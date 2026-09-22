@@ -1166,3 +1166,203 @@ footer span { color: var(--blue); }
 
   .section-heading h2 { font-size: 22px; }
 }
+
+/* Mobile home: true single-column command center, not a squeezed desktop layout. */
+@media (max-width: 520px) {
+  html, body { overflow-x: hidden; }
+
+  .main-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 12px 24px;
+  }
+
+  .topbar {
+    height: 62px;
+  }
+  .menu-button {
+    width: 34px;
+    height: 34px;
+  }
+  .day-context {
+    margin-left: 9px;
+  }
+  .day-context p {
+    margin-bottom: 2px;
+    font-size: 11px;
+  }
+  .day-context time {
+    font-size: 9px;
+  }
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 9px;
+  }
+
+  .hero {
+    display: block;
+    width: 100%;
+    max-width: none;
+    padding: 22px 0 16px;
+  }
+  .hero h1 {
+    max-width: none;
+    font-size: 34px;
+    line-height: 1.02;
+    letter-spacing: -.03em;
+  }
+  .hero-copy > p:last-child {
+    max-width: none;
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .ask-panel {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 15px 16px;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(18,35,63,.12);
+  }
+  .ask-form label {
+    margin-bottom: 2px;
+    font-size: 18px;
+  }
+  .ask-row {
+    gap: 6px;
+  }
+  .ask-row input {
+    padding: 9px 0;
+    font-size: 11px;
+  }
+  .ask-row button {
+    width: 36px;
+    height: 36px;
+  }
+  .ask-form > p {
+    display: none;
+  }
+
+  .money-horizon {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin-top: 14px;
+  }
+  .money-horizon > * {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  .budget-panel,
+  .event-budget-panel {
+    padding: 14px;
+    border-radius: 16px;
+  }
+  .event-budget-panel {
+    margin-top: 10px;
+  }
+
+  .section-heading {
+    gap: 10px;
+  }
+  .section-heading h2 {
+    font-size: 20px;
+  }
+  .context-label {
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .budget-heading-actions {
+    gap: 8px;
+  }
+  .budget-heading-actions .count-pill {
+    font-size: 8px;
+  }
+  .text-action {
+    font-size: 9px;
+  }
+  .budget-summary {
+    margin-top: 12px;
+  }
+  .budget-compact-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .budget-primary span,
+  .budget-compact-spent span {
+    font-size: 9px;
+  }
+  .budget-primary strong {
+    font-size: 25px;
+  }
+  .budget-compact-spent strong {
+    font-size: 12px;
+  }
+  .budget-compact-progress-row {
+    margin-top: 10px;
+  }
+  .budget-metrics.compact {
+    margin-top: 10px;
+  }
+
+  .event-budget-list {
+    margin-top: 10px;
+  }
+  .event-budget-item {
+    flex-basis: 82vw;
+    padding: 10px;
+  }
+
+  .workbench {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin-top: 14px;
+  }
+  .focus-panel,
+  .agenda-panel {
+    width: 100%;
+    max-width: none;
+    padding: 14px;
+    border-radius: 16px;
+  }
+  .agenda-panel {
+    margin-top: 10px;
+  }
+
+  .focus-list {
+    margin-top: 10px;
+  }
+  .focus-item {
+    padding: 10px 0;
+    gap: 8px;
+  }
+  .focus-item strong {
+    margin-bottom: 2px;
+    font-size: 11px;
+  }
+  .focus-item p {
+    font-size: 10px;
+  }
+  .focus-meta time,
+  .focus-meta span {
+    font-size: 9px;
+  }
+
+  .calendar-heading-meta {
+    gap: 8px;
+  }
+  .calendar-legend {
+    gap: 6px 10px;
+    font-size: 8px;
+  }
+  .weekly-calendar {
+    margin-top: 10px;
+  }
+}
