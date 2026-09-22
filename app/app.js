@@ -205,11 +205,22 @@ function renderBudgetOverview() {
             const itemProgress = itemProgressRaw === null ? null : Math.round(itemProgressRaw);
             const itemProgressWidth = itemProgressRaw === null ? 0 : Math.max(0, Math.min(100, itemProgressRaw));
             const overBudget = itemProgressRaw !== null && itemProgressRaw > 100;
+            const sourceStatus = String(item.sourceStatus || item.source_status || "").toUpperCase();
+            const sourceLabel = sourceStatus === "PROVISIONAL_CHAT"
+              ? "Pendiente de conciliar"
+              : sourceStatus === "RECONCILIADO_SHEET"
+                ? "Conciliado"
+                : sourceStatus === "DERIVADO"
+                  ? "Derivado"
+                  : "";
             return `
               <div class="budget-category-item ${overBudget ? "over-budget" : ""}">
                 <div class="budget-category-head">
                   <span class="budget-category-title">${escapeHtml(item.title)}</span>
-                  <strong>${itemProgress === null ? "—" : itemProgress + "%"}</strong>
+                  <span class="budget-category-head-right">
+                    ${sourceLabel ? `<em class="budget-source ${sourceStatus === "PROVISIONAL_CHAT" ? "provisional" : ""}">${sourceLabel}</em>` : ""}
+                    <strong>${itemProgress === null ? "—" : itemProgress + "%"}</strong>
+                  </span>
                 </div>
                 <div class="budget-category-bar"
                      role="progressbar"
