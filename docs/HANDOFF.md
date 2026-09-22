@@ -20,6 +20,11 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Ajustada la densidad móvil de la portada: menos espacio vertical en hero, buscador y secciones principales.
+- El resumen financiero móvil mantiene previsto y ejecutado en la misma fila y conserva las tres métricas clave en una fila compacta en vez de apilarlas.
+- `Eventos y presupuesto` pasa en móvil a carrusel horizontal de tarjetas compactas para evitar una portada excesivamente larga.
+- Reducido padding y tamaño tipográfico de bloques operativos en pantallas pequeñas sin tocar la vista de escritorio.
+
 - La portada deja de esconder las decisiones detrás del botón `Verlas`: las decisiones abiertas se muestran directamente bajo la agenda semanal, con pregunta y opciones visibles.
 - El bloque `Dinero · Este mes` se ha compactado para mostrar solo el resumen ejecutivo (previsto, ejecutado, ingresos, neto personal y ahorro objetivo). El detalle de las 19 partidas pasa a un diálogo accesible mediante `Ver presupuesto`.
 - El detalle financiero sigue leyendo la misma capa privada derivada y mantiene estados de conciliación y barras de progreso por partida.
