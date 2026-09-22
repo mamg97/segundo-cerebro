@@ -41,3 +41,4 @@ jobs:
           test -f dist/app/index.html
           test -f dist/private-config.js
           grep -q "__SECOND_BRAIN_REMOTE__" dist/private-config.js
+          grep -q 'src="../private-config.js"' dist/app/index.html
