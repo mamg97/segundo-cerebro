@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Corregida la lógica privada de eventos importantes tras contrastarla con capturas reales de iCloud: `Viaje nov` pasa a buscar el título real `Viaje Nov` y no un alias antiguo que estaba capturando una fecha errónea.
+- La pestaña privada `EventosImportantes` incorpora `exclude_terms` para diferenciar títulos que contienen otros términos como `preboda` vs `boda`, sin hardcodear nombres personales en Git.
+- Añadida una regla privada independiente para `Preboda` y mantenida otra para `Boda`, evitando que la preboda se renombre incorrectamente como boda.
+
 - Eventos importantes muestra todos los eventos detectados directamente en la home, sin carrusel ni botón intermedio.
 - Las tarjetas se han reducido y uniformado en una rejilla responsive (5/4/3/2/1 columnas según ancho) para que se vean todos de golpe.
 - El bloque `Eventos importantes` y `Próximos movimientos` se fuerzan a `width:100%` y `box-sizing:border-box` para alinear exactamente sus bordes derecho e izquierdo.
