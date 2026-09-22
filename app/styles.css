@@ -439,6 +439,40 @@ a { color: inherit; }
   transition: width .22s ease;
 }
 
+.budget-category-progress {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #e9edf3;
+}
+
+.budget-category-progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: #e9edf3;
+}
+
+.budget-category-progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--blue);
+}
+
+.budget-category-progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--blue);
+}
+
+.budget-category-item.over-budget .budget-category-progress::-webkit-progress-value {
+  background: var(--coral);
+}
+
+.budget-category-item.over-budget .budget-category-progress::-moz-progress-bar {
+  background: var(--coral);
+}
+
 .budget-category-item.over-budget .budget-category-head strong,
 .budget-category-item.over-budget .budget-category-meta strong {
   color: var(--coral);

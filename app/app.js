@@ -197,13 +197,12 @@ function renderBudgetOverview() {
             const itemBudget = numberOrZero(item.budgeted);
             const itemSpent = numberOrZero(item.spent);
             const itemCommitted = numberOrZero(item.committed);
-            const itemConsumed = itemSpent + itemCommitted;
             const itemRemaining = Number.isFinite(Number(item.remaining))
               ? Number(item.remaining)
-              : itemBudget - itemConsumed;
-            const itemProgressRaw = itemBudget > 0 ? (itemConsumed / itemBudget) * 100 : null;
+              : itemBudget - itemSpent - itemCommitted;
+            const itemProgressRaw = itemBudget > 0 ? (itemSpent / itemBudget) * 100 : null;
             const itemProgress = itemProgressRaw === null ? null : Math.round(itemProgressRaw);
-            const itemProgressWidth = itemProgressRaw === null ? 0 : Math.max(0, Math.min(100, itemProgressRaw));
+            const itemProgressValue = itemProgressRaw === null ? 0 : Math.max(0, Math.min(100, itemProgressRaw));
             const overBudget = itemProgressRaw !== null && itemProgressRaw > 100;
             const sourceStatus = String(item.sourceStatus || item.source_status || "").toUpperCase();
             const sourceLabel = sourceStatus === "PROVISIONAL_CHAT"
@@ -222,14 +221,10 @@ function renderBudgetOverview() {
                     <strong>${itemProgress === null ? "—" : itemProgress + "%"}</strong>
                   </span>
                 </div>
-                <div class="budget-category-bar"
-                     role="progressbar"
-                     aria-label="${escapeHtml(item.title)}: ${itemProgress === null ? "sin porcentaje" : itemProgress + "% consumido"}"
-                     aria-valuemin="0"
-                     aria-valuemax="100"
-                     aria-valuenow="${itemProgress === null ? 0 : Math.max(0, Math.min(100, itemProgress))}">
-                  <span style="width:${itemProgressWidth}%"></span>
-                </div>
+                <progress class="budget-category-progress"
+                          max="100"
+                          value="${itemProgressValue}"
+                          aria-label="${escapeHtml(item.title)}: ${itemProgress === null ? "sin porcentaje" : itemProgress + "% gastado"}">${itemProgressValue}</progress>
                 <div class="budget-category-meta">
                   <span>${formatMoney(itemSpent, currency)} gastado${itemCommitted > 0 ? " · " + formatMoney(itemCommitted, currency) + " comprometido" : ""}</span>
                   <strong>${formatMoney(itemRemaining, currency)} libres</strong>

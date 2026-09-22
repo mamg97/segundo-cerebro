@@ -144,6 +144,7 @@ async function fetchFinanceSummary(env) {
   const summary = parseKeyValueRows(summaryRows);
   const categories = parseTableRows(categoryRows).map((item) => ({
     id: item.id || null,
+    group: item.group || "Otros",
     title: item.title || item.id || "Partida",
     budgeted: moneyOrNull(item.budgeted),
     spent: moneyOrNull(item.spent),
