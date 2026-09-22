@@ -427,7 +427,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
 
 function openImportantEventsDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "important-events-dialog");
   dialog.classList.add("important-events-dialog");
 
   const importantEvents = collectImportantEvents(state.financeSummary || {});
@@ -585,7 +585,7 @@ function collectHealthEvents() {
 
 function openHealthDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog");
   dialog.classList.add("health-dialog");
   document.querySelector("#dialog-context").textContent = "Salud · iCloud";
   document.querySelector("#dialog-title").textContent = "Salud";
@@ -847,7 +847,7 @@ function formatWealthDate(value) {
 function openDebtDetail() {
   const debt = state.financeSummary?.debts || null;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Deudas";
   document.querySelector("#dialog-title").textContent = "Detalle de deudas";
@@ -907,7 +907,7 @@ function openBudgetDetail() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual";
   document.querySelector("#dialog-title").textContent = monthly?.periodLabel || monthly?.period || "Presupuesto actual";
@@ -1167,7 +1167,7 @@ function openArea(areaId) {
   const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
   const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "important-events-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [
