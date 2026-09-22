@@ -105,3 +105,5 @@ Validar la demo desde móvil y diseñar, todavía con mocks, un catálogo de fue
 - Detector mecánico de diseño ejecutado; se corrigieron tamaños funcionales, contraste, brillo decorativo y borde de aviso señalados.
 - Historial Git revisado antes de publicar: autor normalizado a `mamg97@users.noreply.github.com` y sin emails personales en los commits publicados.
 - Revisión de conversaciones reales mediante lectura únicamente: no se modificaron los hilos ni sus fuentes y no se incorporaron cifras, identidades, documentos o secretos al repositorio.
+- GitHub Actions `Deploy mock demo to GitHub Pages` run #2: correcto en 20 s.
+- Carga pública de `https://mamg97.github.io/segundo-cerebro/`: correcta; redirige a `/app/` y muestra la v0.1.1.
