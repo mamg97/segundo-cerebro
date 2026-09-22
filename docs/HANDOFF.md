@@ -20,6 +20,13 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Añadida integración privada de iCloud Calendar por CalDAV en rama `icloud-calendar-sync-v0.4`.
+- La integración es operativamente de solo lectura: únicamente usa `PROPFIND` y `REPORT`; no implementa escritura.
+- Los secretos `ICLOUD_APPLE_ID`, `ICLOUD_APP_PASSWORD` e `ICLOUD_CALENDAR_CONFIG` se configuran localmente con Wrangler y nunca se escriben en Git.
+- El Worker consulta los calendarios seleccionados, normaliza solo título/fecha/hora/ubicación/origen y sustituye `state.events` por la agenda iCloud cuando la sincronización funciona.
+- Horizonte inicial: próximos 90 días; caché: 60 s; `/api/health` añade `calendarSync`.
+- La portada limita la agenda a los 8 próximos eventos y reconoce eventos de día completo.
+
 - Corregido el dashboard financiero para mostrar las 19 partidas con presupuesto positivo del ciclo 20/09–20/10, no solo las tres partidas con gasto ya registrado.
 - Corregida la barra de progreso: el CSP bloqueaba el `style="width:..."` inline, por eso el relleno no reflejaba el porcentaje. Se sustituye por `<progress>` nativo, compatible con el CSP.
 - La barra ahora representa exclusivamente gasto ejecutado (`spent / budgeted`). Los importes comprometidos se muestran aparte y no avanzan la barra hasta ejecutarse.
@@ -117,7 +124,7 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 
 ## Próxima acción recomendada
 
-Configurar una única vez los secretos OAuth del Worker usando el JSON `authorized_user` local con permisos de Drive/Sheets. Después validar que un cambio en la hoja derivada aparece en la web al recargar sin regenerar D1. A partir de ahí, `GESTOR FINANZAS PERSONALES` debe mantener la hoja derivada tras cada movimiento confirmado por Miguel.
+Configurar una única vez los secretos iCloud desde el Mac con `node scripts/configure-icloud-calendar-sync.mjs`, desplegar el Worker y validar `calendarSync` en `/api/health`. Después revisar que los cuatro calendarios iCloud seleccionados aparecen correctamente y que no se copian descripciones, asistentes ni enlaces internos.
 
 ## Archivos relevantes
 
