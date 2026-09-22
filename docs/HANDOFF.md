@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Corregido un fallo de bootstrap del modo privado remoto: `build.mjs` solo inyectaba `private-config.js` si `app.js` llevaba exactamente la versión `?v=0.2.0`. Al pasar a `?v=0.2.1`, Cloudflare servía la app con datos mock aunque `/api/health` siguiera sano.
+- La inyección ahora usa un patrón independiente de versión y la CI verifica no solo que exista `dist/private-config.js`, sino que `dist/app/index.html` lo cargue realmente.
+- Este fallo explicaba el calendario ficticio pese a `calendarSync: ok`: la interfaz estaba en `Modo demo` y nunca llamaba a `/api/state`.
+
 - Añadido un bloque específico de Deudas a la portada financiera: resumen compacto visible y detalle completo bajo `Ver detalle`.
 - La hoja privada `SEGUNDO CEREBRO - ESTADO FINANCIERO` incorpora una pestaña `Deudas`; el Worker la lee junto con Resumen/Categorias/Compromisos.
 - Se han inicializado tres obligaciones ya presentes en el presupuesto (El Corte Inglés, IKEA y préstamo coche) con sus cuotas mensuales conocidas. Los saldos pendientes y tipos de interés permanecen nulos hasta que la fuente financiera los confirme.
