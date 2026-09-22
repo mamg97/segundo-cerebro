@@ -470,15 +470,14 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
         && candidate.matchTerms.length
         && candidate.matchTerms.every((term) => normalized.includes(normalizeForMatch(term)))
       );
-      const medical = classifyHealthEvent(event) === "medical";
-      if (!rule && !medical) return null;
+      if (!rule) return null;
       return {
         id: event.id || [event.calendarName, event.title, event.startsAt].join("|"),
-        title: rule?.displayTitle || safeDisplayEventTitle(event.title),
+        title: rule.displayTitle || safeDisplayEventTitle(event.title),
         startsAt: event.startsAt,
         endsAt: event.endsAt,
         location: event.location || null,
-        kind: rule?.kind || "medical",
+        kind: rule.kind || "important",
         source: "calendar"
       };
     })
@@ -531,7 +530,7 @@ function classifyHealthEvent(event) {
   const text = normalizeForMatch([event.title, event.location].filter(Boolean).join(" "));
   if (/gimnasio|\bgym\b|entreno|entrenamiento/.test(text)) return "gym";
   if (/nutricion|nutricionista|dietista|dieta/.test(text)) return "nutrition";
-  if (/medic|doctor|doctora|hospital|clinica|cardiolog|urolog|alergolog|dentista|dental|dermatolog|traumatolog|fisioterap|oftalmolog|revision medica|analitica|consulta/.test(text)) return "medical";
+  if (/\bmedico\b|\bmedica\b|cita medica|doctor|doctora|hospital|clinica|cardiolog|urolog|alergolog|dentista|dental|dermatolog|traumatolog|fisioterap|oftalmolog|revision medica|analitica|consulta/.test(text)) return "medical";
   return null;
 }
 

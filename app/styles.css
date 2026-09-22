@@ -2215,3 +2215,93 @@ html[data-theme="dark"] .important-events-panel .event-budget-item {
     grid-column: 1;
   }
 }
+
+/* v0.8.1 — compact financial summary and single-row important events */
+.money-horizon > .budget-panel .section-heading h2,
+.money-horizon > .debt-panel .section-heading h2,
+.money-horizon > .wealth-panel .section-heading h2 {
+  font-size: 21px;
+  line-height: 1.05;
+}
+
+.money-horizon > .budget-panel .budget-compact-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.money-horizon > .budget-panel .budget-primary {
+  display: block;
+}
+
+.money-horizon > .budget-panel .budget-primary span {
+  display: block;
+  font-size: 10px;
+}
+
+.money-horizon > .budget-panel .budget-primary strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 27px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.money-horizon > .budget-panel .budget-compact-spent span {
+  font-size: 9px;
+}
+
+.money-horizon > .budget-panel .budget-compact-spent strong {
+  font-size: 13px;
+}
+
+.money-horizon > .debt-panel .debt-summary-primary strong {
+  font-size: 21px;
+}
+
+.money-horizon > .wealth-panel .wealth-summary-value strong {
+  font-size: 23px;
+}
+
+.important-events-panel .event-budget-list {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  margin-top: 14px;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.important-events-panel .event-budget-item {
+  flex: 0 0 min(300px, 30vw);
+  min-height: 132px;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 1051px) {
+  .areas-grid > .area-card:last-child:nth-child(3n + 1) {
+    grid-column: 1 / -1;
+    min-height: 138px;
+  }
+}
+
+@media (max-width: 1050px) {
+  .important-events-panel .event-budget-list {
+    display: flex;
+    grid-template-columns: none;
+  }
+
+  .important-events-panel .event-budget-item {
+    flex-basis: min(310px, 46vw);
+  }
+}
+
+@media (max-width: 760px) {
+  .money-horizon > .budget-panel .budget-primary strong {
+    font-size: 24px;
+  }
+
+  .important-events-panel .event-budget-item {
+    flex-basis: min(82vw, 300px);
+  }
+}
