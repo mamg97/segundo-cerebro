@@ -29,6 +29,12 @@ function extractXmlResponses(xml) {
     .map((match) => match[1]);
 }
 
+function extractPropertyHref(xml, propertyName) {
+  const pattern = new RegExp("<(?:(?:[A-Za-z0-9_-]+):)?" + propertyName + "\\b[^>]*>([\\s\\S]*?)<\\/(?:(?:[A-Za-z0-9_-]+):)?" + propertyName + ">", "i");
+  const match = xml.match(pattern);
+  return match ? extractXmlTag(match[1], "href") : null;
+}
+
 async function caldavRequest(env, url, options = {}) {
   const method = options.method || "PROPFIND";
   const depth = options.depth || "0";
@@ -172,7 +178,7 @@ async function discoverIcloudCalendars(env) {
     depth: "0",
     body: principalQuery
   });
-  const principalHref = extractXmlTag(principalResult.text, "href");
+  const principalHref = extractPropertyHref(principalResult.text, "current-user-principal");
   if (!principalHref) throw new Error("ICLOUD_PRINCIPAL_NOT_FOUND");
 
   const principalUrl = absoluteCaldavUrl(principalResult.response.url || authBase, principalHref);
@@ -182,7 +188,7 @@ async function discoverIcloudCalendars(env) {
     depth: "0",
     body: homeQuery
   });
-  const homeHref = extractXmlTag(homeResult.text, "href");
+  const homeHref = extractPropertyHref(homeResult.text, "calendar-home-set");
   if (!homeHref) throw new Error("ICLOUD_CALENDAR_HOME_NOT_FOUND");
 
   const homeUrl = absoluteCaldavUrl(homeResult.response.url || principalUrl, homeHref);
