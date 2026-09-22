@@ -1549,3 +1549,193 @@ footer span { color: var(--blue); }
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* Theme switcher */
+.theme-toggle {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.theme-toggle:hover { border-color: var(--line-strong); background: var(--blue-soft); }
+.theme-toggle:active { transform: scale(.96); }
+.theme-toggle span { font-size: 17px; line-height: 1; }
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e8eef8;
+  --ink-soft: #9eacc1;
+  --paper: #0d1420;
+  --surface: #141e2d;
+  --line: #2a374a;
+  --line-strong: #40516a;
+  --blue: #78a7ff;
+  --blue-soft: #172a47;
+  --coral: #ff8878;
+  --mint: #62c2ad;
+  --amber: #e4ad4f;
+  --violet: #a58eea;
+  --shadow: 0 24px 70px rgba(0, 0, 0, .34);
+}
+
+html[data-theme="dark"] body { background: var(--paper); color: var(--ink); }
+html[data-theme="dark"] .sidebar {
+  background: rgba(13, 20, 32, .94);
+  border-right-color: var(--line);
+}
+html[data-theme="dark"] .brand-mark { background: #dbe7fb; }
+html[data-theme="dark"] .brand-mark span { border-color: #132038; }
+html[data-theme="dark"] .nav-link { color: #9eacc1; }
+html[data-theme="dark"] .nav-link:hover,
+html[data-theme="dark"] .nav-link:focus-visible { background: #111b29; color: var(--ink); }
+html[data-theme="dark"] .nav-link.active { background: var(--blue-soft); color: var(--blue); }
+html[data-theme="dark"] .mock-badge {
+  border-color: #28584e;
+  background: #112a26;
+  color: #86d9c8;
+}
+html[data-theme="dark"] .avatar {
+  background: #dbe7fb;
+  color: #132038;
+}
+html[data-theme="dark"] .pulse-track { stroke: #263347; }
+html[data-theme="dark"] .ask-panel { background: #13233d; }
+html[data-theme="dark"] .ask-row button {
+  background: #e8eef8;
+  color: #13233d;
+}
+html[data-theme="dark"] .ask-row button:hover { background: #d3e1fb; }
+html[data-theme="dark"] .query-result,
+html[data-theme="dark"] .budget-panel,
+html[data-theme="dark"] .focus-panel {
+  background: var(--surface);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .event-budget-panel {
+  background: #211d18;
+  border-color: #4b4030;
+}
+html[data-theme="dark"] .event-budget-item { border-top-color: #4b4030; }
+html[data-theme="dark"] .budget-overall-progress,
+html[data-theme="dark"] .budget-overall-progress::-webkit-progress-bar,
+html[data-theme="dark"] .budget-category-progress,
+html[data-theme="dark"] .budget-category-progress::-webkit-progress-bar,
+html[data-theme="dark"] .budget-category-bar,
+html[data-theme="dark"] .budget-progress {
+  background: #263347;
+}
+html[data-theme="dark"] .budget-source {
+  background: #233044;
+  color: #b7c3d3;
+}
+html[data-theme="dark"] .budget-source.provisional {
+  background: #3a2d17;
+  color: #f0c16c;
+}
+html[data-theme="dark"] .agenda-panel {
+  background: #131f31;
+  border-color: #24344b;
+}
+html[data-theme="dark"] .weekly-calendar {
+  border-color: #31445e;
+  background: rgba(10, 17, 27, .5);
+}
+html[data-theme="dark"] .week-day { border-left-color: #31445e; }
+html[data-theme="dark"] .week-day.today { background: rgba(255,255,255,.035); }
+html[data-theme="dark"] .week-day-header { border-bottom-color: #31445e; }
+html[data-theme="dark"] .week-day-events {
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 39px,
+      rgba(150, 170, 198, .08) 40px
+    );
+}
+html[data-theme="dark"] .week-event {
+  background: color-mix(in srgb, var(--calendar-color) 22%, #111a27);
+  box-shadow: 0 1px 0 rgba(0,0,0,.2);
+}
+html[data-theme="dark"] .decisions-inline,
+html[data-theme="dark"] .decision-callout,
+html[data-theme="dark"] .view-switch,
+html[data-theme="dark"] .area-card,
+html[data-theme="dark"] .module-node,
+html[data-theme="dark"] .capability-list,
+html[data-theme="dark"] .source-list {
+  background: var(--surface);
+}
+html[data-theme="dark"] .decision-inline-item { border-top-color: var(--line); }
+html[data-theme="dark"] .decision-options span { background: #1c293b; }
+html[data-theme="dark"] .area-card:hover { background: #182436; }
+html[data-theme="dark"] .area-symbol,
+html[data-theme="dark"] .module-mark {
+  background: color-mix(in srgb, var(--area-color, var(--node-color)) 18%, #141e2d);
+}
+html[data-theme="dark"] .area-bar { background: #263347; }
+html[data-theme="dark"] .system-map {
+  background: #101a28;
+  border-color: var(--line);
+}
+html[data-theme="dark"] .system-toolbar {
+  background: #131e2d;
+  border-bottom-color: var(--line);
+}
+html[data-theme="dark"] .shared-state-node {
+  border-color: #355178;
+  background: #172a47;
+}
+html[data-theme="dark"] .shared-lock {
+  background: #111d2d;
+  color: var(--blue);
+}
+html[data-theme="dark"] .module-node {
+  border-color: var(--line);
+  color: var(--ink);
+}
+html[data-theme="dark"] .module-node:hover {
+  background: color-mix(in srgb, var(--node-color) 10%, #141e2d);
+}
+html[data-theme="dark"] .capability-list,
+html[data-theme="dark"] .source-list { border-color: var(--line); }
+html[data-theme="dark"] .detail-dialog {
+  background: var(--surface);
+  color: var(--ink);
+}
+html[data-theme="dark"] .detail-dialog::backdrop { background: rgba(0, 0, 0, .7); }
+html[data-theme="dark"] .debt-panel {
+  background: #21191d;
+  border-color: #4a343d;
+}
+html[data-theme="dark"] .debt-summary-grid > div,
+html[data-theme="dark"] .debt-detail-summary > div {
+  border-color: #493941;
+  background: rgba(255,255,255,.035);
+}
+html[data-theme="dark"] .debt-detail-item {
+  border-color: var(--line);
+  background: #172231;
+}
+html[data-theme="dark"] .count-pill { background: #1b2636; }
+html[data-theme="dark"] .menu-button {
+  background: var(--surface);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .menu-button span { background: var(--ink); }
+
+@media (max-width: 520px) {
+  .theme-toggle { width: 32px; height: 32px; }
+  .theme-toggle span { font-size: 15px; }
+  html[data-theme="dark"] .event-budget-item {
+    border-color: #4b4030;
+    background: rgba(255,255,255,.035);
+  }
+}
