@@ -154,11 +154,15 @@ El script envía cada valor a `wrangler secret put`.
 ### Comportamiento
 
 - `/api/state` parte de la instantánea privada D1.
-- Si los secretos están configurados, lee `Resumen`, `Categorias`, `Compromisos` y `Deudas` de la hoja derivada.
+- Si los secretos están configurados, lee `Resumen`, `Categorias`, `Compromisos`, `Deudas` y `Patrimonio` de la hoja derivada.
 - `financeSummary` se sustituye en memoria por la versión de Google Sheets.
 - La caché financiera del Worker dura 30 segundos.
 - Si Google falla, el resto del Segundo Cerebro sigue funcionando y se conserva el resumen financiero que ya exista en D1.
 - `/api/health` expone solo el estado técnico `financeSync`, nunca importes.
+
+### Patrimonio
+
+La pestaña `Patrimonio` contiene una serie histórica derivada con fecha de snapshot, período, nómina de Miguel, nómina de Andrea, suma salarial y patrimonio total. El Worker toma como valor actual el último snapshot con fecha menor o igual a hoy. La portada muestra ese patrimonio y su fecha; el detalle de Patrimonio representa dos gráficas: salarios y patrimonio. No se usan filas futuras como valor actual.
 
 ### Deudas
 
