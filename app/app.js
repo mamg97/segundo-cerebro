@@ -141,10 +141,11 @@ function renderFocus() {
 
 function renderEvents() {
   const now = Date.now();
-  const events = [...state.events]
+  const upcoming = [...state.events]
     .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now - 86400000)
-    .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))
-    .slice(0, 8);
+    .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+
+  const events = pickBalancedCalendarEvents(upcoming, 8);
 
   document.querySelector("#event-list").innerHTML = events.map((event) => {
     const date = new Date(event.startsAt);
@@ -154,12 +155,46 @@ function renderEvents() {
       ? "Todo el día"
       : new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(date);
     const area = areaById.get(event.areaId);
+    const sourceLabel = event.calendarName || area?.shortTitle || "Agenda";
     return `
       <div class="event-item">
         <div class="event-date"><strong>${date.getDate()}</strong><span>${month}</span></div>
-        <div><strong>${escapeHtml(event.title)}</strong><p>${time} · ${escapeHtml(area?.shortTitle || "Agenda")}</p></div>
+        <div><strong>${escapeHtml(event.title)}</strong><p>${time} · ${escapeHtml(sourceLabel)}</p></div>
       </div>`;
   }).join("");
+}
+
+function pickBalancedCalendarEvents(events, limit = 8) {
+  if (events.length <= limit) return events;
+
+  const groups = new Map();
+  for (const event of events) {
+    const key = event.calendarName || event.areaId || "agenda";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(event);
+  }
+
+  const orderedGroups = [...groups.values()]
+    .map((items) => items.sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt)))
+    .sort((a, b) => new Date(a[0].startsAt) - new Date(b[0].startsAt));
+
+  const picked = [];
+  let round = 0;
+
+  while (picked.length < limit) {
+    let added = false;
+    for (const items of orderedGroups) {
+      if (picked.length >= limit) break;
+      if (items[round]) {
+        picked.push(items[round]);
+        added = true;
+      }
+    }
+    if (!added) break;
+    round += 1;
+  }
+
+  return picked.sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
 }
 
 
