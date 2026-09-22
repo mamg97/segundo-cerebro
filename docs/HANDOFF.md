@@ -20,6 +20,9 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Aplicado un hard-stop de overflow horizontal al `workbench`: el track del grid pasa a `minmax(0,1fr)`, los paneles hijos tienen `min-width:0/max-width:100%` y el contenido de `focus-meta` ya no puede ensanchar la sección.
+- `Eventos importantes` y `Próximos movimientos` quedan limitados al mismo ancho lógico del contenido principal.
+
 - Corregido un error semántico en el resumen financiero: la UI etiquetaba como `Neto personal` el campo `joint_net_free` (152,72 €), que en realidad es el margen conjunto.
 - El Worker ahora mapea `personalNet` desde `miguel_net_free` (69,17 €) y conserva `jointNet` por separado.
 - La etiqueta visible pasa a `Libre Miguel` para evitar confundir el margen personal con el conjunto.
