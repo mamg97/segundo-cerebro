@@ -2344,3 +2344,78 @@ html[data-theme="dark"] .important-events-panel .event-budget-item {
     grid-template-columns: 1fr;
   }
 }
+
+/* v0.8.4 — stable three-card summary + full events detail */
+.important-events-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.important-events-panel .event-budget-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  overflow: visible;
+  padding-bottom: 0;
+  scroll-snap-type: none;
+}
+
+.important-events-panel .event-budget-item {
+  width: 100%;
+  min-width: 0;
+  min-height: 138px;
+  flex: none;
+}
+
+.important-events-dialog {
+  width: min(980px, calc(100% - 32px));
+}
+
+.important-events-detail-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.important-events-detail-list .important-event-item {
+  width: 100%;
+  min-width: 0;
+  min-height: 150px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.important-event-full-date {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+html[data-theme="dark"] .important-events-detail-list .important-event-item {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+@media (max-width: 760px) {
+  .important-events-panel .event-budget-list {
+    grid-template-columns: 1fr;
+  }
+
+  .important-events-panel .event-budget-item {
+    min-height: 126px;
+  }
+
+  .important-events-detail-list {
+    grid-template-columns: 1fr;
+  }
+
+  .important-events-actions {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
