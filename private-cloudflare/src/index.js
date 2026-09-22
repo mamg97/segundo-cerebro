@@ -127,7 +127,7 @@ async function fetchFinanceSummary(env) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500"];
+  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -148,6 +148,7 @@ async function fetchFinanceSummary(env) {
   const categoryRows = valueRanges[1]?.values || [];
   const commitmentRows = valueRanges[2]?.values || [];
   const debtRows = valueRanges[3]?.values || [];
+  const wealthRows = valueRanges[4]?.values || [];
 
   const summary = parseKeyValueRows(summaryRows);
   const categories = parseTableRows(categoryRows).map((item) => ({
@@ -217,6 +218,34 @@ async function fetchFinanceSummary(env) {
     sourceSummaryNote: debtSummaryRow?.note || null
   };
 
+  const wealthHistory = parseTableRows(wealthRows)
+    .map((item) => ({
+      date: item.snapshot_date || null,
+      period: item.period || null,
+      salaryMiguel: moneyOrNull(item.salary_miguel),
+      salaryAndrea: moneyOrNull(item.salary_andrea),
+      salaryTotal: moneyOrNull(item.salary_total),
+      patrimony: moneyOrNull(item.patrimony),
+      sourceStatus: item.source_status || null,
+      note: item.note || null
+    }))
+    .filter((item) => item.date)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const currentWealth = [...wealthHistory]
+    .reverse()
+    .find((item) => item.date <= todayKey && item.patrimony !== null) || null;
+
+  const wealthSummary = {
+    currency: summary.currency || "EUR",
+    currentPatrimony: currentWealth?.patrimony ?? null,
+    currentDate: currentWealth?.date ?? null,
+    currentSalaryMiguel: currentWealth?.salaryMiguel ?? null,
+    currentSalaryAndrea: currentWealth?.salaryAndrea ?? null,
+    history: wealthHistory
+  };
+
   const miguelIncome = moneyOrNull(summary.miguel_income);
   const andreaIncome = moneyOrNull(summary.andrea_income);
   const commonBudget = moneyOrNull(summary.common_budget);
@@ -238,6 +267,7 @@ async function fetchFinanceSummary(env) {
     },
     upcomingCommitments: commitments,
     debts: debtSummary,
+    wealth: wealthSummary,
     source: {
       kind: "google-sheet-derived",
       status: summary.status || "DERIVADO",
