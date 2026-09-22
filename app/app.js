@@ -193,13 +193,37 @@ function renderBudgetOverview() {
         ${actualSpent === null ? "" : `<div><span>Gastado registrado</span><strong>${formatMoney(actualSpent, currency)}</strong></div>`}
       </div>
       ${Array.isArray(monthly.categories) && monthly.categories.length
-        ? `<div class="budget-categories">${monthly.categories.slice(0, 4).map((item) => {
+        ? `<div class="budget-categories">${monthly.categories.map((item) => {
             const itemBudget = numberOrZero(item.budgeted);
             const itemSpent = numberOrZero(item.spent);
+            const itemCommitted = numberOrZero(item.committed);
+            const itemConsumed = itemSpent + itemCommitted;
             const itemRemaining = Number.isFinite(Number(item.remaining))
               ? Number(item.remaining)
-              : itemBudget - itemSpent - numberOrZero(item.committed);
-            return `<div><span>${escapeHtml(item.title)}</span><strong>${formatMoney(itemRemaining, currency)} libres</strong></div>`;
+              : itemBudget - itemConsumed;
+            const itemProgressRaw = itemBudget > 0 ? (itemConsumed / itemBudget) * 100 : null;
+            const itemProgress = itemProgressRaw === null ? null : Math.round(itemProgressRaw);
+            const itemProgressWidth = itemProgressRaw === null ? 0 : Math.max(0, Math.min(100, itemProgressRaw));
+            const overBudget = itemProgressRaw !== null && itemProgressRaw > 100;
+            return `
+              <div class="budget-category-item ${overBudget ? "over-budget" : ""}">
+                <div class="budget-category-head">
+                  <span class="budget-category-title">${escapeHtml(item.title)}</span>
+                  <strong>${itemProgress === null ? "—" : itemProgress + "%"}</strong>
+                </div>
+                <div class="budget-category-bar"
+                     role="progressbar"
+                     aria-label="${escapeHtml(item.title)}: ${itemProgress === null ? "sin porcentaje" : itemProgress + "% consumido"}"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuenow="${itemProgress === null ? 0 : Math.max(0, Math.min(100, itemProgress))}">
+                  <span style="width:${itemProgressWidth}%"></span>
+                </div>
+                <div class="budget-category-meta">
+                  <span>${formatMoney(itemSpent, currency)} gastado${itemCommitted > 0 ? " · " + formatMoney(itemCommitted, currency) + " comprometido" : ""}</span>
+                  <strong>${formatMoney(itemRemaining, currency)} libres</strong>
+                </div>
+              </div>`;
           }).join("")}</div>`
         : ""}
     `;

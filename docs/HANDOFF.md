@@ -20,6 +20,8 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Añadida en rama `budget-item-progress-v0.3.1` una barra de progreso por categoría presupuestada del mes. Calcula `% consumido = (gastado + comprometido) / presupuestado`, muestra gastado, comprometido y saldo libre, y marca en coral los excesos >100%.
+
 - Añadida en rama `dashboard-budget-events-v0.3` una nueva zona de portada para presupuesto mensual y próximos compromisos con presupuesto.
 - El modelo admite `financeSummary.monthlyBudget` y `financeSummary.upcomingCommitments`, distinguiendo modelo presupuestario, gasto real y datos por conciliar.
 - Añadido un generador local `make-finance-patch-sql.mjs` que lee `.private/finance-summary.json` y genera un patch D1 dentro de `.private/`, sin versionar importes reales.
@@ -105,7 +107,7 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 
 ## Próxima acción recomendada
 
-Completar la vista financiera de portada con la fuente `GESTOR FINANZAS PERSONALES`: crear `.private/finance-summary.json` con importes verificados, aplicar el patch D1 y validar visualmente presupuesto mensual y próximos compromisos. Mantener Git libre de importes reales y la web en modo lectura.
+Mantener actualizado `financeSummary.monthlyBudget.categories[].spent` (y `committed` cuando proceda) desde la fuente financiera. La portada calculará automáticamente el porcentaje consumido de cada partida al recargar el estado privado. Validar visualmente en móvil y escritorio tras desplegar.
 
 ## Archivos relevantes
 
