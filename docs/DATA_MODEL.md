@@ -81,6 +81,8 @@ Resumen financiero operativo para la portada. No sustituye a la fuente de verdad
 
 `upcomingCommitments` resume próximos eventos o pagos relevantes con `date`, `totalBudget`, `reserved`, `needed`, `currency` y `note`. Si no se conoce `reserved` o `needed`, se deja nulo: la interfaz debe mostrar «Por conciliar» y no inferir deuda.
 
+`debts` resume obligaciones financieras activas. El resumen admite `count`, `totalBalance`, `monthlyPayment`, `currency` y una lista `debts`. Cada deuda puede incluir `title`, `balance`, `monthlyPayment`, `paymentDay`, `interestRate`, `status`, `owner`, `sourceStatus`, `updatedAt` y `note`. Un saldo desconocido permanece `null`: la interfaz debe mostrar «Por completar» y no estimarlo a partir de cuotas.
+
 
 ### PERSON
 
