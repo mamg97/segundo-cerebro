@@ -15,3 +15,8 @@ token*.json
 
 # Estado personal local. Nunca versionar ni publicar.
 .private/
+
+# Build y configuración local de la aplicación privada Cloudflare.
+private-cloudflare/dist/
+private-cloudflare/.wrangler/
+private-cloudflare/wrangler.jsonc
