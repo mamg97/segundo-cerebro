@@ -417,40 +417,61 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
     container.innerHTML = `
       <div class="event-budget-empty">
         <strong>Sin eventos importantes detectados</strong>
-        <p>Se mostrarán aquí viajes, celebraciones y citas médicas encontradas en iCloud.</p>
+        <p>Se mostrarán aquí viajes y celebraciones relevantes encontradas en iCloud.</p>
       </div>`;
     return;
   }
 
-  container.innerHTML = importantEvents.slice(0, 12).map((item) => {
-    const date = new Date(item.startsAt || `${item.date}T12:00:00`);
-    const currency = item.currency || "EUR";
-    const total = firstFinite(item.totalBudget);
-    const reserved = firstFinite(item.reserved);
-    const source = item.source === "calendar" ? "iCloud" : "Finanzas";
-    const tag = item.kind === "medical" ? "Cita médica"
-      : item.kind === "travel" ? "Viaje"
-      : item.kind === "birthday" ? "Cumpleaños"
-      : item.kind === "social" ? "Evento"
-      : "Importante";
-    return `
-      <article class="event-budget-item important-event-item">
-        <div class="event-budget-date">
-          <strong>${Number.isNaN(date.getTime()) ? "—" : date.getDate()}</strong>
-          <span>${Number.isNaN(date.getTime()) ? "sin fecha" : shortMonth(date)}</span>
-        </div>
-        <div class="event-budget-copy">
-          <span class="important-event-tag">${escapeHtml(tag)}</span>
-          <strong>${escapeHtml(item.title)}</strong>
-          <p>${escapeHtml(item.location || item.note || source)}</p>
-        </div>
-        <div class="event-budget-amount">
-          <span>${escapeHtml(source)}</span>
-          ${total !== null ? `<strong>${formatMoney(total, currency)}</strong>` : ""}
-          ${reserved !== null && total !== null ? `<small>${formatMoney(reserved, currency)} reservado</small>` : ""}
-        </div>
-      </article>`;
-  }).join("");
+  container.innerHTML = importantEvents.slice(0, 3).map((item) => renderImportantEventCard(item, true)).join("");
+}
+
+function openImportantEventsDetail() {
+  const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog");
+  dialog.classList.add("important-events-dialog");
+
+  const importantEvents = collectImportantEvents(state.financeSummary || {});
+  document.querySelector("#dialog-context").textContent = "Agenda · iCloud";
+  document.querySelector("#dialog-title").textContent = "Eventos importantes";
+  document.querySelector("#dialog-body").innerHTML = importantEvents.length
+    ? `<div class="important-events-detail-list">${importantEvents.map((item) => renderImportantEventCard(item, false)).join("")}</div>`
+    : "<p>No hay próximos eventos importantes detectados.</p>";
+  dialog.showModal();
+}
+
+function renderImportantEventCard(item, compact = false) {
+  const date = new Date(item.startsAt || (item.date ? `${item.date}T12:00:00` : ""));
+  const currency = item.currency || "EUR";
+  const total = firstFinite(item.totalBudget);
+  const reserved = firstFinite(item.reserved);
+  const source = item.source === "calendar" ? "iCloud" : "Finanzas";
+  const tag = item.kind === "travel" ? "Viaje"
+    : item.kind === "birthday" ? "Cumpleaños"
+    : item.kind === "social" ? "Evento"
+    : "Importante";
+  const validDate = !Number.isNaN(date.getTime());
+  const dateLong = validDate
+    ? new Intl.DateTimeFormat("es-ES", { weekday: "short", day: "numeric", month: "short", year: "numeric" }).format(date).replace(".", "")
+    : "Sin fecha";
+
+  return `
+    <article class="event-budget-item important-event-item ${compact ? "compact" : "detail"}">
+      <div class="event-budget-date">
+        <strong>${validDate ? date.getDate() : "—"}</strong>
+        <span>${validDate ? shortMonth(date) : "sin fecha"}</span>
+      </div>
+      <div class="event-budget-copy">
+        <span class="important-event-tag">${escapeHtml(tag)}</span>
+        <strong>${escapeHtml(item.title)}</strong>
+        <p>${escapeHtml(item.location || item.note || source)}</p>
+        ${compact ? "" : `<small class="important-event-full-date">${escapeHtml(dateLong)}</small>`}
+      </div>
+      <div class="event-budget-amount">
+        <span>${escapeHtml(source)}</span>
+        ${total !== null ? `<strong>${formatMoney(total, currency)}</strong>` : ""}
+        ${reserved !== null && total !== null ? `<small>${formatMoney(reserved, currency)} reservado</small>` : ""}
+      </div>
+    </article>`;
 }
 
 function collectImportantEvents(finance = state.financeSummary || {}) {
@@ -1093,6 +1114,7 @@ function bindInteractions() {
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
+  document.querySelector("#show-important-events")?.addEventListener("click", openImportantEventsDetail);
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
