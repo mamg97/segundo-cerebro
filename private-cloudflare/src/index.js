@@ -127,7 +127,7 @@ async function fetchFinanceSummary(env) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500"];
+  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:F200"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -149,6 +149,7 @@ async function fetchFinanceSummary(env) {
   const commitmentRows = valueRanges[2]?.values || [];
   const debtRows = valueRanges[3]?.values || [];
   const wealthRows = valueRanges[4]?.values || [];
+  const importantEventRows = valueRanges[5]?.values || [];
 
   const summary = parseKeyValueRows(summaryRows);
   const categories = parseTableRows(categoryRows).map((item) => ({
@@ -246,6 +247,20 @@ async function fetchFinanceSummary(env) {
     history: wealthHistory
   };
 
+  const importantEventRules = parseTableRows(importantEventRows)
+    .map((item) => ({
+      id: item.id || null,
+      matchTerms: String(item.match_terms || "")
+        .split("|")
+        .map((term) => term.trim().toLocaleLowerCase("es"))
+        .filter(Boolean),
+      displayTitle: item.display_title || null,
+      kind: item.kind || "important",
+      enabled: String(item.enabled ?? "TRUE").toUpperCase() !== "FALSE",
+      note: item.note || null
+    }))
+    .filter((item) => item.enabled && item.matchTerms.length);
+
   const miguelIncome = moneyOrNull(summary.miguel_income);
   const andreaIncome = moneyOrNull(summary.andrea_income);
   const commonBudget = moneyOrNull(summary.common_budget);
@@ -268,6 +283,7 @@ async function fetchFinanceSummary(env) {
     upcomingCommitments: commitments,
     debts: debtSummary,
     wealth: wealthSummary,
+    importantEventRules,
     source: {
       kind: "google-sheet-derived",
       status: summary.status || "DERIVADO",
@@ -375,7 +391,10 @@ export default {
       if (hasFinanceGoogleConfig(env)) {
         try {
           const finance = await fetchFinanceSummary(env);
-          if (finance.value) state.financeSummary = finance.value;
+          if (finance.value) {
+            state.financeSummary = finance.value;
+            state.importantEventRules = finance.value.importantEventRules || [];
+          }
           financeSync = finance.status;
         } catch (error) {
           financeSync = "error";
