@@ -106,13 +106,22 @@
           </article>
 
           <article class="agenda-panel">
-            <div class="section-heading">
+            <div class="section-heading calendar-heading">
               <div>
                 <p class="context-label">Ritmo</p>
-                <h2>En el horizonte</h2>
+                <h2>Semana</h2>
+              </div>
+              <div class="calendar-heading-meta">
+                <span id="calendar-week-label" class="count-pill"></span>
+                <div class="calendar-legend" aria-label="Calendarios iCloud">
+                  <span><i class="calendar-legend-dot personal"></i>Personal</span>
+                  <span><i class="calendar-legend-dot work"></i>Trabajo</span>
+                  <span><i class="calendar-legend-dot partner"></i>Andrea y Miguel</span>
+                  <span><i class="calendar-legend-dot family"></i>Familia</span>
+                </div>
               </div>
             </div>
-            <div id="event-list" class="event-list"></div>
+            <div id="event-list" class="event-list weekly-calendar"></div>
             <div class="decision-callout">
               <span class="decision-mark" aria-hidden="true">?</span>
               <div><strong id="decision-count">3 decisiones abiertas</strong><p>Una puede afectar a más de un área.</p></div>
