@@ -245,10 +245,16 @@ export default {
 
       let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
       let calendarError = null;
+      let calendarMatchedCount = null;
+      let calendarSelectedCount = null;
+      let calendarEventCount = null;
       if (hasIcloudCalendarConfig(env)) {
         try {
           const calendar = await fetchIcloudCalendarSummary(env);
           calendarSync = calendar.status;
+          calendarMatchedCount = calendar.value?.source?.matchedCalendarCount ?? null;
+          calendarSelectedCount = calendar.value?.source?.selectedCalendarCount ?? null;
+          calendarEventCount = Array.isArray(calendar.value?.events) ? calendar.value.events.length : null;
         } catch (error) {
           calendarSync = "error";
           calendarError = safeIcloudErrorCode(error);
@@ -263,7 +269,10 @@ export default {
         snapshotCreatedAt: row?.created_at ?? null,
         financeSync,
         calendarSync,
-        calendarError
+        calendarError,
+        calendarMatchedCount,
+        calendarSelectedCount,
+        calendarEventCount
       });
     }
 
