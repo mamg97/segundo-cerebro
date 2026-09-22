@@ -395,7 +395,7 @@ function renderBudgetOverview() {
         </div>`}
       <div class="budget-metrics compact">
         ${income === null ? "" : `<div><span>Ingresos</span><strong>${formatMoney(income, currency)}</strong></div>`}
-        ${personalNet === null ? "" : `<div><span>Neto personal</span><strong>${formatMoney(personalNet, currency)}</strong></div>`}
+        ${personalNet === null ? "" : `<div><span>Libre Miguel</span><strong>${formatMoney(personalNet, currency)}</strong></div>`}
         ${savingsTarget === null ? "" : `<div><span>Ahorro objetivo</span><strong>${formatMoney(savingsTarget, currency)}</strong></div>`}
       </div>
     `;
