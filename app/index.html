@@ -22,7 +22,7 @@
 
         <div class="privacy-note">
           <span class="privacy-dot" aria-hidden="true"></span>
-          <span><strong>Modo privado</strong><small>Solo datos ficticios</small></span>
+          <span><strong id="privacy-mode-title">Modo privado</strong><small id="privacy-mode-detail">Solo datos ficticios</small></span>
         </div>
       </aside>
 
@@ -36,8 +36,8 @@
             <time id="current-date"></time>
           </div>
           <div class="top-actions">
-            <span class="mock-badge">Entorno mock</span>
-            <button class="avatar" type="button" aria-label="Perfil ficticio">SC</button>
+            <span class="mock-badge" id="data-mode-badge">Entorno mock</span>
+            <button id="profile-button" class="avatar" type="button" aria-label="Perfil ficticio">SC</button>
           </div>
         </header>
 
@@ -46,12 +46,12 @@
             <h1 id="hero-title">Lo importante,<br>en un mismo lugar.</h1>
             <p>Un estado común para decidir con contexto, sin duplicar tu vida.</p>
           </div>
-          <div class="pulse" aria-label="Pulso general: 78 de 100">
+          <div id="general-pulse" class="pulse" aria-label="Pulso general: 78 de 100">
             <svg viewBox="0 0 140 140" role="img" aria-hidden="true">
               <circle class="pulse-track" cx="70" cy="70" r="58"></circle>
               <circle class="pulse-value" cx="70" cy="70" r="58"></circle>
             </svg>
-            <div><strong>78</strong><span>Pulso general</span></div>
+            <div><strong id="general-health">78</strong><span>Pulso general</span></div>
           </div>
         </section>
 
@@ -61,11 +61,11 @@
             <label id="ask-title" for="ask-input">¿Qué necesitas?</label>
             <div class="ask-row">
               <input id="ask-input" name="query" type="search" autocomplete="off" placeholder="Pregunta por un proyecto, una decisión o un asunto pendiente…">
-              <button type="submit" aria-label="Consultar datos ficticios">
+              <button id="query-submit" type="submit" aria-label="Consultar datos ficticios">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.5-5.5L5 12Z"></path></svg>
               </button>
             </div>
-            <p>La consulta se resuelve localmente sobre los datos ficticios.</p>
+            <p id="query-help">La consulta se resuelve localmente sobre los datos ficticios.</p>
           </form>
         </section>
         <div id="query-result" class="query-result" role="status" aria-live="polite" hidden></div>
@@ -92,7 +92,7 @@
             <div id="event-list" class="event-list"></div>
             <div class="decision-callout">
               <span class="decision-mark" aria-hidden="true">?</span>
-              <div><strong>3 decisiones abiertas</strong><p>Una afecta a más de un área.</p></div>
+              <div><strong id="decision-count">3 decisiones abiertas</strong><p>Una puede afectar a más de un área.</p></div>
               <button id="show-decisions" type="button">Verlas</button>
             </div>
           </article>
@@ -125,7 +125,7 @@
 
         <footer>
           <p>Segundo Cerebro <span>v0.1.1</span></p>
-          <p>Sin conexiones externas · Datos ficticios</p>
+          <p id="footer-mode">Sin conexiones externas · Datos ficticios</p>
         </footer>
       </main>
     </div>

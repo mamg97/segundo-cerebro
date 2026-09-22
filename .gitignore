@@ -12,3 +12,6 @@ coverage/
 *.pfx
 credentials*.json
 token*.json
+
+# Estado personal local. Nunca versionar ni publicar.
+.private/

@@ -1,5 +1,9 @@
 import { mockState } from "../core/mock-state.js";
 
+let state = mockState;
+let areaById = new Map();
+let privateMode = false;
+
 const colors = {
   ink: "#52647f", blue: "#2867e8", mint: "#2e8b78", sky: "#3984a8",
   rose: "#c45d7b", amber: "#b7791f", violet: "#7057b6", cyan: "#16859b",
@@ -11,11 +15,13 @@ const symbols = {
   family: "⌂", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
 };
 
-const areaById = new Map(mockState.areas.map((area) => [area.id, area]));
 const dateFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
 const shortDateFormatter = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" });
 
-function init() {
+async function init() {
+  await loadLocalPrivateState();
+  areaById = new Map(state.areas.map((area) => [area.id, area]));
+  renderMode();
   renderDate();
   renderNavigation();
   renderFocus();
@@ -23,6 +29,40 @@ function init() {
   renderAreas();
   renderSystemMap();
   bindInteractions();
+}
+
+async function loadLocalPrivateState() {
+  const localHost = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+  const requested = new URLSearchParams(window.location.search).get("private") === "1";
+  if (!localHost || !requested) return;
+
+  try {
+    const module = await import("../.private/state.js");
+    if (!module.privateState || module.privateState.meta?.mode !== "private-local") {
+      throw new Error("Estado privado local no válido");
+    }
+    state = module.privateState;
+    privateMode = true;
+  } catch (error) {
+    console.warn("No se pudo cargar el estado privado local; se mantienen los mocks.", error);
+  }
+}
+
+function renderMode() {
+  const generalHealth = state.areas.find((area) => area.id === "area-general")?.health ?? 0;
+  const openDecisions = state.decisions.filter((decision) => decision.status === "open").length;
+  document.querySelector("#privacy-mode-title").textContent = privateMode ? "Modo local privado" : "Modo demo";
+  document.querySelector("#privacy-mode-detail").textContent = privateMode ? "No se publica en GitHub" : "Solo datos ficticios";
+  document.querySelector("#data-mode-badge").textContent = privateMode ? "Estado personal local" : "Entorno mock";
+  document.querySelector("#profile-button").setAttribute("aria-label", privateMode ? "Perfil local privado" : "Perfil ficticio");
+  document.querySelector("#query-submit").setAttribute("aria-label", privateMode ? "Consultar estado privado local" : "Consultar datos ficticios");
+  document.querySelector("#query-help").textContent = privateMode
+    ? "La consulta se resuelve en este navegador sobre el estado local. No usa red ni IA."
+    : "La consulta se resuelve localmente sobre los datos ficticios.";
+  document.querySelector("#footer-mode").textContent = privateMode ? "Sin APIs · Estado local no publicado" : "Sin conexiones externas · Datos ficticios";
+  document.querySelector("#general-health").textContent = String(generalHealth);
+  document.querySelector("#general-pulse").setAttribute("aria-label", `Pulso general: ${generalHealth} de 100`);
+  document.querySelector("#decision-count").textContent = `${openDecisions} decisiones abiertas`;
 }
 
 function renderDate() {
@@ -36,7 +76,7 @@ function renderDate() {
 
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
-  nav.innerHTML = mockState.areas.map((area, index) => `
+  nav.innerHTML = state.areas.map((area, index) => `
     <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
@@ -44,7 +84,7 @@ function renderNavigation() {
 }
 
 function renderFocus() {
-  const sorted = [...mockState.openLoops].sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
+  const sorted = [...state.openLoops].sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
   document.querySelector("#loop-count").textContent = `${sorted.length} abiertos`;
   document.querySelector("#focus-list").innerHTML = sorted.slice(0, 4).map((item) => {
     const area = areaById.get(item.areaId);
@@ -59,7 +99,7 @@ function renderFocus() {
 }
 
 function renderEvents() {
-  document.querySelector("#event-list").innerHTML = mockState.events.map((event) => {
+  document.querySelector("#event-list").innerHTML = state.events.map((event) => {
     const date = new Date(event.startsAt);
     const month = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(date).replace(".", "");
     const time = new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(date);
@@ -72,7 +112,7 @@ function renderEvents() {
 }
 
 function renderAreas() {
-  document.querySelector("#areas-grid").innerHTML = mockState.areas.slice(1).map((area) => `
+  document.querySelector("#areas-grid").innerHTML = state.areas.slice(1).map((area) => `
     <button id="area-${area.slug}" class="area-card" type="button" data-area-id="${area.id}" style="--area-color:${colors[area.tone]};--health:${area.health}%">
       <span class="area-top"><span class="area-symbol">${symbols[area.slug]}</span><span class="area-health">${area.health}</span></span>
       <h3>${escapeHtml(area.title)}</h3>
@@ -83,7 +123,7 @@ function renderAreas() {
 }
 
 function renderSystemMap() {
-  const modules = mockState.areas
+  const modules = state.areas
     .filter((area) => area.module !== "Coordinator")
     .map((area) => ({
       id: area.id,
@@ -92,7 +132,7 @@ function renderSystemMap() {
       status: area.status === "steady" ? "active" : "attention",
       tone: area.tone,
     }));
-  const { coordinator, capabilities, sources } = mockState.system;
+  const { coordinator, capabilities, sources } = state.system;
 
   document.querySelector("#system-graph").innerHTML = `
     <section class="graph-tier coordinator-tier" aria-label="Coordinación">
@@ -111,7 +151,7 @@ function renderSystemMap() {
     <section class="shared-state-node" aria-label="Estado global común">
       <div><span class="node-kind">Fuente de verdad</span><h3>Estado global común</h3></div>
       <p>Entidades, relaciones, contexto y decisiones en una sola capa.</p>
-      <span class="shared-lock">Privado · Mock</span>
+      <span class="shared-lock">${privateMode ? "Privado · Local" : "Privado · Mock"}</span>
     </section>
 
     <div class="graph-flow branch-flow" aria-hidden="true"><span></span></div>
@@ -203,26 +243,32 @@ function setView(view) {
 
 function openArea(areaId) {
   const area = areaById.get(areaId);
-  const relatedLoops = mockState.openLoops.filter((item) => item.areaId === areaId);
-  const relatedProjects = mockState.projects.filter((item) => item.areaId === areaId);
+  const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
+  const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [
-    ...relatedLoops.map((item) => ({ title: item.title, detail: item.nextAction })),
-    ...relatedProjects.map((item) => ({ title: item.title, detail: `${item.progress}% · ${item.nextAction}` })),
+    ...relatedLoops.map((item) => ({
+      title: item.title,
+      detail: [item.context, item.nextAction && `Siguiente: ${item.nextAction}`].filter(Boolean).join(" · "),
+    })),
+    ...relatedProjects.map((item) => ({
+      title: item.title,
+      detail: [item.summary, Number.isFinite(item.progress) && `${item.progress}%`, item.nextAction && `Siguiente: ${item.nextAction}`].filter(Boolean).join(" · "),
+    })),
   ];
   document.querySelector("#dialog-body").innerHTML = entries.length
     ? `<ul class="dialog-list">${entries.map((item) => `<li><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></li>`).join("")}</ul>`
-    : `<p>No hay asuntos mock asociados a esta área.</p>`;
+    : `<p>No hay asuntos asociados a esta área.</p>`;
   dialog.showModal();
 }
 
 function openDecisions() {
   const dialog = document.querySelector("#detail-dialog");
-  document.querySelector("#dialog-context").textContent = "Coordinador · Datos ficticios";
+  document.querySelector("#dialog-context").textContent = privateMode ? "Coordinador · Estado local privado" : "Coordinador · Datos ficticios";
   document.querySelector("#dialog-title").textContent = "Decisiones abiertas";
-  document.querySelector("#dialog-body").innerHTML = `<ul class="dialog-list">${mockState.decisions.map((item) => `
+  document.querySelector("#dialog-body").innerHTML = `<ul class="dialog-list">${state.decisions.map((item) => `
     <li><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.question)} · ${item.options.map(escapeHtml).join(" / ")}</p></li>
   `).join("")}</ul>`;
   dialog.showModal();
@@ -235,10 +281,12 @@ function handleQuery(event) {
   const query = input.value.trim().toLocaleLowerCase("es");
   if (!query) {
     result.hidden = false;
-    result.innerHTML = "Escribe una pregunta o el nombre de un área para buscar en el estado ficticio.";
+    result.innerHTML = privateMode
+      ? "Escribe una pregunta o el nombre de un área para buscar en el estado privado local."
+      : "Escribe una pregunta o el nombre de un área para buscar en el estado ficticio.";
     return;
   }
-  const entities = [...mockState.areas, ...mockState.projects, ...mockState.openLoops, ...mockState.goals, ...mockState.decisions, ...mockState.events];
+  const entities = [...state.areas, ...state.projects, ...state.openLoops, ...state.goals, ...state.decisions, ...state.events];
   const terms = query.split(/\s+/).filter((term) => term.length > 2);
   const matches = entities.filter((entity) => {
     const haystack = JSON.stringify(entity).toLocaleLowerCase("es");
@@ -246,8 +294,10 @@ function handleQuery(event) {
   }).slice(0, 3);
   result.hidden = false;
   result.innerHTML = matches.length
-    ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"} en los mocks:</strong> ${matches.map((item) => escapeHtml(item.title)).join(" · ")}`
-    : "No hay coincidencias en los datos ficticios. La conexión con fuentes reales y el asistente de lenguaje natural quedan para una fase futura.";
+    ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"} en el estado ${privateMode ? "privado" : "mock"}:</strong> ${matches.map((item) => escapeHtml(item.title)).join(" · ")}`
+    : privateMode
+      ? "No hay coincidencias en el estado privado local."
+      : "No hay coincidencias en los datos ficticios. La conexión con fuentes reales y el asistente de lenguaje natural quedan para una fase futura.";
 }
 
 function priorityRank(priority) { return { low: 1, medium: 2, high: 3 }[priority] || 0; }
