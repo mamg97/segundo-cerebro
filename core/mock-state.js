@@ -40,10 +40,9 @@ export const mockState = Object.freeze({
     monthlyBudget: {
       periodLabel: "20 sep – 20 oct",
       currency: "EUR",
-      budgetedExpenses: 2200,
-      spent: 740,
-      committed: 410,
-      remaining: 1050,
+      income: 3200,
+      plannedOutflows: 2750,
+      personalNet: 450,
       savingsTarget: 500,
       categories: [
         { title: "Comida", budgeted: 450, spent: 128.27, remaining: 321.73 },
