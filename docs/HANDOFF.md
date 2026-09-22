@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Corregido un error semántico en el resumen financiero: la UI etiquetaba como `Neto personal` el campo `joint_net_free` (152,72 €), que en realidad es el margen conjunto.
+- El Worker ahora mapea `personalNet` desde `miguel_net_free` (69,17 €) y conserva `jointNet` por separado.
+- La etiqueta visible pasa a `Libre Miguel` para evitar confundir el margen personal con el conjunto.
+
 - `Eventos importantes` deja de vivir dentro del grid financiero `.money-horizon` y pasa a ser una sección hermana de `Próximos movimientos`. Esto elimina definitivamente la diferencia de ancho causada por el spanning del grid.
 - Ambas secciones comparten ahora el mismo contenedor padre y `width:100%`, por lo que sus bordes izquierdo y derecho deben quedar alineados.
 
