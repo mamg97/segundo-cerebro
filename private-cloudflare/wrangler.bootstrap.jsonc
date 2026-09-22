@@ -8,6 +8,13 @@
     "binding": "ASSETS",
     "run_worker_first": true
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "segundo-cerebro-private",
+      "database_id": "0916849e-dc98-4e3e-832d-390062fa738d"
+    }
+  ],
   "vars": {
     "PRIVATE_APP_ENABLED": "false"
   }
