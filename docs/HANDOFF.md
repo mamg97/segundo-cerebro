@@ -20,6 +20,12 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Añadido resumen de Patrimonio a la home: muestra el total del último snapshot del día 1 disponible y un acceso `Ver evolución`.
+- La hoja privada derivada incorpora una pestaña `Patrimonio` con histórico mensual desde abril de 2024 hasta septiembre de 2026: salarios de Miguel/Andrea y patrimonio total. El dato actual es 39.114 € a 1 sep 2026.
+- El área `Patrimonio` abre un detalle específico con dos gráficas SVG responsive: evolución de salarios (dos series) y evolución del patrimonio.
+- El enlace lateral `Patrimonio` abre directamente este detalle en vez de limitarse a desplazar la página hasta la tarjeta.
+- El Worker selecciona como actual el último snapshot con fecha <= hoy, evitando tomar como actuales valores futuros/proyectados.
+
 - Corregido un fallo de bootstrap del modo privado remoto: `build.mjs` solo inyectaba `private-config.js` si `app.js` llevaba exactamente la versión `?v=0.2.0`. Al pasar a `?v=0.2.1`, Cloudflare servía la app con datos mock aunque `/api/health` siguiera sano.
 - La inyección ahora usa un patrón independiente de versión y la CI verifica no solo que exista `dist/private-config.js`, sino que `dist/app/index.html` lo cargue realmente.
 - Este fallo explicaba el calendario ficticio pese a `calendarSync: ok`: la interfaz estaba en `Modo demo` y nunca llamaba a `/api/state`.
