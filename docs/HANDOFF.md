@@ -4,7 +4,7 @@
 
 - **Fecha:** 2026-09-22
 - **Última herramienta:** ChatGPT normal
-- **Rama:** `private-cloudflare-v0.2`
+- **Rama:** `main`
 - **Remoto:** `https://github.com/mamg97/segundo-cerebro.git`
 
 ## Estado actual
@@ -16,6 +16,10 @@ La demo pública v0.1.1 sigue siendo un frontend estático con datos exclusivame
 Preparar una primera versión remota privada y de solo lectura, accesible desde Mac, iPhone e iPad, usando Cloudflare Worker + Access + D1 sin mover datos reales a GitHub.
 
 ## Trabajo realizado
+
+- D1 `segundo-cerebro-private` creada en jurisdicción UE, esquema aplicado y primera instantánea privada importada correctamente (`schema_version 0.2`, `is_current=1`).
+- Cloudflare Access verificado en incógnito: el Worker exige autenticación antes de responder.
+- El Worker bootstrap se ha alineado con el nombre protegido `segundo-cerebro`, vinculado a D1 mediante `DB` y activado con `PRIVATE_APP_ENABLED=true` tras completar las barreras de seguridad.
 
 - Establecidas reglas permanentes en `AGENTS.md`.
 - Documentadas arquitectura, modelo de datos, privacidad y decisiones.
@@ -90,7 +94,7 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 
 ## Próxima acción recomendada
 
-Finalizar y validar el PR de la infraestructura privada. Después hará falta una intervención en Cloudflare para crear D1, desplegar el Worker y activar Access antes de migrar ningún dato real.
+Esperar al despliegue automático del commit de activación y validar `https://segundo-cerebro.mamg97.workers.dev/` tras autenticación. Debe cargar el dashboard en modo privado remoto y leer la instantánea D1. Después revisar exactitud, frescura y prioridades del estado antes de añadir sincronizaciones.
 
 ## Archivos relevantes
 
