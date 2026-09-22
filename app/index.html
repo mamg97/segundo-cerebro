@@ -7,7 +7,7 @@
     <meta name="description" content="Prototipo privado y local del dashboard Segundo Cerebro.">
     <title>Segundo Cerebro — v0.1.1</title>
     <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.js?v=0.2.2"></script>
+    <script type="module" src="./app.js?v=0.2.3"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -73,7 +73,7 @@
         </section>
         <div id="query-result" class="query-result" role="status" aria-live="polite" hidden></div>
 
-        <section class="money-horizon" aria-label="Presupuesto mensual y próximos eventos">
+        <section class="money-horizon" aria-label="Resumen financiero y eventos importantes">
           <article class="budget-panel compact-budget-panel">
             <div class="section-heading">
               <div>
@@ -86,16 +86,6 @@
               </div>
             </div>
             <div id="budget-summary" class="budget-summary"></div>
-          </article>
-
-          <article class="event-budget-panel">
-            <div class="section-heading">
-              <div>
-                <p class="context-label">Próximamente</p>
-                <h2>Eventos y presupuesto</h2>
-              </div>
-            </div>
-            <div id="event-budget-list" class="event-budget-list"></div>
           </article>
 
           <article class="debt-panel">
@@ -118,6 +108,17 @@
               <button id="show-wealth-detail" class="text-action" type="button">Ver evolución</button>
             </div>
             <div id="wealth-summary" class="wealth-summary"></div>
+          </article>
+
+          <article class="event-budget-panel important-events-panel">
+            <div class="section-heading">
+              <div>
+                <p class="context-label">Próximamente</p>
+                <h2>Eventos importantes</h2>
+              </div>
+              <span id="important-event-count" class="count-pill"></span>
+            </div>
+            <div id="event-budget-list" class="event-budget-list"></div>
           </article>
         </section>
 
