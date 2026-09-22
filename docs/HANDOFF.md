@@ -210,3 +210,12 @@ Configurar una única vez los secretos iCloud desde el Mac con `node scripts/con
 - Servidor local ligado a `127.0.0.1`: correcto.
 - Carga de `?private=1`: etiqueta privada, 11 open loops, fuentes y eventos reales minimizados visibles.
 - Consulta local “MIDAS”: devuelve coincidencias del estado privado sin red.
+
+
+## Actualización 22/09/2026 — deudas + tema visual
+
+- La vista privada de Finanzas ya contempla un bloque resumido de deudas con detalle bajo demanda.
+- La fuente sigue siendo el Sheet financiero privado; los importes reales no se versionan en Git.
+- El Worker acepta totales agregados de deuda desde la hoja intermedia para poder mostrar un resumen aunque alguna deuda individual tenga campos incompletos.
+- Se añadió selector claro/oscuro en la cabecera. La preferencia queda guardada en el navegador y el tema oscuro cubre navegación, paneles, calendario, diálogos y tarjetas financieras.
+- Los cambios de código están en `main`; el Worker privado necesita un nuevo despliegue de Cloudflare para reflejarlos en producción.
