@@ -2419,3 +2419,115 @@ html[data-theme="dark"] .important-events-detail-list .important-event-item {
     gap: 4px;
   }
 }
+
+/* v0.8.5 — show every important event at once and align section widths */
+.money-horizon,
+.workbench,
+.important-events-panel,
+.focus-panel {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.money-horizon > .important-events-panel {
+  justify-self: stretch;
+  align-self: stretch;
+}
+
+.important-events-panel {
+  padding: 18px 20px;
+}
+
+.important-events-panel .event-budget-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  overflow: visible;
+  margin-top: 12px;
+  padding: 0;
+}
+
+.important-events-panel .event-budget-item {
+  width: 100%;
+  min-width: 0;
+  min-height: 104px;
+  padding: 10px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 8px;
+  border-radius: 12px;
+}
+
+.important-events-panel .event-budget-date strong {
+  font-size: 20px;
+}
+
+.important-events-panel .event-budget-date span {
+  font-size: 8px;
+}
+
+.important-events-panel .event-budget-copy strong {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.important-events-panel .important-event-tag {
+  margin-bottom: 2px;
+  font-size: 7px;
+}
+
+.important-events-panel .event-budget-copy p {
+  display: none;
+}
+
+.important-events-panel .event-budget-amount {
+  grid-column: 2;
+  margin-top: 2px;
+  text-align: left;
+}
+
+.important-events-panel .event-budget-amount span {
+  display: none;
+}
+
+.important-events-panel .event-budget-amount strong {
+  display: inline;
+  margin: 0 5px 0 0;
+  font-size: 10px;
+}
+
+.important-events-panel .event-budget-amount small {
+  display: inline;
+  font-size: 8px;
+}
+
+@media (max-width: 1180px) {
+  .important-events-panel .event-budget-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 920px) {
+  .important-events-panel .event-budget-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .important-events-panel .event-budget-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .important-events-panel .event-budget-item {
+    min-height: 96px;
+  }
+}
+
+@media (max-width: 460px) {
+  .important-events-panel .event-budget-list {
+    grid-template-columns: 1fr;
+  }
+}
