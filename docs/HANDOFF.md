@@ -20,6 +20,8 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Corregido el desbordamiento de los KPI compactos del bloque Dinero en escritorio: Ingresos, Neto personal y Ahorro objetivo pasan a filas horizontales etiqueta/valor dentro de la tarjeta, evitando cortes y solapes en anchos estrechos.
+
 - Eventos médicos salen de `Eventos importantes` y permanecen dentro de `Salud` (Médicos). También se evita clasificar `Comprar medicinas` como cita médica.
 - `Eventos importantes` pasa a una banda horizontal de una sola fila con scroll, para no ocupar varias pantallas verticales.
 - Reducido el tamaño del patrimonio, deuda y presupuesto en el bloque financiero de tres columnas; el valor principal de Dinero deja de solaparse con `Ejecutado`.
