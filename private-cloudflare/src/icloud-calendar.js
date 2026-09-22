@@ -33,22 +33,35 @@ async function caldavRequest(env, url, options = {}) {
   const method = options.method || "PROPFIND";
   const depth = options.depth || "0";
   const body = options.body || "";
-  const response = await fetch(url, {
-    method,
-    redirect: "follow",
-    headers: {
-      "Authorization": basicAuth(env.ICLOUD_APPLE_ID, env.ICLOUD_APP_PASSWORD),
-      "Depth": depth,
-      "Content-Type": "application/xml; charset=utf-8"
-    },
-    body: body || undefined
-  });
+  let currentUrl = url;
 
-  const text = await response.text();
-  if (!response.ok && response.status !== 207) {
-    throw new Error("ICLOUD_CALDAV_" + response.status);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const response = await fetch(currentUrl, {
+      method,
+      redirect: "manual",
+      headers: {
+        "Authorization": basicAuth(env.ICLOUD_APPLE_ID, env.ICLOUD_APP_PASSWORD),
+        "Depth": depth,
+        "Content-Type": "application/xml; charset=utf-8"
+      },
+      body: body || undefined
+    });
+
+    if ([301, 302, 307, 308].includes(response.status)) {
+      const location = response.headers.get("Location");
+      if (!location) throw new Error("ICLOUD_REDIRECT_WITHOUT_LOCATION");
+      currentUrl = new URL(location, currentUrl).toString();
+      continue;
+    }
+
+    const text = await response.text();
+    if (!response.ok && response.status !== 207) {
+      throw new Error("ICLOUD_CALDAV_" + response.status);
+    }
+    return { response, text };
   }
-  return { response, text };
+
+  throw new Error("ICLOUD_TOO_MANY_REDIRECTS");
 }
 
 function absoluteCaldavUrl(base, href) {
