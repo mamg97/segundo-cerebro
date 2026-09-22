@@ -390,6 +390,29 @@ a { color: inherit; }
   font-size: 11px;
 }
 
+.budget-category-head-right {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.budget-source {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #eef3f8;
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.budget-source.provisional {
+  background: #fff4df;
+  color: #94621f;
+}
+
 .budget-category-head strong {
   color: var(--blue);
   font-size: 12px;
