@@ -2305,3 +2305,42 @@ html[data-theme="dark"] .important-events-panel .event-budget-item {
     flex-basis: min(82vw, 300px);
   }
 }
+
+/* v0.8.2 — prevent summary KPI overflow inside the narrow finance card */
+.money-horizon > .budget-panel .budget-metrics.compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.money-horizon > .budget-panel .budget-metrics.compact > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 9px 11px;
+}
+
+.money-horizon > .budget-panel .budget-metrics.compact span {
+  min-width: 0;
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.money-horizon > .budget-panel .budget-metrics.compact strong {
+  flex: none;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .money-horizon > .budget-panel .budget-metrics.compact {
+    grid-template-columns: 1fr;
+  }
+}
