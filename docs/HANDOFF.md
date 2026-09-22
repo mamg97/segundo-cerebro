@@ -5,11 +5,11 @@
 - **Fecha:** 2026-09-22
 - **Última herramienta:** Codex
 - **Rama:** `main`
-- **Remoto:** ninguno configurado
+- **Remoto:** `https://github.com/mamg97/segundo-cerebro.git`
 
 ## Estado actual
 
-La v0.1.1 es un prototipo frontend estático, responsive y funcional con datos exclusivamente ficticios. Incluye un árbol operativo que explica la relación entre Coordinador, estado global, módulos, capacidades y fuentes sin crear memorias separadas. La arquitectura, el modelo, la privacidad y las decisiones base están documentados.
+La v0.1.1 es un prototipo frontend estático, responsive y funcional con datos exclusivamente ficticios. Incluye un árbol operativo que explica la relación entre Coordinador, estado global, módulos, capacidades y fuentes sin crear memorias separadas. El código está publicado en `mamg97/segundo-cerebro` y la demo se distribuye mediante GitHub Pages en `https://mamg97.github.io/segundo-cerebro/`.
 
 ## Objetivo activo
 
@@ -27,7 +27,8 @@ Validar con casos ficticios que el dashboard y el árbol operativo ayudan a comp
 - Añadidas capacidades transversales mock: revisión semanal, priorizador, detector de conflictos y control de privacidad.
 - Mejorada la legibilidad móvil de textos funcionales y el contraste de los acentos.
 - Añadidos límites explícitos para módulos e integraciones futuras.
-- Inicializado Git local en `main` sin configurar remoto.
+- Publicado el repositorio en la cuenta personal `mamg97` y añadido un workflow de GitHub Pages para la demo estática.
+- Revisadas en modo solo lectura conversaciones existentes sobre finanzas personales, inversión/ahorro, MIDAS, LITOS, HabitQuest y carrera. Se identificaron dominios y fuentes futuras, pero no se copiaron datos reales al repositorio.
 
 ## Estado funcional
 
@@ -39,6 +40,7 @@ Validar con casos ficticios que el dashboard y el árbol operativo ayudan a comp
 - Los nodos de módulo del árbol abren el mismo detalle que las tarjetas de área.
 - Las fuentes externas figuran bloqueadas y sin conectar; solo el mock local aparece activo.
 - No hay persistencia: recargar restablece el estado ficticio.
+- La publicación de Pages contiene únicamente `app/`, `core/`, el redirect raíz y `.nojekyll`.
 
 ## Decisiones tomadas
 
@@ -48,7 +50,7 @@ Validar con casos ficticios que el dashboard y el árbol operativo ayudan a comp
 - v0.1 usa HTML, CSS y JavaScript nativos, sin dependencias.
 - La interfaz nace responsive y preparada conceptualmente para PWA, pero no se activa aún caché offline.
 - El árbol operativo es una capa de transparencia; sus nodos no son memorias ni agentes autónomos.
-- Hosting, base de datos, autenticación, proveedor de IA y sincronización quedan abiertos.
+- GitHub Pages aloja solo la demo mock; hosting definitivo, base de datos, autenticación, proveedor de IA y sincronización siguen abiertos.
 
 Consulta `docs/DECISIONS.md` para el registro duradero.
 
@@ -58,18 +60,20 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 - Los indicadores de salud son mocks y todavía no tienen fórmula de cálculo.
 - El árbol todavía no muestra relaciones entre entidades concretas como proyectos, personas o decisiones.
 - No existen persistencia, autenticación, cifrado, PWA instalable ni tests automatizados de navegador.
-- El proyecto no tiene remoto. Si se publica en el futuro, debe decidirse expresamente la cuenta correcta y mantenerse privado; no asumir ninguna cuenta.
+- La demo y el repositorio son públicos, por lo que cualquier cambio futuro requiere mantener la revisión estricta de secretos, datos reales y metadatos sensibles antes de cada push.
+- Las conversaciones revisadas son contexto de fuentes reales, no una integración: pueden cambiar y no existe sincronización automática con ellas.
 
 ## Pendientes inmediatos
 
 1. Validar con el usuario la jerarquía, lenguaje y utilidad diaria del dashboard.
-2. Definir el primer flujo real sin conectar APIs, por ejemplo revisión semanal o captura manual ficticia.
-3. Convertir ese flujo en criterios de aceptación y tests automatizados mínimos.
-4. Solo después, evaluar persistencia privada y estrategia PWA mediante una decisión registrada.
+2. Diseñar un registro privado de fuentes que permita referenciar, sin copiar, conversaciones y sistemas reales por dominio, propietario, sensibilidad y fecha de actualización.
+3. Definir el primer flujo real sin conectar APIs, por ejemplo revisión semanal o captura manual ficticia.
+4. Convertir ese flujo en criterios de aceptación y tests automatizados mínimos.
+5. Solo después, evaluar persistencia privada y estrategia PWA mediante una decisión registrada.
 
 ## Próxima acción recomendada
 
-Realizar una sesión de validación del prototipo con tres preguntas ficticias y un recorrido móvil. Anotar qué respuesta debería producir el Coordinador y qué entidades necesita, sin incorporar todavía información real.
+Validar la demo desde móvil y diseñar, todavía con mocks, un catálogo de fuentes inspirado en los seis dominios reales revisados. Debe guardar solo referencia, frescura, sensibilidad y permisos; nunca el contenido real en GitHub.
 
 ## Archivos relevantes
 
@@ -82,6 +86,7 @@ Realizar una sesión de validación del prototipo con tres preguntas ficticias y
 - `docs/DATA_MODEL.md`: entidades y relaciones.
 - `docs/PRIVACY.md`: datos prohibidos y reglas para integraciones.
 - `docs/DECISIONS.md`: decisiones arquitectónicas duraderas.
+- `.github/workflows/pages.yml`: publicación de la demo estática en GitHub Pages.
 
 ## Pruebas realizadas
 
@@ -98,3 +103,5 @@ Realizar una sesión de validación del prototipo con tres preguntas ficticias y
 - Árbol operativo: jerarquía, estados y fuentes visibles correctamente en escritorio y móvil.
 - Interacción módulo → detalle: correcta desde la vista Sistema.
 - Detector mecánico de diseño ejecutado; se corrigieron tamaños funcionales, contraste, brillo decorativo y borde de aviso señalados.
+- Historial Git revisado antes de publicar: autor normalizado a `mamg97@users.noreply.github.com` y sin emails personales en los commits publicados.
+- Revisión de conversaciones reales mediante lectura únicamente: no se modificaron los hilos ni sus fuentes y no se incorporaron cifras, identidades, documentos o secretos al repositorio.

@@ -1,6 +1,12 @@
 # Segundo Cerebro
 
-Prototipo privado de un sistema operativo personal. La v0.1 ofrece un dashboard responsive con datos ficticios, un punto central de consulta y una vista visual de las áreas vitales.
+Prototipo de un sistema operativo personal privado. La demo pública de la v0.1 ofrece un dashboard responsive con datos ficticios, un punto central de consulta y una vista visual de las áreas vitales.
+
+## Demo
+
+[Abrir Segundo Cerebro](https://mamg97.github.io/segundo-cerebro/)
+
+La publicación contiene únicamente la interfaz estática y mocks inequívocos. No conecta cuentas, APIs ni información personal.
 
 ## Estado
 

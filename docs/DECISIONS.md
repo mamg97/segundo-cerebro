@@ -43,3 +43,11 @@ Este documento registra decisiones duraderas. El histórico detallado permanece 
 - **Fecha:** 2026-09-22
 - **Decisión:** la vista Sistema representa Coordinador, estado común, módulos, capacidades y fuentes con sus estados y permisos. Los nodos no implican agentes autónomos ni memorias separadas.
 - **Motivo:** hacer comprensible cómo trabaja el sistema sin contradecir la arquitectura de fuente de verdad única.
+
+## D-007 — Demo pública estática en GitHub Pages
+
+- **Estado:** aceptada
+- **Fecha:** 2026-09-22
+- **Decisión:** publicar en `mamg97/segundo-cerebro` una demo estática de la v0.1 mediante GitHub Pages, limitada a código, documentación técnica y datos mock inequívocos.
+- **Motivo:** permitir la validación temprana desde Mac, iPhone e iPad sin desplegar backend, conectar cuentas ni exponer información personal.
+- **Alcance:** GitHub Pages es solo el alojamiento de la demo actual. No decide el hosting, la persistencia ni la arquitectura de datos definitivos del producto privado.
