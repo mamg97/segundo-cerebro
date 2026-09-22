@@ -2531,3 +2531,21 @@ html[data-theme="dark"] .important-events-detail-list .important-event-item {
     grid-template-columns: 1fr;
   }
 }
+
+/* v0.8.7 — Important events is a top-level section, so it shares the same width as Workbench */
+.important-events-panel {
+  width: 100%;
+  max-width: none;
+  margin-top: 22px;
+  box-sizing: border-box;
+}
+
+.money-horizon > .important-events-panel {
+  grid-column: auto;
+}
+
+@media (max-width: 520px) {
+  .important-events-panel {
+    margin-top: 10px;
+  }
+}
