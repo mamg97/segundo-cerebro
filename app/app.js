@@ -422,7 +422,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
     return;
   }
 
-  container.innerHTML = importantEvents.slice(0, 3).map((item) => renderImportantEventCard(item, true)).join("");
+  container.innerHTML = importantEvents.map((item) => renderImportantEventCard(item, true)).join("");
 }
 
 function openImportantEventsDetail() {
@@ -1114,7 +1114,6 @@ function bindInteractions() {
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
-  document.querySelector("#show-important-events")?.addEventListener("click", openImportantEventsDetail);
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
