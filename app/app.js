@@ -29,6 +29,7 @@ async function init() {
   renderFocus();
   renderEvents();
   renderBudgetOverview();
+  renderDebtOverview();
   renderDecisionsInline();
   renderAreas();
   renderSystemMap();
@@ -383,6 +384,103 @@ function renderBudgetOverview() {
   }).join("");
 }
 
+function renderDebtOverview() {
+  const finance = state.financeSummary || {};
+  const debt = finance.debts || null;
+  const container = document.querySelector("#debt-summary");
+  if (!container) return;
+
+  if (!debt || !Array.isArray(debt.debts)) {
+    container.innerHTML = `
+      <div class="debt-empty">
+        <strong>Deudas pendientes de conectar</strong>
+        <p>El resumen aparecerá aquí cuando la fuente financiera incluya saldos y cuotas.</p>
+      </div>`;
+    return;
+  }
+
+  const currency = debt.currency || "EUR";
+  const count = Number.isFinite(Number(debt.count)) ? Number(debt.count) : debt.debts.length;
+  const totalBalance = firstFinite(debt.totalBalance);
+  const monthlyPayment = firstFinite(debt.monthlyPayment);
+
+  container.innerHTML = `
+    <div class="debt-summary-grid">
+      <div class="debt-summary-primary">
+        <span>Saldo pendiente</span>
+        <strong>${totalBalance === null ? "Por completar" : formatMoney(totalBalance, currency)}</strong>
+      </div>
+      <div>
+        <span>Cuota mensual</span>
+        <strong>${monthlyPayment === null ? "—" : formatMoney(monthlyPayment, currency)}</strong>
+      </div>
+      <div>
+        <span>Deudas activas</span>
+        <strong>${count}</strong>
+      </div>
+    </div>
+    ${totalBalance === null
+      ? '<p class="debt-source-note">Las cuotas están registradas; faltan saldos pendientes para calcular la deuda total real.</p>'
+      : ""}`;
+}
+
+function openDebtDetail() {
+  const debt = state.financeSummary?.debts || null;
+  const dialog = document.querySelector("#detail-dialog");
+
+  document.querySelector("#dialog-context").textContent = "Finanzas · Deudas";
+  document.querySelector("#dialog-title").textContent = "Detalle de deudas";
+
+  if (!debt || !Array.isArray(debt.debts) || !debt.debts.length) {
+    document.querySelector("#dialog-body").innerHTML = "<p>No hay deudas registradas en la fuente financiera.</p>";
+    dialog.showModal();
+    return;
+  }
+
+  const currency = debt.currency || "EUR";
+  document.querySelector("#dialog-body").innerHTML = `
+    <div class="debt-detail-summary">
+      <div><span>Saldo total</span><strong>${debt.totalBalance === null ? "Por completar" : formatMoney(debt.totalBalance, currency)}</strong></div>
+      <div><span>Cuota mensual</span><strong>${debt.monthlyPayment === null ? "—" : formatMoney(debt.monthlyPayment, currency)}</strong></div>
+    </div>
+    <div class="debt-detail-list">
+      ${debt.debts.map((item) => renderDebtDetailItem(item, currency)).join("")}
+    </div>`;
+  dialog.showModal();
+}
+
+function renderDebtDetailItem(item, currency) {
+  const balance = firstFinite(item.balance);
+  const monthlyPayment = firstFinite(item.monthlyPayment);
+  const rate = Number.isFinite(Number(item.interestRate)) ? Number(item.interestRate) : null;
+  const paymentDay = Number.isFinite(Number(item.paymentDay)) ? Number(item.paymentDay) : null;
+  const sourceStatus = String(item.sourceStatus || "").toUpperCase();
+  const sourceLabel = sourceStatus === "RECONCILIADO_SHEET"
+    ? "Conciliado"
+    : sourceStatus === "DERIVADO"
+      ? "Derivado"
+      : sourceStatus === "PROVISIONAL_CHAT"
+        ? "Pendiente de conciliar"
+        : "";
+
+  return `
+    <article class="debt-detail-item">
+      <div class="debt-detail-head">
+        <div>
+          <strong>${escapeHtml(item.title)}</strong>
+          ${sourceLabel ? `<span class="debt-source-status">${escapeHtml(sourceLabel)}</span>` : ""}
+        </div>
+        <strong class="debt-detail-balance">${balance === null ? "Saldo por completar" : formatMoney(balance, currency)}</strong>
+      </div>
+      <div class="debt-detail-meta">
+        <span>Cuota: <strong>${monthlyPayment === null ? "—" : formatMoney(monthlyPayment, currency)}</strong></span>
+        <span>Pago: <strong>${paymentDay === null ? "Sin día fijado" : "día " + paymentDay}</strong></span>
+        <span>Tipo: <strong>${rate === null ? "Por completar" : rate.toLocaleString("es-ES", { maximumFractionDigits: 2 }) + "%"}</strong></span>
+      </div>
+      ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
+    </article>`;
+}
+
 function openBudgetDetail() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
@@ -591,6 +689,7 @@ function bindInteractions() {
   const dialog = document.querySelector("#detail-dialog");
   document.querySelectorAll(".area-card").forEach((card) => card.addEventListener("click", () => openArea(card.dataset.areaId)));
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
+  document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
