@@ -71,6 +71,7 @@ async function init() {
   renderEvents();
   renderBudgetOverview();
   renderDebtOverview();
+  renderWealthOverview();
   renderDecisionsInline();
   renderAreas();
   renderSystemMap();
@@ -161,7 +162,7 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   nav.innerHTML = state.areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" style="--area-color:${colors[area.tone]}">
+    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
   `).join("");
@@ -465,9 +466,186 @@ function renderDebtOverview() {
       : ""}`;
 }
 
+function renderWealthOverview() {
+  const wealth = state.financeSummary?.wealth || null;
+  const container = document.querySelector("#wealth-summary");
+  if (!container) return;
+
+  if (!wealth || firstFinite(wealth.currentPatrimony) === null) {
+    container.innerHTML = `
+      <div class="wealth-empty">
+        <strong>Patrimonio pendiente de conectar</strong>
+        <p>El valor del día 1 aparecerá aquí cuando exista histórico financiero.</p>
+      </div>`;
+    return;
+  }
+
+  const currency = wealth.currency || "EUR";
+  const current = firstFinite(wealth.currentPatrimony);
+  const asOf = formatWealthDate(wealth.currentDate);
+
+  container.innerHTML = `
+    <div class="wealth-summary-value">
+      <span>Patrimonio total</span>
+      <strong>${formatMoney(current, currency)}</strong>
+      <small>Actualizado a ${escapeHtml(asOf)}</small>
+    </div>`;
+}
+
+function openWealthDetail() {
+  const wealth = state.financeSummary?.wealth || null;
+  const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.add("wealth-dialog");
+  document.querySelector("#dialog-context").textContent = "Patrimonio · Evolución";
+  document.querySelector("#dialog-title").textContent = "Patrimonio y salarios";
+
+  const history = Array.isArray(wealth?.history)
+    ? wealth.history.filter((item) => item.date)
+    : [];
+
+  if (!history.length) {
+    document.querySelector("#dialog-body").innerHTML = "<p>No hay histórico patrimonial conectado.</p>";
+    dialog.showModal();
+    return;
+  }
+
+  const currency = wealth.currency || "EUR";
+  const current = firstFinite(wealth.currentPatrimony);
+  const asOf = formatWealthDate(wealth.currentDate);
+
+  document.querySelector("#dialog-body").innerHTML = `
+    <div class="wealth-detail">
+      <div class="wealth-detail-kpi">
+        <span>Patrimonio total · ${escapeHtml(asOf)}</span>
+        <strong>${current === null ? "—" : formatMoney(current, currency)}</strong>
+      </div>
+
+      <section class="wealth-chart-block">
+        <div class="wealth-chart-heading">
+          <div><strong>Evolución de salarios</strong><span>Nómina mensual</span></div>
+          <div class="wealth-chart-legend">
+            <span><i class="miguel"></i>Miguel</span>
+            <span><i class="andrea"></i>Andrea</span>
+          </div>
+        </div>
+        ${renderWealthLineChart(history, [
+          { key: "salaryMiguel", className: "salary-miguel" },
+          { key: "salaryAndrea", className: "salary-andrea" }
+        ], currency, "Evolución de salarios")}
+      </section>
+
+      <section class="wealth-chart-block">
+        <div class="wealth-chart-heading">
+          <div><strong>Evolución del patrimonio</strong><span>Valor registrado el día 1 de cada mes</span></div>
+        </div>
+        ${renderWealthLineChart(history, [
+          { key: "patrimony", className: "patrimony-line" }
+        ], currency, "Evolución del patrimonio")}
+      </section>
+    </div>`;
+  dialog.showModal();
+}
+
+function renderWealthLineChart(history, seriesDefs, currency, ariaLabel) {
+  const width = 760;
+  const height = 250;
+  const left = 58;
+  const right = 18;
+  const top = 18;
+  const bottom = 42;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+
+  const rows = history
+    .map((item) => ({ ...item, dateValue: new Date(`${item.date}T12:00:00`).getTime() }))
+    .filter((item) => Number.isFinite(item.dateValue));
+
+  const values = [];
+  for (const row of rows) {
+    for (const def of seriesDefs) {
+      const value = firstFinite(row[def.key]);
+      if (value !== null) values.push(value);
+    }
+  }
+  if (!rows.length || !values.length) return '<p class="wealth-chart-empty">Sin datos suficientes.</p>';
+
+  let min = Math.min(...values);
+  let max = Math.max(...values);
+  if (min === max) {
+    min = min * 0.95;
+    max = max * 1.05 || 1;
+  } else {
+    const pad = (max - min) * 0.08;
+    min -= pad;
+    max += pad;
+  }
+
+  const x = (index) => left + (rows.length === 1 ? plotWidth / 2 : (index / (rows.length - 1)) * plotWidth);
+  const y = (value) => top + ((max - value) / (max - min)) * plotHeight;
+
+  const grid = Array.from({ length: 4 }, (_, index) => {
+    const ratio = index / 3;
+    const value = max - (max - min) * ratio;
+    const yy = top + plotHeight * ratio;
+    return `
+      <line class="wealth-grid-line" x1="${left}" y1="${yy.toFixed(1)}" x2="${width - right}" y2="${yy.toFixed(1)}"></line>
+      <text class="wealth-axis-label" x="${left - 8}" y="${(yy + 3).toFixed(1)}" text-anchor="end">${escapeHtml(compactMoney(value, currency))}</text>`;
+  }).join("");
+
+  const series = seriesDefs.map((def) => {
+    const points = rows.map((row, index) => {
+      const value = firstFinite(row[def.key]);
+      return value === null ? null : `${x(index).toFixed(1)},${y(value).toFixed(1)}`;
+    }).filter(Boolean);
+    if (!points.length) return "";
+    const lastIndex = [...rows].map((row) => firstFinite(row[def.key])).findLastIndex((value) => value !== null);
+    const lastValue = lastIndex >= 0 ? firstFinite(rows[lastIndex][def.key]) : null;
+    return `
+      <polyline class="wealth-chart-line ${def.className}" points="${points.join(" ")}"></polyline>
+      ${lastValue === null ? "" : `<circle class="wealth-chart-point ${def.className}" cx="${x(lastIndex).toFixed(1)}" cy="${y(lastValue).toFixed(1)}" r="3.5"></circle>`}`;
+  }).join("");
+
+  const tickIndexes = [...new Set([0, Math.floor((rows.length - 1) / 3), Math.floor((rows.length - 1) * 2 / 3), rows.length - 1])];
+  const xLabels = tickIndexes.map((index) => {
+    const d = new Date(`${rows[index].date}T12:00:00`);
+    const label = new Intl.DateTimeFormat("es-ES", { month: "short", year: "2-digit" }).format(d).replace(".", "");
+    return `<text class="wealth-axis-label" x="${x(index).toFixed(1)}" y="${height - 14}" text-anchor="middle">${escapeHtml(label)}</text>`;
+  }).join("");
+
+  return `
+    <div class="wealth-chart-scroll">
+      <svg class="wealth-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(ariaLabel)}">
+        ${grid}
+        ${series}
+        ${xLabels}
+      </svg>
+    </div>`;
+}
+
+function compactMoney(value, currency = "EUR") {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency,
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(value);
+}
+
+function formatWealthDate(value) {
+  if (!value) return "fecha desconocida";
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  }).format(date).replace(".", "");
+}
+
 function openDebtDetail() {
   const debt = state.financeSummary?.debts || null;
   const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Deudas";
   document.querySelector("#dialog-title").textContent = "Detalle de deudas";
@@ -527,6 +705,7 @@ function openBudgetDetail() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
   const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual";
   document.querySelector("#dialog-title").textContent = monthly?.periodLabel || monthly?.period || "Presupuesto actual";
@@ -732,6 +911,7 @@ function bindInteractions() {
   document.querySelectorAll(".area-card").forEach((card) => card.addEventListener("click", () => openArea(card.dataset.areaId)));
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
+  document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
@@ -748,6 +928,10 @@ function bindInteractions() {
     document.body.classList.remove("nav-open");
     menuButton.setAttribute("aria-expanded", "false");
   }));
+  document.querySelector('[data-open-wealth="true"]')?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openWealthDetail();
+  });
 }
 
 function setView(view) {
@@ -764,10 +948,15 @@ function setView(view) {
 }
 
 function openArea(areaId) {
+  if (areaId === "area-wealth") {
+    openWealthDetail();
+    return;
+  }
   const area = areaById.get(areaId);
   const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
   const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [
