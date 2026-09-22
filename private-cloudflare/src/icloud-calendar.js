@@ -248,7 +248,9 @@ export async function fetchIcloudCalendarSummary(env) {
 
   const available = await discoverIcloudCalendars(env);
   const now = new Date();
-  const from = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  // Fetch enough history to cover the full current Monday–Sunday week.
+  // Using only the previous 24h made Monday morning events disappear on Tuesday.
+  const from = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
   const to = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
   const start = formatCalDavTimestamp(from);
   const end = formatCalDavTimestamp(to);
