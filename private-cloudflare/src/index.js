@@ -127,7 +127,7 @@ async function fetchFinanceSummary(env) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500"];
+  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -147,6 +147,7 @@ async function fetchFinanceSummary(env) {
   const summaryRows = valueRanges[0]?.values || [];
   const categoryRows = valueRanges[1]?.values || [];
   const commitmentRows = valueRanges[2]?.values || [];
+  const debtRows = valueRanges[3]?.values || [];
 
   const summary = parseKeyValueRows(summaryRows);
   const categories = parseTableRows(categoryRows).map((item) => ({
@@ -175,6 +176,35 @@ async function fetchFinanceSummary(env) {
     note: item.note || null
   }));
 
+  const debts = parseTableRows(debtRows).map((item) => ({
+    id: item.id || null,
+    title: item.title || item.id || "Deuda",
+    balance: moneyOrNull(item.balance),
+    monthlyPayment: moneyOrNull(item.monthly_payment),
+    paymentDay: item.payment_day === "" || item.payment_day == null ? null : Number(item.payment_day),
+    interestRate: item.interest_rate === "" || item.interest_rate == null ? null : Number(item.interest_rate),
+    status: item.status || "active",
+    owner: item.owner || null,
+    sourceStatus: item.source_status || null,
+    updatedAt: item.updated_at || null,
+    note: item.note || null
+  }));
+
+  const activeDebts = debts.filter((item) => item.status !== "closed");
+  const knownBalanceValues = activeDebts.map((item) => item.balance).filter((value) => value !== null);
+  const knownPaymentValues = activeDebts.map((item) => item.monthlyPayment).filter((value) => value !== null);
+  const debtSummary = {
+    currency: summary.currency || "EUR",
+    count: activeDebts.length,
+    totalBalance: knownBalanceValues.length === activeDebts.length && activeDebts.length
+      ? knownBalanceValues.reduce((sum, value) => sum + value, 0)
+      : null,
+    monthlyPayment: knownPaymentValues.length
+      ? knownPaymentValues.reduce((sum, value) => sum + value, 0)
+      : null,
+    debts: activeDebts
+  };
+
   const miguelIncome = moneyOrNull(summary.miguel_income);
   const andreaIncome = moneyOrNull(summary.andrea_income);
   const commonBudget = moneyOrNull(summary.common_budget);
@@ -195,6 +225,7 @@ async function fetchFinanceSummary(env) {
       categories
     },
     upcomingCommitments: commitments,
+    debts: debtSummary,
     source: {
       kind: "google-sheet-derived",
       status: summary.status || "DERIVADO",

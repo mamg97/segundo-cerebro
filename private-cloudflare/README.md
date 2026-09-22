@@ -154,11 +154,15 @@ El script envía cada valor a `wrangler secret put`.
 ### Comportamiento
 
 - `/api/state` parte de la instantánea privada D1.
-- Si los secretos están configurados, lee `Resumen`, `Categorias` y `Compromisos` de la hoja derivada.
+- Si los secretos están configurados, lee `Resumen`, `Categorias`, `Compromisos` y `Deudas` de la hoja derivada.
 - `financeSummary` se sustituye en memoria por la versión de Google Sheets.
 - La caché financiera del Worker dura 30 segundos.
 - Si Google falla, el resto del Segundo Cerebro sigue funcionando y se conserva el resumen financiero que ya exista en D1.
 - `/api/health` expone solo el estado técnico `financeSync`, nunca importes.
+
+### Deudas
+
+La pestaña `Deudas` mantiene un inventario derivado y minimizado de obligaciones activas. Puede almacenar saldo pendiente, cuota mensual, día de pago, tipo de interés y estado. Los campos desconocidos se dejan vacíos: no se estiman saldos a partir de una cuota mensual. La portada muestra solo el resumen y el detalle se abre bajo demanda.
 
 ### Semántica de conciliación
 
