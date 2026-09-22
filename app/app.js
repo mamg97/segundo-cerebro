@@ -274,9 +274,9 @@ function renderWeekEvent(event) {
     : null;
 
   return `
-    <article class="week-event ${calendarClass}" title="${escapeHtml(event.title)} · ${escapeHtml(sourceLabel)}">
+    <article class="week-event ${calendarClass}" title="${escapeHtml(safeDisplayEventTitle(event.title))} · ${escapeHtml(sourceLabel)}">
       <span class="week-event-time">${time}${endTime ? "–" + endTime : ""}</span>
-      <strong>${escapeHtml(event.title)}</strong>
+      <strong>${escapeHtml(safeDisplayEventTitle(event.title))}</strong>
       <small>${escapeHtml(sourceLabel)}</small>
     </article>`;
 }
