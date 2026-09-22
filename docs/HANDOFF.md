@@ -20,6 +20,12 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Creada en Drive la hoja privada derivada `SEGUNDO CEREBRO - ESTADO FINANCIERO` con pestañas `Resumen`, `Categorias` y `Compromisos`; no sustituye a `ASUNTOS v3.xlsx`.
+- Actualizado `CONTROL ASISTENTE - MEMORIA FINANCIERA` con el protocolo de integración: Gestor Financiero actúa como intermediario, Excel solo lectura, estados `PROVISIONAL_CHAT` / `RECONCILIADO_SHEET` / `DERIVADO`.
+- Añadida en rama `finance-live-sheet-sync-v0.3.2` lectura privada en vivo desde Google Sheets al Worker: `/api/state` superpone `financeSummary` sobre D1, con caché de 30 s y fallback seguro.
+- Añadido script local para configurar credenciales OAuth de lectura como secretos de Wrangler sin escribirlas en Git.
+- La UI diferencia partidas provisionales pendientes de conciliación de partidas confirmadas.
+
 - Añadida en rama `budget-item-progress-v0.3.1` una barra de progreso por categoría presupuestada del mes. Calcula `% consumido = (gastado + comprometido) / presupuestado`, muestra gastado, comprometido y saldo libre, y marca en coral los excesos >100%.
 
 - Añadida en rama `dashboard-budget-events-v0.3` una nueva zona de portada para presupuesto mensual y próximos compromisos con presupuesto.
@@ -107,7 +113,7 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 
 ## Próxima acción recomendada
 
-Mantener actualizado `financeSummary.monthlyBudget.categories[].spent` (y `committed` cuando proceda) desde la fuente financiera. La portada calculará automáticamente el porcentaje consumido de cada partida al recargar el estado privado. Validar visualmente en móvil y escritorio tras desplegar.
+Configurar una única vez los secretos OAuth del Worker usando el JSON `authorized_user` local con permisos de Drive/Sheets. Después validar que un cambio en la hoja derivada aparece en la web al recargar sin regenerar D1. A partir de ahí, `GESTOR FINANZAS PERSONALES` debe mantener la hoja derivada tras cada movimiento confirmado por Miguel.
 
 ## Archivos relevantes
 

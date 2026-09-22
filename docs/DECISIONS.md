@@ -75,3 +75,13 @@ Este documento registra decisiones duraderas. El histórico detallado permanece 
 - **Decisión:** la primera versión remota con datos reales se implementará como un Cloudflare Worker protegido íntegramente por Cloudflare Access y con D1 como persistencia privada. GitHub Pages seguirá siendo solo la demo mock.
 - **Motivo:** permite acceso desde Mac, iPhone e iPad, mantiene los datos fuera de GitHub y encaja en el uso personal de bajo volumen sin añadir un servidor propio.
 - **Límite:** la primera versión será de solo lectura; no se activará hasta verificar Access. El proveedor podrá reevaluarse si cambian requisitos de privacidad, coste o portabilidad.
+
+
+## D-011 — Gestor financiero como intermediario y hoja derivada privada
+
+- **Estado:** aceptada
+- **Fecha:** 2026-09-22
+- **Decisión:** `ASUNTOS v3.xlsx` continúa como fuente oficial financiera y permanece solo lectura para el asistente. La conversación `GESTOR FINANZAS PERSONALES` mantiene reglas/contexto en `CONTROL ASISTENTE - MEMORIA FINANCIERA` y una hoja privada derivada `SEGUNDO CEREBRO - ESTADO FINANCIERO` para transportar el estado normalizado al dashboard.
+- **Conciliación:** un movimiento registrado en conversación entra como `PROVISIONAL_CHAT`; solo pasa a `RECONCILIADO_SHEET` cuando se confirma contra `ASUNTOS v3.xlsx`.
+- **Sincronización:** el Worker privado puede leer la hoja derivada de Google Sheets en cada carga y superponer `financeSummary` sobre la instantánea D1, sin publicar importes en Git.
+- **Motivo:** evita contabilidad paralela, conserva la trazabilidad entre conversación y fuente oficial, y permite que las barras de presupuesto se actualicen al registrar movimientos sin que el Segundo Cerebro modifique el Excel.
