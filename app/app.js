@@ -169,32 +169,28 @@ function renderBudgetOverview() {
       </div>`;
   } else {
     const currency = monthly.currency || "EUR";
-    const budgeted = numberOrZero(monthly.budgetedExpenses);
-    const spent = numberOrZero(monthly.spent);
-    const committed = numberOrZero(monthly.committed);
-    const remaining = Number.isFinite(Number(monthly.remaining))
-      ? Number(monthly.remaining)
-      : budgeted - spent - committed;
-    const progress = budgeted > 0
-      ? Math.max(0, Math.min(100, Math.round(((spent + committed) / budgeted) * 100)))
-      : 0;
+    const plannedOutflows = firstFinite(monthly.plannedOutflows, monthly.budgetedExpenses, monthly.budgeted);
+    const income = firstFinite(monthly.income);
+    const personalNet = firstFinite(monthly.personalNet, monthly.remaining);
+    const actualSpent = firstFinite(monthly.spent);
+    const committed = firstFinite(monthly.committed);
+    const savingsTarget = firstFinite(monthly.savingsTarget);
+    const progress = plannedOutflows !== null && actualSpent !== null
+      ? Math.max(0, Math.min(100, Math.round(((actualSpent + (committed || 0)) / plannedOutflows) * 100)))
+      : null;
 
     period.textContent = monthly.periodLabel || monthly.period || "Periodo actual";
     summary.innerHTML = `
       <div class="budget-primary">
-        <span>Presupuestado</span>
-        <strong>${formatMoney(budgeted, currency)}</strong>
+        <span>Gasto + ahorro previsto</span>
+        <strong>${plannedOutflows === null ? "—" : formatMoney(plannedOutflows, currency)}</strong>
       </div>
-      <div class="budget-progress" aria-label="${progress}% gastado o comprometido">
-        <span style="width:${progress}%"></span>
-      </div>
+      ${progress === null ? "" : `<div class="budget-progress" aria-label="${progress}% gastado o comprometido"><span style="width:${progress}%"></span></div>`}
       <div class="budget-metrics">
-        <div><span>Gastado</span><strong>${formatMoney(spent, currency)}</strong></div>
-        <div><span>Comprometido</span><strong>${formatMoney(committed, currency)}</strong></div>
-        <div><span>Margen</span><strong>${formatMoney(remaining, currency)}</strong></div>
-        ${Number.isFinite(Number(monthly.savingsTarget))
-          ? `<div><span>Ahorro objetivo</span><strong>${formatMoney(monthly.savingsTarget, currency)}</strong></div>`
-          : ""}
+        ${income === null ? "" : `<div><span>Ingresos</span><strong>${formatMoney(income, currency)}</strong></div>`}
+        ${personalNet === null ? "" : `<div><span>Neto personal modelado</span><strong>${formatMoney(personalNet, currency)}</strong></div>`}
+        ${savingsTarget === null ? "" : `<div><span>Ahorro objetivo</span><strong>${formatMoney(savingsTarget, currency)}</strong></div>`}
+        ${actualSpent === null ? "" : `<div><span>Gastado registrado</span><strong>${formatMoney(actualSpent, currency)}</strong></div>`}
       </div>
       ${Array.isArray(monthly.categories) && monthly.categories.length
         ? `<div class="budget-categories">${monthly.categories.slice(0, 4).map((item) => {
@@ -227,10 +223,17 @@ function renderBudgetOverview() {
 
   commitments.innerHTML = upcoming.map((item) => {
     const currency = item.currency || "EUR";
-    const total = numberOrZero(item.totalBudget);
-    const reserved = numberOrZero(item.reserved);
-    const needed = Number.isFinite(Number(item.needed)) ? Number(item.needed) : Math.max(0, total - reserved);
+    const total = firstFinite(item.totalBudget);
+    const reserved = firstFinite(item.reserved);
+    const explicitNeeded = firstFinite(item.needed);
+    const needed = explicitNeeded !== null
+      ? explicitNeeded
+      : total !== null && reserved !== null
+        ? Math.max(0, total - reserved)
+        : null;
     const date = item.date ? new Date(`${item.date}T12:00:00`) : null;
+    const statusLabel = needed === null ? "Por conciliar" : needed > 0 ? "Falta" : "Cubierto";
+    const statusValue = needed === null ? "—" : needed > 0 ? formatMoney(needed, currency) : "✓";
     return `
       <article class="event-budget-item">
         <div class="event-budget-date">
@@ -242,9 +245,9 @@ function renderBudgetOverview() {
           <p>${item.note ? escapeHtml(item.note) : "Compromiso previsto"}</p>
         </div>
         <div class="event-budget-amount">
-          <span>${needed > 0 ? "Falta" : "Cubierto"}</span>
-          <strong>${needed > 0 ? formatMoney(needed, currency) : "✓"}</strong>
-          ${total > 0 ? `<small>${formatMoney(reserved, currency)} / ${formatMoney(total, currency)}</small>` : ""}
+          <span>${statusLabel}</span>
+          <strong>${statusValue}</strong>
+          ${total !== null ? `<small>${reserved === null ? "Presupuesto " + formatMoney(total, currency) : formatMoney(reserved, currency) + " / " + formatMoney(total, currency)}</small>` : ""}
         </div>
       </article>`;
   }).join("");
@@ -258,9 +261,17 @@ function formatMoney(value, currency = "EUR") {
   }).format(numberOrZero(value));
 }
 
+function firstFinite(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined || value === "") continue;
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return null;
+}
+
 function numberOrZero(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : 0;
+  return firstFinite(value) ?? 0;
 }
 
 function shortMonth(date) {
