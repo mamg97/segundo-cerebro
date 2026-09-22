@@ -472,7 +472,7 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
       );
       if (!rule) return null;
       return {
-        id: event.id || [event.calendarName, event.title, event.startsAt].join("|"),
+        id: rule.id || event.id || [event.calendarName, event.title, event.startsAt].join("|"),
         title: rule.displayTitle || safeDisplayEventTitle(event.title),
         startsAt: event.startsAt,
         endsAt: event.endsAt,
@@ -483,25 +483,45 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
     })
     .filter(Boolean);
 
+  const calendarByTitle = new Map(
+    calendarItems.map((item) => [normalizeForMatch(item.title), item])
+  );
+
   const commitments = (Array.isArray(finance.upcomingCommitments) ? finance.upcomingCommitments : [])
     .filter((item) => !item.date || new Date(`${item.date}T23:59:59`).getTime() >= now)
-    .map((item) => ({
-      ...item,
-      title: safeDisplayEventTitle(item.title),
-      startsAt: item.date ? `${item.date}T12:00:00` : null,
-      kind: inferImportantKind(item.title),
-      source: "finance"
-    }));
+    .map((item) => {
+      const title = safeDisplayEventTitle(item.title);
+      const key = normalizeForMatch(title);
+      const calendarMatch = calendarByTitle.get(key);
+      if (calendarMatch) {
+        Object.assign(calendarMatch, {
+          currency: item.currency,
+          totalBudget: item.totalBudget,
+          reserved: item.reserved,
+          needed: item.needed,
+          note: item.note || calendarMatch.note || null,
+          financeLinked: true
+        });
+        return null;
+      }
+      return {
+        ...item,
+        title,
+        startsAt: item.date ? `${item.date}T12:00:00` : null,
+        kind: inferImportantKind(item.title),
+        source: "finance"
+      };
+    })
+    .filter(Boolean);
 
   const merged = [...calendarItems, ...commitments]
     .sort((a, b) => new Date(a.startsAt || "9999-12-31").getTime() - new Date(b.startsAt || "9999-12-31").getTime());
 
   const seen = new Set();
   return merged.filter((item) => {
-    const dateKey = String(item.startsAt || "").slice(0, 10);
-    const key = `${normalizeForMatch(item.title)}|${dateKey}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
+    const semanticKey = normalizeForMatch(item.title);
+    if (seen.has(semanticKey)) return false;
+    seen.add(semanticKey);
     return true;
   });
 }

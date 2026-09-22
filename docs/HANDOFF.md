@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Eventos importantes cruza por título normalizado entre iCloud y compromisos financieros: si un mismo evento aparece en ambas fuentes, se conserva la fecha de iCloud y se adjuntan presupuesto/reserva, evitando duplicados como `Viaje nov`.
+- Las reglas privadas de búsqueda se han hecho más tolerantes en la hoja `EventosImportantes` para localizar los eventos personales aunque el título de iCloud no incluya palabras genéricas como `boda` o `master`.
+- Sigue sin copiarse ningún nombre personal de estas reglas a Git; solo la lógica de cruce está versionada.
+
 - Corregido el desbordamiento de los KPI compactos del bloque Dinero en escritorio: Ingresos, Neto personal y Ahorro objetivo pasan a filas horizontales etiqueta/valor dentro de la tarjeta, evitando cortes y solapes en anchos estrechos.
 
 - Eventos médicos salen de `Eventos importantes` y permanecen dentro de `Salud` (Médicos). También se evita clasificar `Comprar medicinas` como cita médica.
