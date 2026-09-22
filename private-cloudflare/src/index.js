@@ -127,7 +127,7 @@ async function fetchFinanceSummary(env) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:F200"];
+  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:G200"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -257,7 +257,11 @@ async function fetchFinanceSummary(env) {
       displayTitle: item.display_title || null,
       kind: item.kind || "important",
       enabled: String(item.enabled ?? "TRUE").toUpperCase() !== "FALSE",
-      note: item.note || null
+      note: item.note || null,
+      excludeTerms: String(item.exclude_terms || "")
+        .split("|")
+        .map((term) => term.trim().toLocaleLowerCase("es"))
+        .filter(Boolean)
     }))
     .filter((item) => item.enabled && item.matchTerms.length);
 
