@@ -29,6 +29,7 @@ async function init() {
   renderFocus();
   renderEvents();
   renderBudgetOverview();
+  renderDecisionsInline();
   renderAreas();
   renderSystemMap();
   bindInteractions();
@@ -290,73 +291,47 @@ function renderBudgetOverview() {
     summary.innerHTML = `
       <div class="budget-empty">
         <strong>Presupuesto pendiente de conectar</strong>
-        <p>Cuando el estado privado incluya el ciclo mensual verás aquí presupuesto, gasto, comprometido y margen.</p>
+        <p>Cuando el estado privado incluya el ciclo mensual verás aquí el resumen.</p>
       </div>`;
   } else {
     const currency = monthly.currency || "EUR";
     const plannedOutflows = firstFinite(monthly.plannedOutflows, monthly.budgetedExpenses, monthly.budgeted);
     const income = firstFinite(monthly.income);
     const personalNet = firstFinite(monthly.personalNet, monthly.remaining);
-    const actualSpent = firstFinite(monthly.spent);
-    const committed = firstFinite(monthly.committed);
     const savingsTarget = firstFinite(monthly.savingsTarget);
-    const progress = plannedOutflows !== null && actualSpent !== null
-      ? Math.max(0, Math.min(100, Math.round(((actualSpent + (committed || 0)) / plannedOutflows) * 100)))
+    const categories = Array.isArray(monthly.categories) ? monthly.categories : [];
+    const actualSpent = firstFinite(
+      monthly.spent,
+      categories.reduce((sum, item) => sum + numberOrZero(item.spent), 0)
+    );
+    const progressRaw = plannedOutflows && actualSpent !== null
+      ? (actualSpent / plannedOutflows) * 100
       : null;
+    const progressValue = progressRaw === null ? 0 : Math.max(0, Math.min(100, progressRaw));
+    const progressLabel = progressRaw === null ? null : Math.round(progressRaw);
 
     period.textContent = monthly.periodLabel || monthly.period || "Periodo actual";
     summary.innerHTML = `
-      <div class="budget-primary">
-        <span>Gasto + ahorro previsto</span>
-        <strong>${plannedOutflows === null ? "—" : formatMoney(plannedOutflows, currency)}</strong>
+      <div class="budget-compact-top">
+        <div class="budget-primary">
+          <span>Gasto + ahorro previsto</span>
+          <strong>${plannedOutflows === null ? "—" : formatMoney(plannedOutflows, currency)}</strong>
+        </div>
+        <div class="budget-compact-spent">
+          <span>Ejecutado</span>
+          <strong>${actualSpent === null ? "—" : formatMoney(actualSpent, currency)}</strong>
+        </div>
       </div>
-      ${progress === null ? "" : `<div class="budget-progress" aria-label="${progress}% gastado o comprometido"><span style="width:${progress}%"></span></div>`}
-      <div class="budget-metrics">
+      ${progressLabel === null ? "" : `
+        <div class="budget-compact-progress-row">
+          <progress class="budget-overall-progress" max="100" value="${progressValue}" aria-label="${progressLabel}% del gasto previsto ejecutado">${progressValue}</progress>
+          <strong>${progressLabel}%</strong>
+        </div>`}
+      <div class="budget-metrics compact">
         ${income === null ? "" : `<div><span>Ingresos</span><strong>${formatMoney(income, currency)}</strong></div>`}
-        ${personalNet === null ? "" : `<div><span>Neto personal modelado</span><strong>${formatMoney(personalNet, currency)}</strong></div>`}
+        ${personalNet === null ? "" : `<div><span>Neto personal</span><strong>${formatMoney(personalNet, currency)}</strong></div>`}
         ${savingsTarget === null ? "" : `<div><span>Ahorro objetivo</span><strong>${formatMoney(savingsTarget, currency)}</strong></div>`}
-        ${actualSpent === null ? "" : `<div><span>Gastado registrado</span><strong>${formatMoney(actualSpent, currency)}</strong></div>`}
       </div>
-      ${Array.isArray(monthly.categories) && monthly.categories.length
-        ? `<div class="budget-categories">${monthly.categories.map((item) => {
-            const itemBudget = numberOrZero(item.budgeted);
-            const itemSpent = numberOrZero(item.spent);
-            const itemCommitted = numberOrZero(item.committed);
-            const itemRemaining = Number.isFinite(Number(item.remaining))
-              ? Number(item.remaining)
-              : itemBudget - itemSpent - itemCommitted;
-            const itemProgressRaw = itemBudget > 0 ? (itemSpent / itemBudget) * 100 : null;
-            const itemProgress = itemProgressRaw === null ? null : Math.round(itemProgressRaw);
-            const itemProgressValue = itemProgressRaw === null ? 0 : Math.max(0, Math.min(100, itemProgressRaw));
-            const overBudget = itemProgressRaw !== null && itemProgressRaw > 100;
-            const sourceStatus = String(item.sourceStatus || item.source_status || "").toUpperCase();
-            const sourceLabel = sourceStatus === "PROVISIONAL_CHAT"
-              ? "Pendiente de conciliar"
-              : sourceStatus === "RECONCILIADO_SHEET"
-                ? "Conciliado"
-                : sourceStatus === "DERIVADO"
-                  ? "Derivado"
-                  : "";
-            return `
-              <div class="budget-category-item ${overBudget ? "over-budget" : ""}">
-                <div class="budget-category-head">
-                  <span class="budget-category-title">${escapeHtml(item.title)}</span>
-                  <span class="budget-category-head-right">
-                    ${sourceLabel ? `<em class="budget-source ${sourceStatus === "PROVISIONAL_CHAT" ? "provisional" : ""}">${sourceLabel}</em>` : ""}
-                    <strong>${itemProgress === null ? "—" : itemProgress + "%"}</strong>
-                  </span>
-                </div>
-                <progress class="budget-category-progress"
-                          max="100"
-                          value="${itemProgressValue}"
-                          aria-label="${escapeHtml(item.title)}: ${itemProgress === null ? "sin porcentaje" : itemProgress + "% gastado"}">${itemProgressValue}</progress>
-                <div class="budget-category-meta">
-                  <span>${formatMoney(itemSpent, currency)} gastado${itemCommitted > 0 ? " · " + formatMoney(itemCommitted, currency) + " comprometido" : ""}</span>
-                  <strong>${formatMoney(itemRemaining, currency)} libres</strong>
-                </div>
-              </div>`;
-          }).join("")}</div>`
-        : ""}
     `;
   }
 
@@ -371,7 +346,7 @@ function renderBudgetOverview() {
     commitments.innerHTML = `
       <div class="event-budget-empty">
         <strong>Sin presupuestos asociados</strong>
-        <p>Los próximos viajes, celebraciones o pagos relevantes aparecerán aquí con lo necesario y lo ya reservado.</p>
+        <p>Los próximos viajes, celebraciones o pagos relevantes aparecerán aquí.</p>
       </div>`;
     return;
   }
@@ -406,6 +381,89 @@ function renderBudgetOverview() {
         </div>
       </article>`;
   }).join("");
+}
+
+function openBudgetDetail() {
+  const finance = state.financeSummary || {};
+  const monthly = finance.monthlyBudget || null;
+  const dialog = document.querySelector("#detail-dialog");
+
+  document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual";
+  document.querySelector("#dialog-title").textContent = monthly?.periodLabel || monthly?.period || "Presupuesto actual";
+
+  if (!monthly) {
+    document.querySelector("#dialog-body").innerHTML = "<p>No hay presupuesto mensual conectado.</p>";
+    dialog.showModal();
+    return;
+  }
+
+  const currency = monthly.currency || "EUR";
+  const categories = Array.isArray(monthly.categories) ? monthly.categories : [];
+  document.querySelector("#dialog-body").innerHTML = categories.length
+    ? `<div class="budget-detail-list">${categories.map((item) => renderBudgetCategoryDetail(item, currency)).join("")}</div>`
+    : "<p>No hay partidas presupuestadas.</p>";
+  dialog.showModal();
+}
+
+function renderBudgetCategoryDetail(item, currency) {
+  const itemBudget = numberOrZero(item.budgeted);
+  const itemSpent = numberOrZero(item.spent);
+  const itemCommitted = numberOrZero(item.committed);
+  const itemRemaining = Number.isFinite(Number(item.remaining))
+    ? Number(item.remaining)
+    : itemBudget - itemSpent - itemCommitted;
+  const itemProgressRaw = itemBudget > 0 ? (itemSpent / itemBudget) * 100 : null;
+  const itemProgress = itemProgressRaw === null ? null : Math.round(itemProgressRaw);
+  const itemProgressValue = itemProgressRaw === null ? 0 : Math.max(0, Math.min(100, itemProgressRaw));
+  const overBudget = itemProgressRaw !== null && itemProgressRaw > 100;
+  const sourceStatus = String(item.sourceStatus || item.source_status || "").toUpperCase();
+  const sourceLabel = sourceStatus === "PROVISIONAL_CHAT"
+    ? "Pendiente de conciliar"
+    : sourceStatus === "RECONCILIADO_SHEET"
+      ? "Conciliado"
+      : sourceStatus === "DERIVADO"
+        ? "Derivado"
+        : "";
+
+  return `
+    <div class="budget-category-item ${overBudget ? "over-budget" : ""}">
+      <div class="budget-category-head">
+        <span class="budget-category-title">${escapeHtml(item.title)}</span>
+        <span class="budget-category-head-right">
+          ${sourceLabel ? `<em class="budget-source ${sourceStatus === "PROVISIONAL_CHAT" ? "provisional" : ""}">${sourceLabel}</em>` : ""}
+          <strong>${itemProgress === null ? "—" : itemProgress + "%"}</strong>
+        </span>
+      </div>
+      <progress class="budget-category-progress"
+                max="100"
+                value="${itemProgressValue}"
+                aria-label="${escapeHtml(item.title)}: ${itemProgress === null ? "sin porcentaje" : itemProgress + "% gastado"}">${itemProgressValue}</progress>
+      <div class="budget-category-meta">
+        <span>${formatMoney(itemSpent, currency)} gastado${itemCommitted > 0 ? " · " + formatMoney(itemCommitted, currency) + " comprometido" : ""}</span>
+        <strong>${formatMoney(itemRemaining, currency)} libres</strong>
+      </div>
+    </div>`;
+}
+
+function renderDecisionsInline() {
+  const container = document.querySelector("#decision-list");
+  const open = state.decisions.filter((item) => item.status === "open");
+
+  if (!open.length) {
+    container.innerHTML = '<p class="decision-inline-empty">No hay decisiones abiertas.</p>';
+    return;
+  }
+
+  container.innerHTML = open.map((item) => `
+    <article class="decision-inline-item">
+      <div>
+        <strong>${escapeHtml(item.title)}</strong>
+        <p>${escapeHtml(item.question)}</p>
+      </div>
+      ${Array.isArray(item.options) && item.options.length
+        ? `<div class="decision-options">${item.options.map((option) => `<span>${escapeHtml(option)}</span>`).join("")}</div>`
+        : ""}
+    </article>`).join("");
 }
 
 function formatMoney(value, currency = "EUR") {
@@ -532,7 +590,7 @@ function renderSystemMap() {
 function bindInteractions() {
   const dialog = document.querySelector("#detail-dialog");
   document.querySelectorAll(".area-card").forEach((card) => card.addEventListener("click", () => openArea(card.dataset.areaId)));
-  document.querySelector("#show-decisions").addEventListener("click", openDecisions);
+  document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
