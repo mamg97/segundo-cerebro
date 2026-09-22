@@ -3,7 +3,7 @@
 ## Última actualización
 
 - **Fecha:** 2026-09-22
-- **Última herramienta:** Codex
+- **Última herramienta:** ChatGPT normal
 - **Rama:** `main`
 - **Remoto:** `https://github.com/mamg97/segundo-cerebro.git`
 
@@ -98,6 +98,9 @@ Recorrer el modo privado local con el usuario y corregir primero hechos, relacio
 - `.github/workflows/pages.yml`: publicación de la demo estática en GitHub Pages.
 - `.private/state.js`: estado real minimizado, solo local e ignorado por Git.
 - `.private/README.md`: instrucciones y límites del modo privado local.
+- `CHATGPT_NORMAL/README.md`: coordinación del carril ChatGPT normal.
+- `WORK_CODEX/README.md`: coordinación del carril Work/Codex.
+- `docs/REMOTE_PRIVATE_PLAN.md`: plan para acceso web privado con datos reales fuera de GitHub.
 
 ## Pruebas realizadas
 
