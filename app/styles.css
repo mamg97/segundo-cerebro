@@ -2549,3 +2549,48 @@ html[data-theme="dark"] .important-events-detail-list .important-event-item {
     margin-top: 10px;
   }
 }
+
+/* v0.8.9 — hard-stop horizontal overflow in Workbench */
+.main-content {
+  overflow-x: clip;
+}
+
+.main-content > .important-events-panel,
+.main-content > .workbench {
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.workbench {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.workbench > .focus-panel,
+.workbench > .agenda-panel {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.focus-list,
+.focus-item,
+.focus-item > * {
+  min-width: 0;
+}
+
+.focus-meta {
+  max-width: 120px;
+}
+
+.focus-meta time,
+.focus-meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
