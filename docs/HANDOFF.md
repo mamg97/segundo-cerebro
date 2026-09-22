@@ -20,6 +20,11 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Corregida la sección `En el horizonte`: antes hacía `slice(0, 8)` sobre todos los eventos y un recurrente diario de Trabajo podía ocupar las ocho posiciones.
+- La portada usa ahora un reparto equilibrado de eventos por calendario iCloud, garantizando representación de los distintos calendarios con eventos próximos antes de rellenar huecos adicionales.
+- La etiqueta mostrada bajo cada evento usa el nombre real del calendario iCloud cuando está disponible.
+- `/api/health` añade contadores seguros `calendarMatchedCount`, `calendarSelectedCount` y `calendarEventCount` para distinguir problemas de lectura de problemas de presentación sin exponer nombres ni eventos.
+
 - Añadida integración privada de iCloud Calendar por CalDAV en rama `icloud-calendar-sync-v0.4`.
 - La integración es operativamente de solo lectura: únicamente usa `PROPFIND` y `REPORT`; no implementa escritura.
 - Los secretos `ICLOUD_APPLE_ID`, `ICLOUD_APP_PASSWORD` e `ICLOUD_CALENDAR_CONFIG` se configuran localmente con Wrangler y nunca se escriben en Git.
