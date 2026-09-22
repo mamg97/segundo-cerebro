@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#12233f">
+    <meta name="description" content="Prototipo privado y local del dashboard Segundo Cerebro.">
+    <title>Segundo Cerebro — v0.1</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegación principal">
+        <a class="brand" href="#overview" aria-label="Segundo Cerebro, inicio">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span><strong>Segundo</strong><small>Cerebro</small></span>
+        </a>
+
+        <nav id="area-nav" class="area-nav" aria-label="Áreas"></nav>
+
+        <div class="privacy-note">
+          <span class="privacy-dot" aria-hidden="true"></span>
+          <span><strong>Modo privado</strong><small>Solo datos ficticios</small></span>
+        </div>
+      </aside>
+
+      <main id="main-content" class="main-content">
+        <header class="topbar">
+          <button id="menu-button" class="icon-button menu-button" type="button" aria-label="Abrir navegación" aria-expanded="false" aria-controls="area-nav">
+            <span></span><span></span>
+          </button>
+          <div class="day-context">
+            <p id="greeting">Buenos días</p>
+            <time id="current-date"></time>
+          </div>
+          <div class="top-actions">
+            <span class="mock-badge">Entorno mock</span>
+            <button class="avatar" type="button" aria-label="Perfil ficticio">SC</button>
+          </div>
+        </header>
+
+        <section id="overview" class="hero" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <p class="context-label">Tu panorama de hoy</p>
+            <h1 id="hero-title">Lo importante,<br>en un mismo lugar.</h1>
+            <p>Un estado común para decidir con contexto, sin duplicar tu vida.</p>
+          </div>
+          <div class="pulse" aria-label="Pulso general: 78 de 100">
+            <svg viewBox="0 0 140 140" role="img" aria-hidden="true">
+              <circle class="pulse-track" cx="70" cy="70" r="58"></circle>
+              <circle class="pulse-value" cx="70" cy="70" r="58"></circle>
+            </svg>
+            <div><strong>78</strong><span>Pulso general</span></div>
+          </div>
+        </section>
+
+        <section class="ask-panel" aria-labelledby="ask-title">
+          <div class="ask-orbit" aria-hidden="true"><span></span></div>
+          <form id="ask-form" class="ask-form">
+            <label id="ask-title" for="ask-input">¿Qué necesitas?</label>
+            <div class="ask-row">
+              <input id="ask-input" name="query" type="search" autocomplete="off" placeholder="Pregunta por un proyecto, una decisión o un asunto pendiente…">
+              <button type="submit" aria-label="Consultar datos ficticios">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.5-5.5L5 12Z"></path></svg>
+              </button>
+            </div>
+            <p>La consulta se resuelve localmente sobre los datos ficticios.</p>
+          </form>
+        </section>
+        <div id="query-result" class="query-result" role="status" aria-live="polite" hidden></div>
+
+        <section class="workbench" aria-label="Prioridades y agenda">
+          <article class="focus-panel">
+            <div class="section-heading">
+              <div>
+                <p class="context-label">Atención</p>
+                <h2>Próximos movimientos</h2>
+              </div>
+              <span id="loop-count" class="count-pill"></span>
+            </div>
+            <ol id="focus-list" class="focus-list"></ol>
+          </article>
+
+          <article class="agenda-panel">
+            <div class="section-heading">
+              <div>
+                <p class="context-label">Ritmo</p>
+                <h2>En el horizonte</h2>
+              </div>
+            </div>
+            <div id="event-list" class="event-list"></div>
+            <div class="decision-callout">
+              <span class="decision-mark" aria-hidden="true">?</span>
+              <div><strong>3 decisiones abiertas</strong><p>Una afecta a más de un área.</p></div>
+              <button id="show-decisions" type="button">Verlas</button>
+            </div>
+          </article>
+        </section>
+
+        <section id="areas" class="areas-section" aria-labelledby="areas-title">
+          <div class="section-heading section-heading-wide">
+            <div>
+              <p class="context-label">Estado común</p>
+              <h2 id="areas-title">Áreas de tu vida</h2>
+            </div>
+            <div class="view-switch" role="group" aria-label="Cambiar vista">
+              <button class="active" type="button" data-view="list" aria-pressed="true">Resumen</button>
+              <button type="button" data-view="map" aria-pressed="false">Sistema</button>
+            </div>
+          </div>
+          <div id="areas-grid" class="areas-grid"></div>
+          <div id="system-map" class="system-map" hidden>
+            <svg id="map-lines" viewBox="0 0 800 500" aria-hidden="true"></svg>
+            <div class="map-core"><span>Estado</span><strong>común</strong></div>
+            <div id="map-nodes"></div>
+          </div>
+        </section>
+
+        <footer>
+          <p>Segundo Cerebro <span>v0.1</span></p>
+          <p>Sin conexiones externas · Datos ficticios</p>
+        </footer>
+      </main>
+    </div>
+
+    <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="dialog-title">
+      <button id="close-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+      <p id="dialog-context" class="context-label"></p>
+      <h2 id="dialog-title"></h2>
+      <div id="dialog-body"></div>
+    </dialog>
+  </body>
+</html>
