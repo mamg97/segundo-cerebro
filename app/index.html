@@ -71,13 +71,16 @@
         <div id="query-result" class="query-result" role="status" aria-live="polite" hidden></div>
 
         <section class="money-horizon" aria-label="Presupuesto mensual y próximos eventos">
-          <article class="budget-panel">
+          <article class="budget-panel compact-budget-panel">
             <div class="section-heading">
               <div>
                 <p class="context-label">Dinero</p>
                 <h2>Este mes</h2>
               </div>
-              <span id="budget-period" class="count-pill">Sin datos</span>
+              <div class="budget-heading-actions">
+                <span id="budget-period" class="count-pill">Sin datos</span>
+                <button id="show-budget-detail" class="text-action" type="button">Ver presupuesto</button>
+              </div>
             </div>
             <div id="budget-summary" class="budget-summary"></div>
           </article>
@@ -122,11 +125,16 @@
               </div>
             </div>
             <div id="event-list" class="event-list weekly-calendar"></div>
-            <div class="decision-callout">
-              <span class="decision-mark" aria-hidden="true">?</span>
-              <div><strong id="decision-count">3 decisiones abiertas</strong><p>Una puede afectar a más de un área.</p></div>
-              <button id="show-decisions" type="button">Verlas</button>
-            </div>
+            <section class="decisions-inline" aria-labelledby="decision-count">
+              <div class="decisions-inline-heading">
+                <span class="decision-mark" aria-hidden="true">?</span>
+                <div>
+                  <strong id="decision-count">3 decisiones abiertas</strong>
+                  <p>Visibles aquí para no ocultar asuntos que requieren criterio.</p>
+                </div>
+              </div>
+              <div id="decision-list" class="decision-inline-list"></div>
+            </section>
           </article>
         </section>
 

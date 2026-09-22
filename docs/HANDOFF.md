@@ -20,6 +20,11 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- La portada deja de esconder las decisiones detrás del botón `Verlas`: las decisiones abiertas se muestran directamente bajo la agenda semanal, con pregunta y opciones visibles.
+- El bloque `Dinero · Este mes` se ha compactado para mostrar solo el resumen ejecutivo (previsto, ejecutado, ingresos, neto personal y ahorro objetivo). El detalle de las 19 partidas pasa a un diálogo accesible mediante `Ver presupuesto`.
+- El detalle financiero sigue leyendo la misma capa privada derivada y mantiene estados de conciliación y barras de progreso por partida.
+- El repositorio `main` queda como fuente operativa de cambios; el proyecto Cloudflare ya está conectado al repositorio. Los siguientes cambios se harán y fusionarán desde Git, dejando el despliegue a la integración Git de Cloudflare; si una actualización no se publica automáticamente, revisar una única vez la configuración de Production branch/autodeploy en Cloudflare en lugar de volver al despliegue manual habitual.
+
 - Corregida la ventana de lectura CalDAV: el Worker pedía solo desde `now - 24h`, por lo que al abrir la semana un martes faltaban los eventos del lunes por la mañana/tarde anteriores a esa hora. Ahora solicita 8 días hacia atrás para garantizar que la semana actual esté completa antes de que la UI filtre lunes–domingo.
 
 - Sustituida la lista vertical `En el horizonte` por una visión semanal horizontal (lunes–domingo) inspirada en la vista Semana de iCloud Calendar.
