@@ -70,6 +70,29 @@
         </section>
         <div id="query-result" class="query-result" role="status" aria-live="polite" hidden></div>
 
+        <section class="money-horizon" aria-label="Presupuesto mensual y próximos eventos">
+          <article class="budget-panel">
+            <div class="section-heading">
+              <div>
+                <p class="context-label">Dinero</p>
+                <h2>Este mes</h2>
+              </div>
+              <span id="budget-period" class="count-pill">Sin datos</span>
+            </div>
+            <div id="budget-summary" class="budget-summary"></div>
+          </article>
+
+          <article class="event-budget-panel">
+            <div class="section-heading">
+              <div>
+                <p class="context-label">Próximamente</p>
+                <h2>Eventos y presupuesto</h2>
+              </div>
+            </div>
+            <div id="event-budget-list" class="event-budget-list"></div>
+          </article>
+        </section>
+
         <section class="workbench" aria-label="Prioridades y agenda">
           <article class="focus-panel">
             <div class="section-heading">

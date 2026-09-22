@@ -36,6 +36,25 @@ export const mockState = Object.freeze({
     { id: "area-loops", slug: "open-loops", title: "Open Loops", shortTitle: "Open Loops", summary: "Cinco asuntos abiertos, dos con prioridad alta.", health: 63, tone: "coral", module: "Coordinator", sensitivity: "personal", status: "attention" },
     { id: "area-goals", slug: "goals", title: "Objetivos", shortTitle: "Objetivos", summary: "Tres horizontes activos y medibles.", health: 81, tone: "lime", module: "Coordinator", sensitivity: "personal", status: "steady" },
   ],
+  financeSummary: {
+    monthlyBudget: {
+      periodLabel: "20 sep – 20 oct",
+      currency: "EUR",
+      income: 3200,
+      plannedOutflows: 2750,
+      personalNet: 450,
+      savingsTarget: 500,
+      categories: [
+        { title: "Comida", budgeted: 450, spent: 128.27, remaining: 321.73 },
+        { title: "Salir", budgeted: 100, spent: 47, remaining: 53 },
+        { title: "Transporte", budgeted: 300, spent: 12.10, remaining: 287.90 }
+      ]
+    },
+    upcomingCommitments: [
+      { id: "commitment-demo-1", title: "Escapada de ejemplo", date: "2026-09-28", totalBudget: 600, reserved: 250, needed: 350, currency: "EUR", note: "Datos ficticios" },
+      { id: "commitment-demo-2", title: "Celebración de ejemplo", date: "2026-10-23", totalBudget: 300, reserved: 300, needed: 0, currency: "EUR", note: "Datos ficticios" }
+    ]
+  },
   projects: [
     { id: "project-marriage", type: "PROJECT", title: "Proyecto matrimonio", areaId: "area-partner", status: "active", progress: 42, nextAction: "Confirmar la cita de la próxima semana", sensitivity: "confidencial", sourceRefs: [], updatedAt: "2026-09-22" },
     { id: "project-portfolio", type: "PROJECT", title: "Portfolio profesional", areaId: "area-career", status: "active", progress: 68, nextAction: "Seleccionar dos casos de estudio ficticios", sensitivity: "personal", sourceRefs: [], updatedAt: "2026-09-21" },

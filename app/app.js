@@ -28,6 +28,7 @@ async function init() {
   renderNavigation();
   renderFocus();
   renderEvents();
+  renderBudgetOverview();
   renderAreas();
   renderSystemMap();
   bindInteractions();
@@ -149,6 +150,132 @@ function renderEvents() {
         <div><strong>${escapeHtml(event.title)}</strong><p>${time} · ${escapeHtml(areaById.get(event.areaId).shortTitle)}</p></div>
       </div>`;
   }).join("");
+}
+
+
+function renderBudgetOverview() {
+  const finance = state.financeSummary || {};
+  const monthly = finance.monthlyBudget || null;
+  const period = document.querySelector("#budget-period");
+  const summary = document.querySelector("#budget-summary");
+  const commitments = document.querySelector("#event-budget-list");
+
+  if (!monthly) {
+    period.textContent = "Sin datos";
+    summary.innerHTML = `
+      <div class="budget-empty">
+        <strong>Presupuesto pendiente de conectar</strong>
+        <p>Cuando el estado privado incluya el ciclo mensual verás aquí presupuesto, gasto, comprometido y margen.</p>
+      </div>`;
+  } else {
+    const currency = monthly.currency || "EUR";
+    const plannedOutflows = firstFinite(monthly.plannedOutflows, monthly.budgetedExpenses, monthly.budgeted);
+    const income = firstFinite(monthly.income);
+    const personalNet = firstFinite(monthly.personalNet, monthly.remaining);
+    const actualSpent = firstFinite(monthly.spent);
+    const committed = firstFinite(monthly.committed);
+    const savingsTarget = firstFinite(monthly.savingsTarget);
+    const progress = plannedOutflows !== null && actualSpent !== null
+      ? Math.max(0, Math.min(100, Math.round(((actualSpent + (committed || 0)) / plannedOutflows) * 100)))
+      : null;
+
+    period.textContent = monthly.periodLabel || monthly.period || "Periodo actual";
+    summary.innerHTML = `
+      <div class="budget-primary">
+        <span>Gasto + ahorro previsto</span>
+        <strong>${plannedOutflows === null ? "—" : formatMoney(plannedOutflows, currency)}</strong>
+      </div>
+      ${progress === null ? "" : `<div class="budget-progress" aria-label="${progress}% gastado o comprometido"><span style="width:${progress}%"></span></div>`}
+      <div class="budget-metrics">
+        ${income === null ? "" : `<div><span>Ingresos</span><strong>${formatMoney(income, currency)}</strong></div>`}
+        ${personalNet === null ? "" : `<div><span>Neto personal modelado</span><strong>${formatMoney(personalNet, currency)}</strong></div>`}
+        ${savingsTarget === null ? "" : `<div><span>Ahorro objetivo</span><strong>${formatMoney(savingsTarget, currency)}</strong></div>`}
+        ${actualSpent === null ? "" : `<div><span>Gastado registrado</span><strong>${formatMoney(actualSpent, currency)}</strong></div>`}
+      </div>
+      ${Array.isArray(monthly.categories) && monthly.categories.length
+        ? `<div class="budget-categories">${monthly.categories.slice(0, 4).map((item) => {
+            const itemBudget = numberOrZero(item.budgeted);
+            const itemSpent = numberOrZero(item.spent);
+            const itemRemaining = Number.isFinite(Number(item.remaining))
+              ? Number(item.remaining)
+              : itemBudget - itemSpent - numberOrZero(item.committed);
+            return `<div><span>${escapeHtml(item.title)}</span><strong>${formatMoney(itemRemaining, currency)} libres</strong></div>`;
+          }).join("")}</div>`
+        : ""}
+    `;
+  }
+
+  const upcoming = Array.isArray(finance.upcomingCommitments)
+    ? [...finance.upcomingCommitments]
+        .filter((item) => !item.date || new Date(`${item.date}T12:00:00`).getTime() >= Date.now() - 86400000)
+        .sort((a, b) => String(a.date || "9999-12-31").localeCompare(String(b.date || "9999-12-31")))
+        .slice(0, 4)
+    : [];
+
+  if (!upcoming.length) {
+    commitments.innerHTML = `
+      <div class="event-budget-empty">
+        <strong>Sin presupuestos asociados</strong>
+        <p>Los próximos viajes, celebraciones o pagos relevantes aparecerán aquí con lo necesario y lo ya reservado.</p>
+      </div>`;
+    return;
+  }
+
+  commitments.innerHTML = upcoming.map((item) => {
+    const currency = item.currency || "EUR";
+    const total = firstFinite(item.totalBudget);
+    const reserved = firstFinite(item.reserved);
+    const explicitNeeded = firstFinite(item.needed);
+    const needed = explicitNeeded !== null
+      ? explicitNeeded
+      : total !== null && reserved !== null
+        ? Math.max(0, total - reserved)
+        : null;
+    const date = item.date ? new Date(`${item.date}T12:00:00`) : null;
+    const statusLabel = needed === null ? "Por conciliar" : needed > 0 ? "Falta" : "Cubierto";
+    const statusValue = needed === null ? "—" : needed > 0 ? formatMoney(needed, currency) : "✓";
+    return `
+      <article class="event-budget-item">
+        <div class="event-budget-date">
+          <strong>${date ? date.getDate() : "—"}</strong>
+          <span>${date ? shortMonth(date) : "sin fecha"}</span>
+        </div>
+        <div class="event-budget-copy">
+          <strong>${escapeHtml(item.title)}</strong>
+          <p>${item.note ? escapeHtml(item.note) : "Compromiso previsto"}</p>
+        </div>
+        <div class="event-budget-amount">
+          <span>${statusLabel}</span>
+          <strong>${statusValue}</strong>
+          ${total !== null ? `<small>${reserved === null ? "Presupuesto " + formatMoney(total, currency) : formatMoney(reserved, currency) + " / " + formatMoney(total, currency)}</small>` : ""}
+        </div>
+      </article>`;
+  }).join("");
+}
+
+function formatMoney(value, currency = "EUR") {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2
+  }).format(numberOrZero(value));
+}
+
+function firstFinite(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined || value === "") continue;
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return null;
+}
+
+function numberOrZero(value) {
+  return firstFinite(value) ?? 0;
+}
+
+function shortMonth(date) {
+  return new Intl.DateTimeFormat("es-ES", { month: "short" }).format(date).replace(".", "");
 }
 
 function renderAreas() {

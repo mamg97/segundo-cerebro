@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Añadida en rama `dashboard-budget-events-v0.3` una nueva zona de portada para presupuesto mensual y próximos compromisos con presupuesto.
+- El modelo admite `financeSummary.monthlyBudget` y `financeSummary.upcomingCommitments`, distinguiendo modelo presupuestario, gasto real y datos por conciliar.
+- Añadido un generador local `make-finance-patch-sql.mjs` que lee `.private/finance-summary.json` y genera un patch D1 dentro de `.private/`, sin versionar importes reales.
+
 - La aplicación privada remota se ha abierto correctamente en navegador tras autenticación.
 - Confirmada la lectura de la instantánea D1 desde la UI: 11 open loops visibles y estado personal remoto activo.
 - Confirmado que la barrera de Access protege el Worker y que el frontend privado no depende del archivo local `.private/` para funcionar.
@@ -101,7 +105,7 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 
 ## Próxima acción recomendada
 
-Revisar la calidad del estado real ya visible en la web: exactitud de proyectos, open loops, decisiones, fechas y prioridades. Corregir primero el modelo y los datos antes de añadir sincronización automática o escritura remota. Mantener la aplicación en modo lectura durante esta fase.
+Completar la vista financiera de portada con la fuente `GESTOR FINANZAS PERSONALES`: crear `.private/finance-summary.json` con importes verificados, aplicar el patch D1 y validar visualmente presupuesto mensual y próximos compromisos. Mantener Git libre de importes reales y la web en modo lectura.
 
 ## Archivos relevantes
 
