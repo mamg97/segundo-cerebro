@@ -365,14 +365,65 @@ a { color: inherit; }
 
 .budget-categories {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 18px;
-  margin-top: 16px;
-  padding-top: 16px;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 18px;
   border-top: 1px solid var(--line);
 }
-.budget-categories div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.budget-categories strong { margin: 0; text-align: right; }
+
+.budget-category-item {
+  display: grid;
+  gap: 7px;
+}
+
+.budget-category-head,
+.budget-category-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.budget-category-title,
+.budget-category-meta span {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.budget-category-head strong {
+  color: var(--blue);
+  font-size: 12px;
+}
+
+.budget-category-meta strong {
+  color: var(--ink);
+  font-size: 11px;
+  text-align: right;
+}
+
+.budget-category-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9edf3;
+}
+
+.budget-category-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+  transition: width .22s ease;
+}
+
+.budget-category-item.over-budget .budget-category-head strong,
+.budget-category-item.over-budget .budget-category-meta strong {
+  color: var(--coral);
+}
+
+.budget-category-item.over-budget .budget-category-bar > span {
+  background: var(--coral);
+}
 
 .budget-empty, .event-budget-empty {
   padding: 18px;
@@ -624,7 +675,9 @@ footer span { color: var(--blue); }
   .ask-form label { font-size: 23px; }
   .ask-row input { font-size: 12px; }
   .budget-panel, .event-budget-panel, .focus-panel, .agenda-panel { padding: 21px; }
-  .budget-categories { grid-template-columns: 1fr; }
+  .budget-category-head, .budget-category-meta { gap: 8px; }
+  .budget-category-meta { align-items: flex-start; flex-direction: column; }
+  .budget-category-meta strong { text-align: left; }
   .event-budget-item { grid-template-columns: 38px minmax(0, 1fr); }
   .event-budget-amount { grid-column: 2; text-align: left; }
   .event-budget-amount span, .event-budget-amount strong, .event-budget-amount small { display: inline; margin-right: 5px; }
