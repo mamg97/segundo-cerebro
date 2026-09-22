@@ -20,6 +20,14 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Reordenada la home financiera: `Dinero`, `Deudas` y `Patrimonio` forman ahora el bloque de resumen; `Eventos importantes` ocupa una fila completa independiente.
+- Creada la pestaña privada `EventosImportantes` en el bridge. Contiene las reglas personales comunicadas por Miguel Ángel y el alias privado del viaje sorpresa; ningún nombre privado se ha introducido en Git.
+- El Worker lee esas reglas y el frontend cruza automáticamente los eventos iCloud con ellas. Así pueden añadirse más eventos importantes en el futuro sin convertir el repositorio público en una base de datos personal.
+- Ampliado el horizonte iCloud de 90 a 550 días para encontrar bodas, viajes y otras fechas importantes de 2027 sin alterar la vista semanal actual.
+- Las citas médicas se consideran también eventos importantes mediante clasificación genérica por título/ubicación.
+- Creada el área derivada `Salud`, con tres apartados: Médicos, Gimnasio y Nutrición. Lee solo iCloud y sigue siendo read-only.
+- El calendario visible aplica el alias seguro `Viaje nov` si el título real contiene el destino sorpresa.
+
 - Añadido resumen de Patrimonio a la home: muestra el total del último snapshot del día 1 disponible y un acceso `Ver evolución`.
 - La hoja privada derivada incorpora una pestaña `Patrimonio` con histórico mensual desde abril de 2024 hasta septiembre de 2026: salarios de Miguel/Andrea y patrimonio total. El dato actual es 39.114 € a 1 sep 2026.
 - El área `Patrimonio` abre un detalle específico con dos gráficas SVG responsive: evolución de salarios (dos series) y evolución del patrimonio.
