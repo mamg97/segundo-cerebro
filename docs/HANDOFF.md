@@ -20,6 +20,11 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Rediseñada la portada móvil como layout single-column real: hero, buscador, dinero, eventos, movimientos y agenda ocupan el ancho disponible completo.
+- Se corrige la sensación de “desktop encogido”: topbar, hero y buscador reducen altura y peso visual; los bloques operativos ganan continuidad vertical.
+- `money-horizon` y `workbench` se fuerzan a bloque único en <=520 px para evitar repartos anómalos de ancho.
+- Se compactan tipografías, paddings y métricas en móvil sin alterar escritorio.
+
 - Ajustada la densidad móvil de la portada: menos espacio vertical en hero, buscador y secciones principales.
 - El resumen financiero móvil mantiene previsto y ejecutado en la misma fila y conserva las tres métricas clave en una fila compacta en vez de apilarlas.
 - `Eventos y presupuesto` pasa en móvil a carrusel horizontal de tarjetas compactas para evitar una portada excesivamente larga.
