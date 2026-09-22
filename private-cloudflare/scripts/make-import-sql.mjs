@@ -22,9 +22,7 @@ const sha256 = createHash("sha256").update(json).digest("hex");
 const schemaVersion = String(state.meta?.schemaVersion || "0.2");
 const escapeSql = (value) => String(value).replaceAll("'", "''");
 
-const sql = `BEGIN TRANSACTION;
-
-UPDATE state_snapshots
+const sql = `UPDATE state_snapshots
 SET is_current = 0
 WHERE is_current = 1;
 
@@ -44,8 +42,6 @@ INSERT INTO state_snapshots (
 
 INSERT INTO audit_events (event_type, detail)
 VALUES ('state_import', 'sha256:${sha256}');
-
-COMMIT;
 `;
 
 await mkdir(outputDir, { recursive: true });
