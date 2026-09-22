@@ -171,15 +171,37 @@ function parseCalendarData(ics, calendar) {
 }
 
 async function discoverIcloudCalendars(env) {
-  const authBase = "https://caldav.icloud.com/";
   const principalQuery = '<?xml version="1.0" encoding="utf-8"?>\n<D:propfind xmlns:D="DAV:">\n  <D:prop><D:current-user-principal/></D:prop>\n</D:propfind>';
-  const principalResult = await caldavRequest(env, authBase, {
-    method: "PROPFIND",
-    depth: "0",
-    body: principalQuery
-  });
-  const principalHref = extractPropertyHref(principalResult.text, "current-user-principal");
-  if (!principalHref) throw new Error("ICLOUD_PRINCIPAL_NOT_FOUND");
+  const discoveryBases = [
+    "https://caldav.icloud.com/",
+    "https://caldav.icloud.com/.well-known/caldav"
+  ];
+
+  let principalResult = null;
+  let principalHref = null;
+  let authBase = discoveryBases[0];
+
+  for (const candidate of discoveryBases) {
+    try {
+      const result = await caldavRequest(env, candidate, {
+        method: "PROPFIND",
+        depth: "0",
+        body: principalQuery
+      });
+      const href = extractPropertyHref(result.text, "current-user-principal");
+      if (href) {
+        principalResult = result;
+        principalHref = href;
+        authBase = candidate;
+        break;
+      }
+    } catch (error) {
+      const code = String(error?.message || "");
+      if (code === "ICLOUD_CALDAV_401" || code === "ICLOUD_CALDAV_403") throw error;
+    }
+  }
+
+  if (!principalResult || !principalHref) throw new Error("ICLOUD_PRINCIPAL_NOT_FOUND");
 
   const principalUrl = absoluteCaldavUrl(principalResult.response.url || authBase, principalHref);
   const homeQuery = '<?xml version="1.0" encoding="utf-8"?>\n<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">\n  <D:prop><C:calendar-home-set/></D:prop>\n</D:propfind>';
