@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "dev": "npm run build && wrangler dev --config wrangler.jsonc",
-    "deploy": "npm run build && wrangler deploy --config wrangler.jsonc"
+    "dev": "npm run build && wrangler dev --config wrangler.bootstrap.jsonc",
+    "deploy": "npm run build && wrangler deploy --config wrangler.bootstrap.jsonc"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
