@@ -20,6 +20,8 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Corregida la ventana de lectura CalDAV: el Worker pedía solo desde `now - 24h`, por lo que al abrir la semana un martes faltaban los eventos del lunes por la mañana/tarde anteriores a esa hora. Ahora solicita 8 días hacia atrás para garantizar que la semana actual esté completa antes de que la UI filtre lunes–domingo.
+
 - Sustituida la lista vertical `En el horizonte` por una visión semanal horizontal (lunes–domingo) inspirada en la vista Semana de iCloud Calendar.
 - La semana se limita deliberadamente a la semana actual: el objetivo es contexto operativo, no replicar el calendario completo de iCloud.
 - Los eventos se deduplican por calendario+título+inicio+fin y se ordenan dentro de cada día con eventos de día completo primero y después por hora.
