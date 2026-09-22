@@ -20,6 +20,11 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Añadido un bloque específico de Deudas a la portada financiera: resumen compacto visible y detalle completo bajo `Ver detalle`.
+- La hoja privada `SEGUNDO CEREBRO - ESTADO FINANCIERO` incorpora una pestaña `Deudas`; el Worker la lee junto con Resumen/Categorias/Compromisos.
+- Se han inicializado tres obligaciones ya presentes en el presupuesto (El Corte Inglés, IKEA y préstamo coche) con sus cuotas mensuales conocidas. Los saldos pendientes y tipos de interés permanecen nulos hasta que la fuente financiera los confirme.
+- El resumen de deuda no infiere saldo total cuando faltan saldos: muestra `Por completar`, la cuota mensual agregada y el número de obligaciones activas.
+
 - Rediseñada la portada móvil como layout single-column real: hero, buscador, dinero, eventos, movimientos y agenda ocupan el ancho disponible completo.
 - Se corrige la sensación de “desktop encogido”: topbar, hero y buscador reducen altura y peso visual; los bloques operativos ganan continuidad vertical.
 - `money-horizon` y `workbench` se fuerzan a bloque único en <=520 px para evitar repartos anómalos de ancho.
