@@ -140,45 +140,131 @@ function renderFocus() {
 }
 
 function renderEvents() {
+  const list = document.querySelector("#event-list");
+  const weekLabel = document.querySelector("#calendar-week-label");
   const now = new Date();
-  const windowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-  const windowEnd = new Date(windowStart.getTime() + 8 * 24 * 60 * 60 * 1000);
+  const weekStart = startOfCalendarWeek(now);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
 
-  const events = [...state.events]
+  const events = dedupeCalendarEvents(state.events)
     .filter((event) => {
       const start = new Date(event.startsAt);
       const end = new Date(event.endsAt || event.startsAt);
-      return end >= windowStart && start < windowEnd;
+      return end >= weekStart && start < weekEnd;
     })
-    .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+    .sort(compareCalendarEvents);
 
-  const list = document.querySelector("#event-list");
+  weekLabel.textContent = formatCalendarWeekLabel(weekStart, weekEnd);
 
-  if (!events.length) {
-    list.innerHTML = '<div class="event-empty">No hay eventos en los próximos 8 días.</div>';
-    return;
-  }
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(weekStart);
+    date.setDate(date.getDate() + index);
+    return date;
+  });
 
-  list.innerHTML = events.map((event) => {
-    const date = new Date(event.startsAt);
-    const month = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(date).replace(".", "");
-    const allDay = /T00:00:00(?:Z)?$/.test(event.startsAt || "");
-    const time = allDay
-      ? "Todo el día"
-      : new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(date);
-    const area = areaById.get(event.areaId);
-    const sourceLabel = event.calendarName || area?.shortTitle || "Agenda";
-    const calendarClass = calendarClassForEvent(event);
+  list.innerHTML = days.map((day) => {
+    const nextDay = new Date(day);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const dayEvents = events.filter((event) => {
+      const start = new Date(event.startsAt);
+      return start >= day && start < nextDay;
+    });
+    const isToday = sameCalendarDay(day, now);
+    const weekday = new Intl.DateTimeFormat("es-ES", { weekday: "short" })
+      .format(day)
+      .replace(".", "");
+    const month = new Intl.DateTimeFormat("es-ES", { month: "short" })
+      .format(day)
+      .replace(".", "");
 
     return `
-      <div class="event-item ${calendarClass}">
-        <div class="event-date"><strong>${date.getDate()}</strong><span>${month}</span></div>
-        <div class="event-copy">
-          <strong>${escapeHtml(event.title)}</strong>
-          <p><span class="event-source-dot" aria-hidden="true"></span>${time} · ${escapeHtml(sourceLabel)}</p>
+      <section class="week-day ${isToday ? "today" : ""}" aria-label="${escapeHtml(weekday)} ${day.getDate()} de ${escapeHtml(month)}">
+        <header class="week-day-header">
+          <span>${escapeHtml(weekday)}</span>
+          <strong>${day.getDate()}</strong>
+        </header>
+        <div class="week-day-events">
+          ${dayEvents.length
+            ? dayEvents.map(renderWeekEvent).join("")
+            : '<span class="week-day-empty">—</span>'}
         </div>
-      </div>`;
+      </section>`;
   }).join("");
+}
+
+function renderWeekEvent(event) {
+  const start = new Date(event.startsAt);
+  const end = new Date(event.endsAt || event.startsAt);
+  const allDay = isAllDayCalendarEvent(event);
+  const sourceLabel = event.calendarName || areaById.get(event.areaId)?.shortTitle || "Agenda";
+  const calendarClass = calendarClassForEvent(event);
+  const time = allDay
+    ? "Todo el día"
+    : new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(start);
+  const endTime = !allDay && end > start
+    ? new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(end)
+    : null;
+
+  return `
+    <article class="week-event ${calendarClass}" title="${escapeHtml(event.title)} · ${escapeHtml(sourceLabel)}">
+      <span class="week-event-time">${time}${endTime ? "–" + endTime : ""}</span>
+      <strong>${escapeHtml(event.title)}</strong>
+      <small>${escapeHtml(sourceLabel)}</small>
+    </article>`;
+}
+
+function startOfCalendarWeek(date) {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+  const mondayOffset = (start.getDay() + 6) % 7;
+  start.setDate(start.getDate() - mondayOffset);
+  return start;
+}
+
+function sameCalendarDay(a, b) {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+function isAllDayCalendarEvent(event) {
+  const start = String(event.startsAt || "");
+  const end = String(event.endsAt || "");
+  return /T00:00:00(?:Z)?$/.test(start) && /T00:00:00(?:Z)?$/.test(end);
+}
+
+function compareCalendarEvents(a, b) {
+  const aAllDay = isAllDayCalendarEvent(a);
+  const bAllDay = isAllDayCalendarEvent(b);
+  if (aAllDay !== bAllDay) return aAllDay ? -1 : 1;
+  return new Date(a.startsAt) - new Date(b.startsAt)
+    || String(a.title).localeCompare(String(b.title), "es");
+}
+
+function dedupeCalendarEvents(events) {
+  const seen = new Set();
+  return [...events].filter((event) => {
+    const key = [
+      event.calendarName || event.areaId || "",
+      event.title || "",
+      event.startsAt || "",
+      event.endsAt || ""
+    ].join("|");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function formatCalendarWeekLabel(start, endExclusive) {
+  const end = new Date(endExclusive);
+  end.setDate(end.getDate() - 1);
+  const sameMonth = start.getMonth() === end.getMonth();
+  const startMonth = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(start).replace(".", "");
+  const endMonth = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(end).replace(".", "");
+  return sameMonth
+    ? `${start.getDate()}–${end.getDate()} ${startMonth}`
+    : `${start.getDate()} ${startMonth} – ${end.getDate()} ${endMonth}`;
 }
 
 function calendarClassForEvent(event) {
