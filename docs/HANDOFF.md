@@ -9,6 +9,9 @@
 
 ## Estado actual
 
+Validación end-to-end completada el 2026-09-22: la URL privada `https://segundo-cerebro.mamg97.workers.dev/app/` carga correctamente tras Cloudflare Access, el Worker lee la instantánea D1 y la interfaz entra en `Modo privado remoto`. La demo pública de GitHub Pages sigue separada y usando mocks.
+
+
 La demo pública v0.1.1 sigue siendo un frontend estático con datos exclusivamente ficticios. Localmente existe además una primera superposición privada experimental, ignorada por Git, que carga un estado real minimizado solo en loopback y con activación explícita. Incluye referencias y contexto derivado de conversaciones leídas en modo solo lectura; no conecta ni modifica ninguna fuente. El código y la demo mock continúan en `mamg97/segundo-cerebro` y `https://mamg97.github.io/segundo-cerebro/`.
 
 ## Objetivo activo
@@ -16,6 +19,10 @@ La demo pública v0.1.1 sigue siendo un frontend estático con datos exclusivame
 Preparar una primera versión remota privada y de solo lectura, accesible desde Mac, iPhone e iPad, usando Cloudflare Worker + Access + D1 sin mover datos reales a GitHub.
 
 ## Trabajo realizado
+
+- La aplicación privada remota se ha abierto correctamente en navegador tras autenticación.
+- Confirmada la lectura de la instantánea D1 desde la UI: 11 open loops visibles y estado personal remoto activo.
+- Confirmado que la barrera de Access protege el Worker y que el frontend privado no depende del archivo local `.private/` para funcionar.
 
 - D1 `segundo-cerebro-private` creada en jurisdicción UE, esquema aplicado y primera instantánea privada importada correctamente (`schema_version 0.2`, `is_current=1`).
 - Cloudflare Access verificado en incógnito: el Worker exige autenticación antes de responder.
@@ -94,7 +101,7 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 
 ## Próxima acción recomendada
 
-Esperar al despliegue automático del commit de activación y validar `https://segundo-cerebro.mamg97.workers.dev/` tras autenticación. Debe cargar el dashboard en modo privado remoto y leer la instantánea D1. Después revisar exactitud, frescura y prioridades del estado antes de añadir sincronizaciones.
+Revisar la calidad del estado real ya visible en la web: exactitud de proyectos, open loops, decisiones, fechas y prioridades. Corregir primero el modelo y los datos antes de añadir sincronización automática o escritura remota. Mantener la aplicación en modo lectura durante esta fase.
 
 ## Archivos relevantes
 
