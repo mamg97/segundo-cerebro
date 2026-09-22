@@ -24,8 +24,8 @@ html = html
     '<meta name="description" content="Segundo Cerebro privado."><meta name="robots" content="noindex,nofollow,noarchive">'
   )
   .replace(
-    '<script type="module" src="./app.js?v=0.2.0"></script>',
-    '<script src="../private-config.js"></script>\n    <script type="module" src="./app.js?v=0.2.0"></script>'
+    /<script type="module" src="\.\/app\.js(?:\?v=[^"]+)?"><\/script>/,
+    (scriptTag) => `<script src="../private-config.js"></script>\n    ${scriptTag}`
   );
 
 await writeFile(indexPath, html, "utf8");
