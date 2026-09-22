@@ -1997,3 +1997,221 @@ html[data-theme="dark"] .wealth-axis-label {
     min-width: 560px;
   }
 }
+
+/* v0.8 — financial hierarchy, important events and health */
+.money-horizon {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+.money-horizon > .budget-panel,
+.money-horizon > .debt-panel,
+.money-horizon > .wealth-panel {
+  grid-column: auto;
+  min-height: 100%;
+}
+
+.money-horizon > .event-budget-panel {
+  grid-column: 1 / -1;
+}
+
+.debt-panel,
+.wealth-panel {
+  padding: 22px;
+}
+
+.debt-summary-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.debt-summary-grid > div {
+  padding: 10px 12px;
+}
+
+.wealth-summary-value {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.wealth-summary-value strong {
+  grid-row: auto;
+  grid-column: auto;
+  font-size: 27px;
+}
+
+.important-events-panel {
+  padding: 22px 24px;
+}
+
+.important-events-panel .event-budget-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.important-events-panel .event-budget-item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #eadfce;
+  border-radius: 14px;
+  background: rgba(255,255,255,.48);
+}
+
+.important-events-panel .event-budget-item:first-child {
+  border-top: 1px solid #eadfce;
+}
+
+.important-events-panel .event-budget-amount {
+  grid-column: 2;
+  margin-top: 3px;
+  text-align: left;
+}
+
+.important-event-tag {
+  display: inline-block;
+  margin-bottom: 3px;
+  color: var(--amber);
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.health-dialog {
+  width: min(820px, calc(100% - 32px));
+}
+
+.health-sections {
+  display: grid;
+  gap: 16px;
+}
+
+.health-section {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.health-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.health-section-heading strong {
+  font-size: 13px;
+}
+
+.health-section-heading span {
+  display: grid;
+  min-width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.health-event-list {
+  display: grid;
+  gap: 8px;
+}
+
+.health-event-item {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 10px 14px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+
+.health-event-item time {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.health-event-item strong {
+  font-size: 11px;
+}
+
+.health-event-item span {
+  grid-column: 2;
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.health-empty {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+html[data-theme="dark"] .health-section {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .important-events-panel .event-budget-item {
+  background: rgba(20,30,45,.56);
+  border-color: #4b4030;
+}
+
+@media (max-width: 1050px) {
+  .money-horizon {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .money-horizon > .wealth-panel {
+    grid-column: 1 / -1;
+  }
+  .important-events-panel .event-budget-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .money-horizon {
+    grid-template-columns: 1fr;
+  }
+  .money-horizon > .budget-panel,
+  .money-horizon > .debt-panel,
+  .money-horizon > .wealth-panel,
+  .money-horizon > .event-budget-panel {
+    grid-column: auto;
+  }
+  .important-events-panel .event-budget-list {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+  .important-events-panel .event-budget-item {
+    flex: 0 0 min(82vw, 300px);
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 520px) {
+  .health-dialog {
+    width: calc(100% - 20px);
+    padding: 22px 14px;
+  }
+
+  .health-event-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .health-event-item span {
+    grid-column: 1;
+  }
+}
