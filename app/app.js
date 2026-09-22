@@ -18,8 +18,49 @@ const symbols = {
 
 const dateFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
 const shortDateFormatter = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" });
+const THEME_STORAGE_KEY = "segundo-cerebro-theme";
+
+function getPreferredTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {}
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
+}
+
+function applyTheme(theme, persist = false) {
+  const next = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = next;
+  document.documentElement.style.colorScheme = next;
+
+  const toggle = document.querySelector("#theme-toggle");
+  if (toggle) {
+    const dark = next === "dark";
+    toggle.setAttribute("aria-pressed", String(dark));
+    toggle.setAttribute("aria-label", dark ? "Activar modo claro" : "Activar modo oscuro");
+    const icon = toggle.querySelector("span");
+    if (icon) icon.textContent = dark ? "☀" : "☾";
+  }
+
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.setAttribute("content", next === "dark" ? "#0d1420" : "#f7f9fc");
+
+  if (persist) {
+    try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch {}
+  }
+}
+
+function initTheme() {
+  applyTheme(getPreferredTheme());
+}
+
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  applyTheme(current === "dark" ? "light" : "dark", true);
+}
 
 async function init() {
+  initTheme();
   await loadLocalPrivateState();
   await loadRemotePrivateState();
   areaById = new Map(state.areas.map((area) => [area.id, area]));
@@ -452,7 +493,8 @@ function openDebtDetail() {
 function renderDebtDetailItem(item, currency) {
   const balance = firstFinite(item.balance);
   const monthlyPayment = firstFinite(item.monthlyPayment);
-  const rate = Number.isFinite(Number(item.interestRate)) ? Number(item.interestRate) : null;
+  const rawRate = Number.isFinite(Number(item.interestRate)) ? Number(item.interestRate) : null;
+  const rate = rawRate !== null && Math.abs(rawRate) > 0 && Math.abs(rawRate) <= 1 ? rawRate * 100 : rawRate;
   const paymentDay = Number.isFinite(Number(item.paymentDay)) ? Number(item.paymentDay) : null;
   const sourceStatus = String(item.sourceStatus || "").toUpperCase();
   const sourceLabel = sourceStatus === "RECONCILIADO_SHEET"
@@ -690,6 +732,7 @@ function bindInteractions() {
   document.querySelectorAll(".area-card").forEach((card) => card.addEventListener("click", () => openArea(card.dataset.areaId)));
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
+  document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
