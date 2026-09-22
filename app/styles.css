@@ -1673,6 +1673,30 @@ html[data-theme="dark"] .capability-list,
 html[data-theme="dark"] .source-list {
   background: var(--surface);
 }
+html[data-theme="dark"] .view-switch {
+  border-color: #34445b;
+  background: #101a28;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+}
+html[data-theme="dark"] .view-switch button {
+  color: #aebbd0;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+html[data-theme="dark"] .view-switch button:hover,
+html[data-theme="dark"] .view-switch button:focus-visible {
+  color: #f4f7fb;
+  background: #1a2739;
+}
+html[data-theme="dark"] .view-switch button.active {
+  background: #26364d;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.35);
+}
+html[data-theme="dark"] .view-switch button.active:hover,
+html[data-theme="dark"] .view-switch button.active:focus-visible {
+  background: #2d405b;
+  color: #ffffff;
+}
 html[data-theme="dark"] .decision-inline-item { border-top-color: var(--line); }
 html[data-theme="dark"] .decision-options span { background: #1c293b; }
 html[data-theme="dark"] .area-card:hover { background: #182436; }
