@@ -55,7 +55,19 @@ La aplicación es estática, sin framework ni dependencias externas. Esta elecci
 1. `app.js` carga una única instantánea desde `core/mock-state.js`.
 2. Las vistas derivan resúmenes y listas de ese estado.
 3. La caja de consulta busca localmente coincidencias en los mocks; no envía texto fuera del dispositivo.
-4. La vista de sistema representa las áreas y sus conexiones con SVG local.
+4. La vista de sistema representa la jerarquía Coordinador → estado común → módulos → capacidades y fuentes.
+
+## Vista operativa
+
+El árbol de la interfaz es una explicación observable de la arquitectura, no un conjunto de agentes con memoria independiente. Sus nodos muestran:
+
+- El Coordinador que interpreta y combina contexto.
+- El estado global común como única fuente de verdad.
+- Módulos especializados que consultan ese estado.
+- Capacidades transversales sin memoria propia.
+- Fuentes propietarias con estado y nivel de acceso explícitos.
+
+En v0.1.1 todos los estados son ficticios. Solo el mock local aparece activo; las fuentes externas se muestran bloqueadas y sin conectar.
 
 ## Evolución prevista, no decidida
 

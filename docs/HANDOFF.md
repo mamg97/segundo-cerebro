@@ -9,11 +9,11 @@
 
 ## Estado actual
 
-La v0.1 es un prototipo frontend estático, responsive y funcional con datos exclusivamente ficticios. El repositorio nació en esta fase: no había implementación, documentación previa ni historial Git que migrar. La arquitectura, el modelo, la privacidad y las decisiones base están documentados.
+La v0.1.1 es un prototipo frontend estático, responsive y funcional con datos exclusivamente ficticios. Incluye un árbol operativo que explica la relación entre Coordinador, estado global, módulos, capacidades y fuentes sin crear memorias separadas. La arquitectura, el modelo, la privacidad y las decisiones base están documentados.
 
 ## Objetivo activo
 
-Validar que el dashboard, las áreas, la caja de consulta y la vista del sistema permiten comprender el producto antes de decidir persistencia, integraciones o infraestructura.
+Validar con casos ficticios que el dashboard y el árbol operativo ayudan a comprender prioridades, relaciones y límites de acceso antes de decidir persistencia, integraciones o infraestructura.
 
 ## Trabajo realizado
 
@@ -22,7 +22,10 @@ Validar que el dashboard, las áreas, la caja de consulta y la vista del sistema
 - Creado un estado global común mock con las entidades iniciales.
 - Construido el dashboard para Mac, iPhone e iPad con navegación lateral adaptable.
 - Incluidas las diez áreas: estado general, carrera, finanzas, agenda, pareja/boda, familia, patrimonio familiar, proyectos, open loops y objetivos.
-- Implementadas caja “¿Qué necesitas?”, búsqueda local sobre mocks, prioridades, agenda, decisiones, detalle por área y vista visual de nodos.
+- Implementadas caja “¿Qué necesitas?”, búsqueda local sobre mocks, prioridades, agenda, decisiones y detalle por área.
+- Evolucionada la vista Sistema a un árbol operativo responsive con estados, permisos y acceso a los detalles de cada módulo.
+- Añadidas capacidades transversales mock: revisión semanal, priorizador, detector de conflictos y control de privacidad.
+- Mejorada la legibilidad móvil de textos funcionales y el contraste de los acentos.
 - Añadidos límites explícitos para módulos e integraciones futuras.
 - Inicializado Git local en `main` sin configurar remoto.
 
@@ -33,6 +36,8 @@ Validar que el dashboard, las áreas, la caja de consulta y la vista del sistema
 - La consulta central realiza una búsqueda literal local; no usa IA ni red.
 - Los detalles de área y decisiones se abren en diálogos locales.
 - El selector Resumen/Sistema funciona y la navegación móvil se repliega.
+- Los nodos de módulo del árbol abren el mismo detalle que las tarjetas de área.
+- Las fuentes externas figuran bloqueadas y sin conectar; solo el mock local aparece activo.
 - No hay persistencia: recargar restablece el estado ficticio.
 
 ## Decisiones tomadas
@@ -42,6 +47,7 @@ Validar que el dashboard, las áreas, la caja de consulta y la vista del sistema
 - Git contiene solo código, documentación técnica y mocks inequívocos.
 - v0.1 usa HTML, CSS y JavaScript nativos, sin dependencias.
 - La interfaz nace responsive y preparada conceptualmente para PWA, pero no se activa aún caché offline.
+- El árbol operativo es una capa de transparencia; sus nodos no son memorias ni agentes autónomos.
 - Hosting, base de datos, autenticación, proveedor de IA y sincronización quedan abiertos.
 
 Consulta `docs/DECISIONS.md` para el registro duradero.
@@ -50,7 +56,7 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 
 - La búsqueda es literal y demostrativa; no interpreta lenguaje natural.
 - Los indicadores de salud son mocks y todavía no tienen fórmula de cálculo.
-- La vista de nodos muestra relaciones área–estado común, no relaciones entre entidades.
+- El árbol todavía no muestra relaciones entre entidades concretas como proyectos, personas o decisiones.
 - No existen persistencia, autenticación, cifrado, PWA instalable ni tests automatizados de navegador.
 - El proyecto no tiene remoto. Si se publica en el futuro, debe decidirse expresamente la cuenta correcta y mantenerse privado; no asumir ninguna cuenta.
 
@@ -85,7 +91,10 @@ Realizar una sesión de validación del prototipo con tres preguntas ficticias y
 - Búsqueda local de patrones habituales de secretos: sin hallazgos.
 - Carga mediante servidor HTTP local: correcta, sin recursos externos.
 - Revisión visual en escritorio: correcta.
-- Revisión responsive a 390 × 844 px: correcta.
+- Revisión responsive a 390 × 844 px: correcta, incluida la jerarquía completa del árbol.
 - Consulta local “anillo”: devuelve el open loop ficticio esperado.
 - Cambio Resumen/Sistema: correcto tras corregir la visibilidad con `hidden`.
 - Navegación “General”: corregida para apuntar a `#overview`.
+- Árbol operativo: jerarquía, estados y fuentes visibles correctamente en escritorio y móvil.
+- Interacción módulo → detalle: correcta desde la vista Sistema.
+- Detector mecánico de diseño ejecutado; se corrigieron tamaños funcionales, contraste, brillo decorativo y borde de aviso señalados.
