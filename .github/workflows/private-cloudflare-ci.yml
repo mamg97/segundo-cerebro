@@ -31,6 +31,8 @@ jobs:
 
       - run: node --check src/index.js
 
+      - run: node --check src/icloud-calendar.js
+
       - run: npm run build
 
       - name: Confirm no private files enter build
