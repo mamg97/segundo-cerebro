@@ -486,11 +486,14 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
     .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now)
     .map((event) => {
       const normalized = normalizeForMatch(event.title);
-      const rule = rules.find((candidate) =>
-        Array.isArray(candidate.matchTerms)
-        && candidate.matchTerms.length
-        && candidate.matchTerms.every((term) => normalized.includes(normalizeForMatch(term)))
-      );
+      const rule = rules.find((candidate) => {
+        const includeMatches = Array.isArray(candidate.matchTerms)
+          && candidate.matchTerms.length
+          && candidate.matchTerms.every((term) => normalized.includes(normalizeForMatch(term)));
+        const excluded = Array.isArray(candidate.excludeTerms)
+          && candidate.excludeTerms.some((term) => normalized.includes(normalizeForMatch(term)));
+        return includeMatches && !excluded;
+      });
       if (!rule) return null;
       return {
         id: rule.id || event.id || [event.calendarName, event.title, event.startsAt].join("|"),
