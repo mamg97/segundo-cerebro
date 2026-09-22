@@ -201,18 +201,19 @@ async function fetchFinanceSummary(env) {
   const knownPaymentValues = activeDebts.map((item) => item.monthlyPayment).filter((value) => value !== null);
   const debtSummary = {
     currency: summary.currency || "EUR",
-    count: activeDebts.length,
-    totalBalance: debtSummaryRow?.balance ?? (
+    count: moneyOrNull(summary.debt_count) ?? activeDebts.length,
+    totalBalance: moneyOrNull(summary.debt_total_balance) ?? debtSummaryRow?.balance ?? (
       knownBalanceValues.length === activeDebts.length && activeDebts.length
         ? knownBalanceValues.reduce((sum, value) => sum + value, 0)
         : null
     ),
-    monthlyPayment: debtSummaryRow?.monthlyPayment ?? (
+    monthlyPayment: moneyOrNull(summary.debt_monthly_payment) ?? debtSummaryRow?.monthlyPayment ?? (
       knownPaymentValues.length
         ? knownPaymentValues.reduce((sum, value) => sum + value, 0)
         : null
     ),
     debts: activeDebts,
+    sourceUpdatedAt: summary.debt_source_updated_at || null,
     sourceSummaryNote: debtSummaryRow?.note || null
   };
 
