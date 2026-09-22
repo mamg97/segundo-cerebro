@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Eventos importantes muestra todos los eventos detectados directamente en la home, sin carrusel ni botón intermedio.
+- Las tarjetas se han reducido y uniformado en una rejilla responsive (5/4/3/2/1 columnas según ancho) para que se vean todos de golpe.
+- El bloque `Eventos importantes` y `Próximos movimientos` se fuerzan a `width:100%` y `box-sizing:border-box` para alinear exactamente sus bordes derecho e izquierdo.
+
 - Resumen de Eventos importantes limitado a 3 tarjetas completas y del mismo ancho; se elimina el carrusel que dejaba tarjetas cortadas a mitad.
 - Añadido `Ver todos` para abrir el listado completo en un diálogo con tarjetas uniformes y fecha completa.
 - La información no desaparece: la home muestra solo los tres próximos y el detalle conserva todos los eventos detectados.
