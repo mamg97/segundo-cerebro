@@ -51,3 +51,11 @@ Este documento registra decisiones duraderas. El histórico detallado permanece 
 - **Decisión:** publicar en `mamg97/segundo-cerebro` una demo estática de la v0.1 mediante GitHub Pages, limitada a código, documentación técnica y datos mock inequívocos.
 - **Motivo:** permitir la validación temprana desde Mac, iPhone e iPad sin desplegar backend, conectar cuentas ni exponer información personal.
 - **Alcance:** GitHub Pages es solo el alojamiento de la demo actual. No decide el hosting, la persistencia ni la arquitectura de datos definitivos del producto privado.
+
+## D-008 — Superposición privada local para validar datos reales
+
+- **Estado:** aceptada como solución provisional
+- **Fecha:** 2026-09-22
+- **Decisión:** permitir que el dashboard cargue `.private/state.js` solo en loopback y bajo activación explícita, manteniendo mocks como comportamiento por defecto y único contenido publicado.
+- **Motivo:** validar el estado global con contexto real sin copiarlo a GitHub, conectar APIs ni modificar las fuentes propietarias.
+- **Límite:** el archivo local no está cifrado ni sincronizado. Esta decisión no selecciona la persistencia privada definitiva y exige minimización adicional para datos `muy_confidencial`.

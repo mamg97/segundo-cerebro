@@ -47,6 +47,15 @@ La clasificación no autoriza a almacenar el dato: primero debe existir una nece
 - Confirmar que `.env`, credenciales y exportaciones están ignorados.
 - Verificar que ejemplos y nombres son ficticios.
 
+## Frontera pública / privada local
+
+- `.private/` contiene el estado personal provisional y debe permanecer ignorado por Git.
+- GitHub Pages publica una lista cerrada: `app/`, `core/`, el redirect raíz y `.nojekyll`. Nunca debe ampliarse con copias recursivas de la raíz.
+- El cargador privado solo funciona en loopback y requiere `?private=1`; el sitio público no intenta cargar datos reales.
+- El archivo local no está cifrado. Debe contener contexto mínimo y referencias, no historiales completos, credenciales, identificadores financieros ni documentos.
+- Servir el prototipo privado únicamente enlazado a `127.0.0.1`, no a una interfaz de red compartida.
+- Antes de cada commit, confirmar con `git check-ignore` que el estado privado sigue excluido y con `git status` que ningún archivo real está preparado para subir.
+
 ## Incidente
 
 Si se detecta un secreto o dato real: detener publicación, revocar credenciales si procede, retirar el dato del historial de forma segura y documentar únicamente la corrección técnica, nunca el secreto.

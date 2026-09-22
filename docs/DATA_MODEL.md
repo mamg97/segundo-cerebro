@@ -88,6 +88,16 @@ SOURCE * ── * entidad
 
 No se fijan esquemas de autenticación, sincronización, auditoría persistente, embeddings, permisos por campo ni almacenamiento. Deben decidirse con requisitos reales y revisión de privacidad.
 
+## Instancia privada local provisional
+
+`.private/state.js` puede instanciar este mismo modelo con datos derivados reales y minimizados. Debe cumplir estas restricciones:
+
+- Cada entidad incluye sensibilidad, fecha y referencias a fuentes.
+- `sourceRefs` apunta a registros `SOURCE`; no duplica conversaciones, hojas o documentos.
+- Identificadores financieros, credenciales, documentos completos y datos médicos detallados quedan fuera incluso del estado local salvo una necesidad futura justificada.
+- El estado puede marcar una fuente como `reviewed-partial`, `reviewed-minimized`, `not-connected` o `external` para no confundir una síntesis con una sincronización vigente.
+- Los indicadores de salud son provisionales y no constituyen métricas calculadas.
+
 ## Metadatos de la vista del sistema
 
 La configuración `system` del mock describe el Coordinador, capacidades transversales y fuentes visibles en el árbol operativo. Es información de presentación y estado de ejecución, no una nueva entidad ni una memoria paralela. Los módulos se derivan de `AREA.module` para evitar duplicarlos.

@@ -69,6 +69,17 @@ El árbol de la interfaz es una explicación observable de la arquitectura, no u
 
 En v0.1.1 todos los estados son ficticios. Solo el mock local aparece activo; las fuentes externas se muestran bloqueadas y sin conectar.
 
+## Capa privada local experimental
+
+Para validar casos reales sin publicarlos, la interfaz admite una superposición local provisional:
+
+1. El modo normal siempre carga `core/mock-state.js`.
+2. Solo si el host es `localhost`, `127.0.0.1` o `::1` y la URL incluye `?private=1`, `app.js` intenta importar `.private/state.js`.
+3. `.private/` está ignorado por Git y no se copia en el workflow de GitHub Pages.
+4. Si el archivo falta o no declara `mode: private-local`, la interfaz conserva los mocks.
+
+Esta capa no conecta conversaciones ni servicios. Contiene una síntesis mínima creada manualmente a partir de fuentes leídas sin modificarlas. Es una prueba del modelo común, no la decisión de persistencia definitiva: el archivo no está cifrado y no debe servirse fuera de `127.0.0.1`.
+
 ## Evolución prevista, no decidida
 
 - Capa de persistencia privada.

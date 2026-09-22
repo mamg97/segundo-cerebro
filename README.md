@@ -22,11 +22,24 @@ python3 -m http.server 4173
 
 Después abre `http://localhost:4173/app/`.
 
+## Modo privado local experimental
+
+La aplicación puede cargar un estado personal desde `.private/state.js` únicamente en `localhost` o `127.0.0.1` y con `?private=1`. La carpeta completa está ignorada por Git y no forma parte del artefacto de GitHub Pages.
+
+```sh
+python3 -m http.server --bind 127.0.0.1 4173
+```
+
+Después abre `http://127.0.0.1:4173/app/?private=1`.
+
+Este mecanismo sirve para validar el modelo, pero todavía no cifra los datos en reposo ni sincroniza dispositivos. No debe considerarse la persistencia privada definitiva.
+
 ## Orientación
 
 - Empieza por `AGENTS.md` y `docs/HANDOFF.md`.
 - La interfaz vive en `app/`.
 - El estado común mock vive en `core/`.
+- El estado personal experimental vive solo en `.private/`, fuera de Git.
 - `agents/` e `integrations/` documentan límites futuros; no contienen conexiones reales.
 - Las decisiones y restricciones están en `docs/`.
 
