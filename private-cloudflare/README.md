@@ -169,3 +169,33 @@ Las filas de categorías usan `source_status`:
 - `DERIVADO`: cálculo derivado de datos ya verificados.
 
 La web puede mostrar un porcentaje provisional, pero nunca debe presentarlo como conciliado mientras la fuente oficial no lo confirme.
+
+
+## iCloud Calendar
+
+El calendario principal puede integrarse por CalDAV en modo lectura desde el Worker privado.
+
+### Secretos
+
+- `ICLOUD_APPLE_ID`
+- `ICLOUD_APP_PASSWORD`
+- `ICLOUD_CALENDAR_CONFIG`
+
+Los nombres concretos de calendarios también se guardan como secreto y no aparecen en Git.
+
+Configuración local:
+
+```sh
+cd private-cloudflare
+node scripts/configure-icloud-calendar-sync.mjs
+```
+
+El script pide el Apple ID y la contraseña específica de app mediante `wrangler secret put`, y después solicita los nombres exactos de cuatro calendarios: personal, trabajo, pareja y familia.
+
+### Privacidad
+
+El Worker solo realiza operaciones CalDAV de lectura (`PROPFIND` y `REPORT`). El estado remoto conserva únicamente título, inicio, fin, ubicación, calendario de origen y área del Segundo Cerebro. No copia asistentes, notas, descripciones ni enlaces de reunión.
+
+El horizonte inicial es de 90 días y la caché del Worker dura 60 segundos.
+
+`/api/health` expone `calendarSync` sin mostrar eventos ni credenciales.
