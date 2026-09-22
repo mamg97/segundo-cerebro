@@ -529,13 +529,43 @@ a { color: inherit; }
 .focus-meta span { margin-top: 3px; color: var(--ink-soft); font-size: 11px; }
 
 .event-list { margin-top: 16px; }
-.event-item { display: grid; grid-template-columns: 42px 1fr; gap: 12px; padding: 13px 0; border-top: 1px solid #cfdaea; }
-.event-date { color: var(--blue); text-align: center; }
+.event-item {
+  --calendar-color: var(--blue);
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+  padding: 13px 0 13px 10px;
+  border-top: 1px solid #cfdaea;
+  border-left: 4px solid var(--calendar-color);
+}
+.event-item.calendar-personal { --calendar-color: #d6a400; }
+.event-item.calendar-work { --calendar-color: #0a84ff; }
+.event-item.calendar-partner { --calendar-color: #e67a00; }
+.event-item.calendar-family { --calendar-color: #34a853; }
+
+.event-date { color: var(--calendar-color); text-align: center; }
 .event-date strong, .event-date span { display: block; }
 .event-date strong { font-family: "Iowan Old Style", serif; font-size: 23px; font-weight: 500; line-height: 1; }
 .event-date span { font-size: 11px; font-weight: 700; }
-.event-item > div:last-child strong { font-size: 12px; }
+.event-copy strong { font-size: 12px; }
 .event-item p { margin: 4px 0 0; color: var(--ink-soft); font-size: 12px; }
+.event-source-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--calendar-color);
+  vertical-align: 1px;
+}
+.event-empty {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px dashed #c8d5e7;
+  border-radius: 12px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
 
 .decision-callout { display: flex; gap: 10px; align-items: center; margin-top: 16px; padding: 13px; border-radius: 14px; background: white; }
 .decision-mark { display: grid; width: 30px; height: 30px; flex: none; place-items: center; border-radius: 50%; background: #fff0ed; color: var(--coral); font-family: serif; font-weight: 700; }

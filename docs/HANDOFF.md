@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Ajustada la sección `En el horizonte` para mostrar todos los eventos de los próximos 8 días en orden cronológico, en lugar de limitarse a 8 eventos balanceados que podían ocultar citas del calendario `Andrea y Miguel`.
+- Añadidos colores visuales por calendario, alineados con la app Calendario de macOS: personal amarillo, trabajo azul, pareja naranja y familiar verde.
+- Cada evento muestra ahora una banda lateral, fecha y punto de origen con el color de su calendario iCloud.
+
 - Corregida la sección `En el horizonte`: antes hacía `slice(0, 8)` sobre todos los eventos y un recurrente diario de Trabajo podía ocupar las ocho posiciones.
 - La portada usa ahora un reparto equilibrado de eventos por calendario iCloud, garantizando representación de los distintos calendarios con eventos próximos antes de rellenar huecos adicionales.
 - La etiqueta mostrada bajo cada evento usa el nombre real del calendario iCloud cuando está disponible.

@@ -140,14 +140,26 @@ function renderFocus() {
 }
 
 function renderEvents() {
-  const now = Date.now();
-  const upcoming = [...state.events]
-    .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now - 86400000)
+  const now = new Date();
+  const windowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  const windowEnd = new Date(windowStart.getTime() + 8 * 24 * 60 * 60 * 1000);
+
+  const events = [...state.events]
+    .filter((event) => {
+      const start = new Date(event.startsAt);
+      const end = new Date(event.endsAt || event.startsAt);
+      return end >= windowStart && start < windowEnd;
+    })
     .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
 
-  const events = pickBalancedCalendarEvents(upcoming, 8);
+  const list = document.querySelector("#event-list");
 
-  document.querySelector("#event-list").innerHTML = events.map((event) => {
+  if (!events.length) {
+    list.innerHTML = '<div class="event-empty">No hay eventos en los próximos 8 días.</div>';
+    return;
+  }
+
+  list.innerHTML = events.map((event) => {
     const date = new Date(event.startsAt);
     const month = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(date).replace(".", "");
     const allDay = /T00:00:00(?:Z)?$/.test(event.startsAt || "");
@@ -156,45 +168,27 @@ function renderEvents() {
       : new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(date);
     const area = areaById.get(event.areaId);
     const sourceLabel = event.calendarName || area?.shortTitle || "Agenda";
+    const calendarClass = calendarClassForEvent(event);
+
     return `
-      <div class="event-item">
+      <div class="event-item ${calendarClass}">
         <div class="event-date"><strong>${date.getDate()}</strong><span>${month}</span></div>
-        <div><strong>${escapeHtml(event.title)}</strong><p>${time} · ${escapeHtml(sourceLabel)}</p></div>
+        <div class="event-copy">
+          <strong>${escapeHtml(event.title)}</strong>
+          <p><span class="event-source-dot" aria-hidden="true"></span>${time} · ${escapeHtml(sourceLabel)}</p>
+        </div>
       </div>`;
   }).join("");
 }
 
-function pickBalancedCalendarEvents(events, limit = 8) {
-  if (events.length <= limit) return events;
-
-  const groups = new Map();
-  for (const event of events) {
-    const key = event.calendarName || event.areaId || "agenda";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(event);
-  }
-
-  const orderedGroups = [...groups.values()]
-    .map((items) => items.sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt)))
-    .sort((a, b) => new Date(a[0].startsAt) - new Date(b[0].startsAt));
-
-  const picked = [];
-  let round = 0;
-
-  while (picked.length < limit) {
-    let added = false;
-    for (const items of orderedGroups) {
-      if (picked.length >= limit) break;
-      if (items[round]) {
-        picked.push(items[round]);
-        added = true;
-      }
-    }
-    if (!added) break;
-    round += 1;
-  }
-
-  return picked.sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+function calendarClassForEvent(event) {
+  const byArea = {
+    "area-general": "calendar-personal",
+    "area-career": "calendar-work",
+    "area-partner": "calendar-partner",
+    "area-family": "calendar-family"
+  };
+  return byArea[event.areaId] || "calendar-default";
 }
 
 
