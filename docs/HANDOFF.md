@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Corregido el dashboard financiero para mostrar las 19 partidas con presupuesto positivo del ciclo 20/09–20/10, no solo las tres partidas con gasto ya registrado.
+- Corregida la barra de progreso: el CSP bloqueaba el `style="width:..."` inline, por eso el relleno no reflejaba el porcentaje. Se sustituye por `<progress>` nativo, compatible con el CSP.
+- La barra ahora representa exclusivamente gasto ejecutado (`spent / budgeted`). Los importes comprometidos se muestran aparte y no avanzan la barra hasta ejecutarse.
+
 - Creada en Drive la hoja privada derivada `SEGUNDO CEREBRO - ESTADO FINANCIERO` con pestañas `Resumen`, `Categorias` y `Compromisos`; no sustituye a `ASUNTOS v3.xlsx`.
 - Actualizado `CONTROL ASISTENTE - MEMORIA FINANCIERA` con el protocolo de integración: Gestor Financiero actúa como intermediario, Excel solo lectura, estados `PROVISIONAL_CHAT` / `RECONCILIADO_SHEET` / `DERIVADO`.
 - Añadida en rama `finance-live-sheet-sync-v0.3.2` lectura privada en vivo desde Google Sheets al Worker: `/api/state` superpone `financeSummary` sobre D1, con caché de 30 s y fallback seguro.
