@@ -61,6 +61,27 @@ Elección abierta o cerrada. Campos: `areaId`, `question`, `options`, `decision`
 
 Compromiso temporal. Campos: `areaId`, `startsAt`, `endsAt`, `locationRef`.
 
+### FINANCE_SUMMARY
+
+Resumen financiero operativo para la portada. No sustituye a la fuente de verdad financiera.
+
+`monthlyBudget` admite:
+
+| Campo | Uso |
+|---|---|
+| `periodLabel` | Ciclo visible, por ejemplo 20 sep – 20 oct |
+| `currency` | Moneda ISO |
+| `income` | Ingresos del ciclo si están verificados |
+| `plannedOutflows` | Gastos + ahorro presupuestados |
+| `personalNet` | Neto personal modelado por la fuente financiera |
+| `savingsTarget` | Ahorro objetivo del ciclo |
+| `spent` | Gasto real consolidado, solo cuando exista fuente reconciliada |
+| `committed` | Importe comprometido todavía no cargado |
+| `categories` | Seguimiento parcial por categoría |
+
+`upcomingCommitments` resume próximos eventos o pagos relevantes con `date`, `totalBudget`, `reserved`, `needed`, `currency` y `note`. Si no se conoce `reserved` o `needed`, se deja nulo: la interfaz debe mostrar «Por conciliar» y no inferir deuda.
+
+
 ### PERSON
 
 Referencia mínima a una relación relevante. Evitar almacenar datos de contacto salvo necesidad y autorización futura.
