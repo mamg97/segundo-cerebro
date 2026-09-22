@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#12233f">
     <meta name="description" content="Prototipo privado y local del dashboard Segundo Cerebro.">
-    <title>Segundo Cerebro — v0.1</title>
+    <title>Segundo Cerebro — v0.1.1</title>
     <link rel="stylesheet" href="./styles.css">
     <script type="module" src="./app.js"></script>
   </head>
@@ -43,7 +43,6 @@
 
         <section id="overview" class="hero" aria-labelledby="hero-title">
           <div class="hero-copy">
-            <p class="context-label">Tu panorama de hoy</p>
             <h1 id="hero-title">Lo importante,<br>en un mismo lugar.</h1>
             <p>Un estado común para decidir con contexto, sin duplicar tu vida.</p>
           </div>
@@ -112,14 +111,20 @@
           </div>
           <div id="areas-grid" class="areas-grid"></div>
           <div id="system-map" class="system-map" hidden>
-            <svg id="map-lines" viewBox="0 0 800 500" aria-hidden="true"></svg>
-            <div class="map-core"><span>Estado</span><strong>común</strong></div>
-            <div id="map-nodes"></div>
+            <div class="system-toolbar">
+              <p>Todos los módulos consultan el mismo estado. Ninguno conserva una memoria separada.</p>
+              <div class="system-legend" aria-label="Leyenda de estados">
+                <span><i class="status-dot active"></i>Activo</span>
+                <span><i class="status-dot simulated"></i>Simulado</span>
+                <span><i class="status-dot locked"></i>Sin conectar</span>
+              </div>
+            </div>
+            <div id="system-graph" class="system-graph" aria-label="Arquitectura operativa del Segundo Cerebro"></div>
           </div>
         </section>
 
         <footer>
-          <p>Segundo Cerebro <span>v0.1</span></p>
+          <p>Segundo Cerebro <span>v0.1.1</span></p>
           <p>Sin conexiones externas · Datos ficticios</p>
         </footer>
       </main>

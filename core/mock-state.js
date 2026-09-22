@@ -3,9 +3,26 @@
 
 export const mockState = Object.freeze({
   meta: {
-    version: "0.1.0",
+    version: "0.1.1",
     mode: "mock",
     updatedAt: "2026-09-22T08:30:00+02:00",
+  },
+  system: {
+    coordinator: {
+      title: "Coordinador",
+      description: "Combina contexto, propone prioridades y mantiene una visión única.",
+      status: "ready",
+    },
+    capabilities: [
+      { id: "cap-review", title: "Revisión semanal", description: "Resume cambios y asuntos abiertos.", status: "simulated" },
+      { id: "cap-priority", title: "Priorizador", description: "Ordena siguientes acciones con contexto.", status: "simulated" },
+      { id: "cap-conflict", title: "Detector de conflictos", description: "Señala cruces entre agenda y objetivos.", status: "simulated" },
+      { id: "cap-privacy", title: "Control de privacidad", description: "Comprueba sensibilidad y acceso.", status: "active" },
+    ],
+    sources: [
+      { id: "source-local", title: "Mock local", access: "Solo lectura", status: "active" },
+      { id: "source-external", title: "Fuentes externas", access: "Sin conectar", status: "locked" },
+    ],
   },
   areas: [
     { id: "area-general", slug: "general", title: "Estado general", shortTitle: "General", summary: "La semana está enfocada y quedan tres decisiones por desbloquear.", health: 78, tone: "ink", module: "Coordinator", sensitivity: "personal", status: "steady" },

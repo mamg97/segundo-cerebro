@@ -83,21 +83,88 @@ function renderAreas() {
 }
 
 function renderSystemMap() {
-  const areas = mockState.areas.slice(1);
-  const compact = window.matchMedia("(max-width: 520px)").matches;
-  const radiusX = compact ? 37 : 39;
-  const radiusY = compact ? 39 : 36;
-  const centerY = 50;
-  const nodes = areas.map((area, index) => {
-    const angle = (-90 + (360 / areas.length) * index) * Math.PI / 180;
-    return { area, x: 50 + Math.cos(angle) * radiusX, y: centerY + Math.sin(angle) * radiusY };
+  const modules = mockState.areas
+    .filter((area) => area.module !== "Coordinator")
+    .map((area) => ({
+      id: area.id,
+      title: area.title,
+      description: area.summary,
+      status: area.status === "steady" ? "active" : "attention",
+      tone: area.tone,
+    }));
+  const { coordinator, capabilities, sources } = mockState.system;
+
+  document.querySelector("#system-graph").innerHTML = `
+    <section class="graph-tier coordinator-tier" aria-label="Coordinación">
+      <article class="system-node coordinator-node">
+        <div class="node-heading">
+          <span class="node-mark coordinator-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div><span class="node-kind">Orquestación</span><h3>${escapeHtml(coordinator.title)}</h3></div>
+        </div>
+        <p>${escapeHtml(coordinator.description)}</p>
+        <span class="node-state"><i class="status-dot active"></i>Preparado · IA local futura</span>
+      </article>
+    </section>
+
+    <div class="graph-flow" aria-hidden="true"><span></span></div>
+
+    <section class="shared-state-node" aria-label="Estado global común">
+      <div><span class="node-kind">Fuente de verdad</span><h3>Estado global común</h3></div>
+      <p>Entidades, relaciones, contexto y decisiones en una sola capa.</p>
+      <span class="shared-lock">Privado · Mock</span>
+    </section>
+
+    <div class="graph-flow branch-flow" aria-hidden="true"><span></span></div>
+
+    <section class="graph-tier" aria-labelledby="modules-title">
+      <div class="tier-heading"><h3 id="modules-title">Módulos especializados</h3><span>${modules.length} áreas</span></div>
+      <div class="module-grid">
+        ${modules.map((module) => `
+          <button class="system-node module-node" type="button" data-system-area-id="${module.id}" style="--node-color:${colors[module.tone]}">
+            <span class="node-heading">
+              <span class="module-mark" aria-hidden="true"><i></i></span>
+              <span><span class="node-kind">Módulo</span><strong>${escapeHtml(module.title)}</strong></span>
+            </span>
+            <span class="module-summary">${escapeHtml(module.description)}</span>
+            <span class="node-state"><i class="status-dot ${module.status === "active" ? "active" : "attention"}"></i>${module.status === "active" ? "Estable" : "Requiere atención"}</span>
+          </button>
+        `).join("")}
+      </div>
+    </section>
+
+    <section class="lower-tiers">
+      <div class="graph-tier capability-tier" aria-labelledby="capabilities-title">
+        <div class="tier-heading"><h3 id="capabilities-title">Capacidades transversales</h3><span>Sin memoria propia</span></div>
+        <div class="capability-list">
+          ${capabilities.map((capability) => `
+            <article class="capability-row">
+              <span class="capability-mark" aria-hidden="true"><i></i><i></i></span>
+              <div><strong>${escapeHtml(capability.title)}</strong><p>${escapeHtml(capability.description)}</p></div>
+              <span class="node-state"><i class="status-dot ${capability.status}"></i>${capability.status === "active" ? "Activo" : "Simulado"}</span>
+            </article>
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="graph-tier source-tier" aria-labelledby="sources-title">
+        <div class="tier-heading"><h3 id="sources-title">Fuentes</h3><span>Propietarias del dato</span></div>
+        <div class="source-list">
+          ${sources.map((source) => `
+            <article class="source-row">
+              <span class="source-mark" aria-hidden="true"><i></i></span>
+              <div><strong>${escapeHtml(source.title)}</strong><p>${escapeHtml(source.access)}</p></div>
+              <span class="node-state"><i class="status-dot ${source.status}"></i>${source.status === "active" ? "Activo" : "Bloqueado"}</span>
+            </article>
+          `).join("")}
+        </div>
+        <p class="source-note">Gmail, Outlook, Calendar, Drive y Sheets permanecen desconectados.</p>
+      </div>
+    </section>
+  `;
+
+  document.querySelectorAll("[data-system-area-id]").forEach((node) => {
+    node.addEventListener("click", () => openArea(node.dataset.systemAreaId));
   });
-  document.querySelector("#map-nodes").innerHTML = nodes.map(({ area, x, y }) => `
-    <div class="map-node" style="left:${x}%;top:${y}%;--node-color:${colors[area.tone]}"><span></span>${escapeHtml(area.shortTitle)}</div>
-  `).join("");
-  document.querySelector("#map-lines").innerHTML = nodes.map(({ x, y }) => `
-    <line class="map-line" x1="400" y1="250" x2="${x * 8}" y2="${y * 5}"></line>
-  `).join("");
 }
 
 function bindInteractions() {
