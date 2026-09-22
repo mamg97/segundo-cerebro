@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "segundo-cerebro-private",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-22",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "segundo-cerebro-private",
+      "database_id": "REPLACE_AFTER_D1_CREATE"
+    }
+  ],
+  "vars": {
+    "PRIVATE_APP_ENABLED": "false"
+  }
+}

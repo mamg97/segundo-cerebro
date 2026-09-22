@@ -4,7 +4,7 @@
 
 - **Fecha:** 2026-09-22
 - **Última herramienta:** ChatGPT normal
-- **Rama:** `main`
+- **Rama:** `private-cloudflare-v0.2`
 - **Remoto:** `https://github.com/mamg97/segundo-cerebro.git`
 
 ## Estado actual
@@ -13,7 +13,7 @@ La demo pública v0.1.1 sigue siendo un frontend estático con datos exclusivame
 
 ## Objetivo activo
 
-Validar si un único estado privado local, construido con referencias mínimas, representa correctamente proyectos, decisiones y open loops reales antes de decidir cifrado, sincronización, integraciones o infraestructura.
+Preparar una primera versión remota privada y de solo lectura, accesible desde Mac, iPhone e iPad, usando Cloudflare Worker + Access + D1 sin mover datos reales a GitHub.
 
 ## Trabajo realizado
 
@@ -32,6 +32,11 @@ Validar si un único estado privado local, construido con referencias mínimas, 
 - Añadido un cargador privado que solo se activa en loopback con `?private=1`; fuera de ese caso mantiene el mock.
 - Creada una primera síntesis local ignorada por Git con proyectos, objetivos, decisiones, open loops, personas mínimas, activos conceptuales y fuentes referenciadas.
 - Ampliada la revisión a planificación de viajes, cuaderno de ideas, asuntos familiares sensibles y pendientes domésticos; los detalles innecesarios, documentos e identificadores se excluyeron.
+- Creada la rama `private-cloudflare-v0.2`.
+- Añadido `private-cloudflare/` con Worker, Static Assets, D1, build aislado, importador local y documentación de despliegue.
+- `app/app.js` ya admite un modo `private-remote` activado únicamente en el bundle privado.
+- Añadido seguro `PRIVATE_APP_ENABLED=false` para impedir exposición antes de configurar Cloudflare Access.
+- Añadido workflow de CI para comprobar sintaxis y que el bundle privado no contenga `.private/`.
 
 ## Estado funcional
 
@@ -57,6 +62,8 @@ Validar si un único estado privado local, construido con referencias mínimas, 
 - El árbol operativo es una capa de transparencia; sus nodos no son memorias ni agentes autónomos.
 - GitHub Pages aloja solo la demo mock; hosting definitivo, base de datos, autenticación, proveedor de IA y sincronización siguen abiertos.
 - La superposición `.private/state.js` es provisional, local, no cifrada y nunca se versiona.
+- Para v0.2 se adopta Cloudflare Worker + Access + D1 como primera arquitectura remota privada.
+- La primera versión remota será estrictamente de solo lectura; no hay endpoints de escritura desde el navegador.
 
 Consulta `docs/DECISIONS.md` para el registro duradero.
 
@@ -74,15 +81,16 @@ Consulta `docs/DECISIONS.md` para el registro duradero.
 
 ## Pendientes inmediatos
 
-1. Validar con el usuario la exactitud y prioridad de la primera síntesis privada.
-2. Completar de forma incremental las fuentes marcadas `reviewed-partial`, sin copiar historiales completos.
-3. Definir el flujo de revisión semanal y la regla de frescura de cada fuente.
-4. Diseñar cifrado y respaldo antes de considerar este archivo una persistencia real.
-5. Convertir el flujo en criterios de aceptación y tests automatizados mínimos.
+1. Abrir PR de `private-cloudflare-v0.2` y dejar pasar la CI.
+2. Crear D1 y el Worker en la cuenta Cloudflare del usuario.
+3. Proteger todo el Worker con Cloudflare Access y verificar que no se abre sin autenticación.
+4. Importar la síntesis existente desde `.private/state.js` a D1 usando el generador local.
+5. Activar `PRIVATE_APP_ENABLED=true` y validar la URL privada desde iPhone, iPad y Mac.
+6. Después, volver a la validación de exactitud, frescura y prioridades del estado.
 
 ## Próxima acción recomendada
 
-Recorrer el modo privado local con el usuario y corregir primero hechos, relaciones, prioridades o fuentes desactualizadas. No añadir nuevas conexiones ni publicar el estado.
+Finalizar y validar el PR de la infraestructura privada. Después hará falta una intervención en Cloudflare para crear D1, desplegar el Worker y activar Access antes de migrar ningún dato real.
 
 ## Archivos relevantes
 
@@ -101,6 +109,10 @@ Recorrer el modo privado local con el usuario y corregir primero hechos, relacio
 - `CHATGPT_NORMAL/README.md`: coordinación del carril ChatGPT normal.
 - `WORK_CODEX/README.md`: coordinación del carril Work/Codex.
 - `docs/REMOTE_PRIVATE_PLAN.md`: plan para acceso web privado con datos reales fuera de GitHub.
+- `private-cloudflare/README.md`: procedimiento de despliegue privado.
+- `private-cloudflare/src/index.js`: Worker y API privada de solo lectura.
+- `private-cloudflare/migrations/0001_init.sql`: esquema inicial D1.
+- `private-cloudflare/scripts/make-import-sql.mjs`: generador local de importación desde `.private/state.js`.
 
 ## Pruebas realizadas
 

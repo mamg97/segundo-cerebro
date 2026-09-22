@@ -89,3 +89,30 @@ Esta capa no conecta conversaciones ni servicios. Contiene una síntesis mínima
 - Instalable como PWA.
 
 Hosting, base de datos, proveedor de IA y método de sincronización quedan deliberadamente abiertos.
+
+
+## Evolución v0.2 — aplicación privada remota
+
+La siguiente fase adopta una arquitectura concreta para acceso desde Mac, iPhone e iPad sin publicar el estado personal:
+
+```text
+Dispositivo
+   ↓
+Cloudflare Access
+   ↓
+Cloudflare Worker + Static Assets
+   ↓
+API privada de solo lectura
+   ↓
+Cloudflare D1
+```
+
+- GitHub Pages continúa como demo pública con mocks.
+- El Worker privado sirve una copia construida de `app/` y `core/`; no publica `.private/`.
+- La interfaz privada solicita `/api/state` y activa el modo `private-remote`.
+- D1 almacena instantáneas versionadas del estado privado; la primera migración parte de `.private/state.js` mediante un generador local que produce SQL dentro de `.private/`.
+- Cloudflare Access protege todo el Worker antes de habilitarlo.
+- La web privada es inicialmente de solo lectura: no existen endpoints de escritura ni sincronización automática.
+- `PRIVATE_APP_ENABLED=false` actúa como seguro de despliegue para evitar publicar la aplicación antes de configurar Access.
+
+Esta fase no convierte GitHub en almacén de datos ni elimina la copia local provisional. La migración remota solo se realiza cuando la barrera de autenticación ha sido verificada.

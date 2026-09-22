@@ -59,3 +59,19 @@ Este documento registra decisiones duraderas. El histórico detallado permanece 
 - **Decisión:** permitir que el dashboard cargue `.private/state.js` solo en loopback y bajo activación explícita, manteniendo mocks como comportamiento por defecto y único contenido publicado.
 - **Motivo:** validar el estado global con contexto real sin copiarlo a GitHub, conectar APIs ni modificar las fuentes propietarias.
 - **Límite:** el archivo local no está cifrado ni sincronizado. Esta decisión no selecciona la persistencia privada definitiva y exige minimización adicional para datos `muy_confidencial`.
+
+
+## D-009 — Relevo entre ChatGPT normal y Work/Codex
+
+- **Estado:** aceptada
+- **Fecha:** 2026-09-22
+- **Decisión:** `docs/HANDOFF.md` es el estado común presente; `CHATGPT_NORMAL/` y `WORK_CODEX/` solo documentan el carril de ejecución.
+- **Motivo:** poder continuar el proyecto entre herramientas sin duplicar la fuente de verdad ni depender de conversaciones largas.
+
+## D-010 — Cloudflare Worker + Access + D1 para la primera web privada
+
+- **Estado:** aceptada para v0.2
+- **Fecha:** 2026-09-22
+- **Decisión:** la primera versión remota con datos reales se implementará como un Cloudflare Worker protegido íntegramente por Cloudflare Access y con D1 como persistencia privada. GitHub Pages seguirá siendo solo la demo mock.
+- **Motivo:** permite acceso desde Mac, iPhone e iPad, mantiene los datos fuera de GitHub y encaja en el uso personal de bajo volumen sin añadir un servidor propio.
+- **Límite:** la primera versión será de solo lectura; no se activará hasta verificar Access. El proveedor podrá reevaluarse si cambian requisitos de privacidad, coste o portabilidad.

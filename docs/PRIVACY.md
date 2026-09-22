@@ -59,3 +59,16 @@ La clasificación no autoriza a almacenar el dato: primero debe existir una nece
 ## Incidente
 
 Si se detecta un secreto o dato real: detener publicación, revocar credenciales si procede, retirar el dato del historial de forma segura y documentar únicamente la corrección técnica, nunca el secreto.
+
+
+## Frontera privada remota v0.2
+
+- La aplicación remota se despliega como un Cloudflare Worker separado de GitHub Pages.
+- Todo el Worker debe quedar protegido por Cloudflare Access antes de activar `PRIVATE_APP_ENABLED=true`.
+- La primera fase remota es de solo lectura: no existen endpoints de escritura desde el navegador.
+- D1 almacena instantáneas privadas versionadas. Los datos reales no se incluyen en Git, artefactos de Pages ni logs de Actions.
+- Las respuestas de `/api/state` usan `Cache-Control: no-store`.
+- La aplicación privada envía cabeceras de seguridad, `noindex` y una política CSP restrictiva.
+- El importador se ejecuta localmente y genera el SQL temporal dentro de `.private/`.
+- El archivo `wrangler.jsonc` real, el directorio de build y el estado local permanecen ignorados por Git.
+- Si Access deja de proteger el Worker, la aplicación debe deshabilitarse inmediatamente antes de cualquier otro cambio.
