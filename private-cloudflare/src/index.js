@@ -35,6 +35,11 @@ function json(payload, status = 200) {
   );
 }
 
+function safeIcloudErrorCode(error) {
+  const message = String(error?.message || "");
+  return /^ICLOUD_[A-Z0-9_]+$/.test(message) ? message : "ICLOUD_UNKNOWN";
+}
+
 function hasFinanceGoogleConfig(env) {
   return Boolean(
     env.GOOGLE_CLIENT_ID &&
@@ -239,12 +244,14 @@ export default {
       }
 
       let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
+      let calendarError = null;
       if (hasIcloudCalendarConfig(env)) {
         try {
           const calendar = await fetchIcloudCalendarSummary(env);
           calendarSync = calendar.status;
-        } catch {
+        } catch (error) {
           calendarSync = "error";
+          calendarError = safeIcloudErrorCode(error);
         }
       }
 
@@ -255,7 +262,8 @@ export default {
         schemaVersion: row?.schema_version ?? null,
         snapshotCreatedAt: row?.created_at ?? null,
         financeSync,
-        calendarSync
+        calendarSync,
+        calendarError
       });
     }
 
