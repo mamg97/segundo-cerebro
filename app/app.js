@@ -13,7 +13,7 @@ const colors = {
 
 const symbols = {
   general: "◎", career: "↗", finance: "≋", calendar: "□", partner: "◇",
-  family: "⌂", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
+  family: "⌂", health: "✚", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
@@ -59,10 +59,33 @@ function toggleTheme() {
   applyTheme(current === "dark" ? "light" : "dark", true);
 }
 
+
+function ensureDerivedAreas() {
+  if (!Array.isArray(state.areas)) state.areas = [];
+  if (!state.areas.some((area) => area.id === "area-health")) {
+    const wealthIndex = state.areas.findIndex((area) => area.id === "area-wealth");
+    const healthArea = {
+      id: "area-health",
+      slug: "health",
+      title: "Salud",
+      shortTitle: "Salud",
+      summary: "Citas médicas, gimnasio y nutrición conectados al calendario.",
+      health: 70,
+      tone: "mint",
+      module: "Health",
+      sensitivity: "confidencial",
+      status: "steady"
+    };
+    if (wealthIndex >= 0) state.areas.splice(wealthIndex, 0, healthArea);
+    else state.areas.push(healthArea);
+  }
+}
+
 async function init() {
   initTheme();
   await loadLocalPrivateState();
   await loadRemotePrivateState();
+  ensureDerivedAreas();
   areaById = new Map(state.areas.map((area) => [area.id, area]));
   renderMode();
   renderDate();
@@ -162,7 +185,7 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   nav.innerHTML = state.areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} style="--area-color:${colors[area.tone]}">
+    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
   `).join("");
@@ -251,9 +274,9 @@ function renderWeekEvent(event) {
     : null;
 
   return `
-    <article class="week-event ${calendarClass}" title="${escapeHtml(event.title)} · ${escapeHtml(sourceLabel)}">
+    <article class="week-event ${calendarClass}" title="${escapeHtml(safeDisplayEventTitle(event.title))} · ${escapeHtml(sourceLabel)}">
       <span class="week-event-time">${time}${endTime ? "–" + endTime : ""}</span>
-      <strong>${escapeHtml(event.title)}</strong>
+      <strong>${escapeHtml(safeDisplayEventTitle(event.title))}</strong>
       <small>${escapeHtml(sourceLabel)}</small>
     </article>`;
 }
@@ -378,52 +401,191 @@ function renderBudgetOverview() {
     `;
   }
 
-  const upcoming = Array.isArray(finance.upcomingCommitments)
-    ? [...finance.upcomingCommitments]
-        .filter((item) => !item.date || new Date(`${item.date}T12:00:00`).getTime() >= Date.now() - 86400000)
-        .sort((a, b) => String(a.date || "9999-12-31").localeCompare(String(b.date || "9999-12-31")))
-        .slice(0, 4)
-    : [];
+  renderImportantEvents(finance);
 
-  if (!upcoming.length) {
-    commitments.innerHTML = `
+}
+
+function renderImportantEvents(finance = state.financeSummary || {}) {
+  const container = document.querySelector("#event-budget-list");
+  const count = document.querySelector("#important-event-count");
+  if (!container) return;
+
+  const importantEvents = collectImportantEvents(finance);
+  if (count) count.textContent = importantEvents.length ? `${importantEvents.length} próximos` : "";
+
+  if (!importantEvents.length) {
+    container.innerHTML = `
       <div class="event-budget-empty">
-        <strong>Sin presupuestos asociados</strong>
-        <p>Los próximos viajes, celebraciones o pagos relevantes aparecerán aquí.</p>
+        <strong>Sin eventos importantes detectados</strong>
+        <p>Se mostrarán aquí viajes, celebraciones y citas médicas encontradas en iCloud.</p>
       </div>`;
     return;
   }
 
-  commitments.innerHTML = upcoming.map((item) => {
+  container.innerHTML = importantEvents.slice(0, 12).map((item) => {
+    const date = new Date(item.startsAt || `${item.date}T12:00:00`);
     const currency = item.currency || "EUR";
     const total = firstFinite(item.totalBudget);
     const reserved = firstFinite(item.reserved);
-    const explicitNeeded = firstFinite(item.needed);
-    const needed = explicitNeeded !== null
-      ? explicitNeeded
-      : total !== null && reserved !== null
-        ? Math.max(0, total - reserved)
-        : null;
-    const date = item.date ? new Date(`${item.date}T12:00:00`) : null;
-    const statusLabel = needed === null ? "Por conciliar" : needed > 0 ? "Falta" : "Cubierto";
-    const statusValue = needed === null ? "—" : needed > 0 ? formatMoney(needed, currency) : "✓";
+    const source = item.source === "calendar" ? "iCloud" : "Finanzas";
+    const tag = item.kind === "medical" ? "Cita médica"
+      : item.kind === "travel" ? "Viaje"
+      : item.kind === "birthday" ? "Cumpleaños"
+      : item.kind === "social" ? "Evento"
+      : "Importante";
     return `
-      <article class="event-budget-item">
+      <article class="event-budget-item important-event-item">
         <div class="event-budget-date">
-          <strong>${date ? date.getDate() : "—"}</strong>
-          <span>${date ? shortMonth(date) : "sin fecha"}</span>
+          <strong>${Number.isNaN(date.getTime()) ? "—" : date.getDate()}</strong>
+          <span>${Number.isNaN(date.getTime()) ? "sin fecha" : shortMonth(date)}</span>
         </div>
         <div class="event-budget-copy">
+          <span class="important-event-tag">${escapeHtml(tag)}</span>
           <strong>${escapeHtml(item.title)}</strong>
-          <p>${item.note ? escapeHtml(item.note) : "Compromiso previsto"}</p>
+          <p>${escapeHtml(item.location || item.note || source)}</p>
         </div>
         <div class="event-budget-amount">
-          <span>${statusLabel}</span>
-          <strong>${statusValue}</strong>
-          ${total !== null ? `<small>${reserved === null ? "Presupuesto " + formatMoney(total, currency) : formatMoney(reserved, currency) + " / " + formatMoney(total, currency)}</small>` : ""}
+          <span>${escapeHtml(source)}</span>
+          ${total !== null ? `<strong>${formatMoney(total, currency)}</strong>` : ""}
+          ${reserved !== null && total !== null ? `<small>${formatMoney(reserved, currency)} reservado</small>` : ""}
         </div>
       </article>`;
   }).join("");
+}
+
+function collectImportantEvents(finance = state.financeSummary || {}) {
+  const now = Date.now() - 24 * 60 * 60 * 1000;
+  const rules = Array.isArray(state.importantEventRules)
+    ? state.importantEventRules
+    : Array.isArray(finance.importantEventRules)
+      ? finance.importantEventRules
+      : [];
+
+  const calendarItems = (Array.isArray(state.events) ? state.events : [])
+    .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now)
+    .map((event) => {
+      const normalized = normalizeForMatch(event.title);
+      const rule = rules.find((candidate) =>
+        Array.isArray(candidate.matchTerms)
+        && candidate.matchTerms.length
+        && candidate.matchTerms.every((term) => normalized.includes(normalizeForMatch(term)))
+      );
+      const medical = classifyHealthEvent(event) === "medical";
+      if (!rule && !medical) return null;
+      return {
+        id: event.id || [event.calendarName, event.title, event.startsAt].join("|"),
+        title: rule?.displayTitle || safeDisplayEventTitle(event.title),
+        startsAt: event.startsAt,
+        endsAt: event.endsAt,
+        location: event.location || null,
+        kind: rule?.kind || "medical",
+        source: "calendar"
+      };
+    })
+    .filter(Boolean);
+
+  const commitments = (Array.isArray(finance.upcomingCommitments) ? finance.upcomingCommitments : [])
+    .filter((item) => !item.date || new Date(`${item.date}T23:59:59`).getTime() >= now)
+    .map((item) => ({
+      ...item,
+      title: safeDisplayEventTitle(item.title),
+      startsAt: item.date ? `${item.date}T12:00:00` : null,
+      kind: inferImportantKind(item.title),
+      source: "finance"
+    }));
+
+  const merged = [...calendarItems, ...commitments]
+    .sort((a, b) => new Date(a.startsAt || "9999-12-31").getTime() - new Date(b.startsAt || "9999-12-31").getTime());
+
+  const seen = new Set();
+  return merged.filter((item) => {
+    const dateKey = String(item.startsAt || "").slice(0, 10);
+    const key = `${normalizeForMatch(item.title)}|${dateKey}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function normalizeForMatch(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es");
+}
+
+function safeDisplayEventTitle(value) {
+  const title = String(value || "");
+  return /varsovia/i.test(title) ? "Viaje nov" : title;
+}
+
+function inferImportantKind(title) {
+  const text = normalizeForMatch(title);
+  if (/viaje|vuelo|escapada|marbella|valencia/.test(text)) return "travel";
+  if (/cumple/.test(text)) return "birthday";
+  if (/boda|celebracion/.test(text)) return "social";
+  return "important";
+}
+
+function classifyHealthEvent(event) {
+  const text = normalizeForMatch([event.title, event.location].filter(Boolean).join(" "));
+  if (/gimnasio|\bgym\b|entreno|entrenamiento/.test(text)) return "gym";
+  if (/nutricion|nutricionista|dietista|dieta/.test(text)) return "nutrition";
+  if (/medic|doctor|doctora|hospital|clinica|cardiolog|urolog|alergolog|dentista|dental|dermatolog|traumatolog|fisioterap|oftalmolog|revision medica|analitica|consulta/.test(text)) return "medical";
+  return null;
+}
+
+function collectHealthEvents() {
+  const now = Date.now() - 24 * 60 * 60 * 1000;
+  return (Array.isArray(state.events) ? state.events : [])
+    .map((event) => ({ ...event, healthKind: classifyHealthEvent(event) }))
+    .filter((event) => event.healthKind && new Date(event.endsAt || event.startsAt).getTime() >= now)
+    .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+}
+
+function openHealthDetail() {
+  const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog");
+  dialog.classList.add("health-dialog");
+  document.querySelector("#dialog-context").textContent = "Salud · iCloud";
+  document.querySelector("#dialog-title").textContent = "Salud";
+
+  const healthEvents = collectHealthEvents();
+  const groups = [
+    ["medical", "Médicos"],
+    ["gym", "Gimnasio"],
+    ["nutrition", "Nutrición"]
+  ];
+
+  document.querySelector("#dialog-body").innerHTML = `
+    <div class="health-sections">
+      ${groups.map(([kind, label]) => {
+        const items = healthEvents.filter((event) => event.healthKind === kind);
+        return `
+          <section class="health-section">
+            <div class="health-section-heading"><strong>${label}</strong><span>${items.length}</span></div>
+            ${items.length
+              ? `<div class="health-event-list">${items.slice(0, 20).map(renderHealthEvent).join("")}</div>`
+              : '<p class="health-empty">No hay próximos eventos detectados en iCloud.</p>'}
+          </section>`;
+      }).join("")}
+    </div>`;
+  dialog.showModal();
+}
+
+function renderHealthEvent(event) {
+  const start = new Date(event.startsAt);
+  const dateLabel = Number.isNaN(start.getTime())
+    ? "Sin fecha"
+    : new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+        .format(start)
+        .replace(".", "");
+  return `
+    <article class="health-event-item">
+      <time>${escapeHtml(dateLabel)}</time>
+      <strong>${escapeHtml(safeDisplayEventTitle(event.title))}</strong>
+      ${event.location ? `<span>${escapeHtml(event.location)}</span>` : ""}
+    </article>`;
 }
 
 function renderDebtOverview() {
@@ -932,6 +1094,10 @@ function bindInteractions() {
     event.preventDefault();
     openWealthDetail();
   });
+  document.querySelector('[data-open-health="true"]')?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openHealthDetail();
+  });
 }
 
 function setView(view) {
@@ -952,11 +1118,15 @@ function openArea(areaId) {
     openWealthDetail();
     return;
   }
+  if (areaId === "area-health") {
+    openHealthDetail();
+    return;
+  }
   const area = areaById.get(areaId);
   const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
   const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [

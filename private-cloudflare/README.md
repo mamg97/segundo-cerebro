@@ -154,7 +154,7 @@ El script envía cada valor a `wrangler secret put`.
 ### Comportamiento
 
 - `/api/state` parte de la instantánea privada D1.
-- Si los secretos están configurados, lee `Resumen`, `Categorias`, `Compromisos`, `Deudas` y `Patrimonio` de la hoja derivada.
+- Si los secretos están configurados, lee `Resumen`, `Categorias`, `Compromisos`, `Deudas`, `Patrimonio` y `EventosImportantes` de la hoja derivada.
 - `financeSummary` se sustituye en memoria por la versión de Google Sheets.
 - La caché financiera del Worker dura 30 segundos.
 - Si Google falla, el resto del Segundo Cerebro sigue funcionando y se conserva el resumen financiero que ya exista en D1.
@@ -207,3 +207,12 @@ El Worker solo realiza operaciones CalDAV de lectura (`PROPFIND` y `REPORT`). El
 El horizonte inicial es de 90 días y la caché del Worker dura 60 segundos.
 
 `/api/health` expone `calendarSync` sin mostrar eventos ni credenciales.
+
+
+### Eventos importantes y Salud
+
+La pestaña privada `EventosImportantes` almacena reglas y alias personales que nunca deben entrar en Git. El Worker entrega esas reglas al cliente autenticado, que las aplica sobre los eventos de iCloud.
+
+El horizonte de lectura CalDAV es de 550 días para poder detectar con antelación bodas, viajes y citas médicas relevantes. La semana visible continúa filtrándose al lunes-domingo actual.
+
+`Salud` es una vista derivada de iCloud: agrupa próximas citas médicas, gimnasio y nutrición. No escribe ni modifica el calendario.

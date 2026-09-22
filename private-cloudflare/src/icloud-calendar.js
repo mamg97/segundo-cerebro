@@ -251,7 +251,9 @@ export async function fetchIcloudCalendarSummary(env) {
   // Fetch enough history to cover the full current Monday–Sunday week.
   // Using only the previous 24h made Monday morning events disappear on Tuesday.
   const from = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
-  const to = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  // Keep a longer future horizon so weddings, trips and medical appointments can be surfaced well in advance.
+  const horizonDays = 550;
+  const to = new Date(now.getTime() + horizonDays * 24 * 60 * 60 * 1000);
   const start = formatCalDavTimestamp(from);
   const end = formatCalDavTimestamp(to);
 
@@ -292,7 +294,7 @@ export async function fetchIcloudCalendarSummary(env) {
     source: {
       kind: "icloud-caldav",
       mode: "read-only",
-      horizonDays: 90,
+      horizonDays,
       selectedCalendarCount: selected.length,
       matchedCalendarCount: selected.length - missingCalendars.length,
       missingCalendars,
