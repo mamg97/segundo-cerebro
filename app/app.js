@@ -37,7 +37,7 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   nav.innerHTML = mockState.areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="#area-${area.slug}" style="--area-color:${colors[area.tone]}">
+    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
   `).join("");
