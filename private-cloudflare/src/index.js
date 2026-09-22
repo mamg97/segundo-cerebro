@@ -190,19 +190,30 @@ async function fetchFinanceSummary(env) {
     note: item.note || null
   }));
 
-  const activeDebts = debts.filter((item) => item.status !== "closed");
+  const debtSummaryRow = debts.find((item) =>
+    item.id === "__summary__" || String(item.status || "").toLowerCase() === "summary"
+  ) || null;
+  const activeDebts = debts.filter((item) => {
+    const status = String(item.status || "").toLowerCase();
+    return status !== "closed" && status !== "summary" && item.id !== "__summary__";
+  });
   const knownBalanceValues = activeDebts.map((item) => item.balance).filter((value) => value !== null);
   const knownPaymentValues = activeDebts.map((item) => item.monthlyPayment).filter((value) => value !== null);
   const debtSummary = {
     currency: summary.currency || "EUR",
     count: activeDebts.length,
-    totalBalance: knownBalanceValues.length === activeDebts.length && activeDebts.length
-      ? knownBalanceValues.reduce((sum, value) => sum + value, 0)
-      : null,
-    monthlyPayment: knownPaymentValues.length
-      ? knownPaymentValues.reduce((sum, value) => sum + value, 0)
-      : null,
-    debts: activeDebts
+    totalBalance: debtSummaryRow?.balance ?? (
+      knownBalanceValues.length === activeDebts.length && activeDebts.length
+        ? knownBalanceValues.reduce((sum, value) => sum + value, 0)
+        : null
+    ),
+    monthlyPayment: debtSummaryRow?.monthlyPayment ?? (
+      knownPaymentValues.length
+        ? knownPaymentValues.reduce((sum, value) => sum + value, 0)
+        : null
+    ),
+    debts: activeDebts,
+    sourceSummaryNote: debtSummaryRow?.note || null
   };
 
   const miguelIncome = moneyOrNull(summary.miguel_income);
