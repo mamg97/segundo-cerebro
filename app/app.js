@@ -3,6 +3,7 @@ import { mockState } from "../core/mock-state.js";
 let state = mockState;
 let areaById = new Map();
 let privateMode = false;
+let privateModeKind = null;
 
 const colors = {
   ink: "#52647f", blue: "#2867e8", mint: "#2e8b78", sky: "#3984a8",
@@ -20,6 +21,7 @@ const shortDateFormatter = new Intl.DateTimeFormat("es-ES", { day: "numeric", mo
 
 async function init() {
   await loadLocalPrivateState();
+  await loadRemotePrivateState();
   areaById = new Map(state.areas.map((area) => [area.id, area]));
   renderMode();
   renderDate();
@@ -43,23 +45,61 @@ async function loadLocalPrivateState() {
     }
     state = module.privateState;
     privateMode = true;
+    privateModeKind = "local";
   } catch (error) {
     console.warn("No se pudo cargar el estado privado local; se mantienen los mocks.", error);
+  }
+}
+
+async function loadRemotePrivateState() {
+  if (privateMode || globalThis.__SECOND_BRAIN_REMOTE__ !== true) return;
+
+  try {
+    const response = await fetch("/api/state", {
+      method: "GET",
+      headers: { "Accept": "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Estado remoto no disponible (${response.status})`);
+    }
+
+    const remoteState = await response.json();
+    if (!remoteState || remoteState.meta?.mode !== "private-remote") {
+      throw new Error("Estado privado remoto no válido");
+    }
+
+    state = remoteState;
+    privateMode = true;
+    privateModeKind = "remote";
+  } catch (error) {
+    console.warn("No se pudo cargar el estado privado remoto; se mantienen los mocks.", error);
   }
 }
 
 function renderMode() {
   const generalHealth = state.areas.find((area) => area.id === "area-general")?.health ?? 0;
   const openDecisions = state.decisions.filter((decision) => decision.status === "open").length;
-  document.querySelector("#privacy-mode-title").textContent = privateMode ? "Modo local privado" : "Modo demo";
-  document.querySelector("#privacy-mode-detail").textContent = privateMode ? "No se publica en GitHub" : "Solo datos ficticios";
-  document.querySelector("#data-mode-badge").textContent = privateMode ? "Estado personal local" : "Entorno mock";
-  document.querySelector("#profile-button").setAttribute("aria-label", privateMode ? "Perfil local privado" : "Perfil ficticio");
-  document.querySelector("#query-submit").setAttribute("aria-label", privateMode ? "Consultar estado privado local" : "Consultar datos ficticios");
-  document.querySelector("#query-help").textContent = privateMode
-    ? "La consulta se resuelve en este navegador sobre el estado local. No usa red ni IA."
-    : "La consulta se resuelve localmente sobre los datos ficticios.";
-  document.querySelector("#footer-mode").textContent = privateMode ? "Sin APIs · Estado local no publicado" : "Sin conexiones externas · Datos ficticios";
+  const local = privateModeKind === "local";
+  const remote = privateModeKind === "remote";
+
+  document.querySelector("#privacy-mode-title").textContent = remote ? "Modo privado remoto" : local ? "Modo local privado" : "Modo demo";
+  document.querySelector("#privacy-mode-detail").textContent = remote ? "Protegido por autenticación" : local ? "No se publica en GitHub" : "Solo datos ficticios";
+  document.querySelector("#data-mode-badge").textContent = remote ? "Estado personal privado" : local ? "Estado personal local" : "Entorno mock";
+  document.querySelector("#profile-button").setAttribute("aria-label", privateMode ? "Perfil privado" : "Perfil ficticio");
+  document.querySelector("#query-submit").setAttribute("aria-label", privateMode ? "Consultar estado privado" : "Consultar datos ficticios");
+  document.querySelector("#query-help").textContent = remote
+    ? "La consulta se resuelve sobre tu estado privado remoto."
+    : local
+      ? "La consulta se resuelve en este navegador sobre el estado local. No usa red ni IA."
+      : "La consulta se resuelve localmente sobre los datos ficticios.";
+  document.querySelector("#footer-mode").textContent = remote
+    ? "Acceso autenticado · Estado privado remoto"
+    : local
+      ? "Sin APIs · Estado local no publicado"
+      : "Sin conexiones externas · Datos ficticios";
   document.querySelector("#general-health").textContent = String(generalHealth);
   document.querySelector("#general-pulse").setAttribute("aria-label", `Pulso general: ${generalHealth} de 100`);
   document.querySelector("#decision-count").textContent = `${openDecisions} decisiones abiertas`;
@@ -151,7 +191,7 @@ function renderSystemMap() {
     <section class="shared-state-node" aria-label="Estado global común">
       <div><span class="node-kind">Fuente de verdad</span><h3>Estado global común</h3></div>
       <p>Entidades, relaciones, contexto y decisiones en una sola capa.</p>
-      <span class="shared-lock">${privateMode ? "Privado · Local" : "Privado · Mock"}</span>
+      <span class="shared-lock">${privateModeKind === "remote" ? "Privado · Remoto" : privateMode ? "Privado · Local" : "Privado · Mock"}</span>
     </section>
 
     <div class="graph-flow branch-flow" aria-hidden="true"><span></span></div>
@@ -266,7 +306,7 @@ function openArea(areaId) {
 
 function openDecisions() {
   const dialog = document.querySelector("#detail-dialog");
-  document.querySelector("#dialog-context").textContent = privateMode ? "Coordinador · Estado local privado" : "Coordinador · Datos ficticios";
+  document.querySelector("#dialog-context").textContent = privateModeKind === "remote" ? "Coordinador · Estado privado remoto" : privateMode ? "Coordinador · Estado local privado" : "Coordinador · Datos ficticios";
   document.querySelector("#dialog-title").textContent = "Decisiones abiertas";
   document.querySelector("#dialog-body").innerHTML = `<ul class="dialog-list">${state.decisions.map((item) => `
     <li><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.question)} · ${item.options.map(escapeHtml).join(" / ")}</p></li>
@@ -282,7 +322,7 @@ function handleQuery(event) {
   if (!query) {
     result.hidden = false;
     result.innerHTML = privateMode
-      ? "Escribe una pregunta o el nombre de un área para buscar en el estado privado local."
+      ? "Escribe una pregunta o el nombre de un área para buscar en el estado privado."
       : "Escribe una pregunta o el nombre de un área para buscar en el estado ficticio.";
     return;
   }
@@ -296,7 +336,7 @@ function handleQuery(event) {
   result.innerHTML = matches.length
     ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"} en el estado ${privateMode ? "privado" : "mock"}:</strong> ${matches.map((item) => escapeHtml(item.title)).join(" · ")}`
     : privateMode
-      ? "No hay coincidencias en el estado privado local."
+      ? "No hay coincidencias en el estado privado."
       : "No hay coincidencias en los datos ficticios. La conexión con fuentes reales y el asistente de lenguaje natural quedan para una fase futura.";
 }
 
