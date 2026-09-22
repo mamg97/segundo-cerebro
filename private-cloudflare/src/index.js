@@ -7,6 +7,9 @@ const securityHeaders = {
   "Content-Security-Policy": "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 };
 
+let googleTokenCache = { token: null, expiresAt: 0 };
+let financeCache = { value: null, expiresAt: 0 };
+
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(securityHeaders)) headers.set(key, value);
@@ -28,6 +31,176 @@ function json(payload, status = 200) {
       }
     })
   );
+}
+
+function hasFinanceGoogleConfig(env) {
+  return Boolean(
+    env.GOOGLE_CLIENT_ID &&
+    env.GOOGLE_CLIENT_SECRET &&
+    env.GOOGLE_REFRESH_TOKEN &&
+    env.FINANCE_SHEET_ID
+  );
+}
+
+async function getGoogleAccessToken(env) {
+  if (googleTokenCache.token && googleTokenCache.expiresAt > Date.now() + 60_000) {
+    return googleTokenCache.token;
+  }
+
+  const body = new URLSearchParams({
+    client_id: env.GOOGLE_CLIENT_ID,
+    client_secret: env.GOOGLE_CLIENT_SECRET,
+    refresh_token: env.GOOGLE_REFRESH_TOKEN,
+    grant_type: "refresh_token"
+  });
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body
+  });
+
+  if (!response.ok) {
+    throw new Error(`GOOGLE_TOKEN_${response.status}`);
+  }
+
+  const payload = await response.json();
+  if (!payload.access_token) throw new Error("GOOGLE_TOKEN_MISSING");
+
+  googleTokenCache = {
+    token: payload.access_token,
+    expiresAt: Date.now() + Math.max(60, Number(payload.expires_in || 3600) - 120) * 1000
+  };
+  return googleTokenCache.token;
+}
+
+function parseKeyValueRows(values = []) {
+  const out = {};
+  for (const row of values.slice(1)) {
+    const key = String(row?.[0] ?? "").trim();
+    if (!key) continue;
+    out[key] = row?.[1] ?? null;
+  }
+  return out;
+}
+
+function parseTableRows(values = []) {
+  if (!values.length) return [];
+  const headers = values[0].map((value) => String(value ?? "").trim());
+  return values.slice(1)
+    .filter((row) => row.some((value) => value !== "" && value !== null && value !== undefined))
+    .map((row) => Object.fromEntries(headers.map((header, index) => [header, row?.[index] ?? null])));
+}
+
+function toNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function moneyOrNull(value) {
+  return toNumber(value);
+}
+
+function formatPeriodLabel(start, end) {
+  if (!start || !end) return null;
+  const formatter = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" });
+  const a = new Date(`${start}T12:00:00Z`);
+  const b = new Date(`${end}T12:00:00Z`);
+  return `${formatter.format(a)} – ${formatter.format(b)}`.replaceAll(".", "");
+}
+
+async function fetchFinanceSummary(env) {
+  if (!hasFinanceGoogleConfig(env)) {
+    return { status: "not-configured", value: null };
+  }
+
+  if (financeCache.value && financeCache.expiresAt > Date.now()) {
+    return { status: "ok-cache", value: financeCache.value };
+  }
+
+  const token = await getGoogleAccessToken(env);
+  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500"];
+  const params = new URLSearchParams();
+  for (const range of ranges) params.append("ranges", range);
+  params.set("majorDimension", "ROWS");
+  params.set("valueRenderOption", "UNFORMATTED_VALUE");
+
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.FINANCE_SHEET_ID)}/values:batchGet?${params.toString()}`;
+  const response = await fetch(endpoint, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    throw new Error(`GOOGLE_SHEETS_${response.status}`);
+  }
+
+  const payload = await response.json();
+  const valueRanges = payload.valueRanges || [];
+  const summaryRows = valueRanges[0]?.values || [];
+  const categoryRows = valueRanges[1]?.values || [];
+  const commitmentRows = valueRanges[2]?.values || [];
+
+  const summary = parseKeyValueRows(summaryRows);
+  const categories = parseTableRows(categoryRows).map((item) => ({
+    id: item.id || null,
+    title: item.title || item.id || "Partida",
+    budgeted: moneyOrNull(item.budgeted),
+    spent: moneyOrNull(item.spent),
+    committed: moneyOrNull(item.committed),
+    remaining: moneyOrNull(item.remaining),
+    trackingMode: item.tracking_mode || "variable",
+    sourceStatus: item.source_status || null,
+    updatedAt: item.updated_at || null,
+    note: item.note || null
+  }));
+
+  const commitments = parseTableRows(commitmentRows).map((item) => ({
+    id: item.id || null,
+    title: item.title || item.id || "Compromiso",
+    date: item.date || null,
+    totalBudget: moneyOrNull(item.total_budget),
+    reserved: moneyOrNull(item.reserved),
+    needed: moneyOrNull(item.needed),
+    currency: item.currency || summary.currency || "EUR",
+    sourceStatus: item.source_status || null,
+    note: item.note || null
+  }));
+
+  const miguelIncome = moneyOrNull(summary.miguel_income);
+  const andreaIncome = moneyOrNull(summary.andrea_income);
+  const commonBudget = moneyOrNull(summary.common_budget);
+  const withSavings = moneyOrNull(summary.common_budget_with_savings);
+
+  const value = {
+    monthlyBudget: {
+      period: summary.period_start && summary.period_end
+        ? `${summary.period_start}/${summary.period_end}`
+        : null,
+      periodLabel: formatPeriodLabel(summary.period_start, summary.period_end),
+      currency: summary.currency || "EUR",
+      income: miguelIncome !== null && andreaIncome !== null ? miguelIncome + andreaIncome : null,
+      plannedOutflows: withSavings,
+      commonBudget,
+      personalNet: moneyOrNull(summary.joint_net_free),
+      savingsTarget: commonBudget !== null && withSavings !== null ? withSavings - commonBudget : null,
+      categories
+    },
+    upcomingCommitments: commitments,
+    source: {
+      kind: "google-sheet-derived",
+      status: summary.status || "DERIVADO",
+      sourceOfTruth: summary.source_of_truth || "ASUNTOS v3.xlsx",
+      intermediary: summary.intermediary || "GESTOR FINANZAS PERSONALES",
+      updatedAt: summary.updated_at || null
+    }
+  };
+
+  financeCache = {
+    value,
+    expiresAt: Date.now() + 30_000
+  };
+  return { status: "ok", value };
 }
 
 export default {
@@ -52,12 +225,23 @@ export default {
         "SELECT id, schema_version, created_at FROM state_snapshots WHERE is_current = 1 ORDER BY id DESC LIMIT 1"
       ).first();
 
+      let financeSync = hasFinanceGoogleConfig(env) ? "configured" : "not-configured";
+      if (hasFinanceGoogleConfig(env)) {
+        try {
+          const finance = await fetchFinanceSummary(env);
+          financeSync = finance.status;
+        } catch {
+          financeSync = "error";
+        }
+      }
+
       return json({
         ok: true,
         mode: "private-remote",
         snapshotAvailable: Boolean(row),
         schemaVersion: row?.schema_version ?? null,
-        snapshotCreatedAt: row?.created_at ?? null
+        snapshotCreatedAt: row?.created_at ?? null,
+        financeSync
       });
     }
 
@@ -83,12 +267,25 @@ export default {
         return json({ ok: false, code: "INVALID_STATE_JSON" }, 500);
       }
 
+      let financeSync = "not-configured";
+      if (hasFinanceGoogleConfig(env)) {
+        try {
+          const finance = await fetchFinanceSummary(env);
+          if (finance.value) state.financeSummary = finance.value;
+          financeSync = finance.status;
+        } catch (error) {
+          financeSync = "error";
+          console.warn("Finance sync failed", String(error?.message || error));
+        }
+      }
+
       state.meta = {
         ...(state.meta || {}),
         mode: "private-remote",
         remoteSnapshotId: row.id,
         schemaVersion: row.schema_version,
-        remoteSnapshotCreatedAt: row.created_at
+        remoteSnapshotCreatedAt: row.created_at,
+        financeSync
       };
 
       return json(state);
