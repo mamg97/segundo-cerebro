@@ -280,7 +280,8 @@ async function fetchFinanceSummary(env) {
       income: miguelIncome !== null && andreaIncome !== null ? miguelIncome + andreaIncome : null,
       plannedOutflows: withSavings,
       commonBudget,
-      personalNet: moneyOrNull(summary.joint_net_free),
+      personalNet: moneyOrNull(summary.miguel_net_free),
+      jointNet: moneyOrNull(summary.joint_net_free),
       savingsTarget: commonBudget !== null && withSavings !== null ? withSavings - commonBudget : null,
       categories
     },
