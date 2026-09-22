@@ -7,7 +7,7 @@
     <meta name="description" content="Prototipo privado y local del dashboard Segundo Cerebro.">
     <title>Segundo Cerebro — v0.1.1</title>
     <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.js?v=0.2.0"></script>
+    <script type="module" src="./app.js?v=0.2.1"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -36,6 +36,9 @@
             <time id="current-date"></time>
           </div>
           <div class="top-actions">
+            <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false" title="Cambiar tema">
+              <span aria-hidden="true">☾</span>
+            </button>
             <span class="mock-badge" id="data-mode-badge">Entorno mock</span>
             <button id="profile-button" class="avatar" type="button" aria-label="Perfil ficticio">SC</button>
           </div>
