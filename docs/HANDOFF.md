@@ -20,6 +20,11 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Eventos médicos salen de `Eventos importantes` y permanecen dentro de `Salud` (Médicos). También se evita clasificar `Comprar medicinas` como cita médica.
+- `Eventos importantes` pasa a una banda horizontal de una sola fila con scroll, para no ocupar varias pantallas verticales.
+- Reducido el tamaño del patrimonio, deuda y presupuesto en el bloque financiero de tres columnas; el valor principal de Dinero deja de solaparse con `Ejecutado`.
+- Corregido el hueco inferior de `Áreas de tu vida`: en escritorio, cuando hay 10 tarjetas, la última ocupa el ancho de la fila en lugar de dejar dos celdas vacías.
+
 - Reordenada la home financiera: `Dinero`, `Deudas` y `Patrimonio` forman ahora el bloque de resumen; `Eventos importantes` ocupa una fila completa independiente.
 - Creada la pestaña privada `EventosImportantes` en el bridge. Contiene las reglas personales comunicadas por Miguel Ángel y el alias privado del viaje sorpresa; ningún nombre privado se ha introducido en Git.
 - El Worker lee esas reglas y el frontend cruza automáticamente los eventos iCloud con ellas. Así pueden añadirse más eventos importantes en el futuro sin convertir el repositorio público en una base de datos personal.
