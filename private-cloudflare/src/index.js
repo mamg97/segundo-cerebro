@@ -1,3 +1,5 @@
+import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
+
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
@@ -236,13 +238,24 @@ export default {
         }
       }
 
+      let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
+      if (hasIcloudCalendarConfig(env)) {
+        try {
+          const calendar = await fetchIcloudCalendarSummary(env);
+          calendarSync = calendar.status;
+        } catch {
+          calendarSync = "error";
+        }
+      }
+
       return json({
         ok: true,
         mode: "private-remote",
         snapshotAvailable: Boolean(row),
         schemaVersion: row?.schema_version ?? null,
         snapshotCreatedAt: row?.created_at ?? null,
-        financeSync
+        financeSync,
+        calendarSync
       });
     }
 
@@ -280,13 +293,29 @@ export default {
         }
       }
 
+      let calendarSync = "not-configured";
+      if (hasIcloudCalendarConfig(env)) {
+        try {
+          const calendar = await fetchIcloudCalendarSummary(env);
+          if (calendar.value) {
+            state.calendarSummary = calendar.value;
+            state.events = calendar.value.events;
+          }
+          calendarSync = calendar.status;
+        } catch (error) {
+          calendarSync = "error";
+          console.warn("iCloud calendar sync failed", String(error?.message || error));
+        }
+      }
+
       state.meta = {
         ...(state.meta || {}),
         mode: "private-remote",
         remoteSnapshotId: row.id,
         schemaVersion: row.schema_version,
         remoteSnapshotCreatedAt: row.created_at,
-        financeSync
+        financeSync,
+        calendarSync
       };
 
       return json(state);
