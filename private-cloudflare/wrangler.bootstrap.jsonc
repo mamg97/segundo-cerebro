@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "segundo-cerebro-private",
+  "name": "segundo-cerebro",
   "main": "src/index.js",
   "compatibility_date": "2026-09-22",
   "assets": {
@@ -16,6 +16,6 @@
     }
   ],
   "vars": {
-    "PRIVATE_APP_ENABLED": "false"
+    "PRIVATE_APP_ENABLED": "true"
   }
 }
