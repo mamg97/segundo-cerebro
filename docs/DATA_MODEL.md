@@ -181,3 +181,20 @@ El estado financiero mensual y el patrimonio invertido son dimensiones distintas
 `monthlyBudget.categories[]` admite `owner` con valores `Común`, `Miguel` o `Andrea`. La UI agrupa por ese campo. Las partidas comunes y personales comparten el mismo modelo: `budgeted`, `spent`, `committed`, `remaining`, `sourceStatus`, `updatedAt` y `note`.
 
 `monthlyBudget` expone además `miguelNet`, `andreaNet` y `jointNet`. Estos netos se presentan como métricas separadas y no deben derivarse sumando/restando otra vez las partidas personales visibles.
+
+
+## Hábitos / HabitQuest
+
+HabitQuest conserva su Google Sheet como fuente propietaria del dato. Segundo Cerebro no replica permanentemente el histórico en D1: genera una vista privada derivada bajo demanda.
+
+### Habit
+
+Campos consumidos: `id`, `name`, `icon`, `category`, `frequency`, `days`, `reminder`, `difficulty`, `xpReward`, `timesPerDay`, `active`, `archivedAt`, `createdAt`.
+
+### Estado diario
+
+`SyncState` usa `habitId + date` como clave lógica y resuelve conflictos por el `updatedAt` más reciente. `count=0` es un tombstone explícito de desmarcado. Segundo Cerebro añade acciones a este log y nunca lo limpia.
+
+### Vista derivada
+
+`habitsSummary` puede incluir `todayHabits`, `summary`, `progress` y metadatos mínimos. No se transporta la foto/base64 de `Meta`. El progreso mostrado en Segundo Cerebro se calcula sobre los últimos 30 días programados.

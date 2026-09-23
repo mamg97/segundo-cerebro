@@ -11,6 +11,7 @@ const securityHeaders = {
 
 let googleTokenCache = { token: null, expiresAt: 0 };
 let financeCache = { value: null, expiresAt: 0 };
+let habitsCache = { value: null, expiresAt: 0 };
 
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
@@ -40,13 +41,20 @@ function safeIcloudErrorCode(error) {
   return /^ICLOUD_[A-Z0-9_]+$/.test(message) ? message : "ICLOUD_UNKNOWN";
 }
 
-function hasFinanceGoogleConfig(env) {
+function hasGoogleOauthConfig(env) {
   return Boolean(
     env.GOOGLE_CLIENT_ID &&
     env.GOOGLE_CLIENT_SECRET &&
-    env.GOOGLE_REFRESH_TOKEN &&
-    env.FINANCE_SHEET_ID
+    env.GOOGLE_REFRESH_TOKEN
   );
+}
+
+function hasFinanceGoogleConfig(env) {
+  return Boolean(hasGoogleOauthConfig(env) && env.FINANCE_SHEET_ID);
+}
+
+function hasHabitQuestGoogleConfig(env) {
+  return Boolean(hasGoogleOauthConfig(env) && env.HABITQUEST_SHEET_ID);
 }
 
 async function getGoogleAccessToken(env) {
@@ -374,6 +382,324 @@ async function fetchFinanceSummary(env) {
 }
 
 
+function habitDateKey(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
+function addHabitDays(dateKey, amount) {
+  const date = new Date(`${dateKey}T12:00:00+02:00`);
+  date.setDate(date.getDate() + amount);
+  return habitDateKey(date);
+}
+
+function habitWeekday(dateKey) {
+  return new Date(`${dateKey}T12:00:00+02:00`).getDay();
+}
+
+function habitIsScheduled(habit, dateKey) {
+  if (!habit.active) return false;
+  const weekday = habitWeekday(dateKey);
+  if (habit.frequency === "daily") return true;
+  if (habit.frequency === "weekdays") return weekday >= 1 && weekday <= 5;
+  return habit.days.includes(weekday);
+}
+
+function buildHabitStateMap(history, syncStates) {
+  const stateMap = new Map();
+
+  for (const completion of history) {
+    const key = `${completion.habitId}|${completion.date}`;
+    const existing = stateMap.get(key) || {
+      habitId: completion.habitId,
+      date: completion.date,
+      count: 0,
+      updatedAt: completion.at || `${completion.date}T12:00:00.000Z`
+    };
+    existing.count += 1;
+    const timestamp = completion.at || `${completion.date}T12:00:00.000Z`;
+    if (timestamp > existing.updatedAt) existing.updatedAt = timestamp;
+    stateMap.set(key, existing);
+  }
+
+  for (const state of syncStates) {
+    const key = `${state.habitId}|${state.date}`;
+    const previous = stateMap.get(key);
+    if (!previous || state.updatedAt >= previous.updatedAt) {
+      stateMap.set(key, state);
+    }
+  }
+
+  return stateMap;
+}
+
+function computeHabitStreak(stateMap, todayKey) {
+  const completedDates = new Set(
+    [...stateMap.values()]
+      .filter((item) => Number(item.count) > 0)
+      .map((item) => item.date)
+  );
+
+  let current = 0;
+  for (let offset = 0; offset < 400; offset += 1) {
+    const key = addHabitDays(todayKey, -offset);
+    if (completedDates.has(key)) current += 1;
+    else if (offset === 0) continue;
+    else break;
+  }
+
+  let longest = 0;
+  let run = 0;
+  for (let offset = 400; offset >= 0; offset -= 1) {
+    const key = addHabitDays(todayKey, -offset);
+    if (completedDates.has(key)) {
+      run += 1;
+      longest = Math.max(longest, run);
+    } else {
+      run = 0;
+    }
+  }
+
+  return { current, longest: Math.max(current, longest) };
+}
+
+function habitLevelFromXp(xp) {
+  const xpForLevel = (level) => {
+    if (level <= 1) return 0;
+    let total = 0;
+    let step = 100;
+    for (let current = 2; current <= level; current += 1) {
+      total += step;
+      step += 50;
+    }
+    return total;
+  };
+
+  let level = 1;
+  while (xpForLevel(level + 1) <= xp) level += 1;
+  const current = xpForLevel(level);
+  const next = xpForLevel(level + 1);
+  return {
+    level,
+    currentLevelXp: xp - current,
+    levelSpan: next - current,
+    progress: next > current ? Math.min(1, Math.max(0, (xp - current) / (next - current))) : 0
+  };
+}
+
+async function fetchHabitQuestSummary(env, options = {}) {
+  if (!hasHabitQuestGoogleConfig(env)) {
+    return { status: "not-configured", value: null };
+  }
+
+  const dateKey = /^\d{4}-\d{2}-\d{2}$/.test(String(options.date || ""))
+    ? String(options.date)
+    : habitDateKey();
+
+  if (!options.force && habitsCache.value && habitsCache.expiresAt > Date.now() && habitsCache.value.date === dateKey) {
+    return { status: "ok-cache", value: habitsCache.value };
+  }
+
+  const token = await getGoogleAccessToken(env);
+  const ranges = ["Habits!A1:M1200", "History!A1:F6000", "Meta!A1:B100", "SyncState!A1:D6000"];
+  const params = new URLSearchParams();
+  for (const range of ranges) params.append("ranges", range);
+  params.set("majorDimension", "ROWS");
+  params.set("valueRenderOption", "UNFORMATTED_VALUE");
+
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values:batchGet?${params.toString()}`;
+  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error(`HABITQUEST_SHEETS_${response.status}`);
+
+  const payload = await response.json();
+  const valueRanges = payload.valueRanges || [];
+  const habitRows = parseTableRows(valueRanges[0]?.values || []);
+  const historyRows = parseTableRows(valueRanges[1]?.values || []);
+  const metaRows = valueRanges[2]?.values || [];
+  const syncRows = parseTableRows(valueRanges[3]?.values || []);
+
+  const habits = habitRows.map((item) => ({
+    id: String(item.id || "").trim(),
+    name: String(item.name || "").trim(),
+    icon: String(item.icon || "✓"),
+    category: String(item.category || "personal"),
+    frequency: String(item.frequency || "daily"),
+    days: String(item.days || "")
+      .split(/[,;\s]+/)
+      .map(Number)
+      .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6),
+    reminder: String(item.reminder || ""),
+    difficulty: String(item.difficulty || "easy"),
+    xpReward: Math.max(0, Number(item.xpReward) || 0),
+    timesPerDay: Math.max(1, Number(item.timesPerDay) || 1),
+    active: String(item.active || "yes").toLowerCase() !== "no",
+    archivedAt: item.archivedAt || null,
+    createdAt: item.createdAt || null
+  })).filter((habit) => habit.id && habit.name);
+
+  const history = historyRows
+    .map((item) => ({
+      id: String(item.id || "").trim(),
+      habitId: String(item.habitId || "").trim(),
+      habitName: String(item.habitName || "").trim(),
+      date: String(item.date || "").trim(),
+      at: String(item.at || "").trim() || null,
+      xpEarned: Math.max(0, Number(item.xpEarned) || 0)
+    }))
+    .filter((item) => item.habitId && /^\d{4}-\d{2}-\d{2}$/.test(item.date));
+
+  const syncStates = syncRows
+    .map((item) => ({
+      habitId: String(item.habitId || "").trim(),
+      date: String(item.date || "").trim(),
+      count: Math.max(0, Math.floor(Number(item.count) || 0)),
+      updatedAt: String(item.updatedAt || "").trim()
+    }))
+    .filter((item) => item.habitId && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.updatedAt);
+
+  const stateMap = buildHabitStateMap(history, syncStates);
+  const habitById = new Map(habits.map((habit) => [habit.id, habit]));
+  const scheduled = habits.filter((habit) => habitIsScheduled(habit, dateKey));
+  const todayHabits = scheduled.map((habit) => {
+    const state = stateMap.get(`${habit.id}|${dateKey}`);
+    const count = Math.max(0, Number(state?.count) || 0);
+    return {
+      ...habit,
+      count,
+      target: habit.timesPerDay,
+      done: count >= habit.timesPerDay
+    };
+  });
+
+  let xp = 0;
+  for (const item of stateMap.values()) {
+    const habit = habitById.get(item.habitId);
+    if (!habit || item.count <= 0) continue;
+    xp += item.count * habit.xpReward;
+  }
+
+  const streak = computeHabitStreak(stateMap, dateKey);
+  const meta = parseKeyValueRows(metaRows);
+  let user = {};
+  try {
+    const parsed = JSON.parse(String(meta.user || "{}"));
+    user = {
+      name: parsed.name || "Miguel",
+      avatar: parsed.avatar || "✓",
+      streakFreezes: Number(parsed.streakFreezes) || 0,
+      habitView: parsed.habitView || "compact"
+    };
+  } catch {}
+
+  const progress = habits.filter((habit) => habit.active).map((habit) => {
+    let scheduledDays = 0;
+    let completedDays = 0;
+    const points = [];
+    for (let offset = 29; offset >= 0; offset -= 1) {
+      const key = addHabitDays(dateKey, -offset);
+      if (!habitIsScheduled(habit, key)) continue;
+      scheduledDays += 1;
+      const count = Math.max(0, Number(stateMap.get(`${habit.id}|${key}`)?.count) || 0);
+      const done = count >= habit.timesPerDay;
+      if (done) completedDays += 1;
+      points.push({ date: key, count, target: habit.timesPerDay, done });
+    }
+    return {
+      id: habit.id,
+      name: habit.name,
+      icon: habit.icon,
+      category: habit.category,
+      scheduledDays,
+      completedDays,
+      rate: scheduledDays ? completedDays / scheduledDays : 0,
+      points
+    };
+  });
+
+  const value = {
+    date: dateKey,
+    user,
+    habits,
+    todayHabits,
+    summary: {
+      total: todayHabits.length,
+      done: todayHabits.filter((habit) => habit.done).length,
+      xp,
+      level: habitLevelFromXp(xp),
+      streak: streak.current,
+      longestStreak: streak.longest
+    },
+    progress,
+    source: {
+      kind: "google-sheet",
+      title: "HabitQuest Data",
+      updatedAt: meta.updatedAt || null
+    }
+  };
+
+  habitsCache = { value, expiresAt: Date.now() + 15_000 };
+  return { status: "ok", value };
+}
+
+async function toggleHabitQuest(request, env) {
+  if (!hasHabitQuestGoogleConfig(env)) {
+    return json({ ok: false, code: "HABITQUEST_NOT_CONFIGURED" }, 503);
+  }
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ ok: false, code: "INVALID_JSON" }, 400);
+  }
+
+  const habitId = String(payload?.habitId || "").trim();
+  const date = String(payload?.date || "").trim();
+  if (!habitId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return json({ ok: false, code: "INVALID_HABIT_ACTION" }, 400);
+  }
+
+  const current = await fetchHabitQuestSummary(env, { date, force: true });
+  const habit = current.value?.habits?.find((item) => item.id === habitId);
+  const todayHabit = current.value?.todayHabits?.find((item) => item.id === habitId);
+  if (!habit) return json({ ok: false, code: "HABIT_NOT_FOUND" }, 404);
+  if (!todayHabit) return json({ ok: false, code: "HABIT_NOT_SCHEDULED" }, 409);
+
+  const currentCount = Math.max(0, Number(todayHabit.count) || 0);
+  const target = Math.max(1, Number(habit.timesPerDay) || 1);
+  const nextCount = currentCount >= target ? 0 : currentCount + 1;
+  const updatedAt = new Date().toISOString();
+
+  const token = await getGoogleAccessToken(env);
+  const range = encodeURIComponent("SyncState!A:D");
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ values: [[habitId, date, nextCount, updatedAt]] })
+  });
+
+  if (!response.ok) throw new Error(`HABITQUEST_WRITE_${response.status}`);
+
+  habitsCache = { value: null, expiresAt: 0 };
+  const refreshed = await fetchHabitQuestSummary(env, { date, force: true });
+  return json({
+    ok: true,
+    habitId,
+    date,
+    count: nextCount,
+    summary: refreshed.value
+  });
+}
+
+
 async function ensureGymTables(env) {
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS gym_sessions (
@@ -581,6 +907,20 @@ export default {
         }
       }
 
+      let habitSync = hasHabitQuestGoogleConfig(env) ? "configured" : "not-configured";
+      let habitCount = null;
+      let habitTodayCount = null;
+      if (hasHabitQuestGoogleConfig(env)) {
+        try {
+          const habits = await fetchHabitQuestSummary(env);
+          habitSync = habits.status;
+          habitCount = Array.isArray(habits.value?.habits) ? habits.value.habits.length : null;
+          habitTodayCount = Array.isArray(habits.value?.todayHabits) ? habits.value.todayHabits.length : null;
+        } catch {
+          habitSync = "error";
+        }
+      }
+
       let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
       let calendarError = null;
       let calendarMatchedCount = null;
@@ -606,12 +946,38 @@ export default {
         schemaVersion: row?.schema_version ?? null,
         snapshotCreatedAt: row?.created_at ?? null,
         financeSync,
+        habitSync,
+        habitCount,
+        habitTodayCount,
         calendarSync,
         calendarError,
         calendarMatchedCount,
         calendarSelectedCount,
         calendarEventCount
       });
+    }
+
+    if (url.pathname === "/api/habits") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const date = url.searchParams.get("date") || undefined;
+      try {
+        const habits = await fetchHabitQuestSummary(env, { date });
+        if (!habits.value) return json({ ok: false, code: "HABITQUEST_NOT_CONFIGURED" }, 503);
+        return json({ ok: true, status: habits.status, ...habits.value });
+      } catch (error) {
+        console.warn("HabitQuest read failed", String(error?.message || error));
+        return json({ ok: false, code: "HABITQUEST_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/habits/toggle") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        return await toggleHabitQuest(request, env);
+      } catch (error) {
+        console.warn("HabitQuest toggle failed", String(error?.message || error));
+        return json({ ok: false, code: "HABITQUEST_WRITE_FAILED" }, 502);
+      }
     }
 
     if (url.pathname === "/api/gym") {
@@ -676,6 +1042,18 @@ export default {
         }
       }
 
+      let habitSync = "not-configured";
+      if (hasHabitQuestGoogleConfig(env)) {
+        try {
+          const habits = await fetchHabitQuestSummary(env);
+          if (habits.value) state.habitsSummary = habits.value;
+          habitSync = habits.status;
+        } catch (error) {
+          habitSync = "error";
+          console.warn("HabitQuest sync failed", String(error?.message || error));
+        }
+      }
+
       let calendarSync = "not-configured";
       if (hasIcloudCalendarConfig(env)) {
         try {
@@ -698,6 +1076,7 @@ export default {
         schemaVersion: row.schema_version,
         remoteSnapshotCreatedAt: row.created_at,
         financeSync,
+        habitSync,
         calendarSync
       };
 
