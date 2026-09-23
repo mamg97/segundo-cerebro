@@ -127,7 +127,7 @@ async function fetchFinanceSummary(env) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:G200", "GimnasioPlan!A1:N500", "Nutricion!A1:G500"];
+  const ranges = ["Resumen!A1:B100", "Categorias!A1:K500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:G200", "GimnasioPlan!A1:N500", "Nutricion!A1:G500"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
