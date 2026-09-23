@@ -20,6 +20,10 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Gimnasio recuerda el último peso real registrado por ejercicio y lo precarga la siguiente vez que se abre ese ejercicio; si el último registro fue sin carga, el campo queda vacío en lugar de volver al peso de referencia.
+- El histórico de entrenamientos incorpora `Eliminar registro`, con confirmación antes de borrar. Al eliminar una sesión también desaparecen sus puntos de las gráficas de progreso.
+- Las dominadas se etiquetan como `kg extra`: el peso corporal queda como referencia y el campo registra solo lastre añadido.
+
 - Gimnasio pasa de ser una vista derivada del calendario a un módulo operativo dentro de Salud.
 - El plan privado se almacena en la pestaña `GimnasioPlan` del bridge privado, no en Git. Se ha migrado la rutina actual de 3 días (Empuje, Tirón y Pierna) con series, repeticiones, referencias de carga y notas técnicas.
 - La web permite seleccionar el día, registrar fecha, series, repeticiones, peso y notas por ejercicio, y guardar cada entrenamiento.
