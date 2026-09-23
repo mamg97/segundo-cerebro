@@ -4060,3 +4060,36 @@ html[data-theme="dark"] .gym-session-footer input {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+.orb-pulse-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: baseline;
+}
+
+.orb-pulse-summary > strong {
+  grid-row: 1 / span 3;
+  align-self: center;
+  color: var(--ink);
+  font-family: "Iowan Old Style", serif;
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.orb-pulse-summary > span {
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+@media (max-width: 620px) {
+  .orb-pulse-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .orb-pulse-summary > strong {
+    grid-row: auto;
+  }
+}
