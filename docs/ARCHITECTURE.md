@@ -2,117 +2,126 @@
 
 ## Visión
 
-El Segundo Cerebro es un sistema coordinado, no una colección de agentes con memorias independientes.
+Segundo Cerebro es un sistema coordinado, no una colección de agentes con memorias independientes.
 
 ```text
 Usuario
   ↓
-Coordinador / Chief of Staff
+Coordinador / Organizador
   ↓
 Estado global común
   ↓
 Módulos especializados
   ↓
-Referencias a fuentes externas propietarias
+Fuentes propietarias y persistencia privada
 ```
 
-## Responsabilidades
+## Superficies
 
-### Coordinador
+### Demo pública
 
-Interpreta la intención del usuario, combina contexto de varias áreas, detecta conflictos y presenta prioridades. No es propietario exclusivo de datos de ningún área.
+GitHub Pages publica únicamente la interfaz y mocks. No accede a datos privados ni secretos.
 
-### Estado global común
-
-Mantiene entidades, relaciones, decisiones, estado operativo y referencias mínimas. Todos los módulos consultan esta misma capa. En v0.1 es un módulo JavaScript en memoria con datos mock.
-
-### Módulos
-
-Las áreas previstas son Finance, Career, Calendar/Social, Partner, Family, Family Wealth, Projects y Coordinator. Un módulo aporta reglas y vistas especializadas, pero no una memoria paralela.
-
-### Integraciones
-
-En el futuro adaptarán Gmail, Outlook, Google Calendar, Google Drive/Sheets y GitHub. Cada fuente seguirá siendo propietaria del dato original. No hay integraciones activas en v0.1.
-
-## Implementación v0.1
+### Aplicación privada remota
 
 ```text
-app/
-  index.html      interfaz y estructura semántica
-  styles.css      sistema visual responsive
-  app.js          renderizado e interacciones locales
-core/
-  mock-state.js   estado global común, ficticio e inmutable por sesión
-agents/           límites de los módulos futuros
-integrations/     contrato y prohibición temporal de conexiones
-docs/             memoria operativa y decisiones
-```
-
-La aplicación es estática, sin framework ni dependencias externas. Esta elección reduce superficie, evita comprometer decisiones prematuras y permite validar navegación, jerarquía y modelo.
-
-## Flujo actual
-
-1. `app.js` carga una única instantánea desde `core/mock-state.js`.
-2. Las vistas derivan resúmenes y listas de ese estado.
-3. La caja de consulta busca localmente coincidencias en los mocks; no envía texto fuera del dispositivo.
-4. La vista de sistema representa la jerarquía Coordinador → estado común → módulos → capacidades y fuentes.
-
-## Vista operativa
-
-El árbol de la interfaz es una explicación observable de la arquitectura, no un conjunto de agentes con memoria independiente. Sus nodos muestran:
-
-- El Coordinador que interpreta y combina contexto.
-- El estado global común como única fuente de verdad.
-- Módulos especializados que consultan ese estado.
-- Capacidades transversales sin memoria propia.
-- Fuentes propietarias con estado y nivel de acceso explícitos.
-
-En v0.1.1 todos los estados son ficticios. Solo el mock local aparece activo; las fuentes externas se muestran bloqueadas y sin conectar.
-
-## Capa privada local experimental
-
-Para validar casos reales sin publicarlos, la interfaz admite una superposición local provisional:
-
-1. El modo normal siempre carga `core/mock-state.js`.
-2. Solo si el host es `localhost`, `127.0.0.1` o `::1` y la URL incluye `?private=1`, `app.js` intenta importar `.private/state.js`.
-3. `.private/` está ignorado por Git y no se copia en el workflow de GitHub Pages.
-4. Si el archivo falta o no declara `mode: private-local`, la interfaz conserva los mocks.
-
-Esta capa no conecta conversaciones ni servicios. Contiene una síntesis mínima creada manualmente a partir de fuentes leídas sin modificarlas. Es una prueba del modelo común, no la decisión de persistencia definitiva: el archivo no está cifrado y no debe servirse fuera de `127.0.0.1`.
-
-## Evolución prevista, no decidida
-
-- Capa de persistencia privada.
-- Autenticación y cifrado.
-- Adaptadores de fuentes con permisos mínimos.
-- Coordinador con lenguaje natural.
-- Instalable como PWA.
-
-Hosting, base de datos, proveedor de IA y método de sincronización quedan deliberadamente abiertos.
-
-
-## Evolución v0.2 — aplicación privada remota
-
-La siguiente fase adopta una arquitectura concreta para acceso desde Mac, iPhone e iPad sin publicar el estado personal:
-
-```text
-Dispositivo
-   ↓
+Mac / iPhone / iPad
+        ↓
 Cloudflare Access
-   ↓
+        ↓
 Cloudflare Worker + Static Assets
-   ↓
-API privada de solo lectura
-   ↓
-Cloudflare D1
+        ↓
+API privada
+   ↙        ↓        ↘
+ D1      Sheets     CalDAV
+  ↑                    ↓
+Health ingest        iCloud
+Worker
 ```
 
-- GitHub Pages continúa como demo pública con mocks.
-- El Worker privado sirve una copia construida de `app/` y `core/`; no publica `.private/`.
-- La interfaz privada solicita `/api/state` y activa el modo `private-remote`.
-- D1 almacena instantáneas versionadas del estado privado; la primera migración parte de `.private/state.js` mediante un generador local que produce SQL dentro de `.private/`.
-- Cloudflare Access protege todo el Worker antes de habilitarlo.
-- La web privada es inicialmente de solo lectura: no existen endpoints de escritura ni sincronización automática.
-- `PRIVATE_APP_ENABLED=false` actúa como seguro de despliegue para evitar publicar la aplicación antes de configurar Access.
+La aplicación privada activa el modo `private-remote` y obtiene el estado desde el Worker protegido.
 
-Esta fase no convierte GitHub en almacén de datos ni elimina la copia local provisional. La migración remota solo se realiza cuando la barrera de autenticación ha sido verificada.
+## Coordinador y estado común
+
+El Coordinador interpreta la intención del usuario y combina información entre áreas. Los módulos aportan reglas de dominio, pero no mantienen memorias independientes.
+
+D1 mantiene instantáneas privadas y determinadas entidades operativas propias del sistema. Cuando una fuente externa es propietaria del dato, D1 o el Worker solo transportan o derivan el contexto mínimo necesario.
+
+## Módulos operativos
+
+### Finance
+
+La fuente financiera externa continúa siendo la autoridad de importes y presupuesto. Una hoja privada derivada normaliza el estado que consume el Worker. El dashboard muestra presupuesto, compromisos, deudas, patrimonio y conciliación sin convertir Git ni D1 en una contabilidad paralela.
+
+### Calendar
+
+iCloud Calendar se consulta mediante CalDAV. Esta integración es deliberadamente de solo lectura: el Worker usa operaciones de consulta y no modifica calendarios.
+
+### Habits / HabitQuest
+
+El Google Sheet original de HabitQuest sigue siendo la fuente de verdad. Segundo Cerebro puede leer el estado diario y gestionar hábitos mediante endpoints privados. La escritura conserva la semántica de sincronización de HabitQuest.
+
+### Health
+
+Salud agrupa Médicos, Gimnasio y Nutrición.
+
+- Médicos deriva citas desde iCloud y permanece lectura.
+- El plan de gimnasio vive en una fuente privada y las sesiones registradas se persisten en D1.
+- Nutrición usa un Sheet privado para comidas, registro y objetivos.
+- El gasto energético automático se almacena en D1 y puede entrar desde Apple Health mediante el Worker de ingesta dedicado.
+
+## Escritura selectiva
+
+La aplicación privada ya no es globalmente de solo lectura. Los permisos se definen por dominio:
+
+- iCloud Calendar: lectura.
+- Finanzas: lectura del estado derivado desde el dashboard.
+- HabitQuest: lectura y gestión de hábitos.
+- Gimnasio: lectura y registro/borrado de sesiones.
+- Nutrición: lectura y escritura de comidas/registros autorizados.
+- Energía Apple Health: ingesta controlada hacia D1.
+
+Cualquier nueva capacidad de escritura debe tener una fuente de verdad clara, validación de entrada y documentación de privacidad.
+
+## Apple Health
+
+Apple Health no se consulta directamente desde el navegador.
+
+```text
+Apple Watch
+  ↓
+Apple Health
+  ↓
+Atajo de iPhone
+  ↓
+segundo-cerebro-health-ingest
+  ↓  Service Binding
+segundo-cerebro
+  ↓
+D1 health_energy_daily
+  ↓
+Salud / Nutrición
+```
+
+El Worker de ingesta usa un token secreto y recibe solo el resumen energético necesario. No requiere credenciales de Google ni expone D1 directamente.
+
+## Código
+
+```text
+app/                    frontend común
+core/                   mocks de la demo pública
+agents/                 contratos de dominio
+docs/                   memoria técnica y decisiones
+private-cloudflare/     Worker, API, build y scripts privados
+.private/               estado auxiliar local, ignorado por Git
+```
+
+## Principios
+
+- Una sola arquitectura conceptual y un estado global coherente.
+- Cada dominio conserva una fuente de verdad explícita.
+- Git nunca almacena datos privados reales.
+- Los secretos solo existen en configuración privada.
+- Minimizar datos transportados y persistidos.
+- Añadir escritura solo donde aporta valor y puede reconciliarse.
+- La demo pública y la aplicación privada deben permanecer separadas.

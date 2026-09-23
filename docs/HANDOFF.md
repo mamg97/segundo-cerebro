@@ -3,331 +3,161 @@
 ## Última actualización
 
 - **Fecha:** 2026-09-23
-- **Última herramienta:** ChatGPT normal
-- **Rama:** `main`
-- **Remoto:** `https://github.com/mamg97/segundo-cerebro.git`
+- **Herramienta:** ChatGPT normal
+- **Rama operativa:** `main`
+- **Repositorio:** `mamg97/segundo-cerebro`
+
+## Propósito de este documento
+
+Este archivo describe únicamente el estado vigente y el siguiente paso. El historial de implementación permanece en Git y las decisiones duraderas en `docs/DECISIONS.md`.
 
 ## Estado actual
 
-Validación end-to-end completada el 2026-09-22: la URL privada `https://segundo-cerebro.mamg97.workers.dev/app/` carga correctamente tras Cloudflare Access, el Worker lee la instantánea D1 y la interfaz entra en `Modo privado remoto`. La demo pública de GitHub Pages sigue separada y usando mocks.
+Segundo Cerebro dispone de dos superficies separadas:
 
+- **GitHub Pages:** demo pública con mocks, sin datos ni conexiones privadas.
+- **Cloudflare:** aplicación privada protegida por Access, con Worker, D1 e integraciones autorizadas.
 
-La demo pública v0.1.1 sigue siendo un frontend estático con datos exclusivamente ficticios. Localmente existe además una primera superposición privada experimental, ignorada por Git, que carga un estado real minimizado solo en loopback y con activación explícita. Incluye referencias y contexto derivado de conversaciones leídas en modo solo lectura; no conecta ni modifica ninguna fuente. El código y la demo mock continúan en `mamg97/segundo-cerebro` y `https://mamg97.github.io/segundo-cerebro/`.
+La aplicación privada ya no es un prototipo de solo lectura. Hay escritura selectiva en los dominios que la necesitan y lectura estricta en los que no.
 
-## Objetivo activo
+## Arquitectura operativa
 
-Preparar una primera versión remota privada y de solo lectura, accesible desde Mac, iPhone e iPad, usando Cloudflare Worker + Access + D1 sin mover datos reales a GitHub.
+```text
+Usuario
+  ↓
+ORGANIZADOR / WEB GENERAL
+  ↓
+Estado global común
+  ↓
+Finance · Calendar · Habits · Health · resto de áreas
+  ↓
+Fuentes propietarias / D1
+```
 
-## Trabajo realizado
+Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de verdad paralelas. Este repositorio y los contratos de `agents/` permiten relevo entre ChatGPT normal y Work/Codex.
 
-- Añadido puente seguro para Apple Health/Apple Watch: Worker independiente `segundo-cerebro-health-ingest`, expuesto solo para ingesta y protegido con un token Bearer secreto.
-- El puente usa un Service Binding interno hacia `segundo-cerebro`; no necesita exponer ni duplicar las credenciales Google del Worker principal.
-- Los datos automáticos de energía se guardan en D1 `health_energy_daily`; `EnergiaDiaria` del Sheet queda como fallback/manual.
-- Salud → Nutrición prioriza la muestra D1 más reciente por fecha y calcula gasto total y balance diario sin inferir calorías por asistencia al gimnasio.
-- Incluido `scripts/setup-health-ingest.mjs`: despliega el Worker de ingesta, genera un token aleatorio y lo guarda como secreto Cloudflare en una sola ejecución local.
+## Funcionalidad vigente
 
-- Creada una fuente privada separada `SEGUNDO CEREBRO - SALUD` para nutrición y energía diaria. No se mezcla con Finanzas.
-- La fuente contiene cuatro pestañas: `Comidas` (base reutilizable), `Registro` (planificado/consumido), `Objetivos` (kcal/macros por fecha efectiva) y `EnergiaDiaria` (calorías activas, reposo y total).
-- El Worker expone `GET /api/nutrition` y endpoints privados de escritura para comida, registro diario y energía.
-- La vista Salud → Nutrición muestra consumidas, gasto total, balance energético, objetivo, comidas del día, base reutilizable e histórico de 14 días.
-- Las filas de Registro pueden referenciar `item_id`; si kcal/macros están vacíos, el Worker deriva los valores desde la base de Comidas y escala por cantidad/ración.
-- Apple Watch/Apple Health queda preparado a nivel de modelo y endpoint. Falta el puente iPhone → Worker/Sheet; hasta entonces la UI lo muestra explícitamente como pendiente y no inventa gasto energético.
+### Interfaz
 
-- Sustituido el orb CSS propio por el componente original `@schoolees/thinking-orbs`, adaptado de Jakub Antalik y licenciado MIT.
-- La librería se versiona dentro de `app/vendor/thinking-orbs/` con `LICENSE` y `NOTICE.md`, evitando depender de CDN o npm en tiempo de ejecución.
-- El orb usa los estados reales de la librería: `idle` en reposo, `searching` durante búsquedas, `solving` al calcular el pulso del sistema y `responding` al presentar resultado.
-- Se mantiene `interactive`, detección automática claro/oscuro, pausa fuera de pantalla y respeto a `prefers-reduced-motion` proporcionados por la propia librería.
+- Dashboard responsive para Mac, iPhone e iPad.
+- Modo claro/oscuro.
+- Logo cerebral común en navegación y favicon.
+- Thinking Orb vendorizado con estados de actividad.
+- Vista semanal de agenda, eventos importantes, decisiones y módulos.
+- Diseño móvil corregido para evitar overflow y apariencia de escritorio comprimido.
 
-- Sustituido el símbolo circular provisional de la marca por el logo cerebral seleccionado por el usuario. Tras detectar un artefacto visual del wrapper SVG, se reemplazó por el PNG original subido desde su Mac.
-- El mismo activo se usa en la esquina superior izquierda y como favicon/shortcut icon de la pestaña.
-- El archivo definitivo vive en `app/brain-logo.png` y es el PNG original descargado por el usuario; no se envuelve en SVG ni se regenera.
+### Finanzas
 
-- El antiguo gráfico concéntrico del cuadro de consulta se sustituye por un **orb del Segundo Cerebro** animado y accesible. El color refleja estado general y al pulsarlo muestra un resumen rápido de pulso, hábitos, open loops, decisiones y ejecución financiera.
-- La sección `Hábitos` incorpora gestión nativa de HabitQuest: crear, editar, archivar/restaurar, eliminar y reordenar hábitos sin abandonar Segundo Cerebro.
-- El editor conserva el modelo de HabitQuest: icono, categoría, frecuencia, días personalizados, recordatorio, dificultad/XP y veces por día.
-- Las mutaciones se escriben en la hoja original de HabitQuest y actualizan `Meta.updatedAt` para que la app HabitQuest independiente siga reconciliando correctamente mediante su flujo de sincronización.
-- Eliminar sigue siendo destructivo y borra también History/SyncState del hábito; archivar conserva todo el histórico y es la opción recomendada.
+- Fuente oficial externa + memoria de reglas + hoja privada derivada.
+- Resumen mensual, presupuesto, próximos movimientos y conciliación.
+- Separación entre partidas comunes e individuales.
+- Deudas con resumen y detalle.
+- Patrimonio con evolución histórica.
+- Flujo mensual separado conceptualmente de inversiones/ahorro.
+- Contrato vigente: `agents/FINANCE.md`.
 
-- HabitQuest integrado de forma nativa dentro de Segundo Cerebro como área `Hábitos`; no se usa iframe ni se duplica la app React.
-- La hoja privada existente `HabitQuest Data` sigue siendo la fuente de verdad. Segundo Cerebro lee `Habits`, `History`, `Meta` y `SyncState` a través del Worker privado.
-- La vista integrada incluye Hoy, navegación por fecha, marcación/desmarcación, racha, XP/nivel, listado de hábitos y progreso de 30 días.
-- La escritura conserva la semántica Last-Write-Wins de HabitQuest: las acciones se anexan a `SyncState`; `count=0` actúa como tombstone y no se borra historial.
-- El identificador de la hoja se guarda únicamente como secreto `HABITQUEST_SHEET_ID`; nombres, histórico y datos personales no se versionan en Git.
-- La app HabitQuest independiente se conserva durante la validación como fallback; no se elimina ni se modifica su Sheet.
+### Calendario
 
-- El detalle de presupuesto mensual se divide en `Común`, `Miguel` y `Andrea`, manteniendo presupuesto, gastado, comprometido, libre, porcentaje y estado por partida.
-- La pestaña privada `Categorias` incorpora columna `owner`; las partidas personales viven solo en la capa financiera privada y no se hardcodean en Git.
-- Los netos libres de Miguel y Andrea se muestran aparte del presupuesto común.
-- En móvil, Series/Reps/Peso del gimnasio usan selectores nativos `select`; en iOS se abren con el picker tipo rueda del sistema. En escritorio se conservan inputs normales.
+- Integración iCloud por CalDAV.
+- Lectura únicamente.
+- Vista semanal y eventos importantes.
+- Reglas privadas de alias y clasificación viven fuera de Git.
+- El horizonte ampliado permite detectar eventos relevantes futuros sin convertir la home en un calendario completo.
 
-- Gimnasio recuerda el último peso real registrado por ejercicio y lo precarga la siguiente vez que se abre ese ejercicio; si el último registro fue sin carga, el campo queda vacío en lugar de volver al peso de referencia.
-- El histórico de entrenamientos incorpora `Eliminar registro`, con confirmación antes de borrar. Al eliminar una sesión también desaparecen sus puntos de las gráficas de progreso.
-- Las dominadas se etiquetan como `kg extra`: el peso corporal queda como referencia y el campo registra solo lastre añadido.
+### Hábitos
 
-- Gimnasio pasa de ser una vista derivada del calendario a un módulo operativo dentro de Salud.
-- El plan privado se almacena en la pestaña `GimnasioPlan` del bridge privado, no en Git. Se ha migrado la rutina actual de 3 días (Empuje, Tirón y Pierna) con series, repeticiones, referencias de carga y notas técnicas.
-- La web permite seleccionar el día, registrar fecha, series, repeticiones, peso y notas por ejercicio, y guardar cada entrenamiento.
-- Los entrenamientos se persisten en D1 (`gym_sessions` y `gym_entries`) y se exponen solo a través del Worker privado protegido por Cloudflare Access.
-- Salud incluye tres pestañas: Médicos (iCloud), Gimnasio (plan + registro + progreso) y Nutrición. Nutrición queda preparada pero sin inventar un plan que todavía no se ha definido.
-- El histórico de gimnasio genera progreso por ejercicio a partir de las cargas registradas y muestra sesiones recientes expandibles.
+- HabitQuest está integrado de forma nativa.
+- El Sheet original sigue siendo fuente de verdad.
+- Lectura de hábitos, histórico y progreso.
+- Marcar/desmarcar respetando Last-Write-Wins.
+- Crear, editar, archivar/restaurar, eliminar y reordenar hábitos.
+- La aplicación independiente HabitQuest se mantiene como fallback durante la validación.
 
-- Aplicado un hard-stop de overflow horizontal al `workbench`: el track del grid pasa a `minmax(0,1fr)`, los paneles hijos tienen `min-width:0/max-width:100%` y el contenido de `focus-meta` ya no puede ensanchar la sección.
-- `Eventos importantes` y `Próximos movimientos` quedan limitados al mismo ancho lógico del contenido principal.
+### Salud — Gimnasio
 
-- Corregido un error semántico en el resumen financiero: la UI etiquetaba como `Neto personal` el campo `joint_net_free` (152,72 €), que en realidad es el margen conjunto.
-- El Worker ahora mapea `personalNet` desde `miguel_net_free` (69,17 €) y conserva `jointNet` por separado.
-- La etiqueta visible pasa a `Libre Miguel` para evitar confundir el margen personal con el conjunto.
+- Salud contiene Médicos, Gimnasio y Nutrición.
+- Médicos deriva de iCloud y es solo lectura.
+- El plan de gimnasio vive en la fuente privada.
+- Las sesiones y ejercicios registrados se persisten en D1.
+- La UI recuerda la última carga real por ejercicio, permite borrar sesiones y muestra progreso.
 
-- `Eventos importantes` deja de vivir dentro del grid financiero `.money-horizon` y pasa a ser una sección hermana de `Próximos movimientos`. Esto elimina definitivamente la diferencia de ancho causada por el spanning del grid.
-- Ambas secciones comparten ahora el mismo contenedor padre y `width:100%`, por lo que sus bordes izquierdo y derecho deben quedar alineados.
+### Salud — Nutrición
 
-- Corregida la lógica privada de eventos importantes tras contrastarla con capturas reales de iCloud: `Viaje nov` pasa a buscar el título real `Viaje Nov` y no un alias antiguo que estaba capturando una fecha errónea.
-- La pestaña privada `EventosImportantes` incorpora `exclude_terms` para diferenciar títulos que contienen otros términos como `preboda` vs `boda`, sin hardcodear nombres personales en Git.
-- Añadida una regla privada independiente para `Preboda` y mantenida otra para `Boda`, evitando que la preboda se renombre incorrectamente como boda.
+- Fuente privada `SEGUNDO CEREBRO - SALUD`.
+- Pestañas lógicas: comidas reutilizables, registro planificado/consumido, objetivos y energía manual de fallback.
+- La UI muestra consumido, gasto, balance, objetivo, comidas e histórico cuando existen datos.
+- No se inventan objetivos nutricionales ni gasto ausente.
+- Contrato vigente: `agents/HEALTH.md`.
 
-- Eventos importantes muestra todos los eventos detectados directamente en la home, sin carrusel ni botón intermedio.
-- Las tarjetas se han reducido y uniformado en una rejilla responsive (5/4/3/2/1 columnas según ancho) para que se vean todos de golpe.
-- El bloque `Eventos importantes` y `Próximos movimientos` se fuerzan a `width:100%` y `box-sizing:border-box` para alinear exactamente sus bordes derecho e izquierdo.
+### Apple Health
 
-- Resumen de Eventos importantes limitado a 3 tarjetas completas y del mismo ancho; se elimina el carrusel que dejaba tarjetas cortadas a mitad.
-- Añadido `Ver todos` para abrir el listado completo en un diálogo con tarjetas uniformes y fecha completa.
-- La información no desaparece: la home muestra solo los tres próximos y el detalle conserva todos los eventos detectados.
+Implementado en servidor:
 
-- Eventos importantes cruza por título normalizado entre iCloud y compromisos financieros: si un mismo evento aparece en ambas fuentes, se conserva la fecha de iCloud y se adjuntan presupuesto/reserva, evitando duplicados como `Viaje nov`.
-- Las reglas privadas de búsqueda se han hecho más tolerantes en la hoja `EventosImportantes` para localizar los eventos personales aunque el título de iCloud no incluya palabras genéricas como `boda` o `master`.
-- Sigue sin copiarse ningún nombre personal de estas reglas a Git; solo la lógica de cruce está versionada.
+```text
+Apple Watch → Apple Health → Atajo iPhone
+→ segundo-cerebro-health-ingest
+→ Service Binding
+→ segundo-cerebro
+→ D1 health_energy_daily
+→ Salud / Nutrición
+```
 
-- Corregido el desbordamiento de los KPI compactos del bloque Dinero en escritorio: Ingresos, Neto personal y Ahorro objetivo pasan a filas horizontales etiqueta/valor dentro de la tarjeta, evitando cortes y solapes en anchos estrechos.
+El Worker de ingesta:
 
-- Eventos médicos salen de `Eventos importantes` y permanecen dentro de `Salud` (Médicos). También se evita clasificar `Comprar medicinas` como cita médica.
-- `Eventos importantes` pasa a una banda horizontal de una sola fila con scroll, para no ocupar varias pantallas verticales.
-- Reducido el tamaño del patrimonio, deuda y presupuesto en el bloque financiero de tres columnas; el valor principal de Dinero deja de solaparse con `Ejecutado`.
-- Corregido el hueco inferior de `Áreas de tu vida`: en escritorio, cuando hay 10 tarjetas, la última ocupa el ancho de la fila en lugar de dejar dos celdas vacías.
+- está separado del Worker principal;
+- usa un token Bearer secreto;
+- recibe solo energía activa, reposo y total;
+- no recibe frecuencia cardiaca, ubicación u otros datos;
+- persiste el resumen en D1;
+- tiene prioridad sobre el fallback manual del Sheet para la misma fecha.
 
-- Reordenada la home financiera: `Dinero`, `Deudas` y `Patrimonio` forman ahora el bloque de resumen; `Eventos importantes` ocupa una fila completa independiente.
-- Creada la pestaña privada `EventosImportantes` en el bridge. Contiene las reglas personales comunicadas por Miguel Ángel y el alias privado del viaje sorpresa; ningún nombre privado se ha introducido en Git.
-- El Worker lee esas reglas y el frontend cruza automáticamente los eventos iCloud con ellas. Así pueden añadirse más eventos importantes en el futuro sin convertir el repositorio público en una base de datos personal.
-- Ampliado el horizonte iCloud de 90 a 550 días para encontrar bodas, viajes y otras fechas importantes de 2027 sin alterar la vista semanal actual.
-- Las citas médicas se consideran también eventos importantes mediante clasificación genérica por título/ubicación.
-- Creada el área derivada `Salud`, con tres apartados: Médicos, Gimnasio y Nutrición. Lee solo iCloud y sigue siendo read-only.
-- El calendario visible aplica el alias seguro `Viaje nov` si el título real contiene el destino sorpresa.
+## Fuentes de verdad
 
-- Añadido resumen de Patrimonio a la home: muestra el total del último snapshot del día 1 disponible y un acceso `Ver evolución`.
-- La hoja privada derivada incorpora una pestaña `Patrimonio` con histórico mensual desde abril de 2024 hasta septiembre de 2026: salarios de Miguel/Andrea y patrimonio total. El dato actual es 39.114 € a 1 sep 2026.
-- El área `Patrimonio` abre un detalle específico con dos gráficas SVG responsive: evolución de salarios (dos series) y evolución del patrimonio.
-- El enlace lateral `Patrimonio` abre directamente este detalle en vez de limitarse a desplazar la página hasta la tarjeta.
-- El Worker selecciona como actual el último snapshot con fecha <= hoy, evitando tomar como actuales valores futuros/proyectados.
+- Finanzas: fuente financiera externa; hoja derivada solo transporta estado normalizado.
+- Calendario y citas: iCloud.
+- HabitQuest: Google Sheet original.
+- Plan/base de Salud y Nutrición: Sheet privado de Salud.
+- Sesiones de gimnasio: D1.
+- Energía automática de Apple Health: D1 `health_energy_daily`.
+- Código, arquitectura y contratos: Git.
+- Secretos: configuración privada de Cloudflare/local, nunca Git.
 
-- Corregido un fallo de bootstrap del modo privado remoto: `build.mjs` solo inyectaba `private-config.js` si `app.js` llevaba exactamente la versión `?v=0.2.0`. Al pasar a `?v=0.2.1`, Cloudflare servía la app con datos mock aunque `/api/health` siguiera sano.
-- La inyección ahora usa un patrón independiente de versión y la CI verifica no solo que exista `dist/private-config.js`, sino que `dist/app/index.html` lo cargue realmente.
-- Este fallo explicaba el calendario ficticio pese a `calendarSync: ok`: la interfaz estaba en `Modo demo` y nunca llamaba a `/api/state`.
+## Privacidad
 
-- Añadido un bloque específico de Deudas a la portada financiera: resumen compacto visible y detalle completo bajo `Ver detalle`.
-- La hoja privada `SEGUNDO CEREBRO - ESTADO FINANCIERO` incorpora una pestaña `Deudas`; el Worker la lee junto con Resumen/Categorias/Compromisos.
-- Se han inicializado tres obligaciones ya presentes en el presupuesto (El Corte Inglés, IKEA y préstamo coche) con sus cuotas mensuales conocidas. Los saldos pendientes y tipos de interés permanecen nulos hasta que la fuente financiera los confirme.
-- El resumen de deuda no infiere saldo total cuando faltan saldos: muestra `Por completar`, la cuota mensual agregada y el número de obligaciones activas.
+- No versionar cifras personales, eventos reales, históricos médicos, nombres privados de reglas, credenciales ni tokens.
+- GitHub Pages debe seguir siendo mock.
+- iCloud permanece de solo lectura.
+- Las mutaciones privadas deben escribir exclusivamente en la fuente documentada para ese dominio.
 
-- Rediseñada la portada móvil como layout single-column real: hero, buscador, dinero, eventos, movimientos y agenda ocupan el ancho disponible completo.
-- Se corrige la sensación de “desktop encogido”: topbar, hero y buscador reducen altura y peso visual; los bloques operativos ganan continuidad vertical.
-- `money-horizon` y `workbench` se fuerzan a bloque único en <=520 px para evitar repartos anómalos de ancho.
-- Se compactan tipografías, paddings y métricas en móvil sin alterar escritorio.
+## Problemas o límites conocidos
 
-- Ajustada la densidad móvil de la portada: menos espacio vertical en hero, buscador y secciones principales.
-- El resumen financiero móvil mantiene previsto y ejecutado en la misma fila y conserva las tres métricas clave en una fila compacta en vez de apilarlas.
-- `Eventos y presupuesto` pasa en móvil a carrusel horizontal de tarjetas compactas para evitar una portada excesivamente larga.
-- Reducido padding y tamaño tipográfico de bloques operativos en pantallas pequeñas sin tocar la vista de escritorio.
+- La caja de consulta sigue siendo principalmente una experiencia local del frontend; todavía no existe un asistente general con lenguaje natural conectado a todos los datos del sistema.
+- La aplicación todavía no es una PWA offline.
+- No todos los dominios previstos tienen contrato propio en `agents/`.
+- La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
+- El puente Apple Health está implementado en código, pero falta terminar su configuración real en el Mac/iPhone.
 
-- La portada deja de esconder las decisiones detrás del botón `Verlas`: las decisiones abiertas se muestran directamente bajo la agenda semanal, con pregunta y opciones visibles.
-- El bloque `Dinero · Este mes` se ha compactado para mostrar solo el resumen ejecutivo (previsto, ejecutado, ingresos, neto personal y ahorro objetivo). El detalle de las 19 partidas pasa a un diálogo accesible mediante `Ver presupuesto`.
-- El detalle financiero sigue leyendo la misma capa privada derivada y mantiene estados de conciliación y barras de progreso por partida.
-- El repositorio `main` queda como fuente operativa de cambios; el proyecto Cloudflare ya está conectado al repositorio. Los siguientes cambios se harán y fusionarán desde Git, dejando el despliegue a la integración Git de Cloudflare; si una actualización no se publica automáticamente, revisar una única vez la configuración de Production branch/autodeploy en Cloudflare en lugar de volver al despliegue manual habitual.
+## Próxima acción exacta
 
-- Corregida la ventana de lectura CalDAV: el Worker pedía solo desde `now - 24h`, por lo que al abrir la semana un martes faltaban los eventos del lunes por la mañana/tarde anteriores a esa hora. Ahora solicita 8 días hacia atrás para garantizar que la semana actual esté completa antes de que la UI filtre lunes–domingo.
+Completar Apple Health:
 
-- Sustituida la lista vertical `En el horizonte` por una visión semanal horizontal (lunes–domingo) inspirada en la vista Semana de iCloud Calendar.
-- La semana se limita deliberadamente a la semana actual: el objetivo es contexto operativo, no replicar el calendario completo de iCloud.
-- Los eventos se deduplican por calendario+título+inicio+fin y se ordenan dentro de cada día con eventos de día completo primero y después por hora.
-- Se mantienen los colores de origen: Personal Miguel amarillo, Trabajo azul, Andrea y Miguel naranja y Calendario familiar verde.
-- La vista semanal ocupa el ancho completo del bloque de trabajo para no comprimir siete columnas; en móvil permite desplazamiento horizontal.
+1. En el Mac, desde `private-cloudflare/`, ejecutar `npm run setup:health-ingest`.
+2. Guardar de forma privada la URL y el token generados; no pegarlos en chats ni Git.
+3. Crear/configurar en el iPhone un Atajo que lea energía activa y energía en reposo de Apple Health y envíe el resumen diario al Worker.
+4. Validar que la muestra aparece en Salud → Nutrición y que el balance usa D1 antes que el fallback del Sheet.
+5. Después de esa validación, decidir la automatización diaria del Atajo.
 
-- Ajustada la sección `En el horizonte` para mostrar todos los eventos de los próximos 8 días en orden cronológico, en lugar de limitarse a 8 eventos balanceados que podían ocultar citas del calendario `Andrea y Miguel`.
-- Añadidos colores visuales por calendario, alineados con la app Calendario de macOS: personal amarillo, trabajo azul, pareja naranja y familiar verde.
-- Cada evento muestra ahora una banda lateral, fecha y punto de origen con el color de su calendario iCloud.
+## Archivos que debe leer el siguiente relevo
 
-- Corregida la sección `En el horizonte`: antes hacía `slice(0, 8)` sobre todos los eventos y un recurrente diario de Trabajo podía ocupar las ocho posiciones.
-- La portada usa ahora un reparto equilibrado de eventos por calendario iCloud, garantizando representación de los distintos calendarios con eventos próximos antes de rellenar huecos adicionales.
-- La etiqueta mostrada bajo cada evento usa el nombre real del calendario iCloud cuando está disponible.
-- `/api/health` añade contadores seguros `calendarMatchedCount`, `calendarSelectedCount` y `calendarEventCount` para distinguir problemas de lectura de problemas de presentación sin exponer nombres ni eventos.
+- `AGENTS.md`
+- `docs/HANDOFF.md`
+- `docs/ARCHITECTURE.md`
+- `docs/DATA_MODEL.md`
+- `docs/PRIVACY.md`
+- `docs/DECISIONS.md`
+- `agents/FINANCE.md`
+- `agents/HEALTH.md`
+- `private-cloudflare/README.md`
 
-- Añadida integración privada de iCloud Calendar por CalDAV en rama `icloud-calendar-sync-v0.4`.
-- La integración es operativamente de solo lectura: únicamente usa `PROPFIND` y `REPORT`; no implementa escritura.
-- Los secretos `ICLOUD_APPLE_ID`, `ICLOUD_APP_PASSWORD` e `ICLOUD_CALENDAR_CONFIG` se configuran localmente con Wrangler y nunca se escriben en Git.
-- El Worker consulta los calendarios seleccionados, normaliza solo título/fecha/hora/ubicación/origen y sustituye `state.events` por la agenda iCloud cuando la sincronización funciona.
-- Horizonte inicial: próximos 90 días; caché: 60 s; `/api/health` añade `calendarSync`.
-- La portada limita la agenda a los 8 próximos eventos y reconoce eventos de día completo.
-
-- Corregido el dashboard financiero para mostrar las 19 partidas con presupuesto positivo del ciclo 20/09–20/10, no solo las tres partidas con gasto ya registrado.
-- Corregida la barra de progreso: el CSP bloqueaba el `style="width:..."` inline, por eso el relleno no reflejaba el porcentaje. Se sustituye por `<progress>` nativo, compatible con el CSP.
-- La barra ahora representa exclusivamente gasto ejecutado (`spent / budgeted`). Los importes comprometidos se muestran aparte y no avanzan la barra hasta ejecutarse.
-
-- Creada en Drive la hoja privada derivada `SEGUNDO CEREBRO - ESTADO FINANCIERO` con pestañas `Resumen`, `Categorias` y `Compromisos`; no sustituye a `ASUNTOS v3.xlsx`.
-- Actualizado `CONTROL ASISTENTE - MEMORIA FINANCIERA` con el protocolo de integración: Gestor Financiero actúa como intermediario, Excel solo lectura, estados `PROVISIONAL_CHAT` / `RECONCILIADO_SHEET` / `DERIVADO`.
-- Añadida en rama `finance-live-sheet-sync-v0.3.2` lectura privada en vivo desde Google Sheets al Worker: `/api/state` superpone `financeSummary` sobre D1, con caché de 30 s y fallback seguro.
-- Añadido script local para configurar credenciales OAuth de lectura como secretos de Wrangler sin escribirlas en Git.
-- La UI diferencia partidas provisionales pendientes de conciliación de partidas confirmadas.
-
-- Añadida en rama `budget-item-progress-v0.3.1` una barra de progreso por categoría presupuestada del mes. Calcula `% consumido = (gastado + comprometido) / presupuestado`, muestra gastado, comprometido y saldo libre, y marca en coral los excesos >100%.
-
-- Añadida en rama `dashboard-budget-events-v0.3` una nueva zona de portada para presupuesto mensual y próximos compromisos con presupuesto.
-- El modelo admite `financeSummary.monthlyBudget` y `financeSummary.upcomingCommitments`, distinguiendo modelo presupuestario, gasto real y datos por conciliar.
-- Añadido un generador local `make-finance-patch-sql.mjs` que lee `.private/finance-summary.json` y genera un patch D1 dentro de `.private/`, sin versionar importes reales.
-
-- La aplicación privada remota se ha abierto correctamente en navegador tras autenticación.
-- Confirmada la lectura de la instantánea D1 desde la UI: 11 open loops visibles y estado personal remoto activo.
-- Confirmado que la barrera de Access protege el Worker y que el frontend privado no depende del archivo local `.private/` para funcionar.
-
-- D1 `segundo-cerebro-private` creada en jurisdicción UE, esquema aplicado y primera instantánea privada importada correctamente (`schema_version 0.2`, `is_current=1`).
-- Cloudflare Access verificado en incógnito: el Worker exige autenticación antes de responder.
-- El Worker bootstrap se ha alineado con el nombre protegido `segundo-cerebro`, vinculado a D1 mediante `DB` y activado con `PRIVATE_APP_ENABLED=true` tras completar las barreras de seguridad.
-
-- Establecidas reglas permanentes en `AGENTS.md`.
-- Documentadas arquitectura, modelo de datos, privacidad y decisiones.
-- Creado un estado global común mock con las entidades iniciales.
-- Construido el dashboard para Mac, iPhone e iPad con navegación lateral adaptable.
-- Incluidas las diez áreas: estado general, carrera, finanzas, agenda, pareja/boda, familia, patrimonio familiar, proyectos, open loops y objetivos.
-- Implementadas caja “¿Qué necesitas?”, búsqueda local sobre mocks, prioridades, agenda, decisiones y detalle por área.
-- Evolucionada la vista Sistema a un árbol operativo responsive con estados, permisos y acceso a los detalles de cada módulo.
-- Añadidas capacidades transversales mock: revisión semanal, priorizador, detector de conflictos y control de privacidad.
-- Mejorada la legibilidad móvil de textos funcionales y el contraste de los acentos.
-- Añadidos límites explícitos para módulos e integraciones futuras.
-- Publicado el repositorio en la cuenta personal `mamg97` y añadido un workflow de GitHub Pages para la demo estática.
-- Revisadas en modo solo lectura conversaciones existentes sobre finanzas personales, inversión/ahorro, MIDAS, LITOS, HabitQuest y carrera. Se identificaron dominios y fuentes futuras, pero no se copiaron datos reales al repositorio.
-- Añadido un cargador privado que solo se activa en loopback con `?private=1`; fuera de ese caso mantiene el mock.
-- Creada una primera síntesis local ignorada por Git con proyectos, objetivos, decisiones, open loops, personas mínimas, activos conceptuales y fuentes referenciadas.
-- Ampliada la revisión a planificación de viajes, cuaderno de ideas, asuntos familiares sensibles y pendientes domésticos; los detalles innecesarios, documentos e identificadores se excluyeron.
-- Creada la rama `private-cloudflare-v0.2`.
-- Añadido `private-cloudflare/` con Worker, Static Assets, D1, build aislado, importador local y documentación de despliegue.
-- `app/app.js` ya admite un modo `private-remote` activado únicamente en el bundle privado.
-- Añadido seguro `PRIVATE_APP_ENABLED=false` para impedir exposición antes de configurar Cloudflare Access.
-- Añadido workflow de CI para comprobar sintaxis y que el bundle privado no contenga `.private/`.
-
-## Estado funcional
-
-- La interfaz se sirve desde `app/` con cualquier servidor HTTP estático.
-- `core/mock-state.js` es la única fuente de estado de la v0.1.
-- La consulta central realiza una búsqueda literal local; no usa IA ni red.
-- Los detalles de área y decisiones se abren en diálogos locales.
-- El selector Resumen/Sistema funciona y la navegación móvil se repliega.
-- Los nodos de módulo del árbol abren el mismo detalle que las tarjetas de área.
-- Las fuentes externas figuran bloqueadas y sin conectar; solo el mock local aparece activo.
-- No hay persistencia: recargar restablece el estado ficticio.
-- La publicación de Pages contiene únicamente `app/`, `core/`, el redirect raíz y `.nojekyll`.
-- El modo privado se abre en `http://127.0.0.1:4173/app/?private=1` y muestra una etiqueta inequívoca de estado local no publicado.
-- Las consultas siguen siendo búsquedas literales en el navegador; en modo privado buscan en la síntesis local sin usar red ni IA.
-
-## Decisiones tomadas
-
-- Estado global único; los módulos no tendrán memorias separadas.
-- Las fuentes externas seguirán siendo propietarias de los datos originales.
-- Git contiene solo código, documentación técnica y mocks inequívocos.
-- v0.1 usa HTML, CSS y JavaScript nativos, sin dependencias.
-- La interfaz nace responsive y preparada conceptualmente para PWA, pero no se activa aún caché offline.
-- El árbol operativo es una capa de transparencia; sus nodos no son memorias ni agentes autónomos.
-- GitHub Pages aloja solo la demo mock; hosting definitivo, base de datos, autenticación, proveedor de IA y sincronización siguen abiertos.
-- La superposición `.private/state.js` es provisional, local, no cifrada y nunca se versiona.
-- Para v0.2 se adopta Cloudflare Worker + Access + D1 como primera arquitectura remota privada.
-- La primera versión remota será estrictamente de solo lectura; no hay endpoints de escritura desde el navegador.
-
-Consulta `docs/DECISIONS.md` para el registro duradero.
-
-## Problemas conocidos
-
-- La búsqueda es literal y demostrativa; no interpreta lenguaje natural.
-- Los indicadores de salud son mocks y todavía no tienen fórmula de cálculo.
-- El árbol todavía no muestra relaciones entre entidades concretas como proyectos, personas o decisiones.
-- No existen persistencia, autenticación, cifrado, PWA instalable ni tests automatizados de navegador.
-- La demo y el repositorio son públicos, por lo que cualquier cambio futuro requiere mantener la revisión estricta de secretos, datos reales y metadatos sensibles antes de cada push.
-- Las conversaciones revisadas son contexto de fuentes reales, no una integración: pueden cambiar y no existe sincronización automática con ellas.
-- La síntesis privada no está cifrada en reposo y depende de este dispositivo; no debe servirse en la red local ni tratarse como respaldo.
-- Varias conversaciones extensas solo están revisadas parcialmente y aparecen marcadas como tales en el registro privado de fuentes.
-- Los indicadores de salud privados son estimaciones provisionales, no métricas calculadas.
-
-## Pendientes inmediatos
-
-1. Abrir PR de `private-cloudflare-v0.2` y dejar pasar la CI.
-2. Crear D1 y el Worker en la cuenta Cloudflare del usuario.
-3. Proteger todo el Worker con Cloudflare Access y verificar que no se abre sin autenticación.
-4. Importar la síntesis existente desde `.private/state.js` a D1 usando el generador local.
-5. Activar `PRIVATE_APP_ENABLED=true` y validar la URL privada desde iPhone, iPad y Mac.
-6. Después, volver a la validación de exactitud, frescura y prioridades del estado.
-
-## Próxima acción recomendada
-
-Configurar una única vez los secretos iCloud desde el Mac con `node scripts/configure-icloud-calendar-sync.mjs`, desplegar el Worker y validar `calendarSync` en `/api/health`. Después revisar que los cuatro calendarios iCloud seleccionados aparecen correctamente y que no se copian descripciones, asistentes ni enlaces internos.
-
-## Archivos relevantes
-
-- `AGENTS.md`: reglas permanentes y límites.
-- `app/index.html`: estructura semántica del dashboard.
-- `app/styles.css`: diseño responsive y accesibilidad visual.
-- `app/app.js`: renderizado e interacciones locales.
-- `core/mock-state.js`: estado global ficticio.
-- `docs/ARCHITECTURE.md`: capas y flujo del sistema.
-- `docs/DATA_MODEL.md`: entidades y relaciones.
-- `docs/PRIVACY.md`: datos prohibidos y reglas para integraciones.
-- `docs/DECISIONS.md`: decisiones arquitectónicas duraderas.
-- `.github/workflows/pages.yml`: publicación de la demo estática en GitHub Pages.
-- `.private/state.js`: estado real minimizado, solo local e ignorado por Git.
-- `.private/README.md`: instrucciones y límites del modo privado local.
-- `CHATGPT_NORMAL/README.md`: coordinación del carril ChatGPT normal.
-- `WORK_CODEX/README.md`: coordinación del carril Work/Codex.
-- `docs/REMOTE_PRIVATE_PLAN.md`: plan para acceso web privado con datos reales fuera de GitHub.
-- `private-cloudflare/README.md`: procedimiento de despliegue privado.
-- `private-cloudflare/src/index.js`: Worker y API privada de solo lectura.
-- `private-cloudflare/migrations/0001_init.sql`: esquema inicial D1.
-- `private-cloudflare/scripts/make-import-sql.mjs`: generador local de importación desde `.private/state.js`.
-
-## Pruebas realizadas
-
-- `node --check app/app.js`: correcto.
-- `node --check core/mock-state.js`: correcto.
-- `git diff --check`: correcto.
-- Búsqueda local de patrones habituales de secretos: sin hallazgos.
-- Carga mediante servidor HTTP local: correcta, sin recursos externos.
-- Revisión visual en escritorio: correcta.
-- Revisión responsive a 390 × 844 px: correcta, incluida la jerarquía completa del árbol.
-- Consulta local “anillo”: devuelve el open loop ficticio esperado.
-- Cambio Resumen/Sistema: correcto tras corregir la visibilidad con `hidden`.
-- Navegación “General”: corregida para apuntar a `#overview`.
-- Árbol operativo: jerarquía, estados y fuentes visibles correctamente en escritorio y móvil.
-- Interacción módulo → detalle: correcta desde la vista Sistema.
-- Detector mecánico de diseño ejecutado; se corrigieron tamaños funcionales, contraste, brillo decorativo y borde de aviso señalados.
-- Historial Git revisado antes de publicar: autor normalizado a `mamg97@users.noreply.github.com` y sin emails personales en los commits publicados.
-- Revisión de conversaciones reales mediante lectura únicamente: no se modificaron los hilos ni sus fuentes y no se incorporaron cifras, identidades, documentos o secretos al repositorio.
-- GitHub Actions `Deploy mock demo to GitHub Pages` run #2: correcto en 20 s.
-- Carga pública de `https://mamg97.github.io/segundo-cerebro/`: correcta; redirige a `/app/` y muestra la v0.1.1.
-- `node --check app/app.js`, `core/mock-state.js` y `.private/state.js`: correcto.
-- `git check-ignore -v .private/state.js`: confirma exclusión mediante `.gitignore`.
-- `git ls-files .private`: sin resultados; no hay estado privado versionado.
-- Servidor local ligado a `127.0.0.1`: correcto.
-- Carga de `?private=1`: etiqueta privada, 11 open loops, fuentes y eventos reales minimizados visibles.
-- Consulta local “MIDAS”: devuelve coincidencias del estado privado sin red.
-
-
-## Actualización 22/09/2026 — deudas + tema visual
-
-- La vista privada de Finanzas ya contempla un bloque resumido de deudas con detalle bajo demanda.
-- La fuente sigue siendo el Sheet financiero privado; los importes reales no se versionan en Git.
-- El Worker acepta totales agregados de deuda desde la hoja intermedia para poder mostrar un resumen aunque alguna deuda individual tenga campos incompletos.
-- Se añadió selector claro/oscuro en la cabecera. La preferencia queda guardada en el navegador y el tema oscuro cubre navegación, paneles, calendario, diálogos y tarjetas financieras.
-- Los cambios de código están en `main`; el Worker privado necesita un nuevo despliegue de Cloudflare para reflejarlos en producción.
-
-
-## Actualización 23/09/2026 — gestor financiero
-
-- El módulo Finance queda formalizado como **gestor de finanzas personales**.
-- La conversación mensual gestiona flujo de caja: ingresos, gastos, cuentas, cuotas, compromisos, liquidez, viajes y cierre de ciclo.
-- Inversiones y ahorro pasan a una conversación separada para patrimonio financiero, brokers y asignación; ambos carriles comparten el mismo estado global.
-- Añadido `agents/FINANCE.md` como contrato operativo del módulo.
-- La lógica permanente exige distinguir saldo bancario, dinero comprometido y dinero libre; las transferencias internas no son ingresos/gastos nuevos y las notas de la fuente financiera forman parte de la conciliación.
-- No se han versionado importes ni movimientos reales. Git sigue conteniendo únicamente lógica, documentación y mocks.
+No reconstruir el proyecto desde conversaciones antiguas salvo que se investigue una decisión histórica concreta.

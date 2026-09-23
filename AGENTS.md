@@ -4,44 +4,50 @@ Estas reglas son permanentes y se aplican a cualquier herramienta que continúe 
 
 ## Propósito
 
-Construir un segundo cerebro personal y privado: un sistema operativo de vida con un coordinador central, estado global común y módulos especializados. El repositorio es la memoria oficial del proyecto; nunca se debe depender del historial de una conversación.
+Construir un segundo cerebro personal y privado: un sistema operativo de vida con un coordinador central, estado global común y módulos especializados. El repositorio es la memoria técnica oficial del proyecto; nunca se debe depender del historial de una conversación.
 
 ## Antes de cambiar nada
 
 1. Leer este archivo completo.
 2. Leer `docs/HANDOFF.md` completo.
 3. Consultar `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/PRIVACY.md` y `docs/DECISIONS.md` según el trabajo.
-4. Revisar estado de Git, ramas y cambios sin commit.
-5. Entender el propósito de cualquier trabajo previo antes de modificarlo o reemplazarlo.
+4. Leer el contrato de `agents/` correspondiente al dominio afectado.
+5. Revisar el estado de Git y entender el propósito del trabajo previo antes de modificarlo.
 
 ## Límites de privacidad
 
-- GitHub solo puede contener código, documentación técnica y datos ficticios inequívocos.
-- No guardar datos personales reales, emails reales, saldos, extractos, patrimonio real, datos familiares o médicos, contraseñas, tokens, claves API, credenciales OAuth ni secretos.
-- No conectar cuentas personales ni APIs reales hasta que una fase futura lo autorice expresamente.
-- Las fuentes originales conservan la propiedad de sus datos. El Segundo Cerebro almacena principalmente estado, relaciones, referencias, decisiones y contexto mínimo.
+- GitHub solo puede contener código, documentación técnica, licencias y datos ficticios inequívocos.
+- No guardar datos personales reales, emails reales, saldos, extractos, patrimonio real, datos familiares o médicos, contraseñas, tokens, claves API, credenciales OAuth, cookies ni secretos.
+- Las integraciones reales están autorizadas únicamente dentro de la infraestructura privada descrita en la arquitectura y con los permisos mínimos necesarios.
+- Las fuentes originales conservan la propiedad de sus datos salvo que una decisión explícita documente que D1 es la fuente operativa de una entidad concreta.
 - Todo dato debe admitir una sensibilidad: `normal`, `personal`, `confidencial` o `muy_confidencial`.
-- Antes de cada commit, revisar que no haya secretos ni datos reales.
+- Antes de cada commit, revisar que no haya secretos, valores personales ni metadatos sensibles.
 
-## Arquitectura y alcance actual
+## Arquitectura vigente
 
-- Flujo conceptual: Usuario → Coordinador → Estado global común → módulos → fuentes externas.
-- Los módulos no deben crear memorias aisladas ni duplicar el estado global.
-- La fase v0.1 usa exclusivamente mocks y no decide todavía hosting ni base de datos definitiva.
-- Mantener la solución pequeña, legible, responsive y preparada para evolucionar a PWA.
-- No añadir dependencias o abstracciones sin una necesidad concreta.
+- Flujo conceptual: Usuario → Coordinador → estado global común → módulos → fuentes externas / D1.
+- Los módulos no crean memorias aisladas ni estados paralelos.
+- GitHub Pages sigue siendo exclusivamente la demo pública mock.
+- La aplicación privada usa Cloudflare Worker + Access + D1.
+- Algunas fuentes son estrictamente de lectura, como iCloud Calendar.
+- Otras permiten escritura privada controlada, como HabitQuest, gimnasio, nutrición y la ingesta energética.
+- Finanzas mantiene su fuente oficial externa y el dashboard consume un estado derivado; no debe inventarse contabilidad paralela.
+- Mantener la solución pequeña, legible, responsive y sin dependencias innecesarias.
 
 ## Documentación viva
 
-- `docs/HANDOFF.md` describe solo el presente, no un diario. Actualizarlo al final de cada bloque de trabajo.
-- Las decisiones duraderas van en `docs/DECISIONS.md`.
-- La arquitectura, el modelo y la privacidad viven en sus documentos homónimos.
+- `docs/HANDOFF.md` describe solo el presente y el siguiente paso operativo. No es un diario.
+- `docs/DECISIONS.md` conserva decisiones duraderas, incluidas las ya superadas cuando siguen siendo útiles históricamente.
+- `docs/ARCHITECTURE.md` describe cómo funciona el sistema hoy.
+- `docs/DATA_MODEL.md` define entidades y contratos.
+- `docs/PRIVACY.md` define fronteras de datos y seguridad.
 - Si el código contradice la documentación, resolver la inconsistencia antes de terminar.
 
 ## Convenciones de trabajo
 
 - Hacer commits pequeños y descriptivos.
-- Ejecutar las comprobaciones disponibles y registrar el resultado en `docs/HANDOFF.md`.
+- Ejecutar las comprobaciones disponibles y registrar en `docs/HANDOFF.md` únicamente las que sigan siendo relevantes para el relevo.
 - No borrar ni sobrescribir trabajo previo sin comprobar para qué sirve.
-- Tratar todos los archivos bajo `sources/` como referencias de solo lectura: no editarlos, moverlos, renombrarlos ni borrarlos. Pueden ser reemplazados por la sincronización del proyecto ChatGPT.
-- No configurar un remoto ni publicar el repositorio sin autorización explícita.
+- Tratar los archivos bajo `sources/` como referencias de solo lectura.
+- No incorporar datos privados en ejemplos de documentación; usar nombres y valores genéricos.
+- No cambiar la fuente de verdad de un dominio sin registrarlo en `docs/DECISIONS.md`.

@@ -2,73 +2,90 @@
 
 ## Regla fundamental
 
-GitHub solo contiene código, documentación técnica y datos ficticios. Las fuentes originales conservan la propiedad de sus datos.
+GitHub contiene únicamente código, documentación técnica, licencias y datos ficticios. Los datos personales reales permanecen en fuentes privadas y en la infraestructura protegida cuando su persistencia es necesaria.
 
-## Datos prohibidos en el repositorio
+## Datos prohibidos en Git
 
 - Emails o mensajes reales.
-- Saldos, extractos, números de cuenta o datos patrimoniales reales.
+- Saldos, extractos, números de cuenta o posiciones patrimoniales reales.
 - Datos familiares sensibles o información médica.
 - Contraseñas, tokens, API keys, secretos, cookies o credenciales OAuth.
 - Exportaciones completas de cuentas personales.
-- Identificadores externos que permitan acceder o inferir información sensible.
+- Identificadores privados que permitan acceso a una fuente.
+- Dumps de D1, Sheets o calendarios con datos reales.
 
 ## Clasificación
 
-| Nivel | Ejemplo abstracto | Tratamiento futuro |
+| Nivel | Ejemplo abstracto | Tratamiento |
 |---|---|---|
 | `normal` | Preferencia de interfaz | Protección estándar |
 | `personal` | Objetivo o relación personal | Acceso privado |
-| `confidencial` | Contexto financiero resumido | Cifrado y acceso restringido |
-| `muy_confidencial` | Salud, credenciales o detalle patrimonial | Minimización extrema; evitar persistencia |
+| `confidencial` | Contexto financiero resumido | Acceso restringido y minimización |
+| `muy_confidencial` | Salud, credenciales o detalle patrimonial | Minimización extrema y persistencia solo cuando esté justificada |
 
-La clasificación no autoriza a almacenar el dato: primero debe existir una necesidad legítima y un diseño seguro.
+La clasificación no autoriza por sí sola el almacenamiento.
 
 ## Propiedad y minimización
 
-- Gmail conserva emails; Calendar conserva eventos; Sheets conserva finanzas; GitHub conserva proyectos de software.
-- El sistema guarda el mínimo contexto derivado necesario: estado, relación, decisión y referencia.
-- Siempre que sea posible, usar referencias opacas revocables en vez de copiar contenido.
-- Separar datos reales de fixtures y pruebas. Los fixtures del repositorio deben indicar claramente que son ficticios.
+- Cada dominio debe declarar su fuente de verdad.
+- El sistema transporta o deriva únicamente los campos necesarios para la función visible.
+- Evitar duplicar historiales completos cuando basta un resumen o referencia.
+- Los fixtures del repositorio deben ser inequívocamente ficticios.
+- D1 puede almacenar datos privados cuando sea la persistencia operativa documentada; eso no autoriza a copiarlos a Git.
 
-## Reglas para integraciones futuras
+## Aplicación privada remota
 
-1. Revisión de amenazas y minimización antes de conectar una fuente.
-2. OAuth con permisos mínimos y revocables.
-3. Secretos fuera del repositorio y del cliente web.
-4. Registro de acceso sin registrar contenido sensible.
-5. Estrategia explícita de borrado, retención y recuperación.
-6. Confirmación humana para acciones externas con consecuencias.
+- La aplicación privada se sirve mediante Cloudflare Worker.
+- Cloudflare Access protege la superficie interactiva antes de exponer datos.
+- `/api/state` y respuestas privadas usan políticas de no caché cuando corresponde.
+- El frontend privado debe enviar cabeceras de seguridad y `noindex`.
+- Los secretos de Google, iCloud y Health ingest se configuran fuera de Git.
+- Los directorios de build, configuración privada y `.private/` permanecen excluidos del repositorio cuando contienen material sensible.
+
+## Lectura y escritura
+
+La seguridad se define por capacidad, no por una regla global de solo lectura.
+
+### Solo lectura
+
+Las integraciones que no necesitan modificar la fuente deben permanecer de solo lectura. iCloud Calendar es el caso de referencia.
+
+### Escritura controlada
+
+HabitQuest, gimnasio, nutrición y energía permiten mutaciones privadas porque forman parte de su función operativa. Cada endpoint debe:
+
+1. validar entrada;
+2. escribir solo en la fuente autorizada;
+3. conservar la semántica de reconciliación del dominio;
+4. no registrar secretos ni contenido sensible innecesario;
+5. fallar de forma segura si la configuración privada no está disponible.
+
+No añadir escritura a un dominio nuevo sin revisar fuente de verdad, amenaza y reversibilidad.
+
+## Apple Health
+
+- El navegador no accede directamente a Apple Health.
+- El iPhone envía únicamente el resumen energético necesario mediante un Worker dedicado.
+- El token Bearer de ingesta es secreto y no se versiona.
+- No enviar frecuencia cardiaca, ubicación, entrenamientos detallados u otros datos de Salud si no existe una necesidad explícita.
+- La ausencia de datos se representa como desconocida; no se infieren métricas de salud.
+
+## Frontera pública
+
+GitHub Pages publica únicamente la demo mock. Un fallo o cambio en la aplicación privada nunca debe provocar que datos reales terminen en Pages.
+
+## Modo privado local
+
+`.private/` es una capa auxiliar histórica para pruebas y migraciones locales. Está ignorada por Git, no es la arquitectura principal y no debe servirse por una interfaz de red compartida.
 
 ## Revisión antes de commit
 
-- Inspeccionar cambios completos.
-- Buscar patrones de secretos y datos reales.
-- Confirmar que `.env`, credenciales y exportaciones están ignorados.
-- Verificar que ejemplos y nombres son ficticios.
-
-## Frontera pública / privada local
-
-- `.private/` contiene el estado personal provisional y debe permanecer ignorado por Git.
-- GitHub Pages publica una lista cerrada: `app/`, `core/`, el redirect raíz y `.nojekyll`. Nunca debe ampliarse con copias recursivas de la raíz.
-- El cargador privado solo funciona en loopback y requiere `?private=1`; el sitio público no intenta cargar datos reales.
-- El archivo local no está cifrado. Debe contener contexto mínimo y referencias, no historiales completos, credenciales, identificadores financieros ni documentos.
-- Servir el prototipo privado únicamente enlazado a `127.0.0.1`, no a una interfaz de red compartida.
-- Antes de cada commit, confirmar con `git check-ignore` que el estado privado sigue excluido y con `git status` que ningún archivo real está preparado para subir.
+- Inspeccionar todos los cambios.
+- Buscar secretos y datos reales.
+- Confirmar exclusiones de `.private/`, credenciales y exportaciones.
+- Verificar que ejemplos y nombres sean ficticios.
+- Revisar que ninguna documentación copie valores personales procedentes de las fuentes.
 
 ## Incidente
 
-Si se detecta un secreto o dato real: detener publicación, revocar credenciales si procede, retirar el dato del historial de forma segura y documentar únicamente la corrección técnica, nunca el secreto.
-
-
-## Frontera privada remota v0.2
-
-- La aplicación remota se despliega como un Cloudflare Worker separado de GitHub Pages.
-- Todo el Worker debe quedar protegido por Cloudflare Access antes de activar `PRIVATE_APP_ENABLED=true`.
-- La primera fase remota es de solo lectura: no existen endpoints de escritura desde el navegador.
-- D1 almacena instantáneas privadas versionadas. Los datos reales no se incluyen en Git, artefactos de Pages ni logs de Actions.
-- Las respuestas de `/api/state` usan `Cache-Control: no-store`.
-- La aplicación privada envía cabeceras de seguridad, `noindex` y una política CSP restrictiva.
-- El importador se ejecuta localmente y genera el SQL temporal dentro de `.private/`.
-- El archivo `wrangler.jsonc` real, el directorio de build y el estado local permanecen ignorados por Git.
-- Si Access deja de proteger el Worker, la aplicación debe deshabilitarse inmediatamente antes de cualquier otro cambio.
+Si se detecta un secreto o dato real en Git: detener la publicación, revocar credenciales si procede, retirar el dato del historial de forma segura y documentar únicamente la corrección técnica.

@@ -1,20 +1,54 @@
 # Segundo Cerebro
 
-Prototipo de un sistema operativo personal privado. La demo pública de la v0.1 ofrece un dashboard responsive con datos ficticios, un punto central de consulta y una vista visual de las áreas vitales.
+Sistema operativo personal privado con un coordinador central, estado global común y módulos especializados.
 
-## Demo
+## Dos superficies separadas
 
-[Abrir Segundo Cerebro](https://mamg97.github.io/segundo-cerebro/)
+### Demo pública
 
-La publicación contiene únicamente la interfaz estática y mocks inequívocos. No conecta cuentas, APIs ni información personal.
+La demo de GitHub Pages sigue siendo estática y usa exclusivamente datos ficticios:
 
-## Estado
+https://mamg97.github.io/segundo-cerebro/
 
-La fase actual es un prototipo frontend estático. No hay cuentas, APIs, backend, base de datos ni datos personales conectados.
+Sirve para validar interfaz y navegación. Nunca debe contener datos personales, secretos ni conexiones privadas.
 
-## Ejecutar en local
+### Aplicación privada
 
-Desde la raíz del proyecto:
+La aplicación real se sirve mediante Cloudflare Worker y está protegida por Cloudflare Access. Usa D1 y adaptadores privados para consultar o actualizar las fuentes autorizadas.
+
+Actualmente existen integraciones operativas para:
+
+- finanzas derivadas desde Google Sheets;
+- calendario iCloud mediante CalDAV en modo lectura;
+- HabitQuest desde su Google Sheet, con lectura y gestión de hábitos;
+- gimnasio y nutrición dentro de Salud;
+- ingesta de gasto energético diario desde Apple Health mediante un Worker dedicado.
+
+GitHub contiene el código y la documentación técnica, nunca los datos personales reales.
+
+## Estado actual
+
+El frontend sigue siendo HTML, CSS y JavaScript nativos, pero el proyecto ya no es solo un prototipo estático. La arquitectura privada remota está operativa y el sistema dispone de lectura y escritura selectiva según cada fuente.
+
+La fuente de verdad de cada dominio continúa fuera de Git cuando corresponde. D1 se usa para estado privado derivado y para datos operativos propios del sistema cuando así está documentado.
+
+## Orientación para continuar
+
+Leer en este orden:
+
+1. `AGENTS.md`
+2. `docs/HANDOFF.md`
+3. `docs/ARCHITECTURE.md`
+4. `docs/DATA_MODEL.md`
+5. `docs/PRIVACY.md`
+6. `docs/DECISIONS.md`
+7. el contrato del módulo correspondiente dentro de `agents/`
+
+La interfaz vive en `app/`. La infraestructura privada vive en `private-cloudflare/`.
+
+## Modo local
+
+La demo puede servirse localmente desde la raíz:
 
 ```sh
 python3 -m http.server 4173
@@ -22,27 +56,8 @@ python3 -m http.server 4173
 
 Después abre `http://localhost:4173/app/`.
 
-## Modo privado local experimental
-
-La aplicación puede cargar un estado personal desde `.private/state.js` únicamente en `localhost` o `127.0.0.1` y con `?private=1`. La carpeta completa está ignorada por Git y no forma parte del artefacto de GitHub Pages.
-
-```sh
-python3 -m http.server --bind 127.0.0.1 4173
-```
-
-Después abre `http://127.0.0.1:4173/app/?private=1`.
-
-Este mecanismo sirve para validar el modelo, pero todavía no cifra los datos en reposo ni sincroniza dispositivos. No debe considerarse la persistencia privada definitiva.
-
-## Orientación
-
-- Empieza por `AGENTS.md` y `docs/HANDOFF.md`.
-- La interfaz vive en `app/`.
-- El estado común mock vive en `core/`.
-- El estado personal experimental vive solo en `.private/`, fuera de Git.
-- `agents/` e `integrations/` documentan límites futuros; no contienen conexiones reales.
-- Las decisiones y restricciones están en `docs/`.
+Existe además una superposición privada local histórica en `.private/`, ignorada por Git. Es un mecanismo auxiliar y ya no es la arquitectura principal del sistema.
 
 ## Privacidad
 
-Todo el contenido incluido es ficticio. Consulta `docs/PRIVACY.md` antes de incorporar nuevas fuentes o campos.
+Antes de introducir una fuente, endpoint o campo nuevo, revisar `docs/PRIVACY.md`. Los secretos se configuran fuera del repositorio y los datos reales nunca se versionan.

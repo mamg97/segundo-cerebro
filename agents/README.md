@@ -1,10 +1,12 @@
 # Módulos especializados
 
-Directorio reservado para las capacidades futuras de Coordinator, Finance, Career, Calendar/Social, Partner, Family, Family Wealth y Projects.
+Los contratos de este directorio definen responsabilidades, fuentes de verdad y reglas de interpretación de cada dominio. No son memorias independientes: todos los módulos participan del mismo Segundo Cerebro y del estado global coordinado.
 
-Todos deberán leer y proponer cambios sobre el estado global común. Ninguno tendrá memoria aislada. En v0.1 no hay agentes ejecutables.
+## Contratos actuales
 
+- `FINANCE.md`: gestor de finanzas personales, conciliación, separación entre flujo mensual e inversiones/ahorro y jerarquía de fuentes.
+- `HEALTH.md`: Salud, Nutrición y gasto energético, incluyendo la relación entre Sheets, D1 y Apple Health.
 
-## Contratos de módulo
+Los dominios sin contrato propio todavía se rigen por `AGENTS.md`, `docs/ARCHITECTURE.md` y `docs/DATA_MODEL.md`.
 
-- `FINANCE.md`: reglas del gestor de finanzas personales, separación entre flujo mensual e inversiones/ahorro y jerarquía de fuentes.
+Cuando un dominio gane lógica operativa relevante, debe recibir un contrato aquí antes de depender del historial de una conversación.
