@@ -132,7 +132,8 @@ Confirmed on iPhone on 2026-09-24:
 - body mass / Peso: Zepp Life appears as a data source;
 - body fat percentage / Porcentaje de grasa corporal: Zepp Life appears as a data source;
 - body mass index / Índice de masa corporal: Zepp Life appears as a data source;
-- lean body mass / Masa corporal sin grasa: Zepp Life appears as a data source.
+- lean body mass / Masa corporal sin grasa: Zepp Life appears as a data source;
+- dedicated muscle mass / `muscleMass`: no matching Apple Health data type was found in the iPhone Health search; Zepp's “Músculo” remains a Zepp-specific metric and must not be mapped to `leanBodyMass`.
 
 Zepp Life itself also displays proprietary/derived body-composition metrics such as muscle mass, body water, basal metabolism estimate, visceral fat, protein percentage, body score and ideal weight. These must not be silently mapped onto standard HealthKit metrics unless Apple Health exposes an equivalent type and contains real samples.
 
