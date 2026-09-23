@@ -5582,3 +5582,123 @@ html[data-theme="dark"] .money-horizon .wealth-summary-value strong {
   letter-spacing: -.035em;
 }
 
+
+
+/* v0.16 — Apple Health overview */
+.health-overview-intro {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+}
+.health-overview-intro strong { display:block; font-size:14px; }
+.health-overview-intro p { margin:4px 0 0; color:var(--ink-soft); font-size:10px; line-height:1.45; }
+.health-overview-intro > span {
+  flex:0 0 auto;
+  padding:5px 8px;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--amber) 12%,transparent);
+  color:var(--amber);
+  font-size:9px;
+  font-weight:800;
+}
+.health-overview-kpis {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+.health-overview-kpis article {
+  display:grid;
+  gap:4px;
+  min-width:0;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--paper);
+}
+.health-overview-kpis span,
+.health-overview-kpis small { color:var(--ink-soft); font-size:8px; }
+.health-overview-kpis strong {
+  overflow:hidden;
+  font-size:18px;
+  letter-spacing:-.025em;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.health-overview-kpis strong.up { color:var(--coral); }
+.health-overview-kpis strong.down { color:var(--mint); }
+.health-overview-kpis strong.flat { color:var(--ink); }
+.health-goal-progress {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:14px;
+}
+.health-goal-progress > div {
+  display:grid;
+  gap:8px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--paper);
+}
+.health-goal-progress > div > span {
+  display:flex;
+  gap:10px;
+  justify-content:space-between;
+  align-items:center;
+}
+.health-goal-progress strong { font-size:10px; }
+.health-goal-progress small { color:var(--ink-soft); font-size:8px; }
+.health-goal-progress progress {
+  width:100%;
+  height:8px;
+  border:0;
+  border-radius:999px;
+  overflow:hidden;
+  appearance:none;
+  -webkit-appearance:none;
+  background:color-mix(in srgb,var(--line) 55%,transparent);
+}
+.health-goal-progress progress::-webkit-progress-bar {
+  background:color-mix(in srgb,var(--line) 55%,transparent);
+  border-radius:inherit;
+}
+.health-goal-progress progress::-webkit-progress-value {
+  background:linear-gradient(90deg,var(--blue),var(--amber));
+  border-radius:inherit;
+}
+.health-goal-progress progress::-moz-progress-bar {
+  background:linear-gradient(90deg,var(--blue),var(--amber));
+  border-radius:inherit;
+}
+.health-trend-note {
+  margin:12px 0 0;
+  padding:11px 13px;
+  border:1px solid color-mix(in srgb,var(--amber) 18%,var(--line));
+  border-radius:11px;
+  background:color-mix(in srgb,var(--amber) 7%,transparent);
+  color:var(--ink-soft);
+  font-size:9px;
+  line-height:1.45;
+}
+html[data-theme="dark"] .health-overview-intro,
+html[data-theme="dark"] .health-overview-kpis article,
+html[data-theme="dark"] .health-goal-progress > div {
+  border-color:rgba(95,168,255,.16);
+  background:linear-gradient(145deg,rgba(16,33,58,.72),rgba(11,23,40,.96));
+}
+@media (max-width:760px) {
+  .health-overview-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .health-goal-progress { grid-template-columns:1fr; }
+}
+@media (max-width:420px) {
+  .health-overview-kpis { grid-template-columns:1fr; }
+}
+
