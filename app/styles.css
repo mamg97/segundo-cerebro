@@ -3890,14 +3890,6 @@ html[data-theme="dark"] .gym-session-footer input {
   color: white;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .brain-orb::before,
-  .brain-orb-halo,
-  .brain-orb-shell,
-  .brain-orb-core {
-    animation: none !important;
-  }
-}
 
 @media (max-width: 620px) {
   .habit-management-toolbar {
