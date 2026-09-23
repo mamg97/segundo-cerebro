@@ -143,3 +143,18 @@ La vista `Eventos importantes` combina:
 - compromisos financieros próximos.
 
 El área `Salud` es derivada y no crea una segunda fuente de verdad. Clasifica eventos iCloud en `medical`, `gym` y `nutrition` a partir de título/ubicación. La fuente sigue siendo iCloud.
+
+
+## Gimnasio
+
+El plan de entrenamiento vive en la pestaña privada `GimnasioPlan`. Cada fila define un ejercicio y contiene día, foco, descanso, orden, series/repeticiones objetivo, carga de referencia, unidad y notas. El repositorio público solo contiene la lógica genérica para leer y representar este modelo.
+
+Los entrenamientos realizados se guardan en D1:
+- `gym_sessions`: una fila por sesión (fecha, día del plan, título, notas).
+- `gym_entries`: una fila por ejercicio realizado (series, reps, carga, unidad, notas).
+
+El endpoint privado `GET /api/gym` combina plan + histórico + series de progreso. `POST /api/gym/session` registra una sesión completa.
+
+## Nutrición
+
+La pestaña privada `Nutricion` está preparada para objetivos y pautas, pero permanece vacía hasta que el usuario defina información concreta. No se generan objetivos nutricionales por inferencia.
