@@ -85,3 +85,15 @@ Este documento registra decisiones duraderas. El histórico detallado permanece 
 - **Conciliación:** un movimiento registrado en conversación entra como `PROVISIONAL_CHAT`; solo pasa a `RECONCILIADO_SHEET` cuando se confirma contra `ASUNTOS v3.xlsx`.
 - **Sincronización:** el Worker privado puede leer la hoja derivada de Google Sheets en cada carga y superponer `financeSummary` sobre la instantánea D1, sin publicar importes en Git.
 - **Motivo:** evita contabilidad paralela, conserva la trazabilidad entre conversación y fuente oficial, y permite que las barras de presupuesto se actualicen al registrar movimientos sin que el Segundo Cerebro modifique el Excel.
+
+
+## D-012 — Separación operativa entre flujo mensual e inversiones
+
+- **Estado:** aceptada
+- **Fecha:** 2026-09-23
+- **Decisión:** el módulo Finance separa dos carriles de trabajo: gestión mensual del dinero y gestión de inversiones/ahorro. Ambos comparten estado global y fuentes financieras, pero no mezclan flujo de caja con patrimonio invertido.
+- **Gestión mensual:** ingresos, gastos, cuentas corrientes, cuotas, compromisos, liquidez, viajes y cierre del ciclo.
+- **Inversiones/ahorro:** patrimonio financiero acumulado, movimientos de brokers, valoración de plataformas, asignación y reconciliación patrimonial.
+- **Jerarquía:** la hoja financiera externa sigue siendo la fuente oficial; el documento privado de control conserva reglas; la hoja derivada y D1 transportan estado normalizado al dashboard.
+- **Privacidad:** Git solo documenta lógica y contratos; nunca cifras, extractos o posiciones reales.
+- **Motivo:** reducir errores de doble conteo, separar decisiones de consumo de decisiones patrimoniales y permitir relevo entre conversaciones sin perder coherencia.
