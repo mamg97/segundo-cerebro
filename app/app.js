@@ -630,9 +630,6 @@ async function openHealthDetail() {
   document.querySelector("#dialog-title").textContent = "Salud";
 
   const medicalEvents = collectHealthEvents().filter((event) => event.healthKind === "medical");
-  const nutritionPlan = Array.isArray(state.healthSummary?.nutritionPlan)
-    ? state.healthSummary.nutritionPlan
-    : [];
 
   document.querySelector("#dialog-body").innerHTML = `
     <div class="health-tabs" role="tablist" aria-label="Apartados de salud">
@@ -648,18 +645,21 @@ async function openHealthDetail() {
         <div id="gym-panel"><p class="health-empty">Cargando plan e histórico…</p></div>
       </section>
       <section class="health-tab-panel" data-health-panel="nutrition">
-        ${renderNutritionSection(nutritionPlan)}
+        <div id="nutrition-panel"><p class="health-empty">Cargando nutrición…</p></div>
       </section>
     </div>`;
 
   bindHealthTabs();
   dialog.showModal();
+  void loadGymPanel();
+  void loadNutritionPanel(localDateKey());
+}
 
+async function loadGymPanel() {
   try {
     const response = await fetch("/api/gym", { headers: { Accept: "application/json" } });
     if (!response.ok) throw new Error(`GYM_${response.status}`);
-    const gymData = await response.json();
-    renderGymPanel(gymData);
+    renderGymPanel(await response.json());
   } catch (error) {
     const panel = document.querySelector("#gym-panel");
     if (panel) panel.innerHTML = '<p class="health-empty">No se ha podido cargar el plan de gimnasio.</p>';
@@ -667,6 +667,27 @@ async function openHealthDetail() {
   }
 }
 
+async function loadNutritionPanel(dateKey) {
+  const panel = document.querySelector("#nutrition-panel");
+  if (panel) panel.innerHTML = '<p class="health-empty">Cargando nutrición…</p>';
+  try {
+    const response = await fetch(`/api/nutrition?date=${encodeURIComponent(dateKey)}`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error(`NUTRITION_${response.status}`);
+    renderNutritionPanel(await response.json());
+  } catch (error) {
+    if (panel) {
+      panel.innerHTML = `
+        <div class="health-empty health-empty-card">
+          <strong>Nutrición todavía no está conectada</strong>
+          <p>La base privada ya está preparada. Falta activar la conexión del Sheet de Salud en el Worker.</p>
+        </div>`;
+    }
+    console.warn("Nutrition load failed", error);
+  }
+}
 
 let selectedHabitDate = null;
 let habitQuestData = null;
