@@ -296,3 +296,42 @@ Endpoints:
 - `POST /api/nutrition/energy`: guarda calorías activas/reposo/total. Este endpoint es el destino previsto para el futuro puente de Apple Health.
 
 La fuente contiene las pestañas `Comidas`, `Registro`, `Objetivos` y `EnergiaDiaria`. El identificador del Sheet no se versiona en Git.
+
+
+## Apple Health bridge
+
+Apple Health no se consulta desde la web. El iPhone obtiene sus muestras locales con Shortcuts/Health y envía únicamente el resumen energético diario a un Worker de ingesta separado.
+
+Arquitectura:
+
+```text
+Apple Watch → Apple Health → Shortcut iPhone
+  → segundo-cerebro-health-ingest (Bearer token)
+  → Service Binding interno
+  → segundo-cerebro
+  → D1 health_energy_daily
+  → Salud / Nutrición
+```
+
+El Worker público de ingesta no conoce Google OAuth ni D1. Solo valida un token y reenvía el resumen al Worker principal mediante Service Binding.
+
+Configuración única:
+
+```sh
+cd private-cloudflare
+npm run setup:health-ingest
+```
+
+El script despliega `segundo-cerebro-health-ingest`, genera `HEALTH_INGEST_TOKEN` y muestra una única vez la URL y el token que deben guardarse en el Shortcut del iPhone.
+
+Payload esperado por `POST /v1/energy`:
+
+```json
+{
+  "date": "YYYY-MM-DD",
+  "activeKcal": 600,
+  "restingKcal": 1700
+}
+```
+
+`date` puede omitirse y el puente usa la fecha local de Madrid. `totalKcal` es opcional; si falta y existen activa + reposo, se suma automáticamente. No se envían pasos, frecuencia cardiaca, entrenamientos ni otros datos de salud.

@@ -25,7 +25,16 @@ When nutritional values are estimated rather than label-confirmed, write the sou
 
 ## Energy expenditure
 
-Apple Health / Apple Watch is intended to be the source for daily activity/resting energy. Until the bridge is connected, missing expenditure remains unknown; never infer it from gym attendance.
+Apple Health / Apple Watch is the intended source for daily active and resting energy. Automatic imports enter through the dedicated token-protected Health ingest Worker and are stored in private D1 (`health_energy_daily`). The Sheet tab `EnergiaDiaria` is retained as a manual/fallback source.
+
+For a date, the newest D1 sample wins over the Sheet fallback. Missing expenditure remains unknown; never infer it from gym attendance.
+
+The intended calculation is:
+- total expenditure = Apple Health total energy when supplied;
+- otherwise active energy + resting/basal energy when both are available;
+- daily energy balance = consumed kcal - total expenditure.
+
+Do not treat Apple Watch active calories alone as total daily expenditure.
 
 ## Goals
 
