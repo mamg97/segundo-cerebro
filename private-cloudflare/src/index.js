@@ -1525,6 +1525,131 @@ async function saveNutritionEnergy(request, env) {
 }
 
 
+async function saveHealthSync(request, env) {
+  let payload;
+  try { payload = await request.json(); } catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const activity = payload?.activity && typeof payload.activity === "object" ? payload.activity : null;
+  const bodySamples = Array.isArray(payload?.bodySamples) ? payload.bodySamples.slice(0, 100) : [];
+  let activitySaved = false;
+
+  if (activity) {
+    const date = String(activity.date || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ ok: false, code: "INVALID_HEALTH_DATE" }, 400);
+
+    const active = toNumber(activity.activeKcal);
+    const resting = toNumber(activity.restingKcal);
+    const suppliedTotal = toNumber(activity.totalKcal);
+    const total = suppliedTotal ?? (active !== null && resting !== null ? active + resting : null);
+    const stepsRaw = toNumber(activity.steps);
+    const steps = stepsRaw === null ? null : Math.round(stepsRaw);
+    const exerciseMinutes = toNumber(activity.exerciseMinutes);
+    const workouts = Array.isArray(activity.workouts) ? activity.workouts.slice(0, 50) : [];
+    const sourceDetails = Array.isArray(activity.sourceDetails) ? activity.sourceDetails.slice(0, 20) : [];
+    const values = [active, resting, total].filter((value) => value !== null);
+
+    if (values.some((value) => value < 0 || value > 20000)) {
+      return json({ ok: false, code: "INVALID_ENERGY_VALUE" }, 400);
+    }
+    if (steps !== null && (steps < 0 || steps > 200000)) {
+      return json({ ok: false, code: "INVALID_STEPS_VALUE" }, 400);
+    }
+    if (exerciseMinutes !== null && (exerciseMinutes < 0 || exerciseMinutes > 1440)) {
+      return json({ ok: false, code: "INVALID_EXERCISE_MINUTES" }, 400);
+    }
+
+    await ensureHealthEnergyTable(env);
+    await env.DB.prepare(`
+      INSERT INTO health_energy_daily (
+        energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at,
+        steps, exercise_minutes, workout_count, sampled_at, source_details, workouts_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(energy_date) DO UPDATE SET
+        active_kcal = excluded.active_kcal,
+        resting_kcal = excluded.resting_kcal,
+        total_kcal = excluded.total_kcal,
+        source = excluded.source,
+        note = excluded.note,
+        recorded_at = excluded.recorded_at,
+        steps = excluded.steps,
+        exercise_minutes = excluded.exercise_minutes,
+        workout_count = excluded.workout_count,
+        sampled_at = excluded.sampled_at,
+        source_details = excluded.source_details,
+        workouts_json = excluded.workouts_json
+    `).bind(
+      date,
+      active,
+      resting,
+      total,
+      String(activity.source || "apple_health").trim().slice(0, 40) || "apple_health",
+      String(activity.note || "").trim().slice(0, 500) || null,
+      new Date().toISOString(),
+      steps,
+      exerciseMinutes,
+      workouts.length,
+      String(activity.sampledAt || "").trim().slice(0, 50) || null,
+      JSON.stringify(sourceDetails),
+      JSON.stringify(workouts)
+    ).run();
+    activitySaved = true;
+  }
+
+  let bodyImported = 0;
+  if (bodySamples.length) {
+    await ensureHealthBodyTable(env);
+    const allowed = new Set(["bodyMass", "bodyFatPercentage", "bodyMassIndex", "leanBodyMass"]);
+    const ranges = {
+      bodyMass: [20, 400],
+      bodyFatPercentage: [0, 100],
+      bodyMassIndex: [5, 100],
+      leanBodyMass: [5, 300]
+    };
+
+    for (const raw of bodySamples) {
+      const type = String(raw?.type || "").trim();
+      if (!allowed.has(type)) continue;
+      const value = toNumber(raw?.value);
+      const measured = new Date(String(raw?.measuredAt || ""));
+      const source = String(raw?.source || "apple_health").trim().slice(0, 120) || "apple_health";
+      if (value === null || !Number.isFinite(measured.getTime())) continue;
+      const [min, max] = ranges[type];
+      if (value < min || value > max) continue;
+      const measuredAt = measured.toISOString();
+      const sampleDate = localHealthDateKey(measured);
+      const unit = String(raw?.unit || (type === "bodyFatPercentage" ? "%" : type === "bodyMassIndex" ? "count" : "kg")).slice(0, 24);
+
+      await env.DB.prepare(`
+        INSERT INTO health_body_samples (
+          metric_type, metric_value, unit, sample_date, measured_at, source, imported_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(metric_type, measured_at, source) DO UPDATE SET
+          metric_value = excluded.metric_value,
+          unit = excluded.unit,
+          sample_date = excluded.sample_date,
+          imported_at = excluded.imported_at
+      `).bind(
+        type,
+        value,
+        unit,
+        sampleDate,
+        measuredAt,
+        source,
+        new Date().toISOString()
+      ).run();
+      bodyImported += 1;
+    }
+  }
+
+  if (!activitySaved && bodyImported === 0) {
+    return json({ ok: false, code: "EMPTY_HEALTH_SYNC" }, 400);
+  }
+
+  healthCache = { value: null, expiresAt: 0, date: null };
+  return json({ ok: true, activitySaved, bodySamplesImported: bodyImported }, 201);
+}
+
+
 async function ensureGymTables(env) {
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS gym_sessions (
@@ -1870,6 +1995,15 @@ export default {
       catch (error) {
         console.warn("Nutrition energy write failed", String(error?.message || error));
         return json({ ok: false, code: "NUTRITION_ENERGY_WRITE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/health/sync") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try { return await saveHealthSync(request, env); }
+      catch (error) {
+        console.warn("Health sync write failed", String(error?.message || error));
+        return json({ ok: false, code: "HEALTH_SYNC_WRITE_FAILED" }, 502);
       }
     }
 
