@@ -170,10 +170,36 @@ Si una fila referencia `item_id` y deja kcal/macros vacíos, el Worker los deriv
 ### Objetivos
 Objetivos con fecha efectiva: kcal, proteína, carbohidratos y grasas. Permanecen vacíos hasta que el usuario defina uno; no se infieren objetivos dietéticos.
 
-### Energía diaria
-Las importaciones automáticas de Apple Health se almacenan en D1 `health_energy_daily`: una única fila por fecha con energía activa, energía en reposo, total, fuente, nota y timestamp. `energy_date` es clave lógica única y cada nueva sincronización del mismo día reemplaza la anterior mediante UPSERT. El tab `EnergiaDiaria` del Sheet se conserva como entrada manual/fallback.
+### Actividad diaria
+Las importaciones automáticas de Apple Health se almacenan en D1 `health_energy_daily`: una única fila por fecha con energía activa, energía en reposo, total, pasos, minutos de ejercicio, contador/metadatos opcionales de entrenamientos, fuente, timestamp de muestreo y timestamp de importación. `energy_date` es clave lógica única y cada nueva sincronización del mismo día reemplaza la anterior mediante UPSERT. El tab `EnergiaDiaria` del Sheet se conserva como entrada manual/fallback y admite los mismos campos ampliados.
 
 Para cada fecha, la fila D1 tiene prioridad sobre el fallback del Sheet. El gasto total usa `total_kcal` cuando Apple Health lo aporta; si no, se deriva como activa + reposo cuando ambas existen. El balance se calcula como `kcal consumidas - gasto total`. La ausencia de gasto se representa como `null`, nunca como 0, y no se infiere a partir de sesiones de gimnasio.
+
+### Composición corporal
+
+El histórico/manual vive en `MedicionesCorporales`. El baseline existente se conserva intacto. Columnas opcionales añadidas: `body_mass_index`, `lean_body_mass_kg`, `measured_at` e `imported_at`.
+
+Las importaciones automáticas de Apple Health se almacenan normalizadas en D1 `health_body_samples`, una fila por métrica:
+- `bodyMass`;
+- `bodyFatPercentage`;
+- `bodyMassIndex`;
+- `leanBodyMass`.
+
+Cada muestra conserva valor, unidad, fecha local, timestamp original, fuente e importación. La clave lógica de idempotencia es `metric_type + measured_at + source`.
+
+La vista combinada fusiona Sheet + D1. Para peso:
+- se conservan todas las muestras del día;
+- se calcula una media diaria si hay varias;
+- la media móvil de 7 días usa esas medias diarias;
+- el cambio semanal compara los últimos 7 días con los 7 anteriores.
+
+Grasa corporal, IMC y masa magra procedentes de bioimpedancia doméstica se presentan como tendencias, no como mediciones exactas.
+
+### Objetivos de actividad
+
+`ObjetivosActividad` define objetivos efectivos por fecha. Segundo Cerebro usa, entre otros, `steps_target`, `moderate_activity_min_week` y la regla `apple_watch_energy_rule`.
+
+Las kcal estimadas por Apple Watch son informativas: no se ajusta la ingesta 1:1. Las decisiones de nutrición se basan en tendencias de 7–14 días junto con peso/composición, adherencia y entrenamiento.
 
 
 
