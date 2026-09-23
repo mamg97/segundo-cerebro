@@ -5549,3 +5549,36 @@ html[data-theme="dark"] .daily-overview-card:hover, html[data-theme="dark"] .dai
   .daily-overview-grid { grid-template-columns:1fr; gap:12px; margin-top:18px; }
   .daily-overview-card { padding:18px; }
 }
+
+
+/* v0.15.1 — unified dashboard typography + orange epigraphs */
+html[data-theme="dark"] .daily-card-heading small,
+html[data-theme="dark"] .context-label,
+html[data-theme="dark"] .section-heading .context-label {
+  color: var(--orange-soft) !important;
+  font-weight: 800;
+  letter-spacing: .015em;
+}
+
+html[data-theme="dark"] .money-horizon .section-heading h2,
+html[data-theme="dark"] .money-horizon .budget-primary strong,
+html[data-theme="dark"] .money-horizon .budget-compact-spent strong,
+html[data-theme="dark"] .money-horizon .debt-summary-grid strong,
+html[data-theme="dark"] .money-horizon .debt-summary-primary strong,
+html[data-theme="dark"] .money-horizon .wealth-summary-value strong,
+html[data-theme="dark"] .daily-overview-card strong {
+  font-family: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif !important;
+}
+
+html[data-theme="dark"] .money-horizon .section-heading h2 {
+  font-weight: 750;
+  letter-spacing: -.03em;
+}
+
+html[data-theme="dark"] .money-horizon .budget-primary strong,
+html[data-theme="dark"] .money-horizon .debt-summary-primary strong,
+html[data-theme="dark"] .money-horizon .wealth-summary-value strong {
+  font-weight: 700;
+  letter-spacing: -.035em;
+}
+
