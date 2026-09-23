@@ -708,12 +708,16 @@ async function openHealthDetail() {
 
   document.querySelector("#dialog-body").innerHTML = `
     <div class="health-tabs" role="tablist" aria-label="Apartados de salud">
-      <button class="active" type="button" data-health-tab="medical">Médicos</button>
+      <button class="active" type="button" data-health-tab="overview">Resumen</button>
+      <button type="button" data-health-tab="medical">Médicos</button>
       <button type="button" data-health-tab="gym">Gimnasio</button>
       <button type="button" data-health-tab="nutrition">Nutrición</button>
     </div>
     <div class="health-tab-panels">
-      <section class="health-tab-panel active" data-health-panel="medical">
+      <section class="health-tab-panel active" data-health-panel="overview">
+        <div id="health-overview-panel"><p class="health-empty">Cargando Apple Health…</p></div>
+      </section>
+      <section class="health-tab-panel" data-health-panel="medical">
         ${renderMedicalSection(medicalEvents)}
       </section>
       <section class="health-tab-panel" data-health-panel="gym">
@@ -726,10 +730,84 @@ async function openHealthDetail() {
 
   bindHealthTabs();
   dialog.showModal();
+  void loadHealthOverview(localDateKey());
   void loadGymPanel();
   void loadNutritionPanel(localDateKey());
 }
 
+async function loadHealthOverview(dateKey = localDateKey()) {
+  const panel = document.querySelector("#health-overview-panel");
+  if (panel) panel.innerHTML = '<p class="health-empty">Cargando Apple Health…</p>';
+  try {
+    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(dateKey), {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
+    renderHealthOverview(await response.json());
+  } catch (error) {
+    if (panel) panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Apple Health no disponible</strong><p>No se ha podido cargar el resumen de actividad y composición corporal.</p></div>';
+    console.warn("Health overview load failed", error);
+  }
+}
+
+function renderHealthOverview(data) {
+  const panel = document.querySelector("#health-overview-panel");
+  if (!panel) return;
+  const body = data.body || {};
+  const activity = data.activity || {};
+  const goal = data.activityObjective || {};
+  const weightToday = Number(body.weightToday?.value);
+  const weightAvg = Number(body.weight7dAverage);
+  const weeklyChange = Number(body.weightWeeklyChange);
+  const bodyFat = Number(body.bodyFat?.value);
+  const bmi = Number(body.bodyMassIndex?.value);
+  const lean = Number(body.leanBodyMass?.value);
+  const active = Number(activity.activeKcal);
+  const resting = Number(activity.restingKcal);
+  const total = Number(activity.totalKcal);
+  const steps = Number(activity.steps);
+  const exercise = Number(activity.exerciseMinutes);
+  const exerciseWeek = Number(activity.exerciseMinutesWeek);
+  const stepsTarget = Number(goal.stepsTarget);
+  const exerciseTarget = Number(goal.moderateActivityMinWeek);
+  const stepsPct = Number.isFinite(steps) && Number.isFinite(stepsTarget) && stepsTarget > 0 ? Math.max(0, Math.min(100, Math.round((steps / stepsTarget) * 100))) : 0;
+  const exercisePct = Number.isFinite(exerciseWeek) && Number.isFinite(exerciseTarget) && exerciseTarget > 0 ? Math.max(0, Math.min(100, Math.round((exerciseWeek / exerciseTarget) * 100))) : 0;
+  const fmt1 = (value, suffix = "") => Number.isFinite(value) ? value.toFixed(1).replace(".", ",") + suffix : "—";
+  const fmt0 = (value, suffix = "") => Number.isFinite(value) ? Math.round(value).toLocaleString("es-ES") + suffix : "—";
+  const changeText = Number.isFinite(weeklyChange) ? (weeklyChange > 0 ? "+" : "") + weeklyChange.toFixed(1).replace(".", ",") + " kg" : "—";
+  const changeClass = Number.isFinite(weeklyChange) ? (weeklyChange > 0 ? "up" : weeklyChange < 0 ? "down" : "flat") : "";
+  const weightSource = body.weightToday?.source || null;
+  const fatSource = body.bodyFat?.source || null;
+
+  panel.innerHTML = `
+    <div class="health-overview-intro">
+      <div><strong>Composición y actividad</strong><p>Peso y bioimpedancia se interpretan como tendencia. El gasto del Apple Watch es informativo y no ajusta la ingesta 1:1.</p></div>
+      <span>7–14 días</span>
+    </div>
+    <div class="health-overview-kpis body-kpis">
+      <article><span>Peso hoy</span><strong>${fmt1(weightToday, " kg")}</strong><small>${weightSource ? "Fuente: " + escapeHtml(weightSource) : "Sin muestra hoy"}</small></article>
+      <article><span>Media 7 días</span><strong>${fmt1(weightAvg, " kg")}</strong><small>Media de promedios diarios</small></article>
+      <article><span>Cambio semanal</span><strong class="${changeClass}">${changeText}</strong><small>7 días actuales vs 7 anteriores</small></article>
+      <article><span>Grasa corporal</span><strong>${fmt1(bodyFat, "%")}</strong><small>${fatSource ? "Tendencia · " + escapeHtml(fatSource) : "No disponible"}</small></article>
+      <article><span>IMC</span><strong>${fmt1(bmi)}</strong><small>Solo si Apple Health lo aporta</small></article>
+      <article><span>Masa magra</span><strong>${fmt1(lean, " kg")}</strong><small>Solo si Apple Health la aporta</small></article>
+    </div>
+    <div class="health-overview-kpis activity-kpis">
+      <article><span>Kcal activas</span><strong>${fmt0(active)}</strong><small>Apple Health</small></article>
+      <article><span>Kcal reposo</span><strong>${fmt0(resting)}</strong><small>Apple Health</small></article>
+      <article><span>Gasto total</span><strong>${fmt0(total)}</strong><small>Activa + reposo</small></article>
+      <article><span>Pasos</span><strong>${fmt0(steps)}</strong><small>${Number.isFinite(stepsTarget) ? "Objetivo " + fmt0(stepsTarget) : "Sin objetivo"}</small></article>
+      <article><span>Ejercicio hoy</span><strong>${fmt0(exercise, " min")}</strong><small>Minutos registrados</small></article>
+      <article><span>Ejercicio semana</span><strong>${fmt0(exerciseWeek, " min")}</strong><small>${Number.isFinite(exerciseTarget) ? "Objetivo " + fmt0(exerciseTarget, " min") : "Sin objetivo"}</small></article>
+    </div>
+    <div class="health-goal-progress">
+      <div><span><strong>Pasos</strong><small>${Number.isFinite(steps) && Number.isFinite(stepsTarget) ? fmt0(steps) + " / " + fmt0(stepsTarget) : "Sin datos suficientes"}</small></span><progress max="100" value="${stepsPct}"></progress></div>
+      <div><span><strong>Actividad semanal</strong><small>${Number.isFinite(exerciseWeek) && Number.isFinite(exerciseTarget) ? fmt0(exerciseWeek, " min") + " / " + fmt0(exerciseTarget, " min") : "Sin datos suficientes"}</small></span><progress max="100" value="${exercisePct}"></progress></div>
+    </div>
+    ${goal.appleWatchEnergyRule ? `<p class="health-trend-note">⌁ ${escapeHtml(goal.appleWatchEnergyRule)}</p>` : ""}
+  `;
+}
 async function loadGymPanel() {
   try {
     const response = await fetch("/api/gym", { headers: { Accept: "application/json" } });
