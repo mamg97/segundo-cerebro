@@ -586,34 +586,106 @@ function collectHealthEvents() {
     .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
 }
 
-function openHealthDetail() {
+async function openHealthDetail() {
   const dialog = document.querySelector("#detail-dialog");
   dialog.classList.remove("wealth-dialog", "important-events-dialog");
   dialog.classList.add("health-dialog");
-  document.querySelector("#dialog-context").textContent = "Salud · iCloud";
+  document.querySelector("#dialog-context").textContent = "Salud · estado privado";
   document.querySelector("#dialog-title").textContent = "Salud";
 
-  const healthEvents = collectHealthEvents();
-  const groups = [
-    ["medical", "Médicos"],
-    ["gym", "Gimnasio"],
-    ["nutrition", "Nutrición"]
-  ];
+  const medicalEvents = collectHealthEvents().filter((event) => event.healthKind === "medical");
+  const nutritionPlan = Array.isArray(state.healthSummary?.nutritionPlan)
+    ? state.healthSummary.nutritionPlan
+    : [];
 
   document.querySelector("#dialog-body").innerHTML = `
-    <div class="health-sections">
-      ${groups.map(([kind, label]) => {
-        const items = healthEvents.filter((event) => event.healthKind === kind);
-        return `
-          <section class="health-section">
-            <div class="health-section-heading"><strong>${label}</strong><span>${items.length}</span></div>
-            ${items.length
-              ? `<div class="health-event-list">${items.slice(0, 20).map(renderHealthEvent).join("")}</div>`
-              : '<p class="health-empty">No hay próximos eventos detectados en iCloud.</p>'}
-          </section>`;
-      }).join("")}
+    <div class="health-tabs" role="tablist" aria-label="Apartados de salud">
+      <button class="active" type="button" data-health-tab="medical">Médicos</button>
+      <button type="button" data-health-tab="gym">Gimnasio</button>
+      <button type="button" data-health-tab="nutrition">Nutrición</button>
+    </div>
+    <div class="health-tab-panels">
+      <section class="health-tab-panel active" data-health-panel="medical">
+        ${renderMedicalSection(medicalEvents)}
+      </section>
+      <section class="health-tab-panel" data-health-panel="gym">
+        <div id="gym-panel"><p class="health-empty">Cargando plan e histórico…</p></div>
+      </section>
+      <section class="health-tab-panel" data-health-panel="nutrition">
+        ${renderNutritionSection(nutritionPlan)}
+      </section>
     </div>`;
+
+  bindHealthTabs();
   dialog.showModal();
+
+  try {
+    const response = await fetch("/api/gym", { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error(`GYM_${response.status}`);
+    const gymData = await response.json();
+    renderGymPanel(gymData);
+  } catch (error) {
+    const panel = document.querySelector("#gym-panel");
+    if (panel) panel.innerHTML = '<p class="health-empty">No se ha podido cargar el plan de gimnasio.</p>';
+    console.warn("Gym load failed", error);
+  }
+}
+
+function bindHealthTabs() {
+  document.querySelectorAll("[data-health-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.healthTab;
+      document.querySelectorAll("[data-health-tab]").forEach((item) => item.classList.toggle("active", item === button));
+      document.querySelectorAll("[data-health-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.healthPanel === tab));
+    });
+  });
+}
+
+function renderMedicalSection(events) {
+  return `
+    <div class="health-section-heading">
+      <div>
+        <strong>Próximas citas</strong>
+        <p>Citas médicas detectadas en los calendarios iCloud seleccionados.</p>
+      </div>
+      <span>${events.length}</span>
+    </div>
+    ${events.length
+      ? `<div class="health-event-list">${events.slice(0, 30).map(renderHealthEvent).join("")}</div>`
+      : '<p class="health-empty">No hay próximas citas médicas detectadas en iCloud.</p>'}`;
+}
+
+function renderNutritionSection(plan) {
+  if (!plan.length) {
+    return `
+      <div class="health-section-heading">
+        <div>
+          <strong>Nutrición</strong>
+          <p>Espacio preparado para objetivos, pautas y seguimiento nutricional.</p>
+        </div>
+      </div>
+      <div class="health-empty health-empty-card">
+        <strong>Plan nutricional pendiente de definir</strong>
+        <p>Cuando fijemos tus objetivos y pautas, quedarán aquí como fuente privada y podremos registrar su evolución.</p>
+      </div>`;
+  }
+
+  return `
+    <div class="health-section-heading">
+      <div>
+        <strong>Plan nutricional</strong>
+        <p>Objetivos y pautas activas.</p>
+      </div>
+    </div>
+    <div class="nutrition-plan-list">
+      ${plan.map((item) => `
+        <article>
+          <span>${escapeHtml(item.section || "General")}</span>
+          <strong>${escapeHtml(item.title)}</strong>
+          ${item.target ? `<p>${escapeHtml(String(item.target))}${item.unit ? " " + escapeHtml(item.unit) : ""}</p>` : ""}
+          ${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}
+        </article>`).join("")}
+    </div>`;
 }
 
 function renderHealthEvent(event) {
@@ -629,6 +701,290 @@ function renderHealthEvent(event) {
       <strong>${escapeHtml(safeDisplayEventTitle(event.title))}</strong>
       ${event.location ? `<span>${escapeHtml(event.location)}</span>` : ""}
     </article>`;
+}
+
+function renderGymPanel(data) {
+  const panel = document.querySelector("#gym-panel");
+  if (!panel) return;
+
+  const plan = Array.isArray(data?.plan) ? data.plan : [];
+  const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
+  const progress = data?.progress && typeof data.progress === "object" ? data.progress : {};
+
+  if (!plan.length) {
+    panel.innerHTML = '<p class="health-empty">Todavía no hay un plan de entrenamiento conectado.</p>';
+    return;
+  }
+
+  const lastDayId = sessions[0]?.dayId || null;
+  const lastIndex = plan.findIndex((day) => day.id === lastDayId);
+  const suggestedIndex = lastIndex >= 0 ? (lastIndex + 1) % plan.length : 0;
+
+  panel.innerHTML = `
+    <div class="gym-overview">
+      <div>
+        <span>Plan activo</span>
+        <strong>${plan.length} días</strong>
+      </div>
+      <div>
+        <span>Entrenamientos registrados</span>
+        <strong>${sessions.length}</strong>
+      </div>
+      <div>
+        <span>Siguiente sugerido</span>
+        <strong>${escapeHtml(plan[suggestedIndex]?.title || plan[0].title)}</strong>
+      </div>
+    </div>
+
+    <div class="gym-day-switch" role="tablist" aria-label="Días del plan">
+      ${plan.map((day, index) => `
+        <button type="button" class="${index === suggestedIndex ? "active" : ""}" data-gym-day="${escapeHtml(day.id)}">
+          <span>Día ${index + 1}</span>
+          <strong>${escapeHtml(day.focus || day.title)}</strong>
+        </button>`).join("")}
+    </div>
+
+    <form id="gym-session-form" class="gym-session-form">
+      <input type="hidden" id="gym-day-id" value="${escapeHtml(plan[suggestedIndex].id)}">
+      <div id="gym-day-detail"></div>
+      <div class="gym-session-footer">
+        <label>
+          <span>Fecha</span>
+          <input id="gym-session-date" type="date" value="${new Date().toISOString().slice(0, 10)}" required>
+        </label>
+        <label class="gym-notes-field">
+          <span>Notas del entrenamiento</span>
+          <input id="gym-session-notes" type="text" maxlength="1000" placeholder="Sensaciones, molestias, técnica…">
+        </label>
+        <button class="gym-save-button" type="submit">Guardar entrenamiento</button>
+      </div>
+      <p id="gym-save-status" class="gym-save-status" role="status"></p>
+    </form>
+
+    <section class="gym-progress-section">
+      <div class="health-section-heading">
+        <div>
+          <strong>Progreso por ejercicio</strong>
+          <p>Evolución de la carga registrada.</p>
+        </div>
+      </div>
+      <div class="gym-progress-grid">
+        ${renderGymProgress(plan, progress)}
+      </div>
+    </section>
+
+    <section class="gym-history-section">
+      <div class="health-section-heading">
+        <div>
+          <strong>Histórico reciente</strong>
+          <p>Últimos entrenamientos guardados.</p>
+        </div>
+      </div>
+      ${renderGymHistory(sessions)}
+    </section>`;
+
+  const planById = new Map(plan.map((day) => [day.id, day]));
+  const initialDay = plan[suggestedIndex];
+  renderGymDay(initialDay);
+
+  document.querySelectorAll("[data-gym-day]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const day = planById.get(button.dataset.gymDay);
+      if (!day) return;
+      document.querySelectorAll("[data-gym-day]").forEach((item) => item.classList.toggle("active", item === button));
+      document.querySelector("#gym-day-id").value = day.id;
+      renderGymDay(day);
+    });
+  });
+
+  document.querySelector("#gym-session-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await saveGymSessionFromForm(planById);
+  });
+}
+
+function renderGymDay(day) {
+  const container = document.querySelector("#gym-day-detail");
+  if (!container || !day) return;
+
+  container.innerHTML = `
+    <div class="gym-day-heading">
+      <div>
+        <p class="context-label">${escapeHtml(day.title)}</p>
+        <h3>${escapeHtml(day.focus || "")}</h3>
+      </div>
+      <span>Descanso ${formatRestSeconds(day.restSeconds)}</span>
+    </div>
+    <div class="gym-exercise-list">
+      ${day.exercises.map((exercise) => `
+        <article class="gym-exercise-row" data-exercise-id="${escapeHtml(exercise.id)}">
+          <div class="gym-exercise-info">
+            <strong>${escapeHtml(exercise.name)}</strong>
+            <span>${escapeHtml(formatTarget(exercise))}</span>
+            ${exercise.loadNote ? `<small>Referencia: ${escapeHtml(exercise.loadNote)}</small>` : ""}
+            ${exercise.coachingNote ? `<p>${escapeHtml(exercise.coachingNote)}</p>` : ""}
+          </div>
+          <label>
+            <span>Series</span>
+            <input class="gym-input-sets" type="number" min="0" max="20" step="1" value="${exercise.setsTarget ?? ""}">
+          </label>
+          <label>
+            <span>Reps</span>
+            <input class="gym-input-reps" type="text" maxlength="30" value="${escapeHtml(exercise.repsTarget || "")}">
+          </label>
+          <label>
+            <span>Peso</span>
+            <div class="gym-load-input">
+              <input class="gym-input-load" type="number" min="0" max="999" step="0.25" value="${exercise.loadValue ?? ""}" placeholder="—">
+              <small>${escapeHtml(exercise.loadUnit || "kg")}</small>
+            </div>
+          </label>
+          <label class="gym-exercise-note">
+            <span>Nota</span>
+            <input class="gym-input-note" type="text" maxlength="500" placeholder="Opcional">
+          </label>
+        </article>`).join("")}
+    </div>`;
+}
+
+async function saveGymSessionFromForm(planById) {
+  const dayId = document.querySelector("#gym-day-id")?.value;
+  const day = planById.get(dayId);
+  if (!day) return;
+
+  const status = document.querySelector("#gym-save-status");
+  const sessionDate = document.querySelector("#gym-session-date")?.value;
+  const notes = document.querySelector("#gym-session-notes")?.value || "";
+  const rows = [...document.querySelectorAll(".gym-exercise-row")];
+
+  const entries = rows.map((row) => {
+    const exercise = day.exercises.find((item) => item.id === row.dataset.exerciseId);
+    return {
+      exerciseId: row.dataset.exerciseId,
+      exerciseName: exercise?.name || row.dataset.exerciseId,
+      setsDone: row.querySelector(".gym-input-sets")?.value || null,
+      repsDone: row.querySelector(".gym-input-reps")?.value || "",
+      loadValue: row.querySelector(".gym-input-load")?.value || null,
+      loadUnit: exercise?.loadUnit || "kg",
+      notes: row.querySelector(".gym-input-note")?.value || ""
+    };
+  });
+
+  if (status) status.textContent = "Guardando…";
+
+  try {
+    const response = await fetch("/api/gym/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        sessionDate,
+        dayId: day.id,
+        dayTitle: day.title,
+        notes,
+        entries
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) throw new Error(payload.code || `GYM_SAVE_${response.status}`);
+
+    if (status) status.textContent = "Entrenamiento guardado ✓";
+    const refresh = await fetch("/api/gym", { headers: { Accept: "application/json" } });
+    if (refresh.ok) renderGymPanel(await refresh.json());
+  } catch (error) {
+    if (status) status.textContent = "No se ha podido guardar. Inténtalo de nuevo.";
+    console.warn("Gym save failed", error);
+  }
+}
+
+function renderGymProgress(plan, progress) {
+  const exercises = plan.flatMap((day) => day.exercises);
+  const cards = exercises
+    .map((exercise) => {
+      const points = Array.isArray(progress[exercise.id]) ? progress[exercise.id] : [];
+      if (!points.length) return null;
+      const first = points[0];
+      const last = points[points.length - 1];
+      const change = Number(last.value) - Number(first.value);
+      return `
+        <article class="gym-progress-card">
+          <strong>${escapeHtml(exercise.name)}</strong>
+          <div>
+            <span>${formatGymLoad(last.value, last.unit)}</span>
+            ${points.length > 1 ? `<small class="${change > 0 ? "positive" : change < 0 ? "negative" : ""}">${change > 0 ? "+" : ""}${change.toLocaleString("es-ES", { maximumFractionDigits: 2 })} ${escapeHtml(last.unit || "kg")}</small>` : '<small>Primer registro</small>'}
+          </div>
+          ${renderGymSparkline(points)}
+        </article>`;
+    })
+    .filter(Boolean);
+
+  return cards.length ? cards.join("") : '<p class="health-empty">Guarda el primer entrenamiento para empezar a ver tu progreso.</p>';
+}
+
+function renderGymSparkline(points) {
+  if (!points.length) return "";
+  const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
+  if (!values.length) return "";
+  const width = 150;
+  const height = 38;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(1, max - min);
+  const coords = values.map((value, index) => {
+    const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
+    const y = height - 4 - ((value - min) / range) * (height - 8);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  return `<svg class="gym-sparkline" viewBox="0 0 ${width} ${height}" aria-hidden="true"><polyline points="${coords.join(" ")}"></polyline></svg>`;
+}
+
+function renderGymHistory(sessions) {
+  if (!sessions.length) return '<p class="health-empty">Todavía no hay entrenamientos guardados.</p>';
+  return `
+    <div class="gym-history-list">
+      ${sessions.slice(0, 12).map((session) => `
+        <details>
+          <summary>
+            <div>
+              <strong>${escapeHtml(session.dayTitle || session.dayId)}</strong>
+              <span>${escapeHtml(formatGymDate(session.sessionDate))} · ${session.entries.length} ejercicios</span>
+            </div>
+          </summary>
+          <div class="gym-history-entries">
+            ${session.entries.map((entry) => `
+              <div>
+                <strong>${escapeHtml(entry.exerciseName)}</strong>
+                <span>${entry.setsDone ?? "—"} series · ${escapeHtml(entry.repsDone || "—")} reps · ${entry.loadValue == null ? "sin peso" : escapeHtml(formatGymLoad(entry.loadValue, entry.loadUnit))}</span>
+              </div>`).join("")}
+            ${session.notes ? `<p>${escapeHtml(session.notes)}</p>` : ""}
+          </div>
+        </details>`).join("")}
+    </div>`;
+}
+
+function formatTarget(exercise) {
+  const sets = exercise.setsTarget ?? "—";
+  const reps = exercise.repsTarget || "—";
+  return `${sets} series × ${reps} repeticiones`;
+}
+
+function formatRestSeconds(value) {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds <= 0) return "según sensaciones";
+  if (seconds % 60 === 0) return `${seconds / 60} min`;
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} min`;
+}
+
+function formatGymLoad(value, unit) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return `${number.toLocaleString("es-ES", { maximumFractionDigits: 2 })} ${unit || "kg"}`;
+}
+
+function formatGymDate(value) {
+  if (!value) return "Sin fecha";
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", year: "numeric" }).format(date).replace(".", "");
 }
 
 function renderDebtOverview() {
