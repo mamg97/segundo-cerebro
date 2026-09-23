@@ -656,6 +656,7 @@ async function openHealthDetail() {
 
 
 let selectedHabitDate = null;
+let habitQuestData = null;
 
 function localDateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -700,6 +701,7 @@ async function openHabitsDetail(dateKey = null) {
 function renderHabitsPanel(data) {
   const body = document.querySelector("#dialog-body");
   if (!body) return;
+  habitQuestData = data;
 
   const todayHabits = Array.isArray(data.todayHabits) ? data.todayHabits : [];
   const habits = Array.isArray(data.habits) ? data.habits : [];
@@ -747,20 +749,15 @@ function renderHabitsPanel(data) {
       </section>
 
       <section class="health-tab-panel" data-habit-panel="list">
-        <div class="health-section-heading">
-          <div><strong>Todos los hábitos</strong><p>La hoja HabitQuest sigue siendo la fuente de verdad.</p></div>
-          <span>${habits.filter((habit) => habit.active).length} activos</span>
+        <div class="habit-management-toolbar">
+          <div class="health-section-heading">
+            <div><strong>Todos los hábitos</strong><p>Crear, editar, ordenar o archivar sin salir de Segundo Cerebro.</p></div>
+            <span>${habits.filter((habit) => habit.active).length} activos</span>
+          </div>
+          <button type="button" class="habit-new-button" data-habit-new>+ Nuevo hábito</button>
         </div>
         <div class="habit-master-list">
-          ${habits.map((habit) => `
-            <article class="${habit.active ? "" : "archived"}">
-              <span class="habit-master-icon">${escapeHtml(habit.icon)}</span>
-              <div>
-                <strong>${escapeHtml(habit.name)}</strong>
-                <small>${escapeHtml(habit.category)} · ${escapeHtml(habit.frequency)} · ${habit.timesPerDay}×/día · ${habit.xpReward} XP</small>
-              </div>
-              <span>${habit.active ? "Activo" : "Archivado"}</span>
-            </article>`).join("")}
+          ${habits.map((habit, index) => renderHabitMasterItem(habit, index, habits)).join("")}
         </div>
       </section>
 
@@ -806,6 +803,174 @@ function renderHabitProgressItem(item) {
     </article>`;
 }
 
+
+function renderHabitMasterItem(habit, index, habits) {
+  const frequencyLabel = habit.frequency === "daily"
+    ? "Diario"
+    : habit.frequency === "weekdays"
+      ? "Laborables"
+      : `Días ${(habit.days || []).join(",") || "personalizados"}`;
+  return `
+    <article class="${habit.active ? "" : "archived"}">
+      <span class="habit-master-icon">${escapeHtml(habit.icon)}</span>
+      <div class="habit-master-copy">
+        <strong>${escapeHtml(habit.name)}</strong>
+        <small>${escapeHtml(habit.category)} · ${escapeHtml(frequencyLabel)} · ${habit.timesPerDay}×/día · ${habit.xpReward} XP</small>
+        <em>${habit.active ? "Activo" : "Archivado"}${habit.reminder ? " · " + escapeHtml(habit.reminder) : ""}</em>
+      </div>
+      <div class="habit-master-actions">
+        <button type="button" data-habit-move="-1" data-habit-id="${escapeHtml(habit.id)}" ${index === 0 ? "disabled" : ""} aria-label="Subir hábito">↑</button>
+        <button type="button" data-habit-move="1" data-habit-id="${escapeHtml(habit.id)}" ${index === habits.length - 1 ? "disabled" : ""} aria-label="Bajar hábito">↓</button>
+        <button type="button" data-habit-edit="${escapeHtml(habit.id)}">Editar</button>
+        <button type="button" data-habit-archive="${escapeHtml(habit.id)}" data-archived="${habit.active ? "false" : "true"}">${habit.active ? "Archivar" : "Restaurar"}</button>
+        <button type="button" class="danger" data-habit-delete="${escapeHtml(habit.id)}">Eliminar</button>
+      </div>
+    </article>`;
+}
+
+function openHabitEditor(habitId = null) {
+  const data = habitQuestData;
+  if (!data) return;
+  const habit = habitId ? data.habits.find((item) => item.id === habitId) : null;
+  const body = document.querySelector("#dialog-body");
+  if (!body) return;
+
+  const category = habit?.category || "personal";
+  const frequency = habit?.frequency || "daily";
+  const difficulty = habit?.difficulty || "medium";
+  const selectedDays = new Set(Array.isArray(habit?.days) ? habit.days : [1, 3, 5]);
+
+  body.innerHTML = `
+    <form id="habit-editor-form" class="habit-editor-form">
+      <div class="habit-editor-heading">
+        <div>
+          <p class="context-label">HabitQuest</p>
+          <h3>${habit ? "Editar hábito" : "Nuevo hábito"}</h3>
+        </div>
+        <button type="button" data-habit-editor-cancel>Volver</button>
+      </div>
+
+      <div class="habit-editor-name">
+        <label><span>Icono</span><input name="icon" maxlength="8" value="${escapeHtml(habit?.icon || "🌱")}" aria-label="Icono"></label>
+        <label><span>Nombre</span><input name="name" maxlength="120" required value="${escapeHtml(habit?.name || "")}" placeholder="Ej. Leer 20 páginas"></label>
+      </div>
+
+      <div class="habit-editor-grid">
+        <label>
+          <span>Categoría</span>
+          <select name="category">
+            ${[
+              ["fitness","Fitness"],["learning","Aprendizaje"],["mind","Mente"],["work","Trabajo"],
+              ["finance","Finanzas"],["health","Salud"],["sleep","Sueño"],["creativity","Creatividad"],
+              ["social","Social"],["personal","Personal"]
+            ].map(([value,label]) => `<option value="${value}" ${category === value ? "selected" : ""}>${label}</option>`).join("")}
+          </select>
+        </label>
+        <label>
+          <span>Dificultad</span>
+          <select name="difficulty">
+            <option value="easy" ${difficulty === "easy" ? "selected" : ""}>Fácil · 10 XP</option>
+            <option value="medium" ${difficulty === "medium" ? "selected" : ""}>Media · 20 XP</option>
+            <option value="hard" ${difficulty === "hard" ? "selected" : ""}>Difícil · 30 XP</option>
+          </select>
+        </label>
+        <label>
+          <span>Frecuencia</span>
+          <select name="frequency" id="habit-frequency">
+            <option value="daily" ${frequency === "daily" ? "selected" : ""}>Todos los días</option>
+            <option value="weekdays" ${frequency === "weekdays" ? "selected" : ""}>Laborables</option>
+            <option value="custom" ${frequency === "custom" ? "selected" : ""}>Personalizada</option>
+          </select>
+        </label>
+        <label>
+          <span>Veces al día</span>
+          <input name="timesPerDay" type="number" min="1" max="12" step="1" value="${Number(habit?.timesPerDay || 1)}">
+        </label>
+        <label>
+          <span>Recordatorio</span>
+          <input name="reminder" type="time" value="${escapeHtml(habit?.reminder || "19:00")}">
+        </label>
+      </div>
+
+      <fieldset id="habit-custom-days" class="habit-custom-days" ${frequency === "custom" ? "" : "hidden"}>
+        <legend>Días</legend>
+        ${[["D",0],["L",1],["M",2],["X",3],["J",4],["V",5],["S",6]].map(([label,value]) => `
+          <label>
+            <input type="checkbox" name="days" value="${value}" ${selectedDays.has(value) ? "checked" : ""}>
+            <span>${label}</span>
+          </label>`).join("")}
+      </fieldset>
+
+      <div class="habit-editor-actions">
+        <button type="button" data-habit-editor-cancel>Cancelar</button>
+        <button type="submit" class="primary">${habit ? "Guardar cambios" : "Crear hábito"}</button>
+      </div>
+      <p id="habit-editor-status" class="gym-save-status" role="status"></p>
+    </form>`;
+
+  const frequencySelect = body.querySelector("#habit-frequency");
+  const customDays = body.querySelector("#habit-custom-days");
+  frequencySelect?.addEventListener("change", () => {
+    if (customDays) customDays.hidden = frequencySelect.value !== "custom";
+  });
+
+  body.querySelectorAll("[data-habit-editor-cancel]").forEach((button) => {
+    button.addEventListener("click", () => renderHabitsPanel(habitQuestData));
+  });
+
+  body.querySelector("#habit-editor-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const status = document.querySelector("#habit-editor-status");
+    if (status) status.textContent = "Guardando…";
+    const payload = {
+      name: String(form.get("name") || "").trim(),
+      icon: String(form.get("icon") || "🌱").trim(),
+      category: String(form.get("category") || "personal"),
+      frequency: String(form.get("frequency") || "daily"),
+      days: form.getAll("days").map(Number),
+      reminder: String(form.get("reminder") || ""),
+      difficulty: String(form.get("difficulty") || "medium"),
+      timesPerDay: Number(form.get("timesPerDay") || 1)
+    };
+    const result = await manageHabitQuest(habit ? "update" : "create", {
+      ...(habit ? { habitId: habit.id } : {}),
+      habit: payload
+    });
+    if (result) renderHabitsPanel(result);
+    else if (status) status.textContent = "No se ha podido guardar.";
+  });
+}
+
+async function manageHabitQuest(action, payload = {}) {
+  try {
+    const response = await fetch("/api/habits/manage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.summary) throw new Error(data.code || `HABIT_MANAGE_${response.status}`);
+    habitQuestData = data.summary;
+    state.habitsSummary = data.summary;
+    return data.summary;
+  } catch (error) {
+    console.warn("Habit management failed", error);
+    window.alert("No se ha podido modificar HabitQuest. Si los hábitos cargan pero no se pueden editar, habrá que ampliar el permiso de Google Sheets a escritura.");
+    return null;
+  }
+}
+
+async function moveHabit(habitId, direction) {
+  const habits = [...(habitQuestData?.habits || [])];
+  const index = habits.findIndex((habit) => habit.id === habitId);
+  const nextIndex = index + direction;
+  if (index < 0 || nextIndex < 0 || nextIndex >= habits.length) return;
+  [habits[index], habits[nextIndex]] = [habits[nextIndex], habits[index]];
+  const result = await manageHabitQuest("reorder", { order: habits.map((habit) => habit.id) });
+  if (result) renderHabitsPanel(result);
+}
+
 function bindHabitInteractions() {
   document.querySelectorAll("[data-habit-tab]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -847,6 +1012,35 @@ function bindHabitInteractions() {
         button.classList.remove("saving");
         console.warn("Habit toggle failed", error);
       }
+    });
+  });
+
+  document.querySelector("[data-habit-new]")?.addEventListener("click", () => openHabitEditor());
+  document.querySelectorAll("[data-habit-edit]").forEach((button) => {
+    button.addEventListener("click", () => openHabitEditor(button.dataset.habitEdit));
+  });
+  document.querySelectorAll("[data-habit-archive]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const habitId = button.dataset.habitArchive;
+      const archived = button.dataset.archived === "true";
+      const result = await manageHabitQuest(archived ? "restore" : "archive", { habitId });
+      if (result) renderHabitsPanel(result);
+    });
+  });
+  document.querySelectorAll("[data-habit-delete]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const habitId = button.dataset.habitDelete;
+      const habit = habitQuestData?.habits?.find((item) => item.id === habitId);
+      if (!habitId || !habit) return;
+      const confirmed = window.confirm(`¿Eliminar "${habit.name}"? Esto también elimina su histórico. Si quieres conservarlo, archívalo.`);
+      if (!confirmed) return;
+      const result = await manageHabitQuest("delete", { habitId });
+      if (result) renderHabitsPanel(result);
+    });
+  });
+  document.querySelectorAll("[data-habit-move]").forEach((button) => {
+    button.addEventListener("click", () => {
+      void moveHabit(button.dataset.habitId, Number(button.dataset.habitMove || 0));
     });
   });
 }
