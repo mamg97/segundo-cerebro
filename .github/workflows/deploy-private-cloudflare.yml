@@ -1,4 +1,5 @@
 name: Deploy private Cloudflare app
+# Auto-deploy verification marker
 
 on:
   push:
