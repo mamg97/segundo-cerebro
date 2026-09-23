@@ -72,7 +72,8 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Lectura de hábitos, histórico y progreso.
 - Marcar/desmarcar respetando Last-Write-Wins.
 - Crear, editar, archivar/restaurar, eliminar y reordenar hábitos.
-- La aplicación independiente HabitQuest se mantiene como fallback durante la validación.
+- Paridad funcional ampliada: vista lista/compacta, ordenación, separación pendientes/completados y activos/archivados, progreso diario, estadísticas 60/90 días, semana actual, heatmap de cinco semanas, logros y feedback de gamificación.
+- La aplicación independiente HabitQuest se mantiene como fallback durante la validación; no se duplican su login Google, onboarding, tema independiente ni import/export XLSX.
 
 ### Salud — Gimnasio
 
@@ -140,14 +141,13 @@ El Worker de ingesta:
 
 ## Próxima acción exacta
 
-Apple Health queda cerrado funcionalmente:
+Validar la absorción de HabitQuest:
 
-1. El Atajo está automatizado en iPhone a las 23:55 cada día.
-2. El Atajo consulta `hoy` y cada ejecución actualiza la única fila D1 de esa fecha mediante UPSERT.
-3. Validar al día siguiente que la primera ejecución automática ocurrió sin intervención.
-4. Los objetivos de kcal y macros se definirán en la conversación `GESTOR NUTRI Y SALUD`, no en el Organizador.
-5. Después, continuar con el siguiente frente global del Organizador.
-
+1. Desplegar el Worker privado con la nueva capa HabitQuest.
+2. Validar en iPhone, iPad y Mac las vistas `Hoy`, `Hábitos` y `Progreso`.
+3. Confirmar que marcar/desmarcar desde Segundo Cerebro y desde HabitQuest sigue resolviendo por Last-Write-Wins sobre el mismo Sheet.
+4. Mantener `streakFreezes` fuera de la UI de Segundo Cerebro hasta formalizar su algoritmo real.
+5. Si la paridad se mantiene estable, decidir cuándo retirar la aplicación HabitQuest independiente.
 ## Archivos que debe leer el siguiente relevo
 
 - `AGENTS.md`
@@ -158,6 +158,7 @@ Apple Health queda cerrado funcionalmente:
 - `docs/DECISIONS.md`
 - `agents/FINANCE.md`
 - `agents/HEALTH.md`
+- `agents/HABITS.md`
 - `private-cloudflare/README.md`
 - `docs/APPLE_HEALTH_SHORTCUT.md`
 

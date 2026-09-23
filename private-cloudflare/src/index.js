@@ -600,11 +600,12 @@ async function fetchHabitQuestSummary(env, options = {}) {
     };
   } catch {}
 
-  const progress = habits.filter((habit) => habit.active).map((habit) => {
+  const activeHabits = habits.filter((habit) => habit.active);
+  const progress = activeHabits.map((habit) => {
     let scheduledDays = 0;
     let completedDays = 0;
     const points = [];
-    for (let offset = 29; offset >= 0; offset -= 1) {
+    for (let offset = 59; offset >= 0; offset -= 1) {
       const key = addHabitDays(dateKey, -offset);
       if (!habitIsScheduled(habit, key)) continue;
       scheduledDays += 1;
@@ -613,6 +614,21 @@ async function fetchHabitQuestSummary(env, options = {}) {
       if (done) completedDays += 1;
       points.push({ date: key, count, target: habit.timesPerDay, done });
     }
+
+    let totalCompletions = 0;
+    for (const item of stateMap.values()) {
+      if (item.habitId === habit.id) totalCompletions += Math.max(0, Number(item.count) || 0);
+    }
+
+    let currentStreak = 0;
+    for (let offset = 0; offset < 400; offset += 1) {
+      const key = addHabitDays(dateKey, -offset);
+      const count = Math.max(0, Number(stateMap.get(`${habit.id}|${key}`)?.count) || 0);
+      if (count > 0) currentStreak += 1;
+      else if (offset === 0) continue;
+      else break;
+    }
+
     return {
       id: habit.id,
       name: habit.name,
@@ -621,10 +637,110 @@ async function fetchHabitQuestSummary(env, options = {}) {
       scheduledDays,
       completedDays,
       rate: scheduledDays ? completedDays / scheduledDays : 0,
+      totalCompletions,
+      currentStreak,
       points
     };
   });
 
+  const doneByDate = new Map();
+  for (const item of stateMap.values()) {
+    const habit = habitById.get(item.habitId);
+    if (!habit || !habit.active || Number(item.count) < Math.max(1, Number(habit.timesPerDay) || 1)) continue;
+    if (!doneByDate.has(item.date)) doneByDate.set(item.date, new Set());
+    doneByDate.get(item.date).add(item.habitId);
+  }
+
+  const mondayOffset = (habitWeekday(dateKey) + 6) % 7;
+  const weekLabels = ["L", "M", "X", "J", "V", "S", "D"];
+  const weekly = weekLabels.map((label, index) => {
+    const key = addHabitDays(dateKey, index - mondayOffset);
+    const scheduledForDay = activeHabits.filter((habit) => habitIsScheduled(habit, key));
+    const doneSet = doneByDate.get(key) || new Set();
+    const done = scheduledForDay.filter((habit) => doneSet.has(habit.id)).length;
+    return {
+      label,
+      date: key,
+      scheduled: scheduledForDay.length,
+      done,
+      rate: scheduledForDay.length ? Math.min(1, done / scheduledForDay.length) : 0,
+      future: key > dateKey
+    };
+  });
+
+  let scheduled90 = 0;
+  let done90 = 0;
+  for (let offset = 0; offset < 90; offset += 1) {
+    const key = addHabitDays(dateKey, -offset);
+    const scheduledForDay = activeHabits.filter((habit) => habitIsScheduled(habit, key));
+    scheduled90 += scheduledForDay.length;
+    const doneSet = doneByDate.get(key) || new Set();
+    done90 += scheduledForDay.filter((habit) => doneSet.has(habit.id)).length;
+  }
+  const completionRate = scheduled90 ? done90 / scheduled90 : 0;
+
+  const toSunday = 6 - mondayOffset;
+  const heatMonths = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const heat = Array.from({ length: 35 }, (_, index) => {
+    const key = addHabitDays(dateKey, toSunday - (34 - index));
+    const scheduledForDay = activeHabits.filter((habit) => habitIsScheduled(habit, key));
+    const doneSet = doneByDate.get(key) || new Set();
+    const done = scheduledForDay.filter((habit) => doneSet.has(habit.id)).length;
+    const date = new Date(`${key}T12:00:00+02:00`);
+    return {
+      date: key,
+      day: date.getDate(),
+      month: heatMonths[date.getMonth()] || "",
+      label: key,
+      firstOfMonth: date.getDate() === 1,
+      future: key > dateKey,
+      level: scheduledForDay.length ? Math.min(1, done / scheduledForDay.length) : 0,
+      done
+    };
+  });
+
+  let totalCompletions = 0;
+  for (const item of stateMap.values()) totalCompletions += Math.max(0, Number(item.count) || 0);
+
+  let morning = 0;
+  let night = 0;
+  for (const item of history) {
+    const finalState = stateMap.get(`${item.habitId}|${item.date}`);
+    if (!finalState || Number(finalState.count) <= 0) continue;
+    const habit = habitById.get(item.habitId);
+    const fallbackHour = Number(String(habit?.reminder || "12:00").split(":")[0] || 12);
+    const parsedHour = item.at ? new Date(item.at).getHours() : fallbackHour;
+    if (parsedHour < 10) morning += 1;
+    if (parsedHour >= 20) night += 1;
+  }
+
+  let perfectRun = 0;
+  for (let offset = 1; offset <= 60; offset += 1) {
+    const key = addHabitDays(dateKey, -offset);
+    const scheduledForDay = activeHabits.filter((habit) => habitIsScheduled(habit, key));
+    const doneSet = doneByDate.get(key) || new Set();
+    if (scheduledForDay.length > 0 && scheduledForDay.every((habit) => doneSet.has(habit.id))) perfectRun += 1;
+    else break;
+  }
+
+  const achievementDefs = [
+    ["first-step", 1, totalCompletions],
+    ["on-fire", 7, Math.max(streak.current, streak.longest)],
+    ["unstoppable", 30, Math.max(streak.current, streak.longest)],
+    ["century", 100, totalCompletions],
+    ["early-bird", 7, morning],
+    ["night-owl", 7, night],
+    ["perfect-week", 7, perfectRun],
+    ["half-k", 500, totalCompletions]
+  ];
+  const achievements = achievementDefs.map(([id, target, rawValue]) => ({
+    id,
+    target,
+    value: Math.min(Number(rawValue) || 0, Number(target) || 0),
+    unlocked: Number(rawValue) >= Number(target)
+  }));
+  const achievementsUnlocked = achievements.filter((item) => item.unlocked).length;
+  const bestHabit = [...progress].sort((a, b) => b.rate - a.rate || b.totalCompletions - a.totalCompletions)[0] || null;
   const value = {
     date: dateKey,
     user,
@@ -636,9 +752,20 @@ async function fetchHabitQuestSummary(env, options = {}) {
       xp,
       level: habitLevelFromXp(xp),
       streak: streak.current,
-      longestStreak: streak.longest
+      longestStreak: streak.longest,
+      completionRate,
+      totalCompletions
     },
     progress,
+    insights: {
+      weekly,
+      heat,
+      completionRate,
+      totalCompletions,
+      bestHabit,
+      achievements,
+      achievementsUnlocked
+    },
     source: {
       kind: "google-sheet",
       title: "HabitQuest Data",

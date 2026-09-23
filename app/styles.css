@@ -4286,3 +4286,399 @@ html[data-theme="dark"] .gym-session-footer input {
   color: var(--ink-soft);
   font-size: 8px;
 }
+
+/* v0.13 — HabitQuest parity layer */
+.habit-daily-progress {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+.habit-daily-progress p {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.habit-progress-ring {
+  display: grid;
+  width: 62px;
+  height: 62px;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(var(--mint) calc(var(--habit-progress) * 1%), color-mix(in srgb, var(--line) 72%, transparent) 0);
+  position: relative;
+}
+
+.habit-progress-ring::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.habit-progress-ring > span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  text-align: center;
+}
+
+.habit-progress-ring strong { font-size: 13px; }
+.habit-progress-ring small { color: var(--ink-soft); font-size: 7px; }
+
+.habit-view-toggle {
+  min-width: 38px;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.habit-list-section {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.habit-list-section.completed { margin-top: 20px; }
+.habit-list-section.archived-section { margin-top: 24px; }
+
+.habit-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 2px;
+}
+
+.habit-list-heading strong {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.habit-list-heading span {
+  min-width: 24px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 8px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.habit-section-note {
+  margin: -2px 2px 2px;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.habit-today-list.compact,
+.habit-master-list.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.habit-today-item.compact {
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-content: start;
+  min-height: 88px;
+}
+
+.habit-today-item.compact .habit-check {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 17px;
+}
+
+.habit-today-item.compact .habit-count {
+  grid-column: 1 / -1;
+  width: fit-content;
+  min-width: 0;
+  justify-self: end;
+  margin-top: -1px;
+}
+
+.habit-today-item.done .habit-today-copy strong {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+}
+
+.habit-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.habit-toolbar-actions select {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 9px;
+}
+
+.habit-master-list.compact article {
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-content: start;
+}
+
+.habit-master-list.compact .habit-master-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+}
+
+.habit-insight-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 20px;
+}
+
+.habit-insight-kpis > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+}
+
+.habit-insight-kpis span,
+.habit-insight-kpis small { color: var(--ink-soft); font-size: 8px; }
+.habit-insight-kpis strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+
+.habit-progress-section { margin-top: 22px; }
+
+.habit-weekly-chart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+  height: 180px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+.habit-week-day {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: 5px;
+  min-width: 0;
+  text-align: center;
+}
+
+.habit-week-track {
+  display: flex;
+  min-height: 0;
+  align-items: end;
+  overflow: hidden;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--line) 45%, transparent);
+}
+
+.habit-week-track span {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 10px;
+  background: var(--blue);
+}
+
+.habit-week-day.future { opacity: .38; }
+.habit-week-day strong { font-size: 8px; }
+.habit-week-day small { color: var(--ink-soft); font-size: 7px; }
+
+.habit-heat-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+.habit-heat-weekdays,
+.habit-heat-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.habit-heat-weekdays {
+  margin-bottom: 7px;
+  color: var(--ink-soft);
+  text-align: center;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.habit-heat-cell {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--line) 50%, transparent);
+  color: var(--ink-soft);
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.habit-heat-cell small { font-size: 6px; }
+.habit-heat-cell.level-1, .habit-heat-legend i.level-1 { background: color-mix(in srgb, var(--mint) 25%, var(--paper)); }
+.habit-heat-cell.level-2, .habit-heat-legend i.level-2 { background: color-mix(in srgb, var(--mint) 45%, var(--paper)); }
+.habit-heat-cell.level-3, .habit-heat-legend i.level-3 { background: color-mix(in srgb, var(--mint) 68%, var(--paper)); color: white; }
+.habit-heat-cell.level-4, .habit-heat-legend i.level-4 { background: var(--mint); color: white; }
+.habit-heat-cell.future { opacity: .34; }
+
+.habit-heat-legend {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 10px;
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.habit-heat-legend i {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--line) 50%, transparent);
+}
+
+.habit-achievements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.habit-achievements article {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+  opacity: .62;
+}
+
+.habit-achievements article.unlocked {
+  border-color: color-mix(in srgb, var(--amber) 50%, var(--line));
+  opacity: 1;
+}
+
+.habit-achievement-icon { font-size: 21px; filter: grayscale(1); }
+.habit-achievements article.unlocked .habit-achievement-icon { filter: none; }
+.habit-achievements article > div { display: grid; gap: 2px; min-width: 0; }
+.habit-achievements strong { font-size: 9px; }
+.habit-achievements small { color: var(--ink-soft); font-size: 7px; }
+.habit-achievements em { color: var(--ink-soft); font-size: 7px; font-style: normal; }
+.habit-achievements progress { grid-column: 2 / -1; width: 100%; height: 6px; accent-color: var(--amber); }
+
+.habit-progress-copy { display: grid !important; gap: 1px !important; min-width: 0; }
+
+.habit-xp-toast {
+  position: fixed;
+  z-index: 120;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--mint);
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: var(--shadow);
+  transition: opacity .16s ease, transform .16s ease;
+}
+
+.habit-xp-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.habit-confetti-layer {
+  position: fixed;
+  z-index: 119;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.habit-confetti-layer i {
+  position: absolute;
+  top: -16px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--blue);
+  animation: habit-confetti-fall 2.1s ease-in var(--delay) forwards;
+}
+
+.habit-confetti-layer i.c1 { background: var(--mint); }
+.habit-confetti-layer i.c2 { background: var(--amber); }
+.habit-confetti-layer i.c3 { background: var(--violet); }
+
+@keyframes habit-confetti-fall {
+  to { transform: translate(var(--drift), calc(100vh + 40px)) rotate(640deg); opacity: .9; }
+}
+
+.habit-level-up {
+  position: fixed;
+  z-index: 130;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--ink) 58%, transparent);
+}
+
+.habit-level-up > div {
+  display: grid;
+  width: min(340px, 100%);
+  gap: 8px;
+  justify-items: center;
+  padding: 30px;
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.habit-level-up > div > span { color: var(--amber); font-size: 42px; }
+.habit-level-up small { color: var(--blue); font-size: 8px; font-weight: 900; letter-spacing: .15em; }
+.habit-level-up strong { font-family: "Iowan Old Style", serif; font-size: 32px; }
+.habit-level-up button { margin-top: 8px; border: 0; border-radius: 11px; padding: 10px 18px; background: var(--blue); color: white; font-weight: 800; }
+
+@media (max-width: 620px) {
+  .habit-daily-progress { grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; padding: 11px; }
+  .habit-progress-ring { width: 52px; height: 52px; }
+  .habit-today-list.compact, .habit-master-list.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .habit-management-toolbar { gap: 9px; }
+  .habit-toolbar-actions { display: grid; grid-template-columns: minmax(0, 1fr) 42px; }
+  .habit-toolbar-actions .habit-new-button { grid-column: 1 / -1; }
+  .habit-insight-kpis { grid-template-columns: 1fr; }
+  .habit-weekly-chart { height: 150px; gap: 4px; padding: 10px; }
+  .habit-heat-weekdays, .habit-heat-grid { gap: 4px; }
+  .habit-heat-cell { border-radius: 6px; font-size: 6px; }
+  .habit-achievements { grid-template-columns: 1fr; }
+  .habit-progress-item { grid-template-columns: 1fr 64px; }
+}

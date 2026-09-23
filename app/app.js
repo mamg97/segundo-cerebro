@@ -691,6 +691,13 @@ async function loadNutritionPanel(dateKey) {
 
 let selectedHabitDate = null;
 let habitQuestData = null;
+let habitActiveTab = "today";
+let habitViewPreference = null;
+let habitSortPreference = "manual";
+try {
+  habitViewPreference = localStorage.getItem("second-brain.habit-view");
+  habitSortPreference = localStorage.getItem("second-brain.habit-sort") || "manual";
+} catch {}
 
 function localDateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -732,6 +739,29 @@ async function openHabitsDetail(dateKey = null) {
   }
 }
 
+function habitViewMode(data = habitQuestData) {
+  const candidate = habitViewPreference || data?.user?.habitView || "list";
+  return candidate === "compact" ? "compact" : "list";
+}
+
+function habitSortMode() {
+  const allowed = new Set(["manual", "alpha", "created", "category", "streak"]);
+  return allowed.has(habitSortPreference) ? habitSortPreference : "manual";
+}
+
+function persistHabitUiPreference(key, value) {
+  try { localStorage.setItem(key, value); } catch {}
+}
+
+function sortHabitMaster(habits, sort, progressById) {
+  const list = [...habits];
+  if (sort === "alpha") list.sort((a, b) => String(a.name).localeCompare(String(b.name), "es"));
+  else if (sort === "created") list.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  else if (sort === "category") list.sort((a, b) => String(a.category).localeCompare(String(b.category), "es") || String(a.name).localeCompare(String(b.name), "es"));
+  else if (sort === "streak") list.sort((a, b) => Number(progressById.get(b.id)?.totalCompletions || 0) - Number(progressById.get(a.id)?.totalCompletions || 0));
+  return list;
+}
+
 function renderHabitsPanel(data) {
   const body = document.querySelector("#dialog-body");
   if (!body) return;
@@ -740,6 +770,7 @@ function renderHabitsPanel(data) {
   const todayHabits = Array.isArray(data.todayHabits) ? data.todayHabits : [];
   const habits = Array.isArray(data.habits) ? data.habits : [];
   const progress = Array.isArray(data.progress) ? data.progress : [];
+  const insights = data.insights || {};
   const summary = data.summary || {};
   const level = summary.level || {};
   const selected = data.date || selectedHabitDate || localDateKey();
@@ -748,10 +779,21 @@ function renderHabitsPanel(data) {
   const completion = summary.total ? Math.round((Number(summary.done || 0) / Number(summary.total)) * 100) : 0;
   const labelDate = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" })
     .format(new Date(`${selected}T12:00:00`));
+  const view = habitViewMode(data);
+  const sort = habitSortMode();
+  const progressById = new Map(progress.map((item) => [item.id, item]));
+  const orderedHabits = sortHabitMaster(habits, sort, progressById);
+  const activeHabits = orderedHabits.filter((habit) => habit.active);
+  const archivedHabits = orderedHabits.filter((habit) => !habit.active);
+  const pendingHabits = todayHabits.filter((habit) => !habit.done);
+  const completedHabits = todayHabits.filter((habit) => habit.done);
+  const completionRate90 = Math.round(Math.max(0, Math.min(1, Number(insights.completionRate || 0))) * 100);
+  const bestHabit = insights.bestHabit || null;
+  const activeClass = (tab) => habitActiveTab === tab ? "active" : "";
 
   body.innerHTML = `
     <div class="habits-kpis">
-      <div><span>Hoy</span><strong>${Number(summary.done || 0)}/${Number(summary.total || 0)}</strong><small>${completion}% completado</small></div>
+      <div><span>${isToday ? "Hoy" : "Día"}</span><strong>${Number(summary.done || 0)}/${Number(summary.total || 0)}</strong><small>${completion}% completado</small></div>
       <div><span>Racha</span><strong>${Number(summary.streak || 0)} días</strong><small>Máxima ${Number(summary.longestStreak || 0)}</small></div>
       <div><span>Nivel</span><strong>${Number(level.level || 1)}</strong><small>${Number(summary.xp || 0).toLocaleString("es-ES")} XP</small></div>
     </div>
@@ -762,13 +804,13 @@ function renderHabitsPanel(data) {
     </div>
 
     <div class="health-tabs habits-tabs" role="tablist" aria-label="HabitQuest">
-      <button class="active" type="button" data-habit-tab="today">Hoy</button>
-      <button type="button" data-habit-tab="list">Hábitos</button>
-      <button type="button" data-habit-tab="progress">Progreso</button>
+      <button class="${activeClass("today")}" type="button" data-habit-tab="today">Hoy</button>
+      <button class="${activeClass("list")}" type="button" data-habit-tab="list">Hábitos</button>
+      <button class="${activeClass("progress")}" type="button" data-habit-tab="progress">Progreso</button>
     </div>
 
     <div class="health-tab-panels">
-      <section class="health-tab-panel active" data-habit-panel="today">
+      <section class="health-tab-panel ${activeClass("today")}" data-habit-panel="today">
         <div class="habit-date-nav">
           <button type="button" data-habit-date-shift="-1" aria-label="Día anterior">‹</button>
           <button type="button" data-habit-today ${isToday ? "disabled" : ""}>
@@ -777,30 +819,100 @@ function renderHabitsPanel(data) {
           </button>
           <button type="button" data-habit-date-shift="1" aria-label="Día siguiente" ${isToday ? "disabled" : ""}>›</button>
         </div>
-        <div class="habit-today-list">
-          ${todayHabits.length ? todayHabits.map(renderHabitTodayItem).join("") : '<p class="health-empty">No hay hábitos programados para este día.</p>'}
+
+        <div class="habit-daily-progress">
+          <div class="habit-progress-ring" style="--habit-progress:${completion}"><span><strong>${completion}%</strong><small>${Number(summary.done || 0)}/${Number(summary.total || 0)}</small></span></div>
+          <div>
+            <strong>${completion === 100 && Number(summary.total || 0) > 0 ? "🎉 Misión diaria completada" : `${Math.max(0, Number(summary.total || 0) - Number(summary.done || 0))} por completar`}</strong>
+            <p>${completion === 100 && Number(summary.total || 0) > 0 ? "Todo lo programado para este día está hecho." : `Sigue avanzando para mantener tu racha de ${Number(summary.streak || 0)} días.`}</p>
+          </div>
+          <button type="button" class="habit-view-toggle" data-habit-view-toggle aria-label="Cambiar vista">${view === "list" ? "▦" : "☰"}</button>
         </div>
+
+        ${pendingHabits.length ? `
+          <div class="habit-list-section">
+            <div class="habit-list-heading"><strong>Pendientes</strong><span>${pendingHabits.length}</span></div>
+            <div class="habit-today-list ${view === "compact" ? "compact" : ""}">
+              ${pendingHabits.map((habit) => renderHabitTodayItem(habit, view === "compact")).join("")}
+            </div>
+          </div>` : ""}
+
+        ${completedHabits.length ? `
+          <div class="habit-list-section completed">
+            <div class="habit-list-heading"><strong>Completados</strong><span>${completedHabits.length}</span></div>
+            <div class="habit-today-list ${view === "compact" ? "compact" : ""}">
+              ${completedHabits.map((habit) => renderHabitTodayItem(habit, view === "compact")).join("")}
+            </div>
+          </div>` : ""}
+
+        ${todayHabits.length ? "" : `<p class="health-empty">No hay hábitos programados para este día.</p>`}
       </section>
 
-      <section class="health-tab-panel" data-habit-panel="list">
+      <section class="health-tab-panel ${activeClass("list")}" data-habit-panel="list">
         <div class="habit-management-toolbar">
           <div class="health-section-heading">
-            <div><strong>Todos los hábitos</strong><p>Crear, editar, ordenar o archivar sin salir de Segundo Cerebro.</p></div>
-            <span>${habits.filter((habit) => habit.active).length} activos</span>
+            <div><strong>Todos los hábitos</strong><p>Misma fuente de verdad que HabitQuest. Gestiona sin salir de Segundo Cerebro.</p></div>
+            <span>${activeHabits.length} activos</span>
           </div>
-          <button type="button" class="habit-new-button" data-habit-new>+ Nuevo hábito</button>
+          <div class="habit-toolbar-actions">
+            <select data-habit-sort aria-label="Ordenar hábitos">
+              <option value="manual" ${sort === "manual" ? "selected" : ""}>Orden manual</option>
+              <option value="alpha" ${sort === "alpha" ? "selected" : ""}>A–Z</option>
+              <option value="created" ${sort === "created" ? "selected" : ""}>Más recientes</option>
+              <option value="category" ${sort === "category" ? "selected" : ""}>Categoría</option>
+              <option value="streak" ${sort === "streak" ? "selected" : ""}>Más completados</option>
+            </select>
+            <button type="button" class="habit-view-toggle" data-habit-view-toggle aria-label="Cambiar vista">${view === "list" ? "▦" : "☰"}</button>
+            <button type="button" class="habit-new-button" data-habit-new>+ Nuevo hábito</button>
+          </div>
         </div>
-        <div class="habit-master-list">
-          ${habits.map((habit, index) => renderHabitMasterItem(habit, index, habits)).join("")}
+
+        <div class="habit-list-section">
+          <div class="habit-list-heading"><strong>Activos</strong><span>${activeHabits.length}</span></div>
+          <div class="habit-master-list ${view === "compact" ? "compact" : ""}">
+            ${activeHabits.map((habit) => renderHabitMasterItem(habit, habits.findIndex((item) => item.id === habit.id), habits, progressById, sort === "manual")).join("")}
+          </div>
         </div>
+
+        ${archivedHabits.length ? `
+          <div class="habit-list-section archived-section">
+            <div class="habit-list-heading"><strong>Archivados</strong><span>${archivedHabits.length}</span></div>
+            <p class="habit-section-note">No aparecen en el día a día, pero conservan su histórico.</p>
+            <div class="habit-master-list ${view === "compact" ? "compact" : ""}">
+              ${archivedHabits.map((habit) => renderHabitMasterItem(habit, habits.findIndex((item) => item.id === habit.id), habits, progressById, sort === "manual")).join("")}
+            </div>
+          </div>` : ""}
       </section>
 
-      <section class="health-tab-panel" data-habit-panel="progress">
-        <div class="health-section-heading">
-          <div><strong>Últimos 30 días</strong><p>Porcentaje de días programados completados por hábito.</p></div>
+      <section class="health-tab-panel ${activeClass("progress")}" data-habit-panel="progress">
+        <div class="habit-insight-kpis">
+          <div><span>Consistencia · 90 días</span><strong>${completionRate90}%</strong></div>
+          <div><span>Completados totales</span><strong>${Number(insights.totalCompletions || 0).toLocaleString("es-ES")}</strong></div>
+          <div><span>Hábito más fuerte</span><strong>${bestHabit ? escapeHtml(bestHabit.name) : "—"}</strong><small>${bestHabit ? `${Math.round(Number(bestHabit.rate || 0) * 100)}% · 60 días` : "Sin histórico"}</small></div>
         </div>
-        <div class="habit-progress-list">
-          ${[...progress].sort((a, b) => b.rate - a.rate).map(renderHabitProgressItem).join("")}
+
+        <div class="habit-progress-section">
+          <div class="health-section-heading"><div><strong>Esta semana</strong><p>Porcentaje de hábitos programados completados cada día.</p></div></div>
+          ${renderHabitWeekly(insights.weekly)}
+        </div>
+
+        <div class="habit-progress-section">
+          <div class="health-section-heading"><div><strong>Mapa de consistencia</strong><p>Últimas cinco semanas; los días futuros aparecen atenuados.</p></div></div>
+          ${renderHabitHeatmap(insights.heat)}
+        </div>
+
+        <div class="habit-progress-section">
+          <div class="health-section-heading"><div><strong>Logros</strong><p>Los mismos hitos de gamificación de HabitQuest.</p></div><span>${Number(insights.achievementsUnlocked || 0)}/${Array.isArray(insights.achievements) ? insights.achievements.length : 0}</span></div>
+          ${renderHabitAchievements(insights.achievements)}
+        </div>
+
+        <div class="habit-progress-section">
+          <div class="health-section-heading">
+            <div><strong>Últimos 60 días</strong><p>Rendimiento por hábito, racha individual y completados acumulados.</p></div>
+          </div>
+          <div class="habit-progress-list">
+            ${[...progress].sort((a, b) => b.rate - a.rate).map(renderHabitProgressItem).join("")}
+          </div>
         </div>
       </section>
     </div>`;
@@ -808,12 +920,12 @@ function renderHabitsPanel(data) {
   bindHabitInteractions();
 }
 
-function renderHabitTodayItem(habit) {
+function renderHabitTodayItem(habit, compact = false) {
   const target = Math.max(1, Number(habit.target || habit.timesPerDay || 1));
   const count = Math.max(0, Number(habit.count || 0));
   const done = Boolean(habit.done);
   return `
-    <button class="habit-today-item ${done ? "done" : ""}" type="button" data-habit-toggle="${escapeHtml(habit.id)}">
+    <button class="habit-today-item ${done ? "done" : ""} ${compact ? "compact" : ""}" type="button" data-habit-toggle="${escapeHtml(habit.id)}">
       <span class="habit-check">${done ? "✓" : escapeHtml(habit.icon)}</span>
       <span class="habit-today-copy">
         <strong>${escapeHtml(habit.name)}</strong>
@@ -830,36 +942,148 @@ function renderHabitProgressItem(item) {
     <article class="habit-progress-item">
       <div>
         <span>${escapeHtml(item.icon || "✓")}</span>
-        <strong>${escapeHtml(item.name)}</strong>
+        <span class="habit-progress-copy"><strong>${escapeHtml(item.name)}</strong><small>🔥 ${Number(item.currentStreak || 0)} días · ${Number(item.totalCompletions || 0)} completados</small></span>
       </div>
       <progress max="100" value="${percent}"></progress>
       <span><strong>${percent}%</strong><small>${Number(item.completedDays || 0)}/${Number(item.scheduledDays || 0)} días</small></span>
     </article>`;
 }
 
-
-function renderHabitMasterItem(habit, index, habits) {
+function renderHabitMasterItem(habit, index, habits, progressById, manualOrder) {
   const frequencyLabel = habit.frequency === "daily"
     ? "Diario"
     : habit.frequency === "weekdays"
       ? "Laborables"
       : `Días ${(habit.days || []).join(",") || "personalizados"}`;
+  const stat = progressById.get(habit.id) || {};
   return `
     <article class="${habit.active ? "" : "archived"}">
       <span class="habit-master-icon">${escapeHtml(habit.icon)}</span>
       <div class="habit-master-copy">
         <strong>${escapeHtml(habit.name)}</strong>
         <small>${escapeHtml(habit.category)} · ${escapeHtml(frequencyLabel)} · ${habit.timesPerDay}×/día · ${habit.xpReward} XP</small>
-        <em>${habit.active ? "Activo" : "Archivado"}${habit.reminder ? " · " + escapeHtml(habit.reminder) : ""}</em>
+        <em>${habit.active ? "Activo" : "Archivado"}${habit.reminder ? " · " + escapeHtml(habit.reminder) : ""} · 🔥 ${Number(stat.currentStreak || 0)}d · ${Number(stat.totalCompletions || 0)} completados</em>
       </div>
       <div class="habit-master-actions">
-        <button type="button" data-habit-move="-1" data-habit-id="${escapeHtml(habit.id)}" ${index === 0 ? "disabled" : ""} aria-label="Subir hábito">↑</button>
-        <button type="button" data-habit-move="1" data-habit-id="${escapeHtml(habit.id)}" ${index === habits.length - 1 ? "disabled" : ""} aria-label="Bajar hábito">↓</button>
+        <button type="button" data-habit-move="-1" data-habit-id="${escapeHtml(habit.id)}" ${!manualOrder || index === 0 ? "disabled" : ""} aria-label="Subir hábito">↑</button>
+        <button type="button" data-habit-move="1" data-habit-id="${escapeHtml(habit.id)}" ${!manualOrder || index === habits.length - 1 ? "disabled" : ""} aria-label="Bajar hábito">↓</button>
         <button type="button" data-habit-edit="${escapeHtml(habit.id)}">Editar</button>
         <button type="button" data-habit-archive="${escapeHtml(habit.id)}" data-archived="${habit.active ? "false" : "true"}">${habit.active ? "Archivar" : "Restaurar"}</button>
         <button type="button" class="danger" data-habit-delete="${escapeHtml(habit.id)}">Eliminar</button>
       </div>
     </article>`;
+}
+
+function renderHabitWeekly(items) {
+  const rows = Array.isArray(items) ? items : [];
+  if (!rows.length) return `<p class="health-empty">Aún no hay histórico suficiente.</p>`;
+  return `
+    <div class="habit-weekly-chart">
+      ${rows.map((item) => {
+        const pct = Math.round(Math.max(0, Math.min(1, Number(item.rate || 0))) * 100);
+        return `<div class="habit-week-day ${item.future ? "future" : ""}">
+          <div class="habit-week-track"><span style="height:${Math.max(4, pct)}%"></span></div>
+          <strong>${escapeHtml(item.label || "")}</strong>
+          <small>${pct}%</small>
+        </div>`;
+      }).join("")}
+    </div>`;
+}
+
+function renderHabitHeatmap(items) {
+  const rows = Array.isArray(items) ? items : [];
+  if (!rows.length) return `<p class="health-empty">Aún no hay histórico suficiente.</p>`;
+  return `
+    <div class="habit-heat-card">
+      <div class="habit-heat-weekdays">${["L","M","X","J","V","S","D"].map((day) => `<span>${day}</span>`).join("")}</div>
+      <div class="habit-heat-grid">
+        ${rows.map((item) => {
+          const level = Math.max(0, Math.min(1, Number(item.level || 0)));
+          const bucket = level === 0 ? 0 : Math.max(1, Math.ceil(level * 4));
+          return `<div class="habit-heat-cell level-${bucket} ${item.future ? "future" : ""}" title="${escapeHtml(item.label || item.date || "")} · ${Number(item.done || 0)} completados"><span>${Number(item.day || 0)}</span>${item.firstOfMonth ? `<small>${escapeHtml(item.month || "")}</small>` : ""}</div>`;
+        }).join("")}
+      </div>
+      <div class="habit-heat-legend"><span>Menos</span><i class="level-0"></i><i class="level-1"></i><i class="level-2"></i><i class="level-3"></i><i class="level-4"></i><span>Más</span></div>
+    </div>`;
+}
+
+function renderHabitAchievements(items) {
+  const rows = Array.isArray(items) ? items : [];
+  if (!rows.length) return `<p class="health-empty">Aún no hay logros calculados.</p>`;
+  const labels = {
+    "first-step": ["🏆", "Primer paso", "Completa tu primer hábito"],
+    "on-fire": ["🔥", "En llamas", "Alcanza una racha de 7 días"],
+    "unstoppable": ["🌋", "Imparable", "Alcanza una racha de 30 días"],
+    "century": ["💯", "Centenario", "Completa 100 hábitos"],
+    "early-bird": ["🌅", "Madrugador", "Completa 7 hábitos por la mañana"],
+    "night-owl": ["🌙", "Noctámbulo", "Completa 7 hábitos por la noche"],
+    "perfect-week": ["⚡", "Semana perfecta", "Completa todo lo programado durante 7 días"],
+    "half-k": ["🚀", "Medio millar", "Completa 500 hábitos"]
+  };
+  return `<div class="habit-achievements">${rows.map((item) => {
+    const meta = labels[item.id] || ["🏅", item.id, ""];
+    const value = Math.min(Number(item.value || 0), Number(item.target || 0));
+    const pct = Number(item.target || 0) ? Math.round((value / Number(item.target)) * 100) : 0;
+    return `<article class="${item.unlocked ? "unlocked" : ""}">
+      <span class="habit-achievement-icon">${meta[0]}</span>
+      <div><strong>${escapeHtml(meta[1])}</strong><small>${escapeHtml(meta[2])}</small></div>
+      <em>${item.unlocked ? "Conseguido" : `${value}/${Number(item.target || 0)}`}</em>
+      <progress max="100" value="${pct}"></progress>
+    </article>`;
+  }).join("")}</div>`;
+}
+
+function habitHaptic(wasDone) {
+  if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+    navigator.vibrate(wasDone ? 25 : [12, 30, 18]);
+    return;
+  }
+  if (typeof document === "undefined") return;
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.setAttribute("switch", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  input.style.pointerEvents = "none";
+  document.body.appendChild(input);
+  input.click();
+  setTimeout(() => input.remove(), 300);
+}
+
+function showHabitXpToast(xp) {
+  document.querySelector(".habit-xp-toast")?.remove();
+  const toast = document.createElement("div");
+  toast.className = "habit-xp-toast";
+  toast.textContent = `+${Number(xp || 0)} XP`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add("show"), 10);
+  setTimeout(() => toast.remove(), 1100);
+}
+
+function launchHabitConfetti() {
+  document.querySelector(".habit-confetti-layer")?.remove();
+  const layer = document.createElement("div");
+  layer.className = "habit-confetti-layer";
+  for (let i = 0; i < 28; i += 1) {
+    const piece = document.createElement("i");
+    piece.style.left = `${Math.round(Math.random() * 100)}%`;
+    piece.style.setProperty("--delay", `${Math.random() * .35}s`);
+    piece.style.setProperty("--drift", `${Math.round((Math.random() - .5) * 160)}px`);
+    piece.className = `c${i % 4}`;
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 2600);
+}
+
+function showHabitLevelUp(level) {
+  document.querySelector(".habit-level-up")?.remove();
+  const overlay = document.createElement("div");
+  overlay.className = "habit-level-up";
+  overlay.innerHTML = `<div><span>✦</span><small>SUBIDA DE NIVEL</small><strong>Nivel ${Number(level || 1)}</strong><button type="button">Seguir</button></div>`;
+  overlay.querySelector("button")?.addEventListener("click", () => overlay.remove());
+  overlay.addEventListener("click", (event) => { if (event.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
 }
 
 function openHabitEditor(habitId = null) {
@@ -1009,9 +1233,24 @@ function bindHabitInteractions() {
   document.querySelectorAll("[data-habit-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       const tab = button.dataset.habitTab;
+      habitActiveTab = tab || "today";
       document.querySelectorAll("[data-habit-tab]").forEach((item) => item.classList.toggle("active", item === button));
       document.querySelectorAll("[data-habit-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.habitPanel === tab));
     });
+  });
+
+  document.querySelectorAll("[data-habit-view-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      habitViewPreference = habitViewMode() === "list" ? "compact" : "list";
+      persistHabitUiPreference("second-brain.habit-view", habitViewPreference);
+      renderHabitsPanel(habitQuestData);
+    });
+  });
+
+  document.querySelector("[data-habit-sort]")?.addEventListener("change", (event) => {
+    habitSortPreference = event.currentTarget.value || "manual";
+    persistHabitUiPreference("second-brain.habit-sort", habitSortPreference);
+    renderHabitsPanel(habitQuestData);
   });
 
   document.querySelectorAll("[data-habit-date-shift]").forEach((button) => {
@@ -1030,6 +1269,12 @@ function bindHabitInteractions() {
     button.addEventListener("click", async () => {
       const habitId = button.dataset.habitToggle;
       if (!habitId) return;
+      const before = habitQuestData;
+      const beforeHabit = before?.todayHabits?.find((item) => item.id === habitId);
+      const previousCount = Math.max(0, Number(beforeHabit?.count || 0));
+      const previousLevel = Number(before?.summary?.level?.level || 1);
+      const beforeAllDone = Number(before?.summary?.total || 0) > 0 && Number(before?.summary?.done || 0) === Number(before?.summary?.total || 0);
+      habitHaptic(Boolean(beforeHabit?.done));
       button.disabled = true;
       button.classList.add("saving");
       try {
@@ -1040,7 +1285,16 @@ function bindHabitInteractions() {
         });
         const payload = await response.json();
         if (!response.ok || !payload.summary) throw new Error(payload.code || `HABIT_TOGGLE_${response.status}`);
+        const nextLevel = Number(payload.summary?.summary?.level?.level || 1);
+        const afterAllDone = Number(payload.summary?.summary?.total || 0) > 0 && Number(payload.summary?.summary?.done || 0) === Number(payload.summary?.summary?.total || 0);
+        const advanced = Number(payload.count || 0) > previousCount;
         renderHabitsPanel(payload.summary);
+        if (advanced) showHabitXpToast(beforeHabit?.xpReward || 0);
+        if (!beforeAllDone && afterAllDone && (selectedHabitDate || localDateKey()) === localDateKey()) launchHabitConfetti();
+        if (nextLevel > previousLevel) {
+          launchHabitConfetti();
+          showHabitLevelUp(nextLevel);
+        }
       } catch (error) {
         button.disabled = false;
         button.classList.remove("saving");

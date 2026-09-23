@@ -129,3 +129,12 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Decisión:** `health_energy_daily` conserva una única fila por `energy_date`. Las sincronizaciones repetidas del mismo día actualizan esa fila mediante UPSERT.
 - **Migración:** al inicializar la tabla se conservan únicamente las filas históricas más recientes de cada fecha antes de crear el índice único.
 - **Motivo:** Apple Health entrega un acumulado diario; conservar múltiples snapshots intermedios no aporta valor operativo y genera redundancia.
+
+## D-019 — Segundo Cerebro absorbe la experiencia operativa de HabitQuest
+
+- **Estado:** aceptada; implementación inicial completada, validación de dispositivos pendiente
+- **Fecha:** 2026-09-23
+- **Decisión:** Segundo Cerebro replica las capacidades útiles de HabitQuest sobre el mismo Google Sheet: gestión, vistas lista/compacta, ordenación, progreso, estadísticas, logros y feedback de gamificación.
+- **Límite:** no se duplican login/sync manual de Google, onboarding, tema independiente, perfil ni XLSX porque son infraestructura de la app separada, no del dominio Hábitos.
+- **Streak freezes:** no se exponen todavía porque la app original no tiene una regla de consumo/concesión suficientemente formalizada en la lógica compartida.
+- **Motivo:** converger hacia un único Segundo Cerebro sin crear otra fuente de verdad ni mantener dos experiencias funcionales divergentes.

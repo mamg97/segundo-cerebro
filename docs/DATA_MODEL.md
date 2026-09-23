@@ -214,7 +214,7 @@ Campos consumidos: `id`, `name`, `icon`, `category`, `frequency`, `days`, `remin
 
 ### Vista derivada
 
-`habitsSummary` puede incluir `todayHabits`, `summary`, `progress` y metadatos mínimos. No se transporta la foto/base64 de `Meta`. El progreso mostrado en Segundo Cerebro se calcula sobre los últimos 30 días programados.
+`habitsSummary` puede incluir `todayHabits`, `summary`, `progress` y metadatos mínimos. No se transporta la foto/base64 de `Meta`. El progreso por hábito mostrado en Segundo Cerebro se calcula sobre los últimos 60 días programados. La vista de Progreso añade una tasa global de 90 días, semana actual, mapa de consistencia de cinco semanas, completados acumulados, racha individual y logros derivados; todos son cálculos de lectura sobre `Habits` + `History` + `SyncState`, no nuevas fuentes de verdad.
 
 
 ### Gestión de hábitos desde Segundo Cerebro
