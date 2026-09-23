@@ -3356,7 +3356,7 @@ html[data-theme="dark"] .gym-session-footer input {
     padding: 9px 30px 9px 10px;
     border: 1px solid var(--line);
     border-radius: 9px;
-    background: #101a28;
+    background: var(--paper);
     color: var(--ink);
     font-size: 16px;
     font-weight: 650;
