@@ -2079,6 +2079,28 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/health/overview") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const date = url.searchParams.get("date") || undefined;
+      try {
+        const health = await fetchHealthNutritionSummary(env, { date });
+        if (!health.value) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+        return json({
+          ok: true,
+          status: health.status,
+          date: health.value.date,
+          body: health.value.body || null,
+          activity: health.value.activity || null,
+          activityObjective: health.value.activityObjective || null,
+          nutritionObjective: health.value.objective || null,
+          energy: health.value.energy || null
+        });
+      } catch (error) {
+        console.warn("Health overview read failed", String(error?.message || error));
+        return json({ ok: false, code: "HEALTH_OVERVIEW_READ_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/nutrition") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       const date = url.searchParams.get("date") || undefined;
