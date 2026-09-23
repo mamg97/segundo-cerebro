@@ -4242,3 +4242,47 @@ html[data-theme="dark"] .gym-session-footer input {
     grid-column: 1 / -1;
   }
 }
+
+.nutrition-food-library {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.nutrition-food-library summary {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.nutrition-food-library > div {
+  display: grid;
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+
+.nutrition-food-library article {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 9px;
+  border-top: 1px solid var(--line);
+}
+
+.nutrition-food-library article > div {
+  display: grid;
+  gap: 2px;
+}
+
+.nutrition-food-library article strong {
+  font-size: 9px;
+}
+
+.nutrition-food-library article small,
+.nutrition-food-library article > span {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
