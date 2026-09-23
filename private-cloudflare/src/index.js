@@ -12,6 +12,7 @@ const securityHeaders = {
 let googleTokenCache = { token: null, expiresAt: 0 };
 let financeCache = { value: null, expiresAt: 0 };
 let habitsCache = { value: null, expiresAt: 0 };
+let healthCache = { value: null, expiresAt: 0, date: null };
 
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
@@ -55,6 +56,10 @@ function hasFinanceGoogleConfig(env) {
 
 function hasHabitQuestGoogleConfig(env) {
   return Boolean(hasGoogleOauthConfig(env) && env.HABITQUEST_SHEET_ID);
+}
+
+function hasHealthGoogleConfig(env) {
+  return Boolean(hasGoogleOauthConfig(env) && env.HEALTH_SHEET_ID);
 }
 
 async function getGoogleAccessToken(env) {
@@ -960,6 +965,267 @@ async function manageHabitQuest(request, env) {
 }
 
 
+
+function localHealthDateKey(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
+function healthAddDays(dateKey, amount) {
+  const date = new Date(`${dateKey}T12:00:00+02:00`);
+  date.setDate(date.getDate() + amount);
+  return localHealthDateKey(date);
+}
+
+function sumNutrition(entries, status) {
+  const selected = entries.filter((entry) => !status || entry.status === status);
+  return selected.reduce((acc, entry) => {
+    acc.kcal += Number(entry.kcal || 0);
+    acc.protein += Number(entry.protein || 0);
+    acc.carbs += Number(entry.carbs || 0);
+    acc.fat += Number(entry.fat || 0);
+    return acc;
+  }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
+}
+
+async function fetchHealthNutritionSummary(env, options = {}) {
+  if (!hasHealthGoogleConfig(env)) {
+    return { status: "not-configured", value: null };
+  }
+
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(options.date || ""))
+    ? String(options.date)
+    : localHealthDateKey();
+
+  if (!options.force && healthCache.value && healthCache.expiresAt > Date.now() && healthCache.date === date) {
+    return { status: "ok-cache", value: healthCache.value };
+  }
+
+  const token = await getGoogleAccessToken(env);
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:G2000"];
+  const params = new URLSearchParams();
+  for (const range of ranges) params.append("ranges", range);
+  params.set("majorDimension", "ROWS");
+  params.set("valueRenderOption", "UNFORMATTED_VALUE");
+
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}/values:batchGet?${params.toString()}`;
+  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error(`HEALTH_SHEETS_${response.status}`);
+
+  const payload = await response.json();
+  const valueRanges = payload.valueRanges || [];
+
+  const foods = parseTableRows(valueRanges[0]?.values || []).map((item) => ({
+    id: String(item.id || "").trim(),
+    name: String(item.nombre || "").trim(),
+    serving: toNumber(item.racion),
+    unit: item.unidad || null,
+    kcal: toNumber(item.kcal_racion),
+    protein: toNumber(item.proteinas_g),
+    carbs: toNumber(item.carbohidratos_g),
+    fat: toNumber(item.grasas_g),
+    source: item.fuente || null,
+    note: item.nota || null,
+    updatedAt: item.updated_at || null
+  })).filter((item) => item.id && item.name);
+
+  const entries = parseTableRows(valueRanges[1]?.values || []).map((item, index) => ({
+    id: `row-${index + 2}`,
+    date: String(item.fecha || "").trim(),
+    moment: String(item.momento || "Otro").trim(),
+    itemId: item.item_id || null,
+    itemName: String(item.item_nombre || "").trim(),
+    quantity: toNumber(item.cantidad),
+    unit: item.unidad || null,
+    kcal: toNumber(item.kcal) ?? 0,
+    protein: toNumber(item.proteinas_g) ?? 0,
+    carbs: toNumber(item.carbohidratos_g) ?? 0,
+    fat: toNumber(item.grasas_g) ?? 0,
+    status: String(item.estado || "consumido").toLowerCase() === "planificado" ? "planificado" : "consumido",
+    source: item.fuente || null,
+    note: item.nota || null,
+    updatedAt: item.updated_at || null
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.itemName);
+
+  const objectives = parseTableRows(valueRanges[2]?.values || []).map((item) => ({
+    effectiveDate: String(item.effective_date || "").trim(),
+    kcal: toNumber(item.target_kcal),
+    protein: toNumber(item.target_protein_g),
+    carbs: toNumber(item.target_carbs_g),
+    fat: toNumber(item.target_fat_g),
+    note: item.nota || null,
+    active: String(item.active ?? "TRUE").toUpperCase() !== "FALSE",
+    updatedAt: item.updated_at || null
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.effectiveDate) && item.active)
+    .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate));
+
+  const energyRows = parseTableRows(valueRanges[3]?.values || []).map((item) => ({
+    date: String(item.fecha || "").trim(),
+    activeKcal: toNumber(item.active_kcal),
+    restingKcal: toNumber(item.resting_kcal),
+    totalKcal: toNumber(item.total_kcal),
+    source: item.fuente || null,
+    note: item.nota || null,
+    importedAt: item.imported_at || null
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date));
+
+  const dayEntries = entries.filter((item) => item.date === date);
+  const consumed = sumNutrition(dayEntries, "consumido");
+  const planned = sumNutrition(dayEntries, "planificado");
+  const objective = objectives.find((item) => item.effectiveDate <= date) || null;
+
+  const energyForDay = energyRows.filter((item) => item.date === date)
+    .sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")))[0] || null;
+  const totalBurn = energyForDay
+    ? (energyForDay.totalKcal ?? (
+      energyForDay.activeKcal !== null && energyForDay.restingKcal !== null
+        ? energyForDay.activeKcal + energyForDay.restingKcal
+        : null
+    ))
+    : null;
+
+  const history = [];
+  for (let offset = 13; offset >= 0; offset -= 1) {
+    const historyDate = healthAddDays(date, -offset);
+    const dayRows = entries.filter((item) => item.date === historyDate);
+    const dayConsumed = sumNutrition(dayRows, "consumido");
+    const dayEnergy = energyRows.filter((item) => item.date === historyDate)
+      .sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")))[0] || null;
+    const burn = dayEnergy
+      ? (dayEnergy.totalKcal ?? (
+        dayEnergy.activeKcal !== null && dayEnergy.restingKcal !== null
+          ? dayEnergy.activeKcal + dayEnergy.restingKcal
+          : null
+      ))
+      : null;
+    history.push({
+      date: historyDate,
+      consumedKcal: dayConsumed.kcal,
+      burnedKcal: burn,
+      balanceKcal: burn === null ? null : dayConsumed.kcal - burn
+    });
+  }
+
+  const value = {
+    date,
+    foods,
+    entries: dayEntries,
+    objective,
+    energy: energyForDay,
+    summary: {
+      consumed,
+      planned,
+      totalBurn,
+      balanceKcal: totalBurn === null ? null : consumed.kcal - totalBurn,
+      remainingToTargetKcal: objective?.kcal === null || objective?.kcal === undefined
+        ? null
+        : objective.kcal - consumed.kcal
+    },
+    history,
+    source: {
+      kind: "google-sheet",
+      title: "SEGUNDO CEREBRO - SALUD"
+    }
+  };
+
+  healthCache = { value, expiresAt: Date.now() + 20_000, date };
+  return { status: "ok", value };
+}
+
+async function appendHealthSheetRow(env, range, values) {
+  const token = await getGoogleAccessToken(env);
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ values: [values] })
+  });
+  if (!response.ok) throw new Error(`HEALTH_WRITE_${response.status}`);
+  healthCache = { value: null, expiresAt: 0, date: null };
+}
+
+async function saveNutritionEntry(request, env) {
+  if (!hasHealthGoogleConfig(env)) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+  let payload;
+  try { payload = await request.json(); } catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const date = String(payload?.date || "").trim();
+  const itemName = String(payload?.itemName || "").trim().slice(0, 160);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !itemName) {
+    return json({ ok: false, code: "INVALID_NUTRITION_ENTRY" }, 400);
+  }
+  const status = String(payload?.status || "consumido").toLowerCase() === "planificado" ? "planificado" : "consumido";
+  const now = new Date().toISOString();
+  await appendHealthSheetRow(env, "Registro!A:N", [
+    date,
+    String(payload?.moment || "Otro").slice(0, 40),
+    String(payload?.itemId || "").slice(0, 80),
+    itemName,
+    toNumber(payload?.quantity),
+    String(payload?.unit || "").slice(0, 30),
+    toNumber(payload?.kcal) ?? 0,
+    toNumber(payload?.protein) ?? 0,
+    toNumber(payload?.carbs) ?? 0,
+    toNumber(payload?.fat) ?? 0,
+    status,
+    String(payload?.source || "web").slice(0, 40),
+    String(payload?.note || "").slice(0, 500),
+    now
+  ]);
+  return json({ ok: true }, 201);
+}
+
+async function saveNutritionFood(request, env) {
+  if (!hasHealthGoogleConfig(env)) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+  let payload;
+  try { payload = await request.json(); } catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+  const name = String(payload?.name || "").trim().slice(0, 160);
+  if (!name) return json({ ok: false, code: "INVALID_FOOD" }, 400);
+  const id = String(payload?.id || `food-${crypto.randomUUID().slice(0, 8)}`);
+  await appendHealthSheetRow(env, "Comidas!A:K", [
+    id,
+    name,
+    toNumber(payload?.serving),
+    String(payload?.unit || "ración").slice(0, 30),
+    toNumber(payload?.kcal) ?? 0,
+    toNumber(payload?.protein) ?? 0,
+    toNumber(payload?.carbs) ?? 0,
+    toNumber(payload?.fat) ?? 0,
+    String(payload?.source || "web").slice(0, 40),
+    String(payload?.note || "").slice(0, 500),
+    new Date().toISOString()
+  ]);
+  return json({ ok: true, id }, 201);
+}
+
+async function saveNutritionEnergy(request, env) {
+  if (!hasHealthGoogleConfig(env)) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+  let payload;
+  try { payload = await request.json(); } catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+  const date = String(payload?.date || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ ok: false, code: "INVALID_ENERGY_DATE" }, 400);
+  const active = toNumber(payload?.activeKcal);
+  const resting = toNumber(payload?.restingKcal);
+  const total = toNumber(payload?.totalKcal) ?? (active !== null && resting !== null ? active + resting : null);
+  await appendHealthSheetRow(env, "EnergiaDiaria!A:G", [
+    date,
+    active,
+    resting,
+    total,
+    String(payload?.source || "manual").slice(0, 40),
+    String(payload?.note || "").slice(0, 500),
+    new Date().toISOString()
+  ]);
+  return json({ ok: true, totalKcal: total }, 201);
+}
+
 async function ensureGymTables(env) {
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS gym_sessions (
@@ -1181,6 +1447,18 @@ export default {
         }
       }
 
+      let nutritionSync = hasHealthGoogleConfig(env) ? "configured" : "not-configured";
+      let nutritionFoodCount = null;
+      if (hasHealthGoogleConfig(env)) {
+        try {
+          const nutrition = await fetchHealthNutritionSummary(env);
+          nutritionSync = nutrition.status;
+          nutritionFoodCount = Array.isArray(nutrition.value?.foods) ? nutrition.value.foods.length : null;
+        } catch {
+          nutritionSync = "error";
+        }
+      }
+
       let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
       let calendarError = null;
       let calendarMatchedCount = null;
@@ -1209,6 +1487,8 @@ export default {
         habitSync,
         habitCount,
         habitTodayCount,
+        nutritionSync,
+        nutritionFoodCount,
         calendarSync,
         calendarError,
         calendarMatchedCount,
@@ -1251,6 +1531,46 @@ export default {
           return json({ ok: false, code }, 400);
         }
         return json({ ok: false, code: "HABITQUEST_MANAGE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const date = url.searchParams.get("date") || undefined;
+      try {
+        const nutrition = await fetchHealthNutritionSummary(env, { date });
+        if (!nutrition.value) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+        return json({ ok: true, status: nutrition.status, ...nutrition.value });
+      } catch (error) {
+        console.warn("Nutrition read failed", String(error?.message || error));
+        return json({ ok: false, code: "NUTRITION_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition/entry") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try { return await saveNutritionEntry(request, env); }
+      catch (error) {
+        console.warn("Nutrition entry write failed", String(error?.message || error));
+        return json({ ok: false, code: "NUTRITION_WRITE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition/food") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try { return await saveNutritionFood(request, env); }
+      catch (error) {
+        console.warn("Nutrition food write failed", String(error?.message || error));
+        return json({ ok: false, code: "NUTRITION_WRITE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition/energy") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try { return await saveNutritionEnergy(request, env); }
+      catch (error) {
+        console.warn("Nutrition energy write failed", String(error?.message || error));
+        return json({ ok: false, code: "NUTRITION_ENERGY_WRITE_FAILED" }, 502);
       }
     }
 
@@ -1328,6 +1648,18 @@ export default {
         }
       }
 
+      let nutritionSync = "not-configured";
+      if (hasHealthGoogleConfig(env)) {
+        try {
+          const nutrition = await fetchHealthNutritionSummary(env);
+          if (nutrition.value) state.nutritionSummary = nutrition.value;
+          nutritionSync = nutrition.status;
+        } catch (error) {
+          nutritionSync = "error";
+          console.warn("Nutrition sync failed", String(error?.message || error));
+        }
+      }
+
       let calendarSync = "not-configured";
       if (hasIcloudCalendarConfig(env)) {
         try {
@@ -1351,6 +1683,7 @@ export default {
         remoteSnapshotCreatedAt: row.created_at,
         financeSync,
         habitSync,
+        nutritionSync,
         calendarSync
       };
 
