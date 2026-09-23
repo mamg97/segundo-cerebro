@@ -1,3 +1,4 @@
+import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 
 let state = mockState;
@@ -200,9 +201,7 @@ function renderMode() {
     const habitSummary = state.habitsSummary?.summary || {};
     const habitTotal = Number(habitSummary.total || 0);
     const habitDone = Number(habitSummary.done || 0);
-    const attention = openDecisions >= 4 || generalHealth < 60;
-    const good = !attention && generalHealth >= 80 && (habitTotal === 0 || habitDone >= Math.ceil(habitTotal * .7));
-    orb.dataset.state = attention ? "attention" : good ? "good" : "normal";
+    orb.setAttribute("state", "idle");
     orb.setAttribute(
       "aria-label",
       `Pulso del sistema: ${generalHealth} de 100. ${openDecisions} decisiones abiertas${habitTotal ? `, ${habitDone} de ${habitTotal} hábitos completados hoy` : ""}.`
@@ -2081,6 +2080,12 @@ function bindInteractions() {
   document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   document.querySelector("#ask-form").addEventListener("submit", handleQuery);
   document.querySelector("#system-orb")?.addEventListener("click", showSystemPulse);
+  document.querySelector("#system-orb")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      showSystemPulse();
+    }
+  });
 
   const menuButton = document.querySelector("#menu-button");
   menuButton.addEventListener("click", () => {
@@ -2165,6 +2170,7 @@ function openDecisions() {
 }
 
 function showSystemPulse() {
+  setSystemOrbState("solving");
   const result = document.querySelector("#query-result");
   const generalHealth = Number(state.areas.find((area) => area.id === "area-general")?.health ?? 0);
   const openLoops = Array.isArray(state.openLoops) ? state.openLoops.length : 0;
@@ -2183,14 +2189,17 @@ function showSystemPulse() {
     ? `Finanzas: ${Math.round((spent / planned) * 100)}% del flujo previsto ejecutado.`
     : "Finanzas: sin porcentaje consolidado.";
 
-  result.hidden = false;
-  result.innerHTML = `
-    <div class="orb-pulse-summary">
-      <strong>Pulso ${generalHealth}/100</strong>
-      <span>Hábitos: ${habitTotal ? `${habitDone}/${habitTotal} hoy · racha ${streak} días` : "sin datos"}.</span>
-      <span>${openLoops} asuntos abiertos · ${openDecisions} decisiones pendientes.</span>
-      <span>${escapeHtml(financeText)}</span>
-    </div>`;
+  window.setTimeout(() => {
+    result.hidden = false;
+    result.innerHTML = `
+      <div class="orb-pulse-summary">
+        <strong>Pulso ${generalHealth}/100</strong>
+        <span>Hábitos: ${habitTotal ? `${habitDone}/${habitTotal} hoy · racha ${streak} días` : "sin datos"}.</span>
+        <span>${openLoops} asuntos abiertos · ${openDecisions} decisiones pendientes.</span>
+        <span>${escapeHtml(financeText)}</span>
+      </div>`;
+    setSystemOrbState("responding", 1400);
+  }, 180);
 }
 
 function handleQuery(event) {
@@ -2199,12 +2208,14 @@ function handleQuery(event) {
   const result = document.querySelector("#query-result");
   const query = input.value.trim().toLocaleLowerCase("es");
   if (!query) {
+    setSystemOrbState("idle");
     result.hidden = false;
     result.innerHTML = privateMode
       ? "Escribe una pregunta o el nombre de un área para buscar en el estado privado."
       : "Escribe una pregunta o el nombre de un área para buscar en el estado ficticio.";
     return;
   }
+  setSystemOrbState("searching");
   const habitEntities = Array.isArray(state.habitsSummary?.habits) ? state.habitsSummary.habits : [];
   const entities = [...state.areas, ...state.projects, ...state.openLoops, ...state.goals, ...state.decisions, ...state.events, ...habitEntities];
   const terms = query.split(/\s+/).filter((term) => term.length > 2);
@@ -2212,12 +2223,33 @@ function handleQuery(event) {
     const haystack = JSON.stringify(entity).toLocaleLowerCase("es");
     return terms.some((term) => haystack.includes(term));
   }).slice(0, 3);
-  result.hidden = false;
-  result.innerHTML = matches.length
-    ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"} en el estado ${privateMode ? "privado" : "mock"}:</strong> ${matches.map((item) => escapeHtml(item.title)).join(" · ")}`
-    : privateMode
-      ? "No hay coincidencias en el estado privado."
-      : "No hay coincidencias en los datos ficticios. La conexión con fuentes reales y el asistente de lenguaje natural quedan para una fase futura.";
+  window.setTimeout(() => {
+    result.hidden = false;
+    result.innerHTML = matches.length
+      ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"} en el estado ${privateMode ? "privado" : "mock"}:</strong> ${matches.map((item) => escapeHtml(item.title)).join(" · ")}`
+      : privateMode
+        ? "No hay coincidencias en el estado privado."
+        : "No hay coincidencias en los datos ficticios. La conexión con fuentes reales y el asistente de lenguaje natural quedan para una fase futura.";
+    setSystemOrbState("responding", 1400);
+  }, 180);
+}
+
+let systemOrbResetTimer = null;
+
+function setSystemOrbState(nextState, resetAfterMs = 0) {
+  const orb = document.querySelector("#system-orb");
+  if (!orb) return;
+  if (systemOrbResetTimer) {
+    window.clearTimeout(systemOrbResetTimer);
+    systemOrbResetTimer = null;
+  }
+  orb.setAttribute("state", nextState);
+  if (resetAfterMs > 0) {
+    systemOrbResetTimer = window.setTimeout(() => {
+      orb.setAttribute("state", "idle");
+      systemOrbResetTimer = null;
+    }, resetAfterMs);
+  }
 }
 
 function priorityRank(priority) { return { low: 1, medium: 2, high: 3 }[priority] || 0; }

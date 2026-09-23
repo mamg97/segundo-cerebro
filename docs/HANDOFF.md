@@ -20,6 +20,11 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Sustituido el orb CSS propio por el componente original `@schoolees/thinking-orbs`, adaptado de Jakub Antalik y licenciado MIT.
+- La librería se versiona dentro de `app/vendor/thinking-orbs/` con `LICENSE` y `NOTICE.md`, evitando depender de CDN o npm en tiempo de ejecución.
+- El orb usa los estados reales de la librería: `idle` en reposo, `searching` durante búsquedas, `solving` al calcular el pulso del sistema y `responding` al presentar resultado.
+- Se mantiene `interactive`, detección automática claro/oscuro, pausa fuera de pantalla y respeto a `prefers-reduced-motion` proporcionados por la propia librería.
+
 - Sustituido el símbolo circular provisional de la marca por el logo cerebral seleccionado por el usuario. Tras detectar un artefacto visual del wrapper SVG, se reemplazó por el PNG original subido desde su Mac.
 - El mismo activo se usa en la esquina superior izquierda y como favicon/shortcut icon de la pestaña.
 - El archivo definitivo vive en `app/brain-logo.png` y es el PNG original descargado por el usuario; no se envuelve en SVG ni se regenera.
