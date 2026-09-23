@@ -710,6 +710,7 @@ function renderGymPanel(data) {
   const plan = Array.isArray(data?.plan) ? data.plan : [];
   const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
   const progress = data?.progress && typeof data.progress === "object" ? data.progress : {};
+  const latestByExercise = getLatestGymEntries(sessions);
 
   if (!plan.length) {
     panel.innerHTML = '<p class="health-empty">Todavía no hay un plan de entrenamiento conectado.</p>';
@@ -785,7 +786,7 @@ function renderGymPanel(data) {
 
   const planById = new Map(plan.map((day) => [day.id, day]));
   const initialDay = plan[suggestedIndex];
-  renderGymDay(initialDay);
+  renderGymDay(initialDay, latestByExercise);
 
   document.querySelectorAll("[data-gym-day]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -793,7 +794,7 @@ function renderGymPanel(data) {
       if (!day) return;
       document.querySelectorAll("[data-gym-day]").forEach((item) => item.classList.toggle("active", item === button));
       document.querySelector("#gym-day-id").value = day.id;
-      renderGymDay(day);
+      renderGymDay(day, latestByExercise);
     });
   });
 
@@ -801,9 +802,26 @@ function renderGymPanel(data) {
     event.preventDefault();
     await saveGymSessionFromForm(planById);
   });
+
+  document.querySelectorAll(".gym-delete-session").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await deleteGymSession(button.dataset.sessionId);
+    });
+  });
 }
 
-function renderGymDay(day) {
+function getLatestGymEntries(sessions) {
+  const latest = new Map();
+  for (const session of sessions) {
+    for (const entry of session.entries || []) {
+      if (!entry.exerciseId || latest.has(entry.exerciseId)) continue;
+      latest.set(entry.exerciseId, entry);
+    }
+  }
+  return latest;
+}
+
+function renderGymDay(day, latestByExercise = new Map()) {
   const container = document.querySelector("#gym-day-detail");
   if (!container || !day) return;
 
@@ -816,12 +834,21 @@ function renderGymDay(day) {
       <span>Descanso ${formatRestSeconds(day.restSeconds)}</span>
     </div>
     <div class="gym-exercise-list">
-      ${day.exercises.map((exercise) => `
+      ${day.exercises.map((exercise) => {
+        const hasHistory = latestByExercise.has(exercise.id);
+        const latest = latestByExercise.get(exercise.id) || null;
+        const inputLoad = hasHistory ? latest?.loadValue : exercise.loadValue;
+        const inputUnit = latest?.loadUnit || exercise.loadUnit || "kg";
+        const latestLabel = hasHistory
+          ? (latest?.loadValue == null ? "Último: sin carga" : `Último: ${formatGymLoad(latest.loadValue, inputUnit)}`)
+          : null;
+        return `
         <article class="gym-exercise-row" data-exercise-id="${escapeHtml(exercise.id)}">
           <div class="gym-exercise-info">
             <strong>${escapeHtml(exercise.name)}</strong>
             <span>${escapeHtml(formatTarget(exercise))}</span>
             ${exercise.loadNote ? `<small>Referencia: ${escapeHtml(exercise.loadNote)}</small>` : ""}
+            ${latestLabel ? `<small class="gym-last-record">${escapeHtml(latestLabel)}</small>` : ""}
             ${exercise.coachingNote ? `<p>${escapeHtml(exercise.coachingNote)}</p>` : ""}
           </div>
           <label>
@@ -835,15 +862,16 @@ function renderGymDay(day) {
           <label>
             <span>Peso</span>
             <div class="gym-load-input">
-              <input class="gym-input-load" type="number" min="0" max="999" step="0.25" value="${exercise.loadValue ?? ""}" placeholder="—">
-              <small>${escapeHtml(exercise.loadUnit || "kg")}</small>
+              <input class="gym-input-load" type="number" min="0" max="999" step="0.25" value="${inputLoad ?? ""}" placeholder="—">
+              <small>${escapeHtml(inputUnit)}</small>
             </div>
           </label>
           <label class="gym-exercise-note">
             <span>Nota</span>
             <input class="gym-input-note" type="text" maxlength="500" placeholder="Opcional">
           </label>
-        </article>`).join("")}
+        </article>`;
+      }).join("")}
     </div>`;
 }
 
@@ -956,9 +984,34 @@ function renderGymHistory(sessions) {
                 <span>${entry.setsDone ?? "—"} series · ${escapeHtml(entry.repsDone || "—")} reps · ${entry.loadValue == null ? "sin peso" : escapeHtml(formatGymLoad(entry.loadValue, entry.loadUnit))}</span>
               </div>`).join("")}
             ${session.notes ? `<p>${escapeHtml(session.notes)}</p>` : ""}
+            <div class="gym-history-actions">
+              <button type="button" class="gym-delete-session" data-session-id="${escapeHtml(session.id)}">Eliminar registro</button>
+            </div>
           </div>
         </details>`).join("")}
     </div>`;
+}
+
+async function deleteGymSession(sessionId) {
+  if (!sessionId) return;
+  const confirmed = window.confirm("¿Eliminar este entrenamiento del histórico? Esta acción también lo quitará de las gráficas de progreso.");
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`/api/gym/session/${encodeURIComponent(sessionId)}`, {
+      method: "DELETE",
+      headers: { Accept: "application/json" }
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) throw new Error(payload.code || `GYM_DELETE_${response.status}`);
+
+    const refresh = await fetch("/api/gym", { headers: { Accept: "application/json" } });
+    if (!refresh.ok) throw new Error(`GYM_REFRESH_${refresh.status}`);
+    renderGymPanel(await refresh.json());
+  } catch (error) {
+    window.alert("No se ha podido eliminar el entrenamiento.");
+    console.warn("Gym delete failed", error);
+  }
 }
 
 function formatTarget(exercise) {
