@@ -1127,6 +1127,51 @@ function sumNutrition(entries, status) {
   }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
 }
 
+async function ensureD1Column(env, table, column, definition) {
+  const info = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+  const exists = (info.results || []).some((item) => item.name === column);
+  if (!exists) await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run();
+}
+
+async function ensureHealthBodyTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS health_body_samples (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      metric_type TEXT NOT NULL,
+      metric_value REAL NOT NULL,
+      unit TEXT NOT NULL,
+      sample_date TEXT NOT NULL,
+      measured_at TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'apple_health',
+      imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(metric_type, measured_at, source)
+    )
+  `).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_health_body_date_type ON health_body_samples(sample_date, metric_type)"
+  ).run();
+}
+
+async function fetchHealthBodySamples(env, startDate, endDate) {
+  await ensureHealthBodyTable(env);
+  const result = await env.DB.prepare(`
+    SELECT metric_type, metric_value, unit, sample_date, measured_at, source, imported_at
+    FROM health_body_samples
+    WHERE sample_date BETWEEN ? AND ?
+    ORDER BY measured_at ASC
+  `).bind(startDate, endDate).all();
+
+  return (result.results || []).map((row) => ({
+    type: row.metric_type,
+    value: toNumber(row.metric_value),
+    unit: row.unit || null,
+    date: row.sample_date,
+    measuredAt: row.measured_at,
+    source: row.source || "apple_health",
+    importedAt: row.imported_at || null
+  }));
+}
+
 async function ensureHealthEnergyTable(env) {
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS health_energy_daily (
@@ -1137,9 +1182,21 @@ async function ensureHealthEnergyTable(env) {
       total_kcal REAL,
       source TEXT NOT NULL DEFAULT 'manual',
       note TEXT,
-      recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      steps INTEGER,
+      exercise_minutes REAL,
+      workout_count INTEGER,
+      sampled_at TEXT,
+      source_details TEXT,
+      workouts_json TEXT
     )
   `).run();
+  await ensureD1Column(env, "health_energy_daily", "steps", "INTEGER");
+  await ensureD1Column(env, "health_energy_daily", "exercise_minutes", "REAL");
+  await ensureD1Column(env, "health_energy_daily", "workout_count", "INTEGER");
+  await ensureD1Column(env, "health_energy_daily", "sampled_at", "TEXT");
+  await ensureD1Column(env, "health_energy_daily", "source_details", "TEXT");
+  await ensureD1Column(env, "health_energy_daily", "workouts_json", "TEXT");
   // Deduplicate historical rows before enforcing one energy snapshot per day.
   await env.DB.prepare(`
     DELETE FROM health_energy_daily
@@ -1164,7 +1221,8 @@ async function ensureHealthEnergyTable(env) {
 async function fetchHealthEnergyRows(env, startDate, endDate) {
   await ensureHealthEnergyTable(env);
   const result = await env.DB.prepare(`
-    SELECT energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at
+    SELECT energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at,
+           steps, exercise_minutes, workout_count, sampled_at, source_details, workouts_json
     FROM health_energy_daily
     WHERE energy_date BETWEEN ? AND ?
     ORDER BY energy_date ASC
@@ -1177,7 +1235,13 @@ async function fetchHealthEnergyRows(env, startDate, endDate) {
     totalKcal: toNumber(row.total_kcal),
     source: row.source || "manual",
     note: row.note || null,
-    importedAt: row.recorded_at || null
+    importedAt: row.recorded_at || null,
+    steps: row.steps === null || row.steps === undefined ? null : Number(row.steps),
+    exerciseMinutes: toNumber(row.exercise_minutes),
+    workoutCount: row.workout_count === null || row.workout_count === undefined ? null : Number(row.workout_count),
+    sampledAt: row.sampled_at || null,
+    sourceDetails: row.source_details ? (() => { try { return JSON.parse(row.source_details); } catch { return []; } })() : [],
+    workouts: row.workouts_json ? (() => { try { return JSON.parse(row.workouts_json); } catch { return []; } })() : []
   }]));
 }
 
