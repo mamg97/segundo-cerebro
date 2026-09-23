@@ -136,16 +136,17 @@ El Worker de ingesta:
 - La aplicación todavía no es una PWA offline.
 - No todos los dominios previstos tienen contrato propio en `agents/`.
 - La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
-- El puente Apple Health está validado end-to-end en producción: Atajo iPhone → Worker de ingesta → Worker principal → D1 → Salud/Nutrición. La primera muestra real se recibió correctamente el 2026-09-23.
+- El puente Apple Health está validado end-to-end en producción: Atajo iPhone → Worker de ingesta → Worker principal → D1 → Salud/Nutrición. La primera muestra real se recibió correctamente el 2026-09-23. La persistencia usa una única fila por fecha: nuevas sincronizaciones del mismo día sustituyen la lectura anterior mediante UPSERT.
 
 ## Próxima acción exacta
 
-Cerrar Apple Health:
+Apple Health queda cerrado funcionalmente:
 
-1. Automatizar en iPhone el Atajo ya validado para ejecutarlo cada noche, cerca del cierre del día.
-2. Mantener el Atajo consultando `hoy` para evitar complejidad innecesaria; cada ejecución añade una muestra nueva y la más reciente de D1 es la que usa la UI.
-3. Validar al día siguiente que la ejecución automática funcionó sin intervención.
-4. Después, continuar con el siguiente frente global del Organizador.
+1. El Atajo está automatizado en iPhone a las 23:55 cada día.
+2. El Atajo consulta `hoy` y cada ejecución actualiza la única fila D1 de esa fecha mediante UPSERT.
+3. Validar al día siguiente que la primera ejecución automática ocurrió sin intervención.
+4. Los objetivos de kcal y macros se definirán en la conversación `GESTOR NUTRI Y SALUD`, no en el Organizador.
+5. Después, continuar con el siguiente frente global del Organizador.
 
 ## Archivos que debe leer el siguiente relevo
 

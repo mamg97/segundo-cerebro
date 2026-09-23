@@ -336,4 +336,4 @@ Payload esperado por `POST /v1/energy`:
 }
 ```
 
-`date` puede omitirse y el puente usa la fecha local de Madrid. `totalKcal` es opcional; si falta y existen activa + reposo, se suma automáticamente. No se envían pasos, frecuencia cardiaca, entrenamientos ni otros datos de salud.
+`date` puede omitirse y el puente usa la fecha local de Madrid. `totalKcal` es opcional; si falta y existen activa + reposo, se suma automáticamente. D1 conserva una sola fila por fecha y las sincronizaciones posteriores del mismo día sustituyen la anterior mediante UPSERT. No se envían pasos, frecuencia cardiaca, entrenamientos ni otros datos de salud.

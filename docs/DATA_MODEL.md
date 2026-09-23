@@ -171,9 +171,9 @@ Si una fila referencia `item_id` y deja kcal/macros vacíos, el Worker los deriv
 Objetivos con fecha efectiva: kcal, proteína, carbohidratos y grasas. Permanecen vacíos hasta que el usuario defina uno; no se infieren objetivos dietéticos.
 
 ### Energía diaria
-Las importaciones automáticas de Apple Health se almacenan en D1 `health_energy_daily`: fecha, energía activa, energía en reposo, total, fuente, nota y timestamp. El tab `EnergiaDiaria` del Sheet se conserva como entrada manual/fallback.
+Las importaciones automáticas de Apple Health se almacenan en D1 `health_energy_daily`: una única fila por fecha con energía activa, energía en reposo, total, fuente, nota y timestamp. `energy_date` es clave lógica única y cada nueva sincronización del mismo día reemplaza la anterior mediante UPSERT. El tab `EnergiaDiaria` del Sheet se conserva como entrada manual/fallback.
 
-Para cada fecha, la muestra D1 más reciente tiene prioridad sobre el fallback del Sheet. El gasto total usa `total_kcal` cuando Apple Health lo aporta; si no, se deriva como activa + reposo cuando ambas existen. El balance se calcula como `kcal consumidas - gasto total`. La ausencia de gasto se representa como `null`, nunca como 0, y no se infiere a partir de sesiones de gimnasio.
+Para cada fecha, la fila D1 tiene prioridad sobre el fallback del Sheet. El gasto total usa `total_kcal` cuando Apple Health lo aporta; si no, se deriva como activa + reposo cuando ambas existen. El balance se calcula como `kcal consumidas - gasto total`. La ausencia de gasto se representa como `null`, nunca como 0, y no se infiere a partir de sesiones de gimnasio.
 
 
 

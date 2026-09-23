@@ -1005,8 +1005,24 @@ async function ensureHealthEnergyTable(env) {
       recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+  // Deduplicate historical rows before enforcing one energy snapshot per day.
+  await env.DB.prepare(`
+    DELETE FROM health_energy_daily
+    WHERE EXISTS (
+      SELECT 1
+      FROM health_energy_daily AS newer
+      WHERE newer.energy_date = health_energy_daily.energy_date
+        AND (
+          newer.recorded_at > health_energy_daily.recorded_at
+          OR (
+            newer.recorded_at = health_energy_daily.recorded_at
+            AND newer.id > health_energy_daily.id
+          )
+        )
+    )
+  `).run();
   await env.DB.prepare(
-    "CREATE INDEX IF NOT EXISTS idx_health_energy_date ON health_energy_daily(energy_date DESC, recorded_at DESC)"
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_health_energy_date ON health_energy_daily(energy_date)"
   ).run();
 }
 
@@ -1016,23 +1032,18 @@ async function fetchHealthEnergyRows(env, startDate, endDate) {
     SELECT energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at
     FROM health_energy_daily
     WHERE energy_date BETWEEN ? AND ?
-    ORDER BY energy_date ASC, recorded_at DESC, id DESC
+    ORDER BY energy_date ASC
   `).bind(startDate, endDate).all();
 
-  const latest = new Map();
-  for (const row of result.results || []) {
-    if (latest.has(row.energy_date)) continue;
-    latest.set(row.energy_date, {
-      date: row.energy_date,
-      activeKcal: toNumber(row.active_kcal),
-      restingKcal: toNumber(row.resting_kcal),
-      totalKcal: toNumber(row.total_kcal),
-      source: row.source || "manual",
-      note: row.note || null,
-      importedAt: row.recorded_at || null
-    });
-  }
-  return latest;
+  return new Map((result.results || []).map((row) => [row.energy_date, {
+    date: row.energy_date,
+    activeKcal: toNumber(row.active_kcal),
+    restingKcal: toNumber(row.resting_kcal),
+    totalKcal: toNumber(row.total_kcal),
+    source: row.source || "manual",
+    note: row.note || null,
+    importedAt: row.recorded_at || null
+  }]));
 }
 
 async function fetchHealthNutritionSummary(env, options = {}) {
@@ -1293,6 +1304,13 @@ async function saveNutritionEnergy(request, env) {
     INSERT INTO health_energy_daily (
       energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(energy_date) DO UPDATE SET
+      active_kcal = excluded.active_kcal,
+      resting_kcal = excluded.resting_kcal,
+      total_kcal = excluded.total_kcal,
+      source = excluded.source,
+      note = excluded.note,
+      recorded_at = excluded.recorded_at
   `).bind(
     date,
     active,

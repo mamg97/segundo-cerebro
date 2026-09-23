@@ -79,7 +79,7 @@ Recomendación inicial:
 - Acción: ejecutar `Segundo Cerebro · Energía hoy`.
 - Ejecución inmediata / sin preguntar.
 
-Cada ejecución inserta una nueva muestra en D1. La UI usa la muestra más reciente de la fecha, por lo que repetir el Atajo durante el día es seguro y actualiza el gasto con una lectura más reciente.
+Cada ejecución hace UPSERT sobre la fecha actual: D1 conserva una sola fila por día. Repetir el Atajo durante el día es seguro y simplemente sustituye el total anterior por una lectura más reciente.
 
 ### Limitación
 
@@ -101,6 +101,6 @@ La integración se considera operativa porque se verificó:
 - suma de ambas categorías en Atajos;
 - petición POST autenticada;
 - respuesta `ok: true`;
-- persistencia en D1;
+- persistencia en D1 con una única fila por fecha y actualización idempotente;
 - lectura posterior desde Salud → Nutrición;
 - cálculo de gasto total y balance energético.

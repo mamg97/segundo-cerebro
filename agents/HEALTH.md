@@ -27,7 +27,7 @@ When nutritional values are estimated rather than label-confirmed, write the sou
 
 Apple Health / Apple Watch is the intended source for daily active and resting energy. Automatic imports enter through the dedicated token-protected Health ingest Worker and are stored in private D1 (`health_energy_daily`). The Sheet tab `EnergiaDiaria` is retained as a manual/fallback source.
 
-For a date, the newest D1 sample wins over the Sheet fallback. Missing expenditure remains unknown; never infer it from gym attendance.
+For each date, D1 keeps exactly one current energy snapshot. Repeated Apple Health synchronizations for the same day replace that row via UPSERT; the D1 row wins over the Sheet fallback. Missing expenditure remains unknown; never infer it from gym attendance.
 
 The intended calculation is:
 - total expenditure = Apple Health total energy when supplied;

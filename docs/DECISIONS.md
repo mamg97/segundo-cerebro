@@ -116,7 +116,16 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 
 ## D-017 — Apple Health entra mediante un Worker de ingesta dedicado
 
-- **Estado:** aceptada; puente servidor implementado, configuración de iPhone pendiente
+- **Estado:** aceptada y operativa
 - **Fecha:** 2026-09-23
 - **Decisión:** Apple Health no se consulta desde la web. Un Atajo del iPhone enviará únicamente energía activa/reposo/total a un Worker dedicado protegido por token, que reenvía internamente al Worker principal y persiste en D1.
 - **Motivo:** Apple Health es local al dispositivo y el sistema solo necesita un resumen energético minimizado.
+
+
+## D-018 — Una única muestra energética por fecha
+
+- **Estado:** aceptada y operativa
+- **Fecha:** 2026-09-23
+- **Decisión:** `health_energy_daily` conserva una única fila por `energy_date`. Las sincronizaciones repetidas del mismo día actualizan esa fila mediante UPSERT.
+- **Migración:** al inicializar la tabla se conservan únicamente las filas históricas más recientes de cada fecha antes de crear el índice único.
+- **Motivo:** Apple Health entrega un acumulado diario; conservar múltiples snapshots intermedios no aporta valor operativo y genera redundancia.
