@@ -5466,3 +5466,16 @@ html[data-theme="dark"] ::selection {
   top: -12px;
   visibility: hidden;
 }
+
+/* v0.14.3 — cleaner top bar spacing */
+.topbar + .overview-anchor + .ask-panel,
+.topbar + .ask-panel {
+  margin-top: 28px;
+}
+
+@media (max-width: 760px) {
+  .topbar + .overview-anchor + .ask-panel,
+  .topbar + .ask-panel {
+    margin-top: 20px;
+  }
+}

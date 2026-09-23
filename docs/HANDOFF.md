@@ -141,7 +141,7 @@ El Worker de ingesta:
 
 ## Sistema visual
 
-- La cabecera superior con saludo/fecha, tema, estado privado y perfil se mantiene. Se eliminó únicamente el gran titular de portada y el indicador `Pulso general` para reducir ruido visual.
+- La cabecera superior conserva saludo/fecha y control de tema. Se eliminaron el badge de estado privado, el avatar `SC`, el gran titular de portada y el indicador `Pulso general`; el primer bloque de contenido mantiene separación visual respecto a la línea inferior de la cabecera.
 
 - El modo oscuro usa un sistema visual único azul noche + azul eléctrico + naranja.
 - Tokens principales: fondo `#07101D`, superficie `#0B1728`, superficie secundaria `#10213A`, azul `#2F6BFF / #5FA8FF`, naranja `#FF7A1A / #FFB347`, texto `#F8FAFC`, muted `#A8B3C7`, borde `#1E3350`.
