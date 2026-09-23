@@ -13,7 +13,7 @@ const colors = {
 
 const symbols = {
   general: "◎", career: "↗", finance: "≋", calendar: "□", partner: "◇",
-  family: "⌂", health: "✚", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
+  family: "⌂", health: "✚", habits: "✓", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
@@ -78,6 +78,29 @@ function ensureDerivedAreas() {
     };
     if (wealthIndex >= 0) state.areas.splice(wealthIndex, 0, healthArea);
     else state.areas.push(healthArea);
+  }
+  if (!state.areas.some((area) => area.id === "area-habits")) {
+    const healthIndex = state.areas.findIndex((area) => area.id === "area-health");
+    const habitSummary = state.habitsSummary?.summary || {};
+    const total = Number(habitSummary.total || 0);
+    const done = Number(habitSummary.done || 0);
+    const completion = total > 0 ? Math.round((done / total) * 100) : 0;
+    const habitsArea = {
+      id: "area-habits",
+      slug: "habits",
+      title: "Hábitos",
+      shortTitle: "Hábitos",
+      summary: total > 0
+        ? `${done}/${total} completados hoy · racha ${Number(habitSummary.streak || 0)} días.`
+        : "Rutinas diarias, rachas, XP e histórico de HabitQuest.",
+      health: total > 0 ? completion : 70,
+      tone: "violet",
+      module: "Habits",
+      sensitivity: "privado",
+      status: "steady"
+    };
+    if (healthIndex >= 0) state.areas.splice(healthIndex + 1, 0, habitsArea);
+    else state.areas.push(habitsArea);
   }
 }
 
@@ -185,7 +208,7 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   nav.innerHTML = state.areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} style="--area-color:${colors[area.tone]}">
+    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} ${area.id === "area-habits" ? 'data-open-habits="true"' : ""} style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
   `).join("");
@@ -427,7 +450,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
 
 function openImportantEventsDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog");
   dialog.classList.add("important-events-dialog");
 
   const importantEvents = collectImportantEvents(state.financeSummary || {});
@@ -629,6 +652,203 @@ async function openHealthDetail() {
     if (panel) panel.innerHTML = '<p class="health-empty">No se ha podido cargar el plan de gimnasio.</p>';
     console.warn("Gym load failed", error);
   }
+}
+
+
+let selectedHabitDate = null;
+
+function localDateKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function shiftDateKey(key, amount) {
+  const [year, month, day] = String(key).split("-").map(Number);
+  const date = new Date(year, (month || 1) - 1, day || 1, 12, 0, 0);
+  date.setDate(date.getDate() + amount);
+  return localDateKey(date);
+}
+
+async function openHabitsDetail(dateKey = null) {
+  const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.add("habits-dialog");
+  document.querySelector("#dialog-context").textContent = "Hábitos · HabitQuest";
+  document.querySelector("#dialog-title").textContent = "Hábitos";
+  selectedHabitDate = dateKey || selectedHabitDate || localDateKey();
+
+  document.querySelector("#dialog-body").innerHTML = '<p class="health-empty">Cargando HabitQuest…</p>';
+  dialog.showModal();
+
+  try {
+    const response = await fetch(`/api/habits?date=${encodeURIComponent(selectedHabitDate)}`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error(`HABITS_${response.status}`);
+    const data = await response.json();
+    renderHabitsPanel(data);
+  } catch (error) {
+    document.querySelector("#dialog-body").innerHTML = `
+      <div class="health-empty health-empty-card">
+        <strong>HabitQuest todavía no está conectado aquí</strong>
+        <p>La integración usa la misma hoja de Google Sheets como fuente de verdad. Falta configurar el identificador privado del Sheet en el Worker.</p>
+      </div>`;
+    console.warn("HabitQuest load failed", error);
+  }
+}
+
+function renderHabitsPanel(data) {
+  const body = document.querySelector("#dialog-body");
+  if (!body) return;
+
+  const todayHabits = Array.isArray(data.todayHabits) ? data.todayHabits : [];
+  const habits = Array.isArray(data.habits) ? data.habits : [];
+  const progress = Array.isArray(data.progress) ? data.progress : [];
+  const summary = data.summary || {};
+  const level = summary.level || {};
+  const selected = data.date || selectedHabitDate || localDateKey();
+  selectedHabitDate = selected;
+  const isToday = selected === localDateKey();
+  const completion = summary.total ? Math.round((Number(summary.done || 0) / Number(summary.total)) * 100) : 0;
+  const labelDate = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" })
+    .format(new Date(`${selected}T12:00:00`));
+
+  body.innerHTML = `
+    <div class="habits-kpis">
+      <div><span>Hoy</span><strong>${Number(summary.done || 0)}/${Number(summary.total || 0)}</strong><small>${completion}% completado</small></div>
+      <div><span>Racha</span><strong>${Number(summary.streak || 0)} días</strong><small>Máxima ${Number(summary.longestStreak || 0)}</small></div>
+      <div><span>Nivel</span><strong>${Number(level.level || 1)}</strong><small>${Number(summary.xp || 0).toLocaleString("es-ES")} XP</small></div>
+    </div>
+
+    <div class="habits-level-progress">
+      <progress max="1" value="${Math.max(0, Math.min(1, Number(level.progress || 0)))}"></progress>
+      <span>${Number(level.currentLevelXp || 0)} / ${Number(level.levelSpan || 0)} XP para el siguiente nivel</span>
+    </div>
+
+    <div class="health-tabs habits-tabs" role="tablist" aria-label="HabitQuest">
+      <button class="active" type="button" data-habit-tab="today">Hoy</button>
+      <button type="button" data-habit-tab="list">Hábitos</button>
+      <button type="button" data-habit-tab="progress">Progreso</button>
+    </div>
+
+    <div class="health-tab-panels">
+      <section class="health-tab-panel active" data-habit-panel="today">
+        <div class="habit-date-nav">
+          <button type="button" data-habit-date-shift="-1" aria-label="Día anterior">‹</button>
+          <button type="button" data-habit-today ${isToday ? "disabled" : ""}>
+            <strong>${escapeHtml(labelDate)}</strong>
+            <small>${isToday ? "Hoy" : "Volver a hoy"}</small>
+          </button>
+          <button type="button" data-habit-date-shift="1" aria-label="Día siguiente" ${isToday ? "disabled" : ""}>›</button>
+        </div>
+        <div class="habit-today-list">
+          ${todayHabits.length ? todayHabits.map(renderHabitTodayItem).join("") : '<p class="health-empty">No hay hábitos programados para este día.</p>'}
+        </div>
+      </section>
+
+      <section class="health-tab-panel" data-habit-panel="list">
+        <div class="health-section-heading">
+          <div><strong>Todos los hábitos</strong><p>La hoja HabitQuest sigue siendo la fuente de verdad.</p></div>
+          <span>${habits.filter((habit) => habit.active).length} activos</span>
+        </div>
+        <div class="habit-master-list">
+          ${habits.map((habit) => `
+            <article class="${habit.active ? "" : "archived"}">
+              <span class="habit-master-icon">${escapeHtml(habit.icon)}</span>
+              <div>
+                <strong>${escapeHtml(habit.name)}</strong>
+                <small>${escapeHtml(habit.category)} · ${escapeHtml(habit.frequency)} · ${habit.timesPerDay}×/día · ${habit.xpReward} XP</small>
+              </div>
+              <span>${habit.active ? "Activo" : "Archivado"}</span>
+            </article>`).join("")}
+        </div>
+      </section>
+
+      <section class="health-tab-panel" data-habit-panel="progress">
+        <div class="health-section-heading">
+          <div><strong>Últimos 30 días</strong><p>Porcentaje de días programados completados por hábito.</p></div>
+        </div>
+        <div class="habit-progress-list">
+          ${[...progress].sort((a, b) => b.rate - a.rate).map(renderHabitProgressItem).join("")}
+        </div>
+      </section>
+    </div>`;
+
+  bindHabitInteractions();
+}
+
+function renderHabitTodayItem(habit) {
+  const target = Math.max(1, Number(habit.target || habit.timesPerDay || 1));
+  const count = Math.max(0, Number(habit.count || 0));
+  const done = Boolean(habit.done);
+  return `
+    <button class="habit-today-item ${done ? "done" : ""}" type="button" data-habit-toggle="${escapeHtml(habit.id)}">
+      <span class="habit-check">${done ? "✓" : escapeHtml(habit.icon)}</span>
+      <span class="habit-today-copy">
+        <strong>${escapeHtml(habit.name)}</strong>
+        <small>${escapeHtml(habit.category)} · ${habit.xpReward} XP${habit.reminder ? " · " + escapeHtml(habit.reminder) : ""}</small>
+      </span>
+      <span class="habit-count">${count}/${target}</span>
+    </button>`;
+}
+
+function renderHabitProgressItem(item) {
+  const rate = Math.max(0, Math.min(1, Number(item.rate || 0)));
+  const percent = Math.round(rate * 100);
+  return `
+    <article class="habit-progress-item">
+      <div>
+        <span>${escapeHtml(item.icon || "✓")}</span>
+        <strong>${escapeHtml(item.name)}</strong>
+      </div>
+      <progress max="100" value="${percent}"></progress>
+      <span><strong>${percent}%</strong><small>${Number(item.completedDays || 0)}/${Number(item.scheduledDays || 0)} días</small></span>
+    </article>`;
+}
+
+function bindHabitInteractions() {
+  document.querySelectorAll("[data-habit-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.habitTab;
+      document.querySelectorAll("[data-habit-tab]").forEach((item) => item.classList.toggle("active", item === button));
+      document.querySelectorAll("[data-habit-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.habitPanel === tab));
+    });
+  });
+
+  document.querySelectorAll("[data-habit-date-shift]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedHabitDate = shiftDateKey(selectedHabitDate || localDateKey(), Number(button.dataset.habitDateShift || 0));
+      void openHabitsDetail(selectedHabitDate);
+    });
+  });
+
+  document.querySelector("[data-habit-today]")?.addEventListener("click", () => {
+    selectedHabitDate = localDateKey();
+    void openHabitsDetail(selectedHabitDate);
+  });
+
+  document.querySelectorAll("[data-habit-toggle]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const habitId = button.dataset.habitToggle;
+      if (!habitId) return;
+      button.disabled = true;
+      button.classList.add("saving");
+      try {
+        const response = await fetch("/api/habits/toggle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ habitId, date: selectedHabitDate || localDateKey() })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.summary) throw new Error(payload.code || `HABIT_TOGGLE_${response.status}`);
+        renderHabitsPanel(payload.summary);
+      } catch (error) {
+        button.disabled = false;
+        button.classList.remove("saving");
+        console.warn("Habit toggle failed", error);
+      }
+    });
+  });
 }
 
 function bindHealthTabs() {
@@ -1670,6 +1890,10 @@ function bindInteractions() {
     event.preventDefault();
     openHealthDetail();
   });
+  document.querySelector('[data-open-habits="true"]')?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openHabitsDetail();
+  });
 }
 
 function setView(view) {
@@ -1694,11 +1918,15 @@ function openArea(areaId) {
     openHealthDetail();
     return;
   }
+  if (areaId === "area-habits") {
+    openHabitsDetail();
+    return;
+  }
   const area = areaById.get(areaId);
   const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
   const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [
