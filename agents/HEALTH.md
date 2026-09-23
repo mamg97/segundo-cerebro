@@ -125,3 +125,19 @@ The operational manager for these signals is the conversation `GESTOR GYM Y NUTR
 Before enabling body-metric import on the iPhone, verify what Apple Health actually contains.
 
 Do not assume that Xiaomi/Zepp writes body-fat percentage, BMI or lean body mass merely because the scale measures them. The source audit must be performed in Apple Health using each metric's `Data Sources & Access` view. Only metrics with real contributing records should be added to the Shortcut.
+
+## Confirmed Apple Health / Zepp Life source audit
+
+Confirmed on iPhone on 2026-09-24:
+- body mass / Peso: Zepp Life appears as a data source;
+- body fat percentage / Porcentaje de grasa corporal: Zepp Life appears as a data source;
+- body mass index / Índice de masa corporal: Zepp Life appears as a data source;
+- lean body mass / Masa corporal sin grasa: Zepp Life appears as a data source.
+
+Zepp Life itself also displays proprietary/derived body-composition metrics such as muscle mass, body water, basal metabolism estimate, visceral fat, protein percentage, body score and ideal weight. These must not be silently mapped onto standard HealthKit metrics unless Apple Health exposes an equivalent type and contains real samples.
+
+In particular:
+- Zepp “Músculo” is not the same quantity as HealthKit `leanBodyMass`;
+- Zepp “Metabolismo basal” is a body-composition estimate and must not be substituted for Apple Health daily `basalEnergyBurned` / resting energy;
+- body score, visceral fat score, protein percentage and ideal weight are Zepp-specific unless separately verified through a supported source.
+
