@@ -2,7 +2,7 @@
 
 ## Última actualización
 
-- **Fecha:** 2026-09-23
+- **Fecha:** 2026-09-24
 - **Herramienta:** ChatGPT normal
 - **Rama operativa:** `main`
 - **Repositorio:** `mamg97/segundo-cerebro`
@@ -93,25 +93,35 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 
 ### Apple Health
 
-Implementado en servidor:
+Hay un único puente privado:
 
 ```text
-Apple Watch → Apple Health → Atajo iPhone
+Apple Watch / Apple Health / Zepp
+→ Atajo único de iPhone
 → segundo-cerebro-health-ingest
 → Service Binding
 → segundo-cerebro
-→ D1 health_energy_daily
-→ Salud / Nutrición
+→ D1 privado
+→ Salud / GESTOR GYM Y NUTRI
 ```
 
-El Worker de ingesta:
+Estado:
+- el puente energético original sigue operativo y compatible en `/v1/energy`;
+- el backend v2 acepta actividad + composición corporal en `/v1/sync`;
+- `health_energy_daily` se amplió con pasos, minutos de ejercicio, entrenamientos opcionales, timestamp de muestreo y detalle de fuentes;
+- `health_body_samples` guarda muestras corporales normalizadas e idempotentes por tipo + timestamp original + fuente;
+- `MedicionesCorporales` conserva el baseline histórico/manual y se amplió con IMC, masa magra, timestamp original e importación;
+- `EnergiaDiaria` conserva el fallback manual y se amplió con pasos, minutos de ejercicio, entrenamientos y metadatos de muestreo;
+- `ObjetivosActividad` ya contiene los objetivos operativos y la regla de no ajustar la comida 1:1 por kcal del reloj;
+- Salud incorpora una pestaña `Resumen` con peso de hoy, media 7 días, cambio semanal, grasa/IMC/masa magra cuando existan, kcal activa/reposo/total, pasos, ejercicio y progreso frente a objetivos;
+- la media de peso usa promedios diarios y compara 7 días actuales frente a 7 anteriores;
+- bioimpedancia se interpreta como tendencia;
+- el gestor operativo es `GESTOR GYM Y NUTRI`.
 
-- está separado del Worker principal;
-- usa un token Bearer secreto;
-- recibe solo energía activa, reposo y total;
-- no recibe frecuencia cardiaca, ubicación u otros datos;
-- persiste el resumen en D1;
-- tiene prioridad sobre el fallback manual del Sheet para la misma fecha.
+Pendiente antes de modificar el Atajo del iPhone:
+- auditar en Apple Salud qué métricas corporales contienen muestras reales;
+- confirmar para cada métrica qué fuente las escribe (Zepp, Zepp Life u otra);
+- solo entonces añadir al Atajo los tipos realmente disponibles.
 
 ## Fuentes de verdad
 
@@ -120,7 +130,8 @@ El Worker de ingesta:
 - HabitQuest: Google Sheet original.
 - Plan/base de Salud y Nutrición: Sheet privado de Salud.
 - Sesiones de gimnasio: D1.
-- Energía automática de Apple Health: D1 `health_energy_daily`.
+- Actividad automática de Apple Health: D1 `health_energy_daily`.
+- Composición corporal automática de Apple Health: D1 `health_body_samples`; baseline/manual en `MedicionesCorporales`.
 - Código, arquitectura y contratos: Git.
 - Secretos: configuración privada de Cloudflare/local, nunca Git.
 
@@ -137,7 +148,7 @@ El Worker de ingesta:
 - La aplicación todavía no es una PWA offline.
 - No todos los dominios previstos tienen contrato propio en `agents/`.
 - La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
-- El puente Apple Health está validado end-to-end en producción: Atajo iPhone → Worker de ingesta → Worker principal → D1 → Salud/Nutrición. La primera muestra real se recibió correctamente el 2026-09-23. La persistencia usa una única fila por fecha: nuevas sincronizaciones del mismo día sustituyen la lectura anterior mediante UPSERT.
+- El puente Apple Health energético está validado end-to-end. La ampliación v2 de actividad/composición ya está implementada en backend; queda pendiente la auditoría de fuentes en el iPhone y la actualización del Atajo.
 
 ## Sistema visual
 
