@@ -43,3 +43,85 @@ Do not invent calorie deficits, weight-loss targets or macro goals. `Objetivos` 
 ## Privacy
 
 No real nutrition history, calorie totals, body metrics, HealthKit data or health identifiers in public Git. Only generic logic and documentation may be versioned.
+
+
+## Unified Apple Health bridge
+
+There is exactly one Apple Health ingestion bridge:
+
+```text
+Apple Health → iOS Shortcut → segundo-cerebro-health-ingest
+→ Service Binding → segundo-cerebro → private D1
+```
+
+The existing token-protected ingest Worker is extended; do not create a second token, app, endpoint family or public datastore.
+
+Endpoints:
+- `/v1/energy`: backwards-compatible energy-only endpoint.
+- `/v1/sync`: unified activity + body-measurement endpoint.
+
+Automatic Health imports use D1 because it provides reliable idempotency. The private Sheet remains the historical/manual/fallback source and is merged at read time.
+
+### Daily activity
+
+`health_energy_daily` is the existing daily snapshot and now also accepts:
+- active kcal;
+- resting/basal kcal;
+- total kcal;
+- steps;
+- exercise minutes;
+- workout count;
+- optional workout metadata;
+- source/source details;
+- source sampling timestamp;
+- import timestamp.
+
+The logical key remains the date. Re-running the Shortcut for the same date replaces the snapshot rather than duplicating it.
+
+### Body measurements
+
+Automatic body measurements are normalized in private D1 table `health_body_samples`.
+
+Supported metric types:
+- `bodyMass`;
+- `bodyFatPercentage`;
+- `bodyMassIndex`;
+- `leanBodyMass`.
+
+Idempotency key is effectively `metric_type + measured_at + source`. Re-importing the same measurement updates it rather than creating another copy.
+
+Every imported sample preserves:
+- original measurement timestamp;
+- original source name when Shortcuts exposes it;
+- import timestamp;
+- unit and value.
+
+The private Sheet tab `MedicionesCorporales` remains the historical/manual baseline and now has optional columns for BMI, lean body mass, original measurement time and import time.
+
+## Body trend rules
+
+Weight is not evaluated from one isolated reading.
+
+Segundo Cerebro calculates:
+- today's latest weight sample;
+- a 7-day moving average based on daily mean weight;
+- the previous 7-day average;
+- weekly change = current 7-day average − previous 7-day average.
+
+All same-day measurements are retained.
+
+Body-fat percentage and other consumer bioimpedance metrics are treated as trend indicators, not exact measurements. Do not make decisions from a single reading.
+
+## Activity goals and nutrition interaction
+
+`ObjetivosActividad` is the source for current activity targets such as steps and weekly exercise minutes.
+
+Apple Watch energy is observational. Never adjust calorie intake 1:1 from the watch's calorie estimate. Nutrition decisions should use 7–14 day trends together with weight/composition trends, adherence and training context.
+
+The operational manager for these signals is the conversation `GESTOR GYM Y NUTRI`.
+
+## Zepp / Zepp Life source audit
+
+Before enabling body-metric import on the iPhone, verify what Apple Health actually contains.
+
+Do not assume that Xiaomi/Zepp writes body-fat percentage, BMI or lean body mass merely because the scale measures them. The source audit must be performed in Apple Health using each metric's `Data Sources & Access` view. Only metrics with real contributing records should be added to the Shortcut.
