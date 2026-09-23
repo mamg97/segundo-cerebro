@@ -3654,3 +3654,442 @@ html[data-theme="dark"] .gym-session-footer input {
     grid-column: 2;
   }
 }
+
+
+/* v0.12 — animated brain orb + complete HabitQuest management */
+.brain-orb {
+  position: relative;
+  display: grid;
+  width: 88px;
+  height: 88px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  outline: none;
+  background: transparent;
+  cursor: pointer;
+  isolation: isolate;
+}
+
+.brain-orb::before {
+  position: absolute;
+  inset: -13px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(114,162,255,.22), rgba(114,162,255,0) 67%);
+  filter: blur(5px);
+  content: "";
+  opacity: .72;
+  animation: brain-orb-breathe 5.8s ease-in-out infinite;
+}
+
+.brain-orb-halo {
+  position: absolute;
+  border: 1px solid rgba(184,209,255,.22);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.brain-orb .halo-a {
+  width: 82px;
+  height: 82px;
+  animation: brain-orb-ring 7s ease-in-out infinite;
+}
+
+.brain-orb .halo-b {
+  width: 64px;
+  height: 64px;
+  opacity: .7;
+  animation: brain-orb-ring 5.2s ease-in-out infinite reverse;
+}
+
+.brain-orb-shell {
+  position: relative;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(224,235,255,.35);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 27%, rgba(255,255,255,.94) 0 3%, transparent 4%),
+    radial-gradient(circle at 42% 38%, #bad0ff 0 7%, #83a9ff 24%, #456fc7 53%, #1d396f 76%, #102346 100%);
+  box-shadow:
+    inset -8px -10px 16px rgba(2,13,36,.36),
+    inset 8px 8px 18px rgba(255,255,255,.16),
+    0 0 22px rgba(102,150,255,.46),
+    0 0 42px rgba(102,150,255,.18);
+  animation: brain-orb-float 5.2s ease-in-out infinite;
+}
+
+.brain-orb-core {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f7fbff 0 6%, #b9d1ff 14%, #7fa8ff 45%, #345fab 75%, #1b376c 100%);
+  box-shadow: 0 0 14px rgba(151,188,255,.85);
+  animation: brain-orb-core 3.8s ease-in-out infinite;
+}
+
+.brain-orb-glint {
+  position: absolute;
+  width: 18px;
+  height: 7px;
+  top: 9px;
+  left: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.42);
+  filter: blur(2px);
+  transform: rotate(-28deg);
+}
+
+.brain-orb:hover .brain-orb-shell,
+.brain-orb:focus-visible .brain-orb-shell {
+  transform: scale(1.08);
+  box-shadow:
+    inset -8px -10px 16px rgba(2,13,36,.36),
+    inset 8px 8px 18px rgba(255,255,255,.2),
+    0 0 28px rgba(126,170,255,.68),
+    0 0 54px rgba(126,170,255,.28);
+}
+
+.brain-orb[data-state="attention"] .brain-orb-shell {
+  background:
+    radial-gradient(circle at 32% 27%, rgba(255,255,255,.94) 0 3%, transparent 4%),
+    radial-gradient(circle at 42% 38%, #ffe5a6 0 7%, #e5aa55 26%, #95622f 56%, #4c321d 100%);
+  box-shadow: 0 0 24px rgba(229,170,85,.45);
+}
+
+.brain-orb[data-state="good"] .brain-orb-shell {
+  background:
+    radial-gradient(circle at 32% 27%, rgba(255,255,255,.94) 0 3%, transparent 4%),
+    radial-gradient(circle at 42% 38%, #c8fff1 0 7%, #76d9c5 28%, #3d8f83 56%, #174a46 100%);
+  box-shadow: 0 0 24px rgba(93,207,184,.4);
+}
+
+@keyframes brain-orb-breathe {
+  0%, 100% { transform: scale(.88); opacity: .38; }
+  50% { transform: scale(1.14); opacity: .9; }
+}
+
+@keyframes brain-orb-ring {
+  0%, 100% { transform: scale(.94); opacity: .28; }
+  50% { transform: scale(1.12); opacity: .72; }
+}
+
+@keyframes brain-orb-float {
+  0%, 100% { transform: translateY(1px) rotate(-2deg); }
+  50% { transform: translateY(-3px) rotate(2deg); }
+}
+
+@keyframes brain-orb-core {
+  0%, 100% { transform: scale(.88); filter: brightness(.95); }
+  50% { transform: scale(1.12); filter: brightness(1.18); }
+}
+
+.habit-management-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+.habit-management-toolbar .health-section-heading {
+  margin-bottom: 0;
+}
+
+.habit-new-button {
+  border: 0;
+  border-radius: 11px;
+  padding: 9px 12px;
+  background: var(--blue);
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.habit-master-list article {
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+}
+
+.habit-master-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.habit-master-copy em {
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-style: normal;
+}
+
+.habit-master-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.habit-master-actions button {
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 7px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.habit-master-actions button:hover,
+.habit-master-actions button:focus-visible {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.habit-master-actions button.danger {
+  color: var(--coral);
+}
+
+.habit-master-actions button:disabled {
+  opacity: .3;
+  cursor: default;
+}
+
+.habit-editor-form {
+  display: grid;
+  gap: 16px;
+}
+
+.habit-editor-heading {
+  display: flex;
+  gap: 12px;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.habit-editor-heading h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.habit-editor-heading > button {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 7px 10px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.habit-editor-name {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.habit-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.habit-editor-form label > span,
+.habit-custom-days legend {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.habit-editor-form input,
+.habit-editor-form select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 10px;
+}
+
+.habit-editor-form input:focus,
+.habit-editor-form select:focus {
+  border-color: var(--blue);
+}
+
+.habit-editor-name label:first-child input {
+  text-align: center;
+  font-size: 20px;
+}
+
+.habit-custom-days {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+}
+
+.habit-custom-days[hidden] {
+  display: none;
+}
+
+.habit-custom-days legend {
+  width: 100%;
+}
+
+.habit-custom-days label {
+  position: relative;
+}
+
+.habit-custom-days input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.habit-custom-days label > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.habit-custom-days input:checked + span {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.habit-editor-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.habit-editor-actions button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.habit-editor-actions button.primary {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: white;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brain-orb::before,
+  .brain-orb-halo,
+  .brain-orb-shell,
+  .brain-orb-core {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .brain-orb {
+    width: 72px;
+    height: 72px;
+  }
+
+  .brain-orb .halo-a { width: 68px; height: 68px; }
+  .brain-orb .halo-b { width: 54px; height: 54px; }
+  .brain-orb-shell { width: 44px; height: 44px; }
+
+  .habit-management-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .habit-new-button {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .habit-master-list article {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .habit-master-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .habit-master-actions button {
+    flex: 1 1 auto;
+  }
+
+  .habit-editor-name,
+  .habit-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .habit-custom-days {
+    justify-content: space-between;
+  }
+
+  .habit-editor-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+.orb-pulse-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: baseline;
+}
+
+.orb-pulse-summary > strong {
+  grid-row: 1 / span 3;
+  align-self: center;
+  color: var(--ink);
+  font-family: "Iowan Old Style", serif;
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.orb-pulse-summary > span {
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+@media (max-width: 620px) {
+  .orb-pulse-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .orb-pulse-summary > strong {
+    grid-row: auto;
+  }
+}

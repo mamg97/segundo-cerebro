@@ -261,3 +261,15 @@ El valor no se incorpora al bundle ni al repositorio. La integración reutiliza 
 - `GET /api/health`: expone solo estado técnico y contadores, nunca nombres de hábitos.
 
 La escritura sigue el mismo criterio de HabitQuest: `SyncState` es append-only y `count=0` representa un desmarcado explícito. La aplicación HabitQuest independiente permanece disponible como fallback durante la validación.
+
+
+### Gestión de hábitos
+
+Además de marcar/desmarcar el día, el Worker permite administrar HabitQuest desde Segundo Cerebro:
+
+- `POST /api/habits/manage` con acciones `create`, `update`, `archive`, `restore`, `delete` y `reorder`.
+- Las escrituras se realizan sobre la misma hoja original `HabitQuest Data`.
+- `Meta!B3` se actualiza con un timestamp ISO tras cada cambio para que los clientes HabitQuest detecten la nueva versión remota.
+- `delete` es destructivo y reescribe `Habits`, `History` y `SyncState` excluyendo el hábito. `archive` solo cambia su estado y conserva histórico.
+
+La credencial Google del Worker necesita permiso de escritura sobre esa hoja. Si el token actual solo tiene alcance de lectura, la vista cargará correctamente pero las mutaciones devolverán error hasta renovar la autorización con scope de escritura.

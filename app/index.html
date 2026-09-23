@@ -7,7 +7,7 @@
     <meta name="description" content="Prototipo privado y local del dashboard Segundo Cerebro.">
     <title>Segundo Cerebro — v0.1.1</title>
     <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.js?v=0.5.0"></script>
+    <script type="module" src="./app.js?v=0.6.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -59,7 +59,14 @@
         </section>
 
         <section class="ask-panel" aria-labelledby="ask-title">
-          <div class="ask-orbit" aria-hidden="true"><span></span></div>
+          <button id="system-orb" class="brain-orb" type="button" aria-label="Abrir pulso del sistema" title="Pulso del Segundo Cerebro">
+            <span class="brain-orb-halo halo-a" aria-hidden="true"></span>
+            <span class="brain-orb-halo halo-b" aria-hidden="true"></span>
+            <span class="brain-orb-shell" aria-hidden="true">
+              <span class="brain-orb-core"></span>
+              <span class="brain-orb-glint"></span>
+            </span>
+          </button>
           <form id="ask-form" class="ask-form">
             <label id="ask-title" for="ask-input">¿Qué necesitas?</label>
             <div class="ask-row">

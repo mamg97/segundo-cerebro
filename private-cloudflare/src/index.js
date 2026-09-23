@@ -700,6 +700,266 @@ async function toggleHabitQuest(request, env) {
 }
 
 
+const HABITQUEST_HABIT_HEADER = [
+  "id", "name", "icon", "category", "frequency", "days", "reminder",
+  "difficulty", "xpReward", "timesPerDay", "active", "archivedAt", "createdAt"
+];
+const HABITQUEST_HISTORY_HEADER = ["id", "habitId", "habitName", "date", "at", "xpEarned"];
+const HABITQUEST_SYNC_HEADER = ["habitId", "date", "count", "updatedAt"];
+const HABITQUEST_CATEGORIES = new Set([
+  "fitness", "learning", "mind", "work", "finance", "health", "sleep", "creativity", "social", "personal"
+]);
+const HABITQUEST_DIFFICULTY_XP = { easy: 10, medium: 20, hard: 30 };
+
+async function fetchHabitQuestTables(env) {
+  const token = await getGoogleAccessToken(env);
+  const ranges = ["Habits!A1:M1200", "History!A1:F6000", "Meta!A1:B100", "SyncState!A1:D6000"];
+  const params = new URLSearchParams();
+  for (const range of ranges) params.append("ranges", range);
+  params.set("majorDimension", "ROWS");
+  params.set("valueRenderOption", "UNFORMATTED_VALUE");
+
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values:batchGet?${params.toString()}`;
+  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error(`HABITQUEST_SHEETS_${response.status}`);
+
+  const payload = await response.json();
+  const valueRanges = payload.valueRanges || [];
+  return {
+    token,
+    habits: parseTableRows(valueRanges[0]?.values || []),
+    history: parseTableRows(valueRanges[1]?.values || []),
+    metaRows: valueRanges[2]?.values || [],
+    syncStates: parseTableRows(valueRanges[3]?.values || [])
+  };
+}
+
+function normalizeHabitQuestDays(value) {
+  const raw = Array.isArray(value) ? value : String(value || "").split(/[,;\s]+/);
+  return [...new Set(raw.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))]
+    .sort((a, b) => a - b);
+}
+
+function normalizeHabitQuestInput(input = {}, existing = null) {
+  const name = String(input.name ?? existing?.name ?? "").trim().slice(0, 120);
+  if (!name) throw new Error("HABIT_NAME_REQUIRED");
+
+  const frequencyRaw = String(input.frequency ?? existing?.frequency ?? "daily");
+  const frequency = ["daily", "weekdays", "custom"].includes(frequencyRaw) ? frequencyRaw : "daily";
+  const difficultyRaw = String(input.difficulty ?? existing?.difficulty ?? "medium");
+  const difficulty = ["easy", "medium", "hard"].includes(difficultyRaw) ? difficultyRaw : "medium";
+  const categoryRaw = String(input.category ?? existing?.category ?? "personal");
+  const category = HABITQUEST_CATEGORIES.has(categoryRaw) ? categoryRaw : "personal";
+  const reminderRaw = String(input.reminder ?? existing?.reminder ?? "").trim();
+  const reminder = /^\d{2}:\d{2}$/.test(reminderRaw) ? reminderRaw : "";
+  const timesPerDay = Math.min(12, Math.max(1, Math.floor(Number(input.timesPerDay ?? existing?.timesPerDay ?? 1) || 1)));
+  const icon = String(input.icon ?? existing?.icon ?? "✓").trim().slice(0, 8) || "✓";
+  const days = normalizeHabitQuestDays(input.days ?? existing?.days ?? []);
+
+  return {
+    id: String(existing?.id || input.id || `sc-${crypto.randomUUID().slice(0, 8)}`),
+    name,
+    icon,
+    category,
+    frequency,
+    days,
+    reminder,
+    difficulty,
+    xpReward: HABITQUEST_DIFFICULTY_XP[difficulty],
+    timesPerDay,
+    active: input.active === undefined ? (existing?.active !== false) : Boolean(input.active),
+    archivedAt: input.archivedAt === undefined ? (existing?.archivedAt || null) : (input.archivedAt || null),
+    createdAt: String(existing?.createdAt || input.createdAt || habitDateKey())
+  };
+}
+
+function habitQuestRowToHabit(item) {
+  return {
+    id: String(item.id || "").trim(),
+    name: String(item.name || "").trim(),
+    icon: String(item.icon || "✓"),
+    category: String(item.category || "personal"),
+    frequency: String(item.frequency || "daily"),
+    days: normalizeHabitQuestDays(item.days),
+    reminder: String(item.reminder || ""),
+    difficulty: String(item.difficulty || "medium"),
+    xpReward: Math.max(0, Number(item.xpReward) || 0),
+    timesPerDay: Math.max(1, Number(item.timesPerDay) || 1),
+    active: String(item.active || "yes").toLowerCase() !== "no",
+    archivedAt: item.archivedAt || null,
+    createdAt: item.createdAt || habitDateKey()
+  };
+}
+
+function habitQuestHabitRow(habit) {
+  return [
+    habit.id,
+    habit.name,
+    habit.icon,
+    habit.category,
+    habit.frequency,
+    (habit.days || []).join(","),
+    habit.reminder || "",
+    habit.difficulty,
+    String(habit.xpReward),
+    String(habit.timesPerDay),
+    habit.active ? "yes" : "no",
+    habit.archivedAt || "",
+    habit.createdAt
+  ];
+}
+
+function habitQuestHistoryRow(item) {
+  return [
+    item.id || "",
+    item.habitId || "",
+    item.habitName || "",
+    item.date || "",
+    item.at || "",
+    String(item.xpEarned ?? "")
+  ];
+}
+
+function habitQuestSyncRow(item) {
+  return [
+    item.habitId || "",
+    item.date || "",
+    String(item.count ?? 0),
+    item.updatedAt || ""
+  ];
+}
+
+async function rewriteHabitQuestRanges(env, token, { habits, history = null, syncStates = null, updatedAt }) {
+  const clearRanges = ["Habits!A2:M1200"];
+  const data = [{
+    range: "Habits!A1",
+    majorDimension: "ROWS",
+    values: [HABITQUEST_HABIT_HEADER, ...habits.map(habitQuestHabitRow)]
+  }];
+
+  if (history) {
+    clearRanges.push("History!A2:F6000");
+    data.push({
+      range: "History!A1",
+      majorDimension: "ROWS",
+      values: [HABITQUEST_HISTORY_HEADER, ...history.map(habitQuestHistoryRow)]
+    });
+  }
+
+  if (syncStates) {
+    clearRanges.push("SyncState!A2:D6000");
+    data.push({
+      range: "SyncState!A1",
+      majorDimension: "ROWS",
+      values: [HABITQUEST_SYNC_HEADER, ...syncStates.map(habitQuestSyncRow)]
+    });
+  }
+
+  const clearResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values:batchClear`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ ranges: clearRanges })
+    }
+  );
+  if (!clearResponse.ok) throw new Error(`HABITQUEST_CLEAR_${clearResponse.status}`);
+
+  data.push({
+    range: "Meta!B3",
+    majorDimension: "ROWS",
+    values: [[updatedAt]]
+  });
+
+  const writeResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        valueInputOption: "RAW",
+        data
+      })
+    }
+  );
+  if (!writeResponse.ok) throw new Error(`HABITQUEST_MANAGE_WRITE_${writeResponse.status}`);
+}
+
+async function manageHabitQuest(request, env) {
+  if (!hasHabitQuestGoogleConfig(env)) {
+    return json({ ok: false, code: "HABITQUEST_NOT_CONFIGURED" }, 503);
+  }
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ ok: false, code: "INVALID_JSON" }, 400);
+  }
+
+  const action = String(payload?.action || "").trim();
+  const tables = await fetchHabitQuestTables(env);
+  let habits = tables.habits.map(habitQuestRowToHabit).filter((habit) => habit.id && habit.name);
+  let history = tables.history;
+  let syncStates = tables.syncStates;
+  const updatedAt = new Date().toISOString();
+
+  if (action === "create") {
+    const habit = normalizeHabitQuestInput(payload.habit || {});
+    habits.push(habit);
+  } else if (action === "update") {
+    const habitId = String(payload?.habitId || "").trim();
+    const index = habits.findIndex((habit) => habit.id === habitId);
+    if (index < 0) return json({ ok: false, code: "HABIT_NOT_FOUND" }, 404);
+    habits[index] = normalizeHabitQuestInput(payload.habit || {}, habits[index]);
+  } else if (action === "archive" || action === "restore") {
+    const habitId = String(payload?.habitId || "").trim();
+    const index = habits.findIndex((habit) => habit.id === habitId);
+    if (index < 0) return json({ ok: false, code: "HABIT_NOT_FOUND" }, 404);
+    const archived = action === "archive";
+    habits[index] = {
+      ...habits[index],
+      active: !archived,
+      archivedAt: archived ? habitDateKey() : null
+    };
+  } else if (action === "delete") {
+    const habitId = String(payload?.habitId || "").trim();
+    if (!habits.some((habit) => habit.id === habitId)) {
+      return json({ ok: false, code: "HABIT_NOT_FOUND" }, 404);
+    }
+    habits = habits.filter((habit) => habit.id !== habitId);
+    history = history.filter((item) => String(item.habitId || "").trim() !== habitId);
+    syncStates = syncStates.filter((item) => String(item.habitId || "").trim() !== habitId);
+  } else if (action === "reorder") {
+    const order = Array.isArray(payload?.order) ? payload.order.map(String) : [];
+    const byId = new Map(habits.map((habit) => [habit.id, habit]));
+    const ordered = order.map((id) => byId.get(id)).filter(Boolean);
+    const seen = new Set(ordered.map((habit) => habit.id));
+    habits = [...ordered, ...habits.filter((habit) => !seen.has(habit.id))];
+  } else {
+    return json({ ok: false, code: "INVALID_HABIT_MANAGEMENT_ACTION" }, 400);
+  }
+
+  const deleting = action === "delete";
+  await rewriteHabitQuestRanges(env, tables.token, {
+    habits,
+    history: deleting ? history : null,
+    syncStates: deleting ? syncStates : null,
+    updatedAt
+  });
+
+  habitsCache = { value: null, expiresAt: 0 };
+  const refreshed = await fetchHabitQuestSummary(env, { force: true });
+  return json({ ok: true, action, summary: refreshed.value });
+}
+
+
 async function ensureGymTables(env) {
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS gym_sessions (
@@ -977,6 +1237,20 @@ export default {
       } catch (error) {
         console.warn("HabitQuest toggle failed", String(error?.message || error));
         return json({ ok: false, code: "HABITQUEST_WRITE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/habits/manage") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        return await manageHabitQuest(request, env);
+      } catch (error) {
+        const code = String(error?.message || "");
+        console.warn("HabitQuest manage failed", code || error);
+        if (code === "HABIT_NAME_REQUIRED") {
+          return json({ ok: false, code }, 400);
+        }
+        return json({ ok: false, code: "HABITQUEST_MANAGE_FAILED" }, 502);
       }
     }
 
