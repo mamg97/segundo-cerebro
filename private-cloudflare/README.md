@@ -231,3 +231,8 @@ La aplicación sigue protegida por Cloudflare Access y no incorpora el plan pers
 ### Nutrición
 
 La pestaña `Nutricion` está preparada como fuente privada de objetivos/pautas. Si está vacía, la UI muestra un estado pendiente de definir.
+
+
+### Presupuesto personal
+
+La lectura de `Categorias` incluye la columna privada `owner` (rango `A:K`). El Worker no contiene importes personales: solo transporta los valores de la hoja derivada privada y expone `owner`, junto a los netos separados de Miguel y Andrea.
