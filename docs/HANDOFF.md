@@ -148,6 +148,7 @@ Validar la absorción de HabitQuest:
 3. Confirmar que marcar/desmarcar desde Segundo Cerebro y desde HabitQuest sigue resolviendo por Last-Write-Wins sobre el mismo Sheet.
 4. Mantener `streakFreezes` fuera de la UI de Segundo Cerebro hasta formalizar su algoritmo real.
 5. Si la paridad se mantiene estable, decidir cuándo retirar la aplicación HabitQuest independiente.
+
 ## Archivos que debe leer el siguiente relevo
 
 - `AGENTS.md`

@@ -693,10 +693,10 @@ let selectedHabitDate = null;
 let habitQuestData = null;
 let habitActiveTab = "today";
 let habitViewPreference = null;
-let habitSortPreference = "manual";
+let habitSortPreference = null;
 try {
   habitViewPreference = localStorage.getItem("second-brain.habit-view");
-  habitSortPreference = localStorage.getItem("second-brain.habit-sort") || "manual";
+  habitSortPreference = localStorage.getItem("second-brain.habit-sort");
 } catch {}
 
 function localDateKey(date = new Date()) {
@@ -744,9 +744,10 @@ function habitViewMode(data = habitQuestData) {
   return candidate === "compact" ? "compact" : "list";
 }
 
-function habitSortMode() {
+function habitSortMode(data = habitQuestData) {
   const allowed = new Set(["manual", "alpha", "created", "category", "streak"]);
-  return allowed.has(habitSortPreference) ? habitSortPreference : "manual";
+  const candidate = habitSortPreference || data?.user?.habitSort || "manual";
+  return allowed.has(candidate) ? candidate : "manual";
 }
 
 function persistHabitUiPreference(key, value) {
@@ -780,7 +781,7 @@ function renderHabitsPanel(data) {
   const labelDate = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" })
     .format(new Date(`${selected}T12:00:00`));
   const view = habitViewMode(data);
-  const sort = habitSortMode();
+  const sort = habitSortMode(data);
   const progressById = new Map(progress.map((item) => [item.id, item]));
   const orderedHabits = sortHabitMaster(habits, sort, progressById);
   const activeHabits = orderedHabits.filter((habit) => habit.active);

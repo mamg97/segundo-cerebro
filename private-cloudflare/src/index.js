@@ -596,7 +596,8 @@ async function fetchHabitQuestSummary(env, options = {}) {
       name: parsed.name || "Miguel",
       avatar: parsed.avatar || "✓",
       streakFreezes: Number(parsed.streakFreezes) || 0,
-      habitView: parsed.habitView || "compact"
+      habitView: parsed.habitView || "compact",
+      habitSort: parsed.habitSort || "manual"
     };
   } catch {}
 
@@ -709,7 +710,14 @@ async function fetchHabitQuestSummary(env, options = {}) {
     if (!finalState || Number(finalState.count) <= 0) continue;
     const habit = habitById.get(item.habitId);
     const fallbackHour = Number(String(habit?.reminder || "12:00").split(":")[0] || 12);
-    const parsedHour = item.at ? new Date(item.at).getHours() : fallbackHour;
+    const parsedHour = item.at
+      ? Number(new Intl.DateTimeFormat("en-GB", {
+          timeZone: "Europe/Madrid",
+          hour: "2-digit",
+          hour12: false,
+          hourCycle: "h23"
+        }).format(new Date(item.at)))
+      : fallbackHour;
     if (parsedHour < 10) morning += 1;
     if (parsedHour >= 20) night += 1;
   }
