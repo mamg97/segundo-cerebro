@@ -194,6 +194,20 @@ function renderMode() {
   document.querySelector("#general-health").textContent = String(generalHealth);
   document.querySelector("#general-pulse").setAttribute("aria-label", `Pulso general: ${generalHealth} de 100`);
   document.querySelector("#decision-count").textContent = `${openDecisions} decisiones abiertas`;
+
+  const orb = document.querySelector("#system-orb");
+  if (orb) {
+    const habitSummary = state.habitsSummary?.summary || {};
+    const habitTotal = Number(habitSummary.total || 0);
+    const habitDone = Number(habitSummary.done || 0);
+    const attention = openDecisions >= 4 || generalHealth < 60;
+    const good = !attention && generalHealth >= 80 && (habitTotal === 0 || habitDone >= Math.ceil(habitTotal * .7));
+    orb.dataset.state = attention ? "attention" : good ? "good" : "normal";
+    orb.setAttribute(
+      "aria-label",
+      `Pulso del sistema: ${generalHealth} de 100. ${openDecisions} decisiones abiertas${habitTotal ? `, ${habitDone} de ${habitTotal} hábitos completados hoy` : ""}.`
+    );
+  }
 }
 
 function renderDate() {
@@ -2066,6 +2080,7 @@ function bindInteractions() {
 
   document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   document.querySelector("#ask-form").addEventListener("submit", handleQuery);
+  document.querySelector("#system-orb")?.addEventListener("click", showSystemPulse);
 
   const menuButton = document.querySelector("#menu-button");
   menuButton.addEventListener("click", () => {
@@ -2147,6 +2162,35 @@ function openDecisions() {
     <li><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.question)} · ${item.options.map(escapeHtml).join(" / ")}</p></li>
   `).join("")}</ul>`;
   dialog.showModal();
+}
+
+function showSystemPulse() {
+  const result = document.querySelector("#query-result");
+  const generalHealth = Number(state.areas.find((area) => area.id === "area-general")?.health ?? 0);
+  const openLoops = Array.isArray(state.openLoops) ? state.openLoops.length : 0;
+  const openDecisions = Array.isArray(state.decisions)
+    ? state.decisions.filter((decision) => decision.status === "open").length
+    : 0;
+  const habits = state.habitsSummary?.summary || {};
+  const habitTotal = Number(habits.total || 0);
+  const habitDone = Number(habits.done || 0);
+  const streak = Number(habits.streak || 0);
+  const monthly = state.financeSummary?.monthlyBudget || {};
+  const categories = Array.isArray(monthly.categories) ? monthly.categories : [];
+  const spent = categories.reduce((sum, item) => sum + numberOrZero(item.spent), 0);
+  const planned = Number(monthly.plannedOutflows);
+  const financeText = Number.isFinite(planned) && planned > 0
+    ? `Finanzas: ${Math.round((spent / planned) * 100)}% del flujo previsto ejecutado.`
+    : "Finanzas: sin porcentaje consolidado.";
+
+  result.hidden = false;
+  result.innerHTML = `
+    <div class="orb-pulse-summary">
+      <strong>Pulso ${generalHealth}/100</strong>
+      <span>Hábitos: ${habitTotal ? `${habitDone}/${habitTotal} hoy · racha ${streak} días` : "sin datos"}.</span>
+      <span>${openLoops} asuntos abiertos · ${openDecisions} decisiones pendientes.</span>
+      <span>${escapeHtml(financeText)}</span>
+    </div>`;
 }
 
 function handleQuery(event) {
