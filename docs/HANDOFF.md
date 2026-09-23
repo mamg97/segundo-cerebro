@@ -20,6 +20,13 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- HabitQuest integrado de forma nativa dentro de Segundo Cerebro como área `Hábitos`; no se usa iframe ni se duplica la app React.
+- La hoja privada existente `HabitQuest Data` sigue siendo la fuente de verdad. Segundo Cerebro lee `Habits`, `History`, `Meta` y `SyncState` a través del Worker privado.
+- La vista integrada incluye Hoy, navegación por fecha, marcación/desmarcación, racha, XP/nivel, listado de hábitos y progreso de 30 días.
+- La escritura conserva la semántica Last-Write-Wins de HabitQuest: las acciones se anexan a `SyncState`; `count=0` actúa como tombstone y no se borra historial.
+- El identificador de la hoja se guarda únicamente como secreto `HABITQUEST_SHEET_ID`; nombres, histórico y datos personales no se versionan en Git.
+- La app HabitQuest independiente se conserva durante la validación como fallback; no se elimina ni se modifica su Sheet.
+
 - El detalle de presupuesto mensual se divide en `Común`, `Miguel` y `Andrea`, manteniendo presupuesto, gastado, comprometido, libre, porcentaje y estado por partida.
 - La pestaña privada `Categorias` incorpora columna `owner`; las partidas personales viven solo en la capa financiera privada y no se hardcodean en Git.
 - Los netos libres de Miguel y Andrea se muestran aparte del presupuesto común.
