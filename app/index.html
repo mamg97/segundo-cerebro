@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
     <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.js?v=0.6.0"></script>
+    <script type="module" src="./app.js?v=0.6.1"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -62,14 +62,19 @@
         </section>
 
         <section class="ask-panel" aria-labelledby="ask-title">
-          <button id="system-orb" class="brain-orb" type="button" aria-label="Abrir pulso del sistema" title="Pulso del Segundo Cerebro">
-            <span class="brain-orb-halo halo-a" aria-hidden="true"></span>
-            <span class="brain-orb-halo halo-b" aria-hidden="true"></span>
-            <span class="brain-orb-shell" aria-hidden="true">
-              <span class="brain-orb-core"></span>
-              <span class="brain-orb-glint"></span>
-            </span>
-          </button>
+          <thinking-orb
+            id="system-orb"
+            state="idle"
+            size="96"
+            theme="auto"
+            variant="classic"
+            speed="1"
+            interactive
+            role="button"
+            tabindex="0"
+            aria-label="Abrir pulso del sistema"
+            title="Pulso del Segundo Cerebro"
+          ></thinking-orb>
           <form id="ask-form" class="ask-form">
             <label id="ask-title" for="ask-input">¿Qué necesitas?</label>
             <div class="ask-row">
