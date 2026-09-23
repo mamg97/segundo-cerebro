@@ -3172,3 +3172,32 @@ html[data-theme="dark"] .gym-session-footer input {
     text-align: left;
   }
 }
+
+/* v0.9.1 — last load memory + deletable gym history */
+.gym-last-record {
+  color: var(--blue) !important;
+  font-weight: 750;
+}
+
+.gym-history-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.gym-delete-session {
+  border: 1px solid color-mix(in srgb, var(--coral) 35%, var(--line));
+  border-radius: 9px;
+  padding: 7px 10px;
+  background: transparent;
+  color: var(--coral);
+  font-size: 9px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.gym-delete-session:hover,
+.gym-delete-session:focus-visible {
+  background: color-mix(in srgb, var(--coral) 9%, transparent);
+}
