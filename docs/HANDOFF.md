@@ -20,6 +20,11 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- El detalle de presupuesto mensual se divide en `Común`, `Miguel` y `Andrea`, manteniendo presupuesto, gastado, comprometido, libre, porcentaje y estado por partida.
+- La pestaña privada `Categorias` incorpora columna `owner`; las partidas personales viven solo en la capa financiera privada y no se hardcodean en Git.
+- Los netos libres de Miguel y Andrea se muestran aparte del presupuesto común.
+- En móvil, Series/Reps/Peso del gimnasio usan selectores nativos `select`; en iOS se abren con el picker tipo rueda del sistema. En escritorio se conservan inputs normales.
+
 - Gimnasio recuerda el último peso real registrado por ejercicio y lo precarga la siguiente vez que se abre ese ejercicio; si el último registro fue sin carga, el campo queda vacío en lugar de volver al peso de referencia.
 - El histórico de entrenamientos incorpora `Eliminar registro`, con confirmación antes de borrar. Al eliminar una sesión también desaparecen sus puntos de las gráficas de progreso.
 - Las dominadas se etiquetan como `kg extra`: el peso corporal queda como referencia y el campo registra solo lastre añadido.
