@@ -525,6 +525,27 @@ async function saveGymSession(request, env) {
   return json({ ok: true, sessionId }, 201);
 }
 
+
+async function deleteGymSession(sessionId, env) {
+  await ensureGymTables(env);
+  const id = String(sessionId || "").trim();
+  if (!id) return json({ ok: false, code: "INVALID_SESSION_ID" }, 400);
+
+  const existing = await env.DB.prepare(
+    "SELECT id FROM gym_sessions WHERE id = ? LIMIT 1"
+  ).bind(id).first();
+
+  if (!existing) return json({ ok: false, code: "GYM_SESSION_NOT_FOUND" }, 404);
+
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM gym_entries WHERE session_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM gym_sessions WHERE id = ?").bind(id)
+  ]);
+
+  return json({ ok: true, deletedSessionId: id });
+}
+
+
 export default {
   async fetch(request, env) {
     if (env.PRIVATE_APP_ENABLED !== "true") {
@@ -606,6 +627,12 @@ export default {
     if (url.pathname === "/api/gym/session") {
       if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       return saveGymSession(request, env);
+    }
+
+    if (url.pathname.startsWith("/api/gym/session/")) {
+      if (request.method !== "DELETE") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const sessionId = decodeURIComponent(url.pathname.slice("/api/gym/session/".length));
+      return deleteGymSession(sessionId, env);
     }
 
     if (url.pathname === "/api/state") {
