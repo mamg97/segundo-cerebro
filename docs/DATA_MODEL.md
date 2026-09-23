@@ -198,3 +198,19 @@ Campos consumidos: `id`, `name`, `icon`, `category`, `frequency`, `days`, `remin
 ### Vista derivada
 
 `habitsSummary` puede incluir `todayHabits`, `summary`, `progress` y metadatos mínimos. No se transporta la foto/base64 de `Meta`. El progreso mostrado en Segundo Cerebro se calcula sobre los últimos 30 días programados.
+
+
+### Gestión de hábitos desde Segundo Cerebro
+
+Segundo Cerebro puede gestionar el mismo registro `Habit` de HabitQuest mediante el endpoint privado `POST /api/habits/manage`. Acciones admitidas:
+
+- `create`
+- `update`
+- `archive`
+- `restore`
+- `delete`
+- `reorder`
+
+El modelo conserva los campos originales de HabitQuest y recalcula `xpReward` según dificultad: easy=10, medium=20, hard=30.
+
+Las operaciones no crean una segunda fuente de verdad. La hoja `HabitQuest Data` sigue siendo propietaria. Tras cada mutación se actualiza `Meta.updatedAt`; al eliminar, se eliminan también las filas del hábito en `History` y `SyncState`. Archivar nunca borra histórico.
