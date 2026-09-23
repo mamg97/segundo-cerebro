@@ -1148,7 +1148,7 @@ function renderNutritionPanel(data) {
       <article>
         <span>Objetivo</span>
         <strong>${objective?.kcal == null ? "Sin definir" : formatKcal(objective.kcal)}</strong>
-        <small>${remainingTarget === null ? "Pendiente de fijar" : remainingTarget >= 0 ? `${formatKcal(remainingTarget)} restantes` : `${formatKcal(Math.abs(remainingTarget))} por encima`}</small>
+        <small>${objective?.kcal == null ? "Pendiente de fijar" : remainingTarget === null ? "Pendiente de calcular" : remainingTarget >= 0 ? `${formatKcal(remainingTarget)} restantes` : `${formatKcal(Math.abs(remainingTarget))} por encima`}</small>
       </article>
     </div>
 

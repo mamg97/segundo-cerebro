@@ -136,17 +136,16 @@ El Worker de ingesta:
 - La aplicación todavía no es una PWA offline.
 - No todos los dominios previstos tienen contrato propio en `agents/`.
 - La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
-- El puente Apple Health está implementado en código y dispone de una guía reproducible en `docs/APPLE_HEALTH_SHORTCUT.md`; falta ejecutar el setup con la sesión local de Cloudflare y crear el Atajo en el iPhone.
+- El puente Apple Health está validado end-to-end en producción: Atajo iPhone → Worker de ingesta → Worker principal → D1 → Salud/Nutrición. La primera muestra real se recibió correctamente el 2026-09-23.
 
 ## Próxima acción exacta
 
-Completar Apple Health:
+Cerrar Apple Health:
 
-1. En el Mac, desde `private-cloudflare/`, ejecutar `npm run setup:health-ingest`. El script valida ahora el endpoint y la protección Bearer antes de mostrar el token.
-2. Seguir `docs/APPLE_HEALTH_SHORTCUT.md` para crear `Segundo Cerebro · Energía ayer` en el iPhone.
-3. Ejecutarlo manualmente una vez y validar respuesta `ok: true`.
-4. Comprobar que Salud → Nutrición usa la muestra D1 del día enviado.
-5. Crear la automatización diaria de mañana solo después de esa validación.
+1. Automatizar en iPhone el Atajo ya validado para ejecutarlo cada noche, cerca del cierre del día.
+2. Mantener el Atajo consultando `hoy` para evitar complejidad innecesaria; cada ejecución añade una muestra nueva y la más reciente de D1 es la que usa la UI.
+3. Validar al día siguiente que la ejecución automática funcionó sin intervención.
+4. Después, continuar con el siguiente frente global del Organizador.
 
 ## Archivos que debe leer el siguiente relevo
 
