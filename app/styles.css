@@ -3650,136 +3650,28 @@ html[data-theme="dark"] .gym-session-footer input {
 }
 
 
-/* v0.12 — animated brain orb + complete HabitQuest management */
-.brain-orb {
-  position: relative;
-  display: grid;
-  width: 88px;
-  height: 88px;
-  flex: none;
-  place-items: center;
-  border: 0;
+/* v0.12.3 — original Thinking Orbs component */
+#system-orb {
+  display: block;
+  width: 96px;
+  height: 96px;
+  flex: 0 0 96px;
   border-radius: 50%;
-  outline: none;
-  background: transparent;
   cursor: pointer;
-  isolation: isolate;
+  outline: none;
 }
 
-.brain-orb::before {
-  position: absolute;
-  inset: -13px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(114,162,255,.22), rgba(114,162,255,0) 67%);
-  filter: blur(5px);
-  content: "";
-  opacity: .72;
-  animation: brain-orb-breathe 5.8s ease-in-out infinite;
+#system-orb:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
 }
 
-.brain-orb-halo {
-  position: absolute;
-  border: 1px solid rgba(184,209,255,.22);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.brain-orb .halo-a {
-  width: 82px;
-  height: 82px;
-  animation: brain-orb-ring 7s ease-in-out infinite;
-}
-
-.brain-orb .halo-b {
-  width: 64px;
-  height: 64px;
-  opacity: .7;
-  animation: brain-orb-ring 5.2s ease-in-out infinite reverse;
-}
-
-.brain-orb-shell {
-  position: relative;
-  display: grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid rgba(224,235,255,.35);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 32% 27%, rgba(255,255,255,.94) 0 3%, transparent 4%),
-    radial-gradient(circle at 42% 38%, #bad0ff 0 7%, #83a9ff 24%, #456fc7 53%, #1d396f 76%, #102346 100%);
-  box-shadow:
-    inset -8px -10px 16px rgba(2,13,36,.36),
-    inset 8px 8px 18px rgba(255,255,255,.16),
-    0 0 22px rgba(102,150,255,.46),
-    0 0 42px rgba(102,150,255,.18);
-  animation: brain-orb-float 5.2s ease-in-out infinite;
-}
-
-.brain-orb-core {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f7fbff 0 6%, #b9d1ff 14%, #7fa8ff 45%, #345fab 75%, #1b376c 100%);
-  box-shadow: 0 0 14px rgba(151,188,255,.85);
-  animation: brain-orb-core 3.8s ease-in-out infinite;
-}
-
-.brain-orb-glint {
-  position: absolute;
-  width: 18px;
-  height: 7px;
-  top: 9px;
-  left: 10px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.42);
-  filter: blur(2px);
-  transform: rotate(-28deg);
-}
-
-.brain-orb:hover .brain-orb-shell,
-.brain-orb:focus-visible .brain-orb-shell {
-  transform: scale(1.08);
-  box-shadow:
-    inset -8px -10px 16px rgba(2,13,36,.36),
-    inset 8px 8px 18px rgba(255,255,255,.2),
-    0 0 28px rgba(126,170,255,.68),
-    0 0 54px rgba(126,170,255,.28);
-}
-
-.brain-orb[data-state="attention"] .brain-orb-shell {
-  background:
-    radial-gradient(circle at 32% 27%, rgba(255,255,255,.94) 0 3%, transparent 4%),
-    radial-gradient(circle at 42% 38%, #ffe5a6 0 7%, #e5aa55 26%, #95622f 56%, #4c321d 100%);
-  box-shadow: 0 0 24px rgba(229,170,85,.45);
-}
-
-.brain-orb[data-state="good"] .brain-orb-shell {
-  background:
-    radial-gradient(circle at 32% 27%, rgba(255,255,255,.94) 0 3%, transparent 4%),
-    radial-gradient(circle at 42% 38%, #c8fff1 0 7%, #76d9c5 28%, #3d8f83 56%, #174a46 100%);
-  box-shadow: 0 0 24px rgba(93,207,184,.4);
-}
-
-@keyframes brain-orb-breathe {
-  0%, 100% { transform: scale(.88); opacity: .38; }
-  50% { transform: scale(1.14); opacity: .9; }
-}
-
-@keyframes brain-orb-ring {
-  0%, 100% { transform: scale(.94); opacity: .28; }
-  50% { transform: scale(1.12); opacity: .72; }
-}
-
-@keyframes brain-orb-float {
-  0%, 100% { transform: translateY(1px) rotate(-2deg); }
-  50% { transform: translateY(-3px) rotate(2deg); }
-}
-
-@keyframes brain-orb-core {
-  0%, 100% { transform: scale(.88); filter: brightness(.95); }
-  50% { transform: scale(1.12); filter: brightness(1.18); }
+@media (max-width: 620px) {
+  #system-orb {
+    width: 72px;
+    height: 72px;
+    flex-basis: 72px;
+  }
 }
 
 .habit-management-toolbar {
@@ -4008,15 +3900,6 @@ html[data-theme="dark"] .gym-session-footer input {
 }
 
 @media (max-width: 620px) {
-  .brain-orb {
-    width: 72px;
-    height: 72px;
-  }
-
-  .brain-orb .halo-a { width: 68px; height: 68px; }
-  .brain-orb .halo-b { width: 54px; height: 54px; }
-  .brain-orb-shell { width: 44px; height: 44px; }
-
   .habit-management-toolbar {
     grid-template-columns: 1fr;
     align-items: stretch;
