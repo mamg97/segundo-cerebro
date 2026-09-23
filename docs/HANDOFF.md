@@ -20,6 +20,13 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Creada una fuente privada separada `SEGUNDO CEREBRO - SALUD` para nutrición y energía diaria. No se mezcla con Finanzas.
+- La fuente contiene cuatro pestañas: `Comidas` (base reutilizable), `Registro` (planificado/consumido), `Objetivos` (kcal/macros por fecha efectiva) y `EnergiaDiaria` (calorías activas, reposo y total).
+- El Worker expone `GET /api/nutrition` y endpoints privados de escritura para comida, registro diario y energía.
+- La vista Salud → Nutrición muestra consumidas, gasto total, balance energético, objetivo, comidas del día, base reutilizable e histórico de 14 días.
+- Las filas de Registro pueden referenciar `item_id`; si kcal/macros están vacíos, el Worker deriva los valores desde la base de Comidas y escala por cantidad/ración.
+- Apple Watch/Apple Health queda preparado a nivel de modelo y endpoint. Falta el puente iPhone → Worker/Sheet; hasta entonces la UI lo muestra explícitamente como pendiente y no inventa gasto energético.
+
 - Sustituido el orb CSS propio por el componente original `@schoolees/thinking-orbs`, adaptado de Jakub Antalik y licenciado MIT.
 - La librería se versiona dentro de `app/vendor/thinking-orbs/` con `LICENSE` y `NOTICE.md`, evitando depender de CDN o npm en tiempo de ejecución.
 - El orb usa los estados reales de la librería: `idle` en reposo, `searching` durante búsquedas, `solving` al calcular el pulso del sistema y `responding` al presentar resultado.
