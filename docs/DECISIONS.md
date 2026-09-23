@@ -184,3 +184,16 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Fecha:** 2026-09-24
 - **Decisión:** los epígrafes/categorías de las tarjetas principales usan naranja en modo oscuro; títulos e importes comparten la misma familia sans.
 - **Motivo:** reforzar la jerarquía visual azul noche + naranja y eliminar la mezcla de serif/sans entre Dinero, Deudas, Patrimonio, Hábitos y Nutrición.
+
+
+## D-025 — Un único puente Apple Health para actividad y composición
+
+- **Estado:** aceptada; backend implementado, auditoría de fuentes del iPhone pendiente
+- **Fecha:** 2026-09-24
+- **Decisión:** ampliar el Worker existente `segundo-cerebro-health-ingest` y no crear una segunda integración HealthKit.
+- **Endpoint:** `/v1/sync` recibe actividad diaria y muestras corporales; `/v1/energy` se mantiene por compatibilidad.
+- **Persistencia automática:** D1 privado. Actividad usa UPSERT por fecha; cuerpo usa clave lógica tipo + timestamp original + fuente.
+- **Sheet privado:** `EnergiaDiaria` y `MedicionesCorporales` permanecen como baseline/manual/fallback y se amplían para soportar los nuevos campos sin duplicar el histórico.
+- **Tendencias:** peso = media móvil de 7 días y cambio frente a los 7 anteriores; grasa/IMC/masa magra de bioimpedancia doméstica se tratan como tendencia.
+- **Nutrición:** las kcal del Apple Watch son informativas; no se ajusta ingesta 1:1. El gestor debe evaluar 7–14 días junto con peso, adherencia y entrenamiento.
+- **Fuente corporal:** no se asume que Zepp/Zepp Life escriba todas las métricas. Antes de configurar el Atajo se verifica cada tipo en Apple Salud → Fuentes de datos y acceso.
