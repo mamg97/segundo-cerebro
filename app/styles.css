@@ -5458,3 +5458,11 @@ html[data-theme="dark"] ::selection {
     padding-top: 22px;
   }
 }
+
+/* v0.14.2 — restore top status bar, remove oversized hero headline */
+.overview-anchor {
+  display: block;
+  position: relative;
+  top: -12px;
+  visibility: hidden;
+}

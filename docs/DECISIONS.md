@@ -160,10 +160,10 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Motivo:** eliminar la apariencia multicolor y la mezcla tipográfica del tema oscuro anterior y reforzar una identidad visual propia.
 
 
-## D-022 — Portada sin cabecera global ni Pulso general
+## D-022 — Portada sin titular gigante ni Pulso general
 
 - **Estado:** aceptada e implementada
 - **Fecha:** 2026-09-24
-- **Decisión:** eliminar de la portada la cabecera superior con controles/estado y retirar el indicador circular `Pulso general`.
-- **Motivo:** reducir ruido visual, evitar una métrica agregada poco interpretable y hacer que el contenido principal gane jerarquía.
+- **Decisión:** mantener la barra superior con saludo/fecha, tema, estado privado y perfil; eliminar el gran titular de portada y retirar el indicador circular `Pulso general`.
+- **Motivo:** reducir ruido visual, evitar una métrica agregada poco interpretable y hacer que el contenido operativo gane jerarquía.
 - **Consecuencia:** el estado de cada dominio se consulta en sus propios módulos y no mediante una puntuación global.
