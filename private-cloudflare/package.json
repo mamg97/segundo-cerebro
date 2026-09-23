@@ -5,7 +5,9 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "dev": "npm run build && wrangler dev --config wrangler.bootstrap.jsonc",
-    "deploy": "npm run build && wrangler deploy --config wrangler.bootstrap.jsonc"
+    "deploy": "npm run build && wrangler deploy --config wrangler.bootstrap.jsonc",
+    "deploy:health-ingest": "wrangler deploy --config wrangler.health-ingest.jsonc",
+    "setup:health-ingest": "node scripts/setup-health-ingest.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
