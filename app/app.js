@@ -2189,30 +2189,33 @@ function showSystemPulse() {
     ? `Finanzas: ${Math.round((spent / planned) * 100)}% del flujo previsto ejecutado.`
     : "Finanzas: sin porcentaje consolidado.";
 
-  result.hidden = false;
-  result.innerHTML = `
-    <div class="orb-pulse-summary">
-      <strong>Pulso ${generalHealth}/100</strong>
-      <span>Hábitos: ${habitTotal ? `${habitDone}/${habitTotal} hoy · racha ${streak} días` : "sin datos"}.</span>
-      <span>${openLoops} asuntos abiertos · ${openDecisions} decisiones pendientes.</span>
-      <span>${escapeHtml(financeText)}</span>
-    </div>`;
-  setSystemOrbState("responding", 1400);
+  window.setTimeout(() => {
+    result.hidden = false;
+    result.innerHTML = `
+      <div class="orb-pulse-summary">
+        <strong>Pulso ${generalHealth}/100</strong>
+        <span>Hábitos: ${habitTotal ? `${habitDone}/${habitTotal} hoy · racha ${streak} días` : "sin datos"}.</span>
+        <span>${openLoops} asuntos abiertos · ${openDecisions} decisiones pendientes.</span>
+        <span>${escapeHtml(financeText)}</span>
+      </div>`;
+    setSystemOrbState("responding", 1400);
+  }, 180);
 }
 
 function handleQuery(event) {
   event.preventDefault();
-  setSystemOrbState("searching");
   const input = document.querySelector("#ask-input");
   const result = document.querySelector("#query-result");
   const query = input.value.trim().toLocaleLowerCase("es");
   if (!query) {
+    setSystemOrbState("idle");
     result.hidden = false;
     result.innerHTML = privateMode
       ? "Escribe una pregunta o el nombre de un área para buscar en el estado privado."
       : "Escribe una pregunta o el nombre de un área para buscar en el estado ficticio.";
     return;
   }
+  setSystemOrbState("searching");
   const habitEntities = Array.isArray(state.habitsSummary?.habits) ? state.habitsSummary.habits : [];
   const entities = [...state.areas, ...state.projects, ...state.openLoops, ...state.goals, ...state.decisions, ...state.events, ...habitEntities];
   const terms = query.split(/\s+/).filter((term) => term.length > 2);
@@ -2220,13 +2223,15 @@ function handleQuery(event) {
     const haystack = JSON.stringify(entity).toLocaleLowerCase("es");
     return terms.some((term) => haystack.includes(term));
   }).slice(0, 3);
-  result.hidden = false;
-  result.innerHTML = matches.length
-    ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"} en el estado ${privateMode ? "privado" : "mock"}:</strong> ${matches.map((item) => escapeHtml(item.title)).join(" · ")}`
-    : privateMode
-      ? "No hay coincidencias en el estado privado."
-      : "No hay coincidencias en los datos ficticios. La conexión con fuentes reales y el asistente de lenguaje natural quedan para una fase futura.";
-  setSystemOrbState("responding", 1400);
+  window.setTimeout(() => {
+    result.hidden = false;
+    result.innerHTML = matches.length
+      ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"} en el estado ${privateMode ? "privado" : "mock"}:</strong> ${matches.map((item) => escapeHtml(item.title)).join(" · ")}`
+      : privateMode
+        ? "No hay coincidencias en el estado privado."
+        : "No hay coincidencias en los datos ficticios. La conexión con fuentes reales y el asistente de lenguaje natural quedan para una fase futura.";
+    setSystemOrbState("responding", 1400);
+  }, 180);
 }
 
 let systemOrbResetTimer = null;
