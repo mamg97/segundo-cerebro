@@ -72,7 +72,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Lectura de hábitos, histórico y progreso.
 - Marcar/desmarcar respetando Last-Write-Wins.
 - Crear, editar, archivar/restaurar, eliminar y reordenar hábitos.
-- Paridad funcional ampliada: vista lista/compacta, ordenación, separación pendientes/completados y activos/archivados, progreso diario, estadísticas 60/90 días, semana actual, heatmap de cinco semanas, logros y feedback de gamificación.
+- Paridad funcional ampliada: vista lista/compacta, ordenación, separación pendientes/completados y activos/archivados, progreso diario, estadísticas 60/90 días, semana actual, heatmap de cinco semanas, logros y feedback de gamificación. La vista de gestión usa tarjetas densas con metadatos/chips, estadísticas y acciones secundarias discretas para evitar el aspecto administrativo inicial.
 - La aplicación independiente HabitQuest se mantiene como fallback durante la validación; no se duplican su login Google, onboarding, tema independiente ni import/export XLSX.
 
 ### Salud — Gimnasio

@@ -4682,3 +4682,313 @@ html[data-theme="dark"] .gym-session-footer input {
   .habit-achievements { grid-template-columns: 1fr; }
   .habit-progress-item { grid-template-columns: 1fr 64px; }
 }
+
+
+/* v0.13.1 — HabitQuest habit-card visual refinement */
+.habit-master-list {
+  gap: 10px;
+}
+
+.habit-master-list.compact {
+  gap: 12px;
+}
+
+.habit-master-list article.habit-master-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 96%, var(--blue) 4%), var(--surface));
+  box-shadow: 0 8px 26px rgba(9, 24, 49, .045);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.habit-master-list article.habit-master-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--blue) 35%, var(--line));
+  box-shadow: 0 12px 30px rgba(9, 24, 49, .075);
+}
+
+.habit-master-list article.habit-master-card.archived {
+  opacity: .62;
+  background: color-mix(in srgb, var(--paper) 72%, var(--surface));
+}
+
+.habit-master-main {
+  display: grid !important;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 12px !important;
+  align-items: start;
+  min-width: 0;
+}
+
+.habit-master-card .habit-master-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--blue) 12%, var(--line));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--blue) 7%, var(--paper));
+  font-size: 22px;
+}
+
+.habit-master-card .habit-master-copy {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+
+.habit-master-title-row {
+  display: flex !important;
+  gap: 10px !important;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.habit-master-title-row > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-xp-chip {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 13%, transparent);
+  color: var(--amber) !important;
+  font-size: 7px !important;
+  font-weight: 900;
+  letter-spacing: .02em;
+}
+
+.habit-master-chips {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 5px !important;
+}
+
+.habit-master-chips > span {
+  padding: 4px 7px;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  color: var(--ink-soft);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.habit-master-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px !important;
+}
+
+.habit-master-stats > span {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 8px 9px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+}
+
+.habit-master-stats strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-master-stats small {
+  color: var(--ink-soft);
+  font-size: 6px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.habit-master-list article.habit-master-card .habit-master-actions {
+  display: flex;
+  grid-column: auto;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+}
+
+.habit-reorder-actions,
+.habit-card-actions {
+  display: flex !important;
+  gap: 5px !important;
+  align-items: center;
+}
+
+.habit-master-card .habit-master-actions button {
+  min-width: 30px;
+  min-height: 29px;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.habit-master-card .habit-master-actions button:hover,
+.habit-master-card .habit-master-actions button:focus-visible {
+  border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
+  background: color-mix(in srgb, var(--blue) 7%, transparent);
+  color: var(--blue);
+}
+
+.habit-master-card .habit-master-actions button.danger {
+  width: 30px;
+  padding-inline: 0;
+  color: var(--coral);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.habit-master-list:not(.compact) article.habit-master-card {
+  grid-template-columns: minmax(0, 1.55fr) minmax(250px, .75fr);
+  align-items: center;
+}
+
+.habit-master-list:not(.compact) .habit-master-stats {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.habit-master-list:not(.compact) .habit-master-actions {
+  grid-column: 1 / -1 !important;
+}
+
+.habit-master-list.compact article.habit-master-card {
+  min-height: 0;
+}
+
+@media (max-width: 760px) {
+  .habit-master-list:not(.compact) article.habit-master-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .habit-master-list:not(.compact) .habit-master-stats,
+  .habit-master-list:not(.compact) .habit-master-actions {
+    grid-column: auto !important;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .habit-master-list.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .habit-master-list article.habit-master-card {
+    padding: 11px;
+    border-radius: 15px;
+  }
+
+  .habit-master-list.compact .habit-master-main {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 8px !important;
+  }
+
+  .habit-master-list.compact .habit-master-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    font-size: 18px;
+  }
+
+  .habit-master-list.compact .habit-master-title-row {
+    display: grid !important;
+    gap: 5px !important;
+  }
+
+  .habit-master-list.compact .habit-master-title-row > strong {
+    font-size: 11px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .habit-master-list.compact .habit-xp-chip {
+    width: fit-content;
+    padding: 3px 5px;
+    font-size: 6px !important;
+  }
+
+  .habit-master-list.compact .habit-master-chips {
+    gap: 4px !important;
+  }
+
+  .habit-master-list.compact .habit-master-chips > span {
+    padding: 3px 5px;
+    font-size: 6px;
+  }
+
+  .habit-master-list.compact .habit-master-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .habit-master-list.compact .habit-master-stats > span:last-child {
+    display: none;
+  }
+
+  .habit-master-list.compact .habit-master-stats > span {
+    padding: 6px;
+  }
+
+  .habit-master-list.compact .habit-master-stats strong {
+    font-size: 7px;
+  }
+
+  .habit-master-list.compact .habit-master-stats small {
+    font-size: 5px;
+  }
+
+  .habit-master-list.compact .habit-master-actions {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 5px;
+    padding-top: 7px;
+  }
+
+  .habit-master-list.compact .habit-card-actions {
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  .habit-master-list.compact .habit-master-actions button {
+    min-width: 25px;
+    min-height: 25px;
+    padding: 3px 5px;
+    font-size: 6px;
+  }
+
+  .habit-master-list.compact .habit-master-actions button.danger {
+    width: 25px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 390px) {
+  .habit-master-list.compact {
+    grid-template-columns: 1fr;
+  }
+}

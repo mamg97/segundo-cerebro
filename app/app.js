@@ -957,20 +957,39 @@ function renderHabitMasterItem(habit, index, habits, progressById, manualOrder) 
       ? "Laborables"
       : `Días ${(habit.days || []).join(",") || "personalizados"}`;
   const stat = progressById.get(habit.id) || {};
+  const difficultyLabel = habit.difficulty === "hard" ? "Difícil" : habit.difficulty === "easy" ? "Fácil" : "Media";
   return `
-    <article class="${habit.active ? "" : "archived"}">
-      <span class="habit-master-icon">${escapeHtml(habit.icon)}</span>
-      <div class="habit-master-copy">
-        <strong>${escapeHtml(habit.name)}</strong>
-        <small>${escapeHtml(habit.category)} · ${escapeHtml(frequencyLabel)} · ${habit.timesPerDay}×/día · ${habit.xpReward} XP</small>
-        <em>${habit.active ? "Activo" : "Archivado"}${habit.reminder ? " · " + escapeHtml(habit.reminder) : ""} · 🔥 ${Number(stat.currentStreak || 0)}d · ${Number(stat.totalCompletions || 0)} completados</em>
+    <article class="habit-master-card ${habit.active ? "" : "archived"}">
+      <div class="habit-master-main">
+        <span class="habit-master-icon">${escapeHtml(habit.icon)}</span>
+        <div class="habit-master-copy">
+          <div class="habit-master-title-row">
+            <strong>${escapeHtml(habit.name)}</strong>
+            <span class="habit-xp-chip">+${Number(habit.xpReward || 0)} XP</span>
+          </div>
+          <div class="habit-master-chips">
+            <span>${escapeHtml(habit.category)}</span>
+            <span>${escapeHtml(frequencyLabel)}</span>
+            <span>${Number(habit.timesPerDay || 1)}×/día</span>
+            ${habit.reminder ? `<span>◷ ${escapeHtml(habit.reminder)}</span>` : ""}
+          </div>
+        </div>
+      </div>
+      <div class="habit-master-stats">
+        <span><strong>🔥 ${Number(stat.currentStreak || 0)}d</strong><small>racha</small></span>
+        <span><strong>✓ ${Number(stat.totalCompletions || 0)}</strong><small>completados</small></span>
+        <span><strong>${escapeHtml(difficultyLabel)}</strong><small>dificultad</small></span>
       </div>
       <div class="habit-master-actions">
-        <button type="button" data-habit-move="-1" data-habit-id="${escapeHtml(habit.id)}" ${!manualOrder || index === 0 ? "disabled" : ""} aria-label="Subir hábito">↑</button>
-        <button type="button" data-habit-move="1" data-habit-id="${escapeHtml(habit.id)}" ${!manualOrder || index === habits.length - 1 ? "disabled" : ""} aria-label="Bajar hábito">↓</button>
-        <button type="button" data-habit-edit="${escapeHtml(habit.id)}">Editar</button>
-        <button type="button" data-habit-archive="${escapeHtml(habit.id)}" data-archived="${habit.active ? "false" : "true"}">${habit.active ? "Archivar" : "Restaurar"}</button>
-        <button type="button" class="danger" data-habit-delete="${escapeHtml(habit.id)}">Eliminar</button>
+        <div class="habit-reorder-actions">
+          <button type="button" data-habit-move="-1" data-habit-id="${escapeHtml(habit.id)}" ${!manualOrder || index === 0 ? "disabled" : ""} aria-label="Subir hábito" title="Subir">↑</button>
+          <button type="button" data-habit-move="1" data-habit-id="${escapeHtml(habit.id)}" ${!manualOrder || index === habits.length - 1 ? "disabled" : ""} aria-label="Bajar hábito" title="Bajar">↓</button>
+        </div>
+        <div class="habit-card-actions">
+          <button type="button" data-habit-edit="${escapeHtml(habit.id)}">Editar</button>
+          <button type="button" data-habit-archive="${escapeHtml(habit.id)}" data-archived="${habit.active ? "false" : "true"}">${habit.active ? "Archivar" : "Restaurar"}</button>
+          <button type="button" class="danger" data-habit-delete="${escapeHtml(habit.id)}" aria-label="Eliminar hábito" title="Eliminar">×</button>
+        </div>
       </div>
     </article>`;
 }
