@@ -1033,23 +1033,36 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     updatedAt: item.updated_at || null
   })).filter((item) => item.id && item.name);
 
-  const entries = parseTableRows(valueRanges[1]?.values || []).map((item, index) => ({
-    id: `row-${index + 2}`,
-    date: String(item.fecha || "").trim(),
-    moment: String(item.momento || "Otro").trim(),
-    itemId: item.item_id || null,
-    itemName: String(item.item_nombre || "").trim(),
-    quantity: toNumber(item.cantidad),
-    unit: item.unidad || null,
-    kcal: toNumber(item.kcal) ?? 0,
-    protein: toNumber(item.proteinas_g) ?? 0,
-    carbs: toNumber(item.carbohidratos_g) ?? 0,
-    fat: toNumber(item.grasas_g) ?? 0,
-    status: String(item.estado || "consumido").toLowerCase() === "planificado" ? "planificado" : "consumido",
-    source: item.fuente || null,
-    note: item.nota || null,
-    updatedAt: item.updated_at || null
-  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.itemName);
+  const foodById = new Map(foods.map((food) => [food.id, food]));
+  const entries = parseTableRows(valueRanges[1]?.values || []).map((item, index) => {
+    const itemId = item.item_id || null;
+    const linkedFood = itemId ? foodById.get(String(itemId)) : null;
+    const quantity = toNumber(item.cantidad);
+    const serving = linkedFood?.serving;
+    const factor = linkedFood && quantity !== null && serving !== null && serving > 0
+      ? quantity / serving
+      : linkedFood ? 1 : null;
+    const derived = (field) => linkedFood && factor !== null && linkedFood[field] !== null
+      ? Number(linkedFood[field]) * factor
+      : null;
+    return {
+      id: `row-${index + 2}`,
+      date: String(item.fecha || "").trim(),
+      moment: String(item.momento || "Otro").trim(),
+      itemId,
+      itemName: String(item.item_nombre || linkedFood?.name || "").trim(),
+      quantity,
+      unit: item.unidad || linkedFood?.unit || null,
+      kcal: toNumber(item.kcal) ?? derived("kcal") ?? 0,
+      protein: toNumber(item.proteinas_g) ?? derived("protein") ?? 0,
+      carbs: toNumber(item.carbohidratos_g) ?? derived("carbs") ?? 0,
+      fat: toNumber(item.grasas_g) ?? derived("fat") ?? 0,
+      status: String(item.estado || "consumido").toLowerCase() === "planificado" ? "planificado" : "consumido",
+      source: item.fuente || (linkedFood ? "base_comidas" : null),
+      note: item.nota || null,
+      updatedAt: item.updated_at || null
+    };
+  }).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.itemName);
 
   const objectives = parseTableRows(valueRanges[2]?.values || []).map((item) => ({
     effectiveDate: String(item.effective_date || "").trim(),
