@@ -630,9 +630,6 @@ async function openHealthDetail() {
   document.querySelector("#dialog-title").textContent = "Salud";
 
   const medicalEvents = collectHealthEvents().filter((event) => event.healthKind === "medical");
-  const nutritionPlan = Array.isArray(state.healthSummary?.nutritionPlan)
-    ? state.healthSummary.nutritionPlan
-    : [];
 
   document.querySelector("#dialog-body").innerHTML = `
     <div class="health-tabs" role="tablist" aria-label="Apartados de salud">
@@ -648,18 +645,21 @@ async function openHealthDetail() {
         <div id="gym-panel"><p class="health-empty">Cargando plan e histórico…</p></div>
       </section>
       <section class="health-tab-panel" data-health-panel="nutrition">
-        ${renderNutritionSection(nutritionPlan)}
+        <div id="nutrition-panel"><p class="health-empty">Cargando nutrición…</p></div>
       </section>
     </div>`;
 
   bindHealthTabs();
   dialog.showModal();
+  void loadGymPanel();
+  void loadNutritionPanel(localDateKey());
+}
 
+async function loadGymPanel() {
   try {
     const response = await fetch("/api/gym", { headers: { Accept: "application/json" } });
     if (!response.ok) throw new Error(`GYM_${response.status}`);
-    const gymData = await response.json();
-    renderGymPanel(gymData);
+    renderGymPanel(await response.json());
   } catch (error) {
     const panel = document.querySelector("#gym-panel");
     if (panel) panel.innerHTML = '<p class="health-empty">No se ha podido cargar el plan de gimnasio.</p>';
@@ -667,6 +667,27 @@ async function openHealthDetail() {
   }
 }
 
+async function loadNutritionPanel(dateKey) {
+  const panel = document.querySelector("#nutrition-panel");
+  if (panel) panel.innerHTML = '<p class="health-empty">Cargando nutrición…</p>';
+  try {
+    const response = await fetch(`/api/nutrition?date=${encodeURIComponent(dateKey)}`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error(`NUTRITION_${response.status}`);
+    renderNutritionPanel(await response.json());
+  } catch (error) {
+    if (panel) {
+      panel.innerHTML = `
+        <div class="health-empty health-empty-card">
+          <strong>Nutrición todavía no está conectada</strong>
+          <p>La base privada ya está preparada. Falta activar la conexión del Sheet de Salud en el Worker.</p>
+        </div>`;
+    }
+    console.warn("Nutrition load failed", error);
+  }
+}
 
 let selectedHabitDate = null;
 let habitQuestData = null;
@@ -1082,37 +1103,234 @@ function renderMedicalSection(events) {
       : '<p class="health-empty">No hay próximas citas médicas detectadas en iCloud.</p>'}`;
 }
 
-function renderNutritionSection(plan) {
-  if (!plan.length) {
-    return `
+function renderNutritionPanel(data) {
+  const panel = document.querySelector("#nutrition-panel");
+  if (!panel) return;
+
+  const date = data.date || localDateKey();
+  const entries = Array.isArray(data.entries) ? data.entries : [];
+  const foods = Array.isArray(data.foods) ? data.foods : [];
+  const history = Array.isArray(data.history) ? data.history : [];
+  const summary = data.summary || {};
+  const consumed = summary.consumed || {};
+  const objective = data.objective || null;
+  const energy = data.energy || null;
+  const totalBurn = Number.isFinite(Number(summary.totalBurn)) ? Number(summary.totalBurn) : null;
+  const balance = Number.isFinite(Number(summary.balanceKcal)) ? Number(summary.balanceKcal) : null;
+  const remainingTarget = Number.isFinite(Number(summary.remainingToTargetKcal)) ? Number(summary.remainingToTargetKcal) : null;
+
+  panel.innerHTML = `
+    <div class="nutrition-date-nav">
+      <button type="button" data-nutrition-shift="-1" aria-label="Día anterior">‹</button>
+      <label>
+        <span>Fecha</span>
+        <input id="nutrition-date" type="date" value="${escapeHtml(date)}">
+      </label>
+      <button type="button" data-nutrition-shift="1" aria-label="Día siguiente">›</button>
+    </div>
+
+    <div class="nutrition-kpis">
+      <article>
+        <span>Consumidas</span>
+        <strong>${formatKcal(consumed.kcal)}</strong>
+        <small>P ${formatMacro(consumed.protein)} · C ${formatMacro(consumed.carbs)} · G ${formatMacro(consumed.fat)}</small>
+      </article>
+      <article>
+        <span>Gasto total</span>
+        <strong>${totalBurn === null ? "—" : formatKcal(totalBurn)}</strong>
+        <small>${energy?.source ? escapeHtml(String(energy.source)) : "Apple Health pendiente"}</small>
+      </article>
+      <article>
+        <span>Balance</span>
+        <strong class="${balance !== null && balance < 0 ? "negative-balance" : ""}">${balance === null ? "—" : signedKcal(balance)}</strong>
+        <small>Ingeridas − gastadas</small>
+      </article>
+      <article>
+        <span>Objetivo</span>
+        <strong>${objective?.kcal == null ? "Sin definir" : formatKcal(objective.kcal)}</strong>
+        <small>${remainingTarget === null ? "Pendiente de fijar" : remainingTarget >= 0 ? `${formatKcal(remainingTarget)} restantes` : `${formatKcal(Math.abs(remainingTarget))} por encima`}</small>
+      </article>
+    </div>
+
+    <div class="nutrition-status-grid">
+      <article>
+        <div>
+          <span class="nutrition-source-dot ${energy?.source ? "connected" : ""}"></span>
+          <strong>Apple Health</strong>
+        </div>
+        <p>${energy?.source
+          ? `Datos energéticos recibidos para este día.${energy.activeKcal != null ? ` Activas: ${formatKcal(energy.activeKcal)}.` : ""}${energy.restingKcal != null ? ` Reposo: ${formatKcal(energy.restingKcal)}.` : ""}`
+          : "Pendiente de conectar la importación automática desde el iPhone/Apple Watch."}</p>
+      </article>
+      <article>
+        <div><strong>Base de comidas</strong><span>${foods.length}</span></div>
+        <p>Cada comida que vayamos definiendo se guardará para reutilizar calorías y macros.</p>
+      </article>
+    </div>
+
+    <details class="nutrition-food-library">
+      <summary>Ver base de comidas (${foods.length})</summary>
+      <div>
+        ${foods.length
+          ? foods.map(food => `
+            <article>
+              <div><strong>${escapeHtml(food.name)}</strong><small>${food.serving == null ? "Ración" : escapeHtml(String(food.serving)) + " " + escapeHtml(food.unit || "")}</small></div>
+              <span>${food.kcal == null ? "—" : formatKcal(food.kcal)}</span>
+            </article>`).join("")
+          : '<p class="health-empty">Aún no hay comidas guardadas. Las iremos creando cuando me las vayas diciendo.</p>'}
+      </div>
+    </details>
+
+    <section class="nutrition-day-section">
       <div class="health-section-heading">
         <div>
-          <strong>Nutrición</strong>
-          <p>Espacio preparado para objetivos, pautas y seguimiento nutricional.</p>
+          <strong>Comidas del día</strong>
+          <p>Se mantienen separadas las previstas y las realmente consumidas.</p>
+        </div>
+        <span>${entries.length}</span>
+      </div>
+      ${renderNutritionEntries(entries)}
+    </section>
+
+    <section class="nutrition-quick-add">
+      <div class="health-section-heading">
+        <div>
+          <strong>Añadir rápido</strong>
+          <p>También podrás decírmelo por chat; este formulario es un respaldo directo desde la web.</p>
         </div>
       </div>
-      <div class="health-empty health-empty-card">
-        <strong>Plan nutricional pendiente de definir</strong>
-        <p>Cuando fijemos tus objetivos y pautas, quedarán aquí como fuente privada y podremos registrar su evolución.</p>
-      </div>`;
+      <form id="nutrition-entry-form">
+        <label><span>Momento</span>
+          <select name="moment">
+            <option>Desayuno</option><option>Comida</option><option>Cena</option><option>Snack</option><option>Otro</option>
+          </select>
+        </label>
+        <label class="nutrition-name-field"><span>Comida</span><input name="itemName" list="nutrition-food-options" required placeholder="Ej. arroz con pollo"><datalist id="nutrition-food-options">${foods.map(food => `<option value="${escapeHtml(food.name)}"></option>`).join("")}</datalist></label>
+        <label><span>kcal</span><input name="kcal" type="number" min="0" step="1" placeholder="0"></label>
+        <label><span>Estado</span>
+          <select name="status"><option value="consumido">Consumido</option><option value="planificado">Planificado</option></select>
+        </label>
+        <button type="submit">Guardar</button>
+        <p id="nutrition-entry-status" class="gym-save-status" role="status"></p>
+      </form>
+    </section>
+
+    <section class="nutrition-history-section">
+      <div class="health-section-heading">
+        <div><strong>Últimos 14 días</strong><p>Ingesta, gasto y balance energético.</p></div>
+      </div>
+      ${renderNutritionHistory(history)}
+    </section>
+  `;
+
+  bindNutritionInteractions(date);
+}
+
+function renderNutritionEntries(entries) {
+  if (!entries.length) return '<p class="health-empty">Todavía no hay comidas registradas para este día.</p>';
+
+  const order = ["Desayuno", "Comida", "Cena", "Snack", "Otro"];
+  const groups = new Map();
+  for (const entry of entries) {
+    const key = entry.moment || "Otro";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
   }
 
+  return `<div class="nutrition-meal-groups">${[...groups.entries()]
+    .sort((a,b) => (order.indexOf(a[0]) < 0 ? 99 : order.indexOf(a[0])) - (order.indexOf(b[0]) < 0 ? 99 : order.indexOf(b[0])))
+    .map(([moment, rows]) => `
+      <article class="nutrition-meal-group">
+        <header><strong>${escapeHtml(moment)}</strong><span>${formatKcal(rows.reduce((sum,row)=>sum+Number(row.kcal||0),0))}</span></header>
+        ${rows.map(row => `
+          <div class="nutrition-meal-row">
+            <div>
+              <strong>${escapeHtml(row.itemName)}</strong>
+              <small>${row.status === "planificado" ? "Planificado" : "Consumido"}${row.note ? " · " + escapeHtml(row.note) : ""}</small>
+            </div>
+            <span>${formatKcal(row.kcal)}</span>
+          </div>`).join("")}
+      </article>`).join("")}</div>`;
+}
+
+function renderNutritionHistory(history) {
+  if (!history.length) return '<p class="health-empty">Aún no hay histórico suficiente.</p>';
   return `
-    <div class="health-section-heading">
-      <div>
-        <strong>Plan nutricional</strong>
-        <p>Objetivos y pautas activas.</p>
-      </div>
-    </div>
-    <div class="nutrition-plan-list">
-      ${plan.map((item) => `
-        <article>
-          <span>${escapeHtml(item.section || "General")}</span>
-          <strong>${escapeHtml(item.title)}</strong>
-          ${item.target ? `<p>${escapeHtml(String(item.target))}${item.unit ? " " + escapeHtml(item.unit) : ""}</p>` : ""}
-          ${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}
-        </article>`).join("")}
+    <div class="nutrition-history-list">
+      ${history.map(item => {
+        const balance = item.balanceKcal;
+        return `
+          <article>
+            <time>${escapeHtml(formatNutritionDate(item.date))}</time>
+            <span><small>Ingeridas</small><strong>${formatKcal(item.consumedKcal)}</strong></span>
+            <span><small>Gastadas</small><strong>${item.burnedKcal == null ? "—" : formatKcal(item.burnedKcal)}</strong></span>
+            <span><small>Balance</small><strong class="${balance != null && balance < 0 ? "negative-balance" : ""}">${balance == null ? "—" : signedKcal(balance)}</strong></span>
+          </article>`;
+      }).join("")}
     </div>`;
+}
+
+function bindNutritionInteractions(currentDate) {
+  document.querySelector("#nutrition-date")?.addEventListener("change", (event) => {
+    if (event.target.value) void loadNutritionPanel(event.target.value);
+  });
+
+  document.querySelectorAll("[data-nutrition-shift]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const next = shiftDateKey(currentDate, Number(button.dataset.nutritionShift || 0));
+      void loadNutritionPanel(next);
+    });
+  });
+
+  document.querySelector("#nutrition-entry-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const status = document.querySelector("#nutrition-entry-status");
+    if (status) status.textContent = "Guardando…";
+    try {
+      const response = await fetch("/api/nutrition/entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          date: currentDate,
+          moment: form.get("moment"),
+          itemName: form.get("itemName"),
+          kcal: form.get("kcal"),
+          status: form.get("status"),
+          source: "web"
+        })
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.code || `NUTRITION_SAVE_${response.status}`);
+      if (status) status.textContent = "Guardado ✓";
+      await loadNutritionPanel(currentDate);
+    } catch (error) {
+      if (status) status.textContent = "No se ha podido guardar.";
+      console.warn("Nutrition save failed", error);
+    }
+  });
+}
+
+function formatKcal(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? `${Math.round(n).toLocaleString("es-ES")} kcal` : "—";
+}
+
+function signedKcal(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return `${n > 0 ? "+" : ""}${Math.round(n).toLocaleString("es-ES")} kcal`;
+}
+
+function formatMacro(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? `${Math.round(n)} g` : "0 g";
+}
+
+function formatNutritionDate(value) {
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" }).format(date).replace(".", "");
 }
 
 function renderHealthEvent(event) {

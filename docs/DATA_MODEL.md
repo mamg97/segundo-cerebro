@@ -157,7 +157,22 @@ El endpoint privado `GET /api/gym` combina plan + histórico + series de progres
 
 ## Nutrición
 
-La pestaña privada `Nutricion` está preparada para objetivos y pautas, pero permanece vacía hasta que el usuario defina información concreta. No se generan objetivos nutricionales por inferencia.
+La nutrición operativa vive en una fuente privada separada `SEGUNDO CEREBRO - SALUD`, no en Git ni en el Sheet financiero.
+
+### Comidas
+Base reutilizable de alimentos/platos: `id`, `nombre`, `racion`, `unidad`, `kcal_racion`, `proteinas_g`, `carbohidratos_g`, `grasas_g`, `fuente`, `nota`, `updated_at`.
+
+### Registro
+Plan diario/semanal y consumo real: `fecha`, `momento`, `item_id`, `item_nombre`, `cantidad`, `unidad`, kcal/macros, `estado` (`planificado` o `consumido`), fuente, nota y timestamp.
+
+Si una fila referencia `item_id` y deja kcal/macros vacíos, el Worker los deriva de la base Comidas. Cuando hay cantidad y ración conocidas, escala proporcionalmente.
+
+### Objetivos
+Objetivos con fecha efectiva: kcal, proteína, carbohidratos y grasas. Permanecen vacíos hasta que el usuario defina uno; no se infieren objetivos dietéticos.
+
+### Energía diaria
+`EnergiaDiaria` guarda `active_kcal`, `resting_kcal`, `total_kcal`, fuente y timestamp. El balance se calcula como `kcal consumidas - gasto total`. La importación automática de Apple Health requiere un puente autorizado desde iPhone; la ausencia de datos se representa como `null`, no como 0.
+
 
 
 ### Estados operativos del gestor financiero

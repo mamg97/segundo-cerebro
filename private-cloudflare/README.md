@@ -278,3 +278,21 @@ La credencial Google del Worker necesita permiso de escritura sobre esa hoja. Si
 ## Thinking Orbs
 
 El frontend incluye una copia vendorizada de `@schoolees/thinking-orbs` en `app/vendor/thinking-orbs/`. No requiere servicios externos ni dependencias runtime. Se conserva la licencia MIT y el archivo de atribución del proyecto original.
+
+
+## Salud / Nutrición
+
+Nutrición usa un Google Sheet privado independiente. Configura su identificador como secreto:
+
+```sh
+cd private-cloudflare
+node scripts/configure-health-sync.mjs <HEALTH_SHEET_ID>
+```
+
+Endpoints:
+- `GET /api/nutrition?date=YYYY-MM-DD`: resumen diario, comidas, objetivo, energía e histórico.
+- `POST /api/nutrition/entry`: añade una comida planificada o consumida.
+- `POST /api/nutrition/food`: añade una ficha a la base reutilizable.
+- `POST /api/nutrition/energy`: guarda calorías activas/reposo/total. Este endpoint es el destino previsto para el futuro puente de Apple Health.
+
+La fuente contiene las pestañas `Comidas`, `Registro`, `Objetivos` y `EnergiaDiaria`. El identificador del Sheet no se versiona en Git.
