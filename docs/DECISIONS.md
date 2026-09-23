@@ -142,9 +142,19 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 
 ## D-020 — Deploy automático de la app privada
 
-- **Estado:** aceptada; workflow operativo, secretos de Cloudflare pendientes de configuración
+- **Estado:** aceptada y operativa; despliegue real validado end-to-end
 - **Fecha:** 2026-09-23
 - **Decisión:** los cambios relevantes en `main` deben validar, construir y desplegar automáticamente el Worker privado mediante GitHub Actions.
 - **Secretos requeridos:** `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`.
 - **Seguridad:** los secretos solo viven en GitHub Actions/Cloudflare; nunca se versionan ni se comparten por chat.
 - **Motivo:** eliminar el ciclo manual `git pull` + `npm run deploy` y convertir GitHub en la interfaz canónica de entrega.
+
+
+## D-021 — Sistema visual oscuro azul noche + naranja
+
+- **Estado:** aceptada e implementada
+- **Fecha:** 2026-09-24
+- **Decisión:** el modo oscuro adopta una paleta restringida azul noche + azul eléctrico + naranja, con una sola familia tipográfica sans para toda la jerarquía.
+- **Paleta:** fondo `#07101D`, superficie `#0B1728`, superficie secundaria `#10213A`, azul `#2F6BFF / #5FA8FF`, naranja `#FF7A1A / #FFB347`, texto `#F8FAFC`, muted `#A8B3C7`, borde `#1E3350`.
+- **Regla de uso:** azul = navegación/acción/estructura; naranja = énfasis/progreso/estado destacado; otros colores quedan limitados a semántica funcional excepcional.
+- **Motivo:** eliminar la apariencia multicolor y la mezcla tipográfica del tema oscuro anterior y reforzar una identidad visual propia.

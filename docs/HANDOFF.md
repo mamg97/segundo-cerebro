@@ -139,17 +139,25 @@ El Worker de ingesta:
 - La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
 - El puente Apple Health está validado end-to-end en producción: Atajo iPhone → Worker de ingesta → Worker principal → D1 → Salud/Nutrición. La primera muestra real se recibió correctamente el 2026-09-23. La persistencia usa una única fila por fecha: nuevas sincronizaciones del mismo día sustituyen la lectura anterior mediante UPSERT.
 
+## Sistema visual
+
+- El modo oscuro usa un sistema visual único azul noche + azul eléctrico + naranja.
+- Tokens principales: fondo `#07101D`, superficie `#0B1728`, superficie secundaria `#10213A`, azul `#2F6BFF / #5FA8FF`, naranja `#FF7A1A / #FFB347`, texto `#F8FAFC`, muted `#A8B3C7`, borde `#1E3350`.
+- En oscuro se unifica la tipografía en Avenir Next / Segoe UI / system sans; se elimina la mezcla de serif en títulos.
+- El naranja queda reservado para énfasis, progreso, estados destacados y microinteracciones; el azul para navegación, acciones y estructura.
+- Las áreas y módulos se restringen visualmente a la familia azul/naranja para evitar el mosaico multicolor anterior.
+
 ## Despliegue automático
 
 - El Worker privado tiene workflow de producción en `.github/workflows/deploy-private-cloudflare.yml`.
 - Un cambio relevante en `main` valida JavaScript, construye el bundle privado, comprueba que no entren archivos privados y ejecuta `wrangler deploy`.
-- Requiere dos GitHub Actions repository secrets: `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`.
-- Si todavía no existen, el workflow valida y construye pero omite el deploy con un aviso explícito.
-- Una vez configurados, el flujo normal es ChatGPT/GitHub → commit a `main` → GitHub Actions → Cloudflare, sin `git pull` ni `npm run deploy` manuales.
+- Los secretos de despliegue de Cloudflare ya están configurados en GitHub Actions.
+- El 2026-09-23 se validó una ejecución real completa hasta producción.
+- El flujo normal es ChatGPT/GitHub → commit a `main` → GitHub Actions → Cloudflare, sin `git pull` ni `npm run deploy` manuales.
 
-### Configuración única pendiente de CI/CD
+### Configuración CI/CD completada
 
-Para activar el deploy automático completo hay que crear en GitHub Actions dos *repository secrets*:
+El deploy automático completo está activado con los *repository secrets* documentados:
 
 - `CLOUDFLARE_API_TOKEN`: token de API de Cloudflare con permisos para editar/deployar Workers.
 - `CLOUDFLARE_ACCOUNT_ID`: identificador de cuenta de Cloudflare.
@@ -161,7 +169,7 @@ Rutas oficiales:
 Reglas:
 - nunca versionar ninguno de estos valores;
 - nunca pegarlos en una conversación;
-- una vez configurados, los cambios relevantes en `main` deben desplegarse sin intervención local.
+- los cambios relevantes en `main` se despliegan sin intervención local.
 
 ## Próxima acción exacta
 
