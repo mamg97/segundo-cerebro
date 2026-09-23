@@ -2,7 +2,7 @@
 
 ## Última actualización
 
-- **Fecha:** 2026-09-22
+- **Fecha:** 2026-09-23
 - **Última herramienta:** ChatGPT normal
 - **Rama:** `main`
 - **Remoto:** `https://github.com/mamg97/segundo-cerebro.git`
@@ -281,3 +281,13 @@ Configurar una única vez los secretos iCloud desde el Mac con `node scripts/con
 - El Worker acepta totales agregados de deuda desde la hoja intermedia para poder mostrar un resumen aunque alguna deuda individual tenga campos incompletos.
 - Se añadió selector claro/oscuro en la cabecera. La preferencia queda guardada en el navegador y el tema oscuro cubre navegación, paneles, calendario, diálogos y tarjetas financieras.
 - Los cambios de código están en `main`; el Worker privado necesita un nuevo despliegue de Cloudflare para reflejarlos en producción.
+
+
+## Actualización 23/09/2026 — gestor financiero
+
+- El módulo Finance queda formalizado como **gestor de finanzas personales**.
+- La conversación mensual gestiona flujo de caja: ingresos, gastos, cuentas, cuotas, compromisos, liquidez, viajes y cierre de ciclo.
+- Inversiones y ahorro pasan a una conversación separada para patrimonio financiero, brokers y asignación; ambos carriles comparten el mismo estado global.
+- Añadido `agents/FINANCE.md` como contrato operativo del módulo.
+- La lógica permanente exige distinguir saldo bancario, dinero comprometido y dinero libre; las transferencias internas no son ingresos/gastos nuevos y las notas de la fuente financiera forman parte de la conciliación.
+- No se han versionado importes ni movimientos reales. Git sigue conteniendo únicamente lógica, documentación y mocks.
