@@ -273,3 +273,8 @@ Además de marcar/desmarcar el día, el Worker permite administrar HabitQuest de
 - `delete` es destructivo y reescribe `Habits`, `History` y `SyncState` excluyendo el hábito. `archive` solo cambia su estado y conserva histórico.
 
 La credencial Google del Worker necesita permiso de escritura sobre esa hoja. Si el token actual solo tiene alcance de lectura, la vista cargará correctamente pero las mutaciones devolverán error hasta renovar la autorización con scope de escritura.
+
+
+## Thinking Orbs
+
+El frontend incluye una copia vendorizada de `@schoolees/thinking-orbs` en `app/vendor/thinking-orbs/`. No requiere servicios externos ni dependencias runtime. Se conserva la licencia MIT y el archivo de atribución del proyecto original.
