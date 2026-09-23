@@ -176,3 +176,11 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Primer nivel operativo:** dos tarjetas preceden al resto de resúmenes: Hábitos muestra completados/total y abre HabitQuest; Nutrición muestra kcal consumidas, gasto total y objetivo diario y abre directamente Salud → Nutrición.
 - **Datos:** Hábitos deriva del resumen de HabitQuest; Nutrición consulta el endpoint privado del día actual. Si el objetivo no está definido se muestra `Pendiente`, sin inferir una cifra.
 - **Motivo:** priorizar información diaria accionable y eliminar el mosaico de tarjetas con fondos de colores distintos.
+
+
+## D-024 — Epígrafes naranjas y tipografía única en portada
+
+- **Estado:** aceptada e implementada
+- **Fecha:** 2026-09-24
+- **Decisión:** los epígrafes/categorías de las tarjetas principales usan naranja en modo oscuro; títulos e importes comparten la misma familia sans.
+- **Motivo:** reforzar la jerarquía visual azul noche + naranja y eliminar la mezcla de serif/sans entre Dinero, Deudas, Patrimonio, Hábitos y Nutrición.
