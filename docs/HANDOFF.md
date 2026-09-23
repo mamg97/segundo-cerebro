@@ -20,6 +20,13 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Gimnasio pasa de ser una vista derivada del calendario a un módulo operativo dentro de Salud.
+- El plan privado se almacena en la pestaña `GimnasioPlan` del bridge privado, no en Git. Se ha migrado la rutina actual de 3 días (Empuje, Tirón y Pierna) con series, repeticiones, referencias de carga y notas técnicas.
+- La web permite seleccionar el día, registrar fecha, series, repeticiones, peso y notas por ejercicio, y guardar cada entrenamiento.
+- Los entrenamientos se persisten en D1 (`gym_sessions` y `gym_entries`) y se exponen solo a través del Worker privado protegido por Cloudflare Access.
+- Salud incluye tres pestañas: Médicos (iCloud), Gimnasio (plan + registro + progreso) y Nutrición. Nutrición queda preparada pero sin inventar un plan que todavía no se ha definido.
+- El histórico de gimnasio genera progreso por ejercicio a partir de las cargas registradas y muestra sesiones recientes expandibles.
+
 - Aplicado un hard-stop de overflow horizontal al `workbench`: el track del grid pasa a `minmax(0,1fr)`, los paneles hijos tienen `min-width:0/max-width:100%` y el contenido de `focus-meta` ya no puede ensanchar la sección.
 - `Eventos importantes` y `Próximos movimientos` quedan limitados al mismo ancho lógico del contenido principal.
 
