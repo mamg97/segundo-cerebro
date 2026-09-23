@@ -136,6 +136,8 @@ Confirmed on iPhone on 2026-09-24:
 - dedicated muscle mass / `muscleMass`: no matching Apple Health data type was found in the iPhone Health search; Zepp's “Músculo” remains a Zepp-specific metric and must not be mapped to `leanBodyMass`.
 - body water percentage: no matching usable Apple Health body-composition data type was found in the iPhone Health search; Zepp's body-water percentage remains Zepp-specific.
 - steps / Pasos: Apple Watch, iPhone and Zepp Life all appear as data sources. Do not sum raw cross-source samples blindly; use Apple Health's consolidated daily value or otherwise avoid double-counting overlapping sources.
+- workouts / Entrenos: Apple Watch and Wikiloc appear as data sources. Preserve the original workout source when importing individual workouts.
+- exercise minutes / Minutos de ejercicio: Apple Watch and iPhone appear as data sources. Prefer Apple Health's consolidated daily value rather than summing overlapping device samples.
 
 Zepp Life itself also displays proprietary/derived body-composition metrics such as muscle mass, body water, basal metabolism estimate, visceral fat, protein percentage, body score and ideal weight. These must not be silently mapped onto standard HealthKit metrics unless Apple Health exposes an equivalent type and contains real samples.
 
