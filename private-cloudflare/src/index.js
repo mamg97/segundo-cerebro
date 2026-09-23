@@ -992,6 +992,49 @@ function sumNutrition(entries, status) {
   }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
 }
 
+async function ensureHealthEnergyTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS health_energy_daily (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      energy_date TEXT NOT NULL,
+      active_kcal REAL,
+      resting_kcal REAL,
+      total_kcal REAL,
+      source TEXT NOT NULL DEFAULT 'manual',
+      note TEXT,
+      recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_health_energy_date ON health_energy_daily(energy_date DESC, recorded_at DESC)"
+  ).run();
+}
+
+async function fetchHealthEnergyRows(env, startDate, endDate) {
+  await ensureHealthEnergyTable(env);
+  const result = await env.DB.prepare(`
+    SELECT energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at
+    FROM health_energy_daily
+    WHERE energy_date BETWEEN ? AND ?
+    ORDER BY energy_date ASC, recorded_at DESC, id DESC
+  `).bind(startDate, endDate).all();
+
+  const latest = new Map();
+  for (const row of result.results || []) {
+    if (latest.has(row.energy_date)) continue;
+    latest.set(row.energy_date, {
+      date: row.energy_date,
+      activeKcal: toNumber(row.active_kcal),
+      restingKcal: toNumber(row.resting_kcal),
+      totalKcal: toNumber(row.total_kcal),
+      source: row.source || "manual",
+      note: row.note || null,
+      importedAt: row.recorded_at || null
+    });
+  }
+  return latest;
+}
+
 async function fetchHealthNutritionSummary(env, options = {}) {
   if (!hasHealthGoogleConfig(env)) {
     return { status: "not-configured", value: null };
@@ -1086,13 +1129,20 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     importedAt: item.imported_at || null
   })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date));
 
+  const historyStart = healthAddDays(date, -13);
+  const d1EnergyByDate = await fetchHealthEnergyRows(env, historyStart, date);
+  const sheetEnergyByDate = new Map();
+  for (const row of [...energyRows].sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")))) {
+    if (!sheetEnergyByDate.has(row.date)) sheetEnergyByDate.set(row.date, row);
+  }
+  const energyForDate = (dateKey) => d1EnergyByDate.get(dateKey) || sheetEnergyByDate.get(dateKey) || null;
+
   const dayEntries = entries.filter((item) => item.date === date);
   const consumed = sumNutrition(dayEntries, "consumido");
   const planned = sumNutrition(dayEntries, "planificado");
   const objective = objectives.find((item) => item.effectiveDate <= date) || null;
 
-  const energyForDay = energyRows.filter((item) => item.date === date)
-    .sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")))[0] || null;
+  const energyForDay = energyForDate(date);
   const totalBurn = energyForDay
     ? (energyForDay.totalKcal ?? (
       energyForDay.activeKcal !== null && energyForDay.restingKcal !== null
@@ -1106,8 +1156,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     const historyDate = healthAddDays(date, -offset);
     const dayRows = entries.filter((item) => item.date === historyDate);
     const dayConsumed = sumNutrition(dayRows, "consumido");
-    const dayEnergy = energyRows.filter((item) => item.date === historyDate)
-      .sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")))[0] || null;
+    const dayEnergy = energyForDate(historyDate);
     const burn = dayEnergy
       ? (dayEnergy.totalKcal ?? (
         dayEnergy.activeKcal !== null && dayEnergy.restingKcal !== null
@@ -1219,25 +1268,45 @@ async function saveNutritionFood(request, env) {
 }
 
 async function saveNutritionEnergy(request, env) {
-  if (!hasHealthGoogleConfig(env)) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
   let payload;
   try { payload = await request.json(); } catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
   const date = String(payload?.date || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ ok: false, code: "INVALID_ENERGY_DATE" }, 400);
+
   const active = toNumber(payload?.activeKcal);
   const resting = toNumber(payload?.restingKcal);
-  const total = toNumber(payload?.totalKcal) ?? (active !== null && resting !== null ? active + resting : null);
-  await appendHealthSheetRow(env, "EnergiaDiaria!A:G", [
+  const suppliedTotal = toNumber(payload?.totalKcal);
+  const total = suppliedTotal ?? (active !== null && resting !== null ? active + resting : null);
+
+  if (active === null && resting === null && total === null) {
+    return json({ ok: false, code: "EMPTY_ENERGY_SAMPLE" }, 400);
+  }
+
+  const values = [active, resting, total].filter((value) => value !== null);
+  if (values.some((value) => value < 0 || value > 20000)) {
+    return json({ ok: false, code: "INVALID_ENERGY_VALUE" }, 400);
+  }
+
+  await ensureHealthEnergyTable(env);
+  await env.DB.prepare(`
+    INSERT INTO health_energy_daily (
+      energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).bind(
     date,
     active,
     resting,
     total,
-    String(payload?.source || "manual").slice(0, 40),
-    String(payload?.note || "").slice(0, 500),
+    String(payload?.source || "manual").trim().slice(0, 40) || "manual",
+    String(payload?.note || "").trim().slice(0, 500) || null,
     new Date().toISOString()
-  ]);
-  return json({ ok: true, totalKcal: total }, 201);
+  ).run();
+
+  healthCache = { value: null, expiresAt: 0, date: null };
+  return json({ ok: true, date, activeKcal: active, restingKcal: resting, totalKcal: total }, 201);
 }
+
 
 async function ensureGymTables(env) {
   await env.DB.prepare(`
