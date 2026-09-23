@@ -147,6 +147,22 @@ El Worker de ingesta:
 - Si todavía no existen, el workflow valida y construye pero omite el deploy con un aviso explícito.
 - Una vez configurados, el flujo normal es ChatGPT/GitHub → commit a `main` → GitHub Actions → Cloudflare, sin `git pull` ni `npm run deploy` manuales.
 
+### Configuración única pendiente de CI/CD
+
+Para activar el deploy automático completo hay que crear en GitHub Actions dos *repository secrets*:
+
+- `CLOUDFLARE_API_TOKEN`: token de API de Cloudflare con permisos para editar/deployar Workers.
+- `CLOUDFLARE_ACCOUNT_ID`: identificador de cuenta de Cloudflare.
+
+Rutas oficiales:
+- API Tokens: `https://dash.cloudflare.com/profile/api-tokens`
+- GitHub: repositorio → Settings → Secrets and variables → Actions.
+
+Reglas:
+- nunca versionar ninguno de estos valores;
+- nunca pegarlos en una conversación;
+- una vez configurados, los cambios relevantes en `main` deben desplegarse sin intervención local.
+
 ## Próxima acción exacta
 
 Validar la absorción de HabitQuest:

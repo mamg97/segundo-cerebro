@@ -138,3 +138,13 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Límite:** no se duplican login/sync manual de Google, onboarding, tema independiente, perfil ni XLSX porque son infraestructura de la app separada, no del dominio Hábitos.
 - **Streak freezes:** no se exponen todavía porque la app original no tiene una regla de consumo/concesión suficientemente formalizada en la lógica compartida.
 - **Motivo:** converger hacia un único Segundo Cerebro sin crear otra fuente de verdad ni mantener dos experiencias funcionales divergentes.
+
+
+## D-020 — Deploy automático de la app privada
+
+- **Estado:** aceptada; workflow operativo, secretos de Cloudflare pendientes de configuración
+- **Fecha:** 2026-09-23
+- **Decisión:** los cambios relevantes en `main` deben validar, construir y desplegar automáticamente el Worker privado mediante GitHub Actions.
+- **Secretos requeridos:** `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`.
+- **Seguridad:** los secretos solo viven en GitHub Actions/Cloudflare; nunca se versionan ni se comparten por chat.
+- **Motivo:** eliminar el ciclo manual `git pull` + `npm run deploy` y convertir GitHub en la interfaz canónica de entrega.

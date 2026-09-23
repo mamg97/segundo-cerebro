@@ -340,6 +340,26 @@ Payload esperado por `POST /v1/energy`:
 
 ## CI/CD desde GitHub
 
+### Activación inicial del deploy automático
+
+Antes del primer deploy automático desde GitHub, configura una sola vez:
+
+1. Cloudflare API Token:
+   - abre `https://dash.cloudflare.com/profile/api-tokens`;
+   - crea un token con permisos para desplegar Workers;
+   - guarda el valor únicamente como secret de GitHub.
+2. Cloudflare Account ID:
+   - usa el identificador de la cuenta asociada al Worker;
+   - guárdalo como secret de GitHub.
+3. En GitHub:
+   - repositorio `mamg97/segundo-cerebro`;
+   - `Settings → Secrets and variables → Actions`;
+   - crea `CLOUDFLARE_API_TOKEN`;
+   - crea `CLOUDFLARE_ACCOUNT_ID`.
+
+Nunca escribir estos valores en Git, documentación, issues, logs ni chats.
+
+
 La app privada puede desplegarse automáticamente con GitHub Actions mediante:
 
 - `.github/workflows/deploy-private-cloudflare.yml`
