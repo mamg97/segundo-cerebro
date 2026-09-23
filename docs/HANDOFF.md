@@ -20,6 +20,12 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- Añadido puente seguro para Apple Health/Apple Watch: Worker independiente `segundo-cerebro-health-ingest`, expuesto solo para ingesta y protegido con un token Bearer secreto.
+- El puente usa un Service Binding interno hacia `segundo-cerebro`; no necesita exponer ni duplicar las credenciales Google del Worker principal.
+- Los datos automáticos de energía se guardan en D1 `health_energy_daily`; `EnergiaDiaria` del Sheet queda como fallback/manual.
+- Salud → Nutrición prioriza la muestra D1 más reciente por fecha y calcula gasto total y balance diario sin inferir calorías por asistencia al gimnasio.
+- Incluido `scripts/setup-health-ingest.mjs`: despliega el Worker de ingesta, genera un token aleatorio y lo guarda como secreto Cloudflare en una sola ejecución local.
+
 - Creada una fuente privada separada `SEGUNDO CEREBRO - SALUD` para nutrición y energía diaria. No se mezcla con Finanzas.
 - La fuente contiene cuatro pestañas: `Comidas` (base reutilizable), `Registro` (planificado/consumido), `Objetivos` (kcal/macros por fecha efectiva) y `EnergiaDiaria` (calorías activas, reposo y total).
 - El Worker expone `GET /api/nutrition` y endpoints privados de escritura para comida, registro diario y energía.
