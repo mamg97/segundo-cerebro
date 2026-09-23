@@ -174,3 +174,10 @@ El módulo Finance distingue semánticamente el estado de un movimiento o partid
 | `DERIVADO` | Valor calculado a partir de fuentes reconciliadas |
 
 El estado financiero mensual y el patrimonio invertido son dimensiones distintas. El primero describe flujo de caja y margen disponible; el segundo describe ahorro acumulado y valor de activos. La interfaz no debe sumar ambos como si fueran liquidez disponible.
+
+
+### Propietario de partida
+
+`monthlyBudget.categories[]` admite `owner` con valores `Común`, `Miguel` o `Andrea`. La UI agrupa por ese campo. Las partidas comunes y personales comparten el mismo modelo: `budgeted`, `spent`, `committed`, `remaining`, `sourceStatus`, `updatedAt` y `note`.
+
+`monthlyBudget` expone además `miguelNet`, `andreaNet` y `jointNet`. Estos netos se presentan como métricas separadas y no deben derivarse sumando/restando otra vez las partidas personales visibles.
