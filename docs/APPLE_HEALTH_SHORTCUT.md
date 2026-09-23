@@ -104,3 +104,77 @@ La integración se considera operativa porque se verificó:
 - persistencia en D1 con una única fila por fecha y actualización idempotente;
 - lectura posterior desde Salud → Nutrición;
 - cálculo de gasto total y balance energético.
+
+
+## Bridge v2 — actividad + composición corporal
+
+Estado: backend preparado; configuración del iPhone pendiente de auditoría de fuentes Zepp/Zepp Life.
+
+El puente v2 amplía el mismo Worker y el mismo secreto. No se crea una segunda integración.
+
+Nuevo endpoint recomendado para el Atajo:
+
+```text
+POST /v1/sync
+```
+
+El endpoint antiguo `/v1/energy` sigue operativo para compatibilidad.
+
+### Estructura prevista
+
+```json
+{
+  "activity": {
+    "activeKcal": 0,
+    "restingKcal": 0,
+    "steps": 0,
+    "exerciseMinutes": 0,
+    "sampledAt": "ISO-8601",
+    "sources": [],
+    "workouts": []
+  },
+  "bodySamples": [
+    {
+      "type": "bodyMass",
+      "value": 0,
+      "unit": "kg",
+      "measuredAt": "ISO-8601",
+      "source": "source name from Apple Health"
+    }
+  ]
+}
+```
+
+Tipos corporales admitidos por el backend:
+- `bodyMass`
+- `bodyFatPercentage`
+- `bodyMassIndex`
+- `leanBodyMass`
+
+No incluir un tipo en el Atajo hasta confirmar que existen muestras reales en Apple Health.
+
+### Auditoría previa obligatoria
+
+Para cada tipo de dato corporal:
+1. abrir Salud;
+2. abrir el tipo concreto;
+3. entrar en `Fuentes de datos y acceso`;
+4. confirmar si Zepp, Zepp Life u otra fuente aparece como contribuyente;
+5. revisar alguna muestra real y su fecha.
+
+Apple indica que en `Fuentes de datos y acceso` solo aparecen fuentes que contribuyen a ese tipo de dato.
+
+### Idempotencia
+
+- actividad: una fotografía diaria, UPSERT por fecha;
+- cuerpo: una muestra única por tipo + timestamp original + fuente.
+
+Ejecutar varias veces el Atajo no duplica registros.
+
+### Interpretación
+
+- peso: conservar todas las muestras; usar media móvil de 7 días y cambio frente a los 7 días anteriores;
+- grasa/IMC/masa magra de básculas de consumo: usar como tendencia;
+- gasto del Apple Watch: informativo;
+- nunca aumentar/reducir ingesta 1:1 según calorías del reloj;
+- decisiones de GESTOR GYM Y NUTRI: usar tendencias de 7–14 días.
