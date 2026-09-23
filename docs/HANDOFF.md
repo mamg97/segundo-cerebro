@@ -20,9 +20,9 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
-- Sustituido el símbolo circular provisional de la marca por el logo cerebral seleccionado por el usuario.
+- Sustituido el símbolo circular provisional de la marca por el logo cerebral seleccionado por el usuario. Tras detectar un artefacto visual del wrapper SVG, se reemplazó por el PNG original subido desde su Mac.
 - El mismo activo se usa en la esquina superior izquierda y como favicon/shortcut icon de la pestaña.
-- El archivo vive en `app/brain-logo.svg` como wrapper SVG del PNG seleccionado; no se regenera ni se sustituye por otra variante.
+- El archivo definitivo vive en `app/brain-logo.png` y es el PNG original descargado por el usuario; no se envuelve en SVG ni se regenera.
 
 - El antiguo gráfico concéntrico del cuadro de consulta se sustituye por un **orb del Segundo Cerebro** animado y accesible. El color refleja estado general y al pulsarlo muestra un resumen rápido de pulso, hábitos, open loops, decisiones y ejecución financiera.
 - La sección `Hábitos` incorpora gestión nativa de HabitQuest: crear, editar, archivar/restaurar, eliminar y reordenar hábitos sin abandonar Segundo Cerebro.
