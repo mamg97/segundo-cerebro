@@ -1168,6 +1168,19 @@ function renderNutritionPanel(data) {
       </article>
     </div>
 
+    <details class="nutrition-food-library">
+      <summary>Ver base de comidas (${foods.length})</summary>
+      <div>
+        ${foods.length
+          ? foods.map(food => `
+            <article>
+              <div><strong>${escapeHtml(food.name)}</strong><small>${food.serving == null ? "Ración" : escapeHtml(String(food.serving)) + " " + escapeHtml(food.unit || "")}</small></div>
+              <span>${food.kcal == null ? "—" : formatKcal(food.kcal)}</span>
+            </article>`).join("")
+          : '<p class="health-empty">Aún no hay comidas guardadas. Las iremos creando cuando me las vayas diciendo.</p>'}
+      </div>
+    </details>
+
     <section class="nutrition-day-section">
       <div class="health-section-heading">
         <div>
@@ -1192,7 +1205,7 @@ function renderNutritionPanel(data) {
             <option>Desayuno</option><option>Comida</option><option>Cena</option><option>Snack</option><option>Otro</option>
           </select>
         </label>
-        <label class="nutrition-name-field"><span>Comida</span><input name="itemName" required placeholder="Ej. arroz con pollo"></label>
+        <label class="nutrition-name-field"><span>Comida</span><input name="itemName" list="nutrition-food-options" required placeholder="Ej. arroz con pollo"><datalist id="nutrition-food-options">${foods.map(food => `<option value="${escapeHtml(food.name)}"></option>`).join("")}</datalist></label>
         <label><span>kcal</span><input name="kcal" type="number" min="0" step="1" placeholder="0"></label>
         <label><span>Estado</span>
           <select name="status"><option value="consumido">Consumido</option><option value="planificado">Planificado</option></select>
