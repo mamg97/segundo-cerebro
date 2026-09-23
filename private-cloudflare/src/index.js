@@ -127,7 +127,7 @@ async function fetchFinanceSummary(env) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:G200"];
+  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:G200", "GimnasioPlan!A1:N500", "Nutricion!A1:G500"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -150,6 +150,8 @@ async function fetchFinanceSummary(env) {
   const debtRows = valueRanges[3]?.values || [];
   const wealthRows = valueRanges[4]?.values || [];
   const importantEventRows = valueRanges[5]?.values || [];
+  const gymPlanRows = valueRanges[6]?.values || [];
+  const nutritionRows = valueRanges[7]?.values || [];
 
   const summary = parseKeyValueRows(summaryRows);
   const categories = parseTableRows(categoryRows).map((item) => ({
@@ -265,6 +267,68 @@ async function fetchFinanceSummary(env) {
     }))
     .filter((item) => item.enabled && item.matchTerms.length);
 
+  const gymRows = parseTableRows(gymPlanRows)
+    .map((item) => ({
+      dayId: item.day_id || null,
+      dayOrder: toNumber(item.day_order),
+      dayTitle: item.day_title || null,
+      focus: item.focus || null,
+      restSeconds: toNumber(item.rest_seconds),
+      exerciseOrder: toNumber(item.exercise_order),
+      exerciseId: item.exercise_id || null,
+      exerciseName: item.exercise_name || null,
+      setsTarget: toNumber(item.sets_target),
+      repsTarget: item.reps_target == null ? null : String(item.reps_target),
+      loadValue: toNumber(item.load_value),
+      loadUnit: item.load_unit || null,
+      loadNote: item.load_note || null,
+      coachingNote: item.coaching_note || null
+    }))
+    .filter((item) => item.dayId && item.exerciseId && item.exerciseName);
+
+  const gymDayMap = new Map();
+  for (const row of gymRows) {
+    if (!gymDayMap.has(row.dayId)) {
+      gymDayMap.set(row.dayId, {
+        id: row.dayId,
+        order: row.dayOrder,
+        title: row.dayTitle || row.dayId,
+        focus: row.focus,
+        restSeconds: row.restSeconds,
+        exercises: []
+      });
+    }
+    gymDayMap.get(row.dayId).exercises.push({
+      id: row.exerciseId,
+      order: row.exerciseOrder,
+      name: row.exerciseName,
+      setsTarget: row.setsTarget,
+      repsTarget: row.repsTarget,
+      loadValue: row.loadValue,
+      loadUnit: row.loadUnit,
+      loadNote: row.loadNote,
+      coachingNote: row.coachingNote
+    });
+  }
+  const gymPlan = [...gymDayMap.values()]
+    .map((day) => ({
+      ...day,
+      exercises: day.exercises.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+    }))
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+  const nutritionPlan = parseTableRows(nutritionRows)
+    .map((item) => ({
+      section: item.section || null,
+      order: toNumber(item.item_order),
+      title: item.title || null,
+      target: item.target || null,
+      unit: item.unit || null,
+      note: item.note || null,
+      enabled: String(item.enabled ?? "TRUE").toUpperCase() !== "FALSE"
+    }))
+    .filter((item) => item.enabled && item.title);
+
   const miguelIncome = moneyOrNull(summary.miguel_income);
   const andreaIncome = moneyOrNull(summary.andrea_income);
   const commonBudget = moneyOrNull(summary.common_budget);
@@ -289,6 +353,7 @@ async function fetchFinanceSummary(env) {
     debts: debtSummary,
     wealth: wealthSummary,
     importantEventRules,
+    health: { gymPlan, nutritionPlan },
     source: {
       kind: "google-sheet-derived",
       status: summary.status || "DERIVADO",
@@ -303,6 +368,161 @@ async function fetchFinanceSummary(env) {
     expiresAt: Date.now() + 30_000
   };
   return { status: "ok", value };
+}
+
+
+async function ensureGymTables(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS gym_sessions (
+      id TEXT PRIMARY KEY,
+      session_date TEXT NOT NULL,
+      day_id TEXT NOT NULL,
+      day_title TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS gym_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id TEXT NOT NULL,
+      exercise_id TEXT NOT NULL,
+      exercise_name TEXT NOT NULL,
+      sets_done INTEGER,
+      reps_done TEXT,
+      load_value REAL,
+      load_unit TEXT,
+      notes TEXT,
+      FOREIGN KEY(session_id) REFERENCES gym_sessions(id) ON DELETE CASCADE
+    )
+  `).run();
+
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_gym_entries_exercise ON gym_entries(exercise_id)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_gym_sessions_date ON gym_sessions(session_date DESC)").run();
+}
+
+async function fetchGymHistory(env) {
+  await ensureGymTables(env);
+  const sessionsResult = await env.DB.prepare(`
+    SELECT id, session_date, day_id, day_title, notes, created_at
+    FROM gym_sessions
+    ORDER BY session_date DESC, created_at DESC
+    LIMIT 40
+  `).all();
+
+  const entriesResult = await env.DB.prepare(`
+    SELECT id, session_id, exercise_id, exercise_name, sets_done, reps_done, load_value, load_unit, notes
+    FROM gym_entries
+    ORDER BY id ASC
+  `).all();
+
+  const entriesBySession = new Map();
+  for (const entry of entriesResult.results || []) {
+    if (!entriesBySession.has(entry.session_id)) entriesBySession.set(entry.session_id, []);
+    entriesBySession.get(entry.session_id).push({
+      id: entry.id,
+      exerciseId: entry.exercise_id,
+      exerciseName: entry.exercise_name,
+      setsDone: entry.sets_done,
+      repsDone: entry.reps_done,
+      loadValue: entry.load_value,
+      loadUnit: entry.load_unit,
+      notes: entry.notes
+    });
+  }
+
+  const sessions = (sessionsResult.results || []).map((session) => ({
+    id: session.id,
+    sessionDate: session.session_date,
+    dayId: session.day_id,
+    dayTitle: session.day_title,
+    notes: session.notes,
+    createdAt: session.created_at,
+    entries: entriesBySession.get(session.id) || []
+  }));
+
+  const progressMap = new Map();
+  for (const session of [...sessions].reverse()) {
+    for (const entry of session.entries) {
+      if (entry.loadValue == null || !Number.isFinite(Number(entry.loadValue))) continue;
+      if (!progressMap.has(entry.exerciseId)) progressMap.set(entry.exerciseId, []);
+      progressMap.get(entry.exerciseId).push({
+        date: session.sessionDate,
+        value: Number(entry.loadValue),
+        unit: entry.loadUnit || null
+      });
+    }
+  }
+
+  return {
+    sessions,
+    progress: Object.fromEntries(progressMap)
+  };
+}
+
+async function saveGymSession(request, env) {
+  await ensureGymTables(env);
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ ok: false, code: "INVALID_JSON" }, 400);
+  }
+
+  const sessionDate = String(payload?.sessionDate || "").trim();
+  const dayId = String(payload?.dayId || "").trim();
+  const dayTitle = String(payload?.dayTitle || "").trim();
+  const notes = String(payload?.notes || "").trim().slice(0, 1000);
+  const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(sessionDate) || !dayId || !entries.length) {
+    return json({ ok: false, code: "INVALID_GYM_SESSION" }, 400);
+  }
+
+  const cleanEntries = entries
+    .map((entry) => ({
+      exerciseId: String(entry?.exerciseId || "").trim(),
+      exerciseName: String(entry?.exerciseName || "").trim().slice(0, 160),
+      setsDone: toNumber(entry?.setsDone),
+      repsDone: String(entry?.repsDone ?? "").trim().slice(0, 80),
+      loadValue: toNumber(entry?.loadValue),
+      loadUnit: String(entry?.loadUnit || "").trim().slice(0, 40),
+      notes: String(entry?.notes || "").trim().slice(0, 500)
+    }))
+    .filter((entry) => entry.exerciseId && entry.exerciseName);
+
+  if (!cleanEntries.length) return json({ ok: false, code: "EMPTY_GYM_SESSION" }, 400);
+
+  const sessionId = crypto.randomUUID();
+  const statements = [
+    env.DB.prepare(`
+      INSERT INTO gym_sessions (id, session_date, day_id, day_title, notes)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(sessionId, sessionDate, dayId, dayTitle || dayId, notes || null)
+  ];
+
+  for (const entry of cleanEntries) {
+    statements.push(
+      env.DB.prepare(`
+        INSERT INTO gym_entries (
+          session_id, exercise_id, exercise_name, sets_done, reps_done, load_value, load_unit, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        sessionId,
+        entry.exerciseId,
+        entry.exerciseName,
+        entry.setsDone,
+        entry.repsDone || null,
+        entry.loadValue,
+        entry.loadUnit || null,
+        entry.notes || null
+      )
+    );
+  }
+
+  await env.DB.batch(statements);
+  return json({ ok: true, sessionId }, 201);
 }
 
 export default {
@@ -370,6 +590,24 @@ export default {
       });
     }
 
+    if (url.pathname === "/api/gym") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      let gymPlan = [];
+      if (hasFinanceGoogleConfig(env)) {
+        try {
+          const finance = await fetchFinanceSummary(env);
+          gymPlan = finance.value?.health?.gymPlan || [];
+        } catch {}
+      }
+      const history = await fetchGymHistory(env);
+      return json({ ok: true, plan: gymPlan, ...history });
+    }
+
+    if (url.pathname === "/api/gym/session") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      return saveGymSession(request, env);
+    }
+
     if (url.pathname === "/api/state") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
 
@@ -399,6 +637,7 @@ export default {
           if (finance.value) {
             state.financeSummary = finance.value;
             state.importantEventRules = finance.value.importantEventRules || [];
+            state.healthSummary = finance.value.health || { gymPlan: [], nutritionPlan: [] };
           }
           financeSync = finance.status;
         } catch (error) {
