@@ -842,6 +842,7 @@ function renderGymDay(day, latestByExercise = new Map()) {
         const latestLabel = hasHistory
           ? (latest?.loadValue == null ? "Último: sin carga" : `Último: ${formatGymLoad(latest.loadValue, inputUnit)}`)
           : null;
+        const repsValue = exercise.repsTarget || "";
         return `
         <article class="gym-exercise-row" data-exercise-id="${escapeHtml(exercise.id)}">
           <div class="gym-exercise-info">
@@ -851,18 +852,27 @@ function renderGymDay(day, latestByExercise = new Map()) {
             ${latestLabel ? `<small class="gym-last-record">${escapeHtml(latestLabel)}</small>` : ""}
             ${exercise.coachingNote ? `<p>${escapeHtml(exercise.coachingNote)}</p>` : ""}
           </div>
-          <label>
+          <label class="gym-number-field">
             <span>Series</span>
             <input class="gym-input-sets" type="number" min="0" max="20" step="1" value="${exercise.setsTarget ?? ""}">
+            <select class="gym-mobile-picker" data-sync-class="gym-input-sets" aria-label="Series">
+              ${renderMobilePickerOptions(exercise.setsTarget ?? "", 0, 12, 1, { blankLabel: "—" })}
+            </select>
           </label>
-          <label>
+          <label class="gym-number-field">
             <span>Reps</span>
-            <input class="gym-input-reps" type="text" maxlength="30" value="${escapeHtml(exercise.repsTarget || "")}">
+            <input class="gym-input-reps" type="text" maxlength="30" value="${escapeHtml(repsValue)}">
+            <select class="gym-mobile-picker" data-sync-class="gym-input-reps" aria-label="Repeticiones">
+              ${renderMobileRepOptions(repsValue)}
+            </select>
           </label>
-          <label>
+          <label class="gym-number-field">
             <span>Peso</span>
             <div class="gym-load-input">
               <input class="gym-input-load" type="number" min="0" max="999" step="0.25" value="${inputLoad ?? ""}" placeholder="—">
+              <select class="gym-mobile-picker gym-mobile-load-picker" data-sync-class="gym-input-load" aria-label="Peso">
+                ${renderMobilePickerOptions(inputLoad ?? "", 0, 200, 0.25, { blankLabel: "Sin carga", unit: inputUnit })}
+              </select>
               <small>${escapeHtml(inputUnit)}</small>
             </div>
           </label>
@@ -873,6 +883,51 @@ function renderGymDay(day, latestByExercise = new Map()) {
         </article>`;
       }).join("")}
     </div>`;
+
+  container.querySelectorAll(".gym-mobile-picker").forEach((select) => {
+    select.addEventListener("change", () => {
+      const input = select.closest("label")?.querySelector(`.${select.dataset.syncClass}`);
+      if (input) input.value = select.value;
+    });
+  });
+}
+
+function renderMobileRepOptions(currentValue) {
+  const current = String(currentValue ?? "");
+  const options = [];
+  if (current && !/^\d+(?:[.,]\d+)?$/.test(current)) {
+    options.push(`<option value="${escapeHtml(current)}" selected>${escapeHtml(current)} objetivo</option>`);
+  }
+  for (let value = 0; value <= 30; value += 1) {
+    const stringValue = String(value);
+    const selected = current === stringValue ? " selected" : "";
+    options.push(`<option value="${stringValue}"${selected}>${stringValue}</option>`);
+  }
+  return options.join("");
+}
+
+function renderMobilePickerOptions(currentValue, min, max, step, options = {}) {
+  const current = currentValue === null || currentValue === undefined ? "" : String(currentValue);
+  const rows = [];
+  if (options.blankLabel) {
+    rows.push(`<option value=""${current === "" ? " selected" : ""}>${escapeHtml(options.blankLabel)}</option>`);
+  }
+
+  const precision = String(step).includes(".") ? String(step).split(".")[1].length : 0;
+  let currentSeen = current === "";
+  for (let value = min; value <= max + step / 10; value += step) {
+    const rounded = Number(value.toFixed(precision));
+    const stringValue = String(rounded);
+    if (stringValue === current) currentSeen = true;
+    const selected = stringValue === current ? " selected" : "";
+    const label = rounded.toLocaleString("es-ES", { maximumFractionDigits: precision });
+    rows.push(`<option value="${stringValue}"${selected}>${escapeHtml(label)}${options.unit ? " " + escapeHtml(options.unit) : ""}</option>`);
+  }
+
+  if (current && !currentSeen) {
+    rows.unshift(`<option value="${escapeHtml(current)}" selected>${escapeHtml(current)}${options.unit ? " " + escapeHtml(options.unit) : ""}</option>`);
+  }
+  return rows.join("");
 }
 
 async function saveGymSessionFromForm(planById) {
