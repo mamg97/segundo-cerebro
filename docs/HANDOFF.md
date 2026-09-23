@@ -141,6 +141,8 @@ El Worker de ingesta:
 
 ## Sistema visual
 
+- La cabecera superior global y el indicador `Pulso general` se eliminaron de la portada para reducir ruido visual y dejar el contenido como primer nivel de navegación.
+
 - El modo oscuro usa un sistema visual único azul noche + azul eléctrico + naranja.
 - Tokens principales: fondo `#07101D`, superficie `#0B1728`, superficie secundaria `#10213A`, azul `#2F6BFF / #5FA8FF`, naranja `#FF7A1A / #FFB347`, texto `#F8FAFC`, muted `#A8B3C7`, borde `#1E3350`.
 - En oscuro se unifica la tipografía en Avenir Next / Segoe UI / system sans; se elimina la mezcla de serif en títulos.

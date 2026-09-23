@@ -5443,3 +5443,18 @@ html[data-theme="dark"] ::selection {
   color: #fff;
 }
 
+
+/* v0.14.1 — simplified dashboard chrome */
+.hero {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.hero-copy {
+  max-width: 760px;
+}
+
+@media (max-width: 760px) {
+  .main-content {
+    padding-top: 22px;
+  }
+}

@@ -158,3 +158,12 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Paleta:** fondo `#07101D`, superficie `#0B1728`, superficie secundaria `#10213A`, azul `#2F6BFF / #5FA8FF`, naranja `#FF7A1A / #FFB347`, texto `#F8FAFC`, muted `#A8B3C7`, borde `#1E3350`.
 - **Regla de uso:** azul = navegación/acción/estructura; naranja = énfasis/progreso/estado destacado; otros colores quedan limitados a semántica funcional excepcional.
 - **Motivo:** eliminar la apariencia multicolor y la mezcla tipográfica del tema oscuro anterior y reforzar una identidad visual propia.
+
+
+## D-022 — Portada sin cabecera global ni Pulso general
+
+- **Estado:** aceptada e implementada
+- **Fecha:** 2026-09-24
+- **Decisión:** eliminar de la portada la cabecera superior con controles/estado y retirar el indicador circular `Pulso general`.
+- **Motivo:** reducir ruido visual, evitar una métrica agregada poco interpretable y hacer que el contenido principal gane jerarquía.
+- **Consecuencia:** el estado de cada dominio se consulta en sus propios módulos y no mediante una puntuación global.

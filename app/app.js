@@ -179,8 +179,8 @@ function renderMode() {
 
   document.querySelector("#privacy-mode-title").textContent = remote ? "Modo privado remoto" : local ? "Modo local privado" : "Modo demo";
   document.querySelector("#privacy-mode-detail").textContent = remote ? "Protegido por autenticación" : local ? "No se publica en GitHub" : "Solo datos ficticios";
-  document.querySelector("#data-mode-badge").textContent = remote ? "Estado personal privado" : local ? "Estado personal local" : "Entorno mock";
-  document.querySelector("#profile-button").setAttribute("aria-label", privateMode ? "Perfil privado" : "Perfil ficticio");
+  document.querySelector("#data-mode-badge")?.replaceChildren(remote ? "Estado personal privado" : local ? "Estado personal local" : "Entorno mock");
+  document.querySelector("#profile-button")?.setAttribute("aria-label", privateMode ? "Perfil privado" : "Perfil ficticio");
   document.querySelector("#query-submit").setAttribute("aria-label", privateMode ? "Consultar estado privado" : "Consultar datos ficticios");
   document.querySelector("#query-help").textContent = remote
     ? "La consulta se resuelve sobre tu estado privado remoto."
@@ -192,8 +192,6 @@ function renderMode() {
     : local
       ? "Sin APIs · Estado local no publicado"
       : "Sin conexiones externas · Datos ficticios";
-  document.querySelector("#general-health").textContent = String(generalHealth);
-  document.querySelector("#general-pulse").setAttribute("aria-label", `Pulso general: ${generalHealth} de 100`);
   document.querySelector("#decision-count").textContent = `${openDecisions} decisiones abiertas`;
 
   const orb = document.querySelector("#system-orb");
@@ -212,10 +210,13 @@ function renderMode() {
 function renderDate() {
   const now = new Date();
   const hour = now.getHours();
-  document.querySelector("#greeting").textContent = hour < 13 ? "Buenos días" : hour < 20 ? "Buenas tardes" : "Buenas noches";
+  const greeting = document.querySelector("#greeting");
+  if (greeting) greeting.textContent = hour < 13 ? "Buenos días" : hour < 20 ? "Buenas tardes" : "Buenas noches";
   const dateElement = document.querySelector("#current-date");
-  dateElement.dateTime = now.toISOString();
-  dateElement.textContent = dateFormatter.format(now);
+  if (dateElement) {
+    dateElement.dateTime = now.toISOString();
+    dateElement.textContent = dateFormatter.format(now);
+  }
 }
 
 function renderNavigation() {
