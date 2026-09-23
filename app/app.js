@@ -427,7 +427,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
 
 function openImportantEventsDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "important-events-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "important-events-dialog", "budget-dialog");
   dialog.classList.add("important-events-dialog");
 
   const importantEvents = collectImportantEvents(state.financeSummary || {});
@@ -588,7 +588,7 @@ function collectHealthEvents() {
 
 async function openHealthDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog");
   dialog.classList.add("health-dialog");
   document.querySelector("#dialog-context").textContent = "Salud · estado privado";
   document.querySelector("#dialog-title").textContent = "Salud";
@@ -842,6 +842,7 @@ function renderGymDay(day, latestByExercise = new Map()) {
         const latestLabel = hasHistory
           ? (latest?.loadValue == null ? "Último: sin carga" : `Último: ${formatGymLoad(latest.loadValue, inputUnit)}`)
           : null;
+        const repsValue = exercise.repsTarget || "";
         return `
         <article class="gym-exercise-row" data-exercise-id="${escapeHtml(exercise.id)}">
           <div class="gym-exercise-info">
@@ -851,18 +852,27 @@ function renderGymDay(day, latestByExercise = new Map()) {
             ${latestLabel ? `<small class="gym-last-record">${escapeHtml(latestLabel)}</small>` : ""}
             ${exercise.coachingNote ? `<p>${escapeHtml(exercise.coachingNote)}</p>` : ""}
           </div>
-          <label>
+          <label class="gym-number-field">
             <span>Series</span>
             <input class="gym-input-sets" type="number" min="0" max="20" step="1" value="${exercise.setsTarget ?? ""}">
+            <select class="gym-mobile-picker" data-sync-class="gym-input-sets" aria-label="Series">
+              ${renderMobilePickerOptions(exercise.setsTarget ?? "", 0, 12, 1, { blankLabel: "—" })}
+            </select>
           </label>
-          <label>
+          <label class="gym-number-field">
             <span>Reps</span>
-            <input class="gym-input-reps" type="text" maxlength="30" value="${escapeHtml(exercise.repsTarget || "")}">
+            <input class="gym-input-reps" type="text" maxlength="30" value="${escapeHtml(repsValue)}">
+            <select class="gym-mobile-picker" data-sync-class="gym-input-reps" aria-label="Repeticiones">
+              ${renderMobileRepOptions(repsValue)}
+            </select>
           </label>
-          <label>
+          <label class="gym-number-field">
             <span>Peso</span>
             <div class="gym-load-input">
               <input class="gym-input-load" type="number" min="0" max="999" step="0.25" value="${inputLoad ?? ""}" placeholder="—">
+              <select class="gym-mobile-picker gym-mobile-load-picker" data-sync-class="gym-input-load" aria-label="Peso">
+                ${renderMobilePickerOptions(inputLoad ?? "", 0, 200, 0.25, { blankLabel: "Sin carga", unit: inputUnit })}
+              </select>
               <small>${escapeHtml(inputUnit)}</small>
             </div>
           </label>
@@ -873,6 +883,51 @@ function renderGymDay(day, latestByExercise = new Map()) {
         </article>`;
       }).join("")}
     </div>`;
+
+  container.querySelectorAll(".gym-mobile-picker").forEach((select) => {
+    select.addEventListener("change", () => {
+      const input = select.closest("label")?.querySelector(`.${select.dataset.syncClass}`);
+      if (input) input.value = select.value;
+    });
+  });
+}
+
+function renderMobileRepOptions(currentValue) {
+  const current = String(currentValue ?? "");
+  const options = [];
+  if (current && !/^\d+(?:[.,]\d+)?$/.test(current)) {
+    options.push(`<option value="${escapeHtml(current)}" selected>${escapeHtml(current)} objetivo</option>`);
+  }
+  for (let value = 0; value <= 30; value += 1) {
+    const stringValue = String(value);
+    const selected = current === stringValue ? " selected" : "";
+    options.push(`<option value="${stringValue}"${selected}>${stringValue}</option>`);
+  }
+  return options.join("");
+}
+
+function renderMobilePickerOptions(currentValue, min, max, step, options = {}) {
+  const current = currentValue === null || currentValue === undefined ? "" : String(currentValue);
+  const rows = [];
+  if (options.blankLabel) {
+    rows.push(`<option value=""${current === "" ? " selected" : ""}>${escapeHtml(options.blankLabel)}</option>`);
+  }
+
+  const precision = String(step).includes(".") ? String(step).split(".")[1].length : 0;
+  let currentSeen = current === "";
+  for (let value = min; value <= max + step / 10; value += step) {
+    const rounded = Number(value.toFixed(precision));
+    const stringValue = String(rounded);
+    if (stringValue === current) currentSeen = true;
+    const selected = stringValue === current ? " selected" : "";
+    const label = rounded.toLocaleString("es-ES", { maximumFractionDigits: precision });
+    rows.push(`<option value="${stringValue}"${selected}>${escapeHtml(label)}${options.unit ? " " + escapeHtml(options.unit) : ""}</option>`);
+  }
+
+  if (current && !currentSeen) {
+    rows.unshift(`<option value="${escapeHtml(current)}" selected>${escapeHtml(current)}${options.unit ? " " + escapeHtml(options.unit) : ""}</option>`);
+  }
+  return rows.join("");
 }
 
 async function saveGymSessionFromForm(planById) {
@@ -1259,7 +1314,7 @@ function formatWealthDate(value) {
 function openDebtDetail() {
   const debt = state.financeSummary?.debts || null;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Deudas";
   document.querySelector("#dialog-title").textContent = "Detalle de deudas";
@@ -1319,7 +1374,8 @@ function openBudgetDetail() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "budget-dialog");
+  dialog.classList.add("budget-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual";
   document.querySelector("#dialog-title").textContent = monthly?.periodLabel || monthly?.period || "Presupuesto actual";
@@ -1332,10 +1388,71 @@ function openBudgetDetail() {
 
   const currency = monthly.currency || "EUR";
   const categories = Array.isArray(monthly.categories) ? monthly.categories : [];
+  const groups = ["Común", "Miguel", "Andrea"];
+
+  const grouped = Object.fromEntries(groups.map((name) => [name, []]));
+  for (const item of categories) {
+    const ownerRaw = String(item.owner || item.group || "Común").trim().toLowerCase();
+    const owner = ownerRaw === "miguel" ? "Miguel"
+      : ownerRaw === "andrea" ? "Andrea"
+      : "Común";
+    grouped[owner].push(item);
+  }
+
+  const miguelNet = firstFinite(monthly.miguelNet, monthly.personalNet);
+  const andreaNet = firstFinite(monthly.andreaNet);
+  const jointNet = firstFinite(monthly.jointNet);
+
   document.querySelector("#dialog-body").innerHTML = categories.length
-    ? `<div class="budget-detail-list">${categories.map((item) => renderBudgetCategoryDetail(item, currency)).join("")}</div>`
+    ? `
+      <div class="budget-net-strip">
+        <div><span>Libre Miguel</span><strong>${miguelNet === null ? "—" : formatMoney(miguelNet, currency)}</strong></div>
+        <div><span>Libre Andrea</span><strong>${andreaNet === null ? "—" : formatMoney(andreaNet, currency)}</strong></div>
+        <div><span>Libre conjunto</span><strong>${jointNet === null ? "—" : formatMoney(jointNet, currency)}</strong></div>
+      </div>
+      <p class="budget-net-note">Estos netos personales se muestran aparte y no se mezclan con el presupuesto común.</p>
+      <div class="budget-groups">
+        ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
+      </div>`
     : "<p>No hay partidas presupuestadas.</p>";
   dialog.showModal();
+}
+
+function renderBudgetGroup(name, items, currency) {
+  if (!items.length) return "";
+
+  const totals = items.reduce((acc, item) => {
+    const budgeted = numberOrZero(item.budgeted);
+    const spent = numberOrZero(item.spent);
+    const committed = numberOrZero(item.committed);
+    const remaining = Number.isFinite(Number(item.remaining))
+      ? Number(item.remaining)
+      : budgeted - spent - committed;
+    acc.budgeted += budgeted;
+    acc.spent += spent;
+    acc.committed += committed;
+    acc.remaining += remaining;
+    return acc;
+  }, { budgeted: 0, spent: 0, committed: 0, remaining: 0 });
+
+  return `
+    <section class="budget-group budget-group-${name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}">
+      <div class="budget-group-heading">
+        <div>
+          <p class="context-label">${escapeHtml(name)}</p>
+          <h3>${name === "Común" ? "Presupuesto compartido" : "Gastos personales"}</h3>
+        </div>
+        <div class="budget-group-totals">
+          <span><b>${formatMoney(totals.budgeted, currency)}</b> presupuesto</span>
+          <span><b>${formatMoney(totals.spent, currency)}</b> gastado</span>
+          <span><b>${formatMoney(totals.committed, currency)}</b> comprometido</span>
+          <span><b>${formatMoney(totals.remaining, currency)}</b> libre</span>
+        </div>
+      </div>
+      <div class="budget-detail-list">
+        ${items.map((item) => renderBudgetCategoryDetail(item, currency)).join("")}
+      </div>
+    </section>`;
 }
 
 function renderBudgetCategoryDetail(item, currency) {
@@ -1359,7 +1476,7 @@ function renderBudgetCategoryDetail(item, currency) {
         : "";
 
   return `
-    <div class="budget-category-item ${overBudget ? "over-budget" : ""}">
+    <article class="budget-category-item ${overBudget ? "over-budget" : ""}">
       <div class="budget-category-head">
         <span class="budget-category-title">${escapeHtml(item.title)}</span>
         <span class="budget-category-head-right">
@@ -1371,11 +1488,14 @@ function renderBudgetCategoryDetail(item, currency) {
                 max="100"
                 value="${itemProgressValue}"
                 aria-label="${escapeHtml(item.title)}: ${itemProgress === null ? "sin porcentaje" : itemProgress + "% gastado"}">${itemProgressValue}</progress>
-      <div class="budget-category-meta">
-        <span>${formatMoney(itemSpent, currency)} gastado${itemCommitted > 0 ? " · " + formatMoney(itemCommitted, currency) + " comprometido" : ""}</span>
-        <strong>${formatMoney(itemRemaining, currency)} libres</strong>
+      <div class="budget-category-metrics">
+        <span><small>Presupuesto</small><strong>${formatMoney(itemBudget, currency)}</strong></span>
+        <span><small>Gastado</small><strong>${formatMoney(itemSpent, currency)}</strong></span>
+        <span><small>Comprometido</small><strong>${formatMoney(itemCommitted, currency)}</strong></span>
+        <span><small>Libre</small><strong>${formatMoney(itemRemaining, currency)}</strong></span>
       </div>
-    </div>`;
+      ${item.note ? `<p class="budget-category-note">${escapeHtml(item.note)}</p>` : ""}
+    </article>`;
 }
 
 function renderDecisionsInline() {
@@ -1578,7 +1698,7 @@ function openArea(areaId) {
   const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
   const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "important-events-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "important-events-dialog", "budget-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [

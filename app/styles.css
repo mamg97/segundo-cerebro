@@ -3201,3 +3201,173 @@ html[data-theme="dark"] .gym-session-footer input {
 .gym-delete-session:focus-visible {
   background: color-mix(in srgb, var(--coral) 9%, transparent);
 }
+
+/* v0.10 — grouped finance detail + native mobile gym pickers */
+.budget-dialog {
+  width: min(980px, calc(100% - 32px));
+}
+
+.budget-net-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.budget-net-strip > div {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+}
+
+.budget-net-strip span,
+.budget-net-strip strong {
+  display: block;
+}
+
+.budget-net-strip span {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.budget-net-strip strong {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.budget-net-note {
+  margin: 8px 0 18px;
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.budget-groups {
+  display: grid;
+  gap: 20px;
+}
+
+.budget-group {
+  min-width: 0;
+}
+
+.budget-group-heading {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+}
+
+.budget-group-heading h3 {
+  margin: 3px 0 0;
+  font-family: "Iowan Old Style", serif;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.budget-group-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  justify-content: flex-end;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.budget-group-totals b {
+  color: var(--ink);
+}
+
+.budget-category-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.budget-category-metrics > span {
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+}
+
+.budget-category-metrics small,
+.budget-category-metrics strong {
+  display: block;
+}
+
+.budget-category-metrics small {
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.budget-category-metrics strong {
+  margin-top: 2px;
+  font-size: 9px;
+}
+
+.budget-category-note {
+  margin: 7px 0 0;
+  color: var(--ink-soft);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.gym-mobile-picker {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  .budget-dialog {
+    width: calc(100% - 16px);
+    padding: 18px 12px;
+  }
+
+  .budget-net-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-group-heading {
+    display: grid;
+    gap: 8px;
+  }
+
+  .budget-group-totals {
+    justify-content: flex-start;
+  }
+
+  .budget-category-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gym-number-field > input,
+  .gym-number-field .gym-load-input > input {
+    display: none;
+  }
+
+  .gym-mobile-picker {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 9px 30px 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 650;
+    appearance: auto;
+  }
+
+  .gym-load-input {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gym-load-input > small {
+    display: none;
+  }
+}

@@ -127,7 +127,7 @@ async function fetchFinanceSummary(env) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Resumen!A1:B100", "Categorias!A1:J500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:G200", "GimnasioPlan!A1:N500", "Nutricion!A1:G500"];
+  const ranges = ["Resumen!A1:B100", "Categorias!A1:K500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:G200", "GimnasioPlan!A1:N500", "Nutricion!A1:G500"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -156,7 +156,8 @@ async function fetchFinanceSummary(env) {
   const summary = parseKeyValueRows(summaryRows);
   const categories = parseTableRows(categoryRows).map((item) => ({
     id: item.id || null,
-    group: item.group || "Otros",
+    group: item.group || item.owner || "Común",
+    owner: item.owner || item.group || "Común",
     title: item.title || item.id || "Partida",
     budgeted: moneyOrNull(item.budgeted),
     spent: moneyOrNull(item.spent),
@@ -345,6 +346,8 @@ async function fetchFinanceSummary(env) {
       plannedOutflows: withSavings,
       commonBudget,
       personalNet: moneyOrNull(summary.miguel_net_free),
+      miguelNet: moneyOrNull(summary.miguel_net_free),
+      andreaNet: moneyOrNull(summary.andrea_net_free),
       jointNet: moneyOrNull(summary.joint_net_free),
       savingsTarget: commonBudget !== null && withSavings !== null ? withSavings - commonBudget : null,
       categories
