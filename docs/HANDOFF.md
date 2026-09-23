@@ -136,17 +136,17 @@ El Worker de ingesta:
 - La aplicación todavía no es una PWA offline.
 - No todos los dominios previstos tienen contrato propio en `agents/`.
 - La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
-- El puente Apple Health está implementado en código, pero falta terminar su configuración real en el Mac/iPhone.
+- El puente Apple Health está implementado en código y dispone de una guía reproducible en `docs/APPLE_HEALTH_SHORTCUT.md`; falta ejecutar el setup con la sesión local de Cloudflare y crear el Atajo en el iPhone.
 
 ## Próxima acción exacta
 
 Completar Apple Health:
 
-1. En el Mac, desde `private-cloudflare/`, ejecutar `npm run setup:health-ingest`.
-2. Guardar de forma privada la URL y el token generados; no pegarlos en chats ni Git.
-3. Crear/configurar en el iPhone un Atajo que lea energía activa y energía en reposo de Apple Health y envíe el resumen diario al Worker.
-4. Validar que la muestra aparece en Salud → Nutrición y que el balance usa D1 antes que el fallback del Sheet.
-5. Después de esa validación, decidir la automatización diaria del Atajo.
+1. En el Mac, desde `private-cloudflare/`, ejecutar `npm run setup:health-ingest`. El script valida ahora el endpoint y la protección Bearer antes de mostrar el token.
+2. Seguir `docs/APPLE_HEALTH_SHORTCUT.md` para crear `Segundo Cerebro · Energía ayer` en el iPhone.
+3. Ejecutarlo manualmente una vez y validar respuesta `ok: true`.
+4. Comprobar que Salud → Nutrición usa la muestra D1 del día enviado.
+5. Crear la automatización diaria de mañana solo después de esa validación.
 
 ## Archivos que debe leer el siguiente relevo
 
@@ -159,5 +159,6 @@ Completar Apple Health:
 - `agents/FINANCE.md`
 - `agents/HEALTH.md`
 - `private-cloudflare/README.md`
+- `docs/APPLE_HEALTH_SHORTCUT.md`
 
 No reconstruir el proyecto desde conversaciones antiguas salvo que se investigue una decisión histórica concreta.

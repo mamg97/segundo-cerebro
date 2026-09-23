@@ -322,7 +322,9 @@ cd private-cloudflare
 npm run setup:health-ingest
 ```
 
-El script despliega `segundo-cerebro-health-ingest`, genera `HEALTH_INGEST_TOKEN` y muestra una única vez la URL y el token que deben guardarse en el Shortcut del iPhone.
+El script despliega `segundo-cerebro-health-ingest`, valida el endpoint `/health`, genera `HEALTH_INGEST_TOKEN`, comprueba que `/v1/energy` rechaza peticiones sin Bearer y muestra una única vez la URL y el token que deben guardarse en el Shortcut del iPhone.
+
+La construcción exacta del Atajo y su automatización están en [`../docs/APPLE_HEALTH_SHORTCUT.md`](../docs/APPLE_HEALTH_SHORTCUT.md).
 
 Payload esperado por `POST /v1/energy`:
 
