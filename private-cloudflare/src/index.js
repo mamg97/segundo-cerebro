@@ -156,7 +156,8 @@ async function fetchFinanceSummary(env) {
   const summary = parseKeyValueRows(summaryRows);
   const categories = parseTableRows(categoryRows).map((item) => ({
     id: item.id || null,
-    group: item.group || "Otros",
+    group: item.group || item.owner || "Común",
+    owner: item.owner || item.group || "Común",
     title: item.title || item.id || "Partida",
     budgeted: moneyOrNull(item.budgeted),
     spent: moneyOrNull(item.spent),
@@ -345,6 +346,8 @@ async function fetchFinanceSummary(env) {
       plannedOutflows: withSavings,
       commonBudget,
       personalNet: moneyOrNull(summary.miguel_net_free),
+      miguelNet: moneyOrNull(summary.miguel_net_free),
+      andreaNet: moneyOrNull(summary.andrea_net_free),
       jointNet: moneyOrNull(summary.joint_net_free),
       savingsTarget: commonBudget !== null && withSavings !== null ? withSavings - commonBudget : null,
       categories
