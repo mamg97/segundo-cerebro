@@ -1967,7 +1967,8 @@ function handleQuery(event) {
       : "Escribe una pregunta o el nombre de un área para buscar en el estado ficticio.";
     return;
   }
-  const entities = [...state.areas, ...state.projects, ...state.openLoops, ...state.goals, ...state.decisions, ...state.events];
+  const habitEntities = Array.isArray(state.habitsSummary?.habits) ? state.habitsSummary.habits : [];
+  const entities = [...state.areas, ...state.projects, ...state.openLoops, ...state.goals, ...state.decisions, ...state.events, ...habitEntities];
   const terms = query.split(/\s+/).filter((term) => term.length > 2);
   const matches = entities.filter((entity) => {
     const haystack = JSON.stringify(entity).toLocaleLowerCase("es");
