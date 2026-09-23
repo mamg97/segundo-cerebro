@@ -20,6 +20,12 @@ Preparar una primera versión remota privada y de solo lectura, accesible desde 
 
 ## Trabajo realizado
 
+- El antiguo gráfico concéntrico del cuadro de consulta se sustituye por un **orb del Segundo Cerebro** animado y accesible. El color refleja estado general y al pulsarlo muestra un resumen rápido de pulso, hábitos, open loops, decisiones y ejecución financiera.
+- La sección `Hábitos` incorpora gestión nativa de HabitQuest: crear, editar, archivar/restaurar, eliminar y reordenar hábitos sin abandonar Segundo Cerebro.
+- El editor conserva el modelo de HabitQuest: icono, categoría, frecuencia, días personalizados, recordatorio, dificultad/XP y veces por día.
+- Las mutaciones se escriben en la hoja original de HabitQuest y actualizan `Meta.updatedAt` para que la app HabitQuest independiente siga reconciliando correctamente mediante su flujo de sincronización.
+- Eliminar sigue siendo destructivo y borra también History/SyncState del hábito; archivar conserva todo el histórico y es la opción recomendada.
+
 - HabitQuest integrado de forma nativa dentro de Segundo Cerebro como área `Hábitos`; no se usa iframe ni se duplica la app React.
 - La hoja privada existente `HabitQuest Data` sigue siendo la fuente de verdad. Segundo Cerebro lee `Habits`, `History`, `Meta` y `SyncState` a través del Worker privado.
 - La vista integrada incluye Hoy, navegación por fecha, marcación/desmarcación, racha, XP/nivel, listado de hábitos y progreso de 30 días.
