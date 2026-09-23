@@ -236,3 +236,28 @@ La pestaña `Nutricion` está preparada como fuente privada de objetivos/pautas.
 ### Presupuesto personal
 
 La lectura de `Categorias` incluye la columna privada `owner` (rango `A:K`). El Worker no contiene importes personales: solo transporta los valores de la hoja derivada privada y expone `owner`, junto a los netos separados de Miguel y Andrea.
+
+
+## HabitQuest
+
+HabitQuest se integra como módulo nativo del dashboard sin mover su fuente de verdad. La hoja original de HabitQuest continúa siendo propietaria de `Habits`, `History`, `Meta` y `SyncState`.
+
+### Configuración privada
+
+El identificador de la hoja se guarda como secreto del Worker:
+
+```sh
+cd private-cloudflare
+node scripts/configure-habitquest-sync.mjs <HABITQUEST_SHEET_ID>
+```
+
+El valor no se incorpora al bundle ni al repositorio. La integración reutiliza las credenciales Google ya configuradas en el Worker. Para marcar/desmarcar hábitos, esas credenciales deben disponer de permiso de escritura sobre la hoja; si el token actual fuera solo lectura, la lectura funcionará pero habrá que autorizar una credencial con alcance de escritura antes de activar las acciones.
+
+### Endpoints
+
+- `GET /api/habits?date=YYYY-MM-DD`: hábitos programados del día, XP, nivel, racha, listado y progreso.
+- `POST /api/habits/toggle`: añade una acción LWW a `SyncState`.
+- `GET /api/state`: añade un resumen HabitQuest al estado privado cuando está configurado.
+- `GET /api/health`: expone solo estado técnico y contadores, nunca nombres de hábitos.
+
+La escritura sigue el mismo criterio de HabitQuest: `SyncState` es append-only y `count=0` representa un desmarcado explícito. La aplicación HabitQuest independiente permanece disponible como fallback durante la validación.
