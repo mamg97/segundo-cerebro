@@ -1259,7 +1259,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:G2000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -1336,11 +1336,57 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     totalKcal: toNumber(item.total_kcal),
     source: item.fuente || null,
     note: item.nota || null,
+    importedAt: item.imported_at || null,
+    steps: toNumber(item.steps),
+    exerciseMinutes: toNumber(item.exercise_minutes),
+    workoutCount: toNumber(item.workout_count),
+    sampledAt: item.sampled_at || null,
+    sourceDetails: item.source_details ? String(item.source_details).split(",").map((value) => value.trim()).filter(Boolean) : [],
+    workouts: item.workouts_json ? (() => { try { return JSON.parse(item.workouts_json); } catch { return []; } })() : []
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date));
+
+  const activityObjectives = parseTableRows(valueRanges[4]?.values || []).map((item) => ({
+    effectiveDate: String(item.effective_date || "").trim(),
+    stepsFloor: toNumber(item.steps_floor),
+    stepsTarget: toNumber(item.steps_target),
+    strengthSessionsWeek: toNumber(item.strength_sessions_week),
+    moderateActivityMinWeek: toNumber(item.moderate_activity_min_week),
+    vigorousActivityMinWeek: toNumber(item.vigorous_activity_min_week),
+    waterMinL: toNumber(item.water_min_l),
+    waterTargetL: toNumber(item.water_target_l),
+    sleepMinH: toNumber(item.sleep_min_h),
+    sleepTargetH: toNumber(item.sleep_target_h),
+    appleWatchEnergyRule: item.apple_watch_energy_rule || null,
+    reviewAfterDays: toNumber(item.review_after_days),
+    note: item.note || null,
+    active: String(item.active ?? "TRUE").toUpperCase() !== "FALSE",
+    updatedAt: item.updated_at || null
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.effectiveDate) && item.active)
+    .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate));
+
+  const bodySheetRows = parseTableRows(valueRanges[5]?.values || []).map((item) => ({
+    date: String(item.date || "").trim(),
+    weightKg: toNumber(item.weight_kg),
+    bodyFatPct: toNumber(item.body_fat_pct),
+    muscleMassKg: toNumber(item.muscle_mass_kg),
+    waistCm: toNumber(item.waist_cm),
+    waterPct: toNumber(item.water_pct),
+    source: item.source || null,
+    conditions: item.conditions || null,
+    note: item.note || null,
+    updatedAt: item.updated_at || null,
+    bodyMassIndex: toNumber(item.body_mass_index),
+    leanBodyMassKg: toNumber(item.lean_body_mass_kg),
+    measuredAt: item.measured_at || null,
     importedAt: item.imported_at || null
   })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date));
 
   const historyStart = healthAddDays(date, -13);
-  const d1EnergyByDate = await fetchHealthEnergyRows(env, historyStart, date);
+  const bodyHistoryStart = healthAddDays(date, -27);
+  const [d1EnergyByDate, d1BodySamples] = await Promise.all([
+    fetchHealthEnergyRows(env, historyStart, date),
+    fetchHealthBodySamples(env, bodyHistoryStart, date)
+  ]);
   const sheetEnergyByDate = new Map();
   for (const row of [...energyRows].sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")))) {
     if (!sheetEnergyByDate.has(row.date)) sheetEnergyByDate.set(row.date, row);
@@ -1351,6 +1397,54 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const consumed = sumNutrition(dayEntries, "consumido");
   const planned = sumNutrition(dayEntries, "planificado");
   const objective = objectives.find((item) => item.effectiveDate <= date) || null;
+  const activityObjective = activityObjectives.find((item) => item.effectiveDate <= date) || null;
+
+  const bodySamples = [...d1BodySamples];
+  for (const row of bodySheetRows) {
+    const measuredAt = row.measuredAt || `${row.date}T12:00:00+02:00`;
+    const source = row.source || "health_sheet";
+    if (row.weightKg !== null) bodySamples.push({ type: "bodyMass", value: row.weightKg, unit: "kg", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+    if (row.bodyFatPct !== null) bodySamples.push({ type: "bodyFatPercentage", value: row.bodyFatPct, unit: "%", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+    if (row.bodyMassIndex !== null) bodySamples.push({ type: "bodyMassIndex", value: row.bodyMassIndex, unit: "count", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+    if (row.leanBodyMassKg !== null) bodySamples.push({ type: "leanBodyMass", value: row.leanBodyMassKg, unit: "kg", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+  }
+  bodySamples.sort((a, b) => String(a.measuredAt).localeCompare(String(b.measuredAt)));
+
+  const latestMetric = (type, onlyDate = null) => {
+    const matches = bodySamples.filter((sample) => sample.type === type && (!onlyDate || sample.date === onlyDate));
+    return matches.length ? matches[matches.length - 1] : null;
+  };
+
+  const dailyWeight = new Map();
+  for (const sample of bodySamples.filter((item) => item.type === "bodyMass")) {
+    if (!dailyWeight.has(sample.date)) dailyWeight.set(sample.date, []);
+    dailyWeight.get(sample.date).push(Number(sample.value));
+  }
+  const meanForDates = (startOffset, endOffset) => {
+    const means = [];
+    for (let offset = startOffset; offset <= endOffset; offset += 1) {
+      const key = healthAddDays(date, -offset);
+      const values = dailyWeight.get(key) || [];
+      if (values.length) means.push(values.reduce((sum, value) => sum + value, 0) / values.length);
+    }
+    return means.length ? means.reduce((sum, value) => sum + value, 0) / means.length : null;
+  };
+  const weight7dAverage = meanForDates(0, 6);
+  const previous7dAverage = meanForDates(7, 13);
+  const weightWeeklyChange = weight7dAverage !== null && previous7dAverage !== null
+    ? weight7dAverage - previous7dAverage
+    : null;
+
+  const selectedDate = new Date(`${date}T12:00:00+02:00`);
+  const mondayOffset = (selectedDate.getDay() + 6) % 7;
+  const weekStart = healthAddDays(date, -mondayOffset);
+  let exerciseMinutesWeek = 0;
+  let workoutCountWeek = 0;
+  for (let cursor = weekStart; cursor <= date; cursor = healthAddDays(cursor, 1)) {
+    const row = energyForDate(cursor);
+    exerciseMinutesWeek += Number(row?.exerciseMinutes || 0);
+    workoutCountWeek += Number(row?.workoutCount || 0);
+  }
 
   const energyForDay = energyForDate(date);
   const totalBurn = energyForDay
@@ -1378,7 +1472,10 @@ async function fetchHealthNutritionSummary(env, options = {}) {
       date: historyDate,
       consumedKcal: dayConsumed.kcal,
       burnedKcal: burn,
-      balanceKcal: burn === null ? null : dayConsumed.kcal - burn
+      balanceKcal: burn === null ? null : dayConsumed.kcal - burn,
+      steps: dayEnergy?.steps ?? null,
+      exerciseMinutes: dayEnergy?.exerciseMinutes ?? null,
+      workoutCount: dayEnergy?.workoutCount ?? null
     });
   }
 
@@ -1387,7 +1484,31 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     foods,
     entries: dayEntries,
     objective,
+    activityObjective,
     energy: energyForDay,
+    body: {
+      weightToday: latestMetric("bodyMass", date),
+      weight7dAverage,
+      previous7dAverage,
+      weightWeeklyChange,
+      bodyFat: latestMetric("bodyFatPercentage"),
+      bodyMassIndex: latestMetric("bodyMassIndex"),
+      leanBodyMass: latestMetric("leanBodyMass"),
+      samples: bodySamples.filter((item) => item.date >= bodyHistoryStart),
+      interpretation: "trend"
+    },
+    activity: {
+      date,
+      activeKcal: energyForDay?.activeKcal ?? null,
+      restingKcal: energyForDay?.restingKcal ?? null,
+      totalKcal: energyForDay?.totalKcal ?? null,
+      steps: energyForDay?.steps ?? null,
+      exerciseMinutes: energyForDay?.exerciseMinutes ?? null,
+      workoutCount: energyForDay?.workoutCount ?? null,
+      workouts: energyForDay?.workouts ?? [],
+      exerciseMinutesWeek,
+      workoutCountWeek
+    },
     summary: {
       consumed,
       planned,
