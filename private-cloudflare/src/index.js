@@ -907,6 +907,20 @@ export default {
         }
       }
 
+      let habitSync = hasHabitQuestGoogleConfig(env) ? "configured" : "not-configured";
+      let habitCount = null;
+      let habitTodayCount = null;
+      if (hasHabitQuestGoogleConfig(env)) {
+        try {
+          const habits = await fetchHabitQuestSummary(env);
+          habitSync = habits.status;
+          habitCount = Array.isArray(habits.value?.habits) ? habits.value.habits.length : null;
+          habitTodayCount = Array.isArray(habits.value?.todayHabits) ? habits.value.todayHabits.length : null;
+        } catch {
+          habitSync = "error";
+        }
+      }
+
       let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
       let calendarError = null;
       let calendarMatchedCount = null;
@@ -932,12 +946,38 @@ export default {
         schemaVersion: row?.schema_version ?? null,
         snapshotCreatedAt: row?.created_at ?? null,
         financeSync,
+        habitSync,
+        habitCount,
+        habitTodayCount,
         calendarSync,
         calendarError,
         calendarMatchedCount,
         calendarSelectedCount,
         calendarEventCount
       });
+    }
+
+    if (url.pathname === "/api/habits") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const date = url.searchParams.get("date") || undefined;
+      try {
+        const habits = await fetchHabitQuestSummary(env, { date });
+        if (!habits.value) return json({ ok: false, code: "HABITQUEST_NOT_CONFIGURED" }, 503);
+        return json({ ok: true, status: habits.status, ...habits.value });
+      } catch (error) {
+        console.warn("HabitQuest read failed", String(error?.message || error));
+        return json({ ok: false, code: "HABITQUEST_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/habits/toggle") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        return await toggleHabitQuest(request, env);
+      } catch (error) {
+        console.warn("HabitQuest toggle failed", String(error?.message || error));
+        return json({ ok: false, code: "HABITQUEST_WRITE_FAILED" }, 502);
+      }
     }
 
     if (url.pathname === "/api/gym") {
@@ -1002,6 +1042,18 @@ export default {
         }
       }
 
+      let habitSync = "not-configured";
+      if (hasHabitQuestGoogleConfig(env)) {
+        try {
+          const habits = await fetchHabitQuestSummary(env);
+          if (habits.value) state.habitsSummary = habits.value;
+          habitSync = habits.status;
+        } catch (error) {
+          habitSync = "error";
+          console.warn("HabitQuest sync failed", String(error?.message || error));
+        }
+      }
+
       let calendarSync = "not-configured";
       if (hasIcloudCalendarConfig(env)) {
         try {
@@ -1024,6 +1076,7 @@ export default {
         schemaVersion: row.schema_version,
         remoteSnapshotCreatedAt: row.created_at,
         financeSync,
+        habitSync,
         calendarSync
       };
 
