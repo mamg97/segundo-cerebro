@@ -1,0 +1,80 @@
+name: Deploy private Cloudflare app
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "core/**"
+      - "private-cloudflare/src/**"
+      - "private-cloudflare/scripts/**"
+      - "private-cloudflare/package.json"
+      - "private-cloudflare/wrangler.bootstrap.jsonc"
+      - ".github/workflows/deploy-private-cloudflare.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: segundo-cerebro-private-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: private-cloudflare
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate JavaScript
+        run: |
+          node --check ../app/app.js
+          node --check src/index.js
+          node --check src/icloud-calendar.js
+          node --check src/health-ingest.js
+
+      - name: Build private bundle
+        run: npm run build
+
+      - name: Confirm no private files enter build
+        run: |
+          test ! -e dist/.private
+          test -f dist/app/index.html
+          test -f dist/private-config.js
+          grep -q "__SECOND_BRAIN_REMOTE__" dist/private-config.js
+          grep -q 'src="../private-config.js"' dist/app/index.html
+
+      - name: Check Cloudflare credentials
+        id: cloudflare
+        shell: bash
+        run: |
+          if [[ -n "$CLOUDFLARE_API_TOKEN" && -n "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Cloudflare deploy skipped. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository Actions secrets."
+          fi
+
+      - name: Deploy production Worker
+        if: steps.cloudflare.outputs.configured == 'true'
+        run: npx wrangler deploy --config wrangler.bootstrap.jsonc
+
+      - name: Explain skipped deployment
+        if: steps.cloudflare.outputs.configured != 'true'
+        run: |
+          echo "Validation and build passed, but production deploy was skipped because Cloudflare credentials are not configured in GitHub Actions."

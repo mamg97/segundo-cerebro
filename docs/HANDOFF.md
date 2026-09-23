@@ -139,6 +139,14 @@ El Worker de ingesta:
 - La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
 - El puente Apple Health está validado end-to-end en producción: Atajo iPhone → Worker de ingesta → Worker principal → D1 → Salud/Nutrición. La primera muestra real se recibió correctamente el 2026-09-23. La persistencia usa una única fila por fecha: nuevas sincronizaciones del mismo día sustituyen la lectura anterior mediante UPSERT.
 
+## Despliegue automático
+
+- El Worker privado tiene workflow de producción en `.github/workflows/deploy-private-cloudflare.yml`.
+- Un cambio relevante en `main` valida JavaScript, construye el bundle privado, comprueba que no entren archivos privados y ejecuta `wrangler deploy`.
+- Requiere dos GitHub Actions repository secrets: `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`.
+- Si todavía no existen, el workflow valida y construye pero omite el deploy con un aviso explícito.
+- Una vez configurados, el flujo normal es ChatGPT/GitHub → commit a `main` → GitHub Actions → Cloudflare, sin `git pull` ni `npm run deploy` manuales.
+
 ## Próxima acción exacta
 
 Validar la absorción de HabitQuest:

@@ -337,3 +337,20 @@ Payload esperado por `POST /v1/energy`:
 ```
 
 `date` puede omitirse y el puente usa la fecha local de Madrid. `totalKcal` es opcional; si falta y existen activa + reposo, se suma automáticamente. D1 conserva una sola fila por fecha y las sincronizaciones posteriores del mismo día sustituyen la anterior mediante UPSERT. No se envían pasos, frecuencia cardiaca, entrenamientos ni otros datos de salud.
+
+## CI/CD desde GitHub
+
+La app privada puede desplegarse automáticamente con GitHub Actions mediante:
+
+- `.github/workflows/deploy-private-cloudflare.yml`
+- secret `CLOUDFLARE_API_TOKEN`
+- secret `CLOUDFLARE_ACCOUNT_ID`
+
+El workflow se activa en cambios relevantes de `main`, valida el JavaScript, ejecuta `npm run build`, verifica que el bundle no incluya `.private` y despliega con:
+
+```bash
+npx wrangler deploy --config wrangler.bootstrap.jsonc
+```
+
+No guardar nunca el token de Cloudflare en Git. Si faltan los secretos, el workflow valida y construye pero omite el despliegue.
+
