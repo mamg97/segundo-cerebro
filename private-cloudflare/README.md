@@ -216,3 +216,18 @@ La pestaña privada `EventosImportantes` almacena reglas y alias personales que 
 El horizonte de lectura CalDAV es de 550 días para poder detectar con antelación bodas, viajes y citas médicas relevantes. La semana visible continúa filtrándose al lunes-domingo actual.
 
 `Salud` es una vista derivada de iCloud: agrupa próximas citas médicas, gimnasio y nutrición. No escribe ni modifica el calendario.
+
+
+### Gimnasio
+
+El Worker lee el plan de `GimnasioPlan` dentro del Sheet privado y lo expone como parte de Salud. El histórico no se escribe en Google Sheets: se guarda en la D1 privada mediante tablas creadas de forma idempotente por el Worker.
+
+Endpoints:
+- `GET /api/gym`: plan, últimas sesiones y progreso por ejercicio.
+- `POST /api/gym/session`: guarda una sesión con sus ejercicios.
+
+La aplicación sigue protegida por Cloudflare Access y no incorpora el plan personal ni pesos concretos al repositorio público.
+
+### Nutrición
+
+La pestaña `Nutricion` está preparada como fuente privada de objetivos/pautas. Si está vacía, la UI muestra un estado pendiente de definir.
