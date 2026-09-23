@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.14.3">
-    <script type="module" src="./app.js?v=0.14.3"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.15.0">
+    <script type="module" src="./app.js?v=0.15.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -74,6 +74,35 @@
         </section>
         <div id="query-result" class="query-result" role="status" aria-live="polite" hidden></div>
 
+        <section class="daily-overview-grid" aria-label="Resumen de hoy">
+          <button id="home-habits-card" class="daily-overview-card" type="button">
+            <div class="daily-card-heading">
+              <span class="daily-card-icon" aria-hidden="true">✓</span>
+              <span><small>Hábitos</small><strong>Hoy</strong></span>
+              <span class="daily-card-arrow" aria-hidden="true">→</span>
+            </div>
+            <div class="daily-card-main">
+              <strong id="home-habits-value">—</strong>
+              <span id="home-habits-label">Cargando hábitos…</span>
+            </div>
+            <progress id="home-habits-progress" max="100" value="0" aria-label="Progreso de hábitos de hoy"></progress>
+          </button>
+
+          <button id="home-nutrition-card" class="daily-overview-card" type="button">
+            <div class="daily-card-heading">
+              <span class="daily-card-icon accent" aria-hidden="true">◒</span>
+              <span><small>Nutrición</small><strong>Balance diario</strong></span>
+              <span class="daily-card-arrow" aria-hidden="true">→</span>
+            </div>
+            <div class="daily-energy-grid">
+              <span><small>Consumidas</small><strong id="home-kcal-consumed">—</strong></span>
+              <span><small>Gastadas</small><strong id="home-kcal-burned">—</strong></span>
+              <span><small>Objetivo</small><strong id="home-kcal-target">—</strong></span>
+            </div>
+            <progress id="home-kcal-progress" max="100" value="0" aria-label="Calorías consumidas frente al objetivo diario"></progress>
+            <span id="home-kcal-status" class="daily-card-status">Cargando nutrición…</span>
+          </button>
+        </section>
         <section class="money-horizon" aria-label="Resumen financiero y eventos importantes">
           <article class="budget-panel compact-budget-panel">
             <div class="section-heading">

@@ -167,3 +167,12 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Decisión:** mantener la barra superior con saludo/fecha y control de tema; eliminar de ella el badge de estado privado y el avatar `SC`, además del gran titular de portada y del indicador circular `Pulso general`.
 - **Motivo:** reducir ruido visual, evitar una métrica agregada poco interpretable y hacer que el contenido operativo gane jerarquía.
 - **Consecuencia:** el estado de cada dominio se consulta en sus propios módulos y no mediante una puntuación global.
+
+## D-023 — Portada uniforme con resumen diario de hábitos y nutrición
+
+- **Estado:** aceptada e implementada
+- **Fecha:** 2026-09-24
+- **Decisión:** las tarjetas principales de portada comparten superficie, borde, radio y sombra; el color se reserva a acentos y estados.
+- **Primer nivel operativo:** dos tarjetas preceden al resto de resúmenes: Hábitos muestra completados/total y abre HabitQuest; Nutrición muestra kcal consumidas, gasto total y objetivo diario y abre directamente Salud → Nutrición.
+- **Datos:** Hábitos deriva del resumen de HabitQuest; Nutrición consulta el endpoint privado del día actual. Si el objetivo no está definido se muestra `Pendiente`, sin inferir una cifra.
+- **Motivo:** priorizar información diaria accionable y eliminar el mosaico de tarjetas con fondos de colores distintos.

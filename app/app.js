@@ -114,6 +114,7 @@ async function init() {
   renderMode();
   renderDate();
   renderNavigation();
+  renderDailyOverview();
   renderFocus();
   renderEvents();
   renderBudgetOverview();
@@ -382,6 +383,79 @@ function calendarClassForEvent(event) {
 }
 
 
+function renderDailyOverview() {
+  renderHomeHabitsCard();
+  void renderHomeNutritionCard();
+}
+
+function renderHomeHabitsCard() {
+  const summary = state.habitsSummary?.summary || {};
+  const total = Math.max(0, Number(summary.total || 0));
+  const done = Math.max(0, Number(summary.done || 0));
+  const percentage = total > 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : 0;
+  const value = document.querySelector("#home-habits-value");
+  const label = document.querySelector("#home-habits-label");
+  const progress = document.querySelector("#home-habits-progress");
+  if (value) value.textContent = total > 0 ? done + " / " + total : "—";
+  if (label) label.textContent = total > 0
+    ? percentage + "% completado · racha " + Number(summary.streak || 0) + " días"
+    : "Sin hábitos programados";
+  if (progress) {
+    progress.value = percentage;
+    progress.setAttribute("aria-label", total > 0 ? done + " de " + total + " hábitos completados hoy" : "Sin hábitos programados");
+  }
+}
+
+async function renderHomeNutritionCard() {
+  const consumedNode = document.querySelector("#home-kcal-consumed");
+  const burnedNode = document.querySelector("#home-kcal-burned");
+  const targetNode = document.querySelector("#home-kcal-target");
+  const statusNode = document.querySelector("#home-kcal-status");
+  const progress = document.querySelector("#home-kcal-progress");
+  if (!consumedNode || !burnedNode || !targetNode || !statusNode || !progress) return;
+  if (privateModeKind !== "remote") {
+    consumedNode.textContent = "—";
+    burnedNode.textContent = "—";
+    targetNode.textContent = "—";
+    statusNode.textContent = "Disponible en la aplicación privada";
+    progress.value = 0;
+    return;
+  }
+  try {
+    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(localDateKey()), {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("HOME_NUTRITION_" + response.status);
+    const data = await response.json();
+    const consumed = Number(data.summary?.consumed?.kcal);
+    const burned = Number(data.summary?.totalBurn);
+    const target = data.objective?.kcal == null ? null : Number(data.objective.kcal);
+    consumedNode.textContent = Number.isFinite(consumed) ? formatKcal(consumed) : "—";
+    burnedNode.textContent = Number.isFinite(burned) ? formatKcal(burned) : "—";
+    targetNode.textContent = Number.isFinite(target) ? formatKcal(target) : "Pendiente";
+    if (Number.isFinite(target) && target > 0 && Number.isFinite(consumed)) {
+      const pct = Math.max(0, Math.min(100, Math.round((consumed / target) * 100)));
+      progress.value = pct;
+      progress.setAttribute("aria-label", pct + "% del objetivo diario de calorías consumido");
+      const remaining = target - consumed;
+      statusNode.textContent = remaining >= 0
+        ? formatKcal(remaining) + " restantes del objetivo"
+        : formatKcal(Math.abs(remaining)) + " por encima del objetivo";
+    } else {
+      progress.value = 0;
+      progress.setAttribute("aria-label", "Objetivo diario de calorías pendiente de definir");
+      statusNode.textContent = "Objetivo diario pendiente de definir en Nutrición";
+    }
+  } catch (error) {
+    consumedNode.textContent = "—";
+    burnedNode.textContent = "—";
+    targetNode.textContent = "—";
+    statusNode.textContent = "No se ha podido cargar Nutrición";
+    progress.value = 0;
+    console.warn("Home nutrition load failed", error);
+  }
+}
 function renderBudgetOverview() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
@@ -2566,6 +2640,11 @@ function bindInteractions() {
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
+  document.querySelector("#home-habits-card")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
+  document.querySelector("#home-nutrition-card")?.addEventListener("click", async () => {
+    await openHealthDetail();
+    document.querySelector('[data-health-tab="nutrition"]')?.click();
+  });
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });

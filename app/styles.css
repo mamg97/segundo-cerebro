@@ -5479,3 +5479,73 @@ html[data-theme="dark"] ::selection {
     margin-top: 20px;
   }
 }
+
+
+/* v0.15 — unified home cards + daily habits/nutrition overview */
+.daily-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 24px;
+}
+.daily-overview-card {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  padding: 24px 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(18, 35, 63, .045);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+.daily-overview-card:hover, .daily-overview-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--blue) 45%, var(--line));
+  box-shadow: 0 16px 36px rgba(18, 35, 63, .08);
+}
+.daily-card-heading { display:grid; grid-template-columns:38px minmax(0,1fr) auto; gap:11px; align-items:center; }
+.daily-card-heading > span:nth-child(2) { display:grid; gap:1px; }
+.daily-card-heading small, .daily-energy-grid small, .daily-card-status { color:var(--ink-soft); font-size:9px; }
+.daily-card-heading strong { font-size:13px; }
+.daily-card-icon { display:grid; width:38px; height:38px; place-items:center; border-radius:12px; background:var(--blue-soft); color:var(--blue); font-size:18px; font-weight:900; }
+.daily-card-icon.accent { background:color-mix(in srgb, var(--amber) 13%, transparent); color:var(--amber); }
+.daily-card-arrow { color:var(--ink-soft); font-size:17px; }
+.daily-card-main { display:flex; gap:14px; align-items:end; justify-content:space-between; }
+.daily-card-main > strong { font-size:clamp(28px,3vw,42px); letter-spacing:-.04em; }
+.daily-card-main > span { max-width:220px; color:var(--ink-soft); font-size:10px; text-align:right; }
+.daily-energy-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.daily-energy-grid > span { display:grid; gap:5px; min-width:0; padding:11px 12px; border-radius:12px; background:var(--paper); }
+.daily-energy-grid strong { overflow:hidden; font-size:14px; text-overflow:ellipsis; white-space:nowrap; }
+.daily-overview-card progress { width:100%; height:8px; overflow:hidden; border:0; border-radius:999px; appearance:none; -webkit-appearance:none; background:color-mix(in srgb,var(--line) 55%,transparent); }
+.daily-overview-card progress::-webkit-progress-bar { background:color-mix(in srgb,var(--line) 55%,transparent); border-radius:inherit; }
+.daily-overview-card progress::-webkit-progress-value { border-radius:inherit; background:linear-gradient(90deg,var(--blue),var(--amber)); }
+.daily-overview-card progress::-moz-progress-bar { border-radius:inherit; background:linear-gradient(90deg,var(--blue),var(--amber)); }
+.daily-card-status { margin-top:-8px; }
+.money-horizon > article, .event-budget-panel, .workbench > article, .important-events-panel {
+  border:1px solid var(--line) !important;
+  border-radius:var(--radius) !important;
+  background:var(--surface) !important;
+  box-shadow:0 10px 30px rgba(18,35,63,.045) !important;
+}
+html[data-theme="dark"] .daily-overview-card,
+html[data-theme="dark"] .money-horizon > article,
+html[data-theme="dark"] .event-budget-panel,
+html[data-theme="dark"] .workbench > article,
+html[data-theme="dark"] .important-events-panel {
+  border-color:rgba(95,168,255,.16) !important;
+  background:linear-gradient(145deg,rgba(16,33,58,.72),rgba(11,23,40,.96)) !important;
+  box-shadow:0 10px 30px rgba(0,0,0,.1) !important;
+}
+html[data-theme="dark"] .daily-energy-grid > span { background:rgba(7,16,29,.48); }
+html[data-theme="dark"] .daily-overview-card:hover, html[data-theme="dark"] .daily-overview-card:focus-visible {
+  border-color:rgba(95,168,255,.38) !important;
+  background:linear-gradient(145deg,rgba(18,42,75,.9),rgba(12,27,47,.98)) !important;
+}
+@media (max-width:760px) {
+  .daily-overview-grid { grid-template-columns:1fr; gap:12px; margin-top:18px; }
+  .daily-overview-card { padding:18px; }
+}
