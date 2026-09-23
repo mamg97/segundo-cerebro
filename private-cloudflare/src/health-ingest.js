@@ -102,7 +102,8 @@ function cleanWorkout(item) {
 
 function normalizePayload(body, path) {
   const legacy = path === "/v1/energy";
-  const activityRaw = legacy ? body : (body?.activity || {});
+  const hasNestedActivity = body?.activity && typeof body.activity === "object" && !Array.isArray(body.activity);
+  const activityRaw = legacy ? body : (hasNestedActivity ? body.activity : body);
   const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body?.date || activityRaw?.date || ""))
     ? String(body?.date || activityRaw.date)
     : madridDateKey();
@@ -135,6 +136,19 @@ function normalizePayload(body, path) {
   const bodySamples = Array.isArray(body?.bodySamples)
     ? body.bodySamples.map(cleanBodySample).filter(Boolean).slice(0, 100)
     : [];
+
+  const flatBodySpecs = [
+    ["bodyMass", body?.bodyMass, body?.bodyMassMeasuredAt, body?.bodyMassSource, "kg"],
+    ["bodyFatPercentage", body?.bodyFatPercentage, body?.bodyFatMeasuredAt, body?.bodyFatSource, "%"],
+    ["bodyMassIndex", body?.bodyMassIndex, body?.bodyMassIndexMeasuredAt, body?.bodyMassIndexSource, "count"],
+    ["leanBodyMass", body?.leanBodyMass, body?.leanBodyMassMeasuredAt, body?.leanBodyMassSource, "kg"]
+  ];
+
+  for (const [type, value, measuredAt, source, unit] of flatBodySpecs) {
+    if (value === null || value === undefined || value === "") continue;
+    const sample = cleanBodySample({ type, value, measuredAt, source, unit });
+    if (sample) bodySamples.push(sample);
+  }
 
   return { activity, bodySamples };
 }
