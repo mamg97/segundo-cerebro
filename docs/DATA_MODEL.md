@@ -158,3 +158,19 @@ El endpoint privado `GET /api/gym` combina plan + histórico + series de progres
 ## Nutrición
 
 La pestaña privada `Nutricion` está preparada para objetivos y pautas, pero permanece vacía hasta que el usuario defina información concreta. No se generan objetivos nutricionales por inferencia.
+
+
+### Estados operativos del gestor financiero
+
+El módulo Finance distingue semánticamente el estado de un movimiento o partida:
+
+| Estado | Uso |
+|---|---|
+| `PREVISTO` | Está en el modelo presupuestario, pero aún no existe obligación concreta ejecutada |
+| `COMPROMETIDO` | Existe una obligación o reserva conocida, aunque todavía no se haya cargado |
+| `EJECUTADO` | El movimiento real ya ocurrió |
+| `PROVISIONAL_CHAT` | Movimiento comunicado en conversación y todavía pendiente de contraste con la fuente oficial |
+| `RECONCILIADO_SHEET` | Movimiento o partida confirmado contra la hoja financiera |
+| `DERIVADO` | Valor calculado a partir de fuentes reconciliadas |
+
+El estado financiero mensual y el patrimonio invertido son dimensiones distintas. El primero describe flujo de caja y margen disponible; el segundo describe ahorro acumulado y valor de activos. La interfaz no debe sumar ambos como si fueran liquidez disponible.
