@@ -1586,8 +1586,7 @@ html[data-theme="dark"] .sidebar {
   background: rgba(13, 20, 32, .94);
   border-right-color: var(--line);
 }
-html[data-theme="dark"] .brand-mark { background: #dbe7fb; }
-html[data-theme="dark"] .brand-mark span { border-color: #132038; }
+html[data-theme="dark"] .brand-mark { background: transparent; }
 html[data-theme="dark"] .nav-link { color: #9eacc1; }
 html[data-theme="dark"] .nav-link:hover,
 html[data-theme="dark"] .nav-link:focus-visible { background: #111b29; color: var(--ink); }
