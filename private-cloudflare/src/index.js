@@ -1240,6 +1240,20 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/habits/manage") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        return await manageHabitQuest(request, env);
+      } catch (error) {
+        const code = String(error?.message || "");
+        console.warn("HabitQuest manage failed", code || error);
+        if (code === "HABIT_NAME_REQUIRED") {
+          return json({ ok: false, code }, 400);
+        }
+        return json({ ok: false, code: "HABITQUEST_MANAGE_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/gym") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       let gymPlan = [];
