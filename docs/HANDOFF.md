@@ -55,6 +55,8 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Deudas con resumen y detalle.
 - Patrimonio con evolución histórica.
 - Flujo mensual separado conceptualmente de inversiones/ahorro.
+- La categoría Luz abre un drilldown privado alimentado por `LuzHistorico`: importe/consumo mensual, métricas por día, comparativa interanual, última factura, cobro previsto, presupuesto/gasto/comprometido/saldo y alertas derivadas.
+- El drilldown de Luz se reconstruye desde la capa privada y no lee PDFs ni expone datos contractuales.
 - Contrato vigente: `agents/FINANCE.md`.
 
 ### Calendario
@@ -64,6 +66,14 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Vista semanal y eventos importantes.
 - Reglas privadas de alias y clasificación viven fuera de Git.
 - El horizonte ampliado permite detectar eventos relevantes futuros sin convertir la home en un calendario completo.
+
+### Gestor Eventos
+
+- Contrato vigente: `agents/EVENTS.md`.
+- Coordina logística de viajes, celebraciones y compromisos sin crear calendario ni contabilidad paralelos.
+- Calendar/iCloud conserva fechas y horarios; tickets, reservas, emails y documentos permanecen en sus fuentes propietarias.
+- Finanzas conserva presupuesto, provisiones y dinero libre.
+- Estados operativos del gestor: `CONFIRMADO`, `PROPUESTO`, `PENDIENTE`, `CERRADO`.
 
 ### Hábitos
 
@@ -226,11 +236,11 @@ Reglas:
 
 Validar los dominios privados recién ampliados sin mover sus fuentes de verdad:
 
-1. Cargar el estado inicial real de Gestor Padres únicamente mediante runtime/D1 privado y verificar listado, detalle, acciones y referencias.
-2. Confirmar en producción que la home solo proyecta el resumen minimizado de atención familiar.
-3. Verificar al día siguiente que la automatización de Apple Health de las 23:55 ejecutó `/v1/sync` en background.
-4. Poblar `MenuSemanal` cuando el gestor de Salud defina una planificación y crear un cliente OAuth propio de Segundo Cerebro.
-5. Después retomar la validación de HabitQuest en iPhone, iPad y Mac.
+1. Verificar en producción el drilldown de Luz contra `LuzHistorico`, incluidos gráficos, comparativa interanual y presupuesto de la categoría.
+2. Confirmar que una nueva fila futura de `LuzHistorico` aparece sin despliegue manual.
+3. Confirmar en producción que Gestor Padres y su resumen minimizado de home siguen operativos.
+4. Verificar la automatización diaria de Apple Health y completar el cliente OAuth propio de Segundo Cerebro.
+5. Después retomar la validación de HabitQuest y poblar `MenuSemanal` cuando corresponda.
 
 ## Archivos que debe leer el siguiente relevo
 
@@ -241,6 +251,7 @@ Validar los dominios privados recién ampliados sin mover sus fuentes de verdad:
 - `docs/PRIVACY.md`
 - `docs/DECISIONS.md`
 - `agents/FINANCE.md`
+- `agents/EVENTS.md`
 - `agents/HEALTH.md`
 - `agents/HABITS.md`
 - `private-cloudflare/README.md`
