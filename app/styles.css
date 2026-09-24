@@ -6135,3 +6135,181 @@ html[data-theme="dark"] .weekly-menu-day > header {
   color: var(--ink) !important;
   font-weight: 700;
 }
+
+
+/* v0.18 — health historical progress */
+.health-history-section {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.health-history-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.health-history-heading strong {
+  display: block;
+  font-size: 13px;
+}
+
+.health-history-heading p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.health-history-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.health-history-ranges button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.health-history-ranges button.active {
+  border-color: var(--blue);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--blue) 18%, var(--paper));
+}
+
+.health-history-quality {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.health-history-quality > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: var(--paper);
+}
+
+.health-history-quality strong {
+  font-size: 13px;
+}
+
+.health-history-quality small {
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.health-history-quality p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.health-history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.health-history-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+}
+
+.health-history-card header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.health-history-card header > div {
+  min-width: 0;
+}
+
+.health-history-card header strong,
+.health-history-card header small {
+  display: block;
+}
+
+.health-history-card header strong {
+  font-size: 9px;
+}
+
+.health-history-card header small {
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.health-history-card header > span {
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.health-history-chart {
+  display: block;
+  width: 100%;
+  height: 88px;
+  margin: 7px 0 5px;
+  overflow: visible;
+}
+
+.health-history-chart polyline {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.health-history-card footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.health-history-card footer b {
+  color: var(--ink);
+}
+
+html[data-theme="dark"] .health-history-quality > span,
+html[data-theme="dark"] .health-history-card,
+html[data-theme="dark"] .health-history-ranges button {
+  background: #101a28;
+}
+
+@media (max-width: 720px) {
+  .health-history-heading {
+    display: grid;
+  }
+
+  .health-history-quality,
+  .health-history-grid {
+    grid-template-columns: 1fr;
+  }
+}
