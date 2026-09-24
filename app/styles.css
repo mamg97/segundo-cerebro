@@ -6106,3 +6106,32 @@ html[data-theme="dark"] .weekly-menu-day > header {
     gap: 5px;
   }
 }
+
+
+/* protein-first nutrition planner */
+.nutrition-plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.nutrition-plan-items {
+  display: grid;
+  gap: 4px;
+  margin-top: 3px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+.nutrition-plan-items small {
+  margin-top: 0;
+}
+.nutrition-plan-items b {
+  color: var(--ink);
+  font-weight: 700;
+}
+.nutrition-plan-projection {
+  margin-top: auto !important;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+  color: var(--ink) !important;
+  font-weight: 700;
+}
