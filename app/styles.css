@@ -10842,3 +10842,671 @@ html[data-theme="light"] :is(
     font-size: 14px !important;
   }
 }
+
+
+/* v0.30.0 — Salud / Adherencia mensual */
+.adherence-shell {
+  display: grid;
+  gap: 16px;
+  width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.adherence-header {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.adherence-header > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.adherence-header small {
+  color: var(--blue);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.adherence-header > div:first-child > strong {
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.adherence-header p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.adherence-month-nav {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.adherence-month-nav > strong {
+  min-width: 150px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.adherence-month-nav button {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.adherence-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.adherence-summary-card {
+  display: grid;
+  gap: 4px;
+  min-height: 88px;
+  align-content: center;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.adherence-summary-card > span,
+.adherence-summary-card > small {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.adherence-summary-card > strong {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.adherence-summary-card.fulfilled > strong { color: var(--mint); }
+.adherence-summary-card.partial > strong { color: var(--amber); }
+.adherence-summary-card.failed > strong { color: var(--coral); }
+.adherence-summary-card.primary > strong { color: var(--blue); }
+
+.adherence-secondary-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.adherence-secondary-stats > span {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.adherence-secondary-stats small {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.adherence-secondary-stats strong {
+  font-size: 10px;
+}
+
+.adherence-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, .8fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.adherence-calendar-card,
+.adherence-day-detail {
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: var(--surface);
+}
+
+.adherence-calendar-card {
+  padding: 14px;
+}
+
+.adherence-weekday-head,
+.adherence-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.adherence-weekday-head {
+  margin-bottom: 7px;
+}
+
+.adherence-weekday-head > span {
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.adherence-weeks {
+  display: grid;
+  gap: 7px;
+}
+
+.adherence-week-label {
+  display: none;
+}
+
+.adherence-day {
+  display: grid;
+  gap: 6px;
+  min-height: 82px;
+  align-content: space-between;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
+}
+
+.adherence-day:hover,
+.adherence-day:focus-visible {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--blue) 34%, var(--line));
+}
+
+.adherence-day.empty {
+  min-height: 82px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.adherence-day.selected {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--blue) 48%, transparent);
+}
+
+.adherence-day.state-cumplido {
+  border-color: color-mix(in srgb, var(--mint) 32%, var(--line));
+  background: color-mix(in srgb, var(--mint) 9%, var(--surface));
+}
+
+.adherence-day.state-parcial {
+  border-color: color-mix(in srgb, var(--amber) 32%, var(--line));
+  background: color-mix(in srgb, var(--amber) 9%, var(--surface));
+}
+
+.adherence-day.state-no-cumplido {
+  border-color: color-mix(in srgb, var(--coral) 34%, var(--line));
+  background: color-mix(in srgb, var(--coral) 8%, var(--surface));
+}
+
+.adherence-day.state-sin-datos {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--ink-soft) 4%, var(--surface));
+}
+
+.adherence-day.state-futuro {
+  opacity: .42;
+}
+
+.adherence-day-top {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.adherence-day-top > strong {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.adherence-manual-badge {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--blue);
+  color: white;
+  font-size: 7px;
+}
+
+.adherence-day-state {
+  min-height: 20px;
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.adherence-mini {
+  display: flex;
+  gap: 4px;
+}
+
+.adherence-mini i,
+.adherence-legend i {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.adherence-mini i.pass { background: var(--mint); }
+.adherence-mini i.partial { background: var(--amber); }
+.adherence-mini i.fail { background: var(--coral); }
+.adherence-mini i.unknown { background: var(--line-strong); }
+
+.adherence-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+
+.adherence-legend > span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.adherence-legend i.fulfilled { background: var(--mint); }
+.adherence-legend i.partial { background: var(--amber); }
+.adherence-legend i.failed { background: var(--coral); }
+.adherence-legend i.nodata { background: var(--line-strong); }
+
+.adherence-day-detail {
+  position: sticky;
+  top: 10px;
+  display: grid;
+  gap: 13px;
+  min-height: 330px;
+  padding: 16px;
+}
+
+.adherence-detail-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.adherence-detail-head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.adherence-detail-head small {
+  color: var(--ink-soft);
+  font-size: 8px;
+  text-transform: capitalize;
+}
+
+.adherence-detail-head strong {
+  font-size: 17px;
+}
+
+.adherence-detail-head > span {
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.adherence-detail-head > span.state-cumplido { color: var(--mint); }
+.adherence-detail-head > span.state-parcial { color: var(--amber); }
+.adherence-detail-head > span.state-no-cumplido { color: var(--coral); }
+
+.adherence-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.adherence-detail-metric {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px;
+  border-radius: 11px;
+  background: var(--paper);
+}
+
+.adherence-detail-metric > span,
+.adherence-detail-metric > small {
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.adherence-detail-metric > strong {
+  font-size: 10px;
+}
+
+.adherence-detail-metric.metric-pass > strong { color: var(--mint); }
+.adherence-detail-metric.metric-partial > strong { color: var(--amber); }
+.adherence-detail-metric.metric-fail > strong { color: var(--coral); }
+
+.adherence-workout-note,
+.adherence-reasons {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.adherence-workout-note small,
+.adherence-reasons > small {
+  color: var(--blue);
+  font-size: 7px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.adherence-workout-note strong {
+  font-size: 9px;
+}
+
+.adherence-reasons ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 17px;
+  color: var(--ink-soft);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.adherence-reasons p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.adherence-detail-empty {
+  display: grid;
+  gap: 5px;
+  place-content: center;
+  min-height: 260px;
+  text-align: center;
+}
+
+.adherence-detail-empty strong { font-size: 12px; }
+.adherence-detail-empty p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.adherence-policy-note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+html[data-theme="dark"] :is(
+  .adherence-header,
+  .adherence-summary-card,
+  .adherence-calendar-card,
+  .adherence-day-detail
+) {
+  border-color: rgba(95,168,255,.16);
+  background: linear-gradient(145deg, rgba(16,33,58,.72), rgba(11,23,40,.96));
+}
+
+html[data-theme="light"] :is(
+  .adherence-header,
+  .adherence-summary-card,
+  .adherence-calendar-card,
+  .adherence-day-detail
+) {
+  border-color: rgba(47,107,255,.10);
+  background: linear-gradient(145deg, rgba(255,255,255,.99), rgba(247,250,254,.98));
+}
+
+@media (max-width: 980px) {
+  .adherence-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .adherence-main {
+    grid-template-columns: 1fr;
+  }
+
+  .adherence-day-detail {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .adherence-shell {
+    gap: 13px;
+  }
+
+  .adherence-header {
+    display: grid;
+    padding: 15px;
+  }
+
+  .adherence-header > div:first-child > strong {
+    font-size: 24px;
+  }
+
+  .adherence-header p {
+    font-size: 12px;
+  }
+
+  .adherence-month-nav {
+    justify-content: flex-start;
+  }
+
+  .adherence-month-nav > strong {
+    min-width: 136px;
+    font-size: 13px;
+  }
+
+  .adherence-month-nav button {
+    min-width: 38px;
+    height: 38px;
+    font-size: 12px;
+  }
+
+  .adherence-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .adherence-summary-card {
+    min-height: 92px;
+    padding: 12px;
+  }
+
+  .adherence-summary-card > span,
+  .adherence-summary-card > small {
+    font-size: 11px;
+  }
+
+  .adherence-summary-card > strong {
+    font-size: 27px;
+  }
+
+  .adherence-secondary-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .adherence-secondary-stats small {
+    font-size: 10px;
+  }
+
+  .adherence-secondary-stats strong {
+    font-size: 13px;
+  }
+
+  .adherence-calendar-card {
+    padding: 10px;
+  }
+
+  .adherence-weekday-head {
+    display: none;
+  }
+
+  .adherence-weeks {
+    gap: 10px;
+  }
+
+  .adherence-week {
+    display: grid;
+    gap: 7px;
+    padding: 9px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: var(--paper);
+  }
+
+  .adherence-week-label {
+    display: block;
+    color: var(--ink-soft);
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  .adherence-week-grid {
+    gap: 4px;
+  }
+
+  .adherence-day,
+  .adherence-day.empty {
+    min-height: 72px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .adherence-day-top > strong {
+    font-size: 17px;
+  }
+
+  .adherence-day-state {
+    min-height: 18px;
+    font-size: 7px;
+    line-height: 1.15;
+  }
+
+  .adherence-manual-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 6px;
+  }
+
+  .adherence-mini {
+    gap: 3px;
+  }
+
+  .adherence-mini i {
+    width: 6px;
+    height: 6px;
+  }
+
+  .adherence-legend > span {
+    font-size: 10px;
+  }
+
+  .adherence-day-detail {
+    scroll-margin-top: 12px;
+    padding: 14px;
+  }
+
+  .adherence-detail-head small {
+    font-size: 10px;
+  }
+
+  .adherence-detail-head strong {
+    font-size: 22px;
+  }
+
+  .adherence-detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .adherence-detail-metric > span,
+  .adherence-detail-metric > small {
+    font-size: 10px;
+  }
+
+  .adherence-detail-metric > strong {
+    font-size: 14px;
+  }
+
+  .adherence-workout-note small,
+  .adherence-reasons > small {
+    font-size: 9px;
+  }
+
+  .adherence-workout-note strong,
+  .adherence-reasons ul,
+  .adherence-reasons p {
+    font-size: 11px;
+  }
+
+  .adherence-policy-note {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .adherence-calendar-card {
+    padding-inline: 7px;
+  }
+
+  .adherence-week {
+    padding: 7px 5px;
+  }
+
+  .adherence-week-grid {
+    gap: 3px;
+  }
+
+  .adherence-day,
+  .adherence-day.empty {
+    min-height: 68px;
+    padding: 5px 4px;
+  }
+
+  .adherence-day-top > strong {
+    font-size: 16px;
+  }
+
+  .adherence-day-state {
+    font-size: 6.5px;
+  }
+}
