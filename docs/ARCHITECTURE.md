@@ -144,3 +144,21 @@ private-cloudflare/     Worker, API, build y scripts privados
 - Minimizar datos transportados y persistidos.
 - Añadir escritura solo donde aporta valor y puede reconciliarse.
 - La demo pública y la aplicación privada deben permanecer separadas.
+
+## Despensa privada
+
+La Despensa se integra como dominio nativo sin duplicar su fuente:
+
+```text
+SEGUNDO CEREBRO - DESPENSA (Google Sheet privado)
+        ↓ OAuth Google existente
+Cloudflare Worker
+        ├── /api/state → pantrySummary minimizado
+        └── /api/pantry → detalle bajo demanda
+        ↓
+Dashboard privado protegido por Access
+```
+
+El frontend no conoce credenciales ni accede a Google Sheets directamente. El Worker resuelve el Sheet canónico por título exacto en Drive; `PANTRY_SHEET_ID` queda disponible como fallback privado opcional. La caché de lectura es breve para que nuevas filas de inventario, precios o lista de compra aparezcan sin cambios de código.
+
+La demo pública de GitHub Pages no instancia el módulo Despensa ni contiene inventario real.
