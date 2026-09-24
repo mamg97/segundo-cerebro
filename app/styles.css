@@ -6313,3 +6313,186 @@ html[data-theme="dark"] .health-history-ranges button {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v0.19 — larger secondary workspaces on desktop */
+@media (min-width: 761px) {
+  .detail-dialog {
+    width: min(920px, calc(100vw - 48px));
+    max-height: 92vh;
+    padding: 30px 32px 34px;
+    box-sizing: border-box;
+  }
+
+  .detail-dialog:is(
+    .health-dialog,
+    .habits-dialog,
+    .budget-dialog,
+    .wealth-dialog,
+    .important-events-dialog
+  ) {
+    width: min(1460px, calc(100vw - 40px));
+    max-height: 92vh;
+  }
+
+  .health-dialog {
+    padding-inline: clamp(28px, 2.2vw, 38px);
+  }
+
+  .health-dialog h2 {
+    font-size: 34px;
+  }
+
+  .health-dialog .health-tabs {
+    margin-bottom: 22px;
+  }
+
+  .health-dialog .health-tabs button {
+    padding: 9px 16px;
+    font-size: 12px;
+  }
+
+  .health-dialog .health-dashboard-status {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .health-dialog .health-dashboard-status > span {
+    padding: 13px 14px;
+  }
+
+  .health-dialog .health-dashboard-status small {
+    font-size: 9px;
+  }
+
+  .health-dialog .health-dashboard-status strong {
+    font-size: 12px;
+  }
+
+  .health-dialog .health-recomp-grid {
+    gap: 12px;
+  }
+
+  .health-dialog .health-recomp-card {
+    padding: 17px;
+  }
+
+  .health-dialog .health-recomp-card > header > span {
+    font-size: 15px;
+  }
+
+  .health-dialog .health-recomp-card > header > strong {
+    font-size: 10px;
+  }
+
+  .health-dialog .health-recomp-kpis {
+    gap: 9px;
+  }
+
+  .health-dialog .health-recomp-kpis > div,
+  .health-dialog .health-energy-strip > span {
+    padding: 11px 12px;
+  }
+
+  .health-dialog .health-recomp-kpis small,
+  .health-dialog .health-target-row small,
+  .health-dialog .health-benchmark-list small,
+  .health-dialog .health-card-footnote,
+  .health-dialog .health-objective-notes p {
+    font-size: 9px;
+  }
+
+  .health-dialog .health-recomp-kpis strong {
+    font-size: 15px;
+  }
+
+  .health-dialog .health-target-row strong,
+  .health-dialog .health-benchmark-list strong {
+    font-size: 10px;
+  }
+
+  .health-dialog .health-target-row {
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 1fr);
+  }
+
+  .health-dialog .health-energy-strip strong {
+    font-size: 12px;
+  }
+
+  .health-dialog .health-history-section {
+    margin-top: 18px;
+    padding: 17px;
+  }
+
+  .health-dialog .health-history-heading strong {
+    font-size: 15px;
+  }
+
+  .health-dialog .health-history-heading p,
+  .health-dialog .health-history-quality p {
+    font-size: 9px;
+  }
+
+  .health-dialog .health-history-quality strong {
+    font-size: 15px;
+  }
+
+  .health-dialog .health-history-quality small,
+  .health-dialog .health-history-card header small,
+  .health-dialog .health-history-card footer {
+    font-size: 8px;
+  }
+
+  .health-dialog .health-history-card {
+    padding: 15px;
+  }
+
+  .health-dialog .health-history-card header strong {
+    font-size: 10px;
+  }
+
+  .health-dialog .health-history-card header > span {
+    font-size: 14px;
+  }
+
+  .health-dialog .health-history-chart {
+    height: 108px;
+  }
+
+  .health-dialog .nutrition-kpis article,
+  .health-dialog .nutrition-status-grid article,
+  .health-dialog .nutrition-targets-section,
+  .health-dialog .nutrition-suggestions,
+  .health-dialog .gym-overview > div,
+  .health-dialog .gym-session-form,
+  .health-dialog .gym-progress-card {
+    padding-block: 15px;
+  }
+}
+
+@media (min-width: 1500px) {
+  .detail-dialog:is(
+    .health-dialog,
+    .habits-dialog,
+    .budget-dialog,
+    .wealth-dialog,
+    .important-events-dialog
+  ) {
+    width: min(1540px, calc(100vw - 56px));
+  }
+}
+
+@media (max-width: 760px) {
+  .detail-dialog,
+  .detail-dialog:is(
+    .health-dialog,
+    .habits-dialog,
+    .budget-dialog,
+    .wealth-dialog,
+    .important-events-dialog
+  ) {
+    width: calc(100% - 16px);
+    max-height: 94vh;
+    padding: 20px 14px 24px;
+  }
+}
