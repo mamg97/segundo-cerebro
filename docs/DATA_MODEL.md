@@ -26,7 +26,11 @@ Sensibilidades admitidas: `normal`, `personal`, `confidencial`, `muy_confidencia
 
 ### AREA
 
-Ámbito estable de la vida. Campos adicionales: `slug`, `summary`, `tone`, `health`, `module`.
+Ámbito estable de la vida o dominio principal. Campos adicionales: `slug`, `summary`, `tone`, `module` y, cuando exista una semántica definida, indicadores derivados.
+
+`AREA` alimenta la navegación lateral. No deben modelarse como áreas las entidades transversales `OPEN_LOOP`, `GOAL` o `DECISION`.
+
+El campo histórico `health` puede seguir existiendo en snapshots antiguos por compatibilidad, pero no se presenta como puntuación 0–100 si no existe una definición homogénea entre dominios.
 
 ### PROJECT
 
@@ -34,7 +38,7 @@ Resultado acotado con varias acciones. Campos: `areaId`, `goalIds`, `progress`, 
 
 ### OPEN_LOOP
 
-Asunto que requiere atención o seguimiento.
+Asunto que requiere atención o seguimiento. Es una entidad transversal y se presenta principalmente en `Próximos movimientos`; no constituye un área de navegación.
 
 | Campo | Uso |
 |---|---|
@@ -52,6 +56,8 @@ Caso de referencia ficticio: “Recoger el anillo” en Pareja → Matrimonio.
 ### GOAL
 
 Dirección deseada y medible. Campos: `areaId`, `horizon`, `metric`, `target`.
+
+Un objetivo se presenta dentro de su área responsable. Los objetivos transversales del Coordinador pueden aparecer junto a `Próximos movimientos`; no crean un dominio `Objetivos` por sí mismos.
 
 ### DECISION
 
