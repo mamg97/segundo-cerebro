@@ -40,6 +40,64 @@ Do not treat Apple Watch active calories alone as total daily expenditure.
 
 Do not invent calorie deficits, weight-loss targets or macro goals. `Objetivos` stays empty until the user explicitly defines or asks to calculate a target.
 
+## GESTOR GYM Y NUTRI — continuity protocol
+
+This conversation is the operational manager for training, nutrition and the interpretation of Apple Health / Zepp signals. If the chat reaches its context limit or another ChatGPT/Codex session takes over, the new session must recover state in this order:
+
+1. Read `agents/HEALTH.md` and the current `docs/HANDOFF.md`.
+2. Read the live private targets from `Objetivos`, `ObjetivosActividad` and `ObjetivosProgreso`; never copy personal target values into Git.
+3. Read current nutrition from `Registro`, reusable foods/recipes from the private Health Sheet and planned meals from `MenuSemanal`.
+4. Read gym plan from the private source and completed gym sessions from D1.
+5. Read automatic Apple Health activity and body data from D1; use Sheet body measurements only as historical/manual fallback.
+6. Continue the same measurement and decision rules below instead of rebuilding a new plan from conversation memory.
+
+### Measurement conventions
+
+- Scale/body composition: prefer the morning measurement after using the bathroom, before eating/drinking or training, and under comparable clothing/conditions.
+- Weight decisions use a 7-day moving average, not one isolated measurement.
+- Waist: measure at the same anatomical point (operationally, around navel level), relaxed, under comparable morning conditions, about once per week. Store the real value only in the private source.
+- Consumer bioimpedance metrics are secondary trend signals; do not overrule weight, waist, training performance and adherence with one BIA reading.
+- Strength progression should record actual load, actual reps and an approximate RIR when available. A prescribed load is not proof that the target reps were completed.
+
+### Goal hierarchy
+
+Do not reduce the system to a single hard daily calorie maximum and a hard Apple Watch calorie-burn minimum. The operational hierarchy is:
+
+1. **Nutrition intake:** use the active calorie target/range from `Objetivos`, evaluated mainly as adherence and short moving averages. Avoid treating one day slightly above/below target as failure.
+2. **Protein:** treat the active protein target as a daily minimum/priority when feasible; use the private target rather than a hard-coded Git value.
+3. **Fat/carbohydrate/fibre:** use the live macro/fibre targets as supporting constraints, with protein and total energy taking priority unless the plan explicitly says otherwise.
+4. **Activity:** use steps, strength-session adherence and weekly exercise minutes from `ObjetivosActividad` as controllable floors/targets.
+5. **Apple Watch energy:** treat active/resting/total kcal primarily as observed output and trend context, not as a calorie target to chase and never as permission to eat calories back 1:1.
+6. **Body recomposition outcome:** evaluate the joint trend of weight average, waist, body-composition trend, gym performance and adherence over the configured review window.
+
+A personalized active-kcal floor may be added later only after enough real Apple Health history exists to establish a stable baseline. Until then, do not invent one.
+
+### Menu-building workflow
+
+Build the menu progressively from the user's real foods, recipes, Mercadona purchases and confirmed portions rather than generating a detached generic diet.
+
+For each planned day:
+1. Start from the active calorie and protein targets.
+2. Allocate protein across the actual meals the user is likely to eat.
+3. Fill the remaining energy with the user's preferred carbohydrates, fats, vegetables and recipes while respecting the live targets.
+4. Reuse entries already present in `Comidas` / `Recetas`; label estimates clearly.
+5. Write future meals to `MenuSemanal` / `Registro` as `planificado` only. Convert to `consumido` only after confirmation.
+6. Prefer a small library of repeatable meals with known portions/macros, then expand variety gradually.
+7. Adjust menus from 7–14 day outcome trends and adherence, not from one high/low calorie day or one Apple Watch reading.
+
+### Progress review
+
+At each configured review interval, evaluate together:
+- current and previous 7-day average weight;
+- weekly waist trend when available;
+- average calorie/protein adherence;
+- steps and exercise/strength-session adherence;
+- exercise performance (load + reps + RIR/quality where available);
+- sleep/recovery context when available;
+- BIA metrics only as secondary trend evidence.
+
+If weight/waist are moving in the intended direction while strength is stable or improving, keep the plan unless adherence/recovery indicates a problem. If trends stall or move too quickly for multiple weeks, adjust intake or activity modestly rather than making large day-to-day corrections.
+
 ## Privacy
 
 No real nutrition history, calorie totals, body metrics, HealthKit data or health identifiers in public Git. Only generic logic and documentation may be versioned.
