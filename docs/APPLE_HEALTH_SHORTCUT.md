@@ -2,22 +2,24 @@
 
 ## Estado
 
-Integración validada end-to-end el 2026-09-23.
+Integración v2 validada end-to-end el 2026-09-24.
 
 Flujo confirmado:
 
 ```text
-Apple Watch → Apple Health → Atajo iPhone
+Apple Watch / Zepp Life → Apple Health → Atajo iPhone
 → segundo-cerebro-health-ingest
 → Service Binding
 → segundo-cerebro
-→ D1 health_energy_daily
-→ Salud / Nutrición
+→ D1 health_energy_daily + health_body_samples
+→ Salud / Resumen / Nutrición
 ```
 
-La prueba real devolvió `ok: true` y la UI mostró el gasto recibido con origen `apple_health`.
+La prueba real devolvió `201` en `/api/health/sync` y la API privada confirmó actividad, energía y composición corporal persistidas correctamente. El flujo unificado `/v1/sync` es ya el flujo operativo recomendado.
 
 ## Atajo operativo
+
+El Atajo debe usar el endpoint unificado `/v1/sync`. `/v1/energy` queda solo como compatibilidad.
 
 Nombre recomendado:
 
@@ -43,10 +45,10 @@ Repetir el bloque anterior con:
 
 ### Envío
 
-Usar la URL privada generada por `npm run setup:health-ingest`:
+Usar la URL privada del Worker de ingestión:
 
 ```text
-https://segundo-cerebro-health-ingest.mamg97.workers.dev/v1/energy
+https://segundo-cerebro-health-ingest.mamg97.workers.dev/v1/sync
 ```
 
 Añadir `Obtener contenido de URL`:
@@ -54,9 +56,9 @@ Añadir `Obtener contenido de URL`:
 - Método: `POST`.
 - Cabecera `Authorization`: `Bearer <TOKEN_PRIVADO>`.
 - Cuerpo: `JSON`.
-- Campos:
-  - `activeKcal` → variable `activeKcal`.
-  - `restingKcal` → variable `restingKcal`.
+- Actividad: `activeKcal`, `restingKcal`, `steps`, `exerciseMinutes`.
+- Composición corporal: listas paralelas `bodyMassValues` + `bodyMassMeasuredAts`, `bodyFatPercentageValues` + `bodyFatPercentageMeasuredAts`, `bodyMassIndexValues` + `bodyMassIndexMeasuredAts`, `leanBodyMassValues` + `leanBodyMassMeasuredAts`.
+- Fuente común actual: `Zepp Life`.
 
 No hace falta enviar `date`: el Worker usa la fecha local de Madrid.
 
@@ -108,7 +110,7 @@ La integración se considera operativa porque se verificó:
 
 ## Bridge v2 — actividad + composición corporal
 
-Estado: backend preparado; configuración del iPhone pendiente de auditoría de fuentes Zepp/Zepp Life.
+Estado: operativo y validado end-to-end el 2026-09-24. Zepp Life está confirmado como fuente para peso, grasa corporal, IMC y masa magra en el Atajo actual.
 
 El puente v2 amplía el mismo Worker y el mismo secreto. No se crea una segunda integración.
 
@@ -153,16 +155,11 @@ Tipos corporales admitidos por el backend:
 
 No incluir un tipo en el Atajo hasta confirmar que existen muestras reales en Apple Health.
 
-### Auditoría previa obligatoria
+### Auditoría de referencias en Atajos
 
-Para cada tipo de dato corporal:
-1. abrir Salud;
-2. abrir el tipo concreto;
-3. entrar en `Fuentes de datos y acceso`;
-4. confirmar si Zepp, Zepp Life u otra fuente aparece como contribuyente;
-5. revisar alguna muestra real y su fecha.
+Cada acción `Obtener Valor de Muestras médicas` y `Obtener Fecha de inicio de Muestras médicas` debe apuntar al bloque `Buscar muestras médicas` de su propia métrica. Al duplicar bloques, Atajos puede conservar la referencia al bloque anterior.
 
-Apple indica que en `Fuentes de datos y acceso` solo aparecen fuentes que contribuyen a ese tipo de dato.
+Se detectó y corrigió un caso real: `bodyFatPercentageValues` seguía apuntando al bloque `Weight`, por lo que enviaba el peso como porcentaje de grasa. La comprobación fiable es tocar la variable `Muestras médicas` → `Mostrar acción` y verificar que lleva al bloque correcto.
 
 ### Idempotencia
 
@@ -184,3 +181,12 @@ Ejecutar varias veces el Atajo no duplica registros.
 - Nota de compatibilidad con Atajos: las listas corporales pueden enviarse como arrays JSON o como texto con un elemento por línea. Esto permite usar directamente variables mágicas de listas en campos de tipo Texto cuando el editor JSON de Atajos no admite enlazar una lista dinámica.
 
 - Simplificación de composición corporal: el endpoint `/v1/sync` acepta `bodySource` como fuente común para `bodyMass`, `bodyFatPercentage`, `bodyMassIndex` y `leanBodyMass`, evitando repetir `Zepp Life` cuatro veces en Atajos.
+
+
+## Corrección de pruebas erróneas
+
+No es necesario borrar manualmente las muestras corporales erróneas generadas durante la configuración. `health_body_samples` es único por `metric_type + measured_at + source` y el backend usa `ON CONFLICT ... DO UPDATE`, por lo que una sincronización posterior correcta reemplaza el valor anterior para la misma medición en lugar de duplicarlo.
+
+## Deuda técnica OAuth
+
+El acceso Google usado por Salud se renovó temporalmente con el cliente OAuth existente de LITOS. Funciona, pero no es la arquitectura final. Crear un cliente OAuth propio de Segundo Cerebro y publicarlo fuera de modo Testing queda como tarea pendiente para eliminar esa dependencia y evitar caducidades de refresh token asociadas al entorno de prueba.
