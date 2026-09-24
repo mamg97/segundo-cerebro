@@ -85,9 +85,42 @@ function inferCategory(product = {}) {
   return "Otros";
 }
 
+async function resolvePantryIdFromPrivateRegistry(env, token) {
+  if (!env.FINANCE_SHEET_ID) return null;
+
+  const range = encodeURIComponent("IntegracionesPrivadas!A1:B20");
+  const endpoint =
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+    encodeURIComponent(String(env.FINANCE_SHEET_ID).trim()) +
+    "/values/" +
+    range +
+    "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
+
+  try {
+    const response = await fetch(endpoint, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (!response.ok) return null;
+
+    const rows = (await response.json())?.values || [];
+    const entry = rows.find((row) => String(row?.[0] || "").trim() === "PANTRY_SHEET_ID");
+    const value = String(entry?.[1] || "").trim();
+    return /^[A-Za-z0-9_-]{20,}$/.test(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 async function resolveSpreadsheetId(env, token) {
   if (env.PANTRY_SHEET_ID) return String(env.PANTRY_SHEET_ID).trim();
   if (cache.spreadsheetId && cache.spreadsheetIdExpiresAt > Date.now()) return cache.spreadsheetId;
+
+  const privateRegistryId = await resolvePantryIdFromPrivateRegistry(env, token);
+  if (privateRegistryId) {
+    cache.spreadsheetId = privateRegistryId;
+    cache.spreadsheetIdExpiresAt = Date.now() + 10 * 60_000;
+    return privateRegistryId;
+  }
 
   const params = new URLSearchParams({
     q: "name = 'SEGUNDO CEREBRO - DESPENSA' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",

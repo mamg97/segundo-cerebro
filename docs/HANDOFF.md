@@ -272,3 +272,5 @@ Validar los dominios privados recién ampliados sin mover sus fuentes de verdad:
 - `docs/APPLE_HEALTH_SHORTCUT.md`
 
 No reconstruir el proyecto desde conversaciones antiguas salvo que se investigue una decisión histórica concreta.
+
+- Despensa: si no existe `PANTRY_SHEET_ID` como secret, el Worker consulta primero el registro privado `IntegracionesPrivadas` y solo después intenta Drive search. La pestaña es oculta y contiene únicamente referencias de infraestructura; los datos reales siguen en el Sheet canónico de Despensa.
