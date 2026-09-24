@@ -303,6 +303,14 @@ Reglas:
 - Las relaciones permiten conectar proyectos con dominios sin duplicar datos; por ejemplo, sistemas de inversión pueden relacionarse con Finanzas/Patrimonio sin copiar contabilidad.
 - Assets frontend: `v0.29.0`.
 
+## Tipografía móvil Home v0.29.1
+
+- Ajuste exclusivamente tipográfico; no cambia estructura, orden, grids ni tamaño de las tarjetas.
+- En móvil se aumentan claramente títulos, cifras principales, etiquetas KPI, textos secundarios y CTA de Home.
+- Afecta a Hábitos, Nutrición, Despensa, Objetos, Finanzas, Patrimonio, Deudas, Próximos movimientos y Agenda.
+- Se mantiene paridad visual light/dark mediante los mismos componentes y tokens.
+- Asset CSS: `v0.29.1`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:
