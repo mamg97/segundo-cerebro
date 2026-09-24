@@ -37,6 +37,8 @@ jobs:
 
       - run: node --check ../app/projects.js
 
+      - run: node --check ../app/adherence.js
+
       - run: node --check src/index.js
 
       - run: node --check src/pantry.js
@@ -44,6 +46,8 @@ jobs:
       - run: node --check src/objects.js
 
       - run: node --check src/projects.js
+
+      - run: node --check src/adherence.js
 
       - run: node --check src/icloud-calendar.js
 
