@@ -261,16 +261,29 @@ Reglas:
 - Modo claro, oscuro, responsive y Modo demo usan los componentes/tokens comunes.
 - Assets frontend previstos: `v0.26.0`.
 
+## Navegación y Home v0.27.0
+
+- La barra lateral es la navegación canónica de dominios.
+- Se elimina de Home la parrilla duplicada `Áreas de tu vida` y la vista técnica `Sistema`.
+- `Open Loops` deja de ser un área: sus asuntos viven en `Próximos movimientos`.
+- `Objetivos` deja de ser un área: los objetivos se muestran dentro del dominio responsable; los objetivos transversales aparecen de forma compacta junto al foco operativo.
+- Se dejan de mostrar puntuaciones 0–100 de área sin semántica homogénea.
+- Finanzas abre directamente el presupuesto; Agenda lleva a la semana; Patrimonio/Salud/Hábitos/Despensa/Objetos/Padres abren sus vistas especializadas.
+- Carrera, Pareja/Familia y Proyectos muestran en su detalle proyectos, pendientes y objetivos relacionados.
+- Los indicadores del menú lateral se normalizan al sistema visual azul/naranja; se elimina la dependencia del mosaico multicolor.
+- El icono visual de OBJETOS pasa a `◈` para no duplicar el de Pareja.
+- Se elimina del frontend el código muerto de `renderAreas`, `renderSystemMap` y `setView`.
+- Assets frontend: `v0.27.0`.
+
 ## Próxima acción exacta
 
-Validar los dominios privados recién ampliados sin mover sus fuentes de verdad:
+Validar en producción la navegación simplificada y los dominios privados:
 
-1. Verificar en producción la nueva vista Despensa: Home, filtros, ficha de producto, lista de compra y actualización automática desde el Sheet.
-2. Verificar en producción el drilldown de Luz contra `LuzHistorico`, incluidos gráficos, comparativa interanual y presupuesto de la categoría.
-3. Confirmar que una nueva fila futura de `LuzHistorico` aparece sin despliegue manual.
-4. Confirmar en producción que Gestor Padres y su resumen minimizado de home siguen operativos.
-5. Verificar la automatización diaria de Apple Health y completar el cliente OAuth propio de Segundo Cerebro.
-6. Después retomar la validación de HabitQuest y poblar `MenuSemanal` cuando corresponda.
+1. Confirmar que ya no aparece `Áreas de tu vida / Sistema` al final de Home.
+2. Confirmar que `Open Loops` y `Objetivos` ya no aparecen en el menú lateral.
+3. Probar navegación: Finanzas → presupuesto, Agenda → semana, Patrimonio/Salud/Hábitos/Despensa/Objetos/Padres → detalle.
+4. Verificar que Carrera, Pareja/Familia y Proyectos muestran sus pendientes/proyectos/objetivos asociados.
+5. Continuar después con validaciones funcionales pendientes de Despensa, Luz, Apple Health y HabitQuest.
 
 ## Archivos que debe leer el siguiente relevo
 
