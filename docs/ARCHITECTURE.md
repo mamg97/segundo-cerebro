@@ -53,6 +53,15 @@ D1 mantiene instantáneas privadas y determinadas entidades operativas propias d
 
 La fuente financiera externa continúa siendo la autoridad de importes y presupuesto. Una hoja privada derivada normaliza el estado que consume el Worker. El dashboard muestra presupuesto, compromisos, deudas, patrimonio y conciliación sin convertir Git ni D1 en una contabilidad paralela.
 
+### Electricity history
+
+La categoría financiera Luz usa dos capas con responsabilidades distintas:
+
+- presupuesto/gasto/comprometido/saldo: fuente financiera oficial;
+- histórico de facturas y consumo: `LuzHistorico`, capa privada derivada.
+
+El Worker lee `LuzHistorico` directamente desde la fuente privada, normaliza únicamente campos analíticos y expone `/api/finance/electricity`. La UI nunca procesa PDFs ni datos contractuales. El endpoint se reconstruye desde la fuente, por lo que nuevas filas se reflejan sin despliegues de frontend.
+
 ### Calendar
 
 iCloud Calendar se consulta mediante CalDAV. Esta integración es deliberadamente de solo lectura: el Worker usa operaciones de consulta y no modifica calendarios.
