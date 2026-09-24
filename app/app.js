@@ -1871,72 +1871,214 @@ function renderNutritionMacroTargets(consumed, objective) {
 function renderNutritionSuggestions(foods, consumed, objective) {
   if (!objective || !Array.isArray(foods) || !foods.length) return "";
 
+  const targets = {
+    kcal: Number(objective.kcal || 0),
+    protein: Number(objective.protein || 0),
+    carbs: Number(objective.carbs || 0),
+    fat: Number(objective.fat || 0)
+  };
+  const current = {
+    kcal: Number(consumed?.kcal || 0),
+    protein: Number(consumed?.protein || 0),
+    carbs: Number(consumed?.carbs || 0),
+    fat: Number(consumed?.fat || 0)
+  };
   const deficits = {
-    protein: Math.max(0, Number(objective.protein || 0) - Number(consumed?.protein || 0)),
-    carbs: Math.max(0, Number(objective.carbs || 0) - Number(consumed?.carbs || 0)),
-    fat: Math.max(0, Number(objective.fat || 0) - Number(consumed?.fat || 0)),
-    kcal: Math.max(0, Number(objective.kcal || 0) - Number(consumed?.kcal || 0))
+    kcal: Math.max(0, targets.kcal - current.kcal),
+    protein: Math.max(0, targets.protein - current.protein),
+    carbs: Math.max(0, targets.carbs - current.carbs),
+    fat: Math.max(0, targets.fat - current.fat)
   };
 
-  if (deficits.protein <= 0 && deficits.carbs <= 0 && deficits.fat <= 0) {
+  if (!(targets.kcal > 0) || deficits.kcal <= 0) {
     return `
       <section class="nutrition-suggestions">
         <div class="health-section-heading">
-          <div><strong>Qué comer ahora</strong><p>Los objetivos principales de macros ya están cubiertos.</p></div>
+          <div>
+            <strong>Plan para completar hoy</strong>
+            <p>El presupuesto calórico del día ya está cubierto. No se añaden calorías por el gasto del Apple Watch.</p>
+          </div>
         </div>
       </section>`;
   }
 
-  const scored = foods
+  if (deficits.protein <= 0) {
+    return `
+      <section class="nutrition-suggestions">
+        <div class="health-section-heading">
+          <div>
+            <strong>Plan para completar hoy</strong>
+            <p>La prioridad de proteína ya está cubierta. El margen restante es ${escapeHtml(formatKcal(deficits.kcal))}; hidratos y grasas son objetivos secundarios, no una obligación de rellenarlos.</p>
+          </div>
+        </div>
+      </section>`;
+  }
+
+  const baseFoods = foods
     .map((food) => {
+      const kcal = Number(food.kcal);
       const protein = Number(food.protein);
       const carbs = Number(food.carbs);
       const fat = Number(food.fat);
-      const kcal = Number(food.kcal);
-      if (![protein, carbs, fat, kcal].some(Number.isFinite)) return null;
-      const p = Number.isFinite(protein) ? protein : 0;
-      const c = Number.isFinite(carbs) ? carbs : 0;
-      const f = Number.isFinite(fat) ? fat : 0;
-      const k = Number.isFinite(kcal) ? kcal : 0;
-      const coverage =
-        (deficits.protein > 0 ? Math.min(1, p / deficits.protein) * 1.45 : 0) +
-        (deficits.carbs > 0 ? Math.min(1, c / deficits.carbs) : 0) +
-        (deficits.fat > 0 ? Math.min(1, f / deficits.fat) * 0.75 : 0);
-      const kcalPenalty = deficits.kcal > 0 && k > deficits.kcal ? Math.min(0.8, (k - deficits.kcal) / Math.max(deficits.kcal, 1)) : 0;
-      return { food, score: coverage - kcalPenalty };
+      const serving = Number(food.serving);
+      if (![kcal, protein, carbs, fat, serving].every(Number.isFinite) || kcal <= 0 || serving <= 0 || protein <= 0) return null;
+      return {
+        food,
+        kcal,
+        protein,
+        carbs,
+        fat,
+        serving,
+        proteinDensity: (protein / kcal) * 100
+      };
     })
-    .filter(Boolean)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    .filter(Boolean);
 
-  if (!scored.length) return "";
+  if (!baseFoods.length) {
+    return `
+      <section class="nutrition-suggestions">
+        <div class="health-section-heading">
+          <div>
+            <strong>Plan para completar hoy</strong>
+            <p>Faltan ${Math.round(deficits.protein)} g de proteína, pero todavía no hay suficientes alimentos con macros completos en la base para construir un plan fiable.</p>
+          </div>
+        </div>
+      </section>`;
+  }
 
-  const deficitLabels = [
-    deficits.protein > 0 ? `${Math.round(deficits.protein)} g proteína` : null,
-    deficits.carbs > 0 ? `${Math.round(deficits.carbs)} g hidratos` : null,
-    deficits.fat > 0 ? `${Math.round(deficits.fat)} g grasa` : null
-  ].filter(Boolean).join(" · ");
+  const portionsByFood = baseFoods.map((item) => {
+    const unit = String(item.food.unit || "").toLowerCase();
+    const factors = unit.includes("ración") || unit.includes("racion")
+      ? [0.5, 1]
+      : item.proteinDensity >= 15
+        ? [0.5, 1, 1.5, 2]
+        : [0.5, 1, 1.5];
+
+    return factors.map((factor) => ({
+      id: item.food.id,
+      name: item.food.name,
+      unit: item.food.unit || "",
+      quantity: item.serving * factor,
+      kcal: item.kcal * factor,
+      protein: item.protein * factor,
+      carbs: item.carbs * factor,
+      fat: item.fat * factor,
+      proteinDensity: item.proteinDensity
+    })).filter((portion) => portion.kcal <= deficits.kcal + 0.01);
+  }).filter((rows) => rows.length);
+
+  const plans = [];
+  const addPlan = (items) => {
+    if (!items.length) return;
+    const total = items.reduce((acc, item) => {
+      acc.kcal += item.kcal;
+      acc.protein += item.protein;
+      acc.carbs += item.carbs;
+      acc.fat += item.fat;
+      return acc;
+    }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
+
+    if (total.kcal > deficits.kcal + 0.01) return;
+
+    const proteinGap = Math.max(0, deficits.protein - total.protein);
+    const proteinExcess = Math.max(0, total.protein - deficits.protein);
+    const carbGap = Math.max(0, deficits.carbs - total.carbs);
+    const fatGap = Math.max(0, deficits.fat - total.fat);
+    const kcalUnused = Math.max(0, deficits.kcal - total.kcal);
+    const reachesProtein = proteinGap <= 0.5;
+    const quality = items.reduce((sum, item) => sum + Math.min(25, item.proteinDensity), 0) / items.length;
+
+    const score = reachesProtein
+      ? 100000
+        - proteinExcess * 8
+        - kcalUnused * 0.08
+        - carbGap * 0.08
+        - fatGap * 0.12
+        + quality * 2
+        - items.length * 3
+      : total.protein * 250
+        - proteinGap * 60
+        - total.kcal * 0.03
+        + quality * 2
+        - items.length * 2;
+
+    const key = items.map((item) => `${item.id}:${item.quantity}`).sort().join("|");
+    plans.push({ items, total, reachesProtein, proteinGap, score, key });
+  };
+
+  for (let a = 0; a < portionsByFood.length; a += 1) {
+    for (const pa of portionsByFood[a]) addPlan([pa]);
+    for (let b = a + 1; b < portionsByFood.length; b += 1) {
+      for (const pa of portionsByFood[a]) for (const pb of portionsByFood[b]) addPlan([pa, pb]);
+      for (let c = b + 1; c < portionsByFood.length; c += 1) {
+        for (const pa of portionsByFood[a]) {
+          for (const pb of portionsByFood[b]) {
+            for (const pc of portionsByFood[c]) addPlan([pa, pb, pc]);
+          }
+        }
+        for (let d = c + 1; d < portionsByFood.length; d += 1) {
+          for (const pa of portionsByFood[a]) {
+            for (const pb of portionsByFood[b]) {
+              for (const pc of portionsByFood[c]) {
+                for (const pd of portionsByFood[d]) addPlan([pa, pb, pc, pd]);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const unique = [];
+  const seen = new Set();
+  for (const plan of plans.sort((a, b) => b.score - a.score)) {
+    if (seen.has(plan.key)) continue;
+    seen.add(plan.key);
+    unique.push(plan);
+    if (unique.length >= 3) break;
+  }
+
+  if (!unique.length) return "";
+
+  const canReachProtein = unique.some((plan) => plan.reachesProtein);
+  const formatQty = (value, unit) => {
+    const rounded = Math.abs(value - Math.round(value)) < 0.01 ? Math.round(value) : Number(value.toFixed(1));
+    return `${rounded.toLocaleString("es-ES")} ${unit || "ración"}`;
+  };
+  const labels = ["Plan principal", "Alternativa 1", "Alternativa 2"];
 
   return `
     <section class="nutrition-suggestions">
       <div class="health-section-heading">
         <div>
-          <strong>Qué comer ahora</strong>
-          <p>Opciones de tu base que mejor encajan con lo que falta: ${escapeHtml(deficitLabels)}.</p>
+          <strong>Plan para completar hoy</strong>
+          <p>${canReachProtein
+            ? `Prioridad: alcanzar los ${Math.round(targets.protein)} g de proteína sin superar las ${Math.round(targets.kcal)} kcal del día.`
+            : `Con porciones razonables de la base actual no se alcanza todavía la proteína objetivo sin salir del margen calórico; se muestra la mejor aproximación.`}</p>
         </div>
       </div>
       <div class="nutrition-suggestion-grid">
-        ${scored.map(({ food }) => `
-          <article>
-            <strong>${escapeHtml(food.name)}</strong>
-            <span>${food.kcal == null ? "—" : formatKcal(food.kcal)}</span>
-            <small>P ${food.protein == null ? "—" : formatMacro(food.protein)} · C ${food.carbs == null ? "—" : formatMacro(food.carbs)} · G ${food.fat == null ? "—" : formatMacro(food.fat)}</small>
-          </article>`).join("")}
+        ${unique.map((plan, index) => {
+          const projectedKcal = current.kcal + plan.total.kcal;
+          const projectedProtein = current.protein + plan.total.protein;
+          const remainingProtein = Math.max(0, targets.protein - projectedProtein);
+          return `
+            <article class="nutrition-plan-card">
+              <strong>${escapeHtml(labels[index] || `Opción ${index + 1}`)}</strong>
+              <span>${formatKcal(plan.total.kcal)} · P ${formatMacro(plan.total.protein)}</span>
+              <div class="nutrition-plan-items">
+                ${plan.items.map((item) => `
+                  <small><b>${escapeHtml(item.name)}</b> · ${escapeHtml(formatQty(item.quantity, item.unit))} · ${formatKcal(item.kcal)} · P ${formatMacro(item.protein)}</small>`).join("")}
+              </div>
+              <small class="nutrition-plan-projection">
+                Proyección del día: ${formatKcal(projectedKcal)} · P ${formatMacro(projectedProtein)}${remainingProtein > 0.5 ? ` · faltan ${formatMacro(remainingProtein)} de proteína` : " · proteína cubierta"}
+              </small>
+            </article>`;
+        }).join("")}
       </div>
-      <p class="nutrition-suggestion-note">Sugerencias orientativas basadas en la base guardada; no sustituyen el menú planificado.</p>
+      <p class="nutrition-suggestion-note">El optimizador trata la proteína como restricción principal y las kcal como techo. Hidratos y grasas afinan la solución, pero no se fuerzan. El gasto del Apple Watch no amplía automáticamente el presupuesto de comida.</p>
     </section>`;
 }
-
 function renderMenuPanel(data) {
   const panel = document.querySelector("#menu-panel");
   if (!panel) return;
