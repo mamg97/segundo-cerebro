@@ -107,6 +107,14 @@ At each configured review interval, evaluate together:
 
 If weight/waist are moving in the intended direction while strength is stable or improving, keep the plan unless adherence/recovery indicates a problem. If trends stall or move too quickly for multiple weeks, adjust intake or activity modestly rather than making large day-to-day corrections.
 
+## Private historical summary bridge
+
+Raw Apple Health backfill remains canonical in private D1 and is not duplicated into Git. To let authorized ChatGPT health-manager sessions analyze trends without Cloudflare Access cookies, the private Health Sheet contains a derived tab `HistoricoResumen`.
+
+Whenever `GET /api/health/history` is read for a supported range (30/90/180/365/all), the Worker overwrites the corresponding fixed summary row with D1-derived aggregates: coverage-quality counts, comparable activity averages, body-sample count, latest standard body metrics, 7-day/previous-7-day weight averages, weekly weight change and latest waist from the private Sheet.
+
+This is a derived access surface, not a new source of truth. Raw daily activity/body samples continue to live in D1. Decisions must use comparable `full`/`live` days and must not treat `partial` or `phone_only` days as equivalent Watch coverage.
+
 ## Privacy
 
 No real nutrition history, calorie totals, body metrics, HealthKit data or health identifiers in public Git. Only generic logic and documentation may be versioned.
