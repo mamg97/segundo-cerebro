@@ -1,7 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
-import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.24.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.24.0";
+import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.25.0";
 
 let state = mockState;
 let areaById = new Map();
