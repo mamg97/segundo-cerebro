@@ -219,13 +219,13 @@ Reglas:
 
 ## Próxima acción exacta
 
-Cerrar la nueva capa de Salud y después volver a HabitQuest:
+Validar los dominios privados recién ampliados sin mover sus fuentes de verdad:
 
-1. Verificar en producción el nuevo Resumen de recomposición y la comparación de macros.
-2. Verificar al día siguiente que la automatización de las 23:55 ejecutó `/v1/sync` en background.
-3. Registrar una primera cintura para activar su evolución y poblar `MenuSemanal` cuando el gestor de Salud defina una planificación.
-4. Crear un cliente OAuth propio de Segundo Cerebro y sustituir la dependencia temporal del OAuth de LITOS.
-5. Después retomar la validación de absorción de HabitQuest en iPhone, iPad y Mac.
+1. Cargar el estado inicial real de Gestor Padres únicamente mediante runtime/D1 privado y verificar listado, detalle, acciones y referencias.
+2. Confirmar en producción que la home solo proyecta el resumen minimizado de atención familiar.
+3. Verificar al día siguiente que la automatización de Apple Health de las 23:55 ejecutó `/v1/sync` en background.
+4. Poblar `MenuSemanal` cuando el gestor de Salud defina una planificación y crear un cliente OAuth propio de Segundo Cerebro.
+5. Después retomar la validación de HabitQuest en iPhone, iPad y Mac.
 
 ## Archivos que debe leer el siguiente relevo
 
