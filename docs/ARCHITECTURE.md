@@ -218,3 +218,29 @@ Puede:
 No ejecuta todavía razonamiento multiagente ni modificaciones complejas de fuentes. Para planificación, decisiones o escritura en dominios se usan los gestores especializados.
 
 En móvil, el `thinking-orb` se oculta: es decorativo y nunca debe competir con el input o el CTA.
+
+
+## Registro privado de proyectos
+
+PROYECTOS usa una fuente privada canónica independiente:
+
+```text
+SEGUNDO CEREBRO - PROYECTOS
+        ↓ OAuth Google existente
+Cloudflare Worker
+        ├── /api/state → projectsSummary minimizado
+        └── /api/projects → catálogo + documentación + relaciones
+        ↓
+Dashboard privado
+```
+
+La aplicación pública no contiene el catálogo real. Esto evita filtrar en Git nombres de proyectos sensibles, repositorios privados o relaciones personales/profesionales.
+
+El registro no sustituye la documentación propietaria de cada proyecto. Mantiene:
+- identidad y estado;
+- enlaces a repo/web/documentación;
+- resumen y siguiente acción;
+- descripción estructurada suficiente para que otros gestores entiendan el proyecto;
+- relaciones con otros proyectos y dominios.
+
+La UI de Proyectos se carga bajo demanda desde `/api/projects`.
