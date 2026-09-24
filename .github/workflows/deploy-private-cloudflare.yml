@@ -49,10 +49,12 @@ jobs:
           node --check ../app/pantry.js
           node --check ../app/objects.js
           node --check ../app/projects.js
+          node --check ../app/adherence.js
           node --check src/index.js
           node --check src/pantry.js
           node --check src/objects.js
           node --check src/projects.js
+          node --check src/adherence.js
           node --check src/icloud-calendar.js
           node --check src/health-ingest.js
 

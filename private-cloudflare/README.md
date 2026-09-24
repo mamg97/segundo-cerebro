@@ -415,3 +415,19 @@ Resolución de fuente:
 Pestañas: `Proyectos`, `Documentacion`, `Relaciones` y `README`.
 
 `/api/state` recibe solo `projectsSummary`. El catálogo, nombres, enlaces y documentación se cargan exclusivamente bajo demanda. GitHub Pages no recibe esos datos.
+
+
+### Adherencia mensual de Salud
+
+Endpoint:
+- `GET /api/health/adherence?month=YYYY-MM`
+
+Combina:
+- `Registro`, `Objetivos`, `ObjetivosActividad`, `MenuSemanal` y `AdherenciaManual` del Sheet de Salud;
+- `health_energy_daily` de D1 con fallback de `EnergiaDiaria`;
+- `gym_sessions`;
+- HabitQuest cuando está configurado.
+
+La respuesta contiene resumen mensual, clasificación por día, dimensiones y motivos. No persiste el resultado calculado.
+
+La caché del motor es breve y se invalida naturalmente por mes/fecha.

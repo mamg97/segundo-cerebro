@@ -132,3 +132,14 @@ El catálogo real de proyectos es privado.
 - `GET /api/projects` requiere la aplicación privada protegida por Cloudflare Access.
 - Los enlaces privados se transportan desde la fuente privada y no se hardcodean.
 - Un proyecto marcado `read_only` puede ser mostrado/documentado, pero este dominio no debe modificar su repositorio o sistema propietario.
+
+
+## Adherencia de Salud
+
+La clasificación diaria es información privada de Salud.
+
+- No incluir días reales, kcal, proteína, pasos, workouts, hábitos o estados de cumplimiento en Git.
+- Git contiene únicamente lógica genérica, UI y contratos.
+- `GET /api/health/adherence` solo está disponible en la aplicación privada protegida.
+- La pestaña `AdherenciaManual` permanece en el Sheet privado de Salud.
+- La demo pública no debe simular datos que puedan confundirse con el histórico real del usuario.

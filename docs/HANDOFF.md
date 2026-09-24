@@ -311,6 +311,21 @@ Reglas:
 - Se mantiene paridad visual light/dark mediante los mismos componentes y tokens.
 - Asset CSS: `v0.29.1`.
 
+## Salud · Adherencia mensual v0.30.0
+
+- Nueva pestaña privada `AdherenciaManual` en `SEGUNDO CEREBRO - SALUD`.
+- Nueva vista `Salud → Adherencia`.
+- Nuevo endpoint `GET /api/health/adherence?month=YYYY-MM`.
+- Motor centralizado en `private-cloudflare/src/adherence.js`.
+- Fuentes combinadas: Registro/Objetivos/ObjetivosActividad/MenuSemanal, Apple Health/D1, gym D1 y HabitQuest.
+- Estados diarios: `CUMPLIDO`, `PARCIAL`, `NO_CUMPLIDO`, `SIN_DATOS`; días futuros quedan fuera del cálculo.
+- Una fila válida de `AdherenciaManual` prevalece sobre la heurística.
+- Resumen: cumplidos, parciales, no cumplidos, sin datos, adherencia %, cobertura, racha actual/mejor y comparación laborables/fin de semana.
+- El detalle diario explica kcal, proteína, pasos, gym, hábitos y motivos.
+- Mobile: semanas presentadas como tarjetas legibles manteniendo visión mensual; desktop usa calendario + panel de detalle.
+- Light/dark comparten la misma semántica visual.
+- Assets frontend: `v0.30.0`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:

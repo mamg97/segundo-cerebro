@@ -2,6 +2,7 @@ import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-ca
 import { fetchPantrySummary, hasPantryGoogleConfig } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
+import { fetchHealthAdherence } from "./adherence.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -3080,6 +3081,22 @@ export default {
       catch (error) {
         console.warn("Nutrition energy write failed", String(error?.message || error));
         return json({ ok: false, code: "NUTRITION_ENERGY_WRITE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/health/adherence") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const month = url.searchParams.get("month") || undefined;
+        if (month && !/^\d{4}-\d{2}$/.test(month)) {
+          return json({ ok: false, code: "INVALID_ADHERENCE_MONTH" }, 400);
+        }
+        const adherence = await fetchHealthAdherence(env, getGoogleAccessToken, { month });
+        if (!adherence.value) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+        return json({ ok: true, status: adherence.status, ...adherence.value });
+      } catch (error) {
+        console.warn("Health adherence read failed", String(error?.message || error));
+        return json({ ok: false, code: "HEALTH_ADHERENCE_READ_FAILED" }, 502);
       }
     }
 

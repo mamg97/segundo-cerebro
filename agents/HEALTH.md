@@ -223,3 +223,67 @@ In particular:
 
 
 - The unified ingest also accepts parallel list fields from Shortcuts (`bodyMassValues` + `bodyMassMeasuredAts` + `bodyMassSources`, and equivalents for fat %, BMI and lean mass) so every same-day sample can be preserved without one HTTP request per sample.
+
+
+## Adherencia mensual
+
+Salud dispone de una vista derivada mensual de adherencia. No crea una base paralela.
+
+Fuentes:
+- `Registro` + `Objetivos` para kcal/proteína;
+- `ObjetivosActividad` para pasos;
+- Apple Health / D1 para pasos, ejercicio y workouts;
+- D1 `gym_sessions` para sesiones de gimnasio realmente registradas;
+- HabitQuest para hábitos programados/completados;
+- `MenuSemanal.sesion_gym` para obligación diaria explícita de entrenamiento cuando exista;
+- `AdherenciaManual` para correcciones explícitas del gestor/usuario.
+
+Pestaña privada nueva:
+- `AdherenciaManual`
+  - `fecha`
+  - `estado`: `CUMPLIDO | PARCIAL | NO_CUMPLIDO | SIN_DATOS`
+  - `motivo`
+  - `fuente`
+  - `updated_at`
+
+### Precedencia
+
+Una clasificación manual válida prevalece sobre la heurística automática. Esto permite registrar correctamente expresiones explícitas del usuario como “hoy no he cumplido”, evitando que un día incompleto se confunda con “sin datos”.
+
+### Clasificación automática
+
+La lógica está centralizada en `private-cloudflare/src/adherence.js`.
+
+Principios:
+- kcal y proteína solo se juzgan cuando el registro del día tiene cobertura suficiente;
+- pasos se comparan primero contra el suelo activo configurado y después contra el objetivo como contexto;
+- no se penaliza “no ir al gym” si no existe una sesión diaria explícitamente programada;
+- HabitQuest participa cuando hay hábitos programados ese día;
+- hacen falta al menos dos dimensiones juzgables para clasificar automáticamente;
+- `SIN_DATOS` no penaliza el porcentaje del mes;
+- los días futuros no entran en métricas;
+- `CUMPLIDO` no exige perfección absoluta: puede tolerar una desviación pequeña sin fallos claros;
+- `PARCIAL` representa cumplimiento mixto;
+- `NO_CUMPLIDO` requiere desviación clara o varias dimensiones fallidas.
+
+La UI debe explicar siempre los motivos y mostrar las dimensiones disponibles.
+
+### Métrica mensual
+
+Porcentaje de adherencia:
+- cumplido = 1;
+- parcial = 0,5;
+- no cumplido = 0;
+- sin datos = excluido.
+
+También se calculan:
+- cobertura de datos;
+- racha actual de días cumplidos;
+- mejor racha;
+- adherencia laborable;
+- adherencia de fin de semana.
+
+Endpoint privado:
+- `GET /api/health/adherence?month=YYYY-MM`
+
+La vista vive en `Salud → Adherencia`.

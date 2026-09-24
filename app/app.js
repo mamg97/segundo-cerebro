@@ -4,6 +4,7 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.29.0";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.29.0";
+import { loadHealthAdherence } from "./adherence.js?v=0.30.0";
 
 let state = mockState;
 let areaById = new Map();
@@ -1016,6 +1017,7 @@ function openHealthDetail() {
       <button type="button" data-health-tab="medical">Médicos</button>
       <button type="button" data-health-tab="gym">Gimnasio</button>
       <button type="button" data-health-tab="nutrition">Nutrición</button>
+      <button type="button" data-health-tab="adherence">Adherencia</button>
       <button type="button" data-health-tab="menu">Menú</button>
     </div>
     <div class="health-tab-panels">
@@ -1030,6 +1032,9 @@ function openHealthDetail() {
       </section>
       <section class="health-tab-panel" data-health-panel="nutrition">
         <div id="nutrition-panel"><p class="health-empty">Cargando nutrición…</p></div>
+      </section>
+      <section class="health-tab-panel" data-health-panel="adherence">
+        <div id="adherence-panel"><p class="health-empty">Abre la vista para calcular la adherencia mensual.</p></div>
       </section>
       <section class="health-tab-panel" data-health-panel="menu">
         <div id="menu-panel"><p class="health-empty">Cargando menú semanal…</p></div>
@@ -2143,6 +2148,7 @@ function bindHealthTabs() {
       const tab = button.dataset.healthTab;
       document.querySelectorAll("[data-health-tab]").forEach((item) => item.classList.toggle("active", item === button));
       document.querySelectorAll("[data-health-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.healthPanel === tab));
+      if (tab === "adherence") void loadHealthAdherence();
     });
   });
 }
@@ -4000,6 +4006,13 @@ async function handleQuickCommand(query, result) {
   if (/\b(objetos|armario|looks|kits)\b/.test(normalized)) {
     openObjectsDetail();
     openResult("<strong>Objetos abierto.</strong> Incluye inventario, armario, looks, kits y listas.");
+    return true;
+  }
+
+  if (/\b(adherencia|cumplimiento|racha salud)\b/.test(normalized)) {
+    openHealthDetail();
+    document.querySelector('[data-health-tab="adherence"]')?.click();
+    openResult("<strong>Adherencia abierta.</strong> Ahí puedes revisar el mes y el motivo de cada día.");
     return true;
   }
 
