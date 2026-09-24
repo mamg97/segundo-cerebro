@@ -70,6 +70,16 @@ Salud agrupa Médicos, Gimnasio y Nutrición.
 - Nutrición usa un Sheet privado para comidas, registro y objetivos.
 - El gasto energético automático se almacena en D1 y puede entrar desde Apple Health mediante el Worker de ingesta dedicado.
 
+### Parents / Gestor Padres
+
+Gestor Padres es un dominio privado separado de la salud personal del usuario. D1 es la fuente operativa para `family_cases`, acciones y referencias mínimas cuando no existe una fuente externa propietaria.
+
+- La UI separa `mother`, `father` y `shared`.
+- Calendario, Finanzas y LITOS conservan la autoridad de sus respectivos datos; Gestor Padres solo guarda referencias e impacto operativo.
+- Los documentos completos permanecen en su fuente autorizada. D1 conserva metadatos y referencias.
+- La home general recibe únicamente un resumen mínimo de atención (conteos y próximo vencimiento), nunca el detalle médico o patrimonial.
+- El módulo se deriva exclusivamente en `private-remote`; la demo pública no lo instancia.
+
 ## Escritura selectiva
 
 La aplicación privada ya no es globalmente de solo lectura. Los permisos se definen por dominio:
