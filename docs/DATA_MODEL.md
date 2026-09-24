@@ -296,3 +296,10 @@ Los proveedores admitidos incluyen referencias a Calendario, Finanzas, LITOS, em
 ### Resumen para portada
 
 `familySummary` contiene únicamente conteos de casos abiertos/atención/espera/decisión y el próximo vencimiento. No transporta títulos, diagnósticos, importes ni detalle patrimonial a la portada general.
+
+
+### Fuente canónica de despensa
+
+El detalle de compras domésticas (producto, precio, ticket, inventario y lista de compra) vive en una fuente privada separada: `SEGUNDO CEREBRO - DESPENSA`.
+
+El dominio Finance referencia esa fuente para agregados y previsiones, pero no duplica observaciones de precio ni líneas de ticket. Esta separación evita inconsistencias entre presupuesto financiero, nutrición e inventario doméstico.
