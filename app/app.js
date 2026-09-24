@@ -3061,14 +3061,6 @@ function bindInteractions() {
 
   document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   document.querySelector("#ask-form").addEventListener("submit", handleQuery);
-  document.querySelector("#system-orb")?.addEventListener("click", showSystemPulse);
-  document.querySelector("#system-orb")?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      showSystemPulse();
-    }
-  });
-
   const menuButton = document.querySelector("#menu-button");
   menuButton.addEventListener("click", () => {
     const open = document.body.classList.toggle("nav-open");
