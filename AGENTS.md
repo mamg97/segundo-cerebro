@@ -46,6 +46,7 @@ Antes de trabajar con datos de un dominio, leer su contrato específico en `agen
 - Hábitos → `agents/HABITS.md`
 - Despensa → `agents/PANTRY.md`
 - Objetos / armario / looks / kits / equipaje → `agents/OBJECTS.md`
+- Proyectos / repositorios / documentación / relaciones entre proyectos → `agents/PROJECTS.md`
 
 Si un gestor necesita objetos, ropa, equipaje, kits o listas contextuales, debe usar el contrato de OBJETOS y la fuente canónica `SEGUNDO CEREBRO - OBJETOS`; no crear tablas propias ni copiar inventario.
 
