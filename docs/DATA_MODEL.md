@@ -356,7 +356,7 @@ Proyección de Home (`pantrySummary`):
 
 ## Objetos y armario
 
-Fuente canónica prevista: `SEGUNDO CEREBRO - OBJETOS`. Mientras no exista, el estado se representa como desconocido/pendiente y no como inventario vacío confirmado.
+Fuente canónica: `SEGUNDO CEREBRO - OBJETOS`, creada el 2026-09-24 con contrato v0.1. Si deja de estar disponible, el estado se representa como desconocido/pendiente y no como inventario vacío confirmado.
 
 Entidades lógicas:
 - `Object`: objeto maestro con identidad estable, categoría, ubicación, estado, condición, compra, valor, garantía, referencias y metadatos.

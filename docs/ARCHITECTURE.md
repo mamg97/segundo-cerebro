@@ -173,7 +173,7 @@ Para evitar depender de Drive search en runtime, el Worker puede resolver identi
 OBJETOS se integra como dominio privado de primer nivel sin persistencia paralela:
 
 ```text
-SEGUNDO CEREBRO - OBJETOS (Google Sheet privado; pendiente)
+SEGUNDO CEREBRO - OBJETOS (Google Sheet privado)
         ↓ OAuth Google existente
 Cloudflare Worker
         ├── /api/state → objectsSummary minimizado
@@ -184,6 +184,6 @@ Dashboard privado protegido por Access
 
 GESTOR OBJETOS Y ARMARIO es el propietario funcional. ORGANIZADOR presenta los datos. Otros gestores consultan el mismo dominio mediante referencias estructuradas.
 
-La fuente aún no existe; el Worker representa este estado como `source-pending` y no crea D1, mocks personales ni una hoja alternativa. Cuando se cree, se resolverá mediante `OBJECTS_SHEET_ID`, el registro privado de integraciones o búsqueda exacta por título.
+La fuente fue creada el 2026-09-24 y está registrada en el registro privado de integraciones. El Worker la resuelve mediante `OBJECTS_SHEET_ID`, el registro privado o búsqueda exacta por título. `source-pending` se conserva únicamente como degradación segura si la fuente deja de estar disponible.
 
 Las listas contextuales pueden enlazar `evento_ref` y `lista_id`: GESTOR EVENTOS aporta contexto y conserva la referencia; el inventario y la lista material permanecen en OBJETOS.

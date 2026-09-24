@@ -16,20 +16,13 @@ No mantiene una memoria paralela dentro de la web. ORGANIZADOR / WEB GENERAL pre
 
 ## Fuente de verdad
 
-Fuente privada prevista:
+Fuente privada canónica:
 
 `SEGUNDO CEREBRO - OBJETOS`
 
-Estado actual: **pendiente de creación**.
+Estado actual: **creada y registrada en la capa privada**.
 
-Hasta que exista:
-- la UI puede estar implementada;
-- `GET /api/objects` devuelve `source-pending`;
-- no se inventan objetos;
-- no se crea D1 ni otra hoja como fuente alternativa;
-- no se versiona ningún identificador privado.
-
-Cuando exista, el Worker la resolverá por:
+El Sheet contiene el contrato v0.1 y todavía no contiene objetos personales inventados. El Worker la resuelve por:
 1. `OBJECTS_SHEET_ID` privado, si está configurado;
 2. registro privado `IntegracionesPrivadas`;
 3. búsqueda exacta por título en Drive.
@@ -191,7 +184,7 @@ Integra navegación, resumen y presentación. No es propietario del inventario.
 
 - `/api/state` puede transportar únicamente `objectsSummary`.
 - `GET /api/objects` entrega el detalle estructurado bajo demanda.
-- Mientras la fuente no exista, el endpoint responde correctamente con `status=source-pending`, arrays vacíos y `source.available=false`.
+- Si en el futuro la fuente no pudiera resolverse, el endpoint degrada a `status=source-pending`, arrays vacíos y `source.available=false`; con la fuente actual debe responder como conectada.
 
 ## Privacidad
 
