@@ -57,6 +57,15 @@ function cleanIso(value) {
   return Number.isFinite(date.getTime()) ? date.toISOString() : null;
 }
 
+function listFromShortcut(value) {
+  if (Array.isArray(value)) return value;
+  if (value === null || value === undefined || value === "") return [];
+  return String(value)
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 const BODY_TYPES = new Set([
   "bodyMass",
   "bodyFatPercentage",
@@ -158,9 +167,9 @@ function normalizePayload(body, path) {
   ];
 
   for (const [type, valuesRaw, measuredRaw, sourcesRaw, sourceFallbackRaw, unit] of listSpecs) {
-    const values = Array.isArray(valuesRaw) ? valuesRaw : [];
-    const measured = Array.isArray(measuredRaw) ? measuredRaw : [];
-    const sources = Array.isArray(sourcesRaw) ? sourcesRaw : [];
+    const values = listFromShortcut(valuesRaw);
+    const measured = listFromShortcut(measuredRaw);
+    const sources = listFromShortcut(sourcesRaw);
     const sourceFallback = String(sourceFallbackRaw || "apple_health").trim().slice(0, 120) || "apple_health";
     const length = Math.min(values.length, measured.length, 100);
     for (let index = 0; index < length; index += 1) {
