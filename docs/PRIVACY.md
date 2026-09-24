@@ -119,3 +119,16 @@ Si se detecta un secreto o dato real en Git: detener la publicación, revocar cr
 - El frontend nunca recibe credenciales de Google.
 - Los documentos completos permanecen en su fuente propietaria; el inventario guarda como máximo referencias.
 - La ausencia de fuente se representa como `source-pending`; no se transforma en ceros ni en datos ficticios.
+
+
+## Proyectos
+
+El catálogo real de proyectos es privado.
+
+- No versionar en Git el listado real completo, especialmente proyectos sensibles, repositorios privados o relaciones personales/profesionales.
+- Git contiene únicamente el contrato, adaptador y componentes de UI.
+- La fuente canónica es `SEGUNDO CEREBRO - PROYECTOS`.
+- `/api/state` solo recibe un resumen numérico.
+- `GET /api/projects` requiere la aplicación privada protegida por Cloudflare Access.
+- Los enlaces privados se transportan desde la fuente privada y no se hardcodean.
+- Un proyecto marcado `read_only` puede ser mostrado/documentado, pero este dominio no debe modificar su repositorio o sistema propietario.
