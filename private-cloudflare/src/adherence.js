@@ -65,9 +65,8 @@ function sumConsumed(rows) {
       acc.carbs += numberOrNull(row.carbohidratos_g) || 0;
       acc.fat += numberOrNull(row.grasas_g) || 0;
       acc.count += 1;
-      acc.moments.add(String(row.momento || "Otro"));
       return acc;
-    }, { kcal: 0, protein: 0, carbs: 0, fat: 0, count: 0, moments: new Set() });
+    }, { kcal: 0, protein: 0, carbs: 0, fat: 0, count: 0 });
 }
 
 function effectiveRow(rows, date, dateField) {
@@ -180,13 +179,13 @@ function evaluateDay(input) {
     if (state === "fail") reasons.push("Actividad diaria baja");
   }
 
-  const workoutCount = Math.max(Number(energy && energy.workoutCount || 0), gymSessions.length);
+  const gymSessionCount = gymSessions.length;
   if (gymPlanned) {
-    const state = workoutCount > 0 ? "pass" : "fail";
-    dimensions.push(dim("gym", "Entreno", state, workoutCount, 1, gymPlanned));
+    const state = gymSessionCount > 0 ? "pass" : "fail";
+    dimensions.push(dim("gym", "Entreno", state, gymSessionCount, 1, gymPlanned));
     if (state === "fail") reasons.push("Falta entrenamiento en día previsto");
-  } else if (workoutCount > 0) {
-    dimensions.push(dim("gym", "Entreno", "pass", workoutCount, null, "Entreno realizado sin obligación diaria explícita"));
+  } else if (gymSessionCount > 0) {
+    dimensions.push(dim("gym", "Entreno", "pass", gymSessionCount, null, "Sesión de gimnasio registrada"));
   } else {
     dimensions.push(dim("gym", "Entreno", "ignored", 0, null, "No había sesión diaria explícitamente programada"));
   }
@@ -471,7 +470,16 @@ export async function fetchHealthAdherence(env, getGoogleAccessToken, options) {
 
   const today = /^\d{4}-\d{2}-\d{2}$/.test(String(options.today || ""))
     ? String(options.today)
-    : new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    : (function () {
+        const parts = new Intl.DateTimeFormat("en-GB", {
+          timeZone: "Europe/Madrid",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).formatToParts(new Date());
+        const map = Object.fromEntries(parts.map(function (part) { return [part.type, part.value]; }));
+        return map.year + "-" + map.month + "-" + map.day;
+      })();
   const month = /^\d{4}-\d{2}$/.test(String(options.month || "")) ? String(options.month) : today.slice(0, 7);
   const bounds = monthBounds(month);
   if (!bounds) throw new Error("INVALID_ADHERENCE_MONTH");
