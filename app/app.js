@@ -712,6 +712,7 @@ async function openHealthDetail() {
       <button type="button" data-health-tab="medical">Médicos</button>
       <button type="button" data-health-tab="gym">Gimnasio</button>
       <button type="button" data-health-tab="nutrition">Nutrición</button>
+      <button type="button" data-health-tab="menu">Menú</button>
     </div>
     <div class="health-tab-panels">
       <section class="health-tab-panel active" data-health-panel="overview">
@@ -725,6 +726,9 @@ async function openHealthDetail() {
       </section>
       <section class="health-tab-panel" data-health-panel="nutrition">
         <div id="nutrition-panel"><p class="health-empty">Cargando nutrición…</p></div>
+      </section>
+      <section class="health-tab-panel" data-health-panel="menu">
+        <div id="menu-panel"><p class="health-empty">Cargando menú semanal…</p></div>
       </section>
     </div>`;
 
@@ -830,7 +834,9 @@ async function loadNutritionPanel(dateKey) {
       cache: "no-store"
     });
     if (!response.ok) throw new Error(`NUTRITION_${response.status}`);
-    renderNutritionPanel(await response.json());
+    const payload = await response.json();
+    renderNutritionPanel(payload);
+    renderMenuPanel(payload);
   } catch (error) {
     if (panel) {
       panel.innerHTML = `
