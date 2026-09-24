@@ -33,9 +33,13 @@ jobs:
 
       - run: node --check ../app/pantry.js
 
+      - run: node --check ../app/objects.js
+
       - run: node --check src/index.js
 
       - run: node --check src/pantry.js
+
+      - run: node --check src/objects.js
 
       - run: node --check src/icloud-calendar.js
 
