@@ -159,11 +159,12 @@ function normalizePayload(body, path) {
     if (sample) bodySamples.push(sample);
   }
 
+  const genericBodySource = String(body?.bodySource || "").trim().slice(0, 120);
   const listSpecs = [
-    ["bodyMass", body?.bodyMassValues, body?.bodyMassMeasuredAts, body?.bodyMassSources, body?.bodyMassSource, "kg"],
-    ["bodyFatPercentage", body?.bodyFatPercentageValues, body?.bodyFatPercentageMeasuredAts, body?.bodyFatPercentageSources, body?.bodyFatPercentageSource, "%"],
-    ["bodyMassIndex", body?.bodyMassIndexValues, body?.bodyMassIndexMeasuredAts, body?.bodyMassIndexSources, body?.bodyMassIndexSource, "count"],
-    ["leanBodyMass", body?.leanBodyMassValues, body?.leanBodyMassMeasuredAts, body?.leanBodyMassSources, body?.leanBodyMassSource, "kg"]
+    ["bodyMass", body?.bodyMassValues, body?.bodyMassMeasuredAts, body?.bodyMassSources, body?.bodyMassSource || genericBodySource, "kg"],
+    ["bodyFatPercentage", body?.bodyFatPercentageValues, body?.bodyFatPercentageMeasuredAts, body?.bodyFatPercentageSources, body?.bodyFatPercentageSource || genericBodySource, "%"],
+    ["bodyMassIndex", body?.bodyMassIndexValues, body?.bodyMassIndexMeasuredAts, body?.bodyMassIndexSources, body?.bodyMassIndexSource || genericBodySource, "count"],
+    ["leanBodyMass", body?.leanBodyMassValues, body?.leanBodyMassMeasuredAts, body?.leanBodyMassSources, body?.leanBodyMassSource || genericBodySource, "kg"]
   ];
 
   for (const [type, valuesRaw, measuredRaw, sourcesRaw, sourceFallbackRaw, unit] of listSpecs) {
