@@ -312,3 +312,18 @@ Los proveedores admitidos incluyen referencias a Calendario, Finanzas, LITOS, em
 El detalle de compras domésticas (producto, precio, ticket, inventario y lista de compra) vive en una fuente privada separada: `SEGUNDO CEREBRO - DESPENSA`.
 
 El dominio Finance referencia esa fuente para agregados y previsiones, pero no duplica observaciones de precio ni líneas de ticket. Esta separación evita inconsistencias entre presupuesto financiero, nutrición e inventario doméstico.
+
+
+## Electricidad derivada
+
+`financeSummary.electricity` representa una vista privada derivada de `LuzHistorico`, no una nueva fuente financiera.
+
+Campos principales:
+
+- `history[]`: periodo, fecha de factura/cobro, importe, consumo kWh, días, €/día, kWh/día, precio efectivo por kWh, tarifa y actualización;
+- `yearOverYear`: variación de importe y consumo contra el mismo mes del año anterior cuando existe;
+- `budget`: referencia a la categoría Luz del presupuesto oficial (`budgeted`, `spent`, `committed`, `remaining`);
+- `summary`: media de 12 periodos, máximo histórico, última factura y variaciones interanuales;
+- `alerts[]`: avisos derivados de cambios de tarifa, precio efectivo o picos de consumo.
+
+No se incluyen dirección, contrato, titularidad ni contenido de PDFs.
