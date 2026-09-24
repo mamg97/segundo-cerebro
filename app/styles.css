@@ -6496,3 +6496,270 @@ html[data-theme="dark"] .health-history-ranges button {
     padding: 20px 14px 24px;
   }
 }
+
+
+/* v0.20 — readable typography for secondary workspaces */
+@media (min-width: 761px) {
+  .detail-dialog:is(
+    .health-dialog,
+    .habits-dialog,
+    .budget-dialog,
+    .wealth-dialog,
+    .important-events-dialog
+  ) {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .detail-dialog:is(
+    .health-dialog,
+    .habits-dialog,
+    .budget-dialog,
+    .wealth-dialog,
+    .important-events-dialog
+  ) > .context-label {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .detail-dialog:is(
+    .health-dialog,
+    .habits-dialog,
+    .budget-dialog,
+    .wealth-dialog,
+    .important-events-dialog
+  ) h2 {
+    font-size: 38px;
+    line-height: 1.08;
+  }
+
+  /* Salud: dashboard principal */
+  .health-dialog .health-tabs button {
+    padding: 10px 18px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .health-dialog .health-dashboard-status small {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .health-dialog .health-dashboard-status strong {
+    margin-top: 3px;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .health-dialog .health-recomp-card {
+    padding: 19px;
+  }
+
+  .health-dialog .health-recomp-card > header > span {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  .health-dialog .health-recomp-card > header > strong {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .health-dialog .health-recomp-kpis small {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .health-dialog .health-recomp-kpis strong {
+    margin-top: 4px;
+    font-size: 18px;
+    line-height: 1.15;
+  }
+
+  .health-dialog .health-target-row small,
+  .health-dialog .health-benchmark-list small {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .health-dialog .health-target-row strong,
+  .health-dialog .health-benchmark-list strong {
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+
+  .health-dialog .health-card-footnote,
+  .health-dialog .health-objective-notes p {
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+
+  .health-dialog .health-energy-strip small {
+    font-size: 10.5px;
+  }
+
+  .health-dialog .health-energy-strip strong {
+    margin-top: 3px;
+    font-size: 15px;
+  }
+
+  /* Salud: histórico */
+  .health-dialog .health-history-heading strong {
+    font-size: 17px;
+  }
+
+  .health-dialog .health-history-heading p,
+  .health-dialog .health-history-quality p {
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+
+  .health-dialog .health-history-ranges button {
+    padding: 7px 10px;
+    font-size: 10px;
+  }
+
+  .health-dialog .health-history-quality strong {
+    font-size: 17px;
+  }
+
+  .health-dialog .health-history-quality small {
+    font-size: 9.5px;
+  }
+
+  .health-dialog .health-history-card header strong {
+    font-size: 12px;
+  }
+
+  .health-dialog .health-history-card header small,
+  .health-dialog .health-history-card footer {
+    font-size: 9.5px;
+    line-height: 1.35;
+  }
+
+  .health-dialog .health-history-card header > span {
+    font-size: 16px;
+  }
+
+  /* Salud: médicos, gimnasio, nutrición y menú */
+  .health-dialog .health-section-heading > div > strong {
+    font-size: 16px;
+  }
+
+  .health-dialog .health-section-heading > div > p,
+  .health-dialog .health-empty,
+  .health-dialog .health-empty-card p {
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .health-dialog .health-event-item time,
+  .health-dialog .health-event-item span {
+    font-size: 10.5px;
+  }
+
+  .health-dialog .health-event-item strong,
+  .health-dialog .gym-overview strong,
+  .health-dialog .nutrition-kpis strong,
+  .health-dialog .nutrition-status-grid strong {
+    font-size: 14px;
+  }
+
+  .health-dialog .gym-overview span,
+  .health-dialog .nutrition-kpis span,
+  .health-dialog .nutrition-kpis small,
+  .health-dialog .nutrition-status-grid span,
+  .health-dialog .nutrition-status-grid small {
+    font-size: 10.5px;
+  }
+
+  .health-dialog .gym-day-switch button,
+  .health-dialog .gym-session-form label,
+  .health-dialog .nutrition-target-row,
+  .health-dialog .nutrition-meal-group,
+  .health-dialog .nutrition-history-list {
+    font-size: 11.5px;
+  }
+
+  /* Resto de vistas secundarias: subir el cuerpo, no solo el título */
+  .habits-dialog :is(
+    .habits-kpis span,
+    .habits-kpis small,
+    .habit-date-nav button small,
+    .habit-level-progress span
+  ),
+  .budget-dialog :is(
+    .budget-net-strip span,
+    .budget-net-note,
+    .budget-group-totals,
+    .budget-category-note
+  ),
+  .wealth-dialog :is(
+    .wealth-detail-kpi span,
+    .wealth-chart-heading span,
+    .wealth-chart-legend,
+    .wealth-chart-empty,
+    .important-event-full-date
+  ),
+  .important-events-dialog :is(
+    .important-event-full-date,
+    .event-budget-copy p,
+    .event-budget-amount small
+  ) {
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+
+  .habits-dialog .habits-kpis strong,
+  .budget-dialog .budget-net-strip strong,
+  .wealth-dialog .wealth-detail-kpi strong {
+    font-size: 18px;
+  }
+
+  .budget-dialog .budget-group-heading h3,
+  .wealth-dialog .wealth-chart-heading strong {
+    font-size: 16px;
+  }
+
+  .budget-dialog .budget-category-metrics small {
+    font-size: 9.5px;
+  }
+
+  .budget-dialog .budget-category-metrics strong {
+    font-size: 11px;
+  }
+
+  .important-events-dialog .event-budget-copy strong {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 760px) {
+  .detail-dialog:is(
+    .health-dialog,
+    .habits-dialog,
+    .budget-dialog,
+    .wealth-dialog,
+    .important-events-dialog
+  ) {
+    font-size: 15px;
+  }
+
+  .health-dialog .health-tabs button {
+    font-size: 13px;
+  }
+
+  .health-dialog .health-dashboard-status small,
+  .health-dialog .health-recomp-kpis small,
+  .health-dialog .health-target-row small,
+  .health-dialog .health-benchmark-list small,
+  .health-dialog .health-card-footnote {
+    font-size: 11px;
+  }
+
+  .health-dialog .health-dashboard-status strong,
+  .health-dialog .health-target-row strong,
+  .health-dialog .health-benchmark-list strong {
+    font-size: 13px;
+  }
+}
