@@ -144,3 +144,26 @@ Cuando el usuario aporte información nueva sobre sus padres:
 4. conservar referencia mínima a la fuente;
 5. propagar únicamente el impacto necesario a Finanzas, Calendario, LITOS u otro módulo;
 6. no persistir en Git ningún dato real.
+
+
+## API privada operativa
+
+La aplicación privada expone un contrato genérico para que el gestor mantenga el estado sin cambios de código:
+
+- `GET /api/family/cases?scope=mother|father|shared`
+- `POST /api/family/cases`
+- `GET /api/family/cases/:id`
+- `PATCH /api/family/cases/:id`
+- `POST /api/family/cases/:id/actions`
+- `POST /api/family/cases/:id/references`
+
+Las mutaciones validan ámbito, dominio, estado y prioridad. La sensibilidad se fija a `muy_confidencial` en esta fase.
+
+Regla para referencias:
+- `calendar`: apuntar a la cita/evento propietario;
+- `finance`: apuntar al identificador o contexto financiero oficial;
+- `litos`: apuntar a la entidad operativa de LITOS;
+- `email`, `drive` o `document`: guardar únicamente referencia opaca/metadatos mínimos;
+- no copiar documentos completos ni reconstruir contabilidad, calendario o negocio dentro de D1.
+
+La home general consume solo `familySummary` con conteos y próximo vencimiento. Los títulos y detalles de los casos se consultan únicamente al abrir el módulo privado.
