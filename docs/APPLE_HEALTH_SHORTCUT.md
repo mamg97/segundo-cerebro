@@ -182,3 +182,5 @@ Ejecutar varias veces el Atajo no duplica registros.
 - The unified ingest also accepts parallel list fields from Shortcuts (`bodyMassValues` + `bodyMassMeasuredAts` + `bodyMassSources`, and equivalents for fat %, BMI and lean mass) so every same-day sample can be preserved without one HTTP request per sample.
 
 - Nota de compatibilidad con Atajos: las listas corporales pueden enviarse como arrays JSON o como texto con un elemento por línea. Esto permite usar directamente variables mágicas de listas en campos de tipo Texto cuando el editor JSON de Atajos no admite enlazar una lista dinámica.
+
+- Simplificación de composición corporal: el endpoint `/v1/sync` acepta `bodySource` como fuente común para `bodyMass`, `bodyFatPercentage`, `bodyMassIndex` y `leanBodyMass`, evitando repetir `Zepp Life` cuatro veces en Atajos.
