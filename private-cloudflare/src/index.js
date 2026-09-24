@@ -122,6 +122,190 @@ function moneyOrNull(value) {
   return toNumber(value);
 }
 
+function firstSheetValue(row, keys = []) {
+  for (const key of keys) {
+    if (row && row[key] !== undefined && row[key] !== null && row[key] !== "") return row[key];
+  }
+  return null;
+}
+
+function sheetDateOrNull(value) {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const epoch = Date.UTC(1899, 11, 30);
+    const date = new Date(epoch + value * 86400000);
+    return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : null;
+  }
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  const es = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (es) return `${es[3]}-${String(es[2]).padStart(2, "0")}-${String(es[1]).padStart(2, "0")}`;
+  const parsed = new Date(raw);
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString().slice(0, 10) : null;
+}
+
+function percentChange(current, previous) {
+  const a = toNumber(current);
+  const b = toNumber(previous);
+  if (a === null || b === null || b === 0) return null;
+  return ((a - b) / Math.abs(b)) * 100;
+}
+
+function buildElectricityHistory(rows = [], categories = [], currency = "EUR") {
+  const parsed = parseTableRows(rows)
+    .map((item, index) => {
+      const periodStart = sheetDateOrNull(firstSheetValue(item, ["period_start", "periodo_inicio", "fecha_inicio", "desde"]));
+      const periodEnd = sheetDateOrNull(firstSheetValue(item, ["period_end", "periodo_fin", "fecha_fin", "hasta"]));
+      const invoiceDate = sheetDateOrNull(firstSheetValue(item, ["invoice_date", "fecha_factura", "fecha_emision"]));
+      const chargeDate = sheetDateOrNull(firstSheetValue(item, ["charge_date", "fecha_cobro", "fecha_prevista_cobro", "cobro_previsto"]));
+      const amount = moneyOrNull(firstSheetValue(item, ["amount_eur", "importe_eur", "importe", "total_eur", "total"]));
+      const consumptionKwh = toNumber(firstSheetValue(item, ["consumption_kwh", "consumo_kwh", "kwh", "consumo"]));
+      let days = toNumber(firstSheetValue(item, ["days", "dias", "dias_facturados"]));
+      if (days === null && periodStart && periodEnd) {
+        const start = new Date(periodStart + "T12:00:00Z");
+        const end = new Date(periodEnd + "T12:00:00Z");
+        if (Number.isFinite(start.getTime()) && Number.isFinite(end.getTime())) {
+          days = Math.max(1, Math.round((end - start) / 86400000) + 1);
+        }
+      }
+      const eurPerDayRaw = toNumber(firstSheetValue(item, ["eur_per_day", "eur_dia", "euros_dia", "importe_dia"]));
+      const kwhPerDayRaw = toNumber(firstSheetValue(item, ["kwh_per_day", "kwh_dia", "consumo_dia"]));
+      const pricePerKwh = toNumber(firstSheetValue(item, ["price_eur_kwh", "eur_kwh", "precio_kwh", "precio_energia_kwh"]));
+      const tariff = firstSheetValue(item, ["tariff", "tarifa", "plan", "producto"]) == null
+        ? null
+        : String(firstSheetValue(item, ["tariff", "tarifa", "plan", "producto"])).trim();
+      const sourceStatus = firstSheetValue(item, ["source_status", "estado_fuente", "status"]) == null
+        ? null
+        : String(firstSheetValue(item, ["source_status", "estado_fuente", "status"])).trim();
+      const updatedAt = firstSheetValue(item, ["updated_at", "actualizado_en", "imported_at"]) == null
+        ? null
+        : String(firstSheetValue(item, ["updated_at", "actualizado_en", "imported_at"])).trim();
+      const note = firstSheetValue(item, ["note", "nota", "observaciones"]) == null
+        ? null
+        : String(firstSheetValue(item, ["note", "nota", "observaciones"])).trim();
+      const explicitAlert = firstSheetValue(item, ["alert", "alerta", "warning"]) == null
+        ? null
+        : String(firstSheetValue(item, ["alert", "alerta", "warning"])).trim();
+      const sortDate = periodEnd || invoiceDate || chargeDate || periodStart || "";
+      return {
+        id: String(firstSheetValue(item, ["id", "invoice_id", "factura_id"]) || `electricity_${sortDate || index + 1}`),
+        periodStart,
+        periodEnd,
+        invoiceDate,
+        chargeDate,
+        amount,
+        consumptionKwh,
+        days,
+        eurPerDay: eurPerDayRaw ?? (amount !== null && days ? amount / days : null),
+        kwhPerDay: kwhPerDayRaw ?? (consumptionKwh !== null && days ? consumptionKwh / days : null),
+        pricePerKwh: pricePerKwh ?? (amount !== null && consumptionKwh ? amount / consumptionKwh : null),
+        tariff,
+        sourceStatus,
+        updatedAt,
+        note,
+        explicitAlert,
+        sortDate
+      };
+    })
+    .filter((item) => item.amount !== null || item.consumptionKwh !== null)
+    .sort((a, b) => String(a.sortDate).localeCompare(String(b.sortDate)));
+
+  const byMonth = new Map();
+  for (const item of parsed) {
+    const key = String(item.periodEnd || item.invoiceDate || item.periodStart || "").slice(0, 7);
+    if (key) byMonth.set(key, item);
+  }
+
+  for (const item of parsed) {
+    const month = String(item.periodEnd || item.invoiceDate || item.periodStart || "").slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+      item.yearOverYear = { amountPct: null, consumptionPct: null };
+      continue;
+    }
+    const year = Number(month.slice(0, 4));
+    const previousKey = `${year - 1}-${month.slice(5, 7)}`;
+    const previous = byMonth.get(previousKey) || null;
+    item.yearOverYear = {
+      amountPct: previous ? percentChange(item.amount, previous.amount) : null,
+      consumptionPct: previous ? percentChange(item.consumptionKwh, previous.consumptionKwh) : null
+    };
+  }
+
+  const alerts = [];
+  parsed.forEach((item, index) => {
+    if (item.explicitAlert) alerts.push({ type: "source", date: item.sortDate || null, message: item.explicitAlert });
+    if (index === 0) return;
+    const previous = parsed[index - 1];
+    if (item.tariff && previous.tariff && item.tariff !== previous.tariff) {
+      alerts.push({ type: "tariff", date: item.sortDate || null, message: "Cambio de tarifa detectado en la fuente derivada." });
+    }
+    const previousWindow = parsed.slice(Math.max(0, index - 6), index);
+    const avgConsumption = previousWindow
+      .map((row) => row.consumptionKwh)
+      .filter((value) => value !== null)
+      .reduce((acc, value, _, arr) => acc + value / arr.length, 0);
+    if (item.consumptionKwh !== null && previousWindow.length >= 3 && avgConsumption > 0 && item.consumptionKwh > avgConsumption * 1.25) {
+      alerts.push({ type: "consumption", date: item.sortDate || null, message: "Pico de consumo frente a los meses recientes." });
+    }
+    const avgPrice = previousWindow
+      .map((row) => row.pricePerKwh)
+      .filter((value) => value !== null)
+      .reduce((acc, value, _, arr) => acc + value / arr.length, 0);
+    if (item.pricePerKwh !== null && previousWindow.length >= 3 && avgPrice > 0 && item.pricePerKwh > avgPrice * 1.15) {
+      alerts.push({ type: "price", date: item.sortDate || null, message: "Subida relevante del precio efectivo por kWh." });
+    }
+  });
+
+  const latest = parsed.length ? parsed[parsed.length - 1] : null;
+  const last12 = parsed.slice(-12);
+  const amounts12 = last12.map((item) => item.amount).filter((value) => value !== null);
+  const lightCategory = categories.find((item) => {
+    const id = String(item.id || "").trim().toLocaleLowerCase("es");
+    const title = String(item.title || "").trim().toLocaleLowerCase("es");
+    return id === "luz" || title === "luz" || title.includes("electricidad") || id.includes("electric");
+  }) || null;
+
+  const budgeted = lightCategory?.budgeted ?? null;
+  const spent = lightCategory?.spent ?? null;
+  const committed = lightCategory?.committed ?? null;
+  const remaining = lightCategory?.remaining ?? (
+    budgeted !== null
+      ? Number(budgeted || 0) - Number(spent || 0) - Number(committed || 0)
+      : null
+  );
+
+  return {
+    currency,
+    history: parsed,
+    latest,
+    budget: lightCategory ? {
+      categoryId: lightCategory.id || null,
+      categoryTitle: lightCategory.title || "Luz",
+      budgeted,
+      spent,
+      committed,
+      remaining,
+      sourceStatus: lightCategory.sourceStatus || null,
+      updatedAt: lightCategory.updatedAt || null
+    } : null,
+    summary: {
+      average12Amount: amounts12.length ? amounts12.reduce((sum, value) => sum + value, 0) / amounts12.length : null,
+      maxHistoricalAmount: parsed.reduce((max, item) => item.amount !== null && (max === null || item.amount > max) ? item.amount : max, null),
+      latestAmount: latest?.amount ?? null,
+      latestConsumptionKwh: latest?.consumptionKwh ?? null,
+      latestYearOverYearAmountPct: latest?.yearOverYear?.amountPct ?? null,
+      latestYearOverYearConsumptionPct: latest?.yearOverYear?.consumptionPct ?? null
+    },
+    alerts: alerts.slice(-8).reverse(),
+    source: {
+      kind: "private-derived",
+      name: "LuzHistorico",
+      sourceOfTruth: "ASUNTOS v3.xlsx"
+    }
+  };
+}
+
 function formatPeriodLabel(start, end) {
   if (!start || !end) return null;
   const formatter = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" });
@@ -166,6 +350,26 @@ async function fetchFinanceSummary(env) {
   const gymPlanRows = valueRanges[6]?.values || [];
   const nutritionRows = valueRanges[7]?.values || [];
 
+  let electricityRows = [];
+  try {
+    const electricityParams = new URLSearchParams({
+      majorDimension: "ROWS",
+      valueRenderOption: "UNFORMATTED_VALUE"
+    });
+    const electricityRange = encodeURIComponent("LuzHistorico!A1:Z1000");
+    const electricityEndpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.FINANCE_SHEET_ID)}/values/${electricityRange}?${electricityParams.toString()}`;
+    const electricityResponse = await fetch(electricityEndpoint, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (electricityResponse.ok) {
+      electricityRows = (await electricityResponse.json())?.values || [];
+    } else {
+      console.warn("LuzHistorico read failed", "GOOGLE_SHEETS_" + electricityResponse.status);
+    }
+  } catch (error) {
+    console.warn("LuzHistorico read failed", String(error?.message || error));
+  }
+
   const summary = parseKeyValueRows(summaryRows);
   const categories = parseTableRows(categoryRows).map((item) => ({
     id: item.id || null,
@@ -181,6 +385,8 @@ async function fetchFinanceSummary(env) {
     updatedAt: item.updated_at || null,
     note: item.note || null
   }));
+
+  const electricity = buildElectricityHistory(electricityRows, categories, summary.currency || "EUR");
 
   const commitments = parseTableRows(commitmentRows).map((item) => ({
     id: item.id || null,
@@ -366,6 +572,7 @@ async function fetchFinanceSummary(env) {
       categories
     },
     upcomingCommitments: commitments,
+    electricity,
     debts: debtSummary,
     wealth: wealthSummary,
     importantEventRules,
@@ -2761,6 +2968,21 @@ export default {
       if (request.method !== "DELETE") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       const sessionId = decodeURIComponent(url.pathname.slice("/api/gym/session/".length));
       return deleteGymSession(sessionId, env);
+    }
+
+    if (url.pathname === "/api/finance/electricity") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const finance = await fetchFinanceSummary(env);
+        return json({
+          ok: true,
+          status: finance.status,
+          electricity: finance.value?.electricity || null
+        });
+      } catch (error) {
+        console.warn("Electricity history read failed", String(error?.message || "ELECTRICITY_HISTORY_ERROR"));
+        return json({ ok: false, code: "ELECTRICITY_HISTORY_READ_FAILED" }, 502);
+      }
     }
 
     if (url.pathname === "/api/family/cases") {
