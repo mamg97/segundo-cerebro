@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.26.0">
-    <script type="module" src="./app.js?v=0.26.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.27.0">
+    <script type="module" src="./app.js?v=0.27.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -121,7 +121,7 @@
 
           <button id="home-objects-card" class="daily-overview-card objects-home-card" type="button" hidden>
             <div class="daily-card-heading">
-              <span class="daily-card-icon objects-accent" aria-hidden="true">◇</span>
+              <span class="daily-card-icon objects-accent" aria-hidden="true">◈</span>
               <span><small>Objetos</small><strong>Inventario personal</strong></span>
               <span class="daily-card-arrow" aria-hidden="true">→</span>
             </div>
@@ -186,7 +186,7 @@
         </section>
 
         <section class="workbench" aria-label="Prioridades y agenda">
-          <article class="focus-panel">
+          <article class="focus-panel" id="focus-overview">
             <div class="section-heading">
               <div>
                 <p class="context-label">Atención</p>
@@ -195,9 +195,10 @@
               <span id="loop-count" class="count-pill"></span>
             </div>
             <ol id="focus-list" class="focus-list"></ol>
+            <div id="focus-goals" class="focus-goals" hidden></div>
           </article>
 
-          <article class="agenda-panel">
+          <article class="agenda-panel" id="agenda-overview">
             <div class="section-heading calendar-heading">
               <div>
                 <p class="context-label">Ritmo</p>
@@ -227,33 +228,8 @@
           </article>
         </section>
 
-        <section id="areas" class="areas-section" aria-labelledby="areas-title">
-          <div class="section-heading section-heading-wide">
-            <div>
-              <p class="context-label">Estado común</p>
-              <h2 id="areas-title">Áreas de tu vida</h2>
-            </div>
-            <div class="view-switch" role="group" aria-label="Cambiar vista">
-              <button class="active" type="button" data-view="list" aria-pressed="true">Resumen</button>
-              <button type="button" data-view="map" aria-pressed="false">Sistema</button>
-            </div>
-          </div>
-          <div id="areas-grid" class="areas-grid"></div>
-          <div id="system-map" class="system-map" hidden>
-            <div class="system-toolbar">
-              <p>Todos los módulos consultan el mismo estado. Ninguno conserva una memoria separada.</p>
-              <div class="system-legend" aria-label="Leyenda de estados">
-                <span><i class="status-dot active"></i>Activo</span>
-                <span><i class="status-dot simulated"></i>Simulado</span>
-                <span><i class="status-dot locked"></i>Sin conectar</span>
-              </div>
-            </div>
-            <div id="system-graph" class="system-graph" aria-label="Arquitectura operativa del Segundo Cerebro"></div>
-          </div>
-        </section>
-
         <footer>
-          <p>Segundo Cerebro <span>v0.1.1</span></p>
+          <p>Segundo Cerebro</p>
           <p id="footer-mode">Sin conexiones externas · Datos ficticios</p>
         </footer>
       </main>

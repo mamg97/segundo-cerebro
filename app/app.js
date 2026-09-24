@@ -15,11 +15,6 @@ const colors = {
   coral: "#db5d49", lime: "#668f2d",
 };
 
-const symbols = {
-  general: "◎", career: "↗", finance: "≋", calendar: "□", partner: "◇",
-  family: "⌂", parents: "⌂", health: "✚", pantry: "▦", objects: "◇", habits: "✓", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
-};
-
 const dateFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
 const shortDateFormatter = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" });
 const THEME_STORAGE_KEY = "segundo-cerebro-theme";
@@ -166,8 +161,6 @@ async function init() {
   renderDebtOverview();
   renderWealthOverview();
   renderDecisionsInline();
-  renderAreas();
-  renderSystemMap();
   bindInteractions();
   initDemoMode();
 }
@@ -268,8 +261,10 @@ function renderDate() {
 
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
-  nav.innerHTML = state.areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} ${area.id === "area-habits" ? 'data-open-habits="true"' : ""} ${area.id === "area-pantry" ? 'data-open-pantry="true"' : ""} ${area.id === "area-objects" ? 'data-open-objects="true"' : ""} ${area.id === "area-parents" ? 'data-open-parents="true"' : ""} style="--area-color:${colors[area.tone]}">
+  const metaAreas = new Set(["area-loops", "area-goals"]);
+  const areas = state.areas.filter((area) => !metaAreas.has(area.id));
+  nav.innerHTML = areas.map((area, index) => `
+    <a class="nav-link ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}" style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
   `).join("");
@@ -303,6 +298,17 @@ function renderFocus() {
         <div class="focus-meta"><time datetime="${item.dueDate || ""}">${due}</time><span>${escapeHtml(area?.shortTitle || "General")}</span></div>
       </li>`;
   }).join("");
+
+  const transversalGoals = (Array.isArray(state.goals) ? state.goals : [])
+    .filter((goal) => goal.status === "active" && ["area-general", "area-loops", "area-goals"].includes(goal.areaId))
+    .slice(0, 3);
+  const goalsNode = document.querySelector("#focus-goals");
+  if (goalsNode) {
+    goalsNode.hidden = transversalGoals.length === 0;
+    goalsNode.innerHTML = transversalGoals.length
+      ? `<span>Objetivos transversales</span><div>${transversalGoals.map((goal) => `<strong>${escapeHtml(goal.title)}</strong>`).join("")}</div>`
+      : "";
+  }
 }
 
 function renderEvents() {
@@ -3781,105 +3787,8 @@ function shortMonth(date) {
   return new Intl.DateTimeFormat("es-ES", { month: "short" }).format(date).replace(".", "");
 }
 
-function renderAreas() {
-  document.querySelector("#areas-grid").innerHTML = state.areas.slice(1).map((area) => `
-    <button id="area-${area.slug}" class="area-card" type="button" data-area-id="${area.id}" style="--area-color:${colors[area.tone]};--health:${area.health}%">
-      <span class="area-top"><span class="area-symbol">${symbols[area.slug]}</span><span class="area-health">${area.health}</span></span>
-      <h3>${escapeHtml(area.title)}</h3>
-      <p>${escapeHtml(area.summary)}</p>
-      <span class="area-bar" aria-hidden="true"><span></span></span>
-    </button>
-  `).join("");
-}
-
-function renderSystemMap() {
-  const modules = state.areas
-    .filter((area) => area.module !== "Coordinator")
-    .map((area) => ({
-      id: area.id,
-      title: area.title,
-      description: area.summary,
-      status: area.status === "steady" ? "active" : "attention",
-      tone: area.tone,
-    }));
-  const { coordinator, capabilities, sources } = state.system;
-
-  document.querySelector("#system-graph").innerHTML = `
-    <section class="graph-tier coordinator-tier" aria-label="Coordinación">
-      <article class="system-node coordinator-node">
-        <div class="node-heading">
-          <span class="node-mark coordinator-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-          <div><span class="node-kind">Orquestación</span><h3>${escapeHtml(coordinator.title)}</h3></div>
-        </div>
-        <p>${escapeHtml(coordinator.description)}</p>
-        <span class="node-state"><i class="status-dot active"></i>Preparado · IA local futura</span>
-      </article>
-    </section>
-
-    <div class="graph-flow" aria-hidden="true"><span></span></div>
-
-    <section class="shared-state-node" aria-label="Estado global común">
-      <div><span class="node-kind">Fuente de verdad</span><h3>Estado global común</h3></div>
-      <p>Entidades, relaciones, contexto y decisiones en una sola capa.</p>
-      <span class="shared-lock">${privateModeKind === "remote" ? "Privado · Remoto" : privateMode ? "Privado · Local" : "Privado · Mock"}</span>
-    </section>
-
-    <div class="graph-flow branch-flow" aria-hidden="true"><span></span></div>
-
-    <section class="graph-tier" aria-labelledby="modules-title">
-      <div class="tier-heading"><h3 id="modules-title">Módulos especializados</h3><span>${modules.length} áreas</span></div>
-      <div class="module-grid">
-        ${modules.map((module) => `
-          <button class="system-node module-node" type="button" data-system-area-id="${module.id}" style="--node-color:${colors[module.tone]}">
-            <span class="node-heading">
-              <span class="module-mark" aria-hidden="true"><i></i></span>
-              <span><span class="node-kind">Módulo</span><strong>${escapeHtml(module.title)}</strong></span>
-            </span>
-            <span class="module-summary">${escapeHtml(module.description)}</span>
-            <span class="node-state"><i class="status-dot ${module.status === "active" ? "active" : "attention"}"></i>${module.status === "active" ? "Estable" : "Requiere atención"}</span>
-          </button>
-        `).join("")}
-      </div>
-    </section>
-
-    <section class="lower-tiers">
-      <div class="graph-tier capability-tier" aria-labelledby="capabilities-title">
-        <div class="tier-heading"><h3 id="capabilities-title">Capacidades transversales</h3><span>Sin memoria propia</span></div>
-        <div class="capability-list">
-          ${capabilities.map((capability) => `
-            <article class="capability-row">
-              <span class="capability-mark" aria-hidden="true"><i></i><i></i></span>
-              <div><strong>${escapeHtml(capability.title)}</strong><p>${escapeHtml(capability.description)}</p></div>
-              <span class="node-state"><i class="status-dot ${capability.status}"></i>${capability.status === "active" ? "Activo" : "Simulado"}</span>
-            </article>
-          `).join("")}
-        </div>
-      </div>
-
-      <div class="graph-tier source-tier" aria-labelledby="sources-title">
-        <div class="tier-heading"><h3 id="sources-title">Fuentes</h3><span>Propietarias del dato</span></div>
-        <div class="source-list">
-          ${sources.map((source) => `
-            <article class="source-row">
-              <span class="source-mark" aria-hidden="true"><i></i></span>
-              <div><strong>${escapeHtml(source.title)}</strong><p>${escapeHtml(source.access)}</p></div>
-              <span class="node-state"><i class="status-dot ${source.status}"></i>${source.status === "active" ? "Activo" : "Bloqueado"}</span>
-            </article>
-          `).join("")}
-        </div>
-        <p class="source-note">Gmail, Outlook, Calendar, Drive y Sheets permanecen desconectados.</p>
-      </div>
-    </section>
-  `;
-
-  document.querySelectorAll("[data-system-area-id]").forEach((node) => {
-    node.addEventListener("click", () => openArea(node.dataset.systemAreaId));
-  });
-}
-
 function bindInteractions() {
   const dialog = document.querySelector("#detail-dialog");
-  document.querySelectorAll(".area-card").forEach((card) => card.addEventListener("click", () => openArea(card.dataset.areaId)));
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
@@ -3895,57 +3804,39 @@ function bindInteractions() {
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
-  document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   document.querySelector("#ask-form").addEventListener("submit", handleQuery);
   const menuButton = document.querySelector("#menu-button");
   menuButton.addEventListener("click", () => {
     const open = document.body.classList.toggle("nav-open");
     menuButton.setAttribute("aria-expanded", String(open));
   });
-  document.querySelectorAll(".nav-link").forEach((link) => link.addEventListener("click", () => {
+
+  document.querySelectorAll("[data-nav-area-id]").forEach((link) => link.addEventListener("click", (event) => {
+    event.preventDefault();
     document.body.classList.remove("nav-open");
     menuButton.setAttribute("aria-expanded", "false");
+    document.querySelectorAll("[data-nav-area-id]").forEach((node) => node.classList.toggle("active", node === link));
+    openNavigationArea(link.dataset.navAreaId);
   }));
-  document.querySelector('[data-open-wealth="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openWealthDetail();
-  });
-  document.querySelector('[data-open-health="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openHealthDetail();
-  });
-  document.querySelector('[data-open-habits="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openHabitsDetail();
-  });
-  document.querySelector('[data-open-pantry="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openPantryDetail();
-  });
-  document.querySelector('[data-open-objects="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openObjectsDetail();
-  });
-  document.querySelector('[data-open-parents="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openParentsDetail();
-  });
 }
 
-function setView(view) {
-  const list = document.querySelector("#areas-grid");
-  const map = document.querySelector("#system-map");
-  const showMap = view === "map";
-  list.hidden = showMap;
-  map.hidden = !showMap;
-  document.querySelectorAll("[data-view]").forEach((button) => {
-    const active = button.dataset.view === view;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
+function openNavigationArea(areaId) {
+  if (areaId === "area-general") {
+    document.querySelector("#overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  openArea(areaId);
 }
 
 function openArea(areaId) {
+  if (areaId === "area-finance") {
+    openBudgetDetail();
+    return;
+  }
+  if (areaId === "area-calendar") {
+    document.querySelector("#agenda-overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   if (areaId === "area-wealth") {
     openWealthDetail();
     return;
@@ -3971,8 +3862,10 @@ function openArea(areaId) {
     return;
   }
   const area = areaById.get(areaId);
-  const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
-  const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
+  if (!area) return;
+  const relatedLoops = (Array.isArray(state.openLoops) ? state.openLoops : []).filter((item) => item.areaId === areaId);
+  const relatedProjects = (Array.isArray(state.projects) ? state.projects : []).filter((item) => item.areaId === areaId);
+  const relatedGoals = (Array.isArray(state.goals) ? state.goals : []).filter((item) => item.areaId === areaId && item.status !== "archived");
   const dialog = document.querySelector("#detail-dialog");
   dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
@@ -3985,6 +3878,10 @@ function openArea(areaId) {
     ...relatedProjects.map((item) => ({
       title: item.title,
       detail: [item.summary, Number.isFinite(item.progress) && `${item.progress}%`, item.nextAction && `Siguiente: ${item.nextAction}`].filter(Boolean).join(" · "),
+    })),
+    ...relatedGoals.map((item) => ({
+      title: `Objetivo · ${item.title}`,
+      detail: [item.horizon, item.metric && item.target && `${item.metric}: ${item.target}`].filter(Boolean).join(" · "),
     })),
   ];
   document.querySelector("#dialog-body").innerHTML = entries.length

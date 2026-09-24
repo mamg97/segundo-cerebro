@@ -33,6 +33,8 @@ Construir un segundo cerebro personal y privado: un sistema operativo de vida co
 - Otras permiten escritura privada controlada, como HabitQuest, gimnasio, nutrición y la ingesta energética.
 - Finanzas mantiene su fuente oficial externa y el dashboard consume un estado derivado; no debe inventarse contabilidad paralela.
 - Mantener la solución pequeña, legible, responsive y sin dependencias innecesarias.
+- La barra lateral es la navegación canónica de dominios de la aplicación privada.
+- `OPEN_LOOP`, `GOAL`, `DECISION` y otras entidades transversales no son áreas de vida: deben mostrarse dentro del contexto correspondiente, no crear entradas de navegación propias salvo una decisión explícita futura.
 
 ## Enrutamiento de dominios
 
