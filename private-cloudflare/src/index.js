@@ -169,8 +169,8 @@ function buildElectricityHistory(rows = [], categories = [], currency = "EUR") {
           days = Math.max(1, Math.round((end - start) / 86400000) + 1);
         }
       }
-      const eurPerDayRaw = toNumber(firstSheetValue(item, ["eur_per_day", "eur_dia", "euros_dia", "importe_dia"]));
-      const kwhPerDayRaw = toNumber(firstSheetValue(item, ["kwh_per_day", "kwh_dia", "consumo_dia"]));
+      const eurPerDayRaw = toNumber(firstSheetValue(item, ["eur_per_day", "eur_day", "eur_dia", "euros_dia", "importe_dia"]));
+      const kwhPerDayRaw = toNumber(firstSheetValue(item, ["kwh_per_day", "kwh_day", "kwh_dia", "consumo_dia"]));
       const pricePerKwh = toNumber(firstSheetValue(item, ["price_eur_kwh", "eur_kwh", "precio_kwh", "precio_energia_kwh"]));
       const tariff = firstSheetValue(item, ["tariff", "tarifa", "plan", "producto"]) == null
         ? null
