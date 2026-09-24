@@ -576,7 +576,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
 
 function openImportantEventsDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog");
   dialog.classList.add("important-events-dialog");
 
   const importantEvents = collectImportantEvents(state.financeSummary || {});
@@ -971,7 +971,7 @@ function formatFamilyDate(value) {
 
 function openHealthDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog");
   dialog.classList.add("health-dialog");
   document.querySelector("#dialog-context").textContent = "Salud · estado privado";
   document.querySelector("#dialog-title").textContent = "Salud";
@@ -1464,7 +1464,7 @@ function shiftDateKey(key, amount) {
 
 async function openHabitsDetail(dateKey = null) {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog");
   dialog.classList.add("habits-dialog");
   document.querySelector("#dialog-context").textContent = "Hábitos · HabitQuest";
   document.querySelector("#dialog-title").textContent = "Hábitos";
@@ -3287,7 +3287,7 @@ function formatWealthDate(value) {
 function openDebtDetail() {
   const debt = state.financeSummary?.debts || null;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Deudas";
   document.querySelector("#dialog-title").textContent = "Detalle de deudas";
@@ -3347,7 +3347,7 @@ function openBudgetDetail() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "budget-dialog", "parents-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "budget-dialog", "parents-dialog", "electricity-dialog");
   dialog.classList.add("budget-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual";
@@ -3487,7 +3487,7 @@ function renderBudgetCategoryDetail(item, currency) {
 
 async function openElectricityDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "parents-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "parents-dialog", "electricity-dialog");
   dialog.classList.add("budget-dialog", "electricity-dialog");
   document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual · Luz";
   document.querySelector("#dialog-title").textContent = "Electricidad";
@@ -3930,7 +3930,7 @@ function openArea(areaId) {
   const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
   const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [
