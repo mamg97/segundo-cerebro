@@ -228,3 +228,15 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Métricas:** se dejan de exponer puntuaciones 0–100 de área sin una semántica común. Las métricas reales permanecen dentro de cada módulo.
 - **Navegación:** Finanzas abre presupuesto, Agenda desplaza a la semana real y los dominios especializados abren sus vistas propias.
 - **Motivo:** evitar duplicidad de navegación, huecos visuales, tarjetas que no aportan acción y puntuaciones engañosamente comparables.
+
+
+## D-029 — PROYECTOS usa un registro privado canónico
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-24.
+- **Decisión:** el catálogo transversal de proyectos vive en el Sheet privado `SEGUNDO CEREBRO - PROYECTOS`.
+- **Contenido:** identidad, estado, resumen, propietario funcional, enlaces, documentación estructurada, siguiente acción y relaciones.
+- **Privacidad:** el catálogo real no se hardcodea en el repositorio público.
+- **Propiedad:** el registro indexa proyectos; no sustituye el repositorio/documentación propietaria de cada uno.
+- **Solo seguimiento:** un proyecto puede marcarse `read_only` para impedir que Segundo Cerebro lo trate como modificable desde este dominio.
+- **Motivo:** disponer de una vista completa y reutilizable por gestores sin depender de memoria conversacional ni crear listas divergentes.

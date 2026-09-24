@@ -1,8 +1,9 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.26.0";
-import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.26.0";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.29.0";
+import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
+import { openProjectsDetail } from "./projects.js?v=0.29.0";
 
 let state = mockState;
 let areaById = new Map();
@@ -607,7 +608,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
 
 function openImportantEventsDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog");
   dialog.classList.add("important-events-dialog");
 
   const importantEvents = collectImportantEvents(state.financeSummary || {});
@@ -1495,7 +1496,7 @@ function shiftDateKey(key, amount) {
 
 async function openHabitsDetail(dateKey = null) {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog");
   dialog.classList.add("habits-dialog");
   document.querySelector("#dialog-context").textContent = "Hábitos · HabitQuest";
   document.querySelector("#dialog-title").textContent = "Hábitos";
@@ -3867,13 +3868,17 @@ function openArea(areaId) {
     openParentsDetail();
     return;
   }
+  if (areaId === "area-projects" && privateModeKind === "remote") {
+    openProjectsDetail();
+    return;
+  }
   const area = areaById.get(areaId);
   if (!area) return;
   const relatedLoops = (Array.isArray(state.openLoops) ? state.openLoops : []).filter((item) => item.areaId === areaId);
   const relatedProjects = (Array.isArray(state.projects) ? state.projects : []).filter((item) => item.areaId === areaId);
   const relatedGoals = (Array.isArray(state.goals) ? state.goals : []).filter((item) => item.areaId === areaId && item.status !== "archived");
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [
@@ -4026,6 +4031,13 @@ async function handleQuickCommand(query, result) {
   if (/\b(padres)\b/.test(normalized)) {
     openParentsDetail();
     openResult("<strong>Padres abierto.</strong>");
+    return true;
+  }
+
+  if (/\b(proyectos|proyecto)\b/.test(normalized)) {
+    if (privateModeKind === "remote") openProjectsDetail();
+    else openArea("area-projects");
+    openResult("<strong>Proyectos abierto.</strong> Ahí tienes estado, documentación, repositorios y relaciones.");
     return true;
   }
 

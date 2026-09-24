@@ -166,7 +166,7 @@ export async function openObjectsDetail() {
   const dialog=document.querySelector("#detail-dialog");
   if(!dialog)return;
   dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog","budget-dialog","parents-dialog","electricity-dialog","pantry-dialog");
-  dialog.classList.add("objects-dialog");
+  dialog.classList.add("objects-dialog", "projects-dialog");
   document.querySelector("#dialog-context").textContent="Objetos · estado privado";
   document.querySelector("#dialog-title").textContent="Objetos";
   document.querySelector("#dialog-body").innerHTML='<p class="objects-loading">Cargando inventario…</p>';

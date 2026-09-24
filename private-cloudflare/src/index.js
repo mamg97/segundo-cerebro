@@ -1,6 +1,7 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
 import { fetchPantrySummary, hasPantryGoogleConfig } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
+import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -2900,6 +2901,20 @@ export default {
         }
       }
 
+      let projectsSync = hasProjectsGoogleConfig(env) ? "configured" : "not-configured";
+      let projectsCount = null;
+      let projectsActiveCount = null;
+      if (hasProjectsGoogleConfig(env)) {
+        try {
+          const projects = await fetchProjectsSummary(env, getGoogleAccessToken);
+          projectsSync = projects.status;
+          projectsCount = projects.value?.summary?.total ?? null;
+          projectsActiveCount = projects.value?.summary?.active ?? null;
+        } catch {
+          projectsSync = "error";
+        }
+      }
+
       let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
       let calendarError = null;
       let calendarMatchedCount = null;
@@ -2936,6 +2951,9 @@ export default {
         objectsSync,
         objectsTotalCount,
         objectsActiveListCount,
+        projectsSync,
+        projectsCount,
+        projectsActiveCount,
         calendarSync,
         calendarError,
         calendarMatchedCount,
@@ -3142,6 +3160,17 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/projects") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const projects = await fetchProjectsSummary(env, getGoogleAccessToken);
+        return json({ ok: true, status: projects.status, ...projects.value });
+      } catch (error) {
+        console.warn("Projects read failed", String(error?.message || "PROJECTS_READ_ERROR"));
+        return json({ ok: false, code: "PROJECTS_READ_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/finance/electricity") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       try {
@@ -3296,6 +3325,18 @@ export default {
         }
       }
 
+      let projectsSync = "not-configured";
+      if (hasProjectsGoogleConfig(env)) {
+        try {
+          const projects = await fetchProjectsSummary(env, getGoogleAccessToken);
+          state.projectsSummary = projects.value?.summary || null;
+          projectsSync = projects.status;
+        } catch (error) {
+          projectsSync = "error";
+          console.warn("Projects sync failed", String(error?.message || error));
+        }
+      }
+
       let calendarSync = "not-configured";
       if (hasIcloudCalendarConfig(env)) {
         try {
@@ -3329,6 +3370,7 @@ export default {
         nutritionSync,
         pantrySync,
         objectsSync,
+        projectsSync,
         calendarSync
       };
 

@@ -396,3 +396,43 @@ Proyección de Home (`objectsSummary`):
 - `upcomingContexts[]`
 
 `GET /api/objects` devuelve `objects`, `wardrobe`, `looks`, `kits`, `lists` y facetas de filtro. Las relaciones entre looks/kits/listas y el inventario usan IDs estables; no copian objetos.
+
+
+## Proyectos
+
+Fuente canónica privada: `SEGUNDO CEREBRO - PROYECTOS`.
+
+Entidades:
+
+### PROJECT_REGISTRY_ITEM
+
+- `project_id`: ID estable.
+- `parent_id`: subproyecto opcional.
+- `nombre`, `alias`, `area`, `tipo`.
+- `estado`: `ACTIVO | MANTENIMIENTO | PAUSADO | PENDIENTE | CERRADO`.
+- `prioridad`: `ALTA | MEDIA | BAJA`.
+- `resumen`, `owner_funcional`, `next_action`.
+- referencias externas: `repo_url`, `docs_url`, `web_url`.
+- `docs_status`: `COMPLETA | PARCIAL | PENDIENTE`.
+- `related_domains`, `read_only`, `sensitivity`, `updated_at`.
+
+### PROJECT_DOCUMENTATION
+
+Descripción estructurada por `project_id`: visión, objetivo, alcance, estado actual, arquitectura/fuentes, documentos clave, hitos y reglas.
+
+### PROJECT_RELATION
+
+Relación dirigida entre un proyecto y otro proyecto/dominio:
+`source_project_id + relation_type + target_type + target_id_or_name + description`.
+
+### PROJECTS_SUMMARY
+
+Proyección minimizada para `/api/state`:
+- total;
+- topLevel;
+- active;
+- paused;
+- pendingDocs;
+- updatedAt.
+
+El detalle solo se entrega por `GET /api/projects`.
