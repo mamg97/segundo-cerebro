@@ -4,45 +4,43 @@ const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "TEXTAREA", "OPTION", "SVG", "PATH
 const NUMBER_PATTERN = /\d+(?:[.,:/-]\d+)*(?:\s?(?:%|€|EUR|kcal|kg|g|kWh|h|min|d[ií]as?))?/gi;
 
 let observer = null;
+let enabled = false;
+let applyingMask = false;
+const originalText = new Map();
 
 function shouldSkip(node) {
   const parent = node?.parentElement;
   if (!parent) return true;
   if (SKIP_TAGS.has(parent.tagName)) return true;
-  if (parent.closest(".demo-number, [data-demo-unmasked='true']")) return true;
+  if (parent.closest("[data-demo-unmasked='true']")) return true;
   return false;
 }
 
-function instrumentTextNode(node) {
-  if (!node || shouldSkip(node)) return;
+function maskedValue(value) {
+  return String(value ?? "").replace(NUMBER_PATTERN, "** **");
+}
+
+function maskTextNode(node) {
+  if (!enabled || applyingMask || !node || shouldSkip(node)) return;
   const text = node.nodeValue || "";
   NUMBER_PATTERN.lastIndex = 0;
   if (!NUMBER_PATTERN.test(text)) return;
   NUMBER_PATTERN.lastIndex = 0;
 
-  const fragment = document.createDocumentFragment();
-  let cursor = 0;
-  for (const match of text.matchAll(NUMBER_PATTERN)) {
-    const start = match.index ?? 0;
-    if (start > cursor) fragment.append(document.createTextNode(text.slice(cursor, start)));
+  const previous = originalText.get(node);
+  if (previous && node.nodeValue === maskedValue(previous)) return;
 
-    const span = document.createElement("span");
-    span.className = "demo-number";
-    span.textContent = match[0];
-    span.setAttribute("data-demo-sensitive", "number");
-    fragment.append(span);
-    cursor = start + match[0].length;
-  }
-
-  if (cursor < text.length) fragment.append(document.createTextNode(text.slice(cursor)));
-  node.replaceWith(fragment);
+  originalText.set(node, text);
+  applyingMask = true;
+  node.nodeValue = maskedValue(text);
+  applyingMask = false;
 }
 
-function instrumentRoot(root) {
-  if (!root) return;
+function maskRoot(root) {
+  if (!enabled || !root) return;
 
   if (root.nodeType === Node.TEXT_NODE) {
-    instrumentTextNode(root);
+    maskTextNode(root);
     return;
   }
 
@@ -55,47 +53,62 @@ function instrumentRoot(root) {
     nodes.push(current);
     current = walker.nextNode();
   }
-  nodes.forEach(instrumentTextNode);
+  nodes.forEach(maskTextNode);
 }
 
-function updateToggle(enabled) {
+function restoreOriginalText() {
+  applyingMask = true;
+  for (const [node, value] of originalText.entries()) {
+    if (node?.isConnected) node.nodeValue = value;
+  }
+  originalText.clear();
+  applyingMask = false;
+}
+
+function updateToggle(active) {
   const button = document.querySelector("#demo-mode-toggle");
   if (!button) return;
-  button.setAttribute("aria-pressed", String(enabled));
-  button.setAttribute("aria-label", enabled ? "Desactivar modo demo" : "Activar modo demo");
-  button.title = enabled ? "Mostrar cifras reales" : "Ocultar cifras para enseñar la app";
-  button.classList.toggle("active", enabled);
+  button.setAttribute("aria-pressed", String(active));
+  button.setAttribute("aria-label", active ? "Desactivar modo demo" : "Activar modo demo");
+  button.title = active ? "Mostrar cifras reales" : "Ocultar cifras para enseñar la app";
+  button.classList.toggle("active", active);
   const label = button.querySelector(".demo-mode-label");
-  if (label) label.textContent = enabled ? "Demo activo" : "Demo";
+  if (label) label.textContent = active ? "Demo activo" : "Demo";
 }
 
-export function setDemoMode(enabled, persist = true) {
-  const active = Boolean(enabled);
-  document.documentElement.dataset.demoMode = active ? "true" : "false";
-  updateToggle(active);
+export function setDemoMode(active, persist = true) {
+  enabled = Boolean(active);
+  document.documentElement.dataset.demoMode = enabled ? "true" : "false";
+  updateToggle(enabled);
+
+  if (enabled) {
+    maskRoot(document.body);
+  } else {
+    restoreOriginalText();
+  }
 
   if (persist) {
     try {
-      if (active) sessionStorage.setItem(DEMO_MODE_STORAGE_KEY, "1");
+      if (enabled) sessionStorage.setItem(DEMO_MODE_STORAGE_KEY, "1");
       else sessionStorage.removeItem(DEMO_MODE_STORAGE_KEY);
     } catch {}
   }
-
-  if (active) instrumentRoot(document.body);
 }
 
 export function toggleDemoMode() {
-  setDemoMode(document.documentElement.dataset.demoMode !== "true");
+  setDemoMode(!enabled);
 }
 
 export function initDemoMode() {
-  instrumentRoot(document.body);
-
   if (!observer) {
     observer = new MutationObserver((mutations) => {
+      if (!enabled || applyingMask) return;
       for (const mutation of mutations) {
-        mutation.addedNodes.forEach((node) => instrumentRoot(node));
-        if (mutation.type === "characterData") instrumentTextNode(mutation.target);
+        if (mutation.type === "characterData") {
+          maskTextNode(mutation.target);
+          continue;
+        }
+        mutation.addedNodes.forEach((node) => maskRoot(node));
       }
     });
     observer.observe(document.body, {
@@ -105,9 +118,9 @@ export function initDemoMode() {
     });
   }
 
-  let enabled = false;
+  let active = false;
   try {
-    enabled = sessionStorage.getItem(DEMO_MODE_STORAGE_KEY) === "1";
+    active = sessionStorage.getItem(DEMO_MODE_STORAGE_KEY) === "1";
   } catch {}
-  setDemoMode(enabled, false);
+  setDemoMode(active, false);
 }
