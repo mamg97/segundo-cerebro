@@ -735,7 +735,7 @@ function collectHealthEvents() {
     .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
 }
 
-async const FAMILY_SCOPE_LABELS = {
+const FAMILY_SCOPE_LABELS = {
   mother: "Madre",
   father: "Padre",
   shared: "Familiar / patrimonial común"
