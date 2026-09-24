@@ -1525,6 +1525,113 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
   };
 }
 
+
+async function updateHealthSheetRange(env, range, values) {
+  if (!hasHealthGoogleConfig(env)) return;
+  const token = await getGoogleAccessToken(env);
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+  const response = await fetch(endpoint, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ range, majorDimension: "ROWS", values })
+  });
+  if (!response.ok) throw new Error(`HEALTH_SUMMARY_WRITE_${response.status}`);
+}
+
+function healthHistoryWeightStats(bodySamples = [], endDate) {
+  const weightSamples = bodySamples.filter((sample) =>
+    sample?.type === "bodyMass" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(String(sample?.date || "")) &&
+    Number.isFinite(Number(sample?.value))
+  );
+  const dailyWeight = new Map();
+  for (const sample of weightSamples) {
+    if (!dailyWeight.has(sample.date)) dailyWeight.set(sample.date, []);
+    dailyWeight.get(sample.date).push(Number(sample.value));
+  }
+  const dailyMean = (date) => {
+    const values = dailyWeight.get(date) || [];
+    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+  };
+  const meanForOffsets = (startOffset, endOffset) => {
+    const values = [];
+    for (let offset = startOffset; offset <= endOffset; offset += 1) {
+      const value = dailyMean(healthAddDays(endDate, -offset));
+      if (value !== null) values.push(value);
+    }
+    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+  };
+  const current = meanForOffsets(0, 6);
+  const previous = meanForOffsets(7, 13);
+  return {
+    latest: weightSamples.length ? Number(weightSamples[weightSamples.length - 1].value) : null,
+    current7d: current,
+    previous7d: previous,
+    weeklyChange: current !== null && previous !== null ? current - previous : null
+  };
+}
+
+async function persistHealthHistorySummary(env, history) {
+  if (!hasHealthGoogleConfig(env) || !history) return;
+  const rowByRange = { "30": 2, "90": 3, "180": 4, "365": 5, "all": 6 };
+  const targetRow = rowByRange[String(history.range || "")];
+  if (!targetRow) return;
+
+  const bodySamples = Array.isArray(history.bodySamples) ? history.bodySamples : [];
+  const latestMetricValue = (type) => {
+    const matches = bodySamples
+      .filter((sample) => sample?.type === type && Number.isFinite(Number(sample?.value)))
+      .sort((a, b) => String(a.measuredAt || a.date || "").localeCompare(String(b.measuredAt || b.date || "")));
+    return matches.length ? Number(matches[matches.length - 1].value) : null;
+  };
+  const weights = healthHistoryWeightStats(bodySamples, history.endDate);
+  const waist = Array.isArray(history.waistHistory) && history.waistHistory.length
+    ? Number(history.waistHistory[history.waistHistory.length - 1]?.value)
+    : null;
+  const quality = history.quality || {};
+  const averages = history.comparableAverages || {};
+  const comparableDays = Number(quality.full || 0) + Number(quality.live || 0);
+
+  const row = [
+    String(history.range || ""),
+    new Date().toISOString(),
+    history.startDate || "",
+    history.endDate || "",
+    Array.isArray(history.activity) ? history.activity.length : 0,
+    comparableDays,
+    Number(quality.full || 0),
+    Number(quality.live || 0),
+    Number(quality.partial || 0),
+    Number(quality.low || 0),
+    Number(quality.noWatch || 0),
+    Number(quality.phoneOnly || 0),
+    Number(quality.unknown || 0),
+    averages.totalKcal ?? "",
+    averages.activeKcal ?? "",
+    averages.steps ?? "",
+    averages.exerciseMinutes ?? "",
+    bodySamples.length,
+    weights.latest ?? "",
+    weights.current7d ?? "",
+    weights.previous7d ?? "",
+    weights.weeklyChange ?? "",
+    latestMetricValue("bodyFatPercentage") ?? "",
+    latestMetricValue("bodyMassIndex") ?? "",
+    latestMetricValue("leanBodyMass") ?? "",
+    Number.isFinite(waist) ? waist : "",
+    "private-d1-derived"
+  ];
+
+  await updateHealthSheetRange(
+    env,
+    `HistoricoResumen!A${targetRow}:AA${targetRow}`,
+    [row]
+  );
+}
+
 async function fetchHealthNutritionSummary(env, options = {}) {
   if (!hasHealthGoogleConfig(env)) {
     return { status: "not-configured", value: null };
@@ -2930,7 +3037,13 @@ export default {
         if (!["30", "90", "180", "365", "all"].includes(range)) {
           return json({ ok: false, code: "INVALID_HEALTH_HISTORY_RANGE" }, 400);
         }
-        return json({ ok: true, ...(await fetchHealthHistory(env, { endDate, range })) });
+        const history = await fetchHealthHistory(env, { endDate, range });
+        try {
+          await persistHealthHistorySummary(env, history);
+        } catch (summaryError) {
+          console.warn("Health history summary sync failed", String(summaryError?.message || summaryError));
+        }
+        return json({ ok: true, ...history });
       } catch (error) {
         console.warn("Health history read failed", String(error?.message || error));
         return json({ ok: false, code: "HEALTH_HISTORY_READ_FAILED" }, 502);
