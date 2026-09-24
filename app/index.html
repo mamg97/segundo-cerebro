@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.23.0">
-    <script type="module" src="./app.js?v=0.23.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.24.0">
+    <script type="module" src="./app.js?v=0.24.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -39,7 +39,11 @@
             <time id="current-date"></time>
           </div>
           <div class="top-actions">
-            <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false" title="Cambiar tema">
+            <button id="demo-mode-toggle" class="demo-mode-toggle" type="button" aria-label="Activar modo demo" aria-pressed="false" title="Ocultar cifras para enseñar la app" data-demo-unmasked="true">
+              <span class="demo-mode-dot" aria-hidden="true"></span>
+              <span class="demo-mode-label">Demo</span>
+            </button>
+            <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false" title="Cambiar tema" data-demo-unmasked="true">
               <span aria-hidden="true">☾</span>
             </button>
           </div>

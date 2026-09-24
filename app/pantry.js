@@ -105,7 +105,7 @@ export function renderHomePantryCard(state, privateModeKind) {
   const card = document.querySelector("#home-pantry-card");
   if (!card) return;
   const summary = state?.pantrySummary || null;
-  const visible = privateModeKind === "remote" && summary;
+  const visible = privateModeKind === "remote";
   card.hidden = !visible;
   if (!visible) return;
 
@@ -114,6 +114,18 @@ export function renderHomePantryCard(state, privateModeKind) {
     if (node) node.textContent = value;
   };
 
+  if (!summary) {
+    set("#home-pantry-available", "—");
+    set("#home-pantry-low", "—");
+    set("#home-pantry-buy", "—");
+    set("#home-pantry-cost", "—");
+    set("#home-pantry-status", "Despensa disponible · fuente privada pendiente de lectura");
+    set("#home-pantry-review", "Abrir para comprobar conexión");
+    card.dataset.sourceStatus = "unavailable";
+    return;
+  }
+
+  delete card.dataset.sourceStatus;
   set("#home-pantry-available", Number(summary.availableProductCount || 0));
   set("#home-pantry-low", Number(summary.lowStockCount || 0));
   set("#home-pantry-buy", Number(summary.pendingPurchaseCount || 0));
@@ -342,6 +354,7 @@ export async function openPantryDetail() {
   } catch (error) {
     console.warn("Pantry load failed", error);
     document.querySelector("#dialog-body").innerHTML =
-      '<p class="pantry-empty">No se ha podido cargar la despensa privada. El resto del dashboard sigue disponible.</p>';
+      '<div class="pantry-source-error"><strong>Despensa disponible, datos pendientes de conexión</strong><p>No se ha podido leer ahora mismo la fuente privada. El módulo ya no desaparece cuando esto ocurre.</p><button id="pantry-retry" type="button">Reintentar</button></div>';
+    document.querySelector("#pantry-retry")?.addEventListener("click", openPantryDetail);
   }
 }

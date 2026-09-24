@@ -1,6 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js";
+import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.24.0";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.24.0";
 
 let state = mockState;
 let areaById = new Map();
@@ -157,6 +158,7 @@ async function init() {
   renderAreas();
   renderSystemMap();
   bindInteractions();
+  initDemoMode();
 }
 
 async function loadLocalPrivateState() {
@@ -3876,6 +3878,7 @@ function bindInteractions() {
   });
   document.querySelector("#home-pantry-card")?.addEventListener("click", openPantryDetail);
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
+  document.querySelector("#demo-mode-toggle")?.addEventListener("click", toggleDemoMode);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
