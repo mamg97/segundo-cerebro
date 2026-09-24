@@ -748,7 +748,9 @@ async function loadHealthOverview(dateKey = localDateKey()) {
       cache: "no-store"
     });
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
-    renderHealthOverview(await response.json());
+    const payload = await response.json();
+    renderHealthOverview(payload);
+    loadHealthHistory("365", payload.date || dateKey);
   } catch (error) {
     if (panel) panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Apple Health no disponible</strong><p>No se ha podido cargar el resumen de actividad y composición corporal.</p></div>';
     console.warn("Health overview load failed", error);
@@ -914,7 +916,156 @@ function renderHealthOverview(data) {
     </div>
 
     ${activityGoal.appleWatchEnergyRule ? `<p class="health-trend-note">⌁ ${escapeHtml(activityGoal.appleWatchEnergyRule)}</p>` : ""}
+
+    <section class="health-history-section">
+      <div class="health-history-heading">
+        <div>
+          <strong>Progreso histórico</strong>
+          <p>Las tendencias de actividad excluyen de los promedios los días con cobertura incompleta del Apple Watch.</p>
+        </div>
+        <div class="health-history-ranges" role="group" aria-label="Rango histórico">
+          <button type="button" data-health-history-range="30">30 d</button>
+          <button type="button" data-health-history-range="90">90 d</button>
+          <button type="button" data-health-history-range="365" class="active">1 año</button>
+          <button type="button" data-health-history-range="all">Todo</button>
+        </div>
+      </div>
+      <div id="health-history-content" data-health-date="${escapeHtml(data.date || localDateKey())}">
+        <p class="health-empty">Cargando histórico…</p>
+      </div>
+    </section>
   `;
+
+  document.querySelectorAll("[data-health-history-range]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-health-history-range]").forEach((item) => item.classList.toggle("active", item === button));
+      loadHealthHistory(button.dataset.healthHistoryRange, data.date || localDateKey());
+    });
+  });
+}
+
+async function loadHealthHistory(range = "365", dateKey = localDateKey()) {
+  const panel = document.querySelector("#health-history-content");
+  if (!panel) return;
+  panel.innerHTML = '<p class="health-empty">Cargando histórico…</p>';
+  try {
+    const response = await fetch(
+      "/api/health/history?range=" + encodeURIComponent(range) + "&date=" + encodeURIComponent(dateKey),
+      { headers: { Accept: "application/json" }, cache: "no-store" }
+    );
+    if (!response.ok) throw new Error("HEALTH_HISTORY_" + response.status);
+    renderHealthHistory(await response.json());
+  } catch (error) {
+    panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Histórico no disponible</strong><p>Cuando termine el backfill de Apple Health aparecerá aquí.</p></div>';
+    console.warn("Health history load failed", error);
+  }
+}
+
+function renderHealthHistory(data) {
+  const panel = document.querySelector("#health-history-content");
+  if (!panel) return;
+
+  const activity = Array.isArray(data.activity) ? data.activity : [];
+  const bodySamples = Array.isArray(data.bodySamples) ? data.bodySamples : [];
+  const waistHistory = Array.isArray(data.waistHistory) ? data.waistHistory : [];
+  const comparable = activity.filter((row) => ["full", "live"].includes(row.coverageQuality));
+
+  const dailyLatest = (type) => {
+    const byDate = new Map();
+    bodySamples.filter((item) => item.type === type).forEach((item) => {
+      const current = byDate.get(item.date);
+      if (!current || String(item.measuredAt || "") >= String(current.measuredAt || "")) byDate.set(item.date, item);
+    });
+    return [...byDate.values()].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  };
+
+  const weights = dailyLatest("bodyMass");
+  const fat = dailyLatest("bodyFatPercentage");
+  const lean = dailyLatest("leanBodyMass");
+  const totals = comparable.filter((row) => Number.isFinite(Number(row.totalKcal))).map((row) => ({ date: row.date, value: Number(row.totalKcal) }));
+  const steps = comparable.filter((row) => Number.isFinite(Number(row.steps))).map((row) => ({ date: row.date, value: Number(row.steps) }));
+
+  const metricSummary = (rows, suffix, digits = 1) => {
+    if (!rows.length) return { first: "—", latest: "—", change: "—" };
+    const first = Number(rows[0].value);
+    const latest = Number(rows[rows.length - 1].value);
+    const delta = latest - first;
+    const fmt = (value) => Number.isFinite(value) ? value.toFixed(digits).replace(".", ",") + suffix : "—";
+    return { first: fmt(first), latest: fmt(latest), change: (delta > 0 ? "+" : "") + fmt(delta) };
+  };
+
+  const weightRows = weights.map((item) => ({ date: item.date, value: Number(item.value) }));
+  const fatRows = fat.map((item) => ({ date: item.date, value: Number(item.value) }));
+  const leanRows = lean.map((item) => ({ date: item.date, value: Number(item.value) }));
+  const waistRows = waistHistory.map((item) => ({ date: item.date, value: Number(item.value) })).filter((item) => Number.isFinite(item.value));
+
+  const q = data.quality || {};
+  const averages = data.comparableAverages || {};
+  const incomplete = Number(q.partial || 0) + Number(q.low || 0) + Number(q.noWatch || 0);
+
+  panel.innerHTML = `
+    <div class="health-history-quality">
+      <span><strong>${Number(q.full || 0) + Number(q.live || 0)}</strong><small>días comparables</small></span>
+      <span><strong>${incomplete}</strong><small>días Watch parcial/ausente</small></span>
+      <span><strong>${Number(q.phoneOnly || 0)}</strong><small>días previos al Watch</small></span>
+      <p>Los días parciales siguen guardados y visibles, pero no se usan para calcular medias de gasto o actividad.</p>
+    </div>
+
+    <div class="health-history-grid">
+      ${renderHealthHistoryMetric("Peso", weightRows, " kg", 1)}
+      ${renderHealthHistoryMetric("Grasa corporal", fatRows, "%", 1)}
+      ${renderHealthHistoryMetric("Masa magra", leanRows, " kg", 1)}
+      ${renderHealthHistoryMetric("Cintura", waistRows, " cm", 1)}
+      ${renderHealthHistoryMetric("Gasto total · días comparables", totals, " kcal", 0, averages.totalKcal)}
+      ${renderHealthHistoryMetric("Pasos · días comparables", steps, "", 0, averages.steps)}
+    </div>
+  `;
+}
+
+function renderHealthHistoryMetric(label, rows, suffix = "", digits = 1, average = null) {
+  const clean = (rows || []).filter((item) => Number.isFinite(Number(item.value))).map((item) => ({
+    date: item.date,
+    value: Number(item.value)
+  }));
+  if (!clean.length) {
+    return `<article class="health-history-card"><header><strong>${escapeHtml(label)}</strong><span>Sin datos</span></header><p class="health-empty">Todavía no hay histórico suficiente.</p></article>`;
+  }
+
+  const first = clean[0];
+  const latest = clean[clean.length - 1];
+  const delta = latest.value - first.value;
+  const format = (value) => Number(value).toFixed(digits).replace(".", ",") + suffix;
+  return `
+    <article class="health-history-card">
+      <header>
+        <div><strong>${escapeHtml(label)}</strong><small>${clean.length} puntos</small></div>
+        <span>${format(latest.value)}</span>
+      </header>
+      ${healthSparkline(clean)}
+      <footer>
+        <span>Inicio <b>${format(first.value)}</b></span>
+        <span>Cambio <b>${delta > 0 ? "+" : ""}${format(delta)}</b></span>
+        ${Number.isFinite(Number(average)) ? `<span>Media <b>${format(Number(average))}</b></span>` : ""}
+      </footer>
+    </article>`;
+}
+
+function healthSparkline(rows) {
+  if (!rows.length) return "";
+  const width = 420;
+  const height = 110;
+  const pad = 8;
+  const values = rows.map((item) => Number(item.value));
+  let min = Math.min(...values);
+  let max = Math.max(...values);
+  if (min === max) { min -= 1; max += 1; }
+  const span = max - min;
+  const points = rows.map((item, index) => {
+    const x = rows.length === 1 ? width / 2 : pad + (index / (rows.length - 1)) * (width - pad * 2);
+    const y = height - pad - ((Number(item.value) - min) / span) * (height - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  return `<svg class="health-history-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolución de ${rows.length} registros"><polyline points="${points}"></polyline></svg>`;
 }
 
 function normalizeHealthLabel(value) {
