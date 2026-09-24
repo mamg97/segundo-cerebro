@@ -1751,6 +1751,9 @@ function renderNutritionPanel(data) {
       </article>
     </div>
 
+    ${renderNutritionMacroTargets(consumed, objective)}
+    ${renderNutritionSuggestions(foods, consumed, objective)}
+
     <div class="nutrition-status-grid">
       <article>
         <div>
@@ -1823,6 +1826,163 @@ function renderNutritionPanel(data) {
   `;
 
   bindNutritionInteractions(date);
+}
+
+function renderNutritionMacroTargets(consumed, objective) {
+  if (!objective) return "";
+  const rows = [
+    ["Calorías", Number(consumed?.kcal || 0), Number(objective.kcal), " kcal"],
+    ["Proteína", Number(consumed?.protein || 0), Number(objective.protein), " g"],
+    ["Carbohidratos", Number(consumed?.carbs || 0), Number(objective.carbs), " g"],
+    ["Grasas", Number(consumed?.fat || 0), Number(objective.fat), " g"]
+  ].filter(([, , target]) => Number.isFinite(target) && target > 0);
+
+  if (!rows.length) return "";
+  return `
+    <section class="nutrition-targets-section">
+      <div class="health-section-heading">
+        <div>
+          <strong>Objetivos del día</strong>
+          <p>Comparación directa entre lo consumido y el objetivo vigente.</p>
+        </div>
+      </div>
+      <div class="nutrition-target-list">
+        ${rows.map(([label, value, target, suffix]) => {
+          const progress = Math.max(0, Math.min(100, Math.round((value / target) * 100)));
+          const remaining = Math.max(0, target - value);
+          const format = (n) => Number.isInteger(n) ? n.toLocaleString("es-ES") : n.toFixed(1).replace(".", ",");
+          return `
+            <div class="nutrition-target-row">
+              <div>
+                <strong>${escapeHtml(label)}</strong>
+                <small>${format(value)}${suffix} / ${format(target)}${suffix} · faltan ${format(remaining)}${suffix}</small>
+              </div>
+              <progress max="100" value="${progress}"></progress>
+            </div>`;
+        }).join("")}
+      </div>
+    </section>`;
+}
+
+function renderNutritionSuggestions(foods, consumed, objective) {
+  if (!objective || !Array.isArray(foods) || !foods.length) return "";
+
+  const deficits = {
+    protein: Math.max(0, Number(objective.protein || 0) - Number(consumed?.protein || 0)),
+    carbs: Math.max(0, Number(objective.carbs || 0) - Number(consumed?.carbs || 0)),
+    fat: Math.max(0, Number(objective.fat || 0) - Number(consumed?.fat || 0)),
+    kcal: Math.max(0, Number(objective.kcal || 0) - Number(consumed?.kcal || 0))
+  };
+
+  if (deficits.protein <= 0 && deficits.carbs <= 0 && deficits.fat <= 0) {
+    return `
+      <section class="nutrition-suggestions">
+        <div class="health-section-heading">
+          <div><strong>Qué comer ahora</strong><p>Los objetivos principales de macros ya están cubiertos.</p></div>
+        </div>
+      </section>`;
+  }
+
+  const scored = foods
+    .map((food) => {
+      const protein = Number(food.protein);
+      const carbs = Number(food.carbs);
+      const fat = Number(food.fat);
+      const kcal = Number(food.kcal);
+      if (![protein, carbs, fat, kcal].some(Number.isFinite)) return null;
+      const p = Number.isFinite(protein) ? protein : 0;
+      const c = Number.isFinite(carbs) ? carbs : 0;
+      const f = Number.isFinite(fat) ? fat : 0;
+      const k = Number.isFinite(kcal) ? kcal : 0;
+      const coverage =
+        (deficits.protein > 0 ? Math.min(1, p / deficits.protein) * 1.45 : 0) +
+        (deficits.carbs > 0 ? Math.min(1, c / deficits.carbs) : 0) +
+        (deficits.fat > 0 ? Math.min(1, f / deficits.fat) * 0.75 : 0);
+      const kcalPenalty = deficits.kcal > 0 && k > deficits.kcal ? Math.min(0.8, (k - deficits.kcal) / Math.max(deficits.kcal, 1)) : 0;
+      return { food, score: coverage - kcalPenalty };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  if (!scored.length) return "";
+
+  const deficitLabels = [
+    deficits.protein > 0 ? `${Math.round(deficits.protein)} g proteína` : null,
+    deficits.carbs > 0 ? `${Math.round(deficits.carbs)} g hidratos` : null,
+    deficits.fat > 0 ? `${Math.round(deficits.fat)} g grasa` : null
+  ].filter(Boolean).join(" · ");
+
+  return `
+    <section class="nutrition-suggestions">
+      <div class="health-section-heading">
+        <div>
+          <strong>Qué comer ahora</strong>
+          <p>Opciones de tu base que mejor encajan con lo que falta: ${escapeHtml(deficitLabels)}.</p>
+        </div>
+      </div>
+      <div class="nutrition-suggestion-grid">
+        ${scored.map(({ food }) => `
+          <article>
+            <strong>${escapeHtml(food.name)}</strong>
+            <span>${food.kcal == null ? "—" : formatKcal(food.kcal)}</span>
+            <small>P ${food.protein == null ? "—" : formatMacro(food.protein)} · C ${food.carbs == null ? "—" : formatMacro(food.carbs)} · G ${food.fat == null ? "—" : formatMacro(food.fat)}</small>
+          </article>`).join("")}
+      </div>
+      <p class="nutrition-suggestion-note">Sugerencias orientativas basadas en la base guardada; no sustituyen el menú planificado.</p>
+    </section>`;
+}
+
+function renderMenuPanel(data) {
+  const panel = document.querySelector("#menu-panel");
+  if (!panel) return;
+
+  const rows = Array.isArray(data?.weeklyMenu) ? data.weeklyMenu : [];
+  if (!rows.length) {
+    panel.innerHTML = `
+      <div class="health-empty health-empty-card">
+        <strong>Menú semanal preparado, pero todavía vacío</strong>
+        <p>La hoja MenuSemanal ya está conectada. Cuando el gestor de Salud añada propuestas o un menú objetivo, aparecerán aquí sin inventar comidas intermedias.</p>
+      </div>`;
+    return;
+  }
+
+  const groups = new Map();
+  for (const row of rows) {
+    if (!groups.has(row.date)) groups.set(row.date, []);
+    groups.get(row.date).push(row);
+  }
+
+  const dayFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "short", day: "numeric", month: "short" });
+  panel.innerHTML = `
+    <div class="health-section-heading">
+      <div>
+        <strong>Menú objetivo de la semana</strong>
+        <p>Plan separado del registro real. Lo consumido sigue registrándose en Nutrición.</p>
+      </div>
+      <span>${rows.length}</span>
+    </div>
+    <div class="weekly-menu-grid">
+      ${[...groups.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([date, items]) => {
+        const parsed = new Date(`${date}T12:00:00`);
+        const label = Number.isNaN(parsed.getTime()) ? date : dayFormatter.format(parsed).replace(".", "");
+        const kcal = items.reduce((sum, item) => sum + Number(item.kcal || 0), 0);
+        const protein = items.reduce((sum, item) => sum + Number(item.protein || 0), 0);
+        return `
+          <section class="weekly-menu-day">
+            <header><strong>${escapeHtml(label)}</strong><span>${formatKcal(kcal)} · P ${formatMacro(protein)}</span></header>
+            ${items.map((item) => `
+              <article>
+                <div>
+                  <small>${escapeHtml(item.moment || "Otro")}${item.gymSession ? " · " + escapeHtml(item.gymSession) : ""}</small>
+                  <strong>${escapeHtml(item.name)}</strong>
+                  ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
+                </div>
+                <span>${item.kcal == null ? "—" : formatKcal(item.kcal)}</span>
+              </article>`).join("")}
+          </section>`;
+      }).join("")}
+    </div>`;
 }
 
 function renderNutritionEntries(entries) {
