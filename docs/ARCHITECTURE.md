@@ -244,3 +244,29 @@ El registro no sustituye la documentación propietaria de cada proyecto. Mantien
 - relaciones con otros proyectos y dominios.
 
 La UI de Proyectos se carga bajo demanda desde `/api/projects`.
+
+
+## Salud — adherencia mensual
+
+La adherencia es una proyección derivada en tiempo de lectura:
+
+```text
+SEGUNDO CEREBRO - SALUD
+  Registro / Objetivos / ObjetivosActividad / MenuSemanal / AdherenciaManual
+        +
+Apple Health → D1 health_energy_daily
+        +
+D1 gym_sessions
+        +
+HabitQuest
+        ↓
+central adherence engine
+        ↓
+GET /api/health/adherence?month=YYYY-MM
+        ↓
+Salud → Adherencia
+```
+
+No se persiste un segundo histórico calculado. El estado mensual se recalcula desde las fuentes canónicas y se cachea brevemente.
+
+La clasificación manual en `AdherenciaManual` solo representa una decisión explícita sobre el estado del día; no duplica comidas, actividad, gym ni hábitos.
