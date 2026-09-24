@@ -2074,6 +2074,428 @@ async function deleteGymSession(sessionId, env) {
   return json({ ok: true, deletedSessionId: id });
 }
 
+async function ensureFamilyTables(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS family_cases (
+      id TEXT PRIMARY KEY,
+      person_scope TEXT NOT NULL,
+      domain TEXT NOT NULL,
+      title TEXT NOT NULL,
+      summary TEXT,
+      status TEXT NOT NULL DEFAULT 'ACTIVE',
+      priority TEXT NOT NULL DEFAULT 'medium',
+      next_action TEXT,
+      next_action_owner TEXT,
+      due_at TEXT,
+      waiting_on TEXT,
+      sensitivity TEXT NOT NULL DEFAULT 'muy_confidencial',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS family_case_actions (
+      id TEXT PRIMARY KEY,
+      case_id TEXT NOT NULL,
+      action_type TEXT NOT NULL DEFAULT 'note',
+      summary TEXT NOT NULL,
+      owner TEXT,
+      status TEXT,
+      happened_at TEXT NOT NULL,
+      due_at TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(case_id) REFERENCES family_cases(id) ON DELETE CASCADE
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS family_case_refs (
+      id TEXT PRIMARY KEY,
+      case_id TEXT NOT NULL,
+      document_type TEXT,
+      source_provider TEXT NOT NULL,
+      source_ref TEXT NOT NULL,
+      document_date TEXT,
+      summary TEXT,
+      review_status TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(case_id) REFERENCES family_cases(id) ON DELETE CASCADE
+    )
+  `).run();
+
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_cases_scope_status ON family_cases(person_scope, status)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_cases_due ON family_cases(due_at)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_actions_case ON family_case_actions(case_id, happened_at DESC)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_refs_case ON family_case_refs(case_id, updated_at DESC)").run();
+}
+
+const FAMILY_SCOPES = new Set(["mother", "father", "shared"]);
+const FAMILY_DOMAINS = new Set(["health", "disability", "retirement", "property", "mortgage", "investment", "business", "tax", "admin", "legal", "other"]);
+const FAMILY_STATUSES = new Set(["ACTIVE", "WAITING_EXTERNAL", "WAITING_DOCUMENT", "DECISION_OPEN", "SCHEDULED", "BLOCKED", "DONE", "ARCHIVED"]);
+const FAMILY_PRIORITIES = new Set(["low", "medium", "high", "critical"]);
+const FAMILY_ACTION_TYPES = new Set(["note", "update", "milestone", "communication", "document_request", "decision", "task"]);
+const FAMILY_REF_PROVIDERS = new Set(["calendar", "finance", "litos", "email", "drive", "document", "d1", "other"]);
+
+function familyTrim(value, max = 2000) {
+  return String(value ?? "").trim().slice(0, max);
+}
+
+function familyNullable(value, max = 2000) {
+  const clean = familyTrim(value, max);
+  return clean || null;
+}
+
+function familyCaseFromRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    personScope: row.person_scope,
+    domain: row.domain,
+    title: row.title,
+    summary: row.summary || null,
+    status: row.status,
+    priority: row.priority,
+    nextAction: row.next_action || null,
+    nextActionOwner: row.next_action_owner || null,
+    dueAt: row.due_at || null,
+    waitingOn: row.waiting_on || null,
+    sensitivity: row.sensitivity || "muy_confidencial",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function familyActionFromRow(row) {
+  return {
+    id: row.id,
+    caseId: row.case_id,
+    actionType: row.action_type,
+    summary: row.summary,
+    owner: row.owner || null,
+    status: row.status || null,
+    happenedAt: row.happened_at,
+    dueAt: row.due_at || null,
+    createdAt: row.created_at
+  };
+}
+
+function familyRefFromRow(row) {
+  return {
+    id: row.id,
+    caseId: row.case_id,
+    documentType: row.document_type || null,
+    sourceProvider: row.source_provider,
+    sourceRef: row.source_ref,
+    documentDate: row.document_date || null,
+    summary: row.summary || null,
+    reviewStatus: row.review_status || null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function familyDateOrNull(value) {
+  const clean = familyTrim(value, 80);
+  if (!clean) return null;
+  const parsed = new Date(clean);
+  return Number.isFinite(parsed.getTime()) ? clean : null;
+}
+
+async function fetchFamilyCases(env, { scope = null, status = null } = {}) {
+  await ensureFamilyTables(env);
+  const clauses = [];
+  const binds = [];
+
+  if (scope) {
+    if (!FAMILY_SCOPES.has(scope)) throw new Error("INVALID_FAMILY_SCOPE");
+    clauses.push("person_scope = ?");
+    binds.push(scope);
+  }
+
+  if (status) {
+    if (!FAMILY_STATUSES.has(status)) throw new Error("INVALID_FAMILY_STATUS");
+    clauses.push("status = ?");
+    binds.push(status);
+  }
+
+  const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+  const result = await env.DB.prepare(`
+    SELECT id, person_scope, domain, title, summary, status, priority,
+           next_action, next_action_owner, due_at, waiting_on, sensitivity,
+           created_at, updated_at
+    FROM family_cases
+    ${where}
+    ORDER BY
+      CASE priority WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END DESC,
+      CASE WHEN due_at IS NULL OR due_at = '' THEN 1 ELSE 0 END,
+      due_at ASC,
+      updated_at DESC
+  `).bind(...binds).all();
+
+  return (result.results || []).map(familyCaseFromRow);
+}
+
+async function fetchFamilyCaseDetail(env, caseId) {
+  await ensureFamilyTables(env);
+  const id = familyTrim(caseId, 160);
+  if (!id) return null;
+
+  const caseRow = await env.DB.prepare(`
+    SELECT id, person_scope, domain, title, summary, status, priority,
+           next_action, next_action_owner, due_at, waiting_on, sensitivity,
+           created_at, updated_at
+    FROM family_cases
+    WHERE id = ?
+    LIMIT 1
+  `).bind(id).first();
+
+  if (!caseRow) return null;
+
+  const [actionsResult, refsResult] = await Promise.all([
+    env.DB.prepare(`
+      SELECT id, case_id, action_type, summary, owner, status, happened_at, due_at, created_at
+      FROM family_case_actions
+      WHERE case_id = ?
+      ORDER BY happened_at DESC, created_at DESC
+      LIMIT 100
+    `).bind(id).all(),
+    env.DB.prepare(`
+      SELECT id, case_id, document_type, source_provider, source_ref, document_date,
+             summary, review_status, created_at, updated_at
+      FROM family_case_refs
+      WHERE case_id = ?
+      ORDER BY COALESCE(document_date, updated_at) DESC
+      LIMIT 100
+    `).bind(id).all()
+  ]);
+
+  return {
+    case: familyCaseFromRow(caseRow),
+    actions: (actionsResult.results || []).map(familyActionFromRow),
+    references: (refsResult.results || []).map(familyRefFromRow)
+  };
+}
+
+async function fetchFamilyHomeSummary(env) {
+  const cases = await fetchFamilyCases(env);
+  const open = cases.filter((item) => !["DONE", "ARCHIVED"].includes(item.status));
+  const now = Date.now();
+  const attentionLimit = now + 21 * 24 * 60 * 60 * 1000;
+  const needsAttention = open.filter((item) => {
+    const due = item.dueAt ? new Date(item.dueAt).getTime() : NaN;
+    return ["high", "critical"].includes(item.priority)
+      || ["BLOCKED", "DECISION_OPEN", "WAITING_DOCUMENT"].includes(item.status)
+      || (Number.isFinite(due) && due <= attentionLimit);
+  });
+  const dueDates = open
+    .map((item) => item.dueAt)
+    .filter(Boolean)
+    .map((value) => ({ value, time: new Date(value).getTime() }))
+    .filter((item) => Number.isFinite(item.time) && item.time >= now)
+    .sort((a, b) => a.time - b.time);
+
+  return {
+    openCount: open.length,
+    attentionCount: needsAttention.length,
+    waitingCount: open.filter((item) => item.status.startsWith("WAITING_")).length,
+    decisionOpenCount: open.filter((item) => item.status === "DECISION_OPEN").length,
+    nextDueAt: dueDates[0]?.value || null,
+    updatedAt: cases.reduce((latest, item) => !latest || item.updatedAt > latest ? item.updatedAt : latest, null)
+  };
+}
+
+async function createFamilyCase(request, env) {
+  await ensureFamilyTables(env);
+  let payload;
+  try { payload = await request.json(); }
+  catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const personScope = familyTrim(payload?.personScope, 24);
+  const domain = familyTrim(payload?.domain, 32);
+  const title = familyTrim(payload?.title, 240);
+  const status = familyTrim(payload?.status || "ACTIVE", 32).toUpperCase();
+  const priority = familyTrim(payload?.priority || "medium", 16).toLowerCase();
+
+  if (!FAMILY_SCOPES.has(personScope) || !FAMILY_DOMAINS.has(domain) || !title || !FAMILY_STATUSES.has(status) || !FAMILY_PRIORITIES.has(priority)) {
+    return json({ ok: false, code: "INVALID_FAMILY_CASE" }, 400);
+  }
+
+  const now = new Date().toISOString();
+  const id = `family_case_${crypto.randomUUID()}`;
+  await env.DB.prepare(`
+    INSERT INTO family_cases (
+      id, person_scope, domain, title, summary, status, priority,
+      next_action, next_action_owner, due_at, waiting_on, sensitivity,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'muy_confidencial', ?, ?)
+  `).bind(
+    id,
+    personScope,
+    domain,
+    title,
+    familyNullable(payload?.summary, 5000),
+    status,
+    priority,
+    familyNullable(payload?.nextAction, 2000),
+    familyNullable(payload?.nextActionOwner, 240),
+    familyDateOrNull(payload?.dueAt),
+    familyNullable(payload?.waitingOn, 1000),
+    now,
+    now
+  ).run();
+
+  return json({ ok: true, id, case: (await fetchFamilyCaseDetail(env, id)).case }, 201);
+}
+
+async function updateFamilyCase(request, env, caseId) {
+  await ensureFamilyTables(env);
+  const existing = await fetchFamilyCaseDetail(env, caseId);
+  if (!existing) return json({ ok: false, code: "FAMILY_CASE_NOT_FOUND" }, 404);
+
+  let payload;
+  try { payload = await request.json(); }
+  catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const fields = [];
+  const values = [];
+  const push = (column, value) => { fields.push(`${column} = ?`); values.push(value); };
+
+  if (Object.hasOwn(payload, "personScope")) {
+    const value = familyTrim(payload.personScope, 24);
+    if (!FAMILY_SCOPES.has(value)) return json({ ok: false, code: "INVALID_FAMILY_SCOPE" }, 400);
+    push("person_scope", value);
+  }
+  if (Object.hasOwn(payload, "domain")) {
+    const value = familyTrim(payload.domain, 32);
+    if (!FAMILY_DOMAINS.has(value)) return json({ ok: false, code: "INVALID_FAMILY_DOMAIN" }, 400);
+    push("domain", value);
+  }
+  if (Object.hasOwn(payload, "title")) {
+    const value = familyTrim(payload.title, 240);
+    if (!value) return json({ ok: false, code: "INVALID_FAMILY_TITLE" }, 400);
+    push("title", value);
+  }
+  if (Object.hasOwn(payload, "summary")) push("summary", familyNullable(payload.summary, 5000));
+  if (Object.hasOwn(payload, "status")) {
+    const value = familyTrim(payload.status, 32).toUpperCase();
+    if (!FAMILY_STATUSES.has(value)) return json({ ok: false, code: "INVALID_FAMILY_STATUS" }, 400);
+    push("status", value);
+  }
+  if (Object.hasOwn(payload, "priority")) {
+    const value = familyTrim(payload.priority, 16).toLowerCase();
+    if (!FAMILY_PRIORITIES.has(value)) return json({ ok: false, code: "INVALID_FAMILY_PRIORITY" }, 400);
+    push("priority", value);
+  }
+  if (Object.hasOwn(payload, "nextAction")) push("next_action", familyNullable(payload.nextAction, 2000));
+  if (Object.hasOwn(payload, "nextActionOwner")) push("next_action_owner", familyNullable(payload.nextActionOwner, 240));
+  if (Object.hasOwn(payload, "dueAt")) {
+    const raw = familyTrim(payload.dueAt, 80);
+    const value = familyDateOrNull(raw);
+    if (raw && !value) return json({ ok: false, code: "INVALID_FAMILY_DUE_AT" }, 400);
+    push("due_at", value);
+  }
+  if (Object.hasOwn(payload, "waitingOn")) push("waiting_on", familyNullable(payload.waitingOn, 1000));
+
+  if (!fields.length) return json({ ok: false, code: "EMPTY_FAMILY_UPDATE" }, 400);
+  const updatedAt = new Date().toISOString();
+  fields.push("updated_at = ?");
+  values.push(updatedAt, existing.case.id);
+
+  await env.DB.prepare(`UPDATE family_cases SET ${fields.join(", ")} WHERE id = ?`).bind(...values).run();
+  return json({ ok: true, ...(await fetchFamilyCaseDetail(env, existing.case.id)) });
+}
+
+async function appendFamilyAction(request, env, caseId) {
+  await ensureFamilyTables(env);
+  const existing = await fetchFamilyCaseDetail(env, caseId);
+  if (!existing) return json({ ok: false, code: "FAMILY_CASE_NOT_FOUND" }, 404);
+
+  let payload;
+  try { payload = await request.json(); }
+  catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const actionType = familyTrim(payload?.actionType || "note", 40);
+  const summary = familyTrim(payload?.summary, 4000);
+  if (!FAMILY_ACTION_TYPES.has(actionType) || !summary) {
+    return json({ ok: false, code: "INVALID_FAMILY_ACTION" }, 400);
+  }
+
+  const now = new Date().toISOString();
+  const happenedAt = familyDateOrNull(payload?.happenedAt) || now;
+  const dueAtRaw = familyTrim(payload?.dueAt, 80);
+  const dueAt = familyDateOrNull(dueAtRaw);
+  if (dueAtRaw && !dueAt) return json({ ok: false, code: "INVALID_FAMILY_ACTION_DUE_AT" }, 400);
+
+  const id = `family_action_${crypto.randomUUID()}`;
+  await env.DB.batch([
+    env.DB.prepare(`
+      INSERT INTO family_case_actions (
+        id, case_id, action_type, summary, owner, status, happened_at, due_at, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      existing.case.id,
+      actionType,
+      summary,
+      familyNullable(payload?.owner, 240),
+      familyNullable(payload?.status, 80),
+      happenedAt,
+      dueAt,
+      now
+    ),
+    env.DB.prepare("UPDATE family_cases SET updated_at = ? WHERE id = ?").bind(now, existing.case.id)
+  ]);
+
+  return json({ ok: true, id, ...(await fetchFamilyCaseDetail(env, existing.case.id)) }, 201);
+}
+
+async function appendFamilyReference(request, env, caseId) {
+  await ensureFamilyTables(env);
+  const existing = await fetchFamilyCaseDetail(env, caseId);
+  if (!existing) return json({ ok: false, code: "FAMILY_CASE_NOT_FOUND" }, 404);
+
+  let payload;
+  try { payload = await request.json(); }
+  catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const sourceProvider = familyTrim(payload?.sourceProvider, 40).toLowerCase();
+  const sourceRef = familyTrim(payload?.sourceRef, 1200);
+  if (!FAMILY_REF_PROVIDERS.has(sourceProvider) || !sourceRef) {
+    return json({ ok: false, code: "INVALID_FAMILY_REFERENCE" }, 400);
+  }
+
+  const documentDateRaw = familyTrim(payload?.documentDate, 80);
+  const documentDate = familyDateOrNull(documentDateRaw);
+  if (documentDateRaw && !documentDate) return json({ ok: false, code: "INVALID_FAMILY_DOCUMENT_DATE" }, 400);
+
+  const now = new Date().toISOString();
+  const id = `family_ref_${crypto.randomUUID()}`;
+  await env.DB.batch([
+    env.DB.prepare(`
+      INSERT INTO family_case_refs (
+        id, case_id, document_type, source_provider, source_ref, document_date,
+        summary, review_status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      existing.case.id,
+      familyNullable(payload?.documentType, 120),
+      sourceProvider,
+      sourceRef,
+      documentDate,
+      familyNullable(payload?.summary, 2000),
+      familyNullable(payload?.reviewStatus, 120),
+      now,
+      now
+    ),
+    env.DB.prepare("UPDATE family_cases SET updated_at = ? WHERE id = ?").bind(now, existing.case.id)
+  ]);
+
+  return json({ ok: true, id, ...(await fetchFamilyCaseDetail(env, existing.case.id)) }, 201);
+}
+
 
 export default {
   async fetch(request, env) {
@@ -2340,6 +2762,59 @@ export default {
       return deleteGymSession(sessionId, env);
     }
 
+    if (url.pathname === "/api/family/cases") {
+      try {
+        if (request.method === "GET") {
+          const scope = url.searchParams.get("scope") || null;
+          const status = url.searchParams.get("status") || null;
+          return json({
+            ok: true,
+            cases: await fetchFamilyCases(env, { scope, status }),
+            summary: await fetchFamilyHomeSummary(env)
+          });
+        }
+        if (request.method === "POST") return await createFamilyCase(request, env);
+        return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      } catch (error) {
+        const code = String(error?.message || "");
+        if (code.startsWith("INVALID_FAMILY_")) return json({ ok: false, code }, 400);
+        console.warn("Family cases request failed", code || "FAMILY_CASES_ERROR");
+        return json({ ok: false, code: "FAMILY_CASES_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname.startsWith("/api/family/cases/")) {
+      const rest = url.pathname.slice("/api/family/cases/".length);
+      const parts = rest.split("/").filter(Boolean);
+      const caseId = parts[0] ? decodeURIComponent(parts[0]) : "";
+
+      try {
+        if (parts.length === 1) {
+          if (request.method === "GET") {
+            const detail = await fetchFamilyCaseDetail(env, caseId);
+            return detail ? json({ ok: true, ...detail }) : json({ ok: false, code: "FAMILY_CASE_NOT_FOUND" }, 404);
+          }
+          if (request.method === "PATCH") return await updateFamilyCase(request, env, caseId);
+          return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+        }
+
+        if (parts.length === 2 && parts[1] === "actions") {
+          if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+          return await appendFamilyAction(request, env, caseId);
+        }
+
+        if (parts.length === 2 && parts[1] === "references") {
+          if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+          return await appendFamilyReference(request, env, caseId);
+        }
+
+        return json({ ok: false, code: "NOT_FOUND" }, 404);
+      } catch (error) {
+        console.warn("Family case request failed", String(error?.message || "FAMILY_CASE_ERROR"));
+        return json({ ok: false, code: "FAMILY_CASE_REQUEST_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/state") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
 
@@ -2415,6 +2890,13 @@ export default {
           calendarSync = "error";
           console.warn("iCloud calendar sync failed", String(error?.message || error));
         }
+      }
+
+      try {
+        state.familySummary = await fetchFamilyHomeSummary(env);
+      } catch (error) {
+        console.warn("Family summary read failed", String(error?.message || "FAMILY_SUMMARY_ERROR"));
+        state.familySummary = { openCount: 0, attentionCount: 0, waitingCount: 0, decisionOpenCount: 0, nextDueAt: null, updatedAt: null };
       }
 
       state.meta = {
