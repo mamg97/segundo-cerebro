@@ -89,3 +89,13 @@ GitHub Pages publica únicamente la demo mock. Un fallo o cambio en la aplicaci�
 ## Incidente
 
 Si se detecta un secreto o dato real en Git: detener la publicación, revocar credenciales si procede, retirar el dato del historial de forma segura y documentar únicamente la corrección técnica.
+
+
+## Gestor Padres
+
+- El dominio completo se trata por defecto como `muy_confidencial`.
+- No se mezclan datos médicos de terceros con el historial de Salud del usuario.
+- D1 privado puede guardar estado operativo, cronología breve y referencias documentales mínimas.
+- Calendario, Finanzas, LITOS, email y repositorios documentales continúan siendo fuentes propietarias cuando corresponda.
+- La demo pública no instancia el módulo ni contiene fixtures que imiten casos reales.
+- La home general solo puede recibir un resumen minimizado de atención; el detalle pertenece a la vista privada protegida por Access.
