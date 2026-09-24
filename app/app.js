@@ -1010,6 +1010,10 @@ async function loadNutritionPanel(dateKey) {
           <p>La base privada ya está preparada. Falta activar la conexión del Sheet de Salud en el Worker.</p>
         </div>`;
     }
+    const menuPanel = document.querySelector("#menu-panel");
+    if (menuPanel) {
+      menuPanel.innerHTML = '<div class="health-empty health-empty-card"><strong>Menú no disponible</strong><p>No se ha podido cargar MenuSemanal.</p></div>';
+    }
     console.warn("Nutrition load failed", error);
   }
 }
@@ -2022,7 +2026,7 @@ function renderNutritionHistory(history) {
           <article>
             <time>${escapeHtml(formatNutritionDate(item.date))}</time>
             <span><small>Ingeridas</small><strong>${formatKcal(item.consumedKcal)}</strong></span>
-            <span><small>Gastadas</small><strong>${item.burnedKcal == null ? "—" : formatKcal(item.burnedKcal)}</strong></span>
+            <span><small>Gasto total</small><strong>${item.burnedKcal == null ? "—" : formatKcal(item.burnedKcal)}</strong></span>
             <span><small>Balance</small><strong class="${balance != null && balance < 0 ? "negative-balance" : ""}">${balance == null ? "—" : signedKcal(balance)}</strong></span>
           </article>`;
       }).join("")}
