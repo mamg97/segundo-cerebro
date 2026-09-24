@@ -190,3 +190,40 @@ No es necesario borrar manualmente las muestras corporales erróneas generadas d
 ## Deuda técnica OAuth
 
 El acceso Google usado por Salud se renovó temporalmente con el cliente OAuth existente de LITOS. Funciona, pero no es la arquitectura final. Crear un cliente OAuth propio de Segundo Cerebro y publicarlo fuera de modo Testing queda como tarea pendiente para eliminar esa dependencia y evitar caducidades de refresh token asociadas al entorno de prueba.
+
+
+## Backfill histórico desde exportación de Apple Salud
+
+El Atajo diario no se modifica para recuperar el pasado. El histórico se importa una sola vez desde el ZIP que genera Apple Salud.
+
+Script:
+
+```sh
+cd private-cloudflare
+npm run health:backfill -- "/ruta/al/export.zip"
+```
+
+La ejecución sin `--apply` solo analiza el ZIP y genera dos archivos privados ignorados por Git:
+
+- `.private/apple-health-history.sql`
+- `.private/apple-health-history.report.json`
+
+Para aplicar el resultado a D1 remoto:
+
+```sh
+npm run health:backfill -- "/ruta/al/export.zip" --apply
+```
+
+Criterios del importador:
+
+- Apple Watch es la fuente principal de energía/actividad desde el primer día en que aparece.
+- Antes del Apple Watch se conserva el histórico del iPhone, marcado como `phone_only`.
+- Los días con cobertura incompleta del Watch se conservan, pero quedan marcados `partial`, `low` o `no_watch` y no deben utilizarse para medias comparables de gasto/actividad.
+- En pasos no se suman Watch + iPhone porque pueden solaparse; se usa el mayor total diario como fallback conservador.
+- Zepp Life es la fuente canónica de peso, grasa, IMC y masa magra. El porcentaje de grasa exportado por Apple como fracción se normaliza a porcentaje.
+- Los entrenamientos del Watch tienen prioridad sobre registros externos solapados.
+- El último día del export no se sobrescribe por defecto en actividad: el Atajo diario sigue siendo la fuente viva para el día actual.
+- La importación es idempotente mediante UPSERT.
+- El ZIP y el SQL generado no se versionan ni se suben a GitHub.
+
+La web expone el histórico mediante `GET /api/health/history` y separa días comparables de días con cobertura incompleta para no interpretar quitarse el reloj como una caída real de actividad.
