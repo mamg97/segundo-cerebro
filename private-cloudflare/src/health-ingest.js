@@ -150,6 +150,30 @@ function normalizePayload(body, path) {
     if (sample) bodySamples.push(sample);
   }
 
+  const listSpecs = [
+    ["bodyMass", body?.bodyMassValues, body?.bodyMassMeasuredAts, body?.bodyMassSources, "kg"],
+    ["bodyFatPercentage", body?.bodyFatPercentageValues, body?.bodyFatPercentageMeasuredAts, body?.bodyFatPercentageSources, "%"],
+    ["bodyMassIndex", body?.bodyMassIndexValues, body?.bodyMassIndexMeasuredAts, body?.bodyMassIndexSources, "count"],
+    ["leanBodyMass", body?.leanBodyMassValues, body?.leanBodyMassMeasuredAts, body?.leanBodyMassSources, "kg"]
+  ];
+
+  for (const [type, valuesRaw, measuredRaw, sourcesRaw, unit] of listSpecs) {
+    const values = Array.isArray(valuesRaw) ? valuesRaw : [];
+    const measured = Array.isArray(measuredRaw) ? measuredRaw : [];
+    const sources = Array.isArray(sourcesRaw) ? sourcesRaw : [];
+    const length = Math.min(values.length, measured.length, 100);
+    for (let index = 0; index < length; index += 1) {
+      const sample = cleanBodySample({
+        type,
+        value: values[index],
+        measuredAt: measured[index],
+        source: sources[index] || "apple_health",
+        unit
+      });
+      if (sample) bodySamples.push(sample);
+    }
+  }
+
   return { activity, bodySamples };
 }
 
