@@ -14,7 +14,7 @@ const colors = {
 
 const symbols = {
   general: "◎", career: "↗", finance: "≋", calendar: "□", partner: "◇",
-  family: "⌂", health: "✚", habits: "✓", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
+  family: "⌂", parents: "⌂", health: "✚", habits: "✓", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
@@ -102,6 +102,29 @@ function ensureDerivedAreas() {
     };
     if (healthIndex >= 0) state.areas.splice(healthIndex + 1, 0, habitsArea);
     else state.areas.push(habitsArea);
+  }
+
+  if (privateModeKind === "remote" && !state.areas.some((area) => area.id === "area-parents")) {
+    const familySummary = state.familySummary || {};
+    const openCount = Number(familySummary.openCount || 0);
+    const attentionCount = Number(familySummary.attentionCount || 0);
+    const familyIndex = state.areas.findIndex((area) => area.slug === "family");
+    const parentsArea = {
+      id: "area-parents",
+      slug: "parents",
+      title: "Padres",
+      shortTitle: "Padres",
+      summary: openCount
+        ? `${openCount} asuntos activos${attentionCount ? ` · ${attentionCount} requieren atención` : ""}.`
+        : "Casos, próximas acciones y referencias familiares en estado privado.",
+      health: attentionCount ? 65 : 85,
+      tone: "blue",
+      module: "Parents",
+      sensitivity: "muy_confidencial",
+      status: attentionCount ? "attention" : "steady"
+    };
+    if (familyIndex >= 0) state.areas.splice(familyIndex + 1, 0, parentsArea);
+    else state.areas.push(parentsArea);
   }
 }
 
@@ -223,15 +246,30 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   nav.innerHTML = state.areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} ${area.id === "area-habits" ? 'data-open-habits="true"' : ""} style="--area-color:${colors[area.tone]}">
+    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} ${area.id === "area-habits" ? 'data-open-habits="true"' : ""} ${area.id === "area-parents" ? 'data-open-parents="true"' : ""} style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
   `).join("");
 }
 
 function renderFocus() {
-  const sorted = [...state.openLoops].sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
-  document.querySelector("#loop-count").textContent = `${sorted.length} abiertos`;
+  const familySummary = privateModeKind === "remote" ? state.familySummary || {} : {};
+  const familyOpenCount = Number(familySummary.openCount || 0);
+  const familyAttentionCount = Number(familySummary.attentionCount || 0);
+  const familyDue = familySummary.nextDueAt ? String(familySummary.nextDueAt).slice(0, 10) : null;
+  const familyAttention = familyAttentionCount > 0 ? [{
+    id: "family-attention-summary",
+    areaId: "area-parents",
+    title: `Familia · ${familyAttentionCount} asunto${familyAttentionCount === 1 ? "" : "s"} requiere${familyAttentionCount === 1 ? "" : "n"} atención`,
+    nextAction: "Revisar próximas acciones en Gestor Padres",
+    priority: "high",
+    dueDate: familyDue
+  }] : [];
+
+  const sorted = [...state.openLoops, ...familyAttention]
+    .sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
+
+  document.querySelector("#loop-count").textContent = `${state.openLoops.length + familyOpenCount} abiertos`;
   document.querySelector("#focus-list").innerHTML = sorted.slice(0, 4).map((item) => {
     const area = areaById.get(item.areaId);
     const due = item.dueDate ? shortDateFormatter.format(new Date(`${item.dueDate}T12:00:00`)) : "Sin fecha";
@@ -239,7 +277,7 @@ function renderFocus() {
       <li class="focus-item">
         <span class="focus-dot" style="--priority:${item.priority === "high" ? colors.coral : item.priority === "medium" ? colors.amber : colors.blue}"></span>
         <div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.nextAction)}</p></div>
-        <div class="focus-meta"><time datetime="${item.dueDate || ""}">${due}</time><span>${escapeHtml(area.shortTitle)}</span></div>
+        <div class="focus-meta"><time datetime="${item.dueDate || ""}">${due}</time><span>${escapeHtml(area?.shortTitle || "General")}</span></div>
       </li>`;
   }).join("");
 }
@@ -538,7 +576,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
 
 function openImportantEventsDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
   dialog.classList.add("important-events-dialog");
 
   const importantEvents = collectImportantEvents(state.financeSummary || {});
@@ -697,9 +735,243 @@ function collectHealthEvents() {
     .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
 }
 
-async function openHealthDetail() {
+async const FAMILY_SCOPE_LABELS = {
+  mother: "Madre",
+  father: "Padre",
+  shared: "Familiar / patrimonial común"
+};
+
+const FAMILY_STATUS_LABELS = {
+  ACTIVE: "Activo",
+  WAITING_EXTERNAL: "Esperando a tercero",
+  WAITING_DOCUMENT: "Esperando documento",
+  DECISION_OPEN: "Decisión abierta",
+  SCHEDULED: "Programado",
+  BLOCKED: "Bloqueado",
+  DONE: "Finalizado",
+  ARCHIVED: "Archivado"
+};
+
+const FAMILY_DOMAIN_LABELS = {
+  health: "Salud",
+  disability: "Incapacidad",
+  retirement: "Jubilación",
+  property: "Inmueble",
+  mortgage: "Hipoteca",
+  investment: "Inversión",
+  business: "Negocio",
+  tax: "Fiscalidad",
+  admin: "Administración",
+  legal: "Legal",
+  other: "Otro"
+};
+
+function openParentsDetail(initialScope = "mother") {
+  if (privateModeKind !== "remote") return;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.add("parents-dialog");
+  document.querySelector("#dialog-context").textContent = "Gestor Padres · muy confidencial";
+  document.querySelector("#dialog-title").textContent = "Padres";
+  document.querySelector("#dialog-body").innerHTML = `
+    <div class="parents-privacy-note">
+      Estado operativo privado. Las fuentes originales siguen en Finanzas, Calendario, LITOS y repositorios documentales autorizados.
+    </div>
+    <div class="parents-tabs" role="tablist" aria-label="Ámbito familiar">
+      ${Object.entries(FAMILY_SCOPE_LABELS).map(([scope, label]) => `
+        <button type="button" data-family-scope="${scope}" class="${scope === initialScope ? "active" : ""}">${escapeHtml(label)}</button>
+      `).join("")}
+    </div>
+    <div id="parents-panel"><p class="parents-empty">Cargando casos privados…</p></div>
+  `;
+
+  document.querySelectorAll("[data-family-scope]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-family-scope]").forEach((item) => item.classList.toggle("active", item === button));
+      void loadParentsPanel(button.dataset.familyScope);
+    });
+  });
+
+  dialog.showModal();
+  void loadParentsPanel(initialScope);
+}
+
+async function loadParentsPanel(scope) {
+  const panel = document.querySelector("#parents-panel");
+  if (!panel) return;
+  panel.innerHTML = '<p class="parents-empty">Cargando casos privados…</p>';
+
+  try {
+    const response = await fetch("/api/family/cases?scope=" + encodeURIComponent(scope), {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("FAMILY_CASES_" + response.status);
+    const payload = await response.json();
+    renderParentsPanel(scope, payload.cases || [], payload.summary || {});
+  } catch (error) {
+    console.warn("Family cases load failed", error);
+    panel.innerHTML = '<div class="parents-empty parents-empty-card"><strong>No se han podido cargar los casos</strong><p>La estructura privada sigue separada del resto de Salud y Finanzas.</p></div>';
+  }
+}
+
+function renderParentsPanel(scope, cases, summary) {
+  const panel = document.querySelector("#parents-panel");
+  if (!panel) return;
+
+  const openCases = cases.filter((item) => !["DONE", "ARCHIVED"].includes(item.status));
+  const waiting = openCases.filter((item) => String(item.status).startsWith("WAITING_")).length;
+  const decisions = openCases.filter((item) => item.status === "DECISION_OPEN").length;
+  const urgent = openCases.filter((item) => ["high", "critical"].includes(item.priority)).length;
+
+  panel.innerHTML = `
+    <div class="parents-summary-grid">
+      <article><span>Ámbito</span><strong>${escapeHtml(FAMILY_SCOPE_LABELS[scope] || scope)}</strong></article>
+      <article><span>Abiertos</span><strong>${openCases.length}</strong></article>
+      <article><span>Prioridad alta</span><strong>${urgent}</strong></article>
+      <article><span>En espera</span><strong>${waiting}</strong></article>
+      <article><span>Decisiones</span><strong>${decisions}</strong></article>
+    </div>
+
+    <div class="parents-list-heading">
+      <div>
+        <strong>Casos</strong>
+        <p>Estado, próxima acción, responsable, vencimiento y bloqueo.</p>
+      </div>
+      <span>${cases.length} total</span>
+    </div>
+
+    <div class="parents-case-list">
+      ${cases.length ? cases.map(renderFamilyCaseCard).join("") : `
+        <div class="parents-empty parents-empty-card">
+          <strong>Sin casos en este ámbito</strong>
+          <p>GESTOR PADRES podrá crear y mantener casos mediante la API privada sin modificar el código.</p>
+        </div>`}
+    </div>
+  `;
+
+  panel.querySelectorAll("[data-family-case-id]").forEach((button) => {
+    button.addEventListener("click", () => void openFamilyCaseDetail(button.dataset.familyCaseId, scope));
+  });
+}
+
+function renderFamilyCaseCard(item) {
+  const due = formatFamilyDate(item.dueAt);
+  const updated = formatFamilyDate(item.updatedAt);
+  return `
+    <button class="parents-case-card priority-${escapeHtml(item.priority || "medium")}" type="button" data-family-case-id="${escapeHtml(item.id)}">
+      <div class="parents-case-head">
+        <div>
+          <span class="parents-domain">${escapeHtml(FAMILY_DOMAIN_LABELS[item.domain] || item.domain)}</span>
+          <strong>${escapeHtml(item.title)}</strong>
+        </div>
+        <span class="parents-status status-${escapeHtml(String(item.status || "").toLowerCase())}">${escapeHtml(FAMILY_STATUS_LABELS[item.status] || item.status)}</span>
+      </div>
+      ${item.summary ? `<p class="parents-case-summary">${escapeHtml(item.summary)}</p>` : ""}
+      <dl class="parents-case-meta">
+        <div><dt>Próxima acción</dt><dd>${escapeHtml(item.nextAction || "Pendiente de definir")}</dd></div>
+        <div><dt>Responsable</dt><dd>${escapeHtml(item.nextActionOwner || "Sin asignar")}</dd></div>
+        <div><dt>Fecha límite</dt><dd>${escapeHtml(due || "Sin fecha")}</dd></div>
+        <div><dt>Espera / bloqueo</dt><dd>${escapeHtml(item.waitingOn || "—")}</dd></div>
+        <div><dt>Actualizado</dt><dd>${escapeHtml(updated || "—")}</dd></div>
+      </dl>
+    </button>
+  `;
+}
+
+async function openFamilyCaseDetail(caseId, scope) {
+  const panel = document.querySelector("#parents-panel");
+  if (!panel) return;
+  panel.innerHTML = '<p class="parents-empty">Cargando detalle…</p>';
+
+  try {
+    const response = await fetch("/api/family/cases/" + encodeURIComponent(caseId), {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("FAMILY_CASE_" + response.status);
+    const payload = await response.json();
+    renderFamilyCaseDetail(payload.case, payload.actions || [], payload.references || [], scope);
+  } catch (error) {
+    console.warn("Family case detail load failed", error);
+    panel.innerHTML = '<div class="parents-empty parents-empty-card"><strong>No se ha podido cargar el detalle</strong></div>';
+  }
+}
+
+function renderFamilyCaseDetail(item, actions, references, scope) {
+  const panel = document.querySelector("#parents-panel");
+  if (!panel || !item) return;
+
+  panel.innerHTML = `
+    <button class="parents-back" type="button" data-family-back="true">← Volver a ${escapeHtml(FAMILY_SCOPE_LABELS[scope] || "casos")}</button>
+
+    <section class="parents-case-detail">
+      <header class="parents-detail-head">
+        <div>
+          <span class="parents-domain">${escapeHtml(FAMILY_DOMAIN_LABELS[item.domain] || item.domain)}</span>
+          <h3>${escapeHtml(item.title)}</h3>
+          <p>${escapeHtml(item.summary || "Sin resumen operativo.")}</p>
+        </div>
+        <span class="parents-status status-${escapeHtml(String(item.status || "").toLowerCase())}">${escapeHtml(FAMILY_STATUS_LABELS[item.status] || item.status)}</span>
+      </header>
+
+      <div class="parents-detail-grid">
+        <article><span>Prioridad</span><strong>${escapeHtml(item.priority || "medium")}</strong></article>
+        <article><span>Próxima acción</span><strong>${escapeHtml(item.nextAction || "Pendiente de definir")}</strong></article>
+        <article><span>Responsable</span><strong>${escapeHtml(item.nextActionOwner || "Sin asignar")}</strong></article>
+        <article><span>Fecha límite</span><strong>${escapeHtml(formatFamilyDate(item.dueAt) || "Sin fecha")}</strong></article>
+        <article><span>Espera / bloqueo</span><strong>${escapeHtml(item.waitingOn || "—")}</strong></article>
+        <article><span>Última actualización</span><strong>${escapeHtml(formatFamilyDate(item.updatedAt) || "—")}</strong></article>
+      </div>
+
+      <div class="parents-detail-columns">
+        <section>
+          <div class="parents-section-title"><strong>Cronología</strong><span>${actions.length}</span></div>
+          <div class="parents-timeline">
+            ${actions.length ? actions.map((action) => `
+              <article>
+                <time>${escapeHtml(formatFamilyDate(action.happenedAt) || "—")}</time>
+                <div><strong>${escapeHtml(action.actionType)}</strong><p>${escapeHtml(action.summary)}</p>${action.owner ? `<small>Responsable: ${escapeHtml(action.owner)}</small>` : ""}</div>
+              </article>
+            `).join("") : '<p class="parents-empty">Todavía no hay acciones registradas.</p>'}
+          </div>
+        </section>
+
+        <section>
+          <div class="parents-section-title"><strong>Fuentes y documentos</strong><span>${references.length}</span></div>
+          <div class="parents-reference-list">
+            ${references.length ? references.map((ref) => `
+              <article>
+                <div><strong>${escapeHtml(ref.documentType || ref.sourceProvider)}</strong><span>${escapeHtml(ref.sourceProvider)}</span></div>
+                ${ref.summary ? `<p>${escapeHtml(ref.summary)}</p>` : ""}
+                <small>Referencia: ${escapeHtml(ref.sourceRef)}${ref.reviewStatus ? ` · ${escapeHtml(ref.reviewStatus)}` : ""}</small>
+              </article>
+            `).join("") : '<p class="parents-empty">Sin referencias. Los documentos completos permanecen en su fuente original.</p>'}
+          </div>
+        </section>
+      </div>
+    </section>
+  `;
+
+  panel.querySelector("[data-family-back]")?.addEventListener("click", () => void loadParentsPanel(scope));
+}
+
+function formatFamilyDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(date);
+}
+
+function openHealthDetail() {
+  const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
   dialog.classList.add("health-dialog");
   document.querySelector("#dialog-context").textContent = "Salud · estado privado";
   document.querySelector("#dialog-title").textContent = "Salud";
@@ -1192,7 +1464,7 @@ function shiftDateKey(key, amount) {
 
 async function openHabitsDetail(dateKey = null) {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
   dialog.classList.add("habits-dialog");
   document.querySelector("#dialog-context").textContent = "Hábitos · HabitQuest";
   document.querySelector("#dialog-title").textContent = "Hábitos";
@@ -3015,7 +3287,7 @@ function formatWealthDate(value) {
 function openDebtDetail() {
   const debt = state.financeSummary?.debts || null;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Deudas";
   document.querySelector("#dialog-title").textContent = "Detalle de deudas";
@@ -3075,7 +3347,7 @@ function openBudgetDetail() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "budget-dialog", "parents-dialog");
   dialog.classList.add("budget-dialog");
 
   document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual";
@@ -3379,6 +3651,10 @@ function bindInteractions() {
     event.preventDefault();
     openHabitsDetail();
   });
+  document.querySelector('[data-open-parents="true"]')?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openParentsDetail();
+  });
 }
 
 function setView(view) {
@@ -3407,11 +3683,15 @@ function openArea(areaId) {
     openHabitsDetail();
     return;
   }
+  if (areaId === "area-parents") {
+    openParentsDetail();
+    return;
+  }
   const area = areaById.get(areaId);
   const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
   const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [
