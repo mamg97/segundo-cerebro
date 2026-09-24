@@ -2221,7 +2221,7 @@ async function fetchFamilyCases(env, { scope = null, status = null } = {}) {
   }
 
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
-  const result = await env.DB.prepare(`
+  const statement = env.DB.prepare(`
     SELECT id, person_scope, domain, title, summary, status, priority,
            next_action, next_action_owner, due_at, waiting_on, sensitivity,
            created_at, updated_at
@@ -2232,7 +2232,8 @@ async function fetchFamilyCases(env, { scope = null, status = null } = {}) {
       CASE WHEN due_at IS NULL OR due_at = '' THEN 1 ELSE 0 END,
       due_at ASC,
       updated_at DESC
-  `).bind(...binds).all();
+  `);
+  const result = binds.length ? await statement.bind(...binds).all() : await statement.all();
 
   return (result.results || []).map(familyCaseFromRow);
 }
