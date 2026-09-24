@@ -202,3 +202,19 @@ La barra lateral es la navegación canónica de dominios. La portada no replica 
 `OPEN_LOOP` y `GOAL` son capas transversales, no dominios. Los pendientes viven en `Próximos movimientos`; los objetivos se integran en su área y los objetivos del Coordinador pueden mostrarse de forma compacta junto a los pendientes.
 
 La antigua parrilla `Áreas de tu vida` y la vista técnica `Sistema` se retiraron de Home. La arquitectura técnica se documenta en `docs/`, evitando duplicar información técnica potencialmente obsoleta en la interfaz operativa.
+
+
+## Consulta rápida de Home
+
+La tarjeta superior de Home es una interfaz de **consulta/navegación rápida**, no sustituye las conversaciones especializadas.
+
+Puede:
+- abrir módulos mediante órdenes cortas (`abre despensa`, `abre objetos`, `ver presupuesto`);
+- abrir Nutrición/Hábitos/Patrimonio/Padres;
+- llevar a Agenda;
+- responder consultas simples derivadas del estado ya cargado, como `qué tengo hoy`;
+- buscar coincidencias básicas en áreas, proyectos, pendientes, objetivos, decisiones, eventos y hábitos.
+
+No ejecuta todavía razonamiento multiagente ni modificaciones complejas de fuentes. Para planificación, decisiones o escritura en dominios se usan los gestores especializados.
+
+En móvil, el `thinking-orb` se oculta: es decorativo y nunca debe competir con el input o el CTA.

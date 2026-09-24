@@ -275,6 +275,18 @@ Reglas:
 - Se elimina del frontend el código muerto de `renderAreas`, `renderSystemMap` y `setView`.
 - Assets frontend: `v0.27.0`.
 
+## Consulta rápida móvil v0.28.0
+
+- Corregido el solape del orbe en móvil: el componente real `thinking-orb#system-orb` se oculta por debajo de 760 px.
+- La tarjeta pasa de “¿Qué necesitas?” a `Consulta rápida`, explicando que sirve para consultar estado o abrir módulos.
+- Añadidos chips ejecutables: `Qué tengo hoy`, `Abrir despensa`, `Nutrición hoy`, `Ver presupuesto`, `Abrir objetos`.
+- Las órdenes rápidas abren directamente Despensa, Objetos, Nutrición, Hábitos, Presupuesto, Patrimonio, Padres o Agenda.
+- `Qué tengo hoy` resume eventos del día y progreso de hábitos cuando están disponibles.
+- La búsqueda genérica permanece como fallback para coincidencias simples.
+- Las tareas complejas siguen correspondiendo a los gestores especializados; esta barra no pretende ser un chat multiagente.
+- Light/dark comparten estilos y los chips son scrollables horizontalmente en móvil.
+- Assets frontend: `v0.28.0`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:

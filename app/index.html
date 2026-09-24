@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.27.0">
-    <script type="module" src="./app.js?v=0.27.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.28.0">
+    <script type="module" src="./app.js?v=0.28.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -62,14 +62,24 @@
             aria-hidden="true"
           ></thinking-orb>
           <form id="ask-form" class="ask-form">
-            <label id="ask-title" for="ask-input">¿Qué necesitas?</label>
+            <div class="ask-copy">
+              <label id="ask-title" for="ask-input">Consulta rápida</label>
+              <p>Pregunta por tu estado o abre una sección del Segundo Cerebro.</p>
+            </div>
             <div class="ask-row">
-              <input id="ask-input" name="query" type="search" autocomplete="off" placeholder="Pregunta por un proyecto, una decisión o un asunto pendiente…">
-              <button id="query-submit" type="submit" aria-label="Consultar datos ficticios">
+              <input id="ask-input" name="query" type="search" autocomplete="off" placeholder="Ej.: «qué tengo hoy», «abre despensa», «ver presupuesto»">
+              <button id="query-submit" type="submit" aria-label="Ejecutar consulta rápida">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.5-5.5L5 12Z"></path></svg>
               </button>
             </div>
-            <p id="query-help">La consulta se resuelve localmente sobre los datos ficticios.</p>
+            <div class="ask-suggestions" aria-label="Ejemplos de consultas rápidas">
+              <button type="button" data-quick-query="Qué tengo hoy">Qué tengo hoy</button>
+              <button type="button" data-quick-query="Abre despensa">Abrir despensa</button>
+              <button type="button" data-quick-query="Cómo va nutrición">Nutrición hoy</button>
+              <button type="button" data-quick-query="Ver presupuesto">Ver presupuesto</button>
+              <button type="button" data-quick-query="Abre objetos">Abrir objetos</button>
+            </div>
+            <p id="query-help">Usa esta barra para consultar datos conectados o saltar a un módulo.</p>
           </form>
         </section>
         <div id="query-result" class="query-result" role="status" aria-live="polite" hidden></div>

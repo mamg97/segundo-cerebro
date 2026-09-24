@@ -223,10 +223,10 @@ function renderMode() {
   document.querySelector("#profile-button")?.setAttribute("aria-label", privateMode ? "Perfil privado" : "Perfil ficticio");
   document.querySelector("#query-submit").setAttribute("aria-label", privateMode ? "Consultar estado privado" : "Consultar datos ficticios");
   document.querySelector("#query-help").textContent = remote
-    ? "La consulta se resuelve sobre tu estado privado remoto."
+    ? "Consulta datos conectados o usa órdenes como «abre despensa», «ver presupuesto» o «qué tengo hoy»."
     : local
-      ? "La consulta se resuelve en este navegador sobre el estado local. No usa red ni IA."
-      : "La consulta se resuelve localmente sobre los datos ficticios.";
+      ? "Consulta el estado local o abre módulos con órdenes cortas."
+      : "Prueba consultas y accesos rápidos sobre los datos de demostración.";
   document.querySelector("#footer-mode").textContent = remote
     ? "Acceso autenticado · Estado privado remoto"
     : local
@@ -3805,6 +3805,12 @@ function bindInteractions() {
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
   document.querySelector("#ask-form").addEventListener("submit", handleQuery);
+  document.querySelectorAll("[data-quick-query]").forEach((button) => button.addEventListener("click", () => {
+    const input = document.querySelector("#ask-input");
+    if (!input) return;
+    input.value = button.dataset.quickQuery || "";
+    document.querySelector("#ask-form")?.requestSubmit();
+  }));
   const menuButton = document.querySelector("#menu-button");
   menuButton.addEventListener("click", () => {
     const open = document.body.classList.toggle("nav-open");
@@ -3933,20 +3939,26 @@ function showSystemPulse() {
   }, 180);
 }
 
-function handleQuery(event) {
+async function handleQuery(event) {
   event.preventDefault();
   const input = document.querySelector("#ask-input");
   const result = document.querySelector("#query-result");
-  const query = input.value.trim().toLocaleLowerCase("es");
+  const rawQuery = input.value.trim();
+  const query = rawQuery.toLocaleLowerCase("es");
+
   if (!query) {
     setSystemOrbState("idle");
     result.hidden = false;
-    result.innerHTML = privateMode
-      ? "Escribe una pregunta o el nombre de un área para buscar en el estado privado."
-      : "Escribe una pregunta o el nombre de un área para buscar en el estado ficticio.";
+    result.innerHTML = "Escribe una consulta o una orden corta, por ejemplo «qué tengo hoy», «abre despensa» o «ver presupuesto».";
     return;
   }
+
   setSystemOrbState("searching");
+  if (await handleQuickCommand(query, result)) {
+    setSystemOrbState("responding", 900);
+    return;
+  }
+
   const habitEntities = Array.isArray(state.habitsSummary?.habits) ? state.habitsSummary.habits : [];
   const entities = [...state.areas, ...state.projects, ...state.openLoops, ...state.goals, ...state.decisions, ...state.events, ...habitEntities];
   const terms = query.split(/\s+/).filter((term) => term.length > 2);
@@ -3954,15 +3966,92 @@ function handleQuery(event) {
     const haystack = JSON.stringify(entity).toLocaleLowerCase("es");
     return terms.some((term) => haystack.includes(term));
   }).slice(0, 3);
+
   window.setTimeout(() => {
     result.hidden = false;
     result.innerHTML = matches.length
-      ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"} en el estado ${privateMode ? "privado" : "mock"}:</strong> ${matches.map((item) => escapeHtml(item.title)).join(" · ")}`
-      : privateMode
-        ? "No hay coincidencias en el estado privado."
-        : "No hay coincidencias en los datos ficticios. La conexión con fuentes reales y el asistente de lenguaje natural quedan para una fase futura.";
+      ? `<strong>He encontrado ${matches.length} coincidencia${matches.length === 1 ? "" : "s"}:</strong> ${matches.map((item) => escapeHtml(item.title || item.name || "Resultado")).join(" · ")}`
+      : "No encuentro una coincidencia directa. Esta barra sirve para consultas rápidas y navegación; las conversaciones de los gestores siguen siendo la interfaz para tareas complejas.";
     setSystemOrbState("responding", 1400);
-  }, 180);
+  }, 120);
+}
+
+async function handleQuickCommand(query, result) {
+  const normalized = query
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const openResult = (message) => {
+    result.hidden = false;
+    result.innerHTML = message;
+  };
+
+  if (/\b(despensa)\b/.test(normalized)) {
+    openPantryDetail();
+    openResult("<strong>Despensa abierta.</strong> Ahí puedes consultar stock, precios y lista de compra.");
+    return true;
+  }
+
+  if (/\b(objetos|armario|looks|kits)\b/.test(normalized)) {
+    openObjectsDetail();
+    openResult("<strong>Objetos abierto.</strong> Incluye inventario, armario, looks, kits y listas.");
+    return true;
+  }
+
+  if (/\b(nutricion|nutri|calorias|macros)\b/.test(normalized)) {
+    await openHealthDetail();
+    document.querySelector('[data-health-tab="nutrition"]')?.click();
+    openResult("<strong>Nutrición abierta.</strong> Puedes revisar el balance y el plan del día.");
+    return true;
+  }
+
+  if (/\b(habitos|habito)\b/.test(normalized)) {
+    openHabitsDetail(localDateKey());
+    openResult("<strong>Hábitos abierto.</strong>");
+    return true;
+  }
+
+  if (/\b(presupuesto|finanzas|gastos)\b/.test(normalized)) {
+    openBudgetDetail();
+    openResult("<strong>Presupuesto abierto.</strong>");
+    return true;
+  }
+
+  if (/\b(patrimonio)\b/.test(normalized)) {
+    openWealthDetail();
+    openResult("<strong>Patrimonio abierto.</strong>");
+    return true;
+  }
+
+  if (/\b(padres)\b/.test(normalized)) {
+    openParentsDetail();
+    openResult("<strong>Padres abierto.</strong>");
+    return true;
+  }
+
+  if (/\b(agenda|calendario|semana)\b/.test(normalized)) {
+    document.querySelector("#agenda-overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    openResult("<strong>Agenda localizada.</strong> Te he llevado al calendario de la semana.");
+    return true;
+  }
+
+  if (/\b(que tengo hoy|hoy que tengo|agenda de hoy|plan de hoy)\b/.test(normalized)) {
+    const today = localDateKey();
+    const events = (Array.isArray(state.events) ? state.events : [])
+      .filter((item) => String(item.startsAt || item.date || "").slice(0, 10) === today)
+      .sort((a, b) => String(a.startsAt || "").localeCompare(String(b.startsAt || "")));
+    const habits = state.habitsSummary?.summary || {};
+    const habitTotal = Number(habits.total || 0);
+    const habitDone = Number(habits.done || 0);
+    const eventText = events.length
+      ? events.slice(0, 4).map((item) => escapeHtml(item.title || "Evento")).join(" · ")
+      : "sin eventos registrados";
+    const habitText = habitTotal ? ` · Hábitos ${habitDone}/${habitTotal}` : "";
+    openResult(`<strong>Hoy:</strong> ${eventText}${habitText}.`);
+    return true;
+  }
+
+  return false;
 }
 
 let systemOrbResetTimer = null;
