@@ -374,3 +374,16 @@ npx wrangler deploy --config wrangler.bootstrap.jsonc
 
 No guardar nunca el token de Cloudflare en Git. Si faltan los secretos, el workflow valida y construye pero omite el despliegue.
 
+
+## Despensa
+
+La aplicación privada integra `SEGUNDO CEREBRO - DESPENSA` sin copiar su contenido a Git.
+
+Lectura:
+- `GET /api/state` añade únicamente `pantrySummary`.
+- `GET /api/pantry` devuelve detalle de inventario/productos/precios/lista de compra bajo demanda.
+- Caché de lectura: 30 segundos.
+
+Por defecto, el Worker intenta localizar el Sheet por el título exacto `SEGUNDO CEREBRO - DESPENSA` usando el OAuth Google ya configurado. Si el token no dispone de alcance Drive o se quiere fijar explícitamente la fuente, puede configurarse el secreto `PANTRY_SHEET_ID` con `npm run pantry:configure -- <SHEET_ID>`; su valor nunca debe versionarse.
+
+La UI pública de GitHub Pages no contiene ni simula los datos privados de Despensa.
