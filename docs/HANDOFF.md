@@ -94,6 +94,14 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - No se inventan objetivos nutricionales ni gasto ausente.
 - Contrato vigente: `agents/HEALTH.md`.
 
+### Despensa y suministros
+
+- Nuevo gestor operativo: `GESTOR DESPENSA Y SUMINISTROS`.
+- Contrato vigente: `agents/PANTRY.md`.
+- El histórico privado existente de tickets/precios de Mercadona se reutiliza; no se duplica.
+- El inventario actual todavía no tiene una fuente de verdad inicializada: se poblará a partir de observaciones confirmadas (incluidas fotos) y se persistirá solo después de acordar la ubicación privada con ORGANIZADOR / WEB GENERAL.
+- El gestor coordina necesidades de compra con Nutrición y traslada estimaciones/gasto ejecutado a Finanzas sin crear contabilidad paralela.
+
 ### Apple Health
 
 Hay un único puente privado:
