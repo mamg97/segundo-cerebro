@@ -33,8 +33,6 @@ export const mockState = Object.freeze({
     { id: "area-family", slug: "family", title: "Familia", shortTitle: "Familia", summary: "Seguimiento familiar al día.", health: 88, tone: "amber", module: "Family", sensitivity: "confidencial", status: "steady" },
     { id: "area-wealth", slug: "wealth", title: "Patrimonio familiar", shortTitle: "Patrimonio", summary: "Inventario conceptual pendiente de acordar alcance.", health: 58, tone: "violet", module: "Family Wealth", sensitivity: "muy_confidencial", status: "attention" },
     { id: "area-projects", slug: "projects", title: "Proyectos", shortTitle: "Proyectos", summary: "Dos proyectos activos; uno necesita una decisión.", health: 69, tone: "cyan", module: "Projects", sensitivity: "personal", status: "attention" },
-    { id: "area-loops", slug: "open-loops", title: "Open Loops", shortTitle: "Open Loops", summary: "Cinco asuntos abiertos, dos con prioridad alta.", health: 63, tone: "coral", module: "Coordinator", sensitivity: "personal", status: "attention" },
-    { id: "area-goals", slug: "goals", title: "Objetivos", shortTitle: "Objetivos", summary: "Tres horizontes activos y medibles.", health: 81, tone: "lime", module: "Coordinator", sensitivity: "personal", status: "steady" },
   ],
   financeSummary: {
     monthlyBudget: {
@@ -68,7 +66,7 @@ export const mockState = Object.freeze({
     { id: "loop-scope", type: "OPEN_LOOP", title: "Definir alcance del inventario", areaId: "area-wealth", projectId: null, personId: null, status: "open", priority: "low", dueDate: null, cost: null, nextAction: "Separar categorías sin introducir valores reales", blocker: "Falta acordar el nivel de detalle", sensitivity: "muy_confidencial", sourceRefs: [], updatedAt: "2026-09-19" },
   ],
   goals: [
-    { id: "goal-weekly", type: "GOAL", title: "Reducir asuntos sin siguiente acción", areaId: "area-loops", status: "active", horizon: "Esta semana", metric: "Open loops accionables", target: "100%", sensitivity: "personal", sourceRefs: [], updatedAt: "2026-09-22" },
+    { id: "goal-weekly", type: "GOAL", title: "Reducir asuntos sin siguiente acción", areaId: "area-general", status: "active", horizon: "Esta semana", metric: "Open loops accionables", target: "100%", sensitivity: "personal", sourceRefs: [], updatedAt: "2026-09-22" },
     { id: "goal-career", type: "GOAL", title: "Clarificar el siguiente paso profesional", areaId: "area-career", status: "active", horizon: "90 días", metric: "Opciones evaluadas", target: "3", sensitivity: "personal", sourceRefs: [], updatedAt: "2026-09-21" },
     { id: "goal-system", type: "GOAL", title: "Validar el Segundo Cerebro", areaId: "area-projects", status: "active", horizon: "Este trimestre", metric: "Revisiones semanales útiles", target: "8", sensitivity: "personal", sourceRefs: [], updatedAt: "2026-09-22" },
   ],
