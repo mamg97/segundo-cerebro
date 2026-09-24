@@ -7,7 +7,8 @@
     "dev": "npm run build && wrangler dev --config wrangler.bootstrap.jsonc",
     "deploy": "npm run build && wrangler deploy --config wrangler.bootstrap.jsonc",
     "deploy:health-ingest": "wrangler deploy --config wrangler.health-ingest.jsonc",
-    "setup:health-ingest": "node scripts/setup-health-ingest.mjs"
+    "setup:health-ingest": "node scripts/setup-health-ingest.mjs",
+    "health:backfill": "python3 scripts/import-apple-health-history.py"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
