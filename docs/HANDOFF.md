@@ -118,6 +118,8 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 
 ### Apple Health
 
+- Salud dispone de una pestaña privada derivada `HistoricoResumen`: al consultar `/api/health/history`, el Worker vuelca únicamente agregados por rango (30/90/180/365/all) desde D1. Permite que GESTOR GYM Y NUTRI analice el histórico mediante el Sheet autorizado sin exponer ni duplicar las muestras crudas; D1 sigue siendo la fuente canónica.
+
 Hay un único puente privado:
 
 ```text
