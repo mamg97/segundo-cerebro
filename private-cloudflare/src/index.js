@@ -1,5 +1,6 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
 import { fetchPantrySummary, hasPantryGoogleConfig } from "./pantry.js";
+import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -2885,6 +2886,20 @@ export default {
         }
       }
 
+      let objectsSync = hasObjectsGoogleConfig(env) ? "configured" : "not-configured";
+      let objectsTotalCount = null;
+      let objectsActiveListCount = null;
+      if (hasObjectsGoogleConfig(env)) {
+        try {
+          const objects = await fetchObjectsSummary(env, getGoogleAccessToken);
+          objectsSync = objects.status;
+          objectsTotalCount = objects.value?.summary?.totalObjects ?? null;
+          objectsActiveListCount = objects.value?.summary?.activeListCount ?? null;
+        } catch {
+          objectsSync = "error";
+        }
+      }
+
       let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
       let calendarError = null;
       let calendarMatchedCount = null;
@@ -2918,6 +2933,9 @@ export default {
         pantrySync,
         pantryAvailableCount,
         pantryLowStockCount,
+        objectsSync,
+        objectsTotalCount,
+        objectsActiveListCount,
         calendarSync,
         calendarError,
         calendarMatchedCount,
@@ -3113,6 +3131,17 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/objects") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const objects = await fetchObjectsSummary(env, getGoogleAccessToken);
+        return json({ ok: true, status: objects.status, ...objects.value });
+      } catch (error) {
+        console.warn("Objects read failed", String(error?.message || "OBJECTS_READ_ERROR"));
+        return json({ ok: false, code: "OBJECTS_READ_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/finance/electricity") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       try {
@@ -3255,6 +3284,18 @@ export default {
         }
       }
 
+      let objectsSync = "not-configured";
+      if (hasObjectsGoogleConfig(env)) {
+        try {
+          const objects = await fetchObjectsSummary(env, getGoogleAccessToken);
+          state.objectsSummary = objects.value?.summary || null;
+          objectsSync = objects.status;
+        } catch (error) {
+          objectsSync = "error";
+          console.warn("Objects sync failed", String(error?.message || error));
+        }
+      }
+
       let calendarSync = "not-configured";
       if (hasIcloudCalendarConfig(env)) {
         try {
@@ -3287,6 +3328,7 @@ export default {
         habitSync,
         nutritionSync,
         pantrySync,
+        objectsSync,
         calendarSync
       };
 
