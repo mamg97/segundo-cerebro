@@ -151,23 +151,24 @@ function normalizePayload(body, path) {
   }
 
   const listSpecs = [
-    ["bodyMass", body?.bodyMassValues, body?.bodyMassMeasuredAts, body?.bodyMassSources, "kg"],
-    ["bodyFatPercentage", body?.bodyFatPercentageValues, body?.bodyFatPercentageMeasuredAts, body?.bodyFatPercentageSources, "%"],
-    ["bodyMassIndex", body?.bodyMassIndexValues, body?.bodyMassIndexMeasuredAts, body?.bodyMassIndexSources, "count"],
-    ["leanBodyMass", body?.leanBodyMassValues, body?.leanBodyMassMeasuredAts, body?.leanBodyMassSources, "kg"]
+    ["bodyMass", body?.bodyMassValues, body?.bodyMassMeasuredAts, body?.bodyMassSources, body?.bodyMassSource, "kg"],
+    ["bodyFatPercentage", body?.bodyFatPercentageValues, body?.bodyFatPercentageMeasuredAts, body?.bodyFatPercentageSources, body?.bodyFatPercentageSource, "%"],
+    ["bodyMassIndex", body?.bodyMassIndexValues, body?.bodyMassIndexMeasuredAts, body?.bodyMassIndexSources, body?.bodyMassIndexSource, "count"],
+    ["leanBodyMass", body?.leanBodyMassValues, body?.leanBodyMassMeasuredAts, body?.leanBodyMassSources, body?.leanBodyMassSource, "kg"]
   ];
 
-  for (const [type, valuesRaw, measuredRaw, sourcesRaw, unit] of listSpecs) {
+  for (const [type, valuesRaw, measuredRaw, sourcesRaw, sourceFallbackRaw, unit] of listSpecs) {
     const values = Array.isArray(valuesRaw) ? valuesRaw : [];
     const measured = Array.isArray(measuredRaw) ? measuredRaw : [];
     const sources = Array.isArray(sourcesRaw) ? sourcesRaw : [];
+    const sourceFallback = String(sourceFallbackRaw || "apple_health").trim().slice(0, 120) || "apple_health";
     const length = Math.min(values.length, measured.length, 100);
     for (let index = 0; index < length; index += 1) {
       const sample = cleanBodySample({
         type,
         value: values[index],
         measuredAt: measured[index],
-        source: sources[index] || "apple_health",
+        source: sources[index] || sourceFallback,
         unit
       });
       if (sample) bodySamples.push(sample);
