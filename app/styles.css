@@ -7803,6 +7803,17 @@ html[data-theme="dark"] .electricity-chart-card {
 
 .pantry-home-review { margin-top: -9px; }
 
+.pantry-home-footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -9px;
+}
+
+.pantry-home-footer .pantry-home-review { margin-top: 0; }
+.pantry-home-footer strong { color: var(--blue); font-size: 9px; white-space: nowrap; }
+
 .pantry-dialog {
   width: min(1050px, calc(100% - 28px));
   max-height: min(90vh, 900px);
