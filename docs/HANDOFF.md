@@ -287,6 +287,22 @@ Reglas:
 - Light/dark comparten estilos y los chips son scrollables horizontalmente en móvil.
 - Assets frontend: `v0.28.0`.
 
+## Registro de Proyectos v0.29.0
+
+- Nueva fuente privada canónica: `SEGUNDO CEREBRO - PROYECTOS`.
+- Pestañas: `Proyectos`, `Documentacion`, `Relaciones`, `README`.
+- El catálogo real queda fuera de Git público.
+- Nuevo contrato: `agents/PROJECTS.md`.
+- Nuevo endpoint privado: `GET /api/projects`.
+- `/api/state` recibe únicamente `projectsSummary`; `/api/health` solo contadores técnicos.
+- El área `Proyectos` del menú abre una vista propia con `Resumen · Todos · Relaciones`.
+- Cada proyecto puede mostrar estado, prioridad, área, tipo, resumen, siguiente acción, repositorio, documentación, web, responsable, subproyectos y documentación estructurada.
+- La búsqueda permite filtrar por texto, estado y área.
+- Los enlaces privados se leen desde la fuente privada, no desde código.
+- El registro inicial incluye los proyectos que el usuario ha identificado y documentación marcada como parcial/pendiente cuando no existe evidencia suficiente.
+- Las relaciones permiten conectar proyectos con dominios sin duplicar datos; por ejemplo, sistemas de inversión pueden relacionarse con Finanzas/Patrimonio sin copiar contabilidad.
+- Assets frontend: `v0.29.0`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:
