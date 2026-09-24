@@ -180,6 +180,36 @@ Puede consultar disponibilidad de objetos deportivos, ropa, recipientes u otros 
 
 Integra navegación, resumen y presentación. No es propietario del inventario.
 
+## Participación de otros gestores
+
+La participación es compartida, pero la propiedad funcional no.
+
+| Gestor | Puede consultar | Puede proponer | Puede escribir directamente |
+| --- | --- | --- | --- |
+| GESTOR OBJETOS Y ARMARIO | Todo | Todo | Sí: todas las pestañas del dominio |
+| GESTOR EVENTOS | Objetos, Armario, Looks, Kits, Listas | contexto de viaje/evento, necesidades, restricciones | No en inventario; la lista material la mantiene OBJETOS |
+| GESTOR GYM / NUTRICIÓN | objetos deportivos, ropa, recipientes, kits | necesidades de deporte/gimnasio | No |
+| GESTOR PADRES | objetos/listas cuando un asunto familiar lo requiera | necesidades concretas | No |
+| ORGANIZADOR / WEB GENERAL | resumen y detalle para presentación | cambios de UI/contrato | No sobre datos reales |
+| Gestor del hogar / futuros agentes | objetos y kits pertinentes | necesidades/contextos | No salvo decisión futura documentada |
+
+### Regla de escritura
+
+- `GESTOR OBJETOS Y ARMARIO` es el escritor funcional por defecto.
+- Los demás gestores entregan **contexto o intención**, no duplican registros.
+- Para un viaje, EVENTOS aporta destino/fechas/actividades; OBJETOS genera o actualiza `Listas` y `ListaItems`.
+- Para una necesidad inexistente se usa `FALTA_COMPRAR`; no se crea un objeto poseído hasta que realmente lo sea.
+- Cualquier futura excepción de escritura directa debe documentarse en `docs/DECISIONS.md`.
+
+### Cómo debe consumirlo otro gestor
+
+1. Leer `AGENTS.md`.
+2. Leer `agents/OBJECTS.md`.
+3. Consultar la fuente privada canónica o `GET /api/objects`, según el entorno.
+4. Referenciar entidades por `objeto_id`, `look_id`, `kit_id` o `lista_id`.
+5. No copiar inventario a su propio dominio.
+6. Si necesita una modificación, pasar la intención a GESTOR OBJETOS Y ARMARIO.
+
 ## API privada
 
 - `/api/state` puede transportar únicamente `objectsSummary`.
