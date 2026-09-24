@@ -1245,6 +1245,79 @@ async function fetchHealthEnergyRows(env, startDate, endDate) {
   }]));
 }
 
+
+function healthCoverageQuality(row) {
+  const details = Array.isArray(row?.sourceDetails) ? row.sourceDetails : [];
+  const coverage = details.find((item) => item && item.kind === "coverage");
+  if (coverage?.quality) return String(coverage.quality);
+  if (String(row?.source || "").includes("history_partial")) return "partial";
+  if (String(row?.source || "").includes("export_partial")) return "partial";
+  if (String(row?.source || "").includes("export_watch")) return "full";
+  if (String(row?.source || "").includes("export_phone")) return "phone_only";
+  if (String(row?.source || "").includes("apple_health")) return "live";
+  return "unknown";
+}
+
+async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(endDate || ""))
+    ? String(endDate)
+    : localHealthDateKey();
+  const daysByRange = { "30": 30, "90": 90, "180": 180, "365": 365 };
+  const days = daysByRange[String(range)] || null;
+  const startDate = String(range) === "all"
+    ? "2000-01-01"
+    : healthAddDays(date, -(days || 365) + 1);
+
+  const [energyMap, bodySamples] = await Promise.all([
+    fetchHealthEnergyRows(env, startDate, date),
+    fetchHealthBodySamples(env, startDate, date)
+  ]);
+
+  let waistHistory = [];
+  if (hasHealthGoogleConfig(env)) {
+    try {
+      const health = await fetchHealthNutritionSummary(env, { date, force: true });
+      waistHistory = health.value?.body?.waistHistory || [];
+    } catch (error) {
+      console.warn("Health history waist read failed", String(error?.message || error));
+    }
+  }
+
+  const activity = [...energyMap.values()].map((row) => ({
+    ...row,
+    coverageQuality: healthCoverageQuality(row)
+  }));
+  const comparable = activity.filter((row) => ["full", "live"].includes(row.coverageQuality));
+  const mean = (values) => {
+    const clean = values.filter((value) => Number.isFinite(Number(value))).map(Number);
+    return clean.length ? clean.reduce((sum, value) => sum + value, 0) / clean.length : null;
+  };
+
+  return {
+    startDate,
+    endDate: date,
+    range: String(range),
+    activity,
+    bodySamples,
+    waistHistory,
+    quality: {
+      full: activity.filter((row) => row.coverageQuality === "full").length,
+      live: activity.filter((row) => row.coverageQuality === "live").length,
+      partial: activity.filter((row) => row.coverageQuality === "partial").length,
+      low: activity.filter((row) => row.coverageQuality === "low").length,
+      noWatch: activity.filter((row) => row.coverageQuality === "no_watch").length,
+      phoneOnly: activity.filter((row) => row.coverageQuality === "phone_only").length,
+      unknown: activity.filter((row) => row.coverageQuality === "unknown").length
+    },
+    comparableAverages: {
+      totalKcal: mean(comparable.map((row) => row.totalKcal)),
+      activeKcal: mean(comparable.map((row) => row.activeKcal)),
+      steps: mean(comparable.map((row) => row.steps)),
+      exerciseMinutes: mean(comparable.map((row) => row.exerciseMinutes))
+    }
+  };
+}
+
 async function fetchHealthNutritionSummary(env, options = {}) {
   if (!hasHealthGoogleConfig(env)) {
     return { status: "not-configured", value: null };
@@ -2216,6 +2289,21 @@ export default {
       catch (error) {
         console.warn("Nutrition energy write failed", String(error?.message || error));
         return json({ ok: false, code: "NUTRITION_ENERGY_WRITE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/health/history") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const endDate = url.searchParams.get("date") || undefined;
+        const range = url.searchParams.get("range") || "365";
+        if (!["30", "90", "180", "365", "all"].includes(range)) {
+          return json({ ok: false, code: "INVALID_HEALTH_HISTORY_RANGE" }, 400);
+        }
+        return json({ ok: true, ...(await fetchHealthHistory(env, { endDate, range })) });
+      } catch (error) {
+        console.warn("Health history read failed", String(error?.message || error));
+        return json({ ok: false, code: "HEALTH_HISTORY_READ_FAILED" }, 502);
       }
     }
 
