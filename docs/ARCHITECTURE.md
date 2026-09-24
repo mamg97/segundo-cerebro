@@ -162,3 +162,7 @@ Dashboard privado protegido por Access
 El frontend no conoce credenciales ni accede a Google Sheets directamente. El Worker resuelve el Sheet canónico por título exacto en Drive; `PANTRY_SHEET_ID` queda disponible como fallback privado opcional. La caché de lectura es breve para que nuevas filas de inventario, precios o lista de compra aparezcan sin cambios de código.
 
 La demo pública de GitHub Pages no instancia el módulo Despensa ni contiene inventario real.
+
+### Registro privado de integraciones
+
+Para evitar depender de Drive search en runtime, el Worker puede resolver identificadores de fuentes desde la pestaña oculta `IntegracionesPrivadas` del Sheet privado de estado financiero, cuya referencia ya vive como secreto del Worker. Este registro contiene únicamente punteros de infraestructura; no inventario, precios ni datos de dominio. Despensa sigue teniendo como única fuente canónica su propio Sheet privado.
