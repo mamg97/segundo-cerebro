@@ -3388,6 +3388,9 @@ function openBudgetDetail() {
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>`
     : "<p>No hay partidas presupuestadas.</p>";
+  document.querySelectorAll('[data-open-electricity="true"]').forEach((node) => {
+    node.addEventListener("click", () => void openElectricityDetail());
+  });
   dialog.showModal();
 }
 
@@ -3448,10 +3451,21 @@ function renderBudgetCategoryDetail(item, currency) {
         ? "Derivado"
         : "";
 
+  const normalizedId = normalizeForMatch(item.id || "");
+  const normalizedTitle = normalizeForMatch(item.title || "");
+  const isElectricity = normalizedId === "luz"
+    || normalizedTitle === "luz"
+    || normalizedTitle.includes("electricidad")
+    || normalizedId.includes("electric");
+  const tag = isElectricity ? "button" : "article";
+  const interactiveAttrs = isElectricity
+    ? ' type="button" data-open-electricity="true" aria-label="Abrir histórico de electricidad"'
+    : "";
+
   return `
-    <article class="budget-category-item ${overBudget ? "over-budget" : ""}">
+    <${tag} class="budget-category-item ${overBudget ? "over-budget" : ""} ${isElectricity ? "interactive" : ""}"${interactiveAttrs}>
       <div class="budget-category-head">
-        <span class="budget-category-title">${escapeHtml(item.title)}</span>
+        <span class="budget-category-title">${escapeHtml(item.title)}${isElectricity ? '<em class="budget-category-drill">Histórico →</em>' : ""}</span>
         <span class="budget-category-head-right">
           ${sourceLabel ? `<em class="budget-source ${sourceStatus === "PROVISIONAL_CHAT" ? "provisional" : ""}">${sourceLabel}</em>` : ""}
           <strong>${itemProgress === null ? "—" : itemProgress + "%"}</strong>
@@ -3468,7 +3482,232 @@ function renderBudgetCategoryDetail(item, currency) {
         <span><small>Libre</small><strong>${formatMoney(itemRemaining, currency)}</strong></span>
       </div>
       ${item.note ? `<p class="budget-category-note">${escapeHtml(item.note)}</p>` : ""}
-    </article>`;
+    </${tag}>`;
+}
+
+async function openElectricityDetail() {
+  const dialog = document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "parents-dialog");
+  dialog.classList.add("budget-dialog", "electricity-dialog");
+  document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual · Luz";
+  document.querySelector("#dialog-title").textContent = "Electricidad";
+  document.querySelector("#dialog-body").innerHTML = '<p class="electricity-empty">Cargando histórico privado…</p>';
+  if (!dialog.open) dialog.showModal();
+
+  try {
+    const response = await fetch("/api/finance/electricity", {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("ELECTRICITY_HISTORY_" + response.status);
+    const payload = await response.json();
+    renderElectricityDetail(payload.electricity);
+  } catch (error) {
+    console.warn("Electricity detail load failed", error);
+    document.querySelector("#dialog-body").innerHTML = `
+      <button class="electricity-back" type="button" data-electricity-back="true">← Presupuesto mensual</button>
+      <div class="electricity-empty electricity-empty-card">
+        <strong>Histórico de Luz no disponible</strong>
+        <p>La vista depende de la capa privada derivada LuzHistorico.</p>
+      </div>`;
+    document.querySelector("[data-electricity-back]")?.addEventListener("click", openBudgetDetail);
+  }
+}
+
+function renderElectricityDetail(data) {
+  const root = document.querySelector("#dialog-body");
+  if (!root) return;
+  if (!data || !Array.isArray(data.history) || !data.history.length) {
+    root.innerHTML = `
+      <button class="electricity-back" type="button" data-electricity-back="true">← Presupuesto mensual</button>
+      <div class="electricity-empty electricity-empty-card">
+        <strong>Sin histórico disponible</strong>
+        <p>Cuando LuzHistorico reciba filas, aparecerán aquí automáticamente.</p>
+      </div>`;
+    root.querySelector("[data-electricity-back]")?.addEventListener("click", openBudgetDetail);
+    return;
+  }
+
+  const currency = data.currency || "EUR";
+  const history = data.history;
+  const latest = data.latest || history[history.length - 1] || {};
+  const budget = data.budget || {};
+  const summary = data.summary || {};
+  const alerts = Array.isArray(data.alerts) ? data.alerts : [];
+
+  const period = [formatElectricityDate(latest.periodStart), formatElectricityDate(latest.periodEnd)]
+    .filter(Boolean)
+    .join(" → ") || "Periodo no informado";
+
+  root.innerHTML = `
+    <button class="electricity-back" type="button" data-electricity-back="true">← Presupuesto mensual</button>
+
+    <section class="electricity-summary-grid">
+      ${electricityMetric("Media 12 meses", summary.average12Amount, "money", currency)}
+      ${electricityMetric("Máximo histórico", summary.maxHistoricalAmount, "money", currency)}
+      ${electricityMetric("Última factura", summary.latestAmount, "money", currency)}
+      ${electricityMetric("Variación interanual", summary.latestYearOverYearAmountPct, "percent", currency)}
+    </section>
+
+    <section class="electricity-current-grid">
+      <article>
+        <span>Última factura</span>
+        <strong>${latest.amount === null || latest.amount === undefined ? "—" : formatMoney(latest.amount, currency)}</strong>
+        <small>${escapeHtml(period)}</small>
+      </article>
+      <article>
+        <span>Consumo</span>
+        <strong>${formatElectricityNumber(latest.consumptionKwh, 1, " kWh")}</strong>
+        <small>${formatElectricityNumber(latest.kwhPerDay, 2, " kWh/día")}</small>
+      </article>
+      <article>
+        <span>Coste diario</span>
+        <strong>${formatElectricityNumber(latest.eurPerDay, 2, " €/día")}</strong>
+        <small>${latest.days ? escapeHtml(String(latest.days)) + " días facturados" : "Duración no informada"}</small>
+      </article>
+      <article>
+        <span>Cobro previsto</span>
+        <strong>${escapeHtml(formatElectricityDate(latest.chargeDate) || "Sin fecha")}</strong>
+        <small>${latest.invoiceDate ? "Factura " + escapeHtml(formatElectricityDate(latest.invoiceDate)) : "Fecha de factura no informada"}</small>
+      </article>
+    </section>
+
+    <section class="electricity-budget-panel">
+      <header><strong>Ciclo actual · Luz</strong><span>Fuente financiera oficial</span></header>
+      <div>
+        ${electricityMetric("Presupuesto", budget.budgeted, "money", currency)}
+        ${electricityMetric("Gastado", budget.spent, "money", currency)}
+        ${electricityMetric("Comprometido", budget.committed, "money", currency)}
+        ${electricityMetric("Saldo restante", budget.remaining, "money", currency)}
+      </div>
+    </section>
+
+    ${alerts.length ? `
+      <section class="electricity-alerts">
+        <header><strong>Alertas</strong><span>${alerts.length}</span></header>
+        ${alerts.map((alert) => `
+          <article class="electricity-alert electricity-alert-${escapeHtml(alert.type || "source")}">
+            <span>${escapeHtml(alert.type === "tariff" ? "Tarifa" : alert.type === "consumption" ? "Consumo" : alert.type === "price" ? "Precio" : "Aviso")}</span>
+            <p>${escapeHtml(alert.message || "")}</p>
+            <time>${escapeHtml(formatElectricityDate(alert.date) || "")}</time>
+          </article>`).join("")}
+      </section>` : ""}
+
+    <section class="electricity-charts-grid">
+      <article class="electricity-chart-card">
+        <header><strong>Consumo mensual</strong><span>kWh</span></header>
+        ${renderElectricityChart(history, "consumptionKwh", "kWh")}
+      </article>
+      <article class="electricity-chart-card">
+        <header><strong>Importe mensual</strong><span>€</span></header>
+        ${renderElectricityChart(history, "amount", "€")}
+      </article>
+    </section>
+
+    <section class="electricity-history-section">
+      <header><strong>Histórico</strong><span>${history.length} facturas / periodos</span></header>
+      <div class="electricity-history-list">
+        ${[...history].reverse().map((item) => `
+          <article>
+            <div>
+              <strong>${escapeHtml(formatElectricityMonth(item.periodEnd || item.invoiceDate || item.periodStart) || "Periodo")}</strong>
+              <small>${escapeHtml([formatElectricityDate(item.periodStart), formatElectricityDate(item.periodEnd)].filter(Boolean).join(" → "))}</small>
+            </div>
+            <span><b>${item.amount === null ? "—" : formatMoney(item.amount, currency)}</b><small>${formatElectricityNumber(item.eurPerDay, 2, " €/día")}</small></span>
+            <span><b>${formatElectricityNumber(item.consumptionKwh, 1, " kWh")}</b><small>${formatElectricityNumber(item.kwhPerDay, 2, " kWh/día")}</small></span>
+            <span>
+              <b>${formatElectricityVariation(item.yearOverYear?.amountPct)}</b>
+              <small>€ vs mismo periodo año anterior</small>
+            </span>
+            <span>
+              <b>${formatElectricityVariation(item.yearOverYear?.consumptionPct)}</b>
+              <small>kWh vs mismo periodo año anterior</small>
+            </span>
+          </article>`).join("")}
+      </div>
+    </section>
+
+    <p class="electricity-source-note">LuzHistorico es una capa privada derivada. Los PDFs y datos contractuales originales permanecen fuera de la interfaz.</p>
+  `;
+
+  root.querySelector("[data-electricity-back]")?.addEventListener("click", openBudgetDetail);
+}
+
+function electricityMetric(label, value, type = "number", currency = "EUR") {
+  const rendered = value === null || value === undefined || !Number.isFinite(Number(value))
+    ? "—"
+    : type === "money"
+      ? formatMoney(Number(value), currency)
+      : type === "percent"
+        ? formatElectricityVariation(Number(value))
+        : Number(value).toLocaleString("es-ES");
+  return `<article class="electricity-metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(rendered)}</strong></article>`;
+}
+
+function renderElectricityChart(history, field, unit) {
+  const rows = (history || [])
+    .map((item) => ({
+      date: item.periodEnd || item.invoiceDate || item.periodStart || "",
+      value: Number(item[field])
+    }))
+    .filter((item) => item.date && Number.isFinite(item.value));
+
+  if (!rows.length) return '<p class="electricity-empty">Sin datos suficientes.</p>';
+
+  const width = 620;
+  const height = 190;
+  const padX = 18;
+  const padY = 16;
+  const values = rows.map((item) => item.value);
+  let min = Math.min(...values);
+  let max = Math.max(...values);
+  if (min === max) { min -= 1; max += 1; }
+  const span = max - min;
+  const points = rows.map((item, index) => {
+    const x = rows.length === 1 ? width / 2 : padX + (index / (rows.length - 1)) * (width - padX * 2);
+    const y = height - padY - ((item.value - min) / span) * (height - padY * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  const last = rows[rows.length - 1];
+
+  return `
+    <svg class="electricity-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolución mensual en ${escapeHtml(unit)}">
+      <line x1="${padX}" y1="${height - padY}" x2="${width - padX}" y2="${height - padY}"></line>
+      <polyline points="${points}"></polyline>
+    </svg>
+    <footer>
+      <span>${escapeHtml(formatElectricityMonth(rows[0].date))}</span>
+      <strong>${last.value.toLocaleString("es-ES", { maximumFractionDigits: 2 })} ${escapeHtml(unit)}</strong>
+      <span>${escapeHtml(formatElectricityMonth(last.date))}</span>
+    </footer>`;
+}
+
+function formatElectricityNumber(value, digits = 1, suffix = "") {
+  const number = Number(value);
+  return Number.isFinite(number)
+    ? number.toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: digits }) + suffix
+    : "—";
+}
+
+function formatElectricityVariation(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return (number > 0 ? "+" : "") + number.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "%";
+}
+
+function formatElectricityDate(value) {
+  if (!value) return "";
+  const date = new Date(String(value).slice(0, 10) + "T12:00:00");
+  if (!Number.isFinite(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
+}
+
+function formatElectricityMonth(value) {
+  if (!value) return "";
+  const date = new Date(String(value).slice(0, 10) + "T12:00:00");
+  if (!Number.isFinite(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("es-ES", { month: "short", year: "2-digit" }).format(date).replace(".", "");
 }
 
 function renderDecisionsInline() {
