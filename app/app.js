@@ -758,61 +758,226 @@ async function loadHealthOverview(dateKey = localDateKey()) {
 function renderHealthOverview(data) {
   const panel = document.querySelector("#health-overview-panel");
   if (!panel) return;
+
   const body = data.body || {};
   const activity = data.activity || {};
-  const goal = data.activityObjective || {};
-  const metricNumber = (value) => value === null || value === undefined || value === "" ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
+  const activityGoal = data.activityObjective || {};
+  const nutritionGoal = data.nutritionObjective || {};
+  const nutrition = data.nutritionSummary || {};
+  const consumed = nutrition.consumed || {};
+  const gym = data.gym || {};
+  const progressObjectives = Array.isArray(data.progressObjectives) ? data.progressObjectives : [];
+
+  const metricNumber = (value) => value === null || value === undefined || value === ""
+    ? null
+    : (Number.isFinite(Number(value)) ? Number(value) : null);
+  const pct = (value, target) => Number.isFinite(value) && Number.isFinite(target) && target > 0
+    ? Math.max(0, Math.min(100, Math.round((value / target) * 100)))
+    : 0;
+  const fmt1 = (value, suffix = "") => Number.isFinite(value) ? value.toFixed(1).replace(".", ",") + suffix : "—";
+  const fmt0 = (value, suffix = "") => Number.isFinite(value) ? Math.round(value).toLocaleString("es-ES") + suffix : "—";
+
   const weightToday = metricNumber(body.weightToday?.value);
   const weightAvg = metricNumber(body.weight7dAverage);
   const weeklyChange = metricNumber(body.weightWeeklyChange);
   const bodyFat = metricNumber(body.bodyFat?.value);
   const bmi = metricNumber(body.bodyMassIndex?.value);
   const lean = metricNumber(body.leanBodyMass?.value);
+  const waist = metricNumber(body.waist?.value);
+  const waistHistory = Array.isArray(body.waistHistory) ? body.waistHistory : [];
+  const waistStart = waistHistory.length > 1 ? metricNumber(waistHistory[0]?.value) : null;
+  const waistDelta = Number.isFinite(waist) && Number.isFinite(waistStart) ? waist - waistStart : null;
+
   const active = metricNumber(activity.activeKcal);
   const resting = metricNumber(activity.restingKcal);
   const total = metricNumber(activity.totalKcal);
   const steps = metricNumber(activity.steps);
-  const exercise = metricNumber(activity.exerciseMinutes);
   const exerciseWeek = metricNumber(activity.exerciseMinutesWeek);
-  const stepsTarget = metricNumber(goal.stepsTarget);
-  const exerciseTarget = metricNumber(goal.moderateActivityMinWeek);
-  const stepsPct = Number.isFinite(steps) && Number.isFinite(stepsTarget) && stepsTarget > 0 ? Math.max(0, Math.min(100, Math.round((steps / stepsTarget) * 100))) : 0;
-  const exercisePct = Number.isFinite(exerciseWeek) && Number.isFinite(exerciseTarget) && exerciseTarget > 0 ? Math.max(0, Math.min(100, Math.round((exerciseWeek / exerciseTarget) * 100))) : 0;
-  const fmt1 = (value, suffix = "") => Number.isFinite(value) ? value.toFixed(1).replace(".", ",") + suffix : "—";
-  const fmt0 = (value, suffix = "") => Number.isFinite(value) ? Math.round(value).toLocaleString("es-ES") + suffix : "—";
-  const changeText = Number.isFinite(weeklyChange) ? (weeklyChange > 0 ? "+" : "") + weeklyChange.toFixed(1).replace(".", ",") + " kg" : "—";
-  const changeClass = Number.isFinite(weeklyChange) ? (weeklyChange > 0 ? "up" : weeklyChange < 0 ? "down" : "flat") : "";
-  const weightSource = body.weightToday?.source || null;
-  const fatSource = body.bodyFat?.source || null;
+  const sessionsThisWeek = metricNumber(gym.sessionsThisWeek) ?? 0;
+  const stepsFloor = metricNumber(activityGoal.stepsFloor);
+  const stepsTarget = metricNumber(activityGoal.stepsTarget);
+  const exerciseTarget = metricNumber(activityGoal.moderateActivityMinWeek);
+  const strengthTarget = metricNumber(activityGoal.strengthSessionsWeek);
+
+  const kcalConsumed = metricNumber(consumed.kcal) ?? 0;
+  const proteinConsumed = metricNumber(consumed.protein) ?? 0;
+  const carbsConsumed = metricNumber(consumed.carbs) ?? 0;
+  const fatConsumed = metricNumber(consumed.fat) ?? 0;
+  const kcalTarget = metricNumber(nutritionGoal.kcal);
+  const proteinTarget = metricNumber(nutritionGoal.protein);
+  const carbsTarget = metricNumber(nutritionGoal.carbs);
+  const fatTarget = metricNumber(nutritionGoal.fat);
+
+  const nutritionChecks = [
+    Number.isFinite(kcalTarget) ? kcalConsumed >= kcalTarget * 0.9 && kcalConsumed <= kcalTarget * 1.05 : null,
+    Number.isFinite(proteinTarget) ? proteinConsumed >= proteinTarget * 0.95 : null,
+    Number.isFinite(carbsTarget) ? carbsConsumed >= carbsTarget * 0.9 && carbsConsumed <= carbsTarget * 1.1 : null,
+    Number.isFinite(fatTarget) ? fatConsumed >= fatTarget * 0.9 && fatConsumed <= fatTarget * 1.1 : null
+  ].filter((value) => value !== null);
+  const nutritionDone = nutritionChecks.filter(Boolean).length;
+
+  const activityChecks = [
+    Number.isFinite(stepsFloor) ? Number.isFinite(steps) && steps >= stepsFloor : null,
+    Number.isFinite(exerciseTarget) ? Number.isFinite(exerciseWeek) && exerciseWeek >= exerciseTarget : null,
+    Number.isFinite(strengthTarget) ? sessionsThisWeek >= strengthTarget : null
+  ].filter((value) => value !== null);
+  const activityDone = activityChecks.filter(Boolean).length;
+
+  let recompositionStatus = "Baseline en construcción";
+  if (Number.isFinite(weeklyChange)) {
+    recompositionStatus = weeklyChange <= -0.15 && weeklyChange >= -0.45
+      ? "En rumbo"
+      : "Seguir tendencia";
+  } else if (Number.isFinite(waistDelta) && waistDelta < 0) {
+    recompositionStatus = "En rumbo";
+  }
+
+  const performanceObjectives = progressObjectives.filter((item) => {
+    const category = normalizeHealthLabel(item.category);
+    return category === "rendimiento" || category === "skill";
+  });
+
+  const compositionGoal = (metric) => progressObjectives.find((item) =>
+    normalizeHealthLabel(item.category) === "composicion" &&
+    normalizeHealthLabel(item.metric).includes(normalizeHealthLabel(metric))
+  );
+
+  const weightGoal = compositionGoal("peso medio");
+  const waistGoal = compositionGoal("cintura");
+  const fatGoal = compositionGoal("grasa");
+
+  const changeText = Number.isFinite(weeklyChange)
+    ? (weeklyChange > 0 ? "+" : "") + weeklyChange.toFixed(1).replace(".", ",") + " kg"
+    : "—";
+  const changeClass = Number.isFinite(weeklyChange)
+    ? (weeklyChange > 0 ? "up" : weeklyChange < 0 ? "down" : "flat")
+    : "";
 
   panel.innerHTML = `
-    <div class="health-overview-intro">
-      <div><strong>Composición y actividad</strong><p>Peso y bioimpedancia se interpretan como tendencia. El gasto del Apple Watch es informativo y no ajusta la ingesta 1:1.</p></div>
-      <span>7–14 días</span>
+    <div class="health-dashboard-status">
+      <span><small>Nutrición</small><strong>${nutritionChecks.length ? `${nutritionDone}/${nutritionChecks.length}` : "Sin objetivo"}</strong></span>
+      <span><small>Actividad</small><strong>${activityChecks.length ? `${activityDone}/${activityChecks.length}` : "Sin objetivo"}</strong></span>
+      <span><small>Fuerza</small><strong>${Number.isFinite(strengthTarget) ? `${sessionsThisWeek}/${fmt0(strengthTarget)} sesiones` : `${sessionsThisWeek} sesiones`}</strong></span>
+      <span><small>Recomposición</small><strong>${escapeHtml(recompositionStatus)}</strong></span>
     </div>
-    <div class="health-overview-kpis body-kpis">
-      <article><span>Peso hoy</span><strong>${fmt1(weightToday, " kg")}</strong><small>${weightSource ? "Fuente: " + escapeHtml(weightSource) : "Sin muestra hoy"}</small></article>
-      <article><span>Media 7 días</span><strong>${fmt1(weightAvg, " kg")}</strong><small>Media de promedios diarios</small></article>
-      <article><span>Cambio semanal</span><strong class="${changeClass}">${changeText}</strong><small>7 días actuales vs 7 anteriores</small></article>
-      <article><span>Grasa corporal</span><strong>${fmt1(bodyFat, "%")}</strong><small>${fatSource ? "Tendencia · " + escapeHtml(fatSource) : "No disponible"}</small></article>
-      <article><span>IMC</span><strong>${fmt1(bmi)}</strong><small>Solo si Apple Health lo aporta</small></article>
-      <article><span>Masa magra</span><strong>${fmt1(lean, " kg")}</strong><small>Solo si Apple Health la aporta</small></article>
+
+    <div class="health-recomp-grid">
+      <section class="health-recomp-card">
+        <header><span>Composición corporal</span><strong>Tendencia</strong></header>
+        <div class="health-recomp-kpis">
+          <div><small>Peso hoy</small><strong>${fmt1(weightToday, " kg")}</strong></div>
+          <div><small>Media 7 días</small><strong>${fmt1(weightAvg, " kg")}</strong></div>
+          <div><small>Cambio semanal</small><strong class="${changeClass}">${changeText}</strong></div>
+          <div><small>Cintura</small><strong>${fmt1(waist, " cm")}</strong></div>
+          <div><small>Grasa</small><strong>${fmt1(bodyFat, "%")}</strong></div>
+          <div><small>Masa magra</small><strong>${fmt1(lean, " kg")}</strong></div>
+        </div>
+        <div class="health-objective-notes">
+          ${weightGoal?.target ? `<p><b>Peso:</b> ${escapeHtml(weightGoal.target)}</p>` : ""}
+          ${waistGoal?.target ? `<p><b>Cintura:</b> ${escapeHtml(waistGoal.target)}${waist === null ? " · pendiente de primera medición" : Number.isFinite(waistDelta) ? ` · ${waistDelta > 0 ? "+" : ""}${waistDelta.toFixed(1).replace(".", ",")} cm desde baseline disponible` : ""}</p>` : ""}
+          ${fatGoal?.target ? `<p><b>% grasa:</b> ${escapeHtml(fatGoal.target)}</p>` : ""}
+          ${Number.isFinite(bmi) ? `<p><b>IMC:</b> ${fmt1(bmi)} · dato descriptivo, no objetivo.</p>` : ""}
+        </div>
+      </section>
+
+      <section class="health-recomp-card">
+        <header><span>Nutrición</span><strong>Hoy</strong></header>
+        <div class="health-target-list">
+          ${renderHealthTargetRow("Calorías", kcalConsumed, kcalTarget, " kcal", pct(kcalConsumed, kcalTarget))}
+          ${renderHealthTargetRow("Proteína", proteinConsumed, proteinTarget, " g", pct(proteinConsumed, proteinTarget))}
+          ${renderHealthTargetRow("Carbohidratos", carbsConsumed, carbsTarget, " g", pct(carbsConsumed, carbsTarget))}
+          ${renderHealthTargetRow("Grasas", fatConsumed, fatTarget, " g", pct(fatConsumed, fatTarget))}
+        </div>
+        <p class="health-card-footnote">El gasto del reloj es informativo; no se compensa 1:1 con comida.</p>
+      </section>
+
+      <section class="health-recomp-card">
+        <header><span>Actividad</span><strong>Semana</strong></header>
+        <div class="health-target-list">
+          ${renderHealthTargetRow("Pasos hoy", steps, stepsTarget, "", pct(steps, stepsTarget), Number.isFinite(stepsFloor) ? `suelo ${fmt0(stepsFloor)}` : "")}
+          ${renderHealthTargetRow("Actividad", exerciseWeek, exerciseTarget, " min", pct(exerciseWeek, exerciseTarget))}
+          ${renderHealthTargetRow("Fuerza", sessionsThisWeek, strengthTarget, " sesiones", pct(sessionsThisWeek, strengthTarget))}
+        </div>
+        <div class="health-energy-strip">
+          <span><small>Activas</small><strong>${fmt0(active, " kcal")}</strong></span>
+          <span><small>Reposo</small><strong>${fmt0(resting, " kcal")}</strong></span>
+          <span><small>Total acumulado</small><strong>${fmt0(total, " kcal")}</strong></span>
+        </div>
+      </section>
+
+      <section class="health-recomp-card">
+        <header><span>Rendimiento</span><strong>Benchmarks</strong></header>
+        ${performanceObjectives.length
+          ? `<div class="health-benchmark-list">${performanceObjectives.map((goal) => renderHealthBenchmark(goal, gym.sessions || [])).join("")}</div>`
+          : '<p class="health-empty">Todavía no hay benchmarks de rendimiento definidos.</p>'}
+      </section>
     </div>
-    <div class="health-overview-kpis activity-kpis">
-      <article><span>Kcal activas</span><strong>${fmt0(active)}</strong><small>Apple Health</small></article>
-      <article><span>Kcal reposo</span><strong>${fmt0(resting)}</strong><small>Apple Health</small></article>
-      <article><span>Gasto total</span><strong>${fmt0(total)}</strong><small>Activa + reposo</small></article>
-      <article><span>Pasos</span><strong>${fmt0(steps)}</strong><small>${Number.isFinite(stepsTarget) ? "Objetivo " + fmt0(stepsTarget) : "Sin objetivo"}</small></article>
-      <article><span>Ejercicio hoy</span><strong>${fmt0(exercise, " min")}</strong><small>Minutos registrados</small></article>
-      <article><span>Ejercicio semana</span><strong>${fmt0(exerciseWeek, " min")}</strong><small>${Number.isFinite(exerciseTarget) ? "Objetivo " + fmt0(exerciseTarget, " min") : "Sin objetivo"}</small></article>
-    </div>
-    <div class="health-goal-progress">
-      <div><span><strong>Pasos</strong><small>${Number.isFinite(steps) && Number.isFinite(stepsTarget) ? fmt0(steps) + " / " + fmt0(stepsTarget) : "Sin datos suficientes"}</small></span><progress max="100" value="${stepsPct}"></progress></div>
-      <div><span><strong>Actividad semanal</strong><small>${Number.isFinite(exerciseWeek) && Number.isFinite(exerciseTarget) ? fmt0(exerciseWeek, " min") + " / " + fmt0(exerciseTarget, " min") : "Sin datos suficientes"}</small></span><progress max="100" value="${exercisePct}"></progress></div>
-    </div>
-    ${goal.appleWatchEnergyRule ? `<p class="health-trend-note">⌁ ${escapeHtml(goal.appleWatchEnergyRule)}</p>` : ""}
+
+    ${activityGoal.appleWatchEnergyRule ? `<p class="health-trend-note">⌁ ${escapeHtml(activityGoal.appleWatchEnergyRule)}</p>` : ""}
   `;
 }
+
+function normalizeHealthLabel(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function renderHealthTargetRow(label, value, target, suffix = "", progress = 0, note = "") {
+  const validValue = Number.isFinite(Number(value));
+  const validTarget = Number.isFinite(Number(target));
+  const current = validValue ? Number(value) : null;
+  const goal = validTarget ? Number(target) : null;
+  const format = (n) => Number.isInteger(n) ? n.toLocaleString("es-ES") : n.toFixed(1).replace(".", ",");
+  return `
+    <div class="health-target-row">
+      <div>
+        <strong>${escapeHtml(label)}</strong>
+        <small>${current === null ? "Sin dato" : format(current) + suffix}${goal === null ? "" : " / " + format(goal) + suffix}${note ? " · " + escapeHtml(note) : ""}</small>
+      </div>
+      <progress max="100" value="${Math.max(0, Math.min(100, Number(progress) || 0))}"></progress>
+    </div>`;
+}
+
+function renderHealthBenchmark(goal, sessions) {
+  const metric = String(goal.metric || "");
+  const normalized = normalizeHealthLabel(metric);
+  const matcher =
+    normalized.includes("press banca") ? /press.*banca|banca.*press|bench/i :
+    normalized.includes("dominadas") ? /dominadas/i :
+    normalized.includes("remo") ? /remo/i :
+    normalized.includes("fondos") ? /fondos/i :
+    normalized.includes("prensa") ? /prensa/i :
+    null;
+
+  let latest = null;
+  if (matcher) {
+    for (const session of sessions || []) {
+      latest = (session.entries || []).find((entry) => matcher.test(String(entry.exerciseName || ""))) || null;
+      if (latest) break;
+    }
+  }
+
+  const latestText = latest
+    ? [
+        latest.loadValue == null ? null : `${String(latest.loadValue).replace(".", ",")} ${latest.loadUnit || "kg"}`,
+        latest.setsDone == null ? null : `${latest.setsDone} series`,
+        latest.repsDone ? `${latest.repsDone} reps` : null
+      ].filter(Boolean).join(" · ")
+    : null;
+
+  return `
+    <article>
+      <div>
+        <strong>${escapeHtml(metric)}</strong>
+        <small>${latestText ? "Último: " + escapeHtml(latestText) : "Baseline: " + escapeHtml(goal.baseline || "pendiente")}</small>
+      </div>
+      <p>${escapeHtml(goal.target || "Objetivo pendiente")}</p>
+    </article>`;
+}
+
 async function loadGymPanel() {
   try {
     const response = await fetch("/api/gym", { headers: { Accept: "application/json" } });
