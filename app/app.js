@@ -166,8 +166,6 @@ async function init() {
   renderDebtOverview();
   renderWealthOverview();
   renderDecisionsInline();
-  renderAreas();
-  renderSystemMap();
   bindInteractions();
   initDemoMode();
 }
@@ -268,8 +266,10 @@ function renderDate() {
 
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
-  nav.innerHTML = state.areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} ${area.id === "area-habits" ? 'data-open-habits="true"' : ""} ${area.id === "area-pantry" ? 'data-open-pantry="true"' : ""} ${area.id === "area-objects" ? 'data-open-objects="true"' : ""} ${area.id === "area-parents" ? 'data-open-parents="true"' : ""} style="--area-color:${colors[area.tone]}">
+  const metaAreas = new Set(["area-loops", "area-goals"]);
+  const areas = state.areas.filter((area) => !metaAreas.has(area.id));
+  nav.innerHTML = areas.map((area, index) => `
+    <a class="nav-link ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}" style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
   `).join("");
@@ -303,6 +303,17 @@ function renderFocus() {
         <div class="focus-meta"><time datetime="${item.dueDate || ""}">${due}</time><span>${escapeHtml(area?.shortTitle || "General")}</span></div>
       </li>`;
   }).join("");
+
+  const transversalGoals = (Array.isArray(state.goals) ? state.goals : [])
+    .filter((goal) => goal.status === "active" && ["area-general", "area-loops", "area-goals"].includes(goal.areaId))
+    .slice(0, 3);
+  const goalsNode = document.querySelector("#focus-goals");
+  if (goalsNode) {
+    goalsNode.hidden = transversalGoals.length === 0;
+    goalsNode.innerHTML = transversalGoals.length
+      ? `<span>Objetivos transversales</span><div>${transversalGoals.map((goal) => `<strong>${escapeHtml(goal.title)}</strong>`).join("")}</div>`
+      : "";
+  }
 }
 
 function renderEvents() {
@@ -3879,7 +3890,6 @@ function renderSystemMap() {
 
 function bindInteractions() {
   const dialog = document.querySelector("#detail-dialog");
-  document.querySelectorAll(".area-card").forEach((card) => card.addEventListener("click", () => openArea(card.dataset.areaId)));
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
@@ -3895,41 +3905,20 @@ function bindInteractions() {
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
-  document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   document.querySelector("#ask-form").addEventListener("submit", handleQuery);
   const menuButton = document.querySelector("#menu-button");
   menuButton.addEventListener("click", () => {
     const open = document.body.classList.toggle("nav-open");
     menuButton.setAttribute("aria-expanded", String(open));
   });
-  document.querySelectorAll(".nav-link").forEach((link) => link.addEventListener("click", () => {
+
+  document.querySelectorAll("[data-nav-area-id]").forEach((link) => link.addEventListener("click", (event) => {
+    event.preventDefault();
     document.body.classList.remove("nav-open");
     menuButton.setAttribute("aria-expanded", "false");
+    document.querySelectorAll("[data-nav-area-id]").forEach((node) => node.classList.toggle("active", node === link));
+    openNavigationArea(link.dataset.navAreaId);
   }));
-  document.querySelector('[data-open-wealth="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openWealthDetail();
-  });
-  document.querySelector('[data-open-health="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openHealthDetail();
-  });
-  document.querySelector('[data-open-habits="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openHabitsDetail();
-  });
-  document.querySelector('[data-open-pantry="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openPantryDetail();
-  });
-  document.querySelector('[data-open-objects="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openObjectsDetail();
-  });
-  document.querySelector('[data-open-parents="true"]')?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openParentsDetail();
-  });
 }
 
 function setView(view) {
@@ -3945,7 +3934,23 @@ function setView(view) {
   });
 }
 
+function openNavigationArea(areaId) {
+  if (areaId === "area-general") {
+    document.querySelector("#overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  openArea(areaId);
+}
+
 function openArea(areaId) {
+  if (areaId === "area-finance") {
+    openBudgetDetail();
+    return;
+  }
+  if (areaId === "area-calendar") {
+    document.querySelector("#agenda-overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   if (areaId === "area-wealth") {
     openWealthDetail();
     return;
@@ -3971,8 +3976,10 @@ function openArea(areaId) {
     return;
   }
   const area = areaById.get(areaId);
-  const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
-  const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
+  if (!area) return;
+  const relatedLoops = (Array.isArray(state.openLoops) ? state.openLoops : []).filter((item) => item.areaId === areaId);
+  const relatedProjects = (Array.isArray(state.projects) ? state.projects : []).filter((item) => item.areaId === areaId);
+  const relatedGoals = (Array.isArray(state.goals) ? state.goals : []).filter((item) => item.areaId === areaId && item.status !== "archived");
   const dialog = document.querySelector("#detail-dialog");
   dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
@@ -3985,6 +3992,10 @@ function openArea(areaId) {
     ...relatedProjects.map((item) => ({
       title: item.title,
       detail: [item.summary, Number.isFinite(item.progress) && `${item.progress}%`, item.nextAction && `Siguiente: ${item.nextAction}`].filter(Boolean).join(" · "),
+    })),
+    ...relatedGoals.map((item) => ({
+      title: `Objetivo · ${item.title}`,
+      detail: [item.horizon, item.metric && item.target && `${item.metric}: ${item.target}`].filter(Boolean).join(" · "),
     })),
   ];
   document.querySelector("#dialog-body").innerHTML = entries.length
