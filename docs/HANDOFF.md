@@ -86,8 +86,11 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 ### Salud — Nutrición
 
 - Fuente privada `SEGUNDO CEREBRO - SALUD`.
-- Pestañas lógicas: comidas reutilizables, registro planificado/consumido, objetivos y energía manual de fallback.
-- La UI muestra consumido, gasto, balance, objetivo, comidas e histórico cuando existen datos.
+- Pestañas lógicas: comidas reutilizables, registro planificado/consumido, objetivos, energía y menú semanal.
+- La UI muestra consumido, gasto total, balance, objetivo, comidas e histórico cuando existen datos.
+- Los macros se comparan explícitamente con sus objetivos vigentes.
+- La web propone opciones de la base de comidas según los macros que faltan, identificándolas como sugerencias orientativas y sin sustituir el menú planificado.
+- `MenuSemanal` está conectado como fuente propia; si no contiene filas, la UI lo indica sin inventar un menú.
 - No se inventan objetivos nutricionales ni gasto ausente.
 - Contrato vigente: `agents/HEALTH.md`.
 
@@ -113,7 +116,10 @@ Estado:
 - `MedicionesCorporales` conserva el baseline histórico/manual y se amplió con IMC, masa magra, timestamp original e importación;
 - `EnergiaDiaria` conserva el fallback manual y se amplió con pasos, minutos de ejercicio, entrenamientos y metadatos de muestreo;
 - `ObjetivosActividad` ya contiene los objetivos operativos y la regla de no ajustar la comida 1:1 por kcal del reloj;
-- Salud incorpora una pestaña `Resumen` con peso de hoy, media 7 días, cambio semanal, grasa/IMC/masa magra cuando existan, kcal activa/reposo/total, pasos, ejercicio y progreso frente a objetivos;
+- Salud incorpora una pestaña `Resumen` convertida en cuadro de mando de recomposición con cuatro bloques: Composición corporal, Nutrición, Actividad y Rendimiento;
+- el Resumen muestra peso de hoy, media 7 días, cambio semanal, grasa/IMC/masa magra, cintura cuando exista, kcal activa/reposo/total, pasos, actividad semanal, sesiones de fuerza y progreso frente a objetivos;
+- `ObjetivosProgreso` alimenta objetivos de tendencia, cintura, nutrición, adherencia a fuerza, benchmarks de ejercicios y muscle-up;
+- la UI no define un mínimo de kcal a quemar: el gasto del reloj se mantiene informativo;
 - la media de peso usa promedios diarios y compara 7 días actuales frente a 7 anteriores;
 - bioimpedancia se interpreta como tendencia;
 - el gestor operativo es `GESTOR GYM Y NUTRI`;
@@ -147,7 +153,8 @@ Estado:
 - La aplicación todavía no es una PWA offline.
 - No todos los dominios previstos tienen contrato propio en `agents/`.
 - La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
-- Apple Health v2 está validado end-to-end. Queda pendiente únicamente automatizar la ejecución diaria del Atajo y separar el OAuth de Google del proyecto LITOS.
+- Apple Health v2 está validado end-to-end y la automatización diaria del Atajo está configurada a las 23:55; queda verificar una ejecución automática real y separar el OAuth de Google del proyecto LITOS.
+- `MenuSemanal` está conectado pero actualmente no contiene filas de planificación; la pestaña Menú mostrará ese estado vacío hasta que el gestor de Salud escriba propuestas.
 
 ## Sistema visual
 
@@ -189,12 +196,13 @@ Reglas:
 
 ## Próxima acción exacta
 
-Cerrar Apple Health v2 y después volver a HabitQuest:
+Cerrar la nueva capa de Salud y después volver a HabitQuest:
 
-1. Crear en iPhone una automatización personal diaria a las `23:55` que ejecute el Atajo de Salud con ejecución inmediata/sin preguntar.
-2. Verificar al día siguiente que el POST `/v1/sync` se ejecutó en background y que la API privada refleja el cierre diario.
-3. Crear un cliente OAuth propio de Segundo Cerebro y sustituir la dependencia temporal del OAuth de LITOS.
-4. Después retomar la validación de absorción de HabitQuest en iPhone, iPad y Mac.
+1. Verificar en producción el nuevo Resumen de recomposición y la comparación de macros.
+2. Verificar al día siguiente que la automatización de las 23:55 ejecutó `/v1/sync` en background.
+3. Registrar una primera cintura para activar su evolución y poblar `MenuSemanal` cuando el gestor de Salud defina una planificación.
+4. Crear un cliente OAuth propio de Segundo Cerebro y sustituir la dependencia temporal del OAuth de LITOS.
+5. Después retomar la validación de absorción de HabitQuest en iPhone, iPad y Mac.
 
 ## Archivos que debe leer el siguiente relevo
 
