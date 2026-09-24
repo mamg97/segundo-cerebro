@@ -34,6 +34,19 @@ Construir un segundo cerebro personal y privado: un sistema operativo de vida co
 - Finanzas mantiene su fuente oficial externa y el dashboard consume un estado derivado; no debe inventarse contabilidad paralela.
 - Mantener la solución pequeña, legible, responsive y sin dependencias innecesarias.
 
+## Enrutamiento de dominios
+
+Antes de trabajar con datos de un dominio, leer su contrato específico en `agents/`.
+
+- Finanzas → `agents/FINANCE.md`
+- Eventos / viajes → `agents/EVENTS.md`
+- Salud / nutrición → `agents/HEALTH.md`
+- Hábitos → `agents/HABITS.md`
+- Despensa → `agents/PANTRY.md`
+- Objetos / armario / looks / kits / equipaje → `agents/OBJECTS.md`
+
+Si un gestor necesita objetos, ropa, equipaje, kits o listas contextuales, debe usar el contrato de OBJETOS y la fuente canónica `SEGUNDO CEREBRO - OBJETOS`; no crear tablas propias ni copiar inventario.
+
 ## Documentación viva
 
 - `docs/HANDOFF.md` describe solo el presente y el siguiente paso operativo. No es un diario.
