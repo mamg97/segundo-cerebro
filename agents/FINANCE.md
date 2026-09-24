@@ -66,3 +66,17 @@ Una conversación nueva de finanzas debe poder reconstruir el estado leyendo:
 4. la fuente financiera externa vigente.
 
 El historial de una conversación concreta nunca es la única memoria del sistema.
+
+
+## Integración con GESTOR DESPENSA
+
+Para compras domésticas, `SEGUNDO CEREBRO - DESPENSA` es la fuente privada canónica del detalle de producto, ticket, precio, inventario y lista de compra.
+
+Finance debe:
+- consumir `Precios`, `Tickets`, `ListaCompra` y `Productos` cuando necesite estimar o explicar gasto doméstico;
+- priorizar precios reales de tickets sobre referencias públicas online para análisis histórico;
+- usar referencias web únicamente como estimación futura, conservando fuente y fecha;
+- registrar solo el impacto económico agregado en presupuesto/gasto mensual;
+- no mantener una tabla paralela de precios de alimentación o suministros.
+
+El detalle operativo de productos e inventario pertenece a GESTOR DESPENSA Y SUMINISTROS.
