@@ -9,17 +9,23 @@ Coordinate the private Health area of Segundo Cerebro without creating duplicate
 The private spreadsheet `SEGUNDO CEREBRO - SALUD` is the source of truth for nutrition. It is never mirrored with real values in Git.
 
 Tabs:
-- `Comidas`: reusable food/dish database.
+- `Comidas`: reusable personal dishes/meal definitions and legacy compatibility rows; it is not the canonical packaged-product catalogue.
 - `Registro`: planned and consumed meals by date.
 - `Objetivos`: effective calorie/macro targets.
 - `EnergiaDiaria`: active, resting and total energy expenditure.
+- `Recetas` / `IngredientesReceta`: recipe definitions.
+- `MenuSemanal`: planned menu.
+
+Packaged-product identity, EAN, store URL, product-level nutrition and physical availability are owned by the private canonical source `SEGUNDO CEREBRO - DESPENSA`, primarily `Productos` and `Inventario`.
 
 When the user tells ChatGPT what they plan to eat:
-1. Resolve each reusable dish against `Comidas`.
-2. If it does not exist, create a new food record only when calories/macros are known or explicitly estimated.
-3. Append the dated meal to `Registro` with `estado=planificado`.
-4. If the user later confirms they actually ate it, record/update the real consumption as `consumido`; do not silently treat planned food as eaten.
-5. Preserve the user's notes and portion information.
+1. For a packaged product, resolve it first against Pantry `Productos` and reuse its `producto_id`; do not create a duplicate product master in Health.
+2. For a recipe/personal dish, resolve it against `Recetas` / `Comidas` as appropriate.
+3. Before recommending or planning food, cross nutritional needs with Pantry `Inventario`.
+4. Append the dated meal to `Registro` with `estado=planificado`.
+5. If the user later confirms they actually ate it, record/update the real consumption as `consumido`; do not silently treat planned food as eaten.
+6. Preserve the user's notes and portion information.
+7. If the plan needs an absent/low-stock product, hand that need to GESTOR DESPENSA so it can be represented in `ListaCompra`.
 
 When nutritional values are estimated rather than label-confirmed, write the source/note accordingly. Never present an estimate as measured data.
 
@@ -46,10 +52,11 @@ This conversation is the operational manager for training, nutrition and the int
 
 1. Read `agents/HEALTH.md` and the current `docs/HANDOFF.md`.
 2. Read the live private targets from `Objetivos`, `ObjetivosActividad` and `ObjetivosProgreso`; never copy personal target values into Git.
-3. Read current nutrition from `Registro`, reusable foods/recipes from the private Health Sheet and planned meals from `MenuSemanal`.
-4. Read gym plan from the private source and completed gym sessions from D1.
-5. Read automatic Apple Health activity and body data from D1; use Sheet body measurements only as historical/manual fallback.
-6. Continue the same measurement and decision rules below instead of rebuilding a new plan from conversation memory.
+3. Read current nutrition from `Registro`, recipes from the private Health Sheet and planned meals from `MenuSemanal`.
+4. Read Pantry `Productos`, `Inventario` and `ListaCompra` before resolving packaged products or recommending what to eat.
+5. Read gym plan from the private source and completed gym sessions from D1.
+6. Read automatic Apple Health activity and body data from D1; use Sheet body measurements only as historical/manual fallback.
+7. Continue the same measurement and decision rules below instead of rebuilding a new plan from conversation memory.
 
 ### Measurement conventions
 
@@ -74,16 +81,18 @@ A personalized active-kcal floor may be added later only after enough real Apple
 
 ### Menu-building workflow
 
-Build the menu progressively from the user's real foods, recipes, Mercadona purchases and confirmed portions rather than generating a detached generic diet.
+Build the menu progressively from the user's real recipes, confirmed portions and the current Pantry inventory, rather than generating a detached generic diet.
 
 For each planned day:
 1. Start from the active calorie and protein targets.
-2. Allocate protein across the actual meals the user is likely to eat.
-3. Fill the remaining energy with the user's preferred carbohydrates, fats, vegetables and recipes while respecting the live targets.
-4. Reuse entries already present in `Comidas` / `Recetas`; label estimates clearly.
-5. Write future meals to `MenuSemanal` / `Registro` as `planificado` only. Convert to `consumido` only after confirmation.
-6. Prefer a small library of repeatable meals with known portions/macros, then expand variety gradually.
-7. Adjust menus from 7–14 day outcome trends and adherence, not from one high/low calorie day or one Apple Watch reading.
+2. Read Pantry `Inventario` and join it to `Productos`; unavailable items are not presented as "eat now" options.
+3. Allocate protein across realistic meals using available foods first.
+4. Fill remaining energy with preferred carbohydrates, fats, vegetables and recipes while respecting the live targets.
+5. Reuse Pantry `producto_id` for packaged products and Health `Recetas` / personal dishes for composed meals; label estimates clearly.
+6. Write future meals to `MenuSemanal` / `Registro` as `planificado` only. Convert to `consumido` only after confirmation.
+7. When a useful ingredient/product is absent or low, communicate it to GESTOR DESPENSA for `ListaCompra` rather than silently assuming availability.
+8. Prefer a small library of repeatable meals with known portions/macros, then expand variety gradually.
+9. Adjust menus from 7–14 day outcome trends and adherence, not from one high/low calorie day or one Apple Watch reading.
 
 ### Progress review
 
