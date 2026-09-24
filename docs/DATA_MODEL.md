@@ -436,3 +436,48 @@ Proyección minimizada para `/api/state`:
 - updatedAt.
 
 El detalle solo se entrega por `GET /api/projects`.
+
+
+## Salud — DAILY_ADHERENCE
+
+Entidad derivada por fecha:
+
+- `date`
+- `status`: `CUMPLIDO | PARCIAL | NO_CUMPLIDO | SIN_DATOS | FUTURO`
+- `score` derivado cuando existe evaluación
+- `manual`
+- `reasons[]`
+- `dimensions[]`
+  - kcal
+  - proteína
+  - pasos
+  - gym
+  - hábitos
+- `details`
+- objetivos efectivos de la fecha
+- indicador de fin de semana
+
+Estados de dimensión:
+- `pass`
+- `partial`
+- `fail`
+- `unknown`
+- `ignored`
+
+`unknown` significa que falta información para evaluar esa dimensión. `ignored` significa que la dimensión no era exigible ese día.
+
+### ADHERENCE_MONTH_SUMMARY
+
+- días cumplidos;
+- días parciales;
+- días no cumplidos;
+- días sin datos;
+- porcentaje de adherencia;
+- porcentaje de cobertura;
+- racha actual;
+- mejor racha;
+- adherencia laborable;
+- adherencia de fin de semana;
+- días evaluados/transcurridos.
+
+No se almacena como fuente independiente.
