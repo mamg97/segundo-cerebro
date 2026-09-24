@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.16.0">
-    <script type="module" src="./app.js?v=0.16.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.17.0">
+    <script type="module" src="./app.js?v=0.17.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -55,11 +55,7 @@
             theme="auto"
             variant="classic"
             speed="3.6"
-            interactive
-            role="button"
-            tabindex="0"
-            aria-label="Abrir pulso del sistema"
-            title="Pulso del Segundo Cerebro"
+            aria-hidden="true"
           ></thinking-orb>
           <form id="ask-form" class="ask-form">
             <label id="ask-title" for="ask-input">¿Qué necesitas?</label>
@@ -96,7 +92,7 @@
             </div>
             <div class="daily-energy-grid">
               <span><small>Consumidas</small><strong id="home-kcal-consumed">—</strong></span>
-              <span><small>Gastadas</small><strong id="home-kcal-burned">—</strong></span>
+              <span><small>Gasto total</small><strong id="home-kcal-burned">—</strong></span>
               <span><small>Objetivo</small><strong id="home-kcal-target">—</strong></span>
             </div>
             <progress id="home-kcal-progress" max="100" value="0" aria-label="Calorías consumidas frente al objetivo diario"></progress>
