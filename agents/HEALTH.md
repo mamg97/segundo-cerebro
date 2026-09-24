@@ -146,3 +146,5 @@ In particular:
 - Zepp “Metabolismo basal” is a body-composition estimate and must not be substituted for Apple Health daily `basalEnergyBurned` / resting energy;
 - body score, visceral fat score, protein percentage and ideal weight are Zepp-specific unless separately verified through a supported source.
 
+
+- The unified ingest also accepts parallel list fields from Shortcuts (`bodyMassValues` + `bodyMassMeasuredAts` + `bodyMassSources`, and equivalents for fat %, BMI and lean mass) so every same-day sample can be preserved without one HTTP request per sample.
