@@ -257,3 +257,42 @@ Segundo Cerebro puede gestionar el mismo registro `Habit` de HabitQuest mediante
 El modelo conserva los campos originales de HabitQuest y recalcula `xpReward` según dificultad: easy=10, medium=20, hard=30.
 
 Las operaciones no crean una segunda fuente de verdad. La hoja `HabitQuest Data` sigue siendo propietaria. Tras cada mutación se actualiza `Meta.updatedAt`; al eliminar, se eliminan también las filas del hábito en `History` y `SyncState`. Archivar nunca borra histórico.
+
+
+## Gestor Padres
+
+Los datos reales de este dominio solo existen en D1 privado o en fuentes externas propietarias. Git contiene únicamente el contrato y el esquema genérico.
+
+### `family_cases`
+
+Unidad operativa principal. Campos:
+
+| Campo | Uso |
+|---|---|
+| `id` | Identificador estable local |
+| `person_scope` | `mother`, `father`, `shared` |
+| `domain` | salud, incapacidad, jubilación, inmueble, hipoteca, inversión, negocio, fiscalidad, administración, legal u otro |
+| `title` | Título operativo privado |
+| `summary` | Síntesis minimizada del estado |
+| `status` | `ACTIVE`, `WAITING_EXTERNAL`, `WAITING_DOCUMENT`, `DECISION_OPEN`, `SCHEDULED`, `BLOCKED`, `DONE`, `ARCHIVED` |
+| `priority` | `low`, `medium`, `high`, `critical` |
+| `next_action` | Próxima acción concreta |
+| `next_action_owner` | Responsable de la próxima acción |
+| `due_at` | Fecha límite opcional |
+| `waiting_on` | Tercero, documento o condición bloqueante |
+| `sensitivity` | Fijado inicialmente a `muy_confidencial` |
+| `created_at` / `updated_at` | Trazabilidad temporal |
+
+### `family_case_actions`
+
+Cronología breve y operativa por caso: `case_id`, `action_type`, `summary`, `owner`, `status`, `happened_at`, `due_at`.
+
+### `family_case_refs`
+
+Referencias mínimas a documentos o fuentes: `case_id`, `document_type`, `source_provider`, `source_ref`, `document_date`, `summary`, `review_status`.
+
+Los proveedores admitidos incluyen referencias a Calendario, Finanzas, LITOS, email, Drive/documentos y otras fuentes autorizadas. Una referencia no convierte D1 en fuente propietaria del contenido original.
+
+### Resumen para portada
+
+`familySummary` contiene únicamente conteos de casos abiertos/atención/espera/decisión y el próximo vencimiento. No transporta títulos, diagnósticos, importes ni detalle patrimonial a la portada general.
