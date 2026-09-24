@@ -2103,7 +2103,7 @@ html[data-theme="dark"] .wealth-axis-label {
   font-size: 13px;
 }
 
-.health-section-heading span {
+.health-section-heading > span {
   display: grid;
   min-width: 26px;
   height: 26px;
