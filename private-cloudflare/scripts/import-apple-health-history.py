@@ -346,7 +346,6 @@ def sql_for(activity_rows, body_rows) -> str:
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     lines = [
         "-- Generated locally from Apple Health export. Do not commit this file.",
-        "BEGIN TRANSACTION;",
         "CREATE TABLE IF NOT EXISTS health_energy_daily (id INTEGER PRIMARY KEY AUTOINCREMENT, energy_date TEXT NOT NULL, active_kcal REAL, resting_kcal REAL, total_kcal REAL, source TEXT NOT NULL DEFAULT 'manual', note TEXT, recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, steps INTEGER, exercise_minutes REAL, workout_count INTEGER, sampled_at TEXT, source_details TEXT, workouts_json TEXT);",
         "CREATE UNIQUE INDEX IF NOT EXISTS uq_health_energy_date ON health_energy_daily(energy_date);",
         "CREATE TABLE IF NOT EXISTS health_body_samples (id INTEGER PRIMARY KEY AUTOINCREMENT, metric_type TEXT NOT NULL, metric_value REAL NOT NULL, unit TEXT NOT NULL, sample_date TEXT NOT NULL, measured_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'apple_health', imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(metric_type, measured_at, source));",
@@ -389,7 +388,6 @@ def sql_for(activity_rows, body_rows) -> str:
             + ") ON CONFLICT(metric_type,measured_at,source) DO UPDATE SET metric_value=excluded.metric_value, unit=excluded.unit, sample_date=excluded.sample_date, imported_at=excluded.imported_at;"
         )
 
-    lines.append("COMMIT;")
     return "\n".join(lines) + "\n"
 
 
