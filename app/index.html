@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.22.0">
-    <script type="module" src="./app.js?v=0.22.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.23.0">
+    <script type="module" src="./app.js?v=0.23.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -97,6 +97,22 @@
             </div>
             <progress id="home-kcal-progress" max="100" value="0" aria-label="Calorías consumidas frente al objetivo diario"></progress>
             <span id="home-kcal-status" class="daily-card-status">Cargando nutrición…</span>
+          </button>
+
+          <button id="home-pantry-card" class="daily-overview-card pantry-home-card" type="button" hidden>
+            <div class="daily-card-heading">
+              <span class="daily-card-icon pantry-accent" aria-hidden="true">▦</span>
+              <span><small>Despensa</small><strong>Casa</strong></span>
+              <span class="daily-card-arrow" aria-hidden="true">→</span>
+            </div>
+            <div class="pantry-home-grid">
+              <span><small>En casa</small><strong id="home-pantry-available">—</strong></span>
+              <span><small>Stock bajo</small><strong id="home-pantry-low">—</strong></span>
+              <span><small>Lista compra</small><strong id="home-pantry-buy">—</strong></span>
+              <span><small>Estimación</small><strong id="home-pantry-cost">—</strong></span>
+            </div>
+            <span id="home-pantry-status" class="daily-card-status">Cargando despensa…</span>
+            <span id="home-pantry-review" class="pantry-home-review">—</span>
           </button>
         </section>
         <section class="money-horizon" aria-label="Resumen financiero y eventos importantes">

@@ -7761,3 +7761,482 @@ html[data-theme="dark"] .electricity-chart-card {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* v0.23.0 — Despensa privada */
+@media (min-width: 1120px) {
+  .daily-overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.daily-card-icon.pantry-accent {
+  background: color-mix(in srgb, var(--cyan) 13%, transparent);
+  color: var(--cyan);
+}
+
+.pantry-home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.pantry-home-grid > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.pantry-home-grid small,
+.pantry-home-review {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.pantry-home-grid strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pantry-home-review { margin-top: -9px; }
+
+.pantry-dialog {
+  width: min(1050px, calc(100% - 28px));
+  max-height: min(90vh, 900px);
+  overflow: auto;
+  padding: 30px;
+}
+
+.pantry-dialog h2 { margin-bottom: 14px; }
+
+.pantry-shell {
+  display: grid;
+  gap: 20px;
+}
+
+.pantry-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, .8fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.pantry-hero > div:first-child,
+.pantry-metrics,
+.pantry-controls,
+.pantry-shopping-section,
+.pantry-product-detail {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.pantry-hero > div:first-child {
+  display: grid;
+  gap: 7px;
+  align-content: center;
+  padding: 20px;
+}
+
+.pantry-human-status {
+  margin: 0;
+  font-size: clamp(17px, 2vw, 24px);
+  font-weight: 750;
+  letter-spacing: -.025em;
+  line-height: 1.22;
+}
+
+.pantry-hero > div:first-child > span {
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.pantry-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.pantry-metrics > span {
+  display: grid;
+  gap: 4px;
+  padding: 15px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.pantry-metrics > span:nth-child(2n) { border-right: 0; }
+.pantry-metrics > span:nth-last-child(-n+2) { border-bottom: 0; }
+.pantry-metrics small { color: var(--ink-soft); font-size: 9px; }
+.pantry-metrics strong { font-size: 18px; }
+
+.pantry-location-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pantry-location-tile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 10px;
+  padding: 14px 15px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pantry-location-tile span { font-size: 11px; font-weight: 750; }
+.pantry-location-tile strong {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  color: var(--blue);
+  font-size: 24px;
+}
+.pantry-location-tile small { color: var(--ink-soft); font-size: 9px; }
+
+.pantry-controls {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+}
+
+.pantry-filter-row,
+.pantry-category-row {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.pantry-filter-row button,
+.pantry-category-row button,
+.pantry-back {
+  flex: none;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.pantry-filter-row button.active,
+.pantry-category-row button.active {
+  border-color: color-mix(in srgb, var(--blue) 42%, var(--line));
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.pantry-search {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: none;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+}
+
+.pantry-search:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 12%, transparent);
+}
+
+.pantry-section-heading {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.pantry-section-heading div { display: grid; gap: 2px; }
+.pantry-section-heading small,
+.pantry-section-heading > span { color: var(--ink-soft); font-size: 9px; }
+.pantry-section-heading strong { font-size: 13px; }
+
+.pantry-product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pantry-product-card {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .14s ease, border-color .14s ease;
+}
+
+.pantry-product-card:hover,
+.pantry-product-card:focus-visible {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--blue) 36%, var(--line));
+}
+
+.pantry-product-top,
+.pantry-product-meta,
+.pantry-product-foot,
+.pantry-detail-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pantry-product-category {
+  color: var(--blue);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.stock-chip,
+.purchase-state {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.stock-sufficient { color: var(--mint); }
+.stock-medium { color: var(--blue); }
+.stock-low, .state-revisar { color: var(--amber); }
+.stock-out, .state-comprar { color: var(--coral); }
+.state-comprado { color: var(--mint); }
+
+.pantry-product-name {
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+
+.pantry-product-brand,
+.pantry-product-foot {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.pantry-product-meta {
+  align-items: end;
+  font-size: 9px;
+}
+
+.pantry-product-meta span {
+  overflow: hidden;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pantry-product-meta strong { flex: none; font-size: 11px; }
+
+.pantry-stock-track {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--paper);
+}
+
+.pantry-stock-track i {
+  display: block;
+  width: var(--stock-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), var(--amber));
+}
+
+.pantry-shopping-section { padding: 16px; }
+.pantry-shopping-list { display: grid; }
+
+.pantry-shopping-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(72px, auto);
+  gap: 12px;
+  align-items: center;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+
+.pantry-shopping-row > div { display: grid; gap: 3px; }
+.pantry-shopping-row > div strong { font-size: 11px; }
+.pantry-shopping-row > div span { color: var(--ink-soft); font-size: 9px; }
+.pantry-shopping-price { text-align: right; font-size: 10px; font-weight: 750; }
+
+.pantry-shopping-total {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+}
+
+.pantry-shopping-total strong { font-size: 12px; }
+
+.pantry-empty {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.pantry-back {
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+
+.pantry-product-detail {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.pantry-detail-head h3 {
+  margin: 5px 0 3px;
+  font-size: 22px;
+}
+
+.pantry-detail-head p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.pantry-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pantry-detail-grid > span,
+.pantry-nutrition span {
+  display: grid;
+  gap: 4px;
+  padding: 11px;
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.pantry-detail-grid small,
+.pantry-nutrition small {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.pantry-detail-grid strong,
+.pantry-nutrition b { font-size: 11px; }
+
+.pantry-price-history,
+.pantry-nutrition,
+.pantry-detail-notes {
+  display: grid;
+  gap: 9px;
+}
+
+.pantry-price-history > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pantry-price-history strong,
+.pantry-nutrition > strong,
+.pantry-detail-notes strong { font-size: 11px; }
+
+.pantry-price-history span,
+.pantry-detail-notes p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.pantry-sparkline {
+  width: 100%;
+  height: 72px;
+  overflow: visible;
+}
+
+.pantry-sparkline polyline {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pantry-nutrition > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.pantry-product-link {
+  width: fit-content;
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+html[data-theme="dark"] .pantry-home-grid > span,
+html[data-theme="dark"] .pantry-search,
+html[data-theme="dark"] .pantry-detail-grid > span,
+html[data-theme="dark"] .pantry-nutrition span,
+html[data-theme="dark"] .pantry-stock-track,
+html[data-theme="dark"] .stock-chip,
+html[data-theme="dark"] .purchase-state {
+  background: rgba(7, 16, 29, .5);
+}
+
+@media (max-width: 820px) {
+  .pantry-hero { grid-template-columns: 1fr; }
+  .pantry-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .pantry-dialog {
+    width: calc(100% - 14px);
+    max-height: 94vh;
+    padding: 20px 12px;
+    border-radius: 18px;
+  }
+  .pantry-location-strip { grid-template-columns: 1fr; }
+  .pantry-product-grid { grid-template-columns: 1fr; }
+  .pantry-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pantry-nutrition > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pantry-shopping-row { grid-template-columns: 1fr auto; }
+  .pantry-shopping-price { grid-column: 2; }
+}

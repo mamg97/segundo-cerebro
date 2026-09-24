@@ -1,4 +1,5 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
+import { fetchPantrySummary, hasPantryGoogleConfig } from "./pantry.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -2870,6 +2871,20 @@ export default {
         }
       }
 
+      let pantrySync = hasPantryGoogleConfig(env) ? "configured" : "not-configured";
+      let pantryAvailableCount = null;
+      let pantryLowStockCount = null;
+      if (hasPantryGoogleConfig(env)) {
+        try {
+          const pantry = await fetchPantrySummary(env, getGoogleAccessToken);
+          pantrySync = pantry.status;
+          pantryAvailableCount = pantry.value?.summary?.availableProductCount ?? null;
+          pantryLowStockCount = pantry.value?.summary?.lowStockCount ?? null;
+        } catch {
+          pantrySync = "error";
+        }
+      }
+
       let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
       let calendarError = null;
       let calendarMatchedCount = null;
@@ -2900,6 +2915,9 @@ export default {
         habitTodayCount,
         nutritionSync,
         nutritionFoodCount,
+        pantrySync,
+        pantryAvailableCount,
+        pantryLowStockCount,
         calendarSync,
         calendarError,
         calendarMatchedCount,
@@ -3083,6 +3101,18 @@ export default {
       return deleteGymSession(sessionId, env);
     }
 
+    if (url.pathname === "/api/pantry") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const pantry = await fetchPantrySummary(env, getGoogleAccessToken);
+        if (!pantry.value) return json({ ok: false, code: "PANTRY_NOT_CONFIGURED" }, 503);
+        return json({ ok: true, status: pantry.status, ...pantry.value });
+      } catch (error) {
+        console.warn("Pantry read failed", String(error?.message || "PANTRY_READ_ERROR"));
+        return json({ ok: false, code: "PANTRY_READ_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/finance/electricity") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       try {
@@ -3213,6 +3243,18 @@ export default {
         }
       }
 
+      let pantrySync = "not-configured";
+      if (hasPantryGoogleConfig(env)) {
+        try {
+          const pantry = await fetchPantrySummary(env, getGoogleAccessToken);
+          if (pantry.value) state.pantrySummary = pantry.value.summary || null;
+          pantrySync = pantry.status;
+        } catch (error) {
+          pantrySync = "error";
+          console.warn("Pantry sync failed", String(error?.message || error));
+        }
+      }
+
       let calendarSync = "not-configured";
       if (hasIcloudCalendarConfig(env)) {
         try {
@@ -3244,6 +3286,7 @@ export default {
         financeSync,
         habitSync,
         nutritionSync,
+        pantrySync,
         calendarSync
       };
 

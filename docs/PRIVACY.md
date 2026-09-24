@@ -99,3 +99,12 @@ Si se detecta un secreto o dato real en Git: detener la publicación, revocar cr
 - Calendario, Finanzas, LITOS, email y repositorios documentales continúan siendo fuentes propietarias cuando corresponda.
 - La demo pública no instancia el módulo ni contiene fixtures que imiten casos reales.
 - La home general solo puede recibir un resumen minimizado de atención; el detalle pertenece a la vista privada protegida por Access.
+
+## Despensa
+
+- Inventario real, tickets, precios, patrones de compra, enlaces privados y fotos domésticas permanecen fuera de Git.
+- El repositorio público solo contiene lógica, contratos y estilos; no contiene el identificador real del Sheet.
+- `/api/state` recibe únicamente un resumen minimizado de Despensa.
+- El detalle se carga bajo demanda mediante `/api/pantry`, siempre detrás de Cloudflare Access.
+- El navegador no recibe credenciales Google ni consulta Sheets directamente.
+- El texto humano del dashboard es una derivación de filas privadas actuales; no se persiste como una segunda fuente de verdad.

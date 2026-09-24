@@ -9,7 +9,8 @@
     "deploy:health-ingest": "wrangler deploy --config wrangler.health-ingest.jsonc",
     "setup:health-ingest": "node scripts/setup-health-ingest.mjs",
     "health:backfill": "python3 scripts/import-apple-health-history.py",
-    "family:import": "node scripts/import-family-cases-private.mjs"
+    "family:import": "node scripts/import-family-cases-private.mjs",
+    "pantry:configure": "node scripts/configure-pantry-sync.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

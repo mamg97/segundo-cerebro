@@ -327,3 +327,28 @@ Campos principales:
 - `alerts[]`: avisos derivados de cambios de tarifa, precio efectivo o picos de consumo.
 
 No se incluyen dirección, contrato, titularidad ni contenido de PDFs.
+
+## Despensa
+
+Fuente canónica privada: `SEGUNDO CEREBRO - DESPENSA`.
+
+Entidades lógicas:
+- `Producto`: `producto_id`, identidad, marca, formato, EAN/URL, categoría y nutrición de producto disponible.
+- `Inventario`: observación física con ubicación, cantidad aproximada, unidad, nivel de stock, apertura, confianza y fecha de revisión.
+- `Precio`: observación fechada con importe, base, tienda, fuente, ticket/referencia y URL cuando exista.
+- `Ticket`: resumen de una compra; no sustituye el detalle de precio por producto.
+- `ListaCompra`: candidato/confirmado con `REVISAR | COMPRAR | COMPRADO`, prioridad, cantidad objetivo, motivo y coste estimado.
+
+Proyección de Home (`pantrySummary`):
+- `availableProductCount`
+- `lowStockCount`
+- `pendingPurchaseCount`
+- `confirmedPurchaseCount`
+- `reviewCount`
+- `estimatedBasketTotal`
+- `estimatedBasketPartial`
+- `missingPriceCount`
+- `lastInventoryReview`
+- `homeMessage`
+
+`GET /api/pantry` entrega el detalle enriquecido bajo demanda: inventario unido al maestro de producto, último precio, último precio procedente de ticket, histórico reciente, nutrición disponible, lista de compra y agregados por ubicación/categoría. Los valores desconocidos siguen siendo `null`, nunca cero inventado.

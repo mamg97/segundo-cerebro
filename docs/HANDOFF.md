@@ -112,6 +112,9 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - `Productos` es el catálogo maestro de identidad de producto, formato/EAN/URL y nutrición de producto disponible.
 - `Inventario` es la fuente de disponibilidad física, cantidad aproximada, ubicación y confianza.
 - `ListaCompra` contiene necesidades/candidatos de reposición.
+- La web privada integra Despensa de forma nativa: Home recibe solo `pantrySummary` y el detalle se carga con `GET /api/pantry`.
+- La vista Despensa incluye resumen humano, métricas, filtros por ubicación/categoría, búsqueda, tarjetas de inventario, lista `REVISAR → COMPRAR → COMPRADO`, coste estimado parcial/total y ficha de producto con precio, ticket, histórico, nutrición y enlace cuando exista.
+- El Worker resuelve `SEGUNDO CEREBRO - DESPENSA` por título exacto mediante Drive y admite `PANTRY_SHEET_ID` como fallback privado; no se versiona el identificador.
 - Salud no crea una base paralela de productos. `SEGUNDO CEREBRO - SALUD` mantiene ingesta, recetas, objetivos, menú y balance; puede referenciar `producto_id` de Despensa.
 - Las recomendaciones de comida deben cruzar primero objetivo nutricional + inventario. Lo que falte o esté bajo se coordina con Despensa para `ListaCompra`.
 - Nueva nutrición fiable de un producto existente se incorpora a `Productos` conservando el mismo `producto_id` cuando sea posible.
@@ -238,11 +241,12 @@ Reglas:
 
 Validar los dominios privados recién ampliados sin mover sus fuentes de verdad:
 
-1. Verificar en producción el drilldown de Luz contra `LuzHistorico`, incluidos gráficos, comparativa interanual y presupuesto de la categoría.
-2. Confirmar que una nueva fila futura de `LuzHistorico` aparece sin despliegue manual.
-3. Confirmar en producción que Gestor Padres y su resumen minimizado de home siguen operativos.
-4. Verificar la automatización diaria de Apple Health y completar el cliente OAuth propio de Segundo Cerebro.
-5. Después retomar la validación de HabitQuest y poblar `MenuSemanal` cuando corresponda.
+1. Verificar en producción la nueva vista Despensa: Home, filtros, ficha de producto, lista de compra y actualización automática desde el Sheet.
+2. Verificar en producción el drilldown de Luz contra `LuzHistorico`, incluidos gráficos, comparativa interanual y presupuesto de la categoría.
+3. Confirmar que una nueva fila futura de `LuzHistorico` aparece sin despliegue manual.
+4. Confirmar en producción que Gestor Padres y su resumen minimizado de home siguen operativos.
+5. Verificar la automatización diaria de Apple Health y completar el cliente OAuth propio de Segundo Cerebro.
+6. Después retomar la validación de HabitQuest y poblar `MenuSemanal` cuando corresponda.
 
 ## Archivos que debe leer el siguiente relevo
 

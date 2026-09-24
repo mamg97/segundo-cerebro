@@ -118,7 +118,7 @@ Suggested `stock_status` values:
 - `out`
 - `unknown`
 
-The technical persistence location must be decided with ORGANIZADOR / WEB GENERAL before writing production data. Do not silently create a second source of truth.
+The technical persistence location is the canonical private Sheet described above. The private web reads it through the Worker integration; the browser never reads Google Sheets directly. Do not silently create a second source of truth.
 
 ## Privacy
 
@@ -139,3 +139,16 @@ A new session taking over this manager should recover state in this order:
 6. Read current `MenuSemanal` when meal planning affects the next purchase.
 7. Read pantry price/ticket history when useful.
 8. Never reconstruct stock solely from old conversation memory when a newer inventory snapshot exists.
+
+## Dashboard contract
+
+The private dashboard exposes Pantry through two layers:
+
+- `/api/state` carries only `pantrySummary`, a minimized home-card projection.
+- `GET /api/pantry` loads the detailed inventory, product, price and shopping-list view on demand.
+
+The Worker resolves the canonical private spreadsheet by its exact Drive title and may use the optional `PANTRY_SHEET_ID` secret as an explicit fallback. The spreadsheet identifier is not committed to Git.
+
+The home summary may derive human wording such as fridge fullness, items to review and estimated next-basket cost, but it must stay traceable to live inventory/list rows and explicitly mark partial price coverage.
+
+The Organizer owns presentation only. GESTOR DESPENSA Y SUMINISTROS remains the functional owner of inventory, product identity, price evidence and `ListaCompra`.
