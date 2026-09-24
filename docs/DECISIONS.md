@@ -207,3 +207,13 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Fuentes externas:** Calendario, Finanzas, LITOS, email y repositorios documentales conservan la autoridad de sus datos; D1 guarda solo el estado operativo y referencias necesarias.
 - **Privacidad:** el dominio se trata por defecto como `muy_confidencial`; la home general recibe únicamente un resumen minimizado de atención.
 - **Motivo:** permitir seguimiento transversal de asuntos familiares sin duplicar fuentes de verdad ni exponer datos reales en GitHub Pages.
+
+
+## D-027 — OBJETOS conserva una única fuente canónica privada
+
+- **Estado:** aceptada; interfaz y capa de lectura implementadas, fuente pendiente de creación.
+- **Fecha:** 2026-09-24
+- **Decisión:** el inventario personal, armario, looks, kits y listas contextuales pertenecerán a `SEGUNDO CEREBRO - OBJETOS`, mantenido funcionalmente por GESTOR OBJETOS Y ARMARIO.
+- **Integración:** otros gestores referencian `objeto_id`, `look_id`, `kit_id` o `lista_id`; no copian inventario.
+- **Estado previo a la fuente:** la aplicación muestra `source-pending` y no crea D1 ni otra hoja como sustituto.
+- **Motivo:** evitar divergencias entre equipaje, armario, eventos, hogar y futuros agentes.

@@ -352,3 +352,41 @@ Proyección de Home (`pantrySummary`):
 - `homeMessage`
 
 `GET /api/pantry` entrega el detalle enriquecido bajo demanda: inventario unido al maestro de producto, último precio, último precio procedente de ticket, histórico reciente, nutrición disponible, lista de compra y agregados por ubicación/categoría. Los valores desconocidos siguen siendo `null`, nunca cero inventado.
+
+
+## Objetos y armario
+
+Fuente canónica prevista: `SEGUNDO CEREBRO - OBJETOS`. Mientras no exista, el estado se representa como desconocido/pendiente y no como inventario vacío confirmado.
+
+Entidades lógicas:
+- `Object`: objeto maestro con identidad estable, categoría, ubicación, estado, condición, compra, valor, garantía, referencias y metadatos.
+- `WardrobeItem`: extensión de un `Object` para color, talla, temporada, formalidad, oficina, uso y compatibilidad.
+- `Look`: conjunto de prendas referenciadas por `objeto_id`; nunca duplica las prendas.
+- `Kit`: plantilla reutilizable de necesidades; puede referenciar objetos concretos o necesidades genéricas.
+- `ContextList`: lista ligada a viaje/evento/contexto, con `evento_ref`, destino, fechas, clima y actividades.
+- `ContextListItem`: referencia opcional a `objeto_id`, importancia y estado de preparación.
+
+Estados de objeto:
+`DISPONIBLE | EN_USO | PRESTADO | REPARACIÓN | VENDIDO | DONADO | DESCARTADO | PERDIDO`.
+
+Importancia de lista:
+`NECESARIO | RECOMENDADO | OPCIONAL`.
+
+Estado de lista:
+`FALTA_COMPRAR | SELECCIONADO | PREPARADO | DESCARTADO`.
+
+Proyección de Home (`objectsSummary`):
+- `totalObjects`
+- `wardrobeCount`
+- `electronicsCount`
+- `repairCount`
+- `loanedCount`
+- `dispositionReviewCount`
+- `activeListCount`
+- `lookCount`
+- `kitCount`
+- `latestAdditions[]`
+- `locations[]`
+- `upcomingContexts[]`
+
+`GET /api/objects` devuelve `objects`, `wardrobe`, `looks`, `kits`, `lists` y facetas de filtro. Las relaciones entre looks/kits/listas y el inventario usan IDs estables; no copian objetos.

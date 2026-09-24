@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.25.0">
-    <script type="module" src="./app.js?v=0.25.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.26.0">
+    <script type="module" src="./app.js?v=0.26.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -117,6 +117,22 @@
             </div>
             <span id="home-pantry-status" class="daily-card-status">Cargando despensa…</span>
             <span class="pantry-home-footer"><span id="home-pantry-review" class="pantry-home-review">—</span><strong>Ver despensa →</strong></span>
+          </button>
+
+          <button id="home-objects-card" class="daily-overview-card objects-home-card" type="button" hidden>
+            <div class="daily-card-heading">
+              <span class="daily-card-icon objects-accent" aria-hidden="true">◇</span>
+              <span><small>Objetos</small><strong>Inventario personal</strong></span>
+              <span class="daily-card-arrow" aria-hidden="true">→</span>
+            </div>
+            <div class="objects-home-grid">
+              <span><small>Objetos</small><strong id="home-objects-total">—</strong></span>
+              <span><small>Armario</small><strong id="home-objects-wardrobe">—</strong></span>
+              <span><small>Atención</small><strong id="home-objects-attention">—</strong></span>
+              <span><small>Listas</small><strong id="home-objects-lists">—</strong></span>
+            </div>
+            <span id="home-objects-status" class="daily-card-status">Cargando objetos…</span>
+            <span class="objects-home-footer"><span>Inventario · Armario · Looks · Kits</span><strong>Ver objetos →</strong></span>
           </button>
         </section>
         <section class="money-horizon" aria-label="Resumen financiero y eventos importantes">

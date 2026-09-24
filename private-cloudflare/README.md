@@ -387,3 +387,17 @@ Lectura:
 Por defecto, el Worker intenta localizar el Sheet por el título exacto `SEGUNDO CEREBRO - DESPENSA` usando el OAuth Google ya configurado. Si el token no dispone de alcance Drive o se quiere fijar explícitamente la fuente, puede configurarse el secreto `PANTRY_SHEET_ID` con `npm run pantry:configure -- <SHEET_ID>`; su valor nunca debe versionarse.
 
 La UI pública de GitHub Pages no contiene ni simula los datos privados de Despensa.
+
+
+## Objetos
+
+El Worker incluye `GET /api/objects` como adaptador privado del futuro Sheet `SEGUNDO CEREBRO - OBJETOS`.
+
+Resolución de fuente:
+1. `OBJECTS_SHEET_ID` si existe como secreto/variable privada;
+2. clave `OBJECTS_SHEET_ID` en `IntegracionesPrivadas`;
+3. búsqueda exacta por título en Drive.
+
+Mientras la fuente no exista, el endpoint devuelve `status: "source-pending"`, `source.available=false` y colecciones vacías. Esto es un estado esperado y no un error de backend.
+
+La UI pública no instancia el módulo y Git no contiene inventario real.

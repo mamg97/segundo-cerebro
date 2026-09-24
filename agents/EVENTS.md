@@ -65,3 +65,15 @@ Después responder de forma compacta con:
 - dinero relevante.
 
 Ampliar solo cuando haga falta para ejecutar la logística.
+
+
+## Integración con OBJETOS
+
+Para equipaje y preparación material:
+
+1. GESTOR EVENTOS aporta destino, fechas, duración, actividades, restricciones y clima cuando proceda.
+2. GESTOR OBJETOS Y ARMARIO consulta el inventario y los kits y mantiene la lista contextual.
+3. EVENTOS conserva únicamente una referencia a `lista_id` / `evento_ref` y puede mostrar su progreso.
+4. EVENTOS no copia ropa, electrónica ni otros objetos a una base propia.
+
+Las necesidades `FALTA_COMPRAR` pueden trasladarse al gestor competente, pero no deben convertirse en objetos poseídos hasta que realmente lo sean.

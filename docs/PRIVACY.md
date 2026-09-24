@@ -108,3 +108,14 @@ Si se detecta un secreto o dato real en Git: detener la publicación, revocar cr
 - El detalle se carga bajo demanda mediante `/api/pantry`, siempre detrás de Cloudflare Access.
 - El navegador no recibe credenciales Google ni consulta Sheets directamente.
 - El texto humano del dashboard es una derivación de filas privadas actuales; no se persiste como una segunda fuente de verdad.
+
+
+## Objetos y armario
+
+- Inventario real, fotografías, ubicaciones domésticas, números de serie, facturas, garantías y valor económico permanecen fuera de Git.
+- El dominio se trata como `confidencial`.
+- La demo pública no instancia OBJETOS ni contiene fixtures que imiten posesiones reales.
+- `/api/state` recibe únicamente `objectsSummary`; el detalle se carga bajo demanda mediante `/api/objects`.
+- El frontend nunca recibe credenciales de Google.
+- Los documentos completos permanecen en su fuente propietaria; el inventario guarda como máximo referencias.
+- La ausencia de fuente se representa como `source-pending`; no se transforma en ceros ni en datos ficticios.

@@ -1,7 +1,8 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.25.0";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.26.0";
+import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.26.0";
 
 let state = mockState;
 let areaById = new Map();
@@ -16,7 +17,7 @@ const colors = {
 
 const symbols = {
   general: "◎", career: "↗", finance: "≋", calendar: "□", partner: "◇",
-  family: "⌂", parents: "⌂", health: "✚", pantry: "▦", habits: "✓", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
+  family: "⌂", parents: "⌂", health: "✚", pantry: "▦", objects: "◇", habits: "✓", wealth: "◆", projects: "✦", "open-loops": "!", goals: "○",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
@@ -112,6 +113,16 @@ function ensureDerivedAreas() {
       const healthIndex = state.areas.findIndex((area) => area.id === "area-health");
       if (healthIndex >= 0) state.areas.splice(healthIndex + 1, 0, pantryArea);
       else state.areas.push(pantryArea);
+    }
+  }
+
+  if (!state.areas.some((area) => area.id === "area-objects")) {
+    const objectsArea = objectsAreaFromState(state, privateModeKind);
+    if (objectsArea) {
+      const pantryIndex = state.areas.findIndex((area) => area.id === "area-pantry");
+      const habitsIndex = state.areas.findIndex((area) => area.id === "area-habits");
+      const insertAt = pantryIndex >= 0 ? pantryIndex + 1 : habitsIndex >= 0 ? habitsIndex : state.areas.length;
+      state.areas.splice(insertAt, 0, objectsArea);
     }
   }
 
@@ -258,7 +269,7 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   nav.innerHTML = state.areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} ${area.id === "area-habits" ? 'data-open-habits="true"' : ""} ${area.id === "area-pantry" ? 'data-open-pantry="true"' : ""} ${area.id === "area-parents" ? 'data-open-parents="true"' : ""} style="--area-color:${colors[area.tone]}">
+    <a class="nav-link ${index === 0 ? "active" : ""}" href="${area.slug === "general" ? "#overview" : `#area-${area.slug}`}" ${area.id === "area-wealth" ? 'data-open-wealth="true"' : ""} ${area.id === "area-health" ? 'data-open-health="true"' : ""} ${area.id === "area-habits" ? 'data-open-habits="true"' : ""} ${area.id === "area-pantry" ? 'data-open-pantry="true"' : ""} ${area.id === "area-objects" ? 'data-open-objects="true"' : ""} ${area.id === "area-parents" ? 'data-open-parents="true"' : ""} style="--area-color:${colors[area.tone]}">
       ${escapeHtml(area.shortTitle)}
     </a>
   `).join("");
@@ -437,6 +448,7 @@ function renderDailyOverview() {
   renderHomeHabitsCard();
   void renderHomeNutritionCard();
   renderHomePantryCard(state, privateModeKind);
+  renderHomeObjectsCard(state, privateModeKind);
 }
 
 function renderHomeHabitsCard() {
@@ -589,7 +601,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
 
 function openImportantEventsDetail() {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog");
   dialog.classList.add("important-events-dialog");
 
   const importantEvents = collectImportantEvents(state.financeSummary || {});
@@ -1477,7 +1489,7 @@ function shiftDateKey(key, amount) {
 
 async function openHabitsDetail(dateKey = null) {
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog");
   dialog.classList.add("habits-dialog");
   document.querySelector("#dialog-context").textContent = "Hábitos · HabitQuest";
   document.querySelector("#dialog-title").textContent = "Hábitos";
@@ -3877,6 +3889,7 @@ function bindInteractions() {
     document.querySelector('[data-health-tab="nutrition"]')?.click();
   });
   document.querySelector("#home-pantry-card")?.addEventListener("click", openPantryDetail);
+  document.querySelector("#home-objects-card")?.addEventListener("click", openObjectsDetail);
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#demo-mode-toggle")?.addEventListener("click", toggleDemoMode);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
@@ -3908,6 +3921,10 @@ function bindInteractions() {
   document.querySelector('[data-open-pantry="true"]')?.addEventListener("click", (event) => {
     event.preventDefault();
     openPantryDetail();
+  });
+  document.querySelector('[data-open-objects="true"]')?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openObjectsDetail();
   });
   document.querySelector('[data-open-parents="true"]')?.addEventListener("click", (event) => {
     event.preventDefault();
@@ -3945,6 +3962,10 @@ function openArea(areaId) {
     openPantryDetail();
     return;
   }
+  if (areaId === "area-objects") {
+    openObjectsDetail();
+    return;
+  }
   if (areaId === "area-parents") {
     openParentsDetail();
     return;
@@ -3953,7 +3974,7 @@ function openArea(areaId) {
   const relatedLoops = state.openLoops.filter((item) => item.areaId === areaId);
   const relatedProjects = state.projects.filter((item) => item.areaId === areaId);
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
   document.querySelector("#dialog-title").textContent = area.title;
   const entries = [

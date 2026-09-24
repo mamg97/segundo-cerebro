@@ -335,7 +335,8 @@ export async function openPantryDetail() {
     "important-events-dialog",
     "budget-dialog",
     "parents-dialog",
-    "electricity-dialog"
+    "electricity-dialog",
+    "objects-dialog"
   );
   dialog.classList.add("pantry-dialog");
   document.querySelector("#dialog-context").textContent = "Despensa · Fuente privada";

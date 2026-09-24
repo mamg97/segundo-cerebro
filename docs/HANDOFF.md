@@ -245,6 +245,21 @@ Reglas:
 - Despensa deja de depender de una lectura correcta del Sheet para existir en navegación/Home. Si la fuente privada falla, el módulo permanece visible con estado de conexión y reintento.
 - Assets frontend versionados como `v0.24.0` para evitar caché obsoleta en cambios de navegación/estilo.
 
+## Objetos y armario
+
+- Nuevo dominio principal: `OBJETOS`.
+- Propietario funcional: `GESTOR OBJETOS Y ARMARIO`; contrato en `agents/OBJECTS.md`.
+- Fuente canónica prevista: `SEGUNDO CEREBRO - OBJETOS`.
+- Verificación de Drive a 2026-09-24: la fuente todavía no existe.
+- No se ha creado fuente paralela ni datos personales ficticios.
+- La web privada incluye navegación, tarjeta Home y workspace con `Resumen · Inventario · Armario · Looks · Kits · Listas`.
+- `GET /api/objects` está preparado y devuelve `source-pending` hasta que exista el Sheet.
+- `/api/state` puede transportar solo `objectsSummary`; el detalle se carga bajo demanda.
+- Contrato inicial v0.1 preparado para `Objetos`, `Armario`, `Looks/LookItems`, `Kits/KitItems` y `Listas/ListaItems`.
+- GESTOR EVENTOS no copia inventario: aporta contexto y referencia la lista de OBJETOS mediante `evento_ref/lista_id`.
+- Modo claro, oscuro, responsive y Modo demo usan los componentes/tokens comunes.
+- Assets frontend previstos: `v0.26.0`.
+
 ## Próxima acción exacta
 
 Validar los dominios privados recién ampliados sin mover sus fuentes de verdad:
