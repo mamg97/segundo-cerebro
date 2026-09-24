@@ -1259,7 +1259,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -1381,6 +1381,39 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     importedAt: item.imported_at || null
   })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date));
 
+  const progressObjectives = parseTableRows(valueRanges[6]?.values || []).map((item) => ({
+    category: String(item.category || "").trim(),
+    metric: String(item.metric || "").trim(),
+    baseline: item.baseline == null ? null : String(item.baseline).trim(),
+    target: item.target == null ? null : String(item.target).trim(),
+    timeframe: item.timeframe == null ? null : String(item.timeframe).trim(),
+    frequency: item.frequency == null ? null : String(item.frequency).trim(),
+    measurement: item.measurement == null ? null : String(item.measurement).trim(),
+    decisionRule: item.decision_rule == null ? null : String(item.decision_rule).trim(),
+    priority: String(item.priority || "media").trim().toLowerCase(),
+    status: String(item.status || "activo").trim().toLowerCase(),
+    updatedAt: item.updated_at || null
+  })).filter((item) => item.metric && item.status !== "inactivo");
+
+  const weeklyMenuRows = parseTableRows(valueRanges[7]?.values || []).map((item) => ({
+    weekStart: String(item.semana_inicio || "").trim() || null,
+    date: String(item.fecha || "").trim(),
+    moment: String(item.momento || "Otro").trim(),
+    recipeId: item.recipe_id || null,
+    foodId: item.food_id || null,
+    name: String(item.nombre || "").trim(),
+    quantity: toNumber(item.cantidad),
+    unit: item.unidad || null,
+    status: String(item.estado || "planificado").trim().toLowerCase(),
+    kcal: toNumber(item.kcal),
+    protein: toNumber(item.proteinas_g),
+    carbs: toNumber(item.carbohidratos_g),
+    fat: toNumber(item.grasas_g),
+    gymSession: item.sesion_gym || null,
+    note: item.nota || null,
+    updatedAt: item.updated_at || null
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.name);
+
   const historyStart = healthAddDays(date, -13);
   const bodyHistoryStart = healthAddDays(date, -27);
   const [d1EnergyByDate, d1BodySamples] = await Promise.all([
@@ -1438,6 +1471,14 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const selectedDate = new Date(`${date}T12:00:00+02:00`);
   const mondayOffset = (selectedDate.getDay() + 6) % 7;
   const weekStart = healthAddDays(date, -mondayOffset);
+  const weekEnd = healthAddDays(weekStart, 6);
+  const weeklyMenu = weeklyMenuRows.filter((item) =>
+    item.date >= weekStart && item.date <= weekEnd
+  );
+  const waistHistory = bodySheetRows
+    .filter((item) => item.waistCm !== null && item.date <= date)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const waistLatest = waistHistory.length ? waistHistory[waistHistory.length - 1] : null;
   let exerciseMinutesWeek = 0;
   let workoutCountWeek = 0;
   for (let cursor = weekStart; cursor <= date; cursor = healthAddDays(cursor, 1)) {
@@ -1494,6 +1535,19 @@ async function fetchHealthNutritionSummary(env, options = {}) {
       bodyFat: latestMetric("bodyFatPercentage"),
       bodyMassIndex: latestMetric("bodyMassIndex"),
       leanBodyMass: latestMetric("leanBodyMass"),
+      waist: waistLatest ? {
+        value: waistLatest.waistCm,
+        unit: "cm",
+        date: waistLatest.date,
+        source: waistLatest.source || "health_sheet",
+        updatedAt: waistLatest.updatedAt || null
+      } : null,
+      waistHistory: waistHistory.slice(-16).map((item) => ({
+        date: item.date,
+        value: item.waistCm,
+        unit: "cm",
+        source: item.source || "health_sheet"
+      })),
       samples: bodySamples.filter((item) => item.date >= bodyHistoryStart),
       interpretation: "trend"
     },
@@ -1519,6 +1573,8 @@ async function fetchHealthNutritionSummary(env, options = {}) {
         : objective.kcal - consumed.kcal
     },
     history,
+    progressObjectives,
+    weeklyMenu,
     source: {
       kind: "google-sheet",
       title: "SEGUNDO CEREBRO - SALUD"
@@ -2085,6 +2141,24 @@ export default {
       try {
         const health = await fetchHealthNutritionSummary(env, { date });
         if (!health.value) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+        let gym = { sessionsThisWeek: 0, sessions: [], progress: {} };
+        try {
+          const gymHistory = await fetchGymHistory(env);
+          const selectedDate = health.value.date;
+          const selected = new Date(`${selectedDate}T12:00:00+02:00`);
+          const mondayOffset = (selected.getDay() + 6) % 7;
+          const weekStart = healthAddDays(selectedDate, -mondayOffset);
+          const weekSessions = (gymHistory.sessions || []).filter((session) =>
+            session.sessionDate >= weekStart && session.sessionDate <= selectedDate
+          );
+          gym = {
+            sessionsThisWeek: weekSessions.length,
+            sessions: (gymHistory.sessions || []).slice(0, 16),
+            progress: gymHistory.progress || {}
+          };
+        } catch (gymError) {
+          console.warn("Health overview gym read failed", String(gymError?.message || gymError));
+        }
         return json({
           ok: true,
           status: health.status,
@@ -2093,6 +2167,10 @@ export default {
           activity: health.value.activity || null,
           activityObjective: health.value.activityObjective || null,
           nutritionObjective: health.value.objective || null,
+          nutritionSummary: health.value.summary || null,
+          progressObjectives: health.value.progressObjectives || [],
+          weeklyMenu: health.value.weeklyMenu || [],
+          gym,
           energy: health.value.energy || null
         });
       } catch (error) {
