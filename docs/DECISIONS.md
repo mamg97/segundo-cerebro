@@ -240,3 +240,15 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Propiedad:** el registro indexa proyectos; no sustituye el repositorio/documentación propietaria de cada uno.
 - **Solo seguimiento:** un proyecto puede marcarse `read_only` para impedir que Segundo Cerebro lo trate como modificable desde este dominio.
 - **Motivo:** disponer de una vista completa y reutilizable por gestores sin depender de memoria conversacional ni crear listas divergentes.
+
+
+## D-030 — Adherencia es una proyección derivada con override manual
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-25.
+- **Decisión:** la adherencia mensual de Salud se calcula al leer las fuentes canónicas; no se crea un histórico calculado paralelo.
+- **Fuentes:** Nutrición/Objetivos, Apple Health/D1, gym D1, HabitQuest y planificación explícita.
+- **Override:** `AdherenciaManual` permite que una declaración explícita del usuario prevalezca sobre la heurística.
+- **Datos insuficientes:** se representan como `SIN_DATOS` y no penalizan el porcentaje.
+- **Gym:** no se considera incumplimiento diario si no existía entrenamiento programado explícitamente.
+- **Motivo:** distinguir falta real de adherencia de falta de registro y evitar una métrica binaria/agresiva.
