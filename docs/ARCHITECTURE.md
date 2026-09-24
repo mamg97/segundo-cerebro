@@ -187,3 +187,18 @@ GESTOR OBJETOS Y ARMARIO es el propietario funcional. ORGANIZADOR presenta los d
 La fuente fue creada el 2026-09-24 y está registrada en el registro privado de integraciones. El Worker la resuelve mediante `OBJECTS_SHEET_ID`, el registro privado o búsqueda exacta por título. `source-pending` se conserva únicamente como degradación segura si la fuente deja de estar disponible.
 
 Las listas contextuales pueden enlazar `evento_ref` y `lista_id`: GESTOR EVENTOS aporta contexto y conserva la referencia; el inventario y la lista material permanecen en OBJETOS.
+
+
+## Navegación y composición de Home
+
+La barra lateral es la navegación canónica de dominios. La portada no replica todos los dominios en una segunda parrilla.
+
+- `General` vuelve al inicio.
+- `Finanzas` abre el presupuesto mensual conectado.
+- `Agenda` lleva a la semana real de calendario.
+- `Patrimonio`, `Salud`, `Hábitos`, `Despensa`, `Objetos` y `Padres` abren sus vistas especializadas.
+- Carrera, Pareja/Familia y Proyectos usan un detalle genérico que reúne sus proyectos, pendientes y objetivos asociados.
+
+`OPEN_LOOP` y `GOAL` son capas transversales, no dominios. Los pendientes viven en `Próximos movimientos`; los objetivos se integran en su área y los objetivos del Coordinador pueden mostrarse de forma compacta junto a los pendientes.
+
+La antigua parrilla `Áreas de tu vida` y la vista técnica `Sistema` se retiraron de Home. La arquitectura técnica se documenta en `docs/`, evitando duplicar información técnica potencialmente obsoleta en la interfaz operativa.
