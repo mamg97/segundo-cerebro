@@ -211,9 +211,20 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 
 ## D-027 — OBJETOS conserva una única fuente canónica privada
 
-- **Estado:** aceptada; interfaz y capa de lectura implementadas, fuente pendiente de creación.
+- **Estado:** aceptada e implementada; fuente canónica creada y conectada.
 - **Fecha:** 2026-09-24
 - **Decisión:** el inventario personal, armario, looks, kits y listas contextuales pertenecerán a `SEGUNDO CEREBRO - OBJETOS`, mantenido funcionalmente por GESTOR OBJETOS Y ARMARIO.
 - **Integración:** otros gestores referencian `objeto_id`, `look_id`, `kit_id` o `lista_id`; no copian inventario.
-- **Estado previo a la fuente:** la aplicación muestra `source-pending` y no crea D1 ni otra hoja como sustituto.
+- **Degradación:** si la fuente deja de resolverse, la aplicación muestra `source-pending` y no crea D1 ni otra hoja como sustituto.
 - **Motivo:** evitar divergencias entre equipaje, armario, eventos, hogar y futuros agentes.
+
+
+## D-028 — La barra lateral es la navegación canónica
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-24
+- **Decisión:** eliminar de Home la parrilla duplicada `Áreas de tu vida` y la vista técnica `Sistema`. La barra lateral es el único índice de dominios.
+- **Metacapas:** `Open Loops` y `Objetivos` dejan de presentarse como áreas. Los pendientes se integran en `Próximos movimientos`; los objetivos se muestran en el dominio al que pertenecen y los transversales junto al foco operativo.
+- **Métricas:** se dejan de exponer puntuaciones 0–100 de área sin una semántica común. Las métricas reales permanecen dentro de cada módulo.
+- **Navegación:** Finanzas abre presupuesto, Agenda desplaza a la semana real y los dominios especializados abren sus vistas propias.
+- **Motivo:** evitar duplicidad de navegación, huecos visuales, tarjetas que no aportan acción y puntuaciones engañosamente comparables.
