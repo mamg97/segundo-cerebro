@@ -249,11 +249,12 @@ Reglas:
 
 - Nuevo dominio principal: `OBJETOS`.
 - Propietario funcional: `GESTOR OBJETOS Y ARMARIO`; contrato en `agents/OBJECTS.md`.
-- Fuente canónica prevista: `SEGUNDO CEREBRO - OBJETOS`.
-- Verificación de Drive a 2026-09-24: la fuente todavía no existe.
-- No se ha creado fuente paralela ni datos personales ficticios.
+- Fuente canónica: `SEGUNDO CEREBRO - OBJETOS`.
+- Creada en Drive el 2026-09-24 con contrato v0.1 y registrada como `OBJECTS_SHEET_ID` en `IntegracionesPrivadas`.
+- Pestañas: `Objetos`, `Armario`, `Looks`, `LookItems`, `Kits`, `KitItems`, `Listas`, `ListaItems`, `README`.
+- No se han añadido datos personales ficticios ni se ha creado una fuente paralela.
 - La web privada incluye navegación, tarjeta Home y workspace con `Resumen · Inventario · Armario · Looks · Kits · Listas`.
-- `GET /api/objects` está preparado y devuelve `source-pending` hasta que exista el Sheet.
+- `GET /api/objects` está conectado al Sheet canónico; conserva `source-pending` solo como degradación si la fuente deja de resolverse.
 - `/api/state` puede transportar solo `objectsSummary`; el detalle se carga bajo demanda.
 - Contrato inicial v0.1 preparado para `Objetos`, `Armario`, `Looks/LookItems`, `Kits/KitItems` y `Listas/ListaItems`.
 - GESTOR EVENTOS no copia inventario: aporta contexto y referencia la lista de OBJETOS mediante `evento_ref/lista_id`.
