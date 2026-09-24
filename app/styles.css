@@ -9891,3 +9891,66 @@ html[data-theme="light"] .objects-callout {
   .packing-list article { grid-template-columns: 1fr auto; }
   .packing-importance { grid-column: 1 / -1; }
 }
+
+
+/* v0.27.0 — canonical sidebar navigation and transversal goals */
+.nav-link::before {
+  background: var(--blue);
+  opacity: .72;
+}
+
+.nav-link.active::before {
+  background: var(--orange);
+  opacity: 1;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 12%, transparent);
+}
+
+#focus-overview,
+#agenda-overview {
+  scroll-margin-top: 96px;
+}
+
+.focus-goals {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.focus-goals[hidden] {
+  display: none;
+}
+
+.focus-goals > span {
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+}
+
+.focus-goals > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.focus-goals strong {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+html[data-theme="dark"] .focus-goals strong {
+  border: 1px solid rgba(95, 168, 255, .10);
+  background: rgba(16, 33, 58, .72);
+}
+
+html[data-theme="light"] .focus-goals strong {
+  border: 1px solid rgba(47, 107, 255, .09);
+  background: rgba(47, 107, 255, .045);
+}
