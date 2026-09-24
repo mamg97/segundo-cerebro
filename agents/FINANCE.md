@@ -80,3 +80,15 @@ Finance debe:
 - no mantener una tabla paralela de precios de alimentación o suministros.
 
 El detalle operativo de productos e inventario pertenece a GESTOR DESPENSA Y SUMINISTROS.
+
+
+## Histórico de electricidad
+
+La categoría `Luz` del presupuesto mensual puede ampliar su detalle con la fuente privada derivada `LuzHistorico`.
+
+- `ASUNTOS v3.xlsx` sigue siendo la fuente financiera oficial del presupuesto, gasto, comprometido y saldo restante.
+- `LuzHistorico` es una capa privada derivada para análisis de facturación y consumo.
+- La UI no lee PDFs ni contratos originales.
+- La interfaz solo consume campos analíticos necesarios: periodos, importe, consumo, métricas por día, fechas de factura/cobro, variaciones, tarifa si existe y metadatos de actualización.
+- No se transportan dirección, número de contrato ni otros identificadores personales.
+- Una fila nueva en `LuzHistorico` debe aparecer sin cambios de código tras la siguiente actualización de la fuente derivada.
