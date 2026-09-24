@@ -147,6 +147,16 @@ Estado:
 - iCloud permanece de solo lectura.
 - Las mutaciones privadas deben escribir exclusivamente en la fuente documentada para ese dominio.
 
+
+## Nuevo dominio pendiente — Padres
+
+- Existe el contrato genérico `agents/PARENTS.md`.
+- El dominio debe implementarse únicamente en la aplicación privada; todos los datos reales son `muy_confidencial`.
+- La persistencia operativa recomendada es D1 privado para casos, acciones y referencias mínimas; documentos y fuentes originales permanecen fuera de Git.
+- La UI debe separar Padre, Madre y Familiar/Patrimonial común, con foco en asuntos abiertos, próxima acción, responsable, vencimiento, bloqueo y referencias.
+- Falta que ORGANIZADOR / WEB GENERAL implemente la estructura base, endpoints privados y vista del módulo antes de cargar datos reales.
+
+
 ## Problemas o límites conocidos
 
 - La caja de consulta sigue siendo principalmente una experiencia local del frontend; todavía no existe un asistente general con lenguaje natural conectado a todos los datos del sistema.
