@@ -401,3 +401,17 @@ Resolución de fuente:
 Mientras la fuente no exista, el endpoint devuelve `status: "source-pending"`, `source.available=false` y colecciones vacías. Esto es un estado esperado y no un error de backend.
 
 La UI pública no instancia el módulo y Git no contiene inventario real.
+
+
+## Proyectos
+
+El Worker expone `GET /api/projects` para el registro privado `SEGUNDO CEREBRO - PROYECTOS`.
+
+Resolución de fuente:
+1. `PROJECTS_SHEET_ID` si existe como variable/secreto privado;
+2. clave `PROJECTS_SHEET_ID` en `IntegracionesPrivadas`;
+3. búsqueda exacta por título en Drive.
+
+Pestañas: `Proyectos`, `Documentacion`, `Relaciones` y `README`.
+
+`/api/state` recibe solo `projectsSummary`. El catálogo, nombres, enlaces y documentación se cargan exclusivamente bajo demanda. GitHub Pages no recibe esos datos.
