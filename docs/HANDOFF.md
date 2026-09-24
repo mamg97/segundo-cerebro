@@ -107,7 +107,7 @@ Apple Watch / Apple Health / Zepp
 
 Estado:
 - el puente energético original sigue operativo y compatible en `/v1/energy`;
-- el backend v2 acepta actividad + composición corporal en `/v1/sync`;
+- el flujo v2 de producción usa `/v1/sync` y está validado end-to-end con actividad + composición corporal;
 - `health_energy_daily` se amplió con pasos, minutos de ejercicio, entrenamientos opcionales, timestamp de muestreo y detalle de fuentes;
 - `health_body_samples` guarda muestras corporales normalizadas e idempotentes por tipo + timestamp original + fuente;
 - `MedicionesCorporales` conserva el baseline histórico/manual y se amplió con IMC, masa magra, timestamp original e importación;
@@ -116,12 +116,11 @@ Estado:
 - Salud incorpora una pestaña `Resumen` con peso de hoy, media 7 días, cambio semanal, grasa/IMC/masa magra cuando existan, kcal activa/reposo/total, pasos, ejercicio y progreso frente a objetivos;
 - la media de peso usa promedios diarios y compara 7 días actuales frente a 7 anteriores;
 - bioimpedancia se interpreta como tendencia;
-- el gestor operativo es `GESTOR GYM Y NUTRI`.
-
-Pendiente antes de modificar el Atajo del iPhone:
-- auditar en Apple Salud qué métricas corporales contienen muestras reales;
-- confirmar para cada métrica qué fuente las escribe (Zepp, Zepp Life u otra);
-- solo entonces añadir al Atajo los tipos realmente disponibles.
+- el gestor operativo es `GESTOR GYM Y NUTRI`;
+- el Atajo del iPhone ya envía energía activa/reposo, pasos, minutos de ejercicio, peso, grasa corporal, IMC y masa magra;
+- Zepp Life está confirmado como fuente de composición corporal;
+- una referencia incorrecta heredada al duplicar bloques (`Body Fat Percentage` apuntando a `Weight`) fue detectada y corregida; el backend actualizó la misma muestra mediante UPSERT, sin dejar una muestra duplicada para ese timestamp;
+- el refresh token de Google se renovó temporalmente usando el cliente OAuth existente de LITOS; queda pendiente crear un cliente OAuth dedicado de Segundo Cerebro.
 
 ## Fuentes de verdad
 
@@ -148,7 +147,7 @@ Pendiente antes de modificar el Atajo del iPhone:
 - La aplicación todavía no es una PWA offline.
 - No todos los dominios previstos tienen contrato propio en `agents/`.
 - La calidad del estado depende de que las fuentes privadas estén sincronizadas y reconciliadas.
-- El puente Apple Health energético está validado end-to-end. La ampliación v2 de actividad/composición ya está implementada en backend; queda pendiente la auditoría de fuentes en el iPhone y la actualización del Atajo.
+- Apple Health v2 está validado end-to-end. Queda pendiente únicamente automatizar la ejecución diaria del Atajo y separar el OAuth de Google del proyecto LITOS.
 
 ## Sistema visual
 
@@ -190,13 +189,12 @@ Reglas:
 
 ## Próxima acción exacta
 
-Validar la absorción de HabitQuest:
+Cerrar Apple Health v2 y después volver a HabitQuest:
 
-1. Desplegar el Worker privado con la nueva capa HabitQuest.
-2. Validar en iPhone, iPad y Mac las vistas `Hoy`, `Hábitos` y `Progreso`.
-3. Confirmar que marcar/desmarcar desde Segundo Cerebro y desde HabitQuest sigue resolviendo por Last-Write-Wins sobre el mismo Sheet.
-4. Mantener `streakFreezes` fuera de la UI de Segundo Cerebro hasta formalizar su algoritmo real.
-5. Si la paridad se mantiene estable, decidir cuándo retirar la aplicación HabitQuest independiente.
+1. Crear en iPhone una automatización personal diaria a las `23:55` que ejecute el Atajo de Salud con ejecución inmediata/sin preguntar.
+2. Verificar al día siguiente que el POST `/v1/sync` se ejecutó en background y que la API privada refleja el cierre diario.
+3. Crear un cliente OAuth propio de Segundo Cerebro y sustituir la dependencia temporal del OAuth de LITOS.
+4. Después retomar la validación de absorción de HabitQuest en iPhone, iPad y Mac.
 
 ## Archivos que debe leer el siguiente relevo
 
