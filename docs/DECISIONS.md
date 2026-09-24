@@ -197,3 +197,13 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Tendencias:** peso = media móvil de 7 días y cambio frente a los 7 anteriores; grasa/IMC/masa magra de bioimpedancia doméstica se tratan como tendencia.
 - **Nutrición:** las kcal del Apple Watch son informativas; no se ajusta ingesta 1:1. El gestor debe evaluar 7–14 días junto con peso, adherencia y entrenamiento.
 - **Fuente corporal:** no se asume que Zepp/Zepp Life escriba todas las métricas. Antes de configurar el Atajo se verifica cada tipo en Apple Salud → Fuentes de datos y acceso.
+
+
+## D-026 — Gestor Padres usa D1 privado como estado operativo
+
+- **Estado:** aceptada e implementada
+- **Fecha:** 2026-09-24
+- **Decisión:** Gestor Padres persiste casos, acciones y referencias mínimas en D1 privado y se instancia únicamente en la aplicación `private-remote`.
+- **Fuentes externas:** Calendario, Finanzas, LITOS, email y repositorios documentales conservan la autoridad de sus datos; D1 guarda solo el estado operativo y referencias necesarias.
+- **Privacidad:** el dominio se trata por defecto como `muy_confidencial`; la home general recibe únicamente un resumen minimizado de atención.
+- **Motivo:** permitir seguimiento transversal de asuntos familiares sin duplicar fuentes de verdad ni exponer datos reales en GitHub Pages.
