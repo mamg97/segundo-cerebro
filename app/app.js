@@ -1847,7 +1847,7 @@ function renderNutritionMacroTargets(consumed, objective) {
       <div class="health-section-heading">
         <div>
           <strong>Objetivos del día</strong>
-          <p>Comparación directa entre lo consumido y el objetivo vigente.</p>
+          <p>Calorías como techo diario y proteína como prioridad; hidratos y grasas orientan el reparto.</p>
         </div>
       </div>
       <div class="nutrition-target-list">
