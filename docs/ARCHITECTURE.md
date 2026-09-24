@@ -166,3 +166,24 @@ La demo pública de GitHub Pages no instancia el módulo Despensa ni contiene in
 ### Registro privado de integraciones
 
 Para evitar depender de Drive search en runtime, el Worker puede resolver identificadores de fuentes desde la pestaña oculta `IntegracionesPrivadas` del Sheet privado de estado financiero, cuya referencia ya vive como secreto del Worker. Este registro contiene únicamente punteros de infraestructura; no inventario, precios ni datos de dominio. Despensa sigue teniendo como única fuente canónica su propio Sheet privado.
+
+
+## Objetos privado
+
+OBJETOS se integra como dominio privado de primer nivel sin persistencia paralela:
+
+```text
+SEGUNDO CEREBRO - OBJETOS (Google Sheet privado; pendiente)
+        ↓ OAuth Google existente
+Cloudflare Worker
+        ├── /api/state → objectsSummary minimizado
+        └── /api/objects → detalle bajo demanda
+        ↓
+Dashboard privado protegido por Access
+```
+
+GESTOR OBJETOS Y ARMARIO es el propietario funcional. ORGANIZADOR presenta los datos. Otros gestores consultan el mismo dominio mediante referencias estructuradas.
+
+La fuente aún no existe; el Worker representa este estado como `source-pending` y no crea D1, mocks personales ni una hoja alternativa. Cuando se cree, se resolverá mediante `OBJECTS_SHEET_ID`, el registro privado de integraciones o búsqueda exacta por título.
+
+Las listas contextuales pueden enlazar `evento_ref` y `lista_id`: GESTOR EVENTOS aporta contexto y conserva la referencia; el inventario y la lista material permanecen en OBJETOS.
