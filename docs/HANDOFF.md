@@ -156,13 +156,18 @@ Estado:
 - Las mutaciones privadas deben escribir exclusivamente en la fuente documentada para ese dominio.
 
 
-## Nuevo dominio pendiente — Padres
+## Gestor Padres
 
-- Existe el contrato genérico `agents/PARENTS.md`.
-- El dominio debe implementarse únicamente en la aplicación privada; todos los datos reales son `muy_confidencial`.
-- La persistencia operativa recomendada es D1 privado para casos, acciones y referencias mínimas; documentos y fuentes originales permanecen fuera de Git.
-- La UI debe separar Padre, Madre y Familiar/Patrimonial común, con foco en asuntos abiertos, próxima acción, responsable, vencimiento, bloqueo y referencias.
-- Falta que ORGANIZADOR / WEB GENERAL implemente la estructura base, endpoints privados y vista del módulo antes de cargar datos reales.
+- Contrato vigente: `agents/PARENTS.md`.
+- El módulo se instancia únicamente en la aplicación `private-remote`; GitHub Pages no crea el área Padres.
+- D1 privado es la fuente operativa de `family_cases`, `family_case_actions` y `family_case_refs`.
+- La UI separa Padre, Madre y Familiar/Patrimonial común y prioriza estado, prioridad, próxima acción, responsable, vencimiento, espera/bloqueo y última actualización.
+- El detalle de caso muestra cronología breve y referencias mínimas a fuentes/documentos.
+- Calendario, Finanzas y LITOS conservan sus fuentes de verdad; Gestor Padres no duplica esos datos.
+- La home general recibe solo `familySummary`: conteos de atención/espera/decisión y próximo vencimiento, sin detalle sensible.
+- Endpoints privados disponibles: listado/creación de casos, lectura/actualización por id, alta de acciones y alta de referencias.
+- La sensibilidad de los casos se fija a `muy_confidencial` en esta fase.
+- La estructura está preparada para cargar datos reales únicamente en runtime/D1 después del despliegue; ningún caso real vive en Git.
 
 
 ## Problemas o límites conocidos
