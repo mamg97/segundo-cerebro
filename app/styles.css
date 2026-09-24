@@ -10720,3 +10720,125 @@ html[data-theme="light"] :is(
     justify-content: flex-start;
   }
 }
+
+
+/* v0.29.1 — larger mobile typography only; layout unchanged */
+@media (max-width: 760px) {
+  .daily-card-heading small {
+    font-size: 13px !important;
+    line-height: 1.2;
+  }
+
+  .daily-card-heading strong {
+    font-size: 21px !important;
+    line-height: 1.15;
+  }
+
+  .daily-card-arrow {
+    font-size: 25px !important;
+  }
+
+  .daily-card-main > strong {
+    font-size: 46px !important;
+    line-height: 1;
+  }
+
+  .daily-card-main > span {
+    font-size: 15px !important;
+    line-height: 1.35;
+  }
+
+  .daily-energy-grid small,
+  .pantry-home-grid small,
+  .objects-home-grid small {
+    font-size: 13px !important;
+    line-height: 1.2;
+  }
+
+  .daily-energy-grid strong,
+  .pantry-home-grid strong,
+  .objects-home-grid strong {
+    font-size: 23px !important;
+    line-height: 1.15;
+  }
+
+  .daily-card-status,
+  .pantry-home-review,
+  .objects-home-footer,
+  .pantry-home-footer {
+    font-size: 14px !important;
+    line-height: 1.45;
+  }
+
+  .pantry-home-footer strong,
+  .objects-home-footer strong {
+    font-size: 14px !important;
+  }
+
+  .money-horizon .context-label,
+  .section-heading .context-label {
+    font-size: 14px !important;
+  }
+
+  .money-horizon .section-heading h2,
+  .section-heading h2 {
+    font-size: 28px !important;
+    line-height: 1.05;
+  }
+
+  .text-action,
+  .count-pill {
+    font-size: 13px !important;
+  }
+
+  .money-horizon > .budget-panel .budget-primary span,
+  .money-horizon > .budget-panel .budget-compact-spent span,
+  .budget-metrics span,
+  .debt-summary-grid span,
+  .wealth-summary-value span {
+    font-size: 13px !important;
+  }
+
+  .money-horizon > .budget-panel .budget-primary strong {
+    font-size: 38px !important;
+  }
+
+  .money-horizon > .budget-panel .budget-compact-spent strong {
+    font-size: 22px !important;
+  }
+
+  .money-horizon > .budget-panel .budget-metrics.compact strong,
+  .debt-summary-grid strong {
+    font-size: 17px !important;
+  }
+
+  .money-horizon > .debt-panel .debt-summary-primary strong,
+  .money-horizon > .wealth-panel .wealth-summary-value strong {
+    font-size: 32px !important;
+  }
+
+  .focus-item strong {
+    font-size: 16px !important;
+  }
+
+  .focus-item p,
+  .focus-meta time,
+  .focus-meta span {
+    font-size: 13px !important;
+  }
+
+  .calendar-legend,
+  .week-day-header span,
+  .week-event-time,
+  .week-event small {
+    font-size: 12px !important;
+  }
+
+  .week-day-header strong {
+    font-size: 25px !important;
+  }
+
+  .week-event strong {
+    font-size: 14px !important;
+  }
+}
