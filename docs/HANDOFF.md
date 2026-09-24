@@ -237,6 +237,14 @@ Reglas:
 - nunca pegarlos en una conversación;
 - los cambios relevantes en `main` se despliegan sin intervención local.
 
+## Correcciones UX v0.24.0
+
+- El contenido de escritorio vuelve a ocupar todo el ancho disponible a la derecha de la barra lateral; se elimina el tope visual de 1460 px.
+- Modo claro y oscuro comparten la misma jerarquía tipográfica, tratamiento de tarjetas, controles, diálogos, navegación y acentos; cambia la paleta, no el nivel de acabado.
+- La barra superior incorpora `Modo demo`: oculta visualmente cifras con `** **` sin modificar el estado ni las fuentes reales. Se mantiene solo durante la sesión del navegador.
+- Despensa deja de depender de una lectura correcta del Sheet para existir en navegación/Home. Si la fuente privada falla, el módulo permanece visible con estado de conexión y reintento.
+- Assets frontend versionados como `v0.24.0` para evitar caché obsoleta en cambios de navegación/estilo.
+
 ## Próxima acción exacta
 
 Validar los dominios privados recién ampliados sin mover sus fuentes de verdad:
