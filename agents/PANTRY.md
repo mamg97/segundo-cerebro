@@ -22,38 +22,30 @@ It does not replace nutrition, finance or the central coordinator.
 
 ## Existing authoritative sources
 
-### Nutrition and reusable food data
+### Canonical pantry source
 
-`SEGUNDO CEREBRO - SALUD` remains the private source for nutrition-related data already owned by the Health domain.
+The private spreadsheet **`SEGUNDO CEREBRO - DESPENSA`** is the canonical source for product identity and physical availability.
 
-Relevant tabs include:
+Core tabs:
+- `Productos`: master product identity, canonical `producto_id`, brand/store/category, format, EAN, Mercadona URL when known and product-level nutrition when available.
+- `Inventario`: what is physically available at home, approximate quantity, storage location, stock level and confidence.
+- `ListaCompra`: replenishment needs and candidates.
+- `Precios` / `Tickets`: pantry-owned price and purchase evidence when present.
 
-- `Comidas`
-- `Recetas`
-- `IngredientesReceta`
-- `MenuSemanal`
-- `Objetivos`
-
-GESTOR DESPENSA Y SUMINISTROS may read these to understand what ingredients are useful for the nutrition plan, but it must not redefine calorie or macro targets.
-
-### Mercadona receipt and price history
-
-The existing private tabs:
-
-- `MercadonaItems`
-- `MercadonaTickets`
-
-remain the authoritative history for receipt-derived Mercadona products, observed prices, purchase dates and ticket metadata.
-
-Do not duplicate this history in Git or in a second private store merely for convenience.
-
-### Current pantry inventory
-
-No authoritative current-inventory dataset is assumed until one is explicitly initialized.
-
-Photos, user statements and future scanner/import flows are observations. They must be converted into structured stock only after the item and quantity/status are reasonably identifiable.
+Do not create a parallel packaged-product catalogue in Health, Git or another private store. Reconcile observations to the existing `producto_id` whenever possible. If reliable nutrition is learned for an existing product, enrich `Productos` instead of creating a second product record.
 
 Unknown quantity is represented as unknown, not zero.
+
+### Health-owned nutrition state
+
+`SEGUNDO CEREBRO - SALUD` remains authoritative for:
+- actual/planned intake;
+- recipes and recipe ingredients;
+- nutrition targets;
+- weekly menu planning;
+- energy balance and health measurements.
+
+Health may reference Pantry `producto_id` values but must not redefine packaged-product identity or physical stock. GESTOR DESPENSA may read `MenuSemanal`, `Recetas` and active nutrition targets to anticipate required ingredients, but it must not change nutrition targets or mark food as consumed.
 
 ## Photo ingestion workflow
 
@@ -104,9 +96,9 @@ Consumes a derived household-supplies state, such as stock alerts, next purchase
 
 The Organizer owns global navigation and presentation. This manager owns pantry-domain semantics.
 
-## Recommended inventory entity
+## Inventory entity
 
-When the private persistence is implemented, each inventory observation should support at least:
+The private persistence is now implemented in `SEGUNDO CEREBRO - DESPENSA / Inventario`. Each inventory observation should support at least:
 
 - `item_id`
 - `display_name`
@@ -143,7 +135,7 @@ A new session taking over this manager should recover state in this order:
 2. Read `docs/HANDOFF.md`.
 3. Read this file.
 4. Read `agents/HEALTH.md` and `agents/FINANCE.md` when coordinating those domains.
-5. Read current private pantry inventory once its authoritative source exists.
+5. Read current `SEGUNDO CEREBRO - DESPENSA` tabs `Productos`, `Inventario` and `ListaCompra`.
 6. Read current `MenuSemanal` when meal planning affects the next purchase.
-7. Read `MercadonaItems` / `MercadonaTickets` for price and purchase history when useful.
+7. Read pantry price/ticket history when useful.
 8. Never reconstruct stock solely from old conversation memory when a newer inventory snapshot exists.

@@ -159,8 +159,17 @@ El endpoint privado `GET /api/gym` combina plan + histórico + series de progres
 
 La nutrición operativa vive en una fuente privada separada `SEGUNDO CEREBRO - SALUD`, no en Git ni en el Sheet financiero.
 
+### Producto canónico y disponibilidad
+
+La identidad de productos envasados no pertenece a Salud. Vive en la fuente privada canónica `SEGUNDO CEREBRO - DESPENSA`:
+- `Productos`: `producto_id`, nombre canónico, marca/comercio/categoría, formato, EAN, URL de producto, nutrición disponible, fuentes/verificación y notas.
+- `Inventario`: `inventario_id`, `producto_id`, nombre, ubicación, cantidad/unidad aproximada, nivel de stock, abierto/caducidad, confianza, origen, última revisión y notas.
+- `ListaCompra`: `producto_id`, nombre, estado/prioridad, cantidad objetivo, motivo y estimaciones de precio/coste.
+
+Los dominios consumidores deben reconciliar por `producto_id` y no crear un catálogo paralelo. La nutrición fiable descubierta para un producto existente enriquece `Productos`.
+
 ### Comidas
-Base reutilizable de alimentos/platos: `id`, `nombre`, `racion`, `unidad`, `kcal_racion`, `proteinas_g`, `carbohidratos_g`, `grasas_g`, `fuente`, `nota`, `updated_at`.
+Base reutilizable de platos/comidas personales y compatibilidad histórica: `id`, `nombre`, `racion`, `unidad`, `kcal_racion`, `proteinas_g`, `carbohidratos_g`, `grasas_g`, `fuente`, `nota`, `updated_at`. No es el maestro de productos envasados.
 
 ### Registro
 Plan diario/semanal y consumo real: `fecha`, `momento`, `item_id`, `item_nombre`, `cantidad`, `unidad`, kcal/macros, `estado` (`planificado` o `consumido`), fuente, nota y timestamp.

@@ -96,11 +96,15 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 
 ### Despensa y suministros
 
-- Nuevo gestor operativo: `GESTOR DESPENSA Y SUMINISTROS`.
+- Gestor operativo: `GESTOR DESPENSA Y SUMINISTROS`.
 - Contrato vigente: `agents/PANTRY.md`.
-- El histórico privado existente de tickets/precios de Mercadona se reutiliza; no se duplica.
-- El inventario actual todavía no tiene una fuente de verdad inicializada: se poblará a partir de observaciones confirmadas (incluidas fotos) y se persistirá solo después de acordar la ubicación privada con ORGANIZADOR / WEB GENERAL.
-- El gestor coordina necesidades de compra con Nutrición y traslada estimaciones/gasto ejecutado a Finanzas sin crear contabilidad paralela.
+- Fuente privada canónica inicializada: `SEGUNDO CEREBRO - DESPENSA`.
+- `Productos` es el catálogo maestro de identidad de producto, formato/EAN/URL y nutrición de producto disponible.
+- `Inventario` es la fuente de disponibilidad física, cantidad aproximada, ubicación y confianza.
+- `ListaCompra` contiene necesidades/candidatos de reposición.
+- Salud no crea una base paralela de productos. `SEGUNDO CEREBRO - SALUD` mantiene ingesta, recetas, objetivos, menú y balance; puede referenciar `producto_id` de Despensa.
+- Las recomendaciones de comida deben cruzar primero objetivo nutricional + inventario. Lo que falte o esté bajo se coordina con Despensa para `ListaCompra`.
+- Nueva nutrición fiable de un producto existente se incorpora a `Productos` conservando el mismo `producto_id` cuando sea posible.
 
 ### Apple Health
 
@@ -141,7 +145,8 @@ Estado:
 - Finanzas: fuente financiera externa; hoja derivada solo transporta estado normalizado.
 - Calendario y citas: iCloud.
 - HabitQuest: Google Sheet original.
-- Plan/base de Salud y Nutrición: Sheet privado de Salud.
+- Ingesta, recetas, objetivos, menú y balance de Salud/Nutrición: Sheet privado de Salud.
+- Identidad de productos, nutrición de producto, inventario y lista de compra: Sheet privado canónico de Despensa.
 - Sesiones de gimnasio: D1.
 - Actividad automática de Apple Health: D1 `health_energy_daily`.
 - Composición corporal automática de Apple Health: D1 `health_body_samples`; baseline/manual en `MedicionesCorporales`.
