@@ -6,7 +6,8 @@ let cache = {
   value: null,
   expiresAt: 0,
   spreadsheetId: null,
-  spreadsheetIdExpiresAt: 0
+  spreadsheetIdExpiresAt: 0,
+  sourceMissingUntil: 0
 };
 
 export function hasObjectsGoogleConfig(env) {
@@ -113,6 +114,7 @@ async function resolveFromPrivateRegistry(env, token) {
 async function resolveSpreadsheetId(env, token) {
   if (env.OBJECTS_SHEET_ID) return String(env.OBJECTS_SHEET_ID).trim();
   if (cache.spreadsheetId && cache.spreadsheetIdExpiresAt > Date.now()) return cache.spreadsheetId;
+  if (cache.sourceMissingUntil > Date.now()) return null;
 
   const registered = await resolveFromPrivateRegistry(env, token);
   if (registered) {
@@ -133,7 +135,10 @@ async function resolveSpreadsheetId(env, token) {
   if (!response.ok) throw new Error("GOOGLE_DRIVE_" + response.status);
   const files = (await response.json())?.files || [];
   const sheet = files.find((item) => item?.name === SHEET_TITLE);
-  if (!sheet?.id) return null;
+  if (!sheet?.id) {
+    cache.sourceMissingUntil = Date.now() + 5 * 60_000;
+    return null;
+  }
 
   cache.spreadsheetId = sheet.id;
   cache.spreadsheetIdExpiresAt = Date.now() + 10 * 60_000;
@@ -369,7 +374,7 @@ function buildPayload(rows) {
   return {
     summary: {
       totalObjects: activeObjects.length,
-      wardrobeCount: apparel.length || wardrobe.length,
+      wardrobeCount: Math.max(apparel.length, wardrobe.length),
       electronicsCount: electronics.length,
       repairCount: repair.length,
       loanedCount: loaned.length,
