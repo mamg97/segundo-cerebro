@@ -61,6 +61,28 @@ function toggleTheme() {
   applyTheme(current === "dark" ? "light" : "dark", true);
 }
 
+let orbMediaQuery = null;
+
+function syncSystemOrbResponsiveSize() {
+  const orb = document.querySelector("#system-orb");
+  if (!orb) return;
+  const mobile = window.matchMedia("(max-width: 760px)").matches;
+  const nextSize = mobile ? "64" : "96";
+  if (orb.getAttribute("size") !== nextSize) orb.setAttribute("size", nextSize);
+}
+
+function initSystemOrbResponsiveSize() {
+  syncSystemOrbResponsiveSize();
+  if (orbMediaQuery) return;
+  orbMediaQuery = window.matchMedia("(max-width: 760px)");
+  const onChange = () => syncSystemOrbResponsiveSize();
+  if (typeof orbMediaQuery.addEventListener === "function") {
+    orbMediaQuery.addEventListener("change", onChange);
+  } else if (typeof orbMediaQuery.addListener === "function") {
+    orbMediaQuery.addListener(onChange);
+  }
+}
+
 
 function ensureDerivedAreas() {
   if (!Array.isArray(state.areas)) state.areas = [];
@@ -150,6 +172,7 @@ function ensureDerivedAreas() {
 
 async function init() {
   initTheme();
+  initSystemOrbResponsiveSize();
   await loadLocalPrivateState();
   await loadRemotePrivateState();
   ensureDerivedAreas();

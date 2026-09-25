@@ -11820,3 +11820,87 @@ html[data-theme="dark"] .progress-ring {
     width: 68px;
   }
 }
+
+
+/* v0.32.0 — restore Thinking Orb on mobile without overlapping quick query */
+@media (max-width: 760px) {
+  .ask-panel {
+    position: relative;
+    display: block;
+    grid-template-columns: none;
+    overflow: hidden;
+    padding: 20px;
+  }
+
+  #system-orb {
+    display: block !important;
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    z-index: 0;
+    width: 64px;
+    height: 64px;
+    flex: none;
+    opacity: .9;
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .ask-form {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ask-copy {
+    min-height: 66px;
+    padding-right: 82px;
+  }
+
+  .ask-row,
+  .ask-suggestions,
+  #query-help {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ask-row {
+    width: 100%;
+  }
+
+  .ask-row input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .ask-panel {
+    padding: 18px;
+  }
+
+  #system-orb {
+    top: 14px;
+    right: 14px;
+    width: 64px;
+    height: 64px;
+  }
+
+  .ask-copy {
+    min-height: 64px;
+    padding-right: 74px;
+  }
+}
+
+@media (max-width: 350px) {
+  #system-orb {
+    top: 13px;
+    right: 12px;
+  }
+
+  .ask-copy {
+    min-height: 64px;
+    padding-right: 70px;
+  }
+}

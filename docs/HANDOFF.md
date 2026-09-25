@@ -345,6 +345,20 @@ Reglas:
 - Modo demo neutraliza también el arco de progreso para que no revele porcentajes aproximados.
 - Assets frontend: `v0.31.0`.
 
+## Orbe móvil seguro v0.32.0
+
+- Se corrige la regresión introducida en v0.28 que ocultaba el Thinking Orb en pantallas móviles con `display: none !important`.
+- El orbe vuelve a mostrarse en móvil:
+  - tamaño interno real de 64 px;
+  - situado en la esquina superior derecha del bloque de consulta rápida;
+  - `pointer-events: none` para no capturar toques;
+  - el bloque de texto reserva espacio específico para que nunca se solape;
+  - input, botón y sugerencias siguen ocupando el ancho completo debajo.
+- Desktop conserva el tamaño de 96 px.
+- El cambio de tamaño se sincroniza con `matchMedia("(max-width: 760px)")`, por lo que también funciona al rotar/cambiar viewport.
+- Light y dark comparten exactamente el mismo layout.
+- Assets frontend: `v0.32.0`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:
