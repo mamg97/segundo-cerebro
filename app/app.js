@@ -509,12 +509,12 @@ async function renderHomeNutritionCard() {
     targetNode.textContent = Number.isFinite(target) ? formatKcal(target) : "Pendiente";
     if (Number.isFinite(target) && target > 0 && Number.isFinite(consumed)) {
       const pct = Math.max(0, Math.min(100, Math.round((consumed / target) * 100)));
+      const remaining = target - consumed;
       updateProgressRing(ring, pct, {
-        tone: "amber",
+        tone: remaining < 0 ? "coral" : "amber",
         label: "kcal",
         ariaLabel: pct + "% del objetivo diario de calorías consumido"
       });
-      const remaining = target - consumed;
       statusNode.textContent = remaining >= 0
         ? formatKcal(remaining) + " restantes del objetivo"
         : formatKcal(Math.abs(remaining)) + " por encima del objetivo";
@@ -1633,7 +1633,7 @@ function renderHabitsPanel(data) {
         </div>
 
         <div class="habit-daily-progress">
-          ${progressRingMarkup(completion, { tone: "violet", size: "lg", label: `${Number(summary.done || 0)}/${Number(summary.total || 0)}`, ariaLabel: `${completion}% de hábitos completados` })}
+          ${progressRingMarkup(Number(summary.total || 0) > 0 ? completion : null, { tone: "violet", size: "lg", label: `${Number(summary.done || 0)}/${Number(summary.total || 0)}`, ariaLabel: Number(summary.total || 0) > 0 ? `${completion}% de hábitos completados` : "Sin hábitos programados" })}
           <div>
             <strong>${completion === 100 && Number(summary.total || 0) > 0 ? "🎉 Misión diaria completada" : `${Math.max(0, Number(summary.total || 0) - Number(summary.done || 0))} por completar`}</strong>
             <p>${completion === 100 && Number(summary.total || 0) > 0 ? "Todo lo programado para este día está hecho." : `Sigue avanzando para mantener tu racha de ${Number(summary.streak || 0)} días.`}</p>
@@ -2337,10 +2337,11 @@ function renderNutritionMacroTargets(consumed, objective) {
         ${rows.map(([label, value, target, suffix, tone, shortLabel]) => {
           const progress = Math.max(0, Math.min(100, Math.round((value / target) * 100)));
           const remaining = Math.max(0, target - value);
+          const ringTone = label === "Calorías" && value > target * 1.05 ? "coral" : tone;
           const format = (n) => Number.isInteger(n) ? n.toLocaleString("es-ES") : n.toFixed(1).replace(".", ",");
           return `
             <article class="nutrition-target-ring-card">
-              ${progressRingMarkup(progress, { tone, size: "md", label: shortLabel, ariaLabel: `${label}: ${progress}% del objetivo` })}
+              ${progressRingMarkup(progress, { tone: ringTone, size: "md", label: shortLabel, ariaLabel: `${label}: ${progress}% del objetivo` })}
               <div>
                 <strong>${escapeHtml(label)}</strong>
                 <small>${format(value)}${suffix} / ${format(target)}${suffix}</small>
