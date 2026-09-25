@@ -1,3 +1,4 @@
+import { progressRingMarkup } from "./progress-ring.js?v=0.31.0";
 let activeMonth = null;
 let currentPayload = null;
 let selectedDate = null;
@@ -77,10 +78,13 @@ function summaryCard(label, value, cls, note) {
 }
 
 function renderSummary(summary) {
-  const adherence = summary.adherencePct == null ? "—" : summary.adherencePct + "%";
+  const adherenceValue = summary.adherencePct == null ? null : Number(summary.adherencePct);
   const coverage = summary.coveragePct == null ? "—" : summary.coveragePct + "% datos";
+  const adherenceCard = '<article class="adherence-summary-card primary ring-card">' +
+    progressRingMarkup(adherenceValue, { tone: "blue", size: "md", label: "mes", ariaLabel: "Adherencia mensual" }) +
+    '<span><span>Adherencia</span><small>' + esc(coverage) + '</small></span></article>';
   return '<div class="adherence-summary-grid">' +
-    summaryCard("Adherencia", adherence, "primary", coverage) +
+    adherenceCard +
     summaryCard("Cumplidos", summary.fulfilled, "fulfilled", "días") +
     summaryCard("Parciales", summary.partial, "partial", "días") +
     summaryCard("No cumplidos", summary.failed, "failed", "días") +

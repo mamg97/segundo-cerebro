@@ -252,3 +252,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Datos insuficientes:** se representan como `SIN_DATOS` y no penalizan el porcentaje.
 - **Gym:** no se considera incumplimiento diario si no existía entrenamiento programado explícitamente.
 - **Motivo:** distinguir falta real de adherencia de falta de registro y evitar una métrica binaria/agresiva.
+
+
+## D-031 — El anillo de progreso es un componente transversal
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-25.
+- **Decisión:** usar un único componente visual de anillo para representar progreso compacto hacia objetivos cuantificables.
+- **Ámbitos iniciales:** Hábitos, Nutrición, resumen de Salud/Actividad/Fuerza y adherencia mensual.
+- **Regla semántica:** el anillo solo se usa cuando existe una relación interpretable `valor actual / objetivo` o un porcentaje de cumplimiento. No se usa para simples cantidades, saldos o métricas donde “más” no significa “mejor”.
+- **Privacidad:** en modo demo el progreso circular se neutraliza además de ocultar las cifras, para no filtrar valores aproximados visualmente.
+- **Paridad:** light/dark y desktop/móvil comparten exactamente el mismo componente.

@@ -326,6 +326,25 @@ Reglas:
 - Light/dark comparten la misma semántica visual.
 - Assets frontend: `v0.30.0`.
 
+## Anillos de progreso compartidos v0.31.0
+
+- Nuevo componente común `app/progress-ring.js`.
+- Home:
+  - Hábitos sustituye la barra horizontal por anillo diario.
+  - Nutrición sustituye la barra horizontal por anillo kcal; si se supera el objetivo de forma real, el anillo cambia a tono de aviso.
+- Hábitos:
+  - la vista diaria reutiliza el mismo anillo común, eliminando una implementación visual aislada.
+- Nutrición:
+  - los objetivos kcal/proteína/hidratos/grasas se muestran como tarjetas compactas con anillos en vez de cuatro barras largas.
+- Salud:
+  - Nutrición, Actividad y Fuerza usan anillos compactos en el resumen.
+  - Recomposición sigue como texto porque no existe un porcentaje único honesto.
+- Adherencia:
+  - el porcentaje mensual usa el mismo componente.
+- No se aplican anillos a Despensa, Objetos, deuda o cifras financieras por el mero hecho de ser números.
+- Modo demo neutraliza también el arco de progreso para que no revele porcentajes aproximados.
+- Assets frontend: `v0.31.0`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:

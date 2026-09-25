@@ -50,6 +50,7 @@ jobs:
           node --check ../app/objects.js
           node --check ../app/projects.js
           node --check ../app/adherence.js
+          node --check ../app/progress-ring.js
           node --check src/index.js
           node --check src/pantry.js
           node --check src/objects.js
