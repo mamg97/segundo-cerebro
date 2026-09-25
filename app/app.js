@@ -4,7 +4,7 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.29.0";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.29.0";
-import { loadHealthAdherence } from "./adherence.js?v=0.30.0";
+import { loadHealthAdherence } from "./adherence.js?v=0.31.0";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.31.0";
 
 let state = mockState;
@@ -1633,7 +1633,7 @@ function renderHabitsPanel(data) {
         </div>
 
         <div class="habit-daily-progress">
-          <div class="habit-progress-ring" style="--habit-progress:${completion}"><span><strong>${completion}%</strong><small>${Number(summary.done || 0)}/${Number(summary.total || 0)}</small></span></div>
+          ${progressRingMarkup(completion, { tone: "violet", size: "lg", label: `${Number(summary.done || 0)}/${Number(summary.total || 0)}`, ariaLabel: `${completion}% de hábitos completados` })}
           <div>
             <strong>${completion === 100 && Number(summary.total || 0) > 0 ? "🎉 Misión diaria completada" : `${Math.max(0, Number(summary.total || 0) - Number(summary.done || 0))} por completar`}</strong>
             <p>${completion === 100 && Number(summary.total || 0) > 0 ? "Todo lo programado para este día está hecho." : `Sigue avanzando para mantener tu racha de ${Number(summary.streak || 0)} días.`}</p>
@@ -2318,10 +2318,10 @@ function renderNutritionPanel(data) {
 function renderNutritionMacroTargets(consumed, objective) {
   if (!objective) return "";
   const rows = [
-    ["Calorías", Number(consumed?.kcal || 0), Number(objective.kcal), " kcal"],
-    ["Proteína", Number(consumed?.protein || 0), Number(objective.protein), " g"],
-    ["Carbohidratos", Number(consumed?.carbs || 0), Number(objective.carbs), " g"],
-    ["Grasas", Number(consumed?.fat || 0), Number(objective.fat), " g"]
+    ["Calorías", Number(consumed?.kcal || 0), Number(objective.kcal), " kcal", "amber", "kcal"],
+    ["Proteína", Number(consumed?.protein || 0), Number(objective.protein), " g", "mint", "prot"],
+    ["Carbohidratos", Number(consumed?.carbs || 0), Number(objective.carbs), " g", "blue", "carb"],
+    ["Grasas", Number(consumed?.fat || 0), Number(objective.fat), " g", "violet", "grasas"]
   ].filter(([, , target]) => Number.isFinite(target) && target > 0);
 
   if (!rows.length) return "";
@@ -2333,19 +2333,20 @@ function renderNutritionMacroTargets(consumed, objective) {
           <p>Calorías como techo diario y proteína como prioridad; hidratos y grasas orientan el reparto.</p>
         </div>
       </div>
-      <div class="nutrition-target-list">
-        ${rows.map(([label, value, target, suffix]) => {
+      <div class="nutrition-target-ring-grid">
+        ${rows.map(([label, value, target, suffix, tone, shortLabel]) => {
           const progress = Math.max(0, Math.min(100, Math.round((value / target) * 100)));
           const remaining = Math.max(0, target - value);
           const format = (n) => Number.isInteger(n) ? n.toLocaleString("es-ES") : n.toFixed(1).replace(".", ",");
           return `
-            <div class="nutrition-target-row">
+            <article class="nutrition-target-ring-card">
+              ${progressRingMarkup(progress, { tone, size: "md", label: shortLabel, ariaLabel: `${label}: ${progress}% del objetivo` })}
               <div>
                 <strong>${escapeHtml(label)}</strong>
-                <small>${format(value)}${suffix} / ${format(target)}${suffix} · faltan ${format(remaining)}${suffix}</small>
+                <small>${format(value)}${suffix} / ${format(target)}${suffix}</small>
+                <span>${remaining > 0 ? `Faltan ${format(remaining)}${suffix}` : "Objetivo cubierto"}</span>
               </div>
-              <progress max="100" value="${progress}"></progress>
-            </div>`;
+            </article>`;
         }).join("")}
       </div>
     </section>`;
