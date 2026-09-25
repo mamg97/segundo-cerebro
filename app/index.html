@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.30.0">
-    <script type="module" src="./app.js?v=0.30.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.31.0">
+    <script type="module" src="./app.js?v=0.31.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -92,11 +92,15 @@
               <span><small>Hábitos</small><strong>Hoy</strong></span>
               <span class="daily-card-arrow" aria-hidden="true">→</span>
             </div>
-            <div class="daily-card-main">
-              <strong id="home-habits-value">—</strong>
-              <span id="home-habits-label">Cargando hábitos…</span>
+            <div class="daily-progress-summary">
+              <div class="daily-card-main">
+                <strong id="home-habits-value">—</strong>
+                <span id="home-habits-label">Cargando hábitos…</span>
+              </div>
+              <span id="home-habits-ring" class="progress-ring tone-violet size-lg is-empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de hábitos de hoy" style="--ring-progress:0">
+                <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>hoy</small></span>
+              </span>
             </div>
-            <progress id="home-habits-progress" max="100" value="0" aria-label="Progreso de hábitos de hoy"></progress>
           </button>
 
           <button id="home-nutrition-card" class="daily-overview-card" type="button">
@@ -110,8 +114,12 @@
               <span><small>Gasto total</small><strong id="home-kcal-burned">—</strong></span>
               <span><small>Objetivo</small><strong id="home-kcal-target">—</strong></span>
             </div>
-            <progress id="home-kcal-progress" max="100" value="0" aria-label="Calorías consumidas frente al objetivo diario"></progress>
-            <span id="home-kcal-status" class="daily-card-status">Cargando nutrición…</span>
+            <div class="daily-progress-footer">
+              <span id="home-kcal-status" class="daily-card-status">Cargando nutrición…</span>
+              <span id="home-kcal-ring" class="progress-ring tone-amber size-lg is-empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Calorías consumidas frente al objetivo diario" style="--ring-progress:0">
+                <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>kcal</small></span>
+              </span>
+            </div>
           </button>
 
           <button id="home-pantry-card" class="daily-overview-card pantry-home-card" type="button" hidden>
