@@ -274,3 +274,15 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Próximos movimientos:** una decisión solo se eleva allí cuando tiene `nextAction` o una fecha de vencimiento.
 - **No duplicación:** una decisión sin acción concreta no se convierte artificialmente en tarea.
 - **Motivo:** el antiguo bloque mezclaba cuestiones técnicas, profesionales y de proyectos sin contexto ni capacidad operativa, ocupando espacio de Home sin aportar una acción clara.
+
+
+## D-032 — Las decisiones se muestran en su contexto, no como bloque de Home
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-25.
+- **Decisión:** retirar el panel independiente `Decisiones abiertas` situado bajo Agenda.
+- **Modelo:** `DECISION` permanece en el estado global y conserva `areaId`.
+- **Presentación:** cada decisión abierta se integra en su área propietaria.
+- **Proyectos:** las decisiones de `area-projects` se entregan al módulo Proyectos y se muestran allí.
+- **Próximos movimientos:** solo incluye decisiones que tengan siguiente acción o fecha/vencimiento explícito.
+- **Motivo:** evitar un cajón transversal ambiguo y mantener Home centrada en información operativa.
