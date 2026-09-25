@@ -186,7 +186,6 @@ async function init() {
   renderBudgetOverview();
   renderDebtOverview();
   renderWealthOverview();
-  renderDecisionsInline();
   bindInteractions();
   initDemoMode();
 }
@@ -239,7 +238,7 @@ async function loadRemotePrivateState() {
 
 function renderMode() {
   const generalHealth = state.areas.find((area) => area.id === "area-general")?.health ?? 0;
-  const openDecisions = state.decisions.filter((decision) => decision.status === "open").length;
+  const openDecisions = (Array.isArray(state.decisions) ? state.decisions : []).filter((decision) => decision.status === "open").length;
   const local = privateModeKind === "local";
   const remote = privateModeKind === "remote";
 
@@ -258,7 +257,6 @@ function renderMode() {
     : local
       ? "Sin APIs · Estado local no publicado"
       : "Sin conexiones externas · Datos ficticios";
-  document.querySelector("#decision-count").textContent = `${openDecisions} decisiones abiertas`;
 
   const orb = document.querySelector("#system-orb");
   if (orb) {
@@ -310,10 +308,31 @@ function renderFocus() {
     dueDate: familyDue
   }] : [];
 
-  const sorted = [...state.openLoops, ...familyAttention]
+  const actionableDecisions = (Array.isArray(state.decisions) ? state.decisions : [])
+    .filter((item) => item.status === "open" && (item.nextAction || item.dueDate || item.dueAt))
+    .map((item) => {
+      const dueDate = item.dueDate || item.dueAt || null;
+      let priority = item.priority || "medium";
+      if (!item.priority && dueDate) {
+        const dueTime = new Date(String(dueDate).slice(0, 10) + "T12:00:00").getTime();
+        const days = Number.isFinite(dueTime) ? Math.ceil((dueTime - Date.now()) / 86400000) : null;
+        if (days !== null && days <= 7) priority = "high";
+      }
+      return {
+        id: "decision-focus-" + item.id,
+        areaId: item.areaId || "area-general",
+        title: "Decisión · " + item.title,
+        nextAction: item.nextAction || (item.question ? "Resolver: " + item.question : "Tomar una decisión"),
+        priority,
+        dueDate: dueDate ? String(dueDate).slice(0, 10) : null
+      };
+    });
+
+  const openLoops = Array.isArray(state.openLoops) ? state.openLoops : [];
+  const sorted = [...openLoops, ...familyAttention, ...actionableDecisions]
     .sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
 
-  document.querySelector("#loop-count").textContent = `${state.openLoops.length + familyOpenCount} abiertos`;
+  document.querySelector("#loop-count").textContent = `${openLoops.length + familyOpenCount + actionableDecisions.length} accionables`;
   document.querySelector("#focus-list").innerHTML = sorted.slice(0, 4).map((item) => {
     const area = areaById.get(item.areaId);
     const due = item.dueDate ? shortDateFormatter.format(new Date(`${item.dueDate}T12:00:00`)) : "Sin fecha";
@@ -3795,27 +3814,6 @@ function formatElectricityMonth(value) {
   return new Intl.DateTimeFormat("es-ES", { month: "short", year: "2-digit" }).format(date).replace(".", "");
 }
 
-function renderDecisionsInline() {
-  const container = document.querySelector("#decision-list");
-  const open = state.decisions.filter((item) => item.status === "open");
-
-  if (!open.length) {
-    container.innerHTML = '<p class="decision-inline-empty">No hay decisiones abiertas.</p>';
-    return;
-  }
-
-  container.innerHTML = open.map((item) => `
-    <article class="decision-inline-item">
-      <div>
-        <strong>${escapeHtml(item.title)}</strong>
-        <p>${escapeHtml(item.question)}</p>
-      </div>
-      ${Array.isArray(item.options) && item.options.length
-        ? `<div class="decision-options">${item.options.map((option) => `<span>${escapeHtml(option)}</span>`).join("")}</div>`
-        : ""}
-    </article>`).join("");
-}
-
 function formatMoney(value, currency = "EUR") {
   return new Intl.NumberFormat("es-ES", {
     style: "currency",
@@ -3930,6 +3928,8 @@ function openArea(areaId) {
   const relatedLoops = (Array.isArray(state.openLoops) ? state.openLoops : []).filter((item) => item.areaId === areaId);
   const relatedProjects = (Array.isArray(state.projects) ? state.projects : []).filter((item) => item.areaId === areaId);
   const relatedGoals = (Array.isArray(state.goals) ? state.goals : []).filter((item) => item.areaId === areaId && item.status !== "archived");
+  const relatedDecisions = (Array.isArray(state.decisions) ? state.decisions : [])
+    .filter((item) => item.areaId === areaId && item.status === "open");
   const dialog = document.querySelector("#detail-dialog");
   dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog");
   document.querySelector("#dialog-context").textContent = `${area.module} · ${sensitivityLabel(area.sensitivity)}`;
@@ -3943,6 +3943,15 @@ function openArea(areaId) {
       title: item.title,
       detail: [item.summary, Number.isFinite(item.progress) && `${item.progress}%`, item.nextAction && `Siguiente: ${item.nextAction}`].filter(Boolean).join(" · "),
     })),
+    ...relatedDecisions.map((item) => ({
+      title: `Decisión · ${item.title}`,
+      detail: [
+        item.question,
+        Array.isArray(item.options) && item.options.length ? `Opciones: ${item.options.join(" / ")}` : null,
+        item.nextAction && `Siguiente: ${item.nextAction}`,
+        (item.dueDate || item.dueAt) && `Fecha: ${String(item.dueDate || item.dueAt).slice(0, 10)}`
+      ].filter(Boolean).join(" · "),
+    })),
     ...relatedGoals.map((item) => ({
       title: `Objetivo · ${item.title}`,
       detail: [item.horizon, item.metric && item.target && `${item.metric}: ${item.target}`].filter(Boolean).join(" · "),
@@ -3951,16 +3960,6 @@ function openArea(areaId) {
   document.querySelector("#dialog-body").innerHTML = entries.length
     ? `<ul class="dialog-list">${entries.map((item) => `<li><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></li>`).join("")}</ul>`
     : `<p>No hay asuntos asociados a esta área.</p>`;
-  dialog.showModal();
-}
-
-function openDecisions() {
-  const dialog = document.querySelector("#detail-dialog");
-  document.querySelector("#dialog-context").textContent = privateModeKind === "remote" ? "Coordinador · Estado privado remoto" : privateMode ? "Coordinador · Estado local privado" : "Coordinador · Datos ficticios";
-  document.querySelector("#dialog-title").textContent = "Decisiones abiertas";
-  document.querySelector("#dialog-body").innerHTML = `<ul class="dialog-list">${state.decisions.map((item) => `
-    <li><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.question)} · ${item.options.map(escapeHtml).join(" / ")}</p></li>
-  `).join("")}</ul>`;
   dialog.showModal();
 }
 
