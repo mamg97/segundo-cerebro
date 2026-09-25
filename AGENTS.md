@@ -25,7 +25,7 @@ Construir un segundo cerebro personal y privado: un sistema operativo de vida co
 
 ## Arquitectura vigente
 
-- Flujo conceptual: Usuario → Coordinador → estado global común → módulos → fuentes externas / D1.
+- Flujo conceptual objetivo: Usuario → CEREBRO GLOBAL / Coordinador → enrutamiento por intención → módulos especializados → fuentes canónicas / D1 → respuesta unificada.
 - Los módulos no crean memorias aisladas ni estados paralelos.
 - GitHub Pages sigue siendo exclusivamente la demo pública mock.
 - La aplicación privada usa Cloudflare Worker + Access + D1.
@@ -38,6 +38,8 @@ Construir un segundo cerebro personal y privado: un sistema operativo de vida co
 
 ## Enrutamiento de dominios
 
+El punto de entrada principal es `agents/COORDINATOR.md`. El Coordinador decide qué contratos de dominio debe leer y combinar.
+
 Antes de trabajar con datos de un dominio, leer su contrato específico en `agents/`.
 
 - Finanzas → `agents/FINANCE.md`
@@ -47,6 +49,7 @@ Antes de trabajar con datos de un dominio, leer su contrato específico en `agen
 - Despensa → `agents/PANTRY.md`
 - Objetos / armario / looks / kits / equipaje → `agents/OBJECTS.md`
 - Proyectos / repositorios / documentación / relaciones entre proyectos → `agents/PROJECTS.md`
+- Coordinación global / routing / composición multi-dominio → `agents/COORDINATOR.md`
 
 Si un gestor necesita objetos, ropa, equipaje, kits o listas contextuales, debe usar el contrato de OBJETOS y la fuente canónica `SEGUNDO CEREBRO - OBJETOS`; no crear tablas propias ni copiar inventario.
 

@@ -274,3 +274,15 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Próximos movimientos:** una decisión solo se eleva allí cuando tiene `nextAction` o una fecha de vencimiento.
 - **No duplicación:** una decisión sin acción concreta no se convierte artificialmente en tarea.
 - **Motivo:** el antiguo bloque mezclaba cuestiones técnicas, profesionales y de proyectos sin contexto ni capacidad operativa, ocupando espacio de Home sin aportar una acción clara.
+
+
+## D-032 — CEREBRO GLOBAL será la interfaz principal
+
+- **Estado:** aceptada como arquitectura objetivo.
+- **Fecha:** 2026-09-25.
+- **Decisión:** el usuario debe poder interactuar con un único Cerebro Global sin tener que elegir manualmente entre conversaciones especializadas.
+- **Gestores:** Finanzas, Eventos, Salud, Hábitos, Despensa, Objetos, Padres, Proyectos y futuros módulos pasan a considerarse especialistas internos coordinados.
+- **Propiedad:** cada gestor conserva su fuente canónica y reglas de escritura.
+- **Continuidad:** una conversación nueva debe reconstruir contexto desde Git + fuentes privadas, no desde un transcript histórico largo.
+- **Transición:** las conversaciones especializadas se mantienen temporalmente como consolas de mantenimiento y fallback hasta que el Coordinador cubra sus operaciones principales.
+- **Roadmap:** `docs/EVOLUTION_GLOBAL_BRAIN.md`.

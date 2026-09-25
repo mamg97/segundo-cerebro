@@ -270,3 +270,37 @@ Salud → Adherencia
 No se persiste un segundo histórico calculado. El estado mensual se recalcula desde las fuentes canónicas y se cachea brevemente.
 
 La clasificación manual en `AdherenciaManual` solo representa una decisión explícita sobre el estado del día; no duplica comidas, actividad, gym ni hábitos.
+
+
+## Evolución a Cerebro Global
+
+La arquitectura objetivo elimina la necesidad de que el usuario seleccione manualmente una conversación especializada.
+
+```text
+Usuario
+  ↓
+CEREBRO GLOBAL
+  ↓
+Intent Router
+  ↓
+Context Planner
+  ↓
+Gestores especializados
+  ↓
+Fuentes canónicas / D1 / conectores
+  ↓
+Result Composer
+  ↓
+Respuesta única
+```
+
+Los gestores no desaparecen: cambian de papel.
+
+- siguen siendo propietarios semánticos de su dominio;
+- conservan contratos, fuentes y permisos;
+- pueden seguir existiendo como consolas de mantenimiento;
+- dejan de ser la interfaz diaria obligatoria.
+
+El Coordinador no persiste una copia global de todos los datos. Planifica lecturas y escrituras contra las fuentes propietarias.
+
+La hoja de ruta completa está en `docs/EVOLUTION_GLOBAL_BRAIN.md`.
