@@ -379,6 +379,21 @@ Reglas:
 - Se elimina CSS y código muerto del antiguo bloque standalone.
 - Assets frontend: `v0.33.0`.
 
+## Evolución a Cerebro Global
+
+- Se formaliza `CEREBRO GLOBAL` como interfaz principal futura.
+- Nuevo contrato: `agents/COORDINATOR.md`.
+- Nueva hoja de ruta: `docs/EVOLUTION_GLOBAL_BRAIN.md`.
+- Objetivo: el usuario habla con un único coordinador; este enruta a Finanzas, Eventos, Salud, Hábitos, Despensa, Objetos, Padres, Proyectos y futuros módulos.
+- Los gestores especializados conservan propiedad semántica y fuentes de verdad, pero dejan de requerir una conversación elegida manualmente.
+- La transición no borra los chats actuales: quedan como mantenimiento/fallback hasta cubrir lectura, mutaciones y recuperación de errores.
+- Prioridad siguiente:
+  1. registro estructurado de capacidades de gestores;
+  2. Context Planner;
+  3. composición multi-dominio de solo lectura;
+  4. después mutaciones coordinadas con confirmación.
+- Motivación adicional: evitar conversaciones monolíticas muy largas y lentas; la continuidad debe depender del sistema/documentación, no del historial completo del chat.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:
