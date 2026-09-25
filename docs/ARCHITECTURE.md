@@ -270,3 +270,17 @@ Salud → Adherencia
 No se persiste un segundo histórico calculado. El estado mensual se recalcula desde las fuentes canónicas y se cachea brevemente.
 
 La clasificación manual en `AdherenciaManual` solo representa una decisión explícita sobre el estado del día; no duplica comidas, actividad, gym ni hábitos.
+
+
+## Decisiones en contexto
+
+`DECISION` sigue siendo una entidad transversal del estado común, pero no tiene un panel independiente en Home.
+
+Reglas de presentación:
+- una decisión abierta se muestra dentro de su área propietaria mediante `areaId`;
+- Proyectos recibe las decisiones de `area-projects` y las presenta junto al registro canónico;
+- una decisión solo sube a `Próximos movimientos` cuando tiene `nextAction`, `dueDate` o `dueAt`;
+- una decisión sin siguiente acción ni fecha no se convierte artificialmente en tarea;
+- la consulta rápida puede encontrar decisiones porque siguen formando parte del estado común.
+
+Esto evita duplicar el mismo asunto en Home, Proyectos/Carrera y pendientes a la vez.
