@@ -4,8 +4,8 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.29.0";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.29.0";
-import { loadHealthAdherence } from "./adherence.js?v=0.31.0";
-import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.31.0";
+import { loadHealthAdherence } from "./adherence.js?v=0.32.1";
+import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.32.1";
 
 let state = mockState;
 let areaById = new Map();

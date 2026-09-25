@@ -18,7 +18,7 @@ export function progressRingMarkup(value, options) {
   const label = options.label ? '<small>' + escapeHtml(options.label) + '</small>' : "";
   const aria = escapeHtml(options.ariaLabel || (pct === null ? "Progreso sin datos" : pct + "% de progreso"));
   return '<span' + id + ' class="progress-ring tone-' + tone + ' size-' + size + (pct === null ? ' is-empty' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100"' +
-    (pct === null ? '' : ' aria-valuenow="' + pct + '"') + ' aria-label="' + aria + '" style="--ring-progress:' + (pct === null ? 0 : pct) + '">' +
+    (pct === null ? '' : ' aria-valuenow="' + pct + '"') + ' aria-label="' + aria + '" style="--ring-progress:' + (pct === null ? 0 : pct) + ';--ring-fill:' + (pct === null ? 0 : pct) + '%">' +
     '<span class="progress-ring-center"><strong class="progress-ring-value">' + (pct === null ? "—" : pct + "%") + '</strong>' + label + '</span></span>';
 }
 
@@ -27,6 +27,7 @@ export function updateProgressRing(node, value, options) {
   options = options || {};
   const pct = clampPercent(value);
   node.style.setProperty("--ring-progress", pct === null ? "0" : String(pct));
+  node.style.setProperty("--ring-fill", (pct === null ? 0 : pct) + "%");
   node.classList.toggle("is-empty", pct === null);
   ["blue","mint","amber","coral","violet"].forEach(function (tone) {
     node.classList.toggle("tone-" + tone, (options.tone || "blue") === tone);
