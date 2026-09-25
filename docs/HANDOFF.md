@@ -379,6 +379,19 @@ Reglas:
 - Se elimina CSS y código muerto del antiguo bloque standalone.
 - Assets frontend: `v0.33.0`.
 
+## Decisiones contextualizadas v0.33.0
+
+- Eliminado de Home el bloque independiente `Decisiones abiertas` situado debajo de Agenda.
+- `DECISION` no desaparece del modelo:
+  - sigue siendo consultable por la búsqueda rápida;
+  - las decisiones abiertas se muestran dentro de su `areaId`;
+  - Carrera/Pareja/Familia y otras áreas genéricas las incluyen en su detalle;
+  - Proyectos recibe las decisiones de `area-projects` y las integra en su workspace.
+- `Próximos movimientos` solo incorpora una decisión si tiene `nextAction`, `dueDate` o `dueAt`.
+- Una decisión puramente conceptual no se convierte en una tarea falsa.
+- El contador independiente de decisiones desaparece de Home.
+- Assets frontend: `v0.33.0`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:
