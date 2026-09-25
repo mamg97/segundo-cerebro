@@ -11897,12 +11897,10 @@ html[data-theme="dark"] .progress-ring {
   #system-orb {
     top: 13px;
     right: 12px;
-    width: 58px;
-    height: 58px;
   }
 
   .ask-copy {
-    min-height: 60px;
-    padding-right: 66px;
+    min-height: 64px;
+    padding-right: 70px;
   }
 }
