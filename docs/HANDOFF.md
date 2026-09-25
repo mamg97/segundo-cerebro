@@ -44,7 +44,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Modo claro/oscuro.
 - Logo cerebral común en navegación y favicon.
 - Thinking Orb vendorizado con estados de actividad.
-- Vista semanal de agenda, eventos importantes, decisiones y módulos.
+- Vista semanal de agenda y eventos importantes; las decisiones se presentan dentro de su área propietaria, no como bloque independiente.
 - Diseño móvil corregido para evitar overflow y apariencia de escritorio comprimido.
 
 ### Finanzas
@@ -367,6 +367,17 @@ Reglas:
 - Se sube ligeramente el contraste del track.
 - Se fuerzan nuevos asset versions para evitar que Safari reutilice JS/CSS previos.
 - Assets frontend: `v0.32.1`.
+
+## Decisiones contextuales v0.33.0
+
+- Eliminado de Home el bloque independiente `3 decisiones abiertas` que aparecía debajo de la agenda.
+- `DECISION` se conserva en el estado global y en la búsqueda rápida.
+- Carrera, Pareja/Familia y otras áreas genéricas muestran sus decisiones abiertas junto a pendientes, proyectos y objetivos.
+- Proyectos recibe las decisiones abiertas de `area-projects` y las muestra en su workspace; cuando el nombre/alias del proyecto coincide de forma inequívoca, también aparecen en el detalle del proyecto.
+- Una decisión solo se eleva a `Próximos movimientos` cuando tiene `nextAction`, `dueDate` o `dueAt`.
+- El contador de `Próximos movimientos` pasa a reflejar elementos accionables, no todas las decisiones existentes.
+- Se elimina CSS y código muerto del antiguo bloque standalone.
+- Assets frontend: `v0.33.0`.
 
 ## Próxima acción exacta
 

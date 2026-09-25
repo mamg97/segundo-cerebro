@@ -263,3 +263,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Regla semántica:** el anillo solo se usa cuando existe una relación interpretable `valor actual / objetivo` o un porcentaje de cumplimiento. No se usa para simples cantidades, saldos o métricas donde “más” no significa “mejor”.
 - **Privacidad:** en modo demo el progreso circular se neutraliza además de ocultar las cifras, para no filtrar valores aproximados visualmente.
 - **Paridad:** light/dark y desktop/móvil comparten exactamente el mismo componente.
+
+
+## D-032 — Las decisiones no tienen bloque independiente en Home
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-25.
+- **Decisión:** `DECISION` sigue siendo una entidad transversal, pero no dispone de un bloque aislado bajo el calendario.
+- **Presentación:** cada decisión abierta se muestra dentro de su área propietaria; Proyectos puede recibir las decisiones de su área en su workspace privado.
+- **Próximos movimientos:** una decisión solo se eleva allí cuando tiene `nextAction` o una fecha de vencimiento.
+- **No duplicación:** una decisión sin acción concreta no se convierte artificialmente en tarea.
+- **Motivo:** el antiguo bloque mezclaba cuestiones técnicas, profesionales y de proyectos sin contexto ni capacidad operativa, ocupando espacio de Home sin aportar una acción clara.

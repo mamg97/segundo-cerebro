@@ -1,5 +1,6 @@
 let currentPayload = null;
 let currentTab = "summary";
+let currentDecisions = [];
 
 function esc(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;" }[c]));
@@ -14,6 +15,21 @@ function extLink(text, url, primary = false) {
   const u = safeUrl(url);
   return u ? '<a class="project-link'+(primary?' primary':'')+'" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(text)+' ↗</a>' : "";
 }
+function normalizeText(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
+}
+
+function projectDecisions(project) {
+  const names = [project && project.name, project && project.alias]
+    .map(normalizeText)
+    .filter(function (value) { return value.length >= 4; });
+  return currentDecisions.filter(function (decision) {
+    if (decision.projectId && decision.projectId === project.id) return true;
+    const title = normalizeText(decision.title);
+    return names.some(function (name) { return title.includes(name); });
+  });
+}
+
 function empty(title, detail) {
   return '<div class="projects-empty"><strong>'+esc(title)+'</strong>'+(detail?'<p>'+esc(detail)+'</p>':'')+'</div>';
 }
@@ -42,7 +58,13 @@ function renderSummary(payload) {
     '<article><span>Revisar</span><strong>'+attention.length+'</strong><small>pausados, pendientes o doc parcial</small></article>'+
     '</div>'+
     '<section class="projects-section"><div class="projects-heading"><div><small>Mapa</small><strong>Proyectos principales</strong></div><button type="button" data-project-tab="all">Ver todos</button></div>'+
-    '<div class="projects-featured-grid">'+(top.length?top.map((p)=>projectCard(p,payload,true)).join(""):empty("No hay proyectos principales",""))+'</div></section>';
+    '<div class="projects-featured-grid">'+(top.length?top.map((p)=>projectCard(p,payload,true)).join(""):empty("No hay proyectos principales",""))+'</div></section>'+
+    (currentDecisions.length
+      ? '<section class="projects-section project-area-decisions"><div class="projects-heading"><div><small>Criterio pendiente</small><strong>Decisiones de Proyectos</strong></div></div><div class="project-relations">'+
+        currentDecisions.map(function (decision) {
+          return '<article><span class="relation-type">Decisión</span><div><strong>'+esc(decision.title)+'</strong></div><p>'+esc(decision.question||decision.nextAction||"Pendiente de resolver")+'</p></article>';
+        }).join("")+'</div></section>'
+      : '');
 }
 function renderAll(payload) {
   const projects = payload.projects || [];
@@ -83,6 +105,7 @@ function renderDetail(project, payload) {
   const relations = (payload.relations||[]).filter((r)=>r.sourceProjectId===project.id || r.target===project.id);
   const children = (payload.projects||[]).filter((x)=>x.parentId===project.id);
   const parent = (payload.projects||[]).find((x)=>x.id===project.parentId);
+  const decisions = projectDecisions(project);
   body.innerHTML = '<button class="projects-back" type="button" data-projects-back>← Volver a Proyectos</button>'+
     '<section class="project-detail">'+
     '<header class="project-detail-head"><div><span class="project-area">'+esc(project.area||"Proyecto")+'</span><h3>'+esc(project.name)+'</h3>'+(project.alias?'<p>'+esc(project.alias)+'</p>':'')+'</div>'+
@@ -106,6 +129,7 @@ function renderDetail(project, payload) {
     '<section class="project-next-action"><small>Siguiente acción</small><strong>'+esc(project.nextAction||"Sin siguiente acción definida")+'</strong></section>'+
     ((doc.keyDocs||[]).length?'<section class="project-keydocs"><small>Documentos clave</small><div>'+doc.keyDocs.map((x)=>'<span>'+esc(x)+'</span>').join("")+'</div></section>':'')+
     (children.length?'<section class="project-children-detail"><small>Subproyectos</small><div>'+children.map((x)=>'<button type="button" data-project-id="'+esc(x.id)+'">'+esc(x.name)+' <span>'+esc(words(x.status))+'</span></button>').join("")+'</div></section>':'')+
+    (decisions.length?'<section class="project-relations-detail"><small>Decisiones abiertas</small>'+decisions.map((decision)=>'<p><strong>'+esc(decision.title)+'</strong> · '+esc(decision.question||decision.nextAction||"Pendiente de resolver")+'</p>').join("")+'</section>':'')+
     (relations.length?'<section class="project-relations-detail"><small>Relaciones</small>'+relations.map((r)=>'<p><strong>'+esc(words(r.type))+'</strong> · '+esc(r.description||r.target)+'</p>').join("")+'</section>':'')+
     '</section>';
   body.querySelector("[data-projects-back]")?.addEventListener("click",()=>renderWorkspace(payload));
@@ -128,7 +152,8 @@ function bindWorkspace(payload) {
   };
   ["#projects-search","#projects-status","#projects-area"].forEach((sel)=>{body.querySelector(sel)?.addEventListener("input",apply);body.querySelector(sel)?.addEventListener("change",apply);});
 }
-export async function openProjectsDetail() {
+export async function openProjectsDetail(decisions) {
+  currentDecisions = (Array.isArray(decisions) ? decisions : []).filter(function (item) { return item && item.status === "open" && item.areaId === "area-projects"; });
   const dialog = document.querySelector("#detail-dialog");
   if(!dialog) return;
   dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog","budget-dialog","parents-dialog","electricity-dialog","pantry-dialog","objects-dialog");
