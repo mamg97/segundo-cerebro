@@ -359,6 +359,15 @@ Reglas:
 - Light y dark comparten exactamente el mismo layout.
 - Assets frontend: `v0.32.0`.
 
+## Compatibilidad iOS de anillos v0.32.1
+
+- Los anillos estaban implementados y presentes en `main`, pero el arco dependía de `calc(var(--ring-progress) * 3.6deg)` dentro de `conic-gradient`.
+- Se sustituye por `--ring-fill: NN%`, compatible de forma más robusta con Safari/iOS.
+- Se mantiene `--ring-progress` por compatibilidad interna, pero el render visual usa porcentaje directo.
+- Se sube ligeramente el contraste del track.
+- Se fuerzan nuevos asset versions para evitar que Safari reutilice JS/CSS previos.
+- Assets frontend: `v0.32.1`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:
