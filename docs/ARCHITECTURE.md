@@ -197,9 +197,9 @@ La barra lateral es la navegación canónica de dominios. La portada no replica 
 - `Finanzas` abre el presupuesto mensual conectado.
 - `Agenda` lleva a la semana real de calendario.
 - `Patrimonio`, `Salud`, `Hábitos`, `Despensa`, `Objetos` y `Padres` abren sus vistas especializadas.
-- Carrera, Pareja/Familia y Proyectos usan un detalle genérico que reúne sus proyectos, pendientes y objetivos asociados.
+- Carrera y Pareja/Familia usan un detalle contextual que reúne proyectos, pendientes, objetivos y decisiones abiertas de su propio ámbito. Proyectos usa su workspace privado y puede mostrar las decisiones abiertas del área.
 
-`OPEN_LOOP` y `GOAL` son capas transversales, no dominios. Los pendientes viven en `Próximos movimientos`; los objetivos se integran en su área y los objetivos del Coordinador pueden mostrarse de forma compacta junto a los pendientes.
+`OPEN_LOOP`, `GOAL` y `DECISION` son capas transversales, no dominios. Los pendientes viven en `Próximos movimientos`; los objetivos y decisiones se integran en su área propietaria. Una decisión solo entra también en `Próximos movimientos` cuando tiene una siguiente acción o un vencimiento explícito.
 
 La antigua parrilla `Áreas de tu vida` y la vista técnica `Sistema` se retiraron de Home. La arquitectura técnica se documenta en `docs/`, evitando duplicar información técnica potencialmente obsoleta en la interfaz operativa.
 
@@ -217,7 +217,7 @@ Puede:
 
 No ejecuta todavía razonamiento multiagente ni modificaciones complejas de fuentes. Para planificación, decisiones o escritura en dominios se usan los gestores especializados.
 
-En móvil, el `thinking-orb` se oculta: es decorativo y nunca debe competir con el input o el CTA.
+En móvil, el `thinking-orb` permanece visible en un espacio reservado de la tarjeta, con tamaño reducido y `pointer-events: none`, de modo que nunca se solapa ni bloquea el input o el CTA.
 
 
 ## Registro privado de proyectos
