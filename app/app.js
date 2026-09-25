@@ -5,6 +5,7 @@ import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./p
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.29.0";
 import { loadHealthAdherence } from "./adherence.js?v=0.30.0";
+import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.31.0";
 
 let state = mockState;
 let areaById = new Map();
@@ -463,18 +464,19 @@ function renderHomeHabitsCard() {
   const summary = state.habitsSummary?.summary || {};
   const total = Math.max(0, Number(summary.total || 0));
   const done = Math.max(0, Number(summary.done || 0));
-  const percentage = total > 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : 0;
+  const percentage = total > 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : null;
   const value = document.querySelector("#home-habits-value");
   const label = document.querySelector("#home-habits-label");
-  const progress = document.querySelector("#home-habits-progress");
+  const ring = document.querySelector("#home-habits-ring");
   if (value) value.textContent = total > 0 ? done + " / " + total : "—";
   if (label) label.textContent = total > 0
     ? percentage + "% completado · racha " + Number(summary.streak || 0) + " días"
     : "Sin hábitos programados";
-  if (progress) {
-    progress.value = percentage;
-    progress.setAttribute("aria-label", total > 0 ? done + " de " + total + " hábitos completados hoy" : "Sin hábitos programados");
-  }
+  updateProgressRing(ring, percentage, {
+    tone: "violet",
+    label: "hoy",
+    ariaLabel: total > 0 ? done + " de " + total + " hábitos completados hoy" : "Sin hábitos programados"
+  });
 }
 
 async function renderHomeNutritionCard() {
@@ -482,14 +484,14 @@ async function renderHomeNutritionCard() {
   const burnedNode = document.querySelector("#home-kcal-burned");
   const targetNode = document.querySelector("#home-kcal-target");
   const statusNode = document.querySelector("#home-kcal-status");
-  const progress = document.querySelector("#home-kcal-progress");
-  if (!consumedNode || !burnedNode || !targetNode || !statusNode || !progress) return;
+  const ring = document.querySelector("#home-kcal-ring");
+  if (!consumedNode || !burnedNode || !targetNode || !statusNode || !ring) return;
   if (privateModeKind !== "remote") {
     consumedNode.textContent = "—";
     burnedNode.textContent = "—";
     targetNode.textContent = "—";
     statusNode.textContent = "Disponible en la aplicación privada";
-    progress.value = 0;
+    updateProgressRing(ring, null, { tone: "amber", label: "kcal", ariaLabel: "Nutrición disponible en la aplicación privada" });
     return;
   }
   try {
@@ -507,15 +509,21 @@ async function renderHomeNutritionCard() {
     targetNode.textContent = Number.isFinite(target) ? formatKcal(target) : "Pendiente";
     if (Number.isFinite(target) && target > 0 && Number.isFinite(consumed)) {
       const pct = Math.max(0, Math.min(100, Math.round((consumed / target) * 100)));
-      progress.value = pct;
-      progress.setAttribute("aria-label", pct + "% del objetivo diario de calorías consumido");
+      updateProgressRing(ring, pct, {
+        tone: "amber",
+        label: "kcal",
+        ariaLabel: pct + "% del objetivo diario de calorías consumido"
+      });
       const remaining = target - consumed;
       statusNode.textContent = remaining >= 0
         ? formatKcal(remaining) + " restantes del objetivo"
         : formatKcal(Math.abs(remaining)) + " por encima del objetivo";
     } else {
-      progress.value = 0;
-      progress.setAttribute("aria-label", "Objetivo diario de calorías pendiente de definir");
+      updateProgressRing(ring, null, {
+        tone: "amber",
+        label: "kcal",
+        ariaLabel: "Objetivo diario de calorías pendiente de definir"
+      });
       statusNode.textContent = "Objetivo diario pendiente de definir en Nutrición";
     }
   } catch (error) {
@@ -523,7 +531,7 @@ async function renderHomeNutritionCard() {
     burnedNode.textContent = "—";
     targetNode.textContent = "—";
     statusNode.textContent = "No se ha podido cargar Nutrición";
-    progress.value = 0;
+    updateProgressRing(ring, null, { tone: "amber", label: "kcal", ariaLabel: "Nutrición no disponible" });
     console.warn("Home nutrition load failed", error);
   }
 }
@@ -1133,6 +1141,11 @@ function renderHealthOverview(data) {
     Number.isFinite(strengthTarget) ? sessionsThisWeek >= strengthTarget : null
   ].filter((value) => value !== null);
   const activityDone = activityChecks.filter(Boolean).length;
+  const nutritionProgress = nutritionChecks.length ? Math.round((nutritionDone / nutritionChecks.length) * 100) : null;
+  const activityProgress = activityChecks.length ? Math.round((activityDone / activityChecks.length) * 100) : null;
+  const strengthProgress = Number.isFinite(strengthTarget) && strengthTarget > 0
+    ? Math.round((sessionsThisWeek / strengthTarget) * 100)
+    : null;
 
   let recompositionStatus = "Baseline en construcción";
   if (Number.isFinite(weeklyChange)) {
@@ -1165,11 +1178,20 @@ function renderHealthOverview(data) {
     : "";
 
   panel.innerHTML = `
-    <div class="health-dashboard-status">
-      <span><small>Nutrición</small><strong>${nutritionChecks.length ? `${nutritionDone}/${nutritionChecks.length}` : "Sin objetivo"}</strong></span>
-      <span><small>Actividad</small><strong>${activityChecks.length ? `${activityDone}/${activityChecks.length}` : "Sin objetivo"}</strong></span>
-      <span><small>Fuerza</small><strong>${Number.isFinite(strengthTarget) ? `${sessionsThisWeek}/${fmt0(strengthTarget)} sesiones` : `${sessionsThisWeek} sesiones`}</strong></span>
-      <span><small>Recomposición</small><strong>${escapeHtml(recompositionStatus)}</strong></span>
+    <div class="health-dashboard-status progress-ring-status">
+      <span>
+        ${progressRingMarkup(nutritionProgress, { tone: "amber", size: "sm", label: "nutri", ariaLabel: "Progreso de nutrición" })}
+        <span><small>Nutrición</small><strong>${nutritionChecks.length ? `${nutritionDone}/${nutritionChecks.length}` : "Sin objetivo"}</strong></span>
+      </span>
+      <span>
+        ${progressRingMarkup(activityProgress, { tone: "blue", size: "sm", label: "actividad", ariaLabel: "Progreso de actividad" })}
+        <span><small>Actividad</small><strong>${activityChecks.length ? `${activityDone}/${activityChecks.length}` : "Sin objetivo"}</strong></span>
+      </span>
+      <span>
+        ${progressRingMarkup(strengthProgress, { tone: "mint", size: "sm", label: "fuerza", ariaLabel: "Progreso semanal de fuerza" })}
+        <span><small>Fuerza</small><strong>${Number.isFinite(strengthTarget) ? `${sessionsThisWeek}/${fmt0(strengthTarget)} sesiones` : `${sessionsThisWeek} sesiones`}</strong></span>
+      </span>
+      <span class="health-status-text-only"><small>Recomposición</small><strong>${escapeHtml(recompositionStatus)}</strong></span>
     </div>
 
     <div class="health-recomp-grid">
