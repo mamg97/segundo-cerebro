@@ -11515,8 +11515,9 @@ html[data-theme="light"] :is(
 /* v0.31.0 — shared compact progress rings */
 .progress-ring {
   --ring-progress: 0;
+  --ring-fill: 0%;
   --ring-color: var(--blue);
-  --ring-track: color-mix(in srgb, var(--line-strong) 72%, transparent);
+  --ring-track: color-mix(in srgb, var(--line-strong) 78%, transparent);
   --ring-center: var(--surface);
   position: relative;
   display: grid;
@@ -11528,8 +11529,8 @@ html[data-theme="light"] :is(
   background:
     conic-gradient(
       from -90deg,
-      var(--ring-color) 0 calc(var(--ring-progress) * 3.6deg),
-      var(--ring-track) calc(var(--ring-progress) * 3.6deg) 360deg
+      var(--ring-color) 0 var(--ring-fill),
+      var(--ring-track) var(--ring-fill) 100%
     );
   box-shadow:
     0 6px 18px color-mix(in srgb, var(--ring-color) 10%, transparent),
@@ -11600,6 +11601,7 @@ html[data-theme="light"] :is(
 
 html[data-demo-mode="true"] .progress-ring {
   --ring-progress: 0 !important;
+  --ring-fill: 0% !important;
 }
 
 /* Home: same cards, more compact visual language for actual progress. */
