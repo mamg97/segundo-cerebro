@@ -5,7 +5,7 @@ import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./p
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.33.0";
 import { loadHealthAdherence } from "./adherence.js?v=0.32.1";
-import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.3";
+import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.4";
 
 let state = mockState;
 let areaById = new Map();
