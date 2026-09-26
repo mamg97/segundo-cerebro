@@ -5,7 +5,7 @@ import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./p
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.33.0";
 import { loadHealthAdherence } from "./adherence.js?v=0.32.1";
-import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.32.1";
+import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.1";
 
 let state = mockState;
 let areaById = new Map();
@@ -2243,9 +2243,14 @@ function renderNutritionPanel(data) {
   const consumed = summary.consumed || {};
   const objective = data.objective || null;
   const energy = data.energy || null;
-  const totalBurn = Number.isFinite(Number(summary.totalBurn)) ? Number(summary.totalBurn) : null;
-  const balance = Number.isFinite(Number(summary.balanceKcal)) ? Number(summary.balanceKcal) : null;
-  const remainingTarget = Number.isFinite(Number(summary.remainingToTargetKcal)) ? Number(summary.remainingToTargetKcal) : null;
+  const nullableNumber = (value) => {
+    if (value === null || value === undefined || value === "") return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  };
+  const totalBurn = nullableNumber(summary.totalBurn);
+  const balance = nullableNumber(summary.balanceKcal);
+  const remainingTarget = nullableNumber(summary.remainingToTargetKcal);
 
   panel.innerHTML = `
     <div class="nutrition-date-nav">
@@ -2266,7 +2271,7 @@ function renderNutritionPanel(data) {
       <article>
         <span>Gasto total</span>
         <strong>${totalBurn === null ? "—" : formatKcal(totalBurn)}</strong>
-        <small>${energy?.source ? escapeHtml(String(energy.source)) : "Apple Health pendiente"}</small>
+        <small>${energy?.source ? escapeHtml(String(energy.source)) : "Sin registro para esta fecha"}</small>
       </article>
       <article>
         <span>Balance</span>
@@ -2290,8 +2295,15 @@ function renderNutritionPanel(data) {
           <strong>Apple Health</strong>
         </div>
         <p>${energy?.source
-          ? `Datos energéticos recibidos para este día.${energy.activeKcal != null ? ` Activas: ${formatKcal(energy.activeKcal)}.` : ""}${energy.restingKcal != null ? ` Reposo: ${formatKcal(energy.restingKcal)}.` : ""}`
-          : "Pendiente de conectar la importación automática desde el iPhone/Apple Watch."}</p>
+          ? [
+              energy.activeKcal != null ? `Activas ${formatKcal(energy.activeKcal)}` : null,
+              energy.restingKcal != null ? `Reposo ${formatKcal(energy.restingKcal)}` : null,
+              energy.totalKcal != null ? `Total ${formatKcal(energy.totalKcal)}` : null,
+              energy.steps != null ? `${Number(energy.steps).toLocaleString("es-ES")} pasos` : null,
+              energy.exerciseMinutes != null ? `${Math.round(Number(energy.exerciseMinutes))} min ejercicio` : null,
+              energy.workoutCount != null ? `${Number(energy.workoutCount)} entrenos` : null
+            ].filter(Boolean).join(" · ")
+          : "Sin datos importados de Apple Health para esta fecha. Llevar el Watch no basta si el Atajo diario no llegó a sincronizar ese día."}</p>
       </article>
       <article>
         <div><strong>Base de comidas</strong><span>${foods.length}</span></div>
@@ -2372,22 +2384,39 @@ function renderNutritionMacroTargets(consumed, objective) {
       <div class="health-section-heading">
         <div>
           <strong>Objetivos del día</strong>
-          <p>Calorías como techo diario y proteína como prioridad; hidratos y grasas orientan el reparto.</p>
+          <p>Calorías = techo máximo; proteína = mínimo prioritario; hidratos y grasas = referencias de reparto.</p>
         </div>
       </div>
       <div class="nutrition-target-ring-grid">
         ${rows.map(([label, value, target, suffix, tone, shortLabel]) => {
-          const progress = Math.max(0, Math.min(100, Math.round((value / target) * 100)));
+          const rawPercent = Math.max(0, Math.round((value / target) * 100));
+          const progress = Math.min(100, rawPercent);
+          const difference = value - target;
           const remaining = Math.max(0, target - value);
-          const ringTone = label === "Calorías" && value > target * 1.05 ? "coral" : tone;
+          const ringTone = label === "Calorías" && difference > 0 ? "coral" : tone;
           const format = (n) => Number.isInteger(n) ? n.toLocaleString("es-ES") : n.toFixed(1).replace(".", ",");
+          const status = label === "Calorías"
+            ? difference > 0
+              ? `Exceso +${format(difference)}${suffix}`
+              : difference === 0
+                ? "En el límite máximo"
+                : `Margen ${format(remaining)}${suffix}`
+            : label === "Proteína"
+              ? difference >= 0
+                ? "Mínimo cubierto"
+                : `Faltan ${format(remaining)}${suffix}`
+              : difference > 0
+                ? `+${format(difference)}${suffix} sobre referencia`
+                : difference === 0
+                  ? "En referencia"
+                  : `Quedan ${format(remaining)}${suffix} de referencia`;
           return `
             <article class="nutrition-target-ring-card">
-              ${progressRingMarkup(progress, { tone: ringTone, size: "md", label: shortLabel, ariaLabel: `${label}: ${progress}% del objetivo` })}
+              ${progressRingMarkup(progress, { tone: ringTone, size: "md", label: label === "Calorías" ? "máx" : shortLabel, displayPercent: rawPercent, ariaLabel: `${label}: ${format(value)}${suffix} de ${format(target)}${suffix}. ${status}` })}
               <div>
                 <strong>${escapeHtml(label)}</strong>
                 <small>${format(value)}${suffix} / ${format(target)}${suffix}</small>
-                <span>${remaining > 0 ? `Faltan ${format(remaining)}${suffix}` : "Objetivo cubierto"}</span>
+                <span>${escapeHtml(status)}</span>
               </div>
             </article>`;
         }).join("")}
