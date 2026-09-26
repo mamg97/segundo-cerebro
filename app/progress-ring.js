@@ -30,11 +30,12 @@ function dashGeometry(percent, radius) {
 
 function circleMarkup(className, radius, percent, extraStyle) {
   const geometry = dashGeometry(percent, radius);
-  return '<circle class="' + className + '" cx="50" cy="50" r="' + radius + '"' +
-    ' stroke-dasharray="' + geometry.dasharray + '"' +
-    ' stroke-dashoffset="' + geometry.dashoffset + '"' +
-    (extraStyle ? ' style="' + extraStyle + '"' : '') +
-    '></circle>';
+  const style = [
+    'stroke-dasharray:' + geometry.dasharray,
+    'stroke-dashoffset:' + geometry.dashoffset,
+    extraStyle || ''
+  ].filter(Boolean).join(';');
+  return '<circle class="' + className + '" cx="50" cy="50" r="' + radius + '" style="' + style + '"></circle>';
 }
 
 function ringSvgMarkup(percent, displayPct) {
@@ -52,8 +53,8 @@ function ringSvgMarkup(percent, displayPct) {
 function setCircleProgress(circle, radius, percent) {
   if (!circle) return;
   const geometry = dashGeometry(percent, radius);
-  circle.setAttribute("stroke-dasharray", geometry.dasharray);
-  circle.setAttribute("stroke-dashoffset", geometry.dashoffset);
+  circle.style.strokeDasharray = geometry.dasharray;
+  circle.style.strokeDashoffset = geometry.dashoffset;
 }
 
 function updateRingSvg(node, percent, displayPct) {
