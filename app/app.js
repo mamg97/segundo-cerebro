@@ -92,6 +92,62 @@ async function fetchEventsInline() {
   return response.json();
 }
 
+function collectLiveCalendarEventsForWorkspace() {
+  const finance = state.financeSummary || {};
+  const rules = Array.isArray(state.importantEventRules)
+    ? state.importantEventRules
+    : Array.isArray(finance.importantEventRules)
+      ? finance.importantEventRules
+      : [];
+
+  return (Array.isArray(state.events) ? state.events : [])
+    .map((event) => {
+      const normalized = normalizeForMatch(event.title);
+      const rule = rules.find((candidate) => {
+        const includeMatches = Array.isArray(candidate.matchTerms)
+          && candidate.matchTerms.length
+          && candidate.matchTerms.every((term) => normalized.includes(normalizeForMatch(term)));
+        const excluded = Array.isArray(candidate.excludeTerms)
+          && candidate.excludeTerms.some((term) => normalized.includes(normalizeForMatch(term)));
+        return includeMatches && !excluded;
+      });
+      const inferredKind = inferImportantKind([event.title, event.location || event.locationRef].filter(Boolean).join(" "));
+      if (!rule && inferredKind === "important") return null;
+      return {
+        id: event.id || [event.calendarName, event.title, event.startsAt].join("|"),
+        title: rule?.displayTitle || safeDisplayEventTitle(event.title),
+        kind: rule?.kind || inferredKind,
+        status: eventStatusFromDates(event.startsAt, event.endsAt, event.status),
+        startsAt: event.startsAt,
+        endsAt: event.endsAt || event.startsAt,
+        location: event.location || event.locationRef || null,
+        calendarRef: event.id || null,
+        financeRef: null,
+        objectsListRef: null,
+        summary: rule?.note || null,
+        finalSummary: null,
+        sensitivity: event.sensitivity || "confidencial",
+        source: "calendar-live"
+      };
+    })
+    .filter(Boolean);
+}
+
+function mergeLiveEventsIntoPayload(payload) {
+  const persisted = Array.isArray(payload?.events) ? payload.events : [];
+  const live = collectLiveCalendarEventsForWorkspace();
+  const byId = new Map(persisted.map((item) => [String(item.id), item]));
+  for (const item of live) {
+    const key = String(item.id);
+    const existing = byId.get(key);
+    byId.set(key, existing ? { ...existing, ...item, status: item.status } : item);
+  }
+  return {
+    ...(payload || {}),
+    events: [...byId.values()].sort((a, b) => new Date(a.startsAt || 0) - new Date(b.startsAt || 0))
+  };
+}
+
 function renderEventsWorkspaceInline() {
   const body = document.querySelector("#dialog-body");
   if (!body || !eventsWorkspacePayload) return;
@@ -124,7 +180,7 @@ function renderEventsWorkspaceInline() {
               <p>${escapeHtml(range)}${item.location ? " · " + escapeHtml(item.location) : ""}</p>
               ${item.summary ? "<small>" + escapeHtml(item.summary) + "</small>" : ""}
             </button>`;
-        }).join("") : '<div class="events-empty"><strong>Sin eventos en esta vista</strong><p>Los eventos cerrados se conservarán aquí automáticamente.</p></div>'}
+        }).join("") : ('<div class="events-empty"><strong>Sin eventos en esta vista</strong><p>' + (eventsWorkspaceTab === "history" ? "Todavía no hay eventos cerrados guardados desde que activamos el histórico." : "No hay eventos activos que mostrar.") + '</p></div>')}
       </div>
     </div>`;
 
@@ -158,7 +214,7 @@ async function openEventsWorkspaceInline(initialTab = "active") {
   }
 
   try {
-    eventsWorkspacePayload = await fetchEventsInline();
+    eventsWorkspacePayload = mergeLiveEventsIntoPayload(await fetchEventsInline());
     renderEventsWorkspaceInline();
   } catch (error) {
     console.warn("Events workspace load failed", error);
@@ -1117,14 +1173,15 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
           && candidate.excludeTerms.some((term) => normalized.includes(normalizeForMatch(term)));
         return includeMatches && !excluded;
       });
-      if (!rule) return null;
+      const inferredKind = inferImportantKind([event.title, event.location || event.locationRef].filter(Boolean).join(" "));
+      if (!rule && inferredKind === "important") return null;
       return {
-        id: event.id || rule.id || [event.calendarName, event.title, event.startsAt].join("|"),
-        title: rule.displayTitle || safeDisplayEventTitle(event.title),
+        id: event.id || rule?.id || [event.calendarName, event.title, event.startsAt].join("|"),
+        title: rule?.displayTitle || safeDisplayEventTitle(event.title),
         startsAt: event.startsAt,
         endsAt: event.endsAt,
         location: event.location || event.locationRef || null,
-        kind: rule.kind || "important",
+        kind: rule?.kind || inferredKind,
         status: eventStatusFromDates(event.startsAt, event.endsAt, event.status),
         source: "calendar"
       };

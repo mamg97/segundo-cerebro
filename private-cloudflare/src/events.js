@@ -140,6 +140,14 @@ function matchRule(event, rules) {
   }) || null;
 }
 
+function inferCalendarEventKind(event) {
+  const text = normalize([event && event.title, event && (event.location || event.locationRef)].filter(Boolean).join(" "));
+  if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|hotel|airbnb/.test(text)) return "travel";
+  if (/cumple|cumpleanos/.test(text)) return "birthday";
+  if (/boda|preboda|celebracion|aniversario/.test(text)) return "social";
+  return null;
+}
+
 function findFinanceRef(displayTitle, originalTitle, financeSummary) {
   const targets = [displayTitle, originalTitle].map(normalize).filter(Boolean);
   const commitments = Array.isArray(financeSummary && financeSummary.upcomingCommitments)
@@ -159,15 +167,19 @@ function findFinanceRef(displayTitle, originalTitle, financeSummary) {
 export async function syncImportantEventRecords(env, calendarEvents, rules, financeSummary) {
   await ensureEventTables(env);
   const matched = (Array.isArray(calendarEvents) ? calendarEvents : [])
-    .map((event) => ({ event, rule: matchRule(event, rules) }))
-    .filter((item) => item.rule && item.event && item.event.id && item.event.startsAt);
+    .map((event) => ({
+      event,
+      rule: matchRule(event, rules),
+      inferredKind: inferCalendarEventKind(event)
+    }))
+    .filter((item) => (item.rule || item.inferredKind) && item.event && item.event.id && item.event.startsAt);
 
   if (!matched.length) return 0;
 
   const now = new Date().toISOString();
-  const statements = matched.map(({ event, rule }) => {
-    const title = trim(rule.displayTitle || event.title || "Evento", 240);
-    const kind = trim(rule.kind || "important", 40).toLowerCase();
+  const statements = matched.map(({ event, rule, inferredKind }) => {
+    const title = trim((rule && rule.displayTitle) || event.title || "Evento", 240);
+    const kind = trim((rule && rule.kind) || inferredKind || "important", 40).toLowerCase();
     const financeRef = findFinanceRef(title, event.title, financeSummary);
     const location = nullable(event.location || event.locationRef, 500);
     return env.DB.prepare(
@@ -198,7 +210,7 @@ export async function syncImportantEventRecords(env, calendarEvents, rules, fina
       location,
       event.id,
       financeRef,
-      nullable(rule.note, 2000),
+      nullable(rule && rule.note, 2000),
       nullable(event.sensitivity, 40) || "confidencial",
       now,
       now

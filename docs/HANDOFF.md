@@ -492,3 +492,13 @@ Assets frontend: `v0.34.0`.
 - Se mantienen activos/histórico, ficha de evento, Finanzas, Nutrición, OBJETOS, crónica, referencias y balance final.
 - El objetivo de este hotfix es evitar cualquier fallo por carga de un segundo módulo ES en iPad.
 - Assets frontend: `v0.34.3`.
+
+
+## Hotfix ciclo de vida Eventos v0.34.4
+
+- La UI de Eventos ya cargaba correctamente en iPhone, pero el contador mostraba `En curso = 0` durante un viaje activo.
+- La causa era de datos, no de render: D1 solo persistía eventos de iCloud que coincidían con una regla explícita. Un viaje real podía aparecer en Home por Finanzas y no existir todavía en el ledger histórico.
+- El Worker ahora reconoce también eventos inequívocos de calendario por semántica de viaje/cumpleaños/celebración, sin convertir recordatorios financieros ordinarios en eventos.
+- La vista Eventos mezcla los registros persistidos con el calendario iCloud vivo antes de calcular `Activos / En curso / Histórico`, por lo que el evento actual se refleja inmediatamente aunque el upsert de D1 sea best-effort.
+- Histórico vacío ya explica que todavía no existen eventos cerrados guardados desde la activación del ledger; no implica un error de carga.
+- Assets frontend: `v0.34.4`.
