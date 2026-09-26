@@ -20,27 +20,32 @@ function lapPercent(displayPct, lapIndex) {
   return Math.max(0, Math.min(100, displayPct - start));
 }
 
-function circumference(radius) {
-  return 2 * Math.PI * radius;
+function fixed(value) {
+  return Number(value.toFixed(3));
 }
 
-function dashGeometry(percent, radius) {
+function arcPath(radius, percent) {
   const pct = Math.max(0, Math.min(100, Number(percent) || 0));
-  const circle = circumference(radius);
-  return {
-    dasharray: circle.toFixed(3),
-    dashoffset: (circle * (1 - pct / 100)).toFixed(3)
-  };
+  if (pct <= 0 || pct >= 100) return "";
+  const startX = 50;
+  const startY = 50 - radius;
+  const endAngle = (-90 + pct * 3.6) * Math.PI / 180;
+  const endX = 50 + radius * Math.cos(endAngle);
+  const endY = 50 + radius * Math.sin(endAngle);
+  const largeArc = pct > 50 ? 1 : 0;
+  return [
+    "M", fixed(startX), fixed(startY),
+    "A", radius, radius, 0, largeArc, 1, fixed(endX), fixed(endY)
+  ].join(" ");
 }
 
-function circleMarkup(className, radius, percent, extraStyle) {
-  const geometry = dashGeometry(percent, radius);
-  const style = [
-    'stroke-dasharray:' + geometry.dasharray,
-    'stroke-dashoffset:' + geometry.dashoffset,
-    extraStyle || ''
-  ].filter(Boolean).join(';');
-  return '<circle class="' + className + '" cx="50" cy="50" r="' + radius + '" style="' + style + '"></circle>';
+function progressShapeMarkup(className, radius, percent) {
+  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+  if (pct <= 0) return "";
+  if (pct >= 100) {
+    return '<circle class="' + className + ' progress-ring-full" cx="50" cy="50" r="' + radius + '"></circle>';
+  }
+  return '<path class="' + className + ' progress-ring-arc" data-progress="' + pct + '" d="' + arcPath(radius, pct) + '"></path>';
 }
 
 function ringSvgMarkup(percent, displayPct) {
@@ -49,40 +54,17 @@ function ringSvgMarkup(percent, displayPct) {
   const lap3 = lapPercent(displayPct, 2);
   return '<svg class="progress-ring-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">' +
     '<circle class="progress-ring-track" cx="50" cy="50" r="36"></circle>' +
-    circleMarkup("progress-ring-stroke progress-ring-main", 36, main, "") +
-    circleMarkup("progress-ring-stroke progress-ring-lap progress-ring-lap-2", 44, lap2, "opacity:" + (lap2 > 0 ? 1 : 0)) +
-    circleMarkup("progress-ring-stroke progress-ring-lap progress-ring-lap-3", 48, lap3, "opacity:" + (lap3 > 0 ? 1 : 0)) +
+    progressShapeMarkup("progress-ring-stroke progress-ring-main", 36, main) +
+    progressShapeMarkup("progress-ring-stroke progress-ring-lap progress-ring-lap-2", 44, lap2) +
+    progressShapeMarkup("progress-ring-stroke progress-ring-lap progress-ring-lap-3", 48, lap3) +
     '</svg>';
 }
 
-function setCircleProgress(circle, radius, percent) {
-  if (!circle) return;
-  const geometry = dashGeometry(percent, radius);
-  circle.style.strokeDasharray = geometry.dasharray;
-  circle.style.strokeDashoffset = geometry.dashoffset;
-}
-
 function updateRingSvg(node, percent, displayPct) {
-  node.querySelectorAll(".progress-ring-start,.progress-ring-cap").forEach(function (item) { item.remove(); });
-  let svg = node.querySelector(".progress-ring-svg");
-  if (!svg) {
-    node.insertAdjacentHTML("afterbegin", ringSvgMarkup(percent, displayPct));
-    svg = node.querySelector(".progress-ring-svg");
-  }
-
-  const main = percent === null ? 0 : percent;
-  const lap2 = lapPercent(displayPct, 1);
-  const lap3 = lapPercent(displayPct, 2);
-  const mainCircle = svg?.querySelector(".progress-ring-main");
-  const lap2Circle = svg?.querySelector(".progress-ring-lap-2");
-  const lap3Circle = svg?.querySelector(".progress-ring-lap-3");
-
-  setCircleProgress(mainCircle, 36, main);
-  setCircleProgress(lap2Circle, 44, lap2);
-  setCircleProgress(lap3Circle, 48, lap3);
-
-  if (lap2Circle) lap2Circle.style.opacity = lap2 > 0 ? "1" : "0";
-  if (lap3Circle) lap3Circle.style.opacity = lap3 > 0 ? "1" : "0";
+  const markup = ringSvgMarkup(percent, displayPct);
+  const current = node.querySelector(".progress-ring-svg");
+  if (current) current.outerHTML = markup;
+  else node.insertAdjacentHTML("afterbegin", markup);
 }
 
 export function progressRingMarkup(value, options) {

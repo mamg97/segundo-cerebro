@@ -1,4 +1,4 @@
-import { progressRingMarkup } from "./progress-ring.js?v=0.33.7";
+import { progressRingMarkup } from "./progress-ring.js?v=0.33.8";
 let activeMonth = null;
 let currentPayload = null;
 let selectedDate = null;
