@@ -24,6 +24,7 @@ export function progressRingMarkup(value, options) {
   const ariaMax = displayPct !== null && displayPct > 100 ? displayPct : 100;
   return '<span' + id + ' class="progress-ring tone-' + tone + ' size-' + size + overflowClass + (pct === null ? ' is-empty' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="' + ariaMax + '"' +
     (displayPct === null ? '' : ' aria-valuenow="' + displayPct + '"') + ' aria-label="' + aria + '" style="--ring-progress:' + (pct === null ? 0 : pct) + ';--ring-fill:' + (pct === null ? 0 : pct) + '%;--ring-overflow-fill:' + overflowPct + '%">' +
+    '<i class="progress-ring-start" aria-hidden="true"></i><i class="progress-ring-cap" aria-hidden="true"></i>' +
     '<span class="progress-ring-center"><strong class="progress-ring-value">' + (displayPct === null ? "—" : displayPct + "%") + '</strong>' + label + '</span></span>';
 }
 
@@ -39,6 +40,20 @@ export function updateProgressRing(node, value, options) {
   node.style.setProperty("--ring-overflow-fill", overflowPct + "%");
   node.classList.toggle("is-empty", pct === null);
   node.classList.toggle("has-overflow", overflowPct > 0);
+  let startCap = node.querySelector(".progress-ring-start");
+  let endCap = node.querySelector(".progress-ring-cap");
+  if (!startCap) {
+    startCap = document.createElement("i");
+    startCap.className = "progress-ring-start";
+    startCap.setAttribute("aria-hidden", "true");
+    node.prepend(startCap);
+  }
+  if (!endCap) {
+    endCap = document.createElement("i");
+    endCap.className = "progress-ring-cap";
+    endCap.setAttribute("aria-hidden", "true");
+    node.prepend(endCap);
+  }
   ["blue","mint","amber","coral","violet"].forEach(function (tone) {
     node.classList.toggle("tone-" + tone, (options.tone || "blue") === tone);
   });
