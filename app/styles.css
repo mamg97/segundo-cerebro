@@ -11478,7 +11478,6 @@ html[data-theme="light"] :is(
 .progress-ring-stroke {
   stroke: var(--ring-color);
   stroke-linecap: round;
-  stroke-dashoffset: 0;
   transition: stroke-dashoffset .22s ease, opacity .18s ease;
 }
 
