@@ -36,7 +36,7 @@ const p132 = progressRingMarkup(132, { tone: "blue", label: "ref" });
 assertOffset(p132, "progress-ring-stroke progress-ring-main", 36, 100);
 assertOffset(p132, "progress-ring-stroke progress-ring-lap progress-ring-lap-2", 44, 32);
 assert.match(p132, /aria-valuenow="132"/);
-assert.match(p132, />132%<);
+assert.match(p132, />132%</);
 
 const p178 = progressRingMarkup(178, { tone: "coral", label: "máx" });
 assertOffset(p178, "progress-ring-stroke progress-ring-main", 36, 100);
@@ -46,7 +46,7 @@ const p220 = progressRingMarkup(220, { tone: "coral", label: "ref" });
 assertOffset(p220, "progress-ring-stroke progress-ring-main", 36, 100);
 assertOffset(p220, "progress-ring-stroke progress-ring-lap progress-ring-lap-2", 44, 100);
 assertOffset(p220, "progress-ring-stroke progress-ring-lap progress-ring-lap-3", 48, 20);
-assert.match(p220, />220%<);
+assert.match(p220, />220%</);
 
 // Global surface audit: every visible percentage circle must use the same component/version.
 const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
