@@ -12,6 +12,7 @@ let state = mockState;
 let areaById = new Map();
 let privateMode = false;
 let privateModeKind = null;
+let remoteStateLoadError = null;
 
 const colors = {
   ink: "#52647f", blue: "#2867e8", mint: "#2e8b78", sky: "#3984a8",
@@ -221,12 +222,16 @@ async function loadLocalPrivateState() {
 async function loadRemotePrivateState() {
   if (privateMode || globalThis.__SECOND_BRAIN_REMOTE__ !== true) return;
 
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort("private-state-timeout"), 9000);
+
   try {
     const response = await fetch("/api/state", {
       method: "GET",
       headers: { "Accept": "application/json" },
       cache: "no-store",
-      credentials: "same-origin"
+      credentials: "same-origin",
+      signal: controller.signal
     });
 
     if (!response.ok) {
@@ -241,8 +246,12 @@ async function loadRemotePrivateState() {
     state = remoteState;
     privateMode = true;
     privateModeKind = "remote";
+    remoteStateLoadError = null;
   } catch (error) {
-    console.warn("No se pudo cargar el estado privado remoto; se mantienen los mocks.", error);
+    remoteStateLoadError = error;
+    console.warn("No se pudo cargar el estado privado remoto; la interfaz continuará sin bloquearse.", error);
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 
@@ -252,8 +261,9 @@ function renderMode() {
   const local = privateModeKind === "local";
   const remote = privateModeKind === "remote";
 
-  document.querySelector("#privacy-mode-title").textContent = remote ? "Modo privado remoto" : local ? "Modo local privado" : "Modo demo";
-  document.querySelector("#privacy-mode-detail").textContent = remote ? "Protegido por autenticación" : local ? "No se publica en GitHub" : "Solo datos ficticios";
+  const remoteUnavailable = globalThis.__SECOND_BRAIN_REMOTE__ === true && !remote && Boolean(remoteStateLoadError);
+  document.querySelector("#privacy-mode-title").textContent = remote ? "Modo privado remoto" : local ? "Modo local privado" : remoteUnavailable ? "Modo privado" : "Modo demo";
+  document.querySelector("#privacy-mode-detail").textContent = remote ? "Protegido por autenticación" : local ? "No se publica en GitHub" : remoteUnavailable ? "Conexión temporalmente no disponible" : "Solo datos ficticios";
   document.querySelector("#data-mode-badge")?.replaceChildren(remote ? "Estado personal privado" : local ? "Estado personal local" : "Entorno mock");
   document.querySelector("#profile-button")?.setAttribute("aria-label", privateMode ? "Perfil privado" : "Perfil ficticio");
   document.querySelector("#query-submit").setAttribute("aria-label", privateMode ? "Consultar estado privado" : "Consultar datos ficticios");

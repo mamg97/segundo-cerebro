@@ -47,6 +47,33 @@ function safeIcloudErrorCode(error) {
   return /^ICLOUD_[A-Z0-9_]+$/.test(message) ? message : "ICLOUD_UNKNOWN";
 }
 
+async function withStateTimeout(promise, timeoutMs, label) {
+  let timeoutId = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(label + "_TIMEOUT")), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeoutId !== null) clearTimeout(timeoutId);
+  }
+}
+
+async function loadStateSource(enabled, label, loader, timeoutMs = 4500) {
+  if (!enabled) return { status: "not-configured", value: null };
+  try {
+    const result = await withStateTimeout(Promise.resolve().then(loader), timeoutMs, label);
+    return result || { status: "ok", value: null };
+  } catch (error) {
+    const message = String(error?.message || error);
+    const timedOut = message.endsWith("_TIMEOUT");
+    console.warn(label + " sync failed", message);
+    return { status: timedOut ? "timeout" : "error", value: null };
+  }
+}
+
 function hasGoogleOauthConfig(env) {
   return Boolean(
     env.GOOGLE_CLIENT_ID &&
@@ -3404,116 +3431,84 @@ export default {
         return json({ ok: false, code: "INVALID_STATE_JSON" }, 500);
       }
 
-      let financeSync = "not-configured";
-      if (hasFinanceGoogleConfig(env)) {
-        try {
-          const finance = await fetchFinanceSummary(env);
-          if (finance.value) {
-            state.financeSummary = finance.value;
-            state.importantEventRules = finance.value.importantEventRules || [];
-            state.healthSummary = finance.value.health || { gymPlan: [], nutritionPlan: [] };
-          }
-          financeSync = finance.status;
-        } catch (error) {
-          financeSync = "error";
-          console.warn("Finance sync failed", String(error?.message || error));
-        }
+      const [finance, habits, nutrition, pantry, objects, projects, calendar, family] = await Promise.all([
+        loadStateSource(hasFinanceGoogleConfig(env), "Finance", () => fetchFinanceSummary(env)),
+        loadStateSource(hasHabitQuestGoogleConfig(env), "HabitQuest", () => fetchHabitQuestSummary(env)),
+        loadStateSource(hasHealthGoogleConfig(env), "Nutrition", () => fetchHealthNutritionSummary(env)),
+        loadStateSource(hasPantryGoogleConfig(env), "Pantry", () => fetchPantrySummary(env, getGoogleAccessToken)),
+        loadStateSource(hasObjectsGoogleConfig(env), "Objects", () => fetchObjectsSummary(env, getGoogleAccessToken)),
+        loadStateSource(hasProjectsGoogleConfig(env), "Projects", () => fetchProjectsSummary(env, getGoogleAccessToken)),
+        loadStateSource(hasIcloudCalendarConfig(env), "iCloud", () => fetchIcloudCalendarSummary(env)),
+        loadStateSource(true, "Family", async () => ({
+          status: "ok",
+          value: await fetchFamilyHomeSummary(env)
+        }), 2500)
+      ]);
+
+      const financeSync = finance.status || "error";
+      if (finance.value) {
+        state.financeSummary = finance.value;
+        state.importantEventRules = finance.value.importantEventRules || [];
+        state.healthSummary = finance.value.health || { gymPlan: [], nutritionPlan: [] };
       }
 
-      let habitSync = "not-configured";
-      if (hasHabitQuestGoogleConfig(env)) {
-        try {
-          const habits = await fetchHabitQuestSummary(env);
-          if (habits.value) state.habitsSummary = habits.value;
-          habitSync = habits.status;
-        } catch (error) {
-          habitSync = "error";
-          console.warn("HabitQuest sync failed", String(error?.message || error));
-        }
+      const habitSync = habits.status || "error";
+      if (habits.value) state.habitsSummary = habits.value;
+
+      const nutritionSync = nutrition.status || "error";
+      if (nutrition.value) state.nutritionSummary = nutrition.value;
+
+      const pantrySync = pantry.status || "error";
+      if (pantry.value) state.pantrySummary = pantry.value.summary || null;
+
+      const objectsSync = objects.status || "error";
+      if (objects.value) state.objectsSummary = objects.value.summary || null;
+
+      const projectsSync = projects.status || "error";
+      if (projects.value) state.projectsSummary = projects.value.summary || null;
+
+      const calendarSync = calendar.status || "error";
+      if (calendar.value) {
+        state.calendarSummary = calendar.value;
+        state.events = calendar.value.events;
       }
 
-      let nutritionSync = "not-configured";
-      if (hasHealthGoogleConfig(env)) {
-        try {
-          const nutrition = await fetchHealthNutritionSummary(env);
-          if (nutrition.value) state.nutritionSummary = nutrition.value;
-          nutritionSync = nutrition.status;
-        } catch (error) {
-          nutritionSync = "error";
-          console.warn("Nutrition sync failed", String(error?.message || error));
-        }
-      }
+      state.familySummary = family.value || {
+        openCount: 0,
+        attentionCount: 0,
+        waitingCount: 0,
+        decisionOpenCount: 0,
+        nextDueAt: null,
+        updatedAt: null
+      };
 
-      let pantrySync = "not-configured";
-      if (hasPantryGoogleConfig(env)) {
-        try {
-          const pantry = await fetchPantrySummary(env, getGoogleAccessToken);
-          if (pantry.value) state.pantrySummary = pantry.value.summary || null;
-          pantrySync = pantry.status;
-        } catch (error) {
-          pantrySync = "error";
-          console.warn("Pantry sync failed", String(error?.message || error));
-        }
-      }
-
-      let objectsSync = "not-configured";
-      if (hasObjectsGoogleConfig(env)) {
-        try {
-          const objects = await fetchObjectsSummary(env, getGoogleAccessToken);
-          state.objectsSummary = objects.value?.summary || null;
-          objectsSync = objects.status;
-        } catch (error) {
-          objectsSync = "error";
-          console.warn("Objects sync failed", String(error?.message || error));
-        }
-      }
-
-      let projectsSync = "not-configured";
-      if (hasProjectsGoogleConfig(env)) {
-        try {
-          const projects = await fetchProjectsSummary(env, getGoogleAccessToken);
-          state.projectsSummary = projects.value?.summary || null;
-          projectsSync = projects.status;
-        } catch (error) {
-          projectsSync = "error";
-          console.warn("Projects sync failed", String(error?.message || error));
-        }
-      }
-
-      let calendarSync = "not-configured";
-      if (hasIcloudCalendarConfig(env)) {
-        try {
-          const calendar = await fetchIcloudCalendarSummary(env);
-          if (calendar.value) {
-            state.calendarSummary = calendar.value;
-            state.events = calendar.value.events;
-          }
-          calendarSync = calendar.status;
-        } catch (error) {
-          calendarSync = "error";
-          console.warn("iCloud calendar sync failed", String(error?.message || error));
-        }
-      }
-
-
+      // Event persistence must never block the initial dashboard load.
+      // It is best-effort: the current state is returned even if D1 is briefly slow.
       try {
-        await syncImportantEventRecords(
-          env,
-          Array.isArray(state.events) ? state.events : [],
-          Array.isArray(state.importantEventRules) ? state.importantEventRules : [],
-          state.financeSummary || {}
+        await withStateTimeout(
+          syncImportantEventRecords(
+            env,
+            Array.isArray(state.events) ? state.events : [],
+            Array.isArray(state.importantEventRules) ? state.importantEventRules : [],
+            state.financeSummary || {}
+          ),
+          1200,
+          "EventsPersist"
         );
-        state.eventsSummary = await fetchEventHomeSummary(env);
       } catch (error) {
-        console.warn("Events sync failed", String(error?.message || "EVENTS_SYNC_ERROR"));
-        state.eventsSummary = { activeCount: 0, historyCount: 0, inProgressCount: 0, updatedAt: null };
+        console.warn("Events persistence deferred", String(error?.message || error));
       }
 
       try {
-        state.familySummary = await fetchFamilyHomeSummary(env);
+        state.eventsSummary = await withStateTimeout(fetchEventHomeSummary(env), 1000, "EventsSummary");
       } catch (error) {
-        console.warn("Family summary read failed", String(error?.message || "FAMILY_SUMMARY_ERROR"));
-        state.familySummary = { openCount: 0, attentionCount: 0, waitingCount: 0, decisionOpenCount: 0, nextDueAt: null, updatedAt: null };
+        console.warn("Events summary read failed", String(error?.message || error));
+        state.eventsSummary = state.eventsSummary || {
+          activeCount: 0,
+          historyCount: 0,
+          inProgressCount: 0,
+          updatedAt: null
+        };
       }
 
       state.meta = {
