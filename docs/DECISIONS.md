@@ -286,3 +286,15 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Continuidad:** una conversación nueva debe reconstruir contexto desde Git + fuentes privadas, no desde un transcript histórico largo.
 - **Transición:** las conversaciones especializadas se mantienen temporalmente como consolas de mantenimiento y fallback hasta que el Coordinador cubra sus operaciones principales.
 - **Roadmap:** `docs/EVOLUTION_GLOBAL_BRAIN.md`.
+
+
+## D-033 — Eventos conserva identidad y crónica mínima en D1
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-26.
+- **Decisión:** iCloud conserva la autoridad sobre fecha/horario; D1 conserva la identidad del evento, su ciclo de vida, referencias y una crónica mínima para disponer de histórico permanente.
+- **No duplicación:** Finanzas, Salud/Nutrición, OBJETOS, email, reservas y documentos siguen siendo fuentes propietarias. La ficha de evento los compone bajo demanda.
+- **Cierre:** `EN_CURSO` y `CERRADO` se derivan de `starts_at/ends_at`; no se requiere cron.
+- **Home:** solo muestra eventos activos. `CERRADO` y `CANCELADO` se consultan desde Eventos → Histórico.
+- **Alcance:** los compromisos puramente financieros no se convierten en eventos por el hecho de tener una fecha.
+- **Motivo:** conservar memoria útil de viajes y celebraciones sin depender indefinidamente del calendario ni crear una segunda contabilidad.
