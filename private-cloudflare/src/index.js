@@ -1545,6 +1545,52 @@ async function updateHealthSheetRange(env, range, values) {
   if (!response.ok) throw new Error(`HEALTH_SUMMARY_WRITE_${response.status}`);
 }
 
+async function clearHealthSheetRange(env, range) {
+  if (!hasHealthGoogleConfig(env)) return;
+  const token = await getGoogleAccessToken(env);
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}/values/${encodeURIComponent(range)}:clear`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: "{}"
+  });
+  if (!response.ok) throw new Error(`HEALTH_DETAIL_CLEAR_${response.status}`);
+}
+
+async function persistHealthActivityDetail(env, history) {
+  if (!hasHealthGoogleConfig(env) || !history) return;
+  const generatedAt = new Date().toISOString();
+  const activity = Array.isArray(history.activity) ? history.activity : [];
+  const rows = activity.slice(-1999).map((row) => [
+    row.date || "",
+    row.activeKcal ?? "",
+    row.restingKcal ?? "",
+    row.totalKcal ?? "",
+    row.steps ?? "",
+    row.exerciseMinutes ?? "",
+    row.workoutCount ?? "",
+    row.coverageQuality || healthCoverageQuality(row),
+    row.source || "",
+    row.sampledAt || "",
+    row.importedAt || "",
+    JSON.stringify(Array.isArray(row.sourceDetails) ? row.sourceDetails : []),
+    JSON.stringify(Array.isArray(row.workouts) ? row.workouts : []),
+    generatedAt
+  ]);
+
+  await clearHealthSheetRange(env, "ActividadDiaria!A2:N2000");
+  if (rows.length) {
+    await updateHealthSheetRange(
+      env,
+      `ActividadDiaria!A2:N${rows.length + 1}`,
+      rows
+    );
+  }
+}
+
 function healthHistoryWeightStats(bodySamples = [], endDate) {
   const weightSamples = bodySamples.filter((sample) =>
     sample?.type === "bodyMass" &&
@@ -3110,9 +3156,12 @@ export default {
         }
         const history = await fetchHealthHistory(env, { endDate, range });
         try {
-          await persistHealthHistorySummary(env, history);
+          await Promise.all([
+            persistHealthHistorySummary(env, history),
+            persistHealthActivityDetail(env, history)
+          ]);
         } catch (summaryError) {
-          console.warn("Health history summary sync failed", String(summaryError?.message || summaryError));
+          console.warn("Health history derived-sheet sync failed", String(summaryError?.message || summaryError));
         }
         return json({ ok: true, ...history });
       } catch (error) {
