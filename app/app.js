@@ -12,7 +12,8 @@ let areaById = new Map();
 let privateMode = false;
 let privateModeKind = null;
 let remoteStateLoadError = null;
-let eventsFeaturePromise = null;
+let eventsWorkspacePayload = null;
+let eventsWorkspaceTab = "active";
 
 function eventsAreaFromStateFallback(currentState, mode) {
   if (mode !== "remote") return null;
@@ -36,44 +37,336 @@ function eventsAreaFromStateFallback(currentState, mode) {
   };
 }
 
-async function loadEventsFeature() {
-  if (!eventsFeaturePromise) {
-    eventsFeaturePromise = import("./events.js?v=0.34.2").catch((error) => {
-      eventsFeaturePromise = null;
-      console.warn("Módulo Eventos no disponible; el dashboard principal sigue operativo.", error);
-      return null;
-    });
-  }
-  return eventsFeaturePromise;
+function eventStatusLabel(status) {
+  const labels = {
+    PROPUESTO: "Propuesto",
+    PENDIENTE: "Pendiente",
+    CONFIRMADO: "Confirmado",
+    EN_CURSO: "En curso",
+    CERRADO: "Cerrado",
+    CANCELADO: "Cancelado"
+  };
+  return labels[String(status || "").toUpperCase()] || String(status || "Confirmado");
 }
 
-async function openEventsWorkspaceLazy(initialTab = "active") {
-  const feature = await loadEventsFeature();
-  if (feature?.openEventsWorkspace) {
-    return feature.openEventsWorkspace(state, privateModeKind, initialTab);
-  }
-  openFeatureUnavailableDialog("Eventos");
+function eventKindLabel(kind) {
+  const labels = {
+    travel: "Viaje",
+    social: "Evento",
+    birthday: "Cumpleaños",
+    medical: "Cita",
+    important: "Importante"
+  };
+  return labels[String(kind || "").toLowerCase()] || "Evento";
 }
 
-async function openEventDetailLazy(eventId, fallback) {
-  const feature = await loadEventsFeature();
-  if (feature?.openEventDetail) {
-    return feature.openEventDetail(state, privateModeKind, eventId, fallback);
-  }
-  openFeatureUnavailableDialog("Eventos");
+function eventDateLabel(value, withTime = false) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("es-ES", withTime
+    ? { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }
+    : { day: "numeric", month: "short", year: "numeric" }
+  ).format(date).replace(".", "");
 }
 
-function openFeatureUnavailableDialog(title) {
+function prepareEventsDialog(className) {
   const dialog = document.querySelector("#detail-dialog");
-  const context = document.querySelector("#dialog-context");
-  const heading = document.querySelector("#dialog-title");
+  if (!dialog) return null;
+  dialog.classList.remove(
+    "wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog",
+    "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog",
+    "objects-dialog", "projects-dialog", "events-workspace-dialog", "event-detail-dialog"
+  );
+  if (className) dialog.classList.add(className);
+  return dialog;
+}
+
+async function fetchEventsInline() {
+  const response = await fetch("/api/events?scope=all", {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+    credentials: "same-origin"
+  });
+  if (!response.ok) throw new Error("EVENTS_" + response.status);
+  return response.json();
+}
+
+function renderEventsWorkspaceInline() {
   const body = document.querySelector("#dialog-body");
-  if (!dialog || !context || !heading || !body) return;
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog", "events-workspace-dialog", "event-detail-dialog");
-  context.textContent = "Módulo temporalmente no disponible";
-  heading.textContent = title;
-  body.innerHTML = "<p>El panel principal está operativo, pero este módulo no ha podido cargarse. Recarga la página y vuelve a intentarlo.</p>";
+  if (!body || !eventsWorkspacePayload) return;
+  const all = Array.isArray(eventsWorkspacePayload.events) ? eventsWorkspacePayload.events : [];
+  const active = all.filter((item) => !["CERRADO", "CANCELADO"].includes(item.status));
+  const history = all.filter((item) => ["CERRADO", "CANCELADO"].includes(item.status));
+  const selected = eventsWorkspaceTab === "history" ? history : active;
+
+  body.innerHTML = `
+    <div class="events-workspace">
+      <div class="events-workspace-summary">
+        <article><span>Activos</span><strong>${active.length}</strong></article>
+        <article><span>En curso</span><strong>${active.filter((item) => item.status === "EN_CURSO").length}</strong></article>
+        <article><span>Histórico</span><strong>${history.length}</strong></article>
+      </div>
+      <div class="events-tabs" role="tablist" aria-label="Eventos">
+        <button type="button" data-events-inline-tab="active" class="${eventsWorkspaceTab === "active" ? "active" : ""}">Próximos y en curso</button>
+        <button type="button" data-events-inline-tab="history" class="${eventsWorkspaceTab === "history" ? "active" : ""}">Histórico</button>
+      </div>
+      <div class="events-record-list">
+        ${selected.length ? selected.map((item) => {
+          const start = eventDateLabel(item.startsAt);
+          const end = item.endsAt ? eventDateLabel(item.endsAt) : null;
+          const range = end && end !== start ? start + " → " + end : start;
+          return `
+            <button type="button" class="events-record-card status-${escapeHtml(String(item.status || "").toLowerCase())}" data-event-inline-id="${escapeHtml(item.id)}">
+              <span class="events-record-kind">${escapeHtml(eventKindLabel(item.kind))}</span>
+              <strong>${escapeHtml(item.title)}</strong>
+              <span class="events-record-status">${escapeHtml(eventStatusLabel(item.status))}</span>
+              <p>${escapeHtml(range)}${item.location ? " · " + escapeHtml(item.location) : ""}</p>
+              ${item.summary ? "<small>" + escapeHtml(item.summary) + "</small>" : ""}
+            </button>`;
+        }).join("") : '<div class="events-empty"><strong>Sin eventos en esta vista</strong><p>Los eventos cerrados se conservarán aquí automáticamente.</p></div>'}
+      </div>
+    </div>`;
+
+  body.querySelectorAll("[data-events-inline-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      eventsWorkspaceTab = button.dataset.eventsInlineTab === "history" ? "history" : "active";
+      renderEventsWorkspaceInline();
+    });
+  });
+
+  body.querySelectorAll("[data-event-inline-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = all.find((candidate) => candidate.id === button.dataset.eventInlineId) || null;
+      void openEventDetailInline(button.dataset.eventInlineId, item);
+    });
+  });
+}
+
+async function openEventsWorkspaceInline(initialTab = "active") {
+  const dialog = prepareEventsDialog("events-workspace-dialog");
+  if (!dialog) return;
+  eventsWorkspaceTab = initialTab === "history" ? "history" : "active";
+  document.querySelector("#dialog-context").textContent = "Eventos · privado";
+  document.querySelector("#dialog-title").textContent = "Eventos";
+  document.querySelector("#dialog-body").innerHTML = '<p class="events-loading">Cargando eventos…</p>';
   if (!dialog.open) dialog.showModal();
+
+  if (privateModeKind !== "remote") {
+    document.querySelector("#dialog-body").innerHTML = '<div class="events-empty"><strong>Histórico disponible en modo privado remoto</strong></div>';
+    return;
+  }
+
+  try {
+    eventsWorkspacePayload = await fetchEventsInline();
+    renderEventsWorkspaceInline();
+  } catch (error) {
+    console.warn("Events workspace load failed", error);
+    document.querySelector("#dialog-body").innerHTML =
+      '<div class="events-empty"><strong>No se ha podido cargar el histórico</strong><p>El panel principal sigue operativo.</p></div>';
+  }
+}
+
+function findEventFinanceInline(event) {
+  const finance = state.financeSummary || {};
+  const commitments = Array.isArray(finance.upcomingCommitments) ? finance.upcomingCommitments : [];
+  if (event?.financeRef) {
+    const byId = commitments.find((item) => item.id === event.financeRef);
+    if (byId) return byId;
+  }
+  const title = normalizeForMatch(event?.title || "");
+  return commitments.find((item) => {
+    const candidate = normalizeForMatch(item?.title || "");
+    return candidate === title
+      || (title.length >= 5 && candidate.includes(title))
+      || (candidate.length >= 5 && title.includes(candidate));
+  }) || null;
+}
+
+async function hydrateEventNutritionInline(event) {
+  const panel = document.querySelector("#event-inline-nutrition");
+  if (!panel || !event?.startsAt) return;
+  const start = new Date(event.startsAt);
+  const end = new Date(event.endsAt || event.startsAt);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+    panel.innerHTML = '<p class="events-muted">Sin fechas válidas.</p>';
+    return;
+  }
+  const dates = [];
+  const current = new Date(start);
+  current.setHours(12, 0, 0, 0);
+  const last = new Date(end);
+  last.setHours(12, 0, 0, 0);
+  while (current <= last && dates.length < 14) {
+    dates.push(localDateKey(current));
+    current.setDate(current.getDate() + 1);
+  }
+  try {
+    const results = await Promise.all(dates.map(async (date) => {
+      const response = await fetch("/api/nutrition?date=" + encodeURIComponent(date), {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      if (!response.ok) return null;
+      return { date, value: await response.json() };
+    }));
+    const valid = results.filter(Boolean);
+    panel.innerHTML = valid.length
+      ? '<div class="event-nutrition-days">' + valid.map(({ date, value }) => {
+          const consumed = value?.summary?.consumed || {};
+          const kcal = Number.isFinite(Number(consumed.kcal)) ? Math.round(Number(consumed.kcal)) + " kcal" : "Sin kcal";
+          const protein = Number.isFinite(Number(consumed.protein)) ? Math.round(Number(consumed.protein)) + " g proteína" : "Proteína sin dato";
+          return '<article><strong>' + escapeHtml(eventDateLabel(date + "T12:00:00")) + '</strong><span>' + escapeHtml(kcal) + '</span><small>' + escapeHtml(protein) + '</small></article>';
+        }).join("") + '</div>'
+      : '<p class="events-muted">Sin datos nutricionales asociados.</p>';
+  } catch (error) {
+    console.warn("Event nutrition load failed", error);
+    panel.innerHTML = '<p class="events-muted">Nutrición no disponible.</p>';
+  }
+}
+
+async function hydrateEventObjectsInline(event) {
+  const panel = document.querySelector("#event-inline-objects");
+  if (!panel) return;
+  try {
+    const response = await fetch("/api/objects", {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("OBJECTS_" + response.status);
+    const data = await response.json();
+    const lists = Array.isArray(data.lists) ? data.lists : [];
+    const eventTitle = normalizeForMatch(event?.title || "");
+    const match = lists.find((item) => event?.objectsListRef && item.id === event.objectsListRef)
+      || lists.find((item) => {
+        const ref = normalizeForMatch(item?.eventRef || "");
+        return ref && eventTitle && (ref.includes(eventTitle) || eventTitle.includes(ref));
+      })
+      || lists.find((item) => String(item?.startDate || "") === String(event?.startsAt || "").slice(0, 10));
+
+    if (!match) {
+      panel.innerHTML = '<p class="events-muted">No hay una lista de Objetos vinculada.</p>';
+      return;
+    }
+    const items = Array.isArray(match.items) ? match.items : [];
+    const prepared = items.filter((item) => item.state === "PREPARADO").length;
+    panel.innerHTML = '<div class="event-objects-head"><div><strong>' + escapeHtml(match.name || "Lista de equipaje") + '</strong><span>' + prepared + '/' + items.length + ' preparados</span></div></div>'
+      + '<div class="event-objects-items">'
+      + (items.length
+        ? items.map((item) => '<span class="state-' + escapeHtml(String(item.state || "").toLowerCase()) + '"><i></i>' + escapeHtml(item.name || "Necesidad") + '<small>' + escapeHtml(item.state || "") + '</small></span>').join("")
+        : '<p class="events-muted">Lista sin items.</p>')
+      + '</div>';
+  } catch (error) {
+    console.warn("Event objects load failed", error);
+    panel.innerHTML = '<p class="events-muted">Objetos no disponible.</p>';
+  }
+}
+
+function renderEventDetailInline(payload) {
+  const event = payload.event;
+  const facts = Array.isArray(payload.facts) ? payload.facts : [];
+  const references = Array.isArray(payload.references) ? payload.references : [];
+  const finance = findEventFinanceInline(event);
+  const currency = finance?.currency || "EUR";
+  const total = firstFinite(finance?.totalBudget);
+  const reserved = firstFinite(finance?.reserved);
+  const needed = firstFinite(finance?.needed);
+  const body = document.querySelector("#dialog-body");
+
+  document.querySelector("#dialog-context").textContent = eventKindLabel(event.kind) + " · " + eventStatusLabel(event.status);
+  document.querySelector("#dialog-title").textContent = event.title;
+  body.innerHTML = `
+    <div class="event-detail">
+      <button type="button" class="events-back" data-events-inline-back="true">← Volver a Eventos</button>
+      <section class="event-detail-hero">
+        <div>
+          <span class="event-detail-status status-${escapeHtml(String(event.status || "").toLowerCase())}">${escapeHtml(eventStatusLabel(event.status))}</span>
+          <p>${escapeHtml(eventDateLabel(event.startsAt))}${event.endsAt ? " → " + escapeHtml(eventDateLabel(event.endsAt)) : ""}</p>
+          ${event.location ? "<p>" + escapeHtml(event.location) + "</p>" : ""}
+          ${event.summary ? '<p class="event-detail-summary">' + escapeHtml(event.summary) + '</p>' : ""}
+        </div>
+      </section>
+      <section class="event-detail-section">
+        <div class="event-detail-section-head"><strong>Finanzas</strong><span>Fuente canónica Finanzas</span></div>
+        ${finance ? `
+          <div class="event-finance-grid">
+            <article><span>Importe asociado</span><strong>${total === null ? "—" : formatMoney(total, currency)}</strong></article>
+            <article><span>Reservado</span><strong>${reserved === null ? "—" : formatMoney(reserved, currency)}</strong></article>
+            <article><span>Pendiente</span><strong>${needed === null ? "—" : formatMoney(needed, currency)}</strong></article>
+            <article><span>Estado</span><strong>${escapeHtml(finance.status || "—")}</strong></article>
+          </div>`
+          : '<p class="events-muted">Sin vínculo financiero estructurado todavía.</p>'}
+      </section>
+      <section class="event-detail-section"><div class="event-detail-section-head"><strong>Nutrición</strong><span>Salud · por fechas</span></div><div id="event-inline-nutrition"><p class="events-muted">Cargando Nutrición…</p></div></section>
+      <section class="event-detail-section"><div class="event-detail-section-head"><strong>Equipaje y objetos</strong><span>OBJETOS</span></div><div id="event-inline-objects"><p class="events-muted">Buscando lista vinculada…</p></div></section>
+      <section class="event-detail-section">
+        <div class="event-detail-section-head"><strong>Crónica</strong><span>${facts.length} hechos</span></div>
+        ${facts.length
+          ? '<div class="event-timeline">' + facts.map((fact) => '<article><time>' + escapeHtml(eventDateLabel(fact.happenedAt, true)) + '</time><div><span class="event-fact-type">' + escapeHtml(fact.type) + '</span><p>' + escapeHtml(fact.summary) + '</p></div></article>').join("") + '</div>'
+          : '<p class="events-muted">Todavía no hay hechos fechados guardados para este evento.</p>'}
+      </section>
+      ${references.length ? `
+        <section class="event-detail-section">
+          <div class="event-detail-section-head"><strong>Referencias</strong><span>${references.length}</span></div>
+          <div class="event-reference-list">${references.map((ref) => '<span><strong>' + escapeHtml(ref.label || ref.type || ref.sourceProvider) + '</strong><small>' + escapeHtml(ref.sourceProvider || "") + '</small></span>').join("")}</div>
+        </section>` : ""}
+      ${event.finalSummary ? '<section class="event-detail-section event-final-summary"><div class="event-detail-section-head"><strong>Balance final</strong><span>Cierre</span></div><p>' + escapeHtml(event.finalSummary) + '</p></section>' : ""}
+    </div>`;
+
+  body.querySelector("[data-events-inline-back]")?.addEventListener("click", () => void openEventsWorkspaceInline(eventsWorkspaceTab));
+  void hydrateEventNutritionInline(event);
+  void hydrateEventObjectsInline(event);
+}
+
+async function openEventDetailInline(eventId, fallback) {
+  const dialog = prepareEventsDialog("event-detail-dialog");
+  if (!dialog) return;
+  document.querySelector("#dialog-context").textContent = "Eventos · detalle";
+  document.querySelector("#dialog-title").textContent = fallback?.title || "Evento";
+  document.querySelector("#dialog-body").innerHTML = '<p class="events-loading">Cargando ficha del evento…</p>';
+  if (!dialog.open) dialog.showModal();
+
+  let payload = null;
+  if (privateModeKind === "remote" && eventId) {
+    try {
+      const response = await fetch("/api/events/" + encodeURIComponent(eventId), {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      if (response.ok) payload = await response.json();
+    } catch (error) {
+      console.warn("Event detail load failed", error);
+    }
+  }
+
+  if (!payload?.event && fallback) {
+    payload = {
+      event: {
+        id: fallback.id,
+        title: fallback.title,
+        kind: fallback.kind,
+        status: fallback.status || "CONFIRMADO",
+        startsAt: fallback.startsAt,
+        endsAt: fallback.endsAt,
+        location: fallback.location || null,
+        financeRef: fallback.financeRef || fallback.id || null,
+        objectsListRef: null,
+        summary: fallback.note || null,
+        finalSummary: null
+      },
+      facts: [],
+      references: []
+    };
+  }
+
+  if (!payload?.event) {
+    document.querySelector("#dialog-body").innerHTML = '<div class="events-empty"><strong>No se ha podido reconstruir este evento</strong></div>';
+    return;
+  }
+  renderEventDetailInline(payload);
 }
 
 const colors = {
@@ -743,7 +1036,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
   container.querySelectorAll("[data-important-event-id]").forEach((card) => {
     const open = () => {
       const item = importantEvents.find((candidate) => candidate.id === card.dataset.importantEventId) || null;
-      void openEventDetailLazy(card.dataset.importantEventId, item);
+      void openEventDetailInline(card.dataset.importantEventId, item);
     };
     card.addEventListener("click", open);
     card.addEventListener("keydown", (event) => {
@@ -3992,7 +4285,7 @@ function bindInteractions() {
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
-  document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspaceLazy("history"));
+  document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspaceInline("history"));
   document.querySelector("#home-habits-card")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
   document.querySelector("#home-nutrition-card")?.addEventListener("click", async () => {
     await openHealthDetail();
@@ -4037,7 +4330,7 @@ function openNavigationArea(areaId) {
 
 function openArea(areaId) {
   if (areaId === "area-events") {
-    void openEventsWorkspaceLazy("active");
+    void openEventsWorkspaceInline("active");
     return;
   }
   if (areaId === "area-finance") {

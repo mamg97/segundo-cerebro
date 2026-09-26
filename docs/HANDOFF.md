@@ -482,3 +482,13 @@ Assets frontend: `v0.34.0`.
 - Si Eventos fallara en un navegador concreto, el dashboard principal continúa operativo y solo se degrada ese módulo.
 - Se fuerza URL nueva para `app.js` y para el import dinámico de Eventos.
 - Assets frontend: `v0.34.2`.
+
+
+## Hotfix Eventos iPad v0.34.3
+
+- Confirmado por captura: el dashboard ya arranca en iPad, pero la carga bajo demanda de `events.js` falla y activa el fallback "Módulo temporalmente no disponible".
+- Para eliminar por completo esa dependencia de Safari/asset-loading, la UI de Eventos se integra ahora en `app.js`.
+- `events.js` deja de ser necesario para el flujo de usuario en producción; la API privada y D1 no cambian.
+- Se mantienen activos/histórico, ficha de evento, Finanzas, Nutrición, OBJETOS, crónica, referencias y balance final.
+- El objetivo de este hotfix es evitar cualquier fallo por carga de un segundo módulo ES en iPad.
+- Assets frontend: `v0.34.3`.
