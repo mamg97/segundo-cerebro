@@ -60,7 +60,7 @@ Añadir `Obtener contenido de URL`:
 - Composición corporal: listas paralelas `bodyMassValues` + `bodyMassMeasuredAts`, `bodyFatPercentageValues` + `bodyFatPercentageMeasuredAts`, `bodyMassIndexValues` + `bodyMassIndexMeasuredAts`, `leanBodyMassValues` + `leanBodyMassMeasuredAts`.
 - Fuente común actual: `Zepp Life`.
 
-No hace falta enviar `date`: el Worker usa la fecha local de Madrid.
+Para el flujo normal de "hoy" no hace falta enviar `date`: el Worker usa la fecha local de Madrid. Para reconciliar un día anterior sí se puede enviar explícitamente `date: YYYY-MM-DD`; el ingest ya lo admite y D1 hace UPSERT por esa fecha.
 
 No hace falta enviar `totalKcal`: el Worker suma activa + reposo.
 
@@ -83,9 +83,16 @@ Recomendación inicial:
 
 Cada ejecución hace UPSERT sobre la fecha actual: D1 conserva una sola fila por día. Repetir el Atajo durante el día es seguro y simplemente sustituye el total anterior por una lectura más reciente.
 
-### Limitación
+### Cierre robusto y reconciliación
 
-Una ejecución a las 23:55 puede no incluir unos pocos minutos finales del día. Para el uso actual esa diferencia es irrelevante. Si en el futuro se necesita cierre exacto, se puede recuperar el día anterior con un Atajo específico sin cambiar el backend.
+Una ejecución a las 23:55 puede no incluir unos pocos minutos finales del día y, si la automatización no llega a ejecutarse, ese día queda sin fila en D1 aunque el usuario haya llevado el Apple Watch.
+
+Para evitar huecos, el patrón recomendado pasa a ser doble e idempotente:
+
+- mantener la sincronización de `hoy` durante el día / al final del día;
+- añadir una reconciliación del `día anterior` a primera hora o después de medianoche, buscando las muestras de ayer y enviando `date` explícito con la fecha de ayer.
+
+Ambas escrituras son UPSERT. Repetirlas no duplica días y la reconciliación del día anterior es la que debe considerarse el cierre definitivo de actividad.
 
 ## Seguridad
 

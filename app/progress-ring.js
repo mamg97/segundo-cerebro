@@ -12,20 +12,25 @@ function escapeHtml(value) {
 export function progressRingMarkup(value, options) {
   options = options || {};
   const pct = clampPercent(value);
+  const rawDisplay = Number(options.displayPercent);
+  const displayPct = Number.isFinite(rawDisplay) ? Math.max(0, Math.round(rawDisplay)) : pct;
   const id = options.id ? ' id="' + escapeHtml(options.id) + '"' : "";
   const tone = escapeHtml(options.tone || "blue");
   const size = escapeHtml(options.size || "md");
   const label = options.label ? '<small>' + escapeHtml(options.label) + '</small>' : "";
-  const aria = escapeHtml(options.ariaLabel || (pct === null ? "Progreso sin datos" : pct + "% de progreso"));
-  return '<span' + id + ' class="progress-ring tone-' + tone + ' size-' + size + (pct === null ? ' is-empty' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100"' +
-    (pct === null ? '' : ' aria-valuenow="' + pct + '"') + ' aria-label="' + aria + '" style="--ring-progress:' + (pct === null ? 0 : pct) + ';--ring-fill:' + (pct === null ? 0 : pct) + '%">' +
-    '<span class="progress-ring-center"><strong class="progress-ring-value">' + (pct === null ? "—" : pct + "%") + '</strong>' + label + '</span></span>';
+  const aria = escapeHtml(options.ariaLabel || (displayPct === null ? "Progreso sin datos" : displayPct + "% de progreso"));
+  const ariaMax = displayPct !== null && displayPct > 100 ? displayPct : 100;
+  return '<span' + id + ' class="progress-ring tone-' + tone + ' size-' + size + (pct === null ? ' is-empty' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="' + ariaMax + '"' +
+    (displayPct === null ? '' : ' aria-valuenow="' + displayPct + '"') + ' aria-label="' + aria + '" style="--ring-progress:' + (pct === null ? 0 : pct) + ';--ring-fill:' + (pct === null ? 0 : pct) + '%">' +
+    '<span class="progress-ring-center"><strong class="progress-ring-value">' + (displayPct === null ? "—" : displayPct + "%") + '</strong>' + label + '</span></span>';
 }
 
 export function updateProgressRing(node, value, options) {
   if (!node) return;
   options = options || {};
   const pct = clampPercent(value);
+  const rawDisplay = Number(options.displayPercent);
+  const displayPct = Number.isFinite(rawDisplay) ? Math.max(0, Math.round(rawDisplay)) : pct;
   node.style.setProperty("--ring-progress", pct === null ? "0" : String(pct));
   node.style.setProperty("--ring-fill", (pct === null ? 0 : pct) + "%");
   node.classList.toggle("is-empty", pct === null);
@@ -33,10 +38,11 @@ export function updateProgressRing(node, value, options) {
     node.classList.toggle("tone-" + tone, (options.tone || "blue") === tone);
   });
   const out = node.querySelector(".progress-ring-value");
-  if (out) out.textContent = pct === null ? "—" : pct + "%";
+  if (out) out.textContent = displayPct === null ? "—" : displayPct + "%";
   const label = node.querySelector("small");
   if (label && options.label !== undefined) label.textContent = options.label || "";
-  if (pct === null) node.removeAttribute("aria-valuenow");
-  else node.setAttribute("aria-valuenow", String(pct));
-  node.setAttribute("aria-label", options.ariaLabel || (pct === null ? "Progreso sin datos" : pct + "% de progreso"));
+  if (displayPct === null) node.removeAttribute("aria-valuenow");
+  else node.setAttribute("aria-valuenow", String(displayPct));
+  node.setAttribute("aria-valuemax", String(displayPct !== null && displayPct > 100 ? displayPct : 100));
+  node.setAttribute("aria-label", options.ariaLabel || (displayPct === null ? "Progreso sin datos" : displayPct + "% de progreso"));
 }
