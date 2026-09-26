@@ -304,3 +304,34 @@ Los gestores no desaparecen: cambian de papel.
 El Coordinador no persiste una copia global de todos los datos. Planifica lecturas y escrituras contra las fuentes propietarias.
 
 La hoja de ruta completa está en `docs/EVOLUTION_GLOBAL_BRAIN.md`.
+
+
+## Eventos e histórico privado
+
+La agenda de iCloud sigue siendo de solo lectura y autoridad temporal. El histórico necesita persistencia mínima porque CalDAV se consulta con una ventana acotada.
+
+```text
+iCloud Calendar (fechas/horas)
+        ↓ read-only
+importantEventRules privadas
+        ↓
+D1 event_records
+        ├── event_facts        ← crónica mínima
+        └── event_refs         ← punteros a fuentes
+        ↓
+GET /api/events
+        ↓
+Eventos / Histórico / ficha
+        ├── Finanzas (referencia, no copia)
+        ├── Salud-Nutrición (consulta por fechas)
+        └── OBJETOS (lista contextual por evento_ref/lista_id)
+```
+
+### Reglas de composición
+
+- Un evento sincronizado usa como identidad el ID estable producido por el adaptador iCloud.
+- La lectura de `/api/state` hace upsert de los eventos importantes actualmente visibles; nunca escribe en calendario.
+- La fecha de fin determina automáticamente cuándo deja Home y aparece solo en Histórico.
+- D1 no replica el detalle financiero, nutricional ni material.
+- Las obligaciones financieras sin semántica de viaje/celebración no se presentan como eventos históricos.
+- El dashboard expone `Eventos` como dominio de primer nivel y permite abrir la ficha desde Home o desde el histórico.
