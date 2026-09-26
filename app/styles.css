@@ -11444,6 +11444,7 @@ html[data-theme="light"] :is(
 .progress-ring {
   --ring-progress: 0;
   --ring-fill: 0%;
+  --ring-overflow-fill: 0%;
   --ring-color: var(--blue);
   --ring-track: color-mix(in srgb, var(--line-strong) 78%, transparent);
   --ring-center: var(--surface);
@@ -11474,6 +11475,35 @@ html[data-theme="light"] :is(
   background: var(--ring-center);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 62%, transparent);
   content: "";
+}
+
+.progress-ring::after {
+  position: absolute;
+  inset: -4px;
+  z-index: 2;
+  border-radius: inherit;
+  background:
+    conic-gradient(
+      from -90deg,
+      var(--ring-color) 0 var(--ring-overflow-fill),
+      transparent var(--ring-overflow-fill) 100%
+    );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  opacity: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.progress-ring.has-overflow::after {
+  opacity: 1;
+}
+
+.progress-ring.tone-coral.has-overflow {
+  box-shadow:
+    0 7px 24px color-mix(in srgb, var(--coral) 28%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--coral) 18%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--coral) 16%, transparent);
 }
 
 .progress-ring-center {
