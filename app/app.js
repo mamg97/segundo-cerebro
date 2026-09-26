@@ -4,6 +4,7 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.29.0";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.33.0";
+import { eventsAreaFromState, openEventsWorkspace, openEventDetail } from "./events.js?v=0.34.0";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 
@@ -143,6 +144,15 @@ function ensureDerivedAreas() {
       const habitsIndex = state.areas.findIndex((area) => area.id === "area-habits");
       const insertAt = pantryIndex >= 0 ? pantryIndex + 1 : habitsIndex >= 0 ? habitsIndex : state.areas.length;
       state.areas.splice(insertAt, 0, objectsArea);
+    }
+  }
+
+  if (!state.areas.some((area) => area.id === "area-events")) {
+    const eventsArea = eventsAreaFromState(state, privateModeKind);
+    if (eventsArea) {
+      const calendarIndex = state.areas.findIndex((area) => area.id === "area-calendar");
+      const insertAt = calendarIndex >= 0 ? calendarIndex + 1 : 1;
+      state.areas.splice(insertAt, 0, eventsArea);
     }
   }
 
@@ -658,6 +668,19 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
   }
 
   container.innerHTML = importantEvents.map((item) => renderImportantEventCard(item, true)).join("");
+  container.querySelectorAll("[data-important-event-id]").forEach((card) => {
+    const open = () => {
+      const item = importantEvents.find((candidate) => candidate.id === card.dataset.importantEventId) || null;
+      void openEventDetail(state, privateModeKind, card.dataset.importantEventId, item);
+    };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    });
+  });
 }
 
 function openImportantEventsDetail() {
@@ -690,7 +713,7 @@ function renderImportantEventCard(item, compact = false) {
     : "Sin fecha";
 
   return `
-    <article class="event-budget-item important-event-item ${compact ? "compact" : "detail"}">
+    <article class="event-budget-item important-event-item ${compact ? "compact" : "detail"}" data-important-event-id="${escapeHtml(item.id || "")}" role="button" tabindex="0" aria-label="Abrir ${escapeHtml(item.title)}">
       <div class="event-budget-date">
         <strong>${validDate ? date.getDate() : "—"}</strong>
         <span>${validDate ? shortMonth(date) : "sin fecha"}</span>
@@ -710,7 +733,7 @@ function renderImportantEventCard(item, compact = false) {
 }
 
 function collectImportantEvents(finance = state.financeSummary || {}) {
-  const now = Date.now() - 24 * 60 * 60 * 1000;
+  const now = Date.now();
   const rules = Array.isArray(state.importantEventRules)
     ? state.importantEventRules
     : Array.isArray(finance.importantEventRules)
@@ -731,12 +754,13 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
       });
       if (!rule) return null;
       return {
-        id: rule.id || event.id || [event.calendarName, event.title, event.startsAt].join("|"),
+        id: event.id || rule.id || [event.calendarName, event.title, event.startsAt].join("|"),
         title: rule.displayTitle || safeDisplayEventTitle(event.title),
         startsAt: event.startsAt,
         endsAt: event.endsAt,
-        location: event.location || null,
+        location: event.location || event.locationRef || null,
         kind: rule.kind || "important",
+        status: eventStatusFromDates(event.startsAt, event.endsAt, event.status),
         source: "calendar"
       };
     })
@@ -763,11 +787,15 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
         });
         return null;
       }
+      const kind = inferImportantKind(item.title);
+      if (kind === "important") return null;
       return {
         ...item,
         title,
         startsAt: item.date ? `${item.date}T12:00:00` : null,
-        kind: inferImportantKind(item.title),
+        endsAt: item.date ? `${item.date}T23:59:59` : null,
+        kind,
+        status: "CONFIRMADO",
         source: "finance"
       };
     })
@@ -795,6 +823,18 @@ function normalizeForMatch(value) {
 function safeDisplayEventTitle(value) {
   const title = String(value || "");
   return /varsovia/i.test(title) ? "Viaje nov" : title;
+}
+
+function eventStatusFromDates(startsAt, endsAt, baseStatus = "CONFIRMADO") {
+  const base = String(baseStatus || "CONFIRMADO").toUpperCase();
+  if (base === "CANCELADO") return "CANCELADO";
+  const start = startsAt ? new Date(startsAt).getTime() : NaN;
+  const end = new Date(endsAt || startsAt || "").getTime();
+  const now = Date.now();
+  if (Number.isFinite(end) && end < now) return "CERRADO";
+  if (Number.isFinite(start) && start <= now && (!Number.isFinite(end) || end >= now)) return "EN_CURSO";
+  if (base === "PROPUESTO" || base === "PENDIENTE") return base;
+  return "CONFIRMADO";
 }
 
 function inferImportantKind(title) {
@@ -3880,6 +3920,7 @@ function bindInteractions() {
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
+  document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspace(state, privateModeKind, "history"));
   document.querySelector("#home-habits-card")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
   document.querySelector("#home-nutrition-card")?.addEventListener("click", async () => {
     await openHealthDetail();
@@ -3923,6 +3964,10 @@ function openNavigationArea(areaId) {
 }
 
 function openArea(areaId) {
+  if (areaId === "area-events") {
+    void openEventsWorkspace(state, privateModeKind, "active");
+    return;
+  }
   if (areaId === "area-finance") {
     openBudgetDetail();
     return;
