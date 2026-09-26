@@ -75,7 +75,7 @@ assert.doesNotMatch(index, /habit-progress-ring/);
 
 // Dynamic update path is mandatory: live cards call updateProgressRing and it replaces SVG geometry.
 assert.match(ringSource, /function updateRingSvg\([^)]*\)[\s\S]*outerHTML = markup/);
-assert.match(app, /updateProgressRing\(ring, completion/);
+assert.match(app, /updateProgressRing\(ring, percentage/);
 assert.match(app, /updateProgressRing\(ring, fillPct/);
 
 for (const marker of [
