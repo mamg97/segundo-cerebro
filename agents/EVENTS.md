@@ -15,10 +15,12 @@ Su salida operativa debe priorizar:
 
 | Estado | Uso |
 |---|---|
-| `CONFIRMADO` | El evento existe y se realizará |
 | `PROPUESTO` | Existe una propuesta todavía no decidida |
 | `PENDIENTE` | El evento está confirmado pero falta alguna gestión |
-| `CERRADO` | El evento ya ocurrió y no quedan gestiones pendientes |
+| `CONFIRMADO` | El evento existe y se realizará |
+| `EN_CURSO` | La fecha de inicio ya llegó y el evento todavía no ha terminado |
+| `CERRADO` | La fecha de fin ya pasó; se conserva en el histórico |
+| `CANCELADO` | El evento no se realiza, pero se conserva para trazabilidad |
 
 ## Información operativa
 
@@ -77,3 +79,42 @@ Para equipaje y preparación material:
 4. EVENTOS no copia ropa, electrónica ni otros objetos a una base propia.
 
 Las necesidades `FALTA_COMPRAR` pueden trasladarse al gestor competente, pero no deben convertirse en objetos poseídos hasta que realmente lo sean.
+
+
+## Histórico y crónica privada
+
+Los eventos tienen ciclo de vida persistente. La desaparición de un evento del horizonte de iCloud no elimina su identidad ni su crónica.
+
+La capa privada D1 conserva únicamente:
+
+- identidad estable del evento;
+- tipo y estado operativo;
+- referencias a calendario, finanzas y lista de objetos;
+- participantes cuando se hayan registrado explícitamente;
+- síntesis operativa y balance final;
+- hechos fechados de la crónica;
+- punteros mínimos a fuentes externas.
+
+Tipos iniciales de hecho:
+
+`PLAN | GASTO | COMIDA | NUTRICION | TRANSPORTE | LUGAR | INCIDENCIA | DECISION | NOTA`.
+
+Un hecho no sustituye a su fuente propietaria. Por ejemplo, un hecho `GASTO` puede explicar qué ocurrió, pero el importe conciliado continúa perteneciendo a Finanzas.
+
+### Ciclo de presentación
+
+- Home muestra eventos `PROPUESTO`, `PENDIENTE`, `CONFIRMADO` y `EN_CURSO`.
+- En cuanto `ends_at < now`, la vista derivada lo presenta como `CERRADO`.
+- `CERRADO` y `CANCELADO` dejan de ocupar el resumen principal y permanecen en Eventos → Histórico.
+- Las obligaciones puramente financieras no se convierten artificialmente en eventos históricos.
+
+## API privada
+
+- `GET /api/events?scope=all|active|history`
+- `POST /api/events`
+- `GET /api/events/:id`
+- `PATCH /api/events/:id`
+- `POST /api/events/:id/facts`
+- `POST /api/events/:id/references`
+
+La sincronización de lectura de `/api/state` persiste automáticamente los eventos importantes detectados en iCloud que coinciden con reglas privadas. No escribe en iCloud.
