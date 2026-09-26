@@ -1,6 +1,11 @@
-function clampPercent(value) {
+function normalizePercent(value) {
   const number = Number(value);
-  return Number.isFinite(number) ? Math.max(0, Math.min(100, Math.round(number))) : null;
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : null;
+}
+
+function clampPercent(value) {
+  const normalized = normalizePercent(value);
+  return normalized === null ? null : Math.min(100, normalized);
 }
 
 function escapeHtml(value) {
@@ -82,9 +87,10 @@ function updateRingSvg(node, percent, displayPct) {
 
 export function progressRingMarkup(value, options) {
   options = options || {};
+  const normalized = normalizePercent(value);
   const pct = clampPercent(value);
   const rawDisplay = Number(options.displayPercent);
-  const displayPct = Number.isFinite(rawDisplay) ? Math.max(0, Math.round(rawDisplay)) : pct;
+  const displayPct = Number.isFinite(rawDisplay) ? Math.max(0, Math.round(rawDisplay)) : normalized;
   const id = options.id ? ' id="' + escapeHtml(options.id) + '"' : "";
   const tone = escapeHtml(options.tone || "blue");
   const size = escapeHtml(options.size || "md");
@@ -100,9 +106,10 @@ export function progressRingMarkup(value, options) {
 export function updateProgressRing(node, value, options) {
   if (!node) return;
   options = options || {};
+  const normalized = normalizePercent(value);
   const pct = clampPercent(value);
   const rawDisplay = Number(options.displayPercent);
-  const displayPct = Number.isFinite(rawDisplay) ? Math.max(0, Math.round(rawDisplay)) : pct;
+  const displayPct = Number.isFinite(rawDisplay) ? Math.max(0, Math.round(rawDisplay)) : normalized;
 
   updateRingSvg(node, pct, displayPct);
   node.classList.toggle("is-empty", pct === null);
