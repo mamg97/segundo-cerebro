@@ -2,68 +2,79 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { progressRingMarkup } from "./progress-ring.js";
 
-function circleStyle(markup, className) {
+function getArc(markup, className) {
   const escaped = className.replace(/[.*+?^\${}()|[\]\\]/g, "\\$&");
-  const match = markup.match(new RegExp('<circle class="' + escaped + '"[^>]*style="([^"]*)"'));
-  assert.ok(match, "Missing circle " + className);
-  return Object.fromEntries(match[1].split(";").filter(Boolean).map((item) => {
-    const index = item.indexOf(":");
-    return [item.slice(0, index), item.slice(index + 1)];
-  }));
+  const match = markup.match(new RegExp('<path class="' + escaped + '[^"]*"[^>]*data-progress="([^"]+)"[^>]*d="([^"]+)"'));
+  return match ? { progress: Number(match[1]), d: match[2] } : null;
 }
 
-function expectedOffset(radius, percent) {
-  const circle = 2 * Math.PI * radius;
-  return circle * (1 - Math.max(0, Math.min(100, percent)) / 100);
+function getFullCircle(markup, className) {
+  const escaped = className.replace(/[.*+?^\${}()|[\]\\]/g, "\\$&");
+  return new RegExp('<circle class="' + escaped + '[^"]*progress-ring-full"').test(markup);
 }
 
-function assertOffset(markup, className, radius, percent) {
-  const style = circleStyle(markup, className);
-  const actual = Number(style["stroke-dashoffset"]);
-  const expected = expectedOffset(radius, percent);
-  assert.ok(Number.isFinite(actual), className + " has a numeric dash offset");
-  assert.ok(Math.abs(actual - expected) < 0.002, className + " expected " + expected + " got " + actual);
-}
-
-for (const pct of [0, 16, 26, 37, 60, 100]) {
+for (const pct of [16, 26, 37, 60]) {
   const markup = progressRingMarkup(pct, { tone: "mint", label: "test" });
-  assertOffset(markup, "progress-ring-stroke progress-ring-main", 36, pct);
+  const arc = getArc(markup, "progress-ring-stroke progress-ring-main");
+  assert.ok(arc, pct + "% must render as a partial SVG path, not a full circle");
+  assert.equal(arc.progress, pct);
   assert.match(markup, new RegExp('aria-valuenow="' + pct + '"'));
   assert.match(markup, new RegExp('>' + pct + '%<'));
+  assert.equal(getFullCircle(markup, "progress-ring-stroke progress-ring-main"), false);
 }
 
+const p0 = progressRingMarkup(0, { tone: "violet", label: "hoy" });
+assert.equal(getArc(p0, "progress-ring-stroke progress-ring-main"), null);
+assert.equal(getFullCircle(p0, "progress-ring-stroke progress-ring-main"), false);
+
+const p100 = progressRingMarkup(100, { tone: "mint" });
+assert.equal(getFullCircle(p100, "progress-ring-stroke progress-ring-main"), true);
+
 const p132 = progressRingMarkup(132, { tone: "blue", label: "ref" });
-assertOffset(p132, "progress-ring-stroke progress-ring-main", 36, 100);
-assertOffset(p132, "progress-ring-stroke progress-ring-lap progress-ring-lap-2", 44, 32);
-assert.match(p132, /aria-valuenow="132"/);
-assert.match(p132, />132%</);
+assert.equal(getFullCircle(p132, "progress-ring-stroke progress-ring-main"), true);
+const lap132 = getArc(p132, "progress-ring-stroke progress-ring-lap progress-ring-lap-2");
+assert.ok(lap132);
+assert.equal(lap132.progress, 32);
 
 const p178 = progressRingMarkup(178, { tone: "coral", label: "máx" });
-assertOffset(p178, "progress-ring-stroke progress-ring-main", 36, 100);
-assertOffset(p178, "progress-ring-stroke progress-ring-lap progress-ring-lap-2", 44, 78);
+assert.equal(getFullCircle(p178, "progress-ring-stroke progress-ring-main"), true);
+const lap178 = getArc(p178, "progress-ring-stroke progress-ring-lap progress-ring-lap-2");
+assert.ok(lap178);
+assert.equal(lap178.progress, 78);
 
 const p220 = progressRingMarkup(220, { tone: "coral", label: "ref" });
-assertOffset(p220, "progress-ring-stroke progress-ring-main", 36, 100);
-assertOffset(p220, "progress-ring-stroke progress-ring-lap progress-ring-lap-2", 44, 100);
-assertOffset(p220, "progress-ring-stroke progress-ring-lap progress-ring-lap-3", 48, 20);
-assert.match(p220, />220%</);
+assert.equal(getFullCircle(p220, "progress-ring-stroke progress-ring-main"), true);
+assert.equal(getFullCircle(p220, "progress-ring-stroke progress-ring-lap progress-ring-lap-2"), true);
+const lap220 = getArc(p220, "progress-ring-stroke progress-ring-lap progress-ring-lap-3");
+assert.ok(lap220);
+assert.equal(lap220.progress, 20);
 
-// Global surface audit: every visible percentage circle must use the same component/version.
+// Exact geometric spot checks: these endpoints correspond to the requested angle.
+assert.match(progressRingMarkup(26, {}), /d="M 50 14 A 36 36 0 0 1 85\.929 52\.26"/);
+assert.match(progressRingMarkup(60, {}), /d="M 50 14 A 36 36 0 1 1 28\.84 79\.125"/);
+
+// Global audit: all percentage rings use the same component/version.
 const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
 const adherence = readFileSync(new URL("./adherence.js", import.meta.url), "utf8");
 const index = readFileSync(new URL("./index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), "utf8");
 
-assert.match(app, /progress-ring\.js\?v=0\.33\.7/);
-assert.match(app, /adherence\.js\?v=0\.33\.7/);
-assert.match(adherence, /progress-ring\.js\?v=0\.33\.7/);
-assert.match(index, /app\.js\?v=0\.33\.7/);
-assert.doesNotMatch(css, /\.progress-ring-stroke\s*\{[^}]*stroke-dashoffset\s*:/s);
+assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
+assert.match(app, /adherence\.js\?v=0\.33\.8/);
+assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
+assert.match(index, /app\.js\?v=0\.33\.8/);
+assert.doesNotMatch(css, /stroke-dasharray|stroke-dashoffset/);
+assert.doesNotMatch(ringSource, /stroke-dasharray|stroke-dashoffset|pathLength/);
 assert.doesNotMatch(css, /\.habit-progress-ring\s*\{/);
 assert.doesNotMatch(app, /habit-progress-ring/);
 assert.doesNotMatch(index, /habit-progress-ring/);
 
-// Known live surfaces that must remain on the shared ring component.
+// Dynamic update path is mandatory: live cards call updateProgressRing and it replaces SVG geometry.
+assert.match(ringSource, /function updateRingSvg\([^)]*\)[\s\S]*outerHTML = markup/);
+assert.match(app, /updateProgressRing\(ring, completion/);
+assert.match(app, /updateProgressRing\(ring, fillPct/);
+
 for (const marker of [
   "#home-habits-ring",
   "#home-kcal-ring",
@@ -77,4 +88,4 @@ for (const marker of [
 }
 assert.ok(adherence.includes("Adherencia mensual"), "Missing audited adherence ring surface");
 
-console.log("progress-ring geometry and all live ring surfaces OK");
+console.log("geometric progress rings: static geometry, overflow, dynamic update and all live surfaces OK");
