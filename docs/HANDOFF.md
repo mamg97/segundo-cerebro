@@ -460,3 +460,14 @@ Assets frontend: `v0.34.0`.
 3. Abrir una tarjeta activa desde Home y revisar ficha agregada.
 4. Verificar que una lista de OBJETOS con `evento_ref` se resuelve en la ficha.
 5. Tras finalizar un evento, confirmar que desaparece de Home y figura en Histórico sin perder hechos.
+
+
+## Hotfix de carga privada v0.34.1
+
+- La captura posterior a v0.34.0 mostró el dashboard detenido en el esqueleto inicial: `/api/state` podía bloquear toda la inicialización mientras esperaba integraciones externas.
+- `/api/state` ahora consulta Finanzas, HabitQuest, Nutrición, Despensa, Objetos, Proyectos, iCloud y resumen familiar en paralelo con límites de latencia.
+- Una fuente lenta degrada su propio estado a `timeout/error` sin impedir que el resto del estado privado llegue al navegador.
+- La persistencia y el resumen de Eventos son best-effort y tienen límites propios; nunca deben bloquear Home.
+- El cliente aborta la carga inicial del estado privado a los 9 s como última salvaguarda y continúa renderizando en vez de quedar eternamente en `Cargando…`.
+- Si esa salvaguarda entra, el lateral muestra `Modo privado · Conexión temporalmente no disponible` en lugar de aparentar una carga infinita.
+- Assets frontend: `v0.34.1`.
