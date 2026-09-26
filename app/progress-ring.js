@@ -15,9 +15,26 @@ function lapPercent(displayPct, lapIndex) {
   return Math.max(0, Math.min(100, displayPct - start));
 }
 
-function dashArray(percent) {
-  const value = Math.max(0, Math.min(100, Number(percent) || 0));
-  return value + " " + (100 - value);
+function circumference(radius) {
+  return 2 * Math.PI * radius;
+}
+
+function dashGeometry(percent, radius) {
+  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+  const circle = circumference(radius);
+  return {
+    dasharray: circle.toFixed(3),
+    dashoffset: (circle * (1 - pct / 100)).toFixed(3)
+  };
+}
+
+function circleMarkup(className, radius, percent, extraStyle) {
+  const geometry = dashGeometry(percent, radius);
+  return '<circle class="' + className + '" cx="50" cy="50" r="' + radius + '"' +
+    ' stroke-dasharray="' + geometry.dasharray + '"' +
+    ' stroke-dashoffset="' + geometry.dashoffset + '"' +
+    (extraStyle ? ' style="' + extraStyle + '"' : '') +
+    '></circle>';
 }
 
 function ringSvgMarkup(percent, displayPct) {
@@ -25,11 +42,18 @@ function ringSvgMarkup(percent, displayPct) {
   const lap2 = lapPercent(displayPct, 1);
   const lap3 = lapPercent(displayPct, 2);
   return '<svg class="progress-ring-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">' +
-    '<circle class="progress-ring-track" cx="50" cy="50" r="36" pathLength="100"></circle>' +
-    '<circle class="progress-ring-stroke progress-ring-main" cx="50" cy="50" r="36" pathLength="100" style="stroke-dasharray:' + dashArray(main) + '"></circle>' +
-    '<circle class="progress-ring-stroke progress-ring-lap progress-ring-lap-2" cx="50" cy="50" r="44" pathLength="100" style="stroke-dasharray:' + dashArray(lap2) + ';opacity:' + (lap2 > 0 ? 1 : 0) + '"></circle>' +
-    '<circle class="progress-ring-stroke progress-ring-lap progress-ring-lap-3" cx="50" cy="50" r="48" pathLength="100" style="stroke-dasharray:' + dashArray(lap3) + ';opacity:' + (lap3 > 0 ? 1 : 0) + '"></circle>' +
+    '<circle class="progress-ring-track" cx="50" cy="50" r="36"></circle>' +
+    circleMarkup("progress-ring-stroke progress-ring-main", 36, main, "") +
+    circleMarkup("progress-ring-stroke progress-ring-lap progress-ring-lap-2", 44, lap2, "opacity:" + (lap2 > 0 ? 1 : 0)) +
+    circleMarkup("progress-ring-stroke progress-ring-lap progress-ring-lap-3", 48, lap3, "opacity:" + (lap3 > 0 ? 1 : 0)) +
     '</svg>';
+}
+
+function setCircleProgress(circle, radius, percent) {
+  if (!circle) return;
+  const geometry = dashGeometry(percent, radius);
+  circle.setAttribute("stroke-dasharray", geometry.dasharray);
+  circle.setAttribute("stroke-dashoffset", geometry.dashoffset);
 }
 
 function updateRingSvg(node, percent, displayPct) {
@@ -39,21 +63,20 @@ function updateRingSvg(node, percent, displayPct) {
     node.insertAdjacentHTML("afterbegin", ringSvgMarkup(percent, displayPct));
     svg = node.querySelector(".progress-ring-svg");
   }
+
   const main = percent === null ? 0 : percent;
   const lap2 = lapPercent(displayPct, 1);
   const lap3 = lapPercent(displayPct, 2);
   const mainCircle = svg?.querySelector(".progress-ring-main");
   const lap2Circle = svg?.querySelector(".progress-ring-lap-2");
   const lap3Circle = svg?.querySelector(".progress-ring-lap-3");
-  if (mainCircle) mainCircle.style.strokeDasharray = dashArray(main);
-  if (lap2Circle) {
-    lap2Circle.style.strokeDasharray = dashArray(lap2);
-    lap2Circle.style.opacity = lap2 > 0 ? "1" : "0";
-  }
-  if (lap3Circle) {
-    lap3Circle.style.strokeDasharray = dashArray(lap3);
-    lap3Circle.style.opacity = lap3 > 0 ? "1" : "0";
-  }
+
+  setCircleProgress(mainCircle, 36, main);
+  setCircleProgress(lap2Circle, 44, lap2);
+  setCircleProgress(lap3Circle, 48, lap3);
+
+  if (lap2Circle) lap2Circle.style.opacity = lap2 > 0 ? "1" : "0";
+  if (lap3Circle) lap3Circle.style.opacity = lap3 > 0 ? "1" : "0";
 }
 
 export function progressRingMarkup(value, options) {
