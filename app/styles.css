@@ -11427,8 +11427,6 @@ html[data-theme="light"] :is(
 .progress-ring-track,
 .progress-ring-stroke {
   fill: none;
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
   vector-effect: non-scaling-stroke;
 }
 
@@ -11440,7 +11438,7 @@ html[data-theme="light"] :is(
 .progress-ring-stroke {
   stroke: var(--ring-color);
   stroke-linecap: round;
-  transition: stroke-dashoffset .22s ease, opacity .18s ease;
+  stroke-linejoin: round;
 }
 
 .progress-ring-main {
