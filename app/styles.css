@@ -4234,34 +4234,6 @@ html[data-theme="dark"] .gym-session-footer input {
   font-size: 9px;
 }
 
-.habit-progress-ring {
-  display: grid;
-  width: 62px;
-  height: 62px;
-  place-items: center;
-  border-radius: 50%;
-  background: conic-gradient(var(--mint) calc(var(--habit-progress) * 1%), color-mix(in srgb, var(--line) 72%, transparent) 0);
-  position: relative;
-}
-
-.habit-progress-ring::after {
-  content: "";
-  position: absolute;
-  inset: 7px;
-  border-radius: 50%;
-  background: var(--paper);
-}
-
-.habit-progress-ring > span {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  text-align: center;
-}
-
-.habit-progress-ring strong { font-size: 13px; }
-.habit-progress-ring small { color: var(--ink-soft); font-size: 7px; }
-
 .habit-view-toggle {
   min-width: 38px;
   min-height: 38px;
@@ -5218,15 +5190,6 @@ html[data-theme="dark"] .habits-level-progress progress,
 html[data-theme="dark"] .habit-progress-item progress,
 html[data-theme="dark"] .habit-achievements progress {
   accent-color: var(--orange);
-}
-
-html[data-theme="dark"] .habit-progress-ring {
-  background: conic-gradient(var(--orange) calc(var(--habit-progress) * 1%), rgba(95, 168, 255, .12) 0);
-  box-shadow: 0 0 24px rgba(255, 122, 26, .08);
-}
-
-html[data-theme="dark"] .habit-progress-ring::after {
-  background: var(--surface);
 }
 
 html[data-theme="dark"] .habit-today-item {
