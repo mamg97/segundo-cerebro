@@ -4,7 +4,6 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.29.0";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.33.0";
-import { eventsAreaFromState, openEventsWorkspace, openEventDetail } from "./events.js?v=0.34.0";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 
@@ -13,6 +12,69 @@ let areaById = new Map();
 let privateMode = false;
 let privateModeKind = null;
 let remoteStateLoadError = null;
+let eventsFeaturePromise = null;
+
+function eventsAreaFromStateFallback(currentState, mode) {
+  if (mode !== "remote") return null;
+  const summary = currentState?.eventsSummary || {};
+  const active = Number(summary.activeCount || 0);
+  const inProgress = Number(summary.inProgressCount || 0);
+  const history = Number(summary.historyCount || 0);
+  return {
+    id: "area-events",
+    slug: "events",
+    title: "Eventos",
+    shortTitle: "Eventos",
+    summary: inProgress
+      ? `${inProgress} en curso · ${active} activos · ${history} históricos.`
+      : `${active} próximos · ${history} históricos.`,
+    health: 85,
+    tone: "blue",
+    module: "Events",
+    sensitivity: "confidencial",
+    status: inProgress ? "attention" : "steady"
+  };
+}
+
+async function loadEventsFeature() {
+  if (!eventsFeaturePromise) {
+    eventsFeaturePromise = import("./events.js?v=0.34.2").catch((error) => {
+      eventsFeaturePromise = null;
+      console.warn("Módulo Eventos no disponible; el dashboard principal sigue operativo.", error);
+      return null;
+    });
+  }
+  return eventsFeaturePromise;
+}
+
+async function openEventsWorkspaceLazy(initialTab = "active") {
+  const feature = await loadEventsFeature();
+  if (feature?.openEventsWorkspace) {
+    return feature.openEventsWorkspace(state, privateModeKind, initialTab);
+  }
+  openFeatureUnavailableDialog("Eventos");
+}
+
+async function openEventDetailLazy(eventId, fallback) {
+  const feature = await loadEventsFeature();
+  if (feature?.openEventDetail) {
+    return feature.openEventDetail(state, privateModeKind, eventId, fallback);
+  }
+  openFeatureUnavailableDialog("Eventos");
+}
+
+function openFeatureUnavailableDialog(title) {
+  const dialog = document.querySelector("#detail-dialog");
+  const context = document.querySelector("#dialog-context");
+  const heading = document.querySelector("#dialog-title");
+  const body = document.querySelector("#dialog-body");
+  if (!dialog || !context || !heading || !body) return;
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog", "events-workspace-dialog", "event-detail-dialog");
+  context.textContent = "Módulo temporalmente no disponible";
+  heading.textContent = title;
+  body.innerHTML = "<p>El panel principal está operativo, pero este módulo no ha podido cargarse. Recarga la página y vuelve a intentarlo.</p>";
+  if (!dialog.open) dialog.showModal();
+}
 
 const colors = {
   ink: "#52647f", blue: "#2867e8", mint: "#2e8b78", sky: "#3984a8",
@@ -149,7 +211,7 @@ function ensureDerivedAreas() {
   }
 
   if (!state.areas.some((area) => area.id === "area-events")) {
-    const eventsArea = eventsAreaFromState(state, privateModeKind);
+    const eventsArea = eventsAreaFromStateFallback(state, privateModeKind);
     if (eventsArea) {
       const calendarIndex = state.areas.findIndex((area) => area.id === "area-calendar");
       const insertAt = calendarIndex >= 0 ? calendarIndex + 1 : 1;
@@ -681,7 +743,7 @@ function renderImportantEvents(finance = state.financeSummary || {}) {
   container.querySelectorAll("[data-important-event-id]").forEach((card) => {
     const open = () => {
       const item = importantEvents.find((candidate) => candidate.id === card.dataset.importantEventId) || null;
-      void openEventDetail(state, privateModeKind, card.dataset.importantEventId, item);
+      void openEventDetailLazy(card.dataset.importantEventId, item);
     };
     card.addEventListener("click", open);
     card.addEventListener("keydown", (event) => {
@@ -3930,7 +3992,7 @@ function bindInteractions() {
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
-  document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspace(state, privateModeKind, "history"));
+  document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspaceLazy("history"));
   document.querySelector("#home-habits-card")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
   document.querySelector("#home-nutrition-card")?.addEventListener("click", async () => {
     await openHealthDetail();
@@ -3975,7 +4037,7 @@ function openNavigationArea(areaId) {
 
 function openArea(areaId) {
   if (areaId === "area-events") {
-    void openEventsWorkspace(state, privateModeKind, "active");
+    void openEventsWorkspaceLazy("active");
     return;
   }
   if (areaId === "area-finance") {

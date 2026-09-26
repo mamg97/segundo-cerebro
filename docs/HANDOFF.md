@@ -471,3 +471,14 @@ Assets frontend: `v0.34.0`.
 - El cliente aborta la carga inicial del estado privado a los 9 s como última salvaguarda y continúa renderizando en vez de quedar eternamente en `Cargando…`.
 - Si esa salvaguarda entra, el lateral muestra `Modo privado · Conexión temporalmente no disponible` en lugar de aparentar una carga infinita.
 - Assets frontend: `v0.34.1`.
+
+
+## Hotfix de arranque iPad v0.34.2
+
+- La segunda captura de iPad mostró que el problema no era solo latencia de `/api/state`: a las 20:04 el encabezado seguía mostrando `Buenos días`, prueba de que `app.js` no había llegado a ejecutar `init()`.
+- El único módulo estático nuevo introducido por v0.34.0 era `events.js`. Un fallo de carga/parseo de cualquier import estático impide arrancar todo el grafo ES modules.
+- `events.js` deja de ser dependencia estática del bootstrap. Se carga con `import()` únicamente al abrir Eventos/Histórico o una ficha.
+- El área Eventos se puede construir desde `eventsSummary` sin importar el módulo de detalle.
+- Si Eventos fallara en un navegador concreto, el dashboard principal continúa operativo y solo se degrada ese módulo.
+- Se fuerza URL nueva para `app.js` y para el import dinámico de Eventos.
+- Assets frontend: `v0.34.2`.
