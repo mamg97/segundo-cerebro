@@ -37,6 +37,8 @@ jobs:
 
       - run: node --check ../app/projects.js
 
+      - run: node --check ../app/events.js
+
       - run: node --check ../app/adherence.js
 
       - run: node --check ../app/progress-ring.js
@@ -49,6 +51,8 @@ jobs:
       - run: node --check src/objects.js
 
       - run: node --check src/projects.js
+
+      - run: node --check src/events.js
 
       - run: node --check src/adherence.js
 
