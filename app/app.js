@@ -5,7 +5,7 @@ import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./p
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.33.0";
 import { loadHealthAdherence } from "./adherence.js?v=0.32.1";
-import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.1";
+import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.2";
 
 let state = mockState;
 let areaById = new Map();
@@ -550,16 +550,19 @@ async function renderHomeNutritionCard() {
     burnedNode.textContent = Number.isFinite(burned) ? formatKcal(burned) : "—";
     targetNode.textContent = Number.isFinite(target) ? formatKcal(target) : "Pendiente";
     if (Number.isFinite(target) && target > 0 && Number.isFinite(consumed)) {
-      const pct = Math.max(0, Math.min(100, Math.round((consumed / target) * 100)));
+      const rawPct = Math.max(0, Math.round((consumed / target) * 100));
+      const fillPct = Math.min(100, rawPct);
       const remaining = target - consumed;
-      updateProgressRing(ring, pct, {
-        tone: remaining < 0 ? "coral" : "amber",
-        label: "kcal",
-        ariaLabel: pct + "% del objetivo diario de calorías consumido"
+      const tone = rawPct <= 100 ? "mint" : rawPct <= 110 ? "amber" : "coral";
+      updateProgressRing(ring, fillPct, {
+        tone,
+        label: "máx",
+        displayPercent: rawPct,
+        ariaLabel: rawPct + "% del máximo diario de calorías consumido"
       });
       statusNode.textContent = remaining >= 0
-        ? formatKcal(remaining) + " restantes del objetivo"
-        : formatKcal(Math.abs(remaining)) + " por encima del objetivo";
+        ? "Dentro del máximo · margen " + formatKcal(remaining)
+        : "Exceso · " + formatKcal(Math.abs(remaining)) + " por encima";
     } else {
       updateProgressRing(ring, null, {
         tone: "amber",
@@ -2372,10 +2375,10 @@ function renderNutritionPanel(data) {
 function renderNutritionMacroTargets(consumed, objective) {
   if (!objective) return "";
   const rows = [
-    ["Calorías", Number(consumed?.kcal || 0), Number(objective.kcal), " kcal", "amber", "kcal"],
-    ["Proteína", Number(consumed?.protein || 0), Number(objective.protein), " g", "mint", "prot"],
-    ["Carbohidratos", Number(consumed?.carbs || 0), Number(objective.carbs), " g", "blue", "carb"],
-    ["Grasas", Number(consumed?.fat || 0), Number(objective.fat), " g", "violet", "grasas"]
+    ["Calorías", Number(consumed?.kcal || 0), Number(objective.kcal), " kcal", "amber", "máx"],
+    ["Proteína", Number(consumed?.protein || 0), Number(objective.protein), " g", "mint", "mín"],
+    ["Carbohidratos", Number(consumed?.carbs || 0), Number(objective.carbs), " g", "blue", "ref"],
+    ["Grasas", Number(consumed?.fat || 0), Number(objective.fat), " g", "violet", "ref"]
   ].filter(([, , target]) => Number.isFinite(target) && target > 0);
 
   if (!rows.length) return "";
@@ -2393,14 +2396,18 @@ function renderNutritionMacroTargets(consumed, objective) {
           const progress = Math.min(100, rawPercent);
           const difference = value - target;
           const remaining = Math.max(0, target - value);
-          const ringTone = label === "Calorías" && difference > 0 ? "coral" : tone;
+          const ringTone = label === "Calorías"
+            ? rawPercent <= 100 ? "mint" : rawPercent <= 110 ? "amber" : "coral"
+            : label === "Proteína"
+              ? rawPercent >= 94 ? "mint" : rawPercent >= 75 ? "amber" : "coral"
+              : rawPercent > 150 ? "coral" : rawPercent > 120 ? "amber" : tone;
           const format = (n) => Number.isInteger(n) ? n.toLocaleString("es-ES") : n.toFixed(1).replace(".", ",");
           const status = label === "Calorías"
             ? difference > 0
               ? `Exceso +${format(difference)}${suffix}`
               : difference === 0
                 ? "En el límite máximo"
-                : `Margen ${format(remaining)}${suffix}`
+                : `Dentro del máximo · margen ${format(remaining)}${suffix}`
             : label === "Proteína"
               ? difference >= 0
                 ? "Mínimo cubierto"
@@ -2412,7 +2419,7 @@ function renderNutritionMacroTargets(consumed, objective) {
                   : `Quedan ${format(remaining)}${suffix} de referencia`;
           return `
             <article class="nutrition-target-ring-card">
-              ${progressRingMarkup(progress, { tone: ringTone, size: "md", label: label === "Calorías" ? "máx" : shortLabel, displayPercent: rawPercent, ariaLabel: `${label}: ${format(value)}${suffix} de ${format(target)}${suffix}. ${status}` })}
+              ${progressRingMarkup(progress, { tone: ringTone, size: "md", label: shortLabel, displayPercent: rawPercent, ariaLabel: `${label}: ${format(value)}${suffix} de ${format(target)}${suffix}. ${status}` })}
               <div>
                 <strong>${escapeHtml(label)}</strong>
                 <small>${format(value)}${suffix} / ${format(target)}${suffix}</small>
