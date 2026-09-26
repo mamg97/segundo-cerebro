@@ -4570,7 +4570,6 @@ html[data-theme="dark"] .gym-session-footer input {
 
 @media (max-width: 620px) {
   .habit-daily-progress { grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; padding: 11px; }
-  .habit-progress-ring { width: 52px; height: 52px; }
   .habit-today-list.compact, .habit-master-list.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .habit-management-toolbar { gap: 9px; }
   .habit-toolbar-actions { display: grid; grid-template-columns: minmax(0, 1fr) 42px; }
