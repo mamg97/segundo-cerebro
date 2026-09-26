@@ -431,3 +431,32 @@ No reconstruir el proyecto desde conversaciones antiguas salvo que se investigue
 - Nutrición mantiene el Health dialog amplio, pero usa un ancho interno de lectura de hasta 1180 px.
 - KPIs, objetivos, planes sugeridos, fuentes, comidas, formulario rápido e histórico tienen nueva escala tipográfica y espaciado responsive.
 - Assets frontend: `v0.25.0`.
+
+
+## Eventos + Histórico v0.34.0
+
+Implementado un dominio persistente de Eventos:
+
+- nueva entrada `Eventos` en la navegación privada;
+- botón `Ver histórico` en el bloque de Eventos importantes de Home;
+- tarjetas de eventos pulsables;
+- workspace con activos/en curso e histórico;
+- ficha agregada con Finanzas, Nutrición/actividad por fechas, lista de OBJETOS, crónica, referencias y balance final;
+- Home deja de tratar compromisos puramente financieros como eventos;
+- eventos finalizados salen automáticamente de Home cuando termina su fecha y permanecen en D1;
+- API privada `/api/events` y subrutas de detalle/hechos/referencias;
+- tablas D1 `event_records`, `event_facts`, `event_refs`, creadas de forma idempotente; migración declarativa `0002_events.sql`;
+- sincronización iCloud → D1 de solo lectura durante `/api/state`;
+- `eventsSummary` minimizado en el estado general.
+
+No se ha hardcodeado ningún viaje real en Git. Los eventos reales aparecen por reglas privadas + iCloud y sus gestores pueden enriquecer la crónica mediante la API.
+
+Assets frontend: `v0.34.0`.
+
+### Validación pendiente
+
+1. CI: sintaxis, build y dry-run del Worker.
+2. Producción: comprobar que `Eventos` aparece en barra lateral.
+3. Abrir una tarjeta activa desde Home y revisar ficha agregada.
+4. Verificar que una lista de OBJETOS con `evento_ref` se resuelve en la ficha.
+5. Tras finalizar un evento, confirmar que desaparece de Home y figura en Histórico sin perder hechos.

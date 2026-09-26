@@ -3,6 +3,7 @@ import { fetchPantrySummary, hasPantryGoogleConfig } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
+import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -3252,6 +3253,82 @@ export default {
       }
     }
 
+
+    if (url.pathname === "/api/events") {
+      try {
+        if (request.method === "GET") {
+          const scope = url.searchParams.get("scope") || "all";
+          if (!["all", "active", "history"].includes(scope)) {
+            return json({ ok: false, code: "INVALID_EVENT_SCOPE" }, 400);
+          }
+          const year = url.searchParams.get("year") || null;
+          const kind = url.searchParams.get("kind") || null;
+          return json({
+            ok: true,
+            events: await fetchEventRecords(env, { scope, year, kind }),
+            summary: await fetchEventHomeSummary(env)
+          });
+        }
+        if (request.method === "POST") {
+          let payload;
+          try { payload = await request.json(); }
+          catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+          return json({ ok: true, ...(await createEventRecord(env, payload)) }, 201);
+        }
+        return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      } catch (error) {
+        const code = String(error?.message || "EVENTS_ERROR");
+        if (code.startsWith("INVALID_EVENT")) return json({ ok: false, code }, 400);
+        console.warn("Events request failed", code);
+        return json({ ok: false, code: "EVENTS_REQUEST_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname.startsWith("/api/events/")) {
+      const rest = url.pathname.slice("/api/events/".length);
+      const parts = rest.split("/").filter(Boolean);
+      const eventId = parts[0] ? decodeURIComponent(parts[0]) : "";
+      try {
+        if (parts.length === 1) {
+          if (request.method === "GET") {
+            const detail = await fetchEventDetail(env, eventId);
+            return detail ? json({ ok: true, ...detail }) : json({ ok: false, code: "EVENT_NOT_FOUND" }, 404);
+          }
+          if (request.method === "PATCH") {
+            let payload;
+            try { payload = await request.json(); }
+            catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+            return json({ ok: true, ...(await updateEventRecord(env, eventId, payload)) });
+          }
+          return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+        }
+
+        if (parts.length === 2 && parts[1] === "facts") {
+          if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+          let payload;
+          try { payload = await request.json(); }
+          catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+          return json({ ok: true, ...(await appendEventFact(env, eventId, payload)) }, 201);
+        }
+
+        if (parts.length === 2 && parts[1] === "references") {
+          if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+          let payload;
+          try { payload = await request.json(); }
+          catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+          return json({ ok: true, ...(await appendEventReference(env, eventId, payload)) }, 201);
+        }
+
+        return json({ ok: false, code: "NOT_FOUND" }, 404);
+      } catch (error) {
+        const code = String(error?.message || "EVENT_ERROR");
+        if (code === "EVENT_NOT_FOUND") return json({ ok: false, code }, 404);
+        if (code.startsWith("INVALID_EVENT")) return json({ ok: false, code }, 400);
+        console.warn("Event detail request failed", code);
+        return json({ ok: false, code: "EVENT_REQUEST_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/family/cases") {
       try {
         if (request.method === "GET") {
@@ -3416,6 +3493,20 @@ export default {
           calendarSync = "error";
           console.warn("iCloud calendar sync failed", String(error?.message || error));
         }
+      }
+
+
+      try {
+        await syncImportantEventRecords(
+          env,
+          Array.isArray(state.events) ? state.events : [],
+          Array.isArray(state.importantEventRules) ? state.importantEventRules : [],
+          state.financeSummary || {}
+        );
+        state.eventsSummary = await fetchEventHomeSummary(env);
+      } catch (error) {
+        console.warn("Events sync failed", String(error?.message || "EVENTS_SYNC_ERROR"));
+        state.eventsSummary = { activeCount: 0, historyCount: 0, inProgressCount: 0, updatedAt: null };
       }
 
       try {

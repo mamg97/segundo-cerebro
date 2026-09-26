@@ -481,3 +481,57 @@ Estados de dimensión:
 - días evaluados/transcurridos.
 
 No se almacena como fuente independiente.
+
+
+## Eventos persistentes e histórico
+
+El calendario conserva la autoridad sobre fechas y horarios, pero su ventana de lectura no constituye un archivo histórico. D1 mantiene una capa mínima de identidad y crónica para que un evento siga siendo consultable después de desaparecer del horizonte de calendario.
+
+### EVENT_RECORD
+
+- `id`: ID estable; para eventos sincronizados se reutiliza el ID normalizado de iCloud.
+- `title`, `kind`.
+- `status`: `PROPUESTO | PENDIENTE | CONFIRMADO | EN_CURSO | CERRADO | CANCELADO`.
+- `starts_at`, `ends_at`, `location`.
+- `participants_json`: participantes explícitamente registrados; no se infieren.
+- `calendar_ref`.
+- `finance_ref`.
+- `objects_list_ref`.
+- `summary`, `final_summary`.
+- `sensitivity`.
+- `created_at`, `updated_at`.
+
+El estado `EN_CURSO` y el paso a `CERRADO` se derivan de las fechas al leer. No hace falta una tarea programada para mover registros.
+
+### EVENT_FACT
+
+Hecho cronológico mínimo:
+
+- `id`, `event_id`;
+- `fact_type`;
+- `summary`;
+- `happened_at`;
+- `source_provider`, `source_ref`;
+- `created_at`.
+
+Tipos v0.1: `PLAN`, `GASTO`, `COMIDA`, `NUTRICION`, `TRANSPORTE`, `LUGAR`, `INCIDENCIA`, `DECISION`, `NOTA`.
+
+### EVENT_REF
+
+Puntero a una fuente propietaria:
+
+- `event_id`;
+- `ref_type`;
+- `source_provider`;
+- `source_ref`;
+- `label`.
+
+No se copian tickets, reservas, movimientos financieros, registros de Nutrición ni inventario dentro de Eventos.
+
+### Vista derivada
+
+La ficha de evento compone bajo demanda:
+
+`EVENT_RECORD + EVENT_FACT + Finanzas + Salud/Nutrición + OBJETOS + referencias`.
+
+La Home solo recibe un resumen minimizado `eventsSummary` con conteos de activos, en curso e históricos.
