@@ -513,3 +513,19 @@ Assets frontend: `v0.34.0`.
 - La vista Eventos mezcla los registros persistidos con el calendario iCloud vivo antes de calcular `Activos / En curso / Histórico`, por lo que el evento actual se refleja inmediatamente aunque el upsert de D1 sea best-effort.
 - Histórico vacío ya explica que todavía no existen eventos cerrados guardados desde la activación del ledger; no implica un error de carga.
 - Assets frontend: `v0.34.4`.
+
+
+## Finanzas · Liquidez por cuenta + composición patrimonial v0.35.0
+
+- Nueva visualización en Finanzas para separar, por cuenta, saldo actual, dinero ya reservado y dinero libre.
+- Contrato privado opcional:
+  - `Cuentas`
+  - `ReservasCuenta`
+- Cada cuenta se representa mediante una barra horizontal segmentada. La parte libre se deriva como saldo menos reservas cuando no existe `free_amount` explícito.
+- Si reservas + libre superan el saldo, la UI marca una discrepancia de conciliación.
+- Patrimonio incorpora una composición vertical segmentada tipo vault/cilindro por custodio o plataforma.
+- Contrato privado opcional: `PatrimonioDetalle`.
+- La vista patrimonial agregada mantiene las curvas históricas existentes y añade la distribución actual sin sustituir las apps de inversión.
+- Ningún saldo, nombre de cuenta real ni cifra patrimonial queda hardcodeado en Git.
+- El Gestor de Finanzas es responsable de mantener estas asignaciones cuando cambien saldos, provisiones o ubicaciones patrimoniales.
+- Assets frontend: `v0.35.0`.
