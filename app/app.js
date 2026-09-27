@@ -4042,7 +4042,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                       const height = Math.max(0, Math.min(100, (segment.amount / denominator) * 100));
                       const pctOfBalance = balance > 0 ? (segment.amount / balance) * 100 : 0;
                       return `<span class="liquidity-bar-segment ${segment.className}"
-                                    style="height:${height.toFixed(3)}%"
+                                    style="--segment-size:${height.toFixed(3)}%"
                                     title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))} · ${pctOfBalance.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del saldo"></span>`;
                     }).join("")}
                     ${overflow ? `<span class="liquidity-balance-marker" style="bottom:${balanceMarkerPct.toFixed(3)}%" aria-hidden="true"></span>` : ""}
