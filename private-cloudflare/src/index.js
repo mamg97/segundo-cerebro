@@ -532,7 +532,11 @@ async function fetchFinanceSummary(env) {
       priority: item.priority === "" || item.priority == null ? null : Number(item.priority),
       note: item.note || null
     }))
-    .filter((item) => item.accountId && item.amount !== null && String(item.status).toLowerCase() !== "cancelled");
+    .filter((item) => {
+      const status = String(item.status || "active").trim().toLowerCase();
+      const terminal = new Set(["cancelled", "canceled", "released", "executed", "paid", "closed", "completed"]);
+      return item.accountId && item.amount !== null && !terminal.has(status);
+    });
 
   const liquidityAccounts = parseTableRows(accountRows)
     .map((item) => {
