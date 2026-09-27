@@ -394,6 +394,17 @@ Reglas:
   4. después mutaciones coordinadas con confirmación.
 - Motivación adicional: evitar conversaciones monolíticas muy largas y lentas; la continuidad debe depender del sistema/documentación, no del historial completo del chat.
 
+## Botón Actualizar en cabecera v0.34.1
+
+- Nuevo control global `Actualizar` en la cabecera.
+- Desktop: botón textual `↻ Actualizar`.
+- Móvil: botón circular con icono `↻` para conservar espacio.
+- Al pulsarlo se recarga la aplicación y, durante el nuevo arranque, se vuelven a consultar el estado privado y sus fuentes conectadas.
+- El control queda visible también en modo Demo (`data-demo-unmasked`).
+- Mientras se inicia la recarga, el botón se deshabilita y el icono gira como feedback.
+- No modifica navegación ni estructura de Home.
+- Assets frontend: CSS `v0.34.1`, JS `v0.34.5`.
+
 ## Próxima acción exacta
 
 Validar en producción la navegación simplificada y los dominios privados:
