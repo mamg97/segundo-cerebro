@@ -176,7 +176,7 @@ function renderDetail(day) {
   const workoutNames = [];
   const energyWorkouts = day.details && day.details.energy && Array.isArray(day.details.energy.workouts) ? day.details.energy.workouts : [];
   energyWorkouts.forEach(function (item) {
-    const name = item.name || item.workoutActivityType || item.type;
+    const name = item.name || item.workoutActivityType || item.activityType || item.type;
     if (name && !workoutNames.includes(name)) workoutNames.push(name);
   });
   (day.details && day.details.gymSessions || []).forEach(function (item) {
