@@ -12942,6 +12942,17 @@ html[data-theme="dark"] .liquidity-svg-base {
   gap: 2px;
 }
 
+.nav-tone-ink { --area-color: #52647f; }
+.nav-tone-blue { --area-color: #2867e8; }
+.nav-tone-mint { --area-color: #2e8b78; }
+.nav-tone-sky { --area-color: #3984a8; }
+.nav-tone-rose { --area-color: #c45d7b; }
+.nav-tone-amber { --area-color: #b7791f; }
+.nav-tone-violet { --area-color: #7057b6; }
+.nav-tone-cyan { --area-color: #16859b; }
+.nav-tone-coral { --area-color: #db5d49; }
+.nav-tone-lime { --area-color: #668f2d; }
+
 .nav-subnav {
   display: grid;
   gap: 2px;
