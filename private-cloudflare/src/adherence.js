@@ -182,12 +182,12 @@ function evaluateDay(input) {
   const gymSessionCount = gymSessions.length;
   if (gymPlanned) {
     const state = gymSessionCount > 0 ? "pass" : "fail";
-    dimensions.push(dim("gym", "Entreno", state, gymSessionCount, 1, gymPlanned));
+    dimensions.push(dim("gym", "Gimnasio / fuerza", state, gymSessionCount, 1, gymPlanned));
     if (state === "fail") reasons.push("Falta entrenamiento en día previsto");
   } else if (gymSessionCount > 0) {
-    dimensions.push(dim("gym", "Entreno", "pass", gymSessionCount, null, "Sesión de gimnasio registrada"));
+    dimensions.push(dim("gym", "Gimnasio / fuerza", "pass", gymSessionCount, null, "Sesión de gimnasio registrada"));
   } else {
-    dimensions.push(dim("gym", "Entreno", "ignored", 0, null, "No había sesión diaria explícitamente programada"));
+    dimensions.push(dim("gym", "Gimnasio / fuerza", "ignored", 0, null, "No había sesión diaria explícitamente programada"));
   }
 
   if (habitStats && habitStats.scheduled > 0) {
