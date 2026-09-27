@@ -4068,6 +4068,64 @@ function formatFinanceDate(value, fallback = "Sin fecha") {
   return new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", year: "numeric" }).format(date).replace(".", "");
 }
 
+function formatShortChargeDate(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const slash = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
+  let date = null;
+
+  if (iso) {
+    date = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]), 12);
+  } else if (slash) {
+    const year = Number(slash[3]) < 100 ? 2000 + Number(slash[3]) : Number(slash[3]);
+    date = new Date(year, Number(slash[2]) - 1, Number(slash[1]), 12);
+  } else {
+    const parsed = new Date(raw);
+    if (Number.isFinite(parsed.getTime())) date = parsed;
+  }
+
+  if (!date || !Number.isFinite(date.getTime())) return raw;
+  return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" })
+    .format(date)
+    .replace(".", "");
+}
+
+function liquidityChargeLabel(item) {
+  if (!item) return null;
+
+  if (item.chargeDate) {
+    const label = formatShortChargeDate(item.chargeDate);
+    return label ? `Cobro: ${label}` : null;
+  }
+
+  if (item.chargeDay !== null && item.chargeDay !== undefined && String(item.chargeDay).trim() !== "") {
+    const day = Number(item.chargeDay);
+    if (Number.isFinite(day) && day >= 1 && day <= 31) return `Cobro: día ${day}`;
+  }
+
+  const note = String(item.note || "").trim();
+  if (!note) return null;
+
+  // Prefer the next/expected charge over later dates such as "último pago previsto".
+  let match = note.match(/(?:pr[oó]ximo\s+)?(?:cargo|cobro|pago)\s+(?:previsto|esperado|programado)?[^0-9]{0,18}(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})/i);
+  if (match) return `Cobro: ${formatShortChargeDate(match[1])}`;
+
+  match = note.match(/alrededor\s+del\s+d[ií]a\s+(\d{1,2})\b/i);
+  if (match) return `Cobro: aprox. día ${Number(match[1])}`;
+
+  match = note.match(/(?:pr[oó]ximo\s+)?(?:cargo|cobro|pago)[^.;]{0,28}?\bd[ií]a\s+(\d{1,2})\b/i);
+  if (match) return `Cobro: día ${Number(match[1])}`;
+
+  // Some canonical notes use compact wording such as "Cargo BBVA, día 4".
+  if (/(?:cargo|cobro|pago)/i.test(note)) {
+    match = note.match(/\bd[ií]a\s+(\d{1,2})\b/i);
+    if (match) return `Cobro: día ${Number(match[1])}`;
+  }
+
+  return null;
+}
+
 function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
   if (!Array.isArray(accounts) || !accounts.length) {
     return `
@@ -4111,7 +4169,10 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
             ...allocations.map((item, index) => ({
               label: item.label || "Compromiso",
               amount: Number(item.amount),
-              className: allocationColorClass(item.label, index)
+              className: allocationColorClass(item.label, index),
+              note: item.note || null,
+              chargeDate: item.chargeDate || null,
+              chargeDay: item.chargeDay ?? null
             })),
             ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free" }] : [])
           ];
@@ -4157,6 +4218,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                 <div class="liquidity-account-legend ${leaderCountClass}">
                   ${leaderLayout.map((segment) => {
                     const pct = balance > 0 ? (segment.amount / balance) * 100 : 0;
+                    const chargeLabel = liquidityChargeLabel(segment);
                     return `
                       <div class="liquidity-legend-row ${segment.visiblePct > 0 ? "" : "is-outside-balance"}">
                         <i class="${segment.className}"></i>
@@ -4166,7 +4228,10 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                             ? pct.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "% del saldo"
                             : "Fuera del saldo actual"}</small>
                         </span>
-                        <b>${formatMoney(segment.amount, currency)}</b>
+                        <span class="liquidity-legend-value">
+                          <b>${formatMoney(segment.amount, currency)}</b>
+                          ${chargeLabel ? `<small class="liquidity-charge-date">${escapeHtml(chargeLabel)}</small>` : ""}
+                        </span>
                       </div>`;
                   }).join("")}
                 </div>
