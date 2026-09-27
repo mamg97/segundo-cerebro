@@ -530,7 +530,9 @@ async function fetchFinanceSummary(env) {
       status: item.status || "active",
       kind: item.kind || "reserved",
       priority: item.priority === "" || item.priority == null ? null : Number(item.priority),
-      note: item.note || null
+      note: item.note || null,
+      chargeDate: item.charge_date || item.due_date || item.billing_date || null,
+      chargeDay: item.charge_day || item.billing_day || null
     }))
     .filter((item) => {
       const status = String(item.status || "active").trim().toLowerCase();
