@@ -3739,12 +3739,22 @@ function renderWealthOverview() {
   const current = firstFinite(wealth.currentPatrimony);
   const asOf = formatWealthDate(wealth.currentDate);
 
+  const allocation = Array.isArray(wealth.allocation) ? wealth.allocation : [];
+  const allocationTotal = allocation.reduce((sum, item) => sum + Math.max(0, numberOrZero(item.amount)), 0);
   container.innerHTML = `
     <div class="wealth-summary-value">
       <span>Patrimonio total</span>
       <strong>${formatMoney(current, currency)}</strong>
       <small>Actualizado a ${escapeHtml(asOf)}</small>
-    </div>`;
+    </div>
+    ${allocation.length ? `
+      <div class="wealth-mini-allocation" aria-label="Distribución patrimonial por plataforma">
+        ${allocation.map((item, index) => {
+          const pct = allocationTotal > 0 ? (Math.max(0, numberOrZero(item.amount)) / allocationTotal) * 100 : 0;
+          return `<span class="allocation-${(index % 6) + 1}" style="width:${pct.toFixed(3)}%" title="${escapeHtml(item.platform || "Posición")} · ${pct.toFixed(1)}%"></span>`;
+        }).join("")}
+      </div>` : ""}
+  `;
 }
 
 function openWealthDetail() {
@@ -3774,6 +3784,8 @@ function openWealthDetail() {
         <span>Patrimonio total · ${escapeHtml(asOf)}</span>
         <strong>${current === null ? "—" : formatMoney(current, currency)}</strong>
       </div>
+
+      ${renderWealthAllocation(wealth.allocation, currency)}
 
       <section class="wealth-chart-block">
         <div class="wealth-chart-heading">
@@ -3956,6 +3968,118 @@ function renderDebtDetailItem(item, currency) {
     </article>`;
 }
 
+function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
+  if (!Array.isArray(accounts) || !accounts.length) {
+    return `
+      <section class="liquidity-section liquidity-section-empty">
+        <div class="liquidity-section-heading">
+          <div><p class="context-label">Liquidez por cuenta</p><h3>Dinero disponible y ya asignado</h3></div>
+        </div>
+        <p>La visualización aparecerá cuando Finanzas complete las pestañas privadas Cuentas y ReservasCuenta.</p>
+      </section>`;
+  }
+
+  return `
+    <section class="liquidity-section">
+      <div class="liquidity-section-heading">
+        <div>
+          <p class="context-label">Liquidez por cuenta</p>
+          <h3>Qué parte del saldo ya tiene destino</h3>
+        </div>
+        <span>Saldo ≠ dinero libre</span>
+      </div>
+      <div class="liquidity-account-list">
+        ${accounts.map((account) => {
+          const currency = account.currency || fallbackCurrency;
+          const balance = Math.max(0, numberOrZero(account.balance));
+          const allocations = (Array.isArray(account.allocations) ? account.allocations : [])
+            .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
+          const reserved = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
+          const explicitFree = firstFinite(account.free);
+          const free = explicitFree === null ? Math.max(0, balance - reserved) : Math.max(0, explicitFree);
+          const represented = reserved + free;
+          const denominator = Math.max(balance, represented, 1);
+          const overflow = represented > balance + 0.01;
+          const segments = [
+            ...allocations.map((item, index) => ({
+              label: item.label || "Reserva",
+              amount: Number(item.amount),
+              className: `allocation-${(index % 6) + 1}`
+            })),
+            ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free" }] : [])
+          ];
+          return `
+            <article class="liquidity-account-card ${overflow ? "has-overflow" : ""}">
+              <header>
+                <div>
+                  <strong>${escapeHtml(account.name || account.id || "Cuenta")}</strong>
+                  <span>${escapeHtml([account.bank, account.owner].filter(Boolean).join(" · "))}</span>
+                </div>
+                <div>
+                  <small>Saldo actual</small>
+                  <b>${formatMoney(balance, currency)}</b>
+                </div>
+              </header>
+              <div class="liquidity-segment-bar" role="img" aria-label="${escapeHtml(account.name || "Cuenta")}: distribución del saldo">
+                ${segments.map((segment) => {
+                  const width = Math.max(0, Math.min(100, (segment.amount / denominator) * 100));
+                  return `<span class="${segment.className}" style="width:${width.toFixed(3)}%" title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))}"></span>`;
+                }).join("")}
+              </div>
+              <div class="liquidity-legend">
+                ${segments.map((segment) => `
+                  <span><i class="${segment.className}"></i><em>${escapeHtml(segment.label)}</em><b>${formatMoney(segment.amount, currency)}</b></span>
+                `).join("")}
+              </div>
+              ${overflow ? `<p class="liquidity-warning">Las asignaciones superan el saldo actual: revisar conciliación.</p>` : ""}
+            </article>`;
+        }).join("")}
+      </div>
+    </section>`;
+}
+
+function renderWealthAllocation(allocation, fallbackCurrency = "EUR") {
+  const items = (Array.isArray(allocation) ? allocation : [])
+    .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
+  if (!items.length) {
+    return `
+      <section class="wealth-allocation-section wealth-allocation-empty">
+        <div><strong>Distribución patrimonial</strong><span>Por custodio o plataforma</span></div>
+        <p>Se mostrará cuando Finanzas complete PatrimonioDetalle.</p>
+      </section>`;
+  }
+
+  const total = items.reduce((sum, item) => sum + Number(item.amount), 0);
+  return `
+    <section class="wealth-allocation-section">
+      <div class="wealth-allocation-heading">
+        <div><strong>Distribución patrimonial</strong><span>Dónde está custodiado el patrimonio financiero</span></div>
+        <b>${formatMoney(total, fallbackCurrency)}</b>
+      </div>
+      <div class="wealth-allocation-layout">
+        <div class="wealth-vault" role="img" aria-label="Distribución del patrimonio por plataforma">
+          ${[...items].reverse().map((item, index) => {
+            const pct = total > 0 ? (Number(item.amount) / total) * 100 : 0;
+            return `<span class="wealth-vault-segment allocation-${((items.length - 1 - index) % 6) + 1}" style="height:${pct.toFixed(3)}%" title="${escapeHtml(item.platform)} · ${pct.toFixed(1)}%"></span>`;
+          }).join("")}
+        </div>
+        <div class="wealth-allocation-legend">
+          ${items.map((item, index) => {
+            const amount = Number(item.amount);
+            const pct = total > 0 ? (amount / total) * 100 : 0;
+            return `
+              <div>
+                <i class="allocation-${(index % 6) + 1}"></i>
+                <span><strong>${escapeHtml(item.platform)}</strong><small>${escapeHtml(item.assetClass || "")}</small></span>
+                <b>${formatMoney(amount, item.currency || fallbackCurrency)}</b>
+                <em>${pct.toLocaleString("es-ES", { maximumFractionDigits: 1 })}%</em>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>
+    </section>`;
+}
+
 function openBudgetDetail() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
@@ -3974,6 +4098,7 @@ function openBudgetDetail() {
 
   const currency = monthly.currency || "EUR";
   const categories = Array.isArray(monthly.categories) ? monthly.categories : [];
+  const liquidityAccounts = Array.isArray(monthly.liquidityAccounts) ? monthly.liquidityAccounts : [];
   const groups = ["Común", "Miguel", "Andrea"];
 
   const grouped = Object.fromEntries(groups.map((name) => [name, []]));
@@ -3989,7 +4114,7 @@ function openBudgetDetail() {
   const andreaNet = firstFinite(monthly.andreaNet);
   const jointNet = firstFinite(monthly.jointNet);
 
-  document.querySelector("#dialog-body").innerHTML = categories.length
+  document.querySelector("#dialog-body").innerHTML = (categories.length || liquidityAccounts.length)
     ? `
       <div class="budget-net-strip">
         <div><span>Libre Miguel</span><strong>${miguelNet === null ? "—" : formatMoney(miguelNet, currency)}</strong></div>
@@ -3997,10 +4122,12 @@ function openBudgetDetail() {
         <div><span>Libre conjunto</span><strong>${jointNet === null ? "—" : formatMoney(jointNet, currency)}</strong></div>
       </div>
       <p class="budget-net-note">Estos netos personales se muestran aparte y no se mezclan con el presupuesto común.</p>
-      <div class="budget-groups">
+      ${renderLiquidityAccounts(liquidityAccounts, currency)}
+      ${categories.length ? `<div class="budget-groups">
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
-      </div>`
-    : "<p>No hay partidas presupuestadas.</p>";
+      </div>` : ""}
+      `
+    : "<p>No hay partidas presupuestadas ni liquidez por cuenta conectada.</p>";
   document.querySelectorAll('[data-open-electricity="true"]').forEach((node) => {
     node.addEventListener("click", () => void openElectricityDetail());
   });
