@@ -92,6 +92,13 @@ async function fetchEventsInline() {
   return response.json();
 }
 
+function isBirthdayReminderOnly(value) {
+  const text = normalizeForMatch(value);
+  const isBirthday = /cumple|cumpleanos|birthday/.test(text);
+  const hasConcretePlan = /cena|comida|fiesta|quedada|merienda|copas|celebracion|reserva|restaurante|bar|casa de|en casa/.test(text);
+  return isBirthday && !hasConcretePlan;
+}
+
 function collectLiveCalendarEventsForWorkspace() {
   const finance = state.financeSummary || {};
   const rules = Array.isArray(state.importantEventRules)
@@ -101,6 +108,7 @@ function collectLiveCalendarEventsForWorkspace() {
       : [];
 
   return (Array.isArray(state.events) ? state.events : [])
+    .filter((event) => !isBirthdayReminderOnly([event.title, event.location || event.locationRef].filter(Boolean).join(" ")))
     .map((event) => {
       const normalized = normalizeForMatch(event.title);
       const rule = rules.find((candidate) => {
@@ -151,7 +159,8 @@ function mergeLiveEventsIntoPayload(payload) {
 function renderEventsWorkspaceInline() {
   const body = document.querySelector("#dialog-body");
   if (!body || !eventsWorkspacePayload) return;
-  const all = Array.isArray(eventsWorkspacePayload.events) ? eventsWorkspacePayload.events : [];
+  const all = (Array.isArray(eventsWorkspacePayload.events) ? eventsWorkspacePayload.events : [])
+    .filter((item) => !isBirthdayReminderOnly([item.title, item.location].filter(Boolean).join(" ")));
   const active = all.filter((item) => !["CERRADO", "CANCELADO"].includes(item.status));
   const history = all.filter((item) => ["CERRADO", "CANCELADO"].includes(item.status));
   const selected = eventsWorkspaceTab === "history" ? history : active;
@@ -728,12 +737,43 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   const metaAreas = new Set(["area-loops", "area-goals"]);
-  const areas = state.areas.filter((area) => !metaAreas.has(area.id));
-  nav.innerHTML = areas.map((area, index) => `
-    <a class="nav-link ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}" style="--area-color:${colors[area.tone]}">
-      ${escapeHtml(area.shortTitle)}
-    </a>
-  `).join("");
+  const childMap = new Map([
+    ["area-calendar", ["area-events"]],
+    ["area-family", ["area-parents"]],
+    ["area-health", ["area-habits"]],
+    ["area-objects", ["area-pantry"]]
+  ]);
+  const childIds = new Set([...childMap.values()].flat());
+  const canonicalOrder = [
+    "area-general", "area-career", "area-finance", "area-calendar",
+    "area-partner", "area-family", "area-health", "area-objects",
+    "area-wealth", "area-projects"
+  ];
+  const allAreas = state.areas.filter((area) => !metaAreas.has(area.id));
+  const orderRank = new Map(canonicalOrder.map((id, index) => [id, index]));
+  const parents = allAreas
+    .filter((area) => !childIds.has(area.id))
+    .sort((a, b) => (orderRank.get(a.id) ?? 999) - (orderRank.get(b.id) ?? 999));
+
+  nav.innerHTML = parents.map((area, index) => {
+    const children = (childMap.get(area.id) || [])
+      .map((id) => allAreas.find((candidate) => candidate.id === id))
+      .filter(Boolean);
+    return `
+      <div class="nav-group" data-nav-group="${escapeHtml(area.id)}">
+        <a class="nav-link nav-link-parent nav-tone-${escapeHtml(area.tone || "blue")} ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}">
+          ${escapeHtml(area.shortTitle)}
+        </a>
+        ${children.length ? `
+          <div class="nav-subnav" aria-label="Subapartados de ${escapeHtml(area.shortTitle)}">
+            ${children.map((child) => `
+              <a class="nav-link nav-link-child nav-tone-${escapeHtml(child.tone || area.tone || "blue")}" href="#overview" data-nav-area-id="${child.id}">
+                ${escapeHtml(child.shortTitle)}
+              </a>
+            `).join("")}
+          </div>` : ""}
+      </div>`;
+  }).join("");
 }
 
 function renderFocus() {
@@ -1174,6 +1214,7 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
 
   const calendarItems = (Array.isArray(state.events) ? state.events : [])
     .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now)
+    .filter((event) => !isBirthdayReminderOnly([event.title, event.location || event.locationRef].filter(Boolean).join(" ")))
     .map((event) => {
       const normalized = normalizeForMatch(event.title);
       const rule = rules.find((candidate) => {
@@ -1273,8 +1314,7 @@ function eventStatusFromDates(startsAt, endsAt, baseStatus = "CONFIRMADO") {
 function inferImportantKind(title) {
   const text = normalizeForMatch(title);
   if (/viaje|vuelo|escapada|marbella|valencia/.test(text)) return "travel";
-  if (/cumple/.test(text)) return "birthday";
-  if (/boda|celebracion/.test(text)) return "social";
+  if (/boda|celebracion|cena|comida|fiesta|quedada|merienda|copas/.test(text)) return "social";
   return "important";
 }
 
@@ -3726,34 +3766,33 @@ function renderWealthOverview() {
   const container = document.querySelector("#wealth-summary");
   if (!container) return;
 
-  if (!wealth || firstFinite(wealth.currentPatrimony) === null) {
+  const allocation = Array.isArray(wealth?.allocation)
+    ? wealth.allocation.filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0)
+    : [];
+  const allocationTotal = allocation.reduce((sum, item) => sum + Number(item.amount), 0);
+  const current = allocationTotal > 0 ? allocationTotal : firstFinite(wealth?.currentPatrimony);
+
+  if (!wealth || current === null) {
     container.innerHTML = `
       <div class="wealth-empty">
         <strong>Patrimonio pendiente de conectar</strong>
-        <p>El valor del día 1 aparecerá aquí cuando exista histórico financiero.</p>
+        <p>La distribución aparecerá cuando exista un snapshot patrimonial privado.</p>
       </div>`;
     return;
   }
 
   const currency = wealth.currency || "EUR";
-  const current = firstFinite(wealth.currentPatrimony);
-  const asOf = formatWealthDate(wealth.currentDate);
+  const dates = allocation.map((item) => item.updatedAt).filter(Boolean).sort();
+  const latestAllocationDate = dates.length ? dates[dates.length - 1] : null;
+  const asOf = formatFinanceDate(latestAllocationDate || wealth.currentDate, "Fecha no disponible");
+  const needsRefresh = allocation.some((item) => /requiere refresco|retirada posterior|no representa el saldo actual/i.test(String(item.note || "")));
 
-  const allocation = Array.isArray(wealth.allocation) ? wealth.allocation : [];
-  const allocationTotal = allocation.reduce((sum, item) => sum + Math.max(0, numberOrZero(item.amount)), 0);
   container.innerHTML = `
     <div class="wealth-summary-value">
       <span>Patrimonio total</span>
       <strong>${formatMoney(current, currency)}</strong>
-      <small>Actualizado a ${escapeHtml(asOf)}</small>
+      <small>PatrimonioDetalle · ${escapeHtml(asOf)}${needsRefresh ? " · refresco pendiente en alguna fuente" : ""}</small>
     </div>
-    ${allocation.length ? `
-      <div class="wealth-mini-allocation" aria-label="Distribución patrimonial por plataforma">
-        ${allocation.map((item, index) => {
-          const pct = allocationTotal > 0 ? (Math.max(0, numberOrZero(item.amount)) / allocationTotal) * 100 : 0;
-          return `<span class="allocation-${(index % 6) + 1}" style="width:${pct.toFixed(3)}%" title="${escapeHtml(item.platform || "Posición")} · ${pct.toFixed(1)}%"></span>`;
-        }).join("")}
-      </div>` : ""}
   `;
 }
 
@@ -3761,54 +3800,50 @@ function openWealthDetail() {
   const wealth = state.financeSummary?.wealth || null;
   const dialog = document.querySelector("#detail-dialog");
   dialog.classList.add("wealth-dialog");
-  document.querySelector("#dialog-context").textContent = "Patrimonio · Evolución";
-  document.querySelector("#dialog-title").textContent = "Patrimonio y salarios";
+  document.querySelector("#dialog-context").textContent = "Patrimonio · Distribución y conciliación";
+  document.querySelector("#dialog-title").textContent = "Patrimonio financiero";
 
-  const history = Array.isArray(wealth?.history)
-    ? wealth.history.filter((item) => item.date)
+  const allocation = Array.isArray(wealth?.allocation)
+    ? wealth.allocation.filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0)
     : [];
-
-  if (!history.length) {
-    document.querySelector("#dialog-body").innerHTML = "<p>No hay histórico patrimonial conectado.</p>";
+  if (!wealth || (!allocation.length && firstFinite(wealth.currentPatrimony) === null)) {
+    document.querySelector("#dialog-body").innerHTML = "<p>No hay patrimonio conectado.</p>";
     dialog.showModal();
     return;
   }
 
+  const history = Array.isArray(wealth.history)
+    ? wealth.history.filter((item) => item.date)
+    : [];
   const currency = wealth.currency || "EUR";
-  const current = firstFinite(wealth.currentPatrimony);
-  const asOf = formatWealthDate(wealth.currentDate);
 
   document.querySelector("#dialog-body").innerHTML = `
     <div class="wealth-detail">
-      <div class="wealth-detail-kpi">
-        <span>Patrimonio total · ${escapeHtml(asOf)}</span>
-        <strong>${current === null ? "—" : formatMoney(current, currency)}</strong>
-      </div>
+      ${renderWealthAllocation(wealth, currency)}
 
-      ${renderWealthAllocation(wealth.allocation, currency)}
-
-      <section class="wealth-chart-block">
-        <div class="wealth-chart-heading">
-          <div><strong>Evolución de salarios</strong><span>Nómina mensual</span></div>
-          <div class="wealth-chart-legend">
-            <span><i class="miguel"></i>Miguel</span>
-            <span><i class="andrea"></i>Andrea</span>
+      ${history.length ? `
+        <section class="wealth-chart-block">
+          <div class="wealth-chart-heading">
+            <div><strong>Evolución de salarios</strong><span>Nómina mensual</span></div>
+            <div class="wealth-chart-legend">
+              <span><i class="miguel"></i>Miguel</span>
+              <span><i class="andrea"></i>Andrea</span>
+            </div>
           </div>
-        </div>
-        ${renderWealthLineChart(history, [
-          { key: "salaryMiguel", className: "salary-miguel" },
-          { key: "salaryAndrea", className: "salary-andrea" }
-        ], currency, "Evolución de salarios")}
-      </section>
+          ${renderWealthLineChart(history, [
+            { key: "salaryMiguel", className: "salary-miguel" },
+            { key: "salaryAndrea", className: "salary-andrea" }
+          ], currency, "Evolución de salarios")}
+        </section>
 
-      <section class="wealth-chart-block">
-        <div class="wealth-chart-heading">
-          <div><strong>Evolución del patrimonio</strong><span>Valor registrado el día 1 de cada mes</span></div>
-        </div>
-        ${renderWealthLineChart(history, [
-          { key: "patrimony", className: "patrimony-line" }
-        ], currency, "Evolución del patrimonio")}
-      </section>
+        <section class="wealth-chart-block">
+          <div class="wealth-chart-heading">
+            <div><strong>Evolución del patrimonio histórico</strong><span>Referencia registrada el día 1 de cada mes</span></div>
+          </div>
+          ${renderWealthLineChart(history, [
+            { key: "patrimony", className: "patrimony-line" }
+          ], currency, "Evolución del patrimonio")}
+        </section>` : ""}
     </div>`;
   dialog.showModal();
 }
@@ -3968,6 +4003,54 @@ function renderDebtDetailItem(item, currency) {
     </article>`;
 }
 
+function quantizeBarSegments(segments, total) {
+  const safeTotal = Math.max(0, Number(total) || 0);
+  if (!safeTotal || !segments.length) return segments.map((item) => ({ ...item, visibleAmount: 0, visiblePct: 0, pctClass: "pct-0" }));
+
+  let remaining = safeTotal;
+  const visible = segments.map((item) => {
+    const amount = Math.max(0, Number(item.amount) || 0);
+    const visibleAmount = Math.min(amount, remaining);
+    remaining = Math.max(0, remaining - visibleAmount);
+    return { ...item, visibleAmount, exactVisiblePct: (visibleAmount / safeTotal) * 100 };
+  });
+  const floors = visible.map((item) => Math.floor(item.exactVisiblePct));
+  let points = 100 - floors.reduce((sum, value) => sum + value, 0);
+  const order = visible
+    .map((item, index) => ({ index, fraction: item.exactVisiblePct - floors[index] }))
+    .sort((a, b) => b.fraction - a.fraction);
+  for (let i = 0; i < order.length && points > 0; i += 1) {
+    if (visible[order[i].index].visibleAmount > 0) {
+      floors[order[i].index] += 1;
+      points -= 1;
+    }
+  }
+  if (points > 0) {
+    const firstVisible = visible.findIndex((item) => item.visibleAmount > 0);
+    if (firstVisible >= 0) floors[firstVisible] += points;
+  }
+  return visible.map((item, index) => ({
+    ...item,
+    visiblePct: Math.max(0, Math.min(100, floors[index])),
+    pctClass: `pct-${Math.max(0, Math.min(100, floors[index]))}`
+  }));
+}
+
+function allocationColorClass(label, index) {
+  const source = String(label || index || "reserva");
+  let hash = 0;
+  for (let i = 0; i < source.length; i += 1) hash = ((hash << 5) - hash + source.charCodeAt(i)) | 0;
+  return `allocation-${(Math.abs(hash) % 8) + 1}`;
+}
+
+function formatFinanceDate(value, fallback = "Sin fecha") {
+  if (!value) return fallback;
+  const raw = String(value);
+  const date = new Date(raw.length <= 10 ? `${raw}T12:00:00` : raw);
+  if (!Number.isFinite(date.getTime())) return raw;
+  return new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", year: "numeric" }).format(date).replace(".", "");
+}
+
 function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
   if (!Array.isArray(accounts) || !accounts.length) {
     return `
@@ -3975,118 +4058,75 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
         <div class="liquidity-section-heading">
           <div><p class="context-label">Liquidez por cuenta</p><h3>Distribución del saldo real por destino</h3></div>
         </div>
-        <p>La visualización aparecerá cuando Finanzas complete las pestañas privadas Cuentas y ReservasCuenta.</p>
+        <p>La visualización aparecerá cuando Finanzas complete Cuentas y ReservasCuenta.</p>
       </section>`;
   }
 
-  const colorClassFor = (label, index) => {
-    const source = String(label || index || "reserva");
-    let hash = 0;
-    for (let i = 0; i < source.length; i += 1) {
-      hash = ((hash << 5) - hash + source.charCodeAt(i)) | 0;
-    }
-    return `allocation-${(Math.abs(hash) % 10) + 1}`;
-  };
+  const accountRank = new Map([
+    ["openbank-miguel", 0], ["openbank-andrea", 1], ["santander-comun", 2], ["bbva-comun", 3]
+  ]);
+  const orderedAccounts = [...accounts].sort((a, b) => (accountRank.get(a.id) ?? 99) - (accountRank.get(b.id) ?? 99));
 
   return `
     <section class="liquidity-section">
       <div class="liquidity-section-heading">
         <div>
           <p class="context-label">Liquidez por cuenta</p>
-          <h3>Distribución del saldo real por destino</h3>
+          <h3>Cómo está distribuido el dinero de cada cuenta</h3>
         </div>
-        <span>Cada barra = saldo actual · cada franja = compromiso o dinero libre</span>
+        <span>100% de cada barra = saldo actual real</span>
       </div>
       <div class="liquidity-account-list">
-        ${accounts.map((account, accountIndex) => {
+        ${orderedAccounts.map((account) => {
           const currency = account.currency || fallbackCurrency;
           const balance = Math.max(0, numberOrZero(account.balance));
-          const allocations = (Array.isArray(account.allocations) ? account.allocations : [])
+          const allAllocations = (Array.isArray(account.allocations) ? account.allocations : [])
             .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
-          const reserved = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
-          const explicitFree = firstFinite(account.free);
-          const free = explicitFree === null ? Math.max(0, balance - reserved) : Math.max(0, explicitFree);
-          const represented = reserved + free;
-          const overflowAmount = Math.max(0, represented - balance);
-          const overflow = overflowAmount > 0.01;
-          const denominator = Math.max(balance, represented, 1);
-          const balanceMarkerPct = Math.max(0, Math.min(100, (balance / denominator) * 100));
-          const segments = [
+          const holds = allAllocations.filter((item) => String(item.kind || "").toLowerCase() === "card_hold");
+          const allocations = allAllocations.filter((item) => String(item.kind || "").toLowerCase() !== "card_hold");
+          const retained = holds.reduce((sum, item) => sum + Number(item.amount), 0);
+          const committed = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
+          const free = Math.max(0, balance - committed - retained);
+          const excess = Math.max(0, committed + retained - balance);
+          const availableAfterHolds = Math.max(0, balance - retained);
+          const rawSegments = [
+            ...(retained > 0 ? [{ label: "Retenciones bancarias", amount: retained, className: "allocation-hold" }] : []),
             ...allocations.map((item, index) => ({
-              label: item.label || "Reserva",
+              label: item.label || "Compromiso",
               amount: Number(item.amount),
-              className: colorClassFor(item.label, index)
+              className: allocationColorClass(item.label, index)
             })),
             ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free" }] : [])
           ];
-          let cumulativePct = 0;
-          const positionedSegments = segments.map((segment) => {
-            const height = Math.max(0, Math.min(100, (segment.amount / denominator) * 100));
-            const positioned = { ...segment, height, bottom: cumulativePct };
-            cumulativePct += height;
-            return positioned;
-          });
-          const barInnerTop = 1;
-          const barInnerHeight = 246;
-          const clipId = `liquidity-clip-${accountIndex}`;
-          const svgSegments = positionedSegments.map((segment) => {
-            const topPct = Math.max(0, 100 - Math.min(100, segment.bottom + segment.height));
-            return {
-              ...segment,
-              y: barInnerTop + (topPct / 100) * barInnerHeight,
-              rectHeight: Math.max(1, (segment.height / 100) * barInnerHeight)
-            };
-          });
-          const markerY = barInnerTop + ((100 - balanceMarkerPct) / 100) * barInnerHeight;
+          const segments = quantizeBarSegments(rawSegments, balance);
 
           return `
-            <article class="liquidity-account-card ${overflow ? "has-overflow" : ""}">
-              <header>
+            <article class="liquidity-account-card ${excess > 0.01 ? "has-overflow" : ""}">
+              <header class="liquidity-card-header">
                 <div>
                   <strong>${escapeHtml(account.name || account.id || "Cuenta")}</strong>
                   <span>${escapeHtml([account.bank, account.owner].filter(Boolean).join(" · "))}</span>
+                  <small>Actualizado: ${escapeHtml(formatFinanceDate(account.updatedAt, "Sin fecha de actualización"))}</small>
                 </div>
                 <div class="liquidity-balance">
                   <small>Saldo actual</small>
                   <b>${formatMoney(balance, currency)}</b>
+                  ${retained > 0 ? `<span>Tras retenciones: <strong>${formatMoney(availableAfterHolds, currency)}</strong></span>` : ""}
                 </div>
               </header>
 
               <div class="liquidity-account-chart">
                 <div class="liquidity-bar-wrap">
-                  <svg class="liquidity-stacked-bar-svg"
-                       viewBox="0 0 62 248"
-                       role="img"
-                       aria-label="${escapeHtml(account.name || "Cuenta")}: ${escapeHtml(formatMoney(balance, currency))} de saldo actual distribuido por destino"
-                       preserveAspectRatio="none">
-                    <defs>
-                      <clipPath id="${clipId}">
-                        <rect x="1" y="1" width="60" height="246" rx="14" ry="14"></rect>
-                      </clipPath>
-                    </defs>
-                    <rect class="liquidity-svg-base" x="1" y="1" width="60" height="246" rx="14" ry="14"></rect>
-                    <g clip-path="url(#${clipId})">
-                      ${svgSegments.map((segment) => {
-                        const pctOfBalance = balance > 0 ? (segment.amount / balance) * 100 : 0;
-                        return `<rect class="liquidity-svg-segment ${segment.className}"
-                                      x="1"
-                                      y="${segment.y.toFixed(3)}"
-                                      width="60"
-                                      height="${segment.rectHeight.toFixed(3)}">
-                                  <title>${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))} · ${pctOfBalance.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del saldo</title>
-                                </rect>`;
-                      }).join("")}
-                    </g>
-                    <rect class="liquidity-svg-outline" x="1" y="1" width="60" height="246" rx="14" ry="14"></rect>
-                    <ellipse class="liquidity-svg-rim liquidity-svg-rim-top" cx="31" cy="8" rx="24" ry="5"></ellipse>
-                    <ellipse class="liquidity-svg-rim liquidity-svg-rim-bottom" cx="31" cy="240" rx="24" ry="5"></ellipse>
-                    ${overflow ? `<line class="liquidity-svg-balance-marker" x1="0" y1="${markerY.toFixed(3)}" x2="62" y2="${markerY.toFixed(3)}"></line>` : ""}
-                  </svg>
-                  <small class="liquidity-bar-caption">${overflow ? "La línea marca el saldo real" : "100% del saldo"}</small>
+                  <div class="liquidity-stacked-bar-2d" role="img" aria-label="${escapeHtml(account.name || "Cuenta")}: distribución de ${escapeHtml(formatMoney(balance, currency))}">
+                    ${segments.map((segment) => `
+                      <div class="liquidity-bar-segment-2d ${segment.className} ${segment.pctClass}" title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))}"></div>
+                    `).join("")}
+                  </div>
+                  <small class="liquidity-bar-caption">Saldo real = 100%</small>
                 </div>
 
                 <div class="liquidity-account-legend">
-                  ${segments.map((segment) => {
+                  ${rawSegments.map((segment) => {
                     const pct = balance > 0 ? (segment.amount / balance) * 100 : 0;
                     return `
                       <div class="liquidity-legend-row">
@@ -4101,20 +4141,43 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                 </div>
               </div>
 
+              <section class="bank-holds-block">
+                <div class="bank-holds-heading">
+                  <div><strong>Retenciones bancarias</strong><span>${holds.length ? holds.length + " pendientes" : "Sin retenciones pendientes"}</span></div>
+                  <b>${formatMoney(retained, currency)}</b>
+                </div>
+                ${holds.length ? `
+                  <div class="bank-holds-list">
+                    ${holds.map((hold) => `
+                      <article>
+                        <div>
+                          <strong>${escapeHtml(hold.label || "Retención")}</strong>
+                          <small>${escapeHtml(hold.note || "Pendiente de consolidación bancaria.")}</small>
+                        </div>
+                        <div>
+                          <b>${formatMoney(numberOrZero(hold.amount), currency)}</b>
+                          <small>Consolidación: pendiente de consolidación</small>
+                        </div>
+                      </article>
+                    `).join("")}
+                  </div>` : '<p class="bank-holds-empty">Sin retenciones pendientes.</p>'}
+              </section>
+
               <footer class="liquidity-account-summary">
-                <span>Comprometido <b>${formatMoney(reserved, currency)}</b></span>
+                <span>Comprometido <b>${formatMoney(committed, currency)}</b></span>
                 <span>Libre <b>${formatMoney(free, currency)}</b></span>
+                <span>Retenido <b>${formatMoney(retained, currency)}</b></span>
+                <span>Exceso / falta <b>${excess > 0.01 ? formatMoney(excess, currency) : "0,00 €"}</b></span>
               </footer>
-              ${overflow ? `<p class="liquidity-warning">Compromisos superiores al saldo actual en ${formatMoney(overflowAmount, currency)}. La parte situada por encima de la línea necesita conciliación o financiación adicional.</p>` : ""}
+              ${excess > 0.01 ? `<p class="liquidity-warning">Compromisos superiores al saldo actual en ${formatMoney(excess, currency)}. El exceso no se dibuja como si fuera saldo real.</p>` : ""}
             </article>`;
         }).join("")}
       </div>
     </section>`;
 }
 
-
-function renderWealthAllocation(allocation, fallbackCurrency = "EUR") {
-  const items = (Array.isArray(allocation) ? allocation : [])
+function renderWealthAllocation(wealth, fallbackCurrency = "EUR") {
+  const items = (Array.isArray(wealth?.allocation) ? wealth.allocation : [])
     .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
   if (!items.length) {
     return `
@@ -4125,33 +4188,72 @@ function renderWealthAllocation(allocation, fallbackCurrency = "EUR") {
   }
 
   const total = items.reduce((sum, item) => sum + Number(item.amount), 0);
+  const segments = quantizeBarSegments(items.map((item, index) => ({
+    ...item,
+    label: item.platform,
+    className: allocationColorClass(item.platform, index)
+  })), total);
+  const allocationDates = items.map((item) => item.updatedAt).filter(Boolean).sort();
+  const allocationDate = allocationDates.length ? allocationDates[allocationDates.length - 1] : null;
+  const historicTotal = firstFinite(wealth?.currentPatrimony);
+  const historicDate = wealth?.currentDate || null;
+  const differentSnapshot = allocationDate && historicDate && String(allocationDate).slice(0, 10) !== String(historicDate).slice(0, 10);
+  const historicalDifference = historicTotal === null ? null : total - historicTotal;
+  const needsRefresh = items.some((item) => /requiere refresco|retirada posterior|no representa el saldo actual/i.test(String(item.note || "")));
+
   return `
     <section class="wealth-allocation-section">
-      <div class="wealth-allocation-heading">
-        <div><strong>Distribución patrimonial</strong><span>Dónde está custodiado el patrimonio financiero</span></div>
-        <b>${formatMoney(total, fallbackCurrency)}</b>
-      </div>
-      <div class="wealth-allocation-layout">
-        <div class="wealth-vault" role="img" aria-label="Distribución del patrimonio por plataforma">
-          ${[...items].reverse().map((item, index) => {
-            const pct = total > 0 ? (Number(item.amount) / total) * 100 : 0;
-            return `<span class="wealth-vault-segment allocation-${((items.length - 1 - index) % 6) + 1}" style="height:${pct.toFixed(3)}%" title="${escapeHtml(item.platform)} · ${pct.toFixed(1)}%"></span>`;
-          }).join("")}
+      <div class="wealth-primary-summary">
+        <div>
+          <span>Patrimonio total</span>
+          <strong>${formatMoney(total, fallbackCurrency)}</strong>
+          <small>PatrimonioDetalle · ${escapeHtml(formatFinanceDate(allocationDate, "Sin fecha"))}</small>
         </div>
-        <div class="wealth-allocation-legend">
-          ${items.map((item, index) => {
-            const amount = Number(item.amount);
-            const pct = total > 0 ? (amount / total) * 100 : 0;
-            return `
-              <div>
-                <i class="allocation-${(index % 6) + 1}"></i>
-                <span><strong>${escapeHtml(item.platform)}</strong><small>${escapeHtml(item.assetClass || "")}</small></span>
-                <b>${formatMoney(amount, item.currency || fallbackCurrency)}</b>
-                <em>${pct.toLocaleString("es-ES", { maximumFractionDigits: 1 })}%</em>
-              </div>`;
-          }).join("")}
+        <span class="wealth-reconciliation-status ${needsRefresh ? "is-warning" : "is-ok"}">${needsRefresh ? "Alguna fuente requiere refresco" : "Último detalle disponible"}</span>
+      </div>
+
+      <div class="wealth-stack-wrap">
+        <div class="wealth-stack-bar" role="img" aria-label="Distribución del patrimonio financiero por plataforma">
+          ${segments.map((item) => `<div class="wealth-stack-segment ${item.className} ${item.pctClass}" title="${escapeHtml(item.platform)} · ${escapeHtml(formatMoney(item.amount, item.currency || fallbackCurrency))}"></div>`).join("")}
         </div>
       </div>
+
+      <div class="wealth-platform-grid">
+        ${items.map((item, index) => {
+          const amount = Number(item.amount);
+          const pct = total > 0 ? (amount / total) * 100 : 0;
+          return `
+            <article class="wealth-platform-card">
+              <div class="wealth-platform-head"><i class="${allocationColorClass(item.platform, index)}"></i><strong>${escapeHtml(item.platform)}</strong></div>
+              <b>${formatMoney(amount, item.currency || fallbackCurrency)}</b>
+              <span>${pct.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del total</span>
+              <small>Origen: PatrimonioDetalle</small>
+              <small>Último dato: ${escapeHtml(formatFinanceDate(item.updatedAt, "Sin fecha"))}</small>
+              ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
+            </article>`;
+        }).join("")}
+      </div>
+
+      <section class="wealth-reconciliation-block">
+        <div class="wealth-reconciliation-heading">
+          <div><strong>Referencia de conciliación</strong><span>El dashboard no altera ninguna cifra para hacerla cuadrar.</span></div>
+        </div>
+        <div class="wealth-reconciliation-grid">
+          <article>
+            <span>PatrimonioDetalle</span>
+            <strong>${formatMoney(total, fallbackCurrency)}</strong>
+            <small>${escapeHtml(formatFinanceDate(allocationDate, "Sin fecha"))}</small>
+          </article>
+          ${historicTotal !== null ? `
+            <article class="${!differentSnapshot && Math.abs(historicalDifference || 0) > 0.01 ? "has-difference" : ""}">
+              <span>Patrimonio histórico</span>
+              <strong>${formatMoney(historicTotal, fallbackCurrency)}</strong>
+              <small>${escapeHtml(formatFinanceDate(historicDate, "Sin fecha"))}</small>
+              <em>${differentSnapshot ? "Snapshot de otra fecha: no comparable 1:1" : "Diferencia: " + formatMoney(historicalDifference || 0, fallbackCurrency)}</em>
+            </article>` : ""}
+        </div>
+        ${needsRefresh ? '<p class="wealth-reconciliation-warning">Alguna plataforma tiene un dato marcado como pendiente de refresco por Finanzas. Se muestra el último dato asentado, sin corregirlo artificialmente.</p>' : ""}
+      </section>
     </section>`;
 }
 

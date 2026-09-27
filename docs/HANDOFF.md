@@ -554,3 +554,19 @@ Assets frontend: `v0.34.0`.
 - Verificación previa al cierre: render headless en Chromium con los importes reales conocidos de Openbank Miguel (191,42 €) y Openbank Andrea (150,95 €); ambas barras aparecen completamente rellenas y segmentadas, y Andrea muestra la línea de saldo real en el punto correcto.
 - Despliegue privado de Cloudflare completado correctamente.
 - Assets frontend: `v0.35.4`.
+
+
+## Navegación + visualización financiera v0.36.0
+
+- La navegación deja de ser plana:
+  - Agenda → Eventos.
+  - Familia → Padres.
+  - Salud → Hábitos.
+  - Objetos → Despensa.
+- Los cumpleaños simples permanecen en Agenda/calendario y no se incorporan a Eventos. Solo aparecen en Eventos cuando el propio registro describe un plan concreto (comida, cena, fiesta, quedada, etc.).
+- ORGANIZADOR no mantiene estado financiero paralelo: consume `Cuentas`, `ReservasCuenta` y `PatrimonioDetalle` preparados por GESTOR FINANZAS.
+- Liquidez usa barras verticales rectangulares 2D de altura fija. Las retenciones existentes con `kind=card_hold` se separan visualmente de otros compromisos sin duplicar datos.
+- El 100% de cada barra es el saldo actual. El exceso de compromisos se muestra como alerta y no se dibuja fuera del saldo.
+- Patrimonio usa una barra horizontal apilada 2D y tarjetas por plataforma. `PatrimonioDetalle` es el total/distribución actual mostrado; el histórico de `Patrimonio` conserva su función temporal.
+- Paleta de segmentos: estilo Activity/Fitness con colores vivos.
+- Assets frontend: `v0.36.0`.

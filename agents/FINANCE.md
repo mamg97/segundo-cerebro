@@ -144,3 +144,14 @@ La fuente derivada puede exponer `PatrimonioDetalle` con:
 La UI muestra una composición visual del patrimonio por custodio/plataforma. El objetivo es saber de un vistazo dónde está el patrimonio, no sustituir el detalle operativo de Coinbase, eToro, Interactive Brokers, BBVA u otras plataformas.
 
 El total de `PatrimonioDetalle` debe poder conciliarse con el patrimonio agregado cuando ambas cifras correspondan a la misma fecha y perímetro. Una diferencia debe mostrarse o investigarse, no asumirse como correcta.
+
+
+## Responsabilidad de ORGANIZADOR sobre Finanzas
+
+ORGANIZADOR y la capa de interfaz son consumidores de solo lectura del estado financiero ya mantenido por GESTOR FINANZAS.
+
+- No crean cuentas, reservas, retenciones ni posiciones patrimoniales paralelas.
+- La UI puede separar visualmente reservas de tipo `card_hold` como retenciones bancarias sin duplicarlas en otra tabla.
+- `Cuentas`, `ReservasCuenta` y `PatrimonioDetalle` siguen siendo las estructuras privadas derivadas que alimentan estas vistas.
+- La visualización de liquidez representa siempre el saldo actual como 100% de la barra; cualquier compromiso que exceda ese saldo se informa aparte y no aumenta la barra.
+- La visualización patrimonial toma `PatrimonioDetalle` para la distribución actual y mantiene `Patrimonio` como referencia histórica. Las diferencias entre snapshots de distinta fecha no se presentan como conciliación 1:1.
