@@ -94,6 +94,40 @@ Para evitar huecos, el patrón recomendado pasa a ser doble e idempotente:
 
 Ambas escrituras son UPSERT. Repetirlas no duplica días y la reconciliación del día anterior es la que debe considerarse el cierre definitivo de actividad.
 
+
+#### Atajo recomendado: `Segundo Cerebro · Cierre ayer`
+
+Duplicar el Atajo operativo actual y usar este segundo Atajo exclusivamente para cerrar el día anterior.
+
+1. Obtener `Fecha actual`.
+2. `Ajustar fecha` → restar 1 día. Guardar como `fechaAyer`.
+3. `Formatear fecha` → formato personalizado `yyyy-MM-dd`. Guardar como `dateKey`.
+4. En cada bloque de actividad del Atajo duplicado, cambiar el filtro temporal de `es hoy` a `es ayer`:
+   - Energía en actividad → suma → `activeKcal`.
+   - Energía en reposo → suma → `restingKcal`.
+   - Pasos → mismo método que use el Atajo operativo → `steps`.
+   - Minutos de ejercicio → suma → `exerciseMinutes`.
+5. En el JSON de `POST /v1/sync`, añadir `date` con el valor `dateKey`.
+6. Mantener el mismo Bearer privado y el mismo endpoint del Atajo operativo.
+7. Ejecutar manualmente una vez y comprobar respuesta `ok: true` y `date` igual a ayer.
+
+Automatización iOS recomendada:
+
+- disparador: `Hora del día`;
+- hora: `00:15`;
+- frecuencia: diaria;
+- acción: ejecutar `Segundo Cerebro · Cierre ayer`;
+- ejecución inmediata / sin preguntar;
+- la notificación de ejecución puede desactivarse si iOS lo permite.
+
+El cierre de las 00:15 es la referencia definitiva del día anterior. El Atajo de `hoy` puede seguir existiendo como snapshot, pero nunca debe sustituir la reconciliación de ayer.
+
+#### Recuperación manual de huecos
+
+Si falta un día anterior concreto, reutilizar temporalmente el mismo patrón con una fecha objetivo explícita. El filtro de todas las métricas y el campo JSON `date` deben apuntar al mismo día. Ejecutar una vez y después verificar en D1/web antes de recuperar el siguiente día.
+
+A 2026-09-27 estaban pendientes de recuperar 2026-09-25 y 2026-09-26; el 2026-09-24 solo tenía un snapshot parcial de mediodía.
+
 ## Seguridad
 
 - El token Bearer no se guarda en Git.
