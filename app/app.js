@@ -474,6 +474,17 @@ function toggleTheme() {
   applyTheme(current === "dark" ? "light" : "dark", true);
 }
 
+function refreshApp() {
+  const button = document.querySelector("#refresh-app");
+  if (button) {
+    button.disabled = true;
+    button.classList.add("is-refreshing");
+    button.setAttribute("aria-label", "Actualizando Segundo Cerebro");
+    button.setAttribute("aria-busy", "true");
+  }
+  window.setTimeout(() => window.location.reload(), 80);
+}
+
 let orbMediaQuery = null;
 
 function syncSystemOrbResponsiveSize() {
@@ -4352,6 +4363,7 @@ function bindInteractions() {
   document.querySelector("#home-objects-card")?.addEventListener("click", openObjectsDetail);
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#demo-mode-toggle")?.addEventListener("click", toggleDemoMode);
+  document.querySelector("#refresh-app")?.addEventListener("click", refreshApp);
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
