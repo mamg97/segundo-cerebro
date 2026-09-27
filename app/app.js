@@ -3998,7 +3998,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
         <span>Cada barra = saldo actual · cada franja = compromiso o dinero libre</span>
       </div>
       <div class="liquidity-account-list">
-        ${accounts.map((account) => {
+        ${accounts.map((account, accountIndex) => {
           const currency = account.currency || fallbackCurrency;
           const balance = Math.max(0, numberOrZero(account.balance));
           const allocations = (Array.isArray(account.allocations) ? account.allocations : [])
@@ -4026,6 +4026,18 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
             cumulativePct += height;
             return positioned;
           });
+          const barInnerTop = 1;
+          const barInnerHeight = 246;
+          const clipId = `liquidity-clip-${accountIndex}`;
+          const svgSegments = positionedSegments.map((segment) => {
+            const topPct = Math.max(0, 100 - Math.min(100, segment.bottom + segment.height));
+            return {
+              ...segment,
+              y: barInnerTop + (topPct / 100) * barInnerHeight,
+              rectHeight: Math.max(1, (segment.height / 100) * barInnerHeight)
+            };
+          });
+          const markerY = barInnerTop + ((100 - balanceMarkerPct) / 100) * barInnerHeight;
 
           return `
             <article class="liquidity-account-card ${overflow ? "has-overflow" : ""}">
@@ -4042,17 +4054,34 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
 
               <div class="liquidity-account-chart">
                 <div class="liquidity-bar-wrap">
-                  <div class="liquidity-stacked-bar"
+                  <svg class="liquidity-stacked-bar-svg"
+                       viewBox="0 0 62 248"
                        role="img"
-                       aria-label="${escapeHtml(account.name || "Cuenta")}: ${escapeHtml(formatMoney(balance, currency))} de saldo actual distribuido por destino">
-                    ${positionedSegments.map((segment) => {
-                      const pctOfBalance = balance > 0 ? (segment.amount / balance) * 100 : 0;
-                      return `<span class="liquidity-bar-segment ${segment.className}"
-                                    style="--segment-size:${segment.height.toFixed(3)}%;--segment-bottom:${segment.bottom.toFixed(3)}%"
-                                    title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))} · ${pctOfBalance.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del saldo"></span>`;
-                    }).join("")}
-                    ${overflow ? `<span class="liquidity-balance-marker" style="bottom:${balanceMarkerPct.toFixed(3)}%" aria-hidden="true"></span>` : ""}
-                  </div>
+                       aria-label="${escapeHtml(account.name || "Cuenta")}: ${escapeHtml(formatMoney(balance, currency))} de saldo actual distribuido por destino"
+                       preserveAspectRatio="none">
+                    <defs>
+                      <clipPath id="${clipId}">
+                        <rect x="1" y="1" width="60" height="246" rx="14" ry="14"></rect>
+                      </clipPath>
+                    </defs>
+                    <rect class="liquidity-svg-base" x="1" y="1" width="60" height="246" rx="14" ry="14"></rect>
+                    <g clip-path="url(#${clipId})">
+                      ${svgSegments.map((segment) => {
+                        const pctOfBalance = balance > 0 ? (segment.amount / balance) * 100 : 0;
+                        return `<rect class="liquidity-svg-segment ${segment.className}"
+                                      x="1"
+                                      y="${segment.y.toFixed(3)}"
+                                      width="60"
+                                      height="${segment.rectHeight.toFixed(3)}">
+                                  <title>${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))} · ${pctOfBalance.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del saldo</title>
+                                </rect>`;
+                      }).join("")}
+                    </g>
+                    <rect class="liquidity-svg-outline" x="1" y="1" width="60" height="246" rx="14" ry="14"></rect>
+                    <ellipse class="liquidity-svg-rim liquidity-svg-rim-top" cx="31" cy="8" rx="24" ry="5"></ellipse>
+                    <ellipse class="liquidity-svg-rim liquidity-svg-rim-bottom" cx="31" cy="240" rx="24" ry="5"></ellipse>
+                    ${overflow ? `<line class="liquidity-svg-balance-marker" x1="0" y1="${markerY.toFixed(3)}" x2="62" y2="${markerY.toFixed(3)}"></line>` : ""}
+                  </svg>
                   <small class="liquidity-bar-caption">${overflow ? "La línea marca el saldo real" : "100% del saldo"}</small>
                 </div>
 
