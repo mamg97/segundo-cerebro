@@ -92,6 +92,13 @@ async function fetchEventsInline() {
   return response.json();
 }
 
+function isBirthdayReminderOnly(value) {
+  const text = normalizeForMatch(value);
+  const isBirthday = /cumple|cumpleanos|birthday/.test(text);
+  const hasConcretePlan = /cena|comida|fiesta|quedada|merienda|copas|celebracion|reserva|restaurante|bar|casa de|en casa/.test(text);
+  return isBirthday && !hasConcretePlan;
+}
+
 function collectLiveCalendarEventsForWorkspace() {
   const finance = state.financeSummary || {};
   const rules = Array.isArray(state.importantEventRules)
@@ -101,6 +108,7 @@ function collectLiveCalendarEventsForWorkspace() {
       : [];
 
   return (Array.isArray(state.events) ? state.events : [])
+    .filter((event) => !isBirthdayReminderOnly([event.title, event.location || event.locationRef].filter(Boolean).join(" ")))
     .map((event) => {
       const normalized = normalizeForMatch(event.title);
       const rule = rules.find((candidate) => {
@@ -151,7 +159,8 @@ function mergeLiveEventsIntoPayload(payload) {
 function renderEventsWorkspaceInline() {
   const body = document.querySelector("#dialog-body");
   if (!body || !eventsWorkspacePayload) return;
-  const all = Array.isArray(eventsWorkspacePayload.events) ? eventsWorkspacePayload.events : [];
+  const all = (Array.isArray(eventsWorkspacePayload.events) ? eventsWorkspacePayload.events : [])
+    .filter((item) => !isBirthdayReminderOnly([item.title, item.location].filter(Boolean).join(" ")));
   const active = all.filter((item) => !["CERRADO", "CANCELADO"].includes(item.status));
   const history = all.filter((item) => ["CERRADO", "CANCELADO"].includes(item.status));
   const selected = eventsWorkspaceTab === "history" ? history : active;
@@ -1205,6 +1214,7 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
 
   const calendarItems = (Array.isArray(state.events) ? state.events : [])
     .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now)
+    .filter((event) => !isBirthdayReminderOnly([event.title, event.location || event.locationRef].filter(Boolean).join(" ")))
     .map((event) => {
       const normalized = normalizeForMatch(event.title);
       const rule = rules.find((candidate) => {
@@ -3756,7 +3766,13 @@ function renderWealthOverview() {
   const container = document.querySelector("#wealth-summary");
   if (!container) return;
 
-  if (!wealth || firstFinite(wealth.currentPatrimony) === null) {
+  const allocation = Array.isArray(wealth?.allocation)
+    ? wealth.allocation.filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0)
+    : [];
+  const allocationTotal = allocation.reduce((sum, item) => sum + Number(item.amount), 0);
+  const current = allocationTotal > 0 ? allocationTotal : firstFinite(wealth?.currentPatrimony);
+
+  if (!wealth || current === null) {
     container.innerHTML = `
       <div class="wealth-empty">
         <strong>Patrimonio pendiente de conectar</strong>
@@ -3766,19 +3782,15 @@ function renderWealthOverview() {
   }
 
   const currency = wealth.currency || "EUR";
-  const current = firstFinite(wealth.currentPatrimony);
-  const asOf = formatWealthDate(wealth.currentDate);
-  const status = wealth.primaryStatus === "pending_refresh"
-    ? " · alguna plataforma requiere refresco"
-    : wealth.reconciliationStatus === "pending"
-      ? " · conciliación pendiente"
-      : "";
+  const dates = allocation.map((item) => item.updatedAt).filter(Boolean).sort();
+  const asOf = formatFinanceDate(dates.at(-1) || wealth.currentDate, "Fecha no disponible");
+  const needsRefresh = allocation.some((item) => /requiere refresco|retirada posterior|no representa el saldo actual/i.test(String(item.note || "")));
 
   container.innerHTML = `
     <div class="wealth-summary-value">
       <span>Patrimonio total</span>
       <strong>${formatMoney(current, currency)}</strong>
-      <small>${escapeHtml(wealth.primarySource || "PatrimonioDetalle")} · ${escapeHtml(asOf)}${escapeHtml(status)}</small>
+      <small>PatrimonioDetalle · ${escapeHtml(asOf)}${needsRefresh ? " · refresco pendiente en alguna fuente" : ""}</small>
     </div>
   `;
 }
@@ -4042,7 +4054,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
         <div class="liquidity-section-heading">
           <div><p class="context-label">Liquidez por cuenta</p><h3>Distribución del saldo real por destino</h3></div>
         </div>
-        <p>La visualización aparecerá cuando Finanzas complete Cuentas, ReservasCuenta y RetencionesCuenta.</p>
+        <p>La visualización aparecerá cuando Finanzas complete Cuentas y ReservasCuenta.</p>
       </section>`;
   }
 
@@ -4064,24 +4076,23 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
         ${orderedAccounts.map((account) => {
           const currency = account.currency || fallbackCurrency;
           const balance = Math.max(0, numberOrZero(account.balance));
-          const holds = (Array.isArray(account.holds) ? account.holds : [])
+          const allAllocations = (Array.isArray(account.allocations) ? account.allocations : [])
             .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
-          const allocations = (Array.isArray(account.allocations) ? account.allocations : [])
-            .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
-          const retained = firstFinite(account.retained) ?? holds.reduce((sum, item) => sum + Number(item.amount), 0);
-          const committed = firstFinite(account.reserved) ?? allocations.reduce((sum, item) => sum + Number(item.amount), 0);
+          const holds = allAllocations.filter((item) => String(item.kind || "").toLowerCase() === "card_hold");
+          const allocations = allAllocations.filter((item) => String(item.kind || "").toLowerCase() !== "card_hold");
+          const retained = holds.reduce((sum, item) => sum + Number(item.amount), 0);
+          const committed = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
           const free = firstFinite(account.free) ?? Math.max(0, balance - committed - retained);
-          const excess = firstFinite(account.excess) ?? Math.max(0, committed + retained - balance);
-          const availableBalance = firstFinite(account.availableBalance);
+          const excess = Math.max(0, committed + retained - balance);
+          const availableAfterHolds = Math.max(0, balance - retained);
           const rawSegments = [
-            ...(retained > 0 ? [{ label: "Retenciones bancarias", amount: retained, className: "allocation-hold", kind: "hold" }] : []),
+            ...(retained > 0 ? [{ label: "Retenciones bancarias", amount: retained, className: "allocation-hold" }] : []),
             ...allocations.map((item, index) => ({
               label: item.label || "Compromiso",
               amount: Number(item.amount),
-              className: allocationColorClass(item.label, index),
-              kind: "commitment"
+              className: allocationColorClass(item.label, index)
             })),
-            ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free", kind: "free" }] : [])
+            ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free" }] : [])
           ];
           const segments = quantizeBarSegments(rawSegments, balance);
 
@@ -4096,7 +4107,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                 <div class="liquidity-balance">
                   <small>Saldo actual</small>
                   <b>${formatMoney(balance, currency)}</b>
-                  ${availableBalance !== null ? `<span>${account.availableBalanceSource === "bank" ? "Disponible banco" : "Tras retenciones"}: <strong>${formatMoney(availableBalance, currency)}</strong></span>` : ""}
+                  ${retained > 0 ? `<span>Tras retenciones: <strong>${formatMoney(availableAfterHolds, currency)}</strong></span>` : ""}
                 </div>
               </header>
 
@@ -4136,12 +4147,12 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                     ${holds.map((hold) => `
                       <article>
                         <div>
-                          <strong>${escapeHtml(hold.merchant || "Retención")}</strong>
-                          <small>Operación: ${escapeHtml(formatFinanceDate(hold.transactionDate, "Fecha no asentada"))}</small>
+                          <strong>${escapeHtml(hold.label || "Retención")}</strong>
+                          <small>${escapeHtml(hold.note || "Pendiente de consolidación bancaria.")}</small>
                         </div>
                         <div>
                           <b>${formatMoney(numberOrZero(hold.amount), currency)}</b>
-                          <small>Consolidación: ${escapeHtml(formatFinanceDate(hold.estimatedSettlementDate, "pendiente de consolidación"))}</small>
+                          <small>Consolidación: pendiente de consolidación</small>
                         </div>
                       </article>
                     `).join("")}
@@ -4172,20 +4183,19 @@ function renderWealthAllocation(wealth, fallbackCurrency = "EUR") {
       </section>`;
   }
 
-  const total = firstFinite(wealth.allocationTotal, wealth.currentPatrimony)
-    ?? items.reduce((sum, item) => sum + Number(item.amount), 0);
+  const total = items.reduce((sum, item) => sum + Number(item.amount), 0);
   const segments = quantizeBarSegments(items.map((item, index) => ({
     ...item,
     label: item.platform,
     className: allocationColorClass(item.platform, index)
   })), total);
-  const reconciliation = Array.isArray(wealth.reconciliation) ? wealth.reconciliation : [];
-  const delta = reconciliation.find((item) => item.id === "delta");
-  const statusText = wealth.primaryStatus === "pending_refresh"
-    ? "Alguna plataforma necesita refresco"
-    : wealth.reconciliationStatus === "pending"
-      ? "Pendiente de conciliación"
-      : "Conciliado";
+  const allocationDates = items.map((item) => item.updatedAt).filter(Boolean).sort();
+  const allocationDate = allocationDates.at(-1) || null;
+  const historicTotal = firstFinite(wealth?.currentPatrimony);
+  const historicDate = wealth?.currentDate || null;
+  const differentSnapshot = allocationDate && historicDate && String(allocationDate).slice(0, 10) !== String(historicDate).slice(0, 10);
+  const historicalDifference = historicTotal === null ? null : total - historicTotal;
+  const needsRefresh = items.some((item) => /requiere refresco|retirada posterior|no representa el saldo actual/i.test(String(item.note || "")));
 
   return `
     <section class="wealth-allocation-section">
@@ -4193,9 +4203,9 @@ function renderWealthAllocation(wealth, fallbackCurrency = "EUR") {
         <div>
           <span>Patrimonio total</span>
           <strong>${formatMoney(total, fallbackCurrency)}</strong>
-          <small>${escapeHtml(wealth.primarySource || "PatrimonioDetalle")} · ${escapeHtml(formatFinanceDate(wealth.currentDate, "Fecha no disponible"))}</small>
+          <small>PatrimonioDetalle · ${escapeHtml(formatFinanceDate(allocationDate, "Sin fecha"))}</small>
         </div>
-        <span class="wealth-reconciliation-status ${wealth.reconciliationStatus === "pending" || wealth.primaryStatus === "pending_refresh" ? "is-warning" : "is-ok"}">${escapeHtml(statusText)}</span>
+        <span class="wealth-reconciliation-status ${needsRefresh ? "is-warning" : "is-ok"}">${needsRefresh ? "Alguna fuente requiere refresco" : "Último detalle disponible"}</span>
       </div>
 
       <div class="wealth-stack-wrap">
@@ -4222,23 +4232,23 @@ function renderWealthAllocation(wealth, fallbackCurrency = "EUR") {
 
       <section class="wealth-reconciliation-block">
         <div class="wealth-reconciliation-heading">
-          <div><strong>Conciliación</strong><span>No se fuerzan cifras para hacerlas cuadrar.</span></div>
-          ${delta && Number.isFinite(Number(delta.difference)) ? `<b>Diferencia vs Delta: ${formatMoney(Math.abs(Number(delta.difference)), fallbackCurrency)}</b>` : ""}
+          <div><strong>Referencia de conciliación</strong><span>El dashboard no altera ninguna cifra para hacerla cuadrar.</span></div>
         </div>
         <div class="wealth-reconciliation-grid">
-          ${reconciliation.map((item) => `
-            <article class="${item.comparable && Math.abs(Number(item.difference || 0)) > 0.01 ? "has-difference" : ""}">
-              <span>${escapeHtml(item.label || item.id || "Fuente")}</span>
-              <strong>${item.amount === null || item.amount === undefined ? "Control de movimientos" : formatMoney(Number(item.amount), fallbackCurrency)}</strong>
-              <small>${escapeHtml(formatFinanceDate(item.asOf, "Sin fecha"))}</small>
-              ${item.amount !== null && item.amount !== undefined && item.id !== "detalle" ? `<em>Diferencia: ${formatMoney(Number(item.difference || 0), fallbackCurrency)}</em>` : ""}
-              ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
-            </article>
-          `).join("")}
+          <article>
+            <span>PatrimonioDetalle</span>
+            <strong>${formatMoney(total, fallbackCurrency)}</strong>
+            <small>${escapeHtml(formatFinanceDate(allocationDate, "Sin fecha"))}</small>
+          </article>
+          ${historicTotal !== null ? `
+            <article class="${!differentSnapshot && Math.abs(historicalDifference || 0) > 0.01 ? "has-difference" : ""}">
+              <span>Patrimonio histórico</span>
+              <strong>${formatMoney(historicTotal, fallbackCurrency)}</strong>
+              <small>${escapeHtml(formatFinanceDate(historicDate, "Sin fecha"))}</small>
+              <em>${differentSnapshot ? "Snapshot de otra fecha: no comparable 1:1" : "Diferencia: " + formatMoney(historicalDifference || 0, fallbackCurrency)}</em>
+            </article>` : ""}
         </div>
-        ${wealth.reconciliationStatus === "pending" || wealth.primaryStatus === "pending_refresh"
-          ? '<p class="wealth-reconciliation-warning">Hay diferencias o datos pendientes de refresco. El total mostrado procede de PatrimonioDetalle y no se ha ajustado artificialmente.</p>'
-          : ""}
+        ${needsRefresh ? '<p class="wealth-reconciliation-warning">Alguna plataforma tiene un dato marcado como pendiente de refresco por Finanzas. Se muestra el último dato asentado, sin corregirlo artificialmente.</p>' : ""}
       </section>
     </section>`;
 }
