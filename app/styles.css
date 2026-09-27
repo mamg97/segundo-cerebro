@@ -12245,3 +12245,73 @@ html[data-theme="dark"] .progress-ring-stroke {
     gap: 10px;
   }
 }
+
+
+/* v0.34.1 — explicit app refresh control */
+.refresh-app {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease, opacity .18s ease;
+}
+
+.refresh-app:hover,
+.refresh-app:focus-visible {
+  border-color: var(--line-strong);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.refresh-app:active {
+  transform: scale(.97);
+}
+
+.refresh-app:disabled {
+  cursor: wait;
+  opacity: .72;
+}
+
+.refresh-app-icon {
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  transform-origin: 50% 50%;
+}
+
+.refresh-app.is-refreshing .refresh-app-icon {
+  animation: refresh-app-spin .65s linear infinite;
+}
+
+@keyframes refresh-app-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 760px) {
+  .refresh-app {
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+    flex: none;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .refresh-app-label {
+    display: none;
+  }
+
+  .refresh-app-icon {
+    font-size: 20px;
+  }
+}
