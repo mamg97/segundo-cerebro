@@ -12869,3 +12869,68 @@ html[data-theme="dark"] .liquidity-stacked-bar {
     font-size: 8.5px;
   }
 }
+
+
+/* v0.35.4 — CSP-safe SVG liquidity bars */
+.liquidity-stacked-bar-svg {
+  display: block;
+  width: 62px;
+  height: 248px;
+  overflow: visible;
+  filter: drop-shadow(0 8px 18px rgba(15,30,52,.08));
+}
+
+.liquidity-svg-base {
+  fill: #e8edf4;
+}
+
+html[data-theme="dark"] .liquidity-svg-base {
+  fill: #263347;
+}
+
+.liquidity-svg-outline {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.liquidity-svg-rim {
+  fill: none;
+  stroke: rgba(255,255,255,.35);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.liquidity-svg-rim-bottom {
+  opacity: .38;
+}
+
+.liquidity-svg-segment {
+  shape-rendering: geometricPrecision;
+}
+
+.liquidity-svg-segment.allocation-1 { fill: #4e7de9; }
+.liquidity-svg-segment.allocation-2 { fill: #8a68d8; }
+.liquidity-svg-segment.allocation-3 { fill: #d27d58; }
+.liquidity-svg-segment.allocation-4 { fill: #3e9c88; }
+.liquidity-svg-segment.allocation-5 { fill: #c45d7b; }
+.liquidity-svg-segment.allocation-6 { fill: #9a8239; }
+.liquidity-svg-segment.allocation-7 { fill: #5a9fd4; }
+.liquidity-svg-segment.allocation-8 { fill: #ad6dad; }
+.liquidity-svg-segment.allocation-9 { fill: #cf9362; }
+.liquidity-svg-segment.allocation-10 { fill: #72a65d; }
+.liquidity-svg-segment.allocation-free { fill: #b8c3d1; }
+
+.liquidity-svg-balance-marker {
+  stroke: #df8a32;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgba(223,138,50,.45));
+}
+
+@media (max-width: 700px) {
+  .liquidity-stacked-bar-svg {
+    width: 56px;
+    height: 204px;
+  }
+}
