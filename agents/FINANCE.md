@@ -92,3 +92,55 @@ La categoría `Luz` del presupuesto mensual puede ampliar su detalle con la fuen
 - La interfaz solo consume campos analíticos necesarios: periodos, importe, consumo, métricas por día, fechas de factura/cobro, variaciones, tarifa si existe y metadatos de actualización.
 - No se transportan dirección, número de contrato ni otros identificadores personales.
 - Una fila nueva en `LuzHistorico` debe aparecer sin cambios de código tras la siguiente actualización de la fuente derivada.
+
+
+## Liquidez por cuenta y distribución patrimonial
+
+El dashboard distingue dos visualizaciones privadas complementarias:
+
+### Liquidez por cuenta
+
+La fuente derivada puede exponer las pestañas privadas `Cuentas` y `ReservasCuenta`.
+
+`Cuentas`:
+- `account_id`: identificador estable de la cuenta;
+- `name`: nombre legible;
+- `bank`: entidad;
+- `owner`: Miguel, Andrea o Común;
+- `balance`: saldo actual conocido;
+- `free_amount`: opcional; si falta, se deriva como saldo menos reservas;
+- `currency`;
+- `updated_at`;
+- `note`.
+
+`ReservasCuenta`:
+- `account_id`;
+- `label`: destino de la reserva;
+- `amount`;
+- `status`;
+- `kind`;
+- `priority`;
+- `note`.
+
+Reglas:
+- cada cuenta se representa como una barra segmentada por reservas y dinero libre;
+- las reservas representan dinero con destino ya identificado, aunque siga físicamente en la cuenta;
+- si las asignaciones superan el saldo, la UI debe marcar discrepancia y no ocultarla;
+- no se hardcodean saldos ni nombres reales de cuentas en Git;
+- el Gestor de Finanzas mantiene estas asignaciones cuando el usuario comunica nuevos saldos, provisiones o liberaciones.
+
+### Distribución patrimonial
+
+La fuente derivada puede exponer `PatrimonioDetalle` con:
+- `id`;
+- `platform` o custodio;
+- `amount`;
+- `asset_class`;
+- `currency`;
+- `updated_at`;
+- `status`;
+- `note`.
+
+La UI muestra una composición visual del patrimonio por custodio/plataforma. El objetivo es saber de un vistazo dónde está el patrimonio, no sustituir el detalle operativo de Coinbase, eToro, Interactive Brokers, BBVA u otras plataformas.
+
+El total de `PatrimonioDetalle` debe poder conciliarse con el patrimonio agregado cuando ambas cifras correspondan a la misma fecha y perímetro. Una diferencia debe mostrarse o investigarse, no asumirse como correcta.
