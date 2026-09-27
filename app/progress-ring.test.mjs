@@ -63,7 +63,7 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.36\.1/);
+assert.match(index, /app\.js\?v=0\.36\.2/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -93,6 +93,10 @@ assert.ok(adherence.includes("Adherencia mensual"), "Missing audited adherence r
 
 assert.match(app, /buildLiquidityLeaderLayout/);
 assert.match(app, /liquidity-leader-layer/);
+assert.match(app, /function liquidityChargeLabel/);
+assert.match(app, /Cobro: día/);
+assert.match(app, /Cobro: aprox\. día/);
+assert.match(css, /liquidity-charge-date/);
 assert.match(css, /liquidity-leader-line/);
 for (let i = 1; i <= 12; i += 1) {
   assert.match(css, new RegExp('\\.allocation-' + i + '\\s*\\{'));

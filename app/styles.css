@@ -13692,3 +13692,32 @@ html[data-theme="dark"] .liquidity-svg-base {
     padding-left: 0;
   }
 }
+
+
+/* v0.36.2 — charge dates inside liquidity legend items */
+.liquidity-legend-value {
+  display: grid;
+  min-width: max-content !important;
+  justify-items: end;
+  gap: 1px;
+}
+
+.liquidity-legend-value b {
+  display: block;
+}
+
+.liquidity-charge-date {
+  margin-top: 0 !important;
+  color: #64d2ff !important;
+  font-size: 6.8px !important;
+  font-weight: 750;
+  line-height: 1.15;
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .liquidity-charge-date {
+    font-size: 6.6px !important;
+  }
+}

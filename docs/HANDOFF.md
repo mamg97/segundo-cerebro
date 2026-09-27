@@ -581,3 +581,13 @@ Assets frontend: `v0.34.0`.
 - `Retenciones bancarias` y `Libre` conservan colores dedicados y distintos de los compromisos.
 - En móvil se ocultan las líneas guía para evitar saturación, manteniendo la leyenda normal.
 - Assets frontend: `v0.36.1`.
+
+
+## Liquidez · fecha de cobro en ítems v0.36.2
+
+- Los compromisos muestran la fecha de cobro dentro del propio ítem cuando Finanzas ya dispone de ella.
+- La UI prioriza campos estructurados opcionales (`charge_date`, `due_date`, `billing_date`, `charge_day`) y, mientras no existan, interpreta expresiones canónicas ya presentes en `note`: `cobro previsto DD/MM/YYYY`, `próximo cargo esperado DD/MM/YYYY`, `día N` o `alrededor del día N`.
+- No se inventa una fecha cuando no existe información suficiente.
+- La fecha aparece compacta bajo el importe, por ejemplo `Cobro: 30 sept`, `Cobro: día 4` o `Cobro: aprox. día 29`.
+- ORGANIZADOR sigue siendo de solo lectura respecto al estado financiero.
+- Assets frontend: `v0.36.2`.
