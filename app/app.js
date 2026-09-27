@@ -761,13 +761,13 @@ function renderNavigation() {
       .filter(Boolean);
     return `
       <div class="nav-group" data-nav-group="${escapeHtml(area.id)}">
-        <a class="nav-link nav-link-parent ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}">
+        <a class="nav-link nav-link-parent nav-tone-${escapeHtml(area.tone || "blue")} ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}">
           ${escapeHtml(area.shortTitle)}
         </a>
         ${children.length ? `
           <div class="nav-subnav" aria-label="Subapartados de ${escapeHtml(area.shortTitle)}">
             ${children.map((child) => `
-              <a class="nav-link nav-link-child" href="#overview" data-nav-area-id="${child.id}">
+              <a class="nav-link nav-link-child nav-tone-${escapeHtml(child.tone || area.tone || "blue")}" href="#overview" data-nav-area-id="${child.id}">
                 ${escapeHtml(child.shortTitle)}
               </a>
             `).join("")}
@@ -3783,7 +3783,8 @@ function renderWealthOverview() {
 
   const currency = wealth.currency || "EUR";
   const dates = allocation.map((item) => item.updatedAt).filter(Boolean).sort();
-  const asOf = formatFinanceDate(dates.at(-1) || wealth.currentDate, "Fecha no disponible");
+  const latestAllocationDate = dates.length ? dates[dates.length - 1] : null;
+  const asOf = formatFinanceDate(latestAllocationDate || wealth.currentDate, "Fecha no disponible");
   const needsRefresh = allocation.some((item) => /requiere refresco|retirada posterior|no representa el saldo actual/i.test(String(item.note || "")));
 
   container.innerHTML = `
@@ -3802,7 +3803,10 @@ function openWealthDetail() {
   document.querySelector("#dialog-context").textContent = "Patrimonio · Distribución y conciliación";
   document.querySelector("#dialog-title").textContent = "Patrimonio financiero";
 
-  if (!wealth || firstFinite(wealth.currentPatrimony) === null) {
+  const allocation = Array.isArray(wealth?.allocation)
+    ? wealth.allocation.filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0)
+    : [];
+  if (!wealth || (!allocation.length && firstFinite(wealth.currentPatrimony) === null)) {
     document.querySelector("#dialog-body").innerHTML = "<p>No hay patrimonio conectado.</p>";
     dialog.showModal();
     return;
@@ -4082,7 +4086,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
           const allocations = allAllocations.filter((item) => String(item.kind || "").toLowerCase() !== "card_hold");
           const retained = holds.reduce((sum, item) => sum + Number(item.amount), 0);
           const committed = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
-          const free = firstFinite(account.free) ?? Math.max(0, balance - committed - retained);
+          const free = Math.max(0, balance - committed - retained);
           const excess = Math.max(0, committed + retained - balance);
           const availableAfterHolds = Math.max(0, balance - retained);
           const rawSegments = [
@@ -4190,7 +4194,7 @@ function renderWealthAllocation(wealth, fallbackCurrency = "EUR") {
     className: allocationColorClass(item.platform, index)
   })), total);
   const allocationDates = items.map((item) => item.updatedAt).filter(Boolean).sort();
-  const allocationDate = allocationDates.at(-1) || null;
+  const allocationDate = allocationDates.length ? allocationDates[allocationDates.length - 1] : null;
   const historicTotal = firstFinite(wealth?.currentPatrimony);
   const historicDate = wealth?.currentDate || null;
   const differentSnapshot = allocationDate && historicDate && String(allocationDate).slice(0, 10) !== String(historicDate).slice(0, 10);
