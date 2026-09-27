@@ -543,3 +543,14 @@ Assets frontend: `v0.34.0`.
 - No se hardcodean saldos ni destinos en frontend; la visualización se recalcula al refrescar datos privados.
 - Assets frontend: `v0.35.1`.
 
+
+
+## Hotfix Finanzas · SVG CSP-safe v0.35.4
+
+- Causa raíz de las barras verticales vacías: la app privada aplica CSP `style-src 'self'`; los porcentajes se estaban escribiendo mediante atributos `style=""` inline y el navegador los bloqueaba.
+- Se elimina por completo la geometría basada en estilos inline.
+- La barra de liquidez se renderiza ahora como SVG dinámico: cada reserva es un `rect` con `y` y `height` numéricos calculados en JavaScript; la línea de saldo en casos de overflow es un `line` SVG.
+- Los colores siguen viniendo de CSS externo permitido por CSP.
+- Verificación previa al cierre: render headless en Chromium con los importes reales conocidos de Openbank Miguel (191,42 €) y Openbank Andrea (150,95 €); ambas barras aparecen completamente rellenas y segmentadas, y Andrea muestra la línea de saldo real en el punto correcto.
+- Despliegue privado de Cloudflare completado correctamente.
+- Assets frontend: `v0.35.4`.
