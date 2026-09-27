@@ -529,3 +529,17 @@ Assets frontend: `v0.34.0`.
 - Ningún saldo, nombre de cuenta real ni cifra patrimonial queda hardcodeado en Git.
 - El Gestor de Finanzas es responsable de mantener estas asignaciones cuando cambien saldos, provisiones o ubicaciones patrimoniales.
 - Assets frontend: `v0.35.0`.
+
+
+## Finanzas · Liquidez por cuenta — barras apiladas v0.35.1
+
+- Sustituida la representación horizontal por una gráfica dinámica de barras apiladas verticales.
+- Se muestra una barra por cuenta, alimentada exclusivamente por `Cuentas` + `ReservasCuenta`.
+- Encima de cada barra aparece el saldo actual; cada franja representa una reserva/compromiso y el remanente se muestra como `Libre`.
+- La leyenda lateral muestra destino, importe y porcentaje sobre el saldo.
+- Cuando los compromisos superan el saldo, la barra conserva todos los compromisos y dibuja una línea de saldo real para visualizar el déficit sin falsear cifras.
+- Las reservas con estado terminal (`executed`, `paid`, `released`, `closed`, `completed`, `cancelled`) dejan de entrar en la visualización.
+- Responsive: 4 barras en escritorio ancho, 2 en viewport intermedio y 1 por fila en móvil.
+- No se hardcodean saldos ni destinos en frontend; la visualización se recalcula al refrescar datos privados.
+- Assets frontend: `v0.35.1`.
+
