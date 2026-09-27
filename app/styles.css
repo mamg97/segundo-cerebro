@@ -12698,9 +12698,11 @@ html[data-theme="dark"] .wealth-vault {
 .liquidity-bar-segment {
   position: relative;
   width: 100%;
+  height: var(--segment-size);
   min-height: 2px;
+  flex: 0 0 var(--segment-size);
   border-top: 1px solid rgba(255,255,255,.38);
-  transition: height .22s ease;
+  transition: flex-basis .22s ease, height .22s ease;
 }
 
 .liquidity-bar-segment:hover {
