@@ -4019,6 +4019,13 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
             })),
             ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free" }] : [])
           ];
+          let cumulativePct = 0;
+          const positionedSegments = segments.map((segment) => {
+            const height = Math.max(0, Math.min(100, (segment.amount / denominator) * 100));
+            const positioned = { ...segment, height, bottom: cumulativePct };
+            cumulativePct += height;
+            return positioned;
+          });
 
           return `
             <article class="liquidity-account-card ${overflow ? "has-overflow" : ""}">
@@ -4038,11 +4045,10 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                   <div class="liquidity-stacked-bar"
                        role="img"
                        aria-label="${escapeHtml(account.name || "Cuenta")}: ${escapeHtml(formatMoney(balance, currency))} de saldo actual distribuido por destino">
-                    ${segments.map((segment) => {
-                      const height = Math.max(0, Math.min(100, (segment.amount / denominator) * 100));
+                    ${positionedSegments.map((segment) => {
                       const pctOfBalance = balance > 0 ? (segment.amount / balance) * 100 : 0;
                       return `<span class="liquidity-bar-segment ${segment.className}"
-                                    style="--segment-size:${height.toFixed(3)}%"
+                                    style="--segment-size:${segment.height.toFixed(3)}%;--segment-bottom:${segment.bottom.toFixed(3)}%"
                                     title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))} · ${pctOfBalance.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del saldo"></span>`;
                     }).join("")}
                     ${overflow ? `<span class="liquidity-balance-marker" style="bottom:${balanceMarkerPct.toFixed(3)}%" aria-hidden="true"></span>` : ""}
