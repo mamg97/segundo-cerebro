@@ -406,10 +406,12 @@ async function fetchFinanceSummary(env) {
     }
   }
 
-  const [accountRows, accountAllocationRows, wealthAllocationRows] = await Promise.all([
-    fetchOptionalFinanceRows("Cuentas!A1:J200"),
+  const [accountRows, accountAllocationRows, accountHoldRows, wealthAllocationRows, wealthReconciliationRows] = await Promise.all([
+    fetchOptionalFinanceRows("Cuentas!A1:K200"),
     fetchOptionalFinanceRows("ReservasCuenta!A1:J500"),
-    fetchOptionalFinanceRows("PatrimonioDetalle!A1:J500")
+    fetchOptionalFinanceRows("RetencionesCuenta!A1:J500"),
+    fetchOptionalFinanceRows("PatrimonioDetalle!A1:J500"),
+    fetchOptionalFinanceRows("PatrimonioConciliacion!A1:J200")
   ]);
 
   let electricityRows = [];
@@ -522,48 +524,117 @@ async function fetchFinanceSummary(env) {
     .reverse()
     .find((item) => item.date <= todayKey && item.patrimony !== null) || null;
 
-  const accountAllocations = parseTableRows(accountAllocationRows)
+  const terminalAccountStatuses = new Set([
+    "cancelled", "canceled", "released", "executed", "paid", "closed", "completed",
+    "settled", "consolidated", "charged", "cleared"
+  ]);
+  const priorityRank = (value) => {
+    const key = String(value || "").trim().toLowerCase();
+    if (key === "critical") return 0;
+    if (key === "high") return 1;
+    if (key === "normal" || key === "medium") return 2;
+    if (key === "low") return 3;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? 10 + numeric : 99;
+  };
+
+  const allAccountAllocations = parseTableRows(accountAllocationRows)
     .map((item) => ({
       accountId: item.account_id || item.account || null,
       label: item.label || item.title || item.reservation || "Reserva",
       amount: moneyOrNull(item.amount),
       status: item.status || "active",
       kind: item.kind || "reserved",
-      priority: item.priority === "" || item.priority == null ? null : Number(item.priority),
+      priority: item.priority || null,
       note: item.note || null
     }))
     .filter((item) => {
       const status = String(item.status || "active").trim().toLowerCase();
-      const terminal = new Set(["cancelled", "canceled", "released", "executed", "paid", "closed", "completed"]);
-      return item.accountId && item.amount !== null && !terminal.has(status);
+      return item.accountId && item.amount !== null && !terminalAccountStatuses.has(status);
     });
+
+  const fallbackHolds = allAccountAllocations
+    .filter((item) => String(item.kind || "").trim().toLowerCase() === "card_hold")
+    .map((item) => ({
+      accountId: item.accountId,
+      merchant: item.label,
+      amount: item.amount,
+      transactionDate: null,
+      estimatedSettlementDate: null,
+      status: item.status,
+      note: item.note,
+      sourceStatus: null,
+      source: "ReservasCuenta"
+    }));
+
+  const accountAllocations = allAccountAllocations
+    .filter((item) => String(item.kind || "").trim().toLowerCase() !== "card_hold");
+
+  const explicitHolds = parseTableRows(accountHoldRows)
+    .map((item) => ({
+      accountId: item.account_id || item.account || null,
+      merchant: item.merchant || item.label || item.title || "Retención",
+      amount: moneyOrNull(item.amount),
+      transactionDate: item.transaction_date || item.date || null,
+      estimatedSettlementDate: item.estimated_settlement_date || item.settlement_date || null,
+      status: item.status || "active",
+      note: item.note || null,
+      sourceStatus: item.source_status || null,
+      source: "RetencionesCuenta"
+    }))
+    .filter((item) => {
+      const status = String(item.status || "active").trim().toLowerCase();
+      return item.accountId && item.amount !== null && !terminalAccountStatuses.has(status);
+    });
+
+  const explicitHoldAccounts = new Set(explicitHolds.map((item) => item.accountId));
+  const accountHolds = [
+    ...explicitHolds,
+    ...fallbackHolds.filter((item) => !explicitHoldAccounts.has(item.accountId))
+  ];
 
   const liquidityAccounts = parseTableRows(accountRows)
     .map((item) => {
       const id = item.account_id || item.id || null;
       const balance = moneyOrNull(item.balance);
       const explicitFree = moneyOrNull(item.free_amount);
+      const explicitAvailableBalance = moneyOrNull(item.available_balance);
       const allocations = accountAllocations
         .filter((allocation) => allocation.accountId === id)
-        .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+        .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
+      const holds = accountHolds
+        .filter((hold) => hold.accountId === id)
+        .sort((a, b) => String(a.transactionDate || "").localeCompare(String(b.transactionDate || "")));
       const reserved = allocations.reduce((sum, allocation) => sum + Math.max(0, allocation.amount || 0), 0);
+      const retained = holds.reduce((sum, hold) => sum + Math.max(0, hold.amount || 0), 0);
       const free = explicitFree !== null
-        ? explicitFree
+        ? Math.max(0, explicitFree)
         : balance !== null
-          ? Math.max(0, balance - reserved)
+          ? Math.max(0, balance - reserved - retained)
           : null;
+      const availableBalance = explicitAvailableBalance !== null
+        ? explicitAvailableBalance
+        : balance !== null
+          ? Math.max(0, balance - retained)
+          : null;
+      const excess = balance !== null ? Math.max(0, reserved + retained - balance) : 0;
       return {
         id,
         name: item.name || item.account_name || id || "Cuenta",
         bank: item.bank || null,
         owner: item.owner || null,
         balance,
+        availableBalance,
+        availableBalanceSource: explicitAvailableBalance !== null ? "bank" : retained > 0 ? "derived" : null,
         free,
         reserved,
+        retained,
+        excess,
         currency: item.currency || summary.currency || "EUR",
         updatedAt: item.updated_at || null,
         note: item.note || null,
-        allocations
+        allocations,
+        holds
       };
     })
     .filter((item) => item.id && item.balance !== null);
@@ -579,16 +650,51 @@ async function fetchFinanceSummary(env) {
       note: item.note || null,
       status: item.status || "active"
     }))
-    .filter((item) => item.id && item.amount !== null && String(item.status).toLowerCase() !== "closed");
+    .filter((item) => item.id && item.amount !== null && !["closed", "cancelled", "canceled"].includes(String(item.status).toLowerCase()));
+
+  const wealthAllocationTotal = wealthAllocation.reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
+  const wealthAllocationDates = wealthAllocation.map((item) => item.updatedAt).filter(Boolean).sort();
+  const wealthAllocationDate = wealthAllocationDates.length ? wealthAllocationDates[wealthAllocationDates.length - 1] : null;
+  const wealthNeedsRefresh = wealthAllocation.some((item) => /requiere refresco|retirada posterior|no representa el saldo actual/i.test(String(item.note || "")));
+
+  const wealthReconciliation = parseTableRows(wealthReconciliationRows)
+    .map((item) => {
+      const amount = moneyOrNull(item.amount);
+      const comparable = ["true", "1", "yes", "si", "sí"].includes(String(item.comparable || "").trim().toLowerCase());
+      return {
+        id: item.source_id || item.id || null,
+        label: item.label || item.source || item.source_id || "Fuente",
+        amount,
+        asOf: item.as_of || item.updated_at || null,
+        comparable,
+        status: item.status || null,
+        note: item.note || null,
+        sourceRef: item.source_ref || null,
+        difference: amount !== null && wealthAllocationTotal > 0 ? wealthAllocationTotal - amount : null
+      };
+    })
+    .filter((item) => item.id);
+
+  const comparableDifferences = wealthReconciliation
+    .filter((item) => item.comparable && item.amount !== null && item.id !== "detalle")
+    .map((item) => Math.abs(item.difference || 0));
+  const reconciliationStatus = comparableDifferences.some((value) => value > 0.01) ? "pending" : "reconciled";
 
   const wealthSummary = {
     currency: summary.currency || "EUR",
-    currentPatrimony: currentWealth?.patrimony ?? null,
-    currentDate: currentWealth?.date ?? null,
+    currentPatrimony: wealthAllocationTotal > 0 ? wealthAllocationTotal : currentWealth?.patrimony ?? null,
+    currentDate: wealthAllocationDate || currentWealth?.date || null,
+    primarySource: wealthAllocationTotal > 0 ? "PatrimonioDetalle" : "Patrimonio",
+    primaryStatus: wealthNeedsRefresh ? "pending_refresh" : "current",
+    historicalPatrimony: currentWealth?.patrimony ?? null,
+    historicalDate: currentWealth?.date ?? null,
     currentSalaryMiguel: currentWealth?.salaryMiguel ?? null,
     currentSalaryAndrea: currentWealth?.salaryAndrea ?? null,
     history: wealthHistory,
-    allocation: wealthAllocation
+    allocation: wealthAllocation,
+    allocationTotal: wealthAllocationTotal || null,
+    reconciliation: wealthReconciliation,
+    reconciliationStatus
   };
 
   const importantEventRules = parseTableRows(importantEventRows)
