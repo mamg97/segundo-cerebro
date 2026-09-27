@@ -4037,10 +4037,27 @@ function quantizeBarSegments(segments, total) {
 }
 
 function allocationColorClass(label, index) {
-  const source = String(label || index || "reserva");
-  let hash = 0;
-  for (let i = 0; i < source.length; i += 1) hash = ((hash << 5) - hash + source.charCodeAt(i)) | 0;
-  return `allocation-${(Math.abs(hash) % 8) + 1}`;
+  // Within a single visual block, index-based assignment keeps adjacent
+  // categories visually unique. The palette has 12 commitment colors;
+  // Retenido and Libre use their own dedicated colors outside this range.
+  return `allocation-${(Math.max(0, Number(index) || 0) % 12) + 1}`;
+}
+
+function buildLiquidityLeaderLayout(segments, height = 258) {
+  const ordered = [...segments].reverse();
+  if (!ordered.length) return [];
+
+  let topPct = 0;
+  return ordered.map((segment, index) => {
+    const visiblePct = Math.max(0, Number(segment.visiblePct) || 0);
+    const barCenterY = height * ((topPct + (visiblePct / 2)) / 100);
+    topPct += visiblePct;
+    return {
+      ...segment,
+      barCenterY,
+      rowCenterY: height * ((index + 0.5) / ordered.length)
+    };
+  });
 }
 
 function formatFinanceDate(value, fallback = "Sin fecha") {
@@ -4099,6 +4116,8 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
             ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free" }] : [])
           ];
           const segments = quantizeBarSegments(rawSegments, balance);
+          const leaderLayout = buildLiquidityLeaderLayout(segments);
+          const leaderCountClass = `leader-count-${Math.min(20, leaderLayout.length)}`;
 
           return `
             <article class="liquidity-account-card ${excess > 0.01 ? "has-overflow" : ""}">
@@ -4116,6 +4135,16 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
               </header>
 
               <div class="liquidity-account-chart">
+                <svg class="liquidity-leader-layer" aria-hidden="true">
+                  ${leaderLayout.map((segment) => segment.visiblePct > 0 ? `
+                    <line class="liquidity-leader-line"
+                          x1="71" y1="${segment.barCenterY.toFixed(2)}"
+                          x2="92" y2="${segment.rowCenterY.toFixed(2)}"></line>
+                    <circle class="liquidity-leader-dot ${segment.className}"
+                            cx="92" cy="${segment.rowCenterY.toFixed(2)}" r="2.6"></circle>
+                  ` : "").join("")}
+                </svg>
+
                 <div class="liquidity-bar-wrap">
                   <div class="liquidity-stacked-bar-2d" role="img" aria-label="${escapeHtml(account.name || "Cuenta")}: distribución de ${escapeHtml(formatMoney(balance, currency))}">
                     ${segments.map((segment) => `
@@ -4125,15 +4154,17 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                   <small class="liquidity-bar-caption">Saldo real = 100%</small>
                 </div>
 
-                <div class="liquidity-account-legend">
-                  ${rawSegments.map((segment) => {
+                <div class="liquidity-account-legend ${leaderCountClass}">
+                  ${leaderLayout.map((segment) => {
                     const pct = balance > 0 ? (segment.amount / balance) * 100 : 0;
                     return `
-                      <div class="liquidity-legend-row">
+                      <div class="liquidity-legend-row ${segment.visiblePct > 0 ? "" : "is-outside-balance"}">
                         <i class="${segment.className}"></i>
                         <span>
                           <em>${escapeHtml(segment.label)}</em>
-                          <small>${pct.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del saldo</small>
+                          <small>${segment.visiblePct > 0
+                            ? pct.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "% del saldo"
+                            : "Fuera del saldo actual"}</small>
                         </span>
                         <b>${formatMoney(segment.amount, currency)}</b>
                       </div>`;
