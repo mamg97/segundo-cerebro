@@ -115,7 +115,7 @@ Whenever `GET /api/health/history` is read for a supported range (30/90/180/365/
 
 The same read also refreshes private tab `ActividadDiaria` with the daily D1 detail for the requested range: date, active/resting/total kcal, steps, exercise minutes, workout count, coverage quality, source, sample/import timestamps, source details and workout metadata. This exists so an authorized health-manager chat can inspect an exact day instead of inferring it from aggregates.
 
-These are derived access surfaces, not new sources of truth. Raw daily activity/body samples continue to live in D1. Decisions must use comparable `full`/`live` days and must not treat `partial` or `phone_only` days as equivalent Watch coverage. If a selected date has no D1 row, do not display zero: show it as missing/not synchronized.
+These are derived access surfaces, not new sources of truth. Raw daily activity/body samples continue to live in D1. Explicit rows recovered from a user-supplied Apple Health export are first staged in the private Health Sheet with source `apple_health_export_recovery` (activity) or an explicit recovery note (body metrics), then reconciled idempotently into D1 on the next Health read. This lets a complete export replace a stale partial live snapshot without keeping two competing truths. Decisions must use comparable `full`/`live` days and must not treat `partial` or `phone_only` days as equivalent Watch coverage. If a selected date has no D1 row, do not display zero: show it as missing/not synchronized.
 
 ## Privacy
 

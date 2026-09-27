@@ -1484,6 +1484,93 @@ async function fetchHealthEnergyRows(env, startDate, endDate) {
   }]));
 }
 
+async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = []) {
+  const recoveredEnergy = energyRows.filter((row) =>
+    row?.date &&
+    String(row?.source || "") === "apple_health_export_recovery"
+  );
+
+  if (recoveredEnergy.length) {
+    await ensureHealthEnergyTable(env);
+    for (const row of recoveredEnergy) {
+      await env.DB.prepare(`
+        INSERT INTO health_energy_daily (
+          energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at,
+          steps, exercise_minutes, workout_count, sampled_at, source_details, workouts_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(energy_date) DO UPDATE SET
+          active_kcal = excluded.active_kcal,
+          resting_kcal = excluded.resting_kcal,
+          total_kcal = excluded.total_kcal,
+          source = excluded.source,
+          note = excluded.note,
+          recorded_at = excluded.recorded_at,
+          steps = excluded.steps,
+          exercise_minutes = excluded.exercise_minutes,
+          workout_count = excluded.workout_count,
+          sampled_at = excluded.sampled_at,
+          source_details = excluded.source_details,
+          workouts_json = excluded.workouts_json
+      `).bind(
+        row.date,
+        row.activeKcal,
+        row.restingKcal,
+        row.totalKcal,
+        "apple_health_export_recovery",
+        row.note || "Apple Health export recovery",
+        row.importedAt || new Date().toISOString(),
+        row.steps === null || row.steps === undefined ? null : Math.round(Number(row.steps)),
+        row.exerciseMinutes,
+        row.workoutCount === null || row.workoutCount === undefined ? null : Math.round(Number(row.workoutCount)),
+        row.sampledAt || `${row.date}T23:59:59+02:00`,
+        JSON.stringify(Array.isArray(row.sourceDetails) ? row.sourceDetails : []),
+        JSON.stringify(Array.isArray(row.workouts) ? row.workouts : [])
+      ).run();
+    }
+  }
+
+  const recoveredBody = bodyRows.filter((row) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(String(row?.date || "")) &&
+    String(row?.note || "").includes("Recuperado del ZIP de Apple Salud") &&
+    row?.measuredAt
+  );
+
+  if (recoveredBody.length) {
+    await ensureHealthBodyTable(env);
+    for (const row of recoveredBody) {
+      const samples = [
+        ["bodyMass", row.weightKg, "kg"],
+        ["bodyFatPercentage", row.bodyFatPct, "%"],
+        ["bodyMassIndex", row.bodyMassIndex, "count"],
+        ["leanBodyMass", row.leanBodyMassKg, "kg"]
+      ];
+      for (const [type, value, unit] of samples) {
+        if (!Number.isFinite(Number(value))) continue;
+        await env.DB.prepare(`
+          INSERT INTO health_body_samples (
+            metric_type, metric_value, unit, sample_date, measured_at, source, imported_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(metric_type, measured_at, source) DO UPDATE SET
+            metric_value = excluded.metric_value,
+            unit = excluded.unit,
+            sample_date = excluded.sample_date,
+            imported_at = excluded.imported_at
+        `).bind(
+          type,
+          Number(value),
+          unit,
+          row.date,
+          row.measuredAt,
+          String(row.source || "Zepp Life"),
+          row.importedAt || row.updatedAt || new Date().toISOString()
+        ).run();
+      }
+    }
+  }
+
+  return { energy: recoveredEnergy.length, bodyRows: recoveredBody.length };
+}
+
 
 function healthCoverageQuality(row) {
   const details = Array.isArray(row?.sourceDetails) ? row.sourceDetails : [];
@@ -1492,6 +1579,7 @@ function healthCoverageQuality(row) {
   if (String(row?.source || "").includes("history_partial")) return "partial";
   if (String(row?.source || "").includes("export_partial")) return "partial";
   if (String(row?.source || "").includes("export_watch")) return "full";
+  if (String(row?.source || "").includes("export_recovery")) return "full";
   if (String(row?.source || "").includes("export_phone")) return "phone_only";
   if (String(row?.source || "").includes("apple_health")) return "live";
   return "unknown";
@@ -1507,20 +1595,20 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
     ? "2000-01-01"
     : healthAddDays(date, -(days || 365) + 1);
 
-  const [energyMap, bodySamples] = await Promise.all([
-    fetchHealthEnergyRows(env, startDate, date),
-    fetchHealthBodySamples(env, startDate, date)
-  ]);
-
   let waistHistory = [];
   if (hasHealthGoogleConfig(env)) {
     try {
       const health = await fetchHealthNutritionSummary(env, { date, force: true });
       waistHistory = health.value?.body?.waistHistory || [];
     } catch (error) {
-      console.warn("Health history waist read failed", String(error?.message || error));
+      console.warn("Health history recovery/waist read failed", String(error?.message || error));
     }
   }
+
+  const [energyMap, bodySamples] = await Promise.all([
+    fetchHealthEnergyRows(env, startDate, date),
+    fetchHealthBodySamples(env, startDate, date)
+  ]);
 
   const activity = [...energyMap.values()].map((row) => ({
     ...row,
@@ -1881,6 +1969,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
 
   const historyStart = healthAddDays(date, -13);
   const bodyHistoryStart = healthAddDays(date, -27);
+  await reconcileHealthRecoveryRows(env, energyRows, bodySheetRows);
   const [d1EnergyByDate, d1BodySamples] = await Promise.all([
     fetchHealthEnergyRows(env, historyStart, date),
     fetchHealthBodySamples(env, bodyHistoryStart, date)
@@ -1897,16 +1986,22 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const objective = objectives.find((item) => item.effectiveDate <= date) || null;
   const activityObjective = activityObjectives.find((item) => item.effectiveDate <= date) || null;
 
-  const bodySamples = [...d1BodySamples];
+  const mergedBodySamples = [...d1BodySamples];
   for (const row of bodySheetRows) {
     const measuredAt = row.measuredAt || `${row.date}T12:00:00+02:00`;
     const source = row.source || "health_sheet";
-    if (row.weightKg !== null) bodySamples.push({ type: "bodyMass", value: row.weightKg, unit: "kg", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
-    if (row.bodyFatPct !== null) bodySamples.push({ type: "bodyFatPercentage", value: row.bodyFatPct, unit: "%", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
-    if (row.bodyMassIndex !== null) bodySamples.push({ type: "bodyMassIndex", value: row.bodyMassIndex, unit: "count", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
-    if (row.leanBodyMassKg !== null) bodySamples.push({ type: "leanBodyMass", value: row.leanBodyMassKg, unit: "kg", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+    if (row.weightKg !== null) mergedBodySamples.push({ type: "bodyMass", value: row.weightKg, unit: "kg", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+    if (row.bodyFatPct !== null) mergedBodySamples.push({ type: "bodyFatPercentage", value: row.bodyFatPct, unit: "%", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+    if (row.bodyMassIndex !== null) mergedBodySamples.push({ type: "bodyMassIndex", value: row.bodyMassIndex, unit: "count", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+    if (row.leanBodyMassKg !== null) mergedBodySamples.push({ type: "leanBodyMass", value: row.leanBodyMassKg, unit: "kg", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
   }
-  bodySamples.sort((a, b) => String(a.measuredAt).localeCompare(String(b.measuredAt)));
+  const bodySampleMap = new Map();
+  for (const sample of mergedBodySamples) {
+    const key = [sample.type, sample.measuredAt, sample.source].join("|");
+    bodySampleMap.set(key, sample);
+  }
+  const bodySamples = [...bodySampleMap.values()]
+    .sort((a, b) => String(a.measuredAt).localeCompare(String(b.measuredAt)));
 
   const latestMetric = (type, onlyDate = null) => {
     const matches = bodySamples.filter((sample) => sample.type === type && (!onlyDate || sample.date === onlyDate));
