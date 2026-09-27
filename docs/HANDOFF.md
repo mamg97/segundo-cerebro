@@ -570,3 +570,14 @@ Assets frontend: `v0.34.0`.
 - Patrimonio usa una barra horizontal apilada 2D y tarjetas por plataforma. `PatrimonioDetalle` es el total/distribución actual mostrado; el histórico de `Patrimonio` conserva su función temporal.
 - Paleta de segmentos: estilo Activity/Fitness con colores vivos.
 - Assets frontend: `v0.36.0`.
+
+
+## Liquidez · líneas guía y paleta única v0.36.1
+
+- Cada franja de la barra vertical de liquidez queda conectada con su etiqueta mediante una línea guía minimalista.
+- La leyenda se ordena de arriba abajo igual que la barra, evitando cruces visuales.
+- Las líneas solo conectan segmentos realmente dibujados dentro del saldo; los compromisos fuera de saldo se mantienen en texto sin fingir una franja.
+- Los compromisos reciben colores por índice con una paleta de 12 tonos vivos y no repiten color dentro del mismo bloque mientras haya colores disponibles.
+- `Retenciones bancarias` y `Libre` conservan colores dedicados y distintos de los compromisos.
+- En móvil se ocultan las líneas guía para evitar saturación, manteniendo la leyenda normal.
+- Assets frontend: `v0.36.1`.

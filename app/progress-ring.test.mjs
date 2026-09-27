@@ -63,7 +63,7 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.36\.0/);
+assert.match(index, /app\.js\?v=0\.36\.1/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -90,5 +90,14 @@ for (const marker of [
   assert.ok(app.includes(marker), "Missing audited app ring surface: " + marker);
 }
 assert.ok(adherence.includes("Adherencia mensual"), "Missing audited adherence ring surface");
+
+assert.match(app, /buildLiquidityLeaderLayout/);
+assert.match(app, /liquidity-leader-layer/);
+assert.match(css, /liquidity-leader-line/);
+for (let i = 1; i <= 12; i += 1) {
+  assert.match(css, new RegExp('\\.allocation-' + i + '\\s*\\{'));
+}
+assert.match(css, /allocation-hold/);
+assert.match(css, /allocation-free/);
 
 console.log("geometric progress rings: static geometry, overflow, dynamic update and all live surfaces OK");
