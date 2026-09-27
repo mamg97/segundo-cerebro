@@ -382,6 +382,36 @@ async function fetchFinanceSummary(env) {
   const gymPlanRows = valueRanges[6]?.values || [];
   const nutritionRows = valueRanges[7]?.values || [];
 
+  async function fetchOptionalFinanceRows(range) {
+    try {
+      const optionalParams = new URLSearchParams({
+        majorDimension: "ROWS",
+        valueRenderOption: "UNFORMATTED_VALUE"
+      });
+      const encodedRange = encodeURIComponent(range);
+      const optionalEndpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.FINANCE_SHEET_ID)}/values/${encodedRange}?${optionalParams.toString()}`;
+      const optionalResponse = await fetch(optionalEndpoint, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!optionalResponse.ok) {
+        if (optionalResponse.status !== 400 && optionalResponse.status !== 404) {
+          console.warn("Optional finance range read failed", range, "GOOGLE_SHEETS_" + optionalResponse.status);
+        }
+        return [];
+      }
+      return (await optionalResponse.json())?.values || [];
+    } catch (error) {
+      console.warn("Optional finance range read failed", range, String(error?.message || error));
+      return [];
+    }
+  }
+
+  const [accountRows, accountAllocationRows, wealthAllocationRows] = await Promise.all([
+    fetchOptionalFinanceRows("Cuentas!A1:J200"),
+    fetchOptionalFinanceRows("ReservasCuenta!A1:J500"),
+    fetchOptionalFinanceRows("PatrimonioDetalle!A1:J500")
+  ]);
+
   let electricityRows = [];
   try {
     const electricityParams = new URLSearchParams({
@@ -492,13 +522,69 @@ async function fetchFinanceSummary(env) {
     .reverse()
     .find((item) => item.date <= todayKey && item.patrimony !== null) || null;
 
+  const accountAllocations = parseTableRows(accountAllocationRows)
+    .map((item) => ({
+      accountId: item.account_id || item.account || null,
+      label: item.label || item.title || item.reservation || "Reserva",
+      amount: moneyOrNull(item.amount),
+      status: item.status || "active",
+      kind: item.kind || "reserved",
+      priority: item.priority === "" || item.priority == null ? null : Number(item.priority),
+      note: item.note || null
+    }))
+    .filter((item) => item.accountId && item.amount !== null && String(item.status).toLowerCase() !== "cancelled");
+
+  const liquidityAccounts = parseTableRows(accountRows)
+    .map((item) => {
+      const id = item.account_id || item.id || null;
+      const balance = moneyOrNull(item.balance);
+      const explicitFree = moneyOrNull(item.free_amount);
+      const allocations = accountAllocations
+        .filter((allocation) => allocation.accountId === id)
+        .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+      const reserved = allocations.reduce((sum, allocation) => sum + Math.max(0, allocation.amount || 0), 0);
+      const free = explicitFree !== null
+        ? explicitFree
+        : balance !== null
+          ? Math.max(0, balance - reserved)
+          : null;
+      return {
+        id,
+        name: item.name || item.account_name || id || "Cuenta",
+        bank: item.bank || null,
+        owner: item.owner || null,
+        balance,
+        free,
+        reserved,
+        currency: item.currency || summary.currency || "EUR",
+        updatedAt: item.updated_at || null,
+        note: item.note || null,
+        allocations
+      };
+    })
+    .filter((item) => item.id && item.balance !== null);
+
+  const wealthAllocation = parseTableRows(wealthAllocationRows)
+    .map((item) => ({
+      id: item.id || item.platform || item.custodian || null,
+      platform: item.platform || item.custodian || item.title || item.id || "Posición",
+      amount: moneyOrNull(item.amount),
+      assetClass: item.asset_class || item.type || null,
+      currency: item.currency || summary.currency || "EUR",
+      updatedAt: item.updated_at || null,
+      note: item.note || null,
+      status: item.status || "active"
+    }))
+    .filter((item) => item.id && item.amount !== null && String(item.status).toLowerCase() !== "closed");
+
   const wealthSummary = {
     currency: summary.currency || "EUR",
     currentPatrimony: currentWealth?.patrimony ?? null,
     currentDate: currentWealth?.date ?? null,
     currentSalaryMiguel: currentWealth?.salaryMiguel ?? null,
     currentSalaryAndrea: currentWealth?.salaryAndrea ?? null,
-    history: wealthHistory
+    history: wealthHistory,
+    allocation: wealthAllocation
   };
 
   const importantEventRules = parseTableRows(importantEventRows)
@@ -601,7 +687,8 @@ async function fetchFinanceSummary(env) {
       andreaNet: moneyOrNull(summary.andrea_net_free),
       jointNet: moneyOrNull(summary.joint_net_free),
       savingsTarget: commonBudget !== null && withSavings !== null ? withSavings - commonBudget : null,
-      categories
+      categories,
+      liquidityAccounts
     },
     upcomingCommitments: commitments,
     electricity,
