@@ -4135,7 +4135,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
               </header>
 
               <div class="liquidity-account-chart">
-                <svg class="liquidity-leader-layer" aria-hidden="true">
+                <svg class="liquidity-leader-layer" width="100%" height="258" aria-hidden="true">
                   ${leaderLayout.map((segment) => segment.visiblePct > 0 ? `
                     <line class="liquidity-leader-line"
                           x1="71" y1="${segment.barCenterY.toFixed(2)}"
