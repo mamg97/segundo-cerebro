@@ -3973,20 +3973,29 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
     return `
       <section class="liquidity-section liquidity-section-empty">
         <div class="liquidity-section-heading">
-          <div><p class="context-label">Liquidez por cuenta</p><h3>Dinero disponible y ya asignado</h3></div>
+          <div><p class="context-label">Liquidez por cuenta</p><h3>Distribución del saldo real por destino</h3></div>
         </div>
         <p>La visualización aparecerá cuando Finanzas complete las pestañas privadas Cuentas y ReservasCuenta.</p>
       </section>`;
   }
+
+  const colorClassFor = (label, index) => {
+    const source = String(label || index || "reserva");
+    let hash = 0;
+    for (let i = 0; i < source.length; i += 1) {
+      hash = ((hash << 5) - hash + source.charCodeAt(i)) | 0;
+    }
+    return `allocation-${(Math.abs(hash) % 10) + 1}`;
+  };
 
   return `
     <section class="liquidity-section">
       <div class="liquidity-section-heading">
         <div>
           <p class="context-label">Liquidez por cuenta</p>
-          <h3>Qué parte del saldo ya tiene destino</h3>
+          <h3>Distribución del saldo real por destino</h3>
         </div>
-        <span>Saldo ≠ dinero libre</span>
+        <span>Cada barra = saldo actual · cada franja = compromiso o dinero libre</span>
       </div>
       <div class="liquidity-account-list">
         ${accounts.map((account) => {
@@ -3998,16 +4007,19 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
           const explicitFree = firstFinite(account.free);
           const free = explicitFree === null ? Math.max(0, balance - reserved) : Math.max(0, explicitFree);
           const represented = reserved + free;
+          const overflowAmount = Math.max(0, represented - balance);
+          const overflow = overflowAmount > 0.01;
           const denominator = Math.max(balance, represented, 1);
-          const overflow = represented > balance + 0.01;
+          const balanceMarkerPct = Math.max(0, Math.min(100, (balance / denominator) * 100));
           const segments = [
             ...allocations.map((item, index) => ({
               label: item.label || "Reserva",
               amount: Number(item.amount),
-              className: `allocation-${(index % 6) + 1}`
+              className: colorClassFor(item.label, index)
             })),
             ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free" }] : [])
           ];
+
           return `
             <article class="liquidity-account-card ${overflow ? "has-overflow" : ""}">
               <header>
@@ -4015,28 +4027,56 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                   <strong>${escapeHtml(account.name || account.id || "Cuenta")}</strong>
                   <span>${escapeHtml([account.bank, account.owner].filter(Boolean).join(" · "))}</span>
                 </div>
-                <div>
+                <div class="liquidity-balance">
                   <small>Saldo actual</small>
                   <b>${formatMoney(balance, currency)}</b>
                 </div>
               </header>
-              <div class="liquidity-segment-bar" role="img" aria-label="${escapeHtml(account.name || "Cuenta")}: distribución del saldo">
-                ${segments.map((segment) => {
-                  const width = Math.max(0, Math.min(100, (segment.amount / denominator) * 100));
-                  return `<span class="${segment.className}" style="width:${width.toFixed(3)}%" title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))}"></span>`;
-                }).join("")}
+
+              <div class="liquidity-account-chart">
+                <div class="liquidity-bar-wrap">
+                  <div class="liquidity-stacked-bar"
+                       role="img"
+                       aria-label="${escapeHtml(account.name || "Cuenta")}: ${escapeHtml(formatMoney(balance, currency))} de saldo actual distribuido por destino">
+                    ${segments.map((segment) => {
+                      const height = Math.max(0, Math.min(100, (segment.amount / denominator) * 100));
+                      const pctOfBalance = balance > 0 ? (segment.amount / balance) * 100 : 0;
+                      return `<span class="liquidity-bar-segment ${segment.className}"
+                                    style="height:${height.toFixed(3)}%"
+                                    title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))} · ${pctOfBalance.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del saldo"></span>`;
+                    }).join("")}
+                    ${overflow ? `<span class="liquidity-balance-marker" style="bottom:${balanceMarkerPct.toFixed(3)}%" aria-hidden="true"></span>` : ""}
+                  </div>
+                  <small class="liquidity-bar-caption">${overflow ? "La línea marca el saldo real" : "100% del saldo"}</small>
+                </div>
+
+                <div class="liquidity-account-legend">
+                  ${segments.map((segment) => {
+                    const pct = balance > 0 ? (segment.amount / balance) * 100 : 0;
+                    return `
+                      <div class="liquidity-legend-row">
+                        <i class="${segment.className}"></i>
+                        <span>
+                          <em>${escapeHtml(segment.label)}</em>
+                          <small>${pct.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% del saldo</small>
+                        </span>
+                        <b>${formatMoney(segment.amount, currency)}</b>
+                      </div>`;
+                  }).join("")}
+                </div>
               </div>
-              <div class="liquidity-legend">
-                ${segments.map((segment) => `
-                  <span><i class="${segment.className}"></i><em>${escapeHtml(segment.label)}</em><b>${formatMoney(segment.amount, currency)}</b></span>
-                `).join("")}
-              </div>
-              ${overflow ? `<p class="liquidity-warning">Las asignaciones superan el saldo actual: revisar conciliación.</p>` : ""}
+
+              <footer class="liquidity-account-summary">
+                <span>Comprometido <b>${formatMoney(reserved, currency)}</b></span>
+                <span>Libre <b>${formatMoney(free, currency)}</b></span>
+              </footer>
+              ${overflow ? `<p class="liquidity-warning">Compromisos superiores al saldo actual en ${formatMoney(overflowAmount, currency)}. La parte situada por encima de la línea necesita conciliación o financiación adicional.</p>` : ""}
             </article>`;
         }).join("")}
       </div>
     </section>`;
 }
+
 
 function renderWealthAllocation(allocation, fallbackCurrency = "EUR") {
   const items = (Array.isArray(allocation) ? allocation : [])
