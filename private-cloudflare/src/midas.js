@@ -94,7 +94,7 @@ export async function addPrivateGeneticDiary(db, dashboard) {
     last_equity: last[1],
     return_pct: Math.round((last[1] / snapshot.initial_capital - 1) * 100_000_000) / 1_000_000,
     day_return_pct: previous[1] > 0 ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
-    note: "Resultado registrado por el simulador original. Las órdenes se contabilizaban al mismo cierre que generaba la señal; no son ejecuciones verificadas ni una rentabilidad alcanzable."
+    note: `Diario ficticio desde ${first[0]}; la fecha mostrada es la del asiento, que puede ser posterior a la vela usada. Las operaciones se contabilizaban al mismo cierre que generaba la señal: no son ejecuciones verificadas ni rentabilidad alcanzable.`
   });
   return { ...dashboard, tracks };
 }
