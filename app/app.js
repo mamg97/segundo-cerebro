@@ -1116,6 +1116,7 @@ function renderBudgetOverview() {
         ${personalNet === null ? "" : `<div><span>Libre Miguel</span><strong>${formatMoney(personalNet, currency)}</strong></div>`}
         ${savingsTarget === null ? "" : `<div><span>Ahorro objetivo</span><strong>${formatMoney(savingsTarget, currency)}</strong></div>`}
       </div>
+      ${renderHomeLiquidityOverview(monthly.liquidityAccounts, currency)}
     `;
   }
 
@@ -3794,6 +3795,7 @@ function renderWealthOverview() {
       <strong>${formatMoney(current, currency)}</strong>
       <small>PatrimonioDetalle · ${escapeHtml(asOf)}${needsRefresh ? " · refresco pendiente en alguna fuente" : ""}</small>
     </div>
+    ${renderHomeWealthAllocation(allocation, currency)}
   `;
 }
 
@@ -4221,6 +4223,149 @@ function liquidityChargeLabel(item) {
   return null;
 }
 
+function liquidityVisualModel(account, fallbackCurrency = "EUR") {
+  const currency = account?.currency || fallbackCurrency;
+  const balance = Math.max(0, numberOrZero(account?.balance));
+  const allAllocations = (Array.isArray(account?.allocations) ? account.allocations : [])
+    .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
+  const holds = allAllocations.filter((item) => String(item.kind || "").toLowerCase() === "card_hold");
+  const allocations = allAllocations.filter((item) => String(item.kind || "").toLowerCase() !== "card_hold");
+  const retained = holds.reduce((sum, item) => sum + Number(item.amount), 0);
+  const committed = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
+  const free = Math.max(0, balance - committed - retained);
+  const excess = Math.max(0, committed + retained - balance);
+  const availableAfterHolds = Math.max(0, balance - retained);
+  const rawSegments = [
+    ...(retained > 0 ? [{
+      label: "Retenciones bancarias",
+      amount: retained,
+      className: "allocation-hold",
+      kind: "hold"
+    }] : []),
+    ...allocations.map((item, index) => ({
+      label: item.label || "Compromiso",
+      amount: Number(item.amount),
+      className: allocationColorClass(item.label, index),
+      note: item.note || null,
+      chargeDate: item.chargeDate || null,
+      chargeDay: item.chargeDay ?? null,
+      kind: "commitment"
+    })),
+    ...(free > 0 ? [{
+      label: "Libre",
+      amount: free,
+      className: "allocation-free",
+      kind: "free"
+    }] : [])
+  ];
+
+  return {
+    currency,
+    balance,
+    holds,
+    allocations,
+    retained,
+    committed,
+    free,
+    excess,
+    availableAfterHolds,
+    rawSegments,
+    segments: quantizeBarSegments(rawSegments, balance)
+  };
+}
+
+function orderedLiquidityAccounts(accounts) {
+  const accountRank = new Map([
+    ["openbank-miguel", 0],
+    ["openbank-andrea", 1],
+    ["santander-comun", 2],
+    ["bbva-comun", 3]
+  ]);
+  return [...(Array.isArray(accounts) ? accounts : [])]
+    .sort((a, b) => (accountRank.get(a.id) ?? 99) - (accountRank.get(b.id) ?? 99));
+}
+
+function renderHomeLiquidityOverview(accounts, fallbackCurrency = "EUR") {
+  const orderedAccounts = orderedLiquidityAccounts(accounts).slice(0, 4);
+  if (!orderedAccounts.length) return "";
+
+  return `
+    <section class="home-liquidity-overview" aria-label="Estado actual de las cuentas">
+      <div class="home-finance-mini-heading">
+        <strong>Estado de cuentas</strong>
+        <span>Saldo actual y distribución</span>
+      </div>
+      <div class="home-liquidity-grid">
+        ${orderedAccounts.map((account) => {
+          const model = liquidityVisualModel(account, fallbackCurrency);
+          const shortName = account.bank && account.owner
+            ? `${account.bank} · ${account.owner}`
+            : account.name || account.id || "Cuenta";
+          return `
+            <article class="home-liquidity-account ${model.excess > 0.01 ? "has-overflow" : ""}">
+              <div class="home-liquidity-account-head">
+                <span title="${escapeHtml(account.name || shortName)}">${escapeHtml(shortName)}</span>
+                <strong>${formatMoney(model.balance, model.currency)}</strong>
+              </div>
+              <div class="home-liquidity-account-body">
+                <div class="home-liquidity-bar" role="img" aria-label="${escapeHtml(shortName)}: ${escapeHtml(formatMoney(model.balance, model.currency))} de saldo actual">
+                  ${model.segments.map((segment) => `
+                    <div class="home-liquidity-segment ${segment.className} ${segment.pctClass}"
+                         title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, model.currency))}"></div>
+                  `).join("")}
+                </div>
+                <div class="home-liquidity-account-meta">
+                  <span>Libre <b>${formatMoney(model.free, model.currency)}</b></span>
+                  ${model.retained > 0 ? `<span>Retenido <b>${formatMoney(model.retained, model.currency)}</b></span>` : ""}
+                  ${model.excess > 0.01 ? `<span class="is-warning">Falta <b>${formatMoney(model.excess, model.currency)}</b></span>` : ""}
+                </div>
+              </div>
+            </article>`;
+        }).join("")}
+      </div>
+    </section>`;
+}
+
+function renderHomeWealthAllocation(items, fallbackCurrency = "EUR") {
+  const positions = (Array.isArray(items) ? items : [])
+    .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
+  if (!positions.length) return "";
+
+  const total = positions.reduce((sum, item) => sum + Number(item.amount), 0);
+  const segments = quantizeBarSegments(positions.map((item, index) => ({
+    ...item,
+    label: item.platform || item.id || "Posición",
+    className: allocationColorClass(item.platform || item.id, index)
+  })), total);
+
+  return `
+    <section class="home-wealth-allocation" aria-label="Distribución actual del patrimonio">
+      <div class="home-finance-mini-heading">
+        <strong>Distribución actual</strong>
+        <span>Por plataforma</span>
+      </div>
+      <div class="home-wealth-stack" role="img" aria-label="Distribución del patrimonio por plataforma">
+        ${segments.map((item) => `
+          <div class="home-wealth-segment ${item.className} ${item.pctClass}"
+               title="${escapeHtml(item.platform || item.id || "Posición")} · ${escapeHtml(formatMoney(item.amount, item.currency || fallbackCurrency))}"></div>
+        `).join("")}
+      </div>
+      <div class="home-wealth-legend">
+        ${positions.map((item, index) => {
+          const amount = Number(item.amount);
+          const pct = total > 0 ? (amount / total) * 100 : 0;
+          return `
+            <div>
+              <i class="${allocationColorClass(item.platform || item.id, index)}"></i>
+              <span>${escapeHtml(item.platform || item.id || "Posición")}</span>
+              <small>${pct.toLocaleString("es-ES", { maximumFractionDigits: 1 })}%</small>
+              <b>${formatMoney(amount, item.currency || fallbackCurrency)}</b>
+            </div>`;
+        }).join("")}
+      </div>
+    </section>`;
+}
+
 function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
   if (!Array.isArray(accounts) || !accounts.length) {
     return `
@@ -4248,30 +4393,20 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
       </div>
       <div class="liquidity-account-list">
         ${orderedAccounts.map((account) => {
-          const currency = account.currency || fallbackCurrency;
-          const balance = Math.max(0, numberOrZero(account.balance));
-          const allAllocations = (Array.isArray(account.allocations) ? account.allocations : [])
-            .filter((item) => Number.isFinite(Number(item.amount)) && Number(item.amount) > 0);
-          const holds = allAllocations.filter((item) => String(item.kind || "").toLowerCase() === "card_hold");
-          const allocations = allAllocations.filter((item) => String(item.kind || "").toLowerCase() !== "card_hold");
-          const retained = holds.reduce((sum, item) => sum + Number(item.amount), 0);
-          const committed = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
-          const free = Math.max(0, balance - committed - retained);
-          const excess = Math.max(0, committed + retained - balance);
-          const availableAfterHolds = Math.max(0, balance - retained);
-          const rawSegments = [
-            ...(retained > 0 ? [{ label: "Retenciones bancarias", amount: retained, className: "allocation-hold" }] : []),
-            ...allocations.map((item, index) => ({
-              label: item.label || "Compromiso",
-              amount: Number(item.amount),
-              className: allocationColorClass(item.label, index),
-              note: item.note || null,
-              chargeDate: item.chargeDate || null,
-              chargeDay: item.chargeDay ?? null
-            })),
-            ...(free > 0 ? [{ label: "Libre", amount: free, className: "allocation-free" }] : [])
-          ];
-          const segments = quantizeBarSegments(rawSegments, balance);
+          const model = liquidityVisualModel(account, fallbackCurrency);
+          const {
+            currency,
+            balance,
+            holds,
+            allocations,
+            retained,
+            committed,
+            free,
+            excess,
+            availableAfterHolds,
+            rawSegments,
+            segments
+          } = model;
           const leaderLayout = buildLiquidityLeaderLayout(segments);
           const leaderCountClass = `leader-count-${Math.min(20, leaderLayout.length)}`;
 

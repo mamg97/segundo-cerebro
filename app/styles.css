@@ -13799,3 +13799,252 @@ html[data-theme="dark"] .liquidity-svg-base {
   .midas-table .midas-number { text-align: left; }
   .wealth-actions { gap: 3px 12px; }
 }
+
+
+/* v0.37.6 — compact account liquidity + patrimony distribution on Home */
+.home-liquidity-overview,
+.home-wealth-allocation {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.home-finance-mini-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.home-finance-mini-heading strong {
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.home-finance-mini-heading span {
+  color: var(--ink-soft);
+  font-size: 7.5px;
+  text-align: right;
+}
+
+.home-liquidity-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.home-liquidity-account {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+}
+
+.home-liquidity-account.has-overflow {
+  border-color: color-mix(in srgb, #ff9f0a 45%, var(--line));
+}
+
+.home-liquidity-account-head {
+  min-width: 0;
+}
+
+.home-liquidity-account-head > span,
+.home-liquidity-account-head > strong {
+  display: block;
+}
+
+.home-liquidity-account-head > span {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 6.8px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-liquidity-account-head > strong {
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 9px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.home-liquidity-account-body {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 7px;
+  align-items: end;
+  margin-top: 7px;
+}
+
+.home-liquidity-bar {
+  display: flex;
+  width: 22px;
+  height: 72px;
+  flex-direction: column-reverse;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: 8px;
+  background: #263347;
+  box-shadow: 0 5px 12px rgba(0,0,0,.10);
+}
+
+.home-liquidity-segment {
+  width: 100%;
+  min-height: 0;
+  border-top: 1px solid rgba(255,255,255,.22);
+}
+
+.home-liquidity-segment:first-child {
+  border-top: 0;
+}
+
+.home-liquidity-account-meta {
+  display: grid;
+  align-content: end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.home-liquidity-account-meta span {
+  display: block;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 6.4px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-liquidity-account-meta b {
+  display: block;
+  margin-top: 1px;
+  color: var(--ink);
+  font-size: 7.2px;
+}
+
+.home-liquidity-account-meta .is-warning,
+.home-liquidity-account-meta .is-warning b {
+  color: #ff9f0a;
+}
+
+.home-wealth-stack {
+  display: flex;
+  width: 100%;
+  height: 17px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: 7px;
+  background: #263347;
+}
+
+.home-wealth-segment {
+  height: 100%;
+  min-width: 0;
+  border-left: 1px solid rgba(255,255,255,.24);
+}
+
+.home-wealth-segment:first-child {
+  border-left: 0;
+}
+
+.home-wealth-legend {
+  display: grid;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.home-wealth-legend > div {
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr) auto auto;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.home-wealth-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.home-wealth-legend span {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 7.3px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-wealth-legend small {
+  color: var(--ink-soft);
+  font-size: 6.8px;
+  white-space: nowrap;
+}
+
+.home-wealth-legend b {
+  color: var(--ink);
+  font-size: 7.5px;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .home-liquidity-account {
+  background: rgba(20,30,45,.58);
+}
+
+@media (max-width: 1180px) {
+  .home-liquidity-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-liquidity-bar {
+    height: 62px;
+  }
+}
+
+@media (max-width: 760px) {
+  .home-liquidity-overview,
+  .home-wealth-allocation {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .home-liquidity-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .home-liquidity-account {
+    padding: 9px;
+  }
+
+  .home-liquidity-account-head > span {
+    font-size: 8px;
+  }
+
+  .home-liquidity-account-head > strong {
+    font-size: 10px;
+  }
+
+  .home-liquidity-account-meta span {
+    font-size: 7.3px;
+  }
+
+  .home-liquidity-account-meta b {
+    font-size: 8px;
+  }
+
+  .home-wealth-legend span {
+    font-size: 8px;
+  }
+
+  .home-wealth-legend small,
+  .home-wealth-legend b {
+    font-size: 7.6px;
+  }
+}
