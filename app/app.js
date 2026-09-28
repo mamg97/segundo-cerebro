@@ -3267,6 +3267,39 @@ function renderWeeklyMenuProgress(label, value, target, pct, tone) {
     </div>`;
 }
 
+function weeklyMenuIngredientAmount(ingredient) {
+  const grams = Number(ingredient?.gramsForMeal);
+  if (Number.isFinite(grams)) {
+    return `${grams.toLocaleString("es-ES", { maximumFractionDigits: grams < 10 ? 1 : 0 })} g`;
+  }
+  const quantity = Number(ingredient?.quantityForMeal);
+  if (Number.isFinite(quantity)) {
+    return `${quantity.toLocaleString("es-ES", { maximumFractionDigits: quantity < 10 ? 1 : 0 })} ${ingredient?.unit || ""}`.trim();
+  }
+  return "Cantidad pendiente";
+}
+
+function renderWeeklyMenuIngredients(item) {
+  const ingredients = Array.isArray(item?.ingredients) ? item.ingredients : [];
+  if (!ingredients.length) return "";
+  return `
+    <details class="weekly-menu-ingredients">
+      <summary>Ver ingredientes y cantidades</summary>
+      <div class="weekly-menu-ingredients-list">
+        ${ingredients.map((ingredient) => {
+          const kcal = Number(ingredient?.kcalForMeal);
+          return `
+            <div class="weekly-menu-ingredient-row">
+              <span>${escapeHtml(ingredient.name || "Ingrediente")}</span>
+              <strong>${escapeHtml(weeklyMenuIngredientAmount(ingredient))}</strong>
+              ${Number.isFinite(kcal) ? `<small>${escapeHtml(formatKcal(kcal))}</small>` : ""}
+            </div>`;
+        }).join("")}
+      </div>
+      <small class="weekly-menu-ingredients-note">Cantidades correspondientes a tu ración planificada.</small>
+    </details>`;
+}
+
 function renderWeeklyMenuMeal(item, compact = false) {
   const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
   const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
@@ -3289,6 +3322,7 @@ function renderWeeklyMenuMeal(item, compact = false) {
         <b>${kcal}</b>
         <span>${protein}</span>
       </div>
+      ${compact ? "" : renderWeeklyMenuIngredients(item)}
     </article>`;
 }
 
