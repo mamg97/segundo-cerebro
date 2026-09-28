@@ -147,6 +147,28 @@ La UI muestra una composición visual del patrimonio por custodio/plataforma. El
 
 El total de `PatrimonioDetalle` debe poder conciliarse con el patrimonio agregado cuando ambas cifras correspondan a la misma fecha y perímetro. Una diferencia debe mostrarse o investigarse, no asumirse como correcta.
 
+### Diario de patrimonio
+
+La fuente privada derivada puede exponer `PatrimonioDiario` como histórico de cierres nocturnos de la cartera. Sustituye operativamente al antiguo hábito manual **Diario mercados** sin convertir Git ni HabitQuest en fuente patrimonial.
+
+Campos:
+- `date`: fecha local del cierre;
+- `patrimony`: valor total mostrado por la fuente del cierre; puede ser `null` en históricos sin este dato;
+- `currency`: moneda exacta mostrada por la fuente;
+- `change_pct`: variación diaria expresada como decimal;
+- `pnl_day`: P/L monetario del día;
+- `movement`: clasificación descriptiva opcional;
+- `action`, `comment`, `events`: contexto heredado u opcional;
+- `source`, `source_row`, `source_status`, `captured_at`: trazabilidad.
+
+Reglas:
+- una captura nocturna de Delta comunicada por el usuario puede registrar o actualizar el cierre de ese día en esta fuente privada derivada;
+- se conservan exactamente moneda, valor, variación y P/L que muestre la captura; no se convierte divisa ni se reconstruyen valores ausentes sin una fuente verificada;
+- el histórico heredado de `DIARIO MERCADOS` de la fuente financiera se importa preservando sus anotaciones, pero un patrimonio total inexistente permanece `null`;
+- `PatrimonioDiario` sirve para evolución diaria y no reemplaza `PatrimonioDetalle` como distribución actual por custodio ni `Patrimonio` como referencia histórica mensual;
+- el antiguo hábito **Diario mercados** queda archivado: el registro pasa a Finanzas → Patrimonio y deja de formar parte de la adherencia de hábitos.
+
+
 
 ## Responsabilidad de ORGANIZADOR sobre Finanzas
 
