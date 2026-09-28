@@ -1484,6 +1484,66 @@ async function ensureHealthBodyTable(env) {
   ).run();
 }
 
+async function ensureHealthRecoveryTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS health_recovery_daily (
+      recovery_date TEXT PRIMARY KEY,
+      resting_hr_bpm REAL,
+      walking_hr_bpm REAL,
+      hrv_sdnn_ms REAL,
+      respiratory_rate REAL,
+      oxygen_saturation_pct REAL,
+      vo2_max REAL,
+      wrist_temperature_c REAL,
+      sleep_asleep_minutes REAL,
+      sleep_in_bed_minutes REAL,
+      sleep_awake_minutes REAL,
+      sleep_core_minutes REAL,
+      sleep_deep_minutes REAL,
+      sleep_rem_minutes REAL,
+      source TEXT NOT NULL DEFAULT 'apple_health',
+      sampled_at TEXT,
+      source_details TEXT,
+      recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
+
+async function fetchHealthRecoveryRows(env, startDate, endDate) {
+  await ensureHealthRecoveryTable(env);
+  const result = await env.DB.prepare(`
+    SELECT recovery_date, resting_hr_bpm, walking_hr_bpm, hrv_sdnn_ms,
+           respiratory_rate, oxygen_saturation_pct, vo2_max, wrist_temperature_c,
+           sleep_asleep_minutes, sleep_in_bed_minutes, sleep_awake_minutes,
+           sleep_core_minutes, sleep_deep_minutes, sleep_rem_minutes,
+           source, sampled_at, source_details, recorded_at
+    FROM health_recovery_daily
+    WHERE recovery_date BETWEEN ? AND ?
+    ORDER BY recovery_date ASC
+  `).bind(startDate, endDate).all();
+
+  return (result.results || []).map((row) => ({
+    date: row.recovery_date,
+    restingHeartRate: toNumber(row.resting_hr_bpm),
+    walkingHeartRateAverage: toNumber(row.walking_hr_bpm),
+    hrvSdnnMs: toNumber(row.hrv_sdnn_ms),
+    respiratoryRate: toNumber(row.respiratory_rate),
+    oxygenSaturationPct: toNumber(row.oxygen_saturation_pct),
+    vo2Max: toNumber(row.vo2_max),
+    wristTemperatureC: toNumber(row.wrist_temperature_c),
+    sleepAsleepMinutes: toNumber(row.sleep_asleep_minutes),
+    sleepInBedMinutes: toNumber(row.sleep_in_bed_minutes),
+    sleepAwakeMinutes: toNumber(row.sleep_awake_minutes),
+    sleepCoreMinutes: toNumber(row.sleep_core_minutes),
+    sleepDeepMinutes: toNumber(row.sleep_deep_minutes),
+    sleepRemMinutes: toNumber(row.sleep_rem_minutes),
+    source: row.source || "apple_health",
+    sampledAt: row.sampled_at || null,
+    sourceDetails: row.source_details ? (() => { try { return JSON.parse(row.source_details); } catch { return []; } })() : [],
+    importedAt: row.recorded_at || null
+  }));
+}
+
 async function fetchHealthBodySamples(env, startDate, endDate) {
   await ensureHealthBodyTable(env);
   const result = await env.DB.prepare(`
@@ -1698,9 +1758,10 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
     }
   }
 
-  const [energyMap, bodySamples] = await Promise.all([
+  const [energyMap, bodySamples, recovery] = await Promise.all([
     fetchHealthEnergyRows(env, startDate, date),
-    fetchHealthBodySamples(env, startDate, date)
+    fetchHealthBodySamples(env, startDate, date),
+    fetchHealthRecoveryRows(env, startDate, date)
   ]);
 
   const activity = [...energyMap.values()].map((row) => ({
@@ -1719,6 +1780,7 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
     range: String(range),
     activity,
     bodySamples,
+    recovery,
     waistHistory,
     quality: {
       full: activity.filter((row) => row.coverageQuality === "full").length,
@@ -2361,6 +2423,9 @@ async function saveHealthSync(request, env) {
 
   const activity = payload?.activity && typeof payload.activity === "object" ? payload.activity : null;
   const bodySamples = Array.isArray(payload?.bodySamples) ? payload.bodySamples.slice(0, 100) : [];
+  const recovery = payload?.recovery && typeof payload.recovery === "object" && !Array.isArray(payload.recovery)
+    ? payload.recovery
+    : null;
   let activitySaved = false;
 
   if (activity) {
@@ -2471,12 +2536,96 @@ async function saveHealthSync(request, env) {
     }
   }
 
-  if (!activitySaved && bodyImported === 0) {
+  let recoverySaved = false;
+  if (recovery) {
+    const date = String(recovery.date || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ ok: false, code: "INVALID_RECOVERY_DATE" }, 400);
+
+    const bounds = {
+      restingHeartRate: [20, 250],
+      walkingHeartRateAverage: [20, 250],
+      hrvSdnnMs: [0, 1000],
+      respiratoryRate: [2, 80],
+      oxygenSaturationPct: [0, 100],
+      vo2Max: [1, 100],
+      wristTemperatureC: [15, 50],
+      sleepAsleepMinutes: [0, 1440],
+      sleepInBedMinutes: [0, 1440],
+      sleepAwakeMinutes: [0, 1440],
+      sleepCoreMinutes: [0, 1440],
+      sleepDeepMinutes: [0, 1440],
+      sleepRemMinutes: [0, 1440]
+    };
+    const clean = {};
+    let hasValue = false;
+    for (const [field, [min, max]] of Object.entries(bounds)) {
+      const value = toNumber(recovery[field]);
+      clean[field] = value;
+      if (value !== null) {
+        if (value < min || value > max) return json({ ok: false, code: "INVALID_RECOVERY_VALUE" }, 400);
+        hasValue = true;
+      }
+    }
+
+    if (hasValue) {
+      const sourceDetails = Array.isArray(recovery.sourceDetails) ? recovery.sourceDetails.slice(0, 20) : [];
+      await ensureHealthRecoveryTable(env);
+      await env.DB.prepare(`
+        INSERT INTO health_recovery_daily (
+          recovery_date, resting_hr_bpm, walking_hr_bpm, hrv_sdnn_ms,
+          respiratory_rate, oxygen_saturation_pct, vo2_max, wrist_temperature_c,
+          sleep_asleep_minutes, sleep_in_bed_minutes, sleep_awake_minutes,
+          sleep_core_minutes, sleep_deep_minutes, sleep_rem_minutes,
+          source, sampled_at, source_details, recorded_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(recovery_date) DO UPDATE SET
+          resting_hr_bpm = excluded.resting_hr_bpm,
+          walking_hr_bpm = excluded.walking_hr_bpm,
+          hrv_sdnn_ms = excluded.hrv_sdnn_ms,
+          respiratory_rate = excluded.respiratory_rate,
+          oxygen_saturation_pct = excluded.oxygen_saturation_pct,
+          vo2_max = excluded.vo2_max,
+          wrist_temperature_c = excluded.wrist_temperature_c,
+          sleep_asleep_minutes = excluded.sleep_asleep_minutes,
+          sleep_in_bed_minutes = excluded.sleep_in_bed_minutes,
+          sleep_awake_minutes = excluded.sleep_awake_minutes,
+          sleep_core_minutes = excluded.sleep_core_minutes,
+          sleep_deep_minutes = excluded.sleep_deep_minutes,
+          sleep_rem_minutes = excluded.sleep_rem_minutes,
+          source = excluded.source,
+          sampled_at = excluded.sampled_at,
+          source_details = excluded.source_details,
+          recorded_at = excluded.recorded_at
+      `).bind(
+        date,
+        clean.restingHeartRate,
+        clean.walkingHeartRateAverage,
+        clean.hrvSdnnMs,
+        clean.respiratoryRate,
+        clean.oxygenSaturationPct,
+        clean.vo2Max,
+        clean.wristTemperatureC,
+        clean.sleepAsleepMinutes,
+        clean.sleepInBedMinutes,
+        clean.sleepAwakeMinutes,
+        clean.sleepCoreMinutes,
+        clean.sleepDeepMinutes,
+        clean.sleepRemMinutes,
+        String(recovery.source || "apple_health").trim().slice(0, 40) || "apple_health",
+        String(recovery.sampledAt || "").trim().slice(0, 50) || null,
+        JSON.stringify(sourceDetails),
+        new Date().toISOString()
+      ).run();
+      recoverySaved = true;
+    }
+  }
+
+  if (!activitySaved && bodyImported === 0 && !recoverySaved) {
     return json({ ok: false, code: "EMPTY_HEALTH_SYNC" }, 400);
   }
 
   healthCache = { value: null, expiresAt: 0, date: null };
-  return json({ ok: true, activitySaved, bodySamplesImported: bodyImported }, 201);
+  return json({ ok: true, activitySaved, bodySamplesImported: bodyImported, recoverySaved }, 201);
 }
 
 
