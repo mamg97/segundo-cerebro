@@ -23,6 +23,7 @@ Actualmente existen integraciones operativas para:
 - HabitQuest desde su Google Sheet, con lectura y gestión de hábitos;
 - gimnasio y nutrición dentro de Salud;
 - ingesta de gasto energético diario desde Apple Health mediante un Worker dedicado.
+- sincronización bidireccional de la lista compartida de Apple Reminders con `ListaCompra` mediante un agente macOS EventKit.
 
 GitHub contiene el código y la documentación técnica, nunca los datos personales reales.
 

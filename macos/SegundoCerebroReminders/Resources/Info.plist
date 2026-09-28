@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>es</string>
+  <key>CFBundleExecutable</key>
+  <string>SegundoCerebroReminders</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.mamg97.segundo-cerebro.reminders</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>Segundo Cerebro Reminders</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>14.0</string>
+  <key>LSUIElement</key>
+  <true/>
+  <key>NSRemindersFullAccessUsageDescription</key>
+  <string>Segundo Cerebro necesita leer y actualizar la lista de compra compartida para mantener una única lista sincronizada.</string>
+  <key>NSRemindersUsageDescription</key>
+  <string>Segundo Cerebro necesita leer y actualizar la lista de compra compartida para mantener una única lista sincronizada.</string>
+</dict>
+</plist>

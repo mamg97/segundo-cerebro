@@ -179,6 +179,20 @@ El frontend no conoce credenciales ni accede a Google Sheets directamente. El Wo
 
 La demo pública de GitHub Pages no instancia el módulo Despensa ni contiene inventario real.
 
+### Apple Reminders como interfaz compartida de compra
+
+`ListaCompra` y la lista compartida de Apple no son fuentes independientes. Un agente macOS EventKit mantiene el espejo 1:1 mediante endpoints autenticados del Worker. El Sheet conserva el estado enriquecido; D1 solo conserva enlaces de identidad, cola idempotente, timestamps y auditoría. El agente no recibe credenciales Google.
+
+```text
+Apple Reminders / iCloud ⇄ EventKit Agent ⇄ shopping-sync Worker ⇄ Service Binding
+                                                                    ↓
+                                                             Worker privado
+                                                              ├─ ListaCompra
+                                                              └─ D1 metadata
+```
+
+La entrada mínima por token evita abrir rutas del dashboard protegido por Access. La escucha `EKEventStoreChanged` aporta baja latencia y un ciclo de 90 segundos reconcilia cambios perdidos. La disponibilidad depende de que el Mac esté encendido y con sesión iniciada. Detalle operativo: `docs/APPLE_REMINDERS_SYNC.md`.
+
 ### Registro privado de integraciones
 
 Para evitar depender de Drive search en runtime, el Worker puede resolver identificadores de fuentes desde la pestaña oculta `IntegracionesPrivadas` del Sheet privado de estado financiero, cuya referencia ya vive como secreto del Worker. Este registro contiene únicamente punteros de infraestructura; no inventario, precios ni datos de dominio. Despensa sigue teniendo como única fuente canónica su propio Sheet privado.

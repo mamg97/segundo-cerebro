@@ -114,6 +114,20 @@ La URL `workers.dev` será la primera URL privada utilizable desde móvil.
 - Sin IA remota.
 - Cloudflare Access es la barrera de autenticación; no retirar esa protección mientras `PRIVATE_APP_ENABLED=true`.
 
+## Apple Reminders ⇄ ListaCompra
+
+El agente macOS llama al Worker mínimo `segundo-cerebro-shopping-sync`, que valida un Bearer token dedicado y reenvía al Worker privado mediante Service Binding. No usa la cookie de Cloudflare Access, no recibe OAuth Google y no accede al Sheet directamente.
+
+Preparación, sin imprimir el token:
+
+```sh
+npm run reminders:install
+npm run reminders:configure -- https://URL-DEL-WORKER-SHOPPING-SYNC
+npm run reminders:sync -- --dry-run
+```
+
+La sincronización real y `launchd` solo se activan después de revisar el dry-run. Ver contrato completo en `docs/APPLE_REMINDERS_SYNC.md`.
+
 
 ## Sincronización financiera derivada desde Google Sheets
 

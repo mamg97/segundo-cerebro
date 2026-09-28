@@ -48,6 +48,10 @@ jobs:
 
       - run: node --check src/pantry.js
 
+      - run: node --check src/shopping-sync.js
+
+      - run: node --check scripts/configure-shopping-reminders.mjs
+
       - run: node --check src/objects.js
 
       - run: node --check src/projects.js
@@ -60,7 +64,13 @@ jobs:
 
       - run: node --check src/health-ingest.js
 
+      - run: node --check src/shopping-reminders-ingest.js
+
+      - run: npm test
+
       - run: npx wrangler deploy --dry-run --config wrangler.health-ingest.jsonc
+
+      - run: npx wrangler deploy --dry-run --config wrangler.shopping-reminders.jsonc
 
       - run: npm run build
 

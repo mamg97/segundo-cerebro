@@ -115,6 +115,10 @@ Si se detecta un secreto o dato real en Git: detener la publicación, revocar cr
 - El detalle se carga bajo demanda mediante `/api/pantry`, siempre detrás de Cloudflare Access.
 - El navegador no recibe credenciales Google ni consulta Sheets directamente.
 - El texto humano del dashboard es una derivación de filas privadas actuales; no se persiste como una segunda fuente de verdad.
+- El agente EventKit usa un token exclusivo guardado en Keychain y un secreto Cloudflare; nunca recibe OAuth de Google.
+- El nombre de lista se configura localmente y los IDs reales de lista/recordatorio no se versionan.
+- D1 puede conservar IDs EventKit, nombres normalizados, timestamps, cola y auditoría porque es infraestructura privada; logs y respuestas nunca deben imprimir el Bearer token.
+- La demo pública no llama a `/v1/shopping-list/*` ni contiene nombres reales de compra.
 
 
 ## Objetos y armario

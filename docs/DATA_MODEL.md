@@ -345,6 +345,10 @@ Entidades lógicas:
 - `Ticket`: resumen de una compra; no sustituye el detalle de precio por producto.
 - `ListaCompra`: candidato/confirmado con `REVISAR | COMPRAR | COMPRADO`, prioridad, cantidad objetivo, motivo y coste estimado.
 
+Para el espejo Apple Reminders, `ListaCompra` añade `external_id`, `apple_reminder_id`, `normalized_name`, `apple_completed`, `apple_modified_at`, `segundo_cerebro_modified_at`, `last_synced_at`, `sync_status` y `sync_error`. `CANCELADO` se admite como estado terminal de sincronización. `REVISAR` no sale a Apple; `COMPRAR` es activo; `COMPRADO` es completado.
+
+D1 no sustituye al Sheet. Sus tablas `shopping_sync_links`, `shopping_apple_actions`, `shopping_sync_events` y `shopping_sync_runs` guardan identidad, cola, auditoría y resúmenes técnicos. Las claves de idempotencia impiden duplicados en reintentos.
+
 Proyección de Home (`pantrySummary`):
 - `availableProductCount`
 - `lowStockCount`
@@ -354,6 +358,8 @@ Proyección de Home (`pantrySummary`):
 - `estimatedBasketTotal`
 - `estimatedBasketPartial`
 - `missingPriceCount`
+- `knownPriceCount`
+- `previewItems` (máximo cinco nombres confirmados, solo en la aplicación privada)
 - `lastInventoryReview`
 - `homeMessage`
 

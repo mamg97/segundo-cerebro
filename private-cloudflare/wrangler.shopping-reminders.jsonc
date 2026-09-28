@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "segundo-cerebro-shopping-sync",
+  "main": "src/shopping-reminders-ingest.js",
+  "compatibility_date": "2026-09-22",
+  "services": [
+    {
+      "binding": "SECOND_BRAIN",
+      "service": "segundo-cerebro"
+    }
+  ]
+}

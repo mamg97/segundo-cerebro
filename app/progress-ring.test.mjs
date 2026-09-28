@@ -125,7 +125,7 @@ assert.match(css, /home-liquidity-bar/);
 assert.match(css, /v0\.38\.2 — compact mobile liquidity cards/);
 assert.match(css, /v0\.38\.3 — two-column mobile liquidity grid/);
 assert.match(css, /v0\.38\.4 — readability typography pass/);
-assert.match(app, /pantry\.js\?v=0\.38\.6/);
+assert.match(app, /pantry\.js\?v=0\.38\.7/);
 assert.match(index, /id="home-shopping-list"/);
 assert.match(index, /🛒 Lista de la compra/);
 assert.match(pantry, /data-pantry-view="shopping"/);

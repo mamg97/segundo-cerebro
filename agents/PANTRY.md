@@ -159,3 +159,18 @@ The Worker resolves the canonical private spreadsheet by its exact Drive title a
 The home summary may derive human wording such as fridge fullness, items to review and estimated next-basket cost, but it must stay traceable to live inventory/list rows and explicitly mark partial price coverage.
 
 The Organizer owns presentation only. GESTOR DESPENSA Y SUMINISTROS remains the functional owner of inventory, product identity, price evidence and `ListaCompra`.
+
+## Apple Reminders synchronization
+
+The shared Apple list is the daily interface for confirmed purchases and `ListaCompra` is its enriched mirror. There must not be two independent shopping lists.
+
+- `REVISAR` remains internal.
+- `COMPRAR` must exist as an active Apple reminder.
+- `COMPRADO` maps to completed.
+- `CANCELADO` is terminal; the implementation completes rather than destructively deletes when writing to Apple.
+- Completion never increments inventory.
+- Apple titles stay clean; product, format, price, store and reason remain in Pantry.
+- Unknown Apple products are valid rows with empty price and optional provisional `producto_id`; never invent a price.
+- Identity uses EventKit IDs after first link. Exact normalized-name matching is only a migration/deduplication aid.
+
+Operational setup and conflict rules live in `docs/APPLE_REMINDERS_SYNC.md`.

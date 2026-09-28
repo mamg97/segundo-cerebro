@@ -5,6 +5,7 @@ import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
+import { handleShoppingSyncRequest } from "./shopping-sync.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -3484,6 +3485,10 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    if (url.pathname.startsWith("/v1/shopping-list/")) {
+      return withSecurityHeaders(await handleShoppingSyncRequest(request, env, getGoogleAccessToken));
+    }
 
     if (url.pathname === "/") {
       return withSecurityHeaders(Response.redirect(new URL("/app/", request.url), 302));

@@ -7669,6 +7669,12 @@ html[data-theme="dark"] .electricity-chart-card {
   gap: 9px;
 }
 
+.pantry-home-grid > span:last-child {
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
 .pantry-home-grid > span {
   display: grid;
   gap: 4px;
@@ -7681,7 +7687,7 @@ html[data-theme="dark"] .electricity-chart-card {
 .pantry-home-grid small,
 .pantry-home-review {
   color: var(--ink-soft);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .pantry-home-grid strong {
@@ -7693,6 +7699,15 @@ html[data-theme="dark"] .electricity-chart-card {
 
 .pantry-home-review { margin-top: -9px; }
 
+.pantry-home-preview {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pantry-home-footer {
   display: flex;
   gap: 10px;
@@ -7702,7 +7717,7 @@ html[data-theme="dark"] .electricity-chart-card {
 }
 
 .pantry-home-footer .pantry-home-review { margin-top: 0; }
-.pantry-home-footer strong { color: var(--blue); font-size: 9px; white-space: nowrap; }
+.pantry-home-footer strong { color: var(--blue); font-size: 11px; white-space: nowrap; }
 
 .pantry-dialog {
   width: min(1050px, calc(100% - 28px));
@@ -7988,9 +8003,9 @@ html[data-theme="dark"] .electricity-chart-card {
 }
 
 .pantry-shopping-row > div { display: grid; gap: 3px; }
-.pantry-shopping-row > div strong { font-size: 11px; }
-.pantry-shopping-row > div span { color: var(--ink-soft); font-size: 9px; }
-.pantry-shopping-price { text-align: right; font-size: 10px; font-weight: 750; }
+.pantry-shopping-row > div strong { font-size: 12px; }
+.pantry-shopping-row > div span { color: var(--ink-soft); font-size: 11px; }
+.pantry-shopping-price { text-align: right; font-size: 11px; font-weight: 750; }
 
 .pantry-shopping-total {
   display: flex;
@@ -7999,10 +8014,21 @@ html[data-theme="dark"] .electricity-chart-card {
   justify-content: space-between;
   padding-top: 13px;
   border-top: 1px solid var(--line);
-  font-size: 10px;
+  font-size: 11px;
 }
 
-.pantry-shopping-total strong { font-size: 12px; }
+.pantry-shopping-total strong {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+  text-align: right;
+}
+
+.pantry-shopping-total strong small {
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 650;
+}
 
 .pantry-empty {
   margin: 0;
@@ -8140,6 +8166,7 @@ html[data-theme="dark"] .purchase-state {
   .pantry-nutrition > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pantry-shopping-row { grid-template-columns: 1fr auto; }
   .pantry-shopping-price { grid-column: 2; }
+  .pantry-home-grid { grid-template-columns: 1fr 1fr; }
 }
 
 

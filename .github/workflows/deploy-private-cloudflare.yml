@@ -14,6 +14,7 @@ on:
       - "private-cloudflare/wrangler.bootstrap.jsonc"
       - "private-cloudflare/wrangler.health-ingest.jsonc"
       - "private-cloudflare/wrangler.midas-ingest.jsonc"
+      - "private-cloudflare/wrangler.shopping-reminders.jsonc"
       - ".github/workflows/deploy-private-cloudflare.yml"
   workflow_dispatch:
 
@@ -56,6 +57,8 @@ jobs:
           node --check ../app/progress-ring.js
           node --check src/index.js
           node --check src/pantry.js
+          node --check src/shopping-sync.js
+          node --check scripts/configure-shopping-reminders.mjs
           node --check src/objects.js
           node --check src/projects.js
           node --check src/events.js
@@ -64,6 +67,10 @@ jobs:
           node --check src/health-ingest.js
           node --check src/midas.js
           node --check src/midas-ingest.js
+          node --check src/shopping-reminders-ingest.js
+
+      - name: Run tests
+        run: npm test
 
       - name: Verify MIDAS report adapter
         run: node --test tests/midas.test.mjs
@@ -101,6 +108,10 @@ jobs:
       - name: Deploy MIDAS ingest Worker
         if: steps.cloudflare.outputs.configured == 'true'
         run: npx wrangler deploy --config wrangler.midas-ingest.jsonc
+
+      - name: Deploy Shopping Reminders ingest Worker
+        if: steps.cloudflare.outputs.configured == 'true'
+        run: npx wrangler deploy --config wrangler.shopping-reminders.jsonc
 
       - name: Explain skipped deployment
         if: steps.cloudflare.outputs.configured != 'true'

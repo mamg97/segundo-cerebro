@@ -4,13 +4,19 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "test": "node --test src/*.test.mjs ../app/*.test.mjs",
     "dev": "npm run build && wrangler dev --config wrangler.bootstrap.jsonc",
     "deploy": "npm run build && wrangler deploy --config wrangler.bootstrap.jsonc",
     "deploy:health-ingest": "wrangler deploy --config wrangler.health-ingest.jsonc",
+    "deploy:shopping-reminders": "wrangler deploy --config wrangler.shopping-reminders.jsonc",
     "setup:health-ingest": "node scripts/setup-health-ingest.mjs",
     "health:backfill": "python3 scripts/import-apple-health-history.py",
     "family:import": "node scripts/import-family-cases-private.mjs",
-    "pantry:configure": "node scripts/configure-pantry-sync.mjs"
+    "pantry:configure": "node scripts/configure-pantry-sync.mjs",
+    "reminders:sync": "../macos/SegundoCerebroReminders/scripts/sync.sh",
+    "reminders:status": "../macos/SegundoCerebroReminders/scripts/status.sh",
+    "reminders:install": "../macos/SegundoCerebroReminders/scripts/install.sh",
+    "reminders:configure": "node scripts/configure-shopping-reminders.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

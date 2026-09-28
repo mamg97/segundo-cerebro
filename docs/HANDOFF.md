@@ -118,6 +118,11 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Salud no crea una base paralela de productos. `SEGUNDO CEREBRO - SALUD` mantiene ingesta, recetas, objetivos, menú y balance; puede referenciar `producto_id` de Despensa.
 - Las recomendaciones de comida deben cruzar primero objetivo nutricional + inventario. Lo que falte o esté bajo se coordina con Despensa para `ListaCompra`.
 - Nueva nutrición fiable de un producto existente se incorpora a `Productos` conservando el mismo `producto_id` cuando sea posible.
+- Implementado en código el espejo Apple Reminders ⇄ `ListaCompra` mediante un agente macOS Swift/EventKit, endpoints privados, enlaces/cola/auditoría D1 y campos de sincronización en el Sheet.
+- `REVISAR` permanece interno; `COMPRAR` es recordatorio activo; `COMPRADO` es completado; `CANCELADO` se completa sin borrado destructivo. Completar nunca incrementa inventario.
+- La portada muestra compra confirmada, primeros cinco artículos, coste conocido con prefijo `≥` si faltan precios y contador sin precio. Despensa ofrece acceso superior directo a la lista.
+- El agente escucha cambios EventKit y reconcilia cada 90 segundos mediante `launchd`. Token en Keychain/Cloudflare Secret; el Mac no recibe OAuth Google.
+- La activación real está deliberadamente detenida antes del primer permiso/dry-run. Procedimiento en `docs/APPLE_REMINDERS_SYNC.md`.
 
 ### Apple Health
 
@@ -760,8 +765,7 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
   - `Ver despensa →` → abre Inventario.
 - El buscador rápido también entiende `lista de la compra` / `lista compra` y abre esa vista directamente.
 - La fuente mostrada en esa vista es **ListaCompra de Segundo Cerebro**.
-- No se muestra ningún estado, badge o texto de “Sincronizado con Apple Reminders”. Ese puente no existe todavía; los elementos que se hayan trasladado desde Recordatorios/capturas no constituyen sincronización.
-- Solo se añadirá estado de sincronización cuando exista un puente real Apple Reminders ↔ Segundo Cerebro y su estado sea verificable.
+- El puente Apple Reminders ↔ Segundo Cerebro existe en código, pero la UI no afirma «Sincronizado» hasta que el agente real esté configurado y su estado sea verificable.
 - Assets: `styles.css?v=0.38.5`, `app.js?v=0.38.5`, `pantry.js?v=0.38.5`.
 
 
@@ -846,3 +850,17 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - La nota de fuente muestra cuántos calendarios configurados han sido realmente encontrados y enumera los nombres no encontrados cuando existan.
 - Se mantiene la regla de v0.39.3: una respuesta CalDAV vacía nunca borra citas médicas que ya estén visibles en Agenda.
 - Asset JS: `v0.39.5`.
+
+## Punto de intervención humana · Apple Reminders
+
+El código del Worker, D1, dashboard y agente macOS está preparado y probado sin tocar la lista real. Antes de cualquier reconciliación se debe:
+
+1. desplegar los Workers y configurar `SHOPPING_SYNC_TOKEN` con `npm run reminders:configure -- https://URL-DEL-WORKER-SHOPPING-SYNC`;
+2. ejecutar `npm run reminders:sync -- --dry-run`;
+3. conceder acceso completo en **Ajustes del Sistema → Privacidad y seguridad → Recordatorios → Segundo Cerebro Reminders**;
+4. revisar los cuatro contadores del informe;
+5. solo con el informe aprobado, ejecutar la sincronización real y activar `launchd`.
+
+No se ha escrito todavía en Apple Reminders ni se ha realizado la reconciliación real.
+
+Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.

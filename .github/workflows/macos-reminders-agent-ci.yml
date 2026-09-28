@@ -1,0 +1,34 @@
+name: Validate macOS Reminders agent
+
+on:
+  pull_request:
+    paths:
+      - "macos/SegundoCerebroReminders/**"
+      - ".github/workflows/macos-reminders-agent-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "macos/SegundoCerebroReminders/**"
+      - ".github/workflows/macos-reminders-agent-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build release agent
+        run: swift build --package-path macos/SegundoCerebroReminders -c release
+
+      - name: Run Swift tests
+        run: swift test --package-path macos/SegundoCerebroReminders
+
+      - name: Validate property lists
+        run: |
+          plutil -lint macos/SegundoCerebroReminders/Resources/Info.plist
+          plutil -lint macos/SegundoCerebroReminders/Resources/com.mamg97.segundo-cerebro.reminders.plist

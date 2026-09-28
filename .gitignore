@@ -5,6 +5,8 @@
 node_modules/
 dist/
 coverage/
+.build/
+.swiftpm/
 *.log
 *.pem
 *.key

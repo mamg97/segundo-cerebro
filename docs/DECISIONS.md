@@ -330,7 +330,6 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Límite:** el diario original contabiliza operaciones al cierre tras observar ese cierre. Su +/− histórico es un registro de simulación, no rentabilidad ejecutable ni evidencia de superioridad. Un motor causal corregido necesita una serie prospectiva distinta, sin reescribir la antigua.
 - **Coste:** no se crea workflow periódico adicional ni credencial GitHub persistente; el envío es un paso del workflow existente.
 
-
 ## D-037 — Diario mercados pasa a Patrimonio
 
 - **Estado:** aceptada e implementada.
@@ -351,3 +350,16 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Integridad:** si un estudio previo usó 2030 u otro horizonte, sus cifras se conservan como históricas pero las columnas 2031 permanecen pendientes hasta recalcular; no se extrapolan de forma automática.
 - **UI:** Segundo Cerebro → MIDAS consume esta fuente en vivo y muestra la tabla junto al diario de estrategias.
 - **Uso:** la watchlist sirve para recuperar ideas cuando exista liquidez; exige refresco de datos antes de una decisión de inversión.
+
+
+## D-039 — Apple Reminders es la interfaz compartida de ListaCompra
+
+- **Estado:** implementada en código; activación real pendiente de dry-run y permiso EventKit.
+- **Fecha:** 2026-09-28.
+- **Decisión:** usar un agente macOS Swift/EventKit para mantener una relación 1:1 entre la lista compartida de Apple y `SEGUNDO CEREBRO - DESPENSA / ListaCompra`.
+- **Fuente enriquecida:** el Sheet conserva producto, precio, cantidad y motivo. Apple conserva el título y el estado cotidiano compartido.
+- **Persistencia auxiliar:** D1 guarda enlaces, cola idempotente y auditoría; no crea una segunda lista canónica.
+- **Seguridad:** token dedicado en Cloudflare Secrets + Keychain; sin OAuth Google en el Mac y sin IDs privados en Git.
+- **Conflictos:** timestamps de ambos lados, detección de cambios concurrentes y rechazo de escrituras EventKit contra una versión inesperada.
+- **Cancelación:** una desaparición activa en Apple pasa a `CANCELADO`; desde Segundo Cerebro se completa, no se borra destructivamente.
+- **Disponibilidad:** eventos EventKit + fallback de 90 segundos mientras el Mac está encendido y con sesión iniciada.

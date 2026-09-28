@@ -64,7 +64,7 @@ function normalizeStock(value) {
 
 function purchaseState(value) {
   const text = String(value || "REVISAR").trim().toUpperCase();
-  return ["REVISAR", "COMPRAR", "COMPRADO"].includes(text) ? text : "REVISAR";
+  return ["REVISAR", "COMPRAR", "COMPRADO", "CANCELADO"].includes(text) ? text : "REVISAR";
 }
 
 function inferCategory(product = {}) {
@@ -239,8 +239,11 @@ function buildPayload(valueRanges = []) {
     const product = productsById.get(productId) || {};
     const history = pricesByProduct.get(productId) || [];
     const latestPrice = history.length ? history[history.length - 1] : null;
+    const ticketPrices = history.filter((item) => item.ticketId || /ticket/i.test(String(item.source || "")));
+    const lastTicketPrice = ticketPrices.length ? ticketPrices[ticketPrices.length - 1] : null;
     const targetQuantity = numberOrNull(row.cantidad_objetivo) ?? (row.cantidad_objetivo || null);
-    const unitPrice = numberOrNull(row.precio_estimado) ?? latestPrice?.price ?? null;
+    // A real ticket is stronger evidence than a manual estimate or a public price.
+    const unitPrice = lastTicketPrice?.price ?? numberOrNull(row.precio_estimado) ?? latestPrice?.price ?? null;
     const explicitCost = numberOrNull(row.coste_estimado);
     const targetNumber = numberOrNull(targetQuantity);
     const estimatedCost = explicitCost ?? (
@@ -249,8 +252,11 @@ function buildPayload(valueRanges = []) {
         : null
     );
     return {
+      externalId: row.external_id || null,
+      appleReminderId: row.apple_reminder_id || null,
       productId,
       name: row.nombre || product.name || "Producto",
+      normalizedName: row.normalized_name || null,
       state: purchaseState(row.estado),
       priority: row.prioridad || null,
       targetQuantity,
@@ -259,7 +265,13 @@ function buildPayload(valueRanges = []) {
       estimatedUnitPrice: unitPrice,
       estimatedCost,
       source: row.fuente || null,
-      updatedAt: row.updated_at || null
+      updatedAt: row.updated_at || null,
+      appleCompleted: row.apple_completed === true || String(row.apple_completed || "").toLowerCase() === "true",
+      appleModifiedAt: row.apple_modified_at || null,
+      segundoCerebroModifiedAt: row.segundo_cerebro_modified_at || row.updated_at || null,
+      lastSyncedAt: row.last_synced_at || null,
+      syncStatus: row.sync_status || null,
+      syncError: row.sync_error || null
     };
   }).filter((item) => item.productId || item.name);
 
@@ -331,13 +343,16 @@ function buildPayload(valueRanges = []) {
       pendingPurchaseCount: confirmedShopping.length,
       confirmedPurchaseCount: confirmedShopping.length,
       reviewCount: reviewShopping.length,
+      knownPriceCount: knownBasket.length,
       estimatedBasketTotal,
       estimatedBasketPartial: missingPriceCount > 0,
       missingPriceCount,
+      previewItems: confirmedShopping.slice(0, 5).map((item) => item.name),
       lastInventoryReview,
       currency: "EUR",
       homeMessage: [fridgePhrase, reviewPhrase, purchasePhrase].join(" · ")
     },
+    products,
     items: inventory,
     shoppingList: confirmedShopping,
     reviewCandidates: reviewShopping,
@@ -366,7 +381,7 @@ export async function fetchPantrySummary(env, getGoogleAccessToken) {
     "Inventario!A1:M2000",
     "Precios!A1:J4000",
     "Tickets!A1:G2000",
-    "ListaCompra!A1:K2000"
+    "ListaCompra!A1:Z2000"
   ];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
@@ -387,4 +402,151 @@ export async function fetchPantrySummary(env, getGoogleAccessToken) {
   cache.value = payload;
   cache.expiresAt = Date.now() + 30_000;
   return { status: "ok-live", value: payload };
+}
+
+export function invalidatePantryCache() {
+  cache.value = null;
+  cache.expiresAt = 0;
+}
+
+function columnName(index) {
+  let value = Number(index) + 1;
+  let result = "";
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    value = Math.floor((value - 1) / 26);
+  }
+  return result;
+}
+
+export const SHOPPING_LIST_BASE_HEADERS = [
+  "producto_id",
+  "nombre",
+  "estado",
+  "prioridad",
+  "cantidad_objetivo",
+  "unidad",
+  "motivo",
+  "precio_estimado",
+  "coste_estimado",
+  "fuente",
+  "updated_at"
+];
+
+export const SHOPPING_LIST_SYNC_HEADERS = [
+  "external_id",
+  "apple_reminder_id",
+  "normalized_name",
+  "apple_completed",
+  "apple_modified_at",
+  "segundo_cerebro_modified_at",
+  "last_synced_at",
+  "sync_status",
+  "sync_error"
+];
+
+export const SHOPPING_LIST_HEADERS = [
+  ...SHOPPING_LIST_BASE_HEADERS,
+  ...SHOPPING_LIST_SYNC_HEADERS
+];
+
+async function sheetsRequest(endpoint, token, options = {}) {
+  const response = await fetch(endpoint, {
+    ...options,
+    headers: {
+      Authorization: "Bearer " + token,
+      ...(options.body ? { "Content-Type": "application/json; charset=utf-8" } : {}),
+      ...(options.headers || {})
+    }
+  });
+  if (!response.ok) throw new Error("GOOGLE_SHEETS_" + response.status);
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+export async function readPantryShoppingSheet(env, getGoogleAccessToken) {
+  if (!hasPantryGoogleConfig(env)) throw new Error("PANTRY_NOT_CONFIGURED");
+  const token = await getGoogleAccessToken(env);
+  const spreadsheetId = await resolveSpreadsheetId(env, token);
+  const range = encodeURIComponent("ListaCompra!A1:Z2000");
+  const endpoint =
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+    encodeURIComponent(spreadsheetId) +
+    "/values/" +
+    range +
+    "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
+  const payload = await sheetsRequest(endpoint, token);
+  const values = payload?.values || [];
+  const headers = (values[0] || []).map((value) => String(value ?? "").trim());
+  const rows = values.slice(1)
+    .map((valuesRow, index) => ({
+      rowNumber: index + 2,
+      values: valuesRow,
+      record: Object.fromEntries(headers.map((header, headerIndex) => [header, valuesRow?.[headerIndex] ?? null]))
+    }))
+    .filter((row) => row.values.some((value) => value !== "" && value !== null && value !== undefined));
+  return { token, spreadsheetId, headers, rows };
+}
+
+export async function ensurePantryShoppingSchema(env, getGoogleAccessToken) {
+  const sheet = await readPantryShoppingSheet(env, getGoogleAccessToken);
+  const headers = [...sheet.headers];
+  const missing = SHOPPING_LIST_HEADERS.filter((header) => !headers.includes(header));
+  if (!missing.length) return sheet;
+
+  const nextHeaders = [...headers];
+  for (const header of SHOPPING_LIST_HEADERS) {
+    if (!nextHeaders.includes(header)) nextHeaders.push(header);
+  }
+  const lastColumn = columnName(nextHeaders.length - 1);
+  const endpoint =
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+    encodeURIComponent(sheet.spreadsheetId) +
+    "/values/" +
+    encodeURIComponent("ListaCompra!A1:" + lastColumn + "1") +
+    "?valueInputOption=RAW";
+  await sheetsRequest(endpoint, sheet.token, {
+    method: "PUT",
+    body: JSON.stringify({ range: "ListaCompra!A1:" + lastColumn + "1", majorDimension: "ROWS", values: [nextHeaders] })
+  });
+  invalidatePantryCache();
+  return readPantryShoppingSheet(env, getGoogleAccessToken);
+}
+
+function shoppingRowValues(headers, record) {
+  return headers.map((header) => record?.[header] ?? "");
+}
+
+export async function updatePantryShoppingRow(sheet, rowNumber, record) {
+  const lastColumn = columnName(sheet.headers.length - 1);
+  const range = "ListaCompra!A" + rowNumber + ":" + lastColumn + rowNumber;
+  const endpoint =
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+    encodeURIComponent(sheet.spreadsheetId) +
+    "/values/" +
+    encodeURIComponent(range) +
+    "?valueInputOption=RAW";
+  await sheetsRequest(endpoint, sheet.token, {
+    method: "PUT",
+    body: JSON.stringify({ range, majorDimension: "ROWS", values: [shoppingRowValues(sheet.headers, record)] })
+  });
+  invalidatePantryCache();
+}
+
+export async function appendPantryShoppingRow(sheet, record) {
+  const lastColumn = columnName(sheet.headers.length - 1);
+  const range = "ListaCompra!A:" + lastColumn;
+  const endpoint =
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+    encodeURIComponent(sheet.spreadsheetId) +
+    "/values/" +
+    encodeURIComponent(range) +
+    ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS";
+  const payload = await sheetsRequest(endpoint, sheet.token, {
+    method: "POST",
+    body: JSON.stringify({ range, majorDimension: "ROWS", values: [shoppingRowValues(sheet.headers, record)] })
+  });
+  invalidatePantryCache();
+  return payload;
 }

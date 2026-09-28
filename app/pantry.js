@@ -20,6 +20,7 @@ function escapeHtml(value) {
 }
 
 function money(value, currency = "EUR") {
+  if (value === null || value === undefined || value === "") return "Sin precio";
   const number = Number(value);
   if (!Number.isFinite(number)) return "Sin precio";
   if (currency === "EUR") return moneyFormatter.format(number);
@@ -119,7 +120,9 @@ export function renderHomePantryCard(state, privateModeKind) {
     set("#home-pantry-low", "—");
     set("#home-pantry-buy", "—");
     set("#home-pantry-cost", "—");
+    set("#home-pantry-missing", "—");
     set("#home-pantry-status", "Despensa disponible · fuente privada pendiente de lectura");
+    set("#home-shopping-preview", "Fuente privada pendiente de lectura");
     set("#home-pantry-review", "Abrir para comprobar conexión");
     card.dataset.sourceStatus = "unavailable";
     return;
@@ -129,14 +132,20 @@ export function renderHomePantryCard(state, privateModeKind) {
   set("#home-pantry-available", Number(summary.availableProductCount || 0));
   set("#home-pantry-low", Number(summary.lowStockCount || 0));
   set("#home-pantry-buy", Number(summary.pendingPurchaseCount || 0));
+  set("#home-pantry-missing", Number(summary.missingPriceCount || 0));
+  const hasEstimatedTotal = summary.estimatedBasketTotal !== null &&
+    summary.estimatedBasketTotal !== undefined && summary.estimatedBasketTotal !== "" &&
+    Number.isFinite(Number(summary.estimatedBasketTotal));
   set(
     "#home-pantry-cost",
-    Number.isFinite(Number(summary.estimatedBasketTotal))
+    hasEstimatedTotal
       ? (summary.estimatedBasketPartial ? "≥ " : "") + money(Number(summary.estimatedBasketTotal), summary.currency || "EUR")
       : Number(summary.pendingPurchaseCount || 0) > 0
-        ? "Pendiente"
+        ? "Sin precio"
         : "—"
   );
+  const preview = Array.isArray(summary.previewItems) ? summary.previewItems.filter(Boolean).slice(0, 5) : [];
+  set("#home-shopping-preview", preview.length ? preview.join(" · ") : "No hay compras confirmadas pendientes");
   set("#home-pantry-status", summary.homeMessage || "Inventario doméstico conectado.");
   set(
     "#home-pantry-review",
@@ -216,9 +225,14 @@ function renderWorkspace(payload, initialView = "inventory") {
   const body = document.querySelector("#dialog-body");
   const summary = payload.summary || {};
   const items = Array.isArray(payload.items) ? payload.items : [];
-  const shopping = Array.isArray(payload.shoppingList) ? payload.shoppingList : [];
+  const shopping = Array.isArray(payload.shoppingList)
+    ? payload.shoppingList.filter((item) => String(item.state || "").toUpperCase() === "COMPRAR")
+    : [];
   const categories = Array.isArray(payload.categories) ? payload.categories : [];
   const currency = summary.currency || "EUR";
+  const basketLabel = summary.estimatedBasketTotal === null || summary.estimatedBasketTotal === undefined
+    ? "Sin estimar"
+    : (summary.estimatedBasketPartial ? "≥ " : "") + money(summary.estimatedBasketTotal, currency);
 
   const productCards = items.map((item) => {
     const low = ["low", "out"].includes(String(item.stockStatus || ""));
@@ -268,11 +282,7 @@ function renderWorkspace(payload, initialView = "inventory") {
           '<span><small>En casa</small><strong>' + Number(summary.availableProductCount || 0) + '</strong></span>' +
           '<span><small>Stock bajo</small><strong>' + Number(summary.lowStockCount || 0) + '</strong></span>' +
           '<span><small>Lista compra</small><strong>' + Number(summary.pendingPurchaseCount || 0) + '</strong></span>' +
-          '<span><small>Próxima compra</small><strong>' +
-            (Number.isFinite(Number(summary.estimatedBasketTotal))
-              ? escapeHtml((summary.estimatedBasketPartial ? "≥ " : "") + money(summary.estimatedBasketTotal, currency))
-              : (Number(summary.pendingPurchaseCount || 0) > 0 ? "Pendiente" : "—")) +
-          '</strong></span>' +
+          '<span><small>Coste conocido</small><strong>' + escapeHtml(basketLabel) + '</strong></span>' +
         '</div>' +
       '</section>' +
       '<section class="pantry-location-strip">' + locationTiles(payload) + '</section>' +
@@ -289,7 +299,7 @@ function renderWorkspace(payload, initialView = "inventory") {
           categories.map((category) => '<button type="button" data-pantry-category="' + escapeHtml(category) + '">' + escapeHtml(category) + '</button>').join('') +
         '</div>' +
       '</section>' +
-      '<section><div class="pantry-section-heading"><div><small>Inventario</small><strong id="pantry-visible-count">' + items.length + ' productos</strong></div></div>' +
+      '<section id="pantry-inventory"><div class="pantry-section-heading"><div><small>Inventario</small><strong id="pantry-visible-count">' + items.length + ' productos</strong></div></div>' +
         '<div id="pantry-product-grid" class="pantry-product-grid">' + (productCards || '<p class="pantry-empty">Todavía no hay inventario disponible.</p>') + '</div>' +
       '</section>' +
       '</div>' +
