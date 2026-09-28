@@ -3276,27 +3276,53 @@ function weeklyMenuIngredientAmount(ingredient) {
   if (Number.isFinite(quantity)) {
     return `${quantity.toLocaleString("es-ES", { maximumFractionDigits: quantity < 10 ? 1 : 0 })} ${ingredient?.unit || ""}`.trim();
   }
-  return "Cantidad pendiente";
+  return "—";
 }
 
 function renderWeeklyMenuIngredients(item) {
   const ingredients = Array.isArray(item?.ingredients) ? item.ingredients : [];
   if (!ingredients.length) return "";
+
+  const totalKcal = item.kcal == null ? null : Number(item.kcal);
+  const totalProtein = item.protein == null ? null : Number(item.protein);
+
   return `
     <details class="weekly-menu-ingredients">
       <summary>Ver ingredientes y cantidades</summary>
-      <div class="weekly-menu-ingredients-list">
-        ${ingredients.map((ingredient) => {
-          const kcal = Number(ingredient?.kcalForMeal);
-          return `
-            <div class="weekly-menu-ingredient-row">
-              <span>${escapeHtml(ingredient.name || "Ingrediente")}</span>
-              <strong>${escapeHtml(weeklyMenuIngredientAmount(ingredient))}</strong>
-              ${Number.isFinite(kcal) ? `<small>${escapeHtml(formatKcal(kcal))}</small>` : ""}
-            </div>`;
-        }).join("")}
+      <div class="weekly-menu-ingredients-table-wrap">
+        <table class="weekly-menu-ingredients-table">
+          <thead>
+            <tr>
+              <th>Ingrediente</th>
+              <th>Gramos</th>
+              <th>kcal</th>
+              <th>Proteína</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ingredients.map((ingredient) => {
+              const kcal = Number(ingredient?.kcalForMeal);
+              const protein = Number(ingredient?.proteinForMeal);
+              return `
+                <tr>
+                  <td>${escapeHtml(ingredient.name || "Ingrediente")}</td>
+                  <td>${escapeHtml(weeklyMenuIngredientAmount(ingredient))}</td>
+                  <td>${Number.isFinite(kcal) ? escapeHtml(formatKcal(kcal)) : "—"}</td>
+                  <td>${Number.isFinite(protein) ? escapeHtml(formatMacro(protein)) : "—"}</td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Total de tu ración</th>
+              <th></th>
+              <th>${Number.isFinite(totalKcal) ? escapeHtml(formatKcal(totalKcal)) : "—"}</th>
+              <th>${Number.isFinite(totalProtein) ? escapeHtml(formatMacro(totalProtein)) : "—"}</th>
+            </tr>
+          </tfoot>
+        </table>
       </div>
-      <small class="weekly-menu-ingredients-note">Cantidades correspondientes a tu ración planificada.</small>
+      <small class="weekly-menu-ingredients-note">${item.status === "consumido" ? "Cantidades registradas como consumidas." : "Cantidades previstas para tu ración; se registrarán como consumidas cuando confirmes la comida."}</small>
     </details>`;
 }
 
@@ -3308,19 +3334,21 @@ function renderWeeklyMenuMeal(item, compact = false) {
     : "";
   return `
     <article class="weekly-menu-meal">
-      <div class="weekly-menu-meal-copy">
-        <span class="weekly-menu-moment">${escapeHtml(item.moment || "Otro")}</span>
-        <strong>${escapeHtml(item.name)}</strong>
-        ${!compact && (quantity || item.note || item.gymSession) ? `
-          <p>${[
-            quantity,
-            item.gymSession ? escapeHtml(item.gymSession) : "",
-            item.note ? escapeHtml(item.note) : ""
-          ].filter(Boolean).join(" · ")}</p>` : ""}
-      </div>
-      <div class="weekly-menu-meal-macros">
-        <b>${kcal}</b>
-        <span>${protein}</span>
+      <div class="weekly-menu-meal-main">
+        <div class="weekly-menu-meal-copy">
+          <span class="weekly-menu-moment">${escapeHtml(item.moment || "Otro")}</span>
+          <strong>${escapeHtml(item.name)}</strong>
+          ${!compact && (quantity || item.note || item.gymSession) ? `
+            <p>${[
+              quantity,
+              item.gymSession ? escapeHtml(item.gymSession) : "",
+              item.note ? escapeHtml(item.note) : ""
+            ].filter(Boolean).join(" · ")}</p>` : ""}
+        </div>
+        <div class="weekly-menu-meal-macros">
+          <b>${kcal}</b>
+          <span>${protein}</span>
+        </div>
       </div>
       ${compact ? "" : renderWeeklyMenuIngredients(item)}
     </article>`;
