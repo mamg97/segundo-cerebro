@@ -124,56 +124,45 @@ No real nutrition history, calorie totals, body metrics, HealthKit data or healt
 
 ## Unified Apple Health bridge
 
-There is exactly one Apple Health ingestion bridge:
+There is exactly one Apple Health ingestion pipeline. The native iOS bridge becomes the preferred collector once its first real-device sync is validated; the existing Shortcut remains a temporary fallback, not a second source.
 
 ```text
-Apple Health → iOS Shortcut → segundo-cerebro-health-ingest
+Apple Health / HealthKit
+        ↓
+SegundoCerebroHealthBridge (preferred)
+        │
+        └── legacy Shortcut (fallback only)
+        ↓
+segundo-cerebro-health-ingest
 → Service Binding → segundo-cerebro → private D1
 ```
 
-The existing token-protected ingest Worker is extended; do not create a second token, app, endpoint family or public datastore.
+Do not create a second token, public datastore or competing Apple Health history.
 
 Endpoints:
+- `/v1/sync`: canonical unified ingestion endpoint;
 - `/v1/energy`: backwards-compatible energy-only endpoint.
-- `/v1/sync`: unified activity + body-measurement endpoint.
 
-Automatic Health imports use D1 because it provides reliable idempotency. The private Sheet remains the historical/manual/fallback source and is merged at read time.
+Private persistence:
+- `health_energy_daily`: one current activity snapshot per date, UPSERT by date;
+- `health_body_samples`: timestamped body-composition samples with original source;
+- `health_recovery_daily`: one daily recovery/sleep signal snapshot per date, UPSERT by date.
 
-### Daily activity
+The native bridge may read, when the user grants access and Apple Health contains samples:
+- active/basal energy, steps, exercise time and workouts;
+- weight, body-fat percentage, BMI and lean body mass;
+- resting heart rate, walking heart-rate average, HRV SDNN, respiratory rate, oxygen saturation, VO₂ max and sleeping wrist temperature;
+- sleep analysis, including Core/Deep/REM where available.
 
-`health_energy_daily` is the existing daily snapshot and now also accepts:
-- active kcal;
-- resting/basal kcal;
-- total kcal;
-- steps;
-- exercise minutes;
-- workout count;
-- optional workout metadata;
-- source/source details;
-- source sampling timestamp;
-- import timestamp.
+These are observed signals, not diagnoses and not an automatically inferred recovery score. A missing HealthKit sample remains missing. Do not synthesize values.
 
-The logical key remains the date. Re-running the Shortcut for the same date replaces the snapshot rather than duplicating it.
+The bridge synchronizes today plus yesterday on each run. This keeps today's snapshot current while yesterday is repeatedly reconciled idempotently. HealthKit observer/background delivery is best-effort under iOS scheduling; manual sync remains a diagnostic action rather than the normal workflow.
 
-### Body measurements
-
-Automatic body measurements are normalized in private D1 table `health_body_samples`.
-
-Supported metric types:
-- `bodyMass`;
-- `bodyFatPercentage`;
-- `bodyMassIndex`;
-- `leanBodyMass`.
-
-Idempotency key is effectively `metric_type + measured_at + source`. Re-importing the same measurement updates it rather than creating another copy.
-
-Every imported sample preserves:
-- original measurement timestamp;
-- original source name when Shortcuts exposes it;
-- import timestamp;
-- unit and value.
-
-The private Sheet tab `MedicionesCorporales` remains the historical/manual baseline and now has optional columns for BMI, lean body mass, original measurement time and import time.
+Security:
+- the app stores `HEALTH_INGEST_TOKEN` only in iOS Keychain;
+- never store the token in Git, UserDefaults, logs or screenshots;
+- the public repository contains source code and schemas but no real health values;
+- the Worker remains the only public ingress and validates ranges before the main private Worker writes D1.
 
 ## Body trend rules
 

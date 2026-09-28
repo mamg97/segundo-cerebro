@@ -298,3 +298,17 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Home:** solo muestra eventos activos. `CERRADO` y `CANCELADO` se consultan desde Eventos → Histórico.
 - **Alcance:** los compromisos puramente financieros no se convierten en eventos por el hecho de tener una fecha.
 - **Motivo:** conservar memoria útil de viajes y celebraciones sin depender indefinidamente del calendario ni crear una segunda contabilidad.
+
+
+## D-034 — HealthKit nativo sustituye al Atajo como colector principal
+
+- **Estado:** aceptada; código y backend implementados, validación física del iPhone pendiente.
+- **Fecha:** 2026-09-28.
+- **Decisión:** mantener una única canalización Apple Health pero sustituir el Atajo como colector principal por `SegundoCerebroHealthBridge`, una app iOS nativa Swift/HealthKit.
+- **Continuidad:** se conserva el mismo Worker `segundo-cerebro-health-ingest`, el mismo `HEALTH_INGEST_TOKEN`, el mismo `/v1/sync` y las tablas D1 existentes. El Atajo queda como fallback de transición.
+- **Ampliación:** además de actividad y composición, el contrato admite señales diarias de recuperación/sueño en `health_recovery_daily`.
+- **Automatización:** HealthKit Observer Query + Background Delivery son el mecanismo principal; BGAppRefresh aporta reconciliación best-effort. No se promete una hora exacta porque iOS controla la ejecución.
+- **Seguridad:** el token se guarda en Keychain del iPhone. La app solicita solo lectura de HealthKit y Git nunca contiene datos reales ni secretos.
+- **Despliegue:** el Worker de ingesta pasa a desplegarse automáticamente junto con el Worker privado cuando cambian sus fuentes.
+- **Criterio de retirada del Atajo:** no deshabilitarlo hasta validar una sincronización nativa real y una posterior actualización automática.
+- **Motivo:** eliminar la lógica frágil y difícil de mantener de Atajos, permitir pruebas/CI, ampliar señales y reducir la intervención manual.

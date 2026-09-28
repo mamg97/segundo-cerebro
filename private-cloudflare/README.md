@@ -293,50 +293,52 @@ Endpoints:
 - `GET /api/nutrition?date=YYYY-MM-DD`: resumen diario, comidas, objetivo, energía e histórico.
 - `POST /api/nutrition/entry`: añade una comida planificada o consumida.
 - `POST /api/nutrition/food`: añade una ficha a la base reutilizable.
-- `POST /api/nutrition/energy`: guarda calorías activas/reposo/total. Este endpoint es el destino previsto para el futuro puente de Apple Health.
+- `POST /api/nutrition/energy`: guarda calorías activas/reposo/total en flujos privados/manuales; la ingesta automática de Apple Health usa el bridge dedicado.
 
 La fuente contiene las pestañas `Comidas`, `Registro`, `Objetivos` y `EnergiaDiaria`. El identificador del Sheet no se versiona en Git.
 
 
 ## Apple Health bridge
 
-Apple Health no se consulta desde la web. El iPhone obtiene sus muestras locales con Shortcuts/Health y envía únicamente el resumen energético diario a un Worker de ingesta separado.
-
-Arquitectura:
+Apple Health no se consulta desde la web. La arquitectura objetivo usa `SegundoCerebroHealthBridge`, una app nativa Swift/HealthKit incluida en `../ios/SegundoCerebroHealthBridge`. El antiguo Atajo queda como fallback de transición.
 
 ```text
-Apple Watch → Apple Health → Shortcut iPhone
+Apple Watch / Apple Health
+  → SegundoCerebroHealthBridge
   → segundo-cerebro-health-ingest (Bearer token)
   → Service Binding interno
   → segundo-cerebro
-  → D1 health_energy_daily
+  → D1:
+      health_energy_daily
+      health_body_samples
+      health_recovery_daily
   → Salud / Nutrición
 ```
 
-El Worker público de ingesta no conoce Google OAuth ni D1. Solo valida un token y reenvía el resumen al Worker principal mediante Service Binding.
+El Worker público de ingesta no conoce Google OAuth ni D1. Valida el Bearer, normaliza/range-checkea el payload y lo reenvía al Worker principal mediante Service Binding.
 
-Configuración única:
+Endpoint canónico:
+- `POST /v1/sync`: actividad + composición corporal + recuperación/sueño;
+- `POST /v1/energy`: compatibilidad legado para energía.
+
+La configuración inicial del Worker sigue usando:
 
 ```sh
 cd private-cloudflare
 npm run setup:health-ingest
 ```
 
-El script despliega `segundo-cerebro-health-ingest`, valida el endpoint `/health`, genera `HEALTH_INGEST_TOKEN`, comprueba que `/v1/energy` rechaza peticiones sin Bearer y muestra una única vez la URL y el token que deben guardarse en el Shortcut del iPhone.
+El token `HEALTH_INGEST_TOKEN` se mantiene como secreto. En la app nativa se introduce una sola vez y queda en Keychain del iPhone. No crear otro token para el bridge.
 
-La construcción exacta del Atajo y su automatización están en [`../docs/APPLE_HEALTH_SHORTCUT.md`](../docs/APPLE_HEALTH_SHORTCUT.md).
+La app y su instalación están documentadas en [`../ios/SegundoCerebroHealthBridge/README.md`](../ios/SegundoCerebroHealthBridge/README.md). El Atajo legado permanece documentado en [`../docs/APPLE_HEALTH_SHORTCUT.md`](../docs/APPLE_HEALTH_SHORTCUT.md).
 
-Payload esperado por `POST /v1/energy`:
+La sincronización es idempotente:
+- `health_energy_daily`: UPSERT por fecha;
+- `health_recovery_daily`: UPSERT por fecha;
+- `health_body_samples`: deduplicación por tipo + timestamp + fuente.
 
-```json
-{
-  "date": "YYYY-MM-DD",
-  "activeKcal": 600,
-  "restingKcal": 1700
-}
-```
+El workflow privado despliega tanto `wrangler.bootstrap.jsonc` como `wrangler.health-ingest.jsonc` cuando cambian las fuentes relevantes.
 
-`date` puede omitirse y el puente usa la fecha local de Madrid. `totalKcal` es opcional; si falta y existen activa + reposo, se suma automáticamente. D1 conserva una sola fila por fecha y las sincronizaciones posteriores del mismo día sustituyen la anterior mediante UPSERT. No se envían pasos, frecuencia cardiaca, entrenamientos ni otros datos de salud.
 
 ## CI/CD desde GitHub
 
@@ -370,6 +372,7 @@ El workflow se activa en cambios relevantes de `main`, valida el JavaScript, eje
 
 ```bash
 npx wrangler deploy --config wrangler.bootstrap.jsonc
+npx wrangler deploy --config wrangler.health-ingest.jsonc
 ```
 
 No guardar nunca el token de Cloudflare en Git. Si faltan los secretos, el workflow valida y construye pero omite el despliegue.

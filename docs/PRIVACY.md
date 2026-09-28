@@ -64,11 +64,14 @@ No añadir escritura a un dominio nuevo sin revisar fuente de verdad, amenaza y 
 
 ## Apple Health
 
-- El navegador no accede directamente a Apple Health.
-- El iPhone envía únicamente el resumen energético necesario mediante un Worker dedicado.
-- El token Bearer de ingesta es secreto y no se versiona.
-- No enviar frecuencia cardiaca, ubicación, entrenamientos detallados u otros datos de Salud si no existe una necesidad explícita.
-- La ausencia de datos se representa como desconocida; no se infieren métricas de salud.
+- El navegador no accede directamente a Apple Health; HealthKit solo se lee dentro de la app nativa autorizada en el iPhone.
+- El bridge envía únicamente los tipos previstos por el contrato de Salud: actividad diaria, composición corporal, workouts mínimos y señales de recuperación/sueño autorizadas.
+- El token Bearer de ingesta es secreto. En el iPhone vive en Keychain con protección de dispositivo; nunca se guarda en Git ni en UserDefaults.
+- El repositorio no contiene valores reales de HealthKit, exportaciones de Salud, identificadores de muestras ni historiales médicos.
+- D1 privado persiste solo los campos necesarios para análisis longitudinal. No se replica el almacén completo de Apple Health.
+- La ausencia de datos se conserva como desconocida; no se inferieren métricas fisiológicas.
+- Añadir un tipo HealthKit nuevo requiere justificar su uso en Salud y actualizar este contrato antes de enviarlo.
+- La app no solicita permisos de escritura en HealthKit.
 
 ## Frontera pública
 

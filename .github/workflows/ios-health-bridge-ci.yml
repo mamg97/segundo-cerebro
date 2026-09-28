@@ -1,0 +1,24 @@
+name: Validate iOS Health bridge
+
+on:
+  pull_request:
+    paths:
+      - "ios/SegundoCerebroHealthBridge/**"
+      - ".github/workflows/ios-health-bridge-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build HealthKit bridge
+        run: |
+          xcodebuild \
+            -project ios/SegundoCerebroHealthBridge/SegundoCerebroHealthBridge.xcodeproj \
+            -scheme SegundoCerebroHealthBridge \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
