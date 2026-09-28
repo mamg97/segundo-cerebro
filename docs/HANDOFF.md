@@ -591,3 +591,35 @@ Assets frontend: `v0.34.0`.
 - La fecha aparece compacta bajo el importe, por ejemplo `Cobro: 30 sept`, `Cobro: día 4` o `Cobro: aprox. día 29`.
 - ORGANIZADOR sigue siendo de solo lectura respecto al estado financiero.
 - Assets frontend: `v0.36.2`.
+
+
+## Apple Health nativo · HealthKit bridge
+
+Estado 2026-09-28:
+
+- Implementada `ios/SegundoCerebroHealthBridge`, app SwiftUI mínima para reemplazar la lógica manual de Atajos.
+- Mantiene una única canalización: HealthKit → ingest Worker existente → Service Binding → Worker privado → D1.
+- Reutiliza `HEALTH_INGEST_TOKEN`; el valor no está en Git y la app lo guarda en Keychain.
+- Sincroniza hoy + ayer de forma idempotente.
+- HealthKit:
+  - actividad: energía activa/basal, pasos, ejercicio y workouts;
+  - cuerpo: peso, grasa, IMC y masa magra;
+  - recuperación: FC reposo, FC caminando, HRV SDNN, respiración, SpO₂, VO₂ máx., temperatura de muñeca;
+  - sueño: asleep/in-bed/awake/Core/Deep/REM cuando existen.
+- Añadida tabla privada `health_recovery_daily`; ausencia de señal = `null`, nunca cero inventado.
+- `GET /api/health/history` expone también `recovery` para consumo privado posterior.
+- El Worker de ingesta pasa a desplegarse automáticamente con el workflow privado.
+- CI del backend valida sintaxis/build/Wrangler; CI iOS compila el proyecto con Xcode y sin firma.
+- El Atajo actual permanece activo como fallback. No retirarlo todavía.
+
+### Punto de intervención humana
+
+No es necesario que el usuario edite código ni construya Atajos. Tras desplegar esta rama en `main`, la primera intervención irreductible es:
+
+1. abrir `ios/SegundoCerebroHealthBridge/SegundoCerebroHealthBridge.xcodeproj` en Xcode;
+2. elegir su Apple Development Team y ejecutar la app en su iPhone;
+3. introducir una vez el token existente `HEALTH_INGEST_TOKEN` recuperándolo localmente del Atajo actual, sin compartirlo;
+4. conceder permisos de lectura de Salud;
+5. pulsar `Sincronizar ahora` una vez y comunicar el resultado de Diagnóstico.
+
+Después de esa primera sincronización se debe verificar D1/dashboard antes de retirar la automatización antigua.
