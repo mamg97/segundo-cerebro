@@ -659,3 +659,19 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - Las visualizaciones son compactas y responsive: 4 cuentas en escritorio, 2×2 en anchuras menores.
 - No se han añadido datos financieros ni nuevas fuentes; el cambio es exclusivamente de presentación.
 - Assets frontend: `v0.37.6`.
+
+
+## Home · jerarquía financiera v0.37.7
+
+- **Dinero · Este mes** pasa a ocupar una fila completa del resumen financiero.
+- Dentro de Dinero, el resumen presupuestario ocupa la zona izquierda y **Estado de cuentas** la derecha en escritorio, permitiendo leer las 4 cuentas con barras más grandes.
+- Las mini barras de cuenta aumentan a 34×112 px en escritorio y conservan exactamente el mismo modelo canónico de liquidez.
+- La segunda fila queda en dos columnas: **Patrimonio** a la izquierda y **Deudas** a la derecha.
+- En móvil el orden es Dinero → Patrimonio → Deudas.
+- Responsive:
+  - >1180 px: Dinero en composición horizontal interna;
+  - 901–1180 px: Dinero apila resumen + cuentas, manteniendo las 4 cuentas en una fila si caben;
+  - ≤900 px: Patrimonio y Deudas pasan a una columna;
+  - ≤520 px: las cuentas pasan a una columna.
+- No cambia ningún dato ni contrato financiero; solo layout y escala de presentación.
+- Assets frontend: `v0.37.7`.

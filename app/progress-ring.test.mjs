@@ -63,7 +63,7 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.37\.6/);
+assert.match(index, /app\.js\?v=0\.37\.7/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -106,6 +106,9 @@ assert.match(css, /home-liquidity-grid/);
 assert.match(css, /home-liquidity-bar/);
 assert.match(css, /home-wealth-stack/);
 assert.match(css, /home-wealth-legend/);
+assert.match(css, /v0\.37\.7 — Home finance hierarchy/);
+assert.match(css, /\.money-horizon > \.budget-panel\s*\{[\s\S]*grid-column: 1 \/ -1/);
+assert.match(css, /\.money-horizon > \.budget-panel \.budget-summary[\s\S]*grid-template-columns:/);
 for (let i = 1; i <= 12; i += 1) {
   assert.match(css, new RegExp('\\.allocation-' + i + '\\s*\\{'));
 }
