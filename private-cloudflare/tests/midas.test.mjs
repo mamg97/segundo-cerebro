@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fetchMidasDashboard, addPrivateGeneticDiary } from "../src/midas.js";
+import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch } from "../src/midas.js";
 import { normalizeSnapshot, verifyGitHubOidc } from "../src/midas-ingest.js";
 
 test("MIDAS dashboard validates, caches and labels a stale fallback", async () => {
@@ -26,6 +26,41 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
   const stale = await fetchMidasDashboard(async () => { throw new Error("offline"); }, 1_400_000);
   assert.equal(stale.stale, true);
   assert.equal(stale.dashboard.tracks[0].label, "Referencia SPY");
+});
+
+test("MIDAS research resolves its private sheet through IntegracionesPrivadas", async () => {
+  const env = { FINANCE_SHEET_ID: "10hS1pdS8oaQURmIo6nUZX9eo551gFh0b_qwWPIWQRww" };
+  const researchId = "15yXCjLP7Cg6N88lW88yo4duZEmoga-w7WniAl1bLXws";
+  const seen = [];
+  const fetcher = async (url) => {
+    seen.push(url);
+    if (url.includes("/spreadsheets/" + env.FINANCE_SHEET_ID + "/values/")) {
+      return { ok: true, json: async () => ({ values: [
+        ["clave", "valor"],
+        ["MIDAS_RESEARCH_SHEET_ID", researchId]
+      ] }) };
+    }
+    if (url.includes("/spreadsheets/" + researchId + "/values:batchGet")) {
+      return { ok: true, json: async () => ({ valueRanges: [
+        { values: [
+          ["ticker","empresa","tema","tipo_estudio","ultima_revision","tesis_resumida","drivers_clave","riesgos_clave","escenario_bear","escenario_base","escenario_bull","horizonte","estado","regla_de_uso"],
+          ["NVEC","NVE Corporation","Sensores","CAGR","2026-09-23","Tesis","Driver","Riesgo","","","","2026–2031","RECUPERADA","Actualizar"]
+        ] },
+        { values: [
+          ["ticker","empresa","tema","fecha_estudio","objetivo","cagr_bear_2031","cagr_base_2031","cagr_bull_2031","horizonte_original","cagr_bear_original","cagr_base_original","cagr_bull_original","estado","nota"],
+          ["NVEC","NVE Corporation","Sensores","2026-09-23","2031","-6,9%","+12,8%","+34,3%","2026–2031","-6,9%","+12,8%","+34,3%","COMPLETO","Recuperado"]
+        ] }
+      ] }) };
+    }
+    throw new Error("unexpected URL " + url);
+  };
+  const result = await fetchMidasResearch(env, async () => "token", fetcher, 9_000_000);
+  assert.equal(result.status, "ok");
+  assert.equal(result.counts.theses, 1);
+  assert.equal(result.counts.cagrComplete, 1);
+  assert.equal(result.cagr2031[0].base, "+12,8%");
+  assert.equal(seen.some((url) => url.includes("IntegracionesPrivadas")), true);
+  assert.equal(seen.some((url) => url.includes("/drive/v3/files")), false);
 });
 
 test("private genetic diary uses recorded valuations and keeps a quality warning", async () => {
