@@ -2,6 +2,7 @@ const DASHBOARD_URL = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/
 const CACHE_MS = 5 * 60 * 1000;
 let cached = null;
 let cachedAt = 0;
+let researchCache = { value: null, expiresAt: 0, spreadsheetId: null, spreadsheetIdExpiresAt: 0 };
 
 const GROUPS = new Set(["paper_nuevo", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
 
@@ -56,6 +57,110 @@ export async function fetchMidasDashboard(fetcher = fetch, now = Date.now()) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+
+function tableRows(values = []) {
+  if (!Array.isArray(values) || !values.length) return [];
+  const headers = values[0].map((value) => String(value ?? "").trim());
+  return values.slice(1)
+    .filter((row) => Array.isArray(row) && row.some((value) => value !== "" && value !== null && value !== undefined))
+    .map((row) => Object.fromEntries(headers.map((header, index) => [header, row?.[index] ?? null])));
+}
+
+async function resolveResearchSpreadsheetId(env, token, fetcher = fetch) {
+  if (env?.MIDAS_RESEARCH_SHEET_ID) return String(env.MIDAS_RESEARCH_SHEET_ID).trim();
+  if (researchCache.spreadsheetId && researchCache.spreadsheetIdExpiresAt > Date.now()) {
+    return researchCache.spreadsheetId;
+  }
+  const params = new URLSearchParams({
+    q: "name = 'MIDAS - TESIS Y WATCHLIST' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",
+    fields: "files(id,name,modifiedTime)",
+    orderBy: "modifiedTime desc",
+    pageSize: "10"
+  });
+  const response = await fetcher("https://www.googleapis.com/drive/v3/files?" + params.toString(), {
+    headers: { Authorization: "Bearer " + token }
+  });
+  if (!response.ok) throw new Error("MIDAS_RESEARCH_DRIVE_" + response.status);
+  const files = (await response.json())?.files || [];
+  const sheet = files.find((item) => item?.name === "MIDAS - TESIS Y WATCHLIST");
+  if (!sheet?.id) throw new Error("MIDAS_RESEARCH_SHEET_NOT_FOUND");
+  researchCache.spreadsheetId = sheet.id;
+  researchCache.spreadsheetIdExpiresAt = Date.now() + 10 * 60_000;
+  return sheet.id;
+}
+
+function cleanText(value, max = 800) {
+  if (value === null || value === undefined || value === "") return null;
+  return String(value).slice(0, max);
+}
+
+function normalizeResearch(valueRanges = []) {
+  const thesisRows = tableRows(valueRanges[0]?.values || []);
+  const cagrRows = tableRows(valueRanges[1]?.values || []);
+
+  const theses = thesisRows.map((row) => ({
+    ticker: cleanText(row.ticker, 40),
+    company: cleanText(row.empresa, 180),
+    theme: cleanText(row.tema, 220),
+    studyType: cleanText(row.tipo_estudio, 180),
+    lastReview: cleanText(row.ultima_revision, 20),
+    summary: cleanText(row.tesis_resumida, 1200),
+    drivers: cleanText(row.drivers_clave, 1000),
+    risks: cleanText(row.riesgos_clave, 1000),
+    horizon: cleanText(row.horizonte, 80),
+    status: cleanText(row.estado, 120),
+    rule: cleanText(row.regla_de_uso, 500)
+  })).filter((row) => row.ticker && row.company);
+
+  const cagr2031 = cagrRows.map((row) => ({
+    ticker: cleanText(row.ticker, 40),
+    company: cleanText(row.empresa, 180),
+    theme: cleanText(row.tema, 220),
+    studyDate: cleanText(row.fecha_estudio, 20),
+    target: cleanText(row.objetivo, 20) || "2031",
+    bear: cleanText(row.cagr_bear_2031, 80),
+    base: cleanText(row.cagr_base_2031, 80),
+    bull: cleanText(row.cagr_bull_2031, 80),
+    originalHorizon: cleanText(row.horizonte_original, 80),
+    originalBear: cleanText(row.cagr_bear_original, 80),
+    originalBase: cleanText(row.cagr_base_original, 80),
+    originalBull: cleanText(row.cagr_bull_original, 80),
+    status: cleanText(row.estado, 120),
+    note: cleanText(row.nota, 600)
+  })).filter((row) => row.ticker && row.company);
+
+  return {
+    status: "ok",
+    theses,
+    cagr2031,
+    counts: {
+      theses: theses.length,
+      cagr2031: cagr2031.length,
+      cagrComplete: cagr2031.filter((row) => row.bear && row.base && row.bull).length
+    }
+  };
+}
+
+export async function fetchMidasResearch(env, getGoogleAccessToken, fetcher = fetch, now = Date.now()) {
+  if (!getGoogleAccessToken) return { status: "not-configured", theses: [], cagr2031: [], counts: { theses: 0, cagr2031: 0, cagrComplete: 0 } };
+  if (researchCache.value && researchCache.expiresAt > now) return researchCache.value;
+
+  const token = await getGoogleAccessToken(env);
+  const spreadsheetId = await resolveResearchSpreadsheetId(env, token, fetcher);
+  const ranges = ["TESIS!A1:P500", "CAGR2031!A1:N500"];
+  const params = new URLSearchParams();
+  for (const range of ranges) params.append("ranges", range);
+  params.set("majorDimension", "ROWS");
+  params.set("valueRenderOption", "FORMATTED_VALUE");
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values:batchGet?${params.toString()}`;
+  const response = await fetcher(endpoint, { headers: { Authorization: "Bearer " + token } });
+  if (!response.ok) throw new Error("MIDAS_RESEARCH_SHEETS_" + response.status);
+  const normalized = normalizeResearch((await response.json())?.valueRanges || []);
+  researchCache.value = normalized;
+  researchCache.expiresAt = now + 60_000;
+  return normalized;
 }
 
 export async function addPrivateGeneticDiary(db, dashboard) {

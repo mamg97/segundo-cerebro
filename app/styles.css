@@ -15786,3 +15786,149 @@ html[data-theme="dark"] .wealth-daily-kpis article {
   .wealth-daily-kpis strong { font-size: 11px; }
   .wealth-daily-table { min-width: 560px; }
 }
+
+
+/* v0.39.1 — MIDAS thesis watchlist */
+.midas-research {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 22px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.midas-research-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.midas-research-heading strong,
+.midas-research-heading span,
+.midas-research-counts b,
+.midas-research-counts small {
+  display: block;
+}
+
+.midas-research-heading strong { font-size: 13px; }
+.midas-research-heading span,
+.midas-research-counts small,
+.midas-research-rule,
+.midas-research-unavailable p {
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.midas-research-heading span { margin-top: 3px; }
+.midas-research-counts { text-align: right; }
+.midas-research-counts b { font-size: 11px; }
+.midas-research-counts small { margin-top: 2px; }
+.midas-research-rule { margin: 0; }
+
+.midas-research-table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.midas-research-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  font-size: 9px;
+}
+
+.midas-research-table th,
+.midas-research-table td {
+  padding: 8px 9px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.midas-research-table th {
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.midas-research-table tbody tr:last-child td { border-bottom: 0; }
+
+.midas-research-table td:first-child {
+  min-width: 270px;
+}
+
+.midas-research-table td:first-child strong,
+.midas-research-table td:first-child span,
+.midas-research-table td:first-child small {
+  display: block;
+}
+
+.midas-research-table td:first-child strong { font-size: 10px; }
+.midas-research-table td:first-child span {
+  margin-top: 2px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.midas-research-table td:first-child small,
+.midas-cagr-value small {
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 7.5px;
+  line-height: 1.35;
+}
+
+.midas-cagr-value {
+  min-width: 78px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.midas-cagr-value.is-base {
+  min-width: 128px;
+}
+
+.midas-research-status {
+  display: inline-flex;
+  max-width: 170px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 7.5px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.midas-research-status.is-complete {
+  background: color-mix(in srgb, #2f9b70 14%, transparent);
+  color: #2f9b70;
+}
+
+.midas-research-status.is-pending {
+  background: color-mix(in srgb, #b47a2a 14%, transparent);
+  color: #a86918;
+}
+
+@media (max-width: 620px) {
+  .midas-research {
+    padding: 12px;
+    margin: 14px 0 18px;
+  }
+
+  .midas-research-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .midas-research-counts { text-align: left; }
+  .midas-research-table { min-width: 900px; }
+}

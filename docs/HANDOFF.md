@@ -789,3 +789,15 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - El detalle de Patrimonio muestra tres KPI del último cierre, los últimos registros y un histórico desplegable.
 - `PatrimonioDetalle` sigue siendo la distribución actual por plataforma; `Patrimonio` conserva la referencia mensual. El diario no sustituye ninguna de esas fuentes.
 - Assets frontend: `v0.39.0`.
+
+
+## MIDAS · tesis + CAGR 2031 v0.39.1
+
+- MIDAS incorpora una segunda fuente privada, independiente del diario de estrategias: el Sheet **MIDAS - TESIS Y WATCHLIST**.
+- El Worker la resuelve por nombre exacto con el OAuth Google ya configurado; opcionalmente admite `MIDAS_RESEARCH_SHEET_ID`. El identificador real no entra en Git.
+- `GET /api/midas` entrega `research.theses` y `research.cagr2031` además del dashboard público de estrategias.
+- La interfaz MIDAS muestra **Tesis y CAGR 2031** con todas las ideas registradas, escenarios bear/base/bull, última fecha de estudio y estado.
+- Regla canónica: toda tesis nueva debe tener una fila en `TESIS` y otra en `CAGR2031`. Si todavía no se ha calculado un CAGR exacto a 2031, queda explícitamente pendiente; no se extrapola un CAGR de otro horizonte.
+- Los estudios históricos conservan su horizonte original y sus CAGR originales para no perder contexto.
+- La tabla es watchlist/memoria de investigación, no señal automática de compra. Antes de usar una tesis se actualizan precio, filings/resultados, valoración y riesgos.
+- Assets frontend: `v0.39.1`.
