@@ -66,7 +66,16 @@ Esto valida el proyecto y las APIs en compilación. **HealthKit real y Backgroun
 
 ## Instalación en iPhone — intervención humana obligatoria
 
-No realizar estos pasos hasta que el backend y la rama estén desplegados en `main`.
+El backend y la app deben estar desplegados en `main` antes de estos pasos.
+
+### Antes de instalar: comprobar el tipo de Team
+
+Xcode permite probar la app con un Apple Account sin membresía de pago usando un **Personal Team**, pero Apple limita ese aprovisionamiento gratuito a 7 días. El perfil y la instalación deben renovarse/reinstalarse después. Por tanto:
+
+- **Personal Team gratuito:** válido para probar el bridge real durante una semana; no se considera todavía una sustitución permanente del Atajo.
+- **Apple Developer Program / Team de pago:** apto para mantener una instalación de desarrollo mucho más duradera y para distribuir posteriormente mediante mecanismos oficiales.
+- no pagar ni cambiar de plan solo para completar la prueba inicial; primero validar que HealthKit, background y D1 funcionan como esperamos.
+
 
 1. En el Mac, actualizar `mamg97/segundo-cerebro`.
 2. Abrir:

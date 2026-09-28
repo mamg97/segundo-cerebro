@@ -614,7 +614,11 @@ Estado 2026-09-28:
 
 ### Punto de intervención humana
 
-No es necesario que el usuario edite código ni construya Atajos. Tras desplegar esta rama en `main`, la primera intervención irreductible es:
+No es necesario que el usuario edite código ni construya Atajos. El código y backend ya pueden prepararse sin intervención.
+
+Antes de considerar el bridge una sustitución permanente hay que comprobar el Team de Xcode: un `Personal Team` gratuito expira a los 7 días y solo sirve para la prueba inicial. No desactivar el Atajo por ese motivo hasta decidir una vía de firma sostenible.
+
+La primera intervención irreductible es:
 
 1. abrir `ios/SegundoCerebroHealthBridge/SegundoCerebroHealthBridge.xcodeproj` en Xcode;
 2. elegir su Apple Development Team y ejecutar la app en su iPhone;
