@@ -3,7 +3,7 @@ import { fetchPantrySummary, hasPantryGoogleConfig } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
-import { fetchMidasDashboard } from "./midas.js";
+import { fetchMidasDashboard, addPrivateGeneticDiary } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 
 const securityHeaders = {
@@ -3621,7 +3621,9 @@ export default {
     if (url.pathname === "/api/midas") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       try {
-        return json({ ok: true, ...(await fetchMidasDashboard()) });
+        const result = await fetchMidasDashboard();
+        return json({ ok: true, ...result,
+          dashboard: await addPrivateGeneticDiary(env.DB, result.dashboard) });
       } catch (error) {
         console.warn("MIDAS dashboard read failed", String(error?.message || "MIDAS_READ_ERROR"));
         return json({ ok: false, code: "MIDAS_READ_FAILED" }, 502);

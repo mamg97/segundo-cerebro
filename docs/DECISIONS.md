@@ -316,8 +316,16 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 
 ## D-035 — MIDAS se consulta como laboratorio demo separado
 
-- **Estado:** implementada en código; primera sesión real pendiente de los próximos cierres.
+- **Estado:** implementada; la excepción del genético privado fue ampliada por D-036.
 - **Fecha:** 2026-09-28.
-- **Decisión:** la aplicación privada muestra una tabla diaria de todas las líneas MIDAS desde el `dashboard.json` público generado por los workflows existentes. El Worker lo valida y sirve sin credenciales GitHub ni persistencia local.
-- **Límite:** las carteras son ficticias y no forman parte del patrimonio personal; las ideas sin diario conservan estado sin rentabilidad. El genético histórico privado se muestra sin cifras hasta que se autorice y verifique una integración privada.
+- **Decisión:** la aplicación privada muestra una tabla diaria de todas las líneas MIDAS desde el `dashboard.json` público generado por los workflows existentes. El Worker lo valida y sirve sin credenciales GitHub. El genético sigue la excepción privada de D-036.
+- **Límite:** las carteras son ficticias y no forman parte del patrimonio personal; las ideas sin diario conservan estado sin rentabilidad. El genético histórico se muestra sin cifras hasta que su extracto privado quede enlazado y verificado.
 - **Coste:** se reutilizan los dos workflows de mercado; no se crea una Action diaria adicional.
+
+## D-036 — El genético original se enlaza mediante un resumen privado firmado
+
+- **Estado:** implementado en código; verificar primer envío remoto y lectura en el panel.
+- **Fecha:** 2026-09-28.
+- **Decisión:** el workflow existente del repositorio privado envía únicamente su curva de patrimonio ficticio a un Worker de ingesta. La autenticación usa GitHub OIDC con firma y restricciones de repositorio, rama, workflow y audiencia. El resumen permanece en D1 privado; la tabla calcula desde él último día y acumulado.
+- **Límite:** el diario original contabiliza operaciones al cierre tras observar ese cierre. Su +/− histórico es un registro de simulación, no rentabilidad ejecutable ni evidencia de superioridad. Un motor causal corregido necesita una serie prospectiva distinta, sin reescribir la antigua.
+- **Coste:** no se crea workflow periódico adicional ni credencial GitHub persistente; el envío es un paso del workflow existente.

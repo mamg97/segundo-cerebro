@@ -57,3 +57,44 @@ export async function fetchMidasDashboard(fetcher = fetch, now = Date.now()) {
     clearTimeout(timeout);
   }
 }
+
+export async function addPrivateGeneticDiary(db, dashboard) {
+  if (!db) return dashboard;
+  let stored;
+  try {
+    stored = await db.prepare("SELECT payload FROM midas_legacy_snapshot WHERE strategy_id = ?")
+      .bind("genetic_sp500_legacy").first();
+  } catch {
+    return dashboard;
+  }
+  if (!stored?.payload) return dashboard;
+  let snapshot;
+  try {
+    snapshot = JSON.parse(stored.payload);
+  } catch {
+    return dashboard;
+  }
+  const history = snapshot?.equity_history;
+  if (snapshot?.quality !== "legacy_same_close_model" ||
+      !Array.isArray(history) || history.length < 2 ||
+      !Number.isFinite(snapshot.initial_capital) || snapshot.initial_capital <= 0 ||
+      history.some((point) => !Array.isArray(point) || point.length !== 2 ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(point[0]) || !Number.isFinite(point[1]) || point[1] < 0)) return dashboard;
+  const first = history[0];
+  const previous = history.at(-2);
+  const last = history.at(-1);
+  if (first[0] !== snapshot.first_session || last[0] !== snapshot.last_session ||
+      history.some((point, index) => index > 0 && point[0] <= history[index - 1][0])) return dashboard;
+  const tracks = dashboard.tracks.map((row) => row.id !== "genetic_sp500_legacy" ? row : {
+    ...row,
+    status: "diario_heredado_observado",
+    first_session: first[0],
+    last_session: last[0],
+    currency: "USD",
+    last_equity: last[1],
+    return_pct: Math.round((last[1] / snapshot.initial_capital - 1) * 100_000_000) / 1_000_000,
+    day_return_pct: previous[1] > 0 ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
+    note: "Resultado registrado por el simulador original. Las órdenes se contabilizaban al mismo cierre que generaba la señal; no son ejecuciones verificadas ni una rentabilidad alcanzable."
+  });
+  return { ...dashboard, tracks };
+}

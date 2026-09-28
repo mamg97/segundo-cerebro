@@ -79,6 +79,8 @@ GitHub Pages publica únicamente la demo mock. Un fallo o cambio en la aplicaci�
 
 La vista MIDAS solo se habilita en el bundle privado. Su fuente pública contiene exclusivamente carteras y operaciones ficticias; nunca se copia a ese repositorio el diario genético privado, credenciales de brokers ni posiciones personales. La vista no añade su capital demo al patrimonio real.
 
+El extracto del genético original contiene solo fechas y valores de una cartera simulada, sin operaciones ni posiciones. Se recibe con GitHub OIDC firmado y restringido al workflow privado previsto; se guarda únicamente en D1, detrás de la aplicación protegida por Access. El Worker de ingesta público admite escritura autenticada y no ofrece lectura del extracto. La cifra se presenta como rendimiento simulado registrado, con su limitación de ejecución a cierre explícita.
+
 ## Modo privado local
 
 `.private/` es una capa auxiliar histórica para pruebas y migraciones locales. Está ignorada por Git, no es la arquitectura principal y no debe servirse por una interfaz de red compartida.

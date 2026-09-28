@@ -628,7 +628,7 @@ La primera intervención irreductible es:
 
 Después de esa primera sincronización se debe verificar D1/dashboard antes de retirar la automatización antigua.
 
-## MIDAS en Segundo Cerebro · v0.37.4
+## MIDAS en Segundo Cerebro · v0.37.5
 
 - La aplicación privada abre el informe desde la ficha Proyectos → MIDAS → «Ver informe diario» y también desde la tarjeta Patrimonio → «Ver MIDAS» de la pantalla principal. Ambos accesos muestran las 31 líneas catalogadas: 9 carteras demo estadounidenses, 4 adaptaciones TFM EUR, el genético original con diario privado aún no enlazado y 17 ideas pendientes, incluida TimesFM como hipótesis de investigación.
 - Por fila se ve estado, último cierre, variación del último día, acumulado y capital ficticio si existe. `—` significa dato ausente, no 0 %.
@@ -637,3 +637,5 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - En el primer día, antes de dos cierres, la variación diaria permanece vacía. El genético original conserva su diario privado fuera de este informe.
 - El genético original S&P 500 aparece como primera sección del informe, con su diario privado marcado como no enlazado. La estrategia `genetic_frozen` de ocho acciones es una adaptación nueva y separada; sus resultados no se atribuyen al agente original.
 - Cada fila muestra «Origen», derivado del catálogo público: TFG 2021, TFM, MIDAS Python, agente genético, experimentos históricos o campaña nueva de 2026. El origen no implica que una adaptación sea una réplica literal del código antiguo.
+- Se ha preparado la conexión privada del diario genético original: el workflow propio envía solo su curva de capital ficticio a `segundo-cerebro-midas-ingest` con GitHub OIDC; D1 la sirve únicamente en el panel privado. Hay que verificar el primer envío y el valor mostrado. El diario bruto sigue fuera del repositorio público.
+- La rentabilidad que aparecerá para ese agente procede del diario simulado original, que anotaba operaciones al cierre de la señal. La UI advierte de esa limitación; no se presenta como operación real ni como prueba de que el algoritmo sea rentable al ejecutarlo.

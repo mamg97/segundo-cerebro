@@ -13,6 +13,7 @@ on:
       - "private-cloudflare/package.json"
       - "private-cloudflare/wrangler.bootstrap.jsonc"
       - "private-cloudflare/wrangler.health-ingest.jsonc"
+      - "private-cloudflare/wrangler.midas-ingest.jsonc"
       - ".github/workflows/deploy-private-cloudflare.yml"
   workflow_dispatch:
 
@@ -62,6 +63,7 @@ jobs:
           node --check src/icloud-calendar.js
           node --check src/health-ingest.js
           node --check src/midas.js
+          node --check src/midas-ingest.js
 
       - name: Verify MIDAS report adapter
         run: node --test tests/midas.test.mjs
@@ -95,6 +97,10 @@ jobs:
       - name: Deploy Health ingest Worker
         if: steps.cloudflare.outputs.configured == 'true'
         run: npx wrangler deploy --config wrangler.health-ingest.jsonc
+
+      - name: Deploy MIDAS ingest Worker
+        if: steps.cloudflare.outputs.configured == 'true'
+        run: npx wrangler deploy --config wrangler.midas-ingest.jsonc
 
       - name: Explain skipped deployment
         if: steps.cloudflare.outputs.configured != 'true'

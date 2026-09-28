@@ -3861,7 +3861,7 @@ const MIDAS_STATUS = {
   programada_sin_diario: "Programada, sin sesión",
   pendiente_modelo: "Modelo pendiente",
   sin_diario_disponible: "Diario privado no enlazado",
-  diario_heredado_observado: "Diario heredado",
+  diario_heredado_observado: "Simulación histórica registrada",
   sin_ejecucion_comparable: "Pendiente de adaptación"
 };
 
@@ -3894,10 +3894,10 @@ function renderMidasReport(dashboard, stale) {
   const latest = lastSessions.length ? lastSessions[lastSessions.length - 1] : null;
   return `<div class="midas-report">
     <div class="midas-intro">
-      <p><strong>${observed} estrategias con resultados en este informe</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
+      <p><strong>${observed} ${observed === 1 ? "estrategia" : "estrategias"} con resultados en este informe</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
       <p class="midas-updated">Informe generado ${escapeHtml(formatFinanceDate(dashboard.generated_at_utc))}${stale ? " · copia temporal: la fuente no responde" : ""}</p>
     </div>
-    ${originalGenetic && originalGenetic.status === "sin_diario_disponible" ? '<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>Figura en la primera tabla, pero su diario privado aún no está conectado a este informe. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>' : ""}
+    ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>${originalGenetic.status === "diario_heredado_observado" ? "Las cifras proceden de su diario simulado, no de operaciones ejecutadas por un bróker. La versión original anotaba operaciones al mismo cierre que generaba la señal; su rendimiento histórico no demuestra una rentabilidad alcanzable." : "Figura en la primera tabla, pero su diario privado aún no está conectado a este informe."} El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
     <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado.</p>
     ${MIDAS_GROUPS.map(([group, title]) => {
       const groupRows = rows.filter((row) => row.group === group);
@@ -3906,13 +3906,13 @@ function renderMidasReport(dashboard, stale) {
         return `<details class="midas-pending"><summary>${title} <span>${groupRows.length}</span></summary>${renderMidasRows(groupRows)}</details>`;
       }
       const groupNote = group === "diario_heredado"
-        ? `<p class="midas-group-note">Estrategia original con ejecución y diario propios.${originalGenetic?.status === "sin_diario_disponible" ? " Sin cifras hasta verificar y enlazar ese diario privado." : ""}</p>`
+        ? `<p class="midas-group-note">Estrategia original con diario propio.${originalGenetic?.status === "sin_diario_disponible" ? " Sin cifras hasta verificar y enlazar ese diario privado." : " Rendimiento histórico registrado por el simulador; no equipararlo con las nuevas carteras prospectivas."}</p>`
         : group === "tfm_demo_adaptado"
           ? '<p class="midas-group-note">Modelos reimplementados en 2026 con una regla de cartera provisional común.</p>'
           : "";
       return `<section class="midas-group"><h3>${title}</h3>${groupNote}${renderMidasRows(groupRows)}</section>`;
     }).join("")}
-    <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>.${originalGenetic?.status === "sin_diario_disponible" ? " La estrategia genética original mantiene su diario privado, aún no enlazado." : ""}</p>
+    <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>.${originalGenetic?.status === "diario_heredado_observado" ? " La cifra del genético original procede de un extracto validado de su diario privado; no se publican posiciones ni operaciones." : " La estrategia genética original mantiene su diario privado, aún no enlazado."}</p>
   </div>`;
 }
 

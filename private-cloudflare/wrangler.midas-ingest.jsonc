@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "segundo-cerebro-midas-ingest",
+  "main": "src/midas-ingest.js",
+  "compatibility_date": "2026-09-28",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "segundo-cerebro-private",
+      "database_id": "0916849e-dc98-4e3e-832d-390062fa738d"
+    }
+  ]
+}
