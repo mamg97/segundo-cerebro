@@ -3360,6 +3360,16 @@ function renderWeeklyMenuMeal(item, compact = false) {
     </article>`;
 }
 
+function renderMenuMasterLinks() {
+  return `
+    <nav class="master-source-links" aria-label="Maestros de datos del menú">
+      <span>Maestros</span>
+      <a href="/api/source-link?target=pantry-products" target="_blank" rel="noopener noreferrer">Productos ↗</a>
+      <a href="/api/source-link?target=health-foods" target="_blank" rel="noopener noreferrer">Comidas ↗</a>
+      <a href="/api/source-link?target=health-recipes" target="_blank" rel="noopener noreferrer">Recetas ↗</a>
+    </nav>`;
+}
+
 function renderMenuPanel(data) {
   const panel = document.querySelector("#menu-panel");
   if (!panel) return;
@@ -3367,6 +3377,7 @@ function renderMenuPanel(data) {
   const model = weeklyMenuModel(data);
   if (!model.rows.length) {
     panel.innerHTML = `
+      ${renderMenuMasterLinks()}
       <div class="health-empty health-empty-card">
         <strong>Menú semanal preparado, pero todavía vacío</strong>
         <p>La hoja MenuSemanal ya está conectada. Cuando el gestor de Salud añada propuestas o un menú objetivo, aparecerán aquí sin inventar comidas intermedias.</p>
@@ -3386,6 +3397,8 @@ function renderMenuPanel(data) {
         <span><small>Objetivo proteína</small><strong>${model.proteinTarget === null ? "Pendiente" : formatMacro(model.proteinTarget)}</strong></span>
       </div>
     </div>
+
+    ${renderMenuMasterLinks()}
 
     <div class="weekly-menu-grid weekly-menu-grid-rich">
       ${model.days.map((day) => {
