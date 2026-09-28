@@ -347,6 +347,47 @@ function formatPeriodLabel(start, end) {
   return `${formatter.format(a)} – ${formatter.format(b)}`.replaceAll(".", "");
 }
 
+function resolveCycleChargeDate(chargeDate, chargeDay, periodStart, periodEnd) {
+  if (chargeDate) {
+    const raw = String(chargeDate).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  }
+
+  const day = Number(chargeDay);
+  if (!Number.isFinite(day) || day < 1 || day > 31 || !periodStart || !periodEnd) return chargeDate || null;
+
+  const parse = (value) => {
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return match ? { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) } : null;
+  };
+  const start = parse(periodStart);
+  const end = parse(periodEnd);
+  if (!start || !end) return chargeDate || null;
+
+  const makeDateKey = (year, month, requestedDay) => {
+    const maxDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const safeDay = Math.min(requestedDay, maxDay);
+    return `${year}-${String(month).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
+  };
+
+  const candidates = [];
+  candidates.push(makeDateKey(start.year, start.month, day));
+  if (start.year !== end.year || start.month !== end.month) {
+    candidates.push(makeDateKey(end.year, end.month, day));
+  }
+
+  return candidates.find((candidate) => candidate >= periodStart && candidate <= periodEnd) || chargeDate || null;
+}
+
+function allocationPriorityRank(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "high") return 0;
+  if (normalized === "normal" || normalized === "medium") return 1;
+  if (normalized === "low") return 2;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 9;
+}
+
 async function fetchFinanceSummary(env) {
   if (!hasFinanceGoogleConfig(env)) {
     return { status: "not-configured", value: null };
@@ -524,17 +565,22 @@ async function fetchFinanceSummary(env) {
     .find((item) => item.date <= todayKey && item.patrimony !== null) || null;
 
   const accountAllocations = parseTableRows(accountAllocationRows)
-    .map((item) => ({
-      accountId: item.account_id || item.account || null,
-      label: item.label || item.title || item.reservation || "Reserva",
-      amount: moneyOrNull(item.amount),
-      status: item.status || "active",
-      kind: item.kind || "reserved",
-      priority: item.priority === "" || item.priority == null ? null : Number(item.priority),
-      note: item.note || null,
-      chargeDate: item.charge_date || item.due_date || item.billing_date || null,
-      chargeDay: item.charge_day || item.billing_day || null
-    }))
+    .map((item) => {
+      const rawChargeDate = item.charge_date || item.due_date || item.billing_date || null;
+      const rawChargeDay = item.charge_day || item.billing_day || null;
+      return {
+        accountId: item.account_id || item.account || null,
+        label: item.label || item.title || item.reservation || "Reserva",
+        amount: moneyOrNull(item.amount),
+        status: item.status || "active",
+        kind: item.kind || "reserved",
+        priority: item.priority === "" || item.priority == null ? null : item.priority,
+        note: item.note || null,
+        chargeDate: resolveCycleChargeDate(rawChargeDate, rawChargeDay, summary.period_start, summary.period_end),
+        chargeDay: rawChargeDay,
+        cycleNote: item.cycle_note || null
+      };
+    })
     .filter((item) => {
       const status = String(item.status || "active").trim().toLowerCase();
       const terminal = new Set(["cancelled", "canceled", "released", "executed", "paid", "closed", "completed"]);
@@ -548,7 +594,17 @@ async function fetchFinanceSummary(env) {
       const explicitFree = moneyOrNull(item.free_amount);
       const allocations = accountAllocations
         .filter((allocation) => allocation.accountId === id)
-        .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+        .sort((a, b) => {
+          const holdA = String(a.kind || "").toLowerCase() === "card_hold" ? 0 : 1;
+          const holdB = String(b.kind || "").toLowerCase() === "card_hold" ? 0 : 1;
+          if (holdA !== holdB) return holdA - holdB;
+          const dateA = a.chargeDate || "9999-12-31";
+          const dateB = b.chargeDate || "9999-12-31";
+          if (dateA !== dateB) return dateA.localeCompare(dateB);
+          const priorityDiff = allocationPriorityRank(a.priority) - allocationPriorityRank(b.priority);
+          if (priorityDiff !== 0) return priorityDiff;
+          return String(a.label || "").localeCompare(String(b.label || ""), "es");
+        });
       const reserved = allocations.reduce((sum, allocation) => sum + Math.max(0, allocation.amount || 0), 0);
       const free = explicitFree !== null
         ? explicitFree
@@ -684,6 +740,8 @@ async function fetchFinanceSummary(env) {
       period: summary.period_start && summary.period_end
         ? `${summary.period_start}/${summary.period_end}`
         : null,
+      periodStart: summary.period_start || null,
+      periodEnd: summary.period_end || null,
       periodLabel: formatPeriodLabel(summary.period_start, summary.period_end),
       currency: summary.currency || "EUR",
       income: miguelIncome !== null && andreaIncome !== null ? miguelIncome + andreaIncome : null,
