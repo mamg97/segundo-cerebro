@@ -340,3 +340,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Migración:** el histórico de `DIARIO MERCADOS` se consume en lectura y se migra sin modificar el maestro. Los valores que el histórico no contenía permanecen desconocidos; no se estiman retroactivamente.
 - **Separación:** `PatrimonioDetalle` sigue describiendo la distribución patrimonial actual y `Patrimonio` el histórico mensual. El diario aporta granularidad diaria, no otra fuente de verdad paralela.
 - **Hábitos:** `Diario mercados` queda archivado en HabitQuest para que deje de afectar adherencia y recordatorios de hábitos.
+
+
+## D-038 — Toda tesis MIDAS conserva CAGR a 2031
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-28.
+- **Decisión:** cada análisis de empresa solicitado para MIDAS se registra en la fuente privada `MIDAS - TESIS Y WATCHLIST`.
+- **Estructura:** `TESIS` conserva la tesis cualitativa y `CAGR2031` normaliza escenarios bear/base/bull con objetivo 2031.
+- **Integridad:** si un estudio previo usó 2030 u otro horizonte, sus cifras se conservan como históricas pero las columnas 2031 permanecen pendientes hasta recalcular; no se extrapolan de forma automática.
+- **UI:** Segundo Cerebro → MIDAS consume esta fuente en vivo y muestra la tabla junto al diario de estrategias.
+- **Uso:** la watchlist sirve para recuperar ideas cuando exista liquidez; exige refresco de datos antes de una decisión de inversión.
