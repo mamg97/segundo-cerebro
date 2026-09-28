@@ -329,3 +329,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Decisión:** el workflow existente del repositorio privado envía únicamente su curva de patrimonio ficticio a un Worker de ingesta. La autenticación usa GitHub OIDC con firma y restricciones de repositorio, rama, workflow y audiencia. El resumen permanece en D1 privado; la tabla calcula desde él último día y acumulado.
 - **Límite:** el diario original contabiliza operaciones al cierre tras observar ese cierre. Su +/− histórico es un registro de simulación, no rentabilidad ejecutable ni evidencia de superioridad. Un motor causal corregido necesita una serie prospectiva distinta, sin reescribir la antigua.
 - **Coste:** no se crea workflow periódico adicional ni credencial GitHub persistente; el envío es un paso del workflow existente.
+
+
+## D-037 — Diario mercados pasa a Patrimonio
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-28.
+- **Decisión:** el registro nocturno de valor de cartera, variación diaria y P/L deja de ser un hábito de HabitQuest y pasa a ser un subapartado de Finanzas → Patrimonio.
+- **Fuente privada:** `PatrimonioDiario` conserva cierres diarios y trazabilidad. Las capturas de Delta comunicadas por el usuario alimentan esta tabla privada derivada.
+- **Migración:** el histórico de `DIARIO MERCADOS` se consume en lectura y se migra sin modificar el maestro. Los valores que el histórico no contenía permanecen desconocidos; no se estiman retroactivamente.
+- **Separación:** `PatrimonioDetalle` sigue describiendo la distribución patrimonial actual y `Patrimonio` el histórico mensual. El diario aporta granularidad diaria, no otra fuente de verdad paralela.
+- **Hábitos:** `Diario mercados` queda archivado en HabitQuest para que deje de afectar adherencia y recordatorios de hábitos.
