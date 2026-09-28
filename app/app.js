@@ -4488,7 +4488,7 @@ function renderHomeLiquidityOverview(accounts, fallbackCurrency = "EUR") {
     <section class="home-liquidity-overview" aria-label="Estado actual de las cuentas">
       <div class="home-finance-mini-heading">
         <strong>Estado de cuentas</strong>
-        <span>Saldo actual y distribución</span>
+        <span>Disponible bancario y distribución</span>
       </div>
       <div class="home-liquidity-grid">
         ${orderedAccounts.map((account) => {
@@ -4500,17 +4500,18 @@ function renderHomeLiquidityOverview(accounts, fallbackCurrency = "EUR") {
             <article class="home-liquidity-account ${model.excess > 0.01 ? "has-overflow" : ""}">
               <div class="home-liquidity-account-head">
                 <span title="${escapeHtml(account.name || shortName)}">${escapeHtml(shortName)}</span>
-                <strong>${formatMoney(model.balance, model.currency)}</strong>
+                <strong>${formatMoney(model.availableAfterHolds, model.currency)}</strong>
               </div>
               <div class="home-liquidity-account-body">
-                <div class="home-liquidity-bar" role="img" aria-label="${escapeHtml(shortName)}: ${escapeHtml(formatMoney(model.balance, model.currency))} de saldo actual">
+                <div class="home-liquidity-bar" role="img" aria-label="${escapeHtml(shortName)}: ${escapeHtml(formatMoney(model.availableAfterHolds, model.currency))} disponibles en el banco; saldo total ${escapeHtml(formatMoney(model.balance, model.currency))}">
                   ${model.segments.map((segment) => `
                     <div class="home-liquidity-segment ${segment.className} ${segment.pctClass}"
                          title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, model.currency))}"></div>
                   `).join("")}
                 </div>
                 <div class="home-liquidity-account-meta">
-                  <span>Libre <b>${formatMoney(model.free, model.currency)}</b></span>
+                  ${model.retained > 0 ? `<span>Saldo total <b>${formatMoney(model.balance, model.currency)}</b></span>` : ""}
+                  <span>Libre interno <b>${formatMoney(model.free, model.currency)}</b></span>
                   ${model.retained > 0 ? `<span>Retenido <b>${formatMoney(model.retained, model.currency)}</b></span>` : ""}
                   ${model.excess > 0.01 ? `<span class="is-warning">Pendiente de cubrir <b>${formatMoney(model.excess, model.currency)}</b></span>` : ""}
                 </div>
