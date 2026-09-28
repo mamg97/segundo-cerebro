@@ -15052,3 +15052,292 @@ html[data-theme="dark"] .home-weekly-menu-day {
     font-size: 8.5px;
   }
 }
+
+
+/* v0.38.4 — readability typography pass */
+:root {
+  --text-micro: 8.5px;
+  --text-meta: 10px;
+  --text-small: 11px;
+  --text-regular: 12px;
+}
+
+/* Shared actions and supporting copy */
+.text-action {
+  font-size: 12px;
+}
+
+.count-pill,
+.source-note,
+footer {
+  font-size: 11px;
+}
+
+.detail-dialog .dialog-list p,
+.detail-dialog .dialog-list small,
+.detail-dialog .dialog-list time {
+  font-size: 12px;
+}
+
+.detail-dialog .dialog-list strong {
+  font-size: 14px;
+}
+
+/* Home: finance */
+.budget-compact-spent span,
+.budget-metrics span,
+.budget-categories span,
+.debt-summary-grid span,
+.debt-detail-summary span,
+.wealth-summary-value span,
+.wealth-summary-value small {
+  font-size: 11px;
+}
+
+.budget-compact-spent strong {
+  font-size: 17px;
+}
+
+.budget-compact-progress-row strong {
+  font-size: 12px;
+}
+
+.budget-metrics strong,
+.budget-categories strong {
+  font-size: 14px;
+}
+
+.debt-summary-grid strong,
+.debt-detail-summary strong {
+  font-size: 16px;
+}
+
+.debt-summary-primary strong {
+  font-size: 27px;
+}
+
+.home-finance-mini-heading strong {
+  font-size: 11px;
+}
+
+.home-finance-mini-heading span {
+  font-size: 9px;
+}
+
+.home-liquidity-account-head > span {
+  font-size: 8.8px;
+}
+
+.home-liquidity-account-head > strong {
+  font-size: 12px;
+}
+
+.home-liquidity-account-meta span {
+  font-size: 8.4px;
+}
+
+.home-liquidity-account-meta b {
+  font-size: 10px;
+}
+
+.home-wealth-legend span {
+  font-size: 9px;
+}
+
+.home-wealth-legend small {
+  font-size: 8.5px;
+}
+
+.home-wealth-legend b {
+  font-size: 9px;
+}
+
+/* Calendar / next actions */
+.calendar-legend {
+  font-size: 11px;
+}
+
+.week-day-header span,
+.week-event-time,
+.week-event small {
+  font-size: 10px;
+}
+
+.week-event strong {
+  font-size: 11.5px;
+}
+
+.daily-card-heading small,
+.daily-energy-grid small,
+.daily-card-status {
+  font-size: 10px;
+}
+
+.daily-card-heading strong {
+  font-size: 14px;
+}
+
+.daily-card-main > span {
+  font-size: 11px;
+}
+
+/* Health hub and weekly menu */
+.health-tabs button {
+  font-size: 12px;
+}
+
+.health-section-heading > div > p {
+  font-size: 12px;
+}
+
+.health-event-item time,
+.health-event-item span,
+.gym-overview span,
+.gym-day-switch button span {
+  font-size: 10px;
+}
+
+.health-event-item strong,
+.gym-day-switch button strong {
+  font-size: 12px;
+}
+
+.health-empty,
+.health-empty-card p {
+  font-size: 11px;
+}
+
+.weekly-menu-hero p:not(.context-label) {
+  font-size: 10px;
+}
+
+.weekly-menu-objective-chips small {
+  font-size: 8px;
+}
+
+.weekly-menu-objective-chips strong {
+  font-size: 12px;
+}
+
+.weekly-menu-day-rich > header > div small,
+.weekly-menu-day-rich > header > span,
+.weekly-menu-progress span,
+.weekly-menu-progress > small,
+.weekly-menu-progress strong small,
+.weekly-menu-meal-copy p,
+.weekly-menu-day-rich > footer {
+  font-size: 8px;
+}
+
+.weekly-menu-day-rich > header > div strong {
+  font-size: 13px;
+}
+
+.weekly-menu-progress strong,
+.weekly-menu-meal-copy > strong {
+  font-size: 10px;
+}
+
+.weekly-menu-moment,
+.weekly-menu-meal-macros span {
+  font-size: 8px !important;
+}
+
+.weekly-menu-meal-macros b {
+  font-size: 9px;
+}
+
+/* Home weekly menu */
+.home-weekly-menu-subtitle {
+  font-size: 10px;
+}
+
+.home-weekly-menu-day > header small,
+.home-weekly-menu-progress span,
+.home-weekly-menu-day > footer {
+  font-size: 7.5px;
+}
+
+.home-weekly-menu-day > header strong {
+  font-size: 10px;
+}
+
+.home-weekly-menu-day > header > span {
+  font-size: 8px;
+}
+
+.home-weekly-menu-progress b {
+  font-size: 8.5px;
+}
+
+.home-weekly-menu-meals .weekly-menu-meal-copy > strong {
+  font-size: 8.5px;
+}
+
+.home-weekly-menu-meals .weekly-menu-meal-macros b,
+.home-weekly-menu-meals .weekly-menu-meal-macros span {
+  font-size: 8px;
+}
+
+/* Finance detail views */
+.budget-category-title,
+.budget-category-meta span,
+.debt-detail-meta,
+.debt-detail-item p,
+.debt-source-note,
+.wealth-detail-kpi span,
+.wealth-chart-heading span,
+.wealth-chart-legend,
+.wealth-axis-label {
+  font-size: 10px;
+}
+
+.budget-source,
+.debt-source-status {
+  font-size: 9.5px;
+}
+
+.debt-detail-head strong,
+.wealth-chart-heading strong {
+  font-size: 13px;
+}
+
+/* Keep the two-column mobile finance layout readable without reverting it. */
+@media (max-width: 520px) {
+  .money-horizon > .budget-panel .home-liquidity-account-head > span {
+    font-size: 7.8px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-head > strong {
+    font-size: 11px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-meta span {
+    font-size: 6.8px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-meta b {
+    font-size: 8.5px;
+  }
+
+  .debt-summary-grid span {
+    font-size: 9px;
+  }
+
+  .debt-summary-grid strong {
+    font-size: 11px;
+  }
+
+  .debt-summary-primary strong {
+    font-size: 17px;
+  }
+
+  .home-wealth-legend span {
+    font-size: 9px;
+  }
+
+  .home-wealth-legend small,
+  .home-wealth-legend b {
+    font-size: 8.5px;
+  }
+}
