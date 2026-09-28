@@ -65,6 +65,18 @@ async function resolvePrivateSourceLink(env, target) {
   throw new Error("INVALID_SOURCE_LINK_TARGET");
 }
 
+function normalizeCalendarMatchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function isMedicalCalendarEvent(event) {
+  const text = normalizeCalendarMatchText([event?.title, event?.locationRef, event?.location].filter(Boolean).join(" "));
+  return /\bmedico\b|\bmedica\b|cita medica|doctor|doctora|hospital|clinica|cardiolog|urolog|alergolog|dentista|dental|dermatolog|traumatolog|fisioterap|oftalmolog|revision medica|analitica|consulta|psicolog|psiquiatr|otorrin|medicina/.test(text);
+}
+
 function safeIcloudErrorCode(error) {
   const message = String(error?.message || "");
   return /^ICLOUD_[A-Z0-9_]+$/.test(message) ? message : "ICLOUD_UNKNOWN";
@@ -4029,6 +4041,36 @@ export default {
       } catch (error) {
         console.warn("Family case request failed", String(error?.message || "FAMILY_CASE_ERROR"));
         return json({ ok: false, code: "FAMILY_CASE_REQUEST_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/health/appointments") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      if (!hasIcloudCalendarConfig(env)) {
+        return json({ ok: false, code: "ICLOUD_NOT_CONFIGURED" }, 503);
+      }
+
+      try {
+        const calendar = await fetchIcloudCalendarSummary(env);
+        const now = Date.now() - 24 * 60 * 60 * 1000;
+        const events = (Array.isArray(calendar.value?.events) ? calendar.value.events : [])
+          .filter((event) => isMedicalCalendarEvent(event))
+          .filter((event) => {
+            const end = new Date(event.endsAt || event.startsAt || "").getTime();
+            return Number.isFinite(end) && end >= now;
+          })
+          .sort((a, b) => new Date(a.startsAt || 0) - new Date(b.startsAt || 0));
+
+        return json({
+          ok: true,
+          status: calendar.status,
+          events,
+          source: calendar.value?.source || null
+        });
+      } catch (error) {
+        const code = safeIcloudErrorCode(error);
+        console.warn("Medical appointments iCloud read failed", code);
+        return json({ ok: false, code }, 502);
       }
     }
 
