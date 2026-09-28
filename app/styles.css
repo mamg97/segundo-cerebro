@@ -10389,6 +10389,29 @@ html[data-theme="light"] .ask-suggestions button:focus-visible {
   flex-wrap: wrap;
 }
 
+.project-midas-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-block: 1px solid var(--line);
+}
+
+.project-midas-entry strong { font-size: 14px; }
+.project-midas-entry p { margin: 4px 0 0; color: var(--ink-soft); font-size: 11px; line-height: 1.45; }
+.project-midas-entry button {
+  flex: none;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--blue);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .project-link {
   padding: 7px 9px;
   border: 1px solid var(--line);
@@ -10609,6 +10632,7 @@ html[data-theme="light"] :is(
   .project-detail-chips {
     justify-content: flex-start;
   }
+  .project-midas-entry { align-items: flex-start; flex-direction: column; }
 }
 
 

@@ -3,7 +3,7 @@ import { mockState } from "../core/mock-state.js";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.29.0";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
-import { openProjectsDetail } from "./projects.js?v=0.33.0";
+import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 
@@ -4925,7 +4925,7 @@ function openArea(areaId) {
     return;
   }
   if (areaId === "area-projects" && privateModeKind === "remote") {
-    openProjectsDetail(state.decisions);
+    openProjectsDetail(state.decisions, openMidasDialog);
     return;
   }
   const area = areaById.get(areaId);
@@ -5099,7 +5099,7 @@ async function handleQuickCommand(query, result) {
   }
 
   if (/\b(proyectos|proyecto)\b/.test(normalized)) {
-    if (privateModeKind === "remote") openProjectsDetail(state.decisions);
+    if (privateModeKind === "remote") openProjectsDetail(state.decisions, openMidasDialog);
     else openArea("area-projects");
     openResult("<strong>Proyectos abierto.</strong> Ahí tienes estado, documentación, repositorios y relaciones.");
     return true;

@@ -1,6 +1,7 @@
 let currentPayload = null;
 let currentTab = "summary";
 let currentDecisions = [];
+let openMidasReport = null;
 
 function esc(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;" }[c]));
@@ -17,6 +18,9 @@ function extLink(text, url, primary = false) {
 }
 function normalizeText(value) {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
+}
+function isMidasProject(project) {
+  return [project?.name, project?.alias].some((value) => normalizeText(value).trim() === "midas");
 }
 
 function projectDecisions(project) {
@@ -111,6 +115,7 @@ function renderDetail(project, payload) {
     '<header class="project-detail-head"><div><span class="project-area">'+esc(project.area||"Proyecto")+'</span><h3>'+esc(project.name)+'</h3>'+(project.alias?'<p>'+esc(project.alias)+'</p>':'')+'</div>'+
     '<div class="project-detail-chips"><span class="project-status status-'+esc(cssToken(project.status))+'">'+esc(words(project.status))+'</span>'+(project.readOnly?'<span class="project-readonly">Solo seguimiento</span>':'')+'</div></header>'+
     '<div class="project-detail-links">'+extLink("Repositorio",project.repoUrl)+extLink("Documentación",project.docsUrl,true)+extLink("Abrir web",project.webUrl)+((!project.repoUrl&&!project.docsUrl&&!project.webUrl)?'<span>Sin enlaces externos consolidados</span>':'')+'</div>'+
+    (isMidasProject(project) && openMidasReport ? '<section class="project-midas-entry"><div><strong>Informe diario de estrategias</strong><p>Consulta el estado de las carteras ficticias y las ideas aún pendientes.</p></div><button type="button" data-open-midas-report>Ver informe diario</button></section>' : '')+
     '<div class="project-detail-grid">'+
       '<span><small>Tipo</small><strong>'+esc(project.type||"—")+'</strong></span>'+
       '<span><small>Prioridad</small><strong>'+esc(project.priority||"—")+'</strong></span>'+
@@ -133,6 +138,7 @@ function renderDetail(project, payload) {
     (relations.length?'<section class="project-relations-detail"><small>Relaciones</small>'+relations.map((r)=>'<p><strong>'+esc(words(r.type))+'</strong> · '+esc(r.description||r.target)+'</p>').join("")+'</section>':'')+
     '</section>';
   body.querySelector("[data-projects-back]")?.addEventListener("click",()=>renderWorkspace(payload));
+  body.querySelector("[data-open-midas-report]")?.addEventListener("click",()=>void openMidasReport?.());
   body.querySelectorAll("[data-project-id]").forEach((b)=>b.addEventListener("click",()=>{const next=(payload.projects||[]).find((x)=>x.id===b.dataset.projectId);if(next)renderDetail(next,payload);}));
 }
 function bindWorkspace(payload) {
@@ -152,8 +158,9 @@ function bindWorkspace(payload) {
   };
   ["#projects-search","#projects-status","#projects-area"].forEach((sel)=>{body.querySelector(sel)?.addEventListener("input",apply);body.querySelector(sel)?.addEventListener("change",apply);});
 }
-export async function openProjectsDetail(decisions) {
+export async function openProjectsDetail(decisions, onOpenMidasReport = null) {
   currentDecisions = (Array.isArray(decisions) ? decisions : []).filter(function (item) { return item && item.status === "open" && item.areaId === "area-projects"; });
+  openMidasReport = typeof onOpenMidasReport === "function" ? onOpenMidasReport : null;
   const dialog = document.querySelector("#detail-dialog");
   if(!dialog) return;
   dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog","budget-dialog","parents-dialog","electricity-dialog","pantry-dialog","objects-dialog");
@@ -170,6 +177,6 @@ export async function openProjectsDetail(decisions) {
   } catch(error) {
     console.warn("Projects load failed",error);
     document.querySelector("#dialog-body").innerHTML = '<div class="projects-empty"><strong>Proyectos no disponible</strong><p>No se ha podido leer el registro privado.</p><button id="projects-retry" type="button">Reintentar</button></div>';
-    document.querySelector("#projects-retry")?.addEventListener("click",openProjectsDetail);
+    document.querySelector("#projects-retry")?.addEventListener("click",()=>void openProjectsDetail(decisions,onOpenMidasReport));
   }
 }
