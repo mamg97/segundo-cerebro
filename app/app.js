@@ -4804,6 +4804,9 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
   const retained = holds.reduce((sum, item) => sum + Number(item.amount), 0);
   const committed = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
   const free = Math.max(0, balance - committed - retained);
+  const explicitInternalFree = firstFinite(account?.free);
+  const internalFree = explicitInternalFree !== null ? Math.max(0, explicitInternalFree) : free;
+  const personalAdjustment = internalFree - free;
   const excess = Math.max(0, committed + retained - balance);
   const availableAfterHolds = Math.max(0, balance - retained);
   const rawSegments = [
@@ -4838,6 +4841,8 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
     retained,
     committed,
     free,
+    internalFree,
+    personalAdjustment,
     excess,
     availableAfterHolds,
     rawSegments,
@@ -4887,7 +4892,8 @@ function renderHomeLiquidityOverview(accounts, fallbackCurrency = "EUR") {
                 </div>
                 <div class="home-liquidity-account-meta">
                   ${model.retained > 0 ? `<span>Saldo total <b>${formatMoney(model.balance, model.currency)}</b></span>` : ""}
-                  <span>Libre interno <b>${formatMoney(model.free, model.currency)}</b></span>
+                  <span>Libre interno <b>${formatMoney(model.internalFree, model.currency)}</b></span>
+                  ${Math.abs(model.personalAdjustment) > 0.01 ? `<span>Ajuste personal <b>${model.personalAdjustment > 0 ? "+" : ""}${formatMoney(model.personalAdjustment, model.currency)}</b></span>` : ""}
                   ${model.retained > 0 ? `<span>Retenido <b>${formatMoney(model.retained, model.currency)}</b></span>` : ""}
                   ${model.excess > 0.01 ? `<span class="is-warning">Pendiente de cubrir <b>${formatMoney(model.excess, model.currency)}</b></span>` : ""}
                 </div>
@@ -4974,6 +4980,8 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
             retained,
             committed,
             free,
+            internalFree,
+            personalAdjustment,
             excess,
             availableAfterHolds,
             rawSegments,
@@ -5063,7 +5071,8 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
 
               <footer class="liquidity-account-summary">
                 <span>Comprometido <b>${formatMoney(committed, currency)}</b></span>
-                <span>Libre <b>${formatMoney(free, currency)}</b></span>
+                <span>Libre interno <b>${formatMoney(internalFree, currency)}</b></span>
+                ${Math.abs(personalAdjustment) > 0.01 ? `<span>Ajuste personal <b>${personalAdjustment > 0 ? "+" : ""}${formatMoney(personalAdjustment, currency)}</b></span>` : ""}
                 <span>Retenido <b>${formatMoney(retained, currency)}</b></span>
                 <span>Pendiente de cubrir <b>${excess > 0.01 ? formatMoney(excess, currency) : "0,00 €"}</b></span>
               </footer>
