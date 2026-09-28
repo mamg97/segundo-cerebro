@@ -99,7 +99,8 @@ final class HealthKitService {
 
         let activeKcal = try await active
         let restingKcal = try await resting
-        let steps = try await stepsValue.map { Int($0.rounded()) }
+        let stepsDouble = try await stepsValue
+        let steps = stepsDouble.map { Int($0.rounded()) }
         let exerciseMinutes = try await exercise
         let workoutValues = try await workouts
         let hasAny = [activeKcal, restingKcal, exerciseMinutes].contains { $0 != nil }
@@ -108,12 +109,15 @@ final class HealthKitService {
 
         guard hasAny else { return nil }
 
+        let totalKcal = activeKcal.flatMap { activeValue in
+            restingKcal.map { activeValue + $0 }
+        }
         let sources = Set(workoutValues.map(\.source)).sorted()
         return ActivityPayload(
             date: dateKey(date),
             activeKcal: activeKcal,
             restingKcal: restingKcal,
-            totalKcal: (activeKcal != nil && restingKcal != nil) ? activeKcal! + restingKcal! : nil,
+            totalKcal: totalKcal,
             steps: steps,
             exerciseMinutes: exerciseMinutes,
             sampledAt: iso(Date()),
