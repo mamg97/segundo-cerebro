@@ -3851,8 +3851,8 @@ function openWealthDetail() {
 
 const MIDAS_GROUPS = [
   ["diario_heredado", "Algoritmo genético original · S&P 500"],
-  ["paper_nuevo", "Campaña estadounidense · USD"],
-  ["tfm_demo_adaptado", "Modelos TFM adaptados · EUR"],
+  ["paper_nuevo", "Campaña nueva 2026 · EE. UU. · USD"],
+  ["tfm_demo_adaptado", "TFM · modelos adaptados a cartera demo · EUR"],
   ["historica_pendiente", "Ideas históricas pendientes"]
 ];
 
@@ -3875,7 +3875,7 @@ function renderMidasRows(rows) {
     <table class="midas-table">
       <thead><tr><th scope="col">Estrategia</th><th scope="col">Estado</th><th scope="col">Última sesión</th><th scope="col">Día</th><th scope="col">Acumulado</th><th scope="col">Capital demo</th></tr></thead>
       <tbody>${rows.map((row) => `<tr>
-        <th scope="row"><span>${escapeHtml(row.label)}</span>${row.note && ["diario_heredado", "historica_pendiente"].includes(row.group) ? `<small>${escapeHtml(row.note)}</small>` : ""}</th>
+        <th scope="row"><span>${escapeHtml(row.label)}</span>${row.provenance ? `<small class="midas-provenance">Origen: ${escapeHtml(row.provenance)}</small>` : ""}${row.note && ["diario_heredado", "historica_pendiente"].includes(row.group) ? `<small>${escapeHtml(row.note)}</small>` : ""}</th>
         <td data-label="Estado"><span class="midas-status ${row.status === "demo_con_diario" ? "is-running" : ""}">${escapeHtml(MIDAS_STATUS[row.status] || row.status)}</span></td>
         <td data-label="Última sesión">${escapeHtml(formatFinanceDate(row.last_session, "—"))}</td>
         <td class="midas-number" data-label="Día">${formatMidasPercent(row.day_return_pct)}</td>

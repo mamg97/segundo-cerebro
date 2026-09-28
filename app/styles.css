@@ -13771,6 +13771,7 @@ html[data-theme="dark"] .liquidity-svg-base {
 .midas-table tbody th { width: 29%; font-weight: 700; }
 .midas-table tbody th span, .midas-table tbody th small { display: block; }
 .midas-table tbody th small { margin-top: 3px; color: var(--ink-soft); font-size: 11px; font-weight: 400; line-height: 1.4; }
+.midas-table tbody th .midas-provenance { color: var(--blue); font-weight: 650; }
 .midas-table tbody td { white-space: nowrap; }
 .midas-table .midas-number { text-align: right; }
 .midas-status { display: inline-block; padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--ink-soft) 10%, var(--surface)); color: var(--ink-soft); font-size: 11px; font-weight: 700; }

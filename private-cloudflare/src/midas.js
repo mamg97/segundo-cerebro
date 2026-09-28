@@ -21,6 +21,7 @@ function normalizeDashboard(data) {
     }
     return {
       id: row.id.slice(0, 100), label: row.label.slice(0, 180), group: row.group,
+      provenance: typeof row.provenance === "string" ? row.provenance.slice(0, 180) : "",
       status: row.status.slice(0, 80),
       first_session: typeof row.first_session === "string" ? row.first_session.slice(0, 10) : null,
       last_session: typeof row.last_session === "string" ? row.last_session.slice(0, 10) : null,
