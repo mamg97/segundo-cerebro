@@ -778,3 +778,14 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - En modo demo/no privado sí se oculta, porque no hay fuente real que mostrar.
 - Este fallback evita que futuras ampliaciones de Nutrición (recetas, ingredientes, salud, energía, D1, etc.) puedan tumbar el menú semanal de Home.
 - Assets frontend: `v0.38.7`.
+
+
+## Finanzas · diario de patrimonio v0.39.0
+
+- El antiguo hábito **Diario mercados** deja de ser una tarea de HabitQuest y pasa a **Finanzas → Patrimonio**.
+- La fuente privada derivada incorpora `PatrimonioDiario`, con cierres por fecha, patrimonio total cuando existe, moneda, variación diaria, P/L del día, clasificación y trazabilidad.
+- Se migró el histórico disponible desde `DIARIO MERCADOS` de la fuente financiera sin modificar el maestro; los campos que el histórico no contenía permanecen nulos y no se reconstruyen.
+- Las nuevas capturas nocturnas de Delta se registran en `PatrimonioDiario` conservando exactamente la moneda y cifras mostradas.
+- El detalle de Patrimonio muestra tres KPI del último cierre, los últimos registros y un histórico desplegable.
+- `PatrimonioDetalle` sigue siendo la distribución actual por plataforma; `Patrimonio` conserva la referencia mensual. El diario no sustituye ninguna de esas fuentes.
+- Assets frontend: `v0.39.0`.

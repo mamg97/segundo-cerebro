@@ -470,10 +470,11 @@ async function fetchFinanceSummary(env) {
     }
   }
 
-  const [accountRows, accountAllocationRows, wealthAllocationRows] = await Promise.all([
+  const [accountRows, accountAllocationRows, wealthAllocationRows, wealthDailyRows] = await Promise.all([
     fetchOptionalFinanceRows("Cuentas!A1:J200"),
     fetchOptionalFinanceRows("ReservasCuenta!A1:J500"),
-    fetchOptionalFinanceRows("PatrimonioDetalle!A1:J500")
+    fetchOptionalFinanceRows("PatrimonioDetalle!A1:J500"),
+    fetchOptionalFinanceRows("PatrimonioDiario!A1:M1000")
   ]);
 
   let electricityRows = [];
@@ -662,6 +663,25 @@ async function fetchFinanceSummary(env) {
     }))
     .filter((item) => item.id && item.amount !== null && String(item.status).toLowerCase() !== "closed");
 
+  const wealthDailyDiary = parseTableRows(wealthDailyRows)
+    .map((item) => ({
+      date: item.date || null,
+      patrimony: moneyOrNull(item.patrimony),
+      currency: item.currency || null,
+      changePct: item.change_pct === "" || item.change_pct == null ? null : Number(item.change_pct),
+      pnlDay: moneyOrNull(item.pnl_day),
+      movement: item.movement || null,
+      action: item.action || null,
+      comment: item.comment || null,
+      events: item.events || null,
+      source: item.source || null,
+      sourceRow: item.source_row === "" || item.source_row == null ? null : Number(item.source_row),
+      sourceStatus: item.source_status || null,
+      capturedAt: item.captured_at || null
+    }))
+    .filter((item) => item.date)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
   const wealthSummary = {
     currency: summary.currency || "EUR",
     currentPatrimony: currentWealth?.patrimony ?? null,
@@ -669,7 +689,8 @@ async function fetchFinanceSummary(env) {
     currentSalaryMiguel: currentWealth?.salaryMiguel ?? null,
     currentSalaryAndrea: currentWealth?.salaryAndrea ?? null,
     history: wealthHistory,
-    allocation: wealthAllocation
+    allocation: wealthAllocation,
+    dailyDiary: wealthDailyDiary
   };
 
   const importantEventRules = parseTableRows(importantEventRows)

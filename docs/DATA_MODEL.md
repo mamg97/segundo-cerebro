@@ -89,7 +89,7 @@ Resumen financiero operativo para la portada. No sustituye a la fuente de verdad
 
 `debts` resume obligaciones financieras activas. El resumen admite `count`, `totalBalance`, `monthlyPayment`, `currency` y una lista `debts`. Cada deuda puede incluir `title`, `balance`, `monthlyPayment`, `paymentDay`, `interestRate`, `status`, `owner`, `sourceStatus`, `updatedAt` y `note`. Un saldo desconocido permanece `null`: la interfaz debe mostrar «Por completar» y no estimarlo a partir de cuotas.
 
-`wealth` resume patrimonio y evolución salarial. Incluye `currentPatrimony`, `currentDate`, `currentSalaryMiguel`, `currentSalaryAndrea`, `currency` y `history`. Cada punto histórico contiene fecha, período, salarios individuales y patrimonio. La portada enseña solo el patrimonio del último día 1 disponible; el detalle de Patrimonio dibuja las series temporales sin proyectar valores futuros.
+`wealth` resume patrimonio y evolución salarial. Incluye `currentPatrimony`, `currentDate`, `currentSalaryMiguel`, `currentSalaryAndrea`, `currency`, `history`, `allocation` y `dailyDiary`. Cada punto de `history` contiene fecha, período, salarios individuales y patrimonio mensual. `allocation` describe la distribución actual por custodio/plataforma. `dailyDiary` representa cierres diarios derivados de la fuente privada `PatrimonioDiario`: `date`, `patrimony` nullable, `currency`, `changePct`, `pnlDay`, `movement`, contexto opcional y trazabilidad de fuente. Un patrimonio diario ausente no se reconstruye a partir del P/L o del porcentaje; permanece `null`. La portada mantiene el resumen patrimonial vigente y el detalle de Patrimonio combina distribución, diario y series históricas sin proyectar valores futuros.
 
 
 ### PERSON

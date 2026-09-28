@@ -15603,3 +15603,186 @@ html[data-theme="dark"] .pantry-view-nav button.active {
   font-size: 10px;
   line-height: 1.45;
 }
+
+
+/* v0.39.0 — diario de patrimonio */
+.wealth-daily-section {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.wealth-daily-heading,
+.wealth-daily-subheading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wealth-daily-heading strong,
+.wealth-daily-heading span,
+.wealth-daily-subheading strong,
+.wealth-daily-subheading span {
+  display: block;
+}
+
+.wealth-daily-heading strong { font-size: 13px; }
+.wealth-daily-heading span,
+.wealth-daily-heading small,
+.wealth-daily-subheading span,
+.wealth-daily-note,
+.wealth-daily-empty p {
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.wealth-daily-heading span { margin-top: 3px; }
+
+.wealth-daily-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.wealth-daily-kpis article {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+}
+
+.wealth-daily-kpis span,
+.wealth-daily-kpis strong,
+.wealth-daily-kpis small {
+  display: block;
+}
+
+.wealth-daily-kpis span,
+.wealth-daily-kpis small {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.wealth-daily-kpis strong {
+  margin: 4px 0 3px;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wealth-daily-kpis .is-positive strong,
+.wealth-daily-number.is-positive { color: #2f9b70; }
+
+.wealth-daily-kpis .is-negative strong,
+.wealth-daily-number.is-negative { color: #d45b64; }
+
+.wealth-daily-recent { display: grid; gap: 8px; }
+
+.wealth-daily-table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.wealth-daily-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: 9px;
+}
+
+.wealth-daily-table th,
+.wealth-daily-table td {
+  padding: 8px 9px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.wealth-daily-table th {
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.wealth-daily-table tbody tr:last-child td { border-bottom: 0; }
+
+.wealth-daily-number {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.wealth-daily-movement {
+  display: inline-flex;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 65%, transparent);
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.wealth-daily-movement.is-positive {
+  color: #2f9b70;
+  background: color-mix(in srgb, #2f9b70 13%, transparent);
+}
+
+.wealth-daily-movement.is-negative {
+  color: #d45b64;
+  background: color-mix(in srgb, #d45b64 13%, transparent);
+}
+
+.wealth-daily-history {
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+}
+
+.wealth-daily-history summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.wealth-daily-history[open] .wealth-daily-table-scroll { margin-top: 9px; }
+.wealth-daily-note { margin: 0; }
+
+html[data-theme="dark"] .wealth-daily-kpis article {
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+}
+
+@media (max-width: 620px) {
+  .wealth-daily-section {
+    gap: 11px;
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .wealth-daily-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .wealth-daily-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .wealth-daily-kpis article { padding: 9px 8px; }
+  .wealth-daily-kpis span,
+  .wealth-daily-kpis small { font-size: 6.8px; }
+  .wealth-daily-kpis strong { font-size: 11px; }
+  .wealth-daily-table { min-width: 560px; }
+}
