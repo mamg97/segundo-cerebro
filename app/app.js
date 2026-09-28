@@ -4327,7 +4327,60 @@ function renderMidasRows(rows) {
   </div>`;
 }
 
-function renderMidasReport(dashboard, stale) {
+function renderMidasResearch(research) {
+  if (!research || research.status !== "ok") {
+    return `<section class="midas-research midas-research-unavailable">
+      <div class="midas-research-heading">
+        <div><strong>Tesis y CAGR 2031</strong><span>Watchlist privada</span></div>
+      </div>
+      <p>La watchlist privada no está disponible en esta carga.</p>
+    </section>`;
+  }
+
+  const rows = Array.isArray(research.cagr2031) ? research.cagr2031 : [];
+  const theses = new Map((Array.isArray(research.theses) ? research.theses : []).map((item) => [item.ticker, item]));
+  const complete = rows.filter((row) => row.bear && row.base && row.bull).length;
+  const pending = Math.max(0, rows.length - complete);
+
+  return `<section class="midas-research">
+    <div class="midas-research-heading">
+      <div>
+        <strong>Tesis y CAGR 2031</strong>
+        <span>Watchlist privada para revisar cuando exista liquidez</span>
+      </div>
+      <div class="midas-research-counts">
+        <b>${rows.length} tesis</b>
+        <small>${complete} con CAGR 2031 · ${pending} pendientes</small>
+      </div>
+    </div>
+    <p class="midas-research-rule">Cada tesis nueva debe conservar escenarios bear / base / bull a 2031. Si el estudio histórico tenía otro horizonte, no se extrapola: aparece pendiente hasta recalcularlo.</p>
+    <div class="midas-research-table-scroll" role="region" aria-label="Tesis de inversión y CAGR a 2031" tabindex="0">
+      <table class="midas-research-table">
+        <thead><tr>
+          <th>Ticker / empresa</th><th>Tema</th><th>Bear 2031</th><th>Base 2031</th><th>Bull 2031</th><th>Última tesis</th><th>Estado</th>
+        </tr></thead>
+        <tbody>${rows.map((row) => {
+          const thesis = theses.get(row.ticker) || {};
+          const statusClass = row.bear && row.base && row.bull ? "is-complete" : "is-pending";
+          const original = row.originalHorizon && (row.originalBear || row.originalBase || row.originalBull)
+            ? `<small>Histórico ${escapeHtml(row.originalHorizon)}: ${escapeHtml([row.originalBear, row.originalBase, row.originalBull].filter(Boolean).join(" / "))}</small>`
+            : "";
+          return `<tr>
+            <td><strong>${escapeHtml(row.ticker)}</strong><span>${escapeHtml(row.company)}</span>${thesis.summary ? `<small>${escapeHtml(thesis.summary)}</small>` : ""}</td>
+            <td>${escapeHtml(row.theme || thesis.theme || "—")}</td>
+            <td class="midas-cagr-value">${row.bear ? escapeHtml(row.bear) : "—"}</td>
+            <td class="midas-cagr-value is-base">${row.base ? escapeHtml(row.base) : "—"}${!row.base ? original : ""}</td>
+            <td class="midas-cagr-value">${row.bull ? escapeHtml(row.bull) : "—"}</td>
+            <td>${escapeHtml(formatFinanceDate(row.studyDate || thesis.lastReview, "—"))}</td>
+            <td><span class="midas-research-status ${statusClass}">${escapeHtml(row.status || "Pendiente")}</span></td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>
+  </section>`;
+}
+
+function renderMidasReport(dashboard, stale, research = null) {
   const rows = dashboard.tracks || [];
   const observed = rows.filter((row) => ["demo_con_diario", "diario_heredado_observado"].includes(row.status)).length;
   const originalGenetic = rows.find((row) => row.id === "genetic_sp500_legacy");
@@ -4340,6 +4393,7 @@ function renderMidasReport(dashboard, stale) {
     </div>
     ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>${originalGenetic.status === "diario_heredado_observado" ? "Las cifras proceden de su diario simulado, no de operaciones ejecutadas por un bróker. La versión original anotaba operaciones al mismo cierre que generaba la señal; su rendimiento histórico no demuestra una rentabilidad alcanzable." : "Figura en la primera tabla, pero su diario privado aún no está conectado a este informe."} El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
     <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado.</p>
+    ${renderMidasResearch(research)}
     ${MIDAS_GROUPS.map(([group, title]) => {
       const groupRows = rows.filter((row) => row.group === group);
       if (!groupRows.length) return "";
@@ -4373,7 +4427,7 @@ async function openMidasDialog() {
     if (!response.ok) throw new Error(`MIDAS_HTTP_${response.status}`);
     const result = await response.json();
     if (!result.ok || !Array.isArray(result.dashboard?.tracks)) throw new Error("MIDAS_INVALID_RESPONSE");
-    if (dialog.open) target.innerHTML = renderMidasReport(result.dashboard, result.stale);
+    if (dialog.open) target.innerHTML = renderMidasReport(result.dashboard, result.stale, result.research);
   } catch {
     if (dialog.open) {
       target.innerHTML = '<div class="midas-error"><strong>No se pudo cargar el informe.</strong><p>El diario público puede estar aún sin publicar o temporalmente inaccesible.</p><button id="midas-retry" type="button">Reintentar</button></div>';
