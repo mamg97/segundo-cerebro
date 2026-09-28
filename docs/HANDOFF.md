@@ -826,3 +826,14 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
   - si el refresco falla, se mantiene la copia de Agenda y se indica explícitamente.
 - Esto preserva una sola fuente real (iCloud); Agenda actúa como copia ya cargada del mismo origen, no como fuente paralela.
 - Asset JS: `v0.39.3`.
+
+
+## Eventos · clasificación coherente de planes concretos v0.39.4
+
+- Corregida la divergencia entre la clasificación de eventos en backend y en Home.
+- `Puy du Fou` ya era reconocido por el backend de Eventos, pero la función de Home `inferImportantKind()` no lo reconocía y descartaba el evento si no existía una regla explícita.
+- Home ahora alinea la inferencia de viajes con backend e incluye `puy du fou`, `hotel` y `airbnb`.
+- Se amplían además planes sociales concretos con palabras como concierto, teatro, festival, espectáculo y parque temático.
+- Se mantiene la regla existente de cumpleaños: un cumpleaños-recordatorio no aparece en Eventos salvo que el propio evento contenga un plan concreto.
+- Se ha añadido también una regla canónica `puy-du-fou` en `EventosImportantes` de la hoja financiera privada para que el evento actual no dependa únicamente de heurísticas.
+- Asset JS: `v0.39.4`.
