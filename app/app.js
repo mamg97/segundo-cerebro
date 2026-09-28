@@ -1004,6 +1004,29 @@ function renderHomeHabitsCard() {
   });
 }
 
+async function loadHomeWeeklyMenu(primaryData = null) {
+  if (Array.isArray(primaryData?.weeklyMenu) && primaryData.weeklyMenu.length) {
+    renderHomeWeeklyMenu(primaryData);
+    return true;
+  }
+
+  try {
+    const response = await fetch("/api/nutrition/menu?date=" + encodeURIComponent(localDateKey()), {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("HOME_WEEKLY_MENU_" + response.status);
+    const data = await response.json();
+    renderHomeWeeklyMenu(data);
+    return Array.isArray(data.weeklyMenu) && data.weeklyMenu.length > 0;
+  } catch (error) {
+    renderHomeWeeklyMenuUnavailable();
+    console.warn("Home weekly menu fallback failed", error);
+    return false;
+  }
+}
+
 async function renderHomeNutritionCard() {
   const consumedNode = document.querySelector("#home-kcal-consumed");
   const burnedNode = document.querySelector("#home-kcal-burned");
@@ -1016,18 +1039,20 @@ async function renderHomeNutritionCard() {
     burnedNode.textContent = "—";
     targetNode.textContent = "—";
     statusNode.textContent = "Disponible en la aplicación privada";
-    renderHomeWeeklyMenu(null);
+    hideHomeWeeklyMenu();
     updateProgressRing(ring, null, { tone: "amber", label: "kcal", ariaLabel: "Nutrición disponible en la aplicación privada" });
     return;
   }
+
   try {
     const response = await fetch("/api/nutrition?date=" + encodeURIComponent(localDateKey()), {
       headers: { Accept: "application/json" },
-      cache: "no-store"
+      cache: "no-store",
+      credentials: "same-origin"
     });
     if (!response.ok) throw new Error("HOME_NUTRITION_" + response.status);
     const data = await response.json();
-    renderHomeWeeklyMenu(data);
+    void loadHomeWeeklyMenu(data);
     const consumed = Number(data.summary?.consumed?.kcal);
     const burned = Number(data.summary?.totalBurn);
     const target = data.objective?.kcal == null ? null : Number(data.objective.kcal);
@@ -1061,7 +1086,7 @@ async function renderHomeNutritionCard() {
     burnedNode.textContent = "—";
     targetNode.textContent = "—";
     statusNode.textContent = "No se ha podido cargar Nutrición";
-    renderHomeWeeklyMenu(null);
+    void loadHomeWeeklyMenu(null);
     updateProgressRing(ring, null, { tone: "amber", label: "kcal", ariaLabel: "Nutrición no disponible" });
     console.warn("Home nutrition load failed", error);
   }
@@ -3429,19 +3454,43 @@ function renderMenuPanel(data) {
     </div>`;
 }
 
+function hideHomeWeeklyMenu() {
+  const panel = document.querySelector("#home-weekly-menu-panel");
+  const content = document.querySelector("#home-weekly-menu-content");
+  if (!panel || !content) return;
+  panel.hidden = true;
+  content.innerHTML = "";
+}
+
+function renderHomeWeeklyMenuUnavailable() {
+  const panel = document.querySelector("#home-weekly-menu-panel");
+  const content = document.querySelector("#home-weekly-menu-content");
+  if (!panel || !content) return;
+  panel.hidden = false;
+  content.innerHTML = `
+    <div class="home-weekly-menu-state">
+      <strong>Menú semanal temporalmente no disponible</strong>
+      <p>La fuente sigue existiendo. Este bloque se mantiene visible para que un fallo de Nutrición no haga desaparecer la sección.</p>
+    </div>`;
+}
+
 function renderHomeWeeklyMenu(data) {
   const panel = document.querySelector("#home-weekly-menu-panel");
   const content = document.querySelector("#home-weekly-menu-content");
   if (!panel || !content) return;
 
   const model = weeklyMenuModel(data);
+  panel.hidden = false;
+
   if (!model.rows.length) {
-    panel.hidden = true;
-    content.innerHTML = "";
+    content.innerHTML = `
+      <div class="home-weekly-menu-state">
+        <strong>Menú semanal sin filas para esta semana</strong>
+        <p>La sección permanece visible para distinguir un menú vacío de un error de carga.</p>
+      </div>`;
     return;
   }
 
-  panel.hidden = false;
   content.innerHTML = `
     <div class="home-weekly-menu-grid">
       ${model.days.map((day) => {
