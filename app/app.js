@@ -3291,12 +3291,18 @@ function renderWeeklyMenuIngredients(item) {
       <summary>Ver ingredientes y cantidades</summary>
       <div class="weekly-menu-ingredients-table-wrap">
         <table class="weekly-menu-ingredients-table">
+          <colgroup>
+            <col class="weekly-menu-col-ingredient">
+            <col class="weekly-menu-col-grams">
+            <col class="weekly-menu-col-kcal">
+            <col class="weekly-menu-col-protein">
+          </colgroup>
           <thead>
             <tr>
               <th>Ingrediente</th>
-              <th>Gramos</th>
+              <th>g</th>
               <th>kcal</th>
-              <th>Proteína</th>
+              <th>Prot.</th>
             </tr>
           </thead>
           <tbody>
