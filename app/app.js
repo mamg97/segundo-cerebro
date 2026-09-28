@@ -1016,6 +1016,7 @@ async function renderHomeNutritionCard() {
     burnedNode.textContent = "—";
     targetNode.textContent = "—";
     statusNode.textContent = "Disponible en la aplicación privada";
+    renderHomeWeeklyMenu(null);
     updateProgressRing(ring, null, { tone: "amber", label: "kcal", ariaLabel: "Nutrición disponible en la aplicación privada" });
     return;
   }
@@ -1026,6 +1027,7 @@ async function renderHomeNutritionCard() {
     });
     if (!response.ok) throw new Error("HOME_NUTRITION_" + response.status);
     const data = await response.json();
+    renderHomeWeeklyMenu(data);
     const consumed = Number(data.summary?.consumed?.kcal);
     const burned = Number(data.summary?.totalBurn);
     const target = data.objective?.kcal == null ? null : Number(data.objective.kcal);
@@ -1059,6 +1061,7 @@ async function renderHomeNutritionCard() {
     burnedNode.textContent = "—";
     targetNode.textContent = "—";
     statusNode.textContent = "No se ha podido cargar Nutrición";
+    renderHomeWeeklyMenu(null);
     updateProgressRing(ring, null, { tone: "amber", label: "kcal", ariaLabel: "Nutrición no disponible" });
     console.warn("Home nutrition load failed", error);
   }
@@ -3157,12 +3160,144 @@ function renderNutritionSuggestions(foods, consumed, objective) {
       <p class="nutrition-suggestion-note">El optimizador trata la proteína como restricción principal y las kcal como techo. Hidratos y grasas afinan la solución, pero no se fuerzan. El gasto del Apple Watch no amplía automáticamente el presupuesto de comida.</p>
     </section>`;
 }
+function weeklyMenuModel(data) {
+  const rows = Array.isArray(data?.weeklyMenu) ? data.weeklyMenu : [];
+  const objective = data?.objective && typeof data.objective === "object" ? data.objective : {};
+  const kcalTarget = objective.kcal == null ? null : Number(objective.kcal);
+  const proteinTarget = objective.protein == null ? null : Number(objective.protein);
+  const groups = new Map();
+
+  for (const row of rows) {
+    if (!groups.has(row.date)) groups.set(row.date, []);
+    groups.get(row.date).push(row);
+  }
+
+  const momentOrder = new Map([
+    ["desayuno", 0],
+    ["media manana", 1],
+    ["comida", 2],
+    ["merienda", 3],
+    ["cena", 4],
+    ["snack", 5],
+    ["otro", 6]
+  ]);
+  const normalizedMoment = (value) => String(value || "Otro")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  const days = [...groups.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, rawItems]) => {
+      const items = [...rawItems].sort((a, b) =>
+        (momentOrder.get(normalizedMoment(a.moment)) ?? 99)
+        - (momentOrder.get(normalizedMoment(b.moment)) ?? 99)
+      );
+      const kcal = items.reduce((sum, item) => sum + (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0);
+      const protein = items.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
+      const kcalPct = Number.isFinite(kcalTarget) && kcalTarget > 0 ? Math.round((kcal / kcalTarget) * 100) : null;
+      const proteinPct = Number.isFinite(proteinTarget) && proteinTarget > 0 ? Math.round((protein / proteinTarget) * 100) : null;
+      return {
+        date,
+        items,
+        kcal,
+        protein,
+        kcalPct,
+        proteinPct,
+        kcalRemaining: Number.isFinite(kcalTarget) ? kcalTarget - kcal : null,
+        proteinRemaining: Number.isFinite(proteinTarget) ? proteinTarget - protein : null
+      };
+    });
+
+  return {
+    rows,
+    days,
+    kcalTarget: Number.isFinite(kcalTarget) ? kcalTarget : null,
+    proteinTarget: Number.isFinite(proteinTarget) ? proteinTarget : null
+  };
+}
+
+function weeklyMenuTargetLine(day, model) {
+  const parts = [];
+  if (model.kcalTarget !== null) {
+    const delta = day.kcalRemaining;
+    parts.push(delta >= 0
+      ? `Quedan ${formatKcal(delta)}`
+      : `${formatKcal(Math.abs(delta))} sobre kcal`);
+  }
+  if (model.proteinTarget !== null) {
+    const delta = day.proteinRemaining;
+    parts.push(delta > 0.5
+      ? `faltan ${formatMacro(delta)} proteína`
+      : delta < -0.5
+        ? `${formatMacro(Math.abs(delta))} sobre proteína`
+        : "proteína cubierta");
+  }
+  return parts.join(" · ");
+}
+
+function weeklyMenuDayLabel(date, options = {}) {
+  const parsed = new Date(`${date}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return new Intl.DateTimeFormat("es-ES", {
+    weekday: options.long ? "long" : "short",
+    day: "numeric",
+    month: "short"
+  }).format(parsed).replace(".", "");
+}
+
+function renderWeeklyMenuProgress(label, value, target, pct, tone) {
+  if (!Number.isFinite(target) || target <= 0) {
+    return `
+      <div class="weekly-menu-progress ${tone}">
+        <div><span>${escapeHtml(label)}</span><strong>${label === "Proteína" ? formatMacro(value) : formatKcal(value)}</strong></div>
+        <small>Objetivo pendiente</small>
+      </div>`;
+  }
+  const displayValue = label === "Proteína" ? formatMacro(value) : formatKcal(value);
+  const displayTarget = label === "Proteína" ? formatMacro(target) : formatKcal(target);
+  return `
+    <div class="weekly-menu-progress ${tone}">
+      <div>
+        <span>${escapeHtml(label)}</span>
+        <strong>${displayValue} <small>/ ${displayTarget}</small></strong>
+      </div>
+      <progress max="100" value="${Math.max(0, Math.min(100, Number(pct) || 0))}" aria-label="${escapeHtml(label)}: ${Number(pct) || 0}% del objetivo"></progress>
+      <small>${Number.isFinite(pct) ? pct + "% del objetivo" : "Sin objetivo"}</small>
+    </div>`;
+}
+
+function renderWeeklyMenuMeal(item, compact = false) {
+  const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
+  const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
+  const quantity = Number.isFinite(Number(item.quantity))
+    ? `${Number(item.quantity).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${item.unit || ""}`.trim()
+    : "";
+  return `
+    <article class="weekly-menu-meal">
+      <div class="weekly-menu-meal-copy">
+        <span class="weekly-menu-moment">${escapeHtml(item.moment || "Otro")}</span>
+        <strong>${escapeHtml(item.name)}</strong>
+        ${!compact && (quantity || item.note || item.gymSession) ? `
+          <p>${[
+            quantity,
+            item.gymSession ? escapeHtml(item.gymSession) : "",
+            item.note ? escapeHtml(item.note) : ""
+          ].filter(Boolean).join(" · ")}</p>` : ""}
+      </div>
+      <div class="weekly-menu-meal-macros">
+        <b>${kcal}</b>
+        <span>${protein}</span>
+      </div>
+    </article>`;
+}
+
 function renderMenuPanel(data) {
   const panel = document.querySelector("#menu-panel");
   if (!panel) return;
 
-  const rows = Array.isArray(data?.weeklyMenu) ? data.weeklyMenu : [];
-  if (!rows.length) {
+  const model = weeklyMenuModel(data);
+  if (!model.rows.length) {
     panel.innerHTML = `
       <div class="health-empty health-empty-card">
         <strong>Menú semanal preparado, pero todavía vacío</strong>
@@ -3171,40 +3306,94 @@ function renderMenuPanel(data) {
     return;
   }
 
-  const groups = new Map();
-  for (const row of rows) {
-    if (!groups.has(row.date)) groups.set(row.date, []);
-    groups.get(row.date).push(row);
+  panel.innerHTML = `
+    <div class="weekly-menu-hero">
+      <div>
+        <p class="context-label">Plan nutricional</p>
+        <h3>Menú objetivo de la semana</h3>
+        <p>Las cifras son las kcal y proteína estimadas del plan. Lo realmente consumido continúa registrándose aparte en Nutrición.</p>
+      </div>
+      <div class="weekly-menu-objective-chips">
+        <span><small>Objetivo kcal</small><strong>${model.kcalTarget === null ? "Pendiente" : formatKcal(model.kcalTarget)}</strong></span>
+        <span><small>Objetivo proteína</small><strong>${model.proteinTarget === null ? "Pendiente" : formatMacro(model.proteinTarget)}</strong></span>
+      </div>
+    </div>
+
+    <div class="weekly-menu-grid weekly-menu-grid-rich">
+      ${model.days.map((day) => {
+        const isToday = day.date === localDateKey();
+        const targetLine = weeklyMenuTargetLine(day, model);
+        return `
+          <section class="weekly-menu-day weekly-menu-day-rich ${isToday ? "is-today" : ""}">
+            <header>
+              <div>
+                <small>${isToday ? "Hoy" : "Planificado"}</small>
+                <strong>${escapeHtml(weeklyMenuDayLabel(day.date, { long: true }))}</strong>
+              </div>
+              <span>${day.items.length} comida${day.items.length === 1 ? "" : "s"}</span>
+            </header>
+
+            <div class="weekly-menu-day-progress">
+              ${renderWeeklyMenuProgress("Calorías", day.kcal, model.kcalTarget, day.kcalPct, "kcal")}
+              ${renderWeeklyMenuProgress("Proteína", day.protein, model.proteinTarget, day.proteinPct, "protein")}
+            </div>
+
+            <div class="weekly-menu-meal-list">
+              ${day.items.map((item) => renderWeeklyMenuMeal(item)).join("")}
+            </div>
+
+            ${targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : ""}
+          </section>`;
+      }).join("")}
+    </div>`;
+}
+
+function renderHomeWeeklyMenu(data) {
+  const panel = document.querySelector("#home-weekly-menu-panel");
+  const content = document.querySelector("#home-weekly-menu-content");
+  if (!panel || !content) return;
+
+  const model = weeklyMenuModel(data);
+  if (!model.rows.length) {
+    panel.hidden = true;
+    content.innerHTML = "";
+    return;
   }
 
-  const dayFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "short", day: "numeric", month: "short" });
-  panel.innerHTML = `
-    <div class="health-section-heading">
-      <div>
-        <strong>Menú objetivo de la semana</strong>
-        <p>Plan separado del registro real. Lo consumido sigue registrándose en Nutrición.</p>
-      </div>
-      <span>${rows.length}</span>
-    </div>
-    <div class="weekly-menu-grid">
-      ${[...groups.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([date, items]) => {
-        const parsed = new Date(`${date}T12:00:00`);
-        const label = Number.isNaN(parsed.getTime()) ? date : dayFormatter.format(parsed).replace(".", "");
-        const kcal = items.reduce((sum, item) => sum + Number(item.kcal || 0), 0);
-        const protein = items.reduce((sum, item) => sum + Number(item.protein || 0), 0);
+  panel.hidden = false;
+  content.innerHTML = `
+    <div class="home-weekly-menu-grid">
+      ${model.days.map((day) => {
+        const isToday = day.date === localDateKey();
+        const targetLine = weeklyMenuTargetLine(day, model);
         return `
-          <section class="weekly-menu-day">
-            <header><strong>${escapeHtml(label)}</strong><span>${formatKcal(kcal)} · P ${formatMacro(protein)}</span></header>
-            ${items.map((item) => `
-              <article>
-                <div>
-                  <small>${escapeHtml(item.moment || "Otro")}${item.gymSession ? " · " + escapeHtml(item.gymSession) : ""}</small>
-                  <strong>${escapeHtml(item.name)}</strong>
-                  ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
-                </div>
-                <span>${item.kcal == null ? "—" : formatKcal(item.kcal)}</span>
-              </article>`).join("")}
-          </section>`;
+          <article class="home-weekly-menu-day ${isToday ? "is-today" : ""}">
+            <header>
+              <div>
+                <small>${isToday ? "Hoy" : "Día"}</small>
+                <strong>${escapeHtml(weeklyMenuDayLabel(day.date))}</strong>
+              </div>
+              <span>${day.kcalPct == null ? formatKcal(day.kcal) : day.kcalPct + "% kcal"}</span>
+            </header>
+
+            <div class="home-weekly-menu-progress">
+              <div>
+                <span><i class="kcal"></i>Kcal</span>
+                <b>${formatKcal(day.kcal)}${model.kcalTarget === null ? "" : ` / ${formatKcal(model.kcalTarget)}`}</b>
+                ${model.kcalTarget === null ? "" : `<progress max="100" value="${Math.max(0, Math.min(100, day.kcalPct || 0))}"></progress>`}
+              </div>
+              <div>
+                <span><i class="protein"></i>Proteína</span>
+                <b>${formatMacro(day.protein)}${model.proteinTarget === null ? "" : ` / ${formatMacro(model.proteinTarget)}`}</b>
+                ${model.proteinTarget === null ? "" : `<progress max="100" value="${Math.max(0, Math.min(100, day.proteinPct || 0))}"></progress>`}
+              </div>
+            </div>
+
+            <div class="home-weekly-menu-meals">
+              ${day.items.map((item) => renderWeeklyMenuMeal(item, true)).join("")}
+            </div>
+            ${targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : ""}
+          </article>`;
       }).join("")}
     </div>`;
 }
@@ -4996,6 +5185,10 @@ function bindInteractions() {
   document.querySelector("#home-nutrition-card")?.addEventListener("click", async () => {
     await openHealthDetail();
     document.querySelector('[data-health-tab="nutrition"]')?.click();
+  });
+  document.querySelector("#show-home-weekly-menu")?.addEventListener("click", async () => {
+    await openHealthDetail();
+    document.querySelector('[data-health-tab="menu"]')?.click();
   });
   document.querySelector("#home-pantry-card")?.addEventListener("click", openPantryDetail);
   document.querySelector("#home-objects-card")?.addEventListener("click", openObjectsDetail);
