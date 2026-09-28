@@ -76,6 +76,13 @@ The next-purchase list should separate:
 
 For each candidate, use available price history when helpful. A past observed price is historical evidence, not a guarantee of the current shelf price.
 
+### ListaCompra state semantics
+
+- `REVISAR` is an internal pantry suggestion only. It may be shown separately as low stock / suggestion, but it is **not** part of the shopping list, shopping count or estimated basket total.
+- `COMPRAR` is a confirmed purchase need. Only these rows belong to the actionable shopping list and its estimated cost.
+- `COMPRADO` is historical/resolved and is excluded from the active shopping list.
+- A low stock observation alone must not promote an item from `REVISAR` to `COMPRAR`. Promotion requires a real planned need, exhaustion/minimum-stock rule, or explicit user confirmation.
+
 ## Cross-domain coordination
 
 ### GESTOR GYM Y NUTRI
