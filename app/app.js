@@ -1,7 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.29.0";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.38.5";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.29.0";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
@@ -5259,7 +5259,9 @@ function bindInteractions() {
     await openHealthDetail();
     document.querySelector('[data-health-tab="menu"]')?.click();
   });
-  document.querySelector("#home-pantry-card")?.addEventListener("click", openPantryDetail);
+  document.querySelector("#home-pantry-open")?.addEventListener("click", () => openPantryDetail("inventory"));
+  document.querySelector("#home-pantry-open-footer")?.addEventListener("click", () => openPantryDetail("inventory"));
+  document.querySelector("#home-shopping-list")?.addEventListener("click", () => openPantryDetail("shopping"));
   document.querySelector("#home-objects-card")?.addEventListener("click", openObjectsDetail);
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#demo-mode-toggle")?.addEventListener("click", toggleDemoMode);
@@ -5458,8 +5460,14 @@ async function handleQuickCommand(query, result) {
     result.innerHTML = message;
   };
 
+  if (/\b(lista de la compra|lista compra|compra)\b/.test(normalized)) {
+    openPantryDetail("shopping");
+    openResult("<strong>Lista de la compra abierta.</strong>");
+    return true;
+  }
+
   if (/\b(despensa)\b/.test(normalized)) {
-    openPantryDetail();
+    openPantryDetail("inventory");
     openResult("<strong>Despensa abierta.</strong> Ahí puedes consultar stock, precios y lista de compra.");
     return true;
   }
