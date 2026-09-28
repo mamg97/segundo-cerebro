@@ -14774,3 +14774,100 @@ html[data-theme="dark"] .home-weekly-menu-day {
     padding: 16px 14px;
   }
 }
+
+
+/* v0.38.2 — compact mobile liquidity cards */
+@media (max-width: 520px) {
+  .money-horizon > .budget-panel .home-liquidity-grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account {
+    display: grid;
+    grid-template-columns: minmax(86px, .9fr) 40px minmax(118px, 1.2fr);
+    gap: 11px;
+    align-items: center;
+    min-height: 0;
+    padding: 11px 12px;
+    border-radius: 14px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-head {
+    align-self: center;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-head > span {
+    font-size: 8px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-head > strong {
+    margin-top: 5px;
+    font-size: 12px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-body {
+    display: contents;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-bar {
+    grid-column: 2;
+    width: 40px;
+    height: 92px;
+    align-self: center;
+    border-radius: 10px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-meta {
+    grid-column: 3;
+    align-content: center;
+    gap: 7px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-meta span {
+    overflow: visible;
+    font-size: 7.3px;
+    line-height: 1.2;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-meta b {
+    margin-top: 2px;
+    font-size: 9px;
+    line-height: 1.15;
+  }
+
+  .money-horizon > .budget-panel .home-finance-mini-heading {
+    margin-bottom: 8px;
+  }
+
+  .money-horizon > .budget-panel .home-finance-mini-heading strong {
+    font-size: 10px;
+  }
+
+  .money-horizon > .budget-panel .home-finance-mini-heading span {
+    max-width: 145px;
+    font-size: 7px;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 380px) {
+  .money-horizon > .budget-panel .home-liquidity-account {
+    grid-template-columns: minmax(78px, .85fr) 36px minmax(102px, 1.15fr);
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-bar {
+    width: 36px;
+    height: 86px;
+  }
+
+  .money-horizon > .budget-panel .home-liquidity-account-meta {
+    gap: 5px;
+  }
+}
