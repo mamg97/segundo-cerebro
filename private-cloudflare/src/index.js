@@ -2034,6 +2034,80 @@ async function persistHealthHistorySummary(env, history) {
   );
 }
 
+async function fetchWeeklyMenuLight(env, options = {}) {
+  if (!hasHealthGoogleConfig(env)) {
+    return { status: "not-configured", value: null };
+  }
+
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(options.date || ""))
+    ? String(options.date)
+    : localHealthDateKey();
+
+  const token = await getGoogleAccessToken(env);
+  const ranges = ["MenuSemanal!A1:P2000", "Objetivos!A1:H500"];
+  const params = new URLSearchParams();
+  for (const range of ranges) params.append("ranges", range);
+  params.set("majorDimension", "ROWS");
+  params.set("valueRenderOption", "UNFORMATTED_VALUE");
+
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}/values:batchGet?${params.toString()}`;
+  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error(`HEALTH_MENU_SHEETS_${response.status}`);
+
+  const payload = await response.json();
+  const valueRanges = payload.valueRanges || [];
+
+  const weeklyMenuRows = parseTableRows(valueRanges[0]?.values || []).map((item) => ({
+    weekStart: String(item.semana_inicio || "").trim() || null,
+    date: String(item.fecha || "").trim(),
+    moment: String(item.momento || "Otro").trim(),
+    recipeId: item.recipe_id || null,
+    foodId: item.food_id || null,
+    name: String(item.nombre || "").trim(),
+    quantity: toNumber(item.cantidad),
+    unit: item.unidad || null,
+    status: String(item.estado || "planificado").trim().toLowerCase(),
+    kcal: toNumber(item.kcal),
+    protein: toNumber(item.proteinas_g),
+    carbs: toNumber(item.carbohidratos_g),
+    fat: toNumber(item.grasas_g),
+    gymSession: item.sesion_gym || null,
+    note: item.nota || null,
+    updatedAt: item.updated_at || null
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.name);
+
+  const objectives = parseTableRows(valueRanges[1]?.values || []).map((item) => ({
+    effectiveDate: String(item.effective_date || "").trim(),
+    kcal: toNumber(item.target_kcal),
+    protein: toNumber(item.target_protein_g),
+    carbs: toNumber(item.target_carbs_g),
+    fat: toNumber(item.target_fat_g),
+    note: item.nota || null,
+    active: String(item.active ?? "TRUE").toUpperCase() !== "FALSE",
+    updatedAt: item.updated_at || null
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.effectiveDate) && item.active)
+    .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate));
+
+  const selectedDate = new Date(`${date}T12:00:00+02:00`);
+  const mondayOffset = (selectedDate.getDay() + 6) % 7;
+  const weekStart = healthAddDays(date, -mondayOffset);
+  const weekEnd = healthAddDays(weekStart, 6);
+  const weeklyMenu = weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd);
+  const objective = objectives.find((item) => item.effectiveDate <= date) || null;
+
+  return {
+    status: "ok",
+    value: {
+      date,
+      weekStart,
+      weekEnd,
+      objective,
+      weeklyMenu,
+      source: { kind: "google-sheet", title: "SEGUNDO CEREBRO - SALUD", sheet: "MenuSemanal" }
+    }
+  };
+}
+
 async function fetchHealthNutritionSummary(env, options = {}) {
   if (!hasHealthGoogleConfig(env)) {
     return { status: "not-configured", value: null };
@@ -3591,6 +3665,19 @@ export default {
       } catch (error) {
         console.warn("Health overview read failed", String(error?.message || error));
         return json({ ok: false, code: "HEALTH_OVERVIEW_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition/menu") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const date = url.searchParams.get("date") || undefined;
+      try {
+        const menu = await fetchWeeklyMenuLight(env, { date });
+        if (!menu.value) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+        return json({ ok: true, status: menu.status, ...menu.value });
+      } catch (error) {
+        console.warn("Weekly menu light read failed", String(error?.message || error));
+        return json({ ok: false, code: "WEEKLY_MENU_READ_FAILED" }, 502);
       }
     }
 
