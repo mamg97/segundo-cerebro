@@ -705,3 +705,16 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - El CTA **Ver menú completo** abre Salud directamente en la pestaña Menú.
 - En escritorio la semana se presenta como rejilla; en móvil pasa a carrusel horizontal con scroll-snap.
 - Assets frontend: `v0.38.0`.
+
+
+## Finanzas · compactación móvil de cuentas v0.38.2
+
+- Corregido el desaprovechamiento de espacio de **Estado de cuentas** en Home móvil.
+- Las cuatro cuentas siguen apiladas una por fila para conservar legibilidad, pero cada tarjeta pasa a una composición horizontal compacta:
+  - identidad + disponible bancario a la izquierda;
+  - barra segmentada en el centro;
+  - saldo total / libre interno / retenido / pendiente de cubrir a la derecha.
+- La barra móvil baja de 118 px a 92 px de alto; las tarjetas eliminan el gran vacío lateral/vertical sin perder ninguna métrica.
+- En pantallas ≤380 px se aplica una variante aún más estrecha.
+- El modelo financiero y los cálculos no cambian; es únicamente una corrección responsive.
+- Asset CSS: `v0.38.2`; JS permanece `v0.38.1`.
