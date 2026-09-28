@@ -41,7 +41,8 @@ final class HealthKitService {
     }
 
     var readTypes: Set<HKObjectType> {
-        var types = Set<HKObjectType>(quantityTypes.values)
+        var types = Set<HKObjectType>()
+        quantityTypes.values.forEach { types.insert($0) }
         if let sleepType { types.insert(sleepType) }
         types.insert(HKObjectType.workoutType())
         return types
@@ -49,7 +50,7 @@ final class HealthKitService {
 
     func requestAuthorization() async throws {
         guard isAvailable else { throw HealthBridgeError.healthDataUnavailable }
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             store.requestAuthorization(toShare: [], read: readTypes) { success, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -66,7 +67,8 @@ final class HealthKitService {
         guard isAvailable, observerQueries.isEmpty else { return }
 
         for type in readTypes {
-            let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completion, _ in
+            guard let sampleType = type as? HKSampleType else { continue }
+            let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { _, completion, _ in
                 onUpdate()
                 completion()
             }
