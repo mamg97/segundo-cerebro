@@ -4193,7 +4193,13 @@ function liquidityChargeLabel(item) {
 
   if (item.chargeDate) {
     const label = formatShortChargeDate(item.chargeDate);
-    return label ? `Cobro: ${label}` : null;
+    if (!label) return null;
+    const due = new Date(`${String(item.chargeDate).slice(0, 10)}T12:00:00`);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+    return Number.isFinite(due.getTime()) && due < today
+      ? `Previsto: ${label} · verificar`
+      : `Cobro: ${label}`;
   }
 
   if (item.chargeDay !== null && item.chargeDay !== undefined && String(item.chargeDay).trim() !== "") {
@@ -4366,7 +4372,7 @@ function renderHomeWealthAllocation(items, fallbackCurrency = "EUR") {
     </section>`;
 }
 
-function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
+function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel = null) {
   if (!Array.isArray(accounts) || !accounts.length) {
     return `
       <section class="liquidity-section liquidity-section-empty">
@@ -4389,7 +4395,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
           <p class="context-label">Liquidez por cuenta</p>
           <h3>Cómo está distribuido el dinero de cada cuenta</h3>
         </div>
-        <span>100% de cada barra = saldo actual real</span>
+        <span>${periodLabel ? `Ciclo ${escapeHtml(periodLabel)} · ` : ""}100% de cada barra = saldo actual real</span>
       </div>
       <div class="liquidity-account-list">
         ${orderedAccounts.map((account) => {
@@ -4456,7 +4462,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                           <em>${escapeHtml(segment.label)}</em>
                           <small>${segment.visiblePct > 0
                             ? pct.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "% del saldo"
-                            : "Fuera del saldo actual"}</small>
+                            : "Pendiente del ciclo · aún no cubierto por el saldo actual"}</small>
                         </span>
                         <span class="liquidity-legend-value">
                           <b>${formatMoney(segment.amount, currency)}</b>
@@ -4493,9 +4499,9 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR") {
                 <span>Comprometido <b>${formatMoney(committed, currency)}</b></span>
                 <span>Libre <b>${formatMoney(free, currency)}</b></span>
                 <span>Retenido <b>${formatMoney(retained, currency)}</b></span>
-                <span>Exceso / falta <b>${excess > 0.01 ? formatMoney(excess, currency) : "0,00 €"}</b></span>
+                <span>Pendiente de cubrir <b>${excess > 0.01 ? formatMoney(excess, currency) : "0,00 €"}</b></span>
               </footer>
-              ${excess > 0.01 ? `<p class="liquidity-warning">Compromisos superiores al saldo actual en ${formatMoney(excess, currency)}. El exceso no se dibuja como si fuera saldo real.</p>` : ""}
+              ${excess > 0.01 ? `<p class="liquidity-warning">Quedan ${formatMoney(excess, currency)} de compromisos del ciclo que todavía no están cubiertos por el saldo actual. No significa que ya se hayan cobrado.</p>` : ""}
             </article>`;
         }).join("")}
       </div>
@@ -4625,7 +4631,7 @@ function openBudgetDetail() {
         <div><span>Libre conjunto</span><strong>${jointNet === null ? "—" : formatMoney(jointNet, currency)}</strong></div>
       </div>
       <p class="budget-net-note">Estos netos personales se muestran aparte y no se mezclan con el presupuesto común.</p>
-      ${renderLiquidityAccounts(liquidityAccounts, currency)}
+      ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
       ${categories.length ? `<div class="budget-groups">
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>` : ""}
