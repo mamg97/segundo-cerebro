@@ -763,3 +763,18 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - No se muestra ningún estado, badge o texto de “Sincronizado con Apple Reminders”. Ese puente no existe todavía; los elementos que se hayan trasladado desde Recordatorios/capturas no constituyen sincronización.
 - Solo se añadirá estado de sincronización cuando exista un puente real Apple Reminders ↔ Segundo Cerebro y su estado sea verificable.
 - Assets: `styles.css?v=0.38.5`, `app.js?v=0.38.5`, `pantry.js?v=0.38.5`.
+
+
+## Salud · Home weekly menu resilience v0.38.7
+
+- Corregida la desaparición silenciosa de **Menú de la semana** en Home.
+- Confirmado en la fuente privada que `MenuSemanal` sigue conteniendo la semana 2026-09-28 → 2026-10-04; el problema era de presentación/carga, no pérdida de datos.
+- La Home ya no depende exclusivamente del endpoint completo `/api/nutrition` para pintar el menú.
+- Añadido `GET /api/nutrition/menu?date=YYYY-MM-DD`, lectura ligera que consulta únicamente:
+  - `MenuSemanal`;
+  - `Objetivos`.
+- Si `/api/nutrition` falla o no entrega `weeklyMenu`, Home usa automáticamente ese endpoint ligero.
+- Si incluso la lectura ligera falla, la sección **permanece visible** con un estado de error; no vuelve a desaparecer dejando el calendario pegado al footer.
+- En modo demo/no privado sí se oculta, porque no hay fuente real que mostrar.
+- Este fallback evita que futuras ampliaciones de Nutrición (recetas, ingredientes, salud, energía, D1, etc.) puedan tumbar el menú semanal de Home.
+- Assets frontend: `v0.38.7`.
