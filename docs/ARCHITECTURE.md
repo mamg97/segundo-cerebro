@@ -104,25 +104,41 @@ Cualquier nueva capacidad de escritura debe tener una fuente de verdad clara, va
 
 ## Apple Health
 
-Apple Health no se consulta directamente desde el navegador.
+Apple Health no se consulta directamente desde el navegador. La integración objetivo usa una aplicación nativa mínima de iPhone como puente local y conserva el Worker de ingesta ya existente.
 
 ```text
-Apple Watch
+Apple Watch / otras fuentes autorizadas
   ↓
-Apple Health
+Apple Health / HealthKit
   ↓
-Atajo de iPhone
-  ↓
+SegundoCerebroHealthBridge (iOS, Swift)
+  ├── HKObserverQuery + Background Delivery
+  ├── BGAppRefresh como reconciliación
+  └── sincronización manual de diagnóstico
+  ↓ HTTPS + Bearer privado
 segundo-cerebro-health-ingest
-  ↓  Service Binding
+  ↓ Service Binding
 segundo-cerebro
   ↓
-D1 health_energy_daily
+D1
+  ├── health_energy_daily
+  ├── health_body_samples
+  └── health_recovery_daily
   ↓
-Salud / Nutrición
+Salud / Nutrición / análisis longitudinal
 ```
 
-El Worker de ingesta usa un token secreto y recibe solo el resumen energético necesario. No requiere credenciales de Google ni expone D1 directamente.
+El bridge lee únicamente tipos HealthKit autorizados por el usuario. El token de ingesta se guarda en Keychain del dispositivo y no se versiona. La app sincroniza hoy y ayer de forma idempotente para que una actualización parcial del día actual pueda reconciliarse después.
+
+La ingesta admite tres grupos:
+- actividad: energía activa/basal, pasos, minutos de ejercicio y workouts;
+- composición: peso, grasa, IMC y masa magra;
+- recuperación: FC en reposo, HRV SDNN, frecuencia respiratoria, SpO₂, VO₂ máx., temperatura de muñeca y resumen de sueño/fases cuando existen muestras.
+
+La aplicación no calcula una puntuación de recuperación tipo WHOOP. Persiste señales observadas para análisis posterior y mantiene ausencia como `null`.
+
+El Atajo de iPhone se conserva como fallback de transición hasta que la primera sincronización del bridge nativo quede validada en dispositivo real.
+
 
 ## Código
 
