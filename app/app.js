@@ -1343,8 +1343,8 @@ function eventStatusFromDates(startsAt, endsAt, baseStatus = "CONFIRMADO") {
 
 function inferImportantKind(title) {
   const text = normalizeForMatch(title);
-  if (/viaje|vuelo|escapada|marbella|valencia/.test(text)) return "travel";
-  if (/boda|celebracion|cena|comida|fiesta|quedada|merienda|copas/.test(text)) return "social";
+  if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|hotel|airbnb/.test(text)) return "travel";
+  if (/boda|preboda|celebracion|aniversario|cena|comida|fiesta|quedada|merienda|copas|concierto|teatro|festival|espectaculo|parque tematico/.test(text)) return "social";
   return "important";
 }
 
