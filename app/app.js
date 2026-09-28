@@ -4138,6 +4138,104 @@ function renderWealthOverview() {
   `;
 }
 
+function formatWealthDailyPercent(value) {
+  const number = firstFinite(value);
+  if (number === null) return "—";
+  const pct = number * 100;
+  return `${pct > 0 ? "+" : ""}${pct.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`;
+}
+
+function wealthDailyTone(value) {
+  const number = firstFinite(value);
+  if (number === null || Math.abs(number) < 0.0005) return "neutral";
+  return number > 0 ? "positive" : "negative";
+}
+
+function renderWealthDailyRows(rows, fallbackCurrency) {
+  return `<div class="wealth-daily-table-scroll" role="region" aria-label="Histórico diario de patrimonio" tabindex="0">
+    <table class="wealth-daily-table">
+      <thead><tr><th>Fecha</th><th>Patrimonio</th><th>Día</th><th>P/L día</th><th>Movimiento</th></tr></thead>
+      <tbody>${rows.map((item) => {
+        const currency = item.currency || fallbackCurrency;
+        const patrimony = firstFinite(item.patrimony);
+        const pnl = firstFinite(item.pnlDay);
+        const tone = wealthDailyTone(item.changePct);
+        return `<tr>
+          <td>${escapeHtml(formatFinanceDate(item.date, item.date || "—"))}</td>
+          <td>${patrimony === null ? "—" : escapeHtml(formatMoney(patrimony, currency))}</td>
+          <td class="wealth-daily-number is-${tone}">${escapeHtml(formatWealthDailyPercent(item.changePct))}</td>
+          <td class="wealth-daily-number is-${tone}">${pnl === null ? "—" : escapeHtml(formatMoney(pnl, currency))}</td>
+          <td><span class="wealth-daily-movement is-${tone}">${escapeHtml(item.movement || "—")}</span></td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderWealthDailyDiary(diary, fallbackCurrency = "EUR") {
+  const rows = (Array.isArray(diary) ? diary : [])
+    .filter((item) => item?.date)
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+  if (!rows.length) {
+    return `<section class="wealth-daily-section wealth-daily-empty">
+      <div class="wealth-daily-heading">
+        <div><strong>Diario de patrimonio</strong><span>Cierre diario de cartera</span></div>
+      </div>
+      <p>Aún no hay cierres diarios registrados.</p>
+    </section>`;
+  }
+
+  const latest = rows[0];
+  const latestWithPatrimony = rows.find((item) => firstFinite(item.patrimony) !== null) || latest;
+  const currency = latestWithPatrimony.currency || fallbackCurrency;
+  const patrimony = firstFinite(latestWithPatrimony.patrimony);
+  const pnl = firstFinite(latest.pnlDay);
+  const tone = wealthDailyTone(latest.changePct);
+  const importedCount = rows.filter((item) => item.sourceStatus === "IMPORTED_MASTER").length;
+  const recent = rows.slice(0, 12);
+
+  return `<section class="wealth-daily-section">
+    <div class="wealth-daily-heading">
+      <div>
+        <strong>Diario de patrimonio</strong>
+        <span>Antes «Diario mercados» · cierre nocturno de Delta</span>
+      </div>
+      <small>${escapeHtml(formatFinanceDate(latest.date, latest.date))}</small>
+    </div>
+
+    <div class="wealth-daily-kpis">
+      <article>
+        <span>Patrimonio</span>
+        <strong>${patrimony === null ? "—" : escapeHtml(formatMoney(patrimony, currency))}</strong>
+        <small>${escapeHtml(latestWithPatrimony.source || "Fuente privada")}</small>
+      </article>
+      <article class="is-${tone}">
+        <span>Cambio del día</span>
+        <strong>${escapeHtml(formatWealthDailyPercent(latest.changePct))}</strong>
+        <small>${escapeHtml(latest.movement || "Sin clasificación")}</small>
+      </article>
+      <article class="is-${tone}">
+        <span>P/L del día</span>
+        <strong>${pnl === null ? "—" : escapeHtml(formatMoney(pnl, latest.currency || fallbackCurrency))}</strong>
+        <small>Cierre diario</small>
+      </article>
+    </div>
+
+    <div class="wealth-daily-recent">
+      <div class="wealth-daily-subheading"><strong>Últimos registros</strong><span>${rows.length} cierres almacenados</span></div>
+      ${renderWealthDailyRows(recent, fallbackCurrency)}
+    </div>
+
+    ${rows.length > recent.length ? `<details class="wealth-daily-history">
+      <summary>Ver histórico completo · ${rows.length} registros</summary>
+      ${renderWealthDailyRows(rows, fallbackCurrency)}
+    </details>` : ""}
+
+    ${importedCount ? `<p class="wealth-daily-note">Se han importado ${importedCount} registros históricos desde DIARIO MERCADOS. El maestro histórico no tenía una columna de patrimonio total, por eso esos cierres muestran «—» en Patrimonio cuando no existe un valor explícito.</p>` : ""}
+  </section>`;
+}
+
 function openWealthDetail() {
   const wealth = state.financeSummary?.wealth || null;
   const dialog = document.querySelector("#detail-dialog");
@@ -4162,6 +4260,8 @@ function openWealthDetail() {
   document.querySelector("#dialog-body").innerHTML = `
     <div class="wealth-detail">
       ${renderWealthAllocation(wealth, currency)}
+
+      ${renderWealthDailyDiary(wealth.dailyDiary, currency)}
 
       ${history.length ? `
         <section class="wealth-chart-block">
