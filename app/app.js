@@ -3174,7 +3174,7 @@ function weeklyMenuModel(data) {
 
   const momentOrder = new Map([
     ["desayuno", 0],
-    ["media mañana", 1],
+    ["media manana", 1],
     ["comida", 2],
     ["merienda", 3],
     ["cena", 4],
