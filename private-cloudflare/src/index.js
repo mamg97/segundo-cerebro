@@ -2203,6 +2203,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     unit: item.unidad || null,
     grams: toNumber(item.gramos_estimados),
     kcal: toNumber(item.kcal_estimadas),
+    protein: toNumber(item.proteinas_estimadas_g),
     source: item.fuente || null,
     precision: item.precision || null,
     note: item.nota || null,
@@ -2301,7 +2302,8 @@ async function fetchHealthNutritionSummary(env, options = {}) {
           ...ingredient,
           quantityForMeal: ingredient.quantity === null ? null : Number(ingredient.quantity) * factor,
           gramsForMeal: ingredient.grams === null ? null : Number(ingredient.grams) * factor,
-          kcalForMeal: ingredient.kcal === null ? null : Number(ingredient.kcal) * factor
+          kcalForMeal: ingredient.kcal === null ? null : Number(ingredient.kcal) * factor,
+          proteinForMeal: ingredient.protein === null ? null : Number(ingredient.protein) * factor
         }))
       };
     });
