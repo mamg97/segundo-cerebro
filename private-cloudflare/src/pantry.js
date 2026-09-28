@@ -257,12 +257,14 @@ function buildPayload(valueRanges = []) {
     };
   }).filter((item) => item.productId || item.name);
 
-  const activeShopping = shoppingList.filter((item) => item.state !== "COMPRADO");
+  // Only explicitly confirmed COMPRAR rows belong to the shopping list and basket.
+  // REVISAR is an internal pantry suggestion (low stock, uncertain need, etc.) and
+  // must never inflate the shopping count or estimated purchase total.
   const confirmedShopping = shoppingList.filter((item) => item.state === "COMPRAR");
   const reviewShopping = shoppingList.filter((item) => item.state === "REVISAR");
-  const knownBasket = activeShopping.map((item) => item.estimatedCost).filter((value) => value !== null);
+  const knownBasket = confirmedShopping.map((item) => item.estimatedCost).filter((value) => value !== null);
   const estimatedBasketTotal = knownBasket.length ? knownBasket.reduce((sum, value) => sum + value, 0) : null;
-  const missingPriceCount = activeShopping.length - knownBasket.length;
+  const missingPriceCount = confirmedShopping.length - knownBasket.length;
 
   const availableProductCount = new Set(
     inventory
@@ -299,11 +301,14 @@ function buildPayload(valueRanges = []) {
     currency: "EUR",
     maximumFractionDigits: 2
   });
-  const purchasePhrase = activeShopping.length
+  const purchasePhrase = confirmedShopping.length
     ? estimatedBasketTotal !== null
-      ? "próxima compra estimada " + euro.format(estimatedBasketTotal) + (missingPriceCount ? " + productos sin precio" : "")
-      : "próxima compra aún sin precio"
-    : "sin compra pendiente";
+      ? "coste conocido " + (missingPriceCount ? "≥ " : "") + euro.format(estimatedBasketTotal) +
+        (missingPriceCount
+          ? " · " + missingPriceCount + (missingPriceCount === 1 ? " artículo sin precio" : " artículos sin precio")
+          : "")
+      : confirmedShopping.length + (confirmedShopping.length === 1 ? " compra sin precio todavía" : " compras sin precio todavía")
+    : "sin compra confirmada";
   const reviewPhrase = reviewShopping.length
     ? reviewShopping.length + (reviewShopping.length === 1 ? " cosa por revisar" : " cosas por revisar")
     : confirmedShopping.length
@@ -317,7 +322,7 @@ function buildPayload(valueRanges = []) {
     summary: {
       availableProductCount,
       lowStockCount,
-      pendingPurchaseCount: activeShopping.length,
+      pendingPurchaseCount: confirmedShopping.length,
       confirmedPurchaseCount: confirmedShopping.length,
       reviewCount: reviewShopping.length,
       estimatedBasketTotal,
@@ -328,7 +333,8 @@ function buildPayload(valueRanges = []) {
       homeMessage: [fridgePhrase, reviewPhrase, purchasePhrase].join(" · ")
     },
     items: inventory,
-    shoppingList,
+    shoppingList: confirmedShopping,
+    reviewCandidates: reviewShopping,
     locationSummary,
     categories,
     ticketSummary: {
