@@ -73,6 +73,43 @@ const BODY_TYPES = new Set([
   "leanBodyMass"
 ]);
 
+const RECOVERY_FIELDS = {
+  restingHeartRate: [20, 250],
+  walkingHeartRateAverage: [20, 250],
+  hrvSdnnMs: [0, 1000],
+  respiratoryRate: [2, 80],
+  oxygenSaturationPct: [0, 100],
+  vo2Max: [1, 100],
+  wristTemperatureC: [15, 50],
+  sleepAsleepMinutes: [0, 1440],
+  sleepInBedMinutes: [0, 1440],
+  sleepAwakeMinutes: [0, 1440],
+  sleepCoreMinutes: [0, 1440],
+  sleepDeepMinutes: [0, 1440],
+  sleepRemMinutes: [0, 1440]
+};
+
+function cleanRecovery(raw, fallbackDate) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(raw.date || ""))
+    ? String(raw.date)
+    : fallbackDate;
+  const result = {
+    date,
+    sampledAt: cleanIso(raw.sampledAt) || new Date().toISOString(),
+    sourceDetails: Array.isArray(raw.sources)
+      ? raw.sources.map((item) => String(item).trim()).filter(Boolean).slice(0, 20)
+      : []
+  };
+  let populated = false;
+  for (const [field, [min, max]] of Object.entries(RECOVERY_FIELDS)) {
+    const value = finite(raw[field], min, max);
+    result[field] = value;
+    if (value !== null) populated = true;
+  }
+  return populated ? result : null;
+}
+
 function cleanBodySample(sample) {
   const type = String(sample?.type || "").trim();
   if (!BODY_TYPES.has(type)) return null;
@@ -185,7 +222,8 @@ function normalizePayload(body, path) {
     }
   }
 
-  return { activity, bodySamples };
+  const recovery = cleanRecovery(body?.recovery, date);
+  return { activity, bodySamples, recovery };
 }
 
 export default {
@@ -218,7 +256,7 @@ export default {
     }
 
     const normalized = normalizePayload(body, url.pathname);
-    const { activity, bodySamples } = normalized;
+    const { activity, bodySamples, recovery } = normalized;
     const hasActivity = [
       activity.activeKcal,
       activity.restingKcal,
@@ -227,7 +265,7 @@ export default {
       activity.exerciseMinutes
     ].some((value) => value !== null) || activity.workouts.length > 0;
 
-    if (!hasActivity && bodySamples.length === 0) {
+    if (!hasActivity && bodySamples.length === 0 && !recovery) {
       return json({ ok: false, code: "EMPTY_HEALTH_SYNC" }, 400);
     }
 
@@ -241,9 +279,13 @@ export default {
         activity: hasActivity ? {
           ...activity,
           source: "apple_health",
-          note: String(body?.note || "Apple Shortcuts").slice(0, 500)
+          note: String(body?.note || "Apple Health bridge").slice(0, 500)
         } : null,
-        bodySamples
+        bodySamples,
+        recovery: recovery ? {
+          ...recovery,
+          source: "apple_health"
+        } : null
       })
     });
 
@@ -268,7 +310,8 @@ export default {
         exerciseMinutes: activity.exerciseMinutes,
         workoutCount: activity.workouts.length
       } : null,
-      bodySamplesAccepted: bodySamples.length
+      bodySamplesAccepted: bodySamples.length,
+      recoveryAccepted: Boolean(recovery)
     }, 201);
   }
 };
