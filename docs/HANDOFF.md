@@ -639,3 +639,23 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - Cada fila muestra «Origen», derivado del catálogo público: TFG 2021, TFM, MIDAS Python, agente genético, experimentos históricos o campaña nueva de 2026. El origen no implica que una adaptación sea una réplica literal del código antiguo.
 - Se ha preparado la conexión privada del diario genético original: el workflow propio envía solo su curva de capital ficticio a `segundo-cerebro-midas-ingest` con GitHub OIDC; D1 la sirve únicamente en el panel privado. Hay que verificar el primer envío y el valor mostrado. El diario bruto sigue fuera del repositorio público.
 - La rentabilidad que aparecerá para ese agente procede del diario simulado original, que anotaba operaciones al cierre de la señal. La UI advierte de esa limitación; no se presenta como operación real ni como prueba de que el algoritmo sea rentable al ejecutarlo.
+
+
+## Home · estado visual de cuentas y patrimonio v0.37.6
+
+- El resumen principal de **Dinero** incorpora una versión compacta de la visualización de liquidez ya existente:
+  - una mini barra vertical segmentada por cada cuenta;
+  - saldo actual;
+  - dinero libre;
+  - retenciones cuando existen;
+  - exceso/falta si los compromisos superan el saldo.
+- La mini visualización consume exactamente `monthlyBudget.liquidityAccounts`; no mantiene una segunda lógica ni un segundo estado financiero.
+- El modelo de segmentos se centraliza en `liquidityVisualModel()` y lo reutilizan tanto Home como el detalle de Liquidez.
+- El resumen principal de **Patrimonio** muestra ahora:
+  - patrimonio total;
+  - barra horizontal 2D apilada por plataforma;
+  - leyenda compacta con plataforma, porcentaje e importe.
+- Patrimonio Home consume la misma colección `wealth.allocation` / `PatrimonioDetalle` que el detalle completo.
+- Las visualizaciones son compactas y responsive: 4 cuentas en escritorio, 2×2 en anchuras menores.
+- No se han añadido datos financieros ni nuevas fuentes; el cambio es exclusivamente de presentación.
+- Assets frontend: `v0.37.6`.
