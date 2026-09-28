@@ -747,3 +747,19 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - El cambio se implementa como override CSS final para minimizar conflictos con cambios concurrentes en la estructura del menú.
 - No se modifica `app.js` ni el HTML estructural.
 - Asset CSS: `v0.38.4`; JS permanece `v0.38.1`.
+
+
+## Despensa · acceso directo a ListaCompra v0.38.5
+
+- **Despensa** incorpora en la parte superior un selector visible de vistas:
+  - `Inventario`
+  - `🛒 Lista de la compra`
+- `openPantryDetail("shopping")` abre directamente la vista de `ListaCompra`; no obliga a renderizar primero el inventario como paso de navegación.
+- En Home, la tarjeta de Despensa deja de ser un único botón y expone dos acciones independientes:
+  - `🛒 Lista de la compra` → abre directamente ListaCompra;
+  - `Ver despensa →` → abre Inventario.
+- El buscador rápido también entiende `lista de la compra` / `lista compra` y abre esa vista directamente.
+- La fuente mostrada en esa vista es **ListaCompra de Segundo Cerebro**.
+- No se muestra ningún estado, badge o texto de “Sincronizado con Apple Reminders”. Ese puente no existe todavía; los elementos que se hayan trasladado desde Recordatorios/capturas no constituyen sincronización.
+- Solo se añadirá estado de sincronización cuando exista un puente real Apple Reminders ↔ Segundo Cerebro y su estado sea verificable.
+- Assets: `styles.css?v=0.38.5`, `app.js?v=0.38.5`, `pantry.js?v=0.38.5`.

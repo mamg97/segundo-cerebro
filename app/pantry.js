@@ -154,6 +154,18 @@ function locationTiles(payload) {
   }).join("");
 }
 
+function setPantryView(body, view) {
+  const nextView = view === "shopping" ? "shopping" : "inventory";
+  body.querySelectorAll("[data-pantry-view]").forEach((button) => {
+    const active = button.dataset.pantryView === nextView;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  body.querySelectorAll("[data-pantry-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.pantryPanel !== nextView;
+  });
+}
+
 function renderProductDetail(item, payload) {
   const body = document.querySelector("#dialog-body");
   const currency = payload.summary?.currency || "EUR";
@@ -195,10 +207,10 @@ function renderProductDetail(item, payload) {
         : '') +
     '</section>';
 
-  body.querySelector("#pantry-back")?.addEventListener("click", () => renderWorkspace(payload));
+  body.querySelector("#pantry-back")?.addEventListener("click", () => renderWorkspace(payload, "inventory"));
 }
 
-function renderWorkspace(payload) {
+function renderWorkspace(payload, initialView = "inventory") {
   const body = document.querySelector("#dialog-body");
   const summary = payload.summary || {};
   const items = Array.isArray(payload.items) ? payload.items : [];
@@ -239,6 +251,11 @@ function renderWorkspace(payload) {
 
   body.innerHTML =
     '<div class="pantry-shell">' +
+      '<nav class="pantry-view-nav" role="tablist" aria-label="Vistas de Despensa">' +
+        '<button type="button" data-pantry-view="inventory" role="tab">Inventario</button>' +
+        '<button type="button" data-pantry-view="shopping" role="tab">🛒 Lista de la compra <span>' + Number(summary.pendingPurchaseCount || shopping.length || 0) + '</span></button>' +
+      '</nav>' +
+      '<div class="pantry-view-panel" data-pantry-panel="inventory">' +
       '<section class="pantry-hero">' +
         '<div><p class="pantry-human-status">' + escapeHtml(summary.homeMessage || "Inventario doméstico conectado.") + '</p>' +
         '<span>' + escapeHtml(summary.lastInventoryReview ? "Última revisión " + formatDate(summary.lastInventoryReview) : "Sin revisión fechada") + '</span></div>' +
@@ -266,14 +283,21 @@ function renderWorkspace(payload) {
       '<section><div class="pantry-section-heading"><div><small>Inventario</small><strong id="pantry-visible-count">' + items.length + ' productos</strong></div></div>' +
         '<div id="pantry-product-grid" class="pantry-product-grid">' + (productCards || '<p class="pantry-empty">Todavía no hay inventario disponible.</p>') + '</div>' +
       '</section>' +
-      '<section class="pantry-shopping-section">' +
-        '<div class="pantry-section-heading"><div><small>Próxima compra</small><strong>Lista de compra</strong></div>' +
+      '</div>' +
+      '<section class="pantry-shopping-section pantry-shopping-view" data-pantry-panel="shopping">' +
+        '<div class="pantry-section-heading"><div><small>ListaCompra</small><strong>🛒 Lista de la compra</strong></div>' +
         '<span>' + (summary.estimatedBasketPartial ? "Estimación parcial" : "Estimación disponible") + '</span></div>' +
+        '<p class="pantry-shopping-source">Fuente actual: ListaCompra de Segundo Cerebro.</p>' +
         '<div class="pantry-shopping-list">' + (shoppingRows || '<p class="pantry-empty">No hay productos pendientes.</p>') + '</div>' +
         '<div class="pantry-shopping-total"><span>Total estimado próxima compra</span>' +
         '<strong>' + escapeHtml(money(summary.estimatedBasketTotal, currency)) + (summary.estimatedBasketPartial ? " + productos sin precio" : "") + '</strong></div>' +
       '</section>' +
     '</div>';
+
+  setPantryView(body, initialView);
+  body.querySelectorAll("[data-pantry-view]").forEach((button) => button.addEventListener("click", () => {
+    setPantryView(body, button.dataset.pantryView);
+  }));
 
   let activeLocation = "Todo";
   let activeCategory = "Todo";
@@ -325,7 +349,7 @@ function renderWorkspace(payload) {
   }));
 }
 
-export async function openPantryDetail() {
+export async function openPantryDetail(initialView = "inventory") {
   const dialog = document.querySelector("#detail-dialog");
   if (!dialog) return;
   dialog.classList.remove(
@@ -351,11 +375,11 @@ export async function openPantryDetail() {
       credentials: "same-origin"
     });
     if (!response.ok) throw new Error("PANTRY_" + response.status);
-    renderWorkspace(await response.json());
+    renderWorkspace(await response.json(), initialView);
   } catch (error) {
     console.warn("Pantry load failed", error);
     document.querySelector("#dialog-body").innerHTML =
       '<div class="pantry-source-error"><strong>Despensa disponible, datos pendientes de conexión</strong><p>No se ha podido leer ahora mismo la fuente privada. El módulo ya no desaparece cuando esto ocurre.</p><button id="pantry-retry" type="button">Reintentar</button></div>';
-    document.querySelector("#pantry-retry")?.addEventListener("click", openPantryDetail);
+    document.querySelector("#pantry-retry")?.addEventListener("click", () => openPantryDetail(initialView));
   }
 }
