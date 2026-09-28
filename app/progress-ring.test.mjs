@@ -64,7 +64,7 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.39\.1/);
+assert.match(index, /app\.js\?v=0\.39\.2/);
 assert.match(index, /styles\.css\?v=0\.39\.1/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
@@ -154,6 +154,9 @@ assert.match(css, /home-weekly-menu-grid/);
 assert.match(app, /\/api\/nutrition\/menu\?date=/);
 assert.match(app, /function loadHomeWeeklyMenu/);
 assert.match(app, /function renderHomeWeeklyMenuUnavailable/);
+assert.match(app, /function loadMedicalAppointments/);
+assert.match(app, /\/api\/health\/appointments/);
+assert.match(app, /Cargando citas médicas desde iCloud/);
 assert.match(app, /function hideHomeWeeklyMenu/);
 assert.doesNotMatch(app, /function renderHomeWeeklyMenu\(data\)[\s\S]{0,500}panel\.hidden = true/);
 assert.match(css, /v0\.38\.7 — Home weekly-menu resilience/);

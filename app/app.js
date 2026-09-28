@@ -1605,8 +1605,6 @@ function openHealthDetail() {
   document.querySelector("#dialog-context").textContent = "Salud · estado privado";
   document.querySelector("#dialog-title").textContent = "Salud";
 
-  const medicalEvents = collectHealthEvents().filter((event) => event.healthKind === "medical");
-
   document.querySelector("#dialog-body").innerHTML = `
     <div class="health-tabs" role="tablist" aria-label="Apartados de salud">
       <button class="active" type="button" data-health-tab="overview">Resumen</button>
@@ -1621,7 +1619,7 @@ function openHealthDetail() {
         <div id="health-overview-panel"><p class="health-empty">Cargando Apple Health…</p></div>
       </section>
       <section class="health-tab-panel" data-health-panel="medical">
-        ${renderMedicalSection(medicalEvents)}
+        <div id="medical-panel"><p class="health-empty">Cargando citas médicas desde iCloud…</p></div>
       </section>
       <section class="health-tab-panel" data-health-panel="gym">
         <div id="gym-panel"><p class="health-empty">Cargando plan e histórico…</p></div>
@@ -1640,6 +1638,7 @@ function openHealthDetail() {
   bindHealthTabs();
   dialog.showModal();
   void loadHealthOverview(localDateKey());
+  void loadMedicalAppointments();
   void loadGymPanel();
   void loadNutritionPanel(localDateKey());
 }
@@ -2763,18 +2762,49 @@ function bindHealthTabs() {
   });
 }
 
-function renderMedicalSection(events) {
+function renderMedicalSection(events, options = {}) {
+  const sourceNote = options.sourceNote
+    ? `<p class="health-source-note">${escapeHtml(options.sourceNote)}</p>`
+    : "";
   return `
     <div class="health-section-heading">
       <div>
         <strong>Próximas citas</strong>
-        <p>Citas médicas detectadas en los calendarios iCloud seleccionados.</p>
+        <p>Citas médicas detectadas directamente en los calendarios iCloud seleccionados.</p>
+        ${sourceNote}
       </div>
       <span>${events.length}</span>
     </div>
     ${events.length
       ? `<div class="health-event-list">${events.slice(0, 30).map(renderHealthEvent).join("")}</div>`
       : '<p class="health-empty">No hay próximas citas médicas detectadas en iCloud.</p>'}`;
+}
+
+async function loadMedicalAppointments() {
+  const panel = document.querySelector("#medical-panel");
+  if (!panel) return;
+
+  try {
+    const response = await fetch("/api/health/appointments", {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("MEDICAL_APPOINTMENTS_" + response.status);
+    const payload = await response.json();
+    const events = Array.isArray(payload.events) ? payload.events : [];
+    panel.innerHTML = renderMedicalSection(events, {
+      sourceNote: payload.source?.updatedAt ? "iCloud actualizado " + eventDateLabel(payload.source.updatedAt, true) : "Fuente iCloud en directo"
+    });
+  } catch (error) {
+    const fallback = collectHealthEvents().filter((event) => event.healthKind === "medical");
+    panel.innerHTML = renderMedicalSection(fallback, {
+      sourceNote: fallback.length
+        ? "No se ha podido refrescar iCloud; mostrando la copia local cargada en Agenda."
+        : "No se ha podido consultar iCloud en este momento."
+    });
+    console.warn("Medical appointments load failed", error);
+  }
 }
 
 function renderNutritionPanel(data) {
