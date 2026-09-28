@@ -132,8 +132,10 @@ export function renderHomePantryCard(state, privateModeKind) {
   set(
     "#home-pantry-cost",
     Number.isFinite(Number(summary.estimatedBasketTotal))
-      ? money(Number(summary.estimatedBasketTotal), summary.currency || "EUR") + (summary.estimatedBasketPartial ? " +" : "")
-      : "Sin estimar"
+      ? (summary.estimatedBasketPartial ? "≥ " : "") + money(Number(summary.estimatedBasketTotal), summary.currency || "EUR")
+      : Number(summary.pendingPurchaseCount || 0) > 0
+        ? "Pendiente"
+        : "—"
   );
   set("#home-pantry-status", summary.homeMessage || "Inventario doméstico conectado.");
   set(
@@ -263,7 +265,11 @@ function renderWorkspace(payload, initialView = "inventory") {
           '<span><small>En casa</small><strong>' + Number(summary.availableProductCount || 0) + '</strong></span>' +
           '<span><small>Stock bajo</small><strong>' + Number(summary.lowStockCount || 0) + '</strong></span>' +
           '<span><small>Lista compra</small><strong>' + Number(summary.pendingPurchaseCount || 0) + '</strong></span>' +
-          '<span><small>Próxima compra</small><strong>' + escapeHtml(money(summary.estimatedBasketTotal, currency)) + (summary.estimatedBasketPartial ? " +" : "") + '</strong></span>' +
+          '<span><small>Próxima compra</small><strong>' +
+            (Number.isFinite(Number(summary.estimatedBasketTotal))
+              ? escapeHtml((summary.estimatedBasketPartial ? "≥ " : "") + money(summary.estimatedBasketTotal, currency))
+              : (Number(summary.pendingPurchaseCount || 0) > 0 ? "Pendiente" : "—")) +
+          '</strong></span>' +
         '</div>' +
       '</section>' +
       '<section class="pantry-location-strip">' + locationTiles(payload) + '</section>' +
@@ -289,8 +295,15 @@ function renderWorkspace(payload, initialView = "inventory") {
         '<span>' + (summary.estimatedBasketPartial ? "Estimación parcial" : "Estimación disponible") + '</span></div>' +
         '<p class="pantry-shopping-source">Fuente actual: ListaCompra de Segundo Cerebro.</p>' +
         '<div class="pantry-shopping-list">' + (shoppingRows || '<p class="pantry-empty">No hay productos pendientes.</p>') + '</div>' +
-        '<div class="pantry-shopping-total"><span>Total estimado próxima compra</span>' +
-        '<strong>' + escapeHtml(money(summary.estimatedBasketTotal, currency)) + (summary.estimatedBasketPartial ? " + productos sin precio" : "") + '</strong></div>' +
+        '<div class="pantry-shopping-total"><span>Coste conocido de la compra</span>' +
+        '<strong>' +
+          (Number.isFinite(Number(summary.estimatedBasketTotal))
+            ? escapeHtml((summary.estimatedBasketPartial ? "≥ " : "") + money(summary.estimatedBasketTotal, currency))
+            : (shopping.length ? "Sin precios todavía" : "—")) +
+          (Number(summary.missingPriceCount || 0)
+            ? '<small>' + Number(summary.missingPriceCount) + (Number(summary.missingPriceCount) === 1 ? ' artículo sin precio' : ' artículos sin precio') + '</small>'
+            : '') +
+        '</strong></div>' +
       '</section>' +
     '</div>';
 
