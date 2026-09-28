@@ -3,7 +3,7 @@ import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId }
 import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
-import { fetchMidasDashboard, addPrivateGeneticDiary } from "./midas.js";
+import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 
 const securityHeaders = {
@@ -3885,8 +3885,18 @@ export default {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       try {
         const result = await fetchMidasDashboard();
+        let research = { status: "not-configured", theses: [], cagr2031: [], counts: { theses: 0, cagr2031: 0, cagrComplete: 0 } };
+        if (hasGoogleOauthConfig(env)) {
+          try {
+            research = await fetchMidasResearch(env, getGoogleAccessToken);
+          } catch (researchError) {
+            console.warn("MIDAS research read failed", String(researchError?.message || "MIDAS_RESEARCH_ERROR"));
+            research = { status: "error", theses: [], cagr2031: [], counts: { theses: 0, cagr2031: 0, cagrComplete: 0 } };
+          }
+        }
         return json({ ok: true, ...result,
-          dashboard: await addPrivateGeneticDiary(env.DB, result.dashboard) });
+          dashboard: await addPrivateGeneticDiary(env.DB, result.dashboard),
+          research });
       } catch (error) {
         console.warn("MIDAS dashboard read failed", String(error?.message || "MIDAS_READ_ERROR"));
         return json({ ok: false, code: "MIDAS_READ_FAILED" }, 502);
