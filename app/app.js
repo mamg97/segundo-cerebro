@@ -2780,9 +2780,44 @@ function renderMedicalSection(events, options = {}) {
       : '<p class="health-empty">No hay próximas citas médicas detectadas en iCloud.</p>'}`;
 }
 
+function mergeMedicalAppointments(liveEvents = [], localEvents = []) {
+  const merged = new Map();
+  const keyFor = (event) => {
+    const id = String(event?.id || "").trim();
+    if (id) return "id:" + id;
+    const title = normalizeForMatch(event?.title || "");
+    const startsAt = String(event?.startsAt || "");
+    return "semantic:" + title + "|" + startsAt;
+  };
+
+  for (const event of [...localEvents, ...liveEvents]) {
+    if (!event) continue;
+    const key = keyFor(event);
+    const existing = merged.get(key);
+    merged.set(key, existing ? { ...existing, ...event } : event);
+  }
+
+  return [...merged.values()]
+    .filter((event) => {
+      const end = new Date(event.endsAt || event.startsAt || "").getTime();
+      return Number.isFinite(end) && end >= Date.now() - 24 * 60 * 60 * 1000;
+    })
+    .sort((a, b) => new Date(a.startsAt || 0) - new Date(b.startsAt || 0));
+}
+
 async function loadMedicalAppointments() {
   const panel = document.querySelector("#medical-panel");
   if (!panel) return;
+
+  const local = collectHealthEvents().filter((event) => event.healthKind === "medical");
+
+  // Render the medical events already loaded in Agenda immediately. A second
+  // CalDAV request must enrich this state, never erase it with a transient 0.
+  if (local.length) {
+    panel.innerHTML = renderMedicalSection(local, {
+      sourceNote: "Citas médicas cargadas desde Agenda · refrescando iCloud…"
+    });
+  }
 
   try {
     const response = await fetch("/api/health/appointments", {
@@ -2792,15 +2827,22 @@ async function loadMedicalAppointments() {
     });
     if (!response.ok) throw new Error("MEDICAL_APPOINTMENTS_" + response.status);
     const payload = await response.json();
-    const events = Array.isArray(payload.events) ? payload.events : [];
-    panel.innerHTML = renderMedicalSection(events, {
-      sourceNote: payload.source?.updatedAt ? "iCloud actualizado " + eventDateLabel(payload.source.updatedAt, true) : "Fuente iCloud en directo"
-    });
+    const live = Array.isArray(payload.events) ? payload.events : [];
+    const events = mergeMedicalAppointments(live, local);
+    const refreshedAt = payload.source?.updatedAt
+      ? "iCloud actualizado " + eventDateLabel(payload.source.updatedAt, true)
+      : "Fuente iCloud en directo";
+    const sourceNote = live.length
+      ? refreshedAt
+      : local.length
+        ? refreshedAt + " · sin perder las citas ya cargadas en Agenda"
+        : refreshedAt;
+
+    panel.innerHTML = renderMedicalSection(events, { sourceNote });
   } catch (error) {
-    const fallback = collectHealthEvents().filter((event) => event.healthKind === "medical");
-    panel.innerHTML = renderMedicalSection(fallback, {
-      sourceNote: fallback.length
-        ? "No se ha podido refrescar iCloud; mostrando la copia local cargada en Agenda."
+    panel.innerHTML = renderMedicalSection(local, {
+      sourceNote: local.length
+        ? "No se ha podido refrescar iCloud; mostrando las citas ya cargadas en Agenda."
         : "No se ha podido consultar iCloud en este momento."
     });
     console.warn("Medical appointments load failed", error);
