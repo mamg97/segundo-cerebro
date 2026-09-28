@@ -2026,7 +2026,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:L1000", "IngredientesReceta!A1:L5000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -2181,6 +2181,41 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     updatedAt: item.updated_at || null
   })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.name);
 
+  const recipeRows = parseTableRows(valueRanges[8]?.values || []).map((item) => ({
+    id: String(item.recipe_id || "").trim(),
+    name: String(item.nombre || "").trim(),
+    servings: toNumber(item.raciones),
+    kcalTotal: toNumber(item.kcal_total),
+    kcalPerServing: toNumber(item.kcal_racion),
+    proteinPerServing: toNumber(item.proteinas_racion_g),
+    carbsPerServing: toNumber(item.carbohidratos_racion_g),
+    fatPerServing: toNumber(item.grasas_racion_g),
+    precision: item.precision || null,
+    source: item.fuente || null,
+    note: item.nota || null,
+    updatedAt: item.updated_at || null
+  })).filter((item) => item.id);
+
+  const recipeIngredientRows = parseTableRows(valueRanges[9]?.values || []).map((item) => ({
+    recipeId: String(item.recipe_id || "").trim(),
+    name: String(item.ingrediente || "").trim(),
+    quantity: toNumber(item.cantidad),
+    unit: item.unidad || null,
+    grams: toNumber(item.gramos_estimados),
+    kcal: toNumber(item.kcal_estimadas),
+    source: item.fuente || null,
+    precision: item.precision || null,
+    note: item.nota || null,
+    updatedAt: item.updated_at || null
+  })).filter((item) => item.recipeId && item.name);
+
+  const recipeById = new Map(recipeRows.map((recipe) => [recipe.id, recipe]));
+  const ingredientsByRecipeId = new Map();
+  for (const ingredient of recipeIngredientRows) {
+    if (!ingredientsByRecipeId.has(ingredient.recipeId)) ingredientsByRecipeId.set(ingredient.recipeId, []);
+    ingredientsByRecipeId.get(ingredient.recipeId).push(ingredient);
+  }
+
   const historyStart = healthAddDays(date, -13);
   const bodyHistoryStart = healthAddDays(date, -27);
   await reconcileHealthRecoveryRows(env, energyRows, bodySheetRows);
@@ -2246,9 +2281,30 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const mondayOffset = (selectedDate.getDay() + 6) % 7;
   const weekStart = healthAddDays(date, -mondayOffset);
   const weekEnd = healthAddDays(weekStart, 6);
-  const weeklyMenu = weeklyMenuRows.filter((item) =>
-    item.date >= weekStart && item.date <= weekEnd
-  );
+  const weeklyMenu = weeklyMenuRows
+    .filter((item) => item.date >= weekStart && item.date <= weekEnd)
+    .map((item) => {
+      const recipe = item.recipeId ? recipeById.get(String(item.recipeId)) || null : null;
+      const baseIngredients = item.recipeId
+        ? ingredientsByRecipeId.get(String(item.recipeId)) || []
+        : [];
+      const menuQuantity = Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 1;
+      const recipeServings = Number.isFinite(Number(recipe?.servings)) && Number(recipe.servings) > 0
+        ? Number(recipe.servings)
+        : 1;
+      const isServingUnit = /raci[oó]n/i.test(String(item.unit || ""));
+      const factor = recipe && isServingUnit ? menuQuantity / recipeServings : 1;
+      return {
+        ...item,
+        recipe,
+        ingredients: baseIngredients.map((ingredient) => ({
+          ...ingredient,
+          quantityForMeal: ingredient.quantity === null ? null : Number(ingredient.quantity) * factor,
+          gramsForMeal: ingredient.grams === null ? null : Number(ingredient.grams) * factor,
+          kcalForMeal: ingredient.kcal === null ? null : Number(ingredient.kcal) * factor
+        }))
+      };
+    });
   const waistHistory = bodySheetRows
     .filter((item) => item.waistCm !== null && item.date <= date)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
