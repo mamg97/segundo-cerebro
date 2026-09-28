@@ -1,5 +1,5 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
-import { fetchPantrySummary, hasPantryGoogleConfig } from "./pantry.js";
+import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
@@ -41,6 +41,28 @@ function json(payload, status = 200) {
       }
     })
   );
+}
+
+function googleSheetTabUrl(spreadsheetId, gid) {
+  const id = String(spreadsheetId || "").trim();
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(id)) throw new Error("INVALID_SHEET_ID");
+  return "https://docs.google.com/spreadsheets/d/" + encodeURIComponent(id) + "/edit#gid=" + encodeURIComponent(String(gid));
+}
+
+async function resolvePrivateSourceLink(env, target) {
+  if (target === "pantry-products") {
+    const spreadsheetId = await resolvePantrySpreadsheetId(env, getGoogleAccessToken);
+    return googleSheetTabUrl(spreadsheetId, 1001);
+  }
+  if (target === "health-foods") {
+    if (!hasHealthGoogleConfig(env)) throw new Error("HEALTH_NOT_CONFIGURED");
+    return googleSheetTabUrl(env.HEALTH_SHEET_ID, 1824624272);
+  }
+  if (target === "health-recipes") {
+    if (!hasHealthGoogleConfig(env)) throw new Error("HEALTH_NOT_CONFIGURED");
+    return googleSheetTabUrl(env.HEALTH_SHEET_ID, 1893702374);
+  }
+  throw new Error("INVALID_SOURCE_LINK_TARGET");
 }
 
 function safeIcloudErrorCode(error) {
@@ -3683,6 +3705,23 @@ export default {
       if (request.method !== "DELETE") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       const sessionId = decodeURIComponent(url.pathname.slice("/api/gym/session/".length));
       return deleteGymSession(sessionId, env);
+    }
+
+    if (url.pathname === "/api/source-link") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const target = String(url.searchParams.get("target") || "").trim();
+      try {
+        const destination = await resolvePrivateSourceLink(env, target);
+        return withSecurityHeaders(Response.redirect(destination, 302), { "Cache-Control": "no-store" });
+      } catch (error) {
+        const code = String(error?.message || "SOURCE_LINK_ERROR");
+        if (code === "INVALID_SOURCE_LINK_TARGET") return json({ ok: false, code }, 400);
+        if (code === "PANTRY_NOT_CONFIGURED" || code === "HEALTH_NOT_CONFIGURED") {
+          return json({ ok: false, code }, 503);
+        }
+        console.warn("Source link resolve failed", code);
+        return json({ ok: false, code: "SOURCE_LINK_FAILED" }, 502);
+      }
     }
 
     if (url.pathname === "/api/pantry") {
