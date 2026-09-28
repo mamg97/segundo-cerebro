@@ -801,3 +801,14 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - Los estudios históricos conservan su horizonte original y sus CAGR originales para no perder contexto.
 - La tabla es watchlist/memoria de investigación, no señal automática de compra. Antes de usar una tesis se actualizan precio, filings/resultados, valoración y riesgos.
 - Assets frontend: `v0.39.1`.
+
+
+## Salud · citas médicas iCloud en directo v0.39.2
+
+- Corregido el desacople entre **Agenda** y **Salud → Médicos**.
+- Antes, Médicos calculaba las próximas citas desde el snapshot cliente `state.events`; podía mostrar 0 aunque el calendario semanal ya tuviera eventos médicos.
+- Añadido `GET /api/health/appointments`, que consulta la integración CalDAV/iCloud privada y filtra citas médicas por título/ubicación.
+- Al abrir Salud, la pestaña Médicos carga ese endpoint de forma independiente.
+- Si iCloud falla temporalmente, la UI cae a la copia local de Agenda y lo indica explícitamente en vez de mostrar un 0 engañoso.
+- La cita de Dermatología visible en Agenda debe volver a aparecer en Médicos tras el despliegue.
+- Asset JS: `v0.39.2`.
