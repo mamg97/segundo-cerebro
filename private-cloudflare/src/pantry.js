@@ -141,6 +141,12 @@ async function resolveSpreadsheetId(env, token) {
   return sheet.id;
 }
 
+export async function resolvePantrySpreadsheetId(env, getGoogleAccessToken) {
+  if (!hasPantryGoogleConfig(env)) throw new Error("PANTRY_NOT_CONFIGURED");
+  const token = await getGoogleAccessToken(env);
+  return resolveSpreadsheetId(env, token);
+}
+
 function buildPayload(valueRanges = []) {
   const productRows = table(valueRanges[0]?.values || []);
   const inventoryRows = table(valueRanges[1]?.values || []);
