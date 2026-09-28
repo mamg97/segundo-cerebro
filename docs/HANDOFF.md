@@ -685,3 +685,23 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - Las reservas con estado terminal (`executed`, `paid`, `closed`, etc.) se excluyen en backend y desaparecen automáticamente tanto del resumen como del detalle al refrescar.
 - Corrección de dato operativo: el seguro de moto de 183 € corresponde al ciclo anterior; el dinero repuesto ya forma parte del saldo BBVA actual y no debe contarse como compromiso del ciclo 20/09–20/10.
 - Assets frontend: `v0.37.9`.
+
+
+## Salud · menú semanal visual + Home v0.38.0
+
+- Rediseñada la pestaña **Salud → Menú** como tablero semanal de tarjetas, sustituyendo la lista plana.
+- Cada día muestra:
+  - comidas planificadas;
+  - kcal estimadas por comida;
+  - proteína estimada por comida;
+  - total diario planificado;
+  - progreso de kcal frente al objetivo activo de `Objetivos`;
+  - progreso de proteína frente al objetivo activo de `Objetivos`;
+  - kcal/proteína que quedan por completar o exceso cuando proceda.
+- No se hardcodean objetivos: la UI utiliza `data.objective.kcal` y `data.objective.protein` del contrato de Nutrición.
+- El menú planificado sigue separado del registro real: ninguna comida del menú se trata como consumida.
+- Añadido a **Home**, inmediatamente después del bloque de Agenda/Calendario, un resumen semanal con las mismas comidas, kcal, proteína y barras de cobertura.
+- La Home reutiliza la llamada existente a `/api/nutrition`; no añade una segunda petición ni un nuevo estado.
+- El CTA **Ver menú completo** abre Salud directamente en la pestaña Menú.
+- En escritorio la semana se presenta como rejilla; en móvil pasa a carrusel horizontal con scroll-snap.
+- Assets frontend: `v0.38.0`.
