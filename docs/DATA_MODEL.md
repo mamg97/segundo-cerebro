@@ -535,3 +535,29 @@ La ficha de evento compone bajo demanda:
 `EVENT_RECORD + EVENT_FACT + Finanzas + Salud/Nutrición + OBJETOS + referencias`.
 
 La Home solo recibe un resumen minimizado `eventsSummary` con conteos de activos, en curso e históricos.
+
+
+## Apple Health — recuperación diaria privada
+
+La persistencia fisiológica automática usa D1 privado y no forma parte del modelo público de entidades personales.
+
+`health_recovery_daily` conserva como máximo una fila por fecha y puede contener:
+
+| Campo lógico | Uso |
+|---|---|
+| `recovery_date` | fecha local del snapshot |
+| `resting_hr_bpm` | frecuencia cardiaca en reposo |
+| `walking_hr_bpm` | media de frecuencia cardiaca caminando |
+| `hrv_sdnn_ms` | HRV SDNN en milisegundos |
+| `respiratory_rate` | respiraciones por minuto |
+| `oxygen_saturation_pct` | saturación en porcentaje |
+| `vo2_max` | estimación HealthKit de VO₂ máx. |
+| `wrist_temperature_c` | temperatura de muñeca durante sueño |
+| `sleep_*_minutes` | resumen diario de sueño y fases |
+| `source`, `sampled_at`, `source_details` | procedencia y trazabilidad mínima |
+
+Reglas:
+- UPSERT por fecha; un nuevo snapshot reemplaza el anterior del mismo día.
+- `null` significa que Apple Health no aportó una muestra utilizable; no equivale a cero.
+- no almacenar una copia de todas las muestras crudas cardiacas/sueño cuando el caso de uso solo necesita el resumen diario.
+- los valores reales permanecen en D1 privado; Git solo define contrato/esquema.
