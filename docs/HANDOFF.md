@@ -718,3 +718,15 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - En pantallas ≤380 px se aplica una variante aún más estrecha.
 - El modelo financiero y los cálculos no cambian; es únicamente una corrección responsive.
 - Asset CSS: `v0.38.2`; JS permanece `v0.38.1`.
+
+
+## Finanzas · 2 cuentas por fila en móvil v0.38.3
+
+- **Estado de cuentas** en Home pasa a una rejilla de **2 columnas** en móviles de hasta 520 px.
+- Cada tarjeta se adapta a media anchura:
+  - cuenta + disponible bancario arriba;
+  - barra segmentada compacta;
+  - saldo total, libre interno, retenido y pendiente de cubrir al lado.
+- Solo por debajo de 340 px se vuelve a 1 cuenta por fila.
+- El cambio es exclusivamente CSS/responsive; no toca `app.js`, contratos financieros ni la estructura del menú que puede evolucionar en paralelo.
+- Asset CSS: `v0.38.3`; JS permanece sin cambios.
