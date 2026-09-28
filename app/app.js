@@ -4323,7 +4323,7 @@ function renderHomeLiquidityOverview(accounts, fallbackCurrency = "EUR") {
                 <div class="home-liquidity-account-meta">
                   <span>Libre <b>${formatMoney(model.free, model.currency)}</b></span>
                   ${model.retained > 0 ? `<span>Retenido <b>${formatMoney(model.retained, model.currency)}</b></span>` : ""}
-                  ${model.excess > 0.01 ? `<span class="is-warning">Falta <b>${formatMoney(model.excess, model.currency)}</b></span>` : ""}
+                  ${model.excess > 0.01 ? `<span class="is-warning">Pendiente de cubrir <b>${formatMoney(model.excess, model.currency)}</b></span>` : ""}
                 </div>
               </div>
             </article>`;

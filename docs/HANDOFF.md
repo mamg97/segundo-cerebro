@@ -675,3 +675,13 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
   - ≤520 px: las cuentas pasan a una columna.
 - No cambia ningún dato ni contrato financiero; solo layout y escala de presentación.
 - Assets frontend: `v0.37.7`.
+
+
+## Finanzas · sincronía resumen/detalle v0.37.9
+
+- El resumen financiero de Home y el detalle de liquidez siguen una única fuente: `monthly.liquidityAccounts`.
+- Ambos proyectan las cuentas mediante `liquidityVisualModel()`; no existe un segundo estado financiero independiente para Home.
+- La etiqueta del resumen pasa de **Falta** a **Pendiente de cubrir**, igual que en el detalle.
+- Las reservas con estado terminal (`executed`, `paid`, `closed`, etc.) se excluyen en backend y desaparecen automáticamente tanto del resumen como del detalle al refrescar.
+- Corrección de dato operativo: el seguro de moto de 183 € corresponde al ciclo anterior; el dinero repuesto ya forma parte del saldo BBVA actual y no debe contarse como compromiso del ciclo 20/09–20/10.
+- Assets frontend: `v0.37.9`.
