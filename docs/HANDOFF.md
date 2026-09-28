@@ -812,3 +812,17 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - Si iCloud falla temporalmente, la UI cae a la copia local de Agenda y lo indica explícitamente en vez de mostrar un 0 engañoso.
 - La cita de Dermatología visible en Agenda debe volver a aparecer en Médicos tras el despliegue.
 - Asset JS: `v0.39.2`.
+
+
+## Salud · citas médicas iCloud + Agenda v0.39.3
+
+- Corregido un fallo introducido al separar `Salud → Médicos` en una consulta directa a iCloud.
+- Problema: si `/api/health/appointments` respondía correctamente pero con `0` citas, la UI reemplazaba por vacío las citas médicas que ya estaban cargadas en `state.events` y visibles en Agenda.
+- Nuevo comportamiento:
+  - Salud renderiza inmediatamente las citas médicas ya presentes en Agenda;
+  - lanza después el refresco directo de iCloud/CalDAV;
+  - fusiona ambos conjuntos por `id` (o por título+fecha como fallback);
+  - una respuesta transitoria vacía de CalDAV nunca borra una cita ya cargada;
+  - si el refresco falla, se mantiene la copia de Agenda y se indica explícitamente.
+- Esto preserva una sola fuente real (iCloud); Agenda actúa como copia ya cargada del mismo origen, no como fuente paralela.
+- Asset JS: `v0.39.3`.
