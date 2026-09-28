@@ -13661,7 +13661,15 @@ html[data-theme="dark"] .liquidity-svg-base {
 }
 
 .liquidity-legend-row.is-outside-balance {
-  opacity: .6;
+  opacity: 1;
+}
+
+.liquidity-legend-row.is-outside-balance > span:first-of-type small {
+  color: #ff9f0a;
+}
+
+.liquidity-legend-row.is-outside-balance i {
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ff9f0a 24%, transparent);
 }
 
 .leader-count-1{grid-template-rows:repeat(1,minmax(0,1fr));}
