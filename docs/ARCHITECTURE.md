@@ -351,3 +351,9 @@ Eventos / Histórico / ficha
 - D1 no replica el detalle financiero, nutricional ni material.
 - Las obligaciones financieras sin semántica de viaje/celebración no se presentan como eventos históricos.
 - El dashboard expone `Eventos` como dominio de primer nivel y permite abrir la ficha desde Home o desde el histórico.
+
+## MIDAS: informe diario de estrategias demo
+
+`midas-paper-lab` genera `strategy_state/dashboard.json` dentro de sus workflows de cierre de Madrid y EE. UU. El Worker privado de Segundo Cerebro lee ese JSON público bajo demanda mediante `GET /api/midas`, valida el contrato y mantiene una caché de cinco minutos. La interfaz abre una tabla en Patrimonio → Ver MIDAS. No hay cron adicional, token GitHub, escritura en D1 ni copia de importes personales. GitHub Pages conserva la demo mock y no consulta MIDAS.
+
+Las filas sin diario siguen visibles con estado y fecha ausente. El genético original mantiene un diario privado independiente y aparece sin cifras hasta que exista un enlace explícito, seguro y verificable. USD y EUR no se agregan ni se ordenan como una liga común.

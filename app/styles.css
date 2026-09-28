@@ -13721,3 +13721,53 @@ html[data-theme="dark"] .liquidity-svg-base {
     font-size: 6.6px !important;
   }
 }
+
+/* MIDAS: read-only paper-strategy report in the private app. */
+.wealth-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 18px; }
+.midas-dialog { width: min(1120px, calc(100vw - 32px)); max-height: 92vh; }
+.midas-dialog > .context-label { font-size: 11px; }
+.midas-report { display: grid; gap: 22px; font-size: 13px; line-height: 1.5; }
+.midas-intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+.midas-intro p { display: grid; gap: 3px; margin: 0; }
+.midas-intro strong { font-size: 17px; letter-spacing: -.02em; }
+.midas-intro span, .midas-updated, .midas-source { color: var(--ink-soft); }
+.midas-caveat { margin: 0; max-width: 75ch; color: var(--ink-soft); }
+.midas-group { min-width: 0; }
+.midas-group h3 { margin: 0 0 10px; font-size: 17px; letter-spacing: -.015em; }
+.midas-group-note { margin: -5px 0 10px; color: var(--ink-soft); }
+.midas-table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+.midas-table { width: 100%; min-width: 780px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.midas-table th, .midas-table td { padding: 12px 13px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+.midas-table tr:last-child th, .midas-table tr:last-child td { border-bottom: 0; }
+.midas-table thead { background: color-mix(in srgb, var(--blue) 7%, var(--surface)); color: var(--ink-soft); }
+.midas-table thead th { font-size: 11px; font-weight: 750; white-space: nowrap; }
+.midas-table tbody th { width: 29%; font-weight: 700; }
+.midas-table tbody th span, .midas-table tbody th small { display: block; }
+.midas-table tbody th small { margin-top: 3px; color: var(--ink-soft); font-size: 11px; font-weight: 400; line-height: 1.4; }
+.midas-table tbody td { white-space: nowrap; }
+.midas-table .midas-number { text-align: right; }
+.midas-status { display: inline-block; padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--ink-soft) 10%, var(--surface)); color: var(--ink-soft); font-size: 11px; font-weight: 700; }
+.midas-status.is-running { background: color-mix(in srgb, var(--blue) 15%, var(--surface)); color: var(--blue); }
+.midas-pending { border-top: 1px solid var(--line); padding-top: 14px; }
+.midas-pending summary { display: flex; justify-content: space-between; cursor: pointer; font-size: 16px; font-weight: 700; }
+.midas-pending[open] summary { margin-bottom: 12px; }
+.midas-pending summary span { color: var(--ink-soft); }
+.midas-source { margin: 0; font-size: 12px; }
+.midas-source a { color: var(--blue); text-underline-offset: 3px; }
+.midas-error, .midas-loading { padding: 18px 0; }
+.midas-error p { color: var(--ink-soft); }
+.midas-error button { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 8px 12px; cursor: pointer; }
+@media (max-width: 760px) {
+  .midas-dialog { width: calc(100% - 16px); max-height: 94vh; padding: 20px 14px 24px; }
+  .midas-report { gap: 18px; }
+  .midas-table-scroll { overflow: visible; border: 0; }
+  .midas-table { display: block; min-width: 0; }
+  .midas-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .midas-table tbody { display: grid; gap: 8px; }
+  .midas-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+  .midas-table th, .midas-table td { padding: 0; border: 0; white-space: normal; }
+  .midas-table tbody th { grid-column: 1 / -1; width: auto; margin-bottom: 2px; }
+  .midas-table td::before { content: attr(data-label); display: block; margin-bottom: 2px; color: var(--ink-soft); font-size: 10px; font-weight: 700; }
+  .midas-table .midas-number { text-align: left; }
+  .wealth-actions { gap: 3px 12px; }
+}

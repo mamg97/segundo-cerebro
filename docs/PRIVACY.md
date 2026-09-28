@@ -77,6 +77,8 @@ No añadir escritura a un dominio nuevo sin revisar fuente de verdad, amenaza y 
 
 GitHub Pages publica únicamente la demo mock. Un fallo o cambio en la aplicación privada nunca debe provocar que datos reales terminen en Pages.
 
+La vista MIDAS solo se habilita en el bundle privado. Su fuente pública contiene exclusivamente carteras y operaciones ficticias; nunca se copia a ese repositorio el diario genético privado, credenciales de brokers ni posiciones personales. La vista no añade su capital demo al patrimonio real.
+
 ## Modo privado local
 
 `.private/` es una capa auxiliar histórica para pruebas y migraciones locales. Está ignorada por Git, no es la arquitectura principal y no debe servirse por una interfaz de red compartida.

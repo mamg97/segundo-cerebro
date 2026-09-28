@@ -561,3 +561,7 @@ Reglas:
 - `null` significa que Apple Health no aportó una muestra utilizable; no equivale a cero.
 - no almacenar una copia de todas las muestras crudas cardiacas/sueño cuando el caso de uso solo necesita el resumen diario.
 - los valores reales permanecen en D1 privado; Git solo define contrato/esquema.
+
+## MIDAS · proyección externa de solo lectura
+
+`GET /api/midas` devuelve el `dashboard.json` público normalizado: `generated_at_utc`, `stale` y `tracks[]` con `id`, `label`, `group`, `status`, `first_session`, `last_session`, `currency`, `last_equity`, `day_return_pct`, `return_pct` y `note`. El porcentaje diario compara los dos últimos valores de patrimonio ficticio del diario; es `null` si aún no hay dos cierres. Los porcentajes de campañas con fechas, mercados o divisas distintos no son directamente comparables. Segundo Cerebro no persiste esas filas en D1.

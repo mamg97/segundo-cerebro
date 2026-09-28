@@ -2,8 +2,8 @@
 
 ## Última actualización
 
-- **Fecha:** 2026-09-24
-- **Herramienta:** ChatGPT normal
+- **Fecha:** 2026-09-28
+- **Herramienta:** Codex
 - **Rama operativa:** `main`
 - **Repositorio:** `mamg97/segundo-cerebro`
 
@@ -627,3 +627,11 @@ La primera intervención irreductible es:
 5. pulsar `Sincronizar ahora` una vez y comunicar el resultado de Diagnóstico.
 
 Después de esa primera sincronización se debe verificar D1/dashboard antes de retirar la automatización antigua.
+
+## MIDAS en Segundo Cerebro · v0.37.1
+
+- La aplicación privada añade «Ver MIDAS» en Patrimonio y muestra una tabla de las 30 líneas catalogadas: 9 carteras demo estadounidenses, 4 adaptaciones TFM EUR, el genético original con diario privado aún no enlazado y 16 ideas históricas pendientes (las cuatro TFM aparecen como adaptaciones, no como ideas pendientes duplicadas).
+- Por fila se ve estado, último cierre, variación del último día, acumulado y capital ficticio si existe. `—` significa dato ausente, no 0 %.
+- `GET /api/midas` lee el informe público de `mamg97/midas-paper-lab` bajo Cloudflare Access y mantiene caché de cinco minutos. Pages no muestra datos MIDAS.
+- Los workflows existentes de Madrid y EE. UU. actualizan el mismo informe. No se añade una Action periódica.
+- En el primer día, antes de dos cierres, la variación diaria permanece vacía. El genético original conserva su diario privado fuera de este informe.

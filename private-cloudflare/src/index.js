@@ -3,6 +3,7 @@ import { fetchPantrySummary, hasPantryGoogleConfig } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
+import { fetchMidasDashboard } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 
 const securityHeaders = {
@@ -3614,6 +3615,16 @@ export default {
       } catch (error) {
         console.warn("Electricity history read failed", String(error?.message || "ELECTRICITY_HISTORY_ERROR"));
         return json({ ok: false, code: "ELECTRICITY_HISTORY_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/midas") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        return json({ ok: true, ...(await fetchMidasDashboard()) });
+      } catch (error) {
+        console.warn("MIDAS dashboard read failed", String(error?.message || "MIDAS_READ_ERROR"));
+        return json({ ok: false, code: "MIDAS_READ_FAILED" }, 502);
       }
     }
 

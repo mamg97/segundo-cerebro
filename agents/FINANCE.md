@@ -54,6 +54,8 @@ El dashboard puede mostrar, de forma derivada y privada:
 - patrimonio;
 - estado de conciliación.
 
+El seguimiento MIDAS de carteras ficticias es un laboratorio separado: la fuente es el diario público de `mamg97/midas-paper-lab`, leído sin escritura a través de `GET /api/midas`. Su capital demo nunca se suma al patrimonio personal ni se reconcilia contra `BROKERS`. Cada fila conserva estado, fecha de última sesión, variación frente al cierre anterior y rentabilidad acumulada; la ausencia de diario o de cierre previo se muestra como desconocida, no como 0 %.
+
 La UI no debe inferir dinero libre a partir de un saldo bancario ni mezclar flujo mensual con patrimonio de inversión.
 
 ## Relevo entre conversaciones

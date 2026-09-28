@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.36.2">
-    <script type="module" src="./app.js?v=0.36.2"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.37.1">
+    <script type="module" src="./app.js?v=0.37.1"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -190,7 +190,10 @@
                 <p class="context-label">Patrimonio</p>
                 <h2>Total actualizado</h2>
               </div>
-              <button id="show-wealth-detail" class="text-action" type="button">Ver evolución</button>
+              <div class="wealth-actions">
+                <button id="show-midas-detail" class="text-action" type="button" hidden>Ver MIDAS</button>
+                <button id="show-wealth-detail" class="text-action" type="button">Ver evolución</button>
+              </div>
             </div>
             <div id="wealth-summary" class="wealth-summary"></div>
           </article>
@@ -256,6 +259,12 @@
       <p id="dialog-context" class="context-label"></p>
       <h2 id="dialog-title"></h2>
       <div id="dialog-body"></div>
+    </dialog>
+    <dialog id="midas-dialog" class="detail-dialog midas-dialog" aria-labelledby="midas-title">
+      <button id="close-midas-dialog" class="dialog-close" type="button" aria-label="Cerrar informe MIDAS">×</button>
+      <p class="context-label">Inversiones · Cartera ficticia</p>
+      <h2 id="midas-title">Seguimiento MIDAS</h2>
+      <div id="midas-report" aria-live="polite"></div>
     </dialog>
   </body>
 </html>

@@ -691,6 +691,7 @@ function renderMode() {
   const openDecisions = (Array.isArray(state.decisions) ? state.decisions : []).filter((decision) => decision.status === "open").length;
   const local = privateModeKind === "local";
   const remote = privateModeKind === "remote";
+  document.querySelector("#show-midas-detail")?.toggleAttribute("hidden", globalThis.__SECOND_BRAIN_REMOTE__ !== true);
 
   const remoteUnavailable = globalThis.__SECOND_BRAIN_REMOTE__ === true && !remote && Boolean(remoteStateLoadError);
   document.querySelector("#privacy-mode-title").textContent = remote ? "Modo privado remoto" : local ? "Modo local privado" : remoteUnavailable ? "Modo privado" : "Modo demo";
@@ -3848,6 +3849,93 @@ function openWealthDetail() {
   dialog.showModal();
 }
 
+const MIDAS_GROUPS = [
+  ["paper_nuevo", "Campaña estadounidense · USD"],
+  ["tfm_demo_adaptado", "Modelos TFM adaptados · EUR"],
+  ["diario_heredado", "Estrategia heredada"],
+  ["historica_pendiente", "Ideas históricas pendientes"]
+];
+
+const MIDAS_STATUS = {
+  demo_con_diario: "Demo con diario",
+  programada_sin_diario: "Programada, sin sesión",
+  pendiente_modelo: "Modelo pendiente",
+  sin_diario_disponible: "Diario no enlazado",
+  diario_heredado_observado: "Diario heredado",
+  sin_ejecucion_comparable: "Pendiente de adaptación"
+};
+
+function formatMidasPercent(value) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  return `${value > 0 ? "+" : ""}${value.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`;
+}
+
+function renderMidasRows(rows) {
+  return `<div class="midas-table-scroll" role="region" aria-label="Resultados de estrategias" tabindex="0">
+    <table class="midas-table">
+      <thead><tr><th scope="col">Estrategia</th><th scope="col">Estado</th><th scope="col">Última sesión</th><th scope="col">Día</th><th scope="col">Acumulado</th><th scope="col">Capital demo</th></tr></thead>
+      <tbody>${rows.map((row) => `<tr>
+        <th scope="row"><span>${escapeHtml(row.label)}</span>${row.note && ["diario_heredado", "historica_pendiente"].includes(row.group) ? `<small>${escapeHtml(row.note)}</small>` : ""}</th>
+        <td data-label="Estado"><span class="midas-status ${row.status === "demo_con_diario" ? "is-running" : ""}">${escapeHtml(MIDAS_STATUS[row.status] || row.status)}</span></td>
+        <td data-label="Última sesión">${escapeHtml(formatFinanceDate(row.last_session, "—"))}</td>
+        <td class="midas-number" data-label="Día">${formatMidasPercent(row.day_return_pct)}</td>
+        <td class="midas-number" data-label="Acumulado">${formatMidasPercent(row.return_pct)}</td>
+        <td class="midas-number" data-label="Capital demo">${row.last_equity === null || !row.currency ? "—" : escapeHtml(formatMoney(row.last_equity, row.currency))}</td>
+      </tr>`).join("")}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderMidasReport(dashboard, stale) {
+  const rows = dashboard.tracks || [];
+  const observed = rows.filter((row) => row.status === "demo_con_diario").length;
+  const lastSessions = rows.map((row) => row.last_session).filter(Boolean).sort();
+  const latest = lastSessions.length ? lastSessions[lastSessions.length - 1] : null;
+  return `<div class="midas-report">
+    <div class="midas-intro">
+      <p><strong>${observed} de ${rows.length} líneas con diario demo</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
+      <p class="midas-updated">Informe generado ${escapeHtml(formatFinanceDate(dashboard.generated_at_utc))}${stale ? " · copia temporal: la fuente no responde" : ""}</p>
+    </div>
+    <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado.</p>
+    ${MIDAS_GROUPS.map(([group, title]) => {
+      const groupRows = rows.filter((row) => row.group === group);
+      if (!groupRows.length) return "";
+      if (group === "historica_pendiente") {
+        return `<details class="midas-pending"><summary>${title} <span>${groupRows.length}</span></summary>${renderMidasRows(groupRows)}</details>`;
+      }
+      return `<section class="midas-group"><h3>${title}</h3>${group === "tfm_demo_adaptado" ? '<p class="midas-group-note">Modelos reimplementados en 2026 con una regla de cartera provisional común.</p>' : ""}${renderMidasRows(groupRows)}</section>`;
+    }).join("")}
+    <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>. La estrategia genética original mantiene su diario privado y solo tendrá cifras aquí cuando se enlace expresamente.</p>
+  </div>`;
+}
+
+async function openMidasDialog() {
+  if (globalThis.__SECOND_BRAIN_REMOTE__ !== true) return;
+  const dialog = document.querySelector("#midas-dialog");
+  const target = document.querySelector("#midas-report");
+  if (!dialog.open) dialog.showModal();
+  target.innerHTML = '<p class="midas-loading">Cargando el último informe de MIDAS…</p>';
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch("/api/midas", {
+      headers: { Accept: "application/json" }, credentials: "same-origin",
+      cache: "no-store", signal: controller.signal
+    });
+    if (!response.ok) throw new Error(`MIDAS_HTTP_${response.status}`);
+    const result = await response.json();
+    if (!result.ok || !Array.isArray(result.dashboard?.tracks)) throw new Error("MIDAS_INVALID_RESPONSE");
+    if (dialog.open) target.innerHTML = renderMidasReport(result.dashboard, result.stale);
+  } catch {
+    if (dialog.open) {
+      target.innerHTML = '<div class="midas-error"><strong>No se pudo cargar el informe.</strong><p>El diario público puede estar aún sin publicar o temporalmente inaccesible.</p><button id="midas-retry" type="button">Reintentar</button></div>';
+      target.querySelector("#midas-retry")?.addEventListener("click", () => void openMidasDialog());
+    }
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 function renderWealthLineChart(history, seriesDefs, currency, ariaLabel) {
   const width = 760;
   const height = 250;
@@ -4753,6 +4841,8 @@ function bindInteractions() {
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
+  document.querySelector("#show-midas-detail")?.addEventListener("click", () => void openMidasDialog());
+  document.querySelector("#close-midas-dialog")?.addEventListener("click", () => document.querySelector("#midas-dialog")?.close());
   document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspaceInline("history"));
   document.querySelector("#home-habits-card")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
   document.querySelector("#home-nutrition-card")?.addEventListener("click", async () => {

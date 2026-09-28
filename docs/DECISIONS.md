@@ -313,3 +313,11 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Criterio de retirada del Atajo:** no deshabilitarlo hasta validar una sincronización nativa real, una posterior actualización automática y una vía de firma sostenible.
 - **Provisioning:** un Xcode Personal Team gratuito sirve para validar el bridge, pero sus perfiles expiran a los 7 días; no se considera una sustitución operativa permanente mientras esa sea la única firma disponible.
 - **Motivo:** eliminar la lógica frágil y difícil de mantener de Atajos, permitir pruebas/CI, ampliar señales y reducir la intervención manual sin introducir una reinstalación semanal como dependencia permanente.
+
+## D-035 — MIDAS se consulta como laboratorio demo separado
+
+- **Estado:** implementada en código; primera sesión real pendiente de los próximos cierres.
+- **Fecha:** 2026-09-28.
+- **Decisión:** la aplicación privada muestra una tabla diaria de todas las líneas MIDAS desde el `dashboard.json` público generado por los workflows existentes. El Worker lo valida y sirve sin credenciales GitHub ni persistencia local.
+- **Límite:** las carteras son ficticias y no forman parte del patrimonio personal; las ideas sin diario conservan estado sin rentabilidad. El genético histórico privado se muestra sin cifras hasta que se autorice y verifique una integración privada.
+- **Coste:** se reutilizan los dos workflows de mercado; no se crea una Action diaria adicional.

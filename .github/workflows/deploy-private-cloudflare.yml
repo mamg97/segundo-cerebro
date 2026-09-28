@@ -61,6 +61,10 @@ jobs:
           node --check src/adherence.js
           node --check src/icloud-calendar.js
           node --check src/health-ingest.js
+          node --check src/midas.js
+
+      - name: Verify MIDAS report adapter
+        run: node --test tests/midas.test.mjs
 
       - name: Build private bundle
         run: npm run build
