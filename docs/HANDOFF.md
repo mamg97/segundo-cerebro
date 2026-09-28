@@ -730,3 +730,20 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - Solo por debajo de 340 px se vuelve a 1 cuenta por fila.
 - El cambio es exclusivamente CSS/responsive; no toca `app.js`, contratos financieros ni la estructura del menú que puede evolucionar en paralelo.
 - Asset CSS: `v0.38.3`; JS permanece sin cambios.
+
+
+## UI · legibilidad tipográfica v0.38.4
+
+- Aplicado un pase transversal de legibilidad sin alterar estructura, datos ni navegación.
+- Se mantienen los titulares grandes actuales; se aumentan principalmente textos secundarios que habían quedado demasiado pequeños:
+  - acciones y microcopy;
+  - métricas auxiliares de Finanzas;
+  - nombres/importes de cuentas y leyendas de Patrimonio;
+  - calendario y próximos movimientos;
+  - Salud, Gimnasio y vistas de detalle;
+  - menú semanal y resumen del menú en Home.
+- En escritorio, muchas etiquetas que estaban en 6–9 px pasan al rango aproximado 8.5–12 px según jerarquía.
+- En móvil se conserva la rejilla 2×2 de cuentas, pero se suben las fuentes internas hasta el máximo compatible con media anchura.
+- El cambio se implementa como override CSS final para minimizar conflictos con cambios concurrentes en la estructura del menú.
+- No se modifica `app.js` ni el HTML estructural.
+- Asset CSS: `v0.38.4`; JS permanece `v0.38.1`.
