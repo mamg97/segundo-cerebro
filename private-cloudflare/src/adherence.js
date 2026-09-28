@@ -2,10 +2,6 @@ const CACHE_MS = 30000;
 
 const RULES = Object.freeze({
   nutritionMinimumCoverage: 0.55,
-  kcalPassLow: 0.90,
-  kcalPassHigh: 1.10,
-  kcalPartialLow: 0.80,
-  kcalPartialHigh: 1.20,
   proteinPassRatio: 0.94,
   proteinPartialRatio: 0.75,
   stepsPartialRatio: 0.70,
@@ -140,15 +136,13 @@ function evaluateDay(input) {
     dimensions.push(dim("kcal", "Nutrición kcal", "unknown", consumed.kcal || null, targetKcal, consumed.count ? "Registro insuficiente para juzgar el día completo" : "Sin ingestas registradas"));
     reasons.push(consumed.count ? "Registro nutricional incompleto" : "Sin ingestas registradas");
   } else {
-    const ratio = consumed.kcal / targetKcal;
-    const state = ratio >= RULES.kcalPassLow && ratio <= RULES.kcalPassHigh
-      ? "pass"
-      : ratio >= RULES.kcalPartialLow && ratio <= RULES.kcalPartialHigh
-        ? "partial"
-        : "fail";
-    dimensions.push(dim("kcal", "Nutrición kcal", state, consumed.kcal, targetKcal, null));
-    if (state === "partial") reasons.push("Calorías algo fuera del rango objetivo");
-    if (state === "fail") reasons.push("Calorías claramente fuera del rango objetivo");
+    const overBy = consumed.kcal - targetKcal;
+    const state = overBy <= 0 ? "pass" : "fail";
+    const note = state === "pass"
+      ? "Dentro del límite calórico"
+      : Math.round(overBy) + " kcal por encima del límite";
+    dimensions.push(dim("kcal", "Nutrición kcal", state, consumed.kcal, targetKcal, note));
+    if (state === "fail") reasons.push("Calorías por encima del límite");
   }
 
   if (targetProtein === null) {
