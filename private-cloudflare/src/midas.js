@@ -68,11 +68,36 @@ function tableRows(values = []) {
     .map((row) => Object.fromEntries(headers.map((header, index) => [header, row?.[index] ?? null])));
 }
 
+async function resolveResearchIdFromPrivateRegistry(env, token, fetcher = fetch) {
+  const financeSheetId = String(env?.FINANCE_SHEET_ID || "").trim();
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(financeSheetId)) return null;
+  const range = encodeURIComponent("IntegracionesPrivadas!A1:B50");
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(financeSheetId)}/values/${range}?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE`;
+  try {
+    const response = await fetcher(endpoint, { headers: { Authorization: "Bearer " + token } });
+    if (!response.ok) return null;
+    const rows = (await response.json())?.values || [];
+    const entry = rows.find((row) => String(row?.[0] || "").trim() === "MIDAS_RESEARCH_SHEET_ID");
+    const value = String(entry?.[1] || "").trim();
+    return /^[A-Za-z0-9_-]{20,}$/.test(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 async function resolveResearchSpreadsheetId(env, token, fetcher = fetch) {
   if (env?.MIDAS_RESEARCH_SHEET_ID) return String(env.MIDAS_RESEARCH_SHEET_ID).trim();
   if (researchCache.spreadsheetId && researchCache.spreadsheetIdExpiresAt > Date.now()) {
     return researchCache.spreadsheetId;
   }
+
+  const privateRegistryId = await resolveResearchIdFromPrivateRegistry(env, token, fetcher);
+  if (privateRegistryId) {
+    researchCache.spreadsheetId = privateRegistryId;
+    researchCache.spreadsheetIdExpiresAt = Date.now() + 10 * 60_000;
+    return privateRegistryId;
+  }
+
   const params = new URLSearchParams({
     q: "name = 'MIDAS - TESIS Y WATCHLIST' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",
     fields: "files(id,name,modifiedTime)",
