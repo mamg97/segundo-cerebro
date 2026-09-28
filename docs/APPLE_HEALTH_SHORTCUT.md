@@ -1,8 +1,10 @@
-# Apple Health → Segundo Cerebro — Atajo de iPhone
+# Apple Health → Segundo Cerebro — Atajo de iPhone (fallback legado)
+
+> **Estado desde 2026-09-28:** este Atajo deja de ser la arquitectura objetivo. Se conserva temporalmente como fallback mientras se valida en un iPhone físico el bridge nativo `ios/SegundoCerebroHealthBridge`. No crear más lógica ni métricas nuevas en Atajos. La instalación y transición están documentadas en `ios/SegundoCerebroHealthBridge/README.md`.
 
 ## Estado
 
-Integración v2 validada end-to-end el 2026-09-24.
+Integración v2 del Atajo validada end-to-end el 2026-09-24. Sigue operativa únicamente como respaldo durante la transición.
 
 Flujo confirmado:
 
