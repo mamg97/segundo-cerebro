@@ -253,10 +253,13 @@ function renderWorkspace(payload, initialView = "inventory") {
 
   body.innerHTML =
     '<div class="pantry-shell">' +
-      '<nav class="pantry-view-nav" role="tablist" aria-label="Vistas de Despensa">' +
-        '<button type="button" data-pantry-view="inventory" role="tab">Inventario</button>' +
-        '<button type="button" data-pantry-view="shopping" role="tab">🛒 Lista de la compra <span>' + Number(summary.pendingPurchaseCount || shopping.length || 0) + '</span></button>' +
-      '</nav>' +
+      '<div class="pantry-topbar">' +
+        '<nav class="pantry-view-nav" role="tablist" aria-label="Vistas de Despensa">' +
+          '<button type="button" data-pantry-view="inventory" role="tab">Inventario</button>' +
+          '<button type="button" data-pantry-view="shopping" role="tab">🛒 Lista de la compra <span>' + Number(summary.pendingPurchaseCount || shopping.length || 0) + '</span></button>' +
+        '</nav>' +
+        '<a class="master-source-link" href="/api/source-link?target=pantry-products" target="_blank" rel="noopener noreferrer">Maestro de productos ↗</a>' +
+      '</div>' +
       '<div class="pantry-view-panel" data-pantry-panel="inventory">' +
       '<section class="pantry-hero">' +
         '<div><p class="pantry-human-status">' + escapeHtml(summary.homeMessage || "Inventario doméstico conectado.") + '</p>' +
