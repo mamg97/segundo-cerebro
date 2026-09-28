@@ -628,10 +628,11 @@ La primera intervención irreductible es:
 
 Después de esa primera sincronización se debe verificar D1/dashboard antes de retirar la automatización antigua.
 
-## MIDAS en Segundo Cerebro · v0.37.2
+## MIDAS en Segundo Cerebro · v0.37.3
 
 - La aplicación privada abre el informe desde la ficha Proyectos → MIDAS → «Ver informe diario» y también desde la tarjeta Patrimonio → «Ver MIDAS» de la pantalla principal. Ambos accesos muestran las 31 líneas catalogadas: 9 carteras demo estadounidenses, 4 adaptaciones TFM EUR, el genético original con diario privado aún no enlazado y 17 ideas pendientes, incluida TimesFM como hipótesis de investigación.
 - Por fila se ve estado, último cierre, variación del último día, acumulado y capital ficticio si existe. `—` significa dato ausente, no 0 %.
 - `GET /api/midas` lee el informe público de `mamg97/midas-paper-lab` bajo Cloudflare Access y mantiene caché de cinco minutos. Pages no muestra datos MIDAS.
 - Los workflows existentes de Madrid y EE. UU. actualizan el mismo informe. No se añade una Action periódica.
 - En el primer día, antes de dos cierres, la variación diaria permanece vacía. El genético original conserva su diario privado fuera de este informe.
+- El genético original S&P 500 aparece como primera sección del informe, con su diario privado marcado como no enlazado. La estrategia `genetic_frozen` de ocho acciones es una adaptación nueva y separada; sus resultados no se atribuyen al agente original.

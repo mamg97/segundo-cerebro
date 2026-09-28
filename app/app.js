@@ -3850,9 +3850,9 @@ function openWealthDetail() {
 }
 
 const MIDAS_GROUPS = [
+  ["diario_heredado", "Algoritmo genético original · S&P 500"],
   ["paper_nuevo", "Campaña estadounidense · USD"],
   ["tfm_demo_adaptado", "Modelos TFM adaptados · EUR"],
-  ["diario_heredado", "Estrategia heredada"],
   ["historica_pendiente", "Ideas históricas pendientes"]
 ];
 
@@ -3860,7 +3860,7 @@ const MIDAS_STATUS = {
   demo_con_diario: "Demo con diario",
   programada_sin_diario: "Programada, sin sesión",
   pendiente_modelo: "Modelo pendiente",
-  sin_diario_disponible: "Diario no enlazado",
+  sin_diario_disponible: "Diario privado no enlazado",
   diario_heredado_observado: "Diario heredado",
   sin_ejecucion_comparable: "Pendiente de adaptación"
 };
@@ -3888,14 +3888,16 @@ function renderMidasRows(rows) {
 
 function renderMidasReport(dashboard, stale) {
   const rows = dashboard.tracks || [];
-  const observed = rows.filter((row) => row.status === "demo_con_diario").length;
+  const observed = rows.filter((row) => ["demo_con_diario", "diario_heredado_observado"].includes(row.status)).length;
+  const originalGenetic = rows.find((row) => row.id === "genetic_sp500_legacy");
   const lastSessions = rows.map((row) => row.last_session).filter(Boolean).sort();
   const latest = lastSessions.length ? lastSessions[lastSessions.length - 1] : null;
   return `<div class="midas-report">
     <div class="midas-intro">
-      <p><strong>${observed} de ${rows.length} líneas con diario demo</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
+      <p><strong>${observed} estrategias con resultados en este informe</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
       <p class="midas-updated">Informe generado ${escapeHtml(formatFinanceDate(dashboard.generated_at_utc))}${stale ? " · copia temporal: la fuente no responde" : ""}</p>
     </div>
+    ${originalGenetic && originalGenetic.status === "sin_diario_disponible" ? '<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>Figura en la primera tabla, pero su diario privado aún no está conectado a este informe. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>' : ""}
     <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado.</p>
     ${MIDAS_GROUPS.map(([group, title]) => {
       const groupRows = rows.filter((row) => row.group === group);
@@ -3903,9 +3905,14 @@ function renderMidasReport(dashboard, stale) {
       if (group === "historica_pendiente") {
         return `<details class="midas-pending"><summary>${title} <span>${groupRows.length}</span></summary>${renderMidasRows(groupRows)}</details>`;
       }
-      return `<section class="midas-group"><h3>${title}</h3>${group === "tfm_demo_adaptado" ? '<p class="midas-group-note">Modelos reimplementados en 2026 con una regla de cartera provisional común.</p>' : ""}${renderMidasRows(groupRows)}</section>`;
+      const groupNote = group === "diario_heredado"
+        ? `<p class="midas-group-note">Estrategia original con ejecución y diario propios.${originalGenetic?.status === "sin_diario_disponible" ? " Sin cifras hasta verificar y enlazar ese diario privado." : ""}</p>`
+        : group === "tfm_demo_adaptado"
+          ? '<p class="midas-group-note">Modelos reimplementados en 2026 con una regla de cartera provisional común.</p>'
+          : "";
+      return `<section class="midas-group"><h3>${title}</h3>${groupNote}${renderMidasRows(groupRows)}</section>`;
     }).join("")}
-    <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>. La estrategia genética original mantiene su diario privado y solo tendrá cifras aquí cuando se enlace expresamente.</p>
+    <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>.${originalGenetic?.status === "sin_diario_disponible" ? " La estrategia genética original mantiene su diario privado, aún no enlazado." : ""}</p>
   </div>`;
 }
 

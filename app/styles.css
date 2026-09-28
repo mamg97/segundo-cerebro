@@ -13755,6 +13755,9 @@ html[data-theme="dark"] .liquidity-svg-base {
 .midas-intro p { display: grid; gap: 3px; margin: 0; }
 .midas-intro strong { font-size: 17px; letter-spacing: -.02em; }
 .midas-intro span, .midas-updated, .midas-source { color: var(--ink-soft); }
+.midas-genetic-note { display: grid; gap: 3px; margin: 0; padding: 12px 15px; border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--blue) 7%, var(--surface)); }
+.midas-genetic-note strong { color: var(--blue); }
+.midas-genetic-note span { color: var(--ink-soft); }
 .midas-caveat { margin: 0; max-width: 75ch; color: var(--ink-soft); }
 .midas-group { min-width: 0; }
 .midas-group h3 { margin: 0 0 10px; font-size: 17px; letter-spacing: -.015em; }
