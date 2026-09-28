@@ -310,5 +310,6 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Automatización:** HealthKit Observer Query + Background Delivery son el mecanismo principal; BGAppRefresh aporta reconciliación best-effort. No se promete una hora exacta porque iOS controla la ejecución.
 - **Seguridad:** el token se guarda en Keychain del iPhone. La app solicita solo lectura de HealthKit y Git nunca contiene datos reales ni secretos.
 - **Despliegue:** el Worker de ingesta pasa a desplegarse automáticamente junto con el Worker privado cuando cambian sus fuentes.
-- **Criterio de retirada del Atajo:** no deshabilitarlo hasta validar una sincronización nativa real y una posterior actualización automática.
-- **Motivo:** eliminar la lógica frágil y difícil de mantener de Atajos, permitir pruebas/CI, ampliar señales y reducir la intervención manual.
+- **Criterio de retirada del Atajo:** no deshabilitarlo hasta validar una sincronización nativa real, una posterior actualización automática y una vía de firma sostenible.
+- **Provisioning:** un Xcode Personal Team gratuito sirve para validar el bridge, pero sus perfiles expiran a los 7 días; no se considera una sustitución operativa permanente mientras esa sea la única firma disponible.
+- **Motivo:** eliminar la lógica frágil y difícil de mantener de Atajos, permitir pruebas/CI, ampliar señales y reducir la intervención manual sin introducir una reinstalación semanal como dependencia permanente.
