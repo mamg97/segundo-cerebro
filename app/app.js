@@ -3218,10 +3218,12 @@ function weeklyMenuModel(data) {
         (momentOrder.get(normalizedMoment(a.moment)) ?? 99)
         - (momentOrder.get(normalizedMoment(b.moment)) ?? 99)
       );
+      const incompleteItems = items.filter((item) => item.kcal == null || item.protein == null);
+      const nutritionComplete = incompleteItems.length === 0;
       const kcal = items.reduce((sum, item) => sum + (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0);
       const protein = items.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
-      const kcalPct = Number.isFinite(kcalTarget) && kcalTarget > 0 ? Math.round((kcal / kcalTarget) * 100) : null;
-      const proteinPct = Number.isFinite(proteinTarget) && proteinTarget > 0 ? Math.round((protein / proteinTarget) * 100) : null;
+      const kcalPct = nutritionComplete && Number.isFinite(kcalTarget) && kcalTarget > 0 ? Math.round((kcal / kcalTarget) * 100) : null;
+      const proteinPct = nutritionComplete && Number.isFinite(proteinTarget) && proteinTarget > 0 ? Math.round((protein / proteinTarget) * 100) : null;
       return {
         date,
         items,
@@ -3229,8 +3231,10 @@ function weeklyMenuModel(data) {
         protein,
         kcalPct,
         proteinPct,
-        kcalRemaining: Number.isFinite(kcalTarget) ? kcalTarget - kcal : null,
-        proteinRemaining: Number.isFinite(proteinTarget) ? proteinTarget - protein : null
+        nutritionComplete,
+        incompleteItems,
+        kcalRemaining: nutritionComplete && Number.isFinite(kcalTarget) ? kcalTarget - kcal : null,
+        proteinRemaining: nutritionComplete && Number.isFinite(proteinTarget) ? proteinTarget - protein : null
       };
     });
 
@@ -3243,6 +3247,14 @@ function weeklyMenuModel(data) {
 }
 
 function weeklyMenuTargetLine(day, model) {
+  if (!day.nutritionComplete) {
+    const missing = day.incompleteItems
+      .map((item) => item.name)
+      .filter(Boolean)
+      .join(" · ");
+    return `Datos nutricionales incompletos${missing ? `: faltan ${missing}` : ""}. El total mostrado es solo el subtotal conocido.`;
+  }
+
   const parts = [];
   if (model.kcalTarget !== null) {
     const delta = day.kcalRemaining;
@@ -3271,7 +3283,15 @@ function weeklyMenuDayLabel(date, options = {}) {
   }).format(parsed).replace(".", "");
 }
 
-function renderWeeklyMenuProgress(label, value, target, pct, tone) {
+function renderWeeklyMenuProgress(label, value, target, pct, tone, incomplete = false) {
+  if (incomplete) {
+    return `
+      <div class="weekly-menu-progress ${tone}">
+        <div><span>${escapeHtml(label)}</span><strong>${label === "Proteína" ? formatMacro(value) : formatKcal(value)} <small>subtotal</small></strong></div>
+        <small>Faltan datos de alguna comida</small>
+      </div>`;
+  }
+
   if (!Number.isFinite(target) || target <= 0) {
     return `
       <div class="weekly-menu-progress ${tone}">
@@ -3440,8 +3460,8 @@ function renderMenuPanel(data) {
             </header>
 
             <div class="weekly-menu-day-progress">
-              ${renderWeeklyMenuProgress("Calorías", day.kcal, model.kcalTarget, day.kcalPct, "kcal")}
-              ${renderWeeklyMenuProgress("Proteína", day.protein, model.proteinTarget, day.proteinPct, "protein")}
+              ${renderWeeklyMenuProgress("Calorías", day.kcal, model.kcalTarget, day.kcalPct, "kcal", !day.nutritionComplete)}
+              ${renderWeeklyMenuProgress("Proteína", day.protein, model.proteinTarget, day.proteinPct, "protein", !day.nutritionComplete)}
             </div>
 
             <div class="weekly-menu-meal-list">
@@ -3503,19 +3523,19 @@ function renderHomeWeeklyMenu(data) {
                 <small>${isToday ? "Hoy" : "Día"}</small>
                 <strong>${escapeHtml(weeklyMenuDayLabel(day.date))}</strong>
               </div>
-              <span>${day.kcalPct == null ? formatKcal(day.kcal) : day.kcalPct + "% kcal"}</span>
+              <span>${!day.nutritionComplete ? "Datos incompletos" : day.kcalPct == null ? formatKcal(day.kcal) : day.kcalPct + "% kcal"}</span>
             </header>
 
             <div class="home-weekly-menu-progress">
               <div>
                 <span><i class="kcal"></i>Kcal</span>
-                <b>${formatKcal(day.kcal)}${model.kcalTarget === null ? "" : ` / ${formatKcal(model.kcalTarget)}`}</b>
-                ${model.kcalTarget === null ? "" : `<progress max="100" value="${Math.max(0, Math.min(100, day.kcalPct || 0))}"></progress>`}
+                <b>${!day.nutritionComplete ? "Subtotal " : ""}${formatKcal(day.kcal)}${day.nutritionComplete && model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
+                ${day.nutritionComplete && model.kcalTarget !== null ? `<progress max="100" value="${Math.max(0, Math.min(100, day.kcalPct || 0))}"></progress>` : ""}
               </div>
               <div>
                 <span><i class="protein"></i>Proteína</span>
-                <b>${formatMacro(day.protein)}${model.proteinTarget === null ? "" : ` / ${formatMacro(model.proteinTarget)}`}</b>
-                ${model.proteinTarget === null ? "" : `<progress max="100" value="${Math.max(0, Math.min(100, day.proteinPct || 0))}"></progress>`}
+                <b>${!day.nutritionComplete ? "Subtotal " : ""}${formatMacro(day.protein)}${day.nutritionComplete && model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
+                ${day.nutritionComplete && model.proteinTarget !== null ? `<progress max="100" value="${Math.max(0, Math.min(100, day.proteinPct || 0))}"></progress>` : ""}
               </div>
             </div>
 
