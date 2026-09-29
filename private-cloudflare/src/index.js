@@ -3101,10 +3101,30 @@ async function ensureFamilyTables(env) {
     )
   `).run();
 
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS family_wealth_items (
+      id TEXT PRIMARY KEY,
+      owner_scope TEXT NOT NULL,
+      category TEXT NOT NULL,
+      label TEXT NOT NULL,
+      amount_eur REAL,
+      valuation_status TEXT NOT NULL DEFAULT 'pending',
+      as_of_date TEXT,
+      source_provider TEXT NOT NULL DEFAULT 'd1',
+      source_ref TEXT,
+      note TEXT,
+      sensitivity TEXT NOT NULL DEFAULT 'muy_confidencial',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `).run();
+
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_cases_scope_status ON family_cases(person_scope, status)").run();
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_cases_due ON family_cases(due_at)").run();
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_actions_case ON family_case_actions(case_id, happened_at DESC)").run();
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_refs_case ON family_case_refs(case_id, updated_at DESC)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_wealth_owner_category ON family_wealth_items(owner_scope, category)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_family_wealth_status ON family_wealth_items(valuation_status, updated_at DESC)").run();
 }
 
 const FAMILY_SCOPES = new Set(["mother", "father", "shared"]);
@@ -3113,6 +3133,8 @@ const FAMILY_STATUSES = new Set(["ACTIVE", "WAITING_EXTERNAL", "WAITING_DOCUMENT
 const FAMILY_PRIORITIES = new Set(["low", "medium", "high", "critical"]);
 const FAMILY_ACTION_TYPES = new Set(["note", "update", "milestone", "communication", "document_request", "decision", "task"]);
 const FAMILY_REF_PROVIDERS = new Set(["calendar", "finance", "litos", "email", "drive", "document", "d1", "other"]);
+const FAMILY_WEALTH_CATEGORIES = new Set(["investment", "property", "business", "cash", "debt", "other"]);
+const FAMILY_WEALTH_STATUSES = new Set(["confirmed", "estimated", "pending"]);
 
 function familyTrim(value, max = 2000) {
   return String(value ?? "").trim().slice(0, max);
@@ -3281,6 +3303,200 @@ async function fetchFamilyHomeSummary(env) {
     nextDueAt: dueDates[0]?.value || null,
     updatedAt: cases.reduce((latest, item) => !latest || item.updatedAt > latest ? item.updatedAt : latest, null)
   };
+}
+
+function familyWealthFromRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    ownerScope: row.owner_scope,
+    category: row.category,
+    label: row.label,
+    amountEur: row.amount_eur === null || row.amount_eur === undefined ? null : Number(row.amount_eur),
+    valuationStatus: row.valuation_status,
+    asOfDate: row.as_of_date || null,
+    sourceProvider: row.source_provider || "d1",
+    sourceRef: row.source_ref || null,
+    note: row.note || null,
+    sensitivity: row.sensitivity || "muy_confidencial",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function familyWealthAmount(value) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const parsed = Number(String(value).replace(",", "."));
+  if (!Number.isFinite(parsed) || parsed < 0) throw new Error("INVALID_FAMILY_WEALTH_AMOUNT");
+  return Math.round(parsed * 100) / 100;
+}
+
+async function fetchFamilyWealth(env) {
+  await ensureFamilyTables(env);
+  const result = await env.DB.prepare(`
+    SELECT id, owner_scope, category, label, amount_eur, valuation_status,
+           as_of_date, source_provider, source_ref, note, sensitivity,
+           created_at, updated_at
+    FROM family_wealth_items
+    ORDER BY
+      CASE category
+        WHEN 'investment' THEN 1
+        WHEN 'property' THEN 2
+        WHEN 'business' THEN 3
+        WHEN 'cash' THEN 4
+        WHEN 'other' THEN 5
+        WHEN 'debt' THEN 6
+        ELSE 7
+      END,
+      label COLLATE NOCASE
+  `).all();
+
+  const items = (result.results || []).map(familyWealthFromRow);
+  const known = items.filter((item) => item.amountEur !== null && item.valuationStatus !== "pending");
+  const assets = known.filter((item) => item.category !== "debt");
+  const liabilities = known.filter((item) => item.category === "debt");
+  const sum = (rows) => Math.round(rows.reduce((total, item) => total + Number(item.amountEur || 0), 0) * 100) / 100;
+  const grossAssets = sum(assets);
+  const liabilitiesTotal = sum(liabilities);
+
+  return {
+    items,
+    summary: {
+      grossAssets,
+      liabilities: liabilitiesTotal,
+      netKnown: Math.round((grossAssets - liabilitiesTotal) * 100) / 100,
+      investments: sum(assets.filter((item) => item.category === "investment")),
+      pendingValuations: items.filter((item) => item.valuationStatus === "pending" || item.amountEur === null).length,
+      itemCount: items.length,
+      updatedAt: items.reduce((latest, item) => !latest || item.updatedAt > latest ? item.updatedAt : latest, null)
+    }
+  };
+}
+
+async function createFamilyWealthItem(request, env) {
+  await ensureFamilyTables(env);
+  let payload;
+  try { payload = await request.json(); }
+  catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const ownerScope = familyTrim(payload?.ownerScope || "shared", 24);
+  const category = familyTrim(payload?.category, 32);
+  const label = familyTrim(payload?.label, 240);
+  const valuationStatus = familyTrim(payload?.valuationStatus || "pending", 24).toLowerCase();
+  const sourceProvider = familyTrim(payload?.sourceProvider || "d1", 32);
+  let amountEur;
+  try { amountEur = familyWealthAmount(payload?.amountEur); }
+  catch (error) { return json({ ok: false, code: String(error?.message || "INVALID_FAMILY_WEALTH_AMOUNT") }, 400); }
+
+  if (!FAMILY_SCOPES.has(ownerScope) || !FAMILY_WEALTH_CATEGORIES.has(category) || !label || !FAMILY_WEALTH_STATUSES.has(valuationStatus) || !FAMILY_REF_PROVIDERS.has(sourceProvider)) {
+    return json({ ok: false, code: "INVALID_FAMILY_WEALTH_ITEM" }, 400);
+  }
+  if (valuationStatus !== "pending" && amountEur === null) {
+    return json({ ok: false, code: "FAMILY_WEALTH_AMOUNT_REQUIRED" }, 400);
+  }
+
+  const now = new Date().toISOString();
+  const asOfRaw = familyTrim(payload?.asOfDate, 80);
+  const asOfDate = familyDateOrNull(asOfRaw);
+  if (asOfRaw && !asOfDate) return json({ ok: false, code: "INVALID_FAMILY_WEALTH_AS_OF_DATE" }, 400);
+
+  const id = `family_wealth_${crypto.randomUUID()}`;
+  await env.DB.prepare(`
+    INSERT INTO family_wealth_items (
+      id, owner_scope, category, label, amount_eur, valuation_status,
+      as_of_date, source_provider, source_ref, note, sensitivity,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'muy_confidencial', ?, ?)
+  `).bind(
+    id,
+    ownerScope,
+    category,
+    label,
+    amountEur,
+    valuationStatus,
+    asOfDate,
+    sourceProvider,
+    familyNullable(payload?.sourceRef, 1000),
+    familyNullable(payload?.note, 2000),
+    now,
+    now
+  ).run();
+
+  const wealth = await fetchFamilyWealth(env);
+  return json({ ok: true, id, item: wealth.items.find((item) => item.id === id) || null, summary: wealth.summary }, 201);
+}
+
+async function updateFamilyWealthItem(request, env, itemId) {
+  await ensureFamilyTables(env);
+  const id = familyTrim(itemId, 160);
+  const existing = await env.DB.prepare("SELECT id FROM family_wealth_items WHERE id = ? LIMIT 1").bind(id).first();
+  if (!existing) return json({ ok: false, code: "FAMILY_WEALTH_ITEM_NOT_FOUND" }, 404);
+
+  let payload;
+  try { payload = await request.json(); }
+  catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const fields = [];
+  const values = [];
+  const push = (column, value) => { fields.push(`${column} = ?`); values.push(value); };
+
+  if (Object.hasOwn(payload, "ownerScope")) {
+    const value = familyTrim(payload.ownerScope, 24);
+    if (!FAMILY_SCOPES.has(value)) return json({ ok: false, code: "INVALID_FAMILY_WEALTH_OWNER" }, 400);
+    push("owner_scope", value);
+  }
+  if (Object.hasOwn(payload, "category")) {
+    const value = familyTrim(payload.category, 32);
+    if (!FAMILY_WEALTH_CATEGORIES.has(value)) return json({ ok: false, code: "INVALID_FAMILY_WEALTH_CATEGORY" }, 400);
+    push("category", value);
+  }
+  if (Object.hasOwn(payload, "label")) {
+    const value = familyTrim(payload.label, 240);
+    if (!value) return json({ ok: false, code: "INVALID_FAMILY_WEALTH_LABEL" }, 400);
+    push("label", value);
+  }
+  if (Object.hasOwn(payload, "amountEur")) {
+    let value;
+    try { value = familyWealthAmount(payload.amountEur); }
+    catch (error) { return json({ ok: false, code: String(error?.message || "INVALID_FAMILY_WEALTH_AMOUNT") }, 400); }
+    push("amount_eur", value);
+  }
+  if (Object.hasOwn(payload, "valuationStatus")) {
+    const value = familyTrim(payload.valuationStatus, 24).toLowerCase();
+    if (!FAMILY_WEALTH_STATUSES.has(value)) return json({ ok: false, code: "INVALID_FAMILY_WEALTH_STATUS" }, 400);
+    push("valuation_status", value);
+  }
+  if (Object.hasOwn(payload, "asOfDate")) {
+    const raw = familyTrim(payload.asOfDate, 80);
+    const value = familyDateOrNull(raw);
+    if (raw && !value) return json({ ok: false, code: "INVALID_FAMILY_WEALTH_AS_OF_DATE" }, 400);
+    push("as_of_date", value);
+  }
+  if (Object.hasOwn(payload, "sourceProvider")) {
+    const value = familyTrim(payload.sourceProvider, 32);
+    if (!FAMILY_REF_PROVIDERS.has(value)) return json({ ok: false, code: "INVALID_FAMILY_WEALTH_SOURCE" }, 400);
+    push("source_provider", value);
+  }
+  if (Object.hasOwn(payload, "sourceRef")) push("source_ref", familyNullable(payload.sourceRef, 1000));
+  if (Object.hasOwn(payload, "note")) push("note", familyNullable(payload.note, 2000));
+
+  if (!fields.length) return json({ ok: false, code: "EMPTY_FAMILY_WEALTH_UPDATE" }, 400);
+  const updatedAt = new Date().toISOString();
+  fields.push("updated_at = ?");
+  values.push(updatedAt, id);
+  await env.DB.prepare(`UPDATE family_wealth_items SET ${fields.join(", ")} WHERE id = ?`).bind(...values).run();
+
+  const wealth = await fetchFamilyWealth(env);
+  return json({ ok: true, item: wealth.items.find((item) => item.id === id) || null, summary: wealth.summary });
+}
+
+async function deleteFamilyWealthItem(env, itemId) {
+  await ensureFamilyTables(env);
+  const id = familyTrim(itemId, 160);
+  const existing = await env.DB.prepare("SELECT id FROM family_wealth_items WHERE id = ? LIMIT 1").bind(id).first();
+  if (!existing) return json({ ok: false, code: "FAMILY_WEALTH_ITEM_NOT_FOUND" }, 404);
+  await env.DB.prepare("DELETE FROM family_wealth_items WHERE id = ?").bind(id).run();
+  return json({ ok: true, deletedItemId: id, summary: (await fetchFamilyWealth(env)).summary });
 }
 
 async function createFamilyCase(request, env) {
@@ -3998,6 +4214,31 @@ export default {
         if (code.startsWith("INVALID_EVENT")) return json({ ok: false, code }, 400);
         console.warn("Event detail request failed", code);
         return json({ ok: false, code: "EVENT_REQUEST_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/family/wealth") {
+      try {
+        if (request.method === "GET") return json({ ok: true, ...(await fetchFamilyWealth(env)) });
+        if (request.method === "POST") return await createFamilyWealthItem(request, env);
+        return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      } catch (error) {
+        const code = String(error?.message || "");
+        if (code.startsWith("INVALID_FAMILY_WEALTH_")) return json({ ok: false, code }, 400);
+        console.warn("Family wealth request failed", code || "FAMILY_WEALTH_ERROR");
+        return json({ ok: false, code: "FAMILY_WEALTH_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname.startsWith("/api/family/wealth/")) {
+      const itemId = decodeURIComponent(url.pathname.slice("/api/family/wealth/".length));
+      try {
+        if (request.method === "PATCH") return await updateFamilyWealthItem(request, env, itemId);
+        if (request.method === "DELETE") return await deleteFamilyWealthItem(env, itemId);
+        return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      } catch (error) {
+        console.warn("Family wealth item request failed", String(error?.message || "FAMILY_WEALTH_ITEM_ERROR"));
+        return json({ ok: false, code: "FAMILY_WEALTH_ITEM_REQUEST_FAILED" }, 502);
       }
     }
 
