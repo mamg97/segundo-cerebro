@@ -14493,6 +14493,16 @@ html[data-theme="dark"] .home-liquidity-account {
   line-height: 1.3;
 }
 
+.weekly-menu-meal.is-consumed .weekly-menu-meal-copy > strong {
+  color: var(--mint);
+}
+
+.weekly-menu-ingredients-fallback .weekly-menu-ingredients-detail {
+  display: block;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
 .weekly-menu-meal-copy p {
   margin: 4px 0 0;
   color: var(--ink-soft);
