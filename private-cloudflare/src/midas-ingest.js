@@ -55,10 +55,11 @@ const isoDate = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.te
 const money = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1_000_000_000;
 
 export function normalizeSnapshot(body, runId) {
-  if (body?.schema_version !== 1 || body.strategy_id !== "genetic_sp500_legacy" ||
-      body.quality !== "legacy_same_close_model" || !money(body.initial_capital) ||
+  const legacy = body?.strategy_id === "genetic_sp500_legacy" && body.quality === "legacy_same_close_model";
+  const forward = body?.strategy_id === "genetic_sp500_forward" && body.quality === "next_open_raw_ohlc_v1";
+  if (body?.schema_version !== 1 || (!legacy && !forward) || !money(body.initial_capital) ||
       body.initial_capital === 0 || !Array.isArray(body.equity_history) ||
-      body.equity_history.length < 2 || body.equity_history.length > 1000 ||
+      body.equity_history.length < (legacy ? 2 : 1) || body.equity_history.length > 1000 ||
       !/^[a-f0-9]{64}$/.test(body.ledger_sha256 || "")) return null;
   let previous = "";
   for (const point of body.equity_history) {
@@ -70,7 +71,7 @@ export function normalizeSnapshot(body, runId) {
   if (previous > new Date(Date.now() + 86400000).toISOString().slice(0, 10)) return null;
   return {
     schema_version: 1,
-    strategy_id: "genetic_sp500_legacy",
+    strategy_id: body.strategy_id,
     quality: body.quality,
     initial_capital: body.initial_capital,
     first_session: first,

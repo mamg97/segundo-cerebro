@@ -4475,7 +4475,7 @@ function renderMidasReport(dashboard, stale, research = null) {
       <p><strong>${observed} ${observed === 1 ? "estrategia" : "estrategias"} con resultados en este informe</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
       <p class="midas-updated">Informe generado ${escapeHtml(formatFinanceDate(dashboard.generated_at_utc))}${stale ? " · copia temporal: la fuente no responde" : ""}</p>
     </div>
-    ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>${originalGenetic.status === "diario_heredado_observado" ? "Las cifras proceden de su diario simulado, no de operaciones ejecutadas por un bróker. La versión original anotaba operaciones al mismo cierre que generaba la señal; su rendimiento histórico no demuestra una rentabilidad alcanzable." : "Figura en la primera tabla, pero su diario privado aún no está conectado a este informe."} El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
+    ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>El historial antiguo se conserva como referencia: anotaba operaciones al mismo cierre que generaba la señal y su rentabilidad no era alcanzable con esa regla. La fila «versión corregida» empieza una campaña nueva: señal al cierre y ejecución simulada en la apertura siguiente, con costes. Sus cifras siguen siendo ficticias, sin órdenes confirmadas por un bróker. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
     <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado.</p>
     ${renderMidasResearch(research)}
     ${MIDAS_GROUPS.map(([group, title]) => {
@@ -4485,7 +4485,7 @@ function renderMidasReport(dashboard, stale, research = null) {
         return `<details class="midas-pending"><summary>${title} <span>${groupRows.length}</span></summary>${renderMidasRows(groupRows)}</details>`;
       }
       const groupNote = group === "diario_heredado"
-        ? `<p class="midas-group-note">Estrategia original con diario propio.${originalGenetic?.status === "sin_diario_disponible" ? " Sin cifras hasta verificar y enlazar ese diario privado." : " Rendimiento histórico registrado por el simulador; no equipararlo con las nuevas carteras prospectivas."}</p>`
+        ? `<p class="midas-group-note">Diario antiguo congelado y campaña corregida separada. Compara la versión corregida solo cuando acumule sesiones prospectivas.</p>`
         : group === "tfm_demo_adaptado"
           ? '<p class="midas-group-note">Modelos reimplementados en 2026 con una regla de cartera provisional común.</p>'
           : "";

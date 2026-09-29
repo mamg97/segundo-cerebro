@@ -190,41 +190,62 @@ export async function fetchMidasResearch(env, getGoogleAccessToken, fetcher = fe
 
 export async function addPrivateGeneticDiary(db, dashboard) {
   if (!db) return dashboard;
-  let stored;
-  try {
-    stored = await db.prepare("SELECT payload FROM midas_legacy_snapshot WHERE strategy_id = ?")
-      .bind("genetic_sp500_legacy").first();
-  } catch {
-    return dashboard;
+  const snapshots = {};
+  for (const id of ["genetic_sp500_legacy", "genetic_sp500_forward"]) {
+    try {
+      const stored = await db.prepare("SELECT payload FROM midas_legacy_snapshot WHERE strategy_id = ?")
+        .bind(id).first();
+      if (stored?.payload) snapshots[id] = JSON.parse(stored.payload);
+    } catch {
+      // Missing or malformed private data must never create a fictitious return.
+    }
   }
-  if (!stored?.payload) return dashboard;
-  let snapshot;
-  try {
-    snapshot = JSON.parse(stored.payload);
-  } catch {
-    return dashboard;
-  }
-  const history = snapshot?.equity_history;
-  if (snapshot?.quality !== "legacy_same_close_model" ||
-      !Array.isArray(history) || history.length < 2 ||
-      !Number.isFinite(snapshot.initial_capital) || snapshot.initial_capital <= 0 ||
-      history.some((point) => !Array.isArray(point) || point.length !== 2 ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(point[0]) || !Number.isFinite(point[1]) || point[1] < 0)) return dashboard;
-  const first = history[0];
-  const previous = history.at(-2);
-  const last = history.at(-1);
-  if (first[0] !== snapshot.first_session || last[0] !== snapshot.last_session ||
-      history.some((point, index) => index > 0 && point[0] <= history[index - 1][0])) return dashboard;
-  const tracks = dashboard.tracks.map((row) => row.id !== "genetic_sp500_legacy" ? row : {
-    ...row,
-    status: "diario_heredado_observado",
-    first_session: first[0],
-    last_session: last[0],
-    currency: "USD",
-    last_equity: last[1],
-    return_pct: Math.round((last[1] / snapshot.initial_capital - 1) * 100_000_000) / 1_000_000,
-    day_return_pct: previous[1] > 0 ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
-    note: `Diario ficticio desde ${first[0]}; la fecha mostrada es la del asiento, que puede ser posterior a la vela usada. Las operaciones se contabilizaban al mismo cierre que generaba la señal: no son ejecuciones verificadas ni rentabilidad alcanzable.`
+  const valid = (snapshot, id, quality, minimum) => {
+    const history = snapshot?.equity_history;
+    return snapshot?.strategy_id === id && snapshot?.quality === quality &&
+      Array.isArray(history) && history.length >= minimum &&
+      Number.isFinite(snapshot.initial_capital) && snapshot.initial_capital > 0 &&
+      history.every((point, index) => Array.isArray(point) && point.length === 2 &&
+        /^\d{4}-\d{2}-\d{2}$/.test(point[0]) && Number.isFinite(point[1]) && point[1] >= 0 &&
+        (index === 0 || point[0] > history[index - 1][0])) &&
+      history[0][0] === snapshot.first_session && history.at(-1)[0] === snapshot.last_session;
+  };
+  const legacy = snapshots.genetic_sp500_legacy;
+  const forward = snapshots.genetic_sp500_forward;
+  const tracks = dashboard.tracks.map((row) => {
+    if (row.id !== "genetic_sp500_legacy" || !valid(legacy, row.id, "legacy_same_close_model", 2)) return row;
+    const history = legacy.equity_history;
+    const first = history[0];
+    const previous = history.at(-2);
+    const last = history.at(-1);
+    return {
+      ...row, status: "diario_heredado_observado", first_session: first[0], last_session: last[0],
+      currency: "USD", last_equity: last[1],
+      return_pct: Math.round((last[1] / legacy.initial_capital - 1) * 100_000_000) / 1_000_000,
+      day_return_pct: previous[1] > 0 ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
+      note: `Diario ficticio desde ${first[0]}; la fecha mostrada es la del asiento, que puede ser posterior a la vela usada. Las operaciones se contabilizaban al mismo cierre que generaba la señal: no son ejecuciones verificadas ni rentabilidad alcanzable.`
+    };
   });
+  const forwardRow = {
+    id: "genetic_sp500_forward", label: "Genético original S&P 500 · versión corregida",
+    group: "diario_heredado", provenance: "Agente genético original · campaña prospectiva 2026",
+    status: "programada_sin_diario", first_session: null, last_session: null, currency: "USD",
+    last_equity: null, return_pct: null, day_return_pct: null,
+    note: "Aún sin primera sesión. Señal al cierre; órdenes simuladas en la apertura posterior con costes. No son operaciones de bróker."
+  };
+  if (valid(forward, "genetic_sp500_forward", "next_open_raw_ohlc_v1", 1)) {
+    const history = forward.equity_history;
+    const first = history[0];
+    const previous = history.at(-2);
+    const last = history.at(-1);
+    Object.assign(forwardRow, {
+      status: "demo_con_diario", first_session: first[0], last_session: last[0], last_equity: last[1],
+      return_pct: Math.round((last[1] / forward.initial_capital - 1) * 100_000_000) / 1_000_000,
+      day_return_pct: previous && previous[1] > 0
+        ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
+      note: "Patrimonio ficticio al cierre de la sesión indicada; fills modelados en la siguiente apertura con comisión, deslizamiento y stops OHLC. No hay confirmación de bróker."
+    });
+  }
+  if (!tracks.some((row) => row.id === forwardRow.id)) tracks.push(forwardRow);
   return { ...dashboard, tracks };
 }

@@ -67,7 +67,7 @@ test("private genetic diary uses recorded valuations and keeps a quality warning
   const dashboard = { generated_at_utc: "2026-09-28T09:00:00Z", tracks: [
     { id: "genetic_sp500_legacy", status: "sin_diario_disponible", last_equity: null }
   ] };
-  const payload = JSON.stringify({ quality: "legacy_same_close_model", initial_capital: 100000,
+  const payload = JSON.stringify({ strategy_id: "genetic_sp500_legacy", quality: "legacy_same_close_model", initial_capital: 100000,
     first_session: "2026-09-24", last_session: "2026-09-25",
     equity_history: [["2026-09-24", 104000], ["2026-09-25", 104382.9253805104]] });
   const db = { prepare: () => ({ bind: () => ({ first: async () => ({ payload }) }) }) };
@@ -78,6 +78,23 @@ test("private genetic diary uses recorded valuations and keeps a quality warning
   assert.match(merged.tracks[0].note, /no son ejecuciones verificadas/);
   assert.equal(dashboard.tracks[0].last_equity, null);
   assert.equal(await addPrivateGeneticDiary(null, dashboard), dashboard);
+});
+
+test("forward genetic campaign stays separate and never inherits legacy returns", async () => {
+  const dashboard = { generated_at_utc: "2026-09-28T09:00:00Z", tracks: [
+    { id: "genetic_sp500_legacy", status: "sin_diario_disponible", last_equity: null }
+  ] };
+  const forward = { strategy_id: "genetic_sp500_forward", quality: "next_open_raw_ohlc_v1",
+    initial_capital: 100000, first_session: "2026-09-28", last_session: "2026-09-28",
+    equity_history: [["2026-09-28", 100000]] };
+  const db = { prepare: () => ({ bind: (id) => ({ first: async () =>
+    id === "genetic_sp500_forward" ? { payload: JSON.stringify(forward) } : null }) }) };
+  const merged = await addPrivateGeneticDiary(db, dashboard);
+  assert.equal(merged.tracks[0].last_equity, null);
+  assert.equal(merged.tracks[1].status, "demo_con_diario");
+  assert.equal(merged.tracks[1].last_equity, 100000);
+  assert.equal(merged.tracks[1].day_return_pct, null);
+  assert.match(merged.tracks[1].note, /siguiente apertura/);
 });
 
 test("OIDC signature and workflow claims gate the private snapshot", async () => {
@@ -104,4 +121,8 @@ test("OIDC signature and workflow claims gate the private snapshot", async () =>
     equity_history: [["2026-02-27", 99638], ["2026-09-25", 104382]] };
   assert.equal(normalizeSnapshot(body, "123").last_session, "2026-09-25");
   assert.equal(normalizeSnapshot({ ...body, equity_history: body.equity_history.toReversed() }, "123"), null);
+  const prospective = { ...body, strategy_id: "genetic_sp500_forward", quality: "next_open_raw_ohlc_v1",
+    equity_history: [["2026-09-28", 100000]] };
+  assert.equal(normalizeSnapshot(prospective, "123").last_session, "2026-09-28");
+  assert.equal(normalizeSnapshot({ ...prospective, quality: "legacy_same_close_model" }, "123"), null);
 });
