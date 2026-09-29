@@ -926,3 +926,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Despensa pasa a 3 columnas de KPI en escritorio para reducir una fila completa.
 - Móvil conserva sus reglas específicas de tamaño y espaciado.
 - Asset CSS: `styles.css?v=0.39.10`.
+
+
+## Home · resumen diario horizontal 2×2 v0.39.12
+
+- En escritorio ancho (>=1180 px), Hábitos, Nutrición, Despensa y Objetos pasan de 4 tarjetas verticales a una rejilla 2×2.
+- Cada tarjeta reutiliza el ancho disponible para colocar título, cifras y progreso en horizontal, reduciendo espacio muerto sin reducir tipografía.
+- Hábitos: cabecera + progreso en paralelo.
+- Nutrición: cabecera + 3 KPI + estado/anillo en una sola franja.
+- Despensa: cabecera + 5 KPI en una fila; estado y preview debajo.
+- Objetos: cabecera + 4 KPI en una fila; estado/footer debajo.
+- Tablet mantiene el layout previo y móvil sigue a una columna.
+- Asset CSS: `styles.css?v=0.39.12`.
