@@ -3302,6 +3302,15 @@ function weeklyMenuItemIsVisible(item) {
   return !/^(omitid[oa]|retirad[oa]|cancelad[oa]|cancelled|skipped)$/.test(status);
 }
 
+function weeklyMenuItemIsConsumed(item) {
+  const status = String(item?.status || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  return /^(consumid[oa]|hech[oa]|completad[oa]|done|completed)$/.test(status);
+}
+
 function weeklyMenuModel(data) {
   const rows = (Array.isArray(data?.weeklyMenu) ? data.weeklyMenu : [])
     .filter(weeklyMenuItemIsVisible);
@@ -3447,10 +3456,51 @@ function weeklyMenuIngredientAmount(ingredient) {
 
 function renderWeeklyMenuIngredients(item) {
   const ingredients = Array.isArray(item?.ingredients) ? item.ingredients : [];
-  if (!ingredients.length) return "";
-
   const totalKcal = item.kcal == null ? null : Number(item.kcal);
   const totalProtein = item.protein == null ? null : Number(item.protein);
+
+  if (!ingredients.length) {
+    const quantity = Number(item?.quantity);
+    const hasQuantity = Number.isFinite(quantity);
+    const note = String(item?.note || "").trim();
+    if (!hasQuantity && !note) return "";
+
+    const amount = hasQuantity
+      ? `${quantity.toLocaleString("es-ES", { maximumFractionDigits: quantity < 10 ? 1 : 0 })} ${item?.unit || ""}`.trim()
+      : "—";
+
+    return `
+      <details class="weekly-menu-ingredients weekly-menu-ingredients-fallback">
+        <summary>Ver ingredientes y cantidades</summary>
+        <div class="weekly-menu-ingredients-table-wrap">
+          <table class="weekly-menu-ingredients-table">
+            <colgroup>
+              <col class="weekly-menu-col-ingredient">
+              <col class="weekly-menu-col-grams">
+              <col class="weekly-menu-col-kcal">
+              <col class="weekly-menu-col-protein">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Comida</th>
+                <th>Cantidad</th>
+                <th>kcal</th>
+                <th>Prot.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${escapeHtml(item?.name || "Comida")}</td>
+                <td>${escapeHtml(amount)}</td>
+                <td>${Number.isFinite(totalKcal) ? escapeHtml(formatKcal(totalKcal)) : "—"}</td>
+                <td>${Number.isFinite(totalProtein) ? escapeHtml(formatMacro(totalProtein)) : "—"}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        ${note ? `<small class="weekly-menu-ingredients-note weekly-menu-ingredients-detail">${escapeHtml(note)}</small>` : ""}
+      </details>`;
+  }
 
   return `
     <details class="weekly-menu-ingredients">
@@ -3494,7 +3544,7 @@ function renderWeeklyMenuIngredients(item) {
           </tfoot>
         </table>
       </div>
-      <small class="weekly-menu-ingredients-note">${item.status === "consumido" ? "Cantidades registradas como consumidas." : "Cantidades previstas para tu ración; se registrarán como consumidas cuando confirmes la comida."}</small>
+      <small class="weekly-menu-ingredients-note">${weeklyMenuItemIsConsumed(item) ? "Cantidades registradas como consumidas." : "Cantidades previstas para tu ración; se registrarán como consumidas cuando confirmes la comida."}</small>
     </details>`;
 }
 
@@ -3504,8 +3554,9 @@ function renderWeeklyMenuMeal(item, compact = false) {
   const quantity = Number.isFinite(Number(item.quantity))
     ? `${Number(item.quantity).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${item.unit || ""}`.trim()
     : "";
+  const consumed = weeklyMenuItemIsConsumed(item);
   return `
-    <article class="weekly-menu-meal">
+    <article class="weekly-menu-meal ${consumed ? "is-consumed" : ""}">
       <div class="weekly-menu-meal-main">
         <div class="weekly-menu-meal-copy">
           <span class="weekly-menu-moment">${escapeHtml(item.moment || "Otro")}</span>
@@ -3624,9 +3675,10 @@ function renderHomeWeeklyMenuMealGroup(items) {
   const protein = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
   const moment = rows[0]?.moment || "Otro";
   const names = rows.map((item) => item.name).filter(Boolean);
+  const consumed = rows.every(weeklyMenuItemIsConsumed);
 
   return `
-    <article class="weekly-menu-meal weekly-menu-meal-grouped">
+    <article class="weekly-menu-meal weekly-menu-meal-grouped ${consumed ? "is-consumed" : ""}">
       <div class="weekly-menu-meal-main">
         <div class="weekly-menu-meal-copy">
           <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
