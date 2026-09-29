@@ -3269,8 +3269,18 @@ function renderNutritionSuggestions(foods, consumed, objective) {
       <p class="nutrition-suggestion-note">El optimizador trata la proteína como restricción principal y las kcal como techo. Hidratos y grasas afinan la solución, pero no se fuerzan. El gasto del Apple Watch no amplía automáticamente el presupuesto de comida.</p>
     </section>`;
 }
+function weeklyMenuItemIsVisible(item) {
+  const status = String(item?.status || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  return !/^(omitid[oa]|retirad[oa]|cancelad[oa]|cancelled|skipped)$/.test(status);
+}
+
 function weeklyMenuModel(data) {
-  const rows = Array.isArray(data?.weeklyMenu) ? data.weeklyMenu : [];
+  const rows = (Array.isArray(data?.weeklyMenu) ? data.weeklyMenu : [])
+    .filter(weeklyMenuItemIsVisible);
   const objective = data?.objective && typeof data.objective === "object" ? data.objective : {};
   const kcalTarget = objective.kcal == null ? null : Number(objective.kcal);
   const proteinTarget = objective.protein == null ? null : Number(objective.protein);
