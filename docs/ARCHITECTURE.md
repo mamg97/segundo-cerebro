@@ -66,6 +66,8 @@ El Worker lee `LuzHistorico` directamente desde la fuente privada, normaliza ún
 
 iCloud Calendar se consulta mediante CalDAV. Esta integración es deliberadamente de solo lectura: el Worker usa operaciones de consulta y no modifica calendarios.
 
+La disponibilidad de CalDAV no condiciona la continuidad visual de la agenda. El Worker mantiene en D1 una copia derivada `last-known-good` de la última lectura completa y no vacía. iCloud sigue siendo autoridad: la copia solo actúa como caché de resiliencia. Un timeout, una respuesta vacía sospechosa o un descubrimiento parcial de calendarios no puede reemplazarla. En una lectura parcial se mezclan los calendarios frescos con la última copia de los calendarios temporalmente ausentes.
+
 ### Habits / HabitQuest
 
 El Google Sheet original de HabitQuest sigue siendo la fuente de verdad. Segundo Cerebro puede leer el estado diario y gestionar hábitos mediante endpoints privados. La escritura conserva la semántica de sincronización de HabitQuest.
