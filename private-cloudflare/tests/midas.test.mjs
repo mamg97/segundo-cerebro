@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch } from "../src/midas.js";
+import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "../src/midas.js";
 import { normalizeSnapshot, verifyGitHubOidc } from "../src/midas-ingest.js";
 
 test("MIDAS dashboard validates, caches and labels a stale fallback", async () => {
@@ -8,7 +8,8 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
     id: "benchmark_spy", label: "Referencia SPY", provenance: "Campaña nueva 2026 · referencia SPY",
     group: "paper_nuevo", status: "demo_con_diario",
     first_session: "2026-09-28", last_session: "2026-09-29", currency: "USD",
-    last_equity: 101000, day_return_pct: 1, return_pct: 1, note: "Demo"
+    last_equity: 101000, day_return_pct: 1, return_pct: 1,
+    equity_history: [{ date: "2026-09-28", nav: 100000 }, { date: "2026-09-29", nav: 101000 }], note: "Demo"
   };
   const dashboard = { schema_version: 1, generated_at_utc: "2026-09-29T23:45:00Z", tracks: [row] };
   let requests = 0;
@@ -20,12 +21,38 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
   const first = await fetchMidasDashboard(fetcher, 1_000_000);
   assert.equal(first.dashboard.tracks[0].day_return_pct, 1);
   assert.equal(first.dashboard.tracks[0].provenance, row.provenance);
+  assert.deepEqual(first.dashboard.tracks[0].equity_history, row.equity_history);
   assert.equal(first.stale, false);
   await fetchMidasDashboard(fetcher, 1_001_000);
   assert.equal(requests, 1);
   const stale = await fetchMidasDashboard(async () => { throw new Error("offline"); }, 1_400_000);
   assert.equal(stale.stale, true);
   assert.equal(stale.dashboard.tracks[0].label, "Referencia SPY");
+});
+
+
+test("weekly ML bootstrap is normalized and explicitly non-forward", async () => {
+  const payload = {
+    schema_version: 1,
+    kind: "NON_PROSPECTIVE_BOOTSTRAP",
+    excluded_from_forward_performance: true,
+    signal_asof: "2026-09-25",
+    entry_date: "2026-09-28",
+    mark_date: "2026-09-28",
+    strategies: {
+      ensemble_consensus: {
+        mark_to_market_nav: 98657.04,
+        mark_to_market_return_pct: -1.343,
+        positions: [{ ticker: "SMCI", predicted_return: 0.0087, score: 0.86, buy_price: 42.77, mark_close: 41.78, mtm_pnl: -228.55 }]
+      }
+    },
+    ensemble_top20: [{ ticker: "SMCI", score: 0.86, predicted_return: 0.0087, positive_votes: 5, rank_dispersion: 0.17 }]
+  };
+  const result = await fetchMidasWeeklyBootstrap(async () => ({ ok: true, json: async () => payload }), 20_000_000);
+  assert.equal(result.status, "bootstrap_only");
+  assert.equal(result.signal_asof, "2026-09-25");
+  assert.equal(result.strategies.ensemble_consensus.positions[0].ticker, "SMCI");
+  assert.equal(result.ensemble[0].positive_votes, 5);
 });
 
 test("MIDAS research resolves its private sheet through IntegracionesPrivadas", async () => {

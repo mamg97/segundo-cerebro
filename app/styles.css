@@ -16019,3 +16019,384 @@ html[data-theme="dark"] .wealth-daily-kpis article {
     margin-top: -2px;
   }
 }
+
+
+/* v0.39.8 — MIDAS animated algorithm laboratory */
+.midas-lab {
+  display: grid;
+  gap: 18px;
+  margin: 4px 0 2px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--blue) 22%, var(--line));
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--blue) 11%, transparent), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 96%, transparent), color-mix(in srgb, var(--paper) 86%, transparent));
+  overflow: hidden;
+}
+
+.midas-lab-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.midas-lab-heading .eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--blue);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .13em;
+}
+
+.midas-lab-heading h3 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -.025em;
+}
+
+.midas-lab-heading p {
+  max-width: 720px;
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.midas-lab-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px 11px;
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.midas-lab-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.midas-lab-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+}
+
+.midas-lab-legend i.is-positive { background: #2f9b70; }
+.midas-lab-legend i.is-negative { background: #d45b64; }
+.midas-lab-legend i.is-neutral { background: #8b97a8; }
+
+.midas-lab-group {
+  display: grid;
+  gap: 8px;
+}
+
+.midas-lab-group-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.midas-lab-group-title strong {
+  font-size: 11px;
+  letter-spacing: -.01em;
+}
+
+.midas-lab-group-title span {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.midas-lab-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.midas-lab-card {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  overflow: hidden;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 8px 24px rgba(27, 44, 70, .045);
+}
+
+.midas-lab-card::after {
+  position: absolute;
+  inset: 0 auto 0 -42%;
+  width: 36%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  content: "";
+  pointer-events: none;
+  transform: skewX(-18deg);
+  animation: midas-lab-scan 4.8s ease-in-out infinite;
+}
+
+.midas-lab-card.is-bootstrap {
+  border-style: dashed;
+}
+
+.midas-lab-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.midas-lab-card-head > div {
+  min-width: 0;
+}
+
+.midas-lab-card-head strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.midas-lab-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-soft);
+  font-size: 7px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+
+.midas-lab-state i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8b97a8;
+  box-shadow: 0 0 0 0 rgba(139,151,168,.26);
+  animation: midas-lab-pulse 1.9s ease-out infinite;
+}
+
+.midas-lab-card.is-positive .midas-lab-state i {
+  background: #2f9b70;
+  box-shadow: 0 0 0 0 rgba(47,155,112,.3);
+}
+
+.midas-lab-card.is-negative .midas-lab-state i {
+  background: #d45b64;
+  box-shadow: 0 0 0 0 rgba(212,91,100,.28);
+}
+
+.midas-lab-return {
+  flex: none;
+  font-size: 12px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.midas-lab-card.is-positive .midas-lab-return { color: #2f9b70; }
+.midas-lab-card.is-negative .midas-lab-return { color: #d45b64; }
+.midas-lab-card.is-neutral .midas-lab-return { color: var(--ink-soft); }
+
+.midas-lab-spark {
+  display: block;
+  width: 100%;
+  height: 76px;
+  overflow: visible;
+}
+
+.midas-lab-baseline {
+  stroke: color-mix(in srgb, var(--line) 78%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.midas-lab-path {
+  fill: none;
+  stroke: #8b97a8;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  path-length: 1;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: midas-lab-draw 1.15s cubic-bezier(.2,.7,.25,1) forwards;
+}
+
+.midas-lab-spark.is-positive .midas-lab-path,
+.midas-lab-spark.is-positive .midas-lab-endpoint { stroke: #2f9b70; fill: #2f9b70; }
+
+.midas-lab-spark.is-negative .midas-lab-path,
+.midas-lab-spark.is-negative .midas-lab-endpoint { stroke: #d45b64; fill: #d45b64; }
+
+.midas-lab-spark.is-neutral .midas-lab-path,
+.midas-lab-spark.is-neutral .midas-lab-endpoint { stroke: #7e8b9d; fill: #7e8b9d; }
+
+.midas-lab-endpoint {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: midas-lab-endpoint 1.8s ease-in-out infinite;
+}
+
+.midas-lab-spark.is-waiting {
+  position: relative;
+  height: 76px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--blue) 3%, transparent));
+}
+
+.midas-lab-wait-line {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 50%;
+  height: 1px;
+  background: color-mix(in srgb, var(--line) 82%, transparent);
+}
+
+.midas-lab-wait-dot {
+  position: absolute;
+  top: calc(50% - 3px);
+  left: 7%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 10%, transparent);
+  animation: midas-lab-wait 2.4s ease-in-out infinite;
+}
+
+.midas-lab-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 7.5px;
+}
+
+.midas-lab-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 18px;
+}
+
+.midas-lab-picks span {
+  margin-right: 2px;
+  color: var(--ink-soft);
+  font-size: 7px;
+  font-weight: 700;
+}
+
+.midas-lab-picks b {
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--blue) 9%, var(--surface));
+  color: var(--blue);
+  font-size: 7px;
+  font-weight: 850;
+}
+
+.midas-lab-disclaimer {
+  color: var(--ink-soft);
+  font-size: 6.8px;
+  line-height: 1.35;
+}
+
+html[data-theme="dark"] .midas-lab-card {
+  background: color-mix(in srgb, var(--surface-2) 76%, transparent);
+}
+
+@keyframes midas-lab-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes midas-lab-endpoint {
+  0%, 100% { transform: scale(.92); opacity: .8; }
+  50% { transform: scale(1.35); opacity: 1; }
+}
+
+@keyframes midas-lab-pulse {
+  0% { box-shadow: 0 0 0 0 currentColor; }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes midas-lab-wait {
+  0%, 100% { left: 7%; opacity: .65; }
+  50% { left: calc(93% - 6px); opacity: 1; }
+}
+
+@keyframes midas-lab-scan {
+  0%, 70% { left: -42%; opacity: 0; }
+  82% { opacity: 1; }
+  100% { left: 118%; opacity: 0; }
+}
+
+@media (max-width: 900px) {
+  .midas-lab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .midas-lab {
+    margin-inline: -2px;
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .midas-lab-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .midas-lab-heading h3 { font-size: 16px; }
+  .midas-lab-heading p { font-size: 9px; }
+
+  .midas-lab-legend {
+    justify-content: flex-start;
+    font-size: 7.5px;
+  }
+
+  .midas-lab-grid {
+    display: flex;
+    gap: 9px;
+    overflow-x: auto;
+    padding: 1px 1px 7px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .midas-lab-card {
+    min-width: min(78vw, 270px);
+    scroll-snap-align: start;
+  }
+
+  .midas-lab-card-head strong { font-size: 10.5px; }
+  .midas-lab-return { font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .midas-lab-path,
+  .midas-lab-endpoint,
+  .midas-lab-state i,
+  .midas-lab-wait-dot,
+  .midas-lab-card::after {
+    animation: none !important;
+  }
+
+  .midas-lab-path { stroke-dashoffset: 0; }
+}

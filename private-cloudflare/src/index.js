@@ -3,7 +3,7 @@ import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId }
 import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
-import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch } from "./midas.js";
+import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
 
@@ -3911,9 +3911,14 @@ export default {
             research = { status: "error", theses: [], cagr2031: [], counts: { theses: 0, cagr2031: 0, cagrComplete: 0 } };
           }
         }
+        const dashboard = await addPrivateGeneticDiary(env.DB, result.dashboard);
+        const weeklyBootstrap = await fetchMidasWeeklyBootstrap();
         return json({ ok: true, ...result,
-          dashboard: await addPrivateGeneticDiary(env.DB, result.dashboard),
-          research });
+          dashboard,
+          research,
+          lab: {
+            weeklyBootstrap
+          } });
       } catch (error) {
         console.warn("MIDAS dashboard read failed", String(error?.message || "MIDAS_READ_ERROR"));
         return json({ ok: false, code: "MIDAS_READ_FAILED" }, 502);
