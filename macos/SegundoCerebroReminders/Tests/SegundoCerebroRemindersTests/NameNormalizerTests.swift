@@ -1,11 +1,13 @@
-import Testing
+import XCTest
 @testable import SegundoCerebroReminders
 
-@Test func equivalentNamesNormalizeTogether() {
-    #expect(NameNormalizer.normalize(" Huevos ") == NameNormalizer.normalize("huevos"))
-    #expect(NameNormalizer.normalize("Café") == NameNormalizer.normalize("cafe"))
-}
+final class NameNormalizerTests: XCTestCase {
+    func testEquivalentNamesNormalizeTogether() {
+        XCTAssertEqual(NameNormalizer.normalize(" Huevos "), NameNormalizer.normalize("huevos"))
+        XCTAssertEqual(NameNormalizer.normalize("Café"), NameNormalizer.normalize("cafe"))
+    }
 
-@Test func distinctProductsRemainDistinct() {
-    #expect(NameNormalizer.normalize("café") != NameNormalizer.normalize("café descafeinado"))
+    func testDistinctProductsRemainDistinct() {
+        XCTAssertNotEqual(NameNormalizer.normalize("café"), NameNormalizer.normalize("café descafeinado"))
+    }
 }
