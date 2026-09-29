@@ -72,6 +72,36 @@ Cada caso declara sus fuentes. Ejemplos genéricos:
 - Email y documentos: permanecen en la fuente original o en un repositorio privado autorizado. Segundo Cerebro guarda referencias y resúmenes operativos, no copias públicas.
 - Estado propio del caso, próximas acciones y decisiones: D1 privado puede ser la fuente operativa cuando el dato no tenga una fuente externa propietaria.
 
+## Patrimonio familiar
+
+El patrimonio de los padres se modela como una vista privada estructurada, separada de los casos y de las finanzas personales del usuario.
+
+La unidad es `family_wealth_item`, con importes reales exclusivamente en D1 privado. Debe permitir distinguir:
+
+- inversiones financieras;
+- inmuebles;
+- negocio familiar;
+- liquidez u otros activos;
+- deudas.
+
+Cada partida declara `owner_scope` (`mother`, `father` o `shared`), categoría, etiqueta, valor opcional, estado de valoración (`confirmed`, `estimated`, `pending`), fecha de valoración y referencia mínima a la fuente.
+
+Reglas:
+
+- no contar dos veces un inmueble incluido dentro del valor de un negocio;
+- el local del negocio y el valor operativo del negocio son conceptos separados;
+- el patrimonio conocido debe distinguir activos brutos, deudas conocidas y neto conocido;
+- cualquier elemento pendiente de valorar debe permanecer visible como tal, sin inventar importe;
+- LITOS sigue siendo fuente operativa del taller y puede actuar como referencia para valorar el negocio, pero no se replica su contabilidad en Gestor Padres;
+- la portada general no recibe importes ni detalle patrimonial; solo la vista privada de Padres puede mostrarlos.
+
+La API privada asociada es:
+
+- `GET /api/family/wealth`
+- `POST /api/family/wealth`
+- `PATCH /api/family/wealth/:id`
+- `DELETE /api/family/wealth/:id`
+
 ## Integración con otros gestores
 
 ### Finanzas
