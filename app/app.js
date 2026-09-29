@@ -1586,6 +1586,21 @@ function renderFamilyWealthSection(payload) {
   const netKnown = Number(summary.netKnown || 0);
   const investments = Number(summary.investments || 0);
   const pending = Number(summary.pendingValuations || 0);
+  const investmentItems = items
+    .filter((item) => item.category === "investment" && item.valuationStatus !== "pending" && Number(item.amountEur) > 0)
+    .sort((a, b) => Number(b.amountEur || 0) - Number(a.amountEur || 0));
+  const investmentTotal = investmentItems.reduce((total, item) => total + Number(item.amountEur || 0), 0);
+  const primaryInvestment = investmentItems[0] || null;
+  const secondaryInvestment = investmentItems[1] || null;
+  const otherInvestmentAmount = investmentItems.slice(2).reduce((total, item) => total + Number(item.amountEur || 0), 0);
+  const primaryPct = investmentTotal > 0 ? (Number(primaryInvestment?.amountEur || 0) / investmentTotal) * 100 : 0;
+  const secondaryEndPct = investmentTotal > 0
+    ? ((Number(primaryInvestment?.amountEur || 0) + Number(secondaryInvestment?.amountEur || 0)) / investmentTotal) * 100
+    : 0;
+  const comparisonMax = Math.max(grossAssets, liabilities, 1);
+  const assetsWidth = Math.max(0, Math.min(100, (grossAssets / comparisonMax) * 100));
+  const debtWidth = Math.max(0, Math.min(100, (liabilities / comparisonMax) * 100));
+  const pendingItems = items.filter((item) => item.valuationStatus === "pending" || item.amountEur === null || item.amountEur === undefined);
 
   return `
     <section class="parents-wealth-section">
@@ -1604,6 +1619,81 @@ function renderFamilyWealthSection(payload) {
         <article><span>Neto conocido${pending > 0 ? " · incompleto" : ""}</span><strong>${formatMoney(netKnown, "EUR")}</strong></article>
         <article><span>Pendiente valorar</span><strong>${pending}</strong></article>
       </div>
+
+      <div class="parents-wealth-visual-grid">
+        <article class="parents-wealth-chart-card">
+          <div class="parents-wealth-chart-head">
+            <div>
+              <span>Composición</span>
+              <strong>Inversiones financieras</strong>
+            </div>
+            <small>${investmentItems.length} posiciones</small>
+          </div>
+          ${investmentTotal > 0 ? `
+            <div class="parents-wealth-investment-chart">
+              <div
+                class="parents-wealth-donut"
+                role="img"
+                aria-label="Composición de inversiones financieras"
+                style="--wealth-primary-end:${primaryPct.toFixed(2)}%;--wealth-secondary-end:${secondaryEndPct.toFixed(2)}%;"
+              >
+                <div>
+                  <span>Total</span>
+                  <strong>${formatMoney(investmentTotal, "EUR")}</strong>
+                </div>
+              </div>
+              <div class="parents-wealth-chart-legend">
+                ${primaryInvestment ? renderFamilyInvestmentLegendRow(primaryInvestment, "primary", investmentTotal) : ""}
+                ${secondaryInvestment ? renderFamilyInvestmentLegendRow(secondaryInvestment, "secondary", investmentTotal) : ""}
+                ${otherInvestmentAmount > 0 ? renderFamilyInvestmentLegendRow({ label: "Otras inversiones", amountEur: otherInvestmentAmount }, "other", investmentTotal) : ""}
+              </div>
+            </div>
+          ` : '<div class="parents-wealth-chart-empty">Sin inversiones valoradas todavía.</div>'}
+        </article>
+
+        <article class="parents-wealth-chart-card">
+          <div class="parents-wealth-chart-head">
+            <div>
+              <span>Balance conocido</span>
+              <strong>Activos frente a deuda</strong>
+            </div>
+            <small>${pending > 0 ? "Incompleto" : "Actualizado"}</small>
+          </div>
+          <div class="parents-wealth-comparison">
+            <div class="parents-wealth-comparison-row">
+              <div><span>Activos valorados</span><strong>${formatMoney(grossAssets, "EUR")}</strong></div>
+              <div class="parents-wealth-comparison-track" aria-hidden="true"><i class="is-assets" style="width:${assetsWidth.toFixed(2)}%"></i></div>
+            </div>
+            <div class="parents-wealth-comparison-row">
+              <div><span>Deuda conocida</span><strong>${formatMoney(liabilities, "EUR")}</strong></div>
+              <div class="parents-wealth-comparison-track" aria-hidden="true"><i class="is-debt" style="width:${debtWidth.toFixed(2)}%"></i></div>
+            </div>
+          </div>
+          <div class="parents-wealth-net-callout">
+            <span>Neto conocido</span>
+            <strong>${formatMoney(netKnown, "EUR")}</strong>
+            ${pending > 0 ? "<small>No incluye todavía los activos pendientes de valorar.</small>" : ""}
+          </div>
+        </article>
+      </div>
+
+      ${pendingItems.length ? `
+        <div class="parents-wealth-pending">
+          <div class="parents-wealth-pending-head">
+            <strong>Por incorporar a la valoración</strong>
+            <span>${pendingItems.length} pendientes</span>
+          </div>
+          <div class="parents-wealth-pending-grid">
+            ${pendingItems.map((item) => `
+              <article>
+                <span>${escapeHtml(FAMILY_WEALTH_CATEGORY_LABELS[item.category] || item.category)}</span>
+                <strong>${escapeHtml(item.label)}</strong>
+                <small>Pendiente de valorar</small>
+              </article>
+            `).join("")}
+          </div>
+        </div>
+      ` : ""}
 
       <div class="parents-wealth-list">
         ${items.length ? items.map(renderFamilyWealthItem).join("") : `
@@ -1662,6 +1752,21 @@ function renderFamilyWealthSection(payload) {
         <p class="parents-wealth-form-status" data-family-wealth-form-status aria-live="polite"></p>
       </form>
     </section>
+  `;
+}
+
+function renderFamilyInvestmentLegendRow(item, tone, total) {
+  const amount = Number(item?.amountEur || 0);
+  const pct = total > 0 ? (amount / total) * 100 : 0;
+  return `
+    <div class="parents-wealth-legend-row">
+      <i class="tone-${escapeHtml(tone)}"></i>
+      <div>
+        <span>${escapeHtml(item?.label || "Inversión")}</span>
+        <small>${pct.toFixed(1)}%</small>
+      </div>
+      <strong>${formatMoney(amount, "EUR")}</strong>
+    </div>
   `;
 }
 
