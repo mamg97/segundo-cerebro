@@ -64,8 +64,8 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.39\.6/);
-assert.match(index, /styles\.css\?v=0\.39\.1/);
+assert.match(index, /app\.js\?v=0\.39\.7/);
+assert.match(index, /styles\.css\?v=0\.39\.2/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -147,6 +147,11 @@ assert.match(css, /height: 92px/);
 assert.match(css, /home-wealth-stack/);
 assert.match(css, /home-wealth-legend/);
 assert.match(app, /function weeklyMenuModel/);
+assert.match(app, /function weeklyMenuItemIsConsumed/);
+assert.match(app, /weekly-menu-ingredients-fallback/);
+assert.match(app, /consumed \? "is-consumed"/);
+assert.match(css, /weekly-menu-meal\.is-consumed/);
+
 assert.match(app, /function renderHomeWeeklyMenu/);
 assert.match(app, /event\.locationRef/);
 assert.match(app, /if \(tab === "medical"\) void loadMedicalAppointments\(\)/);
