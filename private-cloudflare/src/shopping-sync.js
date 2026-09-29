@@ -317,6 +317,17 @@ export function planAppleActionsForRow(row, link) {
   return [];
 }
 
+export function planAppleActionsForMissingSecondBrainRow(link) {
+  if (
+    !link?.apple_reminder_id ||
+    Boolean(link.apple_completed) ||
+    Boolean(link.apple_missing)
+  ) {
+    return [];
+  }
+  return [{ type: "setCompleted", desiredCompleted: true }];
+}
+
 async function processAppleEvents(request, env, getGoogleAccessToken) {
   let body;
   try { body = await request.json(); }
@@ -377,6 +388,33 @@ async function processAppleEvents(request, env, getGoogleAccessToken) {
     let candidates = linked ? rows.filter((row) => row.externalId === linked.external_id) : [];
     if (!candidates.length) candidates = rows.filter((row) => row.appleReminderId === event.reminderId);
     if (!candidates.length) candidates = rows.filter((row) => !row.appleReminderId && row.normalizedName === event.normalizedName);
+
+    if (linked && !candidates.length) {
+      await queueCompletionForMissingSecondBrainRow(env, linked, event);
+      await upsertLink(env, {
+        externalId: linked.external_id,
+        appleReminderId: event.reminderId,
+        appleExternalIdentifier: event.externalIdentifier || linked.apple_external_identifier,
+        normalizedName: event.normalizedName,
+        appleTitle: event.title,
+        productId: linked.product_id,
+        appleCompleted: event.completed,
+        appleMissing: event.deleted,
+        appleModifiedAt: event.modifiedAt,
+        secondBrainModifiedAt: linked.segundo_cerebro_modified_at,
+        lastSyncedAt: linked.last_synced_at,
+        syncStatus: event.completed || event.deleted ? "synced" : "pending_apple_completion",
+        syncError: event.completed || event.deleted ? null : "SECOND_BRAIN_ROW_REMOVED",
+        lastSeenRunId: runId,
+        createdAt: linked.created_at
+      });
+      await env.DB.prepare(`
+        UPDATE shopping_sync_events SET external_id = ?, status = 'applied', processed_at = ? WHERE id = ?
+      `).bind(linked.external_id, now, eventRecordId).run();
+      result.ignored += 1;
+      links = await allLinks(env);
+      continue;
+    }
 
     if (candidates.length > 1) {
       result.conflicts += 1;
@@ -510,6 +548,25 @@ async function queueAction(env, action) {
   ).run();
 }
 
+async function queueCompletionForMissingSecondBrainRow(env, link, event = null) {
+  for (const action of planAppleActionsForMissingSecondBrainRow({
+    ...link,
+    apple_reminder_id: event?.reminderId || link?.apple_reminder_id,
+    apple_completed: event ? event.completed : link?.apple_completed,
+    apple_missing: event ? event.deleted : link?.apple_missing
+  })) {
+    await queueAction(env, {
+      type: action.type,
+      externalId: link.external_id,
+      appleReminderId: event?.reminderId || link.apple_reminder_id,
+      title: event?.title || link.apple_title,
+      desiredCompleted: action.desiredCompleted,
+      expectedAppleModifiedAt: event?.modifiedAt || link.apple_modified_at || null,
+      version: `second-brain-removed:${link.last_synced_at || link.created_at || link.external_id}`
+    });
+  }
+}
+
 async function reconcilePendingActions(env, getGoogleAccessToken) {
   await ensureSyncSchema(env);
   const sheet = await ensurePantryShoppingSchema(env, getGoogleAccessToken);
@@ -555,6 +612,16 @@ async function reconcilePendingActions(env, getGoogleAccessToken) {
         version
       });
     }
+  }
+
+  const presentExternalIds = new Set(
+    sheet.rows
+      .map((sourceRow) => String(sourceRow.record?.external_id || "").trim())
+      .filter(Boolean)
+  );
+  for (const link of links) {
+    if (presentExternalIds.has(link.external_id)) continue;
+    await queueCompletionForMissingSecondBrainRow(env, link);
   }
 }
 

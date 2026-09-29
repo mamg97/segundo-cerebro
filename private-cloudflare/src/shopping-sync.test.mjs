@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeShoppingName, planAppleActionsForRow, planShoppingDryRun } from "./shopping-sync.js";
+import {
+  normalizeShoppingName,
+  planAppleActionsForMissingSecondBrainRow,
+  planAppleActionsForRow,
+  planShoppingDryRun
+} from "./shopping-sync.js";
 
 function row(rowNumber, values) {
   return { rowNumber, record: values };
@@ -72,5 +77,26 @@ test("COMPRADO and CANCELADO complete an active linked reminder", () => {
       planAppleActionsForRow({ state }, link),
       [{ type: "setCompleted", desiredCompleted: true }]
     );
+  }
+});
+
+test("a physically removed Segundo Cerebro row completes its linked Apple reminder", () => {
+  assert.deepEqual(
+    planAppleActionsForMissingSecondBrainRow({
+      apple_reminder_id: "apple-1",
+      apple_completed: 0,
+      apple_missing: 0
+    }),
+    [{ type: "setCompleted", desiredCompleted: true }]
+  );
+});
+
+test("a removed row does not repeat completion for an already terminal Apple reminder", () => {
+  for (const link of [
+    { apple_reminder_id: "apple-1", apple_completed: 1, apple_missing: 0 },
+    { apple_reminder_id: "apple-1", apple_completed: 0, apple_missing: 1 },
+    { apple_reminder_id: null, apple_completed: 0, apple_missing: 0 }
+  ]) {
+    assert.deepEqual(planAppleActionsForMissingSecondBrainRow(link), []);
   }
 });

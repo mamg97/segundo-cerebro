@@ -354,12 +354,12 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 
 ## D-039 — Apple Reminders es la interfaz compartida de ListaCompra
 
-- **Estado:** implementada en código; activación real pendiente de dry-run y permiso EventKit.
+- **Estado:** implementada, desplegada y activa.
 - **Fecha:** 2026-09-28.
 - **Decisión:** usar un agente macOS Swift/EventKit para mantener una relación 1:1 entre la lista compartida de Apple y `SEGUNDO CEREBRO - DESPENSA / ListaCompra`.
 - **Fuente enriquecida:** el Sheet conserva producto, precio, cantidad y motivo. Apple conserva el título y el estado cotidiano compartido.
 - **Persistencia auxiliar:** D1 guarda enlaces, cola idempotente y auditoría; no crea una segunda lista canónica.
 - **Seguridad:** token dedicado en Cloudflare Secrets + Keychain; sin OAuth Google en el Mac y sin IDs privados en Git.
 - **Conflictos:** timestamps de ambos lados, detección de cambios concurrentes y rechazo de escrituras EventKit contra una versión inesperada.
-- **Cancelación:** una desaparición activa en Apple pasa a `CANCELADO`; desde Segundo Cerebro se completa, no se borra destructivamente.
+- **Cancelación:** una desaparición activa en Apple pasa a `CANCELADO`; desde Segundo Cerebro, tanto `CANCELADO`/`COMPRADO` como la eliminación física de una fila previamente enlazada completan el recordatorio. No se borra destructivamente ni se toca un recordatorio manual nunca enlazado.
 - **Disponibilidad:** eventos EventKit + fallback de 90 segundos mientras el Mac está encendido y con sesión iniciada.

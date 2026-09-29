@@ -851,16 +851,12 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - Se mantiene la regla de v0.39.3: una respuesta CalDAV vacía nunca borra citas médicas que ya estén visibles en Agenda.
 - Asset JS: `v0.39.5`.
 
-## Punto de intervención humana · Apple Reminders
+## Apple Reminders · activación real y cierre por eliminación
 
-El código del Worker, D1, dashboard y agente macOS está preparado y probado sin tocar la lista real. Antes de cualquier reconciliación se debe:
-
-1. desplegar los Workers y configurar `SHOPPING_SYNC_TOKEN` con `npm run reminders:configure -- https://URL-DEL-WORKER-SHOPPING-SYNC`;
-2. ejecutar `npm run reminders:sync -- --dry-run`;
-3. conceder acceso completo en **Ajustes del Sistema → Privacidad y seguridad → Recordatorios → Segundo Cerebro Reminders**;
-4. revisar los cuatro contadores del informe;
-5. solo con el informe aprobado, ejecutar la sincronización real y activar `launchd`.
-
-No se ha escrito todavía en Apple Reminders ni se ha realizado la reconciliación real.
+- Activación real completada el 2026-09-29 con permiso EventKit, lista exacta `Lista De La Compra`, backend, Sheet y agente `launchd` operativos.
+- Primera reconciliación: 1 elemento Apple → Segundo Cerebro; verificación posterior: 1 coincidencia, 0 elementos sueltos y 0 conflictos.
+- Se verificó un ciclo autónomo del agente con 1 coincidencia, 0 conflictos, 0 acciones pendientes y 0 fallos definitivos.
+- Si una fila previamente enlazada se elimina físicamente de `ListaCompra`, ya no se reconstruye desde Apple: se encola una acción idempotente para completar el recordatorio y retirarlo de la lista activa.
+- La regla no afecta recordatorios manuales que nunca hayan estado enlazados con Segundo Cerebro.
 
 Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
