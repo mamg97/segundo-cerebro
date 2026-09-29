@@ -6,6 +6,7 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
+import { renderMidasVisualLab } from "./midas-lab.js?v=0.39.8";
 
 let state = mockState;
 let areaById = new Map();
@@ -4508,6 +4509,7 @@ function openWealthDetail() {
 const MIDAS_GROUPS = [
   ["diario_heredado", "Algoritmo genético original · S&P 500"],
   ["paper_nuevo", "Campaña nueva 2026 · EE. UU. · USD"],
+  ["weekly_ml_demo", "Weekly ML · ensemble y expertos · USD"],
   ["tfm_demo_adaptado", "TFM · modelos adaptados a cartera demo · EUR"],
   ["historica_pendiente", "Ideas históricas pendientes"]
 ];
@@ -4595,7 +4597,7 @@ function renderMidasResearch(research) {
   </section>`;
 }
 
-function renderMidasReport(dashboard, stale, research = null) {
+function renderMidasReport(dashboard, stale, research = null, lab = null) {
   const rows = dashboard.tracks || [];
   const observed = rows.filter((row) => ["demo_con_diario", "diario_heredado_observado"].includes(row.status)).length;
   const originalGenetic = rows.find((row) => row.id === "genetic_sp500_legacy");
@@ -4608,6 +4610,7 @@ function renderMidasReport(dashboard, stale, research = null) {
     </div>
     ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>El historial antiguo se conserva como referencia: anotaba operaciones al mismo cierre que generaba la señal y su rentabilidad no era alcanzable con esa regla. La fila «versión corregida» empieza una campaña nueva: señal al cierre y ejecución simulada en la apertura siguiente, con costes. Sus cifras siguen siendo ficticias, sin órdenes confirmadas por un bróker. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
     <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado.</p>
+    ${renderMidasVisualLab(dashboard, lab)}
     ${renderMidasResearch(research)}
     ${MIDAS_GROUPS.map(([group, title]) => {
       const groupRows = rows.filter((row) => row.group === group);
@@ -4642,7 +4645,7 @@ async function openMidasDialog() {
     if (!response.ok) throw new Error(`MIDAS_HTTP_${response.status}`);
     const result = await response.json();
     if (!result.ok || !Array.isArray(result.dashboard?.tracks)) throw new Error("MIDAS_INVALID_RESPONSE");
-    if (dialog.open) target.innerHTML = renderMidasReport(result.dashboard, result.stale, result.research);
+    if (dialog.open) target.innerHTML = renderMidasReport(result.dashboard, result.stale, result.research, result.lab);
   } catch {
     if (dialog.open) {
       target.innerHTML = '<div class="midas-error"><strong>No se pudo cargar el informe.</strong><p>El diario público puede estar aún sin publicar o temporalmente inaccesible.</p><button id="midas-retry" type="button">Reintentar</button></div>';
