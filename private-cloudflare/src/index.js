@@ -4108,7 +4108,12 @@ export default {
         loadStateSource(hasPantryGoogleConfig(env), "Pantry", () => fetchPantrySummary(env, getGoogleAccessToken)),
         loadStateSource(hasObjectsGoogleConfig(env), "Objects", () => fetchObjectsSummary(env, getGoogleAccessToken)),
         loadStateSource(hasProjectsGoogleConfig(env), "Projects", () => fetchProjectsSummary(env, getGoogleAccessToken)),
-        loadStateSource(hasIcloudCalendarConfig(env), "iCloud", () => fetchIcloudCalendarSummary(env)),
+        loadStateSource(
+          hasIcloudCalendarConfig(env),
+          "iCloud",
+          () => fetchIcloudCalendarSummary(env, { seedEvents: Array.isArray(state.events) ? state.events : [] }),
+          9000
+        ),
         loadStateSource(true, "Family", async () => ({
           status: "ok",
           value: await fetchFamilyHomeSummary(env)
