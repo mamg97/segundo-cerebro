@@ -15973,6 +15973,54 @@ html[data-theme="dark"] .wealth-daily-kpis article {
 }
 
 
+/* v0.39.9 — compact Home daily overview cards without reducing typography */
+@media (min-width: 761px) {
+  .daily-overview-grid {
+    align-items: start;
+    gap: 18px;
+  }
+
+  .daily-overview-card {
+    align-content: start;
+    gap: 14px;
+    padding: 20px 22px;
+  }
+
+  .daily-progress-summary {
+    gap: 14px;
+  }
+
+  .daily-progress-footer {
+    gap: 12px;
+  }
+
+  .daily-energy-grid {
+    gap: 8px;
+  }
+
+  .daily-energy-grid > span,
+  .pantry-home-grid > span,
+  .objects-home-grid > span {
+    padding: 9px 10px;
+  }
+
+  .pantry-home-grid,
+  .objects-home-grid {
+    gap: 7px;
+  }
+
+  .pantry-home-primary {
+    gap: 12px;
+  }
+
+  .pantry-home-review,
+  .pantry-home-footer,
+  .objects-home-footer {
+    margin-top: -2px;
+  }
+}
+
+
 /* v0.39.8 — MIDAS animated algorithm laboratory */
 .midas-lab {
   display: grid;

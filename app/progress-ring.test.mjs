@@ -152,6 +152,10 @@ assert.match(app, /weekly-menu-ingredients-fallback/);
 assert.match(app, /consumed \? "is-consumed"/);
 assert.match(css, /weekly-menu-meal\.is-consumed/);
 assert.match(css, /\.home-weekly-menu-panel\s*\{[\s\S]*?margin-top:\s*24px/);
+assert.match(css, /v0\.39\.9 — compact Home daily overview cards/);
+assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?align-items:\s*start/);
+assert.match(css, /\.daily-overview-card\s*\{[\s\S]*?align-content:\s*start/);
+
 
 
 assert.match(app, /function renderHomeWeeklyMenu/);
