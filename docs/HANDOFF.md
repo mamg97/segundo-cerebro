@@ -872,3 +872,13 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Si aún no existe copia D1, puede sembrarse con los eventos iCloud ya presentes en el snapshot privado.
 - Agenda muestra el estado de la fuente: directo, parcial o copia estable.
 - Asset JS: `v0.39.6`.
+
+
+## Menú semanal · detalle de comidas consumidas v0.39.7
+
+- Las comidas de `MenuSemanal` con `estado=consumido` muestran el título en `var(--mint)`, manteniendo paridad light/dark.
+- El color se deriva del estado canónico; no se infiere por hora ni por fecha.
+- `Ver ingredientes y cantidades` ya no desaparece cuando una comida real/ad hoc no tiene `recipe_id`: si faltan ingredientes estructurados, la UI muestra cantidad, kcal, proteína y la nota registrada como fallback.
+- Caso que motivó el cambio: comida real del 29/09/2026 `Brochetas + arroz basmati + pechuga + 20 picos`, guardada como consumida sin receta estructurada pero con desglose exacto en la nota.
+- Las recetas siguen mostrando su tabla completa de ingredientes como antes.
+- Assets: `app.js?v=0.39.7`, `styles.css?v=0.39.2`.
