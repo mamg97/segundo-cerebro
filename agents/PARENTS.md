@@ -76,7 +76,7 @@ Cada caso declara sus fuentes. Ejemplos genéricos:
 
 El patrimonio de los padres se modela como una vista privada estructurada, separada de los casos y de las finanzas personales del usuario.
 
-La unidad es `family_wealth_item`, con importes reales exclusivamente en D1 privado. Debe permitir distinguir:
+La fuente privada puede aportar partidas desde la hoja financiera privada `PatrimonioPadres`; las altas manuales adicionales pueden vivir en `family_wealth_items` de D1. La API fusiona ambas sin exponer importes en Git ni en la demo pública. Debe permitir distinguir:
 
 - inversiones financieras;
 - inmuebles;
