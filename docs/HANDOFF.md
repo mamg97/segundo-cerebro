@@ -194,7 +194,7 @@ Estado:
 - La sensibilidad de los casos se fija a `muy_confidencial` en esta fase.
 - La estructura está preparada para cargar datos reales únicamente en runtime/D1 después del despliegue; ningún caso real vive en Git.
 - El ámbito `Familiar / patrimonial común` incorpora una vista privada de patrimonio con activos conocidos, inversiones, deudas, neto conocido y partidas pendientes de valorar.
-- El detalle patrimonial vive en `family_wealth_items` (D1 privado). La UI permite alta, edición y borrado desde la aplicación protegida; ningún importe real se versiona en Git.
+- El detalle patrimonial se alimenta de la pestaña privada `PatrimonioPadres` de la fuente financiera y se fusiona con `family_wealth_items` de D1 para altas manuales; ningún importe real se versiona en Git ni entra en la demo pública.
 - Inmueble del negocio y valor operativo del negocio se modelan como partidas distintas para evitar doble conteo; LITOS puede actuar como referencia, no como contabilidad duplicada.
 
 
