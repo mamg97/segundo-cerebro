@@ -65,7 +65,7 @@ assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(index, /app\.js\?v=0\.39\.8/);
-assert.match(index, /styles\.css\?v=0\.39\.8/);
+assert.match(index, /styles\.css\?v=0\.39\.10/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -153,6 +153,10 @@ assert.match(app, /consumed \? "is-consumed"/);
 assert.match(css, /weekly-menu-meal\.is-consumed/);
 assert.match(css, /\.home-weekly-menu-panel\s*\{[\s\S]*?margin-top:\s*24px/);
 assert.match(css, /v0\.39\.9 — compact Home daily overview cards/);
+assert.match(css, /v0\.39\.10 — denser Home summary cards/);
+assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?gap:\s*10px/);
+assert.match(css, /\.pantry-home-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3/);
+
 assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?align-items:\s*start/);
 assert.match(css, /\.daily-overview-card\s*\{[\s\S]*?align-content:\s*start/);
 
