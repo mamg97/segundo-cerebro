@@ -890,3 +890,13 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Separación vertical: 24 px en escritorio y 16 px en móvil.
 - No cambia la estructura, datos ni altura interna de Agenda o Menú; solo la jerarquía visual entre módulos.
 - Asset CSS: `styles.css?v=0.39.3`.
+
+
+## Home · tarjetas de resumen diario compactas v0.39.9
+
+- Hábitos, Nutrición, Despensa y Objetos dejan de estirarse a la altura de la tarjeta más alta de la fila.
+- En escritorio cada tarjeta usa altura natural y alinea su contenido al inicio.
+- Se reducen moderadamente padding y gaps internos, pero no el tamaño de letra.
+- Despensa y Objetos compactan también sus mini-KPI sin eliminar información.
+- La versión móvil conserva la escala tipográfica y espaciado específicos ya definidos.
+- Asset CSS: `styles.css?v=0.39.4`.
