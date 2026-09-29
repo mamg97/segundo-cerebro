@@ -376,3 +376,12 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Arranque:** si D1 todavía no contiene copia estable, puede sembrarse desde eventos iCloud ya presentes en el snapshot privado del Segundo Cerebro hasta conseguir la siguiente lectura válida.
 - **UI:** Agenda informa si está mostrando datos en directo, sincronización parcial o copia estable.
 - **Motivo:** una dependencia de red de Apple no debe hacer desaparecer visualmente bodas, citas o agenda ya conocidas.
+
+
+## MIDAS: animación derivada, no fuente de verdad
+
+- **Fecha:** 2026-09-29.
+- **Decisión:** las animaciones de algoritmos en Segundo Cerebro son una proyección visual de diarios/curvas de patrimonio ficticio existentes. No crean puntos, no interpolan resultados y no constituyen una fuente de verdad adicional.
+- **Fuente:** paper público de `midas-paper-lab` y, para el genético original, el resumen privado saneado en D1.
+- **Bootstrap:** una prueba retrospectiva puede mostrarse solo si está etiquetada explícitamente como no prospectiva y queda fuera del track record forward.
+- **Privacidad:** ninguna posición patrimonial real ni dato de broker entra en esta visualización.
