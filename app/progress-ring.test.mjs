@@ -64,8 +64,8 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.39\.9/);
-assert.match(index, /styles\.css\?v=0\.39\.12/);
+assert.match(index, /app\.js\?v=0\.39\.13/);
+assert.match(index, /styles\.css\?v=0\.39\.13/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -155,6 +155,17 @@ assert.match(css, /\.home-weekly-menu-panel\s*\{[\s\S]*?margin-top:\s*24px/);
 assert.match(css, /v0\.39\.9 — compact Home daily overview cards/);
 assert.match(css, /v0\.39\.10 — denser Home summary cards/);
 assert.match(css, /v0\.39\.12 — desktop 2x2 horizontal summary layout/);
+assert.match(css, /v0\.39\.13 — unified symmetric Home summary cards/);
+assert.match(index, /id="home-habits-done"/);
+assert.match(index, /id="home-habits-pending"/);
+assert.match(index, /id="home-habits-percent"/);
+assert.match(index, /id="home-habits-streak"/);
+assert.match(index, /id="home-kcal-percent"/);
+assert.match(css, /grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
+assert.match(css, /#home-pantry-status,[\s\S]*#home-shopping-preview,[\s\S]*#home-objects-status[\s\S]*display:\s*none/);
+assert.match(app, /const pending = Math\.max\(0, total - done\)/);
+assert.match(app, /percentNode\.textContent = rawPct \+ "%"/);
+
 assert.match(css, /#home-habits-card\s*\{[\s\S]*?grid-template-columns:/);
 assert.match(css, /#home-nutrition-card\s*\{[\s\S]*?grid-template-columns:/);
 assert.match(css, /\.pantry-home-primary\s*\{[\s\S]*?grid-template-columns:/);

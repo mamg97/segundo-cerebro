@@ -1014,14 +1014,30 @@ function renderHomeHabitsCard() {
   const summary = state.habitsSummary?.summary || {};
   const total = Math.max(0, Number(summary.total || 0));
   const done = Math.max(0, Number(summary.done || 0));
+  const pending = Math.max(0, total - done);
+  const streak = Math.max(0, Number(summary.streak || 0));
   const percentage = total > 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : null;
   const value = document.querySelector("#home-habits-value");
   const label = document.querySelector("#home-habits-label");
   const ring = document.querySelector("#home-habits-ring");
+  const doneNode = document.querySelector("#home-habits-done");
+  const pendingNode = document.querySelector("#home-habits-pending");
+  const percentNode = document.querySelector("#home-habits-percent");
+  const streakNode = document.querySelector("#home-habits-streak");
+  const statusNode = document.querySelector("#home-habits-status");
+
   if (value) value.textContent = total > 0 ? done + " / " + total : "—";
   if (label) label.textContent = total > 0
-    ? percentage + "% completado · racha " + Number(summary.streak || 0) + " días"
+    ? percentage + "% completado · racha " + streak + " días"
     : "Sin hábitos programados";
+  if (doneNode) doneNode.textContent = total > 0 ? String(done) : "—";
+  if (pendingNode) pendingNode.textContent = total > 0 ? String(pending) : "—";
+  if (percentNode) percentNode.textContent = percentage == null ? "—" : percentage + "%";
+  if (streakNode) streakNode.textContent = total > 0 ? streak + " días" : "—";
+  if (statusNode) statusNode.textContent = total > 0
+    ? done + " de " + total + " completados hoy"
+    : "Sin hábitos programados";
+
   updateProgressRing(ring, percentage, {
     tone: "violet",
     label: "hoy",
@@ -1056,6 +1072,7 @@ async function renderHomeNutritionCard() {
   const consumedNode = document.querySelector("#home-kcal-consumed");
   const burnedNode = document.querySelector("#home-kcal-burned");
   const targetNode = document.querySelector("#home-kcal-target");
+  const percentNode = document.querySelector("#home-kcal-percent");
   const statusNode = document.querySelector("#home-kcal-status");
   const ring = document.querySelector("#home-kcal-ring");
   if (!consumedNode || !burnedNode || !targetNode || !statusNode || !ring) return;
@@ -1063,6 +1080,7 @@ async function renderHomeNutritionCard() {
     consumedNode.textContent = "—";
     burnedNode.textContent = "—";
     targetNode.textContent = "—";
+    if (percentNode) percentNode.textContent = "—";
     statusNode.textContent = "Disponible en la aplicación privada";
     hideHomeWeeklyMenu();
     updateProgressRing(ring, null, { tone: "amber", label: "kcal", ariaLabel: "Nutrición disponible en la aplicación privada" });
@@ -1088,6 +1106,7 @@ async function renderHomeNutritionCard() {
       const rawPct = Math.max(0, Math.round((consumed / target) * 100));
       const fillPct = Math.min(100, rawPct);
       const remaining = target - consumed;
+      if (percentNode) percentNode.textContent = rawPct + "%";
       const tone = rawPct <= 100 ? "mint" : rawPct <= 110 ? "amber" : "coral";
       updateProgressRing(ring, fillPct, {
         tone,
@@ -1099,6 +1118,7 @@ async function renderHomeNutritionCard() {
         ? "Dentro del máximo · margen " + formatKcal(remaining)
         : "Exceso · " + formatKcal(Math.abs(remaining)) + " por encima";
     } else {
+      if (percentNode) percentNode.textContent = "—";
       updateProgressRing(ring, null, {
         tone: "amber",
         label: "kcal",
@@ -1110,6 +1130,7 @@ async function renderHomeNutritionCard() {
     consumedNode.textContent = "—";
     burnedNode.textContent = "—";
     targetNode.textContent = "—";
+    if (percentNode) percentNode.textContent = "—";
     statusNode.textContent = "No se ha podido cargar Nutrición";
     void loadHomeWeeklyMenu(null);
     updateProgressRing(ring, null, { tone: "amber", label: "kcal", ariaLabel: "Nutrición no disponible" });

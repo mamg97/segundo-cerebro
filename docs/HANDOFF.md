@@ -938,3 +938,16 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Objetos: cabecera + 4 KPI en una fila; estado/footer debajo.
 - Tablet mantiene el layout previo y móvil sigue a una columna.
 - Asset CSS: `styles.css?v=0.39.12`.
+
+
+## Home · tarjetas resumen simétricas v0.39.13
+
+- En escritorio ancho, Hábitos, Nutrición, Despensa y Objetos comparten exactamente el mismo patrón visual: cabecera + 4 KPI + pie.
+- Se eliminan del Home los anillos grandes de Hábitos/Nutrición y se sustituyen por KPI textuales; los anillos siguen disponibles en las vistas detalladas.
+- Hábitos: Completados, Pendientes, Progreso y Racha.
+- Nutrición: Consumidas, Gasto total, Objetivo y Progreso.
+- Despensa: En casa, Stock bajo, Lista compra y Sin precio; el coste conocido pasa al pie junto a la revisión.
+- Objetos conserva sus cuatro KPI actuales.
+- En escritorio se ocultan textos secundarios redundantes de Despensa/Objetos para que las cuatro tarjetas mantengan tres franjas y altura visual comparable.
+- Móvil conserva la presentación anterior de progreso.
+- Assets: `app.js?v=0.39.13`, `styles.css?v=0.39.13`.
