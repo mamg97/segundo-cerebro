@@ -64,7 +64,7 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.39\.5/);
+assert.match(index, /app\.js\?v=0\.39\.6/);
 assert.match(index, /styles\.css\?v=0\.39\.1/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
@@ -152,6 +152,8 @@ assert.match(app, /event\.locationRef/);
 assert.match(app, /if \(tab === "medical"\) void loadMedicalAppointments\(\)/);
 assert.match(app, /selectedCalendarCount/);
 assert.match(app, /missingCalendars/);
+assert.match(app, /calendar-source-status/);
+assert.match(app, /sincronización parcial/);
 assert.match(app, /renderHomeWeeklyMenu\(data\)/);
 assert.match(app, /weekly-menu-meal-macros/);
 assert.match(app, /Proteína/);
