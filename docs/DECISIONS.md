@@ -363,3 +363,16 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Conflictos:** timestamps de ambos lados, detección de cambios concurrentes y rechazo de escrituras EventKit contra una versión inesperada.
 - **Cancelación:** una desaparición activa en Apple pasa a `CANCELADO`; desde Segundo Cerebro, tanto `CANCELADO`/`COMPRADO` como la eliminación física de una fila previamente enlazada completan el recordatorio. No se borra destructivamente ni se toca un recordatorio manual nunca enlazado.
 - **Disponibilidad:** eventos EventKit + fallback de 90 segundos mientras el Mac está encendido y con sesión iniciada.
+
+
+## D-040 — Calendario usa last-known-good derivado para tolerar fallos de CalDAV
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-29.
+- **Autoridad:** iCloud continúa siendo la única fuente de verdad de fechas y horarios; D1 no adquiere autoridad sobre el calendario.
+- **Decisión:** una lectura CalDAV completa y no vacía actualiza una copia derivada `last-known-good` en D1. Timeouts, respuestas vacías sospechosas o descubrimientos parciales nunca sustituyen esa copia.
+- **Degradación:** si falta un calendario configurado, se usan eventos frescos de los calendarios encontrados y se conservan temporalmente los últimos eventos conocidos del calendario ausente. Si la lectura completa devuelve cero eventos pero existe una copia no vacía, se mantiene la copia anterior.
+- **Matching:** los nombres de calendario se comparan primero de forma exacta y después normalizados por mayúsculas, acentos y espacios; una coincidencia normalizada ambigua no se acepta.
+- **Arranque:** si D1 todavía no contiene copia estable, puede sembrarse desde eventos iCloud ya presentes en el snapshot privado del Segundo Cerebro hasta conseguir la siguiente lectura válida.
+- **UI:** Agenda informa si está mostrando datos en directo, sincronización parcial o copia estable.
+- **Motivo:** una dependencia de red de Apple no debe hacer desaparecer visualmente bodas, citas o agenda ya conocidas.
