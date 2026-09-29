@@ -3292,13 +3292,16 @@ function weeklyMenuModel(data) {
   }
 
   const momentOrder = new Map([
-    ["desayuno", 0],
-    ["media manana", 1],
-    ["comida", 2],
-    ["merienda", 3],
-    ["cena", 4],
-    ["snack", 5],
-    ["otro", 6]
+    ["manana oficina", 0],
+    ["desayuno", 1],
+    ["media manana", 2],
+    ["comida", 3],
+    ["merienda", 4],
+    ["cena", 5],
+    ["postre", 6],
+    ["snack", 7],
+    ["cierre", 8],
+    ["otro", 9]
   ]);
   const normalizedMoment = (value) => String(value || "Otro")
     .normalize("NFD")
@@ -3588,6 +3591,46 @@ function renderHomeWeeklyMenuUnavailable() {
     </div>`;
 }
 
+function renderHomeWeeklyMenuMealGroup(items) {
+  const rows = Array.isArray(items) ? items.filter(Boolean) : [];
+  if (!rows.length) return "";
+  if (rows.length === 1) return renderWeeklyMenuMeal(rows[0], true);
+
+  const kcal = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0);
+  const protein = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
+  const moment = rows[0]?.moment || "Otro";
+  const names = rows.map((item) => item.name).filter(Boolean);
+
+  return `
+    <article class="weekly-menu-meal weekly-menu-meal-grouped">
+      <div class="weekly-menu-meal-main">
+        <div class="weekly-menu-meal-copy">
+          <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
+          <strong>${names.map((name) => escapeHtml(name)).join(" + ")}</strong>
+        </div>
+        <div class="weekly-menu-meal-macros">
+          <b>${formatKcal(kcal)}</b>
+          <span>P ${formatMacro(protein)}</span>
+        </div>
+      </div>
+    </article>`;
+}
+
+function groupWeeklyMenuItemsByMoment(items) {
+  const groups = [];
+  for (const item of Array.isArray(items) ? items : []) {
+    const key = String(item?.moment || "Otro")
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    const last = groups[groups.length - 1];
+    if (last?.key === key) last.items.push(item);
+    else groups.push({ key, items: [item] });
+  }
+  return groups;
+}
+
 function renderHomeWeeklyMenu(data) {
   const panel = document.querySelector("#home-weekly-menu-panel");
   const content = document.querySelector("#home-weekly-menu-content");
@@ -3634,7 +3677,9 @@ function renderHomeWeeklyMenu(data) {
             </div>
 
             <div class="home-weekly-menu-meals">
-              ${day.items.map((item) => renderWeeklyMenuMeal(item, true)).join("")}
+              ${groupWeeklyMenuItemsByMoment(day.items)
+                .map((group) => renderHomeWeeklyMenuMealGroup(group.items))
+                .join("")}
             </div>
             ${targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : ""}
           </article>`;
