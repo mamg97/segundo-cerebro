@@ -16472,3 +16472,114 @@ html[data-theme="dark"] .midas-lab-card {
     line-height: 1.25;
   }
 }
+
+
+/* v0.39.11 — desktop 2x2 horizontal summary layout */
+@media (min-width: 1180px) {
+  .daily-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  #home-habits-card,
+  #home-nutrition-card,
+  #home-objects-card,
+  .pantry-home-card {
+    min-height: 0;
+  }
+
+  #home-habits-card {
+    grid-template-columns: minmax(150px, .72fr) minmax(0, 1.28fr);
+    align-items: center;
+  }
+
+  #home-habits-card .daily-card-heading {
+    grid-column: 1;
+  }
+
+  #home-habits-card .daily-progress-summary {
+    grid-column: 2;
+  }
+
+  #home-nutrition-card {
+    grid-template-columns: minmax(150px, .65fr) minmax(300px, 1.45fr) minmax(170px, .8fr);
+    align-items: center;
+  }
+
+  #home-nutrition-card .daily-card-heading {
+    grid-column: 1;
+  }
+
+  #home-nutrition-card .daily-energy-grid {
+    grid-column: 2;
+  }
+
+  #home-nutrition-card .daily-progress-footer {
+    grid-column: 3;
+  }
+
+  .pantry-home-card {
+    align-content: start;
+  }
+
+  .pantry-home-primary {
+    grid-template-columns: minmax(150px, .55fr) minmax(0, 1.45fr);
+    gap: 6px 12px;
+    align-items: center;
+  }
+
+  .pantry-home-primary .daily-card-heading {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .pantry-home-primary .pantry-home-grid {
+    grid-column: 2;
+    grid-row: 1;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .pantry-home-primary .daily-card-status {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0;
+  }
+
+  .pantry-home-primary .pantry-home-preview {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .pantry-home-footer {
+    margin-top: 2px;
+  }
+
+  #home-objects-card {
+    grid-template-columns: minmax(170px, .62fr) minmax(0, 1.38fr);
+    grid-template-areas:
+      "heading stats"
+      "status footer";
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 6px;
+  }
+
+  #home-objects-card .daily-card-heading {
+    grid-area: heading;
+  }
+
+  #home-objects-card .objects-home-grid {
+    grid-area: stats;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  #home-objects-card > .daily-card-status {
+    grid-area: status;
+    margin: 0;
+  }
+
+  #home-objects-card .objects-home-footer {
+    grid-area: footer;
+    margin: 0;
+  }
+}
