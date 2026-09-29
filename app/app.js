@@ -1601,7 +1601,7 @@ function renderFamilyWealthSection(payload) {
         <article><span>Activos conocidos</span><strong>${formatMoney(grossAssets, "EUR")}</strong></article>
         <article><span>Inversiones</span><strong>${formatMoney(investments, "EUR")}</strong></article>
         <article><span>Deuda conocida</span><strong>${formatMoney(liabilities, "EUR")}</strong></article>
-        <article><span>Neto conocido</span><strong>${formatMoney(netKnown, "EUR")}</strong></article>
+        <article><span>Neto conocido${pending > 0 ? " · incompleto" : ""}</span><strong>${formatMoney(netKnown, "EUR")}</strong></article>
         <article><span>Pendiente valorar</span><strong>${pending}</strong></article>
       </div>
 
@@ -1672,12 +1672,13 @@ function renderFamilyWealthItem(item) {
   const owner = FAMILY_SCOPE_LABELS[item.ownerScope] || item.ownerScope || "Común";
   const status = FAMILY_WEALTH_STATUS_LABELS[item.valuationStatus] || item.valuationStatus || "—";
   const date = formatFamilyDate(item.asOfDate || item.updatedAt);
+  const external = item.managedBy === "finance-sheet";
   return `
-    <button class="parents-wealth-item ${item.category === "debt" ? "is-debt" : ""}" type="button" data-family-wealth-id="${escapeHtml(item.id)}">
+    <button class="parents-wealth-item ${item.category === "debt" ? "is-debt" : ""} ${external ? "is-source-managed" : ""}" type="button" data-family-wealth-id="${escapeHtml(item.id)}" ${external ? 'data-family-wealth-readonly="true"' : ""}>
       <div class="parents-wealth-item-main">
         <span>${escapeHtml(FAMILY_WEALTH_CATEGORY_LABELS[item.category] || item.category)}</span>
         <strong>${escapeHtml(item.label)}</strong>
-        <small>${escapeHtml(owner)} · ${escapeHtml(status)}${date ? ` · ${escapeHtml(date)}` : ""}</small>
+        <small>${escapeHtml(owner)} · ${escapeHtml(status)}${date ? ` · ${escapeHtml(date)}` : ""}${external ? " · Fuente privada" : ""}</small>
       </div>
       <strong class="parents-wealth-amount">${escapeHtml(amount)}</strong>
     </button>
@@ -1722,7 +1723,12 @@ function bindFamilyWealthControls(panel, payload) {
   panel.querySelectorAll("[data-family-wealth-id]").forEach((button) => {
     button.addEventListener("click", () => {
       const item = items.find((entry) => entry.id === button.dataset.familyWealthId);
-      if (item) openForm(item);
+      if (!item) return;
+      if (item.managedBy === "finance-sheet") {
+        statusNode.textContent = "Esta partida viene de la fuente financiera privada y se actualiza desde allí.";
+        return;
+      }
+      openForm(item);
     });
   });
 
