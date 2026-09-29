@@ -837,3 +837,12 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - Se mantiene la regla existente de cumpleaños: un cumpleaños-recordatorio no aparece en Eventos salvo que el propio evento contenga un plan concreto.
 - Se ha añadido también una regla canónica `puy-du-fou` en `EventosImportantes` de la hoja financiera privada para que el evento actual no dependa únicamente de heurísticas.
 - Asset JS: `v0.39.4`.
+
+
+## Salud · endurecimiento de calendarios médicos v0.39.5
+
+- `Salud → Médicos` vuelve a consultar las citas cada vez que se abre la pestaña, evitando quedarse con un resultado antiguo.
+- La detección médica usa `title`, `location`, `locationRef` y `calendarName`; `locationRef` es el campo real que entrega la integración iCloud actual.
+- La nota de fuente muestra cuántos calendarios configurados han sido realmente encontrados y enumera los nombres no encontrados cuando existan.
+- Se mantiene la regla de v0.39.3: una respuesta CalDAV vacía nunca borra citas médicas que ya estén visibles en Agenda.
+- Asset JS: `v0.39.5`.

@@ -1349,7 +1349,7 @@ function inferImportantKind(title) {
 }
 
 function classifyHealthEvent(event) {
-  const text = normalizeForMatch([event.title, event.location].filter(Boolean).join(" "));
+  const text = normalizeForMatch([event.title, event.location, event.locationRef, event.calendarName].filter(Boolean).join(" "));
   if (/gimnasio|\bgym\b|entreno|entrenamiento/.test(text)) return "gym";
   if (/nutricion|nutricionista|dietista|dieta/.test(text)) return "nutrition";
   if (/\bmedico\b|\bmedica\b|cita medica|doctor|doctora|hospital|clinica|cardiolog|urolog|alergolog|dentista|dental|dermatolog|traumatolog|fisioterap|oftalmolog|revision medica|analitica|consulta/.test(text)) return "medical";
@@ -2758,6 +2758,7 @@ function bindHealthTabs() {
       document.querySelectorAll("[data-health-tab]").forEach((item) => item.classList.toggle("active", item === button));
       document.querySelectorAll("[data-health-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.healthPanel === tab));
       if (tab === "adherence") void loadHealthAdherence();
+      if (tab === "medical") void loadMedicalAppointments();
     });
   });
 }
@@ -2832,11 +2833,22 @@ async function loadMedicalAppointments() {
     const refreshedAt = payload.source?.updatedAt
       ? "iCloud actualizado " + eventDateLabel(payload.source.updatedAt, true)
       : "Fuente iCloud en directo";
+    const selectedCalendars = Number(payload.source?.selectedCalendarCount);
+    const matchedCalendars = Number(payload.source?.matchedCalendarCount);
+    const missingCalendars = Array.isArray(payload.source?.missingCalendars)
+      ? payload.source.missingCalendars.filter(Boolean)
+      : [];
+    const calendarStatus = Number.isFinite(selectedCalendars) && Number.isFinite(matchedCalendars) && selectedCalendars > 0
+      ? ` · calendarios ${matchedCalendars}/${selectedCalendars} enlazados`
+      : "";
+    const missingStatus = missingCalendars.length
+      ? ` · no encontrados: ${missingCalendars.join(", ")}`
+      : "";
     const sourceNote = live.length
-      ? refreshedAt
+      ? refreshedAt + calendarStatus + missingStatus
       : local.length
-        ? refreshedAt + " · sin perder las citas ya cargadas en Agenda"
-        : refreshedAt;
+        ? refreshedAt + calendarStatus + missingStatus + " · sin perder las citas ya cargadas en Agenda"
+        : refreshedAt + calendarStatus + missingStatus;
 
     panel.innerHTML = renderMedicalSection(events, { sourceNote });
   } catch (error) {
