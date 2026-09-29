@@ -1,6 +1,198 @@
 
 let calendarCache = { value: null, expiresAt: 0 };
 
+const CALENDAR_SNAPSHOT_KEY = "icloud-calendar-last-known-good";
+const CALENDAR_LIVE_TIMEOUT_MS = 7000;
+const CALENDAR_LIVE_CACHE_MS = 60_000;
+const CALENDAR_FALLBACK_CACHE_MS = 15_000;
+
+export function normalizeIcloudCalendarName(value = "") {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function matchIcloudCalendar(available, configuredName) {
+  const items = Array.isArray(available) ? available : [];
+  const exact = items.find((item) => item && item.name === configuredName);
+  if (exact) return exact;
+  const target = normalizeIcloudCalendarName(configuredName);
+  if (!target) return null;
+  const normalizedMatches = items.filter((item) => normalizeIcloudCalendarName(item && item.name) === target);
+  return normalizedMatches.length === 1 ? normalizedMatches[0] : null;
+}
+
+function sortCalendarEvents(events) {
+  return [...(Array.isArray(events) ? events : [])]
+    .sort((a, b) => new Date(a?.startsAt || 0) - new Date(b?.startsAt || 0));
+}
+
+function lastGoodTimestamp(value) {
+  return value?.source?.lastGoodAt || value?.source?.updatedAt || null;
+}
+
+export function resolveIcloudCalendarRead(liveValue, lastGood) {
+  const liveEvents = Array.isArray(liveValue?.events) ? liveValue.events : [];
+  const previousEvents = Array.isArray(lastGood?.events) ? lastGood.events : [];
+  const source = liveValue?.source || {};
+  const selected = Number(source.selectedCalendarCount || 0);
+  const matched = Number(source.matchedCalendarCount || 0);
+  const missing = Array.isArray(source.missingCalendars) ? source.missingCalendars.filter(Boolean) : [];
+  const attemptedAt = source.updatedAt || new Date().toISOString();
+
+  if (previousEvents.length && liveEvents.length === 0) {
+    return {
+      shouldPersist: false,
+      value: {
+        ...lastGood,
+        source: {
+          ...(lastGood?.source || {}),
+          selectedCalendarCount: selected || lastGood?.source?.selectedCalendarCount || 0,
+          matchedCalendarCount: matched,
+          missingCalendars: missing,
+          freshness: "fallback",
+          fallbackReason: "empty-live-read",
+          attemptedAt,
+          lastGoodAt: lastGoodTimestamp(lastGood)
+        }
+      }
+    };
+  }
+
+  if (previousEvents.length && selected > 0 && matched < selected) {
+    const missingNames = new Set(missing.map(normalizeIcloudCalendarName));
+    const byId = new Map(liveEvents.map((event) => [String(event?.id || ""), event]));
+    for (const event of previousEvents) {
+      if (!missingNames.has(normalizeIcloudCalendarName(event?.calendarName))) continue;
+      const key = String(event?.id || "");
+      if (!key || byId.has(key)) continue;
+      byId.set(key, event);
+    }
+    return {
+      shouldPersist: false,
+      value: {
+        ...liveValue,
+        events: sortCalendarEvents([...byId.values()]),
+        source: {
+          ...source,
+          freshness: "mixed",
+          fallbackReason: "missing-calendars",
+          attemptedAt,
+          lastGoodAt: lastGoodTimestamp(lastGood)
+        }
+      }
+    };
+  }
+
+  const complete = selected > 0 && matched === selected;
+  const healthy = complete && liveEvents.length > 0;
+  return {
+    shouldPersist: healthy,
+    value: {
+      ...liveValue,
+      events: sortCalendarEvents(liveEvents),
+      source: {
+        ...source,
+        freshness: healthy ? "live" : "degraded",
+        attemptedAt,
+        lastGoodAt: healthy ? attemptedAt : lastGoodTimestamp(lastGood)
+      }
+    }
+  };
+}
+
+async function ensureCalendarSnapshotTable(env) {
+  if (!env?.DB) return false;
+  await env.DB.prepare(
+    "CREATE TABLE IF NOT EXISTS calendar_snapshots (" +
+      "cache_key TEXT PRIMARY KEY," +
+      "content_json TEXT NOT NULL," +
+      "event_count INTEGER NOT NULL DEFAULT 0," +
+      "created_at TEXT NOT NULL," +
+      "updated_at TEXT NOT NULL" +
+    ")"
+  ).run();
+  return true;
+}
+
+async function loadCalendarSnapshot(env) {
+  try {
+    if (!(await ensureCalendarSnapshotTable(env))) return null;
+    const row = await env.DB.prepare(
+      "SELECT content_json FROM calendar_snapshots WHERE cache_key = ? LIMIT 1"
+    ).bind(CALENDAR_SNAPSHOT_KEY).first();
+    if (!row?.content_json) return null;
+    const parsed = JSON.parse(row.content_json);
+    return parsed && Array.isArray(parsed.events) ? parsed : null;
+  } catch (error) {
+    console.warn("iCloud calendar snapshot read failed", String(error?.message || error));
+    return null;
+  }
+}
+
+async function saveCalendarSnapshot(env, value) {
+  try {
+    if (!(await ensureCalendarSnapshotTable(env))) return;
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      "INSERT INTO calendar_snapshots (cache_key, content_json, event_count, created_at, updated_at) " +
+      "VALUES (?, ?, ?, ?, ?) " +
+      "ON CONFLICT(cache_key) DO UPDATE SET " +
+        "content_json = excluded.content_json, event_count = excluded.event_count, updated_at = excluded.updated_at"
+    ).bind(
+      CALENDAR_SNAPSHOT_KEY,
+      JSON.stringify(value),
+      Array.isArray(value?.events) ? value.events.length : 0,
+      now,
+      now
+    ).run();
+  } catch (error) {
+    console.warn("iCloud calendar snapshot write failed", String(error?.message || error));
+  }
+}
+
+function seedCalendarSnapshot(seedEvents, selected) {
+  const events = (Array.isArray(seedEvents) ? seedEvents : [])
+    .filter((event) => event?.startsAt && (event?.calendarName || (Array.isArray(event?.sourceRefs) && event.sourceRefs.includes("source-icloud-calendar"))));
+  if (!events.length) return null;
+  const updatedAt = events.reduce((latest, event) => {
+    const value = String(event?.updatedAt || "");
+    return value && (!latest || value > latest) ? value : latest;
+  }, "") || new Date().toISOString();
+  return {
+    events: sortCalendarEvents(events),
+    source: {
+      kind: "icloud-caldav",
+      mode: "read-only",
+      horizonDays: 550,
+      selectedCalendarCount: selected.length,
+      matchedCalendarCount: 0,
+      missingCalendars: [],
+      freshness: "seed",
+      fallbackReason: "state-snapshot-seed",
+      updatedAt,
+      lastGoodAt: updatedAt
+    }
+  };
+}
+
+async function withCalendarTimeout(promise, timeoutMs = CALENDAR_LIVE_TIMEOUT_MS) {
+  let timeoutId = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("ICLOUD_LIVE_TIMEOUT")), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeoutId !== null) clearTimeout(timeoutId);
+  }
+}
+
 export function hasIcloudCalendarConfig(env) {
   return Boolean(env.ICLOUD_APPLE_ID && env.ICLOUD_APP_PASSWORD && env.ICLOUD_CALENDAR_CONFIG);
 }
@@ -234,24 +426,10 @@ async function discoverIcloudCalendars(env) {
     }));
 }
 
-export async function fetchIcloudCalendarSummary(env) {
-  if (!hasIcloudCalendarConfig(env)) {
-    return { status: "not-configured", value: null };
-  }
-
-  if (calendarCache.value && calendarCache.expiresAt > Date.now()) {
-    return { status: "ok-cache", value: calendarCache.value };
-  }
-
-  const selected = parseCalendarConfig(env.ICLOUD_CALENDAR_CONFIG);
-  if (!selected.length) throw new Error("ICLOUD_CALENDAR_CONFIG_INVALID");
-
+async function fetchLiveIcloudCalendarSummary(env, selected) {
   const available = await discoverIcloudCalendars(env);
   const now = new Date();
-  // Fetch enough history to cover the full current Monday–Sunday week.
-  // Using only the previous 24h made Monday morning events disappear on Tuesday.
   const from = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
-  // Keep a longer future horizon so weddings, trips and medical appointments can be surfaced well in advance.
   const horizonDays = 550;
   const to = new Date(now.getTime() + horizonDays * 24 * 60 * 60 * 1000);
   const start = formatCalDavTimestamp(from);
@@ -261,7 +439,7 @@ export async function fetchIcloudCalendarSummary(env) {
   const missingCalendars = [];
 
   for (const calendarConfig of selected) {
-    const matched = available.find((item) => item.name === calendarConfig.name);
+    const matched = matchIcloudCalendar(available, calendarConfig.name);
     if (!matched) {
       missingCalendars.push(calendarConfig.name);
       continue;
@@ -274,12 +452,7 @@ export async function fetchIcloudCalendarSummary(env) {
       '  <C:filter><C:comp-filter name="VCALENDAR"><C:comp-filter name="VEVENT"><C:time-range start="' + start + '" end="' + end + '"/></C:comp-filter></C:comp-filter></C:filter>\n' +
       '</C:calendar-query>';
 
-    const report = await caldavRequest(env, matched.url, {
-      method: "REPORT",
-      depth: "1",
-      body: reportBody
-    });
-
+    const report = await caldavRequest(env, matched.url, { method: "REPORT", depth: "1", body: reportBody });
     for (const responseBlock of extractXmlResponses(report.text)) {
       const calendarData = extractXmlTag(responseBlock, "calendar-data");
       if (!calendarData) continue;
@@ -287,25 +460,57 @@ export async function fetchIcloudCalendarSummary(env) {
     }
   }
 
-  const value = {
+  return {
     events: events
       .filter((event) => new Date(event.endsAt).getTime() >= from.getTime())
       .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt)),
     source: {
-      kind: "icloud-caldav",
-      mode: "read-only",
-      horizonDays,
+      kind: "icloud-caldav", mode: "read-only", horizonDays,
       selectedCalendarCount: selected.length,
       matchedCalendarCount: selected.length - missingCalendars.length,
       missingCalendars,
       updatedAt: new Date().toISOString()
     }
   };
+}
 
-  calendarCache = {
-    value,
-    expiresAt: Date.now() + 60_000
-  };
+export async function fetchIcloudCalendarSummary(env, options = {}) {
+  if (!hasIcloudCalendarConfig(env)) return { status: "not-configured", value: null };
+  if (calendarCache.value && calendarCache.expiresAt > Date.now()) return { status: "ok-cache", value: calendarCache.value };
 
-  return { status: "ok", value };
+  const selected = parseCalendarConfig(env.ICLOUD_CALENDAR_CONFIG);
+  if (!selected.length) throw new Error("ICLOUD_CALENDAR_CONFIG_INVALID");
+
+  let lastGood = await loadCalendarSnapshot(env);
+  if (!lastGood) {
+    const seeded = seedCalendarSnapshot(options.seedEvents, selected);
+    if (seeded) {
+      lastGood = seeded;
+      await saveCalendarSnapshot(env, seeded);
+    }
+  }
+
+  try {
+    const liveValue = await withCalendarTimeout(fetchLiveIcloudCalendarSummary(env, selected));
+    const resolved = resolveIcloudCalendarRead(liveValue, lastGood);
+    if (resolved.shouldPersist) await saveCalendarSnapshot(env, resolved.value);
+    const fallback = resolved.value?.source?.freshness !== "live";
+    calendarCache = { value: resolved.value, expiresAt: Date.now() + (fallback ? CALENDAR_FALLBACK_CACHE_MS : CALENDAR_LIVE_CACHE_MS) };
+    return { status: fallback ? "ok-degraded" : "ok", value: resolved.value };
+  } catch (error) {
+    if (!lastGood) throw error;
+    const attemptedAt = new Date().toISOString();
+    const value = {
+      ...lastGood,
+      source: {
+        ...(lastGood.source || {}),
+        freshness: "fallback",
+        fallbackReason: String(error?.message || "ICLOUD_READ_FAILED"),
+        attemptedAt,
+        lastGoodAt: lastGoodTimestamp(lastGood)
+      }
+    };
+    calendarCache = { value, expiresAt: Date.now() + CALENDAR_FALLBACK_CACHE_MS };
+    return { status: "ok-fallback", value };
+  }
 }
