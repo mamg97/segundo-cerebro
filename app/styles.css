@@ -14668,6 +14668,7 @@ html[data-theme="dark"] .home-liquidity-account {
   width: 100%;
   max-width: none;
   box-sizing: border-box;
+  margin-top: 24px;
   padding: 20px 22px;
   border: 1px solid var(--line);
   border-radius: 20px;
@@ -14873,6 +14874,7 @@ html[data-theme="dark"] .home-weekly-menu-day {
   }
 
   .home-weekly-menu-panel {
+    margin-top: 16px;
     padding: 16px 14px;
   }
 }

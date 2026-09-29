@@ -882,3 +882,11 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Caso que motivó el cambio: comida real del 29/09/2026 `Brochetas + arroz basmati + pechuga + 20 picos`, guardada como consumida sin receta estructurada pero con desglose exacto en la nota.
 - Las recetas siguen mostrando su tabla completa de ingredientes como antes.
 - Assets: `app.js?v=0.39.7`, `styles.css?v=0.39.2`.
+
+
+## Home · separación visual entre Agenda y Menú v0.39.8
+
+- `home-weekly-menu-panel` deja de quedar visualmente pegado al bloque anterior.
+- Separación vertical: 24 px en escritorio y 16 px en móvil.
+- No cambia la estructura, datos ni altura interna de Agenda o Menú; solo la jerarquía visual entre módulos.
+- Asset CSS: `styles.css?v=0.39.3`.
