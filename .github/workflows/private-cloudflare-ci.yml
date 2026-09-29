@@ -42,6 +42,8 @@ jobs:
       - run: node --check ../app/adherence.js
 
       - run: node --check ../app/progress-ring.js
+      - run: node --check ../app/midas-lab.js
+      - run: node ../app/midas-lab.test.mjs
       - run: node ../app/progress-ring.test.mjs
 
       - run: node --check src/index.js
