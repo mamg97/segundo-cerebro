@@ -1,13 +1,28 @@
 const DASHBOARD_URL = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/strategy_state/dashboard.json";
+const WEEKLY_BOOTSTRAP_URL = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/weekly_ml_bootstrap_state/bootstrap_2026-09-25.json";
 const CACHE_MS = 5 * 60 * 1000;
 let cached = null;
 let cachedAt = 0;
+let weeklyBootstrapCache = { value: null, expiresAt: 0 };
 let researchCache = { value: null, expiresAt: 0, spreadsheetId: null, spreadsheetIdExpiresAt: 0 };
 
-const GROUPS = new Set(["paper_nuevo", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
+const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
 
 function optionalNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function normalizeEquityHistory(value, limit = 520) {
+  if (!Array.isArray(value)) return [];
+  const points = [];
+  for (const point of value.slice(-limit)) {
+    const date = typeof point?.date === "string" ? point.date.slice(0, 10) : null;
+    const nav = optionalNumber(point?.nav);
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || nav === null || nav < 0) continue;
+    if (points.length && date <= points.at(-1).date) continue;
+    points.push({ date, nav });
+  }
+  return points;
 }
 
 function normalizeDashboard(data) {
@@ -30,6 +45,7 @@ function normalizeDashboard(data) {
       last_equity: optionalNumber(row.last_equity),
       day_return_pct: optionalNumber(row.day_return_pct),
       return_pct: optionalNumber(row.return_pct),
+      equity_history: normalizeEquityHistory(row.equity_history),
       note: typeof row.note === "string" ? row.note.slice(0, 500) : ""
     };
   });
@@ -54,6 +70,70 @@ export async function fetchMidasDashboard(fetcher = fetch, now = Date.now()) {
   } catch (error) {
     if (cached) return { dashboard: cached, stale: true };
     throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+
+function normalizeWeeklyBootstrap(data) {
+  if (data?.schema_version !== 1 || data?.kind !== "NON_PROSPECTIVE_BOOTSTRAP" ||
+      data?.excluded_from_forward_performance !== true || !data?.strategies ||
+      typeof data.strategies !== "object") {
+    throw new Error("MIDAS_INVALID_WEEKLY_BOOTSTRAP");
+  }
+  const strategies = {};
+  for (const [id, raw] of Object.entries(data.strategies)) {
+    if (!raw || typeof raw !== "object") continue;
+    const positions = Array.isArray(raw.positions) ? raw.positions.slice(0, 20).map((item) => ({
+      ticker: typeof item?.ticker === "string" ? item.ticker.slice(0, 20) : "",
+      predicted_return: optionalNumber(item?.predicted_return),
+      direction_probability: optionalNumber(item?.direction_probability),
+      score: optionalNumber(item?.score),
+      buy_price: optionalNumber(item?.buy_price),
+      mark_close: optionalNumber(item?.mark_close),
+      mtm_pnl: optionalNumber(item?.mtm_pnl)
+    })).filter((item) => item.ticker) : [];
+    strategies[String(id).slice(0, 80)] = {
+      mark_to_market_nav: optionalNumber(raw.mark_to_market_nav),
+      mark_to_market_return_pct: optionalNumber(raw.mark_to_market_return_pct),
+      positions
+    };
+  }
+  const ensemble = Array.isArray(data.ensemble_top20) ? data.ensemble_top20.slice(0, 20).map((item) => ({
+    ticker: typeof item?.ticker === "string" ? item.ticker.slice(0, 20) : "",
+    score: optionalNumber(item?.score),
+    predicted_return: optionalNumber(item?.predicted_return),
+    positive_votes: Number.isInteger(item?.positive_votes) ? item.positive_votes : null,
+    rank_dispersion: optionalNumber(item?.rank_dispersion)
+  })).filter((item) => item.ticker) : [];
+  return {
+    status: "bootstrap_only",
+    signal_asof: typeof data.signal_asof === "string" ? data.signal_asof.slice(0, 10) : null,
+    entry_date: typeof data.entry_date === "string" ? data.entry_date.slice(0, 10) : null,
+    mark_date: typeof data.mark_date === "string" ? data.mark_date.slice(0, 10) : null,
+    strategies,
+    ensemble
+  };
+}
+
+export async function fetchMidasWeeklyBootstrap(fetcher = fetch, now = Date.now()) {
+  if (weeklyBootstrapCache.value && weeklyBootstrapCache.expiresAt > now) {
+    return weeklyBootstrapCache.value;
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4500);
+  try {
+    const response = await fetcher(WEEKLY_BOOTSTRAP_URL, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal
+    });
+    if (!response.ok) return null;
+    const value = normalizeWeeklyBootstrap(await response.json());
+    weeklyBootstrapCache = { value, expiresAt: now + CACHE_MS };
+    return value;
+  } catch {
+    return weeklyBootstrapCache.value;
   } finally {
     clearTimeout(timeout);
   }
@@ -221,6 +301,7 @@ export async function addPrivateGeneticDiary(db, dashboard) {
     return {
       ...row, status: "diario_heredado_observado", first_session: first[0], last_session: last[0],
       currency: "USD", last_equity: last[1],
+      equity_history: history.slice(-520).map((point) => ({ date: point[0], nav: point[1] })),
       return_pct: Math.round((last[1] / legacy.initial_capital - 1) * 100_000_000) / 1_000_000,
       day_return_pct: previous[1] > 0 ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
       note: `Diario ficticio desde ${first[0]}; la fecha mostrada es la del asiento, que puede ser posterior a la vela usada. Las operaciones se contabilizaban al mismo cierre que generaba la señal: no son ejecuciones verificadas ni rentabilidad alcanzable.`
@@ -240,6 +321,7 @@ export async function addPrivateGeneticDiary(db, dashboard) {
     const last = history.at(-1);
     Object.assign(forwardRow, {
       status: "demo_con_diario", first_session: first[0], last_session: last[0], last_equity: last[1],
+      equity_history: history.slice(-520).map((point) => ({ date: point[0], nav: point[1] })),
       return_pct: Math.round((last[1] / forward.initial_capital - 1) * 100_000_000) / 1_000_000,
       day_return_pct: previous && previous[1] > 0
         ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
