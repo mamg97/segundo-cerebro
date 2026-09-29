@@ -882,3 +882,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Caso que motivó el cambio: comida real del 29/09/2026 `Brochetas + arroz basmati + pechuga + 20 picos`, guardada como consumida sin receta estructurada pero con desglose exacto en la nota.
 - Las recetas siguen mostrando su tabla completa de ingredientes como antes.
 - Assets: `app.js?v=0.39.7`, `styles.css?v=0.39.2`.
+
+
+## MIDAS · laboratorio visual animado v0.39.8
+
+- El informe MIDAS privado incorpora un bloque **Laboratorio vivo** antes de las tablas tradicionales.
+- Cada algoritmo activo se presenta como tarjeta con estado, rentabilidad, última fecha y una curva SVG de su patrimonio ficticio.
+- La curva se dibuja con animación al abrir MIDAS; el punto final pulsa suavemente y las tarjetas muestran un barrido visual discreto. `prefers-reduced-motion` desactiva todas las animaciones.
+- La animación es puramente de presentación: nunca interpola ni inventa resultados. Con una sola sesión se muestra una línea de espera.
+- El backend acepta `equity_history` compacto desde `midas-paper-lab/strategy_state/dashboard.json` y conserva el genético privado desde D1.
+- Mientras Weekly ML aún no tenga un diario forward, se muestra su bootstrap técnico 25/09→28/09 como preview claramente marcado **no prospectivo**. Cuando exista Weekly ML forward, el bootstrap deja de sustituir las tarjetas reales.
+- La vista agrupa Weekly ML, estrategias diarias, TFM y genético original; las ideas históricas pendientes permanecen en la tabla y no reciben curvas ficticias.
+- Assets: `styles.css?v=0.39.8`, `app.js?v=0.39.8`, nuevo `midas-lab.js?v=0.39.8`.
