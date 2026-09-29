@@ -16400,3 +16400,75 @@ html[data-theme="dark"] .midas-lab-card {
 
   .midas-lab-path { stroke-dashoffset: 0; }
 }
+
+
+/* v0.39.10 — denser Home summary cards, typography unchanged */
+@media (min-width: 761px) {
+  .daily-overview-grid {
+    gap: 10px;
+  }
+
+  .daily-overview-card {
+    gap: 8px;
+    padding: 16px 18px;
+  }
+
+  .daily-card-heading {
+    gap: 8px;
+  }
+
+  .daily-card-heading > span:nth-child(2) {
+    gap: 0;
+  }
+
+  .daily-progress-summary,
+  .daily-progress-footer {
+    gap: 8px;
+  }
+
+  .daily-progress-summary .daily-card-main {
+    gap: 2px;
+  }
+
+  .daily-card-status {
+    line-height: 1.25;
+  }
+
+  .daily-energy-grid,
+  .pantry-home-grid,
+  .objects-home-grid {
+    gap: 5px;
+  }
+
+  .daily-energy-grid > span,
+  .pantry-home-grid > span,
+  .objects-home-grid > span {
+    gap: 1px;
+    padding: 6px 8px;
+    border-radius: 9px;
+  }
+
+  .pantry-home-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pantry-home-grid > span:last-child {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+    align-items: initial;
+  }
+
+  .pantry-home-primary {
+    gap: 8px;
+  }
+
+  .pantry-home-review,
+  .pantry-home-footer,
+  .objects-home-footer {
+    margin-top: 0;
+  }
+
+  .pantry-home-preview {
+    line-height: 1.25;
+  }
+}
