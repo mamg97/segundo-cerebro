@@ -912,3 +912,14 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Mientras Weekly ML aún no tenga un diario forward, se muestra su bootstrap técnico 25/09→28/09 como preview claramente marcado **no prospectivo**. Cuando exista Weekly ML forward, el bootstrap deja de sustituir las tarjetas reales.
 - La vista agrupa Weekly ML, estrategias diarias, TFM y genético original; las ideas históricas pendientes permanecen en la tabla y no reciben curvas ficticias.
 - Assets: `styles.css?v=0.39.8`, `app.js?v=0.39.8`, nuevo `midas-lab.js?v=0.39.8`.
+
+
+## Home · densidad interna de tarjetas v0.39.10
+
+- No se reduce la tipografía.
+- El gap entre tarjetas del resumen diario baja a 10 px en escritorio.
+- Padding de tarjeta y separación entre título, cifras y estado se reducen para eliminar espacio muerto.
+- Los mini-KPI mantienen tamaño de texto pero usan menos padding vertical.
+- Despensa pasa a 3 columnas de KPI en escritorio para reducir una fila completa.
+- Móvil conserva sus reglas específicas de tamaño y espaciado.
+- Asset CSS: `styles.css?v=0.39.10`.
