@@ -308,6 +308,26 @@ Referencias mínimas a documentos o fuentes: `case_id`, `document_type`, `source
 
 Los proveedores admitidos incluyen referencias a Calendario, Finanzas, LITOS, email, Drive/documentos y otras fuentes autorizadas. Una referencia no convierte D1 en fuente propietaria del contenido original.
 
+### `family_wealth_items`
+
+Partidas patrimoniales privadas de los padres, independientes de `family_cases` y de las finanzas personales del usuario.
+
+| Campo | Uso |
+|---|---|
+| `id` | Identificador estable |
+| `owner_scope` | `mother`, `father` o `shared` |
+| `category` | `investment`, `property`, `business`, `cash`, `debt` u `other` |
+| `label` | Nombre privado de la partida |
+| `amount_eur` | Valor conocido/estimado; puede ser nulo si está pendiente |
+| `valuation_status` | `confirmed`, `estimated` o `pending` |
+| `as_of_date` | Fecha de referencia del valor |
+| `source_provider` / `source_ref` | Referencia mínima a Finanzas, LITOS, documento u otra fuente autorizada |
+| `note` | Contexto breve de valoración |
+| `sensitivity` | `muy_confidencial` |
+| `created_at` / `updated_at` | Trazabilidad |
+
+La API deriva `grossAssets`, `liabilities`, `netKnown`, `investments` y `pendingValuations`. Un valor pendiente nunca se sustituye por cero a efectos de valoración.
+
 ### Resumen para portada
 
 `familySummary` contiene únicamente conteos de casos abiertos/atención/espera/decisión y el próximo vencimiento. No transporta títulos, diagnósticos, importes ni detalle patrimonial a la portada general.
