@@ -7316,6 +7316,7 @@ html[data-theme="dark"] .health-history-ranges button {
 }
 
 .parents-wealth-donut {
+  position: relative;
   width: 142px;
   aspect-ratio: 1;
   display: grid;
