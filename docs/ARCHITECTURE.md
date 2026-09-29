@@ -377,3 +377,11 @@ El agente genético original conserva el diario completo en `mamg97/personal_mam
 Desde el 28/09/2026, el mismo workflow conserva la curva histórica del genético original y exporta, cuando exista, una segunda curva de su campaña corregida `genetic_sp500_forward`. El historial antiguo se identifica como ejecución simulada al mismo cierre de la señal; la nueva campaña modela la siguiente apertura y mantiene un diario independiente. El Worker solo acepta esas dos combinaciones de identificador y calidad y la interfaz privada las muestra en filas separadas. Una primera sesión prospectiva no tiene aún retorno diario. Ninguna fila acredita órdenes de bróker.
 
 El rendimiento heredado representa lo registrado por el simulador original: sus operaciones se contabilizaban al mismo cierre que generaba la señal. La UI lo identifica como simulación histórica con limitación metodológica, no como rendimiento ejecutado por bróker ni como una cartera directamente comparable con las nuevas. USD y EUR no se agregan ni se ordenan como una liga común. Si falta el extracto privado, la fila conserva fecha y rentabilidad ausentes.
+
+### Laboratorio visual MIDAS
+
+La app privada presenta además un laboratorio visual animado. La animación **no genera ni interpola rentabilidad**: dibuja exclusivamente las curvas de patrimonio ficticio ya registradas en los diarios de cada estrategia. El punto final y el color se derivan del último valor observado; cuando solo existe una sesión se muestra un estado de espera en vez de inventar una curva.
+
+Para estrategias públicas, `strategy_state/dashboard.json` puede incluir un `equity_history` compacto derivado de los ledgers paper. El Worker valida y limita ese histórico antes de entregarlo a la UI. El genético privado aporta su propia curva ya saneada desde D1. El bootstrap Weekly ML del 25/09/2026 se puede mostrar como demostración técnica separada y siempre marcado como no prospectivo; desaparece como sustituto visual cuando exista un diario forward real de Weekly ML.
+
+La interfaz usa SVG/CSS y respeta `prefers-reduced-motion`. No añade librerías de gráficos ni persiste un segundo histórico.
