@@ -842,6 +842,7 @@ function renderFocus() {
 function renderEvents() {
   const list = document.querySelector("#event-list");
   const weekLabel = document.querySelector("#calendar-week-label");
+  const sourceStatus = document.querySelector("#calendar-source-status");
   const now = new Date();
   const weekStart = startOfCalendarWeek(now);
   const weekEnd = new Date(weekStart);
@@ -856,6 +857,29 @@ function renderEvents() {
     .sort(compareCalendarEvents);
 
   weekLabel.textContent = formatCalendarWeekLabel(weekStart, weekEnd);
+
+  if (sourceStatus) {
+    const source = state.calendarSummary?.source || {};
+    const selected = Number(source.selectedCalendarCount);
+    const matched = Number(source.matchedCalendarCount);
+    const freshness = String(source.freshness || "");
+    const ratio = Number.isFinite(selected) && selected > 0 && Number.isFinite(matched)
+      ? matched + "/" + selected + " calendarios"
+      : "";
+    if (freshness === "fallback") {
+      sourceStatus.textContent = ["iCloud · copia estable", ratio].filter(Boolean).join(" · ");
+      sourceStatus.hidden = false;
+    } else if (freshness === "mixed" || freshness === "degraded") {
+      sourceStatus.textContent = ["iCloud · sincronización parcial", ratio, "completada con copia estable"].filter(Boolean).join(" · ");
+      sourceStatus.hidden = false;
+    } else if (ratio) {
+      sourceStatus.textContent = "iCloud · " + ratio;
+      sourceStatus.hidden = false;
+    } else {
+      sourceStatus.hidden = true;
+      sourceStatus.textContent = "";
+    }
+  }
 
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);

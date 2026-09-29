@@ -860,3 +860,15 @@ Después de esa primera sincronización se debe verificar D1/dashboard antes de 
 - La regla no afecta recordatorios manuales que nunca hayan estado enlazados con Segundo Cerebro.
 
 Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
+
+
+## Calendario · resiliencia CalDAV v0.39.6
+
+- iCloud sigue siendo de solo lectura y fuente de verdad temporal.
+- Se añade una copia derivada `last-known-good` en D1 (`calendar_snapshots`) que solo se actualiza con lecturas completas y no vacías.
+- Un timeout, una lectura vacía o un descubrimiento parcial ya no puede hacer desaparecer Agenda/Eventos: se usa la última copia estable; en parciales se conservan solo los calendarios ausentes desde esa copia.
+- El matching de nombres de calendario tolera mayúsculas, acentos y espacios sin aceptar coincidencias ambiguas.
+- `/api/state` concede a iCloud 9 s y el adaptador corta la lectura en vivo a 7 s para poder devolver el fallback antes del timeout exterior.
+- Si aún no existe copia D1, puede sembrarse con los eventos iCloud ya presentes en el snapshot privado.
+- Agenda muestra el estado de la fuente: directo, parcial o copia estable.
+- Asset JS: `v0.39.6`.
