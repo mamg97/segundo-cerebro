@@ -3331,27 +3331,106 @@ function familyWealthAmount(value) {
   return Math.round(parsed * 100) / 100;
 }
 
+async function fetchFamilyWealthFromFinanceSheet(env) {
+  if (!hasFinanceGoogleConfig(env)) return [];
+
+  try {
+    const token = await getGoogleAccessToken(env);
+    const params = new URLSearchParams({
+      majorDimension: "ROWS",
+      valueRenderOption: "UNFORMATTED_VALUE"
+    });
+    const range = encodeURIComponent("PatrimonioPadres!A1:J200");
+    const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.FINANCE_SHEET_ID)}/values/${range}?${params.toString()}`;
+    const response = await fetch(endpoint, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      if (response.status !== 400 && response.status !== 404) {
+        console.warn("PatrimonioPadres read failed", "GOOGLE_SHEETS_" + response.status);
+      }
+      return [];
+    }
+
+    const rows = (await response.json())?.values || [];
+    if (rows.length < 2) return [];
+    const headers = rows[0].map((value) => String(value ?? "").trim());
+    const index = Object.fromEntries(headers.map((header, i) => [header, i]));
+    const required = ["id", "owner_scope", "category", "label", "valuation_status"];
+    if (required.some((header) => index[header] === undefined)) {
+      console.warn("PatrimonioPadres invalid headers");
+      return [];
+    }
+
+    const now = new Date().toISOString();
+    return rows.slice(1).map((row) => {
+      const amountRaw = row[index.amount_eur];
+      const amount = amountRaw === "" || amountRaw === null || amountRaw === undefined ? null : Number(amountRaw);
+      const ownerScope = familyTrim(row[index.owner_scope], 24);
+      const category = familyTrim(row[index.category], 32);
+      const valuationStatus = familyTrim(row[index.valuation_status], 24).toLowerCase();
+      const sourceProvider = familyTrim(row[index.source_provider] || "finance", 32);
+      const item = {
+        id: familyTrim(row[index.id], 160),
+        ownerScope,
+        category,
+        label: familyTrim(row[index.label], 240),
+        amountEur: Number.isFinite(amount) ? Math.round(amount * 100) / 100 : null,
+        valuationStatus,
+        asOfDate: familyNullable(row[index.as_of_date], 80),
+        sourceProvider: FAMILY_REF_PROVIDERS.has(sourceProvider) ? sourceProvider : "finance",
+        sourceRef: familyNullable(row[index.source_ref], 1000),
+        note: familyNullable(row[index.note], 2000),
+        sensitivity: "muy_confidencial",
+        createdAt: null,
+        updatedAt: now,
+        managedBy: "finance-sheet"
+      };
+      if (!item.id || !item.label || !FAMILY_SCOPES.has(ownerScope) || !FAMILY_WEALTH_CATEGORIES.has(category) || !FAMILY_WEALTH_STATUSES.has(valuationStatus)) {
+        return null;
+      }
+      if (valuationStatus !== "pending" && item.amountEur === null) return null;
+      return item;
+    }).filter(Boolean);
+  } catch (error) {
+    console.warn("PatrimonioPadres read failed", String(error?.message || error));
+    return [];
+  }
+}
+
 async function fetchFamilyWealth(env) {
   await ensureFamilyTables(env);
-  const result = await env.DB.prepare(`
-    SELECT id, owner_scope, category, label, amount_eur, valuation_status,
-           as_of_date, source_provider, source_ref, note, sensitivity,
-           created_at, updated_at
-    FROM family_wealth_items
-    ORDER BY
-      CASE category
-        WHEN 'investment' THEN 1
-        WHEN 'property' THEN 2
-        WHEN 'business' THEN 3
-        WHEN 'cash' THEN 4
-        WHEN 'other' THEN 5
-        WHEN 'debt' THEN 6
-        ELSE 7
-      END,
-      label COLLATE NOCASE
-  `).all();
+  const [result, sheetItems] = await Promise.all([
+    env.DB.prepare(`
+      SELECT id, owner_scope, category, label, amount_eur, valuation_status,
+             as_of_date, source_provider, source_ref, note, sensitivity,
+             created_at, updated_at
+      FROM family_wealth_items
+      ORDER BY
+        CASE category
+          WHEN 'investment' THEN 1
+          WHEN 'property' THEN 2
+          WHEN 'business' THEN 3
+          WHEN 'cash' THEN 4
+          WHEN 'other' THEN 5
+          WHEN 'debt' THEN 6
+          ELSE 7
+        END,
+        label COLLATE NOCASE
+    `).all(),
+    fetchFamilyWealthFromFinanceSheet(env)
+  ]);
 
-  const items = (result.results || []).map(familyWealthFromRow);
+  const d1Items = (result.results || []).map((row) => ({ ...familyWealthFromRow(row), managedBy: "d1" }));
+  const merged = new Map(d1Items.map((item) => [item.id, item]));
+  for (const item of sheetItems) merged.set(item.id, item);
+  const categoryOrder = { investment: 1, property: 2, business: 3, cash: 4, other: 5, debt: 6 };
+  const items = [...merged.values()].sort((a, b) =>
+    (categoryOrder[a.category] || 9) - (categoryOrder[b.category] || 9)
+    || String(a.label || "").localeCompare(String(b.label || ""), "es")
+  );
+
   const known = items.filter((item) => item.amountEur !== null && item.valuationStatus !== "pending");
   const assets = known.filter((item) => item.category !== "debt");
   const liabilities = known.filter((item) => item.category === "debt");
@@ -3368,7 +3447,8 @@ async function fetchFamilyWealth(env) {
       investments: sum(assets.filter((item) => item.category === "investment")),
       pendingValuations: items.filter((item) => item.valuationStatus === "pending" || item.amountEur === null).length,
       itemCount: items.length,
-      updatedAt: items.reduce((latest, item) => !latest || item.updatedAt > latest ? item.updatedAt : latest, null)
+      updatedAt: items.reduce((latest, item) => !latest || (item.updatedAt && item.updatedAt > latest) ? item.updatedAt : latest, null),
+      incomplete: items.some((item) => item.valuationStatus === "pending" || item.amountEur === null)
     }
   };
 }
