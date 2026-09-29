@@ -1420,6 +1420,21 @@ const FAMILY_DOMAIN_LABELS = {
   other: "Otro"
 };
 
+const FAMILY_WEALTH_CATEGORY_LABELS = {
+  investment: "Inversión",
+  property: "Inmueble",
+  business: "Negocio",
+  cash: "Liquidez",
+  debt: "Deuda",
+  other: "Otro"
+};
+
+const FAMILY_WEALTH_STATUS_LABELS = {
+  confirmed: "Confirmado",
+  estimated: "Estimado",
+  pending: "Pendiente de valorar"
+};
+
 function openParentsDetail(initialScope = "mother") {
   if (privateModeKind !== "remote") return;
   const dialog = document.querySelector("#detail-dialog");
@@ -1463,14 +1478,31 @@ async function loadParentsPanel(scope) {
     });
     if (!response.ok) throw new Error("FAMILY_CASES_" + response.status);
     const payload = await response.json();
-    renderParentsPanel(scope, payload.cases || [], payload.summary || {});
+
+    let wealthPayload = null;
+    if (scope === "shared") {
+      try {
+        const wealthResponse = await fetch("/api/family/wealth", {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+          credentials: "same-origin"
+        });
+        if (!wealthResponse.ok) throw new Error("FAMILY_WEALTH_" + wealthResponse.status);
+        wealthPayload = await wealthResponse.json();
+      } catch (wealthError) {
+        console.warn("Family wealth load failed", wealthError);
+        wealthPayload = { error: true, items: [], summary: {} };
+      }
+    }
+
+    renderParentsPanel(scope, payload.cases || [], payload.summary || {}, wealthPayload);
   } catch (error) {
     console.warn("Family cases load failed", error);
     panel.innerHTML = '<div class="parents-empty parents-empty-card"><strong>No se han podido cargar los casos</strong><p>La estructura privada sigue separada del resto de Salud y Finanzas.</p></div>';
   }
 }
 
-function renderParentsPanel(scope, cases, summary) {
+function renderParentsPanel(scope, cases, summary, wealthPayload = null) {
   const panel = document.querySelector("#parents-panel");
   if (!panel) return;
 
@@ -1487,6 +1519,8 @@ function renderParentsPanel(scope, cases, summary) {
       <article><span>En espera</span><strong>${waiting}</strong></article>
       <article><span>Decisiones</span><strong>${decisions}</strong></article>
     </div>
+
+    ${scope === "shared" ? renderFamilyWealthSection(wealthPayload) : ""}
 
     <div class="parents-list-heading">
       <div>
@@ -1507,6 +1541,215 @@ function renderParentsPanel(scope, cases, summary) {
 
   panel.querySelectorAll("[data-family-case-id]").forEach((button) => {
     button.addEventListener("click", () => void openFamilyCaseDetail(button.dataset.familyCaseId, scope));
+  });
+
+  if (scope === "shared") bindFamilyWealthControls(panel, wealthPayload);
+}
+
+function renderFamilyWealthSection(payload) {
+  if (payload?.error) {
+    return `
+      <section class="parents-wealth-section">
+        <div class="parents-list-heading">
+          <div><strong>Patrimonio familiar</strong><p>Activos, deudas y valoraciones separados de las finanzas personales.</p></div>
+        </div>
+        <div class="parents-empty parents-empty-card"><strong>No se ha podido cargar el patrimonio</strong><p>Los casos familiares siguen disponibles.</p></div>
+      </section>
+    `;
+  }
+
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  const summary = payload?.summary || {};
+  const grossAssets = Number(summary.grossAssets || 0);
+  const liabilities = Number(summary.liabilities || 0);
+  const netKnown = Number(summary.netKnown || 0);
+  const investments = Number(summary.investments || 0);
+  const pending = Number(summary.pendingValuations || 0);
+
+  return `
+    <section class="parents-wealth-section">
+      <div class="parents-list-heading parents-wealth-heading">
+        <div>
+          <strong>Patrimonio familiar</strong>
+          <p>Valores privados. El negocio y los inmuebles se muestran separados para evitar dobles conteos.</p>
+        </div>
+        <button type="button" class="parents-wealth-add" data-family-wealth-add>+ Añadir partida</button>
+      </div>
+
+      <div class="parents-wealth-summary">
+        <article><span>Activos conocidos</span><strong>${formatMoney(grossAssets, "EUR")}</strong></article>
+        <article><span>Inversiones</span><strong>${formatMoney(investments, "EUR")}</strong></article>
+        <article><span>Deuda conocida</span><strong>${formatMoney(liabilities, "EUR")}</strong></article>
+        <article><span>Neto conocido</span><strong>${formatMoney(netKnown, "EUR")}</strong></article>
+        <article><span>Pendiente valorar</span><strong>${pending}</strong></article>
+      </div>
+
+      <div class="parents-wealth-list">
+        ${items.length ? items.map(renderFamilyWealthItem).join("") : `
+          <div class="parents-empty parents-empty-card">
+            <strong>Patrimonio todavía sin cargar</strong>
+            <p>Añade inversiones, inmuebles, negocio y deudas. Los importes se guardan solo en D1 privado.</p>
+          </div>`}
+      </div>
+
+      <form class="parents-wealth-form" id="family-wealth-form" hidden>
+        <input type="hidden" name="id" value="">
+        <div class="parents-wealth-form-head">
+          <div><strong data-family-wealth-form-title>Nueva partida</strong><p>Dato privado · nunca se versiona en Git.</p></div>
+          <button type="button" class="parents-wealth-close" data-family-wealth-close aria-label="Cerrar">×</button>
+        </div>
+        <div class="parents-wealth-form-grid">
+          <label class="span-2">Nombre<input name="label" maxlength="240" required placeholder="Ej. inversión, vivienda, local o negocio"></label>
+          <label>Tipo
+            <select name="category" required>
+              ${Object.entries(FAMILY_WEALTH_CATEGORY_LABELS).map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join("")}
+            </select>
+          </label>
+          <label>Titularidad
+            <select name="ownerScope" required>
+              <option value="shared">Común</option>
+              <option value="father">Padre</option>
+              <option value="mother">Madre</option>
+            </select>
+          </label>
+          <label>Valor (€)<input name="amountEur" inputmode="decimal" placeholder="Vacío si está pendiente"></label>
+          <label>Estado
+            <select name="valuationStatus" required>
+              <option value="confirmed">Confirmado</option>
+              <option value="estimated">Estimado</option>
+              <option value="pending">Pendiente de valorar</option>
+            </select>
+          </label>
+          <label>Fecha valor<input name="asOfDate" type="date"></label>
+          <label>Fuente
+            <select name="sourceProvider">
+              <option value="d1">Dato privado</option>
+              <option value="finance">Finanzas</option>
+              <option value="litos">LITOS</option>
+              <option value="document">Documento</option>
+              <option value="email">Email</option>
+              <option value="drive">Drive</option>
+              <option value="other">Otra</option>
+            </select>
+          </label>
+          <label class="span-2">Nota<input name="note" maxlength="2000" placeholder="Contexto de valoración, sin duplicar documentos"></label>
+        </div>
+        <div class="parents-wealth-form-actions">
+          <button type="button" class="parents-wealth-delete" data-family-wealth-delete hidden>Eliminar</button>
+          <button type="submit" class="parents-wealth-save">Guardar</button>
+        </div>
+        <p class="parents-wealth-form-status" data-family-wealth-form-status aria-live="polite"></p>
+      </form>
+    </section>
+  `;
+}
+
+function renderFamilyWealthItem(item) {
+  const amount = item.amountEur === null || item.amountEur === undefined
+    ? "Pendiente"
+    : formatMoney(Number(item.amountEur), "EUR");
+  const owner = FAMILY_SCOPE_LABELS[item.ownerScope] || item.ownerScope || "Común";
+  const status = FAMILY_WEALTH_STATUS_LABELS[item.valuationStatus] || item.valuationStatus || "—";
+  const date = formatFamilyDate(item.asOfDate || item.updatedAt);
+  return `
+    <button class="parents-wealth-item ${item.category === "debt" ? "is-debt" : ""}" type="button" data-family-wealth-id="${escapeHtml(item.id)}">
+      <div class="parents-wealth-item-main">
+        <span>${escapeHtml(FAMILY_WEALTH_CATEGORY_LABELS[item.category] || item.category)}</span>
+        <strong>${escapeHtml(item.label)}</strong>
+        <small>${escapeHtml(owner)} · ${escapeHtml(status)}${date ? ` · ${escapeHtml(date)}` : ""}</small>
+      </div>
+      <strong class="parents-wealth-amount">${escapeHtml(amount)}</strong>
+    </button>
+  `;
+}
+
+function bindFamilyWealthControls(panel, payload) {
+  const form = panel.querySelector("#family-wealth-form");
+  if (!form) return;
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  const addButton = panel.querySelector("[data-family-wealth-add]");
+  const closeButton = form.querySelector("[data-family-wealth-close]");
+  const deleteButton = form.querySelector("[data-family-wealth-delete]");
+  const statusNode = form.querySelector("[data-family-wealth-form-status]");
+  const titleNode = form.querySelector("[data-family-wealth-form-title]");
+
+  const openForm = (item = null) => {
+    form.reset();
+    form.elements.id.value = item?.id || "";
+    form.elements.label.value = item?.label || "";
+    form.elements.category.value = item?.category || "investment";
+    form.elements.ownerScope.value = item?.ownerScope || "shared";
+    form.elements.amountEur.value = item?.amountEur ?? "";
+    form.elements.valuationStatus.value = item?.valuationStatus || (item?.amountEur == null ? "pending" : "confirmed");
+    form.elements.asOfDate.value = item?.asOfDate ? String(item.asOfDate).slice(0, 10) : "";
+    form.elements.sourceProvider.value = item?.sourceProvider || "d1";
+    form.elements.note.value = item?.note || "";
+    titleNode.textContent = item ? "Editar partida" : "Nueva partida";
+    deleteButton.hidden = !item;
+    statusNode.textContent = "";
+    form.hidden = false;
+    form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  const closeForm = () => {
+    form.hidden = true;
+    statusNode.textContent = "";
+  };
+
+  addButton?.addEventListener("click", () => openForm());
+  closeButton?.addEventListener("click", closeForm);
+  panel.querySelectorAll("[data-family-wealth-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = items.find((entry) => entry.id === button.dataset.familyWealthId);
+      if (item) openForm(item);
+    });
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    statusNode.textContent = "Guardando…";
+    const id = form.elements.id.value;
+    const payloadBody = {
+      label: form.elements.label.value,
+      category: form.elements.category.value,
+      ownerScope: form.elements.ownerScope.value,
+      amountEur: form.elements.amountEur.value,
+      valuationStatus: form.elements.valuationStatus.value,
+      asOfDate: form.elements.asOfDate.value,
+      sourceProvider: form.elements.sourceProvider.value,
+      note: form.elements.note.value
+    };
+    try {
+      const response = await fetch(id ? "/api/family/wealth/" + encodeURIComponent(id) : "/api/family/wealth", {
+        method: id ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payloadBody)
+      });
+      if (!response.ok) throw new Error("FAMILY_WEALTH_SAVE_" + response.status);
+      await loadParentsPanel("shared");
+    } catch (error) {
+      console.warn("Family wealth save failed", error);
+      statusNode.textContent = "No se ha podido guardar. Revisa los datos e inténtalo de nuevo.";
+    }
+  });
+
+  deleteButton?.addEventListener("click", async () => {
+    const id = form.elements.id.value;
+    if (!id || !window.confirm("¿Eliminar esta partida patrimonial?")) return;
+    statusNode.textContent = "Eliminando…";
+    try {
+      const response = await fetch("/api/family/wealth/" + encodeURIComponent(id), {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
+        credentials: "same-origin"
+      });
+      if (!response.ok) throw new Error("FAMILY_WEALTH_DELETE_" + response.status);
+      await loadParentsPanel("shared");
+    } catch (error) {
+      console.warn("Family wealth delete failed", error);
+      statusNode.textContent = "No se ha podido eliminar.";
+    }
   });
 }
 
