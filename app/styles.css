@@ -18178,3 +18178,200 @@ html[data-theme="dark"] .midas-lab-card {
   .look-builder-preview { grid-template-columns: 1fr 1fr; }
   .look-builder-preview article { min-height: 155px; }
 }
+
+
+/* v0.40.3 — Finanzas · histórico Delta */
+.delta-history-section {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+}
+.delta-history-heading,
+.delta-history-subhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+.delta-history-heading strong { font-size: 16px; }
+.delta-history-heading span,
+.delta-history-heading small,
+.delta-history-subhead span {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+.delta-history-heading div { display: grid; gap: 3px; }
+.delta-history-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+.delta-history-kpis article,
+.delta-history-insights > article,
+.delta-turnover {
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper) 80%, transparent);
+}
+.delta-history-kpis article { display: grid; gap: 3px; }
+.delta-history-kpis span,
+.delta-history-kpis small {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+.delta-history-kpis strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.delta-history-insights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.delta-year-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 9px;
+}
+.delta-year-grid > div {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--blue) 6%, var(--surface));
+}
+.delta-year-grid span { font-size: 8px; color: var(--ink-soft); }
+.delta-year-grid strong { font-size: 14px; }
+.delta-year-grid small {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 6.5px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+.delta-top-assets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 9px;
+}
+.delta-top-assets > span {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  font-size: 8px;
+}
+.delta-top-assets b {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+  color: var(--blue);
+  font-size: 7px;
+}
+.delta-top-assets strong { font-size: 8px; }
+.delta-turnover-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 9px;
+}
+.delta-turnover-grid > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 7px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+.delta-turnover-grid span { color: var(--ink-soft); font-size: 8px; }
+.delta-turnover-grid strong { font-size: 10px; font-variant-numeric: tabular-nums; }
+.delta-history-table-scroll {
+  overflow-x: auto;
+  margin-top: 8px;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 12px;
+}
+.delta-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+.delta-history-table th,
+.delta-history-table td {
+  padding: 8px 9px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+  text-align: left;
+  font-size: 8px;
+  vertical-align: middle;
+}
+.delta-history-table th {
+  color: var(--ink-soft);
+  font-size: 7px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.delta-history-table td small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 6.5px;
+}
+.delta-history-table tbody tr:last-child td { border-bottom: 0; }
+.delta-number { text-align: right !important; font-variant-numeric: tabular-nums; }
+.delta-side {
+  display: inline-flex;
+  min-width: 42px;
+  justify-content: center;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-weight: 900;
+}
+.delta-side.is-buy { color: #17835c; background: rgba(23,131,92,.12); }
+.delta-side.is-sell { color: #c14a57; background: rgba(193,74,87,.12); }
+.delta-side.is-other { color: var(--ink-soft); background: color-mix(in srgb, var(--line) 50%, transparent); }
+.delta-load-more {
+  margin-top: 10px;
+  padding: 8px 11px;
+  border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--blue) 7%, var(--surface));
+  color: var(--blue);
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.delta-load-more:disabled { opacity: .55; cursor: wait; }
+.delta-history-note,
+.delta-history-error,
+.delta-history-empty {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 8px;
+  line-height: 1.45;
+}
+@media (max-width: 850px) {
+  .delta-history-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .delta-history-insights { grid-template-columns: 1fr; }
+  .delta-turnover-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .delta-history-section { padding: 13px; }
+  .delta-history-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .delta-year-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .delta-top-assets { grid-template-columns: 1fr; }
+}
