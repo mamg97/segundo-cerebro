@@ -441,9 +441,9 @@ Las imágenes son derivados/referencias del mismo `objeto_id`; no crean otra ent
 
 
 Persistencia binaria:
-- R2 privado almacena los bytes bajo claves técnicas versionadas derivadas de `objeto_id + image_type + version`.
+- La carpeta privada de Google Drive `SEGUNDO CEREBRO - OBJETOS MEDIA` almacena los bytes bajo nombres técnicos versionados derivados de `objeto_id + image_type + version`.
 - `Armario` conserva la referencia canónica activa mediante URL privada same-origin del Worker.
-- El nombre de objeto R2 no es una identidad de dominio ni se consulta para reconstruir inventario.
+- El nombre físico del archivo de Drive no es una identidad de dominio ni se usa para reconstruir inventario.
 - `processed` genera una miniatura WebP (lado largo máximo 512 px) y ambas referencias se actualizan juntas en la fila de Armario.
 - El timestamp `ultima_actualizacion_visual` conserva fecha/hora ISO de la última mutación visual.
 
