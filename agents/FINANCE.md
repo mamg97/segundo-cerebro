@@ -131,6 +131,43 @@ Reglas:
 - no se hardcodean saldos ni nombres reales de cuentas en Git;
 - el Gestor de Finanzas mantiene estas asignaciones cuando el usuario comunica nuevos saldos, provisiones o liberaciones.
 
+### Cuentas de crédito y financiaciones
+
+Las tarjetas de crédito y financieras con saldo propio no se modelan como cuentas corrientes ni como un único gasto domiciliado.
+
+La capa privada derivada puede exponer:
+
+`CuentasCredito`:
+- identificador estable de la cuenta de crédito;
+- entidad/proveedor y titular;
+- cuenta bancaria donde se domicilia el recibo;
+- saldo pendiente bruto;
+- saldo revolving y saldo de aplazamientos por separado;
+- reembolsos de terceros pendientes;
+- exposición económica propia después de esos reembolsos;
+- próximo recibo estimado;
+- límites de crédito y fecha de actualización.
+
+`ECIProductos`:
+- productos vigentes o cerrados de Financiera El Corte Inglés;
+- tipo: revolving o aplazamiento;
+- responsable económico real: común, personal o tercero;
+- cuota, saldo pendiente, plazo actual/total, interés y vencimiento;
+- reembolso de tercero cuando exista.
+
+`ECIHistorico`:
+- conciliación mensual del recibo;
+- saldo revolving inicial, compras, intereses, cuota y saldo final;
+- aplazamientos incluidos en el recibo;
+- total cobrado y trazabilidad de fuente.
+
+Reglas:
+- un recibo domiciliado de una financiera se descompone siempre en sus componentes antes de clasificarlo;
+- un gasto de tercero financiado con una tarjeta propia se mantiene visible en el saldo bruto, pero su reembolso esperado se separa de la exposición económica del hogar;
+- una compra revolving no se asigna a una categoría concreta sin soporte del extracto;
+- los extractos y cifras reales permanecen en la fuente privada; Git solo contiene el contrato y la lógica;
+- la UI privada puede mostrar una sección específica de crédito alimentada dinámicamente por estas estructuras.
+
 ### Distribución patrimonial
 
 La fuente derivada puede exponer `PatrimonioDetalle` con:
