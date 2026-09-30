@@ -1,6 +1,9 @@
 name: Audit production web
 
 on:
+  workflow_run:
+    workflows: ["Deploy private Cloudflare app"]
+    types: [completed]
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:

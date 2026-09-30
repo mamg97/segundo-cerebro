@@ -32,7 +32,7 @@ export function validateAuditClaims(claims, now = Date.now()) {
     claims.repository === REPOSITORY &&
     claims.ref === "refs/heads/main" &&
     claims.workflow_ref === WORKFLOW_REF &&
-    ["schedule", "workflow_dispatch"].includes(claims.event_name) &&
+    ["schedule", "workflow_dispatch", "workflow_run"].includes(claims.event_name) &&
     Number.isInteger(claims.iat) &&
     Number.isInteger(claims.exp) &&
     claims.iat <= epoch + 60 &&
