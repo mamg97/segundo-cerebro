@@ -432,3 +432,10 @@ El transporte operativo para cuentas personales ChatGPT se implementa como stagi
 La cola se procesa cada minuto. Solo se procesan filas `pending` o `cleanup_pending`, con un máximo acotado por ciclo. La ingesta final reutiliza el contrato OBJETOS v0.3; el procesador de cola no implementa una segunda persistencia.
 
 Drive actúa exclusivamente como buffer efímero para transportar bytes desde ChatGPT. Tras una ingesta correcta, el archivo de staging se manda a papelera. Si la escritura canónica falla, se conserva el archivo para diagnóstico y no se marca la prenda como procesada.
+
+
+## Finanzas · histórico Delta
+
+El detalle patrimonial consume bajo demanda un export histórico privado de Delta. La referencia al spreadsheet vive en `IntegracionesPrivadas` de la fuente financiera; Git no contiene IDs reales ni operaciones.
+
+El Worker expone `GET /api/finance/delta`, protegido por la misma capa privada, con paginación y separación entre compraventas operativas y ajustes automáticos de sincronización. El navegador no descarga las miles de filas durante el arranque del Home: la consulta se realiza al abrir Patrimonio y se cachea brevemente en el Worker.
