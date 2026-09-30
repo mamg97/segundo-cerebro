@@ -22,7 +22,8 @@
     }
   ],
   "vars": {
-    "PRIVATE_APP_ENABLED": "true"
+    "PRIVATE_APP_ENABLED": "true",
+    "OBJECTS_BRIDGE_UPSTREAM_SHA256": "07046971ae838a35b5839f788438ef5adf6c66b624036a5f9552eb7141213b4c"
   },
   "triggers": {
     "crons": [
