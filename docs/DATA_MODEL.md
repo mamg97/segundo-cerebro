@@ -388,11 +388,11 @@ Proyección de Home (`pantrySummary`):
 
 ## Objetos y armario
 
-Fuente canónica: `SEGUNDO CEREBRO - OBJETOS`, creada el 2026-09-24 con contrato v0.1. Si deja de estar disponible, el estado se representa como desconocido/pendiente y no como inventario vacío confirmado.
+Fuente canónica: `SEGUNDO CEREBRO - OBJETOS`, creada el 2026-09-24 y ampliada al contrato v0.2. Si deja de estar disponible, el estado se representa como desconocido/pendiente y no como inventario vacío confirmado.
 
 Entidades lógicas:
 - `Object`: objeto maestro con identidad estable, categoría, ubicación, estado, condición, compra, valor, garantía, referencias y metadatos.
-- `WardrobeItem`: extensión de un `Object` para color, talla, temporada, formalidad, oficina, uso y compatibilidad.
+- `WardrobeItem`: extensión 1:1/1:0 de un `Object` para color, talla, temporada, formalidad, oficina, uso, compatibilidad y presentación visual.
 - `Look`: conjunto de prendas referenciadas por `objeto_id`; nunca duplica las prendas.
 - `Kit`: plantilla reutilizable de necesidades; puede referenciar objetos concretos o necesidades genéricas.
 - `ContextList`: lista ligada a viaje/evento/contexto, con `evento_ref`, destino, fechas, clima y actividades.
@@ -422,6 +422,31 @@ Proyección de Home (`objectsSummary`):
 - `upcomingContexts[]`
 
 `GET /api/objects` devuelve `objects`, `wardrobe`, `looks`, `kits`, `lists` y facetas de filtro. Las relaciones entre looks/kits/listas y el inventario usan IDs estables; no copian objetos.
+
+### WARDROBE_VISUAL
+
+Campos añadidos a `Armario`:
+- `foto_original_url`
+- `foto_procesada_url`
+- `miniatura_url`
+- `estado_procesado`: `pendiente | procesada | revisar`
+- `vista_prenda`
+- `color_principal`
+- `patron`
+- `categoria_visual`
+- `capa`: `superior | exterior | inferior | calzado | accesorio`
+- `ultima_actualizacion_visual`
+
+Las imágenes son derivados/referencias del mismo `objeto_id`; no crean otra entidad de inventario. La presentación usa `miniatura_url → foto_procesada_url → foto_original_url → Object.foto_url`.
+
+### LOOK_BUILDER
+
+El combinador visual genera un `Look` y sus `LookItems` directamente en la fuente canónica. Cada item contiene:
+- `look_id`
+- `objeto_id` existente en `Armario`
+- `rol`: `superior | exterior | inferior | calzado | accesorio`
+
+El MVP exige `superior + inferior + calzado`; `exterior` es opcional. Una petición con un `objeto_id` inexistente o retirado se rechaza y nunca crea una prenda implícita.
 
 
 ## Proyectos
