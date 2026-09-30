@@ -136,6 +136,46 @@ async function closeDialogIfOpen() {
   }
 }
 
+async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null, options = {}) {
+  const timeout = options.timeout || 6000;
+  const settle = options.settle || 250;
+  const first = page.locator(buttonSelector).first();
+  try {
+    await first.waitFor({ state: "visible", timeout });
+  } catch {
+    fail(label + " · pestañas disponibles", "no se encontraron " + buttonSelector);
+    return;
+  }
+
+  const values = await page.locator(buttonSelector).evaluateAll((nodes, key) =>
+    [...new Set(nodes.map((node) => node.dataset[key]).filter(Boolean))], dataKey
+  );
+  assertCheck(values.length > 0, label + " · pestañas disponibles", values.join(", "));
+
+  for (const value of values) {
+    // Re-query by the exact data attribute after each render; several workspaces rebuild their tab DOM.
+    const exact = page.locator(`${buttonSelector}[data-${options.htmlDataName}="${value}"]`).first();
+    if (!await exact.count()) {
+      fail(`${label} · pestaña ${value}`, "desapareció tras render");
+      continue;
+    }
+    await exact.click();
+    await page.waitForTimeout(settle);
+    const active = await exact.evaluate((node) =>
+      node.classList.contains("active") || node.getAttribute("aria-selected") === "true"
+    ).catch(() => false);
+    assertCheck(active, `${label} · pestaña ${value} activa`);
+
+    if (panelSelector) {
+      const panel = page.locator(panelSelector(value)).first();
+      const panelOk = await panel.evaluate((node) =>
+        !node.hidden && (node.classList.contains("active") || !node.hasAttribute("data-health-panel"))
+      ).catch(() => false);
+      assertCheck(panelOk, `${label} · panel ${value} visible`);
+    }
+  }
+}
+
 try {
   const response = await page.goto(baseUrl + "/app/", { waitUntil: "domcontentloaded", timeout: 30000 });
   assertCheck(Boolean(response?.ok()), "Producción carga", `HTTP ${response?.status() || "?"}`);
@@ -216,6 +256,56 @@ try {
         const title = (await page.locator("#dialog-title").textContent().catch(() => "") || "").trim();
         assertCheck(Boolean(title), `Vista ${areaId} tiene título`);
       }
+    }
+
+    if (areaId === "area-pantry") {
+      await auditTabSet(
+        "Despensa",
+        "[data-pantry-view]",
+        "pantryView",
+        (value) => `[data-pantry-panel="${value}"]`,
+        { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180 }
+      );
+    } else if (areaId === "area-objects") {
+      await auditTabSet(
+        "Objetos",
+        "[data-objects-tab]",
+        "objectsTab",
+        null,
+        { htmlDataName: "objects-tab", attributeName: "objects-tab", attr: "objects-tab", settle: 180 }
+      );
+    } else if (areaId === "area-projects") {
+      await auditTabSet(
+        "Proyectos",
+        "[data-project-tab]",
+        "projectTab",
+        null,
+        { htmlDataName: "project-tab", attributeName: "project-tab", attr: "project-tab", settle: 180 }
+      );
+    } else if (areaId === "area-habits") {
+      await auditTabSet(
+        "Hábitos",
+        "[data-habit-tab]",
+        "habitTab",
+        (value) => `[data-habit-panel="${value}"]`,
+        { htmlDataName: "habit-tab", attributeName: "habit-tab", attr: "habit-tab", settle: 180 }
+      );
+    } else if (areaId === "area-parents") {
+      await auditTabSet(
+        "Padres",
+        "[data-family-scope]",
+        "familyScope",
+        null,
+        { htmlDataName: "family-scope", attributeName: "family-scope", attr: "family-scope", settle: 450 }
+      );
+    } else if (areaId === "area-events") {
+      await auditTabSet(
+        "Eventos",
+        "[data-events-inline-tab]",
+        "eventsInlineTab",
+        null,
+        { htmlDataName: "events-inline-tab", attributeName: "events-inline-tab", attr: "events-inline-tab", settle: 180 }
+      );
     }
     await closeDialogIfOpen();
   }
