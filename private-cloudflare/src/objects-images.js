@@ -5,7 +5,7 @@ import {
   invalidateObjectsCache,
   resolveObjectsSpreadsheetId
 } from "./objects.js";
-import { createObjectsDriveMediaStore } from "./objects-media-drive.js";
+import { createObjectsD1MediaStore } from "./objects-media-d1.js";
 
 const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp"]);
 const IMAGE_TYPES = new Set(["original", "processed", "thumbnail"]);
@@ -280,13 +280,11 @@ function parseVisualMetadata(form, wardrobe) {
   };
 }
 
-async function resolveMediaStore(env, getGoogleAccessToken, overrides = {}) {
+async function resolveMediaStore(env, _getGoogleAccessToken, overrides = {}) {
   if (overrides.bucket) return overrides.bucket;
   if (overrides.mediaStore) return overrides.mediaStore;
   try {
-    return createObjectsDriveMediaStore(env, getGoogleAccessToken, {
-      fetch: overrides.fetch || fetch
-    });
+    return createObjectsD1MediaStore(env);
   } catch {
     throw new ObjectsImageError("OBJECTS_MEDIA_NOT_CONFIGURED", 503);
   }
