@@ -4947,11 +4947,20 @@ function openCreditDetail() {
   const history = (Array.isArray(state.financeSummary?.creditHistory) ? state.financeSummary.creditHistory : [])
     .slice()
     .sort((a, b) => String(b.dueDate || "").localeCompare(String(a.dueDate || "")));
+  const movements = (Array.isArray(state.financeSummary?.creditMovements) ? state.financeSummary.creditMovements : [])
+    .slice()
+    .sort((a, b) => String(b.operationDate || "").localeCompare(String(a.operationDate || "")));
+  const future = (Array.isArray(state.financeSummary?.creditFuture) ? state.financeSummary.creditFuture : [])
+    .slice()
+    .sort((a, b) => String(a.dueDate || "").localeCompare(String(b.dueDate || "")));
 
   const grossPending = firstFinite(account.grossPending);
   const netExposure = firstFinite(account.netHouseholdExposure);
   const nextReceipt = firstFinite(account.estimatedNextReceipt);
   const reimbursementRemaining = firstFinite(account.expectedThirdPartyReimbursement);
+  const revolvingNetPurchases = movements
+    .filter((item) => String(item.financingBucket || "").toLowerCase() === "revolving")
+    .reduce((sum, item) => sum + (firstFinite(item.amount) || 0), 0);
 
   document.querySelector("#dialog-body").innerHTML = `
     <div class="credit-detail">
@@ -4971,6 +4980,58 @@ function openCreditDetail() {
           ${activeProducts.length ? activeProducts.map((item) => renderCreditProductItem(item, currency)).join("") : "<p>Sin productos activos.</p>"}
         </div>
       </section>
+
+      ${future.length ? `
+        <section class="credit-detail-section">
+          <div class="credit-detail-heading">
+            <div><strong>Próximos cargos</strong><span>Calendario previsto de Financiera ECI</span></div>
+            <small>${future.length} componentes</small>
+          </div>
+          <p class="credit-source-note">Las cuotas contractuales se muestran como programadas. El revolving es una proyección suponiendo que no haya nuevas compras; intereses y último pago pueden variar ligeramente.</p>
+          <div class="credit-history-scroll" role="region" aria-label="Próximos cargos de Financiera El Corte Inglés" tabindex="0">
+            <table class="credit-history-table">
+              <thead><tr><th>Fecha</th><th>Concepto</th><th>Plazo</th><th>Bruto</th><th>Reembolso</th><th>Neto hogar</th></tr></thead>
+              <tbody>${future.map((item) => {
+                const installment = item.installmentNo !== null && item.installmentNo !== undefined
+                  && item.installmentTotal !== null && item.installmentTotal !== undefined
+                  ? `${item.installmentNo}/${item.installmentTotal}`
+                  : item.componentType === "revolving" ? "revolving" : "—";
+                return `
+                  <tr>
+                    <td>${escapeHtml(formatFinanceDate(item.dueDate, item.dueDate || "—"))}</td>
+                    <td>${escapeHtml(item.label || item.componentId || "—")}${item.status === "projected" ? " · estimado" : ""}</td>
+                    <td>${escapeHtml(installment)}</td>
+                    <td>${item.grossAmount === null ? "—" : formatMoney(item.grossAmount, currency)}</td>
+                    <td>${item.expectedReimbursement === null || item.expectedReimbursement === 0 ? "—" : formatMoney(item.expectedReimbursement, currency)}</td>
+                    <td><strong>${item.netHouseholdAmount === null ? "—" : formatMoney(item.netHouseholdAmount, currency)}</strong></td>
+                  </tr>`;
+              }).join("")}</tbody>
+            </table>
+          </div>
+        </section>` : ""}
+
+      ${movements.length ? `
+        <section class="credit-detail-section">
+          <div class="credit-detail-heading">
+            <div><strong>Compras que alimentaron el revolving</strong><span>Movimientos identificados en extractos ECI</span></div>
+            <small>Neto ${formatMoney(revolvingNetPurchases, currency)}</small>
+          </div>
+          <div class="credit-history-scroll" role="region" aria-label="Compras históricas del revolving ECI" tabindex="0">
+            <table class="credit-history-table credit-movements-table">
+              <thead><tr><th>Fecha</th><th>Departamento / comercio</th><th>Tipo</th><th>Importe</th></tr></thead>
+              <tbody>${movements.map((item) => `
+                <tr>
+                  <td>${escapeHtml(formatFinanceDate(item.operationDate, item.operationDate || "—"))}</td>
+                  <td title="${escapeHtml(item.note || "")}">
+                    <strong>${escapeHtml(item.department || item.merchant || "—")}</strong>
+                    ${item.merchant && item.department ? `<small>${escapeHtml(item.merchant)}</small>` : ""}
+                  </td>
+                  <td>${escapeHtml(item.movementType === "refund" ? "Devolución" : "Compra")}</td>
+                  <td class="${Number(item.amount) < 0 ? "is-negative" : ""}">${item.amount === null ? "—" : formatMoney(item.amount, currency)}</td>
+                </tr>`).join("")}</tbody>
+            </table>
+          </div>
+        </section>` : ""}
 
       ${history.length ? `
         <section class="credit-detail-section">
