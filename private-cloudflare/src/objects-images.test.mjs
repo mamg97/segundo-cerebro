@@ -7,11 +7,11 @@ import {
   uploadObjectsImage
 } from "./objects-images.js";
 
-const KNOWN_IDS = [
-  "obj-shirt-scalpers-skyblue-001",
-  "obj-sweater-poloclub-quarterzip-grey-001",
-  "obj-chino-zara-navy-001",
-  "obj-sneakers-adidas-samba-blue-001"
+const SAMPLE_IDS = [
+  "obj-shirt-example-001",
+  "obj-knit-example-002",
+  "obj-trousers-example-003",
+  "obj-shoes-example-004"
 ];
 
 const PNG_1X1 = Uint8Array.from(Buffer.from(
@@ -132,7 +132,7 @@ async function rejectCode(promise, code, status) {
 }
 
 test("rejects nonexistent canonical objects", async () => {
-  const id = KNOWN_IDS[0];
+  const id = SAMPLE_IDS[0];
   const bucket = mockBucket();
   const deps = depsFor(id, bucket, {
     source: { status: "ok-live", value: { objects: [], wardrobe: [] } }
@@ -146,7 +146,7 @@ test("rejects nonexistent canonical objects", async () => {
 });
 
 test("rejects invalid MIME before storage", async () => {
-  const id = KNOWN_IDS[0];
+  const id = SAMPLE_IDS[0];
   const bucket = mockBucket();
   await rejectCode(
     uploadObjectsImage(
@@ -163,7 +163,7 @@ test("rejects invalid MIME before storage", async () => {
 });
 
 test("uploads canonical processed image and generated thumbnail", async () => {
-  const id = KNOWN_IDS[0];
+  const id = SAMPLE_IDS[0];
   const bucket = mockBucket();
   let thumbnailCalls = 0;
   const deps = depsFor(id, bucket, {
@@ -184,7 +184,7 @@ test("uploads canonical processed image and generated thumbnail", async () => {
 });
 
 test("writes processed URL, thumbnail URL and visual state to Armario", async () => {
-  const id = KNOWN_IDS[0];
+  const id = SAMPLE_IDS[0];
   const bucket = mockBucket();
   let captured = null;
   const deps = depsFor(id, bucket, {
@@ -209,7 +209,7 @@ test("writes processed URL, thumbnail URL and visual state to Armario", async ()
 });
 
 test("storage errors fail safely without Sheet writes", async () => {
-  const id = KNOWN_IDS[0];
+  const id = SAMPLE_IDS[0];
   const bucket = mockBucket({ failPutAt: 1 });
   let writes = 0;
   const deps = depsFor(id, bucket, { write: async () => { writes += 1; } });
@@ -223,7 +223,7 @@ test("storage errors fail safely without Sheet writes", async () => {
 });
 
 test("Sheet update failure compensates by deleting newly uploaded assets", async () => {
-  const id = KNOWN_IDS[0];
+  const id = SAMPLE_IDS[0];
   const bucket = mockBucket();
   const deps = depsFor(id, bucket, {
     write: async () => { throw new Error("SHEET_DOWN"); }
@@ -237,7 +237,7 @@ test("Sheet update failure compensates by deleting newly uploaded assets", async
 });
 
 test("overwrite is explicit and superseded canonical assets are cleaned after success", async () => {
-  const id = KNOWN_IDS[0];
+  const id = SAMPLE_IDS[0];
   const bucket = mockBucket();
   const oldVersion = "12345678-abcd";
   const oldProcessedKey = "objects/" + id + "/processed/" + oldVersion;
@@ -278,12 +278,12 @@ test("real thumbnail pipeline outputs WebP", async () => {
   assert.equal(signature, "WEBP");
 });
 
-test("accepts the four existing canonical objeto_id values", () => {
-  for (const id of KNOWN_IDS) assert.equal(normalizeObjectId(id), id);
+test("accepts canonical objeto_id shapes used by wardrobe records", () => {
+  for (const id of SAMPLE_IDS) assert.equal(normalizeObjectId(id), id);
 });
 
 test("rejects unauthenticated image upload requests", async () => {
-  const id = KNOWN_IDS[0];
+  const id = SAMPLE_IDS[0];
   const bucket = mockBucket();
   await rejectCode(
     uploadObjectsImage(
