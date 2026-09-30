@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "segundo-cerebro-objects-ingest",
+  "main": "src/objects-ingest.js",
+  "compatibility_date": "2026-09-30",
+  "services": [
+    {
+      "binding": "SEGUNDO_CEREBRO",
+      "service": "segundo-cerebro"
+    }
+  ]
+}
