@@ -106,7 +106,22 @@ jobs:
 
       - name: Deploy production Worker
         if: steps.cloudflare.outputs.configured == 'true'
-        run: npx wrangler deploy --config wrangler.bootstrap.jsonc
+        shell: bash
+        run: |
+          set +e
+          npx wrangler deploy --config wrangler.bootstrap.jsonc 2>&1 | tee /tmp/worker-deploy.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [[ "$status" -eq 0 ]]; then
+            exit 0
+          fi
+          if grep -Fq "R2 bucket 'segundo-cerebro-private-assets' not found" /tmp/worker-deploy.log; then
+            echo "::warning::Objects media bucket is not provisioned yet. Deploying the application without OBJECTS_MEDIA so the rest of Segundo Cerebro remains available."
+            node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync("wrangler.bootstrap.jsonc","utf8")); delete x.r2_buckets; fs.writeFileSync("/tmp/wrangler.bootstrap.no-media.json", JSON.stringify(x,null,2));'
+            npx wrangler deploy --config /tmp/wrangler.bootstrap.no-media.json
+          else
+            exit "$status"
+          fi
 
       - name: Deploy Health ingest Worker
         if: steps.cloudflare.outputs.configured == 'true'

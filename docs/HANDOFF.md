@@ -979,3 +979,11 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - El bucket `segundo-cerebro-private-assets` se trata como infraestructura one-shot, no como recurso administrado en cada deploy.
 - El token normal de GitHub Actions conserva privilegios mínimos de deploy de Workers; no se amplía solo para listar/crear buckets.
 - El workflow ordinario ya no ejecuta `wrangler r2 bucket list/create`; despliega el Worker contra el binding declarado y fallará claramente si el bucket todavía no existe.
+
+
+## OBJETOS · degradación segura mientras R2 no esté provisionado
+
+- Si Cloudflare devuelve explícitamente que `segundo-cerebro-private-assets` no existe, CI despliega el Worker sin el binding `OBJECTS_MEDIA` para no bloquear el resto de Segundo Cerebro.
+- En ese estado, las rutas de imágenes existen en código pero responden `OBJECTS_MEDIA_NOT_CONFIGURED`/503; no se simula que el pipeline esté operativo.
+- Cualquier otro error de deploy sigue fallando normalmente. El fallback solo se activa para el error literal de bucket ausente.
+- En cuanto el bucket exista, el mismo workflow usará automáticamente el binding R2 y dejará de entrar en fallback.
