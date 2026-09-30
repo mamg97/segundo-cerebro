@@ -2,6 +2,7 @@ import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-ca
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
+import { processObjectsImageQueue } from "./objects-staging.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
@@ -4587,5 +4588,16 @@ export default {
     return withSecurityHeaders(assetResponse, {
       "Cache-Control": "private, max-age=0, must-revalidate"
     });
+  },
+
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(
+      processObjectsImageQueue(env, getGoogleAccessToken).catch((error) => {
+        console.warn("[objects:staging]", {
+          stage: "scheduled_failed",
+          code: String(error?.message || "OBJECTS_STAGING_SCHEDULED_FAILED")
+        });
+      })
+    );
   }
 };

@@ -162,3 +162,15 @@ La clasificación diaria es información privada de Salud.
 - `GET /api/health/adherence` solo está disponible en la aplicación privada protegida.
 - La pestaña `AdherenciaManual` permanece en el Sheet privado de Salud.
 - La demo pública no debe simular datos que puedan confundirse con el histórico real del usuario.
+
+
+### Staging visual de OBJETOS
+
+Las imágenes generadas por ChatGPT pueden pasar temporalmente por la carpeta privada `SEGUNDO CEREBRO - OBJETOS STAGING` de Google Drive para salvar la limitación actual de acciones MCP personalizadas de escritura en cuentas personales.
+
+- La carpeta no es pública ni se usa para servir imágenes a la web.
+- El identificador de Drive solo vive en `ImageIngestQueue` hasta completar la ingesta.
+- Los bytes se descargan server-side usando las credenciales Google ya configuradas en Segundo Cerebro.
+- Tras éxito, el archivo de staging se envía a papelera.
+- Las URLs que persisten en `Armario` apuntan únicamente a lectura privada de Segundo Cerebro/R2.
+- No se publican secretos, tokens, rutas locales ni URLs firmadas externas.

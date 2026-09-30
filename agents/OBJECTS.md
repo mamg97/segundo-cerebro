@@ -248,3 +248,28 @@ Este dominio puede contener números de serie, facturas, fotos, ubicaciones dom�
 Git solo contiene código, contrato y estilos. Nunca contiene inventario real, fotos, números de serie, facturas, ubicaciones precisas ni identificadores privados de la fuente.
 
 R2 es persistencia binaria privada, no una segunda fuente de identidad. Las rutas físicas se derivan del `objeto_id` y de una versión técnica; la pertenencia y estado visual siguen gobernados por `Armario`.
+
+
+## Puente operativo ChatGPT → Armario visual
+
+Mientras las cuentas personales Plus no dispongan de MCP personalizado con acciones de escritura, GESTOR OBJETOS usa un staging transitorio dentro de la infraestructura Google ya conectada, sin crear otra fuente de verdad:
+
+1. La imagen generada/procesada en ChatGPT se copia directamente a la carpeta privada de Drive `SEGUNDO CEREBRO - OBJETOS STAGING`. El usuario no descarga ni vuelve a subir el archivo.
+2. GESTOR OBJETOS añade una única fila técnica a `ImageIngestQueue` dentro del mismo spreadsheet canónico `SEGUNDO CEREBRO - OBJETOS`.
+3. El Worker privado procesa la cola cada minuto.
+4. Descarga el archivo privado de Drive con las credenciales Google ya existentes del backend.
+5. Reutiliza internamente el mismo `uploadObjectsImage` del contrato OBJETOS v0.3; no existe una segunda lógica de ingesta.
+6. El asset final y su thumbnail quedan en `OBJECTS_MEDIA`/R2 y `Armario` se actualiza automáticamente.
+7. Tras éxito, el archivo de staging se envía a la papelera. Drive no es almacenamiento permanente.
+8. Si la ingesta falla, `Armario` no se marca como procesado y la fila queda en `error`; el archivo de staging se conserva para diagnóstico/reintento.
+9. Si solo falla el cleanup, la fila queda `cleanup_pending` y el siguiente ciclo reintenta únicamente el borrado.
+
+### Contrato de ImageIngestQueue
+
+Columnas, en orden:
+
+`request_id, objeto_id, image_type, drive_file_id, overwrite, vista_prenda, color_principal, patron, categoria_visual, capa, estado_procesado, status, created_at, processed_at, error_code, foto_url, miniatura_url`
+
+Para una imagen nueva: `status=pending`. No escribir manualmente `foto_*_url` ni `estado_procesado` en Armario.
+
+Esta cola es transporte efímero, no identidad ni fuente canónica de prendas. La identidad continúa siendo `objeto_id` y la fuente canónica funcional continúa siendo `Armario`.

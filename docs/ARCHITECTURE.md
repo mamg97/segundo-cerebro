@@ -421,3 +421,14 @@ La app privada presenta además un laboratorio visual animado. La animación **n
 Para estrategias públicas, `strategy_state/dashboard.json` puede incluir un `equity_history` compacto derivado de los ledgers paper. El Worker valida y limita ese histórico antes de entregarlo a la UI. El genético privado aporta su propia curva ya saneada desde D1. El bootstrap Weekly ML del 25/09/2026 se puede mostrar como demostración técnica separada y siempre marcado como no prospectivo; desaparece como sustituto visual cuando exista un diario forward real de Weekly ML.
 
 La interfaz usa SVG/CSS y respeta `prefers-reduced-motion`. No añade librerías de gráficos ni persiste un segundo histórico.
+
+
+### Bridge ChatGPT → OBJETOS
+
+El transporte operativo para cuentas personales ChatGPT se implementa como staging transitorio sobre Google Drive ya conectado, porque el soporte de MCP personalizado con acciones de escritura no está disponible en el plan personal actual. No cambia la fuente de verdad.
+
+`ChatGPT Library → Drive staging privado → ImageIngestQueue (mismo Sheet canónico) → cron Worker → uploadObjectsImage → R2 OBJECTS_MEDIA → Armario → cleanup Drive`
+
+La cola se procesa cada minuto. Solo se procesan filas `pending` o `cleanup_pending`, con un máximo acotado por ciclo. La ingesta final reutiliza el contrato OBJETOS v0.3; el procesador de cola no implementa una segunda persistencia.
+
+Drive actúa exclusivamente como buffer efímero para transportar bytes desde ChatGPT. Tras una ingesta correcta, el archivo de staging se manda a papelera. Si la escritura canónica falla, se conserva el archivo para diagnóstico y no se marca la prenda como procesada.
