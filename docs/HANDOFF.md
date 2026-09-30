@@ -233,6 +233,20 @@ Estado:
 - El 2026-09-23 se validó una ejecución real completa hasta producción.
 - El flujo normal es ChatGPT/GitHub → commit a `main` → GitHub Actions → Cloudflare, sin `git pull` ni `npm run deploy` manuales.
 
+
+### Auditoría automática de producción
+
+- Workflow canónico: `.github/workflows/web-audit.yml`.
+- Cadencia: cada hora y, además, después de cada `Deploy private Cloudflare app` que termine con éxito. Los deploys cancelados por un push más reciente no lanzan una auditoría útil.
+- El test abre Chromium real con Playwright contra `segundo-cerebro-web-audit`, un gateway Cloudflare de solo lectura enlazado al Worker principal mediante Service Binding.
+- Autenticación del auditor: token OIDC de GitHub de corta duración, restringido a este repositorio, `main`, el workflow exacto y la audiencia del gateway. No existe API key permanente nueva.
+- La auditoría recorre la navegación principal y subpestañas de Salud, Hábitos, Despensa, Objetos, Proyectos, Eventos y Padres; comprueba también fuentes de Finanzas, Calendario y resto de resúmenes aunque no muta ningún dato.
+- Invariantes destacados: calendario enlazado y sin error visible; `MenuSemanal` presente cuando corresponde, sin versiones lógicas duplicadas ni estados omitidos resucitados; agrupación correcta por toma; datos desconocidos no convertidos en cero; barras de kcal/proteína con ancho y estado visual coherentes con valor/objetivo; ausencia de 5xx, fallos de red, errores JavaScript y violaciones CSP.
+- El auditor no toma ni publica capturas de pantalla y no vuelca cifras privadas a logs; registra únicamente checks técnicos, conteos y nombres de invariantes.
+- Un segundo watcher horario de ChatGPT vigila el resultado de `Audit production web`: no avisa si el último run es verde y reciente; avisa ante fallo o si no existe una auditoría correcta reciente.
+- Primera utilidad real confirmada: el auditor detectó estilos inline bloqueados por `style-src 'self'`; se migraron a clases/SVG/`progress` y existe `app/csp-inline-style.test.mjs` para impedir la regresión.
+- Validación de cierre 2026-09-30: auditoría real de producción **154 checks / 0 fallos** después de los cambios concurrentes de Finanzas.
+
 ### Configuración CI/CD completada
 
 El deploy automático completo está activado con los *repository secrets* documentados:
