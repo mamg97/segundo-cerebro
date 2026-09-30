@@ -1100,3 +1100,13 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Compras netas identificadas que han alimentado el revolving: **454,81 €**; los movimientos individuales deben mostrarse con comercio/departamento, fecha e importe, incluida la devolución de 119 €.
 - `ECIFuturo` proyecta revolving desde 183,64 € suponiendo TIN 18 %, sin compras nuevas: 30 €/mes de octubre a marzo y último pago estimado 14,12 € en abril de 2027. Las cuotas contractuales TV Samsung y TV padres Andrea se muestran por separado; los 45 €/mes esperados de Encarna se reflejan como reembolso de tercero.
 - La vista `Crédito · El Corte Inglés` debe mostrar productos activos, próximos cargos, compras que alimentaron el revolving, histórico de recibos y financiaciones cerradas.
+
+
+## Finanzas · histórico Delta
+
+- El export histórico completo de Delta vive en un Google Sheet privado separado; Git no contiene operaciones reales.
+- El Sheet financiero guarda únicamente el puntero `DELTA_OPERATIONS_SHEET_ID` dentro de `IntegracionesPrivadas`.
+- `/api/state` incorpora un resumen agregado del histórico a `financeSummary.wealth.delta`.
+- `GET /api/finance/delta-operations?offset=0&limit=100` devuelve páginas desde las operaciones más recientes hacia atrás.
+- La UI de Patrimonio muestra KPIs, actividad por año, activos más operados, volumen por divisa y un histórico cargado progresivamente.
+- Los ajustes/sync generados por Delta se conservan para auditoría, pero no cuentan como compraventas reales.
