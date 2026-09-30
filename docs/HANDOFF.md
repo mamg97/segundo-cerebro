@@ -1041,3 +1041,21 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Regla canónica: un recibo de una financiera nunca se clasifica como un único gasto sin separar revolving, aplazamientos y reembolsos.
 - Ningún saldo, extracto ni importe real se versiona en Git; toda cifra sigue residiendo exclusivamente en la fuente privada.
 - Assets: `app.js?v=0.40.2`, `styles.css?v=0.40.2`.
+
+
+## Finanzas · auditoría Santander + ECI · 30/09/2026
+
+- `ASUNTOS v3.xlsx` sigue siendo **solo lectura** y actúa como maestro presupuestario/histórico.
+- Se añadió `MovimientosCuenta` a `SEGUNDO CEREBRO - ESTADO FINANCIERO`; contiene el histórico Santander importado (02/01/2025→30/09/2026) con trazabilidad por movimiento.
+- El error de liquidez de Santander estaba causado principalmente por no reservar el alquiler de octubre de **1.350 €**, pese a estar en el maestro y existir como pago mensual recurrente en el histórico bancario.
+- Estado Santander auditado a 30/09:
+  - saldo contable: **2.029,60 €**
+  - disponible bancario: **2.027,60 €**
+  - compromisos internos pendientes: **1.915,34 €**
+  - libre interno prudente: **112,26 €**
+- Compromisos pendientes Santander modelados: alquiler 1.350 €, gimnasio 60 €, Netflix 8,99 €, comida 194,36 €, transporte 231,99 €, salir 53 €, reembolso Bazar Andrea 16 € y ajuste Airbnb 1 €. La retención Uber de 2 € se trata aparte.
+- DIGI 29 € y Canal de Isabel II 21,79 € ya se cobraron el 29/09; no volver a reservarlos.
+- Netflix se corrigió de BBVA a Santander usando el histórico real de cargos.
+- La UI financiera debe distinguir `saldo contable`, `disponible bancario`, `comprometido` y `libre interno`. El saldo restante de una categoría presupuestaria no se etiqueta como dinero libre.
+- El detalle de Finanzas incorpora un histórico reciente de movimientos Santander desde `MovimientosCuenta`.
+- Financiera ECI sigue como cuenta de crédito separada. El revolving queda reconstruido con sus compras, intereses y pagos; saldo tras septiembre **183,64 €** y horizonte aproximado **abril de 2027** si no hay nuevas compras y se mantienen 30 €/mes.
