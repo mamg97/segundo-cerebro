@@ -3805,14 +3805,14 @@ function weeklyMenuProgressVisualState(metric, value, target) {
   let quality = 0;
 
   if (metric === "kcal") {
-    // 100% kcal is the sweet spot. Being far below target is also suboptimal,
-    // but overshooting is penalized faster because kcal is a ceiling/target zone.
+    // 100% is ideal. Under-eating degrades progressively; overshooting degrades faster.
+    // Red = clearly far from the target, green = very close to target.
     quality = ratio <= 1
-      ? (ratio - 0.65) / 0.35
-      : 1 - ((ratio - 1) / 0.15);
+      ? (ratio - 0.70) / 0.30
+      : 1 - ((ratio - 1) / 0.20);
   } else {
-    // Protein is a minimum/target: reaching or exceeding it stays green.
-    quality = ratio >= 1 ? 1 : (ratio - 0.60) / 0.40;
+    // Protein is a minimum/target: 100% or more is ideal; falling short degrades continuously.
+    quality = ratio >= 1 ? 1 : (ratio - 0.50) / 0.50;
   }
 
   quality = Math.max(0, Math.min(1, quality));
@@ -3823,6 +3823,23 @@ function weeklyMenuProgressVisualState(metric, value, target) {
     color: `hsl(${hue} 82% ${lightness}%)`,
     quality
   };
+}
+
+function renderNutritionQualityMeter(metric, value, target, label, incomplete = false) {
+  const visual = weeklyMenuProgressVisualState(metric, value, target);
+  if (!visual) return "";
+  const width = Math.max(0, Math.min(100, visual.pct || 0));
+  return `
+    <div
+      class="nutrition-quality-meter ${incomplete ? "is-incomplete" : ""}"
+      role="progressbar"
+      aria-label="${escapeHtml(label)}: ${visual.pct}% del objetivo${incomplete ? ", subtotal conocido" : ""}"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="${width}"
+    >
+      <span style="width:${width}%;background:${escapeHtml(visual.color)}"></span>
+    </div>`;
 }
 
 function renderWeeklyMenuProgress(label, value, target, pct, tone, incomplete = false) {
@@ -3836,7 +3853,6 @@ function renderWeeklyMenuProgress(label, value, target, pct, tone, incomplete = 
 
   const visual = weeklyMenuProgressVisualState(tone, value, target);
   const effectivePct = visual?.pct ?? (Number.isFinite(pct) ? pct : 0);
-  const progressColor = visual?.color || "currentColor";
   const displayValue = label === "Proteína" ? formatMacro(value) : formatKcal(value);
   const displayTarget = label === "Proteína" ? formatMacro(target) : formatKcal(target);
   return `
@@ -3845,12 +3861,7 @@ function renderWeeklyMenuProgress(label, value, target, pct, tone, incomplete = 
         <span>${escapeHtml(label)}</span>
         <strong>${incomplete ? "<small>Subtotal </small>" : ""}${displayValue} <small>/ ${displayTarget}</small></strong>
       </div>
-      <progress
-        max="100"
-        value="${Math.max(0, Math.min(100, Number(effectivePct) || 0))}"
-        style="--progress-color: ${escapeHtml(progressColor)}"
-        aria-label="${escapeHtml(label)}: ${Number(effectivePct) || 0}% del objetivo${incomplete ? ", subtotal conocido" : ""}"
-      ></progress>
+      ${renderNutritionQualityMeter(tone, value, target, label, incomplete)}
       <small>${incomplete ? `Subtotal conocido · ${effectivePct}% del objetivo` : `${effectivePct}% del objetivo`}</small>
     </div>`;
 }
@@ -4215,16 +4226,14 @@ function renderHomeWeeklyMenu(data) {
                 <span><i class="kcal"></i>Kcal</span>
                 <b>${!day.nutritionComplete ? "Subtotal " : ""}${formatKcal(day.kcal)}${model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
                 ${model.kcalTarget !== null ? (() => {
-                  const visual = weeklyMenuProgressVisualState("kcal", day.kcal, model.kcalTarget);
-                  return `<progress max="100" value="${Math.max(0, Math.min(100, visual?.pct || 0))}" style="--progress-color: ${escapeHtml(visual?.color || "currentColor")}" aria-label="Kcal: ${visual?.pct || 0}% del objetivo${!day.nutritionComplete ? ", subtotal conocido" : ""}"></progress>`;
+                  return renderNutritionQualityMeter("kcal", day.kcal, model.kcalTarget, "Kcal", !day.nutritionComplete);
                 })() : ""}
               </div>
               <div>
                 <span><i class="protein"></i>Proteína</span>
                 <b>${!day.nutritionComplete ? "Subtotal " : ""}${formatMacro(day.protein)}${model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
                 ${model.proteinTarget !== null ? (() => {
-                  const visual = weeklyMenuProgressVisualState("protein", day.protein, model.proteinTarget);
-                  return `<progress max="100" value="${Math.max(0, Math.min(100, visual?.pct || 0))}" style="--progress-color: ${escapeHtml(visual?.color || "currentColor")}" aria-label="Proteína: ${visual?.pct || 0}% del objetivo${!day.nutritionComplete ? ", subtotal conocido" : ""}"></progress>`;
+                  return renderNutritionQualityMeter("protein", day.protein, model.proteinTarget, "Proteína", !day.nutritionComplete);
                 })() : ""}
               </div>
             </div>
