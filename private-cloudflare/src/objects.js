@@ -194,6 +194,15 @@ async function resolveSpreadsheetId(env, token) {
   return sheet.id;
 }
 
+export async function resolveObjectsSpreadsheetId(env, token) {
+  return resolveSpreadsheetId(env, token);
+}
+
+export function invalidateObjectsCache() {
+  cache.value = null;
+  cache.expiresAt = 0;
+}
+
 async function sheetTitles(spreadsheetId, token) {
   const endpoint =
     "https://sheets.googleapis.com/v4/spreadsheets/" +
@@ -231,7 +240,7 @@ function emptyPayload() {
       name: SHEET_TITLE,
       owner: "GESTOR OBJETOS Y ARMARIO",
       available: false,
-      contractVersion: "0.2"
+      contractVersion: "0.3"
     }
   };
 }
@@ -490,7 +499,7 @@ function buildPayload(rows) {
       name: SHEET_TITLE,
       owner: "GESTOR OBJETOS Y ARMARIO",
       available: true,
-      contractVersion: "0.2"
+      contractVersion: "0.3"
     }
   };
 }
