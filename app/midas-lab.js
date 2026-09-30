@@ -111,7 +111,7 @@ function renderMidasLabCard(item) {
     renderSparkline(history, item.label, returnPct) +
     '<div class="midas-lab-card-meta"><span>' + (sessions ? sessions + (sessions === 1 ? " sesión" : " sesiones") : "Esperando histórico") + '</span><span>' + escapeHtml(formatDate(latestDate)) + '</span></div>' +
     (topTickers.length ? '<div class="midas-lab-picks"><span>Selección</span>' + topTickers.map((ticker) => '<b>' + escapeHtml(ticker) + '</b>').join("") + '</div>' : "") +
-    (item.bootstrap ? '<small class="midas-lab-disclaimer">Prueba retrospectiva de arranque · no cuenta en forward</small>' : "") +
+    (item.bootstrap ? '<small class="midas-lab-disclaimer">Prueba retrospectiva de arranque · pre-fracciones · no cuenta en forward</small>' : "") +
   '</article>';
 }
 
