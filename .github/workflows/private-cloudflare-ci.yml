@@ -58,6 +58,7 @@ jobs:
 
       - run: node --check src/objects.js
       - run: node --check src/objects-images.js
+      - run: node --check src/objects-media-drive.js
       - run: node --check src/objects-bridge-auth.js
 
       - name: Validate ChatGPT bridge syntax
