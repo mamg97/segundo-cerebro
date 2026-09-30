@@ -1100,3 +1100,13 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Compras netas identificadas que han alimentado el revolving: **454,81 €**; los movimientos individuales deben mostrarse con comercio/departamento, fecha e importe, incluida la devolución de 119 €.
 - `ECIFuturo` proyecta revolving desde 183,64 € suponiendo TIN 18 %, sin compras nuevas: 30 €/mes de octubre a marzo y último pago estimado 14,12 € en abril de 2027. Las cuotas contractuales TV Samsung y TV padres Andrea se muestran por separado; los 45 €/mes esperados de Encarna se reflejan como reembolso de tercero.
 - La vista `Crédito · El Corte Inglés` debe mostrar productos activos, próximos cargos, compras que alimentaron el revolving, histórico de recibos y financiaciones cerradas.
+
+
+## Finanzas · corrección dinero libre Santander · 01/10/2026
+
+- Se corrige la interpretación de `free_amount` de Santander común. El saldo contable sigue siendo **2.029,60 €** y el disponible bancario **2.027,60 €** tras la retención conocida de 2 €.
+- Compromisos nominales pendientes del ciclo: **1.915,34 €**.
+- La diferencia **112,26 €** deja de mostrarse como dinero libre y pasa a `ReservasCuenta` como `cycle_surplus_buffer` hasta el cierre del ciclo 20/09→20/10.
+- Descomposición conocida del buffer: **80,18 €** de márgenes de partidas fijas ya ejecutadas por debajo del presupuesto (Luz 47,39; Agua 18,21; IKEA 14,46; TV Samsung 0,07; Medicinas 0,05) + **32,08 €** de remanente general/carryover todavía no asignado a una partida concreta.
+- Regla permanente: en una cuenta común por sobres, un sobrante provisional no se considera libre mientras el ciclo esté abierto. En el cierre se decide explícitamente si se destina a ahorro, arrastre o ajuste.
+- Resultado operativo: **Santander free_amount = 0 €** durante el ciclo abierto; la suma de retención 2 € + compromisos 1.915,34 € + buffer 112,26 € explica exactamente los 2.029,60 € contables.
