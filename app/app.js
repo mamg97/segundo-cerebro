@@ -5992,7 +5992,7 @@ function renderWealthAllocation(wealth, fallbackCurrency = "EUR") {
     </section>`;
 }
 
-function renderAccountTransactions(transactions, accountId = "santander-comun", currency = "EUR") {
+function renderAccountTransactions(transactions, accountId, accountLabel, currency = "EUR") {
   const rows = (Array.isArray(transactions) ? transactions : [])
     .filter((item) => item?.accountId === accountId)
     .slice(0, 24);
@@ -6003,11 +6003,11 @@ function renderAccountTransactions(transactions, accountId = "santander-comun", 
       <div class="account-transactions-heading">
         <div>
           <p class="context-label">Movimientos bancarios</p>
-          <h3>Santander · últimos registros</h3>
+          <h3>${escapeHtml(accountLabel || accountId || "Cuenta")} · últimos registros</h3>
         </div>
         <span>Fuente RAW conciliada</span>
       </div>
-      <div class="account-transactions-scroll" role="region" aria-label="Últimos movimientos de Santander" tabindex="0">
+      <div class="account-transactions-scroll" role="region" aria-label="Últimos movimientos de ${escapeHtml(accountLabel || accountId || "la cuenta")}" tabindex="0">
         <table class="account-transactions-table">
           <thead><tr><th>Fecha</th><th>Concepto</th><th>Importe</th><th>Saldo</th></tr></thead>
           <tbody>${rows.map((item) => {
@@ -6071,7 +6071,8 @@ function openBudgetDetail() {
       </div>
       <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
-      ${renderAccountTransactions(accountTransactions, "santander-comun", currency)}
+      ${renderAccountTransactions(accountTransactions, "santander-comun", "Santander · Común", currency)}
+      ${renderAccountTransactions(accountTransactions, "openbank-miguel", "Openbank · Miguel", currency)}
       ${categories.length ? `<div class="budget-groups">
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>` : ""}
