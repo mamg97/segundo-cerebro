@@ -1110,3 +1110,12 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Descomposición conocida del buffer: **80,18 €** de márgenes de partidas fijas ya ejecutadas por debajo del presupuesto (Luz 47,39; Agua 18,21; IKEA 14,46; TV Samsung 0,07; Medicinas 0,05) + **32,08 €** de remanente general/carryover todavía no asignado a una partida concreta.
 - Regla permanente: en una cuenta común por sobres, un sobrante provisional no se considera libre mientras el ciclo esté abierto. En el cierre se decide explícitamente si se destina a ahorro, arrastre o ajuste.
 - Resultado operativo: **Santander free_amount = 0 €** durante el ciclo abierto; la suma de retención 2 € + compromisos 1.915,34 € + buffer 112,26 € explica exactamente los 2.029,60 € contables.
+
+
+### Aclaración origen margen Santander · 01/10/2026
+
+- El maestro demuestra que Santander común está diseñado para quedar aproximadamente a **0 €** al cierre si se ejecuta todo el presupuesto: `13,52 + 1.350,90 + 1.717,00 = 3.081,42`, igual a `3.345,40 - 250 - 8,99 - 4,99 = 3.081,42`.
+- Se detectó una omisión: **50 €** de `Dinero regalos Navidad / Reyes` (I&G AJ38) estaban financiados dentro de Santander pero no figuraban en `ReservasCuenta`. Ya se añadieron como provisión activa.
+- Por tanto, de los antiguos 112,26 € de aparente margen, **50 € estaban ya asignados** y solo **62,26 €** quedan como `cycle_surplus_buffer` provisional.
+- Ese buffer no es dinero nuevo ni libre: surge de desviaciones plan-real (recibos inferiores al presupuesto, transferencias reales frente a la versión actual del maestro, nómina real frente a modelada y otros ajustes de ruta/conciliación). Permanece bloqueado hasta cierre.
+- `free_amount` Santander continúa en **0 €** mientras el ciclo esté abierto.
