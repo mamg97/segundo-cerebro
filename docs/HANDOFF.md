@@ -950,3 +950,11 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - En escritorio se ocultan textos secundarios redundantes de Despensa/Objetos para que las cuatro tarjetas mantengan tres franjas y altura visual comparable.
 - Móvil conserva la presentación anterior de progreso.
 - Assets: `app.js?v=0.39.13`, `styles.css?v=0.39.13`.
+
+
+## OBJETOS · endurecimiento de roles visuales
+
+- `LookItems.rol` queda normalizado a `superior | exterior | inferior | calzado | accesorio`.
+- Los alias históricos como `capa exterior` se leen como `exterior` para mantener compatibilidad.
+- El endpoint de creación de looks valida además que el rol solicitado coincida con la `capa` de la prenda; una camisa no puede guardarse como calzado mediante una llamada manual.
+- La hoja canónica ya tiene validación de lista en `LookItems.rol` y las dos filas históricas `capa exterior` fueron normalizadas sin crear ninguna fuente paralela.
