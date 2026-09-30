@@ -6,8 +6,6 @@ on:
       - "app/**"
       - "core/**"
       - "private-cloudflare/**"
-      - "objects-chatgpt-bridge/**"
-      - "docs/objects-chatgpt-action.openapi.yaml"
       - ".github/workflows/private-cloudflare-ci.yml"
   workflow_dispatch:
 
@@ -58,15 +56,6 @@ jobs:
 
       - run: node --check src/objects.js
       - run: node --check src/objects-images.js
-      - run: node --check src/objects-bridge-auth.js
-
-      - name: Validate ChatGPT bridge syntax
-        working-directory: objects-chatgpt-bridge
-        run: node --check server.mjs
-
-      - name: Test ChatGPT bridge
-        working-directory: objects-chatgpt-bridge
-        run: npm test
 
       - run: node --check src/projects.js
 
