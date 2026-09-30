@@ -12,6 +12,14 @@ test("hidden menu rows never reach the UI model", () => {
   assert.equal(weeklyMenuItemIsVisibleServer({ status: "planificado" }), true);
 });
 
+test("a newer omitted row suppresses an older planned version", () => {
+  const result = dedupeWeeklyMenuRows([
+    { date: "2026-09-30", moment: "Snack", foodId: "food-1", name: "Pistachos", status: "planificado", updatedAt: "2026-09-29T10:00:00+02:00" },
+    { date: "2026-09-30", moment: "Snack", foodId: "food-1", name: "Pistachos", status: "omitido", updatedAt: "2026-09-30T10:00:00+02:00" }
+  ]);
+  assert.deepEqual(result, []);
+});
+
 test("same logical meal is an automatic upsert: newest row wins", () => {
   const rows = [
     { date: "2026-09-30", moment: "Merienda", name: "Batido", status: "planificado", kcal: 200, updatedAt: "2026-09-30T10:00:00+02:00" },
@@ -103,4 +111,21 @@ test("pending recipe never invents macros or exposes stale ingredient assumption
   assert.equal(row.nutritionStatus, "pending-confirmation");
   assert.equal(row.nutritionPendingReason, "Confirmar cuántos huevos se usan.");
   assert.deepEqual(row.ingredients, []);
+});
+
+
+test("lightweight menu marks explicit pending notes without inventing nutrition", () => {
+  const [row] = prepareWeeklyMenuRows([{
+    date: "2026-09-30",
+    moment: "Cena",
+    name: "Tortilla francesa",
+    quantity: 1,
+    unit: "ración",
+    status: "planificado",
+    kcal: null,
+    protein: null,
+    note: "Macros pendientes hasta confirmar cuántos huevos se usan."
+  }]);
+  assert.equal(row.nutritionStatus, "pending-confirmation");
+  assert.match(row.nutritionPendingReason, /confirmar cuántos huevos/i);
 });
