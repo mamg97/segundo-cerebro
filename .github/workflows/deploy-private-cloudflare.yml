@@ -100,16 +100,9 @@ jobs:
             echo "::warning::Cloudflare deploy skipped. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository Actions secrets."
           fi
 
-      - name: Ensure private Objects media bucket
-        if: steps.cloudflare.outputs.configured == 'true'
-        shell: bash
-        run: |
-          BUCKET="segundo-cerebro-private-assets"
-          if npx wrangler r2 bucket list 2>&1 | grep -Fq "$BUCKET"; then
-            echo "R2 bucket already exists: $BUCKET"
-          else
-            npx wrangler r2 bucket create "$BUCKET"
-          fi
+      # R2 is provisioned once outside the ordinary deploy. The standard Workers
+      # deployment token intentionally does not need R2 bucket-admin permission.
+      # wrangler deploy will fail clearly if the declared bucket binding is absent.
 
       - name: Deploy production Worker
         if: steps.cloudflare.outputs.configured == 'true'
