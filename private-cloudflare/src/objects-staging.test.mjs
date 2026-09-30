@@ -162,10 +162,17 @@ test("cleanup_pending retries Drive trash without reingesting", async () => {
   assert.equal(uploads,0);
 });
 
-test("processor is a no-op until R2 is provisioned", async () => {
+test("processor does not require an R2 binding", async () => {
   let tokenCalls=0;
-  const result=await processObjectsImageQueue({},async ()=>{tokenCalls+=1; return "token";});
-  assert.equal(result.status,"media-not-configured");
+  const result=await processObjectsImageQueue(
+    {},
+    async ()=>{tokenCalls+=1; return "token";},
+    {
+      resolveObjectsSpreadsheetId:async ()=>"sheet-id",
+      readQueue:async ()=>[]
+    }
+  );
+  assert.equal(result.status,"ok");
   assert.equal(result.processed,0);
-  assert.equal(tokenCalls,0);
+  assert.equal(tokenCalls,1);
 });
