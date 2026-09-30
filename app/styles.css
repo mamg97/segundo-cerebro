@@ -18178,3 +18178,322 @@ html[data-theme="dark"] .midas-lab-card {
   .look-builder-preview { grid-template-columns: 1fr 1fr; }
   .look-builder-preview article { min-height: 155px; }
 }
+
+
+/* v0.40.0 — Delta historical investment operations */
+.wealth-delta-section {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--line));
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--blue) 8%, transparent), transparent 34%),
+    color-mix(in srgb, var(--surface) 97%, transparent);
+}
+
+.wealth-delta-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.wealth-delta-heading > div {
+  min-width: 0;
+}
+
+.wealth-delta-heading span {
+  display: block;
+  color: var(--blue);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.wealth-delta-heading strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 17px;
+}
+
+.wealth-delta-heading p {
+  max-width: 760px;
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.wealth-delta-heading a {
+  flex: none;
+  color: var(--blue);
+  font-size: 8px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.wealth-delta-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.wealth-delta-kpis article {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+}
+
+.wealth-delta-kpis span,
+.wealth-delta-kpis small {
+  color: var(--ink-soft);
+  font-size: 7.5px;
+}
+
+.wealth-delta-kpis strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wealth-delta-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.wealth-delta-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper) 80%, transparent);
+}
+
+.wealth-delta-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.wealth-delta-card-head strong {
+  font-size: 10px;
+}
+
+.wealth-delta-card-head span,
+.wealth-delta-card > small {
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.wealth-delta-assets,
+.wealth-delta-years,
+.wealth-delta-turnover {
+  display: grid;
+  gap: 6px;
+}
+
+.wealth-delta-assets > div,
+.wealth-delta-turnover > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 8px;
+}
+
+.wealth-delta-assets span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wealth-delta-assets b {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+  color: var(--blue);
+  font-size: 7px;
+}
+
+.wealth-delta-years > div {
+  display: grid;
+  grid-template-columns: 38px 1fr 36px;
+  align-items: center;
+  gap: 7px;
+  font-size: 8px;
+}
+
+.wealth-delta-years progress {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 88%, transparent);
+}
+
+.wealth-delta-years progress::-webkit-progress-bar {
+  background: color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 999px;
+}
+
+.wealth-delta-years progress::-webkit-progress-value {
+  background: var(--blue);
+  border-radius: 999px;
+}
+
+.wealth-delta-years progress::-moz-progress-bar {
+  background: var(--blue);
+  border-radius: 999px;
+}
+
+.wealth-delta-actions,
+.wealth-delta-more-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wealth-delta-actions span,
+.wealth-delta-more-wrap span {
+  color: var(--ink-soft);
+  font-size: 7.5px;
+}
+
+.wealth-delta-load,
+.wealth-delta-more {
+  border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--blue) 8%, var(--surface));
+  color: var(--blue);
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 8px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.wealth-delta-load:hover,
+.wealth-delta-more:hover {
+  background: color-mix(in srgb, var(--blue) 14%, var(--surface));
+}
+
+.wealth-delta-operations {
+  display: grid;
+  gap: 9px;
+}
+
+.wealth-delta-table-scroll {
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+
+.wealth-delta-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  font-size: 7.8px;
+}
+
+.wealth-delta-table th,
+.wealth-delta-table td {
+  padding: 8px 9px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  vertical-align: top;
+  text-align: left;
+}
+
+.wealth-delta-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.wealth-delta-table td strong {
+  display: block;
+}
+
+.wealth-delta-table td small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 6.8px;
+}
+
+.wealth-delta-kind {
+  display: inline-flex;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 6.8px;
+  font-weight: 900;
+}
+
+.wealth-delta-kind.is-buy {
+  background: rgba(47,155,112,.12);
+  color: #2f9b70;
+}
+
+.wealth-delta-kind.is-sell {
+  background: rgba(212,91,100,.12);
+  color: #d45b64;
+}
+
+.wealth-delta-kind.is-adjustment,
+.wealth-delta-kind.is-movement {
+  background: color-mix(in srgb, var(--ink-soft) 12%, transparent);
+  color: var(--ink-soft);
+}
+
+.wealth-delta-loading,
+.wealth-delta-error {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+@media (max-width: 900px) {
+  .wealth-delta-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wealth-delta-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .wealth-delta-section {
+    padding: 13px;
+  }
+
+  .wealth-delta-heading {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .wealth-delta-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wealth-delta-actions,
+  .wealth-delta-more-wrap {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
