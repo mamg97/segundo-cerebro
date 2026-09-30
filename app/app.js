@@ -3755,6 +3755,12 @@ function weeklyMenuModel(data) {
 
 function weeklyMenuTargetLine(day, model) {
   if (!day.nutritionComplete) {
+    const pending = day.incompleteItems
+      .filter((item) => item?.nutritionStatus === "pending-confirmation");
+    if (pending.length) {
+      const names = pending.map((item) => item.name).filter(Boolean).join(" · ");
+      return `Pendiente de confirmar${names ? `: ${names}` : ""}. El total mostrado es solo el subtotal conocido; no se inventan macros.`;
+    }
     const missing = day.incompleteItems
       .map((item) => item.name)
       .filter(Boolean)
@@ -3955,7 +3961,7 @@ function renderWeeklyMenuIngredients(item) {
     </details>`;
 }
 
-function renderWeeklyMenuMeal(item, compact = false) {
+function renderWeeklyMenuMeal(item, compact = false, showMoment = true) {
   const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
   const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
   const quantity = Number.isFinite(Number(item.quantity))
@@ -3966,7 +3972,7 @@ function renderWeeklyMenuMeal(item, compact = false) {
     <article class="weekly-menu-meal ${consumed ? "is-consumed" : ""}">
       <div class="weekly-menu-meal-main">
         <div class="weekly-menu-meal-copy">
-          <span class="weekly-menu-moment">${escapeHtml(item.moment || "Otro")}</span>
+          ${showMoment ? `<span class="weekly-menu-moment">${escapeHtml(item.moment || "Otro")}</span>` : ""}
           <strong>${escapeHtml(item.name)}</strong>
           ${!compact && (quantity || item.note || item.gymSession) ? `
             <p>${[
@@ -3981,6 +3987,63 @@ function renderWeeklyMenuMeal(item, compact = false) {
         </div>
       </div>
       ${compact ? "" : renderWeeklyMenuIngredients(item)}
+    </article>`;
+}
+
+function renderWeeklyMenuMealGroup(items) {
+  const rows = Array.isArray(items) ? items.filter(Boolean) : [];
+  if (!rows.length) return "";
+  if (rows.length === 1) return renderWeeklyMenuMeal(rows[0]);
+
+  const kcalComplete = rows.every((item) => item.kcal != null && Number.isFinite(Number(item.kcal)));
+  const proteinComplete = rows.every((item) => item.protein != null && Number.isFinite(Number(item.protein)));
+  const kcal = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0);
+  const protein = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
+  const consumed = rows.every(weeklyMenuItemIsConsumed);
+  const moment = rows[0]?.moment || "Otro";
+
+  return `
+    <article class="weekly-menu-meal ${consumed ? "is-consumed" : ""}">
+      <div class="weekly-menu-meal-main">
+        <div class="weekly-menu-meal-copy">
+          <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
+          <strong>${rows.length} elementos en la misma toma</strong>
+          <p>${rows.map((item) => escapeHtml(item.name || "Comida")).join(" · ")}</p>
+        </div>
+        <div class="weekly-menu-meal-macros">
+          <b>${kcalComplete ? formatKcal(kcal) : `Subtotal ${formatKcal(kcal)}`}</b>
+          <span>${proteinComplete ? `P ${formatMacro(protein)}` : `P subtotal ${formatMacro(protein)}`}</span>
+        </div>
+      </div>
+      <details class="weekly-menu-ingredients">
+        <summary>Ver componentes y cantidades</summary>
+        <div class="weekly-menu-ingredients-table-wrap">
+          <table class="weekly-menu-ingredients-table">
+            <thead>
+              <tr>
+                <th>Componente</th>
+                <th>Cantidad</th>
+                <th>kcal</th>
+                <th>Prot.</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((item) => {
+                const quantity = Number.isFinite(Number(item.quantity))
+                  ? `${Number(item.quantity).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${item.unit || ""}`.trim()
+                  : "—";
+                return `
+                  <tr>
+                    <td>${escapeHtml(item.name || "Comida")}</td>
+                    <td>${escapeHtml(quantity)}</td>
+                    <td>${item.kcal == null ? "—" : escapeHtml(formatKcal(item.kcal))}</td>
+                    <td>${item.protein == null ? "—" : escapeHtml(formatMacro(item.protein))}</td>
+                  </tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      </details>
     </article>`;
 }
 
@@ -4028,6 +4091,7 @@ function renderMenuPanel(data) {
       ${model.days.map((day) => {
         const isToday = day.date === localDateKey();
         const targetLine = weeklyMenuTargetLine(day, model);
+        const mealGroups = groupWeeklyMenuItemsByMoment(day.items);
         return `
           <section class="weekly-menu-day weekly-menu-day-rich ${isToday ? "is-today" : ""}">
             <header>
@@ -4035,7 +4099,7 @@ function renderMenuPanel(data) {
                 <small>${isToday ? "Hoy" : "Planificado"}</small>
                 <strong>${escapeHtml(weeklyMenuDayLabel(day.date, { long: true }))}</strong>
               </div>
-              <span>${day.items.length} comida${day.items.length === 1 ? "" : "s"}</span>
+              <span>${mealGroups.length} toma${mealGroups.length === 1 ? "" : "s"} · ${day.items.length} elemento${day.items.length === 1 ? "" : "s"}</span>
             </header>
 
             <div class="weekly-menu-day-progress">
@@ -4044,7 +4108,7 @@ function renderMenuPanel(data) {
             </div>
 
             <div class="weekly-menu-meal-list">
-              ${day.items.map((item) => renderWeeklyMenuMeal(item)).join("")}
+              ${mealGroups.map((group) => renderWeeklyMenuMealGroup(group.items)).join("")}
             </div>
 
             ${targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : ""}

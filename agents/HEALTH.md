@@ -38,6 +38,15 @@ When nutritional values are estimated rather than label-confirmed, write the sou
 - Pantry is household stock. Do not interpret multiple packs/trays as all belonging to Miguel; resolve the intended household meal and portion split before assigning consumption.
 - Keep planned and consumed distinct. Do not decrement Pantry stock until consumption/preparation is confirmed, unless the stock is explicitly reserved and the note says so.
 
+### Weekly menu integrity invariants
+
+- `MenuSemanal` is append-tolerant but the product behaves as an upserted plan. The logical identity of a row is `fecha + momento + recipe_id|food_id|nombre normalizado`; when several versions exist, the latest `updated_at` supersedes the older one.
+- A later `omitido | retirado | cancelado` version suppresses an older planned version. Do not zero macros to simulate deletion and do not resurrect the previous row.
+- Distinct components intentionally assigned to the same moment are preserved as separate source rows, but the UI groups them automatically into one **toma**. Do not duplicate the moment merely to make the UI render several cards.
+- Before serving the menu, Segundo Cerebro automatically filters superseded rows, removes hidden states and resolves missing nutrition from the linked recipe master only when that recipe has usable confirmed/estimated per-serving macros.
+- If a linked recipe is explicitly `pendiente` or the note says a quantity must still be confirmed, kcal/protein remain unknown. The UI must say that confirmation is pending and show only the known subtotal; it must not invent macros or reuse stale ingredient assumptions.
+- This reconciliation is a permanent runtime rule. Do not fix recurring menu inconsistencies by manually editing the same day's rows each time.
+
 ## Energy expenditure
 
 Apple Health / Apple Watch is the intended source for daily active and resting energy. Automatic imports enter through the dedicated token-protected Health ingest Worker and are stored in private D1 (`health_energy_daily`). The Sheet tab `EnergiaDiaria` is retained as a manual/fallback source.

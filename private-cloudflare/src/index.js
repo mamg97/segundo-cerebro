@@ -4,6 +4,7 @@ import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { processObjectsImageQueue } from "./objects-staging.js";
+import { prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
@@ -2238,7 +2239,7 @@ async function fetchWeeklyMenuLight(env, options = {}) {
   const mondayOffset = (selectedDate.getDay() + 6) % 7;
   const weekStart = healthAddDays(date, -mondayOffset);
   const weekEnd = healthAddDays(weekStart, 6);
-  const weeklyMenu = weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd);
+  const weeklyMenu = prepareWeeklyMenuRows(weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd));
   const objective = objectives.find((item) => item.effectiveDate <= date) || null;
 
   return {
@@ -2524,31 +2525,10 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const mondayOffset = (selectedDate.getDay() + 6) % 7;
   const weekStart = healthAddDays(date, -mondayOffset);
   const weekEnd = healthAddDays(weekStart, 6);
-  const weeklyMenu = weeklyMenuRows
-    .filter((item) => item.date >= weekStart && item.date <= weekEnd)
-    .map((item) => {
-      const recipe = item.recipeId ? recipeById.get(String(item.recipeId)) || null : null;
-      const baseIngredients = item.recipeId
-        ? ingredientsByRecipeId.get(String(item.recipeId)) || []
-        : [];
-      const menuQuantity = Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 1;
-      const recipeServings = Number.isFinite(Number(recipe?.servings)) && Number(recipe.servings) > 0
-        ? Number(recipe.servings)
-        : 1;
-      const isServingUnit = /raci[oó]n/i.test(String(item.unit || ""));
-      const factor = recipe && isServingUnit ? menuQuantity / recipeServings : 1;
-      return {
-        ...item,
-        recipe,
-        ingredients: baseIngredients.map((ingredient) => ({
-          ...ingredient,
-          quantityForMeal: ingredient.quantity === null ? null : Number(ingredient.quantity) * factor,
-          gramsForMeal: ingredient.grams === null ? null : Number(ingredient.grams) * factor,
-          kcalForMeal: ingredient.kcal === null ? null : Number(ingredient.kcal) * factor,
-          proteinForMeal: ingredient.protein === null ? null : Number(ingredient.protein) * factor
-        }))
-      };
-    });
+  const weeklyMenu = prepareWeeklyMenuRows(
+    weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd),
+    { recipeById, ingredientsByRecipeId }
+  );
   const waistHistory = bodySheetRows
     .filter((item) => item.waistCm !== null && item.date <= date)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
