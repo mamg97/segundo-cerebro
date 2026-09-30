@@ -3288,6 +3288,9 @@ function renderNutritionPanel(data) {
   const totalBurn = nullableNumber(summary.totalBurn);
   const balance = nullableNumber(summary.balanceKcal);
   const remainingTarget = nullableNumber(summary.remainingToTargetKcal);
+  const energySampleTime = energy?.sampledAt && Number.isFinite(new Date(energy.sampledAt).getTime())
+    ? new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(new Date(energy.sampledAt))
+    : null;
 
   panel.innerHTML = `
     <div class="nutrition-date-nav">
@@ -3308,7 +3311,9 @@ function renderNutritionPanel(data) {
       <article>
         <span>Gasto total</span>
         <strong>${totalBurn === null ? "—" : formatKcal(totalBurn)}</strong>
-        <small>${energy?.source ? escapeHtml(String(energy.source)) : "Sin registro para esta fecha"}</small>
+        <small>${energy?.source
+          ? `${escapeHtml(String(energy.source))}${energySampleTime ? ` · actualizado ${escapeHtml(energySampleTime)}` : ""}`
+          : "Sin registro para esta fecha"}</small>
       </article>
       <article>
         <span>Balance</span>
@@ -3339,7 +3344,7 @@ function renderNutritionPanel(data) {
               energy.steps != null ? `${Number(energy.steps).toLocaleString("es-ES")} pasos` : null,
               energy.exerciseMinutes != null ? `${Math.round(Number(energy.exerciseMinutes))} min ejercicio` : null,
               energy.workoutCount != null ? `${Number(energy.workoutCount)} entrenos` : null
-            ].filter(Boolean).join(" · ")
+            ].filter(Boolean).concat(energySampleTime ? [`actualizado ${energySampleTime}`] : []).join(" · ")
           : "Sin datos importados de Apple Health para esta fecha. Llevar el Watch no basta si el Atajo diario no llegó a sincronizar ese día."}</p>
       </article>
       <article>
