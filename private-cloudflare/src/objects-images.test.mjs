@@ -15,7 +15,7 @@ const SAMPLE_IDS = [
 ];
 
 const PNG_1X1 = Uint8Array.from(Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lm8W8QAAAABJRU5ErkJggg==",
+  "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAFUlEQVR4nGP8z8DQwIAEmBjQAGEBAGQRAYdHJFdkAAAAAElFTkSuQmCC",
   "base64"
 ));
 
@@ -271,8 +271,8 @@ test("overwrite is explicit and superseded canonical assets are cleaned after su
 test("real thumbnail pipeline outputs WebP", async () => {
   const result = await generateThumbnailWebp(PNG_1X1, 512);
   assert.equal(result.mime, "image/webp");
-  assert.equal(result.width, 1);
-  assert.equal(result.height, 1);
+  assert.equal(result.width, 4);
+  assert.equal(result.height, 4);
   assert.ok(result.bytes.byteLength > 12);
   const signature = new TextDecoder("ascii").decode(result.bytes.slice(8, 12));
   assert.equal(signature, "WEBP");
