@@ -20,6 +20,10 @@ test("accepts the exact scheduled audit workflow", () => {
   assert.equal(validateAuditClaims(valid, now), true);
 });
 
+test("accepts post-deploy workflow runs", () => {
+  assert.equal(validateAuditClaims({ ...valid, event_name: "workflow_run" }, now), true);
+});
+
 test("accepts manual dispatch of the same workflow", () => {
   assert.equal(validateAuditClaims({ ...valid, event_name: "workflow_dispatch" }, now), true);
 });
