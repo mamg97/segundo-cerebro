@@ -5,6 +5,7 @@ import {
   invalidateObjectsCache,
   resolveObjectsSpreadsheetId
 } from "./objects.js";
+import { createObjectsDriveMediaStore } from "./objects-media-drive.js";
 
 const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp"]);
 const IMAGE_TYPES = new Set(["original", "processed", "thumbnail"]);
@@ -279,11 +280,16 @@ function parseVisualMetadata(form, wardrobe) {
   };
 }
 
-function ensureBucket(env) {
-  if (!env?.OBJECTS_MEDIA || typeof env.OBJECTS_MEDIA.put !== "function") {
+async function resolveMediaStore(env, getGoogleAccessToken, overrides = {}) {
+  if (overrides.bucket) return overrides.bucket;
+  if (overrides.mediaStore) return overrides.mediaStore;
+  try {
+    return createObjectsDriveMediaStore(env, getGoogleAccessToken, {
+      fetch: overrides.fetch || fetch
+    });
+  } catch {
     throw new ObjectsImageError("OBJECTS_MEDIA_NOT_CONFIGURED", 503);
   }
-  return env.OBJECTS_MEDIA;
 }
 
 export async function uploadObjectsImage(request, env, getGoogleAccessToken, objetoId, overrides = {}) {
@@ -318,7 +324,7 @@ export async function uploadObjectsImage(request, env, getGoogleAccessToken, obj
   const writeFields = overrides.writeArmarioFields || writeArmarioFields;
   const makeThumbnail = overrides.generateThumbnailWebp || generateThumbnailWebp;
   const fetchImpl = overrides.fetch || fetch;
-  const bucket = overrides.bucket || ensureBucket(env);
+  const bucket = await resolveMediaStore(env, getGoogleAccessToken, overrides);
 
   const source = await fetchSummary(env, getGoogleAccessToken);
   const objects = Array.isArray(source?.value?.objects) ? source.value.objects : [];
@@ -448,7 +454,7 @@ export async function uploadObjectsImage(request, env, getGoogleAccessToken, obj
   };
 }
 
-export async function readObjectsImage(request, env, objetoId, imageType) {
+export async function readObjectsImage(request, env, getGoogleAccessToken, objetoId, imageType, overrides = {}) {
   if (!isObjectsImageRequestAuthenticated(request)) {
     throw new ObjectsImageError("AUTH_REQUIRED", 401);
   }
@@ -459,7 +465,7 @@ export async function readObjectsImage(request, env, objetoId, imageType) {
   if (!/^[A-Za-z0-9-]{8,80}$/.test(version)) {
     throw new ObjectsImageError("INVALID_IMAGE_VERSION", 400);
   }
-  const bucket = ensureBucket(env);
+  const bucket = await resolveMediaStore(env, getGoogleAccessToken, overrides);
   const key = imageStorageKey(id, type, version);
   const object = await bucket.get(key);
   if (!object) throw new ObjectsImageError("IMAGE_NOT_FOUND", 404);
