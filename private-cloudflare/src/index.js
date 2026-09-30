@@ -10,6 +10,7 @@ import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
+import { deltaPageRange, normalizeDeltaOperations, normalizeDeltaSummary } from "./delta.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -24,6 +25,7 @@ let googleTokenCache = { token: null, expiresAt: 0 };
 let financeCache = { value: null, expiresAt: 0 };
 let habitsCache = { value: null, expiresAt: 0 };
 let healthCache = { value: null, expiresAt: 0, date: null };
+let deltaCache = { spreadsheetId: null, summary: null, expiresAt: 0 };
 
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
@@ -182,6 +184,70 @@ function parseTableRows(values = []) {
   return values.slice(1)
     .filter((row) => row.some((value) => value !== "" && value !== null && value !== undefined))
     .map((row) => Object.fromEntries(headers.map((header, index) => [header, row?.[index] ?? null])));
+}
+
+
+async function fetchGoogleSheetValues(token, spreadsheetId, range) {
+  const params = new URLSearchParams({
+    majorDimension: "ROWS",
+    valueRenderOption: "UNFORMATTED_VALUE"
+  });
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}?${params.toString()}`;
+  const response = await fetch(endpoint, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(`GOOGLE_SHEETS_${response.status}`);
+  return (await response.json())?.values || [];
+}
+
+async function resolveDeltaOperationsSheet(env, token) {
+  if (deltaCache.spreadsheetId && deltaCache.expiresAt > Date.now()) return deltaCache.spreadsheetId;
+  const values = await fetchGoogleSheetValues(token, env.FINANCE_SHEET_ID, "IntegracionesPrivadas!A1:D50");
+  const rows = parseTableRows(values);
+  const row = rows.find((item) => String(item.clave || "").trim() === "DELTA_OPERATIONS_SHEET_ID");
+  const spreadsheetId = String(row?.valor || "").trim();
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(spreadsheetId)) throw new Error("DELTA_SOURCE_NOT_CONFIGURED");
+  deltaCache.spreadsheetId = spreadsheetId;
+  deltaCache.expiresAt = Date.now() + 5 * 60 * 1000;
+  return spreadsheetId;
+}
+
+async function fetchDeltaSummary(env, token) {
+  const spreadsheetId = await resolveDeltaOperationsSheet(env, token);
+  if (deltaCache.summary && deltaCache.expiresAt > Date.now()) return deltaCache.summary;
+  const values = await fetchGoogleSheetValues(token, spreadsheetId, "DeltaResumen!A1:E120");
+  const summary = normalizeDeltaSummary(
+    values,
+    `https://docs.google.com/spreadsheets/d/${encodeURIComponent(spreadsheetId)}/edit`
+  );
+  deltaCache.summary = summary;
+  deltaCache.spreadsheetId = spreadsheetId;
+  deltaCache.expiresAt = Date.now() + 5 * 60 * 1000;
+  return summary;
+}
+
+async function fetchDeltaOperationsPage(env, options = {}) {
+  if (!hasFinanceGoogleConfig(env)) throw new Error("FINANCE_NOT_CONFIGURED");
+  const token = await getGoogleAccessToken(env);
+  const summary = await fetchDeltaSummary(env, token);
+  const totalRows = Number(summary?.summary?.rowsTotal || 0);
+  const offset = Math.max(0, Math.floor(Number(options.offset) || 0));
+  const limit = Math.min(200, Math.max(1, Math.floor(Number(options.limit) || 100)));
+  const page = deltaPageRange(totalRows, offset, limit);
+  if (!page) {
+    return { summary, operations: [], offset, nextOffset: offset, hasMore: false };
+  }
+  const spreadsheetId = await resolveDeltaOperationsSheet(env, token);
+  const sheetName = "SEGUNDO CEREBRO - DELTA OPERACIONES HISTORICAS";
+  const range = `'${sheetName}'!${page.a1}`;
+  const values = await fetchGoogleSheetValues(token, spreadsheetId, range);
+  return {
+    summary,
+    operations: normalizeDeltaOperations(values),
+    offset,
+    nextOffset: page.nextOffset,
+    hasMore: page.hasMore
+  };
 }
 
 function toNumber(value) {
@@ -497,7 +563,8 @@ async function fetchFinanceSummary(env) {
     creditHistoryRows,
     creditMovementRows,
     creditFutureRows,
-    movementRows
+    movementRows,
+    privateIntegrationRows
   ] = await Promise.all([
     fetchOptionalFinanceRows("Cuentas!A1:J200"),
     fetchOptionalFinanceRows("ReservasCuenta!A1:J500"),
@@ -508,7 +575,8 @@ async function fetchFinanceSummary(env) {
     fetchOptionalFinanceRows("ECIHistorico!A1:N300"),
     fetchOptionalFinanceRows("ECIMovimientos!A1:N300"),
     fetchOptionalFinanceRows("ECIFuturo!A1:O300"),
-    fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000")
+    fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000"),
+    fetchOptionalFinanceRows("IntegracionesPrivadas!A1:D50")
   ]);
 
   let electricityRows = [];
@@ -532,6 +600,25 @@ async function fetchFinanceSummary(env) {
   }
 
   const summary = parseKeyValueRows(summaryRows);
+  let delta = null;
+  try {
+    const integrationRows = parseTableRows(privateIntegrationRows);
+    const deltaRow = integrationRows.find((item) => String(item.clave || "").trim() === "DELTA_OPERATIONS_SHEET_ID");
+    const deltaSheetId = String(deltaRow?.valor || "").trim();
+    if (/^[A-Za-z0-9_-]{20,}$/.test(deltaSheetId)) {
+      deltaCache.spreadsheetId = deltaSheetId;
+      deltaCache.expiresAt = Date.now() + 5 * 60 * 1000;
+      const deltaSummaryRows = await fetchGoogleSheetValues(token, deltaSheetId, "DeltaResumen!A1:E120");
+      delta = normalizeDeltaSummary(
+        deltaSummaryRows,
+        `https://docs.google.com/spreadsheets/d/${encodeURIComponent(deltaSheetId)}/edit`
+      );
+      deltaCache.summary = delta;
+    }
+  } catch (error) {
+    console.warn("Delta history read failed", String(error?.message || error));
+  }
+
   const categories = parseTableRows(categoryRows).map((item) => ({
     id: item.id || null,
     group: item.group || item.owner || "Común",
@@ -858,7 +945,8 @@ async function fetchFinanceSummary(env) {
     currentSalaryAndrea: currentWealth?.salaryAndrea ?? null,
     history: wealthHistory,
     allocation: wealthAllocation,
-    dailyDiary: wealthDailyDiary
+    dailyDiary: wealthDailyDiary,
+    delta
   };
 
   const importantEventRules = parseTableRows(importantEventRows)
@@ -4620,6 +4708,19 @@ export default {
         const code = safeIcloudErrorCode(error);
         console.warn("Medical appointments iCloud read failed", code);
         return json({ ok: false, code }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/finance/delta-operations") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const offset = url.searchParams.get("offset") || "0";
+        const limit = url.searchParams.get("limit") || "100";
+        return json({ ok: true, ...(await fetchDeltaOperationsPage(env, { offset, limit })) });
+      } catch (error) {
+        const code = String(error?.message || "DELTA_HISTORY_ERROR");
+        console.warn("Delta operations request failed", code);
+        return json({ ok: false, code: /^DELTA_|^FINANCE_|^GOOGLE_/.test(code) ? code : "DELTA_HISTORY_FAILED" }, 502);
       }
     }
 
