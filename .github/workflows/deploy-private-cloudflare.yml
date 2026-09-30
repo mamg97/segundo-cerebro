@@ -62,7 +62,6 @@ jobs:
           node --check src/index.js
           node --check src/delta.js
 
-      - run: node --check src/delta.js
           node --check src/pantry.js
           node --check src/shopping-sync.js
           node --check scripts/configure-shopping-reminders.mjs
