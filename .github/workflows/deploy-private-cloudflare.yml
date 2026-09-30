@@ -63,6 +63,7 @@ jobs:
           node --check scripts/configure-shopping-reminders.mjs
           node --check src/objects.js
           node --check src/objects-images.js
+          node --check src/objects-media-drive.js
           node --check src/projects.js
           node --check src/events.js
           node --check src/adherence.js
@@ -100,28 +101,9 @@ jobs:
             echo "::warning::Cloudflare deploy skipped. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository Actions secrets."
           fi
 
-      # R2 is provisioned once outside the ordinary deploy. The standard Workers
-      # deployment token intentionally does not need R2 bucket-admin permission.
-      # wrangler deploy will fail clearly if the declared bucket binding is absent.
-
       - name: Deploy production Worker
         if: steps.cloudflare.outputs.configured == 'true'
-        shell: bash
-        run: |
-          set +e
-          npx wrangler deploy --config wrangler.bootstrap.jsonc 2>&1 | tee /tmp/worker-deploy.log
-          status=${PIPESTATUS[0]}
-          set -e
-          if [[ "$status" -eq 0 ]]; then
-            exit 0
-          fi
-          if grep -Fq "R2 bucket 'segundo-cerebro-private-assets' not found" /tmp/worker-deploy.log; then
-            echo "::warning::Objects media bucket is not provisioned yet. Deploying the application without OBJECTS_MEDIA so the rest of Segundo Cerebro remains available."
-            node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync("wrangler.bootstrap.jsonc","utf8")); delete x.r2_buckets; fs.writeFileSync("wrangler.bootstrap.no-media.json", JSON.stringify(x,null,2));'
-            npx wrangler deploy --config wrangler.bootstrap.no-media.json
-          else
-            exit "$status"
-          fi
+        run: npx wrangler deploy --config wrangler.bootstrap.jsonc
 
       - name: Deploy Health ingest Worker
         if: steps.cloudflare.outputs.configured == 'true'
