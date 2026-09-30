@@ -1657,6 +1657,22 @@ footer span { color: var(--blue); }
 
 .credit-history-table tbody tr:last-child td { border-bottom: 0; }
 
+.credit-movements-table td:nth-child(2) strong,
+.credit-movements-table td:nth-child(2) small {
+  display: block;
+}
+
+.credit-movements-table td:nth-child(2) small {
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.credit-movements-table td.is-negative {
+  color: var(--mint);
+}
+
+
 .credit-closed-products summary {
   cursor: pointer;
   color: var(--ink-soft);
