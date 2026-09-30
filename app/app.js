@@ -5293,6 +5293,7 @@ const MIDAS_GROUPS = [
   ["diario_heredado", "Algoritmo genético original · S&P 500"],
   ["paper_nuevo", "Campaña nueva 2026 · EE. UU. · USD"],
   ["weekly_ml_demo", "Weekly ML · ensemble y expertos · USD"],
+  ["capital_cycle_demo", "Capital Cycle · underinvestment + calidad + giro · USD"],
   ["tfg_demo_adaptado", "TFG corregido 2026 · técnico + AHP + MAD · USD"],
   ["tfm_demo_adaptado", "TFM · modelos adaptados a cartera demo · EUR"],
   ["historica_pendiente", "Ideas históricas pendientes"]
