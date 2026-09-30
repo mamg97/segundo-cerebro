@@ -220,10 +220,23 @@ try {
     await closeDialogIfOpen();
   }
 
+  // Some domain views finish asynchronous rendering after their navigation click.
+  // Close any previous dialog and let late work settle before opening Health again,
+  // otherwise a stale async response can replace the Health dialog and create a false positive.
+  await page.waitForTimeout(1800);
+  await closeDialogIfOpen();
+
   const healthLink = page.locator('[data-nav-area-id="area-health"]').first();
   if (await healthLink.count()) {
     await healthLink.click();
-    await page.locator("#detail-dialog[open]").waitFor({ timeout: 10000 });
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector("#detail-dialog");
+      return Boolean(
+        dialog?.open &&
+        document.querySelector("#dialog-title")?.textContent?.trim() === "Salud" &&
+        document.querySelectorAll("[data-health-tab]").length === 6
+      );
+    }, null, { timeout: 12000 });
     const healthTabs = ["overview", "medical", "gym", "nutrition", "adherence", "menu"];
 
     for (const tab of healthTabs) {
