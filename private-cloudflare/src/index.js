@@ -493,7 +493,8 @@ async function fetchFinanceSummary(env) {
     wealthDailyRows,
     creditAccountRows,
     creditProductRows,
-    creditHistoryRows
+    creditHistoryRows,
+    movementRows
   ] = await Promise.all([
     fetchOptionalFinanceRows("Cuentas!A1:J200"),
     fetchOptionalFinanceRows("ReservasCuenta!A1:J500"),
@@ -501,7 +502,8 @@ async function fetchFinanceSummary(env) {
     fetchOptionalFinanceRows("PatrimonioDiario!A1:M1000"),
     fetchOptionalFinanceRows("CuentasCredito!A1:R200"),
     fetchOptionalFinanceRows("ECIProductos!A1:R200"),
-    fetchOptionalFinanceRows("ECIHistorico!A1:N300")
+    fetchOptionalFinanceRows("ECIHistorico!A1:N300"),
+    fetchOptionalFinanceRows("MovimientosCuenta!A1:M2000")
   ]);
 
   let electricityRows = [];
@@ -747,6 +749,29 @@ async function fetchFinanceSummary(env) {
     })
     .filter((item) => item.id && String(item.status).toLowerCase() !== "closed");
 
+  const accountTransactions = parseTableRows(movementRows)
+    .map((item) => ({
+      id: item.movement_id || null,
+      accountId: item.account_id || null,
+      operationDate: sheetDateOrNull(item.operation_date),
+      valueDate: sheetDateOrNull(item.value_date),
+      description: item.description_raw || item.description || null,
+      amount: moneyOrNull(item.amount),
+      balanceAfter: moneyOrNull(item.balance_after),
+      currency: item.currency || summary.currency || "EUR",
+      sourceSystem: item.source_system || null,
+      sourceRow: toNumber(item.source_row),
+      classification: item.classification || null,
+      note: item.note || null
+    }))
+    .filter((item) => item.id && item.accountId && item.operationDate)
+    .sort((a, b) => {
+      const byDate = String(b.operationDate).localeCompare(String(a.operationDate));
+      if (byDate !== 0) return byDate;
+      return (a.sourceRow ?? 999999) - (b.sourceRow ?? 999999);
+    })
+    .slice(0, 160);
+
   const wealthAllocation = parseTableRows(wealthAllocationRows)
     .map((item) => ({
       id: item.id || item.platform || item.custodian || null,
@@ -900,6 +925,7 @@ async function fetchFinanceSummary(env) {
     debts: debtSummary,
     creditAccounts,
     creditHistory,
+    accountTransactions,
     wealth: wealthSummary,
     importantEventRules,
     health: { gymPlan, nutritionPlan },
