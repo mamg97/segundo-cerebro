@@ -399,14 +399,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Motivo:** habilitar armario visual, outfits y futuras recomendaciones de oficina/viaje/clima sin romper IDs, historial ni propiedad funcional del dominio.
 
 
-## D-042 — Assets visuales de Armario usan R2 privado
+## D-042 — Assets visuales de Armario reutilizan Google Drive privado
 
 - **Estado:** aceptada e implementada.
 - **Fecha:** 2026-09-30.
-- **Decisión:** almacenar original, procesada y miniatura de las prendas en un bucket R2 privado ligado al Worker principal. `SEGUNDO CEREBRO - OBJETOS / Armario` continúa siendo la única fuente canónica de identidad, pertenencia, estado y referencia visual activa.
-- **Lectura:** el Sheet guarda rutas same-origin versionadas `/api/objects/:objeto_id/image/:tipo?v=<version>`; R2 no expone dominio público ni URLs firmadas que caduquen.
-- **Escritura:** `POST /api/objects/:objeto_id/image` recibe multipart autenticado por Cloudflare Access, valida objeto, estado, MIME/firma, tamaño y overwrite, persiste en R2 y actualiza la fila existente de Armario.
+- **Decisión:** almacenar original, procesada y miniatura en una carpeta privada dedicada de Google Drive, usando la integración Google ya existente. `SEGUNDO CEREBRO - OBJETOS / Armario` continúa siendo la única fuente canónica de identidad, pertenencia, estado y referencia visual activa.
+- **Lectura:** el Sheet guarda rutas same-origin versionadas `/api/objects/:objeto_id/image/:tipo?v=<version>`; el Worker resuelve únicamente el archivo técnico correspondiente dentro de la carpeta privada y lo sirve tras Cloudflare Access.
+- **Escritura:** `POST /api/objects/:objeto_id/image` recibe multipart autenticado, valida objeto, estado, MIME/firma, tamaño y overwrite, persiste el archivo en Drive y actualiza la fila existente de Armario.
 - **Miniaturas:** una subida `processed` genera automáticamente WebP con lado largo máximo de 512 px dentro del Worker.
-- **Consistencia:** las claves son versionadas; si falla la actualización del Sheet se borran los nuevos assets. En reemplazos, el asset anterior no se limpia hasta que la nueva referencia canónica ya ha sido escrita.
-- **No duplicación:** ni R2 ni D1 mantienen catálogo de prendas; el nombre físico del asset jamás sustituye `objeto_id`.
-- **Motivo:** cerrar el flujo foto → derivado → persistencia → Armario visual sin intervención manual en Sheets y sin abrir almacenamiento público.
+- **Consistencia:** los nombres físicos son versionados; si falla la actualización del Sheet se borran los nuevos archivos. En reemplazos, la versión anterior no se limpia hasta que la nueva referencia canónica ya ha sido escrita.
+- **No duplicación:** Drive no mantiene catálogo de prendas y D1 no recibe fotos; el nombre físico jamás sustituye `objeto_id`.
+- **Motivo:** cerrar foto → derivado → persistencia → Armario visual reutilizando infraestructura privada existente y sin requerir un servicio de storage paralelo.
