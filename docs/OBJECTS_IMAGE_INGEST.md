@@ -119,3 +119,12 @@ El gestor debe:
 5. volver a consultar `GET /api/objects` para verificar el estado final.
 
 No debe escribir manualmente las tres URLs del Sheet, crear otro objeto ni subir la imagen a Git.
+
+
+## Provisionado de R2
+
+El bucket `segundo-cerebro-private-assets` es infraestructura persistente y se crea una sola vez. El workflow normal de despliegue no debe intentar administrarlo en cada push.
+
+La credencial estándar de GitHub Actions está limitada al despliegue de Workers y no necesita permisos de administración de R2. Para el alta inicial del bucket se requiere una credencial de Cloudflare con permiso de escritura/administración de R2 o creación manual desde el dashboard.
+
+Después del alta, `wrangler deploy --config wrangler.bootstrap.jsonc` enlaza el binding `OBJECTS_MEDIA` al bucket existente. Si el bucket no existe, el deploy debe fallar de forma explícita en lugar de intentar provisionarlo silenciosamente.
