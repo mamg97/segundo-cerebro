@@ -13,6 +13,13 @@ const LAYERS = new Set(["superior", "exterior", "inferior", "calzado", "accesori
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const THUMBNAIL_LONG_SIDE = 512;
 const ARMARIO_RANGE = "Armario!A1:V5000";
+const MEDIA_FOLDER_NAME = "SEGUNDO CEREBRO - OBJETOS MEDIA";
+const MEDIA_FOLDER_CACHE_MS = 10 * 60_000;
+
+let mediaFolderCache = {
+  id: null,
+  expiresAt: 0
+};
 
 const VISUAL_COLUMNS = {
   foto_original_url: "foto_original_url",
@@ -117,6 +124,129 @@ export function storedKeyFromUrl(url) {
   } catch {
     return null;
   }
+}
+
+export function driveFilenameFromKey(key) {
+  const match = String(key || "").match(/^objects\/([A-Za-z0-9][A-Za-z0-9._-]{0,127})\/(original|processed|thumbnail)\/([A-Za-z0-9-]{8,80})$/);
+  if (!match) throw new ObjectsImageError("INVALID_MEDIA_KEY", 400);
+  return "sc-objects--" + match[1] + "--" + match[2] + "--" + match[3];
+}
+
+function escapeDriveQueryLiteral(value) {
+  return String(value || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+async function resolveMediaFolderId(token, fetchImpl = fetch) {
+  if (mediaFolderCache.id && mediaFolderCache.expiresAt > Date.now()) return mediaFolderCache.id;
+  const params = new URLSearchParams({
+    q: "name = '" + escapeDriveQueryLiteral(MEDIA_FOLDER_NAME) + "' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+    fields: "files(id,name,modifiedTime)",
+    orderBy: "modifiedTime desc",
+    pageSize: "10"
+  });
+  const response = await fetchImpl("https://www.googleapis.com/drive/v3/files?" + params.toString(), {
+    headers: { Authorization: "Bearer " + token }
+  });
+  if (!response.ok) throw new ObjectsImageError("OBJECTS_MEDIA_FOLDER_READ_FAILED", 502);
+  const files = (await response.json())?.files || [];
+  const folder = files.find((item) => item?.name === MEDIA_FOLDER_NAME);
+  if (!folder?.id) throw new ObjectsImageError("OBJECTS_MEDIA_FOLDER_NOT_FOUND", 503);
+  mediaFolderCache = { id: folder.id, expiresAt: Date.now() + MEDIA_FOLDER_CACHE_MS };
+  return folder.id;
+}
+
+async function findMediaFiles(token, folderId, key, fetchImpl = fetch) {
+  const name = driveFilenameFromKey(key);
+  const params = new URLSearchParams({
+    q: "name = '" + escapeDriveQueryLiteral(name) + "' and '" + escapeDriveQueryLiteral(folderId) + "' in parents and trashed = false",
+    fields: "files(id,name,mimeType,size,md5Checksum,modifiedTime)",
+    pageSize: "10"
+  });
+  const response = await fetchImpl("https://www.googleapis.com/drive/v3/files?" + params.toString(), {
+    headers: { Authorization: "Bearer " + token }
+  });
+  if (!response.ok) throw new ObjectsImageError("OBJECTS_MEDIA_LOOKUP_FAILED", 502);
+  return (await response.json())?.files || [];
+}
+
+export function createGoogleDriveMediaStore(token, fetchImpl = fetch) {
+  return {
+    async put(key, bytes, options = {}) {
+      const folderId = await resolveMediaFolderId(token, fetchImpl);
+      const existing = await findMediaFiles(token, folderId, key, fetchImpl);
+      if (existing.length) throw new ObjectsImageError("OBJECTS_MEDIA_COLLISION", 409);
+
+      const name = driveFilenameFromKey(key);
+      const contentType = options?.httpMetadata?.contentType || "application/octet-stream";
+      const boundary = "sc_objects_" + crypto.randomUUID().replaceAll("-", "");
+      const metadata = {
+        name,
+        parents: [folderId],
+        appProperties: {
+          storage_key: key,
+          objeto_id: String(options?.customMetadata?.objetoId || ""),
+          image_type: String(options?.customMetadata?.imageType || ""),
+          uploaded_at: String(options?.customMetadata?.uploadedAt || "")
+        }
+      };
+      const body = new Blob([
+        "--" + boundary + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n",
+        JSON.stringify(metadata),
+        "\r\n--" + boundary + "\r\nContent-Type: " + contentType + "\r\n\r\n",
+        bytes,
+        "\r\n--" + boundary + "--"
+      ]);
+
+      const response = await fetchImpl(
+        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,size,md5Checksum",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "multipart/related; boundary=" + boundary
+          },
+          body
+        }
+      );
+      if (!response.ok) throw new ObjectsImageError("OBJECTS_MEDIA_UPLOAD_FAILED", 502);
+      return response.json();
+    },
+
+    async get(key) {
+      const folderId = await resolveMediaFolderId(token, fetchImpl);
+      const files = await findMediaFiles(token, folderId, key, fetchImpl);
+      const file = files[0];
+      if (!file?.id) return null;
+      const response = await fetchImpl(
+        "https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(file.id) + "?alt=media",
+        { headers: { Authorization: "Bearer " + token } }
+      );
+      if (response.status === 404) return null;
+      if (!response.ok) throw new ObjectsImageError("OBJECTS_MEDIA_READ_FAILED", 502);
+      return {
+        body: response.body,
+        httpMetadata: { contentType: file.mimeType || response.headers.get("content-type") || "application/octet-stream" },
+        httpEtag: response.headers.get("etag") || file.md5Checksum || null
+      };
+    },
+
+    async delete(key) {
+      const folderId = await resolveMediaFolderId(token, fetchImpl);
+      const files = await findMediaFiles(token, folderId, key, fetchImpl);
+      for (const file of files) {
+        const response = await fetchImpl(
+          "https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(file.id),
+          {
+            method: "DELETE",
+            headers: { Authorization: "Bearer " + token }
+          }
+        );
+        if (!response.ok && response.status !== 404) {
+          throw new ObjectsImageError("OBJECTS_MEDIA_DELETE_FAILED", 502);
+        }
+      }
+    }
+  };
 }
 
 function columnLetter(index) {
@@ -279,13 +409,6 @@ function parseVisualMetadata(form, wardrobe) {
   };
 }
 
-function ensureBucket(env) {
-  if (!env?.OBJECTS_MEDIA || typeof env.OBJECTS_MEDIA.put !== "function") {
-    throw new ObjectsImageError("OBJECTS_MEDIA_NOT_CONFIGURED", 503);
-  }
-  return env.OBJECTS_MEDIA;
-}
-
 export async function uploadObjectsImage(request, env, getGoogleAccessToken, objetoId, overrides = {}) {
   const id = normalizeObjectId(objetoId);
   if (!isObjectsImageRequestAuthenticated(request)) {
@@ -318,7 +441,6 @@ export async function uploadObjectsImage(request, env, getGoogleAccessToken, obj
   const writeFields = overrides.writeArmarioFields || writeArmarioFields;
   const makeThumbnail = overrides.generateThumbnailWebp || generateThumbnailWebp;
   const fetchImpl = overrides.fetch || fetch;
-  const bucket = overrides.bucket || ensureBucket(env);
 
   const source = await fetchSummary(env, getGoogleAccessToken);
   const objects = Array.isArray(source?.value?.objects) ? source.value.objects : [];
@@ -332,6 +454,7 @@ export async function uploadObjectsImage(request, env, getGoogleAccessToken, obj
   }
 
   const token = await getGoogleAccessToken(env);
+  const bucket = overrides.bucket || createGoogleDriveMediaStore(token, fetchImpl);
   const spreadsheetId = await resolveSheet(env, token);
   if (!spreadsheetId) throw new ObjectsImageError("OBJECTS_SOURCE_PENDING", 503);
   const armario = await readRow(spreadsheetId, token, id, fetchImpl);
@@ -448,7 +571,7 @@ export async function uploadObjectsImage(request, env, getGoogleAccessToken, obj
   };
 }
 
-export async function readObjectsImage(request, env, objetoId, imageType) {
+export async function readObjectsImage(request, env, getGoogleAccessToken, objetoId, imageType, overrides = {}) {
   if (!isObjectsImageRequestAuthenticated(request)) {
     throw new ObjectsImageError("AUTH_REQUIRED", 401);
   }
@@ -459,7 +582,9 @@ export async function readObjectsImage(request, env, objetoId, imageType) {
   if (!/^[A-Za-z0-9-]{8,80}$/.test(version)) {
     throw new ObjectsImageError("INVALID_IMAGE_VERSION", 400);
   }
-  const bucket = ensureBucket(env);
+  const fetchImpl = overrides.fetch || fetch;
+  const token = await getGoogleAccessToken(env);
+  const bucket = overrides.bucket || createGoogleDriveMediaStore(token, fetchImpl);
   const key = imageStorageKey(id, type, version);
   const object = await bucket.get(key);
   if (!object) throw new ObjectsImageError("IMAGE_NOT_FOUND", 404);
