@@ -3842,7 +3842,8 @@ function renderNutritionQualityMeter(metric, value, target, label, incomplete = 
   const visual = weeklyMenuProgressVisualState(metric, value, target);
   if (!visual) return "";
   const width = Math.max(0, Math.min(100, visual.pct || 0));
-  const fillColor = incomplete ? "#64748b" : visual.color;
+  const qualityStep = Math.max(0, Math.min(10, Math.round((visual.quality || 0) * 10)));
+  const toneClass = incomplete ? "is-neutral" : `q-${qualityStep}`;
   return `
     <div
       class="nutrition-quality-meter ${incomplete ? "is-incomplete" : ""}"
@@ -3852,7 +3853,10 @@ function renderNutritionQualityMeter(metric, value, target, label, incomplete = 
       aria-valuemax="100"
       aria-valuenow="${width}"
     >
-      <span style="width:${width}%;background:${escapeHtml(fillColor)}"></span>
+      <svg viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <rect class="nutrition-quality-meter-track" x="0" y="0" width="100" height="6" rx="3" ry="3"></rect>
+        <rect class="nutrition-quality-meter-fill ${toneClass}" x="0" y="0" width="${width}" height="6" rx="3" ry="3"></rect>
+      </svg>
     </div>`;
 }
 
