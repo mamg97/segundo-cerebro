@@ -131,12 +131,12 @@ Si se detecta un secreto o dato real en Git: detener la publicación, revocar cr
 - Los documentos completos permanecen en su fuente propietaria; el inventario guarda como máximo referencias.
 - `foto_original_url`, `foto_procesada_url` y `miniatura_url` son referencias privadas asociadas al mismo `objeto_id`; no se hardcodean URLs reales ni bytes de imágenes en Git o en la demo pública.
 - La aplicación privada puede renderizar imágenes HTTPS detrás de Cloudflare Access, pero ampliar `img-src` no amplía `script-src` ni `connect-src`; las imágenes no adquieren capacidad de ejecución.
-- Las imágenes canónicas de Armario se almacenan en un bucket R2 privado ligado al Worker mediante `OBJECTS_MEDIA`. El bucket no publica dominio ni URL directa; la lectura usa rutas same-origin del Worker y hereda la protección de Cloudflare Access.
+- Las imágenes canónicas de Armario se almacenan como bytes privados en el D1 ya existente mediante tablas técnicas de assets/chunks. D1 no sustituye la identidad canónica del Sheet y la lectura usa rutas same-origin del Worker protegidas por Cloudflare Access.
 - `POST /api/objects/:objeto_id/image` no acepta URLs remotas: exige archivo multipart, MIME permitido + firma binaria coherente, máximo 8 MiB y un `objeto_id` existente en el inventario/Armario.
-- Los nombres físicos de R2 son rutas técnicas versionadas derivadas del `objeto_id`; nunca sustituyen la identidad canónica del Sheet.
+- Las claves físicas del almacén D1 son rutas técnicas versionadas derivadas del `objeto_id`; nunca sustituyen la identidad canónica del Sheet.
 - Un fallo de actualización del Sheet desencadena borrado compensatorio de los assets recién subidos. Las sustituciones conservan la versión previa hasta que la nueva referencia canónica se ha escrito correctamente.
 - Los logs del flujo registran únicamente etapa, `objeto_id`, tipo de imagen y estado técnico; nunca bytes, tokens OAuth, cookies de Access ni contenido de la fotografía.
-- El recorte/eliminación de fondo puede ejecutarse antes del upload por una herramienta autorizada; el Worker se limita a persistir el archivo recibido, generar la miniatura y actualizar el mismo registro `Armario`. Los originales no se persisten en D1.
+- El recorte/eliminación de fondo puede ejecutarse antes del upload por una herramienta autorizada; el Worker persiste el archivo recibido en el almacén visual D1, genera la miniatura y actualiza el mismo registro `Armario`.
 - La ausencia de fuente o de imagen se representa como `source-pending`/placeholder; no se transforma en ceros ni en datos ficticios.
 
 
@@ -172,5 +172,5 @@ Las imágenes generadas por ChatGPT pueden pasar temporalmente por la carpeta pr
 - El identificador de Drive solo vive en `ImageIngestQueue` hasta completar la ingesta.
 - Los bytes se descargan server-side usando las credenciales Google ya configuradas en Segundo Cerebro.
 - Tras éxito, el archivo de staging se envía a papelera.
-- Las URLs que persisten en `Armario` apuntan únicamente a lectura privada de Segundo Cerebro/R2.
+- Las URLs que persisten en `Armario` apuntan únicamente a lectura privada same-origin de Segundo Cerebro.
 - No se publican secretos, tokens, rutas locales ni URLs firmadas externas.
