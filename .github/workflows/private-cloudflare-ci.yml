@@ -9,6 +9,7 @@ on:
       - "objects-chatgpt-bridge/**"
       - "docs/objects-chatgpt-action.openapi.yaml"
       - ".github/workflows/private-cloudflare-ci.yml"
+      - ".github/workflows/web-audit.yml"
   workflow_dispatch:
 
 permissions:
@@ -81,11 +82,15 @@ jobs:
 
       - run: node --check src/shopping-reminders-ingest.js
 
+      - run: node --check src/web-audit-gateway.js
+
       - run: npm test
 
       - run: npx wrangler deploy --dry-run --config wrangler.health-ingest.jsonc
 
       - run: npx wrangler deploy --dry-run --config wrangler.shopping-reminders.jsonc
+
+      - run: npx wrangler deploy --dry-run --config wrangler.web-audit.jsonc
 
       - run: npm run build
 

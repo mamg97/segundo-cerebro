@@ -16,6 +16,7 @@ on:
       - "private-cloudflare/wrangler.objects-ingest.jsonc"
       - "private-cloudflare/wrangler.midas-ingest.jsonc"
       - "private-cloudflare/wrangler.shopping-reminders.jsonc"
+      - "private-cloudflare/wrangler.web-audit.jsonc"
       - ".github/workflows/deploy-private-cloudflare.yml"
   workflow_dispatch:
 
@@ -74,6 +75,7 @@ jobs:
           node --check src/midas.js
           node --check src/midas-ingest.js
           node --check src/shopping-reminders-ingest.js
+          node --check src/web-audit-gateway.js
 
       - name: Run tests
         run: npm test
@@ -122,6 +124,10 @@ jobs:
       - name: Deploy Shopping Reminders ingest Worker
         if: steps.cloudflare.outputs.configured == 'true'
         run: npx wrangler deploy --config wrangler.shopping-reminders.jsonc
+
+      - name: Deploy Web audit gateway
+        if: steps.cloudflare.outputs.configured == 'true'
+        run: npx wrangler deploy --config wrangler.web-audit.jsonc
 
       - name: Explain skipped deployment
         if: steps.cloudflare.outputs.configured != 'true'
