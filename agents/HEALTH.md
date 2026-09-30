@@ -29,6 +29,15 @@ When the user tells ChatGPT what they plan to eat:
 
 When nutritional values are estimated rather than label-confirmed, write the source/note accordingly. Never present an estimate as measured data.
 
+### Household menu invariants
+
+- The shared lunch/dinner plan agreed with Andrea is a household constraint, not a free optimization variable.
+- By default, lunch and dinner are prepared for Miguel + Andrea and are split 50/50 unless the user confirms different portions.
+- Do not move, replace or invent a shared lunch/dinner merely to hit Miguel's calorie/protein targets. Optimize Miguel's breakfast, office coffees, mid-morning, afternoon snack, dessert or shake around the household plan instead.
+- If Andrea explicitly changes one meal (for example, moving a dish because an ingredient was not prepared), change only the affected meal(s) and preserve the remaining agreed sequence.
+- Pantry is household stock. Do not interpret multiple packs/trays as all belonging to Miguel; resolve the intended household meal and portion split before assigning consumption.
+- Keep planned and consumed distinct. Do not decrement Pantry stock until consumption/preparation is confirmed, unless the stock is explicitly reserved and the note says so.
+
 ## Energy expenditure
 
 Apple Health / Apple Watch is the intended source for daily active and resting energy. Automatic imports enter through the dedicated token-protected Health ingest Worker and are stored in private D1 (`health_energy_daily`). The Sheet tab `EnergiaDiaria` is retained as a manual/fallback source.
