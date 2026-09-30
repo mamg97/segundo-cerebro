@@ -76,12 +76,17 @@ export async function verifyAuditOidc(token, fetcher = fetch, now = Date.now()) 
   }
 }
 
-function cloneProxyHeaders(headers) {
+export function cloneProxyHeaders(headers) {
   const next = new Headers(headers);
   next.delete("authorization");
   next.delete("host");
   next.delete("cookie");
   next.set("X-Segundo-Cerebro-Audit", "github-actions");
+  // The production UI normally receives this identity from Cloudflare Access.
+  // The audit gateway is itself OIDC-authenticated and reaches the app only by
+  // Service Binding, so it supplies a non-user synthetic identity for read-only
+  // routes such as private wardrobe images.
+  next.set("cf-access-authenticated-user-email", "audit@github-actions.invalid");
   return next;
 }
 

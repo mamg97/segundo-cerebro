@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validateAuditClaims } from "./web-audit-gateway.js";
+import { cloneProxyHeaders, validateAuditClaims } from "./web-audit-gateway.js";
 
 const now = Date.parse("2026-09-30T21:00:00Z");
 const epoch = Math.floor(now / 1000);
@@ -40,3 +40,16 @@ for (const [name, mutation] of [
     assert.equal(validateAuditClaims({ ...valid, ...mutation }, now), false);
   });
 }
+
+
+test("proxy strips caller credentials and injects only synthetic read identity", () => {
+  const headers = cloneProxyHeaders(new Headers({
+    authorization: "Bearer should-not-forward",
+    cookie: "private-cookie=1",
+    "cf-access-authenticated-user-email": "spoofed@example.com"
+  }));
+  assert.equal(headers.has("authorization"), false);
+  assert.equal(headers.has("cookie"), false);
+  assert.equal(headers.get("cf-access-authenticated-user-email"), "audit@github-actions.invalid");
+  assert.equal(headers.get("X-Segundo-Cerebro-Audit"), "github-actions");
+});
