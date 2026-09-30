@@ -15009,20 +15009,18 @@ html[data-theme="dark"] .home-liquidity-account {
   background: color-mix(in srgb, var(--line) 58%, transparent);
 }
 
-.weekly-menu-progress.kcal progress::-webkit-progress-value,
-.home-weekly-menu-progress > div:first-child progress::-webkit-progress-value,
-.weekly-menu-progress.kcal progress::-moz-progress-bar,
-.home-weekly-menu-progress > div:first-child progress::-moz-progress-bar {
-  background: #ff9f0a;
+.weekly-menu-progress progress::-webkit-progress-value,
+.home-weekly-menu-progress progress::-webkit-progress-value,
+.weekly-menu-progress progress::-moz-progress-bar,
+.home-weekly-menu-progress progress::-moz-progress-bar {
+  background: var(--progress-color, #16a34a);
   border-radius: 999px;
+  transition: background 180ms ease, width 180ms ease;
 }
 
-.weekly-menu-progress.protein progress::-webkit-progress-value,
-.home-weekly-menu-progress > div:last-child progress::-webkit-progress-value,
-.weekly-menu-progress.protein progress::-moz-progress-bar,
-.home-weekly-menu-progress > div:last-child progress::-moz-progress-bar {
-  background: #64d2ff;
-  border-radius: 999px;
+.weekly-menu-progress.is-incomplete progress,
+.home-weekly-menu-day:has(> header > span:first-of-type) progress {
+  opacity: 0.9;
 }
 
 .weekly-menu-meal-list {
