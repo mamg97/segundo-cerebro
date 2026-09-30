@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ObjectsImageError,
+  driveFilenameFromKey,
   generateThumbnailWebp,
   normalizeObjectId,
+  sanitizeFilename,
   uploadObjectsImage
 } from "./objects-images.js";
 
@@ -297,4 +299,15 @@ test("rejects unauthenticated image upload requests", async () => {
     401
   );
   assert.equal(bucket.data.size, 0);
+});
+
+
+test("Drive media filenames derive only from validated canonical keys", () => {
+  const name = driveFilenameFromKey("objects/obj-shirt-example-001/processed/20260930T120000-test");
+  assert.equal(name, "sc-objects--obj-shirt-example-001--processed--20260930T120000-test");
+  assert.throws(
+    () => driveFilenameFromKey("objects/../../secret/processed/version123"),
+    /INVALID_MEDIA_KEY/
+  );
+  assert.equal(sanitizeFilename("../../private/garment.png"), "garment.png");
 });
