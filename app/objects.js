@@ -1,5 +1,6 @@
-const TABS = [["summary","Resumen"],["inventory","Inventario"],["wardrobe","Armario"],["looks","Looks"],["kits","Kits"],["lists","Listas"]];
+const TABS = [["summary","Resumen"],["inventory","Inventario"],["wardrobe","Armario visual"],["builder","Combinador"],["looks","Looks"],["kits","Kits"],["lists","Listas"]];
 let activeTab = "summary";
+let objectsFlash = "";
 
 function e(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;" }[c]));
@@ -16,6 +17,29 @@ function m(value, currency="EUR") {
 }
 function label(value) { return String(value || "DISPONIBLE").replaceAll("_"," "); }
 function pending(payload) { return payload?.source?.available === false; }
+function imageUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("/") || /^https?:\/\//i.test(raw)) return raw;
+  return "";
+}
+function visualUrl(item) {
+  return imageUrl(item?.thumbnailUrl || item?.processedPhotoUrl || item?.originalPhotoUrl || item?.photoUrl);
+}
+function processedBadge(item) {
+  const state = String(item?.processedState || "pendiente").toLowerCase();
+  if (state === "procesada") return '<span class="wardrobe-process-state is-ready">Procesada</span>';
+  if (state === "revisar") return '<span class="wardrobe-process-state is-review">Revisar</span>';
+  return '<span class="wardrobe-process-state">Foto pendiente</span>';
+}
+function useFrequency(item) {
+  const n = Number(item?.useCount);
+  if (!Number.isFinite(n)) return "unknown";
+  if (n === 0) return "unused";
+  if (n <= 2) return "low";
+  if (n <= 7) return "regular";
+  return "high";
+}
 function empty(title, detail="") {
   return '<div class="objects-empty"><strong>'+e(title)+'</strong>'+(detail?'<p>'+e(detail)+'</p>':'')+'</div>';
 }
@@ -92,20 +116,70 @@ function inventoryView(payload) {
     (items.length?items.map(objectCard).join(""):empty("Inventario vacío","Cuando el gestor añada objetos a la fuente canónica aparecerán aquí."))+'</div>';
 }
 
+function wardrobeVisualCard(x) {
+  const src=visualUrl(x);
+  return '<button class="wardrobe-card wardrobe-card-visual" type="button" data-object-open="'+e(x.objectId)+'" data-name="'+e(String(x.name||"").toLocaleLowerCase("es"))+'" data-garment="'+e(x.subcategory||"")+'" data-brand="'+e(x.brand||"")+'" data-color="'+e(x.primaryColor||x.color||"")+'" data-formality="'+e(x.formality||"")+'" data-season="'+e(x.season||"")+'" data-office="'+(x.office===true?"yes":x.office===false?"no":"")+'" data-frequency="'+e(useFrequency(x))+'">'+
+    '<span class="wardrobe-visual">'+(src?'<img loading="lazy" src="'+e(src)+'" alt="'+e(x.name||"Prenda")+'">':'<span class="wardrobe-placeholder">◫</span>')+processedBadge(x)+'</span>'+
+    '<span class="wardrobe-card-body"><span class="wardrobe-card-top"><span>'+e(x.subcategory||x.visualCategory||"Prenda")+'</span>'+(x.office===true?'<b>Oficina</b>':'')+'</span>'+
+    '<strong>'+e(x.name||"Prenda")+'</strong><small>'+e([x.brand,x.primaryColor||x.color].filter(Boolean).join(" · ")||"Sin marca/color")+'</small>'+
+    '<span class="wardrobe-card-foot"><span>'+e(x.formality||"Formalidad sin indicar")+'</span><time>'+(x.lastUsed?"Último uso "+e(d(x.lastUsed)):"Sin uso fechado")+'</time><span>'+(x.relatedLookIds||[]).length+' looks relacionados</span></span></span></button>';
+}
+
 function wardrobeView(payload) {
   if (pending(payload)) return pendingView();
-  const rows=payload.wardrobe||[], f=payload.facets||{};
-  return '<section class="objects-toolbar"><input id="wardrobe-search" type="search" placeholder="Buscar prenda…"><select id="wardrobe-type"><option value="">Todas las prendas</option>'+opts(f.garmentTypes)+'</select><select id="wardrobe-season"><option value="">Todas las temporadas</option>'+opts(f.seasons)+'</select><select id="wardrobe-office"><option value="">Oficina: todo</option><option value="yes">Apto oficina</option><option value="no">No oficina</option></select></section><div class="wardrobe-grid">'+
-    (rows.length?rows.map(x=>'<button class="wardrobe-card" type="button" data-object-open="'+e(x.objectId)+'" data-name="'+e(String(x.name||"").toLocaleLowerCase("es"))+'" data-garment="'+e(x.subcategory||"")+'" data-season="'+e(x.season||"")+'" data-office="'+(x.office===true?"yes":x.office===false?"no":"")+'"><span class="wardrobe-visual">'+(x.photoUrl?'<img src="'+e(x.photoUrl)+'" alt="">':'<span>◫</span>')+'</span><span class="wardrobe-card-body"><span class="wardrobe-card-top"><span>'+e(x.subcategory||"Prenda")+'</span>'+(x.office===true?'<b>Oficina</b>':'')+'</span><strong>'+e(x.name||"Prenda")+'</strong><small>'+e([x.color,x.size,x.season].filter(Boolean).join(" · ")||"Sin atributos")+'</small><span class="wardrobe-card-foot"><span>'+e(x.formality||"Formalidad sin indicar")+'</span><time>'+(x.lastUsed?"Último uso "+e(d(x.lastUsed)):"Sin uso fechado")+'</time></span></span></button>').join(""):empty("Armario vacío","Las prendas deben existir primero en el inventario."))+
+  const rows=payload.wardrobe||[], f=payload.facets||{}, vs=payload.summary?.visualWardrobe||{};
+  return '<section class="objects-callout wardrobe-visual-callout"><div><small>Armario visual</small><strong>Prendas listas para combinar</strong><p>Se prioriza miniatura → recorte procesado → foto original. Las prendas sin imagen siguen disponibles y no se inventa ninguna.</p></div><span>'+Number(vs.processed||0)+' procesadas · '+Number(vs.pending||0)+' pendientes</span></section>'+
+    '<section class="objects-toolbar wardrobe-toolbar">'+
+      '<input id="wardrobe-search" type="search" placeholder="Buscar prenda…">'+
+      '<select id="wardrobe-type"><option value="">Categoría: todas</option>'+opts(f.garmentTypes)+'</select>'+
+      '<select id="wardrobe-brand"><option value="">Marca: todas</option>'+opts(f.brands)+'</select>'+
+      '<select id="wardrobe-color"><option value="">Color: todos</option>'+opts(f.colors)+'</select>'+
+      '<select id="wardrobe-formality"><option value="">Formalidad: todas</option>'+opts(f.formalities)+'</select>'+
+      '<select id="wardrobe-season"><option value="">Temporada: todas</option>'+opts(f.seasons)+'</select>'+
+      '<select id="wardrobe-office"><option value="">Oficina: todo</option><option value="yes">Apto oficina</option><option value="no">No oficina</option></select>'+
+      '<select id="wardrobe-frequency"><option value="">Uso: cualquier frecuencia</option><option value="unused">Sin usar</option><option value="low">1–2 usos</option><option value="regular">3–7 usos</option><option value="high">8+ usos</option><option value="unknown">Sin histórico</option></select>'+
+      '<button class="objects-primary-action" type="button" data-look-builder>Abrir combinador</button>'+
+    '</section><div class="objects-list-heading"><strong id="wardrobe-visible-count">'+rows.length+' prendas</strong></div><div class="wardrobe-grid wardrobe-visual-grid">'+
+    (rows.length?rows.map(wardrobeVisualCard).join(""):empty("Armario vacío","Las prendas deben existir primero en el inventario."))+
     '</div>';
+}
+
+function lookMosaic(look,payload) {
+  const wardrobe=new Map((payload.wardrobe||[]).map(x=>[String(x.objectId),x]));
+  const direct=imageUrl(look.photoUrl);
+  if(direct) return '<img loading="lazy" src="'+e(direct)+'" alt="'+e(look.name||"Look")+'">';
+  const images=(look.items||[]).map(i=>visualUrl(wardrobe.get(String(i.objectId)))).filter(Boolean).slice(0,4);
+  if(!images.length) return '<span>◇</span>';
+  return '<span class="look-mosaic">'+images.map(src=>'<img loading="lazy" src="'+e(src)+'" alt="">').join("")+'</span>';
 }
 
 function looksView(payload) {
   if (pending(payload)) return pendingView();
   const rows=payload.looks||[], office=rows.filter(x=>x.office===true).length;
-  return '<section class="objects-callout"><div><small>Armario inteligente</small><strong>Looks de oficina sin repetir</strong><p>Los looks solo referencian prendas existentes y conservan histórico de uso para evitar repeticiones recientes.</p></div><span>'+office+' oficina</span></section><div class="looks-grid">'+
-    (rows.length?rows.map(x=>'<article class="look-card"><div class="look-visual">'+(x.photoUrl?'<img src="'+e(x.photoUrl)+'" alt="">':'<span>◇</span>')+'</div><div class="look-body"><span class="look-tags">'+(x.office===true?'<b>Oficina</b>':'')+(x.season?'<b>'+e(x.season)+'</b>':'')+(x.formality?'<b>'+e(x.formality)+'</b>':'')+'</span><strong>'+e(x.name||"Look")+'</strong><p>'+e((x.items||[]).map(i=>i.name).filter(Boolean).join(" · ")||"Sin prendas vinculadas")+'</p><small>'+e(x.context||"Contexto sin indicar")+' · '+(x.lastUsed?"último uso "+e(d(x.lastUsed)):"sin uso reciente")+'</small></div></article>').join(""):empty("Todavía no hay looks","El gestor podrá construirlos a partir del inventario real."))+
+  return '<section class="objects-callout"><div><small>Armario inteligente</small><strong>Looks guardados</strong><p>Todos los looks referencian prendas existentes. El histórico permitirá evitar repeticiones y preparar viajes/eventos.</p></div><span>'+office+' oficina</span></section>'+
+    '<div class="looks-actions"><button class="objects-primary-action" type="button" data-look-builder>Crear look visual</button></div><div class="looks-grid">'+
+    (rows.length?rows.map(x=>'<article class="look-card"><div class="look-visual">'+lookMosaic(x,payload)+'</div><div class="look-body"><span class="look-tags">'+(x.office===true?'<b>Oficina</b>':'')+(x.season?'<b>'+e(x.season)+'</b>':'')+(x.formality?'<b>'+e(x.formality)+'</b>':'')+'</span><strong>'+e(x.name||"Look")+'</strong><p>'+e((x.items||[]).map(i=>i.name).filter(Boolean).join(" · ")||"Sin prendas vinculadas")+'</p><small>'+e(x.context||"Contexto sin indicar")+' · '+(x.lastUsed?"último uso "+e(d(x.lastUsed)):"sin uso reciente")+'</small></div></article>').join(""):empty("Todavía no hay looks","El combinador puede crear el primero reutilizando prendas reales."))+
     '</div>';
+}
+
+function builderOptions(rows,role) {
+  const candidates=(rows||[]).filter(x=>x.layer===role && !["VENDIDO","DONADO","DESCARTADO","PERDIDO"].includes(String(x.status||"")));
+  return '<option value="">'+(role==="exterior"?"Sin exterior":"Seleccionar")+'</option>'+candidates.map(x=>'<option value="'+e(x.objectId)+'">'+e([x.name,x.brand,x.primaryColor||x.color].filter(Boolean).join(" · "))+'</option>').join("");
+}
+
+function builderView(payload) {
+  if (pending(payload)) return pendingView();
+  const rows=payload.wardrobe||[], f=payload.facets||{};
+  return '<section class="look-builder"><div class="look-builder-head"><div><small>Constructor visual · MVP</small><strong>Combina solo prendas que ya existen</strong><p>Superior, inferior y calzado son necesarios; exterior es opcional. El guardado escribe en Looks + LookItems de la fuente canónica.</p></div><button type="button" data-objects-tab="wardrobe">Volver al armario</button></div>'+
+    '<div class="look-builder-layout"><section class="look-builder-controls">'+
+      '<label>Nombre del look<input id="look-builder-name" type="text" placeholder="Ej. Oficina azul y gris"></label>'+
+      '<label>Contexto<input id="look-builder-context" type="text" placeholder="Oficina, viaje, cena…"></label>'+
+      '<label>Formalidad<select id="look-builder-formality"><option value="">Sin indicar</option>'+opts(f.formalities)+'</select></label>'+
+      '<label>Temporada<select id="look-builder-season"><option value="">Sin indicar</option>'+opts(f.seasons)+'</select></label>'+
+      '<label class="look-builder-office"><input id="look-builder-office" type="checkbox"> Apto para oficina</label>'+
+      '<div class="look-builder-selectors">'+["superior","exterior","inferior","calzado"].map(role=>'<label><span>'+e(role)+'</span><select data-look-role="'+role+'">'+builderOptions(rows,role)+'</select></label>').join("")+'</div>'+
+      '<div class="look-builder-save-row"><span id="look-builder-message">Selecciona superior, inferior y calzado.</span><button id="look-builder-save" class="objects-primary-action" type="button">Guardar look</button></div>'+
+    '</section><section class="look-builder-preview" aria-label="Vista previa del look">'+["exterior","superior","inferior","calzado"].map(role=>'<article data-look-preview="'+role+'"><small>'+e(role)+'</small><div><span>◫</span></div><strong>Sin seleccionar</strong></article>').join("")+'</section></div></section>';
 }
 
 function kitsView(payload) {
@@ -126,11 +200,18 @@ function listsView(payload) {
 
 function detailObject(item,payload) {
   const body=document.querySelector("#dialog-body"), w=(payload.wardrobe||[]).find(x=>x.objectId===item.id);
-  body.innerHTML='<button class="objects-back" data-objects-back type="button">← Volver a Objetos</button><section class="object-detail"><div class="object-detail-head"><div><span class="object-category">'+e(item.category||"Otros")+'</span><h3>'+e(item.name||"Objeto")+'</h3><p>'+e([item.brand,item.model,item.subcategory].filter(Boolean).join(" · ")||"Sin detalle")+'</p></div><span class="object-status">'+e(label(item.status))+'</span></div><div class="object-detail-grid">'+
+  const related=(payload.looks||[]).filter(x=>(w?.relatedLookIds||[]).includes(x.id));
+  const compatible=(w?.compatibleWith||[]).map(id=>(payload.wardrobe||[]).find(x=>x.objectId===id)).filter(Boolean);
+  const processed=w?imageUrl(w.processedPhotoUrl||w.thumbnailUrl||w.photoUrl):"";
+  const original=w?imageUrl(w.originalPhotoUrl||item.photoUrl):imageUrl(item.photoUrl);
+  const gallery=w?'<div class="wardrobe-detail-gallery"><div class="wardrobe-detail-main">'+(processed?'<img src="'+e(processed)+'" alt="'+e(item.name||"Prenda")+' procesada">':'<span>◫</span>')+'<small>Procesada · '+e(w.processedState||"pendiente")+'</small></div><div class="wardrobe-detail-original">'+(original?'<img src="'+e(original)+'" alt="'+e(item.name||"Prenda")+' original">':'<span>Sin original</span>')+'<small>Original</small></div></div>':"";
+  body.innerHTML='<button class="objects-back" data-objects-back type="button">← Volver a Objetos</button><section class="object-detail">'+gallery+'<div class="object-detail-head"><div><span class="object-category">'+e(item.category||"Otros")+'</span><h3>'+e(item.name||"Objeto")+'</h3><p>'+e([item.brand,item.model,item.subcategory].filter(Boolean).join(" · ")||"Sin detalle")+'</p></div><span class="object-status">'+e(label(item.status))+'</span></div><div class="object-detail-grid">'+
     [['Ubicación',item.location||"Sin indicar"],['Cantidad',item.quantity??"—"],['Condición',item.condition||"Sin indicar"],['Compra',d(item.purchaseDate)],['Precio',m(item.purchasePrice,item.currency)],['Valor aprox.',m(item.estimatedValue,item.currency)],['Garantía',d(item.warrantyUntil)],['N.º serie',item.serialNumber||"—"]].map(([a,b])=>'<span><small>'+e(a)+'</small><strong>'+e(b)+'</strong></span>').join("")+
-    '</div>'+(w?'<div class="object-wardrobe-detail"><strong>Armario</strong><span>'+e([w.color,w.size,w.season,w.formality].filter(Boolean).join(" · ")||"Sin atributos")+'</span><small>'+(w.lastUsed?"Último uso "+e(d(w.lastUsed)):"Sin uso fechado")+'</small></div>':'')+
+    '</div>'+(w?'<div class="object-wardrobe-detail"><strong>Armario visual</strong><span>'+e([w.subcategory,w.primaryColor||w.color,w.pattern,w.size,w.season,w.formality].filter(Boolean).join(" · ")||"Sin atributos")+'</span><small>'+e([w.layer?("capa "+w.layer):null,w.garmentView?("vista "+w.garmentView):null,w.lastUsed?("último uso "+d(w.lastUsed)):null,w.office===true?"oficina":null].filter(Boolean).join(" · ")||"Sin histórico de uso")+'</small></div>':'')+
+    (related.length?'<div class="object-related-block"><strong>Looks relacionados</strong><div>'+related.map(x=>'<span>'+e(x.name)+'</span>').join("")+'</div></div>':'')+
+    (compatible.length?'<div class="object-related-block"><strong>Prendas compatibles</strong><div>'+compatible.map(x=>'<span>'+e(x.name)+'</span>').join("")+'</div></div>':'')+
     ((item.contexts||[]).length||(item.tags||[]).length?'<div class="object-chip-row">'+[...(item.contexts||[]),...(item.tags||[])].map(x=>'<span>'+e(x)+'</span>').join("")+'</div>':'')+
-    (item.notes?'<div class="object-notes"><strong>Notas</strong><p>'+e(item.notes)+'</p></div>':'')+
+    (item.notes||w?.notes?'<div class="object-notes"><strong>Notas</strong><p>'+e(w?.notes||item.notes)+'</p></div>':'')+
     '<div class="object-detail-links">'+(item.receiptRef?'<span>Factura/recibo referenciado</span>':'')+(item.link?'<a href="'+e(item.link)+'" target="_blank" rel="noreferrer">Abrir enlace ↗</a>':'')+'</div></section>';
   body.querySelector("[data-objects-back]")?.addEventListener("click",()=>renderWorkspace(payload));
 }
@@ -144,21 +225,96 @@ function detailList(list,payload) {
 
 function bind(payload) {
   const body=document.querySelector("#dialog-body");
-  body.querySelectorAll("[data-objects-tab]").forEach(b=>b.addEventListener("click",()=>{activeTab=b.dataset.objectsTab||"summary";renderWorkspace(payload);}));
+  body.querySelectorAll("[data-objects-tab]").forEach(b=>b.addEventListener("click",()=>{activeTab=b.dataset.objectsTab||"summary";objectsFlash="";renderWorkspace(payload);}));
+  body.querySelectorAll("[data-look-builder]").forEach(b=>b.addEventListener("click",()=>{activeTab="builder";objectsFlash="";renderWorkspace(payload);}));
   body.querySelectorAll("[data-object-open]").forEach(b=>b.addEventListener("click",()=>{const item=(payload.objects||[]).find(x=>String(x.id)===String(b.dataset.objectOpen));if(item)detailObject(item,payload);}));
   body.querySelectorAll("[data-list-open]").forEach(b=>b.addEventListener("click",()=>{const item=(payload.lists||[]).find(x=>String(x.id)===String(b.dataset.listOpen));if(item)detailList(item,payload);}));
 
   const filterObjects=()=>{const q=String(body.querySelector("#objects-search")?.value||"").trim().toLocaleLowerCase("es"),cat=body.querySelector("#objects-category")?.value||"",loc=body.querySelector("#objects-location")?.value||"",st=body.querySelector("#objects-status")?.value||"";let n=0;body.querySelectorAll(".object-card").forEach(c=>{const show=(!q||String(c.dataset.name||"").includes(q))&&(!cat||c.dataset.category===cat)&&(!loc||c.dataset.location===loc)&&(!st||c.dataset.status===st);c.hidden=!show;if(show)n++;});const out=body.querySelector("#objects-visible-count");if(out)out.textContent=n+(n===1?" objeto":" objetos");};
   ["#objects-search","#objects-category","#objects-location","#objects-status"].forEach(s=>{body.querySelector(s)?.addEventListener("input",filterObjects);body.querySelector(s)?.addEventListener("change",filterObjects);});
 
-  const filterWardrobe=()=>{const q=String(body.querySelector("#wardrobe-search")?.value||"").trim().toLocaleLowerCase("es"),type=body.querySelector("#wardrobe-type")?.value||"",season=body.querySelector("#wardrobe-season")?.value||"",office=body.querySelector("#wardrobe-office")?.value||"";body.querySelectorAll(".wardrobe-card").forEach(c=>c.hidden=!((!q||String(c.dataset.name||"").includes(q))&&(!type||c.dataset.garment===type)&&(!season||c.dataset.season===season)&&(!office||c.dataset.office===office)));};
-  ["#wardrobe-search","#wardrobe-type","#wardrobe-season","#wardrobe-office"].forEach(s=>{body.querySelector(s)?.addEventListener("input",filterWardrobe);body.querySelector(s)?.addEventListener("change",filterWardrobe);});
+  const filterWardrobe=()=>{
+    const q=String(body.querySelector("#wardrobe-search")?.value||"").trim().toLocaleLowerCase("es");
+    const filters={
+      garment:body.querySelector("#wardrobe-type")?.value||"",
+      brand:body.querySelector("#wardrobe-brand")?.value||"",
+      color:body.querySelector("#wardrobe-color")?.value||"",
+      formality:body.querySelector("#wardrobe-formality")?.value||"",
+      season:body.querySelector("#wardrobe-season")?.value||"",
+      office:body.querySelector("#wardrobe-office")?.value||"",
+      frequency:body.querySelector("#wardrobe-frequency")?.value||""
+    };
+    let n=0;
+    body.querySelectorAll(".wardrobe-card").forEach(card=>{
+      const show=(!q||String(card.dataset.name||"").includes(q))&&Object.entries(filters).every(([key,val])=>!val||String(card.dataset[key]||"")===val);
+      card.hidden=!show;if(show)n++;
+    });
+    const out=body.querySelector("#wardrobe-visible-count");if(out)out.textContent=n+(n===1?" prenda":" prendas");
+  };
+  ["#wardrobe-search","#wardrobe-type","#wardrobe-brand","#wardrobe-color","#wardrobe-formality","#wardrobe-season","#wardrobe-office","#wardrobe-frequency"].forEach(s=>{body.querySelector(s)?.addEventListener("input",filterWardrobe);body.querySelector(s)?.addEventListener("change",filterWardrobe);});
+
+  const wardrobeById=new Map((payload.wardrobe||[]).map(x=>[String(x.objectId),x]));
+  const updateBuilder=()=>{
+    let complete=true;
+    body.querySelectorAll("[data-look-role]").forEach(select=>{
+      const role=select.dataset.lookRole||"";
+      const item=wardrobeById.get(String(select.value||""));
+      const preview=body.querySelector('[data-look-preview="'+role+'"]');
+      if(preview){
+        const src=visualUrl(item);
+        const visual=preview.querySelector("div");
+        const title=preview.querySelector("strong");
+        if(visual) visual.innerHTML=item?(src?'<img src="'+e(src)+'" alt="'+e(item.name||"Prenda")+'">':'<span>◫</span>'):'<span>◫</span>';
+        if(title) title.textContent=item?.name||"Sin seleccionar";
+      }
+      if(["superior","inferior","calzado"].includes(role)&&!item) complete=false;
+    });
+    const save=body.querySelector("#look-builder-save");
+    if(save) save.disabled=!complete;
+    const message=body.querySelector("#look-builder-message");
+    if(message) message.textContent=complete?"Combinación válida para guardar.":"Selecciona superior, inferior y calzado.";
+  };
+  body.querySelectorAll("[data-look-role]").forEach(select=>select.addEventListener("change",updateBuilder));
+  updateBuilder();
+
+  body.querySelector("#look-builder-save")?.addEventListener("click",async()=>{
+    const save=body.querySelector("#look-builder-save"), message=body.querySelector("#look-builder-message");
+    const items=[...body.querySelectorAll("[data-look-role]")].map(select=>({role:select.dataset.lookRole,objectId:select.value})).filter(x=>x.objectId);
+    if(save)save.disabled=true;
+    if(message)message.textContent="Guardando en la fuente canónica…";
+    try{
+      const response=await fetch("/api/objects/look",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",Accept:"application/json"},
+        credentials:"same-origin",
+        body:JSON.stringify({
+          name:body.querySelector("#look-builder-name")?.value||"",
+          context:body.querySelector("#look-builder-context")?.value||"",
+          formality:body.querySelector("#look-builder-formality")?.value||"",
+          season:body.querySelector("#look-builder-season")?.value||"",
+          office:Boolean(body.querySelector("#look-builder-office")?.checked),
+          items
+        })
+      });
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(result.code||"OBJECTS_LOOK_SAVE_FAILED");
+      const fresh=await fetch("/api/objects",{headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"});
+      if(!fresh.ok)throw new Error("OBJECTS_REFRESH_"+fresh.status);
+      objectsFlash="Look guardado en la fuente canónica.";
+      activeTab="looks";
+      renderWorkspace(await fresh.json());
+    }catch(error){
+      console.warn("Look save failed",error);
+      if(message)message.textContent="No se ha podido guardar el look. Revisa la combinación y reintenta.";
+      if(save)save.disabled=false;
+    }
+  });
 }
 
 function renderWorkspace(payload) {
   const body=document.querySelector("#dialog-body");
-  const views={summary:summaryView,inventory:inventoryView,wardrobe:wardrobeView,looks:looksView,kits:kitsView,lists:listsView};
-  body.innerHTML='<div class="objects-shell"><header class="objects-hero"><div><small>Inventario personal compartido</small><strong>Lo que tengo, dónde está y para qué me sirve</strong><p>Una única fuente para armario, equipaje, oficina, deporte, hogar y futuros gestores.</p></div><span class="objects-source-state '+(pending(payload)?"pending":"ready")+'">'+(pending(payload)?"Fuente pendiente":"Fuente conectada")+'</span></header><nav class="objects-tabs">'+TABS.map(([id,name])=>'<button type="button" class="'+(activeTab===id?"active":"")+'" data-objects-tab="'+id+'">'+e(name)+'</button>').join("")+'</nav><div class="objects-tab-content">'+(views[activeTab]||summaryView)(payload)+'</div></div>';
+  const views={summary:summaryView,inventory:inventoryView,wardrobe:wardrobeView,builder:builderView,looks:looksView,kits:kitsView,lists:listsView};
+  body.innerHTML='<div class="objects-shell">'+(objectsFlash?'<div class="objects-flash">'+e(objectsFlash)+'</div>':'')+'<header class="objects-hero"><div><small>Inventario personal compartido</small><strong>Lo que tengo, dónde está y para qué me sirve</strong><p>Una única fuente para armario, equipaje, oficina, deporte, hogar y futuros gestores.</p></div><span class="objects-source-state '+(pending(payload)?"pending":"ready")+'">'+(pending(payload)?"Fuente pendiente":"Fuente conectada")+'</span></header><nav class="objects-tabs">'+TABS.map(([id,name])=>'<button type="button" class="'+(activeTab===id?"active":"")+'" data-objects-tab="'+id+'">'+e(name)+'</button>').join("")+'</nav><div class="objects-tab-content">'+(views[activeTab]||summaryView)(payload)+'</div></div>';
   bind(payload);
 }
 
