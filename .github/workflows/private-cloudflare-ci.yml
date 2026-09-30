@@ -71,13 +71,13 @@ jobs:
 
       - run: npm test
 
-      - run: npx wrangler deploy --dry-run --config wrangler.bootstrap.jsonc
-
       - run: npx wrangler deploy --dry-run --config wrangler.health-ingest.jsonc
 
       - run: npx wrangler deploy --dry-run --config wrangler.shopping-reminders.jsonc
 
       - run: npm run build
+
+      - run: npx wrangler deploy --dry-run --config wrangler.bootstrap.jsonc
 
       - name: Confirm no private files enter build
         run: |
