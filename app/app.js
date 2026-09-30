@@ -4207,6 +4207,22 @@ function groupWeeklyMenuItemsByMoment(items) {
   return groups;
 }
 
+function focusHomeWeeklyMenuOnToday(content) {
+  if (!content) return;
+  const today = localDateKey();
+  if (content.dataset.weeklyMenuFocusedDate === today) return;
+
+  requestAnimationFrame(() => {
+    const grid = content.querySelector(".home-weekly-menu-grid");
+    const todayCard = content.querySelector(`[data-menu-date="${CSS.escape(today)}"]`);
+    if (!grid || !todayCard) return;
+
+    const left = Math.max(0, todayCard.offsetLeft - grid.offsetLeft);
+    grid.scrollTo({ left, behavior: "auto" });
+    content.dataset.weeklyMenuFocusedDate = today;
+  });
+}
+
 function renderHomeWeeklyMenu(data) {
   const panel = document.querySelector("#home-weekly-menu-panel");
   const content = document.querySelector("#home-weekly-menu-content");
@@ -4230,7 +4246,7 @@ function renderHomeWeeklyMenu(data) {
         const isToday = day.date === localDateKey();
         const targetLine = weeklyMenuTargetLine(day, model);
         return `
-          <article class="home-weekly-menu-day ${isToday ? "is-today" : ""} ${!day.nutritionComplete ? "is-incomplete" : ""}">
+          <article data-menu-date="${escapeHtml(day.date)}" class="home-weekly-menu-day ${isToday ? "is-today" : ""} ${!day.nutritionComplete ? "is-incomplete" : ""}">
             <header>
               <div>
                 <small>${isToday ? "Hoy" : "Día"}</small>
@@ -4265,6 +4281,8 @@ function renderHomeWeeklyMenu(data) {
           </article>`;
       }).join("")}
     </div>`;
+
+  focusHomeWeeklyMenuOnToday(content);
 }
 
 function renderNutritionEntries(entries) {
