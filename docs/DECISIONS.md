@@ -410,3 +410,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Consistencia:** las claves son versionadas; si falla la actualización del Sheet se borran los nuevos assets. En reemplazos, el asset anterior no se limpia hasta que la nueva referencia canónica ya ha sido escrita.
 - **No duplicación:** ni R2 ni D1 mantienen catálogo de prendas; el nombre físico del asset jamás sustituye `objeto_id`.
 - **Motivo:** cerrar el flujo foto → derivado → persistencia → Armario visual sin intervención manual en Sheets y sin abrir almacenamiento público.
+
+
+## D-041 — Bridge de imágenes ChatGPT mediante staging efímero
+
+- **Estado:** aceptada.
+- **Fecha:** 2026-09-30.
+- **Contexto:** el plan personal actual no permite conectar un MCP personalizado con acciones de escritura directamente desde GESTOR OBJETOS, aunque la plataforma soporta file params en plugins.
+- **Decisión:** usar la integración Google Drive ya disponible en ChatGPT como transporte privado y efímero de bytes, con una cola técnica en el mismo spreadsheet canónico.
+- **No es una segunda fuente de verdad:** `Armario` sigue siendo canónico y R2 es el storage final. Drive se limpia después de cada éxito.
+- **Idempotencia:** `request_id` identifica la solicitud; el endpoint v0.3 conserva versionado/overwrite y compensación de storage↔Sheet.
+- **Evolución:** cuando una cuenta permita full MCP write, el staging podrá sustituirse por una tool con `fileParams` sin cambiar `uploadObjectsImage`, R2 ni el modelo de Armario.
