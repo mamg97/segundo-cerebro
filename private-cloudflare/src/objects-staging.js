@@ -193,10 +193,6 @@ async function ingestOne(env, getGoogleAccessToken, spreadsheetId, token, row, o
 }
 
 export async function processObjectsImageQueue(env,getGoogleAccessToken,overrides={}){
-  if(!env?.OBJECTS_MEDIA || typeof env.OBJECTS_MEDIA.put!=="function"){
-    console.info("[objects:staging]",{stage:"skipped",code:"OBJECTS_MEDIA_NOT_CONFIGURED"});
-    return {status:"media-not-configured",processed:0};
-  }
   const token=await getGoogleAccessToken(env);
   const spreadsheetId=await (overrides.resolveObjectsSpreadsheetId || resolveObjectsSpreadsheetId)(env,token);
   if(!spreadsheetId) return {status:"source-pending",processed:0};
