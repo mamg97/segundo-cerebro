@@ -2,7 +2,6 @@ import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-ca
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
-import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
@@ -4167,37 +4166,6 @@ export default {
       } catch (error) {
         console.warn("Objects read failed", String(error?.message || "OBJECTS_READ_ERROR"));
         return json({ ok: false, code: "OBJECTS_READ_FAILED" }, 502);
-      }
-    }
-
-    const internalObjectImageMatch = url.pathname.match(/^\/api\/internal\/objects\/([^/]+)\/image$/);
-    if (internalObjectImageMatch) {
-      const objetoId = decodeURIComponent(internalObjectImageMatch[1]);
-      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
-      try {
-        if (!(await isObjectsBridgeAuthenticated(request, env))) {
-          console.warn("Objects bridge request rejected", { objetoId, code: "BRIDGE_AUTH_REQUIRED" });
-          return json({ ok: false, code: "BRIDGE_AUTH_REQUIRED" }, 401);
-        }
-        const result = await uploadObjectsImage(request, env, getGoogleAccessToken, objetoId, {
-          authenticated: true
-        });
-        console.info("Objects bridge ingest completed", {
-          objetoId,
-          imageType: result?.image_type || null,
-          ok: result?.ok === true
-        });
-        return json(result, 201);
-      } catch (error) {
-        if (error instanceof ObjectsImageError) {
-          console.warn("Objects bridge ingest failed", { objetoId, code: error.code });
-          return json({ ok: false, code: error.code }, error.status);
-        }
-        console.warn("Objects bridge ingest failed", {
-          objetoId,
-          code: String(error?.message || "OBJECTS_BRIDGE_INGEST_FAILED")
-        });
-        return json({ ok: false, code: "OBJECTS_BRIDGE_INGEST_FAILED" }, 502);
       }
     }
 
