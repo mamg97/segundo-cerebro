@@ -504,7 +504,7 @@ async function fetchFinanceSummary(env) {
     fetchOptionalFinanceRows("CuentasCredito!A1:R200"),
     fetchOptionalFinanceRows("ECIProductos!A1:R200"),
     fetchOptionalFinanceRows("ECIHistorico!A1:N300"),
-    fetchOptionalFinanceRows("MovimientosCuenta!A1:M2000")
+    fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000")
   ]);
 
   let electricityRows = [];
