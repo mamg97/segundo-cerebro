@@ -256,19 +256,17 @@ Reglas:
 
 ## Objetos y armario
 
-- Nuevo dominio principal: `OBJETOS`.
-- Propietario funcional: `GESTOR OBJETOS Y ARMARIO`; contrato en `agents/OBJECTS.md`.
-- Fuente canónica: `SEGUNDO CEREBRO - OBJETOS`.
-- Creada en Drive el 2026-09-24 con contrato v0.1 y registrada como `OBJECTS_SHEET_ID` en `IntegracionesPrivadas`.
-- Pestañas: `Objetos`, `Armario`, `Looks`, `LookItems`, `Kits`, `KitItems`, `Listas`, `ListaItems`, `README`.
-- No se han añadido datos personales ficticios ni se ha creado una fuente paralela.
-- La web privada incluye navegación, tarjeta Home y workspace con `Resumen · Inventario · Armario · Looks · Kits · Listas`.
-- `GET /api/objects` está conectado al Sheet canónico; conserva `source-pending` solo como degradación si la fuente deja de resolverse.
-- `/api/state` puede transportar solo `objectsSummary`; el detalle se carga bajo demanda.
-- Contrato inicial v0.1 preparado para `Objetos`, `Armario`, `Looks/LookItems`, `Kits/KitItems` y `Listas/ListaItems`.
-- GESTOR EVENTOS no copia inventario: aporta contexto y referencia la lista de OBJETOS mediante `evento_ref/lista_id`.
-- Modo claro, oscuro, responsive y Modo demo usan los componentes/tokens comunes.
-- Assets frontend previstos: `v0.26.0`.
+- Dominio principal: `OBJETOS`; propietario funcional `GESTOR OBJETOS Y ARMARIO`; contrato en `agents/OBJECTS.md`.
+- Fuente canónica única: `SEGUNDO CEREBRO - OBJETOS`, registrada privadamente como `OBJECTS_SHEET_ID`; contrato vigente **v0.2**.
+- `Armario` sigue siendo extensión por `objeto_id` y ahora admite foto original, procesada, miniatura, estado de procesado, vista, color/patrón visual, categoría, capa y actualización visual.
+- Estados de procesado: `pendiente | procesada | revisar`. Capas: `superior | exterior | inferior | calzado | accesorio`.
+- `GET /api/objects` devuelve inventario + armario visual + looks/kits/listas + facetas. `/api/state` mantiene solo `objectsSummary`.
+- La UI privada incorpora **Armario visual**, filtros por categoría/marca/color/formalidad/temporada/oficina/frecuencia, ficha visual de prenda y **Combinador**.
+- El combinador guarda exclusivamente en `Looks + LookItems` mediante `POST /api/objects/look`, validando IDs y roles contra el armario vigente.
+- El procesado automático de imágenes todavía no existe: la arquitectura ya acepta `foto_original_url` y `foto_procesada_url`; una prenda sin recorte muestra placeholder y permanece `pendiente`.
+- GESTOR EVENTOS y futuros flujos de viaje/oficina/clima deben referenciar los mismos `objeto_id/look_id/lista_id`; no copiar inventario.
+- Modo claro/oscuro y responsive reutilizan los tokens actuales.
+- Assets del armario visual: `v0.40.0`.
 
 ## Navegación y Home v0.27.0
 
