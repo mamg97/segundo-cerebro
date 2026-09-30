@@ -238,7 +238,7 @@ async function fetchDeltaOperationsPage(env, options = {}) {
     return { summary, operations: [], offset, nextOffset: offset, hasMore: false };
   }
   const spreadsheetId = await resolveDeltaOperationsSheet(env, token);
-  const sheetName = "SEGUNDO CEREBRO - DELTA OPERACIONES HISTORICAS";
+  const sheetName = "Operaciones";
   const range = `'${sheetName}'!${page.a1}`;
   const values = await fetchGoogleSheetValues(token, spreadsheetId, range);
   return {
