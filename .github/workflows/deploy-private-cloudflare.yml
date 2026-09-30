@@ -117,8 +117,8 @@ jobs:
           fi
           if grep -Fq "R2 bucket 'segundo-cerebro-private-assets' not found" /tmp/worker-deploy.log; then
             echo "::warning::Objects media bucket is not provisioned yet. Deploying the application without OBJECTS_MEDIA so the rest of Segundo Cerebro remains available."
-            node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync("wrangler.bootstrap.jsonc","utf8")); delete x.r2_buckets; fs.writeFileSync("/tmp/wrangler.bootstrap.no-media.json", JSON.stringify(x,null,2));'
-            npx wrangler deploy --config /tmp/wrangler.bootstrap.no-media.json
+            node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync("wrangler.bootstrap.jsonc","utf8")); delete x.r2_buckets; fs.writeFileSync("wrangler.bootstrap.no-media.json", JSON.stringify(x,null,2));'
+            npx wrangler deploy --config wrangler.bootstrap.no-media.json
           else
             exit "$status"
           fi
