@@ -23,5 +23,10 @@
   ],
   "vars": {
     "PRIVATE_APP_ENABLED": "true"
+  },
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
   }
 }
