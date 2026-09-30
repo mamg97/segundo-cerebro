@@ -6,7 +6,7 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
-import { renderMidasVisualLab } from "./midas-lab.js?v=0.39.9";
+import { renderMidasVisualLab } from "./midas-lab.js?v=0.40.1";
 
 let state = mockState;
 let areaById = new Map();
@@ -4885,6 +4885,7 @@ const MIDAS_GROUPS = [
   ["diario_heredado", "Algoritmo genético original · S&P 500"],
   ["paper_nuevo", "Campaña nueva 2026 · EE. UU. · USD"],
   ["weekly_ml_demo", "Weekly ML · ensemble y expertos · USD"],
+  ["tfg_demo_adaptado", "TFG corregido 2026 · técnico + AHP + MAD · USD"],
   ["tfm_demo_adaptado", "TFM · modelos adaptados a cartera demo · EUR"],
   ["historica_pendiente", "Ideas históricas pendientes"]
 ];

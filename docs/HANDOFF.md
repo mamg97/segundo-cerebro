@@ -1115,3 +1115,13 @@ El Cron del Worker procesa hasta cuatro entradas por ciclo y converge en el mism
 - Drive staging es fallback/transporte transitorio, nunca fuente de verdad ni sustituto de R2.
 - No crear una segunda cola ni otro bucket.
 - No regenerar las cuatro imágenes ya preparadas.
+
+
+## MIDAS · TFG corregido 2026
+
+- `midas-paper-lab` incorpora la línea `tfg_corrected_2026`, grupo `tfg_demo_adaptado`.
+- Segundo Cerebro acepta ese grupo desde el adaptador privado de MIDAS y lo muestra tanto en la tabla general como en **Laboratorio vivo** bajo un bloque TFG propio.
+- La tarjeta usa exclusivamente `equity_history` publicado por el ledger paper; hasta que exista la primera señal/valoración forward mostrará estado programado, sin inventar curva.
+- Es la variante corregida del TFG 2021: técnico → multicriterio/AHP-style → retorno-MAD, con next-open, costes, fracciones y stop causal.
+- El original global de 20 mercados no se sustituye ni se presenta como ejecutado.
+- Asset app: `v0.40.1`; módulo MIDAS lab: `v0.40.1`.
