@@ -972,3 +972,10 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Tests cubren inexistencia, MIME, R2, actualización de Sheet, rollback, overwrite, miniatura WebP, formato de IDs y autenticación.
 - Runbook operativo: `docs/OBJECTS_IMAGE_INGEST.md`.
 - Contrato backend de OBJETOS: `0.3`. La UI de Armario no cambia: ya consume estas URLs y las reutiliza en tarjeta, ficha, combinador y mosaicos.
+
+
+## OBJETOS · provisionado R2
+
+- El bucket `segundo-cerebro-private-assets` se trata como infraestructura one-shot, no como recurso administrado en cada deploy.
+- El token normal de GitHub Actions conserva privilegios mínimos de deploy de Workers; no se amplía solo para listar/crear buckets.
+- El workflow ordinario ya no ejecuta `wrangler r2 bucket list/create`; despliega el Worker contra el binding declarado y fallará claramente si el bucket todavía no existe.
