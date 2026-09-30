@@ -22,12 +22,12 @@ Fuente privada canónica:
 
 Estado actual: **creada y registrada en la capa privada**.
 
-El Sheet contiene el contrato v0.1 y todavía no contiene objetos personales inventados. El Worker la resuelve por:
+El Sheet contiene el contrato v0.3. Git nunca contiene inventario ni imágenes reales. El Worker la resuelve por:
 1. `OBJECTS_SHEET_ID` privado, si está configurado;
 2. registro privado `IntegracionesPrivadas`;
 3. búsqueda exacta por título en Drive.
 
-## Contrato v0.2
+## Contrato v0.3
 
 El esquema puede ampliarse sin romper IDs existentes. Las pestañas previstas son:
 
@@ -233,6 +233,11 @@ La participación es compartida, pero la propiedad funcional no.
 - `/api/state` puede transportar únicamente `objectsSummary`.
 - `GET /api/objects` entrega el detalle estructurado bajo demanda, incluidos metadatos visuales y facetas de armario.
 - `POST /api/objects/look` guarda un look nuevo en la fuente canónica `Looks + LookItems`.
+- `POST /api/objects/:objeto_id/image` recibe `multipart/form-data` autenticado por Cloudflare Access con `image_type=original|processed|thumbnail` y un archivo `image`. Los bytes se guardan en R2 privado; el Sheet conserva únicamente la URL privada estable del mismo `objeto_id`.
+- `GET /api/objects/:objeto_id/image/:image_type?v=<version>` sirve el asset desde R2 a través del mismo Worker protegido; el bucket no necesita URL pública.
+- Una subida `processed` genera además una miniatura WebP de hasta 512 px en el lado largo y actualiza `foto_procesada_url`, `miniatura_url`, `estado_procesado` y `ultima_actualizacion_visual`.
+- El upload acepta PNG/JPEG/WebP hasta 8 MiB, valida firma binaria además de MIME, exige objeto y fila de Armario existentes, bloquea objetos retirados y requiere `overwrite=true` para sustituir una referencia ya canónica.
+- La escritura usa claves R2 versionadas. Primero sube el nuevo asset, después actualiza el Sheet; si la escritura canónica falla, borra los nuevos objetos R2. Tras un overwrite correcto, el asset anterior se limpia best-effort. Así el Sheet nunca apunta deliberadamente a un asset no creado.
 - El escritor valida que cada `objeto_id` exista en `Armario`, que los roles no se repitan y que el look tenga al menos `superior + inferior + calzado`; `exterior` y `accesorio` son opcionales.
 - Si la fuente no pudiera resolverse, el endpoint degrada a `status=source-pending`, arrays vacíos y `source.available=false`; con la fuente actual debe responder como conectada.
 
@@ -241,3 +246,5 @@ La participación es compartida, pero la propiedad funcional no.
 Este dominio puede contener números de serie, facturas, fotos, ubicaciones domésticas y valor económico. Se trata como `confidencial`.
 
 Git solo contiene código, contrato y estilos. Nunca contiene inventario real, fotos, números de serie, facturas, ubicaciones precisas ni identificadores privados de la fuente.
+
+R2 es persistencia binaria privada, no una segunda fuente de identidad. Las rutas físicas se derivan del `objeto_id` y de una versión técnica; la pertenencia y estado visual siguen gobernados por `Armario`.
