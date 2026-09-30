@@ -962,13 +962,13 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 
 ## OBJETOS · ingesta privada de imágenes v0.3
 
-- La fuente canónica sigue siendo exclusivamente `SEGUNDO CEREBRO - OBJETOS`; R2 almacena bytes privados, no entidades ni inventario.
-- Nuevo upload privado: `POST /api/objects/:objeto_id/image` con multipart, Cloudflare Access, PNG/JPEG/WebP y máximo 8 MiB.
-- Nuevo read privado: `GET /api/objects/:objeto_id/image/:image_type?v=<version>`. Las URLs guardadas en Armario son rutas same-origin estables y el bucket no es público.
+- La fuente canónica sigue siendo exclusivamente `SEGUNDO CEREBRO - OBJETOS`; Google Drive almacena bytes privados, no entidades ni inventario.
+- Storage binario: carpeta privada dedicada `SEGUNDO CEREBRO - OBJETOS MEDIA`, resuelta por título exacto con el OAuth Google ya existente; ningún ID privado se versiona.
+- Upload: `POST /api/objects/:objeto_id/image` con multipart, Cloudflare Access, PNG/JPEG/WebP y máximo 8 MiB.
+- Read: `GET /api/objects/:objeto_id/image/:image_type?v=<version>`. Las URLs guardadas en Armario son rutas same-origin estables y no exponen enlaces compartidos de Drive.
 - `processed` genera automáticamente una miniatura WebP de hasta 512 px y actualiza `foto_procesada_url`, `miniatura_url`, `estado_procesado` y timestamp.
-- El flujo usa claves R2 versionadas y rollback compensatorio si falla Google Sheets; overwrite es explícito y la versión anterior no se elimina hasta haber escrito la nueva referencia canónica.
+- El flujo usa nombres físicos versionados y rollback compensatorio si falla Google Sheets; overwrite es explícito y la versión anterior no se elimina hasta haber escrito la nueva referencia canónica.
 - Validaciones: objeto + fila Armario existentes, objeto no retirado, MIME + magic bytes, tamaño, ID seguro, filename saneado, metadata limitada y rechazo de URL remota como sustituto del archivo.
-- Se añade binding `OBJECTS_MEDIA` → bucket privado `segundo-cerebro-private-assets`; el workflow de producción provisiona el bucket antes del deploy.
-- Tests cubren inexistencia, MIME, R2, actualización de Sheet, rollback, overwrite, miniatura WebP, formato de IDs y autenticación.
-- Runbook operativo: `docs/OBJECTS_IMAGE_INGEST.md`.
-- Contrato backend de OBJETOS: `0.3`. La UI de Armario no cambia: ya consume estas URLs y las reutiliza en tarjeta, ficha, combinador y mosaicos.
+- Tests cubren inexistencia, MIME, storage, actualización de Sheet, rollback, overwrite, miniatura WebP, formato de IDs, traversal y autenticación.
+- Runbook: `docs/OBJECTS_IMAGE_INGEST.md`.
+- Contrato backend de OBJETOS: `0.3`. La UI de Armario no cambia: ya reutiliza las URLs en tarjeta, ficha, combinador y mosaicos.
