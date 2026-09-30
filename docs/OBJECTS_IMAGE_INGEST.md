@@ -4,7 +4,7 @@
 
 Cerrar el flujo de una prenda existente desde una imagen recibida/procesada hasta el Armario visual sin editar Google Sheets manualmente.
 
-La identidad sigue siendo siempre `objeto_id` en `SEGUNDO CEREBRO - OBJETOS`. R2 conserva bytes; no contiene un catálogo alternativo.
+La identidad sigue siendo siempre `objeto_id` en `SEGUNDO CEREBRO - OBJETOS`. El almacenamiento visual D1 conserva bytes y metadatos técnicos; no contiene un catálogo alternativo.
 
 ## Endpoints
 
@@ -12,15 +12,14 @@ La identidad sigue siendo siempre `objeto_id` en `SEGUNDO CEREBRO - OBJETOS`. R2
 
 `POST /api/objects/:objeto_id/image`
 
-Requiere Cloudflare Access y `multipart/form-data`.
+En la superficie interactiva requiere Cloudflare Access y `multipart/form-data`. Para server-to-server, el bridge usa el gateway dedicado `segundo-cerebro-objects-ingest`, que reenvía por Service Binding al mismo handler canónico y conserva la validación Bearer upstream.
 
 Campos:
-
-- `image`: archivo PNG, JPEG o WebP, máximo 8 MiB.
+- `image`: PNG, JPEG o WebP, máximo 8 MiB.
 - `image_type`: `original | processed | thumbnail`.
-- `objeto_id`: opcional en el formulario; si se envía debe coincidir con la ruta.
-- `overwrite`: `true` para sustituir explícitamente la referencia canónica actual.
-- `estado_procesado`: solo para `processed`; `procesada` por defecto o `revisar`.
+- `objeto_id`: opcional en formulario; si existe debe coincidir con la ruta.
+- `overwrite`: `true` para sustituir explícitamente la referencia activa.
+- `estado_procesado`: para `processed`; `procesada` por defecto o `revisar`.
 - opcionales: `vista_prenda`, `color_principal`, `patron`, `categoria_visual`, `capa`.
 
 Una subida `processed` genera además una miniatura WebP con lado largo máximo de 512 px.
@@ -29,24 +28,24 @@ Una subida `processed` genera además una miniatura WebP con lado largo máximo 
 
 `GET /api/objects/:objeto_id/image/:image_type?v=<version>`
 
-La URL se guarda en `Armario` y es estable para esa versión. El bucket R2 no tiene URL pública; la lectura pasa por el Worker privado y Cloudflare Access.
+La URL se guarda en `Armario` y es estable para esa versión. La lectura pasa por el Worker privado y Cloudflare Access.
 
 ## Flujo
 
 ```text
-GESTOR OBJETOS / herramienta autorizada
+GESTOR OBJETOS / ChatGPT bridge
         ↓
 archivo + objeto_id existente
         ↓
-Cloudflare Access
+gateway server-to-server o Cloudflare Access
         ↓
-POST image
+mismo upload canónico
         ↓
 validar objeto + Armario + MIME/firma + tamaño + overwrite
         ↓
-R2 privado (clave versionada)
+D1 privado: assets + chunks
         ↓
-si processed → WebP 512 px → R2 privado
+si processed → WebP 512 px → D1 privado
         ↓
 actualizar fila Armario
         ↓
@@ -57,74 +56,34 @@ web lee GET privado
 
 ## Consistencia y compensación
 
-No existe transacción distribuida entre R2 y Google Sheets. Se usa este orden:
-
+No existe transacción distribuida entre D1 y Google Sheets. Se usa este orden:
 1. validar la fuente canónica y la fila de Armario;
 2. escribir nuevos assets bajo claves versionadas;
 3. actualizar las referencias de la misma fila en Sheets;
 4. si el paso 3 falla, borrar los assets creados en el paso 2;
 5. si un overwrite termina bien, limpiar después las versiones anteriores reconocidas como propias.
 
-Nunca se sobreescribe in-place una clave R2 canónica. Así una referencia existente continúa siendo válida hasta que la nueva versión queda registrada.
+Nunca se sobreescribe in-place una clave canónica. La referencia anterior sigue siendo válida hasta registrar la nueva versión.
 
-## Seguridad
+## Seguridad y coste
 
-- Cloudflare Access protege lectura y escritura.
-- R2 no expone dominio público.
-- El Worker exige contexto de Access antes de procesar upload o lectura.
-- No se aceptan URLs externas como sustituto de `image`.
-- Se validan MIME declarado y firma binaria.
-- `objeto_id` permite solo caracteres seguros y nunca se usa un nombre de archivo para construir identidad.
+- La UI y lectura permanecen detrás de Cloudflare Access.
+- El gateway de ingesta no ofrece lectura; solo reenvía el endpoint esperado por Service Binding.
+- El Bearer server-to-server se verifica en el Worker principal mediante SHA-256; el secreto en claro vive fuera de Git.
+- No se aceptan URLs remotas en el endpoint canónico como sustituto de `image`.
+- Se validan MIME declarado, firma binaria, `objeto_id` y tamaño.
 - El filename del cliente se sanea y solo queda como metadata técnica privada.
 - No se registran bytes, cookies, tokens OAuth ni credenciales.
-
-## Invocación programática
-
-Un bridge autorizado puede usar una identidad de servicio de Cloudflare Access. Las credenciales viven fuera de Git y se entregan a Access, que inyecta el contexto autenticado que exige el Worker.
-
-Ejemplo conceptual:
-
-```bash
-curl --fail-with-body \
-  -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
-  -F "image_type=processed" \
-  -F "image=@/ruta/privada/prenda.webp;type=image/webp" \
-  -F "estado_procesado=procesada" \
-  "https://<host-privado>/api/objects/obj-example-001/image"
-```
-
-Respuesta:
-
-```json
-{
-  "ok": true,
-  "objeto_id": "obj-example-001",
-  "image_type": "processed",
-  "url": "/api/objects/obj-example-001/image/processed?v=<version>",
-  "thumbnail_url": "/api/objects/obj-example-001/image/thumbnail?v=<version>",
-  "estado_procesado": "procesada",
-  "updated_at": "<ISO-8601>"
-}
-```
+- El almacén visual usa el D1 ya provisionado. No requiere activar R2.
+- Salvaguarda interna: 200 MiB totales para media de OBJETOS. No se provisiona almacenamiento de pago automáticamente.
 
 ## GESTOR OBJETOS
 
 El gestor debe:
-
 1. resolver una prenda contra un `objeto_id` ya existente;
 2. generar/obtener el recorte fuera del inventario canónico;
 3. enviar el archivo al endpoint con `image_type=processed`;
 4. considerar válida la operación solo si recibe `ok=true`;
-5. volver a consultar `GET /api/objects` para verificar el estado final.
+5. volver a consultar `GET /api/objects` o `Armario` para verificar el estado final.
 
-No debe escribir manualmente las tres URLs del Sheet, crear otro objeto ni subir la imagen a Git.
-
-
-## Provisionado de R2
-
-El bucket `segundo-cerebro-private-assets` es infraestructura persistente y se crea una sola vez. El workflow normal de despliegue no debe intentar administrarlo en cada push.
-
-La credencial estándar de GitHub Actions está limitada al despliegue de Workers y no necesita permisos de administración de R2. Para el alta inicial del bucket se requiere una credencial de Cloudflare con permiso de escritura/administración de R2 o creación manual desde el dashboard.
-
-Después del alta, `wrangler deploy --config wrangler.bootstrap.jsonc` enlaza el binding `OBJECTS_MEDIA` al bucket existente. Si el bucket no existe, el deploy debe fallar de forma explícita en lugar de intentar provisionarlo silenciosamente.
+No debe escribir manualmente las URLs del Sheet, crear otro objeto, subir bytes a Git ni activar R2.

@@ -1003,119 +1003,23 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - El flujo final sigue bloqueado únicamente hasta provisionar el bucket R2 `segundo-cerebro-private-assets`.
 
 
-## OBJETOS visual · estado exacto para relevo (ChatGPT bridge + R2)
+## OBJETOS visual · estado exacto para relevo (ChatGPT bridge + D1, coste 0)
 
-Prioridad activa. No rehacer el pipeline visual ni cambiar el contrato OBJETOS v0.3 salvo necesidad estricta.
-
-### Estado canónico ya terminado
-
-- Fuente de verdad: `SEGUNDO CEREBRO - OBJETOS`.
-- Endpoint canónico:
-  - `POST /api/objects/:objeto_id/image`
-  - `GET /api/objects/:objeto_id/image/:image_type?v=<version>`
-- El upload canónico valida objeto, estado, MIME + magic bytes, tamaño, overwrite, genera thumbnail WebP para `processed`, escribe R2 con claves versionadas y actualiza `Armario` con compensación si falla Sheets.
-- La UI de Armario Visual, ficha, combinador y mosaicos consume `miniatura_url → foto_procesada_url → foto_original_url → fallback`.
-- No sustituir R2 por D1, Drive, Git ni URLs públicas.
-
-### Bridge ChatGPT · cerrado en código y desplegado
-
-El bridge directo ya está fusionado en `main`. La discrepancia del relevo anterior quedó corregida recuperando exactamente la implementación ya validada que había sido eliminada al introducir el staging de Drive; no se rehizo el pipeline.
-
-Componentes activos:
-- `private-cloudflare/src/objects-bridge-auth.js`: Bearer machine-to-machine contra `OBJECTS_BRIDGE_UPSTREAM_SHA256`.
-- `POST /api/internal/objects/:objeto_id/image`: reutiliza `uploadObjectsImage(..., { authenticated: true })`; no duplica la lógica v0.3.
-- `objects-chatgpt-bridge/`: servicio Node mínimo para GPT Actions.
-- `POST /ingest-object-image`: acepta exactamente un `openaiFileIdRefs`, descarga el fichero temporal de OpenAI, valida host/MIME/tamaño y reenvía multipart al Worker.
-- No persiste binarios en Railway, no usa base64 y no guarda credenciales de Cloudflare Access en ChatGPT.
-- Autenticaciones separadas:
-  - ChatGPT Action → Railway: `CHATGPT_ACTION_API_KEY`
-  - Railway → Segundo Cerebro: `OBJECTS_UPSTREAM_SECRET`
-  - Worker: solo `SHA-256(OBJECTS_UPSTREAM_SECRET)`; no versionar ni documentar los valores secretos.
-- Schema Action publicado en `docs/objects-chatgpt-action.openapi.yaml`.
-- CI de bridge/auth, suite general, build y dry-run Wrangler pasaron antes del merge.
-- PR de cierre del bridge: #128; merge a `main` completado.
-
-### Railway · operativo
-
-Proyecto privado: `segundo-cerebro-objects-bridge`.
-
-Servicio: `objects-chatgpt-bridge`.
-
-Estado confirmado el 2026-09-30:
-- repo: `mamg97/segundo-cerebro`
-- branch: `main`
-- root directory: `objects-chatgpt-bridge`
-- start: `npm start`
-- healthcheck: `/health`
-- dominio: `https://objects-chatgpt-bridge-production.up.railway.app`
-- secretos rotados server-side y variables no secretas configuradas;
-- último redeploy post-merge: `SUCCESS`;
-- Railway confirmó `[1/1] Healthcheck succeeded!`.
-
-No copiar ni mostrar valores secretos en documentación o chat.
-
-### R2 · único bloqueo externo actual
-
-Bucket privado requerido:
-
-`segundo-cerebro-private-assets`
-
-Binding esperado en el Worker principal:
-
-`OBJECTS_MEDIA`
-
-Estado comprobado:
-- el deploy ordinario intentó resolver el binding y Cloudflare devolvió `R2 bucket 'segundo-cerebro-private-assets' not found` (`10085`);
-- el fallback seguro desplegó el resto de Segundo Cerebro sin `OBJECTS_MEDIA`;
-- se añadió el workflow one-shot `.github/workflows/provision-objects-r2-once.yml` para crear/verificar el bucket y desplegar el Worker con el binding usando los secretos ya existentes de GitHub Actions;
-- ese workflow llegó a Cloudflare pero falló al crear el bucket con `Authentication error [code: 10000]`;
-- causa concreta: el `CLOUDFLARE_API_TOKEN` actual puede desplegar Workers pero no tiene permiso para administrar R2.
-
-Acción externa mínima pendiente:
-1. conceder al token usado por GitHub Actions permiso `Workers R2 Storage Write` sobre la cuenta correspondiente, o reemplazar `CLOUDFLARE_API_TOKEN` por un token equivalente que lo tenga;
-2. reejecutar `Provision Objects R2 once`;
-3. exigir que `wrangler r2 bucket info segundo-cerebro-private-assets` pase y que el deploy del Worker principal resuelva `env.OBJECTS_MEDIA` sin fallback;
-4. tras éxito, retirar el workflow one-shot si ya no aporta valor.
-
-### Cuatro ingestas reales · preparadas, no duplicar
-
-Las cuatro imágenes generadas originales ya están localizadas y copiadas en la carpeta privada `SEGUNDO CEREBRO - OBJETOS STAGING`. Se verificaron nombre y tamaño contra las originales.
-
-`ImageIngestQueue` ya contiene exactamente cuatro solicitudes `pending`, creadas el 2026-09-30, una por objeto:
-- `image-gen-1(2).png` → `obj-shirt-scalpers-skyblue-001` → `processed`
-- `image-gen-2(2).png` → `obj-sweater-poloclub-quarterzip-grey-001` → `processed`
-- `image-gen-3.png` → `obj-chino-zara-navy-001` → `processed`
-- `image-gen-4.png` → `obj-sneakers-adidas-samba-blue-001` → `processed`
-
-No volver a copiar estos ficheros ni insertar filas nuevas.
-
-El Cron del Worker procesa hasta cuatro entradas por ciclo y converge en el mismo `uploadObjectsImage`. Actualmente las cuatro permanecen `pending` porque `OBJECTS_MEDIA` no está configurado. `Armario` mantiene vacías sus URLs visuales, que es el estado correcto mientras no exista R2.
-
-### Siguiente secuencia exacta
-
-1. Resolver exclusivamente el permiso R2 del token Cloudflare.
-2. Reejecutar `Provision Objects R2 once` y verificar bucket + binding real.
-3. Confirmar que el siguiente ciclo procesa las cuatro filas existentes, sin crear otras:
-   - `status=done`
-   - `error_code` vacío
-   - staging enviado a papelera tras éxito.
-4. Exigir en cada objeto:
-   - `foto_procesada_url`
-   - `miniatura_url`
-   - `estado_procesado=procesada`
-   - metadatos visuales previstos.
-5. Verificar lectura R2 mediante `GET /api/objects/:objeto_id/image/processed?v=...` y thumbnail.
-6. Comprobar `GET /api/objects` y visualización en Armario/ficha/combinador/mosaicos.
-7. Conectar el schema de `docs/objects-chatgpt-action.openapi.yaml` al GPT personalizado GESTOR OBJETOS con la credencial Action correspondiente; una conversación normal de Proyecto no debe asumir que puede invocar una Action personalizada no instalada.
-8. Solo entonces declarar cerrado el criterio final: GESTOR OBJETOS entrega directamente una imagen generada en ChatGPT + `objeto_id` y Segundo Cerebro la ingiere sin intervención manual.
-
-### Criterio de no-regresión
-
-- No tocar el contrato OBJETOS v0.3 para resolver R2 o la Action.
-- Drive staging es fallback/transporte transitorio, nunca fuente de verdad ni sustituto de R2.
-- No crear una segunda cola ni otro bucket.
-- No regenerar las cuatro imágenes ya preparadas.
-
+- **Cerrado el 2026-09-30.** La fuente canónica de identidad y referencias sigue siendo exclusivamente `SEGUNDO CEREBRO - OBJETOS`.
+- Se descartó R2 porque su activación exigía habilitar una suscripción pay-as-you-go, incompatible con la regla operativa de no asumir posibilidad de cobro.
+- Los bytes visuales se persisten en el D1 privado ya existente mediante `objects_media_assets` + `objects_media_chunks`; el adaptador conserva el contrato tipo-object-store y las rutas same-origin existentes.
+- El pipeline OBJETOS v0.3 no cambia de cara al consumidor: `POST /api/objects/:objeto_id/image` y `GET /api/objects/:objeto_id/image/:image_type?v=<version>`.
+- Límite funcional por imagen: 8 MiB. Salvaguarda interna del almacén visual D1: 200 MiB totales; no se contrata almacenamiento adicional automáticamente.
+- Para server-to-server se desplegó `segundo-cerebro-objects-ingest`, un Worker mínimo público sin lectura de datos que reenvía el multipart mediante Service Binding a `segundo-cerebro`. La autorización real sigue siendo el Bearer upstream verificado por SHA-256 en el Worker principal.
+- Railway `objects-chatgpt-bridge` usa ese gateway; `/health` queda operativo. Los secretos permanecen fuera de Git.
+- Las cuatro imágenes reales del armario se ingirieron end-to-end con estado `procesada`, URL procesada y miniatura versionadas:
+  - `obj-shirt-scalpers-skyblue-001`
+  - `obj-sweater-poloclub-quarterzip-grey-001`
+  - `obj-chino-zara-navy-001`
+  - `obj-sneakers-adidas-samba-blue-001`
+- `Armario` quedó actualizado para las cuatro. El runner temporal de Railway se desactivó y `OBJECTS_SEED_JOBS` quedó vacío después de la validación.
+- El staging de Drive queda únicamente como mecanismo transitorio/fallback. Las cuatro filas históricas de `ImageIngestQueue` registran el intento fallido previo `OBJECTS_STAGING_META_403`; no deben duplicarse ni interpretarse como fallo del estado visual actual.
+- No activar R2 ni introducir un proveedor de pago para OBJETOS sin una decisión arquitectónica nueva y aprobación explícita del usuario.
 
 ## MIDAS · TFG corregido 2026
 

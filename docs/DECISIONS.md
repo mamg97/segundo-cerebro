@@ -399,18 +399,18 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Motivo:** habilitar armario visual, outfits y futuras recomendaciones de oficina/viaje/clima sin romper IDs, historial ni propiedad funcional del dominio.
 
 
-## D-042 — Assets visuales de Armario usan R2 privado
+## D-042 — Assets visuales de Armario usan D1 privado con coste operativo cero
 
-- **Estado:** aceptada e implementada.
+- **Estado:** aceptada e implementada; sustituye la variante inicial basada en R2.
 - **Fecha:** 2026-09-30.
-- **Decisión:** almacenar original, procesada y miniatura de las prendas en un bucket R2 privado ligado al Worker principal. `SEGUNDO CEREBRO - OBJETOS / Armario` continúa siendo la única fuente canónica de identidad, pertenencia, estado y referencia visual activa.
-- **Lectura:** el Sheet guarda rutas same-origin versionadas `/api/objects/:objeto_id/image/:tipo?v=<version>`; R2 no expone dominio público ni URLs firmadas que caduquen.
-- **Escritura:** `POST /api/objects/:objeto_id/image` recibe multipart autenticado por Cloudflare Access, valida objeto, estado, MIME/firma, tamaño y overwrite, persiste en R2 y actualiza la fila existente de Armario.
-- **Miniaturas:** una subida `processed` genera automáticamente WebP con lado largo máximo de 512 px dentro del Worker.
-- **Consistencia:** las claves son versionadas; si falla la actualización del Sheet se borran los nuevos assets. En reemplazos, el asset anterior no se limpia hasta que la nueva referencia canónica ya ha sido escrita.
-- **No duplicación:** ni R2 ni D1 mantienen catálogo de prendas; el nombre físico del asset jamás sustituye `objeto_id`.
-- **Motivo:** cerrar el flujo foto → derivado → persistencia → Armario visual sin intervención manual en Sheets y sin abrir almacenamiento público.
-
+- **Decisión:** almacenar original, procesada y miniatura en el D1 privado ya existente mediante tablas técnicas de assets/chunks, manteniendo `SEGUNDO CEREBRO - OBJETOS / Armario` como única fuente canónica de identidad, pertenencia, estado y referencia visual activa.
+- **Motivo:** R2 exige activar una suscripción pay-as-you-go. La regla operativa del sistema es no introducir servicios con posibilidad de cobro cuando existe una alternativa ya provisionada y suficiente.
+- **Contrato:** se mantienen las rutas versionadas `/api/objects/:objeto_id/image/:tipo?v=<version>`; el cambio de almacenamiento no altera OBJETOS v0.3 ni obliga a la UI a conocer D1.
+- **Escritura:** `POST /api/objects/:objeto_id/image` conserva validación de objeto, MIME/firma, tamaño, overwrite, miniatura WebP y compensación si falla Sheets.
+- **Server-to-server:** `segundo-cerebro-objects-ingest` usa Service Binding al Worker principal para evitar la pantalla de Cloudflare Access; el Bearer upstream continúa verificándose dentro del Worker principal mediante hash SHA-256.
+- **Límites:** máximo funcional de 8 MiB por archivo y salvaguarda interna de 200 MiB para el almacén visual D1.
+- **No duplicación:** D1 guarda bytes y metadatos técnicos de almacenamiento, no un catálogo de prendas. El Sheet sigue siendo la autoridad de `objeto_id` y referencias activas.
+- **Prohibición vigente:** no activar R2 ni migrar a almacenamiento de pago sin una nueva decisión explícita.
 
 ## D-041 — Bridge de imágenes ChatGPT mediante staging efímero
 
