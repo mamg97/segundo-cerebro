@@ -518,17 +518,9 @@ async function appendSheetRows(spreadsheetId, token, tab, rows) {
   if (!response.ok) throw new Error("GOOGLE_SHEETS_APPEND_" + response.status + "_" + tab);
 }
 
-export async function createObjectsLook(env, getGoogleAccessToken, payload = {}) {
-  if (!hasObjectsGoogleConfig(env)) throw new Error("OBJECTS_NOT_CONFIGURED");
-  const token = await getGoogleAccessToken(env);
-  const spreadsheetId = await resolveSpreadsheetId(env, token);
-  if (!spreadsheetId) throw new Error("OBJECTS_SOURCE_PENDING");
-
-  const current = await fetchObjectsSummary(env, getGoogleAccessToken);
-  const wardrobe = Array.isArray(current.value?.wardrobe) ? current.value.wardrobe : [];
-  const byId = new Map(wardrobe.map((item) => [String(item.objectId), item]));
-  const rawItems = Array.isArray(payload.items) ? payload.items : [];
-  const normalized = rawItems
+export function validateObjectsLookSelection(wardrobe = [], rawItems = []) {
+  const byId = new Map((Array.isArray(wardrobe) ? wardrobe : []).map((item) => [String(item.objectId), item]));
+  const normalized = (Array.isArray(rawItems) ? rawItems : [])
     .map((item) => ({
       objectId: String(item?.objectId || "").trim(),
       role: String(item?.role || "").trim().toLowerCase()
@@ -550,6 +542,18 @@ export async function createObjectsLook(env, getGoogleAccessToken, payload = {})
   for (const required of ["superior", "inferior", "calzado"]) {
     if (!seenRoles.has(required)) throw new Error("INVALID_OBJECTS_LOOK_INCOMPLETE");
   }
+  return normalized;
+}
+
+export async function createObjectsLook(env, getGoogleAccessToken, payload = {}) {
+  if (!hasObjectsGoogleConfig(env)) throw new Error("OBJECTS_NOT_CONFIGURED");
+  const token = await getGoogleAccessToken(env);
+  const spreadsheetId = await resolveSpreadsheetId(env, token);
+  if (!spreadsheetId) throw new Error("OBJECTS_SOURCE_PENDING");
+
+  const current = await fetchObjectsSummary(env, getGoogleAccessToken);
+  const wardrobe = Array.isArray(current.value?.wardrobe) ? current.value.wardrobe : [];
+  const normalized = validateObjectsLookSelection(wardrobe, payload.items);
 
   const now = new Date();
   const dateKey = now.toISOString().slice(0, 10);
