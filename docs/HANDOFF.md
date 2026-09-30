@@ -1029,3 +1029,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Es la variante corregida del TFG 2021: técnico → multicriterio/AHP-style → retorno-MAD, con next-open, costes, fracciones y stop causal.
 - El original global de 20 mercados no se sustituye ni se presenta como ejecutado.
 - Asset app: `v0.40.1`; módulo MIDAS lab: `v0.40.1`.
+
+
+## Finanzas · cuentas de crédito y Financiera ECI v0.40.2
+
+- La capa privada financiera incorpora `CuentasCredito` para modelar tarjetas/financieras con saldo propio sin tratarlas como liquidez bancaria.
+- Para Financiera El Corte Inglés se añaden `ECIProductos` y `ECIHistorico`: separan revolving, aplazamientos, responsable económico, reembolsos de terceros y conciliación mensual.
+- `CorteIngles` es una vista privada de control dentro del Sheet financiero, alimentada por esas tablas; no crea una fuente de verdad nueva.
+- El Worker lee estas pestañas de forma opcional y expone `creditAccounts` + `creditHistory` dentro del estado financiero privado.
+- Home incorpora un panel **Crédito · El Corte Inglés** y un detalle con saldos, productos activos/cerrados e histórico de recibos.
+- Regla canónica: un recibo de una financiera nunca se clasifica como un único gasto sin separar revolving, aplazamientos y reembolsos.
+- Ningún saldo, extracto ni importe real se versiona en Git; toda cifra sigue residiendo exclusivamente en la fuente privada.
+- Assets: `app.js?v=0.40.2`, `styles.css?v=0.40.2`.
