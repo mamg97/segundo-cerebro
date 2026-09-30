@@ -6025,11 +6025,13 @@ function renderBudgetCategoryDetail(item, currency) {
   const sourceStatus = String(item.sourceStatus || item.source_status || "").toUpperCase();
   const sourceLabel = sourceStatus === "PROVISIONAL_CHAT"
     ? "Pendiente de conciliar"
-    : sourceStatus === "RECONCILIADO_SHEET"
+    : sourceStatus === "RECONCILIADO_SHEET" || sourceStatus === "RECONCILIADO_SANTANDER" || sourceStatus === "RECONCILIADO_MAESTRO_SANTANDER"
       ? "Conciliado"
-      : sourceStatus === "DERIVADO"
-        ? "Derivado"
-        : "";
+      : sourceStatus === "CONFIRMADO_EXTRACTOS_ECI" || sourceStatus === "CONFIRMADO_EXTRACTO_ECI"
+        ? "Confirmado · extractos"
+        : sourceStatus === "DERIVADO"
+          ? "Derivado"
+          : "";
 
   const normalizedId = normalizeForMatch(item.id || "");
   const normalizedTitle = normalizeForMatch(item.title || "");
