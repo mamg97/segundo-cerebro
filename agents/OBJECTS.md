@@ -27,7 +27,7 @@ El Sheet contiene el contrato v0.1 y todavía no contiene objetos personales inv
 2. registro privado `IntegracionesPrivadas`;
 3. búsqueda exacta por título en Drive.
 
-## Contrato inicial v0.1
+## Contrato v0.2
 
 El esquema puede ampliarse sin romper IDs existentes. Las pestañas previstas son:
 
@@ -82,8 +82,26 @@ Campos específicos:
 - `veces_usado` / `frecuencia_uso`
 - `compatible_con`
 - `notas`
+- `foto_original_url`
+- `foto_procesada_url`
+- `miniatura_url`
+- `estado_procesado`: `pendiente | procesada | revisar`
+- `vista_prenda`
+- `color_principal`
+- `patron`
+- `categoria_visual`
+- `capa`: `superior | exterior | inferior | calzado | accesorio`
+- `ultima_actualizacion_visual`
 
-Una prenda no debe existir solo en Armario: primero debe existir como objeto.
+Una prenda no debe existir solo en Armario: primero debe existir como objeto. `Objetos.foto_url` se conserva como referencia/fallback histórico; las imágenes específicas de armario viven en la extensión `Armario`.
+
+### Regla visual
+
+- La UI prioriza `miniatura_url → foto_procesada_url → foto_original_url → Objetos.foto_url`.
+- Una URL ausente no se sustituye por una imagen inventada: se muestra placeholder.
+- `estado_procesado` vacío se interpreta como `procesada` si existe recorte, y como `pendiente` en otro caso.
+- La `capa` puede inferirse temporalmente desde `tipo_prenda` para registros históricos; el campo explícito del Sheet tiene prioridad.
+- El pipeline automático de eliminación de fondo no es fuente de verdad: solo produce derivados visuales que vuelven a referenciar el mismo `objeto_id`.
 
 ### `Looks` + `LookItems`
 
@@ -213,8 +231,10 @@ La participación es compartida, pero la propiedad funcional no.
 ## API privada
 
 - `/api/state` puede transportar únicamente `objectsSummary`.
-- `GET /api/objects` entrega el detalle estructurado bajo demanda.
-- Si en el futuro la fuente no pudiera resolverse, el endpoint degrada a `status=source-pending`, arrays vacíos y `source.available=false`; con la fuente actual debe responder como conectada.
+- `GET /api/objects` entrega el detalle estructurado bajo demanda, incluidos metadatos visuales y facetas de armario.
+- `POST /api/objects/look` guarda un look nuevo en la fuente canónica `Looks + LookItems`.
+- El escritor valida que cada `objeto_id` exista en `Armario`, que los roles no se repitan y que el look tenga al menos `superior + inferior + calzado`; `exterior` y `accesorio` son opcionales.
+- Si la fuente no pudiera resolverse, el endpoint degrada a `status=source-pending`, arrays vacíos y `source.available=false`; con la fuente actual debe responder como conectada.
 
 ## Privacidad
 
