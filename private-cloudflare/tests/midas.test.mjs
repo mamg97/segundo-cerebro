@@ -11,7 +11,14 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
     last_equity: 101000, day_return_pct: 1, return_pct: 1,
     equity_history: [{ date: "2026-09-28", nav: 100000 }, { date: "2026-09-29", nav: 101000 }], note: "Demo"
   };
-  const dashboard = { schema_version: 1, generated_at_utc: "2026-09-29T23:45:00Z", tracks: [row] };
+  const tfg = {
+    id: "tfg_corrected_2026", label: "TFG corregido 2026", provenance: "TFG 2021 · arquitectura portada",
+    group: "tfg_demo_adaptado", status: "demo_con_diario",
+    first_session: "2026-10-02", last_session: "2026-10-09", currency: "USD",
+    last_equity: 100500, day_return_pct: .5, return_pct: .5,
+    equity_history: [{ date: "2026-10-02", nav: 100000 }, { date: "2026-10-09", nav: 100500 }], note: "Paper"
+  };
+  const dashboard = { schema_version: 1, generated_at_utc: "2026-09-29T23:45:00Z", tracks: [row, tfg] };
   let requests = 0;
   const fetcher = async (url) => {
     requests += 1;
@@ -22,6 +29,8 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
   assert.equal(first.dashboard.tracks[0].day_return_pct, 1);
   assert.equal(first.dashboard.tracks[0].provenance, row.provenance);
   assert.deepEqual(first.dashboard.tracks[0].equity_history, row.equity_history);
+  assert.equal(first.dashboard.tracks[1].group, "tfg_demo_adaptado");
+  assert.equal(first.dashboard.tracks[1].return_pct, .5);
   assert.equal(first.stale, false);
   await fetchMidasDashboard(fetcher, 1_001_000);
   assert.equal(requests, 1);
