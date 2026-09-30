@@ -241,15 +241,14 @@ function renderWorkspace(payload, initialView = "inventory") {
       'data-name="' + escapeHtml((item.name || "").toLocaleLowerCase("es")) + '" ' +
       'data-location="' + escapeHtml(item.location || "Otros") + '" ' +
       'data-category="' + escapeHtml(item.categoryLabel || "Otros") + '" ' +
-      'data-stock="' + escapeHtml(item.stockStatus || "unknown") + '" ' +
-      'style="--stock-progress:' + stockProgress(item.stockStatus) + '%">' +
+      'data-stock="' + escapeHtml(item.stockStatus || "unknown") + '">' +
         '<span class="pantry-product-top"><span class="pantry-product-category">' + escapeHtml(item.categoryLabel || "Otros") + '</span>' +
         '<span class="stock-chip stock-' + escapeHtml(item.stockStatus || "unknown") + '">' + escapeHtml(stockLabel(item.stockStatus)) + '</span></span>' +
         '<strong class="pantry-product-name">' + escapeHtml(item.name || "Producto") + '</strong>' +
         '<span class="pantry-product-brand">' + escapeHtml([item.brand, item.format].filter(Boolean).join(" · ") || "Sin marca/formato") + '</span>' +
         '<span class="pantry-product-meta"><span>' + escapeHtml(item.location || "Otros") + ' · ' + escapeHtml(quantityLabel(item)) + '</span>' +
         '<strong>' + escapeHtml(money(item.latestPrice?.price, currency)) + '</strong></span>' +
-        '<span class="pantry-stock-track"><i></i></span>' +
+        '<progress class="pantry-stock-track" max="100" value="' + stockProgress(item.stockStatus) + '" aria-label="Nivel aproximado de stock"></progress>' +
         '<span class="pantry-product-foot">' + (item.confidence && String(item.confidence).toLowerCase() !== "alta" ? "≈ cantidad estimada · " : "") + (low ? "Conviene revisar" : "Abrir ficha") + '</span>' +
       '</button>';
   }).join("");

@@ -63,6 +63,7 @@ jobs:
           node --check src/pantry.js
           node --check src/shopping-sync.js
           node --check scripts/configure-shopping-reminders.mjs
+          node --check scripts/web-audit.mjs
           node --check src/objects.js
           node --check src/objects-images.js
           node --check src/objects-media-d1.js

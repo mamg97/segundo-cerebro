@@ -57,6 +57,8 @@ jobs:
 
       - run: node --check scripts/configure-shopping-reminders.mjs
 
+      - run: node --check scripts/web-audit.mjs
+
       - run: node --check src/objects.js
       - run: node --check src/objects-images.js
       - run: node --check src/objects-media-d1.js
