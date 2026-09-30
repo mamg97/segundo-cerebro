@@ -1,6 +1,7 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
+import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
@@ -4165,6 +4166,37 @@ export default {
       } catch (error) {
         console.warn("Objects read failed", String(error?.message || "OBJECTS_READ_ERROR"));
         return json({ ok: false, code: "OBJECTS_READ_FAILED" }, 502);
+      }
+    }
+
+    const objectImageMatch = url.pathname.match(/^\/api\/objects\/([^/]+)\/image(?:\/(original|processed|thumbnail))?$/);
+    if (objectImageMatch) {
+      const objetoId = decodeURIComponent(objectImageMatch[1]);
+      const imageType = objectImageMatch[2] || null;
+      try {
+        if (imageType) {
+          if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+          const response = await readObjectsImage(request, env, objetoId, imageType);
+          return withSecurityHeaders(response);
+        }
+        if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+        const result = await uploadObjectsImage(request, env, getGoogleAccessToken, objetoId);
+        return json(result, 201);
+      } catch (error) {
+        if (error instanceof ObjectsImageError) {
+          console.warn("Objects image request failed", {
+            objetoId,
+            imageType: imageType || "upload",
+            code: error.code
+          });
+          return json({ ok: false, code: error.code }, error.status);
+        }
+        console.warn("Objects image request failed", {
+          objetoId,
+          imageType: imageType || "upload",
+          code: String(error?.message || "OBJECTS_IMAGE_ERROR")
+        });
+        return json({ ok: false, code: "OBJECTS_IMAGE_FAILED" }, 502);
       }
     }
 
