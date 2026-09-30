@@ -5883,6 +5883,41 @@ function renderWealthAllocation(wealth, fallbackCurrency = "EUR") {
     </section>`;
 }
 
+function renderAccountTransactions(transactions, accountId = "santander-comun", currency = "EUR") {
+  const rows = (Array.isArray(transactions) ? transactions : [])
+    .filter((item) => item?.accountId === accountId)
+    .slice(0, 24);
+  if (!rows.length) return "";
+
+  return `
+    <section class="account-transactions-section">
+      <div class="account-transactions-heading">
+        <div>
+          <p class="context-label">Movimientos bancarios</p>
+          <h3>Santander · últimos registros</h3>
+        </div>
+        <span>Fuente RAW conciliada</span>
+      </div>
+      <div class="account-transactions-scroll" role="region" aria-label="Últimos movimientos de Santander" tabindex="0">
+        <table class="account-transactions-table">
+          <thead><tr><th>Fecha</th><th>Concepto</th><th>Importe</th><th>Saldo</th></tr></thead>
+          <tbody>${rows.map((item) => {
+            const amount = firstFinite(item.amount);
+            const balance = firstFinite(item.balanceAfter);
+            const tone = amount === null ? "neutral" : amount > 0 ? "positive" : amount < 0 ? "negative" : "neutral";
+            return `
+              <tr>
+                <td>${escapeHtml(formatFinanceDate(item.operationDate, item.operationDate || "—"))}</td>
+                <td title="${escapeHtml(item.description || "")}">${escapeHtml(item.description || "—")}</td>
+                <td class="account-transaction-amount is-${tone}">${amount === null ? "—" : formatMoney(amount, item.currency || currency)}</td>
+                <td>${balance === null ? "—" : formatMoney(balance, item.currency || currency)}</td>
+              </tr>`;
+          }).join("")}</tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
 function openBudgetDetail() {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
@@ -5902,6 +5937,7 @@ function openBudgetDetail() {
   const currency = monthly.currency || "EUR";
   const categories = Array.isArray(monthly.categories) ? monthly.categories : [];
   const liquidityAccounts = Array.isArray(monthly.liquidityAccounts) ? monthly.liquidityAccounts : [];
+  const accountTransactions = Array.isArray(finance.accountTransactions) ? finance.accountTransactions : [];
   const groups = ["Común", "Miguel", "Andrea"];
 
   const grouped = Object.fromEntries(groups.map((name) => [name, []]));
@@ -5924,8 +5960,9 @@ function openBudgetDetail() {
         <div><span>Libre Andrea</span><strong>${andreaNet === null ? "—" : formatMoney(andreaNet, currency)}</strong></div>
         <div><span>Libre conjunto</span><strong>${jointNet === null ? "—" : formatMoney(jointNet, currency)}</strong></div>
       </div>
-      <p class="budget-net-note">Estos netos personales se muestran aparte y no se mezclan con el presupuesto común.</p>
+      <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
+      ${renderAccountTransactions(accountTransactions, "santander-comun", currency)}
       ${categories.length ? `<div class="budget-groups">
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>` : ""}
@@ -5965,7 +6002,7 @@ function renderBudgetGroup(name, items, currency) {
           <span><b>${formatMoney(totals.budgeted, currency)}</b> presupuesto</span>
           <span><b>${formatMoney(totals.spent, currency)}</b> gastado</span>
           <span><b>${formatMoney(totals.committed, currency)}</b> comprometido</span>
-          <span><b>${formatMoney(totals.remaining, currency)}</b> libre</span>
+          <span><b>${formatMoney(totals.remaining, currency)}</b> saldo partidas</span>
         </div>
       </div>
       <div class="budget-detail-list">
@@ -6022,7 +6059,7 @@ function renderBudgetCategoryDetail(item, currency) {
         <span><small>Presupuesto</small><strong>${formatMoney(itemBudget, currency)}</strong></span>
         <span><small>Gastado</small><strong>${formatMoney(itemSpent, currency)}</strong></span>
         <span><small>Comprometido</small><strong>${formatMoney(itemCommitted, currency)}</strong></span>
-        <span><small>Libre</small><strong>${formatMoney(itemRemaining, currency)}</strong></span>
+        <span><small>Saldo partida</small><strong>${formatMoney(itemRemaining, currency)}</strong></span>
       </div>
       ${item.note ? `<p class="budget-category-note">${escapeHtml(item.note)}</p>` : ""}
     </${tag}>`;
