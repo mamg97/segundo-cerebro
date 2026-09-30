@@ -13,6 +13,7 @@ on:
       - "private-cloudflare/package.json"
       - "private-cloudflare/wrangler.bootstrap.jsonc"
       - "private-cloudflare/wrangler.health-ingest.jsonc"
+      - "private-cloudflare/wrangler.objects-ingest.jsonc"
       - "private-cloudflare/wrangler.midas-ingest.jsonc"
       - "private-cloudflare/wrangler.shopping-reminders.jsonc"
       - ".github/workflows/deploy-private-cloudflare.yml"
@@ -69,6 +70,7 @@ jobs:
           node --check src/adherence.js
           node --check src/icloud-calendar.js
           node --check src/health-ingest.js
+          node --check src/objects-ingest.js
           node --check src/midas.js
           node --check src/midas-ingest.js
           node --check src/shopping-reminders-ingest.js
@@ -108,6 +110,10 @@ jobs:
       - name: Deploy Health ingest Worker
         if: steps.cloudflare.outputs.configured == 'true'
         run: npx wrangler deploy --config wrangler.health-ingest.jsonc
+
+      - name: Deploy Objects ingest Worker
+        if: steps.cloudflare.outputs.configured == 'true'
+        run: npx wrangler deploy --config wrangler.objects-ingest.jsonc
 
       - name: Deploy MIDAS ingest Worker
         if: steps.cloudflare.outputs.configured == 'true'
