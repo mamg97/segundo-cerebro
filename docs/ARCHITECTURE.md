@@ -53,6 +53,28 @@ D1 mantiene instantáneas privadas y determinadas entidades operativas propias d
 
 La fuente financiera externa continúa siendo la autoridad de importes y presupuesto. Una hoja privada derivada normaliza el estado que consume el Worker. El dashboard muestra presupuesto, compromisos, deudas, patrimonio y conciliación sin convertir Git ni D1 en una contabilidad paralela.
 
+### Delta · histórico de operaciones
+
+El histórico exportado por Delta se conserva en un Google Sheet privado independiente, sin copiar operaciones reales al repositorio:
+
+```text
+Export CSV de Delta
+        ↓ importación privada
+SEGUNDO CEREBRO - DELTA OPERACIONES HISTORICAS
+  ├── Operaciones   ← export bruto completo
+  └── DeltaResumen  ← métricas derivadas/minimizadas
+        ↓ referencia privada DELTA_OPERATIONS_SHEET_ID
+IntegracionesPrivadas (Sheet financiero)
+        ↓ OAuth Google existente
+Cloudflare Worker
+  ├── /api/state → resumen Delta dentro de Patrimonio
+  └── /api/finance/delta-operations → paginación bajo demanda
+        ↓
+Patrimonio financiero → histórico Delta
+```
+
+Los ajustes automáticos/sincronizaciones de Delta permanecen en la fuente bruta para trazabilidad, pero se marcan y se excluyen de los contadores de compraventa. La UI carga operaciones por páginas para no incorporar miles de filas al estado inicial. Git solo contiene el adaptador y el contrato de lectura, nunca el historial real.
+
 ### Electricity history
 
 La categoría financiera Luz usa dos capas con responsabilidades distintas:
