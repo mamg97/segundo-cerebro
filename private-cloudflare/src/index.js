@@ -495,6 +495,8 @@ async function fetchFinanceSummary(env) {
     creditAccountRows,
     creditProductRows,
     creditHistoryRows,
+    creditMovementRows,
+    creditFutureRows,
     movementRows
   ] = await Promise.all([
     fetchOptionalFinanceRows("Cuentas!A1:J200"),
@@ -504,6 +506,8 @@ async function fetchFinanceSummary(env) {
     fetchOptionalFinanceRows("CuentasCredito!A1:R200"),
     fetchOptionalFinanceRows("ECIProductos!A1:R200"),
     fetchOptionalFinanceRows("ECIHistorico!A1:N300"),
+    fetchOptionalFinanceRows("ECIMovimientos!A1:N300"),
+    fetchOptionalFinanceRows("ECIFuturo!A1:O300"),
     fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000")
   ]);
 
@@ -723,6 +727,47 @@ async function fetchFinanceSummary(env) {
     .filter((item) => item.dueDate)
     .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
 
+  const creditMovements = parseTableRows(creditMovementRows)
+    .map((item) => ({
+      id: item.movement_id || null,
+      operationDate: sheetDateOrNull(item.operation_date),
+      statementDue: sheetDateOrNull(item.statement_due),
+      merchant: item.merchant || null,
+      department: item.department || null,
+      amount: moneyOrNull(item.amount),
+      movementType: item.movement_type || null,
+      financingBucket: item.financing_bucket || null,
+      economicOwner: item.economic_owner || null,
+      category: item.category || null,
+      classificationStatus: item.classification_status || null,
+      sourceFile: item.source_file || null,
+      note: item.note || null,
+      sourceStatus: item.source_status || null
+    }))
+    .filter((item) => item.id && item.operationDate)
+    .sort((a, b) => String(a.operationDate).localeCompare(String(b.operationDate)));
+
+  const creditFuture = parseTableRows(creditFutureRows)
+    .map((item) => ({
+      dueDate: sheetDateOrNull(item.due_date),
+      componentId: item.component_id || null,
+      label: item.label || item.component_id || "Componente",
+      componentType: item.component_type || null,
+      grossAmount: moneyOrNull(item.gross_amount),
+      expectedReimbursement: moneyOrNull(item.expected_reimbursement),
+      netHouseholdAmount: moneyOrNull(item.net_household_amount),
+      installmentNo: toNumber(item.installment_no),
+      installmentTotal: toNumber(item.installment_total),
+      openingBalance: moneyOrNull(item.opening_balance),
+      estimatedInterest: moneyOrNull(item.estimated_interest),
+      closingBalance: moneyOrNull(item.closing_balance),
+      status: item.status || null,
+      assumption: item.assumption || null,
+      note: item.note || null
+    }))
+    .filter((item) => item.dueDate && item.componentId)
+    .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
+
   const creditAccounts = parseTableRows(creditAccountRows)
     .map((item) => {
       const id = item.account_id || item.id || null;
@@ -926,6 +971,8 @@ async function fetchFinanceSummary(env) {
     debts: debtSummary,
     creditAccounts,
     creditHistory,
+    creditMovements,
+    creditFuture,
     accountTransactions,
     wealth: wealthSummary,
     importantEventRules,
