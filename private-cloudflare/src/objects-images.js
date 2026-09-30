@@ -288,7 +288,7 @@ function ensureBucket(env) {
 
 export async function uploadObjectsImage(request, env, getGoogleAccessToken, objetoId, overrides = {}) {
   const id = normalizeObjectId(objetoId);
-  if (!(overrides.authenticated === true || isObjectsImageRequestAuthenticated(request))) {
+  if (!isObjectsImageRequestAuthenticated(request)) {
     throw new ObjectsImageError("AUTH_REQUIRED", 401);
   }
   const contentType = String(request.headers.get("content-type") || "").toLowerCase();
