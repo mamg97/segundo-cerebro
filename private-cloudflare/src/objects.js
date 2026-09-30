@@ -76,6 +76,29 @@ export function inferWardrobeLayer(input) {
   return null;
 }
 
+export function normalizeLookRole(input) {
+  const text = String(input || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+
+  const aliases = {
+    "capa superior": "superior",
+    "parte superior": "superior",
+    "capa exterior": "exterior",
+    "prenda exterior": "exterior",
+    "capa inferior": "inferior",
+    "parte inferior": "inferior",
+    "zapatos": "calzado",
+    "zapatillas": "calzado",
+    "complemento": "accesorio"
+  };
+  return aliases[text] || text;
+}
+
 function visualProcessState(input, hasProcessedImage = false) {
   const raw = String(input || "").trim().toLowerCase();
   if (VISUAL_PROCESS_STATES.has(raw)) return raw;
@@ -300,7 +323,7 @@ function buildPayload(rows) {
     lookItems.get(lookId).push({
       objectId: objectId || null,
       name: byId.get(objectId)?.name || value(row, "nombre"),
-      role: value(row, "rol", "role")
+      role: normalizeLookRole(value(row, "rol", "role"))
     });
   }
 
@@ -523,7 +546,7 @@ export function validateObjectsLookSelection(wardrobe = [], rawItems = []) {
   const normalized = (Array.isArray(rawItems) ? rawItems : [])
     .map((item) => ({
       objectId: String(item?.objectId || "").trim(),
-      role: String(item?.role || "").trim().toLowerCase()
+      role: normalizeLookRole(item?.role)
     }))
     .filter((item) => item.objectId || item.role);
 
@@ -537,6 +560,10 @@ export function validateObjectsLookSelection(wardrobe = [], rawItems = []) {
     if (!garment) throw new Error("INVALID_OBJECTS_LOOK_OBJECT");
     if (["VENDIDO", "DONADO", "DESCARTADO", "PERDIDO"].includes(String(garment.status || ""))) {
       throw new Error("INVALID_OBJECTS_LOOK_OBJECT_STATUS");
+    }
+    const garmentLayer = normalizeLookRole(garment.layer || inferWardrobeLayer([garment.subcategory, garment.name].filter(Boolean).join(" ")));
+    if (garmentLayer && garmentLayer !== item.role) {
+      throw new Error("INVALID_OBJECTS_LOOK_LAYER");
     }
   }
   for (const required of ["superior", "inferior", "calzado"]) {
