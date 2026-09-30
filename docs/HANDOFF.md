@@ -1062,3 +1062,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - La UI financiera debe distinguir `saldo contable`, `disponible bancario`, `comprometido` y `libre interno`. El saldo restante de una categoría presupuestaria no se etiqueta como dinero libre.
 - El detalle de Finanzas incorpora un histórico reciente de movimientos Santander desde `MovimientosCuenta`.
 - Financiera ECI sigue como cuenta de crédito separada. El revolving queda reconstruido con sus compras, intereses y pagos; saldo tras septiembre **183,64 €** y horizonte aproximado **abril de 2027** si no hay nuevas compras y se mantienen 30 €/mes.
+
+
+## Finanzas · histórico Openbank Miguel · 30/09/2026
+
+- Importado el extracto `Movimientos de Cuenta.xls` de Openbank Miguel a `MovimientosCuenta` con `account_id=openbank-miguel`.
+- Rango importado: 30/09/2024→30/09/2026; **997 movimientos** RAW con fecha operación/valor, concepto, importe, saldo posterior y trazabilidad del fichero.
+- Saldo exacto Openbank Miguel a 30/09/2026 23:35: **253,52 €**.
+- Antiguos holds Marbella ya contabilizados: De Juan 42 €, Auto Res 21,60 €, Gate Gourmet 3,80 €, Avanza 16 € y La Siesta 44 €; ya no deben figurar como retenciones activas.
+- OneNote 2 € ejecutado el 25/09 y YouTube Music 6 € ejecutado el 21/09. Único compromiso operativo pendiente conocido del ciclo en Openbank Miguel: Apple Watch 16 €; libre interno auditado **237,52 €**.
+- La UI privada de Finanzas muestra ahora movimientos recientes tanto de Santander como de Openbank Miguel; el histórico completo permanece en `MovimientosCuenta`.
+- Futuras importaciones bancarias pueden solapar fechas; deben deduplicarse por `movement_id` determinista y conservar `source_system`, `source_row` e `import_batch`.
+- El histórico permite detectar recurrencias, pero no reasigna automáticamente la cuenta futura de una suscripción si existe una ruta operativa más reciente documentada.
