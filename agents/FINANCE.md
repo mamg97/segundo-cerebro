@@ -131,6 +131,25 @@ Reglas:
 - no se hardcodean saldos ni nombres reales de cuentas en Git;
 - el Gestor de Finanzas mantiene estas asignaciones cuando el usuario comunica nuevos saldos, provisiones o liberaciones.
 
+### Liquidez real por cuenta
+
+El saldo bancario, el disponible bancario y el dinero libre interno son magnitudes distintas y deben mostrarse por separado.
+
+Para cada cuenta:
+- `balance` = saldo contable observado;
+- retenciones activas = operaciones bancarias todavía no consolidadas;
+- disponible bancario = saldo contable menos retenciones;
+- compromisos internos = pagos, sobres y transferencias pendientes dentro del ciclo;
+- `free_amount` = disponible bancario menos compromisos internos todavía pendientes.
+
+Reglas:
+- una partida presupuestaria no ejecutada no se etiqueta como «dinero libre» si todavía corresponde a una obligación o sobre del ciclo;
+- alquiler, cuotas, recibos y demás cargos recurrentes deben existir en `ReservasCuenta` antes de calcular el libre interno;
+- los recibos ya ejecutados se marcan terminales y no se vuelven a reservar;
+- la fuente maestra `ASUNTOS v3.xlsx` es estrictamente solo lectura;
+- el histórico bancario se conserva en `MovimientosCuenta`, con `account_id`, fecha, concepto, importe, saldo posterior y trazabilidad de importación;
+- un histórico bancario puede confirmar la ruta real de pago y corregir asignaciones de cuenta sin modificar el maestro.
+
 ### Cuentas de crédito y financiaciones
 
 Las tarjetas de crédito y financieras con saldo propio no se modelan como cuentas corrientes ni como un único gasto domiciliado.
