@@ -486,11 +486,22 @@ async function fetchFinanceSummary(env) {
     }
   }
 
-  const [accountRows, accountAllocationRows, wealthAllocationRows, wealthDailyRows] = await Promise.all([
+  const [
+    accountRows,
+    accountAllocationRows,
+    wealthAllocationRows,
+    wealthDailyRows,
+    creditAccountRows,
+    creditProductRows,
+    creditHistoryRows
+  ] = await Promise.all([
     fetchOptionalFinanceRows("Cuentas!A1:J200"),
     fetchOptionalFinanceRows("ReservasCuenta!A1:J500"),
     fetchOptionalFinanceRows("PatrimonioDetalle!A1:J500"),
-    fetchOptionalFinanceRows("PatrimonioDiario!A1:M1000")
+    fetchOptionalFinanceRows("PatrimonioDiario!A1:M1000"),
+    fetchOptionalFinanceRows("CuentasCredito!A1:R200"),
+    fetchOptionalFinanceRows("ECIProductos!A1:R200"),
+    fetchOptionalFinanceRows("ECIHistorico!A1:N300")
   ]);
 
   let electricityRows = [];
@@ -666,6 +677,76 @@ async function fetchFinanceSummary(env) {
     })
     .filter((item) => item.id && item.balance !== null);
 
+  const creditProducts = parseTableRows(creditProductRows)
+    .map((item) => ({
+      id: item.product_id || item.id || null,
+      accountId: item.account_id || null,
+      type: item.product_type || null,
+      label: item.label || item.product_id || "Producto de crédito",
+      department: item.department || null,
+      economicOwner: item.economic_owner || null,
+      status: item.status || "active",
+      startDate: sheetDateOrNull(item.start_date),
+      installmentCurrent: toNumber(item.installment_current),
+      installmentTotal: toNumber(item.installment_total),
+      monthlyPayment: moneyOrNull(item.monthly_payment),
+      interestRate: toNumber(item.interest_rate),
+      originalAmount: moneyOrNull(item.original_amount),
+      remaining: moneyOrNull(item.remaining_after_sep_payment),
+      lastDue: sheetDateOrNull(item.last_due),
+      reimbursementMonthly: moneyOrNull(item.reimbursement_monthly),
+      reimbursementRemaining: moneyOrNull(item.reimbursement_remaining),
+      note: item.note || null
+    }))
+    .filter((item) => item.id && item.accountId);
+
+  const creditHistory = parseTableRows(creditHistoryRows)
+    .map((item) => ({
+      dueDate: sheetDateOrNull(item.due_date),
+      purchasePeriod: item.purchase_period || null,
+      openingRevolving: moneyOrNull(item.opening_revolving),
+      purchases: moneyOrNull(item.purchases),
+      interest: moneyOrNull(item.interest),
+      statementRevolving: moneyOrNull(item.statement_revolving),
+      paymentRevolving: moneyOrNull(item.payment_revolving),
+      closingRevolving: moneyOrNull(item.closing_revolving),
+      purchaseDetail: item.purchase_detail || null,
+      installmentReceipt: moneyOrNull(item.installment_receipt),
+      installmentDetail: item.installment_detail || null,
+      totalReceipt: moneyOrNull(item.total_receipt),
+      sourceStatus: item.source_status || null,
+      note: item.note || null
+    }))
+    .filter((item) => item.dueDate)
+    .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
+
+  const creditAccounts = parseTableRows(creditAccountRows)
+    .map((item) => {
+      const id = item.account_id || item.id || null;
+      return {
+        id,
+        name: item.name || id || "Cuenta de crédito",
+        provider: item.provider || null,
+        holder: item.holder || null,
+        type: item.type || "credit",
+        linkedPaymentAccount: item.linked_payment_account || null,
+        status: item.status || "active",
+        statementDay: toNumber(item.statement_day),
+        grossPending: moneyOrNull(item.gross_pending_after_last_payment),
+        revolvingBalance: moneyOrNull(item.revolving_balance),
+        installmentBalance: moneyOrNull(item.installment_balance),
+        expectedThirdPartyReimbursement: moneyOrNull(item.expected_third_party_reimbursement_remaining),
+        netHouseholdExposure: moneyOrNull(item.net_household_exposure),
+        estimatedNextReceipt: moneyOrNull(item.estimated_next_receipt),
+        monthlyThirdPartyReimbursement: moneyOrNull(item.monthly_third_party_reimbursement),
+        creditLimitEci: moneyOrNull(item.credit_limit_eci),
+        creditLimitOther: moneyOrNull(item.credit_limit_other),
+        updatedAt: item.updated_at || null,
+        products: creditProducts.filter((product) => product.accountId === id)
+      };
+    })
+    .filter((item) => item.id && String(item.status).toLowerCase() !== "closed");
+
   const wealthAllocation = parseTableRows(wealthAllocationRows)
     .map((item) => ({
       id: item.id || item.platform || item.custodian || null,
@@ -817,6 +898,8 @@ async function fetchFinanceSummary(env) {
     upcomingCommitments: commitments,
     electricity,
     debts: debtSummary,
+    creditAccounts,
+    creditHistory,
     wealth: wealthSummary,
     importantEventRules,
     health: { gymPlan, nutritionPlan },
