@@ -624,3 +624,20 @@ Reglas:
 ## MIDAS · proyección externa de solo lectura
 
 `GET /api/midas` devuelve el `dashboard.json` público normalizado: `generated_at_utc`, `stale` y `tracks[]` con `id`, `label`, `group`, `status`, `first_session`, `last_session`, `currency`, `last_equity`, `day_return_pct`, `return_pct` y `note`. El porcentaje diario compara los dos últimos valores de patrimonio ficticio del diario; es `null` si aún no hay dos cierres. Los porcentajes de campañas con fechas, mercados o divisas distintos no son directamente comparables. Segundo Cerebro no persiste esas filas en D1.
+
+
+### ImageIngestQueue
+
+Pestaña técnica y efímera del spreadsheet canónico `SEGUNDO CEREBRO - OBJETOS`. No representa prendas ni sustituye `Armario`.
+
+Campos:
+- `request_id`: idempotencia/auditoría de la solicitud.
+- `objeto_id`: FK lógica a `Objetos/Armario`.
+- `image_type`: `original | processed | thumbnail`.
+- `drive_file_id`: archivo privado temporal de staging.
+- `overwrite`: reemplazo explícito.
+- metadatos visuales: `vista_prenda, color_principal, patron, categoria_visual, capa, estado_procesado`.
+- `status`: `pending | processing | done | error | cleanup_pending`.
+- `created_at, processed_at, error_code, foto_url, miniatura_url`.
+
+Solo `Armario` mantiene el estado visual canónico de la prenda. `ImageIngestQueue` puede purgarse después de auditoría.
