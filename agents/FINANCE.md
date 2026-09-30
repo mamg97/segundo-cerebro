@@ -54,7 +54,7 @@ El dashboard puede mostrar, de forma derivada y privada:
 - patrimonio;
 - estado de conciliación.
 
-El seguimiento MIDAS de carteras ficticias es un laboratorio separado: la fuente es el diario público de `mamg97/midas-paper-lab`, leído sin escritura a través de `GET /api/midas`. Su capital demo nunca se suma al patrimonio personal ni se reconcilia contra `BROKERS`. Cada fila conserva estado, fecha de última sesión, variación frente al cierre anterior y rentabilidad acumulada; la ausencia de diario o de cierre previo se muestra como desconocida, no como 0 %.
+El seguimiento MIDAS de carteras ficticias es un laboratorio separado: la fuente es el diario público de `mamg97/midas-paper-lab`, leído sin escritura a través de `GET /api/midas`. Su capital demo nunca se suma al patrimonio personal ni se reconcilia contra `BROKERS`. Cada fila conserva estado, fecha de última sesión, variación frente al cierre anterior y rentabilidad acumulada; la ausencia de diario o de cierre previo se muestra como desconocida, no como 0 %. La línea `capital_cycle_inflection_2026` es una campaña prospectiva adicional: retirada multianual de capital + supervivencia financiera + valoración normalizada + confirmación de giro, con señal mensual y ejecución paper en la apertura siguiente. No se presenta como estrategia validada ni se mezcla con patrimonio real.
 
 La UI no debe inferir dinero libre a partir de un saldo bancario ni mezclar flujo mensual con patrimonio de inversión.
 
