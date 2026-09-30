@@ -61,6 +61,18 @@ function dateOrNull(input) {
   return Number.isFinite(parsed.getTime()) ? parsed.toISOString().slice(0, 10) : null;
 }
 
+function timestampOrNull(input) {
+  if (input === null || input === undefined || input === "") return null;
+  if (typeof input === "number" && Number.isFinite(input)) {
+    const date = new Date(Date.UTC(1899, 11, 30) + input * 86400000);
+    return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+  }
+  const text = String(input).trim();
+  if (!text) return null;
+  const parsed = new Date(text);
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
+}
+
 function list(input) {
   if (input === null || input === undefined || input === "") return [];
   return String(input).split(/[|;,]/).map((item) => item.trim()).filter(Boolean);
@@ -194,6 +206,15 @@ async function resolveSpreadsheetId(env, token) {
   return sheet.id;
 }
 
+export async function resolveObjectsSpreadsheetId(env, token) {
+  return resolveSpreadsheetId(env, token);
+}
+
+export function invalidateObjectsCache() {
+  cache.value = null;
+  cache.expiresAt = 0;
+}
+
 async function sheetTitles(spreadsheetId, token) {
   const endpoint =
     "https://sheets.googleapis.com/v4/spreadsheets/" +
@@ -231,7 +252,7 @@ function emptyPayload() {
       name: SHEET_TITLE,
       owner: "GESTOR OBJETOS Y ARMARIO",
       available: false,
-      contractVersion: "0.2"
+      contractVersion: "0.3"
     }
   };
 }
@@ -301,7 +322,7 @@ function buildPayload(rows) {
       pattern: value(row, "patron", "patrón", "pattern"),
       visualCategory: value(row, "categoria_visual", "categoría_visual", "visual_category"),
       layer: value(row, "capa", "layer") || inferWardrobeLayer([base.subcategory, value(row, "tipo_prenda", "subcategoria"), base.name].filter(Boolean).join(" ")),
-      visualUpdatedAt: dateOrNull(value(row, "ultima_actualizacion_visual", "última_actualizacion_visual", "visual_updated_at")),
+      visualUpdatedAt: timestampOrNull(value(row, "ultima_actualizacion_visual", "última_actualizacion_visual", "visual_updated_at")),
       size: value(row, "talla", "size"),
       season: value(row, "temporada", "season"),
       formality: value(row, "formalidad", "formality"),
@@ -490,7 +511,7 @@ function buildPayload(rows) {
       name: SHEET_TITLE,
       owner: "GESTOR OBJETOS Y ARMARIO",
       available: true,
-      contractVersion: "0.2"
+      contractVersion: "0.3"
     }
   };
 }

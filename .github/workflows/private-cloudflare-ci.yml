@@ -55,6 +55,7 @@ jobs:
       - run: node --check scripts/configure-shopping-reminders.mjs
 
       - run: node --check src/objects.js
+      - run: node --check src/objects-images.js
 
       - run: node --check src/projects.js
 
@@ -75,6 +76,8 @@ jobs:
       - run: npx wrangler deploy --dry-run --config wrangler.shopping-reminders.jsonc
 
       - run: npm run build
+
+      - run: npx wrangler deploy --dry-run --config wrangler.bootstrap.jsonc
 
       - name: Confirm no private files enter build
         run: |
