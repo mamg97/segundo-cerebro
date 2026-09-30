@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { inferWardrobeLayer, validateObjectsLookSelection } from "./objects.js";
+import { inferWardrobeLayer, normalizeLookRole, validateObjectsLookSelection } from "./objects.js";
 
 test("inferWardrobeLayer maps common wardrobe types to visual layers", () => {
   assert.equal(inferWardrobeLayer("Camisa Oxford"), "superior");
@@ -56,5 +56,28 @@ test("look validation requires superior, inferior and footwear", () => {
       { objectId: "shoes-1", role: "calzado" }
     ]),
     /INVALID_OBJECTS_LOOK_INCOMPLETE/
+  );
+});
+
+
+test("normalizeLookRole keeps historical aliases compatible with the canonical roles", () => {
+  assert.equal(normalizeLookRole("capa exterior"), "exterior");
+  assert.equal(normalizeLookRole("Capa superior"), "superior");
+  assert.equal(normalizeLookRole("zapatos"), "calzado");
+});
+
+test("look validation rejects a garment assigned to the wrong visual layer", () => {
+  const wardrobe = [
+    { objectId: "shirt-1", status: "DISPONIBLE", layer: "superior" },
+    { objectId: "trousers-1", status: "DISPONIBLE", layer: "inferior" },
+    { objectId: "shoes-1", status: "DISPONIBLE", layer: "calzado" }
+  ];
+  assert.throws(
+    () => validateObjectsLookSelection(wardrobe, [
+      { objectId: "shirt-1", role: "calzado" },
+      { objectId: "trousers-1", role: "inferior" },
+      { objectId: "shoes-1", role: "superior" }
+    ]),
+    /INVALID_OBJECTS_LOOK_LAYER/
   );
 });
