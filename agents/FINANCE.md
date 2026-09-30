@@ -141,6 +141,7 @@ Para cada cuenta:
 - disponible bancario = saldo contable menos retenciones;
 - compromisos internos = pagos, sobres y transferencias pendientes dentro del ciclo;
 - `free_amount` = disponible bancario menos compromisos internos todavía pendientes.
+- En cuentas comunes con presupuesto por sobres, cualquier sobrante provisional de partidas ya ejecutadas permanece en una reserva `cycle_surplus_buffer` hasta el cierre explícito del ciclo; no se muestra como dinero libre ni como ahorro antes de decidir su destino.
 
 Reglas:
 - una partida presupuestaria no ejecutada no se etiqueta como «dinero libre» si todavía corresponde a una obligación o sobre del ciclo;
