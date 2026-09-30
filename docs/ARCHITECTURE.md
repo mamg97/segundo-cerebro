@@ -222,27 +222,39 @@ Las listas contextuales pueden enlazar `evento_ref` y `lista_id`: GESTOR EVENTOS
 
 ### Armario visual
 
-La visualización de ropa no introduce almacenamiento paralelo:
+La visualización de ropa no introduce una segunda identidad ni una base paralela. El Sheet sigue siendo la fuente canónica de pertenencia/metadatos y R2 actúa únicamente como almacenamiento binario privado:
 
 ```text
-Objetos(objeto_id) ── 1:0/1 ── Armario(objeto_id)
-                              ├─ foto_original_url
-                              ├─ foto_procesada_url
-                              ├─ miniatura_url
-                              └─ metadatos visuales
-                                      ↓
-                           GET /api/objects
-                                      ↓
-                  Armario visual / ficha / combinador
-                                      ↓ POST /api/objects/look
-                              Looks + LookItems
+Imagen original o procesada
+        ↓ multipart + Cloudflare Access
+POST /api/objects/:objeto_id/image
+        ↓ valida objeto/Armario/MIME/tamaño/overwrite
+R2 privado OBJECTS_MEDIA
+        ├─ objects/<objeto_id>/original/<version>
+        ├─ objects/<objeto_id>/processed/<version>
+        └─ objects/<objeto_id>/thumbnail/<version>  ← WebP <= 512 px
+        ↓
+SEGUNDO CEREBRO - OBJETOS / Armario
+        ├─ foto_original_url
+        ├─ foto_procesada_url
+        ├─ miniatura_url
+        ├─ estado_procesado
+        └─ ultima_actualizacion_visual
+        ↓
+GET /api/objects/:objeto_id/image/:tipo?v=<version>
+        ↓
+Armario visual / ficha / combinador / mosaicos
 ```
 
-El Worker no procesa imágenes todavía. Consume referencias ya almacenadas y expone el estado `pendiente/procesada/revisar`. Un procesador futuro podrá eliminar fondo, centrar/normalizar y escribir los derivados en las columnas visuales del mismo registro. La UI nunca considera esos derivados una nueva fuente de verdad.
+El bucket R2 `segundo-cerebro-private-assets` no expone URL pública. Las URLs guardadas en el Sheet son rutas same-origin del Worker privado, por lo que se mantienen estables y la lectura sigue pasando por Cloudflare Access.
 
-Por seguridad la app solo usa las URLs como recursos de imagen; no las ejecuta como contenido. El CSP privado permite imágenes HTTPS además de recursos propios/data, manteniendo scripts y conexiones restringidos a `self`.
+Una subida `processed` conserva la imagen principal a su resolución recibida y genera dentro del Worker una miniatura WebP de hasta 512 px en el lado largo mediante WebAssembly. El recorte/eliminación de fondo puede seguir ocurriendo antes del upload; el endpoint no inventa ni reinterpreta la prenda.
 
-El constructor visual es una operación de escritura controlada: valida los `objeto_id` contra el armario vigente y escribe únicamente `Looks` + `LookItems`. No crea objetos, no copia prendas y no persiste composición paralela en D1.
+La consistencia con Sheets se resuelve con claves versionadas y compensación: primero se escriben los nuevos objetos R2; solo después se actualiza `Armario`. Si esa escritura falla, los nuevos assets se eliminan. En un overwrite correcto, el Sheet empieza a apuntar a la nueva versión y los assets privados anteriores se limpian después de forma best-effort. No se reutiliza una clave de otra prenda.
+
+Por seguridad se aceptan únicamente PNG/JPEG/WebP de hasta 8 MiB, se contrasta el MIME declarado con la firma binaria, el `objeto_id` se valida antes de construir claves, y las llamadas requieren contexto autenticado de Cloudflare Access. No se aceptan URLs externas como sustituto del archivo.
+
+El constructor visual sigue siendo una operación de escritura separada: valida los `objeto_id` contra el armario vigente y escribe únicamente `Looks` + `LookItems`. No crea objetos, no copia prendas y no persiste composición paralela en D1.
 
 
 ## Navegación y composición de Home
