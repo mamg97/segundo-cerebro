@@ -1,6 +1,6 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
-import { fetchObjectsSummary, hasObjectsGoogleConfig } from "./objects.js";
+import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
@@ -13,7 +13,7 @@ const securityHeaders = {
   "Referrer-Policy": "no-referrer",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "X-Robots-Tag": "noindex, nofollow, noarchive",
-  "Content-Security-Policy": "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+  "Content-Security-Policy": "default-src 'self'; connect-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 };
 
 let googleTokenCache = { token: null, expiresAt: 0 };
@@ -4165,6 +4165,23 @@ export default {
       } catch (error) {
         console.warn("Objects read failed", String(error?.message || "OBJECTS_READ_ERROR"));
         return json({ ok: false, code: "OBJECTS_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/objects/look") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        let payload;
+        try { payload = await request.json(); }
+        catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+        const look = await createObjectsLook(env, getGoogleAccessToken, payload);
+        return json({ ok: true, look }, 201);
+      } catch (error) {
+        const code = String(error?.message || "OBJECTS_LOOK_ERROR");
+        if (code.startsWith("INVALID_OBJECTS_LOOK_")) return json({ ok: false, code }, 400);
+        if (code === "OBJECTS_NOT_CONFIGURED" || code === "OBJECTS_SOURCE_PENDING") return json({ ok: false, code }, 503);
+        console.warn("Objects look write failed", code);
+        return json({ ok: false, code: "OBJECTS_LOOK_WRITE_FAILED" }, 502);
       }
     }
 

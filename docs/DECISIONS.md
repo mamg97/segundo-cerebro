@@ -385,3 +385,15 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Fuente:** paper público de `midas-paper-lab` y, para el genético original, el resumen privado saneado en D1.
 - **Bootstrap:** una prueba retrospectiva puede mostrarse solo si está etiquetada explícitamente como no prospectiva y queda fuera del track record forward.
 - **Privacidad:** ninguna posición patrimonial real ni dato de broker entra en esta visualización.
+
+
+## D-041 — Armario visual conserva OBJETOS como única fuente de verdad
+
+- **Estado:** aceptada e implementada en contrato/UI; procesado automático de imágenes pendiente.
+- **Fecha:** 2026-09-30.
+- **Decisión:** ampliar `Armario` dentro de `SEGUNDO CEREBRO - OBJETOS` con referencias a foto original/procesada/miniatura y metadatos visuales, sin crear un catálogo de prendas paralelo.
+- **Derivados:** las imágenes procesadas son representaciones del mismo `objeto_id`; pueden regenerarse y no tienen identidad propia.
+- **Combinador:** el constructor visual solo selecciona prendas ya existentes y guarda el resultado en `Looks + LookItems`; nunca crea objetos implícitos.
+- **Validación:** un look nuevo debe contener `superior + inferior + calzado`; `exterior` y `accesorio` son opcionales. Roles duplicados, objetos inexistentes o retirados se rechazan.
+- **Procesado:** el pipeline automático de fondo/centrado no forma parte aún de la arquitectura operativa. El sistema soporta el estado `pendiente | procesada | revisar` y el almacenamiento de ambas URLs para incorporarlo después.
+- **Motivo:** habilitar armario visual, outfits y futuras recomendaciones de oficina/viaje/clima sin romper IDs, historial ni propiedad funcional del dominio.

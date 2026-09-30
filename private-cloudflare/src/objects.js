@@ -1,6 +1,8 @@
 const SHEET_TITLE = "SEGUNDO CEREBRO - OBJETOS";
 const SOURCE_KEY = "OBJECTS_SHEET_ID";
 const CACHE_MS = 30_000;
+const VISUAL_PROCESS_STATES = new Set(["pendiente", "procesada", "revisar"]);
+const LOOK_ROLES = new Set(["superior", "exterior", "inferior", "calzado", "accesorio"]);
 
 let cache = {
   value: null,
@@ -62,6 +64,30 @@ function dateOrNull(input) {
 function list(input) {
   if (input === null || input === undefined || input === "") return [];
   return String(input).split(/[|;,]/).map((item) => item.trim()).filter(Boolean);
+}
+
+export function inferWardrobeLayer(input) {
+  const text = String(input || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (/zapato|zapatilla|sneaker|mocasin|alpargata|bota|sandalia|calzado/.test(text)) return "calzado";
+  if (/pantalon|vaquero|chino|short|bermuda|falda/.test(text)) return "inferior";
+  if (/abrigo|chaqueta|blazer|cazadora|parka|trench|rebeca/.test(text)) return "exterior";
+  if (/camisa|camiseta|polo|jersey|sudadera|top/.test(text)) return "superior";
+  if (/cinturon|gorra|sombrero|bufanda|reloj|bolso|mochila|gafas|accesorio/.test(text)) return "accesorio";
+  return null;
+}
+
+function visualProcessState(input, hasProcessedImage = false) {
+  const raw = String(input || "").trim().toLowerCase();
+  if (VISUAL_PROCESS_STATES.has(raw)) return raw;
+  return hasProcessedImage ? "procesada" : "pendiente";
+}
+
+function visualImageUrl(...values) {
+  for (const item of values) {
+    const text = String(item || "").trim();
+    if (text) return text;
+  }
+  return null;
 }
 
 function objectStatus(input) {
@@ -176,13 +202,13 @@ function emptyPayload() {
     looks: [],
     kits: [],
     lists: [],
-    facets: { categories: [], locations: [], statuses: [], garmentTypes: [], seasons: [], contexts: [] },
+    facets: { categories: [], locations: [], statuses: [], garmentTypes: [], seasons: [], contexts: [], brands: [], colors: [], formalities: [], layers: [] },
     source: {
       kind: "private-sheet",
       name: SHEET_TITLE,
       owner: "GESTOR OBJETOS Y ARMARIO",
       available: false,
-      contractVersion: "0.1"
+      contractVersion: "0.2"
     }
   };
 }
@@ -232,8 +258,27 @@ function buildPayload(rows) {
       brand: base.brand || value(row, "marca"),
       status: base.status || objectStatus(value(row, "estado")),
       location: base.location || value(row, "ubicacion"),
-      photoUrl: base.photoUrl || value(row, "foto_url", "photo_url"),
+      photoUrl: visualImageUrl(
+        value(row, "miniatura_url", "thumbnail_url"),
+        value(row, "foto_procesada_url", "processed_photo_url"),
+        value(row, "foto_original_url", "original_photo_url"),
+        base.photoUrl,
+        value(row, "foto_url", "photo_url")
+      ),
+      originalPhotoUrl: visualImageUrl(value(row, "foto_original_url", "original_photo_url"), base.photoUrl),
+      processedPhotoUrl: visualImageUrl(value(row, "foto_procesada_url", "processed_photo_url")),
+      thumbnailUrl: visualImageUrl(value(row, "miniatura_url", "thumbnail_url")),
+      processedState: visualProcessState(
+        value(row, "estado_procesado", "processed_state"),
+        Boolean(value(row, "foto_procesada_url", "processed_photo_url"))
+      ),
+      garmentView: value(row, "vista_prenda", "garment_view"),
       color: value(row, "color"),
+      primaryColor: value(row, "color_principal", "primary_color") || value(row, "color"),
+      pattern: value(row, "patron", "patrón", "pattern"),
+      visualCategory: value(row, "categoria_visual", "categoría_visual", "visual_category"),
+      layer: value(row, "capa", "layer") || inferWardrobeLayer([base.subcategory, value(row, "tipo_prenda", "subcategoria"), base.name].filter(Boolean).join(" ")),
+      visualUpdatedAt: dateOrNull(value(row, "ultima_actualizacion_visual", "última_actualizacion_visual", "visual_updated_at")),
       size: value(row, "talla", "size"),
       season: value(row, "temporada", "season"),
       formality: value(row, "formalidad", "formality"),
@@ -277,6 +322,18 @@ function buildPayload(rows) {
       notes: value(row, "notas", "notes")
     };
   }).filter((item) => item.id && item.name);
+
+  const relatedLookIds = new Map();
+  for (const look of looks) {
+    for (const item of look.items || []) {
+      if (!item.objectId) continue;
+      if (!relatedLookIds.has(item.objectId)) relatedLookIds.set(item.objectId, []);
+      relatedLookIds.get(item.objectId).push(look.id);
+    }
+  }
+  for (const item of wardrobe) {
+    item.relatedLookIds = relatedLookIds.get(item.objectId) || [];
+  }
 
   const kitItems = new Map();
   for (const row of rows.kitItems) {
@@ -365,6 +422,10 @@ function buildPayload(rows) {
   const statuses = [...new Set(objects.map((item) => item.status).filter(Boolean))].sort();
   const garmentTypes = [...new Set(wardrobe.map((item) => item.subcategory).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
   const seasons = [...new Set(wardrobe.map((item) => item.season).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const brands = [...new Set(wardrobe.map((item) => item.brand).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const colors = [...new Set(wardrobe.map((item) => item.primaryColor || item.color).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const formalities = [...new Set(wardrobe.map((item) => item.formality).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const layers = [...new Set(wardrobe.map((item) => item.layer).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
   const contexts = [...new Set([
     ...objects.flatMap((item) => item.contexts || []),
     ...looks.map((item) => item.context).filter(Boolean),
@@ -382,6 +443,11 @@ function buildPayload(rows) {
       activeListCount: activeLists.length,
       lookCount: looks.length,
       kitCount: kits.length,
+      visualWardrobe: {
+        processed: wardrobe.filter((item) => item.processedState === "procesada").length,
+        pending: wardrobe.filter((item) => item.processedState === "pendiente").length,
+        review: wardrobe.filter((item) => item.processedState === "revisar").length
+      },
       latestAdditions: latest.map((item) => ({ id: item.id, name: item.name, date: item.createdAt || item.purchaseDate })),
       locations: [...locations.entries()].map(([location, count]) => ({ location, count })),
       upcomingContexts: activeLists
@@ -395,13 +461,13 @@ function buildPayload(rows) {
     looks,
     kits,
     lists: contextLists,
-    facets: { categories, locations: locationNames, statuses, garmentTypes, seasons, contexts },
+    facets: { categories, locations: locationNames, statuses, garmentTypes, seasons, contexts, brands, colors, formalities, layers },
     source: {
       kind: "private-sheet",
       name: SHEET_TITLE,
       owner: "GESTOR OBJETOS Y ARMARIO",
       available: true,
-      contractVersion: "0.1"
+      contractVersion: "0.2"
     }
   };
 }
@@ -430,4 +496,104 @@ export async function fetchObjectsSummary(env, getGoogleAccessToken) {
   cache.value = payload;
   cache.expiresAt = Date.now() + CACHE_MS;
   return { status: "ok-live", value: payload };
+}
+
+
+async function appendSheetRows(spreadsheetId, token, tab, rows) {
+  if (!Array.isArray(rows) || !rows.length) return;
+  const range = encodeURIComponent(tab + "!A:Z");
+  const endpoint =
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+    encodeURIComponent(spreadsheetId) +
+    "/values/" + range +
+    ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS";
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ values: rows })
+  });
+  if (!response.ok) throw new Error("GOOGLE_SHEETS_APPEND_" + response.status + "_" + tab);
+}
+
+export function validateObjectsLookSelection(wardrobe = [], rawItems = []) {
+  const byId = new Map((Array.isArray(wardrobe) ? wardrobe : []).map((item) => [String(item.objectId), item]));
+  const normalized = (Array.isArray(rawItems) ? rawItems : [])
+    .map((item) => ({
+      objectId: String(item?.objectId || "").trim(),
+      role: String(item?.role || "").trim().toLowerCase()
+    }))
+    .filter((item) => item.objectId || item.role);
+
+  if (normalized.length < 3 || normalized.length > 5) throw new Error("INVALID_OBJECTS_LOOK_ITEMS");
+  const seenRoles = new Set();
+  for (const item of normalized) {
+    if (!LOOK_ROLES.has(item.role)) throw new Error("INVALID_OBJECTS_LOOK_ROLE");
+    if (seenRoles.has(item.role)) throw new Error("INVALID_OBJECTS_LOOK_DUPLICATE_ROLE");
+    seenRoles.add(item.role);
+    const garment = byId.get(item.objectId);
+    if (!garment) throw new Error("INVALID_OBJECTS_LOOK_OBJECT");
+    if (["VENDIDO", "DONADO", "DESCARTADO", "PERDIDO"].includes(String(garment.status || ""))) {
+      throw new Error("INVALID_OBJECTS_LOOK_OBJECT_STATUS");
+    }
+  }
+  for (const required of ["superior", "inferior", "calzado"]) {
+    if (!seenRoles.has(required)) throw new Error("INVALID_OBJECTS_LOOK_INCOMPLETE");
+  }
+  return normalized;
+}
+
+export async function createObjectsLook(env, getGoogleAccessToken, payload = {}) {
+  if (!hasObjectsGoogleConfig(env)) throw new Error("OBJECTS_NOT_CONFIGURED");
+  const token = await getGoogleAccessToken(env);
+  const spreadsheetId = await resolveSpreadsheetId(env, token);
+  if (!spreadsheetId) throw new Error("OBJECTS_SOURCE_PENDING");
+
+  const current = await fetchObjectsSummary(env, getGoogleAccessToken);
+  const wardrobe = Array.isArray(current.value?.wardrobe) ? current.value.wardrobe : [];
+  const normalized = validateObjectsLookSelection(wardrobe, payload.items);
+
+  const now = new Date();
+  const dateKey = now.toISOString().slice(0, 10);
+  const id = "look-visual-" + dateKey.replaceAll("-", "") + "-" + crypto.randomUUID().slice(0, 8);
+  const requestedName = String(payload.name || "").trim();
+  const name = requestedName || ("Look visual · " + dateKey);
+  const context = String(payload.context || "").trim();
+  const formality = String(payload.formality || "").trim();
+  const season = String(payload.season || "").trim();
+  const climate = String(payload.climate || "").trim();
+  const office = payload.office === true ? "sí" : payload.office === false ? "no" : "";
+  const notes = String(payload.notes || "").trim() || "Creado desde el combinador visual de Segundo Cerebro.";
+
+  await appendSheetRows(spreadsheetId, token, "Looks", [[
+    id,
+    name,
+    "",
+    context,
+    formality,
+    season,
+    climate,
+    office,
+    "",
+    0,
+    "",
+    notes
+  ]]);
+  await appendSheetRows(
+    spreadsheetId,
+    token,
+    "LookItems",
+    normalized.map((item) => [id, item.objectId, item.role])
+  );
+
+  cache.value = null;
+  cache.expiresAt = 0;
+  return {
+    id,
+    name,
+    itemCount: normalized.length,
+    source: { kind: "private-sheet", name: SHEET_TITLE }
+  };
 }

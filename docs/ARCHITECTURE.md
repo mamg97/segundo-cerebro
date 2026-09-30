@@ -220,6 +220,30 @@ La fuente fue creada el 2026-09-24 y está registrada en el registro privado de 
 
 Las listas contextuales pueden enlazar `evento_ref` y `lista_id`: GESTOR EVENTOS aporta contexto y conserva la referencia; el inventario y la lista material permanecen en OBJETOS.
 
+### Armario visual
+
+La visualización de ropa no introduce almacenamiento paralelo:
+
+```text
+Objetos(objeto_id) ── 1:0/1 ── Armario(objeto_id)
+                              ├─ foto_original_url
+                              ├─ foto_procesada_url
+                              ├─ miniatura_url
+                              └─ metadatos visuales
+                                      ↓
+                           GET /api/objects
+                                      ↓
+                  Armario visual / ficha / combinador
+                                      ↓ POST /api/objects/look
+                              Looks + LookItems
+```
+
+El Worker no procesa imágenes todavía. Consume referencias ya almacenadas y expone el estado `pendiente/procesada/revisar`. Un procesador futuro podrá eliminar fondo, centrar/normalizar y escribir los derivados en las columnas visuales del mismo registro. La UI nunca considera esos derivados una nueva fuente de verdad.
+
+Por seguridad la app solo usa las URLs como recursos de imagen; no las ejecuta como contenido. El CSP privado permite imágenes HTTPS además de recursos propios/data, manteniendo scripts y conexiones restringidos a `self`.
+
+El constructor visual es una operación de escritura controlada: valida los `objeto_id` contra el armario vigente y escribe únicamente `Looks` + `LookItems`. No crea objetos, no copia prendas y no persiste composición paralela en D1.
+
 
 ## Navegación y composición de Home
 

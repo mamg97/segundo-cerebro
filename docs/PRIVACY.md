@@ -129,7 +129,10 @@ Si se detecta un secreto o dato real en Git: detener la publicación, revocar cr
 - `/api/state` recibe únicamente `objectsSummary`; el detalle se carga bajo demanda mediante `/api/objects`.
 - El frontend nunca recibe credenciales de Google.
 - Los documentos completos permanecen en su fuente propietaria; el inventario guarda como máximo referencias.
-- La ausencia de fuente se representa como `source-pending`; no se transforma en ceros ni en datos ficticios.
+- `foto_original_url`, `foto_procesada_url` y `miniatura_url` son referencias privadas asociadas al mismo `objeto_id`; no se hardcodean URLs reales ni bytes de imágenes en Git o en la demo pública.
+- La aplicación privada puede renderizar imágenes HTTPS detrás de Cloudflare Access, pero ampliar `img-src` no amplía `script-src` ni `connect-src`; las imágenes no adquieren capacidad de ejecución.
+- Un procesador futuro de recortes debe usar almacenamiento/servicios autorizados y escribir únicamente derivados visuales en el registro `Armario` correspondiente. No debe crear una base paralela de prendas ni persistir originales en D1 salvo una decisión futura explícita.
+- La ausencia de fuente o de imagen se representa como `source-pending`/placeholder; no se transforma en ceros ni en datos ficticios.
 
 
 ## Proyectos
