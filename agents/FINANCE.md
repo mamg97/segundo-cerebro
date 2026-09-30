@@ -246,3 +246,13 @@ ORGANIZADOR y la capa de interfaz son consumidores de solo lectura del estado fi
 - `Cuentas`, `ReservasCuenta` y `PatrimonioDetalle` siguen siendo las estructuras privadas derivadas que alimentan estas vistas.
 - La visualización de liquidez representa siempre el saldo actual como 100% de la barra; cualquier compromiso que exceda ese saldo se informa aparte y no aumenta la barra.
 - La visualización patrimonial toma `PatrimonioDetalle` para la distribución actual y mantiene `Patrimonio` como referencia histórica. Las diferencias entre snapshots de distinta fecha no se presentan como conciliación 1:1.
+
+
+### Histórico de operaciones Delta
+
+- Los exports de Delta son una **fuente auxiliar privada** para reconstruir actividad histórica de inversión, no una fuente contable primaria de valoración actual.
+- El archivo bruto se conserva privado e íntegro; las filas automáticas de sincronización/balance se mantienen para trazabilidad pero se excluyen de las métricas de operativa real.
+- Segundo Cerebro resuelve la hoja privada de histórico mediante la clave `DELTA_OPERATIONS_SHEET_ID` de `IntegracionesPrivadas` y la carga solo cuando se abre el detalle patrimonial.
+- La vista puede mostrar número de compraventas, activos, días activos, actividad anual, volumen bruto por divisa, activos más operados y operaciones individuales paginadas.
+- El volumen bruto transaccional no equivale a beneficio, rentabilidad ni aportación neta.
+- No se debe inferir P/L histórico total únicamente a partir del export: para ello harían falta lotes/coste, corporate actions, divisas y flujos externos reconciliados.
