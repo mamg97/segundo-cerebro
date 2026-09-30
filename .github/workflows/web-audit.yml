@@ -1,0 +1,56 @@
+name: Audit production web
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: segundo-cerebro-hourly-web-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TZ: Europe/Madrid
+      AUDIT_BASE_URL: https://segundo-cerebro-web-audit.mamg97.workers.dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install audit browser
+        working-directory: private-cloudflare
+        run: |
+          npm install
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Mint short-lived GitHub OIDC token
+        shell: bash
+        run: |
+          RESPONSE="$(curl --fail --silent --show-error             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=segundo-cerebro-web-audit")"
+          TOKEN="$(printf '%s' "$RESPONSE" | node -e '
+            let input = "";
+            process.stdin.on("data", chunk => input += chunk);
+            process.stdin.on("end", () => {
+              const parsed = JSON.parse(input);
+              if (!parsed.value) process.exit(2);
+              process.stdout.write(parsed.value);
+            });
+          ')"
+          echo "::add-mask::$TOKEN"
+          echo "AUDIT_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Navigate and audit production
+        working-directory: private-cloudflare
+        run: node scripts/web-audit.mjs
