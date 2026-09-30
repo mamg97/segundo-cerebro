@@ -1074,3 +1074,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - La UI privada de Finanzas muestra ahora movimientos recientes tanto de Santander como de Openbank Miguel; el histórico completo permanece en `MovimientosCuenta`.
 - Futuras importaciones bancarias pueden solapar fechas; deben deduplicarse por `movement_id` determinista y conservar `source_system`, `source_row` e `import_batch`.
 - El histórico permite detectar recurrencias, pero no reasigna automáticamente la cuenta futura de una suscripción si existe una ruta operativa más reciente documentada.
+
+
+## Finanzas · viaje noviembre + detalle ECI · 30/09/2026 noche
+
+- Openbank Miguel: del ingreso en efectivo de **90 €** del 28/09, **75 €** quedan reservados para `Viaje nov`; solo 15 € de ese ingreso quedan sin asignar.
+- Se añade `efectivo-miguel` con **100 €** fuera de banco, regalo de la madre de Miguel por su santo, totalmente reservados para la siguiente cuota/pago de vuelo Ryanair del viaje de noviembre.
+- Openbank Miguel pasa a **162,52 € libres internos**: 253,52 € de saldo - 16 € Apple Watch - 75 € Viaje nov.
+- `Compromisos/viaje-nov` conserva presupuesto/reserva históricos; los 175 € anteriores se documentan como **fuentes de financiación**, no como aumento automático del presupuesto del viaje.
+- ECI incorpora `ECIMovimientos` a la API/UI para mostrar las compras/devoluciones que han alimentado el revolving y `ECIFuturo` para el calendario futuro.
+- Compras netas identificadas que han alimentado el revolving: **454,81 €**; los movimientos individuales deben mostrarse con comercio/departamento, fecha e importe, incluida la devolución de 119 €.
+- `ECIFuturo` proyecta revolving desde 183,64 € suponiendo TIN 18 %, sin compras nuevas: 30 €/mes de octubre a marzo y último pago estimado 14,12 € en abril de 2027. Las cuotas contractuales TV Samsung y TV padres Andrea se muestran por separado; los 45 €/mes esperados de Encarna se reflejan como reembolso de tercero.
+- La vista `Crédito · El Corte Inglés` debe mostrar productos activos, próximos cargos, compras que alimentaron el revolving, histórico de recibos y financiaciones cerradas.
