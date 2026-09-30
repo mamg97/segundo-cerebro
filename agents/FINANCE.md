@@ -180,6 +180,16 @@ La capa privada derivada puede exponer:
 - aplazamientos incluidos en el recibo;
 - total cobrado y trazabilidad de fuente.
 
+`ECIMovimientos`:
+- compra/devolución individual identificada en extractos ECI;
+- fecha, comercio/departamento, importe y bucket de financiación;
+- permite reconstruir qué operaciones han alimentado el saldo revolving sin asignar artículos no soportados por el extracto.
+
+`ECIFuturo`:
+- calendario de cargos futuros conocidos o proyectados;
+- cuotas contractuales de aplazamientos, reembolsos de terceros y exposición neta del hogar;
+- para revolving, cualquier fila futura debe estar marcada como proyección y documentar el supuesto de no realizar nuevas compras.
+
 Reglas:
 - un recibo domiciliado de una financiera se descompone siempre en sus componentes antes de clasificarlo;
 - un gasto de tercero financiado con una tarjeta propia se mantiene visible en el saldo bruto, pero su reembolso esperado se separa de la exposición económica del hogar;
