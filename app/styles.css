@@ -15019,7 +15019,7 @@ html[data-theme="dark"] .home-liquidity-account {
 }
 
 .weekly-menu-progress.is-incomplete progress,
-.home-weekly-menu-day:has(> header > span:first-of-type) progress {
+.home-weekly-menu-day.is-incomplete progress {
   opacity: 0.9;
 }
 
