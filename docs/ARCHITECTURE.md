@@ -222,17 +222,17 @@ Las listas contextuales pueden enlazar `evento_ref` y `lista_id`: GESTOR EVENTOS
 
 ### Armario visual
 
-La visualización de ropa no introduce una segunda identidad ni una base paralela. El Sheet sigue siendo la fuente canónica de pertenencia/metadatos y R2 actúa únicamente como almacenamiento binario privado:
+La visualización de ropa no introduce una segunda identidad ni una base paralela. El Sheet sigue siendo la fuente canónica de pertenencia/metadatos y Google Drive actúa únicamente como almacenamiento binario privado ya integrado en Segundo Cerebro:
 
 ```text
 Imagen original o procesada
         ↓ multipart + Cloudflare Access
 POST /api/objects/:objeto_id/image
         ↓ valida objeto/Armario/MIME/tamaño/overwrite
-R2 privado OBJECTS_MEDIA
-        ├─ objects/<objeto_id>/original/<version>
-        ├─ objects/<objeto_id>/processed/<version>
-        └─ objects/<objeto_id>/thumbnail/<version>  ← WebP <= 512 px
+Google Drive privado · SEGUNDO CEREBRO - OBJETOS MEDIA
+        ├─ nombre técnico versionado · original
+        ├─ nombre técnico versionado · processed
+        └─ nombre técnico versionado · thumbnail  ← WebP <= 512 px
         ↓
 SEGUNDO CEREBRO - OBJETOS / Armario
         ├─ foto_original_url
@@ -246,154 +246,15 @@ GET /api/objects/:objeto_id/image/:tipo?v=<version>
 Armario visual / ficha / combinador / mosaicos
 ```
 
-El bucket R2 `segundo-cerebro-private-assets` no expone URL pública. Las URLs guardadas en el Sheet son rutas same-origin del Worker privado, por lo que se mantienen estables y la lectura sigue pasando por Cloudflare Access.
+La carpeta de media es privada y el Worker la resuelve por título exacto mediante el OAuth Google ya existente; su identificador no se versiona. Las URLs guardadas en el Sheet son rutas same-origin del Worker privado, por lo que no dependen de enlaces compartidos de Drive ni de URLs firmadas que caduquen.
 
-Una subida `processed` conserva la imagen principal a su resolución recibida y genera dentro del Worker una miniatura WebP de hasta 512 px en el lado largo mediante WebAssembly. El recorte/eliminación de fondo puede seguir ocurriendo antes del upload; el endpoint no inventa ni reinterpreta la prenda.
+Una subida `processed` conserva la imagen principal a su resolución recibida y genera dentro del Worker una miniatura WebP de hasta 512 px en el lado largo mediante WebAssembly. El recorte/eliminación de fondo puede ocurrir antes del upload; el endpoint no inventa ni reinterpreta la prenda.
 
-La consistencia con Sheets se resuelve con claves versionadas y compensación: primero se escriben los nuevos objetos R2; solo después se actualiza `Armario`. Si esa escritura falla, los nuevos assets se eliminan. En un overwrite correcto, el Sheet empieza a apuntar a la nueva versión y los assets privados anteriores se limpian después de forma best-effort. No se reutiliza una clave de otra prenda.
+La consistencia con Sheets se resuelve con nombres físicos versionados y compensación: primero se escriben los nuevos archivos en Drive; solo después se actualiza `Armario`. Si esa escritura falla, los nuevos assets se eliminan. En un overwrite correcto, el Sheet empieza a apuntar a la nueva versión y los archivos anteriores se limpian después de forma best-effort.
 
-Por seguridad se aceptan únicamente PNG/JPEG/WebP de hasta 8 MiB, se contrasta el MIME declarado con la firma binaria, el `objeto_id` se valida antes de construir claves, y las llamadas requieren contexto autenticado de Cloudflare Access. No se aceptan URLs externas como sustituto del archivo.
+Por seguridad se aceptan únicamente PNG/JPEG/WebP de hasta 8 MiB, se contrasta el MIME declarado con la firma binaria, el `objeto_id` se valida antes de construir nombres, y las llamadas requieren contexto autenticado de Cloudflare Access. La ruta de lectura solo puede resolver archivos cuyo nombre técnico derive de un `objeto_id + image_type + version` válidos dentro de la carpeta privada de OBJETOS.
 
 El constructor visual sigue siendo una operación de escritura separada: valida los `objeto_id` contra el armario vigente y escribe únicamente `Looks` + `LookItems`. No crea objetos, no copia prendas y no persiste composición paralela en D1.
-
-
-## Navegación y composición de Home
-
-La barra lateral es la navegación canónica de dominios. La portada no replica todos los dominios en una segunda parrilla.
-
-- `General` vuelve al inicio.
-- `Finanzas` abre el presupuesto mensual conectado.
-- `Agenda` lleva a la semana real de calendario.
-- `Patrimonio`, `Salud`, `Hábitos`, `Despensa`, `Objetos` y `Padres` abren sus vistas especializadas.
-- Carrera y Pareja/Familia usan un detalle contextual que reúne proyectos, pendientes, objetivos y decisiones abiertas de su propio ámbito. Proyectos usa su workspace privado y puede mostrar las decisiones abiertas del área.
-
-`OPEN_LOOP`, `GOAL` y `DECISION` son capas transversales, no dominios. Los pendientes viven en `Próximos movimientos`; los objetivos y decisiones se integran en su área propietaria. Una decisión solo entra también en `Próximos movimientos` cuando tiene una siguiente acción o un vencimiento explícito.
-
-La antigua parrilla `Áreas de tu vida` y la vista técnica `Sistema` se retiraron de Home. La arquitectura técnica se documenta en `docs/`, evitando duplicar información técnica potencialmente obsoleta en la interfaz operativa.
-
-
-## Consulta rápida de Home
-
-La tarjeta superior de Home es una interfaz de **consulta/navegación rápida**, no sustituye las conversaciones especializadas.
-
-Puede:
-- abrir módulos mediante órdenes cortas (`abre despensa`, `abre objetos`, `ver presupuesto`);
-- abrir Nutrición/Hábitos/Patrimonio/Padres;
-- llevar a Agenda;
-- responder consultas simples derivadas del estado ya cargado, como `qué tengo hoy`;
-- buscar coincidencias básicas en áreas, proyectos, pendientes, objetivos, decisiones, eventos y hábitos.
-
-No ejecuta todavía razonamiento multiagente ni modificaciones complejas de fuentes. Para planificación, decisiones o escritura en dominios se usan los gestores especializados.
-
-En móvil, el `thinking-orb` permanece visible en un espacio reservado de la tarjeta, con tamaño reducido y `pointer-events: none`, de modo que nunca se solapa ni bloquea el input o el CTA.
-
-
-## Registro privado de proyectos
-
-PROYECTOS usa una fuente privada canónica independiente:
-
-```text
-SEGUNDO CEREBRO - PROYECTOS
-        ↓ OAuth Google existente
-Cloudflare Worker
-        ├── /api/state → projectsSummary minimizado
-        └── /api/projects → catálogo + documentación + relaciones
-        ↓
-Dashboard privado
-```
-
-La aplicación pública no contiene el catálogo real. Esto evita filtrar en Git nombres de proyectos sensibles, repositorios privados o relaciones personales/profesionales.
-
-El registro no sustituye la documentación propietaria de cada proyecto. Mantiene:
-- identidad y estado;
-- enlaces a repo/web/documentación;
-- resumen y siguiente acción;
-- descripción estructurada suficiente para que otros gestores entiendan el proyecto;
-- relaciones con otros proyectos y dominios.
-
-La UI de Proyectos se carga bajo demanda desde `/api/projects`.
-
-
-## Salud — adherencia mensual
-
-La adherencia es una proyección derivada en tiempo de lectura:
-
-```text
-SEGUNDO CEREBRO - SALUD
-  Registro / Objetivos / ObjetivosActividad / MenuSemanal / AdherenciaManual
-        +
-Apple Health → D1 health_energy_daily
-        +
-D1 gym_sessions
-        +
-HabitQuest
-        ↓
-central adherence engine
-        ↓
-GET /api/health/adherence?month=YYYY-MM
-        ↓
-Salud → Adherencia
-```
-
-No se persiste un segundo histórico calculado. El estado mensual se recalcula desde las fuentes canónicas y se cachea brevemente.
-
-La clasificación manual en `AdherenciaManual` solo representa una decisión explícita sobre el estado del día; no duplica comidas, actividad, gym ni hábitos.
-
-
-## Evolución a Cerebro Global
-
-La arquitectura objetivo elimina la necesidad de que el usuario seleccione manualmente una conversación especializada.
-
-```text
-Usuario
-  ↓
-CEREBRO GLOBAL
-  ↓
-Intent Router
-  ↓
-Context Planner
-  ↓
-Gestores especializados
-  ↓
-Fuentes canónicas / D1 / conectores
-  ↓
-Result Composer
-  ↓
-Respuesta única
-```
-
-Los gestores no desaparecen: cambian de papel.
-
-- siguen siendo propietarios semánticos de su dominio;
-- conservan contratos, fuentes y permisos;
-- pueden seguir existiendo como consolas de mantenimiento;
-- dejan de ser la interfaz diaria obligatoria.
-
-El Coordinador no persiste una copia global de todos los datos. Planifica lecturas y escrituras contra las fuentes propietarias.
-
-La hoja de ruta completa está en `docs/EVOLUTION_GLOBAL_BRAIN.md`.
-
-
-## Eventos e histórico privado
-
-La agenda de iCloud sigue siendo de solo lectura y autoridad temporal. El histórico necesita persistencia mínima porque CalDAV se consulta con una ventana acotada.
-
-```text
-iCloud Calendar (fechas/horas)
-        ↓ read-only
-importantEventRules privadas
-        ↓
-D1 event_records
-        ├── event_facts        ← crónica mínima
-        └── event_refs         ← punteros a fuentes
-        ↓
-GET /api/events
-        ↓
-Eventos / Histórico / ficha
-        ├── Finanzas (referencia, no copia)
-        ├── Salud-Nutrición (consulta por fechas)
-        └── OBJETOS (lista contextual por evento_ref/lista_id)
-```
 
 ### Reglas de composición
 
