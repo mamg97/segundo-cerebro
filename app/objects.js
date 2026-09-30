@@ -202,12 +202,14 @@ function detailObject(item,payload) {
   const body=document.querySelector("#dialog-body"), w=(payload.wardrobe||[]).find(x=>x.objectId===item.id);
   const related=(payload.looks||[]).filter(x=>(w?.relatedLookIds||[]).includes(x.id));
   const compatible=(w?.compatibleWith||[]).map(id=>(payload.wardrobe||[]).find(x=>x.objectId===id)).filter(Boolean);
+  const usageDates=[...new Set(related.flatMap(x=>x.usageHistory||[]).filter(Boolean))].sort().reverse();
   const processed=w?imageUrl(w.processedPhotoUrl||w.thumbnailUrl||w.photoUrl):"";
   const original=w?imageUrl(w.originalPhotoUrl||item.photoUrl):imageUrl(item.photoUrl);
   const gallery=w?'<div class="wardrobe-detail-gallery"><div class="wardrobe-detail-main">'+(processed?'<img src="'+e(processed)+'" alt="'+e(item.name||"Prenda")+' procesada">':'<span>◫</span>')+'<small>Procesada · '+e(w.processedState||"pendiente")+'</small></div><div class="wardrobe-detail-original">'+(original?'<img src="'+e(original)+'" alt="'+e(item.name||"Prenda")+' original">':'<span>Sin original</span>')+'<small>Original</small></div></div>':"";
   body.innerHTML='<button class="objects-back" data-objects-back type="button">← Volver a Objetos</button><section class="object-detail">'+gallery+'<div class="object-detail-head"><div><span class="object-category">'+e(item.category||"Otros")+'</span><h3>'+e(item.name||"Objeto")+'</h3><p>'+e([item.brand,item.model,item.subcategory].filter(Boolean).join(" · ")||"Sin detalle")+'</p></div><span class="object-status">'+e(label(item.status))+'</span></div><div class="object-detail-grid">'+
     [['Ubicación',item.location||"Sin indicar"],['Cantidad',item.quantity??"—"],['Condición',item.condition||"Sin indicar"],['Compra',d(item.purchaseDate)],['Precio',m(item.purchasePrice,item.currency)],['Valor aprox.',m(item.estimatedValue,item.currency)],['Garantía',d(item.warrantyUntil)],['N.º serie',item.serialNumber||"—"]].map(([a,b])=>'<span><small>'+e(a)+'</small><strong>'+e(b)+'</strong></span>').join("")+
-    '</div>'+(w?'<div class="object-wardrobe-detail"><strong>Armario visual</strong><span>'+e([w.subcategory,w.primaryColor||w.color,w.pattern,w.size,w.season,w.formality].filter(Boolean).join(" · ")||"Sin atributos")+'</span><small>'+e([w.layer?("capa "+w.layer):null,w.garmentView?("vista "+w.garmentView):null,w.lastUsed?("último uso "+d(w.lastUsed)):null,w.office===true?"oficina":null].filter(Boolean).join(" · ")||"Sin histórico de uso")+'</small></div>':'')+
+    '</div>'+(w?'<div class="object-wardrobe-detail"><strong>Armario visual</strong><span>'+e([w.visualCategory,w.subcategory,w.primaryColor||w.color,w.pattern,w.size,w.season,w.formality].filter(Boolean).join(" · ")||"Sin atributos")+'</span><small>'+e([w.layer?("capa "+w.layer):null,w.garmentView?("vista "+w.garmentView):null,w.lastUsed?("último uso "+d(w.lastUsed)):null,w.office===true?"oficina":null].filter(Boolean).join(" · ")||"Sin histórico de uso")+'</small></div>':'')+
+    (w?'<div class="object-related-block"><strong>Histórico de uso</strong><div><span>'+e(Number.isFinite(Number(w.useCount))?Number(w.useCount)+" usos registrados":"Frecuencia sin registrar")+'</span>'+(w.lastUsed?'<span>Último '+e(d(w.lastUsed))+'</span>':'')+usageDates.slice(0,6).map(date=>'<span>'+e(d(date))+'</span>').join("")+'</div></div>':'')+
     (related.length?'<div class="object-related-block"><strong>Looks relacionados</strong><div>'+related.map(x=>'<span>'+e(x.name)+'</span>').join("")+'</div></div>':'')+
     (compatible.length?'<div class="object-related-block"><strong>Prendas compatibles</strong><div>'+compatible.map(x=>'<span>'+e(x.name)+'</span>').join("")+'</div></div>':'')+
     ((item.contexts||[]).length||(item.tags||[]).length?'<div class="object-chip-row">'+[...(item.contexts||[]),...(item.tags||[])].map(x=>'<span>'+e(x)+'</span>').join("")+'</div>':'')+
@@ -331,6 +333,7 @@ export async function openObjectsDetail() {
     const response=await fetch("/api/objects",{headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"});
     if(!response.ok)throw new Error("OBJECTS_"+response.status);
     activeTab="summary";
+    objectsFlash="";
     renderWorkspace(await response.json());
   } catch(error) {
     console.warn("Objects load failed",error);
