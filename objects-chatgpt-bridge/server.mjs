@@ -205,7 +205,20 @@ export async function handleRequest(request, env = process.env, fetchImpl = fetc
   try {
     result = await upstream.json();
   } catch {
-    return json({ ok: false, code: "UPSTREAM_INVALID_RESPONSE" }, 502);
+    const contentType = String(upstream.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+    console.warn("[objects-bridge]", {
+      stage: "upstream_invalid_response",
+      objetoId,
+      imageType,
+      status: upstream.status,
+      contentType: contentType || null
+    });
+    return json({
+      ok: false,
+      code: "UPSTREAM_INVALID_RESPONSE",
+      upstream_status: upstream.status,
+      upstream_content_type: contentType || null
+    }, 502);
   }
   if (!upstream.ok || result?.ok !== true) {
     const code = String(result?.code || "UPSTREAM_INGEST_FAILED");
