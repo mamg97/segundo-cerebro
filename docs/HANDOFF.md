@@ -1010,15 +1010,53 @@ Prioridad activa. No rehacer el pipeline visual ni cambiar el contrato OBJETOS v
 ### Estado canónico ya terminado
 
 - Fuente de verdad: `SEGUNDO CEREBRO - OBJETOS`.
-- Endpoint canónico existente:
+- Endpoint canónico:
   - `POST /api/objects/:objeto_id/image`
   - `GET /api/objects/:objeto_id/image/:image_type?v=<version>`
 - El upload canónico valida objeto, estado, MIME + magic bytes, tamaño, overwrite, genera thumbnail WebP para `processed`, escribe R2 con claves versionadas y actualiza `Armario` con compensación si falla Sheets.
-- La UI de Armario Visual, ficha, combinador y mosaicos ya consume `miniatura_url → foto_procesada_url → foto_original_url → fallback`.
+- La UI de Armario Visual, ficha, combinador y mosaicos consume `miniatura_url → foto_procesada_url → foto_original_url → fallback`.
+- No sustituir R2 por D1, Drive, Git ni URLs públicas.
 
-### Bloqueo 1 · R2
+### Bridge ChatGPT · cerrado en código y desplegado
 
-Pendiente crear una única vez el bucket privado Cloudflare:
+El bridge directo ya está fusionado en `main`. La discrepancia del relevo anterior quedó corregida recuperando exactamente la implementación ya validada que había sido eliminada al introducir el staging de Drive; no se rehizo el pipeline.
+
+Componentes activos:
+- `private-cloudflare/src/objects-bridge-auth.js`: Bearer machine-to-machine contra `OBJECTS_BRIDGE_UPSTREAM_SHA256`.
+- `POST /api/internal/objects/:objeto_id/image`: reutiliza `uploadObjectsImage(..., { authenticated: true })`; no duplica la lógica v0.3.
+- `objects-chatgpt-bridge/`: servicio Node mínimo para GPT Actions.
+- `POST /ingest-object-image`: acepta exactamente un `openaiFileIdRefs`, descarga el fichero temporal de OpenAI, valida host/MIME/tamaño y reenvía multipart al Worker.
+- No persiste binarios en Railway, no usa base64 y no guarda credenciales de Cloudflare Access en ChatGPT.
+- Autenticaciones separadas:
+  - ChatGPT Action → Railway: `CHATGPT_ACTION_API_KEY`
+  - Railway → Segundo Cerebro: `OBJECTS_UPSTREAM_SECRET`
+  - Worker: solo `SHA-256(OBJECTS_UPSTREAM_SECRET)`; no versionar ni documentar los valores secretos.
+- Schema Action publicado en `docs/objects-chatgpt-action.openapi.yaml`.
+- CI de bridge/auth, suite general, build y dry-run Wrangler pasaron antes del merge.
+- PR de cierre del bridge: #128; merge a `main` completado.
+
+### Railway · operativo
+
+Proyecto privado: `segundo-cerebro-objects-bridge`.
+
+Servicio: `objects-chatgpt-bridge`.
+
+Estado confirmado el 2026-09-30:
+- repo: `mamg97/segundo-cerebro`
+- branch: `main`
+- root directory: `objects-chatgpt-bridge`
+- start: `npm start`
+- healthcheck: `/health`
+- dominio: `https://objects-chatgpt-bridge-production.up.railway.app`
+- secretos rotados server-side y variables no secretas configuradas;
+- último redeploy post-merge: `SUCCESS`;
+- Railway confirmó `[1/1] Healthcheck succeeded!`.
+
+No copiar ni mostrar valores secretos en documentación o chat.
+
+### R2 · único bloqueo externo actual
+
+Bucket privado requerido:
 
 `segundo-cerebro-private-assets`
 
@@ -1026,88 +1064,54 @@ Binding esperado en el Worker principal:
 
 `OBJECTS_MEDIA`
 
-El token de GitHub Actions actual puede desplegar Workers pero no administrar R2. Se comprobó:
-- intento de listar/crear bucket → error de autenticación/permiso;
-- deploy con binding antes de existir el bucket → `R2 bucket 'segundo-cerebro-private-assets' not found`.
+Estado comprobado:
+- el deploy ordinario intentó resolver el binding y Cloudflare devolvió `R2 bucket 'segundo-cerebro-private-assets' not found` (`10085`);
+- el fallback seguro desplegó el resto de Segundo Cerebro sin `OBJECTS_MEDIA`;
+- se añadió el workflow one-shot `.github/workflows/provision-objects-r2-once.yml` para crear/verificar el bucket y desplegar el Worker con el binding usando los secretos ya existentes de GitHub Actions;
+- ese workflow llegó a Cloudflare pero falló al crear el bucket con `Authentication error [code: 10000]`;
+- causa concreta: el `CLOUDFLARE_API_TOKEN` actual puede desplegar Workers pero no tiene permiso para administrar R2.
 
-El workflow ordinario ya degrada de forma segura: si falta exclusivamente ese bucket, despliega Segundo Cerebro sin `OBJECTS_MEDIA` para no romper el resto. En cuanto el bucket exista, el mismo workflow debe desplegar automáticamente con el binding real.
+Acción externa mínima pendiente:
+1. conceder al token usado por GitHub Actions permiso `Workers R2 Storage Write` sobre la cuenta correspondiente, o reemplazar `CLOUDFLARE_API_TOKEN` por un token equivalente que lo tenga;
+2. reejecutar `Provision Objects R2 once`;
+3. exigir que `wrangler r2 bucket info segundo-cerebro-private-assets` pase y que el deploy del Worker principal resuelva `env.OBJECTS_MEDIA` sin fallback;
+4. tras éxito, retirar el workflow one-shot si ya no aporta valor.
 
-No sustituir R2 por D1, Drive, Git ni URLs públicas.
+### Cuatro ingestas reales · preparadas, no duplicar
 
-### Bloqueo 2 · puente ChatGPT → ingesta
+Las cuatro imágenes generadas originales ya están localizadas y copiadas en la carpeta privada `SEGUNDO CEREBRO - OBJETOS STAGING`. Se verificaron nombre y tamaño contra las originales.
 
-Trabajo en curso en la rama:
+`ImageIngestQueue` ya contiene exactamente cuatro solicitudes `pending`, creadas el 2026-09-30, una por objeto:
+- `image-gen-1(2).png` → `obj-shirt-scalpers-skyblue-001` → `processed`
+- `image-gen-2(2).png` → `obj-sweater-poloclub-quarterzip-grey-001` → `processed`
+- `image-gen-3.png` → `obj-chino-zara-navy-001` → `processed`
+- `image-gen-4.png` → `obj-sneakers-adidas-samba-blue-001` → `processed`
 
-`feat/objects-chatgpt-bridge`
+No volver a copiar estos ficheros ni insertar filas nuevas.
 
-No está todavía fusionada en `main`.
-
-Implementado en esa rama:
-
-- `private-cloudflare/src/objects-bridge-auth.js`: autenticación machine-to-machine por Bearer cuyo secreto se verifica contra `OBJECTS_BRIDGE_UPSTREAM_SHA256`; Segundo Cerebro solo necesita almacenar el hash SHA-256.
-- Ruta server-to-server:
-  `POST /api/internal/objects/:objeto_id/image`
-  que reutiliza exactamente `uploadObjectsImage(...)` con auth interna, sin duplicar la lógica canónica.
-- `objects-chatgpt-bridge/`: servicio Node mínimo para GPT Actions.
-- Entrada del bridge:
-  `POST /ingest-object-image`
-- El bridge acepta el mecanismo de archivos de GPT Actions mediante `openaiFileIdRefs`: descarga exactamente un fichero temporal alojado por OpenAI, valida host/MIME/tamaño y lo reenvía como `multipart/form-data` al endpoint interno de Segundo Cerebro.
-- No persiste el archivo en Railway.
-- No usa base64 manual.
-- No guarda Cloudflare Access tokens en ChatGPT.
-- Autenticaciones separadas:
-  - ChatGPT Action → bridge: `CHATGPT_ACTION_API_KEY`
-  - bridge → Segundo Cerebro: `OBJECTS_UPSTREAM_SECRET`
-  - Segundo Cerebro conserva solo `SHA-256(OBJECTS_UPSTREAM_SECRET)`.
-- CI ampliado para validar/tests del bridge y del auth interno.
-
-### Railway
-
-Ya existe un proyecto privado Railway llamado:
-
-`segundo-cerebro-objects-bridge`
-
-Servicio:
-
-`objects-chatgpt-bridge`
-
-Configuración actual confirmada:
-- repo: `mamg97/segundo-cerebro`
-- root directory: `objects-chatgpt-bridge`
-- start: `npm start`
-- healthcheck: `/health`
-- restart: `ON_FAILURE`
-
-El primer deployment falló durante `railpack prepare` porque se lanzó antes de terminar de configurar el root directory. La configuración del servicio ya quedó corregida, pero falta redeploy y validar `/health`.
-
-Railway tiene configurados los nombres de variables (los valores permanecen secretos/redactados):
-- `CHATGPT_ACTION_API_KEY`
-- `OBJECTS_UPSTREAM_SECRET`
-- `SEGUNDO_CEREBRO_BASE_URL`
-- `OPENAI_FILE_HOST_SUFFIXES`
-- `MAX_IMAGE_BYTES`
-
-No copiar ni mostrar valores secretos en documentación o chat.
+El Cron del Worker procesa hasta cuatro entradas por ciclo y converge en el mismo `uploadObjectsImage`. Actualmente las cuatro permanecen `pending` porque `OBJECTS_MEDIA` no está configurado. `Armario` mantiene vacías sus URLs visuales, que es el estado correcto mientras no exista R2.
 
 ### Siguiente secuencia exacta
 
-1. Redeploy del servicio Railway desde la rama `feat/objects-chatgpt-bridge`.
-2. Validar `GET /health`.
-3. Confirmar/generar server-side los dos secretos y configurar en Segundo Cerebro solo `OBJECTS_BRIDGE_UPSTREAM_SHA256`.
-4. Fusionar la rama tras CI.
-5. Provisionar una vez `segundo-cerebro-private-assets` en Cloudflare y confirmar binding `OBJECTS_MEDIA`.
-6. Desplegar Worker principal y verificar escritura/lectura R2 real.
-7. Publicar el esquema GPT Action que invoque `POST /ingest-object-image` usando `openaiFileIdRefs`.
-8. Ingerir sin regenerar las cuatro imágenes procesadas ya existentes:
-   - `image-gen-1(2).png` → `obj-shirt-scalpers-skyblue-001`
-   - `image-gen-2(2).png` → `obj-sweater-poloclub-quarterzip-grey-001`
-   - `image-gen-3.png` → `obj-chino-zara-navy-001`
-   - `image-gen-4.png` → `obj-sneakers-adidas-samba-blue-001`
-9. Exigir `ok=true`, comprobar R2, Sheet, `GET /api/objects` y visualización en Armario/ficha/combinador/mosaicos.
-10. Solo entonces declarar cerrado el criterio: GESTOR OBJETOS entrega directamente una imagen generada en ChatGPT + `objeto_id` y Segundo Cerebro la ingiere sin intervención manual.
+1. Resolver exclusivamente el permiso R2 del token Cloudflare.
+2. Reejecutar `Provision Objects R2 once` y verificar bucket + binding real.
+3. Confirmar que el siguiente ciclo procesa las cuatro filas existentes, sin crear otras:
+   - `status=done`
+   - `error_code` vacío
+   - staging enviado a papelera tras éxito.
+4. Exigir en cada objeto:
+   - `foto_procesada_url`
+   - `miniatura_url`
+   - `estado_procesado=procesada`
+   - metadatos visuales previstos.
+5. Verificar lectura R2 mediante `GET /api/objects/:objeto_id/image/processed?v=...` y thumbnail.
+6. Comprobar `GET /api/objects` y visualización en Armario/ficha/combinador/mosaicos.
+7. Conectar el schema de `docs/objects-chatgpt-action.openapi.yaml` al GPT personalizado GESTOR OBJETOS con la credencial Action correspondiente; una conversación normal de Proyecto no debe asumir que puede invocar una Action personalizada no instalada.
+8. Solo entonces declarar cerrado el criterio final: GESTOR OBJETOS entrega directamente una imagen generada en ChatGPT + `objeto_id` y Segundo Cerebro la ingiere sin intervención manual.
 
-### Limitación de producto detectada
+### Criterio de no-regresión
 
-Para ChatGPT Plus, la vía práctica para transportar un archivo generado desde ChatGPT a una API externa es una GPT Action con `openaiFileIdRefs`. El bridge está diseñado para ese contrato.
-
-No asumir que una conversación normal de Proyecto puede invocar automáticamente una Action personalizada no instalada. Si esa superficie no puede usar la Action directamente, el flujo debe ejecutarse desde el GPT personalizado GESTOR OBJETOS con dicha Action conectada, manteniendo cero pasos manuales sobre archivos.
+- No tocar el contrato OBJETOS v0.3 para resolver R2 o la Action.
+- Drive staging es fallback/transporte transitorio, nunca fuente de verdad ni sustituto de R2.
+- No crear una segunda cola ni otro bucket.
+- No regenerar las cuatro imágenes ya preparadas.
