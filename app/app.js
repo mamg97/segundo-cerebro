@@ -456,7 +456,6 @@ function getPreferredTheme() {
 function applyTheme(theme, persist = false) {
   const next = theme === "dark" ? "dark" : "light";
   document.documentElement.dataset.theme = next;
-  document.documentElement.style.colorScheme = next;
 
   const toggle = document.querySelector("#theme-toggle");
   if (toggle) {
@@ -823,7 +822,7 @@ function renderFocus() {
     const due = item.dueDate ? shortDateFormatter.format(new Date(`${item.dueDate}T12:00:00`)) : "Sin fecha";
     return `
       <li class="focus-item">
-        <span class="focus-dot" style="--priority:${item.priority === "high" ? colors.coral : item.priority === "medium" ? colors.amber : colors.blue}"></span>
+        <span class="focus-dot priority-${item.priority === "high" ? "high" : item.priority === "medium" ? "medium" : "normal"}"></span>
         <div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.nextAction)}</p></div>
         <div class="focus-meta"><time datetime="${item.dueDate || ""}">${due}</time><span>${escapeHtml(area?.shortTitle || "General")}</span></div>
       </li>`;
@@ -1598,6 +1597,8 @@ function renderFamilyWealthSection(payload) {
   const secondaryEndPct = investmentTotal > 0
     ? ((Number(primaryInvestment?.amountEur || 0) + Number(secondaryInvestment?.amountEur || 0)) / investmentTotal) * 100
     : 0;
+  const secondaryPct = Math.max(0, secondaryEndPct - primaryPct);
+  const otherPct = Math.max(0, 100 - secondaryEndPct);
   const comparisonMax = Math.max(grossAssets, liabilities, 1);
   const assetsWidth = Math.max(0, Math.min(100, (grossAssets / comparisonMax) * 100));
   const debtWidth = Math.max(0, Math.min(100, (liabilities / comparisonMax) * 100));
@@ -1636,8 +1637,18 @@ function renderFamilyWealthSection(payload) {
                 class="parents-wealth-donut"
                 role="img"
                 aria-label="Composición de inversiones financieras"
-                style="--wealth-primary-end:${primaryPct.toFixed(2)}%;--wealth-secondary-end:${secondaryEndPct.toFixed(2)}%;"
               >
+                <svg class="parents-wealth-donut-svg" viewBox="0 0 42 42" aria-hidden="true">
+                  <circle class="parents-wealth-donut-track" cx="21" cy="21" r="15.9155" pathLength="100"></circle>
+                  <circle class="parents-wealth-donut-segment is-primary" cx="21" cy="21" r="15.9155" pathLength="100"
+                    stroke-dasharray="${primaryPct.toFixed(2)} ${Math.max(0, 100 - primaryPct).toFixed(2)}"></circle>
+                  <circle class="parents-wealth-donut-segment is-secondary" cx="21" cy="21" r="15.9155" pathLength="100"
+                    stroke-dasharray="${secondaryPct.toFixed(2)} ${Math.max(0, 100 - secondaryPct).toFixed(2)}"
+                    stroke-dashoffset="${(-primaryPct).toFixed(2)}"></circle>
+                  <circle class="parents-wealth-donut-segment is-other" cx="21" cy="21" r="15.9155" pathLength="100"
+                    stroke-dasharray="${otherPct.toFixed(2)} ${Math.max(0, 100 - otherPct).toFixed(2)}"
+                    stroke-dashoffset="${(-secondaryEndPct).toFixed(2)}"></circle>
+                </svg>
                 <div>
                   <span>Total</span>
                   <strong>${formatMoney(investmentTotal, "EUR")}</strong>
@@ -1663,11 +1674,11 @@ function renderFamilyWealthSection(payload) {
           <div class="parents-wealth-comparison">
             <div class="parents-wealth-comparison-row">
               <div><span>Activos valorados</span><strong>${formatMoney(grossAssets, "EUR")}</strong></div>
-              <div class="parents-wealth-comparison-track" aria-hidden="true"><i class="is-assets" style="width:${assetsWidth.toFixed(2)}%"></i></div>
+              <progress class="parents-wealth-comparison-track is-assets" max="100" value="${assetsWidth.toFixed(2)}" aria-label="Proporción de activos valorados"></progress>
             </div>
             <div class="parents-wealth-comparison-row">
               <div><span>Deuda conocida</span><strong>${formatMoney(liabilities, "EUR")}</strong></div>
-              <div class="parents-wealth-comparison-track" aria-hidden="true"><i class="is-debt" style="width:${debtWidth.toFixed(2)}%"></i></div>
+              <progress class="parents-wealth-comparison-track is-debt" max="100" value="${debtWidth.toFixed(2)}" aria-label="Proporción de deuda conocida"></progress>
             </div>
           </div>
           <div class="parents-wealth-net-callout">
@@ -2801,7 +2812,7 @@ function renderHabitWeekly(items) {
       ${rows.map((item) => {
         const pct = Math.round(Math.max(0, Math.min(1, Number(item.rate || 0))) * 100);
         return `<div class="habit-week-day ${item.future ? "future" : ""}">
-          <div class="habit-week-track"><span style="height:${Math.max(4, pct)}%"></span></div>
+          <progress class="habit-week-track" max="100" value="${Math.max(4, pct)}" aria-label="${escapeHtml(item.label || "")}: ${pct}%"></progress>
           <strong>${escapeHtml(item.label || "")}</strong>
           <small>${pct}%</small>
         </div>`;
@@ -2861,9 +2872,7 @@ function habitHaptic(wasDone) {
   const input = document.createElement("input");
   input.type = "checkbox";
   input.setAttribute("switch", "");
-  input.style.position = "fixed";
-  input.style.opacity = "0";
-  input.style.pointerEvents = "none";
+  input.className = "habit-haptic-switch";
   document.body.appendChild(input);
   input.click();
   setTimeout(() => input.remove(), 300);
@@ -2885,10 +2894,7 @@ function launchHabitConfetti() {
   layer.className = "habit-confetti-layer";
   for (let i = 0; i < 28; i += 1) {
     const piece = document.createElement("i");
-    piece.style.left = `${Math.round(Math.random() * 100)}%`;
-    piece.style.setProperty("--delay", `${Math.random() * .35}s`);
-    piece.style.setProperty("--drift", `${Math.round((Math.random() - .5) * 160)}px`);
-    piece.className = `c${i % 4}`;
+    piece.className = `c${i % 4} p${i % 7} d${i % 5} x${i % 5}`;
     layer.appendChild(piece);
   }
   document.body.appendChild(layer);
