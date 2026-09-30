@@ -15346,6 +15346,31 @@ html[data-theme="dark"] .home-liquidity-account {
   opacity: 0.9;
 }
 
+.nutrition-quality-meter {
+  width: 100%;
+  height: 6px;
+  margin: 7px 0 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 58%, transparent);
+}
+
+.home-weekly-menu-progress .nutrition-quality-meter {
+  margin-top: 5px;
+}
+
+.nutrition-quality-meter > span {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  transition: width 180ms ease, background 180ms ease;
+}
+
+.nutrition-quality-meter.is-incomplete {
+  opacity: 0.9;
+}
+
 .weekly-menu-meal-list {
   display: grid;
   border-top: 1px solid var(--line);
