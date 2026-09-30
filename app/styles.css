@@ -17325,3 +17325,398 @@ html[data-theme="dark"] .midas-lab-card {
     grid-area: auto !important;
   }
 }
+
+
+/* v0.40.0 — visual wardrobe and look builder */
+.wardrobe-toolbar {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+}
+
+.objects-primary-action {
+  min-height: 39px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--blue) 45%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--blue) 14%, var(--paper));
+  color: var(--blue);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.objects-primary-action:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.wardrobe-visual-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.wardrobe-card-visual {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 9px;
+  padding: 9px;
+}
+
+.wardrobe-card-visual .wardrobe-visual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+}
+
+.wardrobe-card-visual .wardrobe-visual img {
+  object-fit: contain;
+  padding: 7px;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--blue) 6%, transparent), transparent 58%),
+    var(--paper);
+}
+
+.wardrobe-placeholder {
+  font-size: 30px;
+  opacity: .55;
+}
+
+.wardrobe-process-state {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: var(--ink-soft);
+  font-size: 6.5px;
+  font-weight: 850;
+  backdrop-filter: blur(7px);
+}
+
+.wardrobe-process-state.is-ready {
+  color: var(--mint);
+}
+
+.wardrobe-process-state.is-review {
+  color: var(--orange);
+}
+
+.wardrobe-card-visual .wardrobe-card-body {
+  align-content: start;
+  padding: 3px 2px 2px;
+}
+
+.wardrobe-card-visual .wardrobe-card-body > strong {
+  font-size: 11px;
+}
+
+.wardrobe-card-visual .wardrobe-card-foot {
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.looks-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -2px 0 10px;
+}
+
+.look-mosaic {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.look-mosaic img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.look-builder {
+  display: grid;
+  gap: 12px;
+}
+
+.look-builder-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 17px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.look-builder-head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.look-builder-head small {
+  color: var(--orange);
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.look-builder-head strong {
+  font-size: 13px;
+}
+
+.look-builder-head p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 8.5px;
+  line-height: 1.45;
+}
+
+.look-builder-head > button {
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font: inherit;
+  font-size: 8px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.look-builder-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, .9fr) minmax(360px, 1.1fr);
+  gap: 12px;
+}
+
+.look-builder-controls,
+.look-builder-preview {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.look-builder-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  align-content: start;
+}
+
+.look-builder-controls label {
+  display: grid;
+  gap: 5px;
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.look-builder-controls input[type="text"],
+.look-builder-controls select {
+  width: 100%;
+  min-height: 37px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 8.5px;
+}
+
+.look-builder-office {
+  display: flex !important;
+  align-items: center;
+  align-self: end;
+  min-height: 37px;
+}
+
+.look-builder-selectors {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding-top: 4px;
+}
+
+.look-builder-selectors label > span {
+  color: var(--blue);
+  text-transform: capitalize;
+}
+
+.look-builder-save-row {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 3px;
+}
+
+.look-builder-save-row > span {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.look-builder-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.look-builder-preview article {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 5px;
+  min-height: 190px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.look-builder-preview article > small {
+  color: var(--blue);
+  font-size: 7px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.look-builder-preview article > div {
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 78%, var(--paper));
+}
+
+.look-builder-preview article img {
+  width: 100%;
+  height: 100%;
+  max-height: 145px;
+  object-fit: contain;
+  padding: 6px;
+}
+
+.look-builder-preview article > div > span {
+  color: var(--ink-soft);
+  font-size: 22px;
+}
+
+.look-builder-preview article > strong {
+  overflow: hidden;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wardrobe-detail-gallery {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(160px, .8fr);
+  gap: 10px;
+}
+
+.wardrobe-detail-main,
+.wardrobe-detail-original {
+  display: grid;
+  gap: 6px;
+  min-height: 240px;
+  padding: 10px;
+  border-radius: 13px;
+  background: var(--paper);
+}
+
+.wardrobe-detail-main img,
+.wardrobe-detail-original img {
+  width: 100%;
+  height: 100%;
+  max-height: 420px;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.wardrobe-detail-main > span,
+.wardrobe-detail-original > span {
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+}
+
+.wardrobe-detail-main small,
+.wardrobe-detail-original small {
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.object-related-block {
+  display: grid;
+  gap: 7px;
+}
+
+.object-related-block > strong {
+  font-size: 10px;
+}
+
+.object-related-block > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.object-related-block span {
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 7px;
+}
+
+.objects-flash {
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--mint) 30%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--mint) 8%, var(--surface));
+  color: var(--mint);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+@media (max-width: 1100px) {
+  .wardrobe-toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .wardrobe-visual-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .look-builder-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .wardrobe-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wardrobe-visual-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .look-builder-controls { grid-template-columns: 1fr; }
+  .look-builder-selectors { grid-template-columns: 1fr; }
+  .look-builder-office,
+  .look-builder-selectors,
+  .look-builder-save-row { grid-column: 1; }
+  .wardrobe-detail-gallery { grid-template-columns: 1fr; }
+  .wardrobe-detail-original { min-height: 180px; }
+}
+
+@media (max-width: 460px) {
+  .wardrobe-toolbar,
+  .wardrobe-visual-grid { grid-template-columns: 1fr; }
+  .wardrobe-card-visual { grid-template-columns: 1fr; }
+  .look-builder-head,
+  .look-builder-save-row { align-items: stretch; flex-direction: column; }
+  .look-builder-preview { grid-template-columns: 1fr 1fr; }
+  .look-builder-preview article { min-height: 155px; }
+}
