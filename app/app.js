@@ -4984,7 +4984,7 @@ function renderMidasReport(dashboard, stale, research = null, lab = null) {
       <p class="midas-updated">Informe generado ${escapeHtml(formatFinanceDate(dashboard.generated_at_utc))}${stale ? " · copia temporal: la fuente no responde" : ""}</p>
     </div>
     ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>El historial antiguo se conserva como referencia: anotaba operaciones al mismo cierre que generaba la señal y su rentabilidad no era alcanzable con esa regla. La fila «versión corregida» empieza una campaña nueva: señal al cierre y ejecución simulada en la apertura siguiente, con costes. Sus cifras siguen siendo ficticias, sin órdenes confirmadas por un bróker. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
-    <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado.</p>
+    <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado. Las líneas prospectivas nuevas admiten acciones fraccionadas; el bootstrap Weekly ML visible hasta el primer forward real es una prueba anterior a ese cambio y no se recalcula.</p>
     ${renderMidasVisualLab(dashboard, lab)}
     ${renderMidasResearch(research)}
     ${MIDAS_GROUPS.map(([group, title]) => {
