@@ -10,6 +10,7 @@ import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
+import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -4620,6 +4621,33 @@ export default {
         const code = safeIcloudErrorCode(error);
         console.warn("Medical appointments iCloud read failed", code);
         return json({ ok: false, code }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/finance/delta") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      if (!hasFinanceGoogleConfig(env)) return json({ ok: false, code: "FINANCE_NOT_CONFIGURED" }, 503);
+      try {
+        const history = await fetchDeltaHistory(env, getGoogleAccessToken);
+        const page = paginateDeltaOperations(history, {
+          kind: url.searchParams.get("kind") || "trade",
+          offset: url.searchParams.get("offset") || 0,
+          limit: url.searchParams.get("limit") || 50
+        });
+        return json({
+          ok: true,
+          source: {
+            kind: "delta-export-private",
+            spreadsheetId: history.spreadsheetId,
+            generatedAt: history.generatedAt
+          },
+          counts: history.counts,
+          summary: history.summary,
+          page
+        });
+      } catch (error) {
+        console.warn("Delta operations read failed", String(error?.message || error));
+        return json({ ok: false, code: "DELTA_HISTORY_FAILED" }, 502);
       }
     }
 
