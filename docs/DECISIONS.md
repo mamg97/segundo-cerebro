@@ -421,3 +421,12 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **No es una segunda fuente de verdad:** `Armario` sigue siendo canónico y R2 es el storage final. Drive se limpia después de cada éxito.
 - **Idempotencia:** `request_id` identifica la solicitud; el endpoint v0.3 conserva versionado/overwrite y compensación de storage↔Sheet.
 - **Evolución:** cuando una cuenta permita full MCP write, el staging podrá sustituirse por una tool con `fileParams` sin cambiar `uploadObjectsImage`, R2 ni el modelo de Armario.
+
+
+## Delta histórico: conservar bruto, analizar derivado
+
+- **Fecha:** 2026-10-01.
+- **Decisión:** conservar el export bruto de Delta en almacenamiento privado y mostrar en Segundo Cerebro una vista derivada de operativa histórica.
+- Los ajustes de sincronización no se borran: se marcan y quedan fuera de métricas de trading.
+- Delta sigue siendo agregador auxiliar; las plataformas/brokers siguen siendo fuente primaria de valor actual.
+- No calcular ni presentar rentabilidad histórica total desde este CSV sin una reconstrucción específica de coste, corporate actions, divisas y flujos externos.
