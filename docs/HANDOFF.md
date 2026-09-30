@@ -1110,3 +1110,13 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Descomposición conocida del buffer: **80,18 €** de márgenes de partidas fijas ya ejecutadas por debajo del presupuesto (Luz 47,39; Agua 18,21; IKEA 14,46; TV Samsung 0,07; Medicinas 0,05) + **32,08 €** de remanente general/carryover todavía no asignado a una partida concreta.
 - Regla permanente: en una cuenta común por sobres, un sobrante provisional no se considera libre mientras el ciclo esté abierto. En el cierre se decide explícitamente si se destina a ahorro, arrastre o ajuste.
 - Resultado operativo: **Santander free_amount = 0 €** durante el ciclo abierto; la suma de retención 2 € + compromisos 1.915,34 € + buffer 112,26 € explica exactamente los 2.029,60 € contables.
+
+
+## MIDAS · Capital Cycle Inflection · v0.40.3
+
+- `mamg97/midas-paper-lab` incorpora la campaña prospectiva `capital_cycle_inflection_2026`, derivada del marco **capital cycle**: infrainversión multianual + supervivencia financiera + valoración normalizada + confirmación de giro.
+- La investigación y los horizontes quedan congelados en `research/CAPITAL_CYCLE_STRATEGY.md`; no se crea un backtest fundamental retrospectivo con datos actuales porque introduciría look-ahead/restatements y survivorship bias.
+- La campaña usa 100.000 USD ficticios, máximo 12 posiciones, 10 % por nombre, 95 % invertido, comisión 0,10 % y slippage 0,05 %. Señal inicial de lanzamiento y después ranking al cierre de mes; fills siempre next-open.
+- Segundo Cerebro acepta el grupo `capital_cycle_demo` desde `GET /api/midas` y lo muestra como bloque propio en la tabla general y en Laboratorio vivo. No interviene en `BROKERS` ni en patrimonio real.
+- La comparación frente al resto de estrategias sigue siendo prospectiva: no se ordenan rentabilidades de campañas con fechas/reglas distintas. La evaluación justa debe usar ventanas comunes y, cuando haya muestra suficiente, CAGR/anualización, drawdown, Sharpe/Sortino, turnover y retorno relativo a SPY desde la misma fecha.
+- El workflow de Capital Cycle corre tras cierre XNYS; solo recalcula fundamentales cuando toca señal y registra diariamente el NAV paper. Cambiar parámetros que afecten resultados exige una campaña nueva, no reescribir el diario.
