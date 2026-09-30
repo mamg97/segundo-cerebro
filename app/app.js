@@ -5235,6 +5235,186 @@ function renderWealthDailyDiary(diary, fallbackCurrency = "EUR") {
   </section>`;
 }
 
+
+function formatDeltaCount(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toLocaleString("es-ES") : "—";
+}
+
+function formatDeltaAmount(value, maxDigits = 6) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return number.toLocaleString("es-ES", { maximumFractionDigits: maxDigits });
+}
+
+function renderDeltaHistory(delta) {
+  if (!delta || delta.status !== "ok") return "";
+  const summary = delta.summary || {};
+  const topAssets = Array.isArray(delta.topAssets) ? delta.topAssets.slice(0, 10) : [];
+  const years = Array.isArray(delta.years) ? delta.years : [];
+  const turnover = Array.isArray(delta.turnover) ? delta.turnover : [];
+  const maxYear = Math.max(1, ...years.map((item) => Number(item.operations) || 0));
+
+  return `
+    <section class="wealth-delta-section">
+      <div class="wealth-delta-heading">
+        <div>
+          <span>DELTA · HISTÓRICO IMPORTADO</span>
+          <strong>Operaciones de inversión</strong>
+          <p>Histórico completo conservado en una fuente privada independiente. Los ajustes automáticos de Delta están registrados, pero separados de la operativa.</p>
+        </div>
+        ${delta.source?.url ? `<a href="${escapeHtml(delta.source.url)}" target="_blank" rel="noopener noreferrer">Fuente completa ↗</a>` : ""}
+      </div>
+
+      <div class="wealth-delta-kpis">
+        <article><span>Registros</span><strong>${formatDeltaCount(summary.rowsTotal)}</strong><small>${formatDeltaCount(summary.adjustments)} ajustes/sync</small></article>
+        <article><span>Compraventas</span><strong>${formatDeltaCount(summary.marketTrades)}</strong><small>${formatDeltaCount(summary.buys)} compras · ${formatDeltaCount(summary.sells)} ventas</small></article>
+        <article><span>Activos negociados</span><strong>${formatDeltaCount(summary.uniqueAssets)}</strong><small>${formatDeltaCount(summary.activeTradingDays)} días con operaciones</small></article>
+        <article><span>Periodo</span><strong>${escapeHtml(formatFinanceDate(summary.firstRecord, "—"))}</strong><small>hasta ${escapeHtml(formatFinanceDate(summary.lastRecord, "—"))}</small></article>
+      </div>
+
+      <div class="wealth-delta-grid">
+        <article class="wealth-delta-card">
+          <div class="wealth-delta-card-head"><strong>Activos más operados</strong><span>nº de operaciones</span></div>
+          <div class="wealth-delta-assets">
+            ${topAssets.map((item, index) => `
+              <div><span><b>${index + 1}</b>${escapeHtml(item.ticker)}</span><strong>${formatDeltaCount(item.operations)}</strong></div>
+            `).join("")}
+          </div>
+        </article>
+
+        <article class="wealth-delta-card">
+          <div class="wealth-delta-card-head"><strong>Actividad por año</strong><span>compraventas</span></div>
+          <div class="wealth-delta-years">
+            ${years.map((item) => {
+              const operations = Number(item.operations) || 0;
+              const width = Math.max(2, (operations / maxYear) * 100);
+              return `<div>
+                <span>${escapeHtml(item.year)}</span>
+                <i><u style="width:${width.toFixed(1)}%"></u></i>
+                <strong>${formatDeltaCount(operations)}</strong>
+              </div>`;
+            }).join("")}
+          </div>
+        </article>
+
+        <article class="wealth-delta-card">
+          <div class="wealth-delta-card-head"><strong>Volumen bruto registrado</strong><span>sin mezclar divisas</span></div>
+          <div class="wealth-delta-turnover">
+            ${turnover.map((item) => `
+              <div><span>${escapeHtml(item.currency)}</span><strong>${formatMoney(Number(item.amount) || 0, item.currency)}</strong></div>
+            `).join("")}
+          </div>
+          <small>No es beneficio ni aportación neta: suma los importes de compra/venta registrados por Delta.</small>
+        </article>
+      </div>
+
+      <div class="wealth-delta-actions">
+        <button type="button" class="wealth-delta-load" data-delta-load>Ver operaciones históricas</button>
+        <span>${formatDeltaCount(summary.rowsTotal)} filas registradas · carga progresiva de 100</span>
+      </div>
+      <div class="wealth-delta-operations" data-delta-operations hidden></div>
+    </section>`;
+}
+
+function renderDeltaOperationRows(operations = []) {
+  return operations.map((item) => {
+    const quote = Number.isFinite(Number(item.quoteAmount)) && item.quoteCurrency
+      ? formatMoney(Number(item.quoteAmount), item.quoteCurrency)
+      : "—";
+    const base = Number.isFinite(Number(item.baseAmount))
+      ? formatDeltaAmount(item.baseAmount)
+      : "—";
+    const price = Number.isFinite(Number(item.impliedPrice)) && item.quoteCurrency
+      ? formatMoney(Number(item.impliedPrice), item.quoteCurrency)
+      : "—";
+    const kind = item.adjustment ? "AJUSTE" : (item.way || "—");
+    const kindClass = item.adjustment ? "is-adjustment" : item.way === "BUY" ? "is-buy" : item.way === "SELL" ? "is-sell" : "is-movement";
+    return `<tr>
+      <td>${escapeHtml(formatFinanceDate(String(item.timestamp || "").slice(0, 10), "—"))}</td>
+      <td><span class="wealth-delta-kind ${kindClass}">${escapeHtml(kind)}</span></td>
+      <td><strong>${escapeHtml(item.ticker || "—")}</strong>${item.assetName ? `<small>${escapeHtml(item.assetName)}</small>` : ""}</td>
+      <td>${escapeHtml(base)}</td>
+      <td>${escapeHtml(quote)}</td>
+      <td>${escapeHtml(price)}</td>
+      <td>${escapeHtml(item.broker || item.exchange || "—")}${item.leverageKind ? `<small>${escapeHtml(item.leverageKind)}</small>` : ""}</td>
+      <td>${item.notes ? escapeHtml(item.notes) : "—"}</td>
+    </tr>`;
+  }).join("");
+}
+
+function deltaOperationsTableShell(rowsHtml = "") {
+  return `<div class="wealth-delta-table-scroll" role="region" aria-label="Operaciones históricas de Delta" tabindex="0">
+    <table class="wealth-delta-table">
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Activo</th><th>Cantidad</th><th>Importe</th><th>Precio impl.</th><th>Broker / mercado</th><th>Nota</th></tr></thead>
+      <tbody data-delta-rows>${rowsHtml}</tbody>
+    </table>
+  </div>
+  <div class="wealth-delta-more-wrap"><button type="button" class="wealth-delta-more" data-delta-more hidden>Cargar 100 anteriores</button><span data-delta-progress></span></div>`;
+}
+
+async function loadDeltaOperations(container, offset = 0, append = false) {
+  const response = await fetch(`/api/finance/delta-operations?offset=${encodeURIComponent(offset)}&limit=100`, {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+    credentials: "same-origin"
+  });
+  if (!response.ok) throw new Error("DELTA_HISTORY_" + response.status);
+  const payload = await response.json();
+  if (!payload.ok || !Array.isArray(payload.operations)) throw new Error("DELTA_HISTORY_INVALID");
+
+  if (!append) container.innerHTML = deltaOperationsTableShell();
+  const body = container.querySelector("[data-delta-rows]");
+  if (body) body.insertAdjacentHTML("beforeend", renderDeltaOperationRows(payload.operations));
+
+  const next = Number(payload.nextOffset) || 0;
+  container.dataset.deltaOffset = String(next);
+  const more = container.querySelector("[data-delta-more]");
+  if (more) more.hidden = !payload.hasMore;
+  const progress = container.querySelector("[data-delta-progress]");
+  const total = Number(payload.summary?.summary?.rowsTotal) || 0;
+  if (progress) progress.textContent = `${Math.min(next, total).toLocaleString("es-ES")} de ${total.toLocaleString("es-ES")} registros cargados`;
+}
+
+function bindWealthDeltaControls(dialog) {
+  const trigger = dialog.querySelector("[data-delta-load]");
+  const container = dialog.querySelector("[data-delta-operations]");
+  if (!trigger || !container) return;
+
+  trigger.addEventListener("click", async () => {
+    if (!container.hidden) {
+      container.hidden = true;
+      trigger.textContent = "Ver operaciones históricas";
+      return;
+    }
+    container.hidden = false;
+    trigger.textContent = "Ocultar operaciones";
+    if (container.dataset.deltaLoaded === "true") return;
+    container.innerHTML = '<p class="wealth-delta-loading">Cargando las operaciones más recientes…</p>';
+    try {
+      await loadDeltaOperations(container, 0, false);
+      container.dataset.deltaLoaded = "true";
+      container.querySelector("[data-delta-more]")?.addEventListener("click", async (event) => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        const original = button.textContent;
+        button.textContent = "Cargando…";
+        try {
+          await loadDeltaOperations(container, Number(container.dataset.deltaOffset) || 0, true);
+        } catch {
+          button.textContent = "Reintentar";
+          return;
+        } finally {
+          button.disabled = false;
+          if (button.textContent === "Cargando…") button.textContent = original;
+        }
+      });
+    } catch {
+      container.innerHTML = '<div class="wealth-delta-error"><strong>No se pudo cargar el histórico de Delta.</strong><p>La fuente privada sigue registrada; prueba de nuevo en unos segundos.</p></div>';
+    }
+  });
+}
+
 function openWealthDetail() {
   const wealth = state.financeSummary?.wealth || null;
   const dialog = document.querySelector("#detail-dialog");
@@ -5262,6 +5442,8 @@ function openWealthDetail() {
 
       ${renderWealthDailyDiary(wealth.dailyDiary, currency)}
 
+      ${renderDeltaHistory(wealth.delta)}
+
       ${history.length ? `
         <section class="wealth-chart-block">
           <div class="wealth-chart-heading">
@@ -5287,6 +5469,7 @@ function openWealthDetail() {
         </section>` : ""}
     </div>`;
   dialog.showModal();
+  bindWealthDeltaControls(dialog);
 }
 
 const MIDAS_GROUPS = [
