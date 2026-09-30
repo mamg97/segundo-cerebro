@@ -45,7 +45,7 @@ export function weeklyMenuIdentity(item) {
 export function dedupeWeeklyMenuRows(rows) {
   const selected = new Map();
   (Array.isArray(rows) ? rows : []).forEach((row, index) => {
-    if (!row || !weeklyMenuItemIsVisibleServer(row)) return;
+    if (!row) return;
     const key = weeklyMenuIdentity(row);
     const current = selected.get(key);
     if (!current) {
@@ -64,7 +64,8 @@ export function dedupeWeeklyMenuRows(rows) {
   });
   return [...selected.values()]
     .sort((a, b) => a.firstIndex - b.firstIndex)
-    .map((entry) => entry.row);
+    .map((entry) => entry.row)
+    .filter(weeklyMenuItemIsVisibleServer);
 }
 
 export function prepareWeeklyMenuRows(rows, options = {}) {
@@ -116,14 +117,16 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
     }));
 
     const missingNutrition = finite(hydrated.kcal) === null || finite(hydrated.protein) === null;
+    const noteSignalsPending = missingNutrition && /(pendient|confirmar|sin confirmar|hasta conocer|queda abierto)/.test(normalize(item?.note));
+    const pendingNutrition = pendingRecipe || noteSignalsPending;
     hydrated.nutritionStatus = missingNutrition
-      ? pendingRecipe
+      ? pendingNutrition
         ? "pending-confirmation"
         : "incomplete"
       : derivedFields.length
         ? "resolved-from-recipe"
         : "explicit";
-    hydrated.nutritionPendingReason = pendingRecipe && missingNutrition
+    hydrated.nutritionPendingReason = pendingNutrition && missingNutrition
       ? String(item?.note || recipe?.note || "").trim() || null
       : null;
     hydrated.nutritionDerivedFields = derivedFields;
