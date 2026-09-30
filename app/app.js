@@ -3708,10 +3708,13 @@ function weeklyMenuModel(data) {
     ["comida", 3],
     ["merienda", 4],
     ["cena", 5],
-    ["postre", 6],
-    ["snack", 7],
-    ["cierre", 8],
-    ["otro", 9]
+    ["cena · complemento", 6],
+    ["cena complemento", 6],
+    ["complemento cena", 6],
+    ["postre", 7],
+    ["snack", 8],
+    ["cierre", 9],
+    ["otro", 10]
   ]);
   const normalizedMoment = (value) => String(value || "Otro")
     .normalize("NFD")
