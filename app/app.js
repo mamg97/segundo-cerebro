@@ -5288,10 +5288,9 @@ function renderDeltaHistory(delta) {
           <div class="wealth-delta-years">
             ${years.map((item) => {
               const operations = Number(item.operations) || 0;
-              const width = Math.max(2, (operations / maxYear) * 100);
               return `<div>
                 <span>${escapeHtml(item.year)}</span>
-                <i><u style="width:${width.toFixed(1)}%"></u></i>
+                <progress max="${maxYear}" value="${operations}" aria-label="Operaciones ${escapeHtml(item.year)}"></progress>
                 <strong>${formatDeltaCount(operations)}</strong>
               </div>`;
             }).join("")}
