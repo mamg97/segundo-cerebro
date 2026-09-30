@@ -987,3 +987,17 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - En ese estado, las rutas de imágenes existen en código pero responden `OBJECTS_MEDIA_NOT_CONFIGURED`/503; no se simula que el pipeline esté operativo.
 - Cualquier otro error de deploy sigue fallando normalmente. El fallback solo se activa para el error literal de bucket ausente.
 - En cuanto el bucket exista, el mismo workflow usará automáticamente el binding R2 y dejará de entrar en fallback.
+
+
+## OBJETOS · bridge operativo ChatGPT mediante staging transitorio
+
+- La limitación actual del plan personal impide usar un MCP personalizado de escritura directamente desde GESTOR OBJETOS.
+- Se implementa fallback sin pasos humanos por foto: ChatGPT copia la imagen de Library a `/Google Drive/SEGUNDO CEREBRO - OBJETOS STAGING` y añade una fila `pending` en `ImageIngestQueue` del mismo spreadsheet canónico.
+- El Worker `segundo-cerebro` procesa hasta 4 solicitudes por minuto mediante Cron Trigger.
+- El procesador reutiliza `uploadObjectsImage` con confianza interna; no expone un endpoint bypass.
+- Éxito: R2 + thumbnail + actualización Armario + staging a papelera + cola `done`.
+- Fallo de ingesta: cola `error`, staging conservado, Armario no se marca procesado.
+- Fallo solo de cleanup: `cleanup_pending`; el siguiente ciclo reintenta únicamente la papelera.
+- Pestaña técnica creada: `ImageIngestQueue`.
+- Carpeta staging privada creada: `SEGUNDO CEREBRO - OBJETOS STAGING`.
+- El flujo final sigue bloqueado únicamente hasta provisionar el bucket R2 `segundo-cerebro-private-assets`.
