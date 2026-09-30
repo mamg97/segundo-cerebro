@@ -4922,6 +4922,7 @@ function renderCreditProductItem(item, currency = "EUR") {
     </article>`;
 }
 
+// ECI detail: purchases + past receipts + future schedule
 function openCreditDetail() {
   const accounts = Array.isArray(state.financeSummary?.creditAccounts)
     ? state.financeSummary.creditAccounts
