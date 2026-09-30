@@ -63,7 +63,7 @@ jobs:
           node --check scripts/configure-shopping-reminders.mjs
           node --check src/objects.js
           node --check src/objects-images.js
-          node --check src/objects-media-drive.js
+          node --check src/objects-media-d1.js
           node --check src/projects.js
           node --check src/events.js
           node --check src/adherence.js
