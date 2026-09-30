@@ -4209,7 +4209,7 @@ export default {
       try {
         if (imageType) {
           if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
-          const response = await readObjectsImage(request, env, objetoId, imageType);
+          const response = await readObjectsImage(request, env, getGoogleAccessToken, objetoId, imageType);
           return withSecurityHeaders(response);
         }
         if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
