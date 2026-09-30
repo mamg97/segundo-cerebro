@@ -3789,15 +3789,36 @@ function weeklyMenuDayLabel(date, options = {}) {
   }).format(parsed).replace(".", "");
 }
 
-function renderWeeklyMenuProgress(label, value, target, pct, tone, incomplete = false) {
-  if (incomplete) {
-    return `
-      <div class="weekly-menu-progress ${tone}">
-        <div><span>${escapeHtml(label)}</span><strong>${label === "Proteína" ? formatMacro(value) : formatKcal(value)} <small>subtotal</small></strong></div>
-        <small>Faltan datos de alguna comida</small>
-      </div>`;
+function weeklyMenuProgressVisualState(metric, value, target) {
+  const numericValue = Number(value);
+  const numericTarget = Number(target);
+  if (!Number.isFinite(numericValue) || !Number.isFinite(numericTarget) || numericTarget <= 0) return null;
+
+  const ratio = Math.max(0, numericValue / numericTarget);
+  let quality = 0;
+
+  if (metric === "kcal") {
+    // 100% kcal is the sweet spot. Being far below target is also suboptimal,
+    // but overshooting is penalized faster because kcal is a ceiling/target zone.
+    quality = ratio <= 1
+      ? (ratio - 0.65) / 0.35
+      : 1 - ((ratio - 1) / 0.15);
+  } else {
+    // Protein is a minimum/target: reaching or exceeding it stays green.
+    quality = ratio >= 1 ? 1 : (ratio - 0.60) / 0.40;
   }
 
+  quality = Math.max(0, Math.min(1, quality));
+  const hue = Math.round(120 * quality);
+  const lightness = quality >= 0.82 ? 38 : 46;
+  return {
+    pct: Math.round(ratio * 100),
+    color: `hsl(${hue} 82% ${lightness}%)`,
+    quality
+  };
+}
+
+function renderWeeklyMenuProgress(label, value, target, pct, tone, incomplete = false) {
   if (!Number.isFinite(target) || target <= 0) {
     return `
       <div class="weekly-menu-progress ${tone}">
@@ -3805,16 +3826,25 @@ function renderWeeklyMenuProgress(label, value, target, pct, tone, incomplete = 
         <small>Objetivo pendiente</small>
       </div>`;
   }
+
+  const visual = weeklyMenuProgressVisualState(tone, value, target);
+  const effectivePct = visual?.pct ?? (Number.isFinite(pct) ? pct : 0);
+  const progressColor = visual?.color || "currentColor";
   const displayValue = label === "Proteína" ? formatMacro(value) : formatKcal(value);
   const displayTarget = label === "Proteína" ? formatMacro(target) : formatKcal(target);
   return `
-    <div class="weekly-menu-progress ${tone}">
+    <div class="weekly-menu-progress ${tone} ${incomplete ? "is-incomplete" : ""}">
       <div>
         <span>${escapeHtml(label)}</span>
-        <strong>${displayValue} <small>/ ${displayTarget}</small></strong>
+        <strong>${incomplete ? "<small>Subtotal </small>" : ""}${displayValue} <small>/ ${displayTarget}</small></strong>
       </div>
-      <progress max="100" value="${Math.max(0, Math.min(100, Number(pct) || 0))}" aria-label="${escapeHtml(label)}: ${Number(pct) || 0}% del objetivo"></progress>
-      <small>${Number.isFinite(pct) ? pct + "% del objetivo" : "Sin objetivo"}</small>
+      <progress
+        max="100"
+        value="${Math.max(0, Math.min(100, Number(effectivePct) || 0))}"
+        style="--progress-color: ${escapeHtml(progressColor)}"
+        aria-label="${escapeHtml(label)}: ${Number(effectivePct) || 0}% del objetivo${incomplete ? ", subtotal conocido" : ""}"
+      ></progress>
+      <small>${incomplete ? `Subtotal conocido · ${effectivePct}% del objetivo` : `${effectivePct}% del objetivo`}</small>
     </div>`;
 }
 
@@ -4118,13 +4148,19 @@ function renderHomeWeeklyMenu(data) {
             <div class="home-weekly-menu-progress">
               <div>
                 <span><i class="kcal"></i>Kcal</span>
-                <b>${!day.nutritionComplete ? "Subtotal " : ""}${formatKcal(day.kcal)}${day.nutritionComplete && model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
-                ${day.nutritionComplete && model.kcalTarget !== null ? `<progress max="100" value="${Math.max(0, Math.min(100, day.kcalPct || 0))}"></progress>` : ""}
+                <b>${!day.nutritionComplete ? "Subtotal " : ""}${formatKcal(day.kcal)}${model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
+                ${model.kcalTarget !== null ? (() => {
+                  const visual = weeklyMenuProgressVisualState("kcal", day.kcal, model.kcalTarget);
+                  return `<progress max="100" value="${Math.max(0, Math.min(100, visual?.pct || 0))}" style="--progress-color: ${escapeHtml(visual?.color || "currentColor")}" aria-label="Kcal: ${visual?.pct || 0}% del objetivo${!day.nutritionComplete ? ", subtotal conocido" : ""}"></progress>`;
+                })() : ""}
               </div>
               <div>
                 <span><i class="protein"></i>Proteína</span>
-                <b>${!day.nutritionComplete ? "Subtotal " : ""}${formatMacro(day.protein)}${day.nutritionComplete && model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
-                ${day.nutritionComplete && model.proteinTarget !== null ? `<progress max="100" value="${Math.max(0, Math.min(100, day.proteinPct || 0))}"></progress>` : ""}
+                <b>${!day.nutritionComplete ? "Subtotal " : ""}${formatMacro(day.protein)}${model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
+                ${model.proteinTarget !== null ? (() => {
+                  const visual = weeklyMenuProgressVisualState("protein", day.protein, model.proteinTarget);
+                  return `<progress max="100" value="${Math.max(0, Math.min(100, visual?.pct || 0))}" style="--progress-color: ${escapeHtml(visual?.color || "currentColor")}" aria-label="Proteína: ${visual?.pct || 0}% del objetivo${!day.nutritionComplete ? ", subtotal conocido" : ""}"></progress>`;
+                })() : ""}
               </div>
             </div>
 
