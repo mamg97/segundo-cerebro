@@ -397,3 +397,16 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Validación:** un look nuevo debe contener `superior + inferior + calzado`; `exterior` y `accesorio` son opcionales. Roles duplicados, objetos inexistentes o retirados se rechazan.
 - **Procesado:** el pipeline automático de fondo/centrado no forma parte aún de la arquitectura operativa. El sistema soporta el estado `pendiente | procesada | revisar` y el almacenamiento de ambas URLs para incorporarlo después.
 - **Motivo:** habilitar armario visual, outfits y futuras recomendaciones de oficina/viaje/clima sin romper IDs, historial ni propiedad funcional del dominio.
+
+
+## D-042 — Assets visuales de Armario usan R2 privado
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-09-30.
+- **Decisión:** almacenar original, procesada y miniatura de las prendas en un bucket R2 privado ligado al Worker principal. `SEGUNDO CEREBRO - OBJETOS / Armario` continúa siendo la única fuente canónica de identidad, pertenencia, estado y referencia visual activa.
+- **Lectura:** el Sheet guarda rutas same-origin versionadas `/api/objects/:objeto_id/image/:tipo?v=<version>`; R2 no expone dominio público ni URLs firmadas que caduquen.
+- **Escritura:** `POST /api/objects/:objeto_id/image` recibe multipart autenticado por Cloudflare Access, valida objeto, estado, MIME/firma, tamaño y overwrite, persiste en R2 y actualiza la fila existente de Armario.
+- **Miniaturas:** una subida `processed` genera automáticamente WebP con lado largo máximo de 512 px dentro del Worker.
+- **Consistencia:** las claves son versionadas; si falla la actualización del Sheet se borran los nuevos assets. En reemplazos, el asset anterior no se limpia hasta que la nueva referencia canónica ya ha sido escrita.
+- **No duplicación:** ni R2 ni D1 mantienen catálogo de prendas; el nombre físico del asset jamás sustituye `objeto_id`.
+- **Motivo:** cerrar el flujo foto → derivado → persistencia → Armario visual sin intervención manual en Sheets y sin abrir almacenamiento público.
