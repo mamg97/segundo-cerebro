@@ -59,13 +59,14 @@ const adherence = readFileSync(new URL("./adherence.js", import.meta.url), "utf8
 const index = readFileSync(new URL("./index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 const pantry = readFileSync(new URL("./pantry.js", import.meta.url), "utf8");
+const objects = readFileSync(new URL("./objects.js", import.meta.url), "utf8");
 const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), "utf8");
 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.39\.15/);
-assert.match(index, /styles\.css\?v=0\.39\.14/);
+assert.match(index, /app\.js\?v=0\.40\.0/);
+assert.match(index, /styles\.css\?v=0\.40\.0/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -126,6 +127,21 @@ assert.match(css, /v0\.38\.2 — compact mobile liquidity cards/);
 assert.match(css, /v0\.38\.3 — two-column mobile liquidity grid/);
 assert.match(css, /v0\.38\.4 — readability typography pass/);
 assert.match(app, /pantry\.js\?v=0\.38\.7/);
+assert.match(app, /objects\.js\?v=0\.40\.0/);
+assert.match(objects, /Armario visual/);
+assert.match(objects, /Combinador/);
+assert.match(objects, /wardrobe-brand/);
+assert.match(objects, /wardrobe-color/);
+assert.match(objects, /wardrobe-formality/);
+assert.match(objects, /wardrobe-frequency/);
+assert.match(objects, /data-look-role/);
+assert.match(objects, /\/api\/objects\/look/);
+assert.match(objects, /processedPhotoUrl/);
+assert.match(objects, /originalPhotoUrl/);
+assert.match(css, /v0\.40\.0 — visual wardrobe and look builder/);
+assert.match(css, /wardrobe-visual-grid/);
+assert.match(css, /look-builder-preview/);
+
 assert.match(index, /id="home-shopping-list"/);
 assert.match(index, /🛒 Lista de la compra/);
 assert.match(pantry, /data-pantry-view="shopping"/);
