@@ -6135,7 +6135,7 @@ function renderBudgetCategoryDetail(item, currency) {
   const sourceStatus = String(item.sourceStatus || item.source_status || "").toUpperCase();
   const sourceLabel = sourceStatus === "PROVISIONAL_CHAT"
     ? "Pendiente de conciliar"
-    : sourceStatus === "RECONCILIADO_SHEET" || sourceStatus === "RECONCILIADO_SANTANDER" || sourceStatus === "RECONCILIADO_MAESTRO_SANTANDER"
+    : sourceStatus === "RECONCILIADO_SHEET" || sourceStatus === "RECONCILIADO_SANTANDER" || sourceStatus === "RECONCILIADO_MAESTRO_SANTANDER" || sourceStatus === "RECONCILIADO_OPENBANK"
       ? "Conciliado"
       : sourceStatus === "CONFIRMADO_EXTRACTOS_ECI" || sourceStatus === "CONFIRMADO_EXTRACTO_ECI"
         ? "Confirmado · extractos"
