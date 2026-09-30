@@ -628,6 +628,7 @@ async function init() {
   renderEvents();
   renderBudgetOverview();
   renderDebtOverview();
+  renderCreditOverview();
   renderWealthOverview();
   bindInteractions();
   initDemoMode();
@@ -4729,6 +4730,165 @@ function renderDebtOverview() {
       : ""}`;
 }
 
+function renderCreditOverview() {
+  const accounts = Array.isArray(state.financeSummary?.creditAccounts)
+    ? state.financeSummary.creditAccounts
+    : [];
+  const container = document.querySelector("#credit-summary");
+  if (!container) return;
+
+  const account = accounts.find((item) => String(item.status || "").toLowerCase() !== "closed") || null;
+  if (!account) {
+    container.innerHTML = `
+      <div class="credit-empty">
+        <strong>Cuenta de crédito pendiente de conectar</strong>
+        <p>Cuando exista una cuenta de crédito privada aparecerán aquí saldo, cuotas y reembolsos.</p>
+      </div>`;
+    return;
+  }
+
+  const currency = "EUR";
+  const grossPending = firstFinite(account.grossPending);
+  const netExposure = firstFinite(account.netHouseholdExposure);
+  const nextReceipt = firstFinite(account.estimatedNextReceipt);
+  const revolving = firstFinite(account.revolvingBalance);
+  const reimbursement = firstFinite(account.monthlyThirdPartyReimbursement);
+
+  container.innerHTML = `
+    <div class="credit-summary-grid">
+      <div class="credit-summary-primary">
+        <span>Pendiente bruto</span>
+        <strong>${grossPending === null ? "—" : formatMoney(grossPending, currency)}</strong>
+      </div>
+      <div>
+        <span>Exposición propia</span>
+        <strong>${netExposure === null ? "—" : formatMoney(netExposure, currency)}</strong>
+      </div>
+      <div>
+        <span>Próximo recibo</span>
+        <strong>${nextReceipt === null ? "—" : formatMoney(nextReceipt, currency)}</strong>
+      </div>
+      <div>
+        <span>Revolving</span>
+        <strong>${revolving === null ? "—" : formatMoney(revolving, currency)}</strong>
+      </div>
+    </div>
+    ${reimbursement !== null && reimbursement > 0
+      ? `<p class="credit-source-note">Incluye un reembolso mensual de terceros de ${formatMoney(reimbursement, currency)} conciliado por separado.</p>`
+      : ""}`;
+}
+
+function renderCreditProductItem(item, currency = "EUR") {
+  const remaining = firstFinite(item.remaining);
+  const monthly = firstFinite(item.monthlyPayment);
+  const reimbursement = firstFinite(item.reimbursementMonthly);
+  const status = String(item.status || "active").toLowerCase();
+  const installment = item.installmentCurrent !== null && item.installmentCurrent !== undefined
+    && item.installmentTotal !== null && item.installmentTotal !== undefined
+    ? `${item.installmentCurrent}/${item.installmentTotal}`
+    : null;
+
+  return `
+    <article class="credit-product-item ${status === "closed" ? "is-closed" : ""}">
+      <div class="credit-product-head">
+        <div>
+          <strong>${escapeHtml(item.label || "Producto")}</strong>
+          <span>${escapeHtml(item.type || "crédito")}${item.economicOwner ? " · " + escapeHtml(item.economicOwner) : ""}</span>
+        </div>
+        <strong>${remaining === null ? (status === "closed" ? "Cerrado" : "—") : formatMoney(remaining, currency)}</strong>
+      </div>
+      <div class="credit-product-meta">
+        <span>Cuota <b>${monthly === null ? "—" : formatMoney(monthly, currency)}</b></span>
+        ${installment ? `<span>Plazo <b>${escapeHtml(installment)}</b></span>` : ""}
+        ${item.lastDue ? `<span>Fin <b>${escapeHtml(formatFinanceDate(item.lastDue, item.lastDue))}</b></span>` : ""}
+        ${reimbursement !== null && reimbursement > 0 ? `<span>Reembolso <b>${formatMoney(reimbursement, currency)}/mes</b></span>` : ""}
+      </div>
+      ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
+    </article>`;
+}
+
+function openCreditDetail() {
+  const accounts = Array.isArray(state.financeSummary?.creditAccounts)
+    ? state.financeSummary.creditAccounts
+    : [];
+  const account = accounts.find((item) => String(item.status || "").toLowerCase() !== "closed") || null;
+  const dialog = document.querySelector("#detail-dialog");
+  if (!dialog) return;
+
+  dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog");
+  dialog.classList.add("credit-dialog");
+  document.querySelector("#dialog-context").textContent = "Finanzas · Crédito";
+  document.querySelector("#dialog-title").textContent = account?.name || "Cuentas de crédito";
+
+  if (!account) {
+    document.querySelector("#dialog-body").innerHTML = "<p>No hay cuentas de crédito conectadas.</p>";
+    dialog.showModal();
+    return;
+  }
+
+  const currency = "EUR";
+  const products = Array.isArray(account.products) ? account.products : [];
+  const activeProducts = products.filter((item) => String(item.status || "").toLowerCase() !== "closed");
+  const closedProducts = products.filter((item) => String(item.status || "").toLowerCase() === "closed");
+  const history = (Array.isArray(state.financeSummary?.creditHistory) ? state.financeSummary.creditHistory : [])
+    .slice()
+    .sort((a, b) => String(b.dueDate || "").localeCompare(String(a.dueDate || "")));
+
+  const grossPending = firstFinite(account.grossPending);
+  const netExposure = firstFinite(account.netHouseholdExposure);
+  const nextReceipt = firstFinite(account.estimatedNextReceipt);
+  const reimbursementRemaining = firstFinite(account.expectedThirdPartyReimbursement);
+
+  document.querySelector("#dialog-body").innerHTML = `
+    <div class="credit-detail">
+      <div class="credit-detail-summary">
+        <article><span>Pendiente bruto</span><strong>${grossPending === null ? "—" : formatMoney(grossPending, currency)}</strong></article>
+        <article><span>Exposición propia</span><strong>${netExposure === null ? "—" : formatMoney(netExposure, currency)}</strong></article>
+        <article><span>Próximo recibo estimado</span><strong>${nextReceipt === null ? "—" : formatMoney(nextReceipt, currency)}</strong></article>
+        <article><span>Reembolsos terceros pendientes</span><strong>${reimbursementRemaining === null ? "—" : formatMoney(reimbursementRemaining, currency)}</strong></article>
+      </div>
+
+      <section class="credit-detail-section">
+        <div class="credit-detail-heading">
+          <div><strong>Productos activos</strong><span>Revolving y aplazamientos</span></div>
+          <small>${activeProducts.length} activos</small>
+        </div>
+        <div class="credit-product-list">
+          ${activeProducts.length ? activeProducts.map((item) => renderCreditProductItem(item, currency)).join("") : "<p>Sin productos activos.</p>"}
+        </div>
+      </section>
+
+      ${history.length ? `
+        <section class="credit-detail-section">
+          <div class="credit-detail-heading">
+            <div><strong>Histórico de recibos</strong><span>Conciliación mensual</span></div>
+            <small>${history.length} periodos</small>
+          </div>
+          <div class="credit-history-scroll" role="region" aria-label="Histórico de recibos de crédito" tabindex="0">
+            <table class="credit-history-table">
+              <thead><tr><th>Vencimiento</th><th>Compras</th><th>Intereses</th><th>Revolving</th><th>Aplazamientos</th><th>Total</th></tr></thead>
+              <tbody>${history.map((item) => `
+                <tr>
+                  <td>${escapeHtml(formatFinanceDate(item.dueDate, item.dueDate || "—"))}</td>
+                  <td>${item.purchases === null ? "—" : formatMoney(item.purchases, currency)}</td>
+                  <td>${item.interest === null ? "—" : formatMoney(item.interest, currency)}</td>
+                  <td>${item.paymentRevolving === null ? "—" : formatMoney(item.paymentRevolving, currency)}</td>
+                  <td>${item.installmentReceipt === null ? "—" : formatMoney(item.installmentReceipt, currency)}</td>
+                  <td><strong>${item.totalReceipt === null ? "—" : formatMoney(item.totalReceipt, currency)}</strong></td>
+                </tr>`).join("")}</tbody>
+            </table>
+          </div>
+        </section>` : ""}
+
+      ${closedProducts.length ? `
+        <details class="credit-closed-products">
+          <summary>Financiaciones cerradas · ${closedProducts.length}</summary>
+          <div class="credit-product-list">${closedProducts.map((item) => renderCreditProductItem(item, currency)).join("")}</div>
+        </details>` : ""}
+    </div>`;
+  dialog.showModal();
+}
+
 function renderWealthOverview() {
   const wealth = state.financeSummary?.wealth || null;
   const container = document.querySelector("#wealth-summary");
@@ -6121,6 +6281,7 @@ function bindInteractions() {
   const dialog = document.querySelector("#detail-dialog");
   document.querySelector("#show-budget-detail")?.addEventListener("click", openBudgetDetail);
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
+  document.querySelector("#show-credit-detail")?.addEventListener("click", openCreditDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
   document.querySelector("#show-midas-detail")?.addEventListener("click", () => void openMidasDialog());
   document.querySelector("#close-midas-dialog")?.addEventListener("click", () => document.querySelector("#midas-dialog")?.close());
