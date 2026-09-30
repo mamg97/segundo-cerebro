@@ -4816,7 +4816,6 @@ function openCreditDetail() {
   if (!dialog) return;
 
   dialog.classList.remove("wealth-dialog", "important-events-dialog", "health-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog");
-  dialog.classList.add("credit-dialog");
   document.querySelector("#dialog-context").textContent = "Finanzas · Crédito";
   document.querySelector("#dialog-title").textContent = account?.name || "Cuentas de crédito";
 
@@ -5359,11 +5358,13 @@ function renderDebtDetailItem(item, currency) {
   const sourceStatus = String(item.sourceStatus || "").toUpperCase();
   const sourceLabel = sourceStatus === "RECONCILIADO_SHEET"
     ? "Conciliado"
-    : sourceStatus === "DERIVADO"
-      ? "Derivado"
-      : sourceStatus === "PROVISIONAL_CHAT"
-        ? "Pendiente de conciliar"
-        : "";
+    : sourceStatus === "CONFIRMADO_EXTRACTOS_ECI" || sourceStatus === "CONFIRMADO_EXTRACTO_ECI"
+      ? "Confirmado · extractos"
+      : sourceStatus === "DERIVADO"
+        ? "Derivado"
+        : sourceStatus === "PROVISIONAL_CHAT"
+          ? "Pendiente de conciliar"
+          : "";
 
   return `
     <article class="debt-detail-item">
