@@ -771,7 +771,7 @@ async function fetchFinanceSummary(env) {
       if (byDate !== 0) return byDate;
       return (a.sourceRow ?? 999999) - (b.sourceRow ?? 999999);
     })
-    .slice(0, 160);
+    .slice(0, 320);
 
   const wealthAllocation = parseTableRows(wealthAllocationRows)
     .map((item) => ({
