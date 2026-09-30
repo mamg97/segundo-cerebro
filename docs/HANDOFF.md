@@ -1119,3 +1119,14 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Por tanto, de los antiguos 112,26 € de aparente margen, **50 € estaban ya asignados** y solo **62,26 €** quedan como `cycle_surplus_buffer` provisional.
 - Ese buffer no es dinero nuevo ni libre: surge de desviaciones plan-real (recibos inferiores al presupuesto, transferencias reales frente a la versión actual del maestro, nómina real frente a modelada y otros ajustes de ruta/conciliación). Permanece bloqueado hasta cierre.
 - `free_amount` Santander continúa en **0 €** mientras el ciclo esté abierto.
+
+
+## Finanzas · histórico completo de Delta v0.40.7
+
+- Importado en fuente privada el export completo de Delta recibido el 01/10/2026 y archivado también como CSV privado.
+- La referencia canónica queda en `IntegracionesPrivadas.DELTA_OPERATIONS_SHEET_ID`; Git no contiene datos patrimoniales reales.
+- Nuevo adaptador `private-cloudflare/src/delta.js` y endpoint privado `GET /api/finance/delta`.
+- Finanzas → Patrimonio muestra un bloque **Histórico de operaciones Delta** con KPI de actividad, distribución anual, activos más operados, turnover por divisa y compraventas paginadas.
+- Las filas automáticas/sync se conservan pero no cuentan como operativa real.
+- La carga es lazy al abrir Patrimonio para no penalizar el Home.
+- Assets app/styles: `v0.40.7`.
