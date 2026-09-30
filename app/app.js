@@ -3676,7 +3676,18 @@ function weeklyMenuItemIsVisible(item) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-  return !/^(omitid[oa]|retirad[oa]|cancelad[oa]|cancelled|skipped)$/.test(status);
+
+  if (/^(omitid[oa]|retirad[oa]|cancelad[oa]|cancelled|skipped)$/.test(status)) return false;
+
+  const hasExplicitKcal = item?.kcal !== null && item?.kcal !== undefined && item?.kcal !== "";
+  const hasExplicitProtein = item?.protein !== null && item?.protein !== undefined && item?.protein !== "";
+  const explicitZero = hasExplicitKcal
+    && hasExplicitProtein
+    && Number(item.kcal) === 0
+    && Number(item.protein) === 0;
+
+  // A true unknown stays visible as "—"; an explicit 0/0 row is operational noise.
+  return !explicitZero;
 }
 
 function weeklyMenuItemIsConsumed(item) {
@@ -3808,14 +3819,13 @@ function weeklyMenuProgressVisualState(metric, value, target) {
   let quality = 0;
 
   if (metric === "kcal") {
-    // 100% is ideal. Under-eating degrades progressively; overshooting degrades faster.
-    // Red = clearly far from the target, green = very close to target.
+    // 100% is ideal. Below target degrades gradually; overshooting is penalized faster.
     quality = ratio <= 1
       ? (ratio - 0.70) / 0.30
-      : 1 - ((ratio - 1) / 0.20);
+      : 1 - ((ratio - 1) / 0.10);
   } else {
-    // Protein is a minimum/target: 100% or more is ideal; falling short degrades continuously.
-    quality = ratio >= 1 ? 1 : (ratio - 0.50) / 0.50;
+    // Protein is a minimum/target: 100%+ is ideal; below 70% is a clear failure.
+    quality = ratio >= 1 ? 1 : (ratio - 0.70) / 0.30;
   }
 
   quality = Math.max(0, Math.min(1, quality));
@@ -3832,16 +3842,17 @@ function renderNutritionQualityMeter(metric, value, target, label, incomplete = 
   const visual = weeklyMenuProgressVisualState(metric, value, target);
   if (!visual) return "";
   const width = Math.max(0, Math.min(100, visual.pct || 0));
+  const fillColor = incomplete ? "#64748b" : visual.color;
   return `
     <div
       class="nutrition-quality-meter ${incomplete ? "is-incomplete" : ""}"
       role="progressbar"
-      aria-label="${escapeHtml(label)}: ${visual.pct}% del objetivo${incomplete ? ", subtotal conocido" : ""}"
+      aria-label="${escapeHtml(label)}: ${visual.pct}% del objetivo${incomplete ? ", subtotal conocido; sin valoración final" : ""}"
       aria-valuemin="0"
       aria-valuemax="100"
       aria-valuenow="${width}"
     >
-      <span style="width:${width}%;background:${escapeHtml(visual.color)}"></span>
+      <span style="width:${width}%;background:${escapeHtml(fillColor)}"></span>
     </div>`;
 }
 
