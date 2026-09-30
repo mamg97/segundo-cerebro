@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: Segundo Cerebro · Objects Image Ingest
+  version: 0.1.0
+  description: >
+    Private bridge used by GESTOR OBJETOS to persist exactly one original or
+    processed wardrobe image into the canonical OBJETOS v0.3 image pipeline.
+servers:
+  - url: https://objects-chatgpt-bridge-production.up.railway.app
+
+paths:
+  /ingest-object-image:
+    post:
+      operationId: ingestObjectImage
+      summary: Ingest one wardrobe image into Segundo Cerebro
+      description: >
+        Send exactly one PNG, JPEG or WebP image from the current ChatGPT
+        conversation. The openaiFileIdRefs field must contain exactly one file.
+        ChatGPT supplies the temporary OpenAI-hosted file reference at runtime.
+        Use image_type=processed for generated clean wardrobe renders and
+        image_type=original for source photos. Do not use this endpoint for
+        thumbnails; processed uploads generate their canonical thumbnail.
+      security:
+        - actionBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - objeto_id
+                - image_type
+                - openaiFileIdRefs
+              properties:
+                objeto_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                  pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'
+                  description: Canonical objeto_id already present in SEGUNDO CEREBRO - OBJETOS.
+                image_type:
+                  type: string
+                  enum: [original, processed]
+                overwrite:
+                  type: boolean
+                  default: false
+                  description: Set true only when intentionally replacing the current canonical image of this type.
+                estado_procesado:
+                  type: string
+                  enum: [procesada, revisar]
+                  description: Optional processing state for processed images. Defaults to procesada.
+                vista_prenda:
+                  type: string
+                  maxLength: 64
+                color_principal:
+                  type: string
+                  maxLength: 80
+                patron:
+                  type: string
+                  maxLength: 80
+                categoria_visual:
+                  type: string
+                  maxLength: 80
+                capa:
+                  type: string
+                  enum: [superior, exterior, inferior, calzado, accesorio]
+                openaiFileIdRefs:
+                  type: array
+                  minItems: 1
+                  maxItems: 1
+                  description: >
+                    Exactly one current-conversation image. ChatGPT populates
+                    this field at runtime with the temporary OpenAI file
+                    reference; do not invent or manually construct its value.
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Image persisted through the canonical OBJETOS v0.3 pipeline.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestResult'
+        '400':
+          description: Invalid object, image type, file reference, MIME, size or metadata.
+        '401':
+          description: Invalid or missing Action bearer key.
+        '409':
+          description: An image already exists and overwrite was not requested.
+        '502':
+          description: Upstream Segundo Cerebro ingest failed.
+        '503':
+          description: Canonical image storage is not configured.
+
+components:
+  securitySchemes:
+    actionBearer:
+      type: http
+      scheme: bearer
+  schemas:
+    IngestResult:
+      type: object
+      required: [ok, objeto_id, image_type]
+      properties:
+        ok:
+          type: boolean
+        objeto_id:
+          type: string
+        image_type:
+          type: string
+          enum: [original, processed]
+        estado_procesado:
+          type: [string, 'null']
+        version:
+          type: [string, 'null']
+        updated_at:
+          type: [string, 'null']
+        foto_original_url:
+          type: [string, 'null']
+        foto_procesada_url:
+          type: [string, 'null']
+        miniatura_url:
+          type: [string, 'null']
