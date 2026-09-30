@@ -4134,26 +4134,31 @@ function renderMenuPanel(data) {
         const isToday = day.date === localDateKey();
         const targetLine = weeklyMenuTargetLine(day, model);
         const mealGroups = groupWeeklyMenuItemsByMoment(day.items);
+        const display = weeklyMenuDayDisplayTotals(day, model);
         return `
           <section class="weekly-menu-day weekly-menu-day-rich ${isToday ? "is-today" : ""}">
             <header>
               <div>
-                <small>${isToday ? "Hoy" : "Planificado"}</small>
+                <small>${display.useConsumed
+                  ? (day.hasPendingPlan ? "Consumido · plan pendiente" : "Consumido")
+                  : (isToday ? "Hoy" : "Planificado")}</small>
                 <strong>${escapeHtml(weeklyMenuDayLabel(day.date, { long: true }))}</strong>
               </div>
               <span>${mealGroups.length} toma${mealGroups.length === 1 ? "" : "s"} · ${day.items.length} elemento${day.items.length === 1 ? "" : "s"}</span>
             </header>
 
             <div class="weekly-menu-day-progress">
-              ${renderWeeklyMenuProgress("Calorías", day.kcal, model.kcalTarget, day.kcalPct, "kcal", !day.nutritionComplete)}
-              ${renderWeeklyMenuProgress("Proteína", day.protein, model.proteinTarget, day.proteinPct, "protein", !day.nutritionComplete)}
+              ${renderWeeklyMenuProgress("Calorías", display.kcal, model.kcalTarget, display.kcalPct, "kcal", !display.useConsumed && !day.nutritionComplete)}
+              ${renderWeeklyMenuProgress("Proteína", display.protein, model.proteinTarget, display.proteinPct, "protein", !display.useConsumed && !day.nutritionComplete)}
             </div>
 
             <div class="weekly-menu-meal-list">
               ${mealGroups.map((group) => renderWeeklyMenuMealGroup(group.items)).join("")}
             </div>
 
-            ${targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : ""}
+            ${display.useConsumed && day.hasPendingPlan
+              ? `<footer>Consumido: ${escapeHtml(formatKcal(display.kcal))} · ${escapeHtml(formatMacro(display.protein))}. Plan completo si se cumplen los pendientes: ${escapeHtml(formatKcal(day.kcal))} · ${escapeHtml(formatMacro(day.protein))}.</footer>`
+              : (targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : "")}
           </section>`;
       }).join("")}
     </div>`;
