@@ -4136,7 +4136,7 @@ function renderHomeWeeklyMenu(data) {
         const isToday = day.date === localDateKey();
         const targetLine = weeklyMenuTargetLine(day, model);
         return `
-          <article class="home-weekly-menu-day ${isToday ? "is-today" : ""}">
+          <article class="home-weekly-menu-day ${isToday ? "is-today" : ""} ${!day.nutritionComplete ? "is-incomplete" : ""}">
             <header>
               <div>
                 <small>${isToday ? "Hoy" : "Día"}</small>
