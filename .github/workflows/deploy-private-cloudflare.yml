@@ -62,6 +62,7 @@ jobs:
           node --check src/shopping-sync.js
           node --check scripts/configure-shopping-reminders.mjs
           node --check src/objects.js
+          node --check src/objects-images.js
           node --check src/projects.js
           node --check src/events.js
           node --check src/adherence.js
@@ -97,6 +98,17 @@ jobs:
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Cloudflare deploy skipped. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository Actions secrets."
+          fi
+
+      - name: Ensure private Objects media bucket
+        if: steps.cloudflare.outputs.configured == 'true'
+        shell: bash
+        run: |
+          BUCKET="segundo-cerebro-private-assets"
+          if npx wrangler r2 bucket list 2>&1 | grep -Fq "$BUCKET"; then
+            echo "R2 bucket already exists: $BUCKET"
+          else
+            npx wrangler r2 bucket create "$BUCKET"
           fi
 
       - name: Deploy production Worker
