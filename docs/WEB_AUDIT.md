@@ -89,10 +89,12 @@ Corregir la causa funcional en el dominio propietario, no el test.
 
 Ejemplos:
 
-- `/api/pantry`, `/api/projects` o una fuente privada devuelve 502/503;
+- `/api/pantry`, `/api/projects`, `/api/objects`, `/api/health/adherence` o una fuente privada devuelve 502/503;
 - Calendar está configurado pero pierde los calendarios/eventos esperados.
 
 El auditor debe identificar la API/fuente. La ausencia posterior de pestañas es consecuencia y no debe presentarse como un bug independiente si el backend ya explica el fallo.
+
+Para fuentes privadas secundarias, un 5xx aislado se reintenta con espera corta. Si la API se recupera, el auditor vuelve a abrir la vista afectada: solo se considera **transitorio recuperado** cuando API + UI vuelven a responder dentro de la misma ejecución. Se registra como `[INFO]` y no genera alerta. Si persiste el 5xx o la UI no se recupera, la auditoría falla. Los fallos de bootstrap crítico (`/api/state`, `/api/health`, `/api/nutrition`) no se rebajan por este mecanismo.
 
 ### Fallo del auditor
 
