@@ -89,6 +89,7 @@ Como mínimo:
   - responsive en 1440×1100, 900×1000 y 390×844;
 - Armario visual: valida explícitamente 4 columnas en escritorio, 3 en tablet, 3 en móvil ancho de 440 px y 2 en móvil de 390 px, además de overflow/clipping/solapes de las tarjetas.
 - Home semanal de Nutrición: debe mantener la matriz día×momento, representar cada comida visible en la celda exacta de su fecha/momento, usar filas de altura automática y tipografía legible. Cuando el ancho no alcance, el scroll debe quedar confinado al contenedor de la tabla; nunca se permite solape, clipping ni overflow global.
+- La matriz semanal no debe exponer filas top-level `Postre` ni `Snack`: esos componentes deben aparecer dentro de `Comida/Cena` o `Media mañana/Merienda` respectivamente. Etiquetas legacy deben reconciliarse antes del render.
 - Home general: el bloque retirado `Próximos movimientos` no forma parte de la superficie visual canónica; su ausencia no debe tratarse como regresión.
   - paleta canónica light/dark y contraste mínimo de texto/acento.
 
