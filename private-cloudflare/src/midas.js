@@ -158,15 +158,12 @@ export async function fetchMidasWorkflowHealth(fetcher = fetch, now = Date.now()
   try {
     const records = await Promise.all(RUNTIME_HEALTH_FILES.map(async (key) => {
       const url = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/strategy_runtime/" + key + ".json";
-      try {
-        const response = await fetcher(url, { headers: { Accept: "application/json" } });
-        if (response.status === 404) return null;
-        if (!response.ok) throw new Error("MIDAS_RUNTIME_" + response.status);
-        return normalizeRuntimeHealthRecord(await response.json());
-      } catch (error) {
-        if (String(error?.message || "").includes("MIDAS_RUNTIME_")) throw error;
-        return null;
-      }
+      const response = await fetcher(url, { headers: { Accept: "application/json" } });
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error("MIDAS_RUNTIME_" + response.status);
+      const normalized = normalizeRuntimeHealthRecord(await response.json());
+      if (!normalized) throw new Error("MIDAS_RUNTIME_INVALID_" + key);
+      return normalized;
     }));
     const health = evaluateMidasWorkflowRuns(records.filter(Boolean), now);
     const value = {
