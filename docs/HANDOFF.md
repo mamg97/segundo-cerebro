@@ -1131,3 +1131,13 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Las filas automáticas/sync se conservan pero no cuentan como operativa real.
 - La carga es lazy al abrir Patrimonio para no penalizar el Home.
 - Assets app/styles: `v0.40.7`.
+
+
+## MIDAS · Capital Cycle Inflection · v0.40.3
+
+- `mamg97/midas-paper-lab` incorpora la campaña prospectiva `capital_cycle_inflection_2026`, derivada del marco **capital cycle**: infrainversión multianual + supervivencia financiera + valoración normalizada + confirmación de giro.
+- La investigación y los horizontes quedan congelados en `research/CAPITAL_CYCLE_STRATEGY.md`; no se crea un backtest fundamental retrospectivo con datos actuales porque introduciría look-ahead/restatements y survivorship bias.
+- La campaña usa 100.000 USD ficticios, máximo 12 posiciones, 10 % por nombre, 95 % invertido, comisión 0,10 % y slippage 0,05 %. Señal inicial de lanzamiento y después ranking al cierre de mes; fills siempre next-open.
+- Segundo Cerebro acepta el grupo `capital_cycle_demo` desde `GET /api/midas` y lo muestra como bloque propio en la tabla general y en Laboratorio vivo. No interviene en `BROKERS` ni en patrimonio real.
+- La comparación frente al resto de estrategias sigue siendo prospectiva: no se ordenan rentabilidades de campañas con fechas/reglas distintas. La evaluación justa debe usar ventanas comunes y, cuando haya muestra suficiente, CAGR/anualización, drawdown, Sharpe/Sortino, turnover y retorno relativo a SPY desde la misma fecha.
+- El workflow de Capital Cycle corre tras cierre XNYS; solo recalcula fundamentales cuando toca señal y registra diariamente el NAV paper. Cambiar parámetros que afecten resultados exige una campaña nueva, no reescribir el diario.
