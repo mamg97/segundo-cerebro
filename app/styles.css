@@ -6763,6 +6763,10 @@ html[data-theme="dark"] .health-history-ranges button {
     max-height: 94vh;
     padding: 20px 14px 24px;
   }
+
+  .detail-dialog > #dialog-title {
+    padding-right: 44px;
+  }
 }
 
 
