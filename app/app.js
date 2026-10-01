@@ -5610,7 +5610,7 @@ function renderMidasExecutionHealth(health, dashboard) {
 
   const unavailable = health?.status !== "ok";
   const attention = !unavailable && rows.some((row) => row.ok === false);
-  const overall = unavailable ? "Estado de Actions no disponible" : attention ? "Requiere atención" : "Ejecución controlada";
+  const overall = unavailable ? "Estado operativo no disponible" : attention ? "Requiere atención" : "Ejecución controlada";
   return `<section class="midas-runtime-health ${attention ? "is-attention" : unavailable ? "is-unknown" : "is-healthy"}">
     <div class="midas-runtime-heading">
       <div><span class="context-label">Salud operativa</span><strong>${escapeHtml(overall)}</strong></div>

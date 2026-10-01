@@ -127,17 +127,48 @@ export async function fetchMidasDashboard(fetcher = fetch, now = Date.now()) {
   }
 }
 
+const RUNTIME_HEALTH_FILES = [
+  "paper_us",
+  "tfm_es",
+  "capital_cycle",
+  "buy_the_dip_strategy",
+  "weekly_ml",
+  "tfg_ahp"
+];
+
+function normalizeRuntimeHealthRecord(data) {
+  if (data?.schema_version !== 1 || data?.event !== "schedule" ||
+      typeof data.workflow_name !== "string" || typeof data.recorded_at_utc !== "string" ||
+      !Number.isFinite(Date.parse(data.recorded_at_utc)) ||
+      !["success", "failure", "cancelled", "skipped"].includes(data.outcome)) {
+    return null;
+  }
+  return {
+    name: data.workflow_name.slice(0, 120),
+    event: "schedule",
+    status: "completed",
+    conclusion: data.outcome,
+    created_at: data.recorded_at_utc,
+    run_number: Number.isInteger(data.run_number) ? data.run_number : null
+  };
+}
+
 export async function fetchMidasWorkflowHealth(fetcher = fetch, now = Date.now()) {
   if (workflowHealthCache.value && workflowHealthCache.expiresAt > now) return workflowHealthCache.value;
   try {
-    const response = await fetcher("https://api.github.com/repos/mamg97/midas-paper-lab/actions/runs?per_page=100", {
-      headers: { Accept: "application/vnd.github+json", "User-Agent": "segundo-cerebro-midas-health" }
-    });
-    if (!response.ok) throw new Error("MIDAS_ACTIONS_" + response.status);
-    const payload = await response.json();
-    const health = evaluateMidasWorkflowRuns(payload?.workflow_runs || [], now);
+    const records = await Promise.all(RUNTIME_HEALTH_FILES.map(async (key) => {
+      const url = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/strategy_runtime/" + key + ".json";
+      const response = await fetcher(url, { headers: { Accept: "application/json" } });
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error("MIDAS_RUNTIME_" + response.status);
+      const normalized = normalizeRuntimeHealthRecord(await response.json());
+      if (!normalized) throw new Error("MIDAS_RUNTIME_INVALID_" + key);
+      return normalized;
+    }));
+    const health = evaluateMidasWorkflowRuns(records.filter(Boolean), now);
     const value = {
       status: "ok",
+      source: "strategy_runtime",
       overall: health.ok ? "healthy" : "attention",
       checked_at_utc: new Date(now).toISOString(),
       workflows: health.workflows.map((item) => ({
@@ -150,11 +181,12 @@ export async function fetchMidasWorkflowHealth(fetcher = fetch, now = Date.now()
         conclusion: typeof item.latest?.conclusion === "string" ? item.latest.conclusion : null
       }))
     };
-    workflowHealthCache = { value, expiresAt: now + 10 * 60_000 };
+    workflowHealthCache = { value, expiresAt: now + 5 * 60_000 };
     return value;
   } catch {
     if (workflowHealthCache.value) return { ...workflowHealthCache.value, stale: true };
-    return { status: "unavailable", overall: "unknown", checked_at_utc: new Date(now).toISOString(), workflows: [] };
+    return { status: "unavailable", source: "strategy_runtime", overall: "unknown",
+      checked_at_utc: new Date(now).toISOString(), workflows: [] };
   }
 }
 

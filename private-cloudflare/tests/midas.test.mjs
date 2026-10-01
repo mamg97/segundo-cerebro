@@ -181,21 +181,39 @@ test("OIDC signature and workflow claims gate the private snapshot", async () =>
 });
 
 
-test("MIDAS workflow health is safe, cached and exposes failures without raw Actions payloads", async () => {
-  const payload = { workflow_runs: [
-    { name: "MIDAS paper comparison", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-01T02:19:28Z", run_number: 4 },
-    { name: "MIDAS TFM shadow forecasts", event: "schedule", status: "completed", conclusion: "failure", created_at: "2026-09-30T23:05:37Z", run_number: 4 },
-    { name: "MIDAS capital cycle paper", event: "schedule", status: "completed", conclusion: "failure", created_at: "2026-10-01T03:49:10Z", run_number: 4 }
-  ] };
+test("MIDAS workflow health reads persisted runtime artifacts and treats missing future jobs as not due", async () => {
+  const payloads = new Map([
+    ["paper_us", {
+      schema_version: 1, workflow_name: "MIDAS paper comparison", event: "schedule",
+      outcome: "success", recorded_at_utc: "2026-10-01T02:19:28Z", run_number: 4
+    }],
+    ["tfm_es", {
+      schema_version: 1, workflow_name: "MIDAS TFM shadow forecasts", event: "schedule",
+      outcome: "failure", recorded_at_utc: "2026-09-30T23:05:37Z", run_number: 4
+    }],
+    ["capital_cycle", {
+      schema_version: 1, workflow_name: "MIDAS capital cycle paper", event: "schedule",
+      outcome: "failure", recorded_at_utc: "2026-10-01T03:49:10Z", run_number: 4
+    }]
+  ]);
   let requests = 0;
-  const fetcher = async () => { requests += 1; return { ok: true, json: async () => payload }; };
-  const first = await fetchMidasWorkflowHealth(fetcher, Date.parse("2026-10-01T16:00:00Z"));
+  const fetcher = async (url) => {
+    requests += 1;
+    const key = url.match(/strategy_runtime\/([^/]+)\.json$/)?.[1];
+    if (!payloads.has(key)) return { ok: false, status: 404, json: async () => ({}) };
+    return { ok: true, status: 200, json: async () => payloads.get(key) };
+  };
+  const now = Date.parse("2026-10-01T16:00:00Z");
+  const first = await fetchMidasWorkflowHealth(fetcher, now);
   assert.equal(first.status, "ok");
+  assert.equal(first.source, "strategy_runtime");
   assert.equal(first.overall, "attention");
   assert.equal(first.workflows.find((row) => row.name === "MIDAS TFM shadow forecasts").state, "failed");
-  assert.equal(first.workflows.find((row) => row.name === "MIDAS weekly ML paper").state, "not_due_yet");
+  assert.equal(first.workflows.find((row) => row.name === "MIDAS capital cycle paper").state, "failed");
   assert.equal(first.workflows.find((row) => row.name === "MIDAS Buy The Dip paper").state, "not_due_yet");
+  assert.equal(first.workflows.find((row) => row.name === "MIDAS weekly ML paper").state, "not_due_yet");
   assert.equal("html_url" in first.workflows[0], false);
-  await fetchMidasWorkflowHealth(fetcher, Date.parse("2026-10-01T16:01:00Z"));
-  assert.equal(requests, 1);
+  assert.equal(requests, 6);
+  await fetchMidasWorkflowHealth(fetcher, now + 60_000);
+  assert.equal(requests, 6);
 });
