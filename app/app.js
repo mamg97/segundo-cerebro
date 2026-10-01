@@ -6,7 +6,7 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
-import { renderMidasVisualLab } from "./midas-lab.js?v=0.40.3";
+import { renderMidasVisualLab } from "./midas-lab.js?v=0.40.16";
 
 let state = mockState;
 let areaById = new Map();
