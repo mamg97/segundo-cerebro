@@ -2,8 +2,8 @@
 
 ## Última actualización
 
-- **Fecha:** 2026-09-28
-- **Herramienta:** Codex
+- **Fecha:** 2026-10-01
+- **Herramienta:** ChatGPT
 - **Rama operativa:** `main`
 - **Repositorio:** `mamg97/segundo-cerebro`
 
@@ -35,6 +35,8 @@ Fuentes propietarias / D1
 ```
 
 Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de verdad paralelas. Este repositorio y los contratos de `agents/` permiten relevo entre ChatGPT normal y Work/Codex.
+
+**Invariante operativo vigente:** Segundo Cerebro es data-driven. Los cambios rutinarios de datos/estado se hacen en la fuente canónica del dominio y deben reflejarse sin despliegue. Frontend/Worker solo se modifican por nueva capacidad, contrato/esquema, integración, validación/seguridad, bug, resiliencia/rendimiento o cambio deliberado de UI/arquitectura. Antes de tocar Git, todo gestor debe comprobar si la petición puede resolverse en la fuente canónica; si no es propietario de ella, enruta la intención al gestor correspondiente.
 
 ## Funcionalidad vigente
 
