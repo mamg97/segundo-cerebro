@@ -60,6 +60,7 @@ Si un gestor necesita objetos, ropa, equipaje, kits o listas contextuales, debe 
 - `docs/ARCHITECTURE.md` describe cómo funciona el sistema hoy.
 - `docs/DATA_MODEL.md` define entidades y contratos.
 - `docs/PRIVACY.md` define fronteras de datos y seguridad.
+- `docs/WEB_AUDIT.md` define la auditoría read-only de producción, su periodicidad, umbral de 90 minutos, clasificación de fallos y diagnóstico. ORGANIZADOR debe conservarla cuando cambie navegación, fuentes o estilos compartidos.
 - Si el código contradice la documentación, resolver la inconsistencia antes de terminar.
 
 ## Convenciones de trabajo

@@ -236,16 +236,17 @@ Estado:
 
 ### Auditoría automática de producción
 
-- Workflow canónico: `.github/workflows/web-audit.yml`.
-- Cadencia: cada hora y, además, después de cada `Deploy private Cloudflare app` que termine con éxito. Los deploys cancelados por un push más reciente no lanzan una auditoría útil.
-- El test abre Chromium real con Playwright contra `segundo-cerebro-web-audit`, un gateway Cloudflare de solo lectura enlazado al Worker principal mediante Service Binding.
-- Autenticación del auditor: token OIDC de GitHub de corta duración, restringido a este repositorio, `main`, el workflow exacto y la audiencia del gateway. No existe API key permanente nueva.
-- La auditoría recorre la navegación principal y subpestañas de Salud, Hábitos, Despensa, Objetos, Proyectos, Eventos y Padres; comprueba también fuentes de Finanzas, Calendario y resto de resúmenes aunque no muta ningún dato.
-- Invariantes destacados: calendario enlazado y sin error visible; `MenuSemanal` presente cuando corresponde, sin versiones lógicas duplicadas ni estados omitidos resucitados; agrupación correcta por toma; datos desconocidos no convertidos en cero; barras de kcal/proteína con ancho y estado visual coherentes con valor/objetivo; ausencia de 5xx, fallos de red, errores JavaScript y violaciones CSP.
-- El auditor no toma ni publica capturas de pantalla y no vuelca cifras privadas a logs; registra únicamente checks técnicos, conteos y nombres de invariantes.
-- Un segundo watcher horario de ChatGPT vigila el resultado de `Audit production web`: no avisa si el último run es verde y reciente; avisa ante fallo o si no existe una auditoría correcta reciente.
-- Primera utilidad real confirmada: el auditor detectó estilos inline bloqueados por `style-src 'self'`; se migraron a clases/SVG/`progress` y existe `app/csp-inline-style.test.mjs` para impedir la regresión.
-- Validación de cierre 2026-09-30: auditoría real de producción **154 checks / 0 fallos** después de los cambios concurrentes de Finanzas.
+- Contrato operativo detallado: `docs/WEB_AUDIT.md`.
+- Workflow único: `.github/workflows/web-audit.yml`; navegador: `private-cloudflare/scripts/web-audit.mjs`.
+- Cadencia normal: auditoría completa al minuto 17 de cada hora. El mismo workflow tiene una oportunidad de respaldo al minuto 42 que solo ejecuta Chromium cuando GitHub no creó la primaria; no existe un segundo workflow horario.
+- También se ejecuta una auditoría completa después de cada `Deploy private Cloudflare app` correcto y admite `workflow_dispatch`.
+- La vigilancia se considera degradada si no existe un **Navigate and audit production = success** en los últimos 90 minutos y tampoco hay una auditoría completa en curso. Un heartbeat de respaldo con Chromium `skipped` no cuenta como auditoría completa.
+- El auditor usa Chromium + Playwright contra `segundo-cerebro-web-audit` con OIDC GitHub temporal y Service Binding read-only.
+- Comprueba estado privado, áreas y subpestañas, Calendar/eventos, MenuSemanal, deduplicación/estados, agrupación de tomas, subtotales, ausencia ≠ cero, barras kcal/proteína, APIs clave de otros dominios, JavaScript/CSP, red y 5xx.
+- `net::ERR_ABORTED` secundario por cambio de vista se clasifica como cancelación esperable; abortos críticos de `/api/state`, `/api/health` o `/api/nutrition` siguen siendo fallo.
+- Un 5xx de fuente/backend debe diagnosticarse como tal antes de culpar a una pestaña que no llegó a renderizarse.
+- No modificar datos privados ni lógica funcional para forzar un verde. Reproducir, clasificar y corregir la causa propietaria.
+- Evidencia: GitHub Actions → `Audit production web` → job `audit` → step `Navigate and audit production`; buscar `[FAIL]`, `[SUMMARY]`, `[AUDIT_FAILED]` o `[AUDIT_OK]`.
 
 ### Configuración CI/CD completada
 

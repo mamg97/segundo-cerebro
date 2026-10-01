@@ -1,4 +1,12 @@
 import { chromium } from "playwright";
+import {
+  classifyRequestFailure,
+  hiddenMenuStatus,
+  logicalMenuKey,
+  normalizeAuditValue,
+  qualityStep,
+  visibleMenuRow
+} from "../src/web-audit-utils.js";
 
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
 const token = process.env.AUDIT_TOKEN;
@@ -10,7 +18,9 @@ if (!token) {
 const failures = [];
 const checks = [];
 const networkFailures = [];
+const ignoredNetworkAborts = [];
 const browserErrors = [];
+const resourceConsoleErrors = [];
 
 function pass(name, detail = "") {
   checks.push({ name, ok: true, detail });
@@ -23,54 +33,13 @@ function fail(name, detail = "") {
   console.error(`[FAIL] ${name}${detail ? ` · ${detail}` : ""}`);
 }
 
+function info(name, detail = "") {
+  console.log(`[INFO] ${name}${detail ? ` · ${detail}` : ""}`);
+}
+
 function assertCheck(condition, name, detail = "") {
   if (condition) pass(name, detail);
   else fail(name, detail);
-}
-
-const normalize = (value) => String(value || "")
-  .trim()
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .replace(/\s+/g, " ")
-  .toLowerCase();
-
-const hiddenStatus = (status) => /^(omitid[oa]|retirad[oa]|cancelad[oa]|cancelled|skipped)$/.test(normalize(status));
-
-function logicalMenuKey(item) {
-  const identity = item?.recipeId
-    ? "recipe:" + normalize(item.recipeId)
-    : item?.foodId
-      ? "food:" + normalize(item.foodId)
-      : "name:" + normalize(item?.name);
-  return [normalize(item?.date), normalize(item?.moment || "otro"), identity].join("|");
-}
-
-function visibleMenuRow(item) {
-  if (!item || hiddenStatus(item.status)) return false;
-  const hasKcal = item.kcal !== null && item.kcal !== undefined && item.kcal !== "";
-  const hasProtein = item.protein !== null && item.protein !== undefined && item.protein !== "";
-  return !(hasKcal && hasProtein && Number(item.kcal) === 0 && Number(item.protein) === 0);
-}
-
-function qualityStep(metric, value, target) {
-  const numericValue = Number(value);
-  const numericTarget = Number(target);
-  if (!Number.isFinite(numericValue) || !Number.isFinite(numericTarget) || numericTarget <= 0) return null;
-  const ratio = Math.max(0, numericValue / numericTarget);
-  let quality;
-  if (metric === "kcal") {
-    quality = ratio <= 1
-      ? (ratio - 0.70) / 0.30
-      : 1 - ((ratio - 1) / 0.10);
-  } else {
-    quality = ratio >= 1 ? 1 : (ratio - 0.70) / 0.30;
-  }
-  quality = Math.max(0, Math.min(1, quality));
-  return {
-    width: Math.max(0, Math.min(100, Math.round(ratio * 100))),
-    step: Math.max(0, Math.min(10, Math.round(quality * 10)))
-  };
 }
 
 function groupDayRows(rows) {
@@ -82,7 +51,7 @@ function groupDayRows(rows) {
   return [...byDate.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, items]) => {
-      const moments = new Set(items.map((item) => normalize(item.moment || "otro")));
+      const moments = new Set(items.map((item) => normalizeAuditValue(item.moment || "otro")));
       return { date, items, momentCount: moments.size };
     });
 }
@@ -102,11 +71,21 @@ await page.route(`${auditOrigin}/**`, async (route) => {
 
 page.on("pageerror", (error) => browserErrors.push("pageerror:" + String(error?.message || error)));
 page.on("console", (message) => {
-  if (message.type() === "error") browserErrors.push("console:" + message.text().slice(0, 240));
+  if (message.type() !== "error") return;
+  const text = message.text().slice(0, 240);
+  if (/^Failed to load resource:/i.test(text)) resourceConsoleErrors.push(text);
+  else browserErrors.push("console:" + text);
 });
 page.on("requestfailed", (request) => {
-  if (request.url().startsWith(auditOrigin)) {
-    networkFailures.push(`requestfailed:${new URL(request.url()).pathname}:${request.failure()?.errorText || "unknown"}`);
+  const classified = classifyRequestFailure({
+    url: request.url(),
+    errorText: request.failure()?.errorText || "unknown",
+    auditOrigin
+  });
+  if (classified.track) {
+    networkFailures.push(`requestfailed:${classified.path}:${classified.errorText}`);
+  } else if (classified.ignored) {
+    ignoredNetworkAborts.push(`${classified.path}:${classified.errorText}`);
   }
 });
 page.on("response", (response) => {
@@ -181,11 +160,22 @@ try {
   assertCheck(Boolean(response?.ok()), "Producción carga", `HTTP ${response?.status() || "?"}`);
 
   await page.waitForFunction(
-    () => document.querySelectorAll("[data-nav-area-id]").length >= 5 &&
-      !document.querySelector("#footer-mode")?.textContent?.includes("Cargando"),
+    () => {
+      const footer = document.querySelector("#footer-mode")?.textContent || "";
+      return /Estado privado remoto|Conexión temporalmente no disponible/i.test(
+        (document.querySelector("#data-mode-badge")?.textContent || "") + " " + footer
+      );
+    },
     null,
     { timeout: 20000 }
+  ).catch(() => {});
+
+  const modeText = normalizeAuditValue(
+    (await page.locator("#data-mode-badge").textContent().catch(() => "")) + " " +
+    (await page.locator("#footer-mode").textContent().catch(() => ""))
   );
+  const remoteReady = /estado personal privado|estado privado remoto|acceso autenticado/.test(modeText);
+  assertCheck(remoteReady, "Estado privado remoto cargado", modeText || "sin estado");
 
   const health = await api("/api/health");
   assertCheck(health.ok && health.body?.ok === true, "Healthcheck funcional de fuentes", `HTTP ${health.status}`);
@@ -207,20 +197,28 @@ try {
     if (health.body.calendarSync !== "error" && health.body.calendarSync !== "not-configured") {
       assertCheck(Number(health.body.calendarSelectedCount) > 0, "Calendario conserva calendarios seleccionados", `n=${Number(health.body.calendarSelectedCount) || 0}`);
       assertCheck(Number(health.body.calendarMatchedCount) > 0, "Calendario conserva calendarios enlazados", `n=${Number(health.body.calendarMatchedCount) || 0}`);
+      assertCheck(Number(health.body.calendarEventCount) > 0, "Calendario conserva eventos en horizonte", `n=${Number(health.body.calendarEventCount) || 0}`);
     }
   }
 
-  const calendarStatus = normalize(await page.locator("#calendar-source-status").textContent().catch(() => ""));
+  const calendarStatus = normalizeAuditValue(await page.locator("#calendar-source-status").textContent().catch(() => ""));
   assertCheck(!/(error|no disponible|fall)/.test(calendarStatus), "Agenda sin error visible de fuente");
 
   const nutrition = await api("/api/nutrition");
   assertCheck(nutrition.ok && nutrition.body?.ok === true, "API de Nutrición", `HTTP ${nutrition.status}`);
 
+  const pantryProbe = await api("/api/pantry");
+  assertCheck(pantryProbe.ok && pantryProbe.body?.ok === true, "API de Despensa", `HTTP ${pantryProbe.status}`);
+  const projectsProbe = await api("/api/projects");
+  assertCheck(projectsProbe.ok && projectsProbe.body?.ok === true, "API de Proyectos", `HTTP ${projectsProbe.status}`);
+  const deltaProbe = await api("/api/finance/delta?limit=1");
+  assertCheck(deltaProbe.ok && deltaProbe.body?.ok === true, "API Delta de Finanzas", `HTTP ${deltaProbe.status}`);
+
   const menuRows = Array.isArray(nutrition.body?.weeklyMenu) ? nutrition.body.weeklyMenu : [];
   const visibleRows = menuRows.filter(visibleMenuRow);
   const keys = visibleRows.map(logicalMenuKey);
   assertCheck(new Set(keys).size === keys.length, "Menú sin versiones lógicas duplicadas", `${keys.length} filas visibles`);
-  assertCheck(!menuRows.some((item) => hiddenStatus(item?.status)), "Menú no resucita omitidos/cancelados");
+  assertCheck(!menuRows.some((item) => hiddenMenuStatus(item?.status)), "Menú no resucita omitidos/cancelados");
 
   await page.waitForFunction(() => {
     const panel = document.querySelector("#home-weekly-menu-panel");
@@ -229,7 +227,7 @@ try {
 
   const homeMenuVisible = await page.locator("#home-weekly-menu-panel").evaluate((node) => !node.hidden).catch(() => false);
   assertCheck(homeMenuVisible, "Menú semanal permanece visible en Home");
-  const homeMenuText = normalize(await page.locator("#home-weekly-menu-panel").textContent().catch(() => ""));
+  const homeMenuText = normalizeAuditValue(await page.locator("#home-weekly-menu-panel").textContent().catch(() => ""));
   assertCheck(!/temporalmente no disponible|no se ha podido/.test(homeMenuText), "Menú Home sin fallback de error");
 
   const dayGroups = groupDayRows(visibleRows);
@@ -239,7 +237,14 @@ try {
   const navIds = await page.locator("[data-nav-area-id]").evaluateAll((nodes) =>
     [...new Set(nodes.map((node) => node.dataset.navAreaId).filter(Boolean))]
   );
+  const expectedNavIds = [
+    "area-general", "area-career", "area-finance", "area-calendar", "area-events",
+    "area-partner", "area-family", "area-parents", "area-health", "area-habits",
+    "area-objects", "area-pantry", "area-wealth", "area-projects"
+  ];
+  const missingNavIds = expectedNavIds.filter((id) => !navIds.includes(id));
   assertCheck(navIds.length >= 5, "Navegación principal disponible", `${navIds.length} áreas`);
+  assertCheck(missingNavIds.length === 0, "Navegación conserva áreas canónicas", missingNavIds.length ? missingNavIds.join(", ") : "14/14");
 
   for (const areaId of navIds) {
     const link = page.locator(`[data-nav-area-id="${areaId}"]`).first();
@@ -259,7 +264,9 @@ try {
     }
 
     if (areaId === "area-pantry") {
-      await auditTabSet(
+      if (!(pantryProbe.ok && pantryProbe.body?.ok === true)) {
+        info("Despensa · pestañas omitidas", "backend no saludable; fallo ya clasificado por API");
+      } else await auditTabSet(
         "Despensa",
         "[data-pantry-view]",
         "pantryView",
@@ -275,7 +282,9 @@ try {
         { htmlDataName: "objects-tab", attributeName: "objects-tab", attr: "objects-tab", settle: 180 }
       );
     } else if (areaId === "area-projects") {
-      await auditTabSet(
+      if (!(projectsProbe.ok && projectsProbe.body?.ok === true)) {
+        info("Proyectos · pestañas omitidas", "backend no saludable; fallo ya clasificado por API");
+      } else await auditTabSet(
         "Proyectos",
         "[data-project-tab]",
         "projectTab",
@@ -336,11 +345,24 @@ try {
         continue;
       }
       await button.click();
-      await page.waitForTimeout(tab === "menu" ? 1200 : 650);
+      if (tab === "menu") {
+        await page.waitForFunction(
+          (expected) => {
+            const panel = document.querySelector('[data-health-panel="menu"]');
+            const text = (panel?.textContent || "").toLowerCase();
+            return document.querySelectorAll('[data-health-panel="menu"] .weekly-menu-day').length === expected ||
+              /no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text);
+          },
+          dayGroups.length,
+          { timeout: 9000 }
+        ).catch(() => {});
+      } else {
+        await page.waitForTimeout(650);
+      }
       const panel = page.locator(`[data-health-panel="${tab}"]`);
       const active = await panel.evaluate((node) => node.classList.contains("active")).catch(() => false);
       assertCheck(active, `Salud · pestaña ${tab} activa`);
-      const text = normalize(await panel.textContent().catch(() => ""));
+      const text = normalizeAuditValue(await panel.textContent().catch(() => ""));
       assertCheck(!/no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text), `Salud · pestaña ${tab} sin error visible`);
     }
 
@@ -383,14 +405,14 @@ try {
 
       const momentGroups = new Map();
       for (const item of group.items) {
-        const key = normalize(item.moment || "otro");
+        const key = normalizeAuditValue(item.moment || "otro");
         if (!momentGroups.has(key)) momentGroups.set(key, []);
         momentGroups.get(key).push(item);
       }
       const cards = uiDay.locator(".weekly-menu-meal");
       let cardIndex = 0;
       for (const items of momentGroups.values()) {
-        const cardText = normalize(await cards.nth(cardIndex).textContent().catch(() => ""));
+        const cardText = normalizeAuditValue(await cards.nth(cardIndex).textContent().catch(() => ""));
         const missingAny = items.some((item) => item.kcal == null || item.protein == null);
         if (missingAny && items.length === 1) {
           assertCheck(cardText.includes("— kcal") || cardText.includes("p —"), `Dato ausente no se convierte en cero día ${index + 1}`);
@@ -413,6 +435,12 @@ try {
     assertCheck(ariaNow !== null && Number.isFinite(Number(ariaNow)), "Indicador kcal Home tiene valor válido");
   }
 
+  if (ignoredNetworkAborts.length) {
+    info("Abortos de navegación ignorados", ignoredNetworkAborts.slice(0, 5).join(","));
+  }
+  if (resourceConsoleErrors.length && networkFailures.length) {
+    info("Errores de recurso ya cubiertos por red", `n=${resourceConsoleErrors.length}`);
+  }
   assertCheck(networkFailures.length === 0, "Sin respuestas 5xx ni fallos de red", networkFailures.length ? networkFailures.join(",") : "");
   assertCheck(browserErrors.length === 0, "Sin errores JavaScript/console", browserErrors.length ? browserErrors.slice(0, 3).join(" | ") : "");
 } catch (error) {
