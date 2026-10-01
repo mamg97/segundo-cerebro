@@ -222,9 +222,10 @@ async function closeDialogIfOpen() {
 
 
 const VISUAL_PROFILES = [
-  { name: "desktop", width: 1440, height: 1100 },
-  { name: "tablet", width: 900, height: 1000 },
-  { name: "mobile", width: 390, height: 844 }
+  { name: "desktop", width: 1440, height: 1100, wardrobeColumns: 4 },
+  { name: "tablet", width: 900, height: 1000, wardrobeColumns: 3 },
+  { name: "mobile-wide", width: 440, height: 956, wardrobeColumns: 3 },
+  { name: "mobile", width: 390, height: 844, wardrobeColumns: 2 }
 ];
 
 async function auditVisualSnapshot(label) {
@@ -514,6 +515,46 @@ async function openAreaForVisualAudit(areaId) {
   return true;
 }
 
+async function auditWardrobeGridColumns(label, expectedColumns) {
+  const tab = page.locator('[data-objects-tab="wardrobe"]').first();
+  const available = await tab.count();
+  if (!available) {
+    fail(`Visual ${label} · Armario visual disponible`, "falta pestaña wardrobe");
+    return;
+  }
+
+  await tab.click();
+  await page.waitForTimeout(300);
+
+  const grid = page.locator(".wardrobe-visual-grid").first();
+  const visible = await grid.isVisible().catch(() => false);
+  if (!visible) {
+    fail(`Visual ${label} · grid Armario visible`);
+    return;
+  }
+
+  const layout = await grid.evaluate((node) => {
+    const style = getComputedStyle(node);
+    const tracks = String(style.gridTemplateColumns || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const cards = [...node.querySelectorAll(".wardrobe-card-visual")]
+      .filter((card) => getComputedStyle(card).display !== "none");
+    return {
+      columns: tracks.length,
+      cardCount: cards.length
+    };
+  });
+
+  assertCheck(
+    layout.columns === expectedColumns,
+    `Visual ${label} · Armario ${expectedColumns} columnas`,
+    `columnas=${layout.columns} prendas=${layout.cardCount}`
+  );
+  await auditVisualSnapshot(`${label} · Armario visual`);
+}
+
 async function auditResponsiveVisualLayout(navIds) {
   const originalViewport = page.viewportSize() || { width: 1440, height: 1100 };
 
@@ -526,14 +567,19 @@ async function auditResponsiveVisualLayout(navIds) {
       ? ["area-finance", "area-health", "area-objects", "area-pantry", "area-projects"]
       : profile.name === "mobile"
         ? navIds
-        : [];
+        : profile.name === "mobile-wide"
+          ? ["area-objects"]
+          : ["area-objects"];
 
     for (const areaId of areas) {
       if (!await openAreaForVisualAudit(areaId)) continue;
       await auditVisualSnapshot(`${profile.name} · ${areaId}`);
+      if (areaId === "area-objects" && profile.wardrobeColumns) {
+        await auditWardrobeGridColumns(profile.name, profile.wardrobeColumns);
+      }
     }
 
-    if (profile.name !== "tablet") {
+    if (profile.name === "desktop" || profile.name === "mobile") {
       await openAreaForVisualAudit("area-general");
       await auditThemeContract("light", `${profile.name} · Home`);
       await auditThemeContract("dark", `${profile.name} · Home`);

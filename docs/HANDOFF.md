@@ -293,6 +293,7 @@ Reglas:
 - El procesado automático de imágenes todavía no existe: la arquitectura ya acepta `foto_original_url` y `foto_procesada_url`; una prenda sin recorte muestra placeholder y permanece `pendiente`.
 - GESTOR EVENTOS y futuros flujos de viaje/oficina/clima deben referenciar los mismos `objeto_id/look_id/lista_id`; no copiar inventario.
 - Modo claro/oscuro y responsive reutilizan los tokens actuales.
+- Armario visual móvil: 2 columnas en teléfonos <430 px y 3 columnas en teléfonos anchos (≥430 px hasta tablet); en móvil se ocultan metadatos secundarios de la tarjeta para priorizar foto + nombre + categoría/marca-color, manteniendo el detalle completo al abrir.
 - Assets del armario visual: `v0.40.0`.
 
 ## Navegación y Home v0.27.0

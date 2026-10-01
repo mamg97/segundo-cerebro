@@ -77,6 +77,7 @@ Como mínimo:
   - proporciones anómalas de diálogos y tarjetas principales;
   - consistencia de tarjetas resumen en escritorio;
   - responsive en 1440×1100, 900×1000 y 390×844;
+- Armario visual: valida explícitamente 4 columnas en escritorio, 3 en tablet, 3 en móvil ancho de 440 px y 2 en móvil de 390 px, además de overflow/clipping/solapes de las tarjetas.
   - paleta canónica light/dark y contraste mínimo de texto/acento.
 
 
