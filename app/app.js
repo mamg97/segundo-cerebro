@@ -5134,6 +5134,7 @@ function renderWealthOverview() {
       <small>PatrimonioDetalle · ${escapeHtml(asOf)}${needsRefresh ? " · refresco pendiente en alguna fuente" : ""}</small>
     </div>
     ${renderHomeWealthAllocation(allocation, currency)}
+    ${renderEtoroAllocationBar(wealth, currency, true)}
   `;
 }
 
@@ -5392,6 +5393,8 @@ function openWealthDetail() {
   document.querySelector("#dialog-body").innerHTML = `
     <div class="wealth-detail">
       ${renderWealthAllocation(wealth, currency)}
+
+      ${renderEtoroAllocationBar(wealth, currency, false)}
 
       ${renderWealthDailyDiary(wealth.dailyDiary, currency)}
 
@@ -6010,6 +6013,73 @@ function renderHomeWealthAllocation(items, fallbackCurrency = "EUR") {
             </div>`;
         }).join("")}
       </div>
+    </section>`;
+}
+
+function renderEtoroAllocationBar(wealth, fallbackCurrency = "EUR", compact = false) {
+  const rows = (Array.isArray(wealth?.etoroAllocations) ? wealth.etoroAllocations : [])
+    .filter((item) => Number.isFinite(Number(item.reservedAmount)) && Number(item.reservedAmount) >= 0);
+  if (!rows.length) return "";
+
+  const total = rows.reduce((sum, item) => sum + Number(item.reservedAmount || 0), 0);
+  if (!(total > 0)) return "";
+
+  const earmarked = rows.filter((item) => item.kind !== "core");
+  const monthlyOut = earmarked.reduce((sum, item) => sum + Number(item.monthlyOut || 0), 0);
+  const segments = quantizeBarSegments(rows.map((item, index) => ({
+    ...item,
+    amount: Number(item.reservedAmount || 0),
+    className: allocationColorClass(item.id || item.label, index)
+  })), total);
+  const nextDates = earmarked.map((item) => item.nextWithdrawal).filter(Boolean).sort();
+  const nextDate = nextDates.length ? nextDates[0] : null;
+
+  return `
+    <section class="etoro-allocation ${compact ? "is-compact" : ""}" aria-label="Dinero de eToro reservado por destino">
+      <div class="etoro-allocation-heading">
+        <div>
+          <strong>eToro · dinero con destino</strong>
+          <span>Qué parte del valor actual está comprometida y cuánto debe salir cada mes</span>
+        </div>
+        <div class="etoro-allocation-kpi">
+          <small>Salida mensual actual</small>
+          <b>${formatMoney(monthlyOut, fallbackCurrency)}</b>
+          ${nextDate ? `<span>próxima · ${escapeHtml(formatFinanceDate(nextDate, nextDate))}</span>` : ""}
+        </div>
+      </div>
+
+      <div class="etoro-allocation-stack" role="img" aria-label="Distribución del valor actual de eToro por destino">
+        ${segments.map((item) => `
+          <div class="etoro-allocation-segment ${item.className} ${item.pctClass}"
+               title="${escapeHtml(item.label || item.id)} · ${escapeHtml(formatMoney(item.amount, fallbackCurrency))}"></div>
+        `).join("")}
+      </div>
+
+      <div class="etoro-allocation-legend">
+        ${rows.map((item, index) => {
+          const amount = Number(item.reservedAmount || 0);
+          const pct = total > 0 ? (amount / total) * 100 : 0;
+          const monthly = Number(item.monthlyOut || 0);
+          const endLabel = item.lastWithdrawal ? formatFinanceDate(item.lastWithdrawal, item.lastWithdrawal) : null;
+          return `
+            <article class="etoro-allocation-row">
+              <i class="${allocationColorClass(item.id || item.label, index)}"></i>
+              <div class="etoro-allocation-label">
+                <strong>${escapeHtml(item.label || item.id || "Bloque")}</strong>
+                <span>${pct.toLocaleString("es-ES", { maximumFractionDigits: 1 })}% de eToro</span>
+                ${item.note && !compact ? `<small>${escapeHtml(item.note)}</small>` : ""}
+              </div>
+              <div class="etoro-allocation-values">
+                <b>${formatMoney(amount, fallbackCurrency)}</b>
+                ${item.kind === "core"
+                  ? `<span>sin retirada programada</span>`
+                  : `<span>${formatMoney(monthly, fallbackCurrency)}/mes${endLabel ? " · hasta " + escapeHtml(endLabel) : ""}</span>`}
+              </div>
+            </article>`;
+        }).join("")}
+      </div>
+
+      <p class="etoro-allocation-note">100% de la barra = valor actual de eToro. Los bloques comprometidos son importes nominales del maestro; si cambia el mercado, el bloque «Resto inversión eToro» absorbe la variación hasta el siguiente cierre.</p>
     </section>`;
 }
 
