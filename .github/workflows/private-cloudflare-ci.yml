@@ -48,6 +48,7 @@ jobs:
       - run: node --check ../app/midas-lab.js
       - run: node ../app/midas-lab.test.mjs
       - run: node ../app/progress-ring.test.mjs
+      - run: node ../app/wardrobe-mobile-grid.test.mjs
 
       - run: node --check src/index.js
 
