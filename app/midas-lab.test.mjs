@@ -47,3 +47,18 @@ test("renders corrected TFG as its own live algorithm group", () => {
   assert.match(html, /TFG corregido 2026/);
   assert.match(html, /\+0,75 %/);
 });
+
+
+test("renders Buy The Dip corpus as its own live algorithm group", () => {
+  const dashboard = { tracks: [
+    { id: "buy_the_dip_corpus_2026_v0", label: "Buy The Dip corpus v0 · deep value + special situations",
+      group: "buy_the_dip_demo", status: "demo_con_diario",
+      return_pct: 1.25, last_session: "2026-10-05", equity_history: [
+        { date: "2026-10-01", nav: 100000 }, { date: "2026-10-05", nav: 101250 }
+      ] }
+  ] };
+  const html = renderMidasVisualLab(dashboard, null);
+  assert.match(html, />Buy The Dip</);
+  assert.match(html, /deep value/);
+  assert.match(html, /\+1,25 %/);
+});
