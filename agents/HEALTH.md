@@ -35,13 +35,14 @@ When nutritional values are estimated rather than label-confirmed, write the sou
 When the user supplies a recipe, its durable representation remains data-driven and must not require a frontend deployment:
 
 1. Reuse or create a stable `recipe_id` in `Recetas`.
-2. Store the recipe photo as a private file under `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS`; do not make it public and do not store the bytes in Git.
-3. Save only the private Drive file reference, MIME type and photo update timestamp in the matching `Recetas` row.
-4. Store ingredient rows in `IngredientesReceta`.
-5. Store preparation instructions in `PasosReceta`, preserving explicit order and only instructions confirmed by the user or supported by the supplied source.
-6. Verify that the private `Recetas` view renders the photo first and, underneath, ingredients and preparation. Missing photo/ingredients/steps stay visibly pending rather than being invented.
+2. Store the original recipe photo as a private file under `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS`; do not make it public and do not store the bytes in Git.
+3. Save the private Drive file reference, MIME type and photo update timestamp in the matching `Recetas` row.
+4. Generate a compact web preview and store it in hidden technical tab `RecipeMedia` (`recipe_id`, MIME, base64 preview, dimensions/hash, original Drive ref and timestamp). This preview exists because the current production Google OAuth can read Sheets but Drive media may answer 403. The original remains the archival image; `RecipeMedia` is only the private web derivative.
+5. Store ingredient rows in `IngredientesReceta`.
+6. Store preparation instructions in `PasosReceta`, preserving explicit order and only instructions confirmed by the user or supported by the supplied source.
+7. Verify that the private `Recetas` view renders the photo first and, underneath, ingredients and preparation. Missing photo/ingredients/steps stay visibly pending rather than being invented.
 
-The Worker proxies recipe images through an authenticated same-origin endpoint. The browser never needs the raw private Drive file identifier. Ordinary recipe additions or edits are Sheet/Drive mutations only; code changes are reserved for schema/capability/UI changes.
+The Worker proxies recipe images through an authenticated same-origin endpoint. It serves `RecipeMedia` first and only falls back to direct Drive media when no Sheet preview exists. The browser never needs the raw private Drive file identifier. Ordinary recipe additions or edits are Sheet/Drive mutations only; code changes are reserved for schema/capability/UI changes.
 
 ### Household menu invariants
 
