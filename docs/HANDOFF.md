@@ -1167,3 +1167,20 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - `PatrimonioDetalle` contiene el último valor por plataforma con `updated_at=2026-10-01`; `Patrimonio` incorpora la fila mensual 01/10/2026; `PatrimonioDiario` incorpora un snapshot CAPTURED para la misma fecha.
 - La UI de patrimonio no necesita hardcode adicional: consume `PatrimonioDetalle` y `Patrimonio` de forma dinámica.
 - No interpretar la diferencia entre snapshots como rentabilidad pura cuando haya aportaciones/retiradas/transferencias entre plataformas.
+
+
+## Finanzas · eToro con dinero reservado · 01/10/2026
+
+- Se crea `EtoroAsignaciones` para separar dentro del valor actual de eToro el dinero económicamente comprometido de la inversión no asignada.
+- Valor eToro canónico 01/10/2026: **28.293,46 €**.
+- Bloques activos reconciliados contra `ASUNTOS v3` y el apunte de retirada del 20/09:
+  - Bono anual Miguel: **789,67 €** restantes; **197,42 €/mes**; tabla fechada hasta 26/01/2027 (el comentario lo resume como «hasta febrero 2027»).
+  - Dinero BMW → cuota Audi: **4.408,00 €** restantes; **116 €/mes**; el maestro marca 580 € ya consumidos a 01/09 y «Fin del dinero del BMW» en 01/11/2029 con 4.988 € acumulados.
+  - Extra doble julio Miguel: **210,20 €**; **105,10 €/mes**; últimas salidas 20/10 y 20/11 de 2026.
+  - Extra doble julio Andrea: **210,20 €**; **105,10 €/mes**; últimas salidas 20/10 y 20/11 de 2026.
+  - Reserva Audi Q3 / Clicars: **100,26 €**; **33,42 €/mes**; últimas salidas 20/10, 20/11 y 20/12 de 2026.
+- Total nominal comprometido dentro de eToro: **5.718,33 €**.
+- `Resto inversión eToro`: **22.575,13 €** al snapshot actual; se calcula como eToro total menos reservas nominales y absorbe la variación de mercado.
+- Salida mensual vigente para el próximo 20/10: **557,04 €** = 197,42 + 116 + 105,10 + 105,10 + 33,42.
+- La UI de Patrimonio muestra una barra específica de eToro, con bloques por destino, importe reservado, salida mensual y fecha final. Se muestra tanto en el resumen de patrimonio como en su detalle.
+- No restar estos bloques del patrimonio total: siguen formando parte del valor de eToro hasta que la retirada se ejecute. La barra es una clasificación económica interna, no una deuda adicional.
