@@ -50,7 +50,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Diseño móvil corregido para evitar overflow y apariencia de escritorio comprimido.
 - La Home ya no muestra el bloque `Próximos movimientos`; los asuntos accionables siguen perteneciendo a sus dominios y no se eliminan de las fuentes.
 - El menú semanal de Home usa una matriz día×momento a ancho completo: conserva todas las comidas reconciliadas en su celda, tipografía legible, altura automática por fila y scroll horizontal interno solo cuando el viewport no permite mostrar las siete columnas sin comprimirlas.
-- La matriz usa únicamente tomas canónicas: los postres se integran en `Comida` o `Cena`, y los snacks en `Media mañana` o `Merienda`. El Sheet actual ya fue normalizado y el reconciliador pliega etiquetas legacy para impedir que reaparezcan filas `Postre`/`Snack`.
+- La matriz usa únicamente tomas canónicas: los postres se integran en `Comida` o `Cena`, los snacks en `Media mañana` o `Merienda`, y cualquier `Cierre` se integra en `Cena`. El Sheet actual ya fue normalizado y el reconciliador pliega etiquetas legacy para impedir que reaparezcan filas `Postre`/`Snack`/`Cierre`.
 - Escala tipográfica compartida aumentada para Home, navegación, calendarios, Salud y diálogos; los cambios de contenido siguen siendo exclusivamente data-driven desde las fuentes canónicas.
 
 ### Finanzas
