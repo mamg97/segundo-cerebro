@@ -441,11 +441,12 @@ Las imágenes son derivados/referencias del mismo `objeto_id`; no crean otra ent
 
 
 Persistencia binaria:
-- R2 privado almacena los bytes bajo claves técnicas versionadas derivadas de `objeto_id + image_type + version`.
+- D1 privado almacena los bytes y metadatos técnicos en `objects_media_assets` + `objects_media_chunks`, bajo claves versionadas derivadas de `objeto_id + image_type + version`.
 - `Armario` conserva la referencia canónica activa mediante URL privada same-origin del Worker.
-- El nombre de objeto R2 no es una identidad de dominio ni se consulta para reconstruir inventario.
+- Las claves/chunks de D1 no son identidad de dominio ni se consultan para reconstruir inventario.
 - `processed` genera una miniatura WebP (lado largo máximo 512 px) y ambas referencias se actualizan juntas en la fila de Armario.
 - El timestamp `ultima_actualizacion_visual` conserva fecha/hora ISO de la última mutación visual.
+- Salvaguarda interna del almacén visual: 200 MiB. R2 no está activo para OBJETOS.
 
 ### LOOK_BUILDER
 
@@ -626,11 +627,11 @@ Reglas:
 `GET /api/midas` devuelve el `dashboard.json` público normalizado: `generated_at_utc`, `stale` y `tracks[]` con `id`, `label`, `group`, `status`, `first_session`, `last_session`, `currency`, `last_equity`, `day_return_pct`, `return_pct` y `note`. El porcentaje diario compara los dos últimos valores de patrimonio ficticio del diario; es `null` si aún no hay dos cierres. Los porcentajes de campañas con fechas, mercados o divisas distintos no son directamente comparables. Segundo Cerebro no persiste esas filas en D1.
 
 
-### ImageIngestQueue
+### ImageIngestQueue (legado)
 
-Pestaña técnica y efímera del spreadsheet canónico `SEGUNDO CEREBRO - OBJETOS`. No representa prendas ni sustituye `Armario`.
+Pestaña técnica y efímera del spreadsheet canónico `SEGUNDO CEREBRO - OBJETOS`. Formó parte del intento inicial `Drive staging → cola → cron`, pero **no es el transporte operativo vigente** y no representa prendas ni sustituye `Armario`.
 
-Campos:
+Campos históricos:
 - `request_id`: idempotencia/auditoría de la solicitud.
 - `objeto_id`: FK lógica a `Objetos/Armario`.
 - `image_type`: `original | processed | thumbnail`.
@@ -640,4 +641,5 @@ Campos:
 - `status`: `pending | processing | done | error | cleanup_pending`.
 - `created_at, processed_at, error_code, foto_url, miniatura_url`.
 
-Solo `Armario` mantiene el estado visual canónico de la prenda. `ImageIngestQueue` puede purgarse después de auditoría.
+Las filas históricas con `OBJECTS_STAGING_META_403` no deben reintentarse ni duplicarse. La ruta vigente usa `objects-chatgpt-bridge` y, cuando hace falta desde una conversación sin POST directo, el bootstrap temporal `seed.mjs` con `OBJECTS_SEED_JOBS`. Solo `Armario` mantiene el estado visual canónico de la prenda.
+

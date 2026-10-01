@@ -246,17 +246,19 @@ Las listas contextuales pueden enlazar `evento_ref` y `lista_id`: GESTOR EVENTOS
 
 ### Armario visual
 
-La visualización de ropa no introduce una segunda identidad ni una base paralela. El Sheet sigue siendo la fuente canónica de pertenencia/metadatos y R2 actúa únicamente como almacenamiento binario privado:
+La visualización de ropa no introduce una segunda identidad ni una base paralela. El Sheet `SEGUNDO CEREBRO - OBJETOS / Armario` sigue siendo la fuente canónica de pertenencia, estado y referencia visual activa. Los bytes se guardan en el D1 privado ya existente mediante tablas técnicas de assets/chunks.
 
 ```text
 Imagen original o procesada
-        ↓ multipart + Cloudflare Access
+        ↓ multipart
 POST /api/objects/:objeto_id/image
         ↓ valida objeto/Armario/MIME/tamaño/overwrite
-R2 privado OBJECTS_MEDIA
-        ├─ objects/<objeto_id>/original/<version>
-        ├─ objects/<objeto_id>/processed/<version>
-        └─ objects/<objeto_id>/thumbnail/<version>  ← WebP <= 512 px
+D1 privado
+        ├─ objects_media_assets
+        └─ objects_media_chunks
+             ├─ objects/<objeto_id>/original/<version>
+             ├─ objects/<objeto_id>/processed/<version>
+             └─ objects/<objeto_id>/thumbnail/<version>
         ↓
 SEGUNDO CEREBRO - OBJETOS / Armario
         ├─ foto_original_url
@@ -270,15 +272,15 @@ GET /api/objects/:objeto_id/image/:tipo?v=<version>
 Armario visual / ficha / combinador / mosaicos
 ```
 
-El bucket R2 `segundo-cerebro-private-assets` no expone URL pública. Las URLs guardadas en el Sheet son rutas same-origin del Worker privado, por lo que se mantienen estables y la lectura sigue pasando por Cloudflare Access.
+Las URLs guardadas en el Sheet son rutas same-origin del Worker privado. La UI no necesita conocer D1 ni el layout físico de chunks.
 
-Una subida `processed` conserva la imagen principal a su resolución recibida y genera dentro del Worker una miniatura WebP de hasta 512 px en el lado largo mediante WebAssembly. El recorte/eliminación de fondo puede seguir ocurriendo antes del upload; el endpoint no inventa ni reinterpreta la prenda.
+Una subida `processed` conserva la imagen principal recibida y genera dentro del Worker una miniatura WebP de hasta 512 px en el lado largo mediante WebAssembly. El recorte/eliminación de fondo ocurre antes del upload; el endpoint no inventa ni reinterpreta la prenda.
 
-La consistencia con Sheets se resuelve con claves versionadas y compensación: primero se escriben los nuevos objetos R2; solo después se actualiza `Armario`. Si esa escritura falla, los nuevos assets se eliminan. En un overwrite correcto, el Sheet empieza a apuntar a la nueva versión y los assets privados anteriores se limpian después de forma best-effort. No se reutiliza una clave de otra prenda.
+La consistencia con Sheets se resuelve con claves versionadas y compensación: primero se escriben los nuevos assets en D1; solo después se actualiza `Armario`. Si esa escritura falla, los nuevos assets se eliminan. En un overwrite correcto, el Sheet empieza a apuntar a la nueva versión y la versión anterior se limpia best-effort.
 
-Por seguridad se aceptan únicamente PNG/JPEG/WebP de hasta 8 MiB, se contrasta el MIME declarado con la firma binaria, el `objeto_id` se valida antes de construir claves, y las llamadas requieren contexto autenticado de Cloudflare Access. No se aceptan URLs externas como sustituto del archivo.
+Por seguridad se aceptan únicamente PNG/JPEG/WebP de hasta 8 MiB, se contrasta MIME con firma binaria y se valida el `objeto_id`. El almacén visual impone además una salvaguarda interna de 200 MiB. R2 no está activo para OBJETOS y no debe activarse sin una nueva decisión explícita.
 
-El constructor visual sigue siendo una operación de escritura separada: valida los `objeto_id` contra el armario vigente y escribe únicamente `Looks` + `LookItems`. No crea objetos, no copia prendas y no persiste composición paralela en D1.
+El constructor visual sigue siendo una operación separada: valida los `objeto_id` contra el armario vigente y escribe únicamente `Looks + LookItems`. No crea objetos, no copia prendas y no persiste composición paralela en D1.
 
 
 ## Navegación y composición de Home
@@ -449,13 +451,27 @@ La interfaz usa SVG/CSS y respeta `prefers-reduced-motion`. No añade librerías
 
 ### Bridge ChatGPT → OBJETOS
 
-El transporte operativo para cuentas personales ChatGPT se implementa como staging transitorio sobre Google Drive ya conectado, porque el soporte de MCP personalizado con acciones de escritura no está disponible en el plan personal actual. No cambia la fuente de verdad.
+La ruta operativa vigente no usa `ImageIngestQueue` como camino principal. Reutiliza el mismo upload canónico mediante un bridge server-to-server:
 
-`ChatGPT Library → Drive staging privado → ImageIngestQueue (mismo Sheet canónico) → cron Worker → uploadObjectsImage → R2 OBJECTS_MEDIA → Armario → cleanup Drive`
+```text
+ChatGPT / GESTOR OBJETOS
+        ↓ openaiFileIdRefs temporal
+objects-chatgpt-bridge
+        ↓ multipart + Bearer upstream
+segundo-cerebro-objects-ingest
+        ↓ Service Binding
+Worker principal /api/internal/objects/:objeto_id/image
+        ↓ uploadObjectsImage
+D1 media + Armario
+```
 
-La cola se procesa cada minuto. Solo se procesan filas `pending` o `cleanup_pending`, con un máximo acotado por ciclo. La ingesta final reutiliza el contrato OBJETOS v0.3; el procesador de cola no implementa una segunda persistencia.
+`objects-chatgpt-bridge` descarga exactamente un archivo temporal desde hosts OpenAI permitidos, no lo persiste en Railway y lo convierte en multipart. `segundo-cerebro-objects-ingest` no ofrece lectura ni storage propio: reenvía la escritura mediante Service Binding al Worker principal. El Bearer server-to-server se valida contra un hash SHA-256 en el Worker principal.
 
-Drive actúa exclusivamente como buffer efímero para transportar bytes desde ChatGPT. Tras una ingesta correcta, el archivo de staging se manda a papelera. Si la escritura canónica falla, se conserva el archivo para diagnóstico y no se marca la prenda como procesada.
+Cuando una conversación no dispone de una acción HTTP directa al bridge pero sí puede operar Google Drive + Railway, se usa el bootstrap `objects-chatgpt-bridge/seed.mjs`: una copia privada de Drive sirve solo para materializar una referencia descargable, `OBJECTS_SEED_JOBS` alimenta temporalmente el lote (máximo 8), el servicio arranca con `node seed.mjs && npm start`, y tras `ok=true` se verifica `Armario`, se vacía la variable, se restaura `npm start` y se elimina el staging.
+
+La antigua ruta `Drive staging → ImageIngestQueue → cron` queda como legado histórico. Las filas `OBJECTS_STAGING_META_403` pertenecen a ese intento anterior y no representan el estado vigente.
+
+El procedimiento operativo detallado y el checklist de cierre están en `docs/OBJECTS_IMAGE_INGEST.md`.
 
 
 ## Finanzas · histórico Delta

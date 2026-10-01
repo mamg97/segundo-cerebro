@@ -234,11 +234,14 @@ La participación es compartida, pero la propiedad funcional no.
 - `/api/state` puede transportar únicamente `objectsSummary`.
 - `GET /api/objects` entrega el detalle estructurado bajo demanda, incluidos metadatos visuales y facetas de armario.
 - `POST /api/objects/look` guarda un look nuevo en la fuente canónica `Looks + LookItems`.
-- `POST /api/objects/:objeto_id/image` recibe `multipart/form-data` autenticado por Cloudflare Access con `image_type=original|processed|thumbnail` y un archivo `image`. Los bytes se guardan en R2 privado; el Sheet conserva únicamente la URL privada estable del mismo `objeto_id`.
-- `GET /api/objects/:objeto_id/image/:image_type?v=<version>` sirve el asset desde R2 a través del mismo Worker protegido; el bucket no necesita URL pública.
-- Una subida `processed` genera además una miniatura WebP de hasta 512 px en el lado largo y actualiza `foto_procesada_url`, `miniatura_url`, `estado_procesado` y `ultima_actualizacion_visual`.
+- `POST /api/objects/:objeto_id/image` recibe `multipart/form-data` autenticado por Cloudflare Access con `image_type=original|processed|thumbnail` y un archivo `image`.
+- `POST /api/internal/objects/:objeto_id/image` es la variante server-to-server; exige Bearer upstream y reutiliza exactamente `uploadObjectsImage`.
+- `GET /api/objects/:objeto_id/image/:image_type?v=<version>` sirve el asset privado mediante el Worker.
+- Los bytes se guardan en el D1 privado existente, en `objects_media_assets` + `objects_media_chunks`; el Sheet conserva únicamente la URL privada estable del mismo `objeto_id`.
+- Una subida `processed` genera además una miniatura WebP de hasta 512 px y actualiza `foto_procesada_url`, `miniatura_url`, `estado_procesado` y `ultima_actualizacion_visual`.
 - El upload acepta PNG/JPEG/WebP hasta 8 MiB, valida firma binaria además de MIME, exige objeto y fila de Armario existentes, bloquea objetos retirados y requiere `overwrite=true` para sustituir una referencia ya canónica.
-- La escritura usa claves R2 versionadas. Primero sube el nuevo asset, después actualiza el Sheet; si la escritura canónica falla, borra los nuevos objetos R2. Tras un overwrite correcto, el asset anterior se limpia best-effort. Así el Sheet nunca apunta deliberadamente a un asset no creado.
+- La escritura usa claves versionadas. Primero sube el nuevo asset a D1 y después actualiza el Sheet; si la escritura canónica falla, elimina los nuevos assets. Tras un overwrite correcto, la versión anterior se limpia best-effort.
+- El almacén visual D1 tiene una salvaguarda interna de 200 MiB. No activar R2 ni almacenamiento de pago sin una decisión explícita nueva.
 - El escritor valida que cada `objeto_id` exista en `Armario`, que los roles no se repitan y que el look tenga al menos `superior + inferior + calzado`; `exterior` y `accesorio` son opcionales.
 - Si la fuente no pudiera resolverse, el endpoint degrada a `status=source-pending`, arrays vacíos y `source.available=false`; con la fuente actual debe responder como conectada.
 
@@ -248,29 +251,35 @@ Este dominio puede contener números de serie, facturas, fotos, ubicaciones dom�
 
 Git solo contiene código, contrato y estilos. Nunca contiene inventario real, fotos, números de serie, facturas, ubicaciones precisas ni identificadores privados de la fuente.
 
-R2 es persistencia binaria privada, no una segunda fuente de identidad. Las rutas físicas se derivan del `objeto_id` y de una versión técnica; la pertenencia y estado visual siguen gobernados por `Armario`.
-
+D1 actúa como persistencia binaria privada de los derivados visuales, no como segunda fuente de identidad. Las rutas físicas se derivan del `objeto_id` y de una versión técnica; pertenencia, metadatos y referencia activa siguen gobernados por `Armario`.
 
 ## Puente operativo ChatGPT → Armario visual
 
-Mientras las cuentas personales Plus no dispongan de MCP personalizado con acciones de escritura, GESTOR OBJETOS usa un staging transitorio dentro de la infraestructura Google ya conectada, sin crear otra fuente de verdad:
+La ruta vigente para imágenes desde ChatGPT es:
 
-1. La imagen generada/procesada en ChatGPT se copia directamente a la carpeta privada de Drive `SEGUNDO CEREBRO - OBJETOS STAGING`. El usuario no descarga ni vuelve a subir el archivo.
-2. GESTOR OBJETOS añade una única fila técnica a `ImageIngestQueue` dentro del mismo spreadsheet canónico `SEGUNDO CEREBRO - OBJETOS`.
-3. El Worker privado procesa la cola cada minuto.
-4. Descarga el archivo privado de Drive con las credenciales Google ya existentes del backend.
-5. Reutiliza internamente el mismo `uploadObjectsImage` del contrato OBJETOS v0.3; no existe una segunda lógica de ingesta.
-6. El asset final y su thumbnail quedan en `OBJECTS_MEDIA`/R2 y `Armario` se actualiza automáticamente.
-7. Tras éxito, el archivo de staging se envía a la papelera. Drive no es almacenamiento permanente.
-8. Si la ingesta falla, `Armario` no se marca como procesado y la fila queda en `error`; el archivo de staging se conserva para diagnóstico/reintento.
-9. Si solo falla el cleanup, la fila queda `cleanup_pending` y el siguiente ciclo reintenta únicamente el borrado.
+```text
+imagen generada/procesada
+        ↓ referencia temporal OpenAI
+objects-chatgpt-bridge
+        ↓
+segundo-cerebro-objects-ingest
+        ↓ Service Binding
+/api/internal/objects/:objeto_id/image
+        ↓ uploadObjectsImage
+D1 visual + actualización Armario
+```
 
-### Contrato de ImageIngestQueue
+Si la sesión no dispone de una acción HTTP arbitraria pero sí de Drive + Railway, se usa el runner temporal `objects-chatgpt-bridge/seed.mjs`:
 
-Columnas, en orden:
+1. confirmar `objeto_id` existente en `Objetos + Armario`;
+2. usar Drive únicamente como staging técnico temporal del archivo;
+3. materializar una referencia temporal OpenAI del archivo;
+4. cargar hasta 8 jobs en `OBJECTS_SEED_JOBS`;
+5. arrancar temporalmente Railway con `node seed.mjs && npm start`;
+6. exigir `stage=done` + `ok=true` por cada job;
+7. verificar `foto_procesada_url`, `miniatura_url` y `estado_procesado=procesada` en Armario;
+8. vaciar `OBJECTS_SEED_JOBS`, restaurar `npm start` y limpiar el staging.
 
-`request_id, objeto_id, image_type, drive_file_id, overwrite, vista_prenda, color_principal, patron, categoria_visual, capa, estado_procesado, status, created_at, processed_at, error_code, foto_url, miniatura_url`
+La antigua cola `ImageIngestQueue` y su cron de Drive quedan como legado/fallback histórico; no son el procedimiento operativo normal. Las filas antiguas con `OBJECTS_STAGING_META_403` no deben reintentarse ni duplicarse.
 
-Para una imagen nueva: `status=pending`. No escribir manualmente `foto_*_url` ni `estado_procesado` en Armario.
-
-Esta cola es transporte efímero, no identidad ni fuente canónica de prendas. La identidad continúa siendo `objeto_id` y la fuente canónica funcional continúa siendo `Armario`.
+El procedimiento completo y checklist de cierre están en `docs/OBJECTS_IMAGE_INGEST.md`.
