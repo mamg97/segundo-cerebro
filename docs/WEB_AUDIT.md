@@ -72,6 +72,7 @@ Como mínimo:
   - elementos principales fuera del viewport;
   - texto recortado sin scroll/ellipsis explícito;
   - solapes entre controles, cabeceras, pestañas y bloques de texto;
+- invasión de texto entre filas adyacentes de leyendas densas, incluida la visualización de liquidez de Finanzas;
   - deformación accidental de imágenes;
   - proporciones anómalas de diálogos y tarjetas principales;
   - consistencia de tarjetas resumen en escritorio;
@@ -131,6 +132,15 @@ El watchdog puede autocorregir una regresión visual solo si:
 6. tras merge/deploy se ejecuta de nuevo `Audit production web` completo y termina en `[AUDIT_OK]`.
 
 Si la causa es ambigua, implica una decisión de diseño/producto, o necesita alterar datos/backend, el watchdog debe **avisar y no autocorregir**.
+
+### Incidente visual Finanzas · leyenda de liquidez
+
+El 2026-10-01 una tarjeta de liquidez con muchos compromisos mostró líneas secundarias y fechas de cobro invadiendo filas contiguas. El auditor no lo detectaba porque solo comprobaba solapes entre cajas hijas de contenedores genéricos; en este caso las cajas de fila no se superponían, pero el **texto con overflow visible sí**.
+
+Corrección:
+- las leyendas con más de 6 filas pasan a altura natural y ocultan las líneas guía, evitando comprimir contenido dentro de 258 px;
+- el auditor compara los rectángulos reales de texto (`Range.getClientRects()`) entre filas adyacentes de `.liquidity-account-legend`;
+- esta comprobación se ejecuta en las pasadas visuales de Finanzas en desktop/tablet/mobile.
 
 ## Criterio de éxito
 
