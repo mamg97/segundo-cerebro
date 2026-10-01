@@ -124,6 +124,8 @@ test("private genetic diary uses recorded valuations and keeps a quality warning
   assert.equal(merged.tracks[0].return_pct, 4.382925);
   assert.equal(merged.tracks[0].last_session, "2026-09-25");
   assert.equal(merged.tracks[0].day_return_pct, .368197);
+  assert.equal(merged.tracks[0].risk_observations, 2);
+  assert.equal(merged.tracks[0].max_drawdown_pct, 0);
   assert.match(merged.tracks[0].note, /no son ejecuciones verificadas/);
   assert.equal(dashboard.tracks[0].last_equity, null);
   assert.equal(await addPrivateGeneticDiary(null, dashboard), dashboard);
@@ -143,6 +145,8 @@ test("forward genetic campaign stays separate and never inherits legacy returns"
   assert.equal(merged.tracks[1].status, "demo_con_diario");
   assert.equal(merged.tracks[1].last_equity, 100000);
   assert.equal(merged.tracks[1].day_return_pct, null);
+  assert.equal(merged.tracks[1].risk_observations, 1);
+  assert.equal(merged.tracks[1].max_drawdown_pct, 0);
   assert.match(merged.tracks[1].note, /siguiente apertura/);
 });
 
