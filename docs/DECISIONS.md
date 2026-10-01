@@ -439,3 +439,12 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Código:** solo se cambia para defectos genéricos de contrato, reconciliación o renderizado que afecten a cualquier menú, nunca para acomodar una comida o fecha concreta.
 - **Privacidad:** ningún menú real, nombre de plato doméstico, fecha o cantidad personal se hardcodea o versiona en Git.
 - **Motivo:** evitar regresiones visuales por cambios cotidianos del plan y mantener una sola fuente canónica de estado nutricional.
+## D-044 — Las pausas temporales de fuerza son estado de objetivos, no incumplimiento
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-10-01.
+- **Decisión:** una pausa temporal de entrenamiento se modela con una nueva fila efectiva en `ObjetivosActividad`; `strength_sessions_week=0` significa que la fuerza no es exigible durante ese estado.
+- **Adherencia:** una fuerza no exigible queda `ignored`, no `fail`; nutrición y otras dimensiones siguen evaluándose de forma independiente.
+- **UI:** Gimnasio conserva el PPL base y su histórico, pero mientras la pausa esté activa no propone ni presenta el formulario de una sesión nueva.
+- **Reactivación:** no es automática por fecha; requiere una fila efectiva posterior, evitando reanudar entrenamientos si la causa de la pausa aún persiste.
+- **Privacidad:** la razón clínica concreta vive solo en la fuente privada; Git contiene únicamente la semántica genérica de pausa.
