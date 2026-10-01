@@ -5,11 +5,15 @@ on:
     workflows: ["Deploy private Cloudflare app"]
     types: [completed]
   schedule:
+    # Primary hourly audit plus a backup opportunity. The backup only executes
+    # the browser audit when the primary schedule event was not created.
     - cron: "17 * * * *"
+    - cron: "42 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 concurrency:
@@ -26,13 +30,82 @@ jobs:
       AUDIT_BASE_URL: https://segundo-cerebro-web-audit.mamg97.workers.dev
 
     steps:
+      - name: Decide whether a full audit is due
+        id: cadence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const output = process.env.GITHUB_OUTPUT;
+          const eventName = process.env.EVENT_NAME || "";
+          const schedule = process.env.EVENT_SCHEDULE || "";
+
+          async function main() {
+            if (eventName !== "schedule" || schedule === "17 * * * *") {
+              fs.appendFileSync(output, "run_audit=true\n");
+              fs.appendFileSync(output, "reason=primary-or-explicit\n");
+              return;
+            }
+
+            try {
+              const response = await fetch(
+                `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions/workflows/web-audit.yml/runs?event=schedule&per_page=20`,
+                {
+                  headers: {
+                    Accept: "application/vnd.github+json",
+                    Authorization: `Bearer ${process.env.GH_TOKEN}`,
+                    "X-GitHub-Api-Version": "2022-11-28"
+                  }
+                }
+              );
+              if (!response.ok) throw new Error(`GitHub API ${response.status}`);
+              const payload = await response.json();
+              const cutoff = Date.now() - 40 * 60 * 1000;
+              const currentId = Number(process.env.CURRENT_RUN_ID);
+              const primarySeen = (payload.workflow_runs || []).some((run) => {
+                if (Number(run.id) === currentId) return false;
+                const created = Date.parse(run.created_at || "");
+                return Number.isFinite(created) &&
+                  created >= cutoff &&
+                  run.conclusion !== "cancelled";
+              });
+
+              fs.appendFileSync(output, `run_audit=${primarySeen ? "false" : "true"}\n`);
+              fs.appendFileSync(output, `reason=${primarySeen ? "primary-seen" : "primary-missed"}\n`);
+            } catch (error) {
+              // Fail open: if cadence inspection itself fails, run the browser audit.
+              fs.appendFileSync(output, "run_audit=true\n");
+              fs.appendFileSync(output, "reason=cadence-check-failed\n");
+              console.error(String(error?.message || error));
+            }
+          }
+
+          main().catch((error) => {
+            fs.appendFileSync(output, "run_audit=true\n");
+            fs.appendFileSync(output, "reason=cadence-check-crashed\n");
+            console.error(error);
+          });
+          NODE
+
+      - name: Backup schedule heartbeat
+        if: ${{ github.event_name == 'schedule' && steps.cadence.outputs.run_audit != 'true' }}
+        run: echo "Primary hourly audit already exists; backup slot stays lightweight."
+
       - uses: actions/checkout@v4
+        if: ${{ steps.cadence.outputs.run_audit == 'true' }}
 
       - uses: actions/setup-node@v4
+        if: ${{ steps.cadence.outputs.run_audit == 'true' }}
         with:
           node-version: "22"
 
       - name: Install audit browser
+        if: ${{ steps.cadence.outputs.run_audit == 'true' }}
         working-directory: private-cloudflare
         run: |
           npm install
@@ -40,6 +113,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Mint short-lived GitHub OIDC token
+        if: ${{ steps.cadence.outputs.run_audit == 'true' }}
         shell: bash
         run: |
           RESPONSE="$(curl --fail --silent --show-error             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=segundo-cerebro-web-audit")"
@@ -56,5 +130,6 @@ jobs:
           echo "AUDIT_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
       - name: Navigate and audit production
+        if: ${{ steps.cadence.outputs.run_audit == 'true' }}
         working-directory: private-cloudflare
         run: node scripts/web-audit.mjs
