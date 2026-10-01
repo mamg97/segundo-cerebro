@@ -80,10 +80,90 @@ Nunca se sobreescribe in-place una clave canónica. La referencia anterior sigue
 ## GESTOR OBJETOS
 
 El gestor debe:
-1. resolver una prenda contra un `objeto_id` ya existente;
+1. resolver la prenda contra un `objeto_id` ya existente en `Objetos + Armario`;
 2. generar/obtener el recorte fuera del inventario canónico;
-3. enviar el archivo al endpoint con `image_type=processed`;
-4. considerar válida la operación solo si recibe `ok=true`;
-5. volver a consultar `GET /api/objects` o `Armario` para verificar el estado final.
+3. enviar el archivo por el bridge con `image_type=processed`;
+4. considerar válida la operación solo si el resultado final contiene `ok=true`;
+5. volver a consultar `Armario` o `GET /api/objects` y comprobar `foto_procesada_url`, `miniatura_url` y `estado_procesado=procesada`.
 
-No debe escribir manualmente las URLs del Sheet, crear otro objeto, subir bytes a Git ni activar R2.
+No debe escribir manualmente las URLs del Sheet, crear otro objeto para una imagen derivada, subir bytes a Git ni activar R2.
+
+## Ruta operativa ChatGPT → Armario visual
+
+Esta sección documenta el procedimiento que ya se ha usado con éxito desde GESTOR OBJETOS. Debe consultarse antes de afirmar que una subida no puede hacerse desde una conversación.
+
+### Ruta normal: bridge server-to-server
+
+El componente `objects-chatgpt-bridge/server.mjs` acepta una referencia de archivo temporal de OpenAI y llama al mismo upload canónico:
+
+```text
+archivo generado/procesado en ChatGPT
+        ↓ openaiFileIdRefs (URL temporal permitida)
+objects-chatgpt-bridge
+        ↓ descarga temporal; Railway no persiste el archivo
+segundo-cerebro-objects-ingest
+        ↓ Service Binding
+Worker principal /api/internal/objects/:objeto_id/image
+        ↓ uploadObjectsImage
+D1 objects_media_assets + objects_media_chunks
+        ↓
+SEGUNDO CEREBRO - OBJETOS / Armario
+```
+
+El bridge:
+- acepta exactamente una referencia `openaiFileIdRefs`;
+- limita hosts de descarga a los permitidos;
+- vuelve a validar tamaño/MIME antes de reenviar;
+- convierte la imagen a `multipart/form-data`;
+- autentica el salto server-to-server con un secreto independiente cuyo hash SHA-256 se valida en el Worker principal;
+- no guarda el binario en Railway.
+
+### Fallback operativo cuando la sesión no puede hacer un POST HTTP directo
+
+Si la conversación dispone de Google Drive y Railway pero no de una acción HTTP arbitraria, se usa `objects-chatgpt-bridge/seed.mjs`. Este es el flujo que se ha ejecutado repetidamente en producción:
+
+1. **Preparar identidad antes del binario.** Confirmar que el `objeto_id` existe en `Objetos` y tiene fila en `Armario`. Si la prenda es nueva, crear primero esas filas canónicas. No escribir `foto_procesada_url`, `miniatura_url` ni `estado_procesado` manualmente.
+2. **Obtener la imagen procesada.** Usar el archivo generado por ChatGPT o el recorte aprobado.
+3. **Staging técnico temporal.** Copiar el archivo a una carpeta privada de Drive únicamente para que el conector pueda volver a materializarlo como referencia descargable. Drive no es almacenamiento final.
+4. **Materializar la referencia.** Leer/descargar ese archivo mediante el conector de Drive y obtener una referencia temporal de archivo OpenAI (`id`, `name`, `mime_type`, `download_link`). No persistir la URL temporal en Git ni en Sheets.
+5. **Preparar el lote Railway.** Escribir temporalmente en el servicio `objects-chatgpt-bridge` la variable `OBJECTS_SEED_JOBS` como un array JSON de 1 a 8 jobs. Cada job contiene:
+   - `objeto_id`;
+   - `image_type` (normalmente `processed`);
+   - `overwrite`;
+   - metadatos visuales opcionales (`vista_prenda`, `color_principal`, `patron`, `categoria_visual`, `capa`, `estado_procesado`);
+   - exactamente una referencia en `openaiFileIdRefs`.
+6. **Arranque de ingesta.** Cambiar temporalmente el start command a `node seed.mjs && npm start` y redeplegar el servicio. `seed.mjs` no implementa otra ingesta: construye una petición local a `handleRequest` de `server.mjs`, por lo que reutiliza exactamente el bridge normal.
+7. **Exigir éxito real.** Revisar logs del deploy. Cada item debe terminar en `stage=done`, HTTP 2xx y resultado `ok=true`. Un deploy verde sin ese resultado no basta.
+8. **Verificar la fuente canónica.** Volver a leer `Armario` o `GET /api/objects` y comprobar que el mismo `objeto_id` tiene `foto_procesada_url`, `miniatura_url` y `estado_procesado=procesada`. Para reemplazos, confirmar además que la versión cambió.
+9. **Restaurar Railway.** Vaciar `OBJECTS_SEED_JOBS`, restaurar el start command normal `npm start` y redeplegar. El servicio debe quedar atendiendo `server.mjs`, no ejecutando un lote en cada arranque.
+10. **Limpiar staging.** Enviar a papelera/borrar la copia temporal de Drive solo después de haber verificado la ingesta. El binario persistente ya está en D1.
+
+### Overwrite e idempotencia
+
+- Imagen nueva sin referencia activa: `overwrite=false`.
+- Sustitución deliberada de una imagen ya canónica: `overwrite=true`.
+- Un `IMAGE_ALREADY_EXISTS` con `overwrite=false` no se debe resolver creando otro `objeto_id`.
+- Nunca crear una prenda duplicada para corregir una foto: la nueva versión pertenece al mismo `objeto_id`.
+
+### Qué NO es la ruta vigente
+
+La antigua combinación `Drive staging → ImageIngestQueue → cron` quedó como experimento/legado y no es el procedimiento operativo actual. En particular:
+- las filas antiguas con `OBJECTS_STAGING_META_403` no representan el estado vigente del armario;
+- no deben reintentarse automáticamente ni duplicarse;
+- `ImageIngestQueue` no es requisito para el bridge Railway;
+- R2 no forma parte de la arquitectura actual.
+
+### Checklist de cierre
+
+Una subida solo se puede declarar terminada cuando se cumplen simultáneamente:
+
+- [ ] `objeto_id` canónico existente;
+- [ ] respuesta/log de ingesta con `ok=true`;
+- [ ] `foto_procesada_url` presente;
+- [ ] `miniatura_url` presente;
+- [ ] `estado_procesado=procesada`;
+- [ ] la web puede leer el asset por la ruta privada versionada;
+- [ ] `OBJECTS_SEED_JOBS` queda vacío tras un uso por seed;
+- [ ] Railway vuelve a su arranque normal;
+- [ ] la copia temporal de Drive queda eliminada.
+
