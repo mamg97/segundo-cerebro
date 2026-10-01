@@ -215,6 +215,291 @@ async function closeDialogIfOpen() {
   }
 }
 
+
+const VISUAL_PROFILES = [
+  { name: "desktop", width: 1440, height: 1100 },
+  { name: "tablet", width: 900, height: 1000 },
+  { name: "mobile", width: 390, height: 844 }
+];
+
+async function auditVisualSnapshot(label) {
+  const report = await page.evaluate(() => {
+    const visible = (element) => {
+      if (!(element instanceof Element)) return false;
+      const style = getComputedStyle(element);
+      if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return false;
+      const rect = element.getBoundingClientRect();
+      return rect.width > 1 && rect.height > 1;
+    };
+
+    const shortName = (element) => {
+      if (element.id) return "#" + element.id;
+      const classes = [...element.classList].slice(0, 2);
+      return element.tagName.toLowerCase() + (classes.length ? "." + classes.join(".") : "");
+    };
+
+    const insideHorizontalScroller = (element) => {
+      let current = element.parentElement;
+      while (current && current !== document.body) {
+        const style = getComputedStyle(current);
+        if (/(auto|scroll)/.test(style.overflowX) && current.scrollWidth > current.clientWidth + 2) return true;
+        current = current.parentElement;
+      }
+      return false;
+    };
+
+    const intersectionArea = (a, b) => {
+      const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      return width * height;
+    };
+
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const outOfBounds = [];
+    const clippedText = [];
+    const overlaps = [];
+    const distortedImages = [];
+    const proportions = [];
+
+    const rootOverflow = Math.max(
+      0,
+      document.documentElement.scrollWidth - viewport.width,
+      document.body.scrollWidth - viewport.width
+    );
+
+    document.querySelectorAll(
+      ".main-content,.topbar,.home-summary-card,#home-weekly-menu-panel,.weekly-menu-day,dialog[open],.detail-dialog[open]"
+    ).forEach((element) => {
+      if (!visible(element) || insideHorizontalScroller(element)) return;
+      const rect = element.getBoundingClientRect();
+      if (rect.left < -3 || rect.right > viewport.width + 3) {
+        outOfBounds.push(`${shortName(element)} [${Math.round(rect.left)},${Math.round(rect.right)}]/${viewport.width}`);
+      }
+    });
+
+    document.querySelectorAll(
+      "h1,h2,h3,.nav-link,.daily-card-heading strong,.daily-card-status,.weekly-menu-moment,.weekly-menu-meal-copy strong,.context-label,.detail-dialog button,.health-tabs button,.pantry-view-nav button,.objects-tabs button,.projects-tabs button,.events-tabs button"
+    ).forEach((element) => {
+      if (!visible(element) || !(element.textContent || "").trim()) return;
+      const style = getComputedStyle(element);
+      const horizontalClip = element.scrollWidth > element.clientWidth + 3;
+      const verticalClip = element.scrollHeight > element.clientHeight + 3;
+      const allowsScroll = /(auto|scroll)/.test(style.overflowX + " " + style.overflowY);
+      const intentionalEllipsis = style.textOverflow === "ellipsis" || style.webkitLineClamp !== "none";
+      if ((horizontalClip || verticalClip) && !allowsScroll && !intentionalEllipsis) {
+        clippedText.push(`${shortName(element)} ${element.clientWidth}x${element.clientHeight}→${element.scrollWidth}x${element.scrollHeight}`);
+      }
+    });
+
+    const overlapContainers = [
+      ".topbar",
+      ".top-actions",
+      ".daily-card-heading",
+      ".weekly-menu-meal-main",
+      ".weekly-menu-day > header",
+      ".health-tabs",
+      ".pantry-view-nav",
+      ".objects-tabs",
+      ".projects-tabs",
+      ".events-tabs",
+      ".area-nav"
+    ];
+    document.querySelectorAll(overlapContainers.join(",")).forEach((container) => {
+      if (!visible(container)) return;
+      const children = [...container.children].filter((element) => {
+        if (!visible(element)) return false;
+        const style = getComputedStyle(element);
+        return style.position !== "absolute" && style.position !== "fixed";
+      });
+      for (let i = 0; i < children.length; i += 1) {
+        for (let j = i + 1; j < children.length; j += 1) {
+          const a = children[i].getBoundingClientRect();
+          const b = children[j].getBoundingClientRect();
+          if (intersectionArea(a, b) > 9) {
+            overlaps.push(`${shortName(container)}: ${shortName(children[i])} ↔ ${shortName(children[j])}`);
+          }
+        }
+      }
+    });
+
+    const dialog = document.querySelector(".detail-dialog[open]");
+    const close = document.querySelector(".detail-dialog[open] .dialog-close");
+    const title = document.querySelector(".detail-dialog[open] #dialog-title");
+    if (dialog && visible(dialog)) {
+      const rect = dialog.getBoundingClientRect();
+      if (rect.width > viewport.width - 8 || rect.left < 0 || rect.right > viewport.width) {
+        proportions.push(`dialog ${Math.round(rect.width)}px en viewport ${viewport.width}px`);
+      }
+      if (close && title && visible(close) && visible(title) && intersectionArea(close.getBoundingClientRect(), title.getBoundingClientRect()) > 9) {
+        overlaps.push("dialog-close ↔ dialog-title");
+      }
+    }
+
+    document.querySelectorAll("img").forEach((image) => {
+      if (!visible(image) || !image.naturalWidth || !image.naturalHeight) return;
+      const style = getComputedStyle(image);
+      if (["cover", "contain", "scale-down"].includes(style.objectFit)) return;
+      const rect = image.getBoundingClientRect();
+      const rendered = rect.width / Math.max(1, rect.height);
+      const natural = image.naturalWidth / image.naturalHeight;
+      if (Math.abs(rendered / natural - 1) > 0.08) {
+        distortedImages.push(`${shortName(image)} natural=${natural.toFixed(2)} render=${rendered.toFixed(2)}`);
+      }
+    });
+
+    if (viewport.width >= 1180) {
+      const cards = [...document.querySelectorAll(".home-summary-card")].filter(visible);
+      if (cards.length >= 2) {
+        const heights = cards.map((element) => Math.round(element.getBoundingClientRect().height));
+        const spread = Math.max(...heights) - Math.min(...heights);
+        if (spread > 24) proportions.push(`home-summary-card alturas ${heights.join(",")} spread=${spread}px`);
+      }
+    }
+
+    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, proportions };
+  });
+
+  assertCheck(report.rootOverflow <= 3, `Visual ${label} · sin overflow global`, `overflow=${report.rootOverflow}px`);
+  assertCheck(report.outOfBounds.length === 0, `Visual ${label} · contenido dentro del viewport`, report.outOfBounds.slice(0, 4).join(" | "));
+  assertCheck(report.clippedText.length === 0, `Visual ${label} · texto sin clipping`, report.clippedText.slice(0, 4).join(" | "));
+  assertCheck(report.overlaps.length === 0, `Visual ${label} · sin solapes`, report.overlaps.slice(0, 4).join(" | "));
+  assertCheck(report.distortedImages.length === 0, `Visual ${label} · imágenes sin deformación`, report.distortedImages.slice(0, 4).join(" | "));
+  assertCheck(report.proportions.length === 0, `Visual ${label} · proporciones coherentes`, report.proportions.slice(0, 4).join(" | "));
+}
+
+async function auditThemeContract(theme, label) {
+  const previous = await page.evaluate(() => document.documentElement.dataset.theme || "");
+  await page.evaluate((nextTheme) => { document.documentElement.dataset.theme = nextTheme; }, theme);
+  await page.waitForTimeout(80);
+
+  const report = await page.evaluate((currentTheme) => {
+    const root = getComputedStyle(document.documentElement);
+    const expected = currentTheme === "dark"
+      ? {
+          "--paper": "#07101d",
+          "--surface": "#0b1728",
+          "--surface-2": "#10213a",
+          "--blue": "#5fa8ff",
+          "--blue-strong": "#2f6bff",
+          "--orange": "#ff7a1a",
+          "--ink": "#f8fafc",
+          "--ink-soft": "#a8b3c7",
+          "--line": "#1e3350"
+        }
+      : {
+          "--paper": "#f5f8fc",
+          "--surface": "#ffffff",
+          "--surface-2": "#eef4fb",
+          "--blue": "#2f6bff",
+          "--blue-strong": "#2454c9",
+          "--orange": "#e96d16",
+          "--ink": "#102038",
+          "--ink-soft": "#66758c",
+          "--line": "#d9e4f0"
+        };
+
+    const rgb = (value) => {
+      const probe = document.createElement("span");
+      probe.style.color = value;
+      document.body.appendChild(probe);
+      const computed = getComputedStyle(probe).color;
+      probe.remove();
+      const parts = computed.match(/[\d.]+/g)?.slice(0, 3).map(Number) || [];
+      return parts.length === 3 ? parts : null;
+    };
+    const luminance = (triplet) => {
+      const channels = triplet.map((value) => {
+        const v = value / 255;
+        return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    };
+    const contrast = (a, b) => {
+      const ra = rgb(a);
+      const rb = rgb(b);
+      if (!ra || !rb) return 0;
+      const la = luminance(ra);
+      const lb = luminance(rb);
+      return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    };
+
+    const mismatches = [];
+    for (const [token, value] of Object.entries(expected)) {
+      const actual = root.getPropertyValue(token).trim().toLowerCase();
+      if (actual !== value) mismatches.push(`${token}=${actual || "∅"} esperado=${value}`);
+    }
+
+    const ink = root.getPropertyValue("--ink").trim();
+    const soft = root.getPropertyValue("--ink-soft").trim();
+    const paper = root.getPropertyValue("--paper").trim();
+    const surface = root.getPropertyValue("--surface").trim();
+    const blue = root.getPropertyValue("--blue").trim();
+    const orange = root.getPropertyValue("--orange").trim();
+    const contrastIssues = [];
+    if (contrast(ink, paper) < 7) contrastIssues.push(`ink/paper=${contrast(ink, paper).toFixed(2)}`);
+    if (contrast(ink, surface) < 7) contrastIssues.push(`ink/surface=${contrast(ink, surface).toFixed(2)}`);
+    if (contrast(soft, paper) < 3) contrastIssues.push(`muted/paper=${contrast(soft, paper).toFixed(2)}`);
+
+    const blueRgb = rgb(blue);
+    const orangeRgb = rgb(orange);
+    const accentDistance = blueRgb && orangeRgb
+      ? Math.sqrt(blueRgb.reduce((sum, value, index) => sum + (value - orangeRgb[index]) ** 2, 0))
+      : 0;
+    if (accentDistance < 80) contrastIssues.push(`azul/naranja demasiado próximos=${accentDistance.toFixed(1)}`);
+
+    return { mismatches, contrastIssues };
+  }, theme);
+
+  assertCheck(report.mismatches.length === 0, `Visual ${label} · paleta ${theme} canónica`, report.mismatches.slice(0, 5).join(" | "));
+  assertCheck(report.contrastIssues.length === 0, `Visual ${label} · contraste ${theme}`, report.contrastIssues.slice(0, 5).join(" | "));
+
+  await page.evaluate((oldTheme) => {
+    if (oldTheme) document.documentElement.dataset.theme = oldTheme;
+    else delete document.documentElement.dataset.theme;
+  }, previous);
+  await page.waitForTimeout(50);
+}
+
+async function openAreaForVisualAudit(areaId) {
+  await closeDialogIfOpen();
+  const exists = await page.locator(`[data-nav-area-id="${areaId}"]`).count();
+  if (!exists) return false;
+  await page.evaluate((id) => document.querySelector(`[data-nav-area-id="${id}"]`)?.click(), areaId);
+  await page.waitForTimeout(areaId === "area-general" ? 250 : 650);
+  return true;
+}
+
+async function auditResponsiveVisualLayout(navIds) {
+  const originalViewport = page.viewportSize() || { width: 1440, height: 1100 };
+
+  for (const profile of VISUAL_PROFILES) {
+    await page.setViewportSize({ width: profile.width, height: profile.height });
+    await openAreaForVisualAudit("area-general");
+    await auditVisualSnapshot(`${profile.name} · Home`);
+
+    const areas = profile.name === "tablet"
+      ? ["area-finance", "area-health", "area-objects", "area-pantry", "area-projects"]
+      : profile.name === "mobile"
+        ? navIds
+        : [];
+
+    for (const areaId of areas) {
+      if (!await openAreaForVisualAudit(areaId)) continue;
+      await auditVisualSnapshot(`${profile.name} · ${areaId}`);
+    }
+
+    if (profile.name !== "tablet") {
+      await openAreaForVisualAudit("area-general");
+      await auditThemeContract("light", `${profile.name} · Home`);
+      await auditThemeContract("dark", `${profile.name} · Home`);
+    }
+  }
+
+  await closeDialogIfOpen();
+  await page.setViewportSize(originalViewport);
+  await openAreaForVisualAudit("area-general");
+}
+
 async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null, options = {}) {
   const timeout = options.timeout || 6000;
   const settle = options.settle || 250;
