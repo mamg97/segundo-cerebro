@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 import {
   classifyRequestFailure,
+  evaluateMidasWorkflowRuns,
   hiddenMenuStatus,
   logicalMenuKey,
   menuDisplayTotals,
@@ -128,6 +129,97 @@ async function probeApi(path, label, options = {}) {
     await page.waitForTimeout(waitMs * attempt);
   }
   return result;
+}
+
+async function fetchMidasWorkflowRuns() {
+  const endpoint = "https://api.github.com/repos/mamg97/midas-paper-lab/actions/runs?per_page=100";
+  const tokenHeader = process.env.GH_TOKEN ? { Authorization: "Bearer " + process.env.GH_TOKEN } : {};
+  let lastError = "unknown";
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    for (const authenticated of [true, false]) {
+      if (!authenticated && !process.env.GH_TOKEN) continue;
+      try {
+        const response = await fetch(endpoint, {
+          headers: {
+            Accept: "application/vnd.github+json",
+            "User-Agent": "segundo-cerebro-web-audit",
+            ...(authenticated ? tokenHeader : {})
+          }
+        });
+        if (response.ok) {
+          const payload = await response.json();
+          return Array.isArray(payload.workflow_runs) ? payload.workflow_runs : [];
+        }
+        lastError = "GitHub API " + response.status;
+        if (authenticated && [401,403,404].includes(response.status)) continue;
+      } catch (error) {
+        lastError = String(error?.message || error);
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+  }
+  throw new Error(lastError);
+}
+
+async function auditMidasCompetition() {
+  console.log("[MIDAS] Competition Health");
+  const midas = await probeApi("/api/midas", "API MIDAS", { attempts: 3, waitMs: 800 });
+  assertCheck(midas.ok && midas.body?.ok === true && Array.isArray(midas.body?.dashboard?.tracks),
+    "MIDAS · API y dashboard", `HTTP ${midas.status}`);
+  if (!(midas.ok && midas.body?.ok === true && Array.isArray(midas.body?.dashboard?.tracks))) return;
+
+  const tracks = midas.body.dashboard.tracks;
+  const paper = tracks.filter((row) => row.group === "paper_nuevo");
+  assertCheck(
+    paper.length === 9 && paper.every((row) => row.status === "demo_con_diario" && row.last_session),
+    "MIDAS · estrategias diarias con diario",
+    `${paper.filter((row) => row.status === "demo_con_diario" && row.last_session).length}/9`
+  );
+
+  const capital = tracks.find((row) => row.id === "capital_cycle_inflection_2026");
+  assertCheck(Boolean(capital?.last_session), "MIDAS · Capital Cycle tiene sesión registrada",
+    capital?.last_session || "sin sesión");
+
+  const genetic = tracks.find((row) => row.id === "genetic_sp500_forward");
+  assertCheck(
+    genetic?.status === "demo_con_diario" && Boolean(genetic?.last_session),
+    "MIDAS · genético prospectivo enlazado",
+    genetic?.last_session || genetic?.status || "ausente"
+  );
+
+  let actionsRuns = [];
+  try {
+    actionsRuns = await fetchMidasWorkflowRuns();
+    pass("MIDAS · GitHub Actions legible", `${actionsRuns.length} runs inspeccionados`);
+  } catch (error) {
+    fail("MIDAS · GitHub Actions legible", String(error?.message || error));
+    return;
+  }
+
+  const health = evaluateMidasWorkflowRuns(actionsRuns);
+  for (const item of health.workflows) {
+    const detail = item.latest
+      ? `${item.state} · run #${item.latest.run_number || "?"} · ${item.latest.created_at || ""}`
+      : item.state;
+    assertCheck(item.ok, `MIDAS · workflow ${item.name}`, item.detail ? detail + " · " + item.detail : detail);
+  }
+
+  const successful = new Set(health.workflows.filter((item) => item.state === "success").map((item) => item.name));
+  if (successful.has("MIDAS TFM shadow forecasts")) {
+    const tfm = tracks.filter((row) => row.group === "tfm_demo_adaptado");
+    assertCheck(tfm.length === 4 && tfm.every((row) => row.status === "demo_con_diario" && row.last_session),
+      "MIDAS · TFM materializa cuatro diarios tras run verde");
+  }
+  if (successful.has("MIDAS weekly ML paper")) {
+    const weekly = tracks.filter((row) => row.group === "weekly_ml_demo");
+    assertCheck(weekly.length === 9 && weekly.every((row) => row.status === "demo_con_diario" && row.last_session),
+      "MIDAS · Weekly ML materializa nueve diarios tras run verde");
+  }
+  if (successful.has("MIDAS TFG corrected paper")) {
+    const tfg = tracks.find((row) => row.id === "tfg_corrected_2026");
+    assertCheck(tfg?.status === "demo_con_diario" && Boolean(tfg?.last_session),
+      "MIDAS · TFG materializa diario tras run verde");
+  }
 }
 
 async function reconcileTransientSourceFailures() {
@@ -696,6 +788,8 @@ try {
 
   const nutrition = await api("/api/nutrition");
   assertCheck(nutrition.ok && nutrition.body?.ok === true, "API de Nutrición", `HTTP ${nutrition.status}`);
+
+  await auditMidasCompetition();
 
   const pantryProbe = await probeApi("/api/pantry", "API de Despensa");
   if (pantryProbe.ok && pantryProbe.body?.ok === true) {

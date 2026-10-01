@@ -64,6 +64,13 @@ Como mínimo:
 - dato ausente permanece ausente, nunca se transforma en 0;
 - barras de kcal/proteína: existencia, porcentaje/anchura y estado visual lógico;
 - APIs privadas clave de Despensa, Proyectos y Delta/Finanzas;
+- **MIDAS Competition Health**:
+  - `/api/midas` responde y conserva los diarios esperados;
+  - las nueve estrategias diarias mantienen sesión registrada;
+  - el genético prospectivo privado está enlazado y fechado;
+  - workflows públicos `paper`, `TFM`, `Capital Cycle`, `Weekly ML` y `TFG` se contrastan contra su cadencia real;
+  - una ejecución debida ausente o cuyo último `schedule` termine en fallo deja la auditoría roja;
+  - tras un workflow verde, el auditor exige que aparezcan los diarios correspondientes y no acepta “esperando primera sesión” como sustituto de una ejecución fallida;
 - respuestas 5xx y fallos de red;
 - errores JavaScript/console;
 - regresiones de navegación/estilos compartidos provocadas por cualquier dominio;
