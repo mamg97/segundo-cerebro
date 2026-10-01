@@ -117,6 +117,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - `Recetas` admite referencia privada de foto; los bytes viven en `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS` y el Worker los sirve mediante proxy autenticado sin exponer el ID de Drive.
 - El alta futura de una receta es una mutación de datos: foto privada + filas canónicas en Salud. No requiere tocar frontend/Worker salvo cambio de capacidad o esquema.
 - Contrato vigente: `agents/HEALTH.md`.
+- Al abrir una nueva conversación `GESTOR GYM Y NUTRI`, reconstruir primero el estado vivo leyendo `Objetivos`, `ObjetivosActividad`, `ObjetivosProgreso`, `MenuSemanal` de la semana actual, `Registro` reciente y las tablas de recetas; cruzar productos/stock con `SEGUNDO CEREBRO - DESPENSA`. No trasladar valores personales actuales a Git ni depender del chat anterior.
 
 ### Despensa y suministros
 
