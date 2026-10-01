@@ -17,6 +17,7 @@ Los gestores especializados dejan de ser superficies de conversación obligatori
 5. **El Coordinador compone; no se convierte en propietario de todos los datos.**
 6. **Toda acción sensible conserva límites, permisos y trazabilidad.**
 7. **La documentación sustituye al historial de conversación como memoria técnica.**
+8. **Datos cambian en fuentes; código cambia por capacidades.** Un cambio operativo que ya cabe en el contrato vigente debe resolverse en la fuente canónica, no mediante un parche de frontend/Worker.
 
 ## Responsabilidades
 
@@ -33,6 +34,7 @@ El Coordinador debe:
 - pedir confirmación cuando una acción lo requiera;
 - registrar decisiones técnicas duraderas en la documentación adecuada;
 - mantener la conversación principal compacta y delegar profundidad técnica a los módulos.
+- aplicar una **puerta previa a Git**: antes de cambiar código por una petición de estado/datos, comprobar si la fuente canónica ya puede representarla y, si es así, mutar o enrutar esa fuente en vez del código.
 
 ## No responsabilidades
 
@@ -115,6 +117,13 @@ Estos objetos son contratos de orquestación. No implican aún persistencia obli
 - Proponer puede ser automático.
 - Escribir requiere respetar el contrato del dominio.
 - Si una mutación requiere confirmación explícita, el Coordinador debe detenerse antes de ejecutarla.
+
+### Regla de cambio operativo
+
+- Si el dato o estado nuevo encaja en el esquema vigente, la acción correcta es escribir en la fuente canónica autorizada o pasar la intención al gestor propietario.
+- No se toca `app/`, `private-cloudflare/` ni otra lógica de producto solo para reflejar una instancia nueva de datos.
+- El código se modifica cuando cambia la capacidad, el contrato/esquema, la integración, la validación, la seguridad, la resiliencia, la UX o cuando existe un bug real.
+- Si un cambio rutinario de datos exige un despliegue, el Coordinador debe tratarlo como señal de acoplamiento indebido y favorecer una solución data-driven reutilizable.
 - Una escritura debe ocurrir en la fuente propietaria del dominio, no en una copia del Coordinador.
 
 ## Conversaciones especializadas durante la transición
