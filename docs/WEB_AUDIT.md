@@ -39,7 +39,7 @@ El watcher externo de ChatGPT debe usar este criterio y no contar como auditorí
 
 Existe además una tarea horaria externa de ChatGPT como defensa frente a una caída del emisor `schedule` de GitHub:
 
-- a partir de **75 minutos** sin auditoría completa correcta y sin otra completa en curso, relanza manualmente el job de auditoría completa más reciente del **mismo** workflow `Audit production web`;
+- se ejecuta cada hora al **minuto 45**; si han pasado al menos **75 minutos** sin auditoría completa correcta y no hay otra completa en curso, relanza manualmente el job de auditoría completa más reciente del **mismo** workflow `Audit production web`;
 - no crea ni mantiene un segundo workflow horario;
 - si la recuperación termina verde antes de los 90 minutos, no notifica;
 - al alcanzar 90 minutos sin auditoría completa correcta, o si el relanzamiento falla, genera alerta con la causa clasificada;
@@ -139,6 +139,14 @@ Corregir el auditor y añadir test cuando sea posible. No modificar datos privad
 9. Tras la corrección, ejecutar una auditoría completa y exigir `[AUDIT_OK]`.
 
 Los logs no deben volcar cifras privadas, tokens, cookies ni screenshots con datos personales.
+
+## Incidente de scheduler · 2026-10-01
+
+- Último `schedule` observado antes del incidente: run **#20**, creado a las 01:19 UTC (03:19 CEST).
+- Después dejaron de materializarse varios disparos horarios aunque `.github/workflows/web-audit.yml` seguía en `main`, el repositorio tenía actividad reciente y el mismo workflow continuaba funcionando por `workflow_run` y rerun manual.
+- No se encontró una causa deshabilitante dentro del repositorio. La causa operativa es la dependencia de un único emisor `schedule` de GitHub, que GitHub documenta como susceptible de retraso o descarte bajo carga.
+- Mitigación: cron primario `:17`, oportunidad de respaldo `:42` dentro del mismo workflow y watchdog externo al `:45`, sin crear un segundo workflow horario.
+- Un run verde del slot de respaldo con `Navigate and audit production` omitido es solo heartbeat y no cuenta como auditoría completa.
 
 ## Scheduler y resiliencia
 
