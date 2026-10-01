@@ -170,11 +170,24 @@ La antigua combinación `Drive staging → ImageIngestQueue → cron` quedó com
 - `ImageIngestQueue` no es requisito para el bridge Railway;
 - R2 no forma parte de la arquitectura actual.
 
+### QA visual previa: transparencia obligatoria
+
+Antes de crear `OBJECTS_SEED_JOBS` o llamar al endpoint de ingesta para una imagen `processed`:
+
+1. abrir el archivo final y confirmar que solo contiene la prenda/objeto;
+2. verificar canal alpha real: el fondo debe ser transparente, no blanco simulado;
+3. rechazar cualquier archivo aplanado con fondo blanco/gris/negro o decorativo;
+4. si se trata de corregir una imagen ya existente, usar el mismo `objeto_id` y `overwrite=true`;
+5. después de la ingesta, comprobar que la URL versionada cambió y que la tarjeta del Armario hereda el fondo de la UI.
+
+Una imagen visualmente correcta pero con fondo blanco **no supera QA** y no debe considerarse lista para ingesta.
+
 ### Checklist de cierre
 
 Una subida solo se puede declarar terminada cuando se cumplen simultáneamente:
 
 - [ ] `objeto_id` canónico existente;
+- [ ] el asset `processed` tiene fondo realmente transparente y supera la QA de alpha;
 - [ ] respuesta/log de ingesta con `ok=true`;
 - [ ] `foto_procesada_url` presente;
 - [ ] `miniatura_url` presente;

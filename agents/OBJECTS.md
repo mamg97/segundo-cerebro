@@ -257,6 +257,20 @@ D1 actúa como persistencia binaria privada de los derivados visuales, no como s
 
 Ante una petición de subir o ingerir una imagen al Armario, GESTOR OBJETOS debe leer primero `docs/OBJECTS_IMAGE_INGEST.md` y comprobar Drive + Railway. La ausencia de un POST directo no bloquea la operación: debe usarse el fallback `seed.mjs + OBJECTS_SEED_JOBS` cuando esas herramientas estén disponibles. No se declara éxito sin `ok=true` y verificación posterior en `Armario`. Al terminar o abortar, Railway debe quedar con `OBJECTS_SEED_JOBS` vacío y con su arranque normal `npm start` (script que ejecuta `node server.mjs`).
 
+### Invariante visual: el asset procesado no lleva fondo
+
+Para el Armario, `foto_procesada_url` debe apuntar a una imagen aislada de la prenda/objeto con **transparencia real**. El color que se vea detrás debe proceder siempre de la tarjeta/web, nunca estar pintado dentro del PNG/WebP.
+
+Reglas:
+- no aceptar fondos blancos, grises, negros, degradados, sombras de estudio ni escenarios;
+- preferir PNG o WebP con canal alpha para `image_type=processed`;
+- antes de la ingesta, comprobar que existe una proporción no trivial de píxeles con alpha 0; una esquina blanca no cuenta como transparencia;
+- si una iteración anterior quedó aplanada sobre blanco, generar/corregir un nuevo derivado y subirlo sobre el **mismo `objeto_id`** con `overwrite=true`;
+- no crear un objeto nuevo ni modificar manualmente las URLs del Sheet;
+- tras sustituir, verificar versión nueva en `foto_procesada_url` y `miniatura_url`.
+
+Este guardrail es obligatorio porque ya hubo una regresión real en la que una tanda reciente quedó con fondo blanco mientras las prendas anteriores eran transparentes.
+
 ### Fallo recurrente conocido: falsa incapacidad tras procesar la imagen
 
 Este gestor ha mostrado repetidamente un patrón incorrecto: genera o procesa bien una imagen y, en el turno siguiente, actúa como si la capacidad de ingesta al Armario no existiera. Esa conclusión es un **fallo de continuidad/capacidad**, no evidencia de que el pipeline haya desaparecido.
