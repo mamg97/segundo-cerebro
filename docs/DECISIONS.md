@@ -412,15 +412,16 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **No duplicación:** D1 guarda bytes y metadatos técnicos de almacenamiento, no un catálogo de prendas. El Sheet sigue siendo la autoridad de `objeto_id` y referencias activas.
 - **Prohibición vigente:** no activar R2 ni migrar a almacenamiento de pago sin una nueva decisión explícita.
 
-## D-041 — Bridge de imágenes ChatGPT mediante staging efímero
+## Histórico supersedido — staging efímero de imágenes ChatGPT
 
-- **Estado:** aceptada.
-- **Fecha:** 2026-09-30.
-- **Contexto:** el plan personal actual no permite conectar un MCP personalizado con acciones de escritura directamente desde GESTOR OBJETOS, aunque la plataforma soporta file params en plugins.
-- **Decisión:** usar la integración Google Drive ya disponible en ChatGPT como transporte privado y efímero de bytes, con una cola técnica en el mismo spreadsheet canónico.
-- **No es una segunda fuente de verdad:** `Armario` sigue siendo canónico y R2 es el storage final. Drive se limpia después de cada éxito.
-- **Idempotencia:** `request_id` identifica la solicitud; el endpoint v0.3 conserva versionado/overwrite y compensación de storage↔Sheet.
-- **Evolución:** cuando una cuenta permita full MCP write, el staging podrá sustituirse por una tool con `fileParams` sin cambiar `uploadObjectsImage`, R2 ni el modelo de Armario.
+- **Estado:** supersedido por la ruta server-to-server documentada en D-042 y `docs/OBJECTS_IMAGE_INGEST.md`.
+- **Fecha original:** 2026-09-30.
+- **Qué se probó:** `Drive staging → ImageIngestQueue → cron` como transporte temporal desde ChatGPT.
+- **Resultado:** el mecanismo produjo errores `OBJECTS_STAGING_META_403` y dejó de ser el camino operativo normal.
+- **Ruta vigente:** `objects-chatgpt-bridge → segundo-cerebro-objects-ingest → Service Binding → uploadObjectsImage → D1 + Armario`.
+- **Fallback vigente para conversaciones sin POST directo:** `objects-chatgpt-bridge/seed.mjs` + `OBJECTS_SEED_JOBS`, usando Drive solo para materializar una referencia temporal y limpiándolo después.
+- **No duplicación:** `ImageIngestQueue` no debe reintentarse ni usarse para crear nuevas filas cuando la ingesta ya se completó por el bridge.
+- **Almacenamiento final:** D1 privado. R2 no forma parte de la arquitectura actual.
 
 
 ## Delta histórico: conservar bruto, analizar derivado
