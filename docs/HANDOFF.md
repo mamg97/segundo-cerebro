@@ -101,6 +101,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Los macros se comparan explícitamente con sus objetivos vigentes.
 - La web propone opciones de la base de comidas según los macros que faltan, identificándolas como sugerencias orientativas y sin sustituir el menú planificado.
 - `MenuSemanal` está conectado como fuente propia; si no contiene filas, la UI lo indica sin inventar un menú.
+- El contenido semanal se modifica exclusivamente en el Sheet privado. Cambiar una comida, moverla de día, sustituir un ingrediente o recalcular una ración no debe requerir tocar código; frontend y Worker permanecen genéricos.
 - `MenuSemanal` es ahora autorreconciliable en runtime: la versión más reciente de una comida lógica gana, estados `omitido/retirado/cancelado` suprimen versiones antiguas, y componentes distintos del mismo momento se agrupan visualmente en una sola **toma**.
 - Si faltan macros, el backend los completa desde `Recetas` solo cuando la receta tiene valores por ración utilizables. Si la receta o la nota indican que falta confirmar cantidades, el dato permanece pendiente y la UI muestra subtotal conocido sin inventar macros ni reutilizar ingredientes obsoletos.
 - Esta regla está cubierta por tests y forma parte de `agents/HEALTH.md`; no volver a corregir a mano el mismo día para resolver duplicados visuales.
