@@ -66,7 +66,71 @@ Como mínimo:
 - APIs privadas clave de Despensa, Proyectos y Delta/Finanzas;
 - respuestas 5xx y fallos de red;
 - errores JavaScript/console;
-- regresiones de navegación/estilos compartidos provocadas por cualquier dominio.
+- regresiones de navegación/estilos compartidos provocadas por cualquier dominio;
+- calidad visual estructural sobre producción real, sin screenshots persistentes:
+  - overflow horizontal global;
+  - elementos principales fuera del viewport;
+  - texto recortado sin scroll/ellipsis explícito;
+  - solapes entre controles, cabeceras, pestañas y bloques de texto;
+  - deformación accidental de imágenes;
+  - proporciones anómalas de diálogos y tarjetas principales;
+  - consistencia de tarjetas resumen en escritorio;
+  - responsive en 1440×1100, 900×1000 y 390×844;
+  - paleta canónica light/dark y contraste mínimo de texto/acento.
+
+
+## Auditoría visual
+
+La auditoría funcional no sustituye a la visual. Chromium ejecuta además una pasada estructural sobre la interfaz renderizada.
+
+Principios:
+
+- se audita el DOM/computed style real de producción, no una maqueta;
+- no se guardan ni publican screenshots con datos privados;
+- no se usa diff pixel-a-pixel porque cambios legítimos de datos, textos o eventos producirían falsos positivos;
+- las comprobaciones visuales se expresan como geometría y estilos medibles.
+
+Cobertura:
+
+- Home en escritorio, tablet y móvil;
+- todas las áreas principales en escritorio y móvil;
+- áreas pesadas representativas también en tablet;
+- subpestañas de Salud, Despensa, Objetos, Proyectos, Hábitos, Eventos y Padres mientras el auditor ya las recorre;
+- temas light y dark.
+
+Una regresión visual genera checks con prefijo `Visual` y deja la auditoría roja igual que una regresión funcional.
+
+### Qué cuenta como fallo visual
+
+Entre otros:
+
+- scroll horizontal global no previsto;
+- contenido principal que sale del viewport sin estar dentro de un contenedor horizontal explícitamente desplazable;
+- texto real recortado sin `ellipsis`/line-clamp/scroll intencional;
+- dos hijos de un mismo layout flex/grid que se pisan;
+- botón de cierre que tapa el título de un diálogo;
+- imagen deformada respecto de su proporción natural cuando no usa `cover/contain/scale-down`;
+- diálogo que excede el ancho útil de la pantalla;
+- tarjetas resumen que pierden de forma material la simetría documentada en escritorio;
+- modificación accidental de los tokens visuales canónicos light/dark;
+- contraste insuficiente de texto principal/muted o pérdida de diferenciación entre azul y naranja.
+
+Los scrolls internos de tablas/tabs diseñados con `overflow-x: auto|scroll`, ellipsis explícitos y recortes deliberados documentados no se consideran error.
+
+### Corrección automática de regresiones visuales
+
+El workflow de GitHub sigue siendo estrictamente **read-only**. La reparación, cuando proceda, corresponde al watchdog/ORGANIZADOR.
+
+El watchdog puede autocorregir una regresión visual solo si:
+
+1. el fallo se reproduce en una segunda auditoría completa o rerun;
+2. la causa es inequívocamente presentacional y está localizada en código frontend/estilos;
+3. no requiere tocar datos privados, fuentes canónicas, backend de dominio ni semántica funcional;
+4. el cambio se hace sobre el `main` más reciente en una rama aislada;
+5. CI pasa;
+6. tras merge/deploy se ejecuta de nuevo `Audit production web` completo y termina en `[AUDIT_OK]`.
+
+Si la causa es ambigua, implica una decisión de diseño/producto, o necesita alterar datos/backend, el watchdog debe **avisar y no autocorregir**.
 
 ## Criterio de éxito
 
