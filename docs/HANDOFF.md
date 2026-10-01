@@ -243,6 +243,7 @@ Estado:
 - La vigilancia se considera degradada si no existe un **Navigate and audit production = success** en los últimos 90 minutos y tampoco hay una auditoría completa en curso. Un heartbeat de respaldo con Chromium `skipped` no cuenta como auditoría completa.
 - El auditor usa Chromium + Playwright contra `segundo-cerebro-web-audit` con OIDC GitHub temporal y Service Binding read-only.
 - Comprueba estado privado, áreas y subpestañas, Calendar/eventos, MenuSemanal, deduplicación/estados, agrupación de tomas, subtotales, ausencia ≠ cero, barras kcal/proteína, APIs clave de otros dominios, JavaScript/CSP, red y 5xx.
+- Añade QA visual estructural sobre producción: overflow, clipping, solapes, proporciones, deformación de imágenes, paleta/contraste light-dark y responsive en escritorio/tablet/móvil. No persiste screenshots privados. Una regresión visual reproducible puede ser autocorregida por el watchdog solo si la causa es presentacional inequívoca, con rama aislada + CI + deploy + rerun verde; si no, alerta.
 - `net::ERR_ABORTED` secundario por cambio de vista se clasifica como cancelación esperable; abortos críticos de `/api/state`, `/api/health` o `/api/nutrition` siguen siendo fallo.
 - Un 5xx de fuente/backend debe diagnosticarse como tal antes de culpar a una pestaña que no llegó a renderizarse.
 - No modificar datos privados ni lógica funcional para forzar un verde. Reproducir, clasificar y corregir la causa propietaria.
