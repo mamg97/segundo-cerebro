@@ -279,10 +279,10 @@ Si la sesión no dispone de una acción HTTP arbitraria pero sí de Drive + Rail
 2. usar Drive únicamente como staging técnico temporal del archivo;
 3. materializar una referencia temporal OpenAI del archivo;
 4. cargar hasta 8 jobs en `OBJECTS_SEED_JOBS`;
-5. arrancar temporalmente Railway con `node seed.mjs && npm start`;
+5. arrancar temporalmente Railway con `node seed.mjs && node server.mjs`;
 6. exigir `stage=done` + `ok=true` por cada job;
 7. verificar `foto_procesada_url`, `miniatura_url` y `estado_procesado=procesada` en Armario;
-8. vaciar `OBJECTS_SEED_JOBS`, restaurar `npm start` y limpiar el staging.
+8. vaciar `OBJECTS_SEED_JOBS`, restaurar `node server.mjs` y limpiar el staging.
 
 La antigua cola `ImageIngestQueue` y su cron de Drive quedan como legado/fallback histórico; no son el procedimiento operativo normal. Las filas antiguas con `OBJECTS_STAGING_META_403` no deben reintentarse ni duplicarse.
 
