@@ -1,9 +1,12 @@
+import { evaluateMidasWorkflowRuns } from "./midas-health.js";
+
 const DASHBOARD_URL = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/strategy_state/dashboard.json";
 const WEEKLY_BOOTSTRAP_URL = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/weekly_ml_bootstrap_state/bootstrap_2026-09-25.json";
 const CACHE_MS = 5 * 60 * 1000;
 let cached = null;
 let cachedAt = 0;
 let weeklyBootstrapCache = { value: null, expiresAt: 0 };
+let workflowHealthCache = { value: null, expiresAt: 0 };
 let researchCache = { value: null, expiresAt: 0, spreadsheetId: null, spreadsheetIdExpiresAt: 0 };
 
 const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "capital_cycle_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
@@ -72,6 +75,37 @@ export async function fetchMidasDashboard(fetcher = fetch, now = Date.now()) {
     throw error;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+export async function fetchMidasWorkflowHealth(fetcher = fetch, now = Date.now()) {
+  if (workflowHealthCache.value && workflowHealthCache.expiresAt > now) return workflowHealthCache.value;
+  try {
+    const response = await fetcher("https://api.github.com/repos/mamg97/midas-paper-lab/actions/runs?per_page=100", {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "segundo-cerebro-midas-health" }
+    });
+    if (!response.ok) throw new Error("MIDAS_ACTIONS_" + response.status);
+    const payload = await response.json();
+    const health = evaluateMidasWorkflowRuns(payload?.workflow_runs || [], now);
+    const value = {
+      status: "ok",
+      overall: health.ok ? "healthy" : "attention",
+      checked_at_utc: new Date(now).toISOString(),
+      workflows: health.workflows.map((item) => ({
+        name: item.name,
+        state: item.state,
+        ok: item.ok,
+        detail: item.detail || null,
+        run_number: Number.isInteger(item.latest?.run_number) ? item.latest.run_number : null,
+        created_at: typeof item.latest?.created_at === "string" ? item.latest.created_at : null,
+        conclusion: typeof item.latest?.conclusion === "string" ? item.latest.conclusion : null
+      }))
+    };
+    workflowHealthCache = { value, expiresAt: now + 10 * 60_000 };
+    return value;
+  } catch {
+    if (workflowHealthCache.value) return { ...workflowHealthCache.value, stale: true };
+    return { status: "unavailable", overall: "unknown", checked_at_utc: new Date(now).toISOString(), workflows: [] };
   }
 }
 

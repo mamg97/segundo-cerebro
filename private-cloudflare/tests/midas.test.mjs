@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "../src/midas.js";
+import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "../src/midas.js";
 import { normalizeSnapshot, verifyGitHubOidc } from "../src/midas-ingest.js";
 
 test("MIDAS dashboard validates, caches and labels a stale fallback", async () => {
@@ -161,4 +161,23 @@ test("OIDC signature and workflow claims gate the private snapshot", async () =>
     equity_history: [["2026-09-28", 100000]] };
   assert.equal(normalizeSnapshot(prospective, "123").last_session, "2026-09-28");
   assert.equal(normalizeSnapshot({ ...prospective, quality: "legacy_same_close_model" }, "123"), null);
+});
+
+
+test("MIDAS workflow health is safe, cached and exposes failures without raw Actions payloads", async () => {
+  const payload = { workflow_runs: [
+    { name: "MIDAS paper comparison", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-01T02:19:28Z", run_number: 4 },
+    { name: "MIDAS TFM shadow forecasts", event: "schedule", status: "completed", conclusion: "failure", created_at: "2026-09-30T23:05:37Z", run_number: 4 },
+    { name: "MIDAS capital cycle paper", event: "schedule", status: "completed", conclusion: "failure", created_at: "2026-10-01T03:49:10Z", run_number: 4 }
+  ] };
+  let requests = 0;
+  const fetcher = async () => { requests += 1; return { ok: true, json: async () => payload }; };
+  const first = await fetchMidasWorkflowHealth(fetcher, Date.parse("2026-10-01T16:00:00Z"));
+  assert.equal(first.status, "ok");
+  assert.equal(first.overall, "attention");
+  assert.equal(first.workflows.find((row) => row.name === "MIDAS TFM shadow forecasts").state, "failed");
+  assert.equal(first.workflows.find((row) => row.name === "MIDAS weekly ML paper").state, "not_due_yet");
+  assert.equal("html_url" in first.workflows[0], false);
+  await fetchMidasWorkflowHealth(fetcher, Date.parse("2026-10-01T16:01:00Z"));
+  assert.equal(requests, 1);
 });

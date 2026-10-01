@@ -1,7 +1,6 @@
 import { chromium } from "playwright";
 import {
   classifyRequestFailure,
-  evaluateMidasWorkflowRuns,
   hiddenMenuStatus,
   logicalMenuKey,
   menuDisplayTotals,
@@ -9,6 +8,7 @@ import {
   qualityStep,
   visibleMenuRow
 } from "../src/web-audit-utils.js";
+import { evaluateMidasWorkflowRuns } from "../src/midas-health.js";
 
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
 const token = process.env.AUDIT_TOKEN;
@@ -205,6 +205,29 @@ async function auditMidasCompetition() {
   }
 
   const successful = new Set(health.workflows.filter((item) => item.state === "success").map((item) => item.name));
+  const midasButton = page.locator("#show-midas-detail").first();
+  if (await midasButton.count()) {
+    await midasButton.click();
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector("#midas-dialog");
+      return Boolean(dialog?.open && document.querySelector(".midas-runtime-health"));
+    }, null, { timeout: 8000 }).catch(() => {});
+    const runtimeText = normalizeAuditValue(await page.locator(".midas-runtime-health").textContent().catch(() => ""));
+    assertCheck(Boolean(runtimeText), "MIDAS · panel visible de salud operativa");
+    for (const issue of health.issues) {
+      const label = issue.name
+        .replace("MIDAS paper comparison", "estrategias diarias")
+        .replace("MIDAS TFM shadow forecasts", "tfm diario")
+        .replace("MIDAS capital cycle paper", "capital cycle")
+        .replace("MIDAS weekly ML paper", "weekly ml")
+        .replace("MIDAS TFG corrected paper", "tfg corregido");
+      assertCheck(runtimeText.includes(normalizeAuditValue(label)), `MIDAS · UI expone incidencia ${label}`);
+    }
+    await page.locator("#close-midas-dialog").click().catch(() => {});
+  } else {
+    fail("MIDAS · acceso visible al panel", "falta #show-midas-detail");
+  }
+
   if (successful.has("MIDAS TFM shadow forecasts")) {
     const tfm = tracks.filter((row) => row.group === "tfm_demo_adaptado");
     assertCheck(tfm.length === 4 && tfm.every((row) => row.status === "demo_con_diario" && row.last_session),

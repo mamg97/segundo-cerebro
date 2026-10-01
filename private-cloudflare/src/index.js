@@ -7,7 +7,7 @@ import { processObjectsImageQueue } from "./objects-staging.js";
 import { prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
-import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap } from "./midas.js";
+import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
 import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
@@ -4486,12 +4486,16 @@ export default {
           }
         }
         const dashboard = await addPrivateGeneticDiary(env.DB, result.dashboard);
-        const weeklyBootstrap = await fetchMidasWeeklyBootstrap();
+        const [weeklyBootstrap, competitionHealth] = await Promise.all([
+          fetchMidasWeeklyBootstrap(),
+          fetchMidasWorkflowHealth()
+        ]);
         return json({ ok: true, ...result,
           dashboard,
           research,
           lab: {
-            weeklyBootstrap
+            weeklyBootstrap,
+            competitionHealth
           } });
       } catch (error) {
         console.warn("MIDAS dashboard read failed", String(error?.message || "MIDAS_READ_ERROR"));

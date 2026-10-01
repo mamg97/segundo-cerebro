@@ -5568,6 +5568,55 @@ function renderMidasResearch(research) {
   </section>`;
 }
 
+function renderMidasExecutionHealth(health, dashboard) {
+  const genetic = (dashboard?.tracks || []).find((row) => row.id === "genetic_sp500_forward");
+  const workflowRows = Array.isArray(health?.workflows) ? health.workflows : [];
+  const stateLabels = {
+    success: "Correcto",
+    running: "Ejecutándose",
+    not_due_yet: "Aún no toca",
+    failed: "Fallo",
+    missing_due_run: "Ejecución ausente"
+  };
+  const rows = workflowRows.map((row) => ({
+    label: row.name
+      .replace("MIDAS paper comparison", "Estrategias diarias")
+      .replace("MIDAS TFM shadow forecasts", "TFM diario")
+      .replace("MIDAS capital cycle paper", "Capital Cycle")
+      .replace("MIDAS weekly ML paper", "Weekly ML")
+      .replace("MIDAS TFG corrected paper", "TFG corregido"),
+    state: row.state,
+    ok: row.ok,
+    detail: row.detail,
+    timestamp: row.created_at,
+    run: row.run_number
+  }));
+  rows.push({
+    label: "Genético S&P 500 prospectivo",
+    state: genetic?.status === "demo_con_diario" && genetic?.last_session ? "success" : "missing_due_run",
+    ok: genetic?.status === "demo_con_diario" && Boolean(genetic?.last_session),
+    detail: genetic?.last_session ? "Diario privado enlazado hasta " + genetic.last_session : "Sin snapshot prospectivo enlazado",
+    timestamp: null,
+    run: null
+  });
+
+  const unavailable = health?.status !== "ok";
+  const attention = !unavailable && rows.some((row) => row.ok === false);
+  const overall = unavailable ? "Estado de Actions no disponible" : attention ? "Requiere atención" : "Ejecución controlada";
+  return `<section class="midas-runtime-health ${attention ? "is-attention" : unavailable ? "is-unknown" : "is-healthy"}">
+    <div class="midas-runtime-heading">
+      <div><span class="context-label">Salud operativa</span><strong>${escapeHtml(overall)}</strong></div>
+      <small>${health?.checked_at_utc ? "Comprobado " + escapeHtml(formatFinanceDate(health.checked_at_utc)) : "La auditoría horaria valida además Actions + diarios"}</small>
+    </div>
+    <div class="midas-runtime-grid">
+      ${rows.map((row) => `<article class="midas-runtime-item is-${escapeHtml(row.state || "unknown")}">
+        <span class="midas-runtime-dot" aria-hidden="true"></span>
+        <div><strong>${escapeHtml(row.label)}</strong><small>${escapeHtml(stateLabels[row.state] || "Estado desconocido")}${row.run ? " · run #" + escapeHtml(row.run) : ""}${row.timestamp ? " · " + escapeHtml(formatFinanceDate(row.timestamp)) : ""}</small>${row.detail ? `<em>${escapeHtml(row.detail)}</em>` : ""}</div>
+      </article>`).join("")}
+    </div>
+  </section>`;
+}
+
 function renderMidasReport(dashboard, stale, research = null, lab = null) {
   const rows = dashboard.tracks || [];
   const observed = rows.filter((row) => ["demo_con_diario", "diario_heredado_observado"].includes(row.status)).length;
@@ -5580,6 +5629,7 @@ function renderMidasReport(dashboard, stale, research = null, lab = null) {
       <p class="midas-updated">Informe generado ${escapeHtml(formatFinanceDate(dashboard.generated_at_utc))}${stale ? " · copia temporal: la fuente no responde" : ""}</p>
     </div>
     ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>El historial antiguo se conserva como referencia: anotaba operaciones al mismo cierre que generaba la señal y su rentabilidad no era alcanzable con esa regla. La fila «versión corregida» empieza una campaña nueva: señal al cierre y ejecución simulada en la apertura siguiente, con costes. Sus cifras siguen siendo ficticias, sin órdenes confirmadas por un bróker. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
+    ${renderMidasExecutionHealth(lab?.competitionHealth, dashboard)}
     <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado. Las líneas prospectivas nuevas admiten acciones fraccionadas; el bootstrap Weekly ML visible hasta el primer forward real es una prueba anterior a ese cambio y no se recalcula.</p>
     ${renderMidasVisualLab(dashboard, lab)}
     ${renderMidasResearch(research)}
