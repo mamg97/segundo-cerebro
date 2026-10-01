@@ -1165,6 +1165,7 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Resto **1,71 €** bloqueado como `cycle_surplus_buffer`; `free_amount` BBVA común = **0 €** mientras el ciclo siga abierto.
 - La UI de Finanzas deja de hardcodear Santander/Openbank para el histórico: recorre todas las cuentas de liquidez conectadas. BBVA aparece con sus movimientos recientes automáticamente; lo mismo ocurrirá con futuras cuentas cuando tengan movimientos importados.
 - `Movimientos bancarios` se unifica en un solo bloque con pestañas por cuenta. Cada pestaña muestra la tabla reciente de esa cuenta y las cuentas conectadas sin histórico permanecen visibles con un estado vacío; no se crean tablas largas separadas ni una lista hardcodeada de bancos.
+- A la derecha del encabezado de `Movimientos bancarios` existe `Abrir Sheet ↗`, que redirige desde el Worker privado al spreadsheet canónico mediante `FINANCE_SHEET_ID`; el identificador real no vive en frontend ni en Git.
 
 
 ## Finanzas · snapshot patrimonial 01/10/2026
