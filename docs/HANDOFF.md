@@ -1162,8 +1162,8 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 ## Finanzas · snapshot patrimonial 01/10/2026
 
 - Snapshot mensual de día 1 actualizado desde capturas directas del usuario.
-- Total consolidado de inversiones: **42.290,00 €**.
-- Desglose: BBVA Fondos **7.169,48 €**; BBVA Acciones **1.818,49 €**; eToro **28.293,46 €**; Interactive Brokers **4.471,03 €**; Coinbase **537,54 €**.
+- Total consolidado de inversiones más reciente del 01/10/2026: **42.292,97 €**.
+- Desglose: BBVA Fondos **7.169,48 €**; BBVA Acciones **1.818,49 €**; eToro **28.293,46 €**; Interactive Brokers **≈4.474,00 €** (captura 11:02, NLV con short put incluida mark-to-market); Coinbase **537,54 €**.
 - `PatrimonioDetalle` contiene el último valor por plataforma con `updated_at=2026-10-01`; `Patrimonio` incorpora la fila mensual 01/10/2026; `PatrimonioDiario` incorpora un snapshot CAPTURED para la misma fecha.
 - La UI de patrimonio no necesita hardcode adicional: consume `PatrimonioDetalle` y `Patrimonio` de forma dinámica.
 - No interpretar la diferencia entre snapshots como rentabilidad pura cuando haya aportaciones/retiradas/transferencias entre plataformas.
