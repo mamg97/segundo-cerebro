@@ -182,6 +182,14 @@ Antes de crear `OBJECTS_SEED_JOBS` o llamar al endpoint de ingesta para una imag
 
 Una imagen visualmente correcta pero con fondo blanco **no supera QA** y no debe considerarse lista para ingesta.
 
+### Reglas operativas del runner `seed.mjs`
+
+- `OBJECTS_SEED_JOBS` admite **entre 1 y 8 trabajos por ejecución**. Un lote de más de 8 devuelve `invalid_jobs`; dividirlo en tandas de hasta 8 sin duplicar los ya completados.
+- El runner se detiene en el **primer trabajo fallido**. Antes de reintentar, consultar `Armario` y continuar únicamente con los `objeto_id` que sigan sin `foto_procesada_url`/miniatura.
+- Si aparece `FILE_DOWNLOAD_FAILED`, volver a materializar/fetch del fichero de staging para obtener una referencia de descarga fresca y reintentar solo ese trabajo y los posteriores pendientes.
+- Si aparece un `UPSTREAM_INVALID_RESPONSE`/HTTP 500 transitorio, reintentar primero el trabajo afectado de forma individual con una referencia fresca. Solo declararlo bloqueo si vuelve a fallar de forma reproducible.
+- Tras cualquier lote, verificar el Sheet canónico antes de limpiar staging o ejecutar otra tanda.
+
 ### Checklist de cierre
 
 Una subida solo se puede declarar terminada cuando se cumplen simultáneamente:
