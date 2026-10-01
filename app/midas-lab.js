@@ -7,6 +7,7 @@ export function renderMidasVisualLab(dashboard, lab = null) {
 
   const groups = [
     ["weekly_ml_demo", "Weekly ML"],
+    ["capital_cycle_demo", "Capital Cycle"],
     ["tfg_demo_adaptado", "TFG"],
     ["paper_nuevo", "Estrategias diarias"],
     ["tfm_demo_adaptado", "TFM"],
