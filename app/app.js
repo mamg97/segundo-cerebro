@@ -2135,9 +2135,9 @@ function renderHealthOverview(data) {
   const nutritionDone = nutritionChecks.filter(Boolean).length;
 
   const activityChecks = [
-    Number.isFinite(stepsFloor) ? Number.isFinite(steps) && steps >= stepsFloor : null,
-    Number.isFinite(exerciseTarget) ? Number.isFinite(exerciseWeek) && exerciseWeek >= exerciseTarget : null,
-    Number.isFinite(strengthTarget) ? sessionsThisWeek >= strengthTarget : null
+    Number.isFinite(stepsFloor) && stepsFloor > 0 ? Number.isFinite(steps) && steps >= stepsFloor : null,
+    Number.isFinite(exerciseTarget) && exerciseTarget > 0 ? Number.isFinite(exerciseWeek) && exerciseWeek >= exerciseTarget : null,
+    Number.isFinite(strengthTarget) && strengthTarget > 0 ? sessionsThisWeek >= strengthTarget : null
   ].filter((value) => value !== null);
   const activityDone = activityChecks.filter(Boolean).length;
   const nutritionProgress = nutritionChecks.length ? Math.round((nutritionDone / nutritionChecks.length) * 100) : null;
@@ -2188,7 +2188,7 @@ function renderHealthOverview(data) {
       </span>
       <span>
         ${progressRingMarkup(strengthProgress, { tone: "mint", size: "sm", label: "fuerza", ariaLabel: "Progreso semanal de fuerza" })}
-        <span><small>Fuerza</small><strong>${Number.isFinite(strengthTarget) ? `${sessionsThisWeek}/${fmt0(strengthTarget)} sesiones` : `${sessionsThisWeek} sesiones`}</strong></span>
+        <span><small>Fuerza</small><strong>${strengthTarget === 0 ? "Pausa" : Number.isFinite(strengthTarget) ? `${sessionsThisWeek}/${fmt0(strengthTarget)} sesiones` : `${sessionsThisWeek} sesiones`}</strong></span>
       </span>
       <span class="health-status-text-only"><small>Recomposición</small><strong>${escapeHtml(recompositionStatus)}</strong></span>
     </div>
@@ -2424,6 +2424,17 @@ function renderHealthTargetRow(label, value, target, suffix = "", progress = 0, 
 
 function renderHealthBenchmark(goal, sessions) {
   const metric = String(goal.metric || "");
+  const paused = normalizeHealthLabel(goal.status).includes("pausa");
+  if (paused) {
+    return `
+      <article class="is-paused">
+        <div>
+          <strong>${escapeHtml(metric)}</strong>
+          <small>Pausa temporal · benchmark congelado</small>
+        </div>
+        <p>${escapeHtml(goal.target || "Objetivo conservado para la reanudación")}</p>
+      </article>`;
+  }
   const normalized = normalizeHealthLabel(metric);
   const matcher =
     normalized.includes("press banca") ? /press.*banca|banca.*press|bench/i :
@@ -4456,10 +4467,46 @@ function renderGymPanel(data) {
   const plan = Array.isArray(data?.plan) ? data.plan : [];
   const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
   const progress = data?.progress && typeof data.progress === "object" ? data.progress : {};
+  const trainingStatus = data?.trainingStatus && typeof data.trainingStatus === "object"
+    ? data.trainingStatus
+    : { paused: false };
   const latestByExercise = getLatestGymEntries(sessions);
 
   if (!plan.length) {
     panel.innerHTML = '<p class="health-empty">Todavía no hay un plan de entrenamiento conectado.</p>';
+    return;
+  }
+
+  if (trainingStatus.paused) {
+    panel.innerHTML = `
+      <section class="gym-pause-card">
+        <span>Recuperación temporal</span>
+        <strong>Entrenamiento de fuerza pausado</strong>
+        <p>${escapeHtml(trainingStatus.reason || "El objetivo activo marca una pausa temporal. El plan base se conserva para la reanudación.")}</p>
+        <small>No se propone ni se registra una sesión mientras esta pausa siga activa.</small>
+      </section>
+
+      <section class="gym-progress-section">
+        <div class="health-section-heading">
+          <div>
+            <strong>Progreso congelado</strong>
+            <p>Los benchmarks se conservan y no se evalúan durante la pausa.</p>
+          </div>
+        </div>
+        <div class="gym-progress-grid">
+          ${renderGymProgress(plan, progress)}
+        </div>
+      </section>
+
+      <section class="gym-history-section">
+        <div class="health-section-heading">
+          <div>
+            <strong>Histórico reciente</strong>
+            <p>Las sesiones previas se mantienen intactas.</p>
+          </div>
+        </div>
+        ${renderGymHistory(sessions)}
+      </section>`;
     return;
   }
 
