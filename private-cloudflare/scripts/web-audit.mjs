@@ -64,6 +64,14 @@ function groupDayRows(rows) {
     });
 }
 
+function menuMomentKey(value) {
+  return String(value || "Otro")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({
   locale: "es-ES",
@@ -395,7 +403,7 @@ async function auditVisualSnapshot(label) {
     );
 
     document.querySelectorAll(
-      ".main-content,.topbar,.home-summary-card,#home-weekly-menu-panel,.weekly-menu-day,dialog[open],.detail-dialog[open]"
+      ".main-content,.topbar,.home-summary-card,#home-weekly-menu-panel,.home-weekly-menu-table-cell,.weekly-menu-day,.recipe-card,dialog[open],.detail-dialog[open]"
     ).forEach((element) => {
       if (!visible(element) || insideHorizontalScroller(element)) return;
       const rect = element.getBoundingClientRect();
@@ -405,7 +413,7 @@ async function auditVisualSnapshot(label) {
     });
 
     document.querySelectorAll(
-      "h1,h2,h3,.nav-link,.daily-card-heading strong,.daily-card-status,.weekly-menu-moment,.weekly-menu-meal-copy strong,.context-label,.detail-dialog button,.health-tabs button,.pantry-view-nav button,.objects-tabs button,.projects-tabs button,.events-tabs button"
+      "h1,h2,h3,h4,.nav-link,.daily-card-heading strong,.daily-card-status,.weekly-menu-moment,.weekly-menu-meal-copy strong,.home-weekly-menu-table-cell .weekly-menu-group-item-copy strong,.recipe-ingredients li,.recipe-steps li,.context-label,.detail-dialog button,.health-tabs button,.pantry-view-nav button,.objects-tabs button,.projects-tabs button,.events-tabs button"
     ).forEach((element) => {
       if (!visible(element) || !(element.textContent || "").trim()) return;
       const style = getComputedStyle(element);
@@ -426,6 +434,8 @@ async function auditVisualSnapshot(label) {
       ".daily-card-heading",
       ".weekly-menu-meal-main",
       ".weekly-menu-day > header",
+      ".recipe-card-body > header",
+      ".recipe-ingredients li",
       ".health-tabs",
       ".pantry-view-nav",
       ".objects-tabs",
@@ -876,8 +886,33 @@ try {
   assertCheck(!/temporalmente no disponible|no se ha podido/.test(homeMenuText), "Menú Home sin fallback de error");
 
   const dayGroups = groupDayRows(visibleRows);
-  const homeDayCount = await page.locator("#home-weekly-menu-content [data-menu-date]").count();
+  const homeDayCount = await page.locator("#home-weekly-menu-content .home-weekly-menu-table-day[data-menu-date]").count();
   assertCheck(homeDayCount === dayGroups.length, "Home representa todos los días del menú", `UI=${homeDayCount} API=${dayGroups.length}`);
+
+  for (const group of dayGroups) {
+    const momentGroups = new Map();
+    for (const item of group.items) {
+      const key = menuMomentKey(item.moment || "Otro");
+      if (!momentGroups.has(key)) momentGroups.set(key, []);
+      momentGroups.get(key).push(item);
+    }
+    for (const [momentKey, items] of momentGroups.entries()) {
+      const selector = `#home-weekly-menu-content .home-weekly-menu-table-cell[data-menu-date="${group.date}"][data-menu-moment="${momentKey}"]`;
+      const cell = page.locator(selector);
+      assertCheck(await cell.count() === 1, `Home tabla · ${group.date} · ${momentKey} tiene celda única`);
+      if (await cell.count()) {
+        const text = normalizeAuditValue(await cell.textContent().catch(() => ""));
+        for (const item of items) {
+          const expectedName = normalizeAuditValue(item.name || "");
+          assertCheck(
+            Boolean(expectedName) && text.includes(expectedName),
+            `Home tabla conserva comida · ${group.date} · ${momentKey}`,
+            expectedName
+          );
+        }
+      }
+    }
+  }
 
   const navIds = await page.locator("[data-nav-area-id]").evaluateAll((nodes) =>
     [...new Set(nodes.map((node) => node.dataset.navAreaId).filter(Boolean))]
@@ -1021,10 +1056,12 @@ try {
       return Boolean(
         dialog?.open &&
         document.querySelector("#dialog-title")?.textContent?.trim() === "Salud" &&
-        document.querySelectorAll("[data-health-tab]").length === 6
+        document.querySelectorAll("[data-health-tab]").length === 7
       );
     }, null, { timeout: 12000 });
-    const healthTabs = ["overview", "medical", "gym", "nutrition", "adherence", "menu"];
+    const healthTabs = ["overview", "medical", "gym", "nutrition", "recipes", "adherence", "menu"];
+    const healthNutritionSnapshot = uiNutrition?.ok === true ? uiNutrition : nutrition.body;
+    const expectedRecipeCount = Array.isArray(healthNutritionSnapshot?.recipes) ? healthNutritionSnapshot.recipes.length : 0;
 
     for (const tab of healthTabs) {
       const button = page.locator(`[data-health-tab="${tab}"]`);
@@ -1044,6 +1081,18 @@ try {
           dayGroups.length,
           { timeout: 9000 }
         ).catch(() => {});
+      } else if (tab === "recipes") {
+        await page.waitForFunction(
+          (expected) => {
+            const panel = document.querySelector('[data-health-panel="recipes"]');
+            const text = (panel?.textContent || "").toLowerCase();
+            return document.querySelectorAll('[data-health-panel="recipes"] .recipe-card').length === expected ||
+              (expected === 0 && /recetario preparado/.test(text)) ||
+              /no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text);
+          },
+          expectedRecipeCount,
+          { timeout: 9000 }
+        ).catch(() => {});
       } else {
         await page.waitForTimeout(650);
       }
@@ -1052,6 +1101,14 @@ try {
       assertCheck(active, `Salud · pestaña ${tab} activa`);
       const text = normalizeAuditValue(await panel.textContent().catch(() => ""));
       assertCheck(!/no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text), `Salud · pestaña ${tab} sin error visible`);
+      if (tab === "recipes") {
+        const recipeCount = await panel.locator(".recipe-card").count();
+        assertCheck(
+          recipeCount === expectedRecipeCount,
+          "Salud · Recetas representa toda la fuente",
+          `UI=${recipeCount} API=${expectedRecipeCount}`
+        );
+      }
       await auditVisualSnapshot(`desktop · Salud · ${tab}`);
     }
 
