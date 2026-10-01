@@ -1,3 +1,5 @@
+import { googleReadFetch, sheetsBatchGet } from "./google-read.js";
+
 const CACHE_MS = 5 * 60 * 1000;
 let cache = { value: null, expiresAt: 0 };
 
@@ -84,7 +86,7 @@ async function readSheetRange(spreadsheetId, range, token) {
   const endpoint = "https://sheets.googleapis.com/v4/spreadsheets/" +
     encodeURIComponent(spreadsheetId) + "/values/" + encodeURIComponent(range) +
     "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
-  const response = await fetch(endpoint, { headers: { Authorization: "Bearer " + token } });
+  const response = await googleReadFetch(endpoint, { headers: { Authorization: "Bearer " + token } });
   if (!response.ok) throw new Error("DELTA_SHEETS_" + response.status);
   return (await response.json())?.values || [];
 }
@@ -103,10 +105,13 @@ export async function fetchDeltaHistory(env, getGoogleAccessToken, now = Date.no
   if (cache.value && cache.expiresAt > now) return cache.value;
   const token = await getGoogleAccessToken(env);
   const spreadsheetId = await resolveDeltaSpreadsheetId(env, token);
-  const [summaryRows, operationRows] = await Promise.all([
-    readSheetRange(spreadsheetId, "DeltaResumen!A1:H200", token),
-    readSheetRange(spreadsheetId, "Operaciones!A1:P4000", token)
-  ]);
+  const batches = await sheetsBatchGet(
+    spreadsheetId,
+    ["DeltaResumen!A1:H200", "Operaciones!A1:P4000"],
+    token
+  );
+  const summaryRows = batches[0]?.values || [];
+  const operationRows = batches[1]?.values || [];
 
   const summary = summaryRowsToObject(summaryRows);
   const operations = parseTableRows(operationRows)
