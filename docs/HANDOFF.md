@@ -1156,3 +1156,13 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Compromisos pendientes dentro de BBVA: Las Flores 240,20 € + Renta Andrea 104 € + Clicars 33,42 € + iPad 28,50 € + MacBook 40 € + ChatGPT 23 € = **469,12 €**.
 - Resto **1,71 €** bloqueado como `cycle_surplus_buffer`; `free_amount` BBVA común = **0 €** mientras el ciclo siga abierto.
 - La UI de Finanzas deja de hardcodear Santander/Openbank para el histórico: recorre todas las cuentas de liquidez conectadas. BBVA aparece con sus movimientos recientes automáticamente; lo mismo ocurrirá con futuras cuentas cuando tengan movimientos importados.
+
+
+## Finanzas · snapshot patrimonial 01/10/2026
+
+- Snapshot mensual de día 1 actualizado desde capturas directas del usuario.
+- Total consolidado de inversiones: **42.290,00 €**.
+- Desglose: BBVA Fondos **7.169,48 €**; BBVA Acciones **1.818,49 €**; eToro **28.293,46 €**; Interactive Brokers **4.471,03 €**; Coinbase **537,54 €**.
+- `PatrimonioDetalle` contiene el último valor por plataforma con `updated_at=2026-10-01`; `Patrimonio` incorpora la fila mensual 01/10/2026; `PatrimonioDiario` incorpora un snapshot CAPTURED para la misma fecha.
+- La UI de patrimonio no necesita hardcode adicional: consume `PatrimonioDetalle` y `Patrimonio` de forma dinámica.
+- No interpretar la diferencia entre snapshots como rentabilidad pura cuando haya aportaciones/retiradas/transferencias entre plataformas.
