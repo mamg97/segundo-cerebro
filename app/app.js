@@ -6432,7 +6432,17 @@ function renderAccountTransactionsWorkspace(transactions, accounts, fallbackCurr
           <p class="context-label">Movimientos bancarios</p>
           <h3>Registros por cuenta</h3>
         </div>
-        <span>Fuente RAW conciliada</span>
+        <div class="account-transactions-heading-actions">
+          <span>Fuente RAW conciliada</span>
+          <a
+            class="account-transactions-sheet-link"
+            href="/api/source-link?target=finance-records"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Abrir Sheet financiero con todos los registros">
+            Abrir Sheet ↗
+          </a>
+        </div>
       </div>
 
       <div class="account-transactions-tabs" role="tablist" aria-label="Cuentas con histórico bancario">
