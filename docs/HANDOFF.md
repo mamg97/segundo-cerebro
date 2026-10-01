@@ -1143,6 +1143,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Assets app/styles: `v0.40.7`.
 
 
+## MIDAS · salud operativa de la competición · 01/10/2026
+
+- `Audit production web` incorpora un bloque **MIDAS Competition Health**.
+- El auditor ya no deduce salud únicamente del dashboard: contrasta `/api/midas`, diarios publicados y los workflows reales de `mamg97/midas-paper-lab`.
+- Vigila diariamente `MIDAS paper comparison`, `MIDAS TFM shadow forecasts` y `MIDAS capital cycle paper`; semanalmente `MIDAS weekly ML paper` y `MIDAS TFG corrected paper`.
+- Un run debido ausente/fallido hace fallar la auditoría. Si un workflow termina verde, se exige que sus diarios aparezcan en MIDAS.
+- El genético S&P 500 prospectivo se controla desde el snapshot privado ya ingerido en D1, sin dar acceso del auditor al repositorio privado.
+- El auditor sigue siendo read-only: detecta y clasifica, no reescribe resultados paper ni modifica reglas de inversión.
+
 ## MIDAS · Capital Cycle Inflection · v0.40.3
 
 - `mamg97/midas-paper-lab` incorpora la campaña prospectiva `capital_cycle_inflection_2026`, derivada del marco **capital cycle**: infrainversión multianual + supervivencia financiera + valoración normalizada + confirmación de giro.
