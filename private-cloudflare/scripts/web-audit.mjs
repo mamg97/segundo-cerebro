@@ -332,8 +332,14 @@ async function auditVisualSnapshot(label) {
       if (rect.width > viewport.width - 8 || rect.left < 0 || rect.right > viewport.width) {
         proportions.push(`dialog ${Math.round(rect.width)}px en viewport ${viewport.width}px`);
       }
-      if (close && title && visible(close) && visible(title) && intersectionArea(close.getBoundingClientRect(), title.getBoundingClientRect()) > 9) {
-        overlaps.push("dialog-close ↔ dialog-title");
+      if (close && title && visible(close) && visible(title)) {
+        const closeRect = close.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(title);
+        const textRects = [...range.getClientRects()];
+        if (textRects.some((rect) => intersectionArea(closeRect, rect) > 9)) {
+          overlaps.push("dialog-close ↔ dialog-title-text");
+        }
       }
     }
 
