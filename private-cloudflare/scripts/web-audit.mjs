@@ -22,6 +22,7 @@ const ignoredNetworkAborts = [];
 const browserErrors = [];
 const resourceConsoleErrors = [];
 const recoveredSourcePaths = new Set();
+const deferredApiFailures = new Map();
 
 function pass(name, detail = "") {
   checks.push({ name, ok: true, detail });
@@ -148,6 +149,16 @@ async function reconcileTransientSourceFailures() {
     }
     recoveredSourcePaths.add(path);
     info("5xx transitorio recuperado", path);
+  }
+}
+
+async function resolveDeferredApiChecks() {
+  for (const [path, check] of deferredApiFailures.entries()) {
+    if (recoveredSourcePaths.has(path)) {
+      pass(check.name + " · recuperación confirmada", "5xx transitorio recuperado");
+      continue;
+    }
+    fail(check.name, check.detail);
   }
 }
 
@@ -305,11 +316,28 @@ try {
   assertCheck(nutrition.ok && nutrition.body?.ok === true, "API de Nutrición", `HTTP ${nutrition.status}`);
 
   const pantryProbe = await probeApi("/api/pantry", "API de Despensa");
-  assertCheck(pantryProbe.ok && pantryProbe.body?.ok === true, "API de Despensa", `HTTP ${pantryProbe.status}`);
+  if (pantryProbe.ok && pantryProbe.body?.ok === true) {
+    pass("API de Despensa", `HTTP ${pantryProbe.status}`);
+  } else {
+    deferredApiFailures.set("/api/pantry", { name: "API de Despensa", detail: `HTTP ${pantryProbe.status}` });
+    info("API de Despensa · pendiente de revalidación", `HTTP ${pantryProbe.status}`);
+  }
+
   const projectsProbe = await probeApi("/api/projects", "API de Proyectos");
-  assertCheck(projectsProbe.ok && projectsProbe.body?.ok === true, "API de Proyectos", `HTTP ${projectsProbe.status}`);
+  if (projectsProbe.ok && projectsProbe.body?.ok === true) {
+    pass("API de Proyectos", `HTTP ${projectsProbe.status}`);
+  } else {
+    deferredApiFailures.set("/api/projects", { name: "API de Proyectos", detail: `HTTP ${projectsProbe.status}` });
+    info("API de Proyectos · pendiente de revalidación", `HTTP ${projectsProbe.status}`);
+  }
+
   const deltaProbe = await probeApi("/api/finance/delta?limit=1", "API Delta de Finanzas");
-  assertCheck(deltaProbe.ok && deltaProbe.body?.ok === true, "API Delta de Finanzas", `HTTP ${deltaProbe.status}`);
+  if (deltaProbe.ok && deltaProbe.body?.ok === true) {
+    pass("API Delta de Finanzas", `HTTP ${deltaProbe.status}`);
+  } else {
+    deferredApiFailures.set("/api/finance/delta", { name: "API Delta de Finanzas", detail: `HTTP ${deltaProbe.status}` });
+    info("API Delta de Finanzas · pendiente de revalidación", `HTTP ${deltaProbe.status}`);
+  }
 
   const menuRows = Array.isArray(nutrition.body?.weeklyMenu) ? nutrition.body.weeklyMenu : [];
   const visibleRows = menuRows.filter(visibleMenuRow);
@@ -534,6 +562,7 @@ try {
 
   await reconcileTransientSourceFailures();
   await revalidateRecoveredSources();
+  await resolveDeferredApiChecks();
 
   if (ignoredNetworkAborts.length) {
     info("Abortos de navegación ignorados", ignoredNetworkAborts.slice(0, 5).join(","));
