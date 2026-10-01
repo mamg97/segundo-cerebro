@@ -393,10 +393,16 @@ export async function fetchPantrySummary(env, getGoogleAccessToken) {
     encodeURIComponent(spreadsheetId) +
     "/values:batchGet?" +
     params.toString();
-  const response = await fetch(endpoint, {
-    headers: { Authorization: "Bearer " + token }
-  });
-  if (!response.ok) throw new Error("GOOGLE_SHEETS_" + response.status);
+  let response = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    response = await fetch(endpoint, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (response.ok) break;
+    if ((response.status !== 429 && response.status < 500) || attempt === 3) break;
+    await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
+  }
+  if (!response?.ok) throw new Error("GOOGLE_SHEETS_" + (response?.status || "NETWORK"));
 
   const payload = buildPayload((await response.json())?.valueRanges || []);
   cache.value = payload;
