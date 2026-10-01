@@ -3406,7 +3406,7 @@ function renderNutritionPanel(data) {
       <form id="nutrition-entry-form">
         <label><span>Momento</span>
           <select name="moment">
-            <option>Desayuno</option><option>Comida</option><option>Cena</option><option>Snack</option><option>Otro</option>
+            <option>Desayuno</option><option>Media mañana</option><option>Comida</option><option>Merienda</option><option>Cena</option><option>Otro</option>
           </select>
         </label>
         <label class="nutrition-name-field"><span>Comida</span><input name="itemName" list="nutrition-food-options" required placeholder="Ej. arroz con pollo"><datalist id="nutrition-food-options">${foods.map(food => `<option value="${escapeHtml(food.name)}"></option>`).join("")}</datalist></label>
@@ -4222,12 +4222,41 @@ function renderHomeWeeklyMenuUnavailable() {
     </div>`;
 }
 
+function normalizeWeeklyMenuMoment(value) {
+  return String(value || "Otro")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function canonicalWeeklyMenuMoment(item) {
+  const raw = String(item?.moment || "Otro").trim() || "Otro";
+  const moment = normalizeWeeklyMenuMoment(raw);
+  const context = normalizeWeeklyMenuMoment([raw, item?.name || item?.itemName, item?.note].filter(Boolean).join(" "));
+
+  if (/^postre\b/.test(moment)) {
+    if (/\b(comida|almuerzo|mediodia)\b/.test(context)) return "Comida";
+    return "Cena";
+  }
+
+  if (/^snack\b/.test(moment)) {
+    if (/\b(media manana|manana)\b/.test(context) && !/\b(despues oficina|tarde|merienda)\b/.test(context)) {
+      return "Media mañana";
+    }
+    return "Merienda";
+  }
+
+  if (/^(cena\s*·?\s*complemento|complemento\s+cena)$/.test(moment)) return "Cena";
+  return raw;
+}
+
 function renderHomeWeeklyMenuMealGroup(items) {
   const rows = Array.isArray(items) ? items.filter(Boolean) : [];
   if (!rows.length) return "";
-  if (rows.length === 1) return renderWeeklyMenuMeal(rows[0], true);
+  if (rows.length === 1) return renderWeeklyMenuMeal({ ...rows[0], moment: canonicalWeeklyMenuMoment(rows[0]) }, true);
 
-  const moment = rows[0]?.moment || "Otro";
+  const moment = canonicalWeeklyMenuMoment(rows[0]);
   const consumed = rows.every(weeklyMenuItemIsConsumed);
 
   return `
@@ -4241,25 +4270,18 @@ function renderHomeWeeklyMenuMealGroup(items) {
 
 function groupWeeklyMenuItemsByMoment(items) {
   const groups = [];
+  const byKey = new Map();
   for (const item of Array.isArray(items) ? items : []) {
-    const key = String(item?.moment || "Otro")
-      .trim()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-    const last = groups[groups.length - 1];
-    if (last?.key === key) last.items.push(item);
-    else groups.push({ key, items: [item] });
+    const label = canonicalWeeklyMenuMoment(item);
+    const key = normalizeWeeklyMenuMoment(label);
+    if (!byKey.has(key)) {
+      const group = { key, label, items: [] };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+    byKey.get(key).items.push(item);
   }
   return groups;
-}
-
-function normalizeWeeklyMenuMoment(value) {
-  return String(value || "Otro")
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
 }
 
 function weeklyMenuMomentRank(value) {
@@ -4270,13 +4292,8 @@ function weeklyMenuMomentRank(value) {
     ["comida", 3],
     ["merienda", 4],
     ["cena", 5],
-    ["cena · complemento", 6],
-    ["cena complemento", 6],
-    ["complemento cena", 6],
-    ["postre", 7],
-    ["snack", 8],
-    ["cierre", 9],
-    ["otro", 10]
+    ["cierre", 6],
+    ["otro", 7]
   ]);
   return order.get(normalizeWeeklyMenuMoment(value)) ?? 99;
 }
@@ -4285,8 +4302,9 @@ function weeklyMenuMatrixMoments(days) {
   const found = new Map();
   for (const day of Array.isArray(days) ? days : []) {
     for (const item of Array.isArray(day?.items) ? day.items : []) {
-      const key = normalizeWeeklyMenuMoment(item?.moment);
-      if (!found.has(key)) found.set(key, String(item?.moment || "Otro").trim() || "Otro");
+      const label = canonicalWeeklyMenuMoment(item);
+      const key = normalizeWeeklyMenuMoment(label);
+      if (!found.has(key)) found.set(key, label);
     }
   }
   return [...found.entries()]
@@ -4296,7 +4314,7 @@ function weeklyMenuMatrixMoments(days) {
 
 function weeklyMenuItemsForMoment(day, momentKey) {
   return (Array.isArray(day?.items) ? day.items : [])
-    .filter((item) => normalizeWeeklyMenuMoment(item?.moment) === momentKey);
+    .filter((item) => normalizeWeeklyMenuMoment(canonicalWeeklyMenuMoment(item)) === momentKey);
 }
 
 function renderHomeWeeklyMenuMatrixCell(items) {
@@ -4514,10 +4532,10 @@ function renderRecipesPanel(data) {
 function renderNutritionEntries(entries) {
   if (!entries.length) return '<p class="health-empty">Todavía no hay comidas registradas para este día.</p>';
 
-  const order = ["Desayuno", "Comida", "Cena", "Snack", "Otro"];
+  const order = ["Mañana oficina", "Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Cierre", "Otro"];
   const groups = new Map();
   for (const entry of entries) {
-    const key = entry.moment || "Otro";
+    const key = canonicalWeeklyMenuMoment({ moment: entry.moment, itemName: entry.itemName, note: entry.note });
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(entry);
   }

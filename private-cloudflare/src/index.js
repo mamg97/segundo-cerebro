@@ -4,7 +4,7 @@ import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { processObjectsImageQueue } from "./objects-staging.js";
-import { prepareWeeklyMenuRows } from "./weekly-menu.js";
+import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
@@ -2926,7 +2926,11 @@ async function saveNutritionEntry(request, env) {
   const now = new Date().toISOString();
   await appendHealthSheetRow(env, "Registro!A:N", [
     date,
-    String(payload?.moment || "Otro").slice(0, 40),
+    canonicalWeeklyMenuMoment({
+      moment: String(payload?.moment || "Otro").slice(0, 40),
+      name: itemName,
+      note: String(payload?.note || "")
+    }),
     String(payload?.itemId || "").slice(0, 80),
     itemName,
     toNumber(payload?.quantity),
