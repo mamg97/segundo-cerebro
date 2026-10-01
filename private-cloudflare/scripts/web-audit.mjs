@@ -122,7 +122,15 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
   try {
     await first.waitFor({ state: "visible", timeout });
   } catch {
-    fail(label + " · pestañas disponibles", "no se encontraron " + buttonSelector);
+    const sourcePath = String(options.sourcePath || "");
+    const backendFailure = sourcePath && networkFailures.some((entry) =>
+      entry.includes(`:${sourcePath}`) || entry.includes(`:${sourcePath}:`)
+    );
+    if (backendFailure) {
+      info(label + " · pestañas no renderizadas", `backend ${sourcePath} ya clasificado como fallo de red`);
+    } else {
+      fail(label + " · pestañas disponibles", "no se encontraron " + buttonSelector);
+    }
     return;
   }
 
@@ -271,7 +279,7 @@ try {
         "[data-pantry-view]",
         "pantryView",
         (value) => `[data-pantry-panel="${value}"]`,
-        { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180 }
+        { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180, sourcePath: "/api/pantry" }
       );
     } else if (areaId === "area-objects") {
       await auditTabSet(
@@ -289,7 +297,7 @@ try {
         "[data-project-tab]",
         "projectTab",
         null,
-        { htmlDataName: "project-tab", attributeName: "project-tab", attr: "project-tab", settle: 180 }
+        { htmlDataName: "project-tab", attributeName: "project-tab", attr: "project-tab", settle: 180, sourcePath: "/api/projects" }
       );
     } else if (areaId === "area-habits") {
       await auditTabSet(
