@@ -498,6 +498,7 @@ async function fetchFinanceSummary(env) {
     creditHistoryRows,
     creditMovementRows,
     creditFutureRows,
+    etoroAllocationRows,
     movementRows
   ] = await Promise.all([
     fetchOptionalFinanceRows("Cuentas!A1:J200"),
@@ -509,6 +510,7 @@ async function fetchFinanceSummary(env) {
     fetchOptionalFinanceRows("ECIHistorico!A1:N300"),
     fetchOptionalFinanceRows("ECIMovimientos!A1:N300"),
     fetchOptionalFinanceRows("ECIFuturo!A1:O300"),
+    fetchOptionalFinanceRows("EtoroAsignaciones!A1:M200"),
     fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000")
   ]);
 
@@ -851,6 +853,25 @@ async function fetchFinanceSummary(env) {
     .filter((item) => item.date)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
+  const etoroAllocations = parseTableRows(etoroAllocationRows)
+    .map((item) => ({
+      id: item.allocation_id || null,
+      label: item.label || item.allocation_id || "Bloque eToro",
+      reservedAmount: moneyOrNull(item.reserved_amount),
+      monthlyOut: moneyOrNull(item.monthly_out),
+      nextWithdrawal: sheetDateOrNull(item.next_withdrawal),
+      lastWithdrawal: sheetDateOrNull(item.last_withdrawal),
+      status: item.status || "active",
+      sourceBasis: item.source_basis || null,
+      note: item.note || null,
+      sortOrder: toNumber(item.sort_order),
+      kind: item.kind || "earmarked",
+      owner: item.owner || null,
+      updatedAt: item.updated_at || null
+    }))
+    .filter((item) => item.id && item.reservedAmount !== null && String(item.status).toLowerCase() !== "closed")
+    .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
+
   const wealthSummary = {
     currency: summary.currency || "EUR",
     currentPatrimony: currentWealth?.patrimony ?? null,
@@ -859,7 +880,8 @@ async function fetchFinanceSummary(env) {
     currentSalaryAndrea: currentWealth?.salaryAndrea ?? null,
     history: wealthHistory,
     allocation: wealthAllocation,
-    dailyDiary: wealthDailyDiary
+    dailyDiary: wealthDailyDiary,
+    etoroAllocations
   };
 
   const importantEventRules = parseTableRows(importantEventRows)
