@@ -750,7 +750,21 @@ try {
 
   const healthLink = page.locator('[data-nav-area-id="area-health"]').first();
   if (await healthLink.count()) {
+    const uiNutritionResponsePromise = page.waitForResponse((response) => {
+      try {
+        const url = new URL(response.url());
+        return url.origin === auditOrigin && url.pathname === "/api/nutrition" && response.status() === 200;
+      } catch {
+        return false;
+      }
+    }, { timeout: 12000 }).catch(() => null);
+
     await healthLink.click();
+    const uiNutritionResponse = await uiNutritionResponsePromise;
+    const uiNutrition = uiNutritionResponse
+      ? await uiNutritionResponse.json().catch(() => null)
+      : null;
+
     await page.waitForFunction(() => {
       const dialog = document.querySelector("#detail-dialog");
       return Boolean(
@@ -793,11 +807,27 @@ try {
     const menuPanel = page.locator('[data-health-panel="menu"]');
     const uiDays = menuPanel.locator(".weekly-menu-day");
     const uiDayCount = await uiDays.count();
-    assertCheck(uiDayCount === dayGroups.length, "Menú detallado representa todos los días", `UI=${uiDayCount} API=${dayGroups.length}`);
 
-    const objective = nutrition.body?.objective || {};
-    for (let index = 0; index < Math.min(uiDayCount, dayGroups.length); index += 1) {
-      const group = dayGroups[index];
+    const comparisonNutrition = uiNutrition?.ok === true ? uiNutrition : nutrition.body;
+    const comparisonRows = Array.isArray(comparisonNutrition?.weeklyMenu)
+      ? comparisonNutrition.weeklyMenu.filter(visibleMenuRow)
+      : visibleRows;
+    const comparisonDayGroups = groupDayRows(comparisonRows);
+    if (uiNutrition?.ok === true) {
+      info("Nutrición · snapshot UI capturado", `${comparisonRows.length} filas visibles`);
+    } else {
+      info("Nutrición · snapshot UI no capturado", "se usa snapshot API inicial");
+    }
+
+    assertCheck(
+      uiDayCount === comparisonDayGroups.length,
+      "Menú detallado representa todos los días",
+      `UI=${uiDayCount} API_UI=${comparisonDayGroups.length}`
+    );
+
+    const objective = comparisonNutrition?.objective || {};
+    for (let index = 0; index < Math.min(uiDayCount, comparisonDayGroups.length); index += 1) {
+      const group = comparisonDayGroups[index];
       const uiDay = uiDays.nth(index);
       const mealCards = await uiDay.locator(".weekly-menu-meal").count();
       assertCheck(mealCards === group.momentCount, `Agrupación de tomas día ${index + 1}`, `UI=${mealCards} esperadas=${group.momentCount}`);
