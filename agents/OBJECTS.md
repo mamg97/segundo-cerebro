@@ -255,7 +255,23 @@ D1 actúa como persistencia binaria privada de los derivados visuales, no como s
 
 ## Regla de ejecución de subidas visuales
 
-Ante una petición de subir o ingerir una imagen al Armario, GESTOR OBJETOS debe leer primero `docs/OBJECTS_IMAGE_INGEST.md` y comprobar Drive + Railway. La ausencia de un POST directo no bloquea la operación: debe usarse el fallback `seed.mjs + OBJECTS_SEED_JOBS` cuando esas herramientas estén disponibles. No se declara éxito sin `ok=true` y verificación posterior en `Armario`. Al terminar o abortar, Railway debe quedar con `OBJECTS_SEED_JOBS` vacío y start command `node server.mjs`.
+Ante una petición de subir o ingerir una imagen al Armario, GESTOR OBJETOS debe leer primero `docs/OBJECTS_IMAGE_INGEST.md` y comprobar Drive + Railway. La ausencia de un POST directo no bloquea la operación: debe usarse el fallback `seed.mjs + OBJECTS_SEED_JOBS` cuando esas herramientas estén disponibles. No se declara éxito sin `ok=true` y verificación posterior en `Armario`. Al terminar o abortar, Railway debe quedar con `OBJECTS_SEED_JOBS` vacío y con su arranque normal `npm start` (script que ejecuta `node server.mjs`).
+
+### Fallo recurrente conocido: falsa incapacidad tras procesar la imagen
+
+Este gestor ha mostrado repetidamente un patrón incorrecto: genera o procesa bien una imagen y, en el turno siguiente, actúa como si la capacidad de ingesta al Armario no existiera. Esa conclusión es un **fallo de continuidad/capacidad**, no evidencia de que el pipeline haya desaparecido.
+
+Protocolo obligatorio de autocorrección antes de responder con cualquier negativa de capacidad:
+
+1. detener la respuesta de «no puedo subirla» antes de enviarla;
+2. releer esta sección y `docs/OBJECTS_IMAGE_INGEST.md`;
+3. comprobar las capacidades reales de la sesión, no las asumidas: archivo procesado actual, Google Drive, Railway y lectura/escritura de la fuente canónica;
+4. si existe Drive + Railway, usar el fallback probado `seed.mjs + OBJECTS_SEED_JOBS` aunque no exista una acción HTTP arbitraria;
+5. si la imagen ya fue generada en la conversación/runtime, reutilizarla; no pedir al usuario que la vuelva a subir salvo que el archivo haya desaparecido o expirado de forma comprobada;
+6. si el usuario indica que «ya se ha hecho antes», tomarlo como señal fuerte de que debe revisarse el runbook y el estado de herramientas antes de afirmar lo contrario;
+7. solo declarar un bloqueo cuando se haya identificado una dependencia concreta realmente ausente o un error reproducible. La respuesta debe nombrar esa dependencia/error exacto, no decir genéricamente «no puedo subir imágenes».
+
+La autocorrección debe ocurrir **antes de la respuesta visible al usuario**: un borrador interno de incapacidad no debe convertirse en la respuesta final si el runbook demuestra una ruta operativa.
 
 ## Puente operativo ChatGPT → Armario visual
 
@@ -282,7 +298,7 @@ Si la sesión no dispone de una acción HTTP arbitraria pero sí de Drive + Rail
 5. arrancar temporalmente Railway con `node seed.mjs && node server.mjs`;
 6. exigir `stage=done` + `ok=true` por cada job;
 7. verificar `foto_procesada_url`, `miniatura_url` y `estado_procesado=procesada` en Armario;
-8. vaciar `OBJECTS_SEED_JOBS`, restaurar `node server.mjs` y limpiar el staging.
+8. vaciar `OBJECTS_SEED_JOBS`, restaurar `npm start` (→ `node server.mjs`) y limpiar el staging.
 
 La antigua cola `ImageIngestQueue` y su cron de Drive quedan como legado/fallback histórico; no son el procedimiento operativo normal. Las filas antiguas con `OBJECTS_STAGING_META_403` no deben reintentarse ni duplicarse.
 
