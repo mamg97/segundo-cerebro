@@ -30,3 +30,14 @@ test("recipe photo bridge returns actionable Drive failure codes", () => {
   assert.match(source, /supportsAllDrives=true/);
   assert.match(source, /googleReadFetch/);
 });
+
+
+test("recipe photo bridge prefers the hidden Sheet preview before Drive", () => {
+  assert.match(source, /RecipeMedia!A1:H500/);
+  assert.match(source, /function fetchHealthRecipePreview/);
+  assert.match(source, /function decodeRecipePreview/);
+  assert.match(source, /X-Recipe-Image-Source": "sheet-preview"/);
+  assert.match(source, /atob\(encoded\)/);
+  const serve = source.slice(source.indexOf("async function serveHealthRecipePhoto"), source.indexOf("function parseKeyValueRows"));
+  assert.ok(serve.indexOf("fetchHealthRecipePreview") < serve.indexOf("fetchHealthRecipePhotoMeta"));
+});

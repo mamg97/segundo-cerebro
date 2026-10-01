@@ -350,14 +350,16 @@ SEGUNDO CEREBRO - SALUD
         │
         ├── metadatos/ref de foto
         ↓
-Drive privado · AUXILIARES/RECETAS - FOTOS
-        ↓ lectura autenticada/proxy same-origin
-Cloudflare Worker
+Drive privado · AUXILIARES/RECETAS - FOTOS (original)
+        │
+        └── preview web derivada → Salud/RecipeMedia (oculta)
+                                   ↓
+Cloudflare Worker · proxy same-origin
         ↓
 Salud → Recetas
 ```
 
-La identidad, nombre, raciones, macros, ingredientes y pasos siguen siendo autoridad del Sheet. Drive contiene únicamente los bytes de la foto; no se crea un catálogo paralelo. El frontend muestra foto → ingredientes → preparación y se actualiza al cambiar la fuente, sin hardcodes por receta.
+La identidad, nombre, raciones, macros, ingredientes y pasos siguen siendo autoridad del Sheet. Drive conserva la foto original y la pestaña técnica oculta `RecipeMedia` conserva únicamente una preview privada compacta para el frontal. No se crea un catálogo paralelo: ambas referencias dependen del mismo `recipe_id`. El frontend muestra foto → ingredientes → preparación y se actualiza al cambiar la fuente, sin hardcodes por receta.
 
 ## Salud — adherencia mensual
 
