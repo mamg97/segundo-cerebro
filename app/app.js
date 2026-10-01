@@ -6487,40 +6487,56 @@ function initializeAccountTransactionTabs(root = document) {
   const section = root.querySelector?.(".account-transactions-section");
   if (!section) return;
 
-  const buttons = [...section.querySelectorAll("[data-account-transactions-tab]")];
-  const panels = [...section.querySelectorAll("[data-account-transactions-panel]")];
-  if (!buttons.length || !panels.length) return;
+  const currentButtons = () => [...section.querySelectorAll("[data-account-transactions-tab]")];
+  const currentPanels = () => [...section.querySelectorAll("[data-account-transactions-panel]")];
+  if (!currentButtons().length || !currentPanels().length) return;
 
   const activate = (accountId, focus = false) => {
+    const buttons = currentButtons();
+    const panels = currentPanels();
+
     buttons.forEach((button) => {
-      const active = button.dataset.accountTransactionsTab === accountId;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-selected", active ? "true" : "false");
-      button.tabIndex = active ? 0 : -1;
-      if (active && focus) button.focus();
+      const selected = button.dataset.accountTransactionsTab === accountId;
+      button.classList.toggle("active", selected);
+      button.setAttribute("aria-selected", selected ? "true" : "false");
+      button.tabIndex = selected ? 0 : -1;
+      if (selected && focus) button.focus();
     });
+
     panels.forEach((panel) => {
-      const active = panel.dataset.accountTransactionsPanel === accountId;
-      panel.classList.toggle("active", active);
-      panel.hidden = !active;
+      const selected = panel.dataset.accountTransactionsPanel === accountId;
+      panel.classList.toggle("active", selected);
+      panel.hidden = !selected;
     });
+
+    section.dataset.activeAccount = accountId;
     document.documentElement.dataset.accountTransactionsTab = accountId;
   };
 
-  buttons.forEach((button, index) => {
-    button.addEventListener("click", () => activate(button.dataset.accountTransactionsTab));
-    button.addEventListener("keydown", (event) => {
-      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-      event.preventDefault();
-      let nextIndex = index;
-      if (event.key === "ArrowLeft") nextIndex = (index - 1 + buttons.length) % buttons.length;
-      if (event.key === "ArrowRight") nextIndex = (index + 1) % buttons.length;
-      if (event.key === "Home") nextIndex = 0;
-      if (event.key === "End") nextIndex = buttons.length - 1;
-      activate(buttons[nextIndex].dataset.accountTransactionsTab, true);
-    });
+  section.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-account-transactions-tab]");
+    if (!button || !section.contains(button)) return;
+    activate(button.dataset.accountTransactionsTab);
   });
 
+  section.addEventListener("keydown", (event) => {
+    const button = event.target.closest?.("[data-account-transactions-tab]");
+    if (!button || !section.contains(button) || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+
+    const buttons = currentButtons();
+    const index = buttons.indexOf(button);
+    if (index < 0) return;
+
+    let nextIndex = index;
+    if (event.key === "ArrowLeft") nextIndex = (index - 1 + buttons.length) % buttons.length;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % buttons.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = buttons.length - 1;
+    activate(buttons[nextIndex].dataset.accountTransactionsTab, true);
+  });
+
+  const buttons = currentButtons();
   const selected = buttons.find((button) => button.getAttribute("aria-selected") === "true") || buttons[0];
   activate(selected.dataset.accountTransactionsTab);
 }
