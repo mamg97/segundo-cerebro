@@ -28,6 +28,7 @@ jobs:
     env:
       TZ: Europe/Madrid
       AUDIT_BASE_URL: https://segundo-cerebro-web-audit.mamg97.workers.dev
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Decide whether a full audit is due
