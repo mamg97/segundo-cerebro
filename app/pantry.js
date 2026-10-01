@@ -374,6 +374,23 @@ function renderWorkspace(payload, initialView = "inventory") {
   }));
 }
 
+async function fetchPantryPayload({ attempts = 3, waitMs = 450 } = {}) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const response = await fetch("/api/pantry", {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (response.ok) return response.json();
+
+    lastError = new Error("PANTRY_" + response.status);
+    if (response.status < 500 || attempt === attempts) throw lastError;
+    await new Promise((resolve) => setTimeout(resolve, waitMs * attempt));
+  }
+  throw lastError || new Error("PANTRY_UNAVAILABLE");
+}
+
 export async function openPantryDetail(initialView = "inventory") {
   const dialog = document.querySelector("#detail-dialog");
   if (!dialog) return;
@@ -394,17 +411,11 @@ export async function openPantryDetail(initialView = "inventory") {
   if (!dialog.open) dialog.showModal();
 
   try {
-    const response = await fetch("/api/pantry", {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-      credentials: "same-origin"
-    });
-    if (!response.ok) throw new Error("PANTRY_" + response.status);
-    renderWorkspace(await response.json(), initialView);
+    renderWorkspace(await fetchPantryPayload(), initialView);
   } catch (error) {
     console.warn("Pantry load failed", error);
     document.querySelector("#dialog-body").innerHTML =
-      '<div class="pantry-source-error"><strong>Despensa disponible, datos pendientes de conexión</strong><p>No se ha podido leer ahora mismo la fuente privada. El módulo ya no desaparece cuando esto ocurre.</p><button id="pantry-retry" type="button">Reintentar</button></div>';
+      '<div class="pantry-source-error"><strong>Despensa disponible, datos pendientes de conexión</strong><p>No se ha podido leer ahora mismo la fuente privada después de varios intentos. Puedes reintentar sin recargar toda la web.</p><button id="pantry-retry" type="button">Reintentar</button></div>';
     document.querySelector("#pantry-retry")?.addEventListener("click", () => openPantryDetail(initialView));
   }
 }
