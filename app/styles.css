@@ -18410,7 +18410,76 @@ html[data-theme="dark"] .midas-lab-card {
 
 @media (max-width: 760px) {
   .wardrobe-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .wardrobe-visual-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Armario móvil: priorizar exploración visual y densidad.
+     En teléfonos anchos caben 3 prendas por fila; el breakpoint inferior
+     baja a 2 sin volver nunca a la tarjeta gigante de una sola columna. */
+  .wardrobe-visual-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .wardrobe-card-visual {
+    gap: 5px;
+    padding: 6px;
+    border-radius: 12px;
+  }
+
+  .wardrobe-card-visual .wardrobe-visual {
+    aspect-ratio: 1 / 1.08;
+    border-radius: 9px;
+  }
+
+  .wardrobe-card-visual .wardrobe-visual img {
+    padding: 4px;
+  }
+
+  .wardrobe-card-visual .wardrobe-card-body {
+    gap: 3px;
+    padding: 1px 1px 2px;
+  }
+
+  .wardrobe-card-visual .wardrobe-card-top > span {
+    font-size: 6px;
+    line-height: 1.2;
+  }
+
+  .wardrobe-card-visual .wardrobe-card-top b {
+    display: none;
+  }
+
+  .wardrobe-card-visual .wardrobe-card-body > strong {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 9px;
+    line-height: 1.25;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .wardrobe-card-visual .wardrobe-card-body > small {
+    overflow: hidden;
+    font-size: 6.5px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .wardrobe-card-visual .wardrobe-card-foot {
+    display: none;
+  }
+
+  .wardrobe-process-state {
+    right: 4px;
+    bottom: 4px;
+    max-width: calc(100% - 8px);
+    padding: 3px 4px;
+    overflow: hidden;
+    font-size: 5.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .look-builder-controls { grid-template-columns: 1fr; }
   .look-builder-selectors { grid-template-columns: 1fr; }
   .look-builder-office,
@@ -18421,13 +18490,17 @@ html[data-theme="dark"] .midas-lab-card {
 }
 
 @media (max-width: 460px) {
-  .wardrobe-toolbar,
-  .wardrobe-visual-grid { grid-template-columns: 1fr; }
-  .wardrobe-card-visual { grid-template-columns: 1fr; }
+  .wardrobe-toolbar { grid-template-columns: 1fr; }
   .look-builder-head,
   .look-builder-save-row { align-items: stretch; flex-direction: column; }
   .look-builder-preview { grid-template-columns: 1fr 1fr; }
   .look-builder-preview article { min-height: 155px; }
+}
+
+@media (max-width: 429px) {
+  .wardrobe-visual-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 
