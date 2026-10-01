@@ -21,3 +21,6 @@ assert.match(styles, /\.account-transactions-panel\[hidden\]/);
 assert.match(audit, /Finanzas · movimientos por cuenta/);
 assert.match(audit, /\[data-account-transactions-tab\]/);
 assert.match(audit, /data-account-transactions-panel/);
+
+assert.doesNotMatch(app, /document\.documentElement\.dataset\.accountTransactionsTab/);
+assert.match(audit, /\.account-transactions-tabs \[data-account-transactions-tab\]/);

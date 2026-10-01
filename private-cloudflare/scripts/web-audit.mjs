@@ -726,7 +726,7 @@ try {
     if (areaId === "area-finance") {
       await auditTabSet(
         "Finanzas · movimientos por cuenta",
-        "[data-account-transactions-tab]",
+        ".account-transactions-tabs [data-account-transactions-tab]",
         "accountTransactionsTab",
         (value) => `[data-account-transactions-panel="${value}"]`,
         {
