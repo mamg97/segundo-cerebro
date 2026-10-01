@@ -132,10 +132,11 @@ Si la conversación dispone de Google Drive y Railway pero no de una acción HTT
    - `overwrite`;
    - metadatos visuales opcionales (`vista_prenda`, `color_principal`, `patron`, `categoria_visual`, `capa`, `estado_procesado`);
    - exactamente una referencia en `openaiFileIdRefs`.
-6. **Arranque de ingesta.** Cambiar temporalmente el start command a `node seed.mjs && npm start` y redeplegar el servicio. `seed.mjs` no implementa otra ingesta: construye una petición local a `handleRequest` de `server.mjs`, por lo que reutiliza exactamente el bridge normal.
+6. **Arranque de ingesta.** Cambiar temporalmente el start command a `node seed.mjs && node server.mjs` y redeplegar el servicio. `seed.mjs` no implementa otra ingesta: construye una petición local a `handleRequest` de `server.mjs`, por lo que reutiliza exactamente el bridge normal.
+   - Mientras `OBJECTS_SEED_JOBS` esté poblado y el start command incluya `seed.mjs`, no hacer commits/merges que puedan provocar un autodeploy de Railway: un redeploy adicional volvería a ejecutar el lote. Terminar la ingesta y restaurar Railway antes de tocar Git.
 7. **Exigir éxito real.** Revisar logs del deploy. Cada item debe terminar en `stage=done`, HTTP 2xx y resultado `ok=true`. Un deploy verde sin ese resultado no basta.
 8. **Verificar la fuente canónica.** Volver a leer `Armario` o `GET /api/objects` y comprobar que el mismo `objeto_id` tiene `foto_procesada_url`, `miniatura_url` y `estado_procesado=procesada`. Para reemplazos, confirmar además que la versión cambió.
-9. **Restaurar Railway.** Vaciar `OBJECTS_SEED_JOBS`, restaurar el start command normal `npm start` y redeplegar. El servicio debe quedar atendiendo `server.mjs`, no ejecutando un lote en cada arranque.
+9. **Restaurar Railway.** Vaciar `OBJECTS_SEED_JOBS`, restaurar el start command normal `node server.mjs` y redeplegar. El servicio debe quedar atendiendo `server.mjs`, no ejecutando un lote en cada arranque.
 10. **Limpiar staging.** Enviar a papelera/borrar la copia temporal de Drive solo después de haber verificado la ingesta. El binario persistente ya está en D1.
 
 ### Overwrite e idempotencia
