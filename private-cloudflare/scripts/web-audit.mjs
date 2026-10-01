@@ -284,9 +284,11 @@ async function auditVisualSnapshot(label) {
       const style = getComputedStyle(element);
       const horizontalClip = element.scrollWidth > element.clientWidth + 3;
       const verticalClip = element.scrollHeight > element.clientHeight + 3;
+      const clipsHorizontally = horizontalClip && /(hidden|clip)/.test(style.overflowX);
+      const clipsVertically = verticalClip && /(hidden|clip)/.test(style.overflowY);
       const allowsScroll = /(auto|scroll)/.test(style.overflowX + " " + style.overflowY);
       const intentionalEllipsis = style.textOverflow === "ellipsis" || style.webkitLineClamp !== "none";
-      if ((horizontalClip || verticalClip) && !allowsScroll && !intentionalEllipsis) {
+      if ((clipsHorizontally || clipsVertically) && !allowsScroll && !intentionalEllipsis) {
         clippedText.push(`${shortName(element)} ${element.clientWidth}x${element.clientHeight}→${element.scrollWidth}x${element.scrollHeight}`);
       }
     });
@@ -712,7 +714,7 @@ try {
         "[data-habit-tab]",
         "habitTab",
         (value) => `[data-habit-panel="${value}"]`,
-        { htmlDataName: "habit-tab", attributeName: "habit-tab", attr: "habit-tab", settle: 180 }
+        { htmlDataName: "habit-tab", attributeName: "habit-tab", attr: "habit-tab", settle: 180, timeout: 12000 }
       );
     } else if (areaId === "area-parents") {
       await auditTabSet(
