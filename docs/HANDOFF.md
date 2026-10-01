@@ -253,6 +253,7 @@ Estado:
 - No modificar datos privados ni lógica funcional para forzar un verde. Reproducir, clasificar y corregir la causa propietaria.
 - Evidencia: GitHub Actions → `Audit production web` → job `audit` → step `Navigate and audit production`; buscar `[FAIL]`, `[SUMMARY]`, `[AUDIT_FAILED]` o `[AUDIT_OK]`.
 - Incidente 2026-10-01: tras el `schedule` #20 dejaron de aparecer varios disparos horarios pese a que el workflow seguía válido/activo; se mitigó con cron primario `:17`, respaldo `:42` en el mismo workflow y watchdog externo `:45`. Ver `docs/WEB_AUDIT.md`.
+- Incidente 2026-10-01 de fuentes: 502 persistentes en Objetos/Proyectos/Delta se corrigieron reduciendo llamadas a Google Sheets con `batchGet` y retry/backoff solo para lecturas idempotentes. El auditor también quedó alineado con la regla de barras de MenuSemanal: hoy/pasado con consumo muestra consumido; futuro muestra plan. Cierre: audit #46, 540/540 checks verdes.
 
 ### Configuración CI/CD completada
 
