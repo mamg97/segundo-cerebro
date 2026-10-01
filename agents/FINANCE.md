@@ -150,6 +150,7 @@ Reglas:
 - los recibos ya ejecutados se marcan terminales y no se vuelven a reservar;
 - la fuente maestra `ASUNTOS v3.xlsx` es estrictamente solo lectura;
 - el histórico bancario se conserva en `MovimientosCuenta`, con `account_id`, fecha, concepto, importe, saldo posterior y trazabilidad de importación;
+- la UI presenta `MovimientosCuenta` en un único workspace con pestañas por cuenta. Las pestañas se derivan de las cuentas conectadas y del propio histórico, nunca se hardcodean; una cuenta conectada sin movimientos debe seguir apareciendo con estado vacío explícito.
 - un histórico bancario puede confirmar la ruta real de pago y corregir asignaciones de cuenta sin modificar el maestro.
 
 ### Cuentas de crédito y financiaciones
