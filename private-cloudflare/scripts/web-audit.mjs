@@ -309,7 +309,8 @@ async function auditVisualSnapshot(label) {
       ".objects-tabs",
       ".projects-tabs",
       ".events-tabs",
-      ".area-nav"
+      ".area-nav",
+      ".liquidity-account-legend"
     ];
     document.querySelectorAll(overlapContainers.join(",")).forEach((container) => {
       if (!visible(container)) return;
@@ -325,6 +326,36 @@ async function auditVisualSnapshot(label) {
           if (intersectionArea(a, b) > 9) {
             overlaps.push(`${shortName(container)}: ${shortName(children[i])} ↔ ${shortName(children[j])}`);
           }
+        }
+      }
+    });
+
+    document.querySelectorAll(".liquidity-account-legend").forEach((legend) => {
+      if (!visible(legend)) return;
+      const rows = [...legend.querySelectorAll(":scope > .liquidity-legend-row")].filter(visible);
+      const textRects = (row) => [...row.querySelectorAll("em, small, b")]
+        .filter(visible)
+        .flatMap((element) => {
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          return [...range.getClientRects()]
+            .filter((rect) => rect.width > 0.5 && rect.height > 0.5)
+            .map((rect) => ({
+              left: rect.left,
+              right: rect.right,
+              top: rect.top,
+              bottom: rect.bottom
+            }));
+        });
+
+      for (let i = 0; i < rows.length - 1; i += 1) {
+        const currentRects = textRects(rows[i]);
+        const nextRects = textRects(rows[i + 1]);
+        const collision = currentRects.some((a) =>
+          nextRects.some((b) => intersectionArea(a, b) > 1)
+        );
+        if (collision) {
+          overlaps.push(`liquidity-account-legend: texto fila ${i + 1} ↔ fila ${i + 2}`);
         }
       }
     });

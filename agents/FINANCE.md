@@ -130,6 +130,7 @@ Reglas:
 - si las asignaciones superan el saldo, la UI debe marcar discrepancia y no ocultarla;
 - no se hardcodean saldos ni nombres reales de cuentas en Git;
 - el Gestor de Finanzas mantiene estas asignaciones cuando el usuario comunica nuevos saldos, provisiones o liberaciones.
+- la leyenda visual de una cuenta nunca puede comprimir texto hasta solaparlo. Cuando hay más de 6 segmentos/compromisos, la tarjeta abandona el reparto vertical fijo asociado a líneas guía y usa filas de altura natural; se prioriza legibilidad sobre conservar las líneas conectoras.
 
 ### Liquidez real por cuenta
 
