@@ -4227,18 +4227,31 @@ function renderHomeWeeklyMenuMealGroup(items) {
 }
 
 function groupWeeklyMenuItemsByMoment(items) {
-  const groups = [];
+  const momentGroups = [];
   for (const item of Array.isArray(items) ? items : []) {
     const key = String(item?.moment || "Otro")
       .trim()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase();
-    const last = groups[groups.length - 1];
+    const last = momentGroups[momentGroups.length - 1];
     if (last?.key === key) last.items.push(item);
-    else groups.push({ key, items: [item] });
+    else momentGroups.push({ key, items: [item] });
   }
-  return groups;
+
+  return momentGroups.flatMap((group) => {
+    const consumed = group.items.filter(weeklyMenuItemIsConsumed);
+    const pending = group.items.filter((item) => !weeklyMenuItemIsConsumed(item));
+
+    if (!consumed.length || !pending.length) return [group];
+
+    // A logical moment can contain both actual consumption and still-pending plan.
+    // Keep them visually separate so consumed items are not hidden inside a planned group.
+    return [
+      { key: group.key + ":consumed", items: consumed },
+      { key: group.key + ":pending", items: pending }
+    ];
+  });
 }
 
 function focusHomeWeeklyMenuOnToday(content) {
