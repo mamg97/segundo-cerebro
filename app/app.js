@@ -4048,30 +4048,44 @@ function renderWeeklyMenuMeal(item, compact = false, showMoment = true) {
     </article>`;
 }
 
+function renderWeeklyMenuGroupItems(rows, compact = false) {
+  return `
+    <div class="weekly-menu-group-items ${compact ? "is-compact" : ""}">
+      ${rows.map((item) => {
+        const consumed = weeklyMenuItemIsConsumed(item);
+        const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
+        const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
+        const quantity = Number.isFinite(Number(item.quantity))
+          ? `${Number(item.quantity).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${item.unit || ""}`.trim()
+          : "";
+        return `
+          <div class="weekly-menu-group-item ${consumed ? "is-consumed" : ""}">
+            <div class="weekly-menu-group-item-copy">
+              <strong>${escapeHtml(item.name || "Comida")}</strong>
+              ${!compact && quantity ? `<small>${escapeHtml(quantity)}</small>` : ""}
+            </div>
+            <div class="weekly-menu-group-item-macros">
+              <b>${kcal}</b>
+              <span>${protein}</span>
+            </div>
+          </div>`;
+      }).join("")}
+    </div>`;
+}
+
 function renderWeeklyMenuMealGroup(items) {
   const rows = Array.isArray(items) ? items.filter(Boolean) : [];
   if (!rows.length) return "";
   if (rows.length === 1) return renderWeeklyMenuMeal(rows[0]);
 
-  const kcalComplete = rows.every((item) => item.kcal != null && Number.isFinite(Number(item.kcal)));
-  const proteinComplete = rows.every((item) => item.protein != null && Number.isFinite(Number(item.protein)));
-  const kcal = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0);
-  const protein = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
   const consumed = rows.every(weeklyMenuItemIsConsumed);
   const moment = rows[0]?.moment || "Otro";
 
   return `
-    <article class="weekly-menu-meal ${consumed ? "is-consumed" : ""}">
-      <div class="weekly-menu-meal-main">
-        <div class="weekly-menu-meal-copy">
-          <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
-          <strong>${rows.length} elementos en la misma toma</strong>
-          <p>${rows.map((item) => escapeHtml(item.name || "Comida")).join(" · ")}</p>
-        </div>
-        <div class="weekly-menu-meal-macros">
-          <b>${kcalComplete ? formatKcal(kcal) : `Subtotal ${formatKcal(kcal)}`}</b>
-          <span>${proteinComplete ? `P ${formatMacro(protein)}` : `P subtotal ${formatMacro(protein)}`}</span>
-        </div>
+    <article class="weekly-menu-meal weekly-menu-meal-grouped ${consumed ? "is-consumed" : ""}">
+      <div class="weekly-menu-meal-copy">
+        <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
+        ${renderWeeklyMenuGroupItems(rows)}
       </div>
       <details class="weekly-menu-ingredients">
         <summary>Ver componentes y cantidades</summary>
@@ -4091,7 +4105,7 @@ function renderWeeklyMenuMealGroup(items) {
                   ? `${Number(item.quantity).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${item.unit || ""}`.trim()
                   : "—";
                 return `
-                  <tr>
+                  <tr class="${weeklyMenuItemIsConsumed(item) ? "is-consumed" : ""}">
                     <td>${escapeHtml(item.name || "Comida")}</td>
                     <td>${escapeHtml(quantity)}</td>
                     <td>${item.kcal == null ? "—" : escapeHtml(formatKcal(item.kcal))}</td>
@@ -4205,53 +4219,31 @@ function renderHomeWeeklyMenuMealGroup(items) {
   if (!rows.length) return "";
   if (rows.length === 1) return renderWeeklyMenuMeal(rows[0], true);
 
-  const kcal = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0);
-  const protein = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
   const moment = rows[0]?.moment || "Otro";
-  const names = rows.map((item) => item.name).filter(Boolean);
   const consumed = rows.every(weeklyMenuItemIsConsumed);
 
   return `
     <article class="weekly-menu-meal weekly-menu-meal-grouped ${consumed ? "is-consumed" : ""}">
-      <div class="weekly-menu-meal-main">
-        <div class="weekly-menu-meal-copy">
-          <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
-          <strong>${names.map((name) => escapeHtml(name)).join(" + ")}</strong>
-        </div>
-        <div class="weekly-menu-meal-macros">
-          <b>${formatKcal(kcal)}</b>
-          <span>P ${formatMacro(protein)}</span>
-        </div>
+      <div class="weekly-menu-meal-copy">
+        <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
+        ${renderWeeklyMenuGroupItems(rows, true)}
       </div>
     </article>`;
 }
 
 function groupWeeklyMenuItemsByMoment(items) {
-  const momentGroups = [];
+  const groups = [];
   for (const item of Array.isArray(items) ? items : []) {
     const key = String(item?.moment || "Otro")
       .trim()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase();
-    const last = momentGroups[momentGroups.length - 1];
+    const last = groups[groups.length - 1];
     if (last?.key === key) last.items.push(item);
-    else momentGroups.push({ key, items: [item] });
+    else groups.push({ key, items: [item] });
   }
-
-  return momentGroups.flatMap((group) => {
-    const consumed = group.items.filter(weeklyMenuItemIsConsumed);
-    const pending = group.items.filter((item) => !weeklyMenuItemIsConsumed(item));
-
-    if (!consumed.length || !pending.length) return [group];
-
-    // A logical moment can contain both actual consumption and still-pending plan.
-    // Keep them visually separate so consumed items are not hidden inside a planned group.
-    return [
-      { key: group.key + ":consumed", items: consumed },
-      { key: group.key + ":pending", items: pending }
-    ];
-  });
+  return groups;
 }
 
 function focusHomeWeeklyMenuOnToday(content) {
