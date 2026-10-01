@@ -517,9 +517,12 @@ async function openAreaForVisualAudit(areaId) {
 
 async function auditWardrobeGridColumns(label, expectedColumns) {
   const tab = page.locator('[data-objects-tab="wardrobe"]').first();
-  const available = await tab.count();
+  const available = await tab
+    .waitFor({ state: "visible", timeout: 8000 })
+    .then(() => true)
+    .catch(() => false);
   if (!available) {
-    fail(`Visual ${label} · Armario visual disponible`, "falta pestaña wardrobe");
+    fail(`Visual ${label} · Armario visual disponible`, "falta pestaña wardrobe tras esperar carga dinámica");
     return;
   }
 
