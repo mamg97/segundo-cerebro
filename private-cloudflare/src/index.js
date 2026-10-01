@@ -4275,8 +4275,22 @@ export default {
           gymPlan = finance.value?.health?.gymPlan || [];
         } catch {}
       }
+
+      let trainingStatus = { paused: false, reason: null, effectiveDate: null };
+      if (hasHealthGoogleConfig(env)) {
+        try {
+          const health = await fetchHealthNutritionSummary(env, { date: localHealthDateKey() });
+          const activityGoal = health.value?.activityObjective || null;
+          trainingStatus = {
+            paused: toNumber(activityGoal?.strengthSessionsWeek) === 0,
+            reason: activityGoal?.note || null,
+            effectiveDate: activityGoal?.effectiveDate || null
+          };
+        } catch {}
+      }
+
       const history = await fetchGymHistory(env);
-      return json({ ok: true, plan: gymPlan, ...history });
+      return json({ ok: true, plan: gymPlan, trainingStatus, ...history });
     }
 
     if (url.pathname === "/api/gym/session") {
