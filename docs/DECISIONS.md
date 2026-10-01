@@ -430,3 +430,12 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - Los ajustes de sincronización no se borran: se marcan y quedan fuera de métricas de trading.
 - Delta sigue siendo agregador auxiliar; las plataformas/brokers siguen siendo fuente primaria de valor actual.
 - No calcular ni presentar rentabilidad histórica total desde este CSV sin una reconstrucción específica de coste, corporate actions, divisas y flujos externos.
+## D-043 — MenuSemanal separa contenido de presentación
+
+- **Estado:** aceptada.
+- **Fecha:** 2026-10-01.
+- **Decisión:** el contenido real del menú semanal vive exclusivamente en el Sheet privado `SEGUNDO CEREBRO - SALUD / MenuSemanal`. El frontend y el Worker son una capa estable y genérica de lectura, reconciliación y presentación.
+- **Mutaciones operativas:** mover una comida de día, cambiar plato/ingrediente/ración, marcar planificado/consumido/omitido o ajustar macros se resuelve en el Sheet; no requiere modificar código.
+- **Código:** solo se cambia para defectos genéricos de contrato, reconciliación o renderizado que afecten a cualquier menú, nunca para acomodar una comida o fecha concreta.
+- **Privacidad:** ningún menú real, nombre de plato doméstico, fecha o cantidad personal se hardcodea o versiona en Git.
+- **Motivo:** evitar regresiones visuales por cambios cotidianos del plan y mantener una sola fuente canónica de estado nutricional.
