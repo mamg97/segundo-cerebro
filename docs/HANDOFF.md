@@ -48,6 +48,9 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Thinking Orb vendorizado con estados de actividad.
 - Vista semanal de agenda y eventos importantes; las decisiones se presentan dentro de su área propietaria, no como bloque independiente.
 - Diseño móvil corregido para evitar overflow y apariencia de escritorio comprimido.
+- La Home ya no muestra el bloque `Próximos movimientos`; los asuntos accionables siguen perteneciendo a sus dominios y no se eliminan de las fuentes.
+- El menú semanal de Home vuelve a tarjetas por día, con agrupación por toma y estados consumido/plan intactos; se descartó la matriz 7×momentos porque degradaba de forma material la legibilidad.
+- Escala tipográfica compartida aumentada para Home, navegación, calendarios, Salud y diálogos; los cambios de contenido siguen siendo exclusivamente data-driven desde las fuentes canónicas.
 
 ### Finanzas
 
