@@ -44,6 +44,7 @@ export function canonicalWeeklyMenuMoment(item) {
   }
 
   if (/^(cena\s*·?\s*complemento|complemento\s+cena)$/.test(moment)) return "Cena";
+  if (/^cierre\b/.test(moment)) return "Cena";
 
   return raw;
 }
