@@ -886,10 +886,10 @@ try {
   assertCheck(!/temporalmente no disponible|no se ha podido/.test(homeMenuText), "Menú Home sin fallback de error");
 
   const dayGroups = groupDayRows(visibleRows);
-  const legacyMomentRows = visibleRows.filter((item) => /^(postre|snack)\b/.test(menuMomentKey(item?.moment || "")));
+  const legacyMomentRows = visibleRows.filter((item) => /^(postre|snack|cierre)\b/.test(menuMomentKey(item?.moment || "")));
   assertCheck(
     legacyMomentRows.length === 0,
-    "Menú API pliega Postre/Snack en su toma padre",
+    "Menú API pliega Postre/Snack/Cierre en su toma padre",
     legacyMomentRows.length ? legacyMomentRows.map((item) => `${item.date}:${item.moment}`).join(", ") : "sin momentos legacy"
   );
 
@@ -897,10 +897,10 @@ try {
   assertCheck(homeDayCount === dayGroups.length, "Home representa todos los días del menú", `UI=${homeDayCount} API=${dayGroups.length}`);
 
   const homeMomentLabels = await page.locator("#home-weekly-menu-content .home-weekly-menu-row-label span").allTextContents();
-  const legacyUiMoments = homeMomentLabels.filter((label) => /^(postre|snack)\b/.test(menuMomentKey(label)));
+  const legacyUiMoments = homeMomentLabels.filter((label) => /^(postre|snack|cierre)\b/.test(menuMomentKey(label)));
   assertCheck(
     legacyUiMoments.length === 0,
-    "Home no crea filas independientes Postre/Snack",
+    "Home no crea filas independientes Postre/Snack/Cierre",
     legacyUiMoments.length ? legacyUiMoments.join(", ") : "tomas canónicas"
   );
 
