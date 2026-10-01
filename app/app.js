@@ -6510,7 +6510,6 @@ function initializeAccountTransactionTabs(root = document) {
     });
 
     section.dataset.activeAccount = accountId;
-    document.documentElement.dataset.accountTransactionsTab = accountId;
   };
 
   section.addEventListener("click", (event) => {
