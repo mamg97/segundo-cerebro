@@ -18466,3 +18466,37 @@ html[data-theme="dark"] .midas-lab-card {
   .delta-year-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .delta-top-assets { grid-template-columns: 1fr; }
 }
+
+.gym-pause-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--accent) 12%);
+}
+
+.gym-pause-card > span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.gym-pause-card > strong {
+  font-size: 1.15rem;
+}
+
+.gym-pause-card > p,
+.gym-pause-card > small {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.health-benchmark-list article.is-paused {
+  opacity: 0.78;
+}
+
