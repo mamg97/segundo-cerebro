@@ -1765,6 +1765,123 @@ html[data-theme="dark"] .credit-detail-summary > article {
   font-weight: 700;
 }
 
+.account-transactions-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+  overflow-x: auto;
+  padding: 2px 1px 4px;
+  scrollbar-width: none;
+}
+
+.account-transactions-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.account-transactions-tabs button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.account-transactions-tabs button:hover,
+.account-transactions-tabs button:focus-visible {
+  border-color: color-mix(in srgb, var(--blue) 58%, var(--line));
+  color: var(--ink);
+  outline: none;
+}
+
+.account-transactions-tabs button.active,
+.account-transactions-tabs button[aria-selected="true"] {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  color: var(--blue);
+}
+
+.account-transactions-tabs button small {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  color: currentColor;
+  font-size: 8px;
+  line-height: 1;
+}
+
+.account-transactions-panel[hidden] {
+  display: none !important;
+}
+
+.account-transactions-current {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.account-transactions-current > div {
+  min-width: 0;
+}
+
+.account-transactions-current strong,
+.account-transactions-current span,
+.account-transactions-current > small {
+  display: block;
+}
+
+.account-transactions-current strong {
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.account-transactions-current span,
+.account-transactions-current > small {
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.account-transactions-current > small {
+  flex: 0 0 auto;
+  margin-top: 0;
+  text-align: right;
+}
+
+.account-transactions-empty {
+  display: grid;
+  gap: 4px;
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.account-transactions-empty strong {
+  font-size: 11px;
+}
+
+.account-transactions-empty span {
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
 .account-transactions-scroll {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -1818,6 +1935,26 @@ html[data-theme="dark"] .credit-detail-summary > article {
     align-items: flex-start;
   }
   .account-transactions-heading h3 { font-size: 13px; }
+
+  .account-transactions-tabs {
+    margin-right: -4px;
+  }
+
+  .account-transactions-tabs button {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .account-transactions-current {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .account-transactions-current > small {
+    text-align: left;
+  }
 }
 
 .etoro-allocation {

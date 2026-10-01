@@ -309,6 +309,7 @@ async function auditVisualSnapshot(label) {
       ".objects-tabs",
       ".projects-tabs",
       ".events-tabs",
+      ".account-transactions-tabs",
       ".area-nav",
       ".liquidity-account-legend"
     ];
@@ -722,7 +723,20 @@ try {
 
     await auditVisualSnapshot(`desktop · ${areaId}`);
 
-    if (areaId === "area-pantry") {
+    if (areaId === "area-finance") {
+      await auditTabSet(
+        "Finanzas · movimientos por cuenta",
+        "[data-account-transactions-tab]",
+        "accountTransactionsTab",
+        (value) => `[data-account-transactions-panel="${value}"]`,
+        {
+          htmlDataName: "account-transactions-tab",
+          attributeName: "account-transactions-tab",
+          attr: "account-transactions-tab",
+          settle: 120
+        }
+      );
+    } else if (areaId === "area-pantry") {
       if (!(pantryProbe.ok && pantryProbe.body?.ok === true)) {
         info("Despensa · pestañas omitidas", "backend no saludable; fallo ya clasificado por API");
       } else await auditTabSet(
