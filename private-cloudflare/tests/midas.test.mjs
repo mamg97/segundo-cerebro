@@ -18,7 +18,15 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
     last_equity: 100500, day_return_pct: .5, return_pct: .5,
     equity_history: [{ date: "2026-10-02", nav: 100000 }, { date: "2026-10-09", nav: 100500 }], note: "Paper"
   };
-  const dashboard = { schema_version: 1, generated_at_utc: "2026-09-29T23:45:00Z", tracks: [row, tfg] };
+  const btd = {
+    id: "buy_the_dip_corpus_2026_v0", label: "Buy The Dip corpus v0", provenance: "Corpus Buy The Dip",
+    group: "buy_the_dip_demo", status: "demo_con_diario",
+    first_session: "2026-10-01", last_session: "2026-10-05", currency: "USD",
+    last_equity: 99000, day_return_pct: -2.94, return_pct: -1,
+    annualized_volatility_pct: 31.2, max_drawdown_pct: -2.94, sharpe_0rf: -0.4, risk_observations: 3,
+    equity_history: [{ date: "2026-10-01", nav: 100000 }, { date: "2026-10-02", nav: 102000 }, { date: "2026-10-05", nav: 99000 }], note: "Paper"
+  };
+  const dashboard = { schema_version: 1, generated_at_utc: "2026-09-29T23:45:00Z", tracks: [row, tfg, btd] };
   let requests = 0;
   const fetcher = async (url) => {
     requests += 1;
@@ -31,6 +39,11 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
   assert.deepEqual(first.dashboard.tracks[0].equity_history, row.equity_history);
   assert.equal(first.dashboard.tracks[1].group, "tfg_demo_adaptado");
   assert.equal(first.dashboard.tracks[1].return_pct, .5);
+  assert.equal(first.dashboard.tracks[2].group, "buy_the_dip_demo");
+  assert.equal(first.dashboard.tracks[2].annualized_volatility_pct, 31.2);
+  assert.equal(first.dashboard.tracks[2].max_drawdown_pct, -2.94);
+  assert.equal(first.dashboard.tracks[2].sharpe_0rf, -0.4);
+  assert.equal(first.dashboard.tracks[2].risk_observations, 3);
   assert.equal(first.stale, false);
   await fetchMidasDashboard(fetcher, 1_001_000);
   assert.equal(requests, 1);
@@ -111,6 +124,8 @@ test("private genetic diary uses recorded valuations and keeps a quality warning
   assert.equal(merged.tracks[0].return_pct, 4.382925);
   assert.equal(merged.tracks[0].last_session, "2026-09-25");
   assert.equal(merged.tracks[0].day_return_pct, .368197);
+  assert.equal(merged.tracks[0].risk_observations, 2);
+  assert.equal(merged.tracks[0].max_drawdown_pct, 0);
   assert.match(merged.tracks[0].note, /no son ejecuciones verificadas/);
   assert.equal(dashboard.tracks[0].last_equity, null);
   assert.equal(await addPrivateGeneticDiary(null, dashboard), dashboard);
@@ -130,6 +145,8 @@ test("forward genetic campaign stays separate and never inherits legacy returns"
   assert.equal(merged.tracks[1].status, "demo_con_diario");
   assert.equal(merged.tracks[1].last_equity, 100000);
   assert.equal(merged.tracks[1].day_return_pct, null);
+  assert.equal(merged.tracks[1].risk_observations, 1);
+  assert.equal(merged.tracks[1].max_drawdown_pct, 0);
   assert.match(merged.tracks[1].note, /siguiente apertura/);
 });
 
