@@ -13,7 +13,8 @@ Tabs:
 - `Registro`: planned and consumed meals by date.
 - `Objetivos`: effective calorie/macro targets.
 - `EnergiaDiaria`: active, resting and total energy expenditure.
-- `Recetas` / `IngredientesReceta`: recipe definitions.
+- `Recetas` / `IngredientesReceta`: recipe definitions and ingredients.
+- `PasosReceta`: canonical ordered preparation steps for recipes. Store only user-confirmed or source-supported instructions; never invent missing cooking steps merely to make a recipe look complete.
 - `MenuSemanal`: planned menu.
 
 Packaged-product identity, EAN, store URL, product-level nutrition and physical availability are owned by the private canonical source `SEGUNDO CEREBRO - DESPENSA`, primarily `Productos` and `Inventario`.
@@ -136,7 +137,13 @@ Raw Apple Health backfill remains canonical in private D1 and is not duplicated 
 
 Whenever `GET /api/health/history` is read for a supported range (30/90/180/365/all), the Worker overwrites the corresponding fixed summary row with D1-derived aggregates: coverage-quality counts, comparable activity averages, body-sample count, latest standard body metrics, 7-day/previous-7-day weight averages, weekly weight change and latest waist from the private Sheet.
 
-The same read also refreshes private tab `ActividadDiaria` with the daily D1 detail for the requested range: date, active/resting/total kcal, steps, exercise minutes, workout count, coverage quality, source, sample/import timestamps, source details and workout metadata. This exists so an authorized health-manager chat can inspect an exact day instead of inferring it from aggregates.
+Every history read keeps the private Sheet as a complete derived inspection surface. The API may return the requested range (30/90/180/365/all), but the Sheet refresh uses the full available D1 history so a later 30- or 365-day query never truncates the visible historical archive.
+
+Derived tabs:
+- `ActividadDiaria`: complete daily D1 activity history (date, active/resting/total kcal, steps, exercise minutes, workout count, coverage quality, source, sample/import timestamps, source details and workout metadata).
+- `MedicionesCorporalesApple`: complete D1 body-sample history (timestamp, date, metric type, value, unit, source and import timestamp).
+- `RecuperacionDiariaApple`: complete D1 recovery/sleep history when those HealthKit metrics exist (heart-rate context, HRV, respiratory rate, SpO2, VO2 max, wrist temperature and sleep-stage minutes).
+- `HistoricoResumen`: fixed aggregate rows for 30/90/180/365/all.
 
 These are derived access surfaces, not new sources of truth. Raw daily activity/body samples continue to live in D1. Explicit rows recovered from a user-supplied Apple Health export are first staged in the private Health Sheet with source `apple_health_export_recovery` (activity) or an explicit recovery note (body metrics), then reconciled idempotently into D1 on the next Health read. This lets a complete export replace a stale partial live snapshot without keeping two competing truths. Decisions must use comparable `full`/`live` days and must not treat `partial` or `phone_only` days as equivalent Watch coverage. If a selected date has no D1 row, do not display zero: show it as missing/not synchronized.
 
