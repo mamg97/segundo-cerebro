@@ -27,6 +27,7 @@ let financeCache = { value: null, expiresAt: 0 };
 let habitsCache = { value: null, expiresAt: 0 };
 let healthCache = { value: null, expiresAt: 0, date: null };
 let recipePhotoCache = { value: new Map(), expiresAt: 0 };
+let recipePreviewCache = { value: new Map(), expiresAt: 0 };
 
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
@@ -210,7 +211,90 @@ async function fetchHealthRecipePhotoMeta(env, recipeId) {
   return recipePhotoCache.value.get(cleanRecipeId) || null;
 }
 
+async function fetchHealthRecipePreview(env, recipeId) {
+  if (!hasHealthGoogleConfig(env)) return null;
+  const cleanRecipeId = String(recipeId || "").trim();
+  if (!cleanRecipeId || cleanRecipeId.length > 160) return null;
+
+  if (recipePreviewCache.expiresAt <= Date.now()) {
+    const token = await getGoogleAccessToken(env);
+    const range = encodeURIComponent("RecipeMedia!A1:H500");
+    const endpoint =
+      "https://sheets.googleapis.com/v4/spreadsheets/" +
+      encodeURIComponent(env.HEALTH_SHEET_ID) +
+      "/values/" + range +
+      "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
+    const response = await googleReadFetch(
+      endpoint,
+      { headers: { Authorization: "Bearer " + token } },
+      { attempts: 3, baseDelayMs: 180 }
+    );
+    if (!response.ok) {
+      if (response.status === 400 || response.status === 404) return null;
+      throw new Error("HEALTH_RECIPE_MEDIA_" + response.status);
+    }
+    const rows = parseTableRows((await response.json())?.values || []);
+    recipePreviewCache = {
+      value: new Map(rows
+        .map((row) => ({
+          recipeId: String(row.recipe_id || "").trim(),
+          mimeType: String(row.mime_type || "").trim().toLowerCase(),
+          base64: String(row.base64_preview || "").trim(),
+          width: toNumber(row.width),
+          height: toNumber(row.height),
+          sha256: String(row.sha256 || "").trim(),
+          updatedAt: String(row.updated_at || "").trim()
+        }))
+        .filter((item) => item.recipeId && item.base64)
+        .map((item) => [item.recipeId, item])),
+      expiresAt: Date.now() + 60_000
+    };
+  }
+
+  return recipePreviewCache.value.get(cleanRecipeId) || null;
+}
+
+function decodeRecipePreview(preview) {
+  const mimeType = String(preview?.mimeType || "").trim().toLowerCase();
+  if (!/^image\/(jpeg|png|webp)$/.test(mimeType)) {
+    throw new Error("INVALID_RECIPE_PREVIEW_TYPE");
+  }
+  const encoded = String(preview?.base64 || "").trim();
+  if (!encoded || encoded.length > 1_500_000) {
+    throw new Error("INVALID_RECIPE_PREVIEW_SIZE");
+  }
+  let binary;
+  try {
+    binary = atob(encoded);
+  } catch {
+    throw new Error("INVALID_RECIPE_PREVIEW_BASE64");
+  }
+  if (!binary.length || binary.length > 1_000_000) {
+    throw new Error("INVALID_RECIPE_PREVIEW_BYTES");
+  }
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return { bytes, mimeType };
+}
+
 async function serveHealthRecipePhoto(env, recipeId) {
+  const preview = await fetchHealthRecipePreview(env, recipeId);
+  if (preview) {
+    try {
+      const decoded = decodeRecipePreview(preview);
+      return withSecurityHeaders(new Response(decoded.bytes, {
+        status: 200,
+        headers: {
+          "Content-Type": decoded.mimeType,
+          "Cache-Control": "private, max-age=300",
+          "Content-Disposition": "inline",
+          "X-Recipe-Image-Source": "sheet-preview"
+        }
+      }));
+    } catch (error) {
+      console.warn("Recipe preview decode failed", recipeId, String(error?.message || error));
+    }
+  }
+
   const meta = await fetchHealthRecipePhotoMeta(env, recipeId);
   if (!meta) return json({ ok: false, code: "RECIPE_PHOTO_NOT_FOUND" }, 404);
   if (!/^[A-Za-z0-9_-]{10,}$/.test(meta.fileId)) {
@@ -2920,6 +3004,7 @@ async function appendHealthSheetRow(env, range, values) {
   if (!response.ok) throw new Error(`HEALTH_WRITE_${response.status}`);
   healthCache = { value: null, expiresAt: 0, date: null };
   recipePhotoCache = { value: new Map(), expiresAt: 0 };
+  recipePreviewCache = { value: new Map(), expiresAt: 0 };
 }
 
 async function saveNutritionEntry(request, env) {
