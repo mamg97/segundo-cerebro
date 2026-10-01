@@ -14779,6 +14779,29 @@ html[data-theme="dark"] .liquidity-svg-base {
   box-shadow: 0 0 0 2px color-mix(in srgb, #ff9f0a 24%, transparent);
 }
 
+/* Dense finance legends must size from their real text, not squeeze every
+   commitment into the fixed 258px leader-line grid. */
+.liquidity-account-chart.has-variable-legend {
+  align-items: start;
+}
+
+.liquidity-account-chart.has-variable-legend .liquidity-leader-layer {
+  display: none;
+}
+
+.liquidity-account-legend.is-variable-height {
+  height: auto;
+  grid-template-rows: none !important;
+  grid-auto-rows: minmax(38px, auto);
+  align-content: start;
+  overflow: visible;
+}
+
+.liquidity-account-legend.is-variable-height .liquidity-legend-row {
+  min-height: 38px;
+  align-content: center;
+}
+
 .leader-count-1{grid-template-rows:repeat(1,minmax(0,1fr));}
 .leader-count-2{grid-template-rows:repeat(2,minmax(0,1fr));}
 .leader-count-3{grid-template-rows:repeat(3,minmax(0,1fr));}
