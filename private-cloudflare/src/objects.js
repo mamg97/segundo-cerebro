@@ -235,7 +235,7 @@ async function readRows(spreadsheetId, token, titles, tab, range) {
     encodeURIComponent(spreadsheetId) +
     "/values/" + encoded +
     "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
-  const response = await fetch(endpoint, { headers: { Authorization: "Bearer " + token } });
+  const response = await googleReadFetch(endpoint, { headers: { Authorization: "Bearer " + token } });
   if (!response.ok) throw new Error("GOOGLE_SHEETS_" + response.status + "_" + tab);
   return table((await response.json())?.values || []);
 }
