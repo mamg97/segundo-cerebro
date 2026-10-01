@@ -637,13 +637,28 @@ async function openAreaForVisualAudit(areaId) {
 }
 
 async function auditWardrobeGridColumns(label, expectedColumns) {
-  const tab = page.locator('[data-objects-tab="wardrobe"]').first();
-  const available = await tab
+  let tab = page.locator('[data-objects-tab="wardrobe"]').first();
+  let available = await tab
     .waitFor({ state: "visible", timeout: 8000 })
     .then(() => true)
     .catch(() => false);
+
   if (!available) {
-    fail(`Visual ${label} · Armario visual disponible`, "falta pestaña wardrobe tras esperar carga dinámica");
+    const probe = await probeApi("/api/objects", `Armario ${label}`, { attempts: 2, waitMs: 900 });
+    if (probe?.ok) {
+      recoveredSourcePaths.add("/api/objects");
+      info(`Visual ${label} · Armario`, "fuente recuperada; reabriendo Objetos antes de declarar fallo");
+      await openAreaForVisualAudit("area-objects");
+      tab = page.locator('[data-objects-tab="wardrobe"]').first();
+      available = await tab
+        .waitFor({ state: "visible", timeout: 8000 })
+        .then(() => true)
+        .catch(() => false);
+    }
+  }
+
+  if (!available) {
+    fail(`Visual ${label} · Armario visual disponible`, "falta pestaña wardrobe tras reintento de fuente y carga dinámica");
     return;
   }
 
