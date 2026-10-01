@@ -1040,6 +1040,7 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Límite funcional por imagen: 8 MiB. Salvaguarda interna del almacén visual D1: 200 MiB totales; no se contrata almacenamiento adicional automáticamente.
 - Para server-to-server se desplegó `segundo-cerebro-objects-ingest`, un Worker mínimo público sin lectura de datos que reenvía el multipart mediante Service Binding a `segundo-cerebro`. La autorización real sigue siendo el Bearer upstream verificado por SHA-256 en el Worker principal.
 - Railway `objects-chatgpt-bridge` usa ese gateway; `/health` queda operativo. Los secretos permanecen fuera de Git.
+- El procedimiento exacto usado para subidas desde una conversación (incluido el fallback `seed.mjs` + `OBJECTS_SEED_JOBS`, verificación y cleanup) queda fijado en `docs/OBJECTS_IMAGE_INGEST.md`; futuros relevos deben consultarlo antes de concluir que una subida no puede ejecutarse desde ChatGPT.
 - Las cuatro imágenes reales del armario se ingirieron end-to-end con estado `procesada`, URL procesada y miniatura versionadas:
   - `obj-shirt-scalpers-skyblue-001`
   - `obj-sweater-poloclub-quarterzip-grey-001`
