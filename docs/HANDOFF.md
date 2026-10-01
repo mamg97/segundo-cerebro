@@ -114,7 +114,9 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - No se inventan objetivos nutricionales ni gasto ausente.
 - Las pausas temporales de fuerza se controlan desde `ObjetivosActividad`: `strength_sessions_week=0` suspende la exigencia, Adherencia la trata como dimensión ignorada y Gimnasio conserva el plan base pero deja de proponer/registrar sesiones hasta una fila efectiva posterior que reactive el objetivo.
 - Salud incorpora `Recetas` como pestaña privada: lee `Recetas + IngredientesReceta + PasosReceta` y presenta foto, ingredientes y preparación sin inventar pasos.
-- `Recetas` admite referencia privada de foto; los bytes viven en `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS` y el Worker los sirve mediante proxy autenticado sin exponer el ID de Drive.
+- `Recetas` admite referencia privada de foto; el original vive en `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS`.
+- Producción detectó que el OAuth actual de Google responde 403 al descargar media Drive aunque sí lee Sheets. Para no hacer públicas las fotos ni exigir reautorización inmediata, la preview web privada vive en pestaña técnica oculta `RecipeMedia`; el Worker la sirve primero y usa Drive solo como fallback.
+- Regla canónica de momentos del menú: `Postre` se guarda dentro de `Comida` o `Cena`; `Snack` dentro de `Media mañana` o `Merienda`; `Cierre` y `Cena · complemento` dentro de `Cena`. El Sheet actual fue normalizado y el runtime mantiene compatibilidad con escritores legacy.
 - El alta futura de una receta es una mutación de datos: foto privada + filas canónicas en Salud. No requiere tocar frontend/Worker salvo cambio de capacidad o esquema.
 - Contrato vigente: `agents/HEALTH.md`.
 - Al abrir una nueva conversación `GESTOR GYM Y NUTRI`, reconstruir primero el estado vivo leyendo `Objetivos`, `ObjetivosActividad`, `ObjetivosProgreso`, `MenuSemanal` de la semana actual, `Registro` reciente y las tablas de recetas; cruzar productos/stock con `SEGUNDO CEREBRO - DESPENSA`. No trasladar valores personales actuales a Git ni depender del chat anterior.
