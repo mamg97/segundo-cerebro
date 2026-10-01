@@ -57,6 +57,7 @@ Como mínimo:
 - subpestañas de dominios con navegación interna;
 - Agenda/Calendario: fuente, calendarios seleccionados/enlazados y conservación de eventos en el horizonte;
 - `MenuSemanal` y API de Nutrición;
+- pestaña `Salud → Recetas`: número de tarjetas frente a la API, ausencia de errores visibles y calidad visual de foto/ingredientes/pasos;
 - ausencia de versiones lógicas duplicadas;
 - estados `omitido | retirado | cancelado` no reaparecen;
 - componentes de una misma toma se agrupan;
@@ -87,7 +88,7 @@ Como mínimo:
   - consistencia de tarjetas resumen en escritorio;
   - responsive en 1440×1100, 900×1000 y 390×844;
 - Armario visual: valida explícitamente 4 columnas en escritorio, 3 en tablet, 3 en móvil ancho de 440 px y 2 en móvil de 390 px, además de overflow/clipping/solapes de las tarjetas.
-- Home semanal de Nutrición: debe mantener tarjetas por día legibles (no una matriz comprimida), conservar agrupación por toma/estado y no reintroducir texto microscópico en escritorio/tablet/móvil.
+- Home semanal de Nutrición: debe mantener la matriz día×momento, representar cada comida visible en la celda exacta de su fecha/momento, usar filas de altura automática y tipografía legible. Cuando el ancho no alcance, el scroll debe quedar confinado al contenedor de la tabla; nunca se permite solape, clipping ni overflow global.
 - Home general: el bloque retirado `Próximos movimientos` no forma parte de la superficie visual canónica; su ausencia no debe tratarse como regresión.
   - paleta canónica light/dark y contraste mínimo de texto/acento.
 
