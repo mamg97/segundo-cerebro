@@ -6,7 +6,7 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
-import { renderMidasVisualLab } from "./midas-lab.js?v=0.40.3";
+import { renderMidasVisualLab } from "./midas-lab.js?v=0.40.17";
 
 let state = mockState;
 let areaById = new Map();
@@ -5480,6 +5480,7 @@ const MIDAS_GROUPS = [
   ["paper_nuevo", "Campaña nueva 2026 · EE. UU. · USD"],
   ["weekly_ml_demo", "Weekly ML · ensemble y expertos · USD"],
   ["capital_cycle_demo", "Capital Cycle · underinvestment + calidad + giro · USD"],
+  ["buy_the_dip_demo", "Buy The Dip corpus · deep value + situaciones especiales · USD"],
   ["tfg_demo_adaptado", "TFG corregido 2026 · técnico + AHP + MAD · USD"],
   ["tfm_demo_adaptado", "TFM · modelos adaptados a cartera demo · EUR"],
   ["historica_pendiente", "Ideas históricas pendientes"]
@@ -5500,15 +5501,21 @@ function formatMidasPercent(value) {
 }
 
 function renderMidasRows(rows) {
-  return `<div class="midas-table-scroll" role="region" aria-label="Resultados de estrategias" tabindex="0">
+  const formatRisk = (value) => typeof value === "number" && Number.isFinite(value)
+    ? value.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : "—";
+  return `<div class="midas-table-scroll" role="region" aria-label="Resultados y riesgo de estrategias" tabindex="0">
     <table class="midas-table">
-      <thead><tr><th scope="col">Estrategia</th><th scope="col">Estado</th><th scope="col">Última sesión</th><th scope="col">Día</th><th scope="col">Acumulado</th><th scope="col">Capital demo</th></tr></thead>
+      <thead><tr><th scope="col">Estrategia</th><th scope="col">Estado</th><th scope="col">Última sesión</th><th scope="col">Día</th><th scope="col">Acumulado</th><th scope="col">Vol. anual.</th><th scope="col">Máx. DD</th><th scope="col">Sharpe</th><th scope="col">Capital demo</th></tr></thead>
       <tbody>${rows.map((row) => `<tr>
         <th scope="row"><span>${escapeHtml(row.label)}</span>${row.provenance ? `<small class="midas-provenance">Origen: ${escapeHtml(row.provenance)}</small>` : ""}${row.note && ["diario_heredado", "historica_pendiente"].includes(row.group) ? `<small>${escapeHtml(row.note)}</small>` : ""}</th>
         <td data-label="Estado"><span class="midas-status ${row.status === "demo_con_diario" ? "is-running" : ""}">${escapeHtml(MIDAS_STATUS[row.status] || row.status)}</span></td>
         <td data-label="Última sesión">${escapeHtml(formatFinanceDate(row.last_session, "—"))}</td>
         <td class="midas-number" data-label="Día">${formatMidasPercent(row.day_return_pct)}</td>
         <td class="midas-number" data-label="Acumulado">${formatMidasPercent(row.return_pct)}</td>
+        <td class="midas-number" data-label="Vol. anual.">${formatMidasPercent(row.annualized_volatility_pct)}</td>
+        <td class="midas-number" data-label="Máx. DD">${formatMidasPercent(row.max_drawdown_pct)}</td>
+        <td class="midas-number" data-label="Sharpe">${formatRisk(row.sharpe_0rf)}</td>
         <td class="midas-number" data-label="Capital demo">${row.last_equity === null || !row.currency ? "—" : escapeHtml(formatMoney(row.last_equity, row.currency))}</td>
       </tr>`).join("")}</tbody>
     </table>
@@ -5583,6 +5590,7 @@ function renderMidasExecutionHealth(health, dashboard) {
       .replace("MIDAS paper comparison", "Estrategias diarias")
       .replace("MIDAS TFM shadow forecasts", "TFM diario")
       .replace("MIDAS capital cycle paper", "Capital Cycle")
+      .replace("MIDAS Buy The Dip paper", "Buy The Dip")
       .replace("MIDAS weekly ML paper", "Weekly ML")
       .replace("MIDAS TFG corrected paper", "TFG corregido"),
     state: row.state,
@@ -5630,7 +5638,7 @@ function renderMidasReport(dashboard, stale, research = null, lab = null) {
     </div>
     ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>El historial antiguo se conserva como referencia: anotaba operaciones al mismo cierre que generaba la señal y su rentabilidad no era alcanzable con esa regla. La fila «versión corregida» empieza una campaña nueva: señal al cierre y ejecución simulada en la apertura siguiente, con costes. Sus cifras siguen siendo ficticias, sin órdenes confirmadas por un bróker. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
     ${renderMidasExecutionHealth(lab?.competitionHealth, dashboard)}
-    <p class="midas-caveat">Capital ficticio y operaciones simuladas. Las campañas USD y EUR empiezan en fechas distintas; sus rentabilidades no forman una clasificación común. «Día» compara el último cierre con el anterior registrado. Las líneas prospectivas nuevas admiten acciones fraccionadas; el bootstrap Weekly ML visible hasta el primer forward real es una prueba anterior a ese cambio y no se recalcula.</p>
+    <p class="midas-caveat">Capital ficticio y operaciones simuladas. La comparación principal sigue rentabilidad acumulada y riesgo realizado (volatilidad anualizada según la cadencia registrada, máximo drawdown y Sharpe descriptivo con rf=0). Cada estrategia conserva sus propios plazos y reglas; si las fechas de inicio difieren no forman una clasificación común hasta disponer de una ventana solapada suficiente. «Día» compara el último cierre con el anterior registrado. Las líneas prospectivas nuevas admiten acciones fraccionadas; el bootstrap Weekly ML visible hasta el primer forward real es una prueba anterior a ese cambio y no se recalcula.</p>
     ${renderMidasVisualLab(dashboard, lab)}
     ${renderMidasResearch(research)}
     ${MIDAS_GROUPS.map(([group, title]) => {
