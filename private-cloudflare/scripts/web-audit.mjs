@@ -219,6 +219,7 @@ async function auditMidasCompetition() {
         .replace("MIDAS paper comparison", "estrategias diarias")
         .replace("MIDAS TFM shadow forecasts", "tfm diario")
         .replace("MIDAS capital cycle paper", "capital cycle")
+        .replace("MIDAS Buy The Dip paper", "buy the dip")
         .replace("MIDAS weekly ML paper", "weekly ml")
         .replace("MIDAS TFG corrected paper", "tfg corregido");
       assertCheck(runtimeText.includes(normalizeAuditValue(label)), `MIDAS · UI expone incidencia ${label}`);
@@ -232,6 +233,11 @@ async function auditMidasCompetition() {
     const tfm = tracks.filter((row) => row.group === "tfm_demo_adaptado");
     assertCheck(tfm.length === 4 && tfm.every((row) => row.status === "demo_con_diario" && row.last_session),
       "MIDAS · TFM materializa cuatro diarios tras run verde");
+  }
+  if (successful.has("MIDAS Buy The Dip paper")) {
+    const buyTheDip = tracks.find((row) => row.id === "buy_the_dip_corpus_2026_v0");
+    assertCheck(buyTheDip?.status === "demo_con_diario" && Boolean(buyTheDip?.last_session),
+      "MIDAS · Buy The Dip materializa diario tras run verde");
   }
   if (successful.has("MIDAS weekly ML paper")) {
     const weekly = tracks.filter((row) => row.group === "weekly_ml_demo");
