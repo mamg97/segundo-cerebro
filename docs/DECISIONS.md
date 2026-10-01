@@ -448,3 +448,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **UI:** Gimnasio conserva el PPL base y su histórico, pero mientras la pausa esté activa no propone ni presenta el formulario de una sesión nueva.
 - **Reactivación:** no es automática por fecha; requiere una fila efectiva posterior, evitando reanudar entrenamientos si la causa de la pausa aún persiste.
 - **Privacidad:** la razón clínica concreta vive solo en la fuente privada; Git contiene únicamente la semántica genérica de pausa.
+
+## D-045 — Código estable y estado operativo en fuentes canónicas
+
+- **Estado:** aceptada
+- **Fecha:** 2026-10-01
+- **Decisión:** Segundo Cerebro adopta como regla transversal una arquitectura data-driven: los cambios ordinarios de estado y datos se realizan en la fuente canónica autorizada del dominio y deben reflejarse en la web mediante contratos genéricos, sin modificar frontend o Worker para cada caso concreto.
+- **Excepciones justificadas:** nueva capacidad funcional, cambio de contrato/esquema, nueva integración o transporte, validación/seguridad/reconciliación, corrección de bugs, rendimiento/resiliencia o cambio deliberado de UI/UX/arquitectura.
+- **Regla para gestores:** antes de tocar Git por una petición operativa deben comprobar si el modelo vigente ya puede representarla. Si puede, escriben en la fuente canónica según permisos o enrutan la intención al gestor propietario. No crean hardcodes ni fuentes paralelas.
+- **Criterio de calidad:** si un dato nuevo compatible con el esquema requiere un despliegue para aparecer correctamente, se considera señal de acoplamiento indebido y debe corregirse el diseño reutilizable en lugar de añadir otro caso especial.
+- **Motivo:** mantener la web estable, reducir regresiones, evitar lógica específica por dato y permitir que los gestores mantengan el sistema actualizando información, no código.
+
