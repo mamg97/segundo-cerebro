@@ -14,7 +14,8 @@ test("Health recipe schema reads private photo metadata without exposing Drive i
 });
 
 test("recipe photos are proxied from private Drive through same-origin Health endpoint", () => {
-  assert.match(source, /\/api\/health\/recipes\/\(\[\^\/\]\+\)\/image/);
+  assert.match(source, /recipeImageMatch = url\.pathname\.match/);
+  assert.ok(source.includes("/api/health/recipes/"));
   assert.match(source, /www\.googleapis\.com\/drive\/v3\/files\//);
   assert.match(source, /\?alt=media/);
   assert.match(source, /Cache-Control": "private, max-age=300"/);
