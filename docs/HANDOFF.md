@@ -1237,3 +1237,16 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - El dashboard MIDAS amplía la comparación para todas las estrategias con **rentabilidad acumulada + riesgo observado**: volatilidad anualizada adaptada a la cadencia, máximo drawdown y Sharpe 0rf. No se proclama clasificación común mientras las ventanas de observación sean distintas.
 - La campaña no altera Capital Cycle ni ninguna línea MIDAS existente y nunca escribe en BROKERS/patrimonio real.
 - Assets de la integración: `app.js?v=0.40.18`, `midas-lab.js?v=0.40.18`.
+
+
+## 2026-10-01 · Salud: recetas con pasos + histórico Apple Health visible completo
+
+- La fuente privada `SEGUNDO CEREBRO - SALUD` incorpora `PasosReceta` como tabla canónica de instrucciones ordenadas por `recipe_id`. Solo se guardan pasos explícitamente aportados por el usuario/fuente; no se inventan huecos culinarios.
+- Recuperados del histórico conversacional y persistidos los pasos explícitos de `Puré de verduras de Andrea` y `Tortilla de patatas casera`.
+- El histórico bruto de Apple Health sigue siendo canónico en D1, pero el Sheet privado pasa a conservar una superficie derivada completa y estable:
+  - `ActividadDiaria`: histórico diario completo de actividad/energía/pasos/entrenos.
+  - `MedicionesCorporalesApple`: todas las muestras corporales D1.
+  - `RecuperacionDiariaApple`: señales de recuperación/sueño D1 cuando existen.
+  - `HistoricoResumen`: agregados 30/90/180/365/all.
+- Una lectura de `/api/health/history?range=30|90|180|365` ya no debe truncar el Sheet al rango solicitado: el API responde al rango pedido, pero la sincronización derivada del Sheet se refresca con `range=all`.
+- `MedicionesCorporales` se mantiene para medidas manuales/recuperaciones históricas compatibles; no se convierte en un volcado masivo para evitar mezclar fuente manual con espejo D1.
