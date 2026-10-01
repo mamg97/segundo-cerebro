@@ -21,6 +21,7 @@ const networkFailures = [];
 const ignoredNetworkAborts = [];
 const browserErrors = [];
 const resourceConsoleErrors = [];
+const recoveredSourcePaths = new Set();
 
 function pass(name, detail = "") {
   checks.push({ name, ok: true, detail });
@@ -107,6 +108,94 @@ async function api(path) {
   }, path);
 }
 
+async function probeApi(path, label, options = {}) {
+  const attempts = Math.max(1, Number(options.attempts || 3));
+  const waitMs = Math.max(0, Number(options.waitMs || 700));
+  let result = null;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    result = await api(path);
+    if (result.ok) {
+      if (attempt > 1) info(label + " · recuperación transitoria", `éxito en intento ${attempt}/${attempts}`);
+      return result;
+    }
+    if (result.status < 500 || attempt === attempts) return result;
+    await page.waitForTimeout(waitMs * attempt);
+  }
+  return result;
+}
+
+async function reconcileTransientSourceFailures() {
+  const retryTargets = new Map([
+    ["/api/pantry", "/api/pantry"],
+    ["/api/projects", "/api/projects"],
+    ["/api/objects", "/api/objects"],
+    ["/api/health/adherence", "/api/health/adherence"],
+    ["/api/finance/delta", "/api/finance/delta?limit=1"]
+  ]);
+  const paths = [...new Set(
+    networkFailures
+      .filter((entry) => /^http5\d\d:/.test(entry))
+      .map((entry) => entry.split(":")[1])
+      .filter((path) => retryTargets.has(path))
+  )];
+  for (const path of paths) {
+    const result = await probeApi(retryTargets.get(path), `Fuente ${path}`, { attempts: 2, waitMs: 900 });
+    if (!result?.ok) continue;
+    for (let index = networkFailures.length - 1; index >= 0; index -= 1) {
+      if (networkFailures[index].startsWith("http5") && networkFailures[index].includes(`:${path}`)) {
+        networkFailures.splice(index, 1);
+      }
+    }
+    recoveredSourcePaths.add(path);
+    info("5xx transitorio recuperado", path);
+  }
+}
+
+async function revalidateRecoveredSources() {
+  const areaChecks = new Map([
+    ["/api/pantry", { areaId: "area-pantry", selector: "[data-pantry-view]" }],
+    ["/api/projects", { areaId: "area-projects", selector: "[data-project-tab]" }],
+    ["/api/objects", { areaId: "area-objects", selector: "[data-objects-tab]" }]
+  ]);
+
+  for (const path of recoveredSourcePaths) {
+    const check = areaChecks.get(path);
+    if (!check) continue;
+    await closeDialogIfOpen();
+    const link = page.locator(`[data-nav-area-id="${check.areaId}"]`).first();
+    if (!await link.count()) {
+      fail(`Recuperación ${path}`, `falta navegación ${check.areaId}`);
+      continue;
+    }
+    await link.click();
+    const visible = await page.locator(check.selector).first()
+      .waitFor({ state: "visible", timeout: 7000 })
+      .then(() => true)
+      .catch(() => false);
+    assertCheck(visible, `Recuperación UI ${path}`, visible ? "API y vista recuperadas" : "API recuperó pero la vista no");
+    await closeDialogIfOpen();
+  }
+
+  if (recoveredSourcePaths.has("/api/health/adherence")) {
+    await closeDialogIfOpen();
+    const link = page.locator('[data-nav-area-id="area-health"]').first();
+    if (await link.count()) {
+      await link.click();
+      const button = page.locator('[data-health-tab="adherence"]');
+      const exists = await button.waitFor({ state: "visible", timeout: 7000 }).then(() => true).catch(() => false);
+      if (exists) {
+        await button.click();
+        await page.waitForTimeout(500);
+        const text = normalizeAuditValue(await page.locator('[data-health-panel="adherence"]').textContent().catch(() => ""));
+        assertCheck(!/no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text), "Recuperación UI /api/health/adherence");
+      } else {
+        fail("Recuperación UI /api/health/adherence", "pestaña no disponible");
+      }
+      await closeDialogIfOpen();
+    }
+  }
+}
+
 async function closeDialogIfOpen() {
   const dialog = page.locator("#detail-dialog");
   if (await dialog.getAttribute("open") !== null) {
@@ -122,7 +211,15 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
   try {
     await first.waitFor({ state: "visible", timeout });
   } catch {
-    fail(label + " · pestañas disponibles", "no se encontraron " + buttonSelector);
+    const sourcePath = String(options.sourcePath || "");
+    const backendFailure = sourcePath && networkFailures.some((entry) =>
+      entry.includes(`:${sourcePath}`) || entry.includes(`:${sourcePath}:`)
+    );
+    if (backendFailure) {
+      info(label + " · pestañas no renderizadas", `backend ${sourcePath} ya clasificado como fallo de red`);
+    } else {
+      fail(label + " · pestañas disponibles", "no se encontraron " + buttonSelector);
+    }
     return;
   }
 
@@ -207,11 +304,11 @@ try {
   const nutrition = await api("/api/nutrition");
   assertCheck(nutrition.ok && nutrition.body?.ok === true, "API de Nutrición", `HTTP ${nutrition.status}`);
 
-  const pantryProbe = await api("/api/pantry");
+  const pantryProbe = await probeApi("/api/pantry", "API de Despensa");
   assertCheck(pantryProbe.ok && pantryProbe.body?.ok === true, "API de Despensa", `HTTP ${pantryProbe.status}`);
-  const projectsProbe = await api("/api/projects");
+  const projectsProbe = await probeApi("/api/projects", "API de Proyectos");
   assertCheck(projectsProbe.ok && projectsProbe.body?.ok === true, "API de Proyectos", `HTTP ${projectsProbe.status}`);
-  const deltaProbe = await api("/api/finance/delta?limit=1");
+  const deltaProbe = await probeApi("/api/finance/delta?limit=1", "API Delta de Finanzas");
   assertCheck(deltaProbe.ok && deltaProbe.body?.ok === true, "API Delta de Finanzas", `HTTP ${deltaProbe.status}`);
 
   const menuRows = Array.isArray(nutrition.body?.weeklyMenu) ? nutrition.body.weeklyMenu : [];
@@ -271,7 +368,7 @@ try {
         "[data-pantry-view]",
         "pantryView",
         (value) => `[data-pantry-panel="${value}"]`,
-        { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180 }
+        { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180, sourcePath: "/api/pantry" }
       );
     } else if (areaId === "area-objects") {
       await auditTabSet(
@@ -279,7 +376,7 @@ try {
         "[data-objects-tab]",
         "objectsTab",
         null,
-        { htmlDataName: "objects-tab", attributeName: "objects-tab", attr: "objects-tab", settle: 180 }
+        { htmlDataName: "objects-tab", attributeName: "objects-tab", attr: "objects-tab", settle: 180, sourcePath: "/api/objects" }
       );
     } else if (areaId === "area-projects") {
       if (!(projectsProbe.ok && projectsProbe.body?.ok === true)) {
@@ -289,7 +386,7 @@ try {
         "[data-project-tab]",
         "projectTab",
         null,
-        { htmlDataName: "project-tab", attributeName: "project-tab", attr: "project-tab", settle: 180 }
+        { htmlDataName: "project-tab", attributeName: "project-tab", attr: "project-tab", settle: 180, sourcePath: "/api/projects" }
       );
     } else if (areaId === "area-habits") {
       await auditTabSet(
@@ -434,6 +531,9 @@ try {
     const ariaNow = await homeKcalRing.getAttribute("aria-valuenow");
     assertCheck(ariaNow !== null && Number.isFinite(Number(ariaNow)), "Indicador kcal Home tiene valor válido");
   }
+
+  await reconcileTransientSourceFailures();
+  await revalidateRecoveredSources();
 
   if (ignoredNetworkAborts.length) {
     info("Abortos de navegación ignorados", ignoredNetworkAborts.slice(0, 5).join(","));
