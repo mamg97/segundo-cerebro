@@ -1142,3 +1142,16 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Segundo Cerebro acepta el grupo `capital_cycle_demo` desde `GET /api/midas` y lo muestra como bloque propio en la tabla general y en Laboratorio vivo. No interviene en `BROKERS` ni en patrimonio real.
 - La comparación frente al resto de estrategias sigue siendo prospectiva: no se ordenan rentabilidades de campañas con fechas/reglas distintas. La evaluación justa debe usar ventanas comunes y, cuando haya muestra suficiente, CAGR/anualización, drawdown, Sharpe/Sortino, turnover y retorno relativo a SPY desde la misma fecha.
 - El workflow de Capital Cycle corre tras cierre XNYS; solo recalcula fundamentales cuando toca señal y registra diariamente el NAV paper. Cambiar parámetros que afecten resultados exige una campaña nueva, no reescribir el diario.
+
+
+## Finanzas · histórico BBVA común · 01/10/2026
+
+- Importado a `MovimientosCuenta` el fichero BBVA recibido el 01/10/2026 con `account_id=bbva-comun` y `source_system=BBVA_EXPORT`.
+- **Limitación de fuente:** aunque se esperaba histórico desde 01/01/2024, el archivo solo contiene **40 movimientos** y cubre operaciones **13/08/2026→30/09/2026** (fecha valor mínima 11/08/2026). El histórico BBVA anterior queda pendiente; no inferirlo.
+- Saldo BBVA común exacto a 30/09: **470,83 €**.
+- Conciliación del snapshot anterior 841,24 €: `+0,31 dividendo META -4,99 Prime -365,73 Audi = 470,83`.
+- Audi: cuota mensual observada **365,73 €** (31/08 y 30/09); la reserva del ciclo pasa a ejecutada y `Deudas` usa ese importe observado.
+- Prime 4,99 € pasa a ejecutado. Seguro moto: AXA 183,68 € fue cargo del ciclo anterior; la reposición de 183 € ya entró en la transferencia +320 € del 18/09.
+- Compromisos pendientes dentro de BBVA: Las Flores 240,20 € + Renta Andrea 104 € + Clicars 33,42 € + iPad 28,50 € + MacBook 40 € + ChatGPT 23 € = **469,12 €**.
+- Resto **1,71 €** bloqueado como `cycle_surplus_buffer`; `free_amount` BBVA común = **0 €** mientras el ciclo siga abierto.
+- La UI de Finanzas deja de hardcodear Santander/Openbank para el histórico: recorre todas las cuentas de liquidez conectadas. BBVA aparece con sus movimientos recientes automáticamente; lo mismo ocurrirá con futuras cuentas cuando tengan movimientos importados.
