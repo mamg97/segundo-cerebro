@@ -368,7 +368,7 @@ try {
         "[data-pantry-view]",
         "pantryView",
         (value) => `[data-pantry-panel="${value}"]`,
-        { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180, sourcePath: "/api/pantry" }
+        { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180, sourcePath: "/api/pantry", timeout: 12000 }
       );
     } else if (areaId === "area-objects") {
       await auditTabSet(
@@ -376,7 +376,7 @@ try {
         "[data-objects-tab]",
         "objectsTab",
         null,
-        { htmlDataName: "objects-tab", attributeName: "objects-tab", attr: "objects-tab", settle: 180, sourcePath: "/api/objects" }
+        { htmlDataName: "objects-tab", attributeName: "objects-tab", attr: "objects-tab", settle: 180, sourcePath: "/api/objects", timeout: 12000 }
       );
     } else if (areaId === "area-projects") {
       if (!(projectsProbe.ok && projectsProbe.body?.ok === true)) {
@@ -386,7 +386,7 @@ try {
         "[data-project-tab]",
         "projectTab",
         null,
-        { htmlDataName: "project-tab", attributeName: "project-tab", attr: "project-tab", settle: 180, sourcePath: "/api/projects" }
+        { htmlDataName: "project-tab", attributeName: "project-tab", attr: "project-tab", settle: 180, sourcePath: "/api/projects", timeout: 12000 }
       );
     } else if (areaId === "area-habits") {
       await auditTabSet(
