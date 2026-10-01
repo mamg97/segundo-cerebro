@@ -19,7 +19,6 @@ test("web audit reconciles transient failures again after UI revalidation", () =
   assert.match(block[0], /await revalidateRecoveredSources\(\);/);
 });
 
-
 test("Pantry backend retries transient Google Sheets reads", async () => {
   const backend = await readFile(new URL("../private-cloudflare/src/pantry.js", import.meta.url), "utf8");
   assert.match(backend, /for \(let attempt = 1; attempt <= 3; attempt \+= 1\)/);
