@@ -6,7 +6,7 @@ let cachedAt = 0;
 let weeklyBootstrapCache = { value: null, expiresAt: 0 };
 let researchCache = { value: null, expiresAt: 0, spreadsheetId: null, spreadsheetIdExpiresAt: 0 };
 
-const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "capital_cycle_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
+const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "capital_cycle_demo", "buy_the_dip_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
 
 function optionalNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -45,6 +45,11 @@ function normalizeDashboard(data) {
       last_equity: optionalNumber(row.last_equity),
       day_return_pct: optionalNumber(row.day_return_pct),
       return_pct: optionalNumber(row.return_pct),
+      annualized_volatility_pct: optionalNumber(row.annualized_volatility_pct),
+      max_drawdown_pct: optionalNumber(row.max_drawdown_pct),
+      sharpe_0rf: optionalNumber(row.sharpe_0rf),
+      risk_observations: Number.isInteger(row.risk_observations) && row.risk_observations >= 0
+        ? Math.min(row.risk_observations, 100000) : 0,
       equity_history: normalizeEquityHistory(row.equity_history),
       note: typeof row.note === "string" ? row.note.slice(0, 500) : ""
     };
