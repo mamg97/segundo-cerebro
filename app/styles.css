@@ -19320,6 +19320,17 @@ footer {
 
 
 /* v0.40.20 — readable weekly matrix + private recipe book */
+.health-tabs {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.health-tabs button {
+  flex: none;
+}
+
 .home-weekly-menu-table-scroll {
   width: 100%;
   max-width: 100%;
