@@ -61,12 +61,19 @@ class FakeStatement {
 }
 
 class FakeD1 {
-  constructor() {
+  constructor({ maxBatchBlobBytes = Infinity } = {}) {
     this.assets=new Map();
     this.chunks=new Map();
+    this.maxBatchBlobBytes=maxBatchBlobBytes;
   }
   prepare(sql){ return new FakeStatement(this,sql); }
   async batch(statements){
+    const blobBytes=statements.reduce((sum,statement)=>sum+statement.args.reduce((inner,arg)=>{
+      if(arg instanceof ArrayBuffer) return inner+arg.byteLength;
+      if(ArrayBuffer.isView(arg)) return inner+arg.byteLength;
+      return inner;
+    },0),0);
+    if(blobBytes>this.maxBatchBlobBytes) throw new Error("D1_BATCH_PAYLOAD_TOO_LARGE");
     for(const statement of statements) statement.execute();
     return statements.map(()=>({success:true}));
   }
@@ -90,6 +97,19 @@ test("D1 object media store chunks, reads and deletes a multi-megabyte asset", a
 
   await store.delete(key);
   assert.equal(await store.get(key),null);
+});
+
+
+test("D1 object media store keeps each write below the aggregate batch payload limit", async () => {
+  const db=new FakeD1({maxBatchBlobBytes:OBJECTS_D1_MEDIA_LIMITS.chunkBytes+1024});
+  const store=createObjectsD1MediaStore({DB:db});
+  const key="objects/obj-large-example-001/processed/12345678-abcd";
+  const input=new Uint8Array(OBJECTS_D1_MEDIA_LIMITS.chunkBytes*3+321);
+  for(let i=0;i<input.length;i+=1) input[i]=i%251;
+
+  await store.put(key,input,{httpMetadata:{contentType:"image/png"}});
+  const stored=await store.get(key);
+  assert.deepEqual(new Uint8Array(stored.body),input);
 });
 
 test("D1 object media store enforces its internal free-tier safety cap", async () => {

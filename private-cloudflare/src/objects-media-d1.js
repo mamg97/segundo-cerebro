@@ -118,24 +118,39 @@ export function createObjectsD1MediaStore(env) {
         chunks.push(bytes.slice(offset, Math.min(offset + CHUNK_BYTES, bytes.byteLength)));
       }
 
-      const statements = [
-        db.prepare(`
-          INSERT INTO objects_media_assets (
-            storage_key, objeto_id, image_type, version, mime_type,
-            size_bytes, chunk_count, etag, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(
-          key, objetoId, imageType, version, mimeType,
-          bytes.byteLength, chunks.length, etag, createdAt
-        ),
-        ...chunks.map((chunk, index) =>
-          db.prepare(
-            "INSERT INTO objects_media_chunks (storage_key, chunk_index, data) VALUES (?, ?, ?)"
-          ).bind(key, index, exactArrayBuffer(chunk))
-        )
-      ];
+      const assetStatement = db.prepare(`
+        INSERT INTO objects_media_assets (
+          storage_key, objeto_id, image_type, version, mime_type,
+          size_bytes, chunk_count, etag, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        key, objetoId, imageType, version, mimeType,
+        bytes.byteLength, chunks.length, etag, createdAt
+      );
 
-      await db.batch(statements);
+      // D1 applies request-size limits to the whole batch payload. Sending every
+      // binary chunk in one batch makes an otherwise valid multi-megabyte image
+      // fail once the aggregate request crosses that limit. Persist metadata and
+      // chunks in bounded requests instead; uploadObjectsImage compensates with
+      // delete() if a later write fails.
+      try {
+        await db.batch([assetStatement]);
+        for (let index = 0; index < chunks.length; index += 1) {
+          await db.batch([
+            db.prepare(
+              "INSERT INTO objects_media_chunks (storage_key, chunk_index, data) VALUES (?, ?, ?)"
+            ).bind(key, index, exactArrayBuffer(chunks[index]))
+          ]);
+        }
+      } catch (error) {
+        try {
+          await db.batch([
+            db.prepare("DELETE FROM objects_media_chunks WHERE storage_key = ?").bind(key),
+            db.prepare("DELETE FROM objects_media_assets WHERE storage_key = ?").bind(key)
+          ]);
+        } catch {}
+        throw error;
+      }
     },
 
     async get(key) {

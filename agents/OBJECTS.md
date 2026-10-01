@@ -253,6 +253,10 @@ Git solo contiene código, contrato y estilos. Nunca contiene inventario real, f
 
 D1 actúa como persistencia binaria privada de los derivados visuales, no como segunda fuente de identidad. Las rutas físicas se derivan del `objeto_id` y de una versión técnica; pertenencia, metadatos y referencia activa siguen gobernados por `Armario`.
 
+## Regla de ejecución de subidas visuales
+
+Ante una petición de subir o ingerir una imagen al Armario, GESTOR OBJETOS debe leer primero `docs/OBJECTS_IMAGE_INGEST.md` y comprobar Drive + Railway. La ausencia de un POST directo no bloquea la operación: debe usarse el fallback `seed.mjs + OBJECTS_SEED_JOBS` cuando esas herramientas estén disponibles. No se declara éxito sin `ok=true` y verificación posterior en `Armario`. Al terminar o abortar, Railway debe quedar con `OBJECTS_SEED_JOBS` vacío y start command `node server.mjs`.
+
 ## Puente operativo ChatGPT → Armario visual
 
 La ruta vigente para imágenes desde ChatGPT es:
