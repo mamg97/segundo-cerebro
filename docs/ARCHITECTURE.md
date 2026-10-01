@@ -293,7 +293,7 @@ La barra lateral es la navegación canónica de dominios. La portada no replica 
 - `Patrimonio`, `Salud`, `Hábitos`, `Despensa`, `Objetos` y `Padres` abren sus vistas especializadas.
 - Carrera y Pareja/Familia usan un detalle contextual que reúne proyectos, pendientes, objetivos y decisiones abiertas de su propio ámbito. Proyectos usa su workspace privado y puede mostrar las decisiones abiertas del área.
 
-`OPEN_LOOP`, `GOAL` y `DECISION` son capas transversales, no dominios. Los pendientes viven en `Próximos movimientos`; los objetivos y decisiones se integran en su área propietaria. Una decisión solo entra también en `Próximos movimientos` cuando tiene una siguiente acción o un vencimiento explícito.
+`OPEN_LOOP`, `GOAL` y `DECISION` son capas transversales, no dominios. Sus datos siguen perteneciendo a sus áreas/gestores propietarios; Home ya no mantiene un bloque global `Próximos movimientos`. Los objetivos y decisiones se muestran en contexto cuando la vista propietaria los necesita.
 
 La antigua parrilla `Áreas de tu vida` y la vista técnica `Sistema` se retiraron de Home. La arquitectura técnica se documenta en `docs/`, evitando duplicar información técnica potencialmente obsoleta en la interfaz operativa.
 
@@ -339,6 +339,25 @@ El registro no sustituye la documentación propietaria de cada proyecto. Mantien
 
 La UI de Proyectos se carga bajo demanda desde `/api/projects`.
 
+
+## Salud — recetas privadas
+
+El recetario reutiliza la fuente canónica de Salud y un almacén binario privado mínimo:
+
+```text
+SEGUNDO CEREBRO - SALUD
+  Recetas + IngredientesReceta + PasosReceta
+        │
+        ├── metadatos/ref de foto
+        ↓
+Drive privado · AUXILIARES/RECETAS - FOTOS
+        ↓ lectura autenticada/proxy same-origin
+Cloudflare Worker
+        ↓
+Salud → Recetas
+```
+
+La identidad, nombre, raciones, macros, ingredientes y pasos siguen siendo autoridad del Sheet. Drive contiene únicamente los bytes de la foto; no se crea un catálogo paralelo. El frontend muestra foto → ingredientes → preparación y se actualiza al cambiar la fuente, sin hardcodes por receta.
 
 ## Salud — adherencia mensual
 

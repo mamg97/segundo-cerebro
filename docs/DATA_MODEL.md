@@ -38,7 +38,7 @@ Resultado acotado con varias acciones. Campos: `areaId`, `goalIds`, `progress`, 
 
 ### OPEN_LOOP
 
-Asunto que requiere atención o seguimiento. Es una entidad transversal y se presenta principalmente en `Próximos movimientos`; no constituye un área de navegación.
+Asunto que requiere atención o seguimiento. Es una entidad transversal propiedad de su área/gestor; no constituye un área de navegación ni requiere un bloque global en Home.
 
 | Campo | Uso |
 |---|---|
@@ -57,7 +57,7 @@ Caso de referencia ficticio: “Recoger el anillo” en Pareja → Matrimonio.
 
 Dirección deseada y medible. Campos: `areaId`, `horizon`, `metric`, `target`.
 
-Un objetivo se presenta dentro de su área responsable. Los objetivos transversales del Coordinador pueden aparecer junto a `Próximos movimientos`; no crean un dominio `Objetivos` por sí mismos.
+Un objetivo se presenta dentro de su área responsable. Los objetivos transversales del Coordinador se presentan únicamente donde aporten contexto; no crean un dominio `Objetivos` por sí mismos.
 
 ### DECISION
 
@@ -66,6 +66,19 @@ Elección abierta o cerrada. Campos: `areaId`, `question`, `options`, `decision`
 ### EVENT
 
 Compromiso temporal. Campos: `areaId`, `startsAt`, `endsAt`, `locationRef`.
+
+### RECIPE
+
+Receta reutilizable de Salud. La autoridad vive en el Sheet privado `SEGUNDO CEREBRO - SALUD`.
+
+Campos/relaciones principales:
+- `recipe_id`: identidad estable;
+- datos de receta/raciones/macros en `Recetas`;
+- ingredientes 1:N en `IngredientesReceta`;
+- pasos ordenados 1:N en `PasosReceta`;
+- `foto_drive_file_id`, `foto_mime_type`, `foto_updated_at`: referencia técnica opcional a una foto privada.
+
+La foto no define la identidad de la receta y sus bytes no se duplican en el Sheet ni en Git. El API público de la aplicación privada expone una URL same-origin, no el identificador bruto de Drive.
 
 ### FINANCE_SUMMARY
 

@@ -460,3 +460,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Criterio de calidad:** si un dato nuevo compatible con el esquema requiere un despliegue para aparecer correctamente, se considera señal de acoplamiento indebido y debe corregirse el diseño reutilizable en lugar de añadir otro caso especial.
 - **Motivo:** mantener la web estable, reducir regresiones, evitar lógica específica por dato y permitir que los gestores mantengan el sistema actualizando información, no código.
 
+
+
+## D-046 — Recetario: Sheet canónico + foto privada en Drive
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-10-01.
+- **Decisión:** las recetas siguen siendo autoridad de `SEGUNDO CEREBRO - SALUD` mediante `Recetas`, `IngredientesReceta` y `PasosReceta`; la foto es un asset binario privado almacenado en Drive y enlazado desde `Recetas` mediante una referencia mínima.
+- **Presentación:** Salud incorpora una pestaña `Recetas` genérica que muestra foto, ingredientes y preparación. Añadir o editar una receta no requiere despliegue.
+- **Privacidad:** el frontend recibe una URL same-origin; el identificador bruto de Drive no forma parte del contrato visible. Git no almacena fotos ni contenido real de recetas.
+- **Integridad:** si faltan foto, ingredientes o pasos, la UI conserva el hueco como pendiente. Los pasos nunca se completan por inferencia.
+- **Motivo:** mantener la arquitectura data-driven, evitar una fuente paralela y permitir que los gestores capturen recetas futuras únicamente mutando las fuentes privadas autorizadas.

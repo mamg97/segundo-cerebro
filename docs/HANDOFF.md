@@ -49,7 +49,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Vista semanal de agenda y eventos importantes; las decisiones se presentan dentro de su área propietaria, no como bloque independiente.
 - Diseño móvil corregido para evitar overflow y apariencia de escritorio comprimido.
 - La Home ya no muestra el bloque `Próximos movimientos`; los asuntos accionables siguen perteneciendo a sus dominios y no se eliminan de las fuentes.
-- El menú semanal de Home vuelve a tarjetas por día, con agrupación por toma y estados consumido/plan intactos; se descartó la matriz 7×momentos porque degradaba de forma material la legibilidad.
+- El menú semanal de Home usa una matriz día×momento a ancho completo: conserva todas las comidas reconciliadas en su celda, tipografía legible, altura automática por fila y scroll horizontal interno solo cuando el viewport no permite mostrar las siete columnas sin comprimirlas.
 - Escala tipográfica compartida aumentada para Home, navegación, calendarios, Salud y diálogos; los cambios de contenido siguen siendo exclusivamente data-driven desde las fuentes canónicas.
 
 ### Finanzas
@@ -112,6 +112,9 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Esta regla está cubierta por tests y forma parte de `agents/HEALTH.md`; no volver a corregir a mano el mismo día para resolver duplicados visuales.
 - No se inventan objetivos nutricionales ni gasto ausente.
 - Las pausas temporales de fuerza se controlan desde `ObjetivosActividad`: `strength_sessions_week=0` suspende la exigencia, Adherencia la trata como dimensión ignorada y Gimnasio conserva el plan base pero deja de proponer/registrar sesiones hasta una fila efectiva posterior que reactive el objetivo.
+- Salud incorpora `Recetas` como pestaña privada: lee `Recetas + IngredientesReceta + PasosReceta` y presenta foto, ingredientes y preparación sin inventar pasos.
+- `Recetas` admite referencia privada de foto; los bytes viven en `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS` y el Worker los sirve mediante proxy autenticado sin exponer el ID de Drive.
+- El alta futura de una receta es una mutación de datos: foto privada + filas canónicas en Salud. No requiere tocar frontend/Worker salvo cambio de capacidad o esquema.
 - Contrato vigente: `agents/HEALTH.md`.
 
 ### Despensa y suministros

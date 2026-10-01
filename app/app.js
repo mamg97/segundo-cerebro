@@ -2022,6 +2022,7 @@ function openHealthDetail() {
       <button type="button" data-health-tab="medical">Médicos</button>
       <button type="button" data-health-tab="gym">Gimnasio</button>
       <button type="button" data-health-tab="nutrition">Nutrición</button>
+      <button type="button" data-health-tab="recipes">Recetas</button>
       <button type="button" data-health-tab="adherence">Adherencia</button>
       <button type="button" data-health-tab="menu">Menú</button>
     </div>
@@ -2037,6 +2038,9 @@ function openHealthDetail() {
       </section>
       <section class="health-tab-panel" data-health-panel="nutrition">
         <div id="nutrition-panel"><p class="health-empty">Cargando nutrición…</p></div>
+      </section>
+      <section class="health-tab-panel" data-health-panel="recipes">
+        <div id="recipes-panel"><p class="health-empty">Cargando recetario…</p></div>
       </section>
       <section class="health-tab-panel" data-health-panel="adherence">
         <div id="adherence-panel"><p class="health-empty">Abre la vista para calcular la adherencia mensual.</p></div>
@@ -2492,6 +2496,7 @@ async function loadNutritionPanel(dateKey) {
     if (!response.ok) throw new Error(`NUTRITION_${response.status}`);
     const payload = await response.json();
     renderNutritionPanel(payload);
+    renderRecipesPanel(payload);
     renderMenuPanel(payload);
   } catch (error) {
     if (panel) {
@@ -2500,6 +2505,10 @@ async function loadNutritionPanel(dateKey) {
           <strong>Nutrición todavía no está conectada</strong>
           <p>La base privada ya está preparada. Falta activar la conexión del Sheet de Salud en el Worker.</p>
         </div>`;
+    }
+    const recipesPanel = document.querySelector("#recipes-panel");
+    if (recipesPanel) {
+      recipesPanel.innerHTML = '<div class="health-empty health-empty-card"><strong>Recetario no disponible</strong><p>No se ha podido cargar la fuente de recetas.</p></div>';
     }
     const menuPanel = document.querySelector("#menu-panel");
     if (menuPanel) {
@@ -4302,12 +4311,13 @@ function focusHomeWeeklyMenuOnToday(content) {
   if (content.dataset.weeklyMenuFocusedDate === today) return;
 
   requestAnimationFrame(() => {
-    const grid = content.querySelector(".home-weekly-menu-grid");
-    const todayCard = content.querySelector(`[data-menu-date="${CSS.escape(today)}"]`);
-    if (!grid || !todayCard) return;
+    const scroller = content.querySelector(".home-weekly-menu-table-scroll");
+    const todayHeader = content.querySelector(`[data-menu-date="${CSS.escape(today)}"]`);
+    if (!scroller || !todayHeader) return;
 
-    const left = Math.max(0, todayCard.offsetLeft - grid.offsetLeft);
-    grid.scrollTo({ left, behavior: "auto" });
+    const rowLabelWidth = content.querySelector(".home-weekly-menu-corner")?.offsetWidth || 0;
+    const left = Math.max(0, todayHeader.offsetLeft - rowLabelWidth - 8);
+    scroller.scrollTo({ left, behavior: "auto" });
     content.dataset.weeklyMenuFocusedDate = today;
   });
 }
@@ -4378,54 +4388,127 @@ function renderHomeWeeklyMenu(data) {
     return;
   }
 
+  const moments = weeklyMenuMatrixMoments(model.days);
+
   content.innerHTML = `
-    <div class="home-weekly-menu-grid">
-      ${model.days.map((day) => {
-        const isToday = day.date === localDateKey();
-        const targetLine = weeklyMenuTargetLine(day, model);
-        const display = weeklyMenuDayDisplayTotals(day, model);
-        return `
-          <article data-menu-date="${escapeHtml(day.date)}" class="home-weekly-menu-day ${isToday ? "is-today" : ""} ${!day.nutritionComplete ? "is-incomplete" : ""}">
-            <header>
-              <div>
-                <small>${isToday ? "Hoy" : "Día"}</small>
-                <strong>${escapeHtml(weeklyMenuDayLabel(day.date))}</strong>
-              </div>
-              <span>${display.useConsumed
-                ? (day.hasPendingPlan ? "Consumido · plan pendiente" : "Consumido")
-                : (!day.nutritionComplete ? "Datos incompletos" : display.kcalPct == null ? formatKcal(display.kcal) : display.kcalPct + "% kcal")}</span>
-            </header>
+    <div class="home-weekly-menu-table-scroll" role="region" aria-label="Menú semanal por momento y día" tabindex="0">
+      <div class="home-weekly-menu-table">
+        <div class="home-weekly-menu-corner">
+          <span>Momento</span>
+        </div>
+        ${model.days.map((day) => renderHomeWeeklyMenuDayHeader(day, model)).join("")}
 
-            <div class="home-weekly-menu-progress">
-              <div>
-                <span><i class="kcal"></i>Kcal</span>
-                <b>${display.useConsumed ? "" : (!day.nutritionComplete ? "Subtotal " : "")}${formatKcal(display.kcal)}${model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
-                ${model.kcalTarget !== null
-                  ? renderNutritionQualityMeter("kcal", display.kcal, model.kcalTarget, "Kcal", !display.useConsumed && !day.nutritionComplete)
-                  : ""}
-              </div>
-              <div>
-                <span><i class="protein"></i>Proteína</span>
-                <b>${display.useConsumed ? "" : (!day.nutritionComplete ? "Subtotal " : "")}${formatMacro(display.protein)}${model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
-                ${model.proteinTarget !== null
-                  ? renderNutritionQualityMeter("protein", display.protein, model.proteinTarget, "Proteína", !display.useConsumed && !day.nutritionComplete)
-                  : ""}
-              </div>
-            </div>
-
-            <div class="home-weekly-menu-meals">
-              ${groupWeeklyMenuItemsByMoment(day.items)
-                .map((group) => renderHomeWeeklyMenuMealGroup(group.items))
-                .join("")}
-            </div>
-            ${display.useConsumed && day.hasPendingPlan
-              ? `<footer>Consumido: ${escapeHtml(formatKcal(display.kcal))} · ${escapeHtml(formatMacro(display.protein))}. Plan completo si se cumplen los pendientes: ${escapeHtml(formatKcal(day.kcal))} · ${escapeHtml(formatMacro(day.protein))}.</footer>`
-              : (targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : "")}
-          </article>`;
-      }).join("")}
+        ${moments.map((moment) => `
+          <div class="home-weekly-menu-row-label">
+            <span>${escapeHtml(moment.label)}</span>
+          </div>
+          ${model.days.map((day) => {
+            const rows = weeklyMenuItemsForMoment(day, moment.key);
+            const allConsumed = rows.length > 0 && rows.every(weeklyMenuItemIsConsumed);
+            return `
+              <div
+                class="home-weekly-menu-table-cell ${allConsumed ? "is-consumed" : ""}"
+                data-menu-date="${escapeHtml(day.date)}"
+                data-menu-moment="${escapeHtml(moment.key)}"
+              >
+                ${renderHomeWeeklyMenuMatrixCell(rows)}
+              </div>`;
+          }).join("")}
+        `).join("")}
+      </div>
     </div>`;
 
   focusHomeWeeklyMenuOnToday(content);
+}
+
+function formatRecipeAmount(ingredient) {
+  const quantity = Number(ingredient?.quantity);
+  const grams = Number(ingredient?.grams);
+  if (Number.isFinite(quantity)) {
+    const unit = String(ingredient?.unit || "").trim();
+    return `${quantity.toLocaleString("es-ES", { maximumFractionDigits: quantity < 10 ? 1 : 0 })}${unit ? " " + unit : ""}`;
+  }
+  if (Number.isFinite(grams)) {
+    return `${grams.toLocaleString("es-ES", { maximumFractionDigits: grams < 10 ? 1 : 0 })} g`;
+  }
+  return "";
+}
+
+function renderRecipesPanel(data) {
+  const panel = document.querySelector("#recipes-panel");
+  if (!panel) return;
+
+  const recipes = Array.isArray(data?.recipes) ? data.recipes : [];
+  panel.innerHTML = `
+    <div class="recipes-toolbar">
+      <div>
+        <p class="context-label">Nutrición · recetario</p>
+        <h3>Recetas</h3>
+        <p>Foto, ingredientes y preparación proceden de la fuente privada de Salud. Los pasos pendientes no se completan por inferencia.</p>
+      </div>
+      <a class="master-source-link" href="/api/source-link?target=health-recipes" target="_blank" rel="noopener noreferrer">Abrir Sheet ↗</a>
+    </div>
+
+    ${recipes.length ? `
+      <div class="recipes-grid">
+        ${recipes.map((recipe) => {
+          const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+          const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
+          const macros = [
+            recipe.kcalPerServing == null ? null : formatKcal(recipe.kcalPerServing),
+            recipe.proteinPerServing == null ? null : `P ${formatMacro(recipe.proteinPerServing)}`
+          ].filter(Boolean).join(" · ");
+          return `
+            <article class="recipe-card" data-recipe-id="${escapeHtml(recipe.id || "")}">
+              <div class="recipe-photo">
+                ${recipe.photoUrl
+                  ? `<img src="${escapeHtml(recipe.photoUrl)}" alt="Foto de ${escapeHtml(recipe.name || "receta")}" loading="lazy">`
+                  : `<div class="recipe-photo-placeholder" aria-label="Receta sin foto"><span>⌁</span><small>Sin foto todavía</small></div>`}
+              </div>
+              <div class="recipe-card-body">
+                <header>
+                  <div>
+                    <h4>${escapeHtml(recipe.name || "Receta")}</h4>
+                    <p>${recipe.servings == null ? "Raciones pendientes" : `${Number(recipe.servings).toLocaleString("es-ES")} ración${Number(recipe.servings) === 1 ? "" : "es"}`}${macros ? " · " + escapeHtml(macros) : ""}</p>
+                  </div>
+                  ${recipe.precision ? `<span class="recipe-precision">${escapeHtml(recipe.precision)}</span>` : ""}
+                </header>
+
+                <section class="recipe-section recipe-ingredients">
+                  <h5>Ingredientes</h5>
+                  ${ingredients.length
+                    ? `<ul>${ingredients.map((ingredient) => `
+                        <li>
+                          <span>${escapeHtml(ingredient.name || "Ingrediente")}</span>
+                          <strong>${escapeHtml(formatRecipeAmount(ingredient) || "—")}</strong>
+                        </li>`).join("")}</ul>`
+                    : '<p class="recipe-pending">Ingredientes pendientes de confirmar.</p>'}
+                </section>
+
+                <section class="recipe-section recipe-steps">
+                  <h5>Preparación</h5>
+                  ${steps.length
+                    ? `<ol>${steps.map((step) => `
+                        <li>
+                          <span>${escapeHtml(step.instruction || "")}</span>
+                          ${step.timeMinutes != null || step.temperature || step.utensil
+                            ? `<small>${[
+                                step.timeMinutes != null ? `${Number(step.timeMinutes)} min` : null,
+                                step.temperature || null,
+                                step.utensil || null
+                              ].filter(Boolean).map(escapeHtml).join(" · ")}</small>`
+                            : ""}
+                        </li>`).join("")}</ol>`
+                    : '<p class="recipe-pending">Preparación pendiente de confirmar.</p>'}
+                </section>
+
+                ${recipe.note ? `<p class="recipe-note">${escapeHtml(recipe.note)}</p>` : ""}
+              </div>
+            </article>`;
+        }).join("")}
+      </div>`
+      : '<div class="health-empty health-empty-card"><strong>Recetario preparado</strong><p>Cuando se añada la primera receta a la fuente privada, aparecerá aquí automáticamente.</p></div>'}
+  `;
 }
 
 function renderNutritionEntries(entries) {

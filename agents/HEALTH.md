@@ -13,7 +13,7 @@ Tabs:
 - `Registro`: planned and consumed meals by date.
 - `Objetivos`: effective calorie/macro targets.
 - `EnergiaDiaria`: active, resting and total energy expenditure.
-- `Recetas` / `IngredientesReceta`: recipe definitions and ingredients.
+- `Recetas` / `IngredientesReceta`: recipe definitions and ingredients. `Recetas` also stores the private photo reference metadata (`foto_drive_file_id`, MIME and update timestamp); the binary image itself is not embedded in the Sheet.
 - `PasosReceta`: canonical ordered preparation steps for recipes. Store only user-confirmed or source-supported instructions; never invent missing cooking steps merely to make a recipe look complete.
 - `MenuSemanal`: planned menu.
 
@@ -29,6 +29,19 @@ When the user tells ChatGPT what they plan to eat:
 7. If the plan needs an absent/low-stock product, hand that need to GESTOR DESPENSA so it can be represented in `ListaCompra`.
 
 When nutritional values are estimated rather than label-confirmed, write the source/note accordingly. Never present an estimate as measured data.
+
+### Recipe capture and photo workflow
+
+When the user supplies a recipe, its durable representation remains data-driven and must not require a frontend deployment:
+
+1. Reuse or create a stable `recipe_id` in `Recetas`.
+2. Store the recipe photo as a private file under `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS`; do not make it public and do not store the bytes in Git.
+3. Save only the private Drive file reference, MIME type and photo update timestamp in the matching `Recetas` row.
+4. Store ingredient rows in `IngredientesReceta`.
+5. Store preparation instructions in `PasosReceta`, preserving explicit order and only instructions confirmed by the user or supported by the supplied source.
+6. Verify that the private `Recetas` view renders the photo first and, underneath, ingredients and preparation. Missing photo/ingredients/steps stay visibly pending rather than being invented.
+
+The Worker proxies recipe images through an authenticated same-origin endpoint. The browser never needs the raw private Drive file identifier. Ordinary recipe additions or edits are Sheet/Drive mutations only; code changes are reserved for schema/capability/UI changes.
 
 ### Household menu invariants
 
