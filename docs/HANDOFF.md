@@ -1225,3 +1225,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Las estrategias conservan sus horizontes propios. No se declara una clasificación común cuando las fechas de inicio o supuestos de ejecución difieren; la comparación justa usa ventanas solapadas cuando exista suficiente historial.
 - La salud operativa de Segundo Cerebro también vigila el workflow `MIDAS Buy The Dip paper`.
 - Assets MIDAS: `app.js?v=0.40.17`, `midas-lab.js?v=0.40.17`.
+
+
+## MIDAS · Buy The Dip corpus v0 · 01/10/2026
+
+- `mamg97/midas-paper-lab` incorpora la campaña prospectiva separada `buy_the_dip_corpus_2026_v0`, derivada únicamente del corpus primario disponible de Buy The Dip.
+- La v0 automatiza un proceso deep-value/situaciones especiales: valoración, supervivencia/calidad, asignación de capital, dislocación y catalizadores; permite caja cuando faltan ideas y rota por coste de oportunidad.
+- Parámetros congelados antes del primer fill: 100.000 USD ficticios, máximo 10 posiciones, 15 % por nombre, 30 % por sector, decisión mensual, NAV diario, comisión 0,10 %, slippage 0,05 % y fills next-open.
+- La v0 usa el universo S&P-derived ya congelado para evitar seleccionar retrospectivamente small/mid caps internacionales. Una futura v1 global requerirá universo propio congelado y diario nuevo.
+- Segundo Cerebro acepta el grupo `buy_the_dip_demo` y lo muestra como bloque propio en tabla y Laboratorio vivo.
+- El dashboard MIDAS amplía la comparación para todas las estrategias con **rentabilidad acumulada + riesgo observado**: volatilidad anualizada adaptada a la cadencia, máximo drawdown y Sharpe 0rf. No se proclama clasificación común mientras las ventanas de observación sean distintas.
+- La campaña no altera Capital Cycle ni ninguna línea MIDAS existente y nunca escribe en BROKERS/patrimonio real.
+- Assets de la integración: `app.js?v=0.40.18`, `midas-lab.js?v=0.40.18`.
