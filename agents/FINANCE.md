@@ -198,6 +198,24 @@ Reglas:
 - los extractos y cifras reales permanecen en la fuente privada; Git solo contiene el contrato y la lógica;
 - la UI privada puede mostrar una sección específica de crédito alimentada dinámicamente por estas estructuras.
 
+### Asignaciones internas de eToro
+
+Parte del valor de eToro puede estar invertida pero económicamente comprometida para retiradas futuras. No se trata como liquidez libre ni se resta del patrimonio bruto: se visualiza como una segmentación interna del valor actual de eToro.
+
+`EtoroAsignaciones` contiene:
+- importe nominal todavía reservado por destino;
+- salida mensual prevista;
+- siguiente retirada y última retirada conocida;
+- propietario económico, fuente y nota de conciliación;
+- bloque `core` = resto de eToro no comprometido por esas reservas, derivado del último `PatrimonioDetalle`.
+
+Reglas:
+- 100 % de la barra eToro = valor actual de eToro en `PatrimonioDetalle`;
+- las reservas nominales provienen del maestro y de sus comentarios/planes, no de una estimación de mercado;
+- la variación de mercado se absorbe en el bloque `Resto inversión eToro` hasta el siguiente cierre;
+- una retirada ejecutada reduce o cierra el bloque correspondiente; no se descuenta dos veces del patrimonio;
+- si maestro, comentario y tabla fechada discrepan en la fecha final, conservar la discrepancia en la nota y usar la tabla fechada más explícita para la programación operativa.
+
 ### Distribución patrimonial
 
 La fuente derivada puede exponer `PatrimonioDetalle` con:
