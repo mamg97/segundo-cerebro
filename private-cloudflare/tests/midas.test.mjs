@@ -194,6 +194,7 @@ test("MIDAS workflow health is safe, cached and exposes failures without raw Act
   assert.equal(first.overall, "attention");
   assert.equal(first.workflows.find((row) => row.name === "MIDAS TFM shadow forecasts").state, "failed");
   assert.equal(first.workflows.find((row) => row.name === "MIDAS weekly ML paper").state, "not_due_yet");
+  assert.equal(first.workflows.find((row) => row.name === "MIDAS Buy The Dip paper").state, "not_due_yet");
   assert.equal("html_url" in first.workflows[0], false);
   await fetchMidasWorkflowHealth(fetcher, Date.parse("2026-10-01T16:01:00Z"));
   assert.equal(requests, 1);
