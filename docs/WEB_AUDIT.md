@@ -35,6 +35,18 @@ La vigilancia se considera degradada cuando:
 
 El watcher externo de ChatGPT debe usar este criterio y no contar como auditoría completa un heartbeat de respaldo cuyo step de Chromium haya quedado `skipped`.
 
+### Watchdog externo de recuperación
+
+Existe además una tarea horaria externa de ChatGPT como defensa frente a una caída del emisor `schedule` de GitHub:
+
+- a partir de **75 minutos** sin auditoría completa correcta y sin otra completa en curso, relanza manualmente el job de auditoría completa más reciente del **mismo** workflow `Audit production web`;
+- no crea ni mantiene un segundo workflow horario;
+- si la recuperación termina verde antes de los 90 minutos, no notifica;
+- al alcanzar 90 minutos sin auditoría completa correcta, o si el relanzamiento falla, genera alerta con la causa clasificada;
+- nunca modifica datos privados ni producción: solo relanza el control read-only y diagnostica.
+
+Esta tarea externa complementa el cron primario/respaldo porque ambos cron siguen dependiendo del mismo scheduler de GitHub.
+
 ## Qué se audita
 
 Como mínimo:
