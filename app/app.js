@@ -3749,13 +3749,10 @@ function weeklyMenuModel(data) {
     ["comida", 3],
     ["merienda", 4],
     ["cena", 5],
-    ["cena · complemento", 6],
-    ["cena complemento", 6],
-    ["complemento cena", 6],
-    ["postre", 7],
-    ["snack", 8],
-    ["cierre", 9],
-    ["otro", 10]
+    ["cena · complemento", 5],
+    ["cena complemento", 5],
+    ["complemento cena", 5],
+    ["otro", 6]
   ]);
   const normalizedMoment = (value) => String(value || "Otro")
     .normalize("NFD")
@@ -4087,13 +4084,17 @@ function renderWeeklyMenuMealGroup(items) {
   if (rows.length === 1) return renderWeeklyMenuMeal(rows[0]);
 
   const consumed = rows.every(weeklyMenuItemIsConsumed);
-  const moment = rows[0]?.moment || "Otro";
+  const moment = canonicalWeeklyMenuMoment(rows[0]);
+  const incomplete = rows.some((item) => item.kcal == null || item.protein == null);
+  const knownKcal = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0);
+  const knownProtein = rows.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
 
   return `
     <article class="weekly-menu-meal weekly-menu-meal-grouped ${consumed ? "is-consumed" : ""}">
       <div class="weekly-menu-meal-copy">
         <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
         ${renderWeeklyMenuGroupItems(rows)}
+        ${incomplete ? `<small class="weekly-menu-group-subtotal">Subtotal conocido · ${escapeHtml(formatKcal(knownKcal))} · P ${escapeHtml(formatMacro(knownProtein))}</small>` : ""}
       </div>
       <details class="weekly-menu-ingredients">
         <summary>Ver componentes y cantidades</summary>
@@ -4248,6 +4249,7 @@ function canonicalWeeklyMenuMoment(item) {
   }
 
   if (/^(cena\s*·?\s*complemento|complemento\s+cena)$/.test(moment)) return "Cena";
+  if (/^cierre\b/.test(moment)) return "Cena";
   return raw;
 }
 
@@ -4292,8 +4294,7 @@ function weeklyMenuMomentRank(value) {
     ["comida", 3],
     ["merienda", 4],
     ["cena", 5],
-    ["cierre", 6],
-    ["otro", 7]
+    ["otro", 6]
   ]);
   return order.get(normalizeWeeklyMenuMoment(value)) ?? 99;
 }
@@ -4357,9 +4358,10 @@ function weeklyMenuDayDisplayTotals(day, model) {
 function renderHomeWeeklyMenuDayHeader(day, model) {
   const isToday = day.date === localDateKey();
   const display = weeklyMenuDayDisplayTotals(day, model);
+  const incomplete = !display.useConsumed && !day.nutritionComplete;
   const stateLabel = display.useConsumed
     ? (day.hasPendingPlan ? "Consumido · plan pendiente" : "Consumido")
-    : (!day.nutritionComplete ? "Datos incompletos" : display.kcalPct == null ? formatKcal(display.kcal) : display.kcalPct + "% kcal");
+    : (incomplete ? "Datos incompletos" : display.kcalPct == null ? formatKcal(display.kcal) : display.kcalPct + "% kcal");
 
   return `
     <div data-menu-date="${escapeHtml(day.date)}" class="home-weekly-menu-table-day ${isToday ? "is-today" : ""}">
@@ -4373,14 +4375,14 @@ function renderHomeWeeklyMenuDayHeader(day, model) {
       <div class="home-weekly-menu-progress">
         <div>
           <span><i class="kcal"></i>Kcal</span>
-          <b>${formatKcal(display.kcal)}${model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
+          <b>${incomplete ? "<small>Subtotal </small>" : ""}${formatKcal(display.kcal)}${model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
           ${model.kcalTarget !== null
             ? renderNutritionQualityMeter("kcal", display.kcal, model.kcalTarget, "Kcal", !display.useConsumed && !day.nutritionComplete)
             : ""}
         </div>
         <div>
           <span><i class="protein"></i>Proteína</span>
-          <b>${formatMacro(display.protein)}${model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
+          <b>${incomplete ? "<small>Subtotal </small>" : ""}${formatMacro(display.protein)}${model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
           ${model.proteinTarget !== null
             ? renderNutritionQualityMeter("protein", display.protein, model.proteinTarget, "Proteína", !display.useConsumed && !day.nutritionComplete)
             : ""}
@@ -4532,7 +4534,7 @@ function renderRecipesPanel(data) {
 function renderNutritionEntries(entries) {
   if (!entries.length) return '<p class="health-empty">Todavía no hay comidas registradas para este día.</p>';
 
-  const order = ["Mañana oficina", "Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Cierre", "Otro"];
+  const order = ["Mañana oficina", "Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Otro"];
   const groups = new Map();
   for (const entry of entries) {
     const key = canonicalWeeklyMenuMoment({ moment: entry.moment, itemName: entry.itemName, note: entry.note });
