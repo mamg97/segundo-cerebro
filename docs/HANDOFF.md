@@ -1143,6 +1143,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Assets app/styles: `v0.40.7`.
 
 
+## MIDAS · fuente robusta de salud operativa · 01/10/2026
+
+- Cada workflow programado de la competición escribe un artefacto mínimo en `mamg97/midas-paper-lab/strategy_runtime/*.json` mediante un step `always()`; por tanto registra también el fallo del motor antes del commit.
+- La vista privada MIDAS lee esos artefactos públicos versionados. Ya no depende de que Cloudflare pueda consultar la API de GitHub Actions en vivo.
+- El auditor mantiene una comprobación independiente y más fuerte: consulta Actions directamente y contrasta que la UI exponga las mismas incidencias.
+- Cobertura actual: estrategias diarias, TFM, Capital Cycle, Buy The Dip, Weekly ML, TFG corregido y el genético prospectivo privado.
+- Un artefacto ausente antes de la primera ventana debida se muestra como «Aún no toca»; después de vencer la ventana/gracia se convierte en ejecución ausente.
+- Esto no altera señales, carteras, retornos ni diarios: solo telemetría operativa.
+
 ## MIDAS · salud operativa de la competición · 01/10/2026
 
 - `Audit production web` incorpora un bloque **MIDAS Competition Health**.
