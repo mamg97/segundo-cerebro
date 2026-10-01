@@ -11,6 +11,7 @@ import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchM
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
 import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
+import { googleReadFetch } from "./google-read.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -217,13 +218,22 @@ async function serveHealthRecipePhoto(env, recipeId) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const response = await fetch(
-    "https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(meta.fileId) + "?alt=media",
-    { headers: { Authorization: "Bearer " + token } }
+  const response = await googleReadFetch(
+    "https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(meta.fileId) + "?alt=media&supportsAllDrives=true",
+    { headers: { Authorization: "Bearer " + token } },
+    { attempts: 3, baseDelayMs: 220 }
   );
   if (!response.ok) {
-    if (response.status === 404) return json({ ok: false, code: "RECIPE_PHOTO_NOT_FOUND" }, 404);
-    throw new Error("HEALTH_RECIPE_PHOTO_DRIVE_" + response.status);
+    if (response.status === 401) {
+      return json({ ok: false, code: "RECIPE_PHOTO_DRIVE_AUTH_REQUIRED" }, 502);
+    }
+    if (response.status === 403) {
+      return json({ ok: false, code: "RECIPE_PHOTO_DRIVE_FORBIDDEN" }, 502);
+    }
+    if (response.status === 404) {
+      return json({ ok: false, code: "RECIPE_PHOTO_DRIVE_INACCESSIBLE" }, 404);
+    }
+    return json({ ok: false, code: "RECIPE_PHOTO_DRIVE_" + response.status }, 502);
   }
 
   const upstreamType = String(response.headers.get("Content-Type") || "").trim().toLowerCase();
