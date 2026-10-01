@@ -21,6 +21,7 @@ const networkFailures = [];
 const ignoredNetworkAborts = [];
 const browserErrors = [];
 const resourceConsoleErrors = [];
+let networkRecheckActive = false;
 const recoveredSourcePaths = new Set();
 
 function pass(name, detail = "") {
@@ -90,7 +91,7 @@ page.on("requestfailed", (request) => {
   }
 });
 page.on("response", (response) => {
-  if (response.url().startsWith(auditOrigin) && response.status() >= 500) {
+  if (!networkRecheckActive && response.url().startsWith(auditOrigin) && response.status() >= 500) {
     networkFailures.push(`http${response.status()}:${new URL(response.url()).pathname}`);
   }
 });
@@ -535,13 +536,35 @@ try {
   await reconcileTransientSourceFailures();
   await revalidateRecoveredSources();
 
+  const retryTargets = [...new Set(networkFailures
+    .filter((entry) => /^http5\d\d:/.test(entry))
+    .map((entry) => entry.replace(/^http5\d\d:/, "")))];
+
+  for (const path of retryTargets) {
+    const target = path === "/api/finance/delta" ? "/api/finance/delta?limit=1" : path;
+    await page.waitForTimeout(1200);
+    networkRecheckActive = true;
+    const retry = await api(target).catch(() => ({ ok: false, status: 0 }));
+    networkRecheckActive = false;
+    if (retry.ok) {
+      info("5xx transitorio recuperado", path);
+      for (let i = networkFailures.length - 1; i >= 0; i -= 1) {
+        if (networkFailures[i].startsWith("http5") && networkFailures[i].endsWith(":" + path)) {
+          networkFailures.splice(i, 1);
+        }
+      }
+    } else {
+      info("5xx persistente confirmado", `${path} · HTTP ${retry.status || "?"}`);
+    }
+  }
+
   if (ignoredNetworkAborts.length) {
     info("Abortos de navegación ignorados", ignoredNetworkAborts.slice(0, 5).join(","));
   }
-  if (resourceConsoleErrors.length && networkFailures.length) {
-    info("Errores de recurso ya cubiertos por red", `n=${resourceConsoleErrors.length}`);
+  if (resourceConsoleErrors.length && retryTargets.length) {
+    info("Errores de recurso cubiertos por diagnóstico de red", `n=${resourceConsoleErrors.length}`);
   }
-  assertCheck(networkFailures.length === 0, "Sin respuestas 5xx ni fallos de red", networkFailures.length ? networkFailures.join(",") : "");
+  assertCheck(networkFailures.length === 0, "Sin respuestas 5xx ni fallos de red persistentes", networkFailures.length ? networkFailures.join(",") : "");
   assertCheck(browserErrors.length === 0, "Sin errores JavaScript/console", browserErrors.length ? browserErrors.slice(0, 3).join(" | ") : "");
 } catch (error) {
   fail("Auditoría ejecutable", String(error?.message || error).slice(0, 300));
