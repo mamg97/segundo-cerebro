@@ -105,6 +105,28 @@ La aplicación privada ya no es globalmente de solo lectura. Los permisos se def
 
 Cualquier nueva capacidad de escritura debe tener una fuente de verdad clara, validación de entrada y documentación de privacidad.
 
+## Principio data-driven: código estable, estado en fuentes
+
+Segundo Cerebro separa deliberadamente **lógica de producto** y **estado operativo**.
+
+- Frontend, Worker, adaptadores y motores de derivación deben ser genéricos respecto a los datos reales.
+- El cambio normal del día a día ocurre en la fuente canónica del dominio: Sheet, D1, iCloud, Apple Health u otra fuente propietaria documentada.
+- Si una nueva fila, saldo, reserva, comida, prenda, objetivo, compra, sesión o evento ya cabe en el contrato vigente, debe aparecer en la web por lectura/derivación sin modificar ni desplegar código.
+- Ningún gestor debe hardcodear un caso real en `app/`, `private-cloudflare/`, mocks o documentación para conseguir que la web refleje un dato.
+- Cuando el gestor que recibe la petición no es propietario de la fuente, entrega la intención al gestor propietario en lugar de crear una copia o parche local.
+
+Una modificación de código está justificada cuando cambia al menos una de estas cosas:
+
+1. capacidad funcional;
+2. contrato o esquema de datos;
+3. integración o transporte;
+4. validación, seguridad o reconciliación;
+5. corrección de un bug;
+6. rendimiento o resiliencia;
+7. presentación/UX deliberadamente nueva.
+
+**Prueba operativa:** si para reflejar un dato nuevo que ya cumple el esquema vigente hay que editar el frontend o el Worker, se considera una señal de acoplamiento indebido y debe corregirse el diseño en vez de añadir otro caso especial.
+
 ## Apple Health
 
 Apple Health no se consulta directamente desde el navegador. La integración objetivo usa una aplicación nativa mínima de iPhone como puente local y conserva el Worker de ingesta ya existente.
@@ -158,6 +180,7 @@ private-cloudflare/     Worker, API, build y scripts privados
 
 - Una sola arquitectura conceptual y un estado global coherente.
 - Cada dominio conserva una fuente de verdad explícita.
+- El código permanece estable ante cambios ordinarios de estado; las fuentes canónicas alimentan la interfaz mediante contratos genéricos.
 - Git nunca almacena datos privados reales.
 - Los secretos solo existen en configuración privada.
 - Minimizar datos transportados y persistidos.
