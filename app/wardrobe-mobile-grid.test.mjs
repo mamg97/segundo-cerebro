@@ -18,3 +18,6 @@ assert.match(audit, /Visual \$\{label\} · Armario \$\{expectedColumns\} columna
 assert.match(index, /styles\.css\?v=0\.40\.14/);
 
 assert.match(audit, /waitFor\(\{ state: "visible", timeout: 8000 \}\)/);
+assert.match(audit, /probeApi\("\/api\/objects", \`Armario \${label}\`, \{ attempts: 2, waitMs: 900 \}\)/);
+assert.match(audit, /fuente recuperada; reabriendo Objetos antes de declarar fallo/);
+assert.match(audit, /openAreaForVisualAudit\("area-objects"\)/);
