@@ -1820,6 +1820,93 @@ html[data-theme="dark"] .credit-detail-summary > article {
   .account-transactions-heading h3 { font-size: 13px; }
 }
 
+.etoro-allocation {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.etoro-allocation-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.etoro-allocation-heading strong,
+.etoro-allocation-heading span,
+.etoro-allocation-kpi small,
+.etoro-allocation-kpi b {
+  display: block;
+}
+
+.etoro-allocation-heading strong { font-size: 13px; }
+.etoro-allocation-heading span { margin-top: 3px; color: var(--ink-soft); font-size: 9px; }
+.etoro-allocation-kpi { text-align: right; }
+.etoro-allocation-kpi small { color: var(--ink-soft); font-size: 8px; }
+.etoro-allocation-kpi b { margin-top: 2px; font-size: 15px; }
+.etoro-allocation-kpi span { margin-top: 2px; font-size: 8px; }
+
+.etoro-allocation-stack {
+  display: flex;
+  width: 100%;
+  height: 18px;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.etoro-allocation-segment { min-width: 2px; height: 100%; }
+
+.etoro-allocation-legend {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.etoro-allocation-row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.etoro-allocation-row:last-child { border-bottom: 0; }
+.etoro-allocation-row > i { width: 7px; height: 28px; border-radius: 999px; }
+.etoro-allocation-label strong, .etoro-allocation-label span, .etoro-allocation-label small { display: block; }
+.etoro-allocation-label strong { font-size: 10px; }
+.etoro-allocation-label span { margin-top: 2px; color: var(--ink-soft); font-size: 8px; }
+.etoro-allocation-label small { margin-top: 5px; color: var(--ink-soft); font-size: 8px; line-height: 1.35; }
+.etoro-allocation-values { text-align: right; }
+.etoro-allocation-values b, .etoro-allocation-values span { display: block; }
+.etoro-allocation-values b { font-size: 10px; }
+.etoro-allocation-values span { margin-top: 2px; color: var(--ink-soft); font-size: 8px; white-space: nowrap; }
+.etoro-allocation-note { margin: 10px 0 0; color: var(--ink-soft); font-size: 8px; line-height: 1.4; }
+
+.etoro-allocation.is-compact {
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(255,255,255,.48);
+}
+.etoro-allocation.is-compact .etoro-allocation-heading span { max-width: 360px; }
+.etoro-allocation.is-compact .etoro-allocation-label small { display: none; }
+.etoro-allocation.is-compact .etoro-allocation-note { display: none; }
+
+html[data-theme="dark"] .etoro-allocation.is-compact { background: rgba(20,30,45,.58); }
+
+@media (max-width: 520px) {
+  .etoro-allocation-heading { align-items: flex-start; }
+  .etoro-allocation-kpi b { font-size: 13px; }
+  .etoro-allocation-row { grid-template-columns: 7px minmax(0, 1fr); }
+  .etoro-allocation-values { grid-column: 2; text-align: left; }
+  .etoro-allocation-values span { white-space: normal; }
+}
+
 /* Theme switcher */
 .theme-toggle {
   display: grid;
