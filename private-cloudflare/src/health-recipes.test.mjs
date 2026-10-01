@@ -21,3 +21,12 @@ test("recipe photos are proxied from private Drive through same-origin Health en
   assert.match(source, /Cache-Control": "private, max-age=300"/);
   assert.match(source, /INVALID_RECIPE_PHOTO_TYPE/);
 });
+
+
+test("recipe photo bridge returns actionable Drive failure codes", () => {
+  assert.match(source, /RECIPE_PHOTO_DRIVE_AUTH_REQUIRED/);
+  assert.match(source, /RECIPE_PHOTO_DRIVE_FORBIDDEN/);
+  assert.match(source, /RECIPE_PHOTO_DRIVE_INACCESSIBLE/);
+  assert.match(source, /supportsAllDrives=true/);
+  assert.match(source, /googleReadFetch/);
+});

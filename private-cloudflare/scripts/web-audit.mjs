@@ -394,6 +394,7 @@ async function auditVisualSnapshot(label) {
     const clippedText = [];
     const overlaps = [];
     const distortedImages = [];
+    const brokenImages = [];
     const proportions = [];
 
     const rootOverflow = Math.max(
@@ -513,7 +514,11 @@ async function auditVisualSnapshot(label) {
     }
 
     document.querySelectorAll("img").forEach((image) => {
-      if (!visible(image) || !image.naturalWidth || !image.naturalHeight) return;
+      if (!visible(image)) return;
+      if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
+        brokenImages.push(`${shortName(image)} src=${String(image.getAttribute("src") || "").slice(0, 140)}`);
+        return;
+      }
       const style = getComputedStyle(image);
       if (["cover", "contain", "scale-down"].includes(style.objectFit)) return;
       const rect = image.getBoundingClientRect();
@@ -533,7 +538,7 @@ async function auditVisualSnapshot(label) {
       }
     }
 
-    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, proportions };
+    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, brokenImages, proportions };
   });
 
   assertCheck(report.rootOverflow <= 3, `Visual ${label} · sin overflow global`, `overflow=${report.rootOverflow}px`);
@@ -541,6 +546,7 @@ async function auditVisualSnapshot(label) {
   assertCheck(report.clippedText.length === 0, `Visual ${label} · texto sin clipping`, report.clippedText.slice(0, 4).join(" | "));
   assertCheck(report.overlaps.length === 0, `Visual ${label} · sin solapes`, report.overlaps.slice(0, 4).join(" | "));
   assertCheck(report.distortedImages.length === 0, `Visual ${label} · imágenes sin deformación`, report.distortedImages.slice(0, 4).join(" | "));
+  assertCheck(report.brokenImages.length === 0, `Visual ${label} · imágenes cargadas`, report.brokenImages.slice(0, 4).join(" | "));
   assertCheck(report.proportions.length === 0, `Visual ${label} · proporciones coherentes`, report.proportions.slice(0, 4).join(" | "));
 }
 
@@ -1123,6 +1129,25 @@ try {
           "Salud · Recetas representa toda la fuente",
           `UI=${recipeCount} API=${expectedRecipeCount}`
         );
+
+        const recipesWithPhotos = (Array.isArray(healthNutritionSnapshot?.recipes) ? healthNutritionSnapshot.recipes : [])
+          .filter((recipe) => recipe?.photoUrl);
+        for (const recipe of recipesWithPhotos) {
+          const probe = await page.evaluate(async (src) => {
+            const response = await fetch(src, { cache: "no-store", credentials: "same-origin" });
+            const contentType = response.headers.get("content-type") || "";
+            let body = null;
+            if (!response.ok && contentType.includes("application/json")) {
+              try { body = await response.json(); } catch {}
+            }
+            return { status: response.status, ok: response.ok, contentType, body };
+          }, recipe.photoUrl);
+          assertCheck(
+            probe.ok && /^image\//i.test(probe.contentType),
+            `Salud · foto receta ${recipe.id || recipe.name || "sin-id"} responde como imagen`,
+            `HTTP ${probe.status} · ${probe.contentType || "sin content-type"}${probe.body?.code ? " · " + probe.body.code : ""}`
+          );
+        }
       }
       await auditVisualSnapshot(`desktop · Salud · ${tab}`);
     }
