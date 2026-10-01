@@ -6354,39 +6354,175 @@ function renderWealthAllocation(wealth, fallbackCurrency = "EUR") {
     </section>`;
 }
 
-function renderAccountTransactions(transactions, accountId, accountLabel, currency = "EUR") {
-  const rows = (Array.isArray(transactions) ? transactions : [])
-    .filter((item) => item?.accountId === accountId)
-    .slice(0, 24);
-  if (!rows.length) return "";
+function transactionAccountLabel(account) {
+  if (!account) return "Cuenta";
+  if (account.bank && account.owner) return `${account.bank} · ${account.owner}`;
+  return account.name || account.id || "Cuenta";
+}
+
+function renderAccountTransactionTable(rows, accountLabel, currency = "EUR") {
+  const visibleRows = (Array.isArray(rows) ? rows : []).slice(0, 24);
+  if (!visibleRows.length) {
+    return `
+      <div class="account-transactions-empty">
+        <strong>Sin movimientos importados</strong>
+        <span>La cuenta está conectada, pero todavía no hay registros disponibles en MovimientosCuenta.</span>
+      </div>`;
+  }
+
+  return `
+    <div class="account-transactions-scroll" role="region" aria-label="Últimos movimientos de ${escapeHtml(accountLabel || "la cuenta")}" tabindex="0">
+      <table class="account-transactions-table">
+        <thead><tr><th>Fecha</th><th>Concepto</th><th>Importe</th><th>Saldo</th></tr></thead>
+        <tbody>${visibleRows.map((item) => {
+          const amount = firstFinite(item.amount);
+          const balance = firstFinite(item.balanceAfter);
+          const tone = amount === null ? "neutral" : amount > 0 ? "positive" : amount < 0 ? "negative" : "neutral";
+          return `
+            <tr>
+              <td>${escapeHtml(formatFinanceDate(item.operationDate, item.operationDate || "—"))}</td>
+              <td title="${escapeHtml(item.description || "")}">${escapeHtml(item.description || "—")}</td>
+              <td class="account-transaction-amount is-${tone}">${amount === null ? "—" : formatMoney(amount, item.currency || currency)}</td>
+              <td>${balance === null ? "—" : formatMoney(balance, item.currency || currency)}</td>
+            </tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderAccountTransactionsWorkspace(transactions, accounts, fallbackCurrency = "EUR") {
+  const sourceRows = Array.isArray(transactions) ? transactions : [];
+  const connectedAccounts = Array.isArray(accounts) ? accounts : [];
+  const accountMap = new Map();
+
+  connectedAccounts.forEach((account) => {
+    if (!account?.id) return;
+    accountMap.set(account.id, {
+      id: account.id,
+      label: transactionAccountLabel(account),
+      currency: account.currency || fallbackCurrency
+    });
+  });
+
+  sourceRows.forEach((item) => {
+    if (!item?.accountId || accountMap.has(item.accountId)) return;
+    accountMap.set(item.accountId, {
+      id: item.accountId,
+      label: item.accountId,
+      currency: item.currency || fallbackCurrency
+    });
+  });
+
+  const catalog = [...accountMap.values()];
+  if (!catalog.length) return "";
+
+  const rowsByAccount = new Map(catalog.map((account) => [account.id, []]));
+  sourceRows.forEach((item) => {
+    if (!item?.accountId) return;
+    if (!rowsByAccount.has(item.accountId)) rowsByAccount.set(item.accountId, []);
+    rowsByAccount.get(item.accountId).push(item);
+  });
+
+  const initialAccount = catalog.find((account) => (rowsByAccount.get(account.id) || []).length > 0) || catalog[0];
 
   return `
     <section class="account-transactions-section">
       <div class="account-transactions-heading">
         <div>
           <p class="context-label">Movimientos bancarios</p>
-          <h3>${escapeHtml(accountLabel || accountId || "Cuenta")} · últimos registros</h3>
+          <h3>Registros por cuenta</h3>
         </div>
         <span>Fuente RAW conciliada</span>
       </div>
-      <div class="account-transactions-scroll" role="region" aria-label="Últimos movimientos de ${escapeHtml(accountLabel || accountId || "la cuenta")}" tabindex="0">
-        <table class="account-transactions-table">
-          <thead><tr><th>Fecha</th><th>Concepto</th><th>Importe</th><th>Saldo</th></tr></thead>
-          <tbody>${rows.map((item) => {
-            const amount = firstFinite(item.amount);
-            const balance = firstFinite(item.balanceAfter);
-            const tone = amount === null ? "neutral" : amount > 0 ? "positive" : amount < 0 ? "negative" : "neutral";
-            return `
-              <tr>
-                <td>${escapeHtml(formatFinanceDate(item.operationDate, item.operationDate || "—"))}</td>
-                <td title="${escapeHtml(item.description || "")}">${escapeHtml(item.description || "—")}</td>
-                <td class="account-transaction-amount is-${tone}">${amount === null ? "—" : formatMoney(amount, item.currency || currency)}</td>
-                <td>${balance === null ? "—" : formatMoney(balance, item.currency || currency)}</td>
-              </tr>`;
-          }).join("")}</tbody>
-        </table>
+
+      <div class="account-transactions-tabs" role="tablist" aria-label="Cuentas con histórico bancario">
+        ${catalog.map((account, index) => {
+          const rows = rowsByAccount.get(account.id) || [];
+          const active = account.id === initialAccount.id;
+          return `
+            <button
+              type="button"
+              id="account-transactions-tab-${index}"
+              class="${active ? "active" : ""}"
+              role="tab"
+              aria-selected="${active ? "true" : "false"}"
+              aria-controls="account-transactions-panel-${index}"
+              tabindex="${active ? "0" : "-1"}"
+              data-account-transactions-tab="${escapeHtml(account.id)}">
+              <span>${escapeHtml(account.label)}</span>
+              <small>${rows.length ? rows.length : "0"}</small>
+            </button>`;
+        }).join("")}
+      </div>
+
+      <div class="account-transactions-panels">
+        ${catalog.map((account, index) => {
+          const rows = rowsByAccount.get(account.id) || [];
+          const active = account.id === initialAccount.id;
+          return `
+            <section
+              id="account-transactions-panel-${index}"
+              class="account-transactions-panel ${active ? "active" : ""}"
+              role="tabpanel"
+              aria-labelledby="account-transactions-tab-${index}"
+              data-account-transactions-panel="${escapeHtml(account.id)}"
+              ${active ? "" : "hidden"}>
+              <div class="account-transactions-current">
+                <div>
+                  <strong>${escapeHtml(account.label)}</strong>
+                  <span>${rows.length
+                    ? `Mostrando hasta ${Math.min(24, rows.length)} registros recientes`
+                    : "Sin histórico importado todavía"}</span>
+                </div>
+                <small>${rows.length ? `${rows.length} registros disponibles en esta carga` : "0 registros"}</small>
+              </div>
+              ${renderAccountTransactionTable(rows, account.label, account.currency)}
+            </section>`;
+        }).join("")}
       </div>
     </section>`;
+}
+
+function initializeAccountTransactionTabs(root = document) {
+  const section = root.querySelector?.(".account-transactions-section");
+  if (!section) return;
+
+  const buttons = [...section.querySelectorAll("[data-account-transactions-tab]")];
+  const panels = [...section.querySelectorAll("[data-account-transactions-panel]")];
+  if (!buttons.length || !panels.length) return;
+
+  const activate = (accountId, focus = false) => {
+    buttons.forEach((button) => {
+      const active = button.dataset.accountTransactionsTab === accountId;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+      button.tabIndex = active ? 0 : -1;
+      if (active && focus) button.focus();
+    });
+    panels.forEach((panel) => {
+      const active = panel.dataset.accountTransactionsPanel === accountId;
+      panel.classList.toggle("active", active);
+      panel.hidden = !active;
+    });
+    document.documentElement.dataset.accountTransactionsTab = accountId;
+  };
+
+  buttons.forEach((button, index) => {
+    button.addEventListener("click", () => activate(button.dataset.accountTransactionsTab));
+    button.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      let nextIndex = index;
+      if (event.key === "ArrowLeft") nextIndex = (index - 1 + buttons.length) % buttons.length;
+      if (event.key === "ArrowRight") nextIndex = (index + 1) % buttons.length;
+      if (event.key === "Home") nextIndex = 0;
+      if (event.key === "End") nextIndex = buttons.length - 1;
+      activate(buttons[nextIndex].dataset.accountTransactionsTab, true);
+    });
+  });
+
+  const selected = buttons.find((button) => button.getAttribute("aria-selected") === "true") || buttons[0];
+  activate(selected.dataset.accountTransactionsTab);
 }
 
 function openBudgetDetail() {
@@ -6433,14 +6569,7 @@ function openBudgetDetail() {
       </div>
       <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
-      ${liquidityAccounts
-        .map((account) => renderAccountTransactions(
-          accountTransactions,
-          account.id,
-          account.name || account.id || "Cuenta",
-          account.currency || currency
-        ))
-        .join("")}
+      ${renderAccountTransactionsWorkspace(accountTransactions, liquidityAccounts, currency)}
       ${categories.length ? `<div class="budget-groups">
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>` : ""}
@@ -6449,6 +6578,7 @@ function openBudgetDetail() {
   document.querySelectorAll('[data-open-electricity="true"]').forEach((node) => {
     node.addEventListener("click", () => void openElectricityDetail());
   });
+  initializeAccountTransactionTabs(document.querySelector("#dialog-body"));
   dialog.showModal();
 }
 
