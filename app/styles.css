@@ -15085,6 +15085,25 @@ html[data-theme="dark"] .liquidity-svg-base {
 .midas-genetic-note strong { color: var(--blue); }
 .midas-genetic-note span { color: var(--ink-soft); }
 .midas-caveat { margin: 0; max-width: 75ch; color: var(--ink-soft); }
+.midas-runtime-health { display: grid; gap: 12px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface) 94%, var(--paper) 6%); }
+.midas-runtime-health.is-attention { border-color: color-mix(in srgb, var(--coral) 48%, var(--line)); }
+.midas-runtime-health.is-healthy { border-color: color-mix(in srgb, var(--blue) 38%, var(--line)); }
+.midas-runtime-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+.midas-runtime-heading strong { display: block; margin-top: 2px; font-size: 15px; }
+.midas-runtime-heading small { color: var(--ink-soft); font-size: 10px; text-align: right; }
+.midas-runtime-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.midas-runtime-item { display: grid; grid-template-columns: 9px minmax(0, 1fr); gap: 9px; align-items: start; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.midas-runtime-item strong, .midas-runtime-item small, .midas-runtime-item em { display: block; min-width: 0; }
+.midas-runtime-item strong { font-size: 11px; }
+.midas-runtime-item small { margin-top: 2px; color: var(--ink-soft); font-size: 9px; }
+.midas-runtime-item em { margin-top: 3px; color: var(--coral); font-size: 8.5px; font-style: normal; line-height: 1.3; }
+.midas-runtime-dot { width: 8px; height: 8px; margin-top: 3px; border-radius: 50%; background: var(--line-strong); }
+.midas-runtime-item.is-success .midas-runtime-dot { background: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 12%, transparent); }
+.midas-runtime-item.is-running .midas-runtime-dot { background: var(--amber); }
+.midas-runtime-item.is-failed .midas-runtime-dot,
+.midas-runtime-item.is-missing_due_run .midas-runtime-dot { background: var(--coral); box-shadow: 0 0 0 3px color-mix(in srgb, var(--coral) 11%, transparent); }
+.midas-runtime-item.is-not_due_yet .midas-runtime-dot { background: var(--ink-soft); opacity: .5; }
+
 .midas-group { min-width: 0; }
 .midas-group h3 { margin: 0 0 10px; font-size: 17px; letter-spacing: -.015em; }
 .midas-group-note { margin: -5px 0 10px; color: var(--ink-soft); }
@@ -15114,6 +15133,9 @@ html[data-theme="dark"] .liquidity-svg-base {
 @media (max-width: 760px) {
   .midas-dialog { width: calc(100% - 16px); max-height: 94vh; padding: 20px 14px 24px; }
   .midas-report { gap: 18px; }
+  .midas-runtime-heading { align-items: start; flex-direction: column; }
+  .midas-runtime-heading small { text-align: left; }
+  .midas-runtime-grid { grid-template-columns: 1fr; }
   .midas-table-scroll { overflow: visible; border: 0; }
   .midas-table { display: block; min-width: 0; }
   .midas-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
