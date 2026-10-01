@@ -106,6 +106,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Si faltan macros, el backend los completa desde `Recetas` solo cuando la receta tiene valores por ración utilizables. Si la receta o la nota indican que falta confirmar cantidades, el dato permanece pendiente y la UI muestra subtotal conocido sin inventar macros ni reutilizar ingredientes obsoletos.
 - Esta regla está cubierta por tests y forma parte de `agents/HEALTH.md`; no volver a corregir a mano el mismo día para resolver duplicados visuales.
 - No se inventan objetivos nutricionales ni gasto ausente.
+- Las pausas temporales de fuerza se controlan desde `ObjetivosActividad`: `strength_sessions_week=0` suspende la exigencia, Adherencia la trata como dimensión ignorada y Gimnasio conserva el plan base pero deja de proponer/registrar sesiones hasta una fila efectiva posterior que reactive el objetivo.
 - Contrato vigente: `agents/HEALTH.md`.
 
 ### Despensa y suministros
