@@ -98,6 +98,7 @@ Una prenda no debe existir solo en Armario: primero debe existir como objeto. `O
 ### Regla visual
 
 - La UI prioriza `miniatura_url → foto_procesada_url → foto_original_url → Objetos.foto_url`.
+- En móvil, `Armario visual` usa una cuadrícula compacta responsive: 2 prendas por fila por debajo de 430 px y 3 prendas por fila desde 430 px hasta tablet; la tarjeta reduce metadatos visibles y conserva el detalle completo al abrir la prenda.
 - Una URL ausente no se sustituye por una imagen inventada: se muestra placeholder.
 - `estado_procesado` vacío se interpreta como `procesada` si existe recorte, y como `pendiente` en otro caso.
 - La `capa` puede inferirse temporalmente desde `tipo_prenda` para registros históricos; el campo explícito del Sheet tiene prioridad.
