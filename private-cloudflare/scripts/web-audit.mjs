@@ -545,6 +545,9 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
       ).catch(() => false);
       assertCheck(panelOk, `${label} · panel ${value} visible`);
     }
+    if (options.visual !== false) {
+      await auditVisualSnapshot(`desktop · ${label} · ${value}`);
+    }
   }
 }
 
@@ -673,6 +676,8 @@ try {
       }
     }
 
+    await auditVisualSnapshot(`desktop · ${areaId}`);
+
     if (areaId === "area-pantry") {
       if (!(pantryProbe.ok && pantryProbe.body?.ok === true)) {
         info("Despensa · pestañas omitidas", "backend no saludable; fallo ya clasificado por API");
@@ -774,6 +779,7 @@ try {
       assertCheck(active, `Salud · pestaña ${tab} activa`);
       const text = normalizeAuditValue(await panel.textContent().catch(() => ""));
       assertCheck(!/no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text), `Salud · pestaña ${tab} sin error visible`);
+      await auditVisualSnapshot(`desktop · Salud · ${tab}`);
     }
 
     const menuPanel = page.locator('[data-health-panel="menu"]');
@@ -844,6 +850,8 @@ try {
     const ariaNow = await homeKcalRing.getAttribute("aria-valuenow");
     assertCheck(ariaNow !== null && Number.isFinite(Number(ariaNow)), "Indicador kcal Home tiene valor válido");
   }
+
+  await auditResponsiveVisualLayout(navIds);
 
   await reconcileTransientSourceFailures();
   await revalidateRecoveredSources();
