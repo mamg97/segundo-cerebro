@@ -25,6 +25,29 @@ function recipePending(recipe) {
   return /(^|\b)(pendiente|pending|por confirmar|sin confirmar)(\b|$)/.test(precision);
 }
 
+export function canonicalWeeklyMenuMoment(item) {
+  const raw = String(item?.moment || "Otro").trim() || "Otro";
+  const moment = normalize(raw);
+  const context = normalize([raw, item?.name, item?.note].filter(Boolean).join(" "));
+
+  if (/^postre\b/.test(moment)) {
+    if (/\b(comida|almuerzo|mediodia)\b/.test(context)) return "Comida";
+    if (/\b(cena|cierre|noche)\b/.test(context)) return "Cena";
+    return "Cena";
+  }
+
+  if (/^snack\b/.test(moment)) {
+    if (/\b(media manana|manana)\b/.test(context) && !/\b(despues oficina|tarde|merienda)\b/.test(context)) {
+      return "Media mañana";
+    }
+    return "Merienda";
+  }
+
+  if (/^(cena\s*·?\s*complemento|complemento\s+cena)$/.test(moment)) return "Cena";
+
+  return raw;
+}
+
 export function weeklyMenuItemIsVisibleServer(item) {
   return !HIDDEN_STATUSES.test(normalize(item?.status));
 }
@@ -37,7 +60,7 @@ export function weeklyMenuIdentity(item) {
       : "name:" + normalize(item?.name);
   return [
     normalize(item?.date),
-    normalize(item?.moment || "otro"),
+    normalize(canonicalWeeklyMenuMoment(item)),
     identity
   ].join("|");
 }
@@ -88,7 +111,7 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
       ["carbs", "carbsPerServing"],
       ["fat", "fatPerServing"]
     ];
-    const hydrated = { ...item };
+    const hydrated = { ...item, moment: canonicalWeeklyMenuMoment(item) };
     const derivedFields = [];
 
     for (const [menuField, recipeField] of fields) {
