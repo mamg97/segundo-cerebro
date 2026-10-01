@@ -212,6 +212,21 @@ Los logs no deben volcar cifras privadas, tokens, cookies ni screenshots con dat
 - Mitigación: cron primario `:17`, oportunidad de respaldo `:42` dentro del mismo workflow y watchdog externo al `:45`, sin crear un segundo workflow horario.
 - Un run verde del slot de respaldo con `Navigate and audit production` omitido es solo heartbeat y no cuenta como auditoría completa.
 
+## Incidente de fuentes Google y barras · 2026-10-01
+
+- Las auditorías #38 y #43 detectaron 502 reproducibles en fuentes privadas respaldadas por Google Sheets, especialmente `/api/objects`, `/api/projects` y `/api/finance/delta`.
+- No se relajó el auditor. La causa técnica era fragilidad del backend ante ráfagas/transitorios: OBJETOS y Proyectos hacían varias lecturas de pestañas en paralelo y las lecturas idempotentes no tenían retry/backoff.
+- Mitigación aplicada en backend:
+  - helper común `private-cloudflare/src/google-read.js`;
+  - reintento solo de GET/HEAD ante 429/500/502/503/504 y errores de red;
+  - respeto de `Retry-After` con límite;
+  - `batchGet` para reducir las lecturas de OBJETOS, Proyectos y Delta;
+  - las escrituras no se reintentan automáticamente.
+- Tras desplegarlo, `objectsSync` y `projectsSync` volvieron a `ok-live` y desaparecieron los 502 persistentes de esas rutas.
+- Después apareció un falso positivo distinto en las barras de MenuSemanal. La UI estaba correcta: para hoy y días pasados, cuando existe al menos una fila consumida, las barras muestran **totales consumidos**; para días futuros muestran el **plan completo**.
+- El auditor ahora captura el snapshot de `/api/nutrition` usado por la propia UI al abrir Salud y aplica la misma regla consumido-vs-plan antes de validar anchura y estado/color.
+- Cierre certificado por Audit production web **#46**: `540 checks / 0 failures / [AUDIT_OK]`.
+
 ## Scheduler y resiliencia
 
 GitHub documenta que los eventos `schedule` pueden retrasarse y, bajo carga, llegar a descartarse. Por eso no se debe interpretar la ausencia de un run como una regresión de la aplicación.
