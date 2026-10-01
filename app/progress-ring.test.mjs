@@ -65,7 +65,7 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.40\.13/);
+assert.match(index, /app\.js\?v=0\.40\.14/);
 assert.match(index, /styles\.css\?v=0\.40\.11/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
@@ -127,7 +127,7 @@ assert.match(css, /v0\.38\.2 — compact mobile liquidity cards/);
 assert.match(css, /v0\.38\.3 — two-column mobile liquidity grid/);
 assert.match(css, /v0\.38\.4 — readability typography pass/);
 assert.match(app, /pantry\.js\?v=0\.38\.7/);
-assert.match(app, /objects\.js\?v=0\.40\.0/);
+assert.match(app, /objects\.js\?v=0\.40\.1/);
 assert.match(objects, /Armario visual/);
 assert.match(objects, /Combinador/);
 assert.match(objects, /wardrobe-brand/);

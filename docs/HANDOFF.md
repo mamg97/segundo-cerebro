@@ -288,6 +288,7 @@ Reglas:
 - Estados de procesado: `pendiente | procesada | revisar`. Capas: `superior | exterior | inferior | calzado | accesorio`.
 - `GET /api/objects` devuelve inventario + armario visual + looks/kits/listas + facetas. `/api/state` mantiene solo `objectsSummary`.
 - La UI privada incorpora **Armario visual**, filtros por categoría/marca/color/formalidad/temporada/oficina/frecuencia, ficha visual de prenda y **Combinador**.
+- El filtro principal `Categoría` del Armario visual se alimenta de `Armario.categoria_visual`; `tipo_prenda`/`subcategoria` conserva el subtipo detallado para tarjetas, ficha y lógica específica.
 - El combinador guarda exclusivamente en `Looks + LookItems` mediante `POST /api/objects/look`, validando IDs y roles contra el armario vigente.
 - El procesado automático de imágenes todavía no existe: la arquitectura ya acepta `foto_original_url` y `foto_procesada_url`; una prenda sin recorte muestra placeholder y permanece `pendiente`.
 - GESTOR EVENTOS y futuros flujos de viaje/oficina/clima deben referenciar los mismos `objeto_id/look_id/lista_id`; no copiar inventario.

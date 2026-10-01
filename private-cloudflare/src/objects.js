@@ -466,7 +466,7 @@ function buildPayload(rows) {
   const categories = [...new Set(objects.map((item) => item.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
   const locationNames = [...locations.keys()].sort((a, b) => a.localeCompare(b, "es"));
   const statuses = [...new Set(objects.map((item) => item.status).filter(Boolean))].sort();
-  const garmentTypes = [...new Set(wardrobe.map((item) => item.subcategory).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const garmentTypes = [...new Set(wardrobe.map((item) => item.visualCategory || item.subcategory).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
   const seasons = [...new Set(wardrobe.map((item) => item.season).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
   const brands = [...new Set(wardrobe.map((item) => item.brand).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
   const colors = [...new Set(wardrobe.map((item) => item.primaryColor || item.color).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
