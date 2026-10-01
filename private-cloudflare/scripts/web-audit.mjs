@@ -205,6 +205,29 @@ async function auditMidasCompetition() {
   }
 
   const successful = new Set(health.workflows.filter((item) => item.state === "success").map((item) => item.name));
+  const midasButton = page.locator("#show-midas-detail").first();
+  if (await midasButton.count()) {
+    await midasButton.click();
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector("#midas-dialog");
+      return Boolean(dialog?.open && document.querySelector(".midas-runtime-health"));
+    }, null, { timeout: 8000 }).catch(() => {});
+    const runtimeText = normalizeAuditValue(await page.locator(".midas-runtime-health").textContent().catch(() => ""));
+    assertCheck(Boolean(runtimeText), "MIDAS · panel visible de salud operativa");
+    for (const issue of health.issues) {
+      const label = issue.name
+        .replace("MIDAS paper comparison", "estrategias diarias")
+        .replace("MIDAS TFM shadow forecasts", "tfm diario")
+        .replace("MIDAS capital cycle paper", "capital cycle")
+        .replace("MIDAS weekly ML paper", "weekly ml")
+        .replace("MIDAS TFG corrected paper", "tfg corregido");
+      assertCheck(runtimeText.includes(normalizeAuditValue(label)), `MIDAS · UI expone incidencia ${label}`);
+    }
+    await page.locator("#close-midas-dialog").click().catch(() => {});
+  } else {
+    fail("MIDAS · acceso visible al panel", "falta #show-midas-detail");
+  }
+
   if (successful.has("MIDAS TFM shadow forecasts")) {
     const tfm = tracks.filter((row) => row.group === "tfm_demo_adaptado");
     assertCheck(tfm.length === 4 && tfm.every((row) => row.status === "demo_con_diario" && row.last_session),
