@@ -87,6 +87,8 @@ Como mínimo:
   - consistencia de tarjetas resumen en escritorio;
   - responsive en 1440×1100, 900×1000 y 390×844;
 - Armario visual: valida explícitamente 4 columnas en escritorio, 3 en tablet, 3 en móvil ancho de 440 px y 2 en móvil de 390 px, además de overflow/clipping/solapes de las tarjetas.
+- Home semanal de Nutrición: debe mantener tarjetas por día legibles (no una matriz comprimida), conservar agrupación por toma/estado y no reintroducir texto microscópico en escritorio/tablet/móvil.
+- Home general: el bloque retirado `Próximos movimientos` no forma parte de la superficie visual canónica; su ausencia no debe tratarse como regresión.
   - paleta canónica light/dark y contraste mínimo de texto/acento.
 
 

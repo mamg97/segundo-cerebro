@@ -623,7 +623,6 @@ async function init() {
   renderDate();
   renderNavigation();
   renderDailyOverview();
-  renderFocus();
   renderEvents();
   renderBudgetOverview();
   renderDebtOverview();
@@ -4303,13 +4302,12 @@ function focusHomeWeeklyMenuOnToday(content) {
   if (content.dataset.weeklyMenuFocusedDate === today) return;
 
   requestAnimationFrame(() => {
-    const scroller = content.querySelector(".home-weekly-menu-table-scroll");
-    const todayHeader = content.querySelector(`[data-menu-date="${CSS.escape(today)}"]`);
-    if (!scroller || !todayHeader) return;
+    const grid = content.querySelector(".home-weekly-menu-grid");
+    const todayCard = content.querySelector(`[data-menu-date="${CSS.escape(today)}"]`);
+    if (!grid || !todayCard) return;
 
-    const rowLabelWidth = content.querySelector(".home-weekly-menu-corner")?.offsetWidth || 0;
-    const left = Math.max(0, todayHeader.offsetLeft - rowLabelWidth - 8);
-    scroller.scrollTo({ left, behavior: "auto" });
+    const left = Math.max(0, todayCard.offsetLeft - grid.offsetLeft);
+    grid.scrollTo({ left, behavior: "auto" });
     content.dataset.weeklyMenuFocusedDate = today;
   });
 }
@@ -4380,30 +4378,51 @@ function renderHomeWeeklyMenu(data) {
     return;
   }
 
-  const moments = weeklyMenuMatrixMoments(model.days);
-
   content.innerHTML = `
-    <div class="home-weekly-menu-table-scroll">
-      <div class="home-weekly-menu-table">
-        <div class="home-weekly-menu-corner">
-          <span>Momento</span>
-        </div>
-        ${model.days.map((day) => renderHomeWeeklyMenuDayHeader(day, model)).join("")}
+    <div class="home-weekly-menu-grid">
+      ${model.days.map((day) => {
+        const isToday = day.date === localDateKey();
+        const targetLine = weeklyMenuTargetLine(day, model);
+        const display = weeklyMenuDayDisplayTotals(day, model);
+        return `
+          <article data-menu-date="${escapeHtml(day.date)}" class="home-weekly-menu-day ${isToday ? "is-today" : ""} ${!day.nutritionComplete ? "is-incomplete" : ""}">
+            <header>
+              <div>
+                <small>${isToday ? "Hoy" : "Día"}</small>
+                <strong>${escapeHtml(weeklyMenuDayLabel(day.date))}</strong>
+              </div>
+              <span>${display.useConsumed
+                ? (day.hasPendingPlan ? "Consumido · plan pendiente" : "Consumido")
+                : (!day.nutritionComplete ? "Datos incompletos" : display.kcalPct == null ? formatKcal(display.kcal) : display.kcalPct + "% kcal")}</span>
+            </header>
 
-        ${moments.map((moment) => `
-          <div class="home-weekly-menu-row-label">
-            <span>${escapeHtml(moment.label)}</span>
-          </div>
-          ${model.days.map((day) => {
-            const rows = weeklyMenuItemsForMoment(day, moment.key);
-            const allConsumed = rows.length > 0 && rows.every(weeklyMenuItemIsConsumed);
-            return `
-              <div class="home-weekly-menu-table-cell ${allConsumed ? "is-consumed" : ""}">
-                ${renderHomeWeeklyMenuMatrixCell(rows)}
-              </div>`;
-          }).join("")}
-        `).join("")}
-      </div>
+            <div class="home-weekly-menu-progress">
+              <div>
+                <span><i class="kcal"></i>Kcal</span>
+                <b>${display.useConsumed ? "" : (!day.nutritionComplete ? "Subtotal " : "")}${formatKcal(display.kcal)}${model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
+                ${model.kcalTarget !== null
+                  ? renderNutritionQualityMeter("kcal", display.kcal, model.kcalTarget, "Kcal", !display.useConsumed && !day.nutritionComplete)
+                  : ""}
+              </div>
+              <div>
+                <span><i class="protein"></i>Proteína</span>
+                <b>${display.useConsumed ? "" : (!day.nutritionComplete ? "Subtotal " : "")}${formatMacro(display.protein)}${model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
+                ${model.proteinTarget !== null
+                  ? renderNutritionQualityMeter("protein", display.protein, model.proteinTarget, "Proteína", !display.useConsumed && !day.nutritionComplete)
+                  : ""}
+              </div>
+            </div>
+
+            <div class="home-weekly-menu-meals">
+              ${groupWeeklyMenuItemsByMoment(day.items)
+                .map((group) => renderHomeWeeklyMenuMealGroup(group.items))
+                .join("")}
+            </div>
+            ${display.useConsumed && day.hasPendingPlan
+              ? `<footer>Consumido: ${escapeHtml(formatKcal(display.kcal))} · ${escapeHtml(formatMacro(display.protein))}. Plan completo si se cumplen los pendientes: ${escapeHtml(formatKcal(day.kcal))} · ${escapeHtml(formatMacro(day.protein))}.</footer>`
+              : (targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : "")}
+          </article>`;
+      }).join("")}
     </div>`;
 
   focusHomeWeeklyMenuOnToday(content);
