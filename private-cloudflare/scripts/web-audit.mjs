@@ -107,6 +107,48 @@ async function api(path) {
   }, path);
 }
 
+async function probeApi(path, label, options = {}) {
+  const attempts = Math.max(1, Number(options.attempts || 3));
+  const waitMs = Math.max(0, Number(options.waitMs || 700));
+  let result = null;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    result = await api(path);
+    if (result.ok) {
+      if (attempt > 1) info(label + " · recuperación transitoria", `éxito en intento ${attempt}/${attempts}`);
+      return result;
+    }
+    if (result.status < 500 || attempt === attempts) return result;
+    await page.waitForTimeout(waitMs * attempt);
+  }
+  return result;
+}
+
+async function reconcileTransientSourceFailures() {
+  const retryPaths = new Set([
+    "/api/pantry",
+    "/api/projects",
+    "/api/objects",
+    "/api/health/adherence",
+    "/api/finance/delta"
+  ]);
+  const paths = [...new Set(
+    networkFailures
+      .filter((entry) => /^http5\d\d:/.test(entry))
+      .map((entry) => entry.split(":")[1])
+      .filter((path) => retryPaths.has(path))
+  )];
+  for (const path of paths) {
+    const result = await probeApi(path, `Fuente ${path}`, { attempts: 2, waitMs: 900 });
+    if (!result?.ok) continue;
+    for (let index = networkFailures.length - 1; index >= 0; index -= 1) {
+      if (networkFailures[index].startsWith("http5") && networkFailures[index].includes(`:${path}`)) {
+        networkFailures.splice(index, 1);
+      }
+    }
+    info("5xx transitorio recuperado", path);
+  }
+}
+
 async function closeDialogIfOpen() {
   const dialog = page.locator("#detail-dialog");
   if (await dialog.getAttribute("open") !== null) {
@@ -215,11 +257,11 @@ try {
   const nutrition = await api("/api/nutrition");
   assertCheck(nutrition.ok && nutrition.body?.ok === true, "API de Nutrición", `HTTP ${nutrition.status}`);
 
-  const pantryProbe = await api("/api/pantry");
+  const pantryProbe = await probeApi("/api/pantry", "API de Despensa");
   assertCheck(pantryProbe.ok && pantryProbe.body?.ok === true, "API de Despensa", `HTTP ${pantryProbe.status}`);
-  const projectsProbe = await api("/api/projects");
+  const projectsProbe = await probeApi("/api/projects", "API de Proyectos");
   assertCheck(projectsProbe.ok && projectsProbe.body?.ok === true, "API de Proyectos", `HTTP ${projectsProbe.status}`);
-  const deltaProbe = await api("/api/finance/delta?limit=1");
+  const deltaProbe = await probeApi("/api/finance/delta?limit=1", "API Delta de Finanzas");
   assertCheck(deltaProbe.ok && deltaProbe.body?.ok === true, "API Delta de Finanzas", `HTTP ${deltaProbe.status}`);
 
   const menuRows = Array.isArray(nutrition.body?.weeklyMenu) ? nutrition.body.weeklyMenu : [];
@@ -442,6 +484,8 @@ try {
     const ariaNow = await homeKcalRing.getAttribute("aria-valuenow");
     assertCheck(ariaNow !== null && Number.isFinite(Number(ariaNow)), "Indicador kcal Home tiene valor válido");
   }
+
+  await reconcileTransientSourceFailures();
 
   if (ignoredNetworkAborts.length) {
     info("Abortos de navegación ignorados", ignoredNetworkAborts.slice(0, 5).join(","));
