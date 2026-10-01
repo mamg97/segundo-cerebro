@@ -174,7 +174,12 @@ function evaluateDay(input) {
   }
 
   const gymSessionCount = gymSessions.length;
-  if (gymPlanned) {
+  const strengthSessionsWeek = numberOrNull(activityGoal && activityGoal.strength_sessions_week);
+  if (strengthSessionsWeek === 0) {
+    const pauseNote = String((activityGoal && activityGoal.note) || "Fuerza temporalmente no exigible").trim();
+    dimensions.push(dim("gym", "Gimnasio / fuerza", "ignored", gymSessionCount, 0, pauseNote));
+    reasons.push("Pausa temporal de fuerza justificada");
+  } else if (gymPlanned) {
     const state = gymSessionCount > 0 ? "pass" : "fail";
     dimensions.push(dim("gym", "Gimnasio / fuerza", state, gymSessionCount, 1, gymPlanned));
     if (state === "fail") reasons.push("Falta entrenamiento en día previsto");
