@@ -40,6 +40,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Confirm deployment run is current main
+        id: head
+        shell: bash
+        run: |
+          git fetch origin main --depth=1
+          latest="$(git rev-parse origin/main)"
+          if [[ "$GITHUB_SHA" == "$latest" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping stale production deploy for $GITHUB_SHA; current main is $latest"
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -109,30 +122,35 @@ jobs:
           fi
 
       - name: Deploy production Worker
-        if: steps.cloudflare.outputs.configured == 'true'
+        if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
         run: npx wrangler deploy --config wrangler.bootstrap.jsonc
 
       - name: Deploy Health ingest Worker
-        if: steps.cloudflare.outputs.configured == 'true'
+        if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
         run: npx wrangler deploy --config wrangler.health-ingest.jsonc
 
       - name: Deploy Objects ingest Worker
-        if: steps.cloudflare.outputs.configured == 'true'
+        if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
         run: npx wrangler deploy --config wrangler.objects-ingest.jsonc
 
       - name: Deploy MIDAS ingest Worker
-        if: steps.cloudflare.outputs.configured == 'true'
+        if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
         run: npx wrangler deploy --config wrangler.midas-ingest.jsonc
 
       - name: Deploy Shopping Reminders ingest Worker
-        if: steps.cloudflare.outputs.configured == 'true'
+        if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
         run: npx wrangler deploy --config wrangler.shopping-reminders.jsonc
 
       - name: Deploy Web audit gateway
-        if: steps.cloudflare.outputs.configured == 'true'
+        if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
         run: npx wrangler deploy --config wrangler.web-audit.jsonc
 
       - name: Explain skipped deployment
         if: steps.cloudflare.outputs.configured != 'true'
         run: |
           echo "Validation and build passed, but production deploy was skipped because Cloudflare credentials are not configured in GitHub Actions."
+
+      - name: Explain stale deployment skip
+        if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current != 'true'
+        run: |
+          echo "Validation and build passed, but this run is older than the current main HEAD, so production deployment was skipped."
