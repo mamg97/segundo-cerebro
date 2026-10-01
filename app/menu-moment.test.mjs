@@ -34,3 +34,13 @@ test("daily nutrition grouping also folds legacy components", () => {
   assert.match(renderer, /canonicalWeeklyMenuMoment\(\{ moment: entry\.moment, itemName: entry\.itemName, note: entry\.note \}\)/);
   assert.doesNotMatch(renderer, /"Snack"|"Postre"|"Cierre"/);
 });
+
+
+test("incomplete grouped meals and day totals are labeled as known subtotals", () => {
+  assert.match(app, /weekly-menu-group-subtotal/);
+  assert.match(app, /Subtotal conocido/);
+  const headerStart = app.indexOf("function renderHomeWeeklyMenuDayHeader");
+  const headerEnd = app.indexOf("function renderHomeWeeklyMenu", headerStart);
+  const header = app.slice(headerStart, headerEnd);
+  assert.match(header, /<small>Subtotal <\/small>/);
+});
