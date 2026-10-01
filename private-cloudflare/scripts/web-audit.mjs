@@ -3,6 +3,7 @@ import {
   classifyRequestFailure,
   hiddenMenuStatus,
   logicalMenuKey,
+  menuDisplayTotals,
   normalizeAuditValue,
   qualityStep,
   visibleMenuRow
@@ -42,6 +43,10 @@ function info(name, detail = "") {
 function assertCheck(condition, name, detail = "") {
   if (condition) pass(name, detail);
   else fail(name, detail);
+}
+
+function localDateKeyForAudit(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function groupDayRows(rows) {
@@ -832,13 +837,12 @@ try {
       const mealCards = await uiDay.locator(".weekly-menu-meal").count();
       assertCheck(mealCards === group.momentCount, `Agrupación de tomas día ${index + 1}`, `UI=${mealCards} esperadas=${group.momentCount}`);
 
-      const incomplete = group.items.some((item) => item.kcal == null || item.protein == null);
-      const kcal = group.items.reduce((sum, item) => sum + (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0);
-      const protein = group.items.reduce((sum, item) => sum + (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0);
+      const display = menuDisplayTotals(group.items, group.date, localDateKeyForAudit(), objective);
+      const incomplete = !display.useConsumed && group.items.some((item) => item.kcal == null || item.protein == null);
 
       for (const [metric, value, target, selector] of [
-        ["kcal", kcal, objective.kcal, ".weekly-menu-progress.kcal .nutrition-quality-meter"],
-        ["protein", protein, objective.protein, ".weekly-menu-progress.protein .nutrition-quality-meter"]
+        ["kcal", display.kcal, objective.kcal, ".weekly-menu-progress.kcal .nutrition-quality-meter"],
+        ["protein", display.protein, objective.protein, ".weekly-menu-progress.protein .nutrition-quality-meter"]
       ]) {
         const expected = qualityStep(metric, value, target);
         const meter = uiDay.locator(selector);

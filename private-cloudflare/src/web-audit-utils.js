@@ -24,6 +24,25 @@ export function visibleMenuRow(item) {
   return !(hasKcal && hasProtein && Number(item.kcal) === 0 && Number(item.protein) === 0);
 }
 
+
+export const consumedMenuStatus = (status) =>
+  /^(consumid[oa]|hech[oa]|completad[oa]|done|completed)$/.test(normalizeAuditValue(status));
+
+export function menuDisplayTotals(items, date, today, objective = {}) {
+  const rows = Array.isArray(items) ? items : [];
+  const useConsumed = String(date || "") <= String(today || "") && rows.some((item) => consumedMenuStatus(item?.status));
+  const selected = useConsumed ? rows.filter((item) => consumedMenuStatus(item?.status)) : rows;
+  const kcal = selected.reduce((sum, item) => sum + (Number.isFinite(Number(item?.kcal)) ? Number(item.kcal) : 0), 0);
+  const protein = selected.reduce((sum, item) => sum + (Number.isFinite(Number(item?.protein)) ? Number(item.protein) : 0), 0);
+  return {
+    useConsumed,
+    kcal,
+    protein,
+    kcalTarget: Number(objective?.kcal),
+    proteinTarget: Number(objective?.protein)
+  };
+}
+
 export function qualityStep(metric, value, target) {
   const numericValue = Number(value);
   const numericTarget = Number(target);
