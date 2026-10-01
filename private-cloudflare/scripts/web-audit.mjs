@@ -1148,6 +1148,26 @@ try {
             `HTTP ${probe.status} · ${probe.contentType || "sin content-type"}${probe.body?.code ? " · " + probe.body.code : ""}`
           );
         }
+
+        const recipeImages = panel.locator(".recipe-card img");
+        const recipeImageCount = await recipeImages.count();
+        for (let imageIndex = 0; imageIndex < recipeImageCount; imageIndex += 1) {
+          const image = recipeImages.nth(imageIndex);
+          const src = await image.getAttribute("src");
+          await image.scrollIntoViewIfNeeded().catch(() => {});
+          const loaded = src
+            ? await page.waitForFunction(
+                (expectedSrc) => {
+                  const candidate = [...document.querySelectorAll('[data-health-panel="recipes"] .recipe-card img')]
+                    .find((node) => node.getAttribute("src") === expectedSrc);
+                  return Boolean(candidate?.complete && candidate.naturalWidth > 0 && candidate.naturalHeight > 0);
+                },
+                src,
+                { timeout: 6000 }
+              ).then(() => true).catch(() => false)
+            : false;
+          assertCheck(loaded, "Salud · Recetas carga foto visible", src || "sin src");
+        }
       }
       await auditVisualSnapshot(`desktop · Salud · ${tab}`);
     }
