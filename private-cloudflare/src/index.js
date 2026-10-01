@@ -25,6 +25,7 @@ let googleTokenCache = { token: null, expiresAt: 0 };
 let financeCache = { value: null, expiresAt: 0 };
 let habitsCache = { value: null, expiresAt: 0 };
 let healthCache = { value: null, expiresAt: 0, date: null };
+let recipePhotoCache = { value: new Map(), expiresAt: 0 };
 
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
@@ -173,6 +174,75 @@ async function getGoogleAccessToken(env) {
     expiresAt: Date.now() + Math.max(60, Number(payload.expires_in || 3600) - 120) * 1000
   };
   return googleTokenCache.token;
+}
+
+async function fetchHealthRecipePhotoMeta(env, recipeId) {
+  if (!hasHealthGoogleConfig(env)) return null;
+  const cleanRecipeId = String(recipeId || "").trim();
+  if (!cleanRecipeId || cleanRecipeId.length > 160) return null;
+
+  if (recipePhotoCache.expiresAt <= Date.now()) {
+    const token = await getGoogleAccessToken(env);
+    const range = encodeURIComponent("Recetas!A1:O1000");
+    const endpoint =
+      "https://sheets.googleapis.com/v4/spreadsheets/" +
+      encodeURIComponent(env.HEALTH_SHEET_ID) +
+      "/values/" + range +
+      "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
+    const response = await fetch(endpoint, { headers: { Authorization: "Bearer " + token } });
+    if (!response.ok) throw new Error("HEALTH_RECIPE_PHOTOS_" + response.status);
+    const rows = parseTableRows((await response.json())?.values || []);
+    recipePhotoCache = {
+      value: new Map(rows
+        .map((row) => ({
+          recipeId: String(row.recipe_id || "").trim(),
+          fileId: String(row.foto_drive_file_id || "").trim(),
+          mimeType: String(row.foto_mime_type || "").trim(),
+          updatedAt: String(row.foto_updated_at || row.updated_at || "").trim()
+        }))
+        .filter((item) => item.recipeId && item.fileId)
+        .map((item) => [item.recipeId, item])),
+      expiresAt: Date.now() + 60_000
+    };
+  }
+
+  return recipePhotoCache.value.get(cleanRecipeId) || null;
+}
+
+async function serveHealthRecipePhoto(env, recipeId) {
+  const meta = await fetchHealthRecipePhotoMeta(env, recipeId);
+  if (!meta) return json({ ok: false, code: "RECIPE_PHOTO_NOT_FOUND" }, 404);
+  if (!/^[A-Za-z0-9_-]{10,}$/.test(meta.fileId)) {
+    return json({ ok: false, code: "INVALID_RECIPE_PHOTO_REF" }, 500);
+  }
+
+  const token = await getGoogleAccessToken(env);
+  const response = await fetch(
+    "https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(meta.fileId) + "?alt=media",
+    { headers: { Authorization: "Bearer " + token } }
+  );
+  if (!response.ok) {
+    if (response.status === 404) return json({ ok: false, code: "RECIPE_PHOTO_NOT_FOUND" }, 404);
+    throw new Error("HEALTH_RECIPE_PHOTO_DRIVE_" + response.status);
+  }
+
+  const upstreamType = String(response.headers.get("Content-Type") || "").trim().toLowerCase();
+  const declaredType = String(meta.mimeType || "").trim().toLowerCase();
+  const contentType = upstreamType.startsWith("image/")
+    ? upstreamType
+    : declaredType.startsWith("image/")
+      ? declaredType
+      : null;
+  if (!contentType) return json({ ok: false, code: "INVALID_RECIPE_PHOTO_TYPE" }, 415);
+
+  return withSecurityHeaders(new Response(response.body, {
+    status: 200,
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": "private, max-age=300",
+      "Content-Disposition": "inline"
+    }
+  }));
 }
 
 function parseKeyValueRows(values = []) {
@@ -2408,7 +2478,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:L1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:O1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -2575,8 +2645,23 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     precision: item.precision || null,
     source: item.fuente || null,
     note: item.nota || null,
-    updatedAt: item.updated_at || null
+    updatedAt: item.updated_at || null,
+    photoFileId: String(item.foto_drive_file_id || "").trim() || null,
+    photoMimeType: String(item.foto_mime_type || "").trim() || null,
+    photoUpdatedAt: String(item.foto_updated_at || "").trim() || null
   })).filter((item) => item.id);
+
+  recipePhotoCache = {
+    value: new Map(recipeRows
+      .filter((recipe) => recipe.photoFileId)
+      .map((recipe) => [recipe.id, {
+        recipeId: recipe.id,
+        fileId: recipe.photoFileId,
+        mimeType: recipe.photoMimeType,
+        updatedAt: recipe.photoUpdatedAt || recipe.updatedAt || null
+      }])),
+    expiresAt: Date.now() + 60_000
+  };
 
   const recipeIngredientRows = parseTableRows(valueRanges[9]?.values || []).map((item) => ({
     recipeId: String(item.recipe_id || "").trim(),
@@ -2738,10 +2823,17 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const value = {
     date,
     foods,
-    recipes: [...recipeById.values()].map((recipe) => ({
-      ...recipe,
-      ingredients: ingredientsByRecipeId.get(recipe.id) || []
-    })),
+    recipes: [...recipeById.values()].map((recipe) => {
+      const { photoFileId, photoMimeType, photoUpdatedAt, ...publicRecipe } = recipe;
+      const version = photoUpdatedAt || recipe.updatedAt || "";
+      return {
+        ...publicRecipe,
+        photoUrl: photoFileId
+          ? `/api/health/recipes/${encodeURIComponent(recipe.id)}/image?v=${encodeURIComponent(version)}`
+          : null,
+        ingredients: ingredientsByRecipeId.get(recipe.id) || []
+      };
+    }),
     entries: dayEntries,
     objective,
     activityObjective,
@@ -2817,6 +2909,7 @@ async function appendHealthSheetRow(env, range, values) {
   });
   if (!response.ok) throw new Error(`HEALTH_WRITE_${response.status}`);
   healthCache = { value: null, expiresAt: 0, date: null };
+  recipePhotoCache = { value: new Map(), expiresAt: 0 };
 }
 
 async function saveNutritionEntry(request, env) {
@@ -4271,6 +4364,17 @@ export default {
       } catch (error) {
         console.warn("Health overview read failed", String(error?.message || error));
         return json({ ok: false, code: "HEALTH_OVERVIEW_READ_FAILED" }, 502);
+      }
+    }
+
+    const recipeImageMatch = url.pathname.match(/^\/api\/health\/recipes\/([^/]+)\/image$/);
+    if (recipeImageMatch) {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        return await serveHealthRecipePhoto(env, decodeURIComponent(recipeImageMatch[1]));
+      } catch (error) {
+        console.warn("Recipe photo read failed", String(error?.message || error));
+        return json({ ok: false, code: "RECIPE_PHOTO_READ_FAILED" }, 502);
       }
     }
 
