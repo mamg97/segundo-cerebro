@@ -3147,6 +3147,21 @@ async function saveGymSession(request, env) {
     return json({ ok: false, code: "INVALID_GYM_SESSION" }, 400);
   }
 
+  if (hasHealthGoogleConfig(env)) {
+    try {
+      const health = await fetchHealthNutritionSummary(env, { date: sessionDate });
+      if (toNumber(health.value?.activityObjective?.strengthSessionsWeek) === 0) {
+        return json({
+          ok: false,
+          code: "GYM_TEMPORARILY_PAUSED",
+          reason: health.value?.activityObjective?.note || null
+        }, 409);
+      }
+    } catch (error) {
+      console.warn("Gym pause validation unavailable", String(error?.message || error));
+    }
+  }
+
   const cleanEntries = entries
     .map((entry) => ({
       exerciseId: String(entry?.exerciseId || "").trim(),
