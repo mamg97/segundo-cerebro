@@ -49,10 +49,14 @@ function json(payload, status = 200) {
   );
 }
 
-function googleSheetTabUrl(spreadsheetId, gid) {
+function googleSpreadsheetUrl(spreadsheetId) {
   const id = String(spreadsheetId || "").trim();
   if (!/^[A-Za-z0-9_-]{20,}$/.test(id)) throw new Error("INVALID_SHEET_ID");
-  return "https://docs.google.com/spreadsheets/d/" + encodeURIComponent(id) + "/edit#gid=" + encodeURIComponent(String(gid));
+  return "https://docs.google.com/spreadsheets/d/" + encodeURIComponent(id) + "/edit";
+}
+
+function googleSheetTabUrl(spreadsheetId, gid) {
+  return googleSpreadsheetUrl(spreadsheetId) + "#gid=" + encodeURIComponent(String(gid));
 }
 
 async function resolvePrivateSourceLink(env, target) {
@@ -67,6 +71,10 @@ async function resolvePrivateSourceLink(env, target) {
   if (target === "health-recipes") {
     if (!hasHealthGoogleConfig(env)) throw new Error("HEALTH_NOT_CONFIGURED");
     return googleSheetTabUrl(env.HEALTH_SHEET_ID, 1893702374);
+  }
+  if (target === "finance-records") {
+    if (!hasFinanceGoogleConfig(env)) throw new Error("FINANCE_NOT_CONFIGURED");
+    return googleSpreadsheetUrl(env.FINANCE_SHEET_ID);
   }
   throw new Error("INVALID_SOURCE_LINK_TARGET");
 }
@@ -4328,7 +4336,7 @@ export default {
       } catch (error) {
         const code = String(error?.message || "SOURCE_LINK_ERROR");
         if (code === "INVALID_SOURCE_LINK_TARGET") return json({ ok: false, code }, 400);
-        if (code === "PANTRY_NOT_CONFIGURED" || code === "HEALTH_NOT_CONFIGURED") {
+        if (code === "PANTRY_NOT_CONFIGURED" || code === "HEALTH_NOT_CONFIGURED" || code === "FINANCE_NOT_CONFIGURED") {
           return json({ ok: false, code }, 503);
         }
         console.warn("Source link resolve failed", code);

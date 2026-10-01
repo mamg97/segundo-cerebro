@@ -1765,6 +1765,57 @@ html[data-theme="dark"] .credit-detail-summary > article {
   font-weight: 700;
 }
 
+.account-transactions-heading-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.account-transactions-heading-actions > span {
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.account-transactions-sheet-link {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 9px;
+  border: 1px solid color-mix(in srgb, var(--blue) 38%, var(--line));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--blue) 9%, var(--surface));
+  color: var(--blue);
+  font-size: 9px;
+  font-weight: 850;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-transactions-sheet-link:hover,
+.account-transactions-sheet-link:focus-visible {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 14%, var(--surface));
+  outline: none;
+}
+
+@media (max-width: 620px) {
+  .account-transactions-heading {
+    align-items: flex-start;
+  }
+
+  .account-transactions-heading-actions {
+    gap: 6px;
+  }
+
+  .account-transactions-heading-actions > span {
+    display: none;
+  }
+}
+
 .account-transactions-tabs {
   display: flex;
   gap: 8px;
