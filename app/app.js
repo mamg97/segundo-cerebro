@@ -3749,13 +3749,10 @@ function weeklyMenuModel(data) {
     ["comida", 3],
     ["merienda", 4],
     ["cena", 5],
-    ["cena · complemento", 6],
-    ["cena complemento", 6],
-    ["complemento cena", 6],
-    ["postre", 7],
-    ["snack", 8],
-    ["cierre", 9],
-    ["otro", 10]
+    ["cena · complemento", 5],
+    ["cena complemento", 5],
+    ["complemento cena", 5],
+    ["otro", 6]
   ]);
   const normalizedMoment = (value) => String(value || "Otro")
     .normalize("NFD")
@@ -4248,6 +4245,7 @@ function canonicalWeeklyMenuMoment(item) {
   }
 
   if (/^(cena\s*·?\s*complemento|complemento\s+cena)$/.test(moment)) return "Cena";
+  if (/^cierre\b/.test(moment)) return "Cena";
   return raw;
 }
 
@@ -4292,8 +4290,7 @@ function weeklyMenuMomentRank(value) {
     ["comida", 3],
     ["merienda", 4],
     ["cena", 5],
-    ["cierre", 6],
-    ["otro", 7]
+    ["otro", 6]
   ]);
   return order.get(normalizeWeeklyMenuMoment(value)) ?? 99;
 }
@@ -4532,7 +4529,7 @@ function renderRecipesPanel(data) {
 function renderNutritionEntries(entries) {
   if (!entries.length) return '<p class="health-empty">Todavía no hay comidas registradas para este día.</p>';
 
-  const order = ["Mañana oficina", "Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Cierre", "Otro"];
+  const order = ["Mañana oficina", "Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Otro"];
   const groups = new Map();
   for (const entry of entries) {
     const key = canonicalWeeklyMenuMoment({ moment: entry.moment, itemName: entry.itemName, note: entry.note });
