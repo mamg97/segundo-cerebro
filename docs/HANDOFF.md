@@ -1202,3 +1202,17 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Salida mensual vigente para el próximo 20/10: **557,04 €** = 197,42 + 116 + 105,10 + 105,10 + 33,42.
 - La UI de Patrimonio muestra una barra específica de eToro, con bloques por destino, importe reservado, salida mensual y fecha final. Se muestra tanto en el resumen de patrimonio como en su detalle.
 - No restar estos bloques del patrimonio total: siguen formando parte del valor de eToro hasta que la retirada se ejecute. La barra es una clasificación económica interna, no una deuda adicional.
+
+
+## MIDAS · Buy The Dip corpus v0 · 01/10/2026
+
+- Nueva campaña prospectiva separada en `mamg97/midas-paper-lab`: `buy_the_dip_corpus_2026_v0`.
+- La metodología v0 se deriva del corpus primario Buy The Dip ya disponible y automatiza deep value / special situations mediante cinco capas: valoración, calidad/supervivencia, asignación de capital, dislocación y catalizadores.
+- Los pesos y umbrales numéricos son decisiones de ingeniería congeladas antes del primer fill; no se presentan como porcentajes declarados por los hosts.
+- Universo v0: S&P-derived ya congelado en MIDAS para evitar selección retrospectiva. La futura v1 global/internacional deberá arrancar un diario nuevo.
+- Capital demo: 100.000 USD; máximo 10 posiciones; 15 % por nombre; 30 % por sector; exposición dinámica 0–95 % según oportunidades; señal fundamental mensual; NAV diario; fills next-open; comisión 0,10 % + slippage 0,05 %.
+- Segundo Cerebro incorpora el grupo `buy_the_dip_demo` en la tabla MIDAS y Laboratorio vivo sin mezclarlo con BROKERS ni patrimonio real.
+- El contrato de comparación MIDAS se amplía para todas las campañas con riesgo observado: volatilidad anualizada según cadencia, máximo drawdown, Sharpe descriptivo con rf=0 y número de observaciones, además de rentabilidad acumulada.
+- Las estrategias conservan sus horizontes propios. No se declara una clasificación común cuando las fechas de inicio o supuestos de ejecución difieren; la comparación justa usa ventanas solapadas cuando exista suficiente historial.
+- La salud operativa de Segundo Cerebro también vigila el workflow `MIDAS Buy The Dip paper`.
+- Assets MIDAS: `app.js?v=0.40.17`, `midas-lab.js?v=0.40.17`.
