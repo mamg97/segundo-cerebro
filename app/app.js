@@ -6312,8 +6312,14 @@ function openBudgetDetail() {
       </div>
       <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
-      ${renderAccountTransactions(accountTransactions, "santander-comun", "Santander · Común", currency)}
-      ${renderAccountTransactions(accountTransactions, "openbank-miguel", "Openbank · Miguel", currency)}
+      ${liquidityAccounts
+        .map((account) => renderAccountTransactions(
+          accountTransactions,
+          account.id,
+          account.name || account.id || "Cuenta",
+          account.currency || currency
+        ))
+        .join("")}
       ${categories.length ? `<div class="budget-groups">
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>` : ""}
