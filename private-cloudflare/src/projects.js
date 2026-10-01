@@ -48,7 +48,7 @@ async function resolveId(env,token){
 async function readRows(id,token,tab,range){
   const encoded=encodeURIComponent(tab+"!"+range);
   const url="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(id)+"/values/"+encoded+"?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
-  const r=await fetch(url,{headers:{Authorization:"Bearer "+token}});
+  const r=await googleReadFetch(url,{headers:{Authorization:"Bearer "+token}});
   if(!r.ok) throw new Error("GOOGLE_SHEETS_"+r.status+"_"+tab);
   return table((await r.json())?.values||[]);
 }
