@@ -1,7 +1,6 @@
 import { chromium } from "playwright";
 import {
   classifyRequestFailure,
-  evaluateMidasWorkflowRuns,
   hiddenMenuStatus,
   logicalMenuKey,
   menuDisplayTotals,
@@ -9,6 +8,7 @@ import {
   qualityStep,
   visibleMenuRow
 } from "../src/web-audit-utils.js";
+import { evaluateMidasWorkflowRuns } from "../src/midas-health.js";
 
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
 const token = process.env.AUDIT_TOKEN;
