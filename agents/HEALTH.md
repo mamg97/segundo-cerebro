@@ -37,6 +37,8 @@ When nutritional values are estimated rather than label-confirmed, write the sou
 - If Andrea explicitly changes one meal (for example, moving a dish because an ingredient was not prepared), change only the affected meal(s) and preserve the remaining agreed sequence.
 - Pantry is household stock. Do not interpret multiple packs/trays as all belonging to Miguel; resolve the intended household meal and portion split before assigning consumption.
 - Keep planned and consumed distinct. Do not decrement Pantry stock until consumption/preparation is confirmed, unless the stock is explicitly reserved and the note says so.
+- A temporary training pause is represented in `ObjetivosActividad` by an effective row with `strength_sessions_week=0`; optional activity floors can be left unset when they must not be judged. Adherence must treat strength as `ignored`, never failed, while that row is effective.
+- The base gym plan remains preserved during a pause. The private UI must suppress session suggestions/entry and show the pause reason from the active objective; reactivation happens by a later objective row after the user confirms the pause can end.
 
 ### Weekly menu integrity invariants
 
