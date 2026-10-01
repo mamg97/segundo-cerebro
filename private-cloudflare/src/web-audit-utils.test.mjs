@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   classifyRequestFailure,
-  evaluateMidasWorkflowRuns,
   hiddenMenuStatus,
   logicalMenuKey,
   menuDisplayTotals,
   qualityStep,
   visibleMenuRow
 } from "./web-audit-utils.js";
+import { evaluateMidasWorkflowRuns } from "./midas-health.js";
 
 test("hidden menu states stay hidden", () => {
   for (const status of ["omitido","retirada","cancelado","cancelled","skipped"]) {
