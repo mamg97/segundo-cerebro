@@ -71,6 +71,7 @@ Como mínimo:
   - workflows públicos `paper`, `TFM`, `Capital Cycle`, `Weekly ML` y `TFG` se contrastan contra su cadencia real;
   - una ejecución debida ausente o cuyo último `schedule` termine en fallo deja la auditoría roja;
   - tras un workflow verde, el auditor exige que aparezcan los diarios correspondientes y no acepta “esperando primera sesión” como sustituto de una ejecución fallida;
+  - la vista MIDAS expone el mismo estado operativo en un bloque `Salud operativa`; el auditor comprueba que las incidencias detectadas también sean visibles para el usuario;
 - respuestas 5xx y fallos de red;
 - errores JavaScript/console;
 - regresiones de navegación/estilos compartidos provocadas por cualquier dominio;
