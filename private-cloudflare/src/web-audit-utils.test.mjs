@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   classifyRequestFailure,
+  evaluateMidasWorkflowRuns,
   hiddenMenuStatus,
   logicalMenuKey,
   menuDisplayTotals,
@@ -63,4 +64,28 @@ test("future menu bars keep full planned totals", () => {
   assert.equal(result.useConsumed, false);
   assert.equal(result.kcal, 1500);
   assert.equal(result.protein, 120);
+});
+
+
+test("MIDAS audit detects a failed due workflow without penalizing not-yet-due weekly jobs", () => {
+  const now = Date.parse("2026-10-01T16:00:00Z");
+  const health = evaluateMidasWorkflowRuns([
+    { name: "MIDAS paper comparison", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-01T02:19:28Z" },
+    { name: "MIDAS TFM shadow forecasts", event: "schedule", status: "completed", conclusion: "failure", created_at: "2026-09-30T23:05:37Z" },
+    { name: "MIDAS capital cycle paper", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-01T03:49:10Z" }
+  ], now);
+  assert.equal(health.ok, false);
+  assert.equal(health.issues.length, 1);
+  assert.equal(health.issues[0].name, "MIDAS TFM shadow forecasts");
+  assert.equal(health.workflows.find((item) => item.name === "MIDAS weekly ML paper").state, "not_due_yet");
+});
+
+test("MIDAS audit detects a missing daily schedule after its grace window", () => {
+  const now = Date.parse("2026-10-02T16:00:00Z");
+  const health = evaluateMidasWorkflowRuns([
+    { name: "MIDAS paper comparison", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-01T02:19:28Z" },
+    { name: "MIDAS TFM shadow forecasts", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-02T04:00:00Z" },
+    { name: "MIDAS capital cycle paper", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-02T04:00:00Z" }
+  ], now);
+  assert.equal(health.workflows.find((item) => item.name === "MIDAS paper comparison").state, "missing_due_run");
 });
