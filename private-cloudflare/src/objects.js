@@ -1,3 +1,5 @@
+import { googleReadFetch, sheetsBatchGet } from "./google-read.js";
+
 const SHEET_TITLE = "SEGUNDO CEREBRO - OBJETOS";
 const SOURCE_KEY = "OBJECTS_SHEET_ID";
 const CACHE_MS = 30_000;
@@ -161,7 +163,7 @@ async function resolveFromPrivateRegistry(env, token) {
     "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
 
   try {
-    const response = await fetch(endpoint, { headers: { Authorization: "Bearer " + token } });
+    const response = await googleReadFetch(endpoint, { headers: { Authorization: "Bearer " + token } });
     if (!response.ok) return null;
     const rows = (await response.json())?.values || [];
     const found = rows.find((row) => String(row?.[0] || "").trim() === SOURCE_KEY);
@@ -190,7 +192,7 @@ async function resolveSpreadsheetId(env, token) {
     orderBy: "modifiedTime desc",
     pageSize: "10"
   });
-  const response = await fetch("https://www.googleapis.com/drive/v3/files?" + params.toString(), {
+  const response = await googleReadFetch("https://www.googleapis.com/drive/v3/files?" + params.toString(), {
     headers: { Authorization: "Bearer " + token }
   });
   if (!response.ok) throw new Error("GOOGLE_DRIVE_" + response.status);
@@ -220,7 +222,7 @@ async function sheetTitles(spreadsheetId, token) {
     "https://sheets.googleapis.com/v4/spreadsheets/" +
     encodeURIComponent(spreadsheetId) +
     "?fields=sheets.properties.title";
-  const response = await fetch(endpoint, { headers: { Authorization: "Bearer " + token } });
+  const response = await googleReadFetch(endpoint, { headers: { Authorization: "Bearer " + token } });
   if (!response.ok) throw new Error("GOOGLE_SHEETS_META_" + response.status);
   return new Set(((await response.json())?.sheets || []).map((sheet) => sheet?.properties?.title).filter(Boolean));
 }
@@ -525,18 +527,28 @@ export async function fetchObjectsSummary(env, getGoogleAccessToken) {
   if (!spreadsheetId) return { status: "source-pending", value: emptyPayload() };
 
   const titles = await sheetTitles(spreadsheetId, token);
-  const [objects, wardrobe, looks, lookItems, kits, kitItems, lists, listItems] = await Promise.all([
-    readRows(spreadsheetId, token, titles, "Objetos", "A1:AZ5000"),
-    readRows(spreadsheetId, token, titles, "Armario", "A1:AZ5000"),
-    readRows(spreadsheetId, token, titles, "Looks", "A1:AZ2000"),
-    readRows(spreadsheetId, token, titles, "LookItems", "A1:AZ10000"),
-    readRows(spreadsheetId, token, titles, "Kits", "A1:AZ2000"),
-    readRows(spreadsheetId, token, titles, "KitItems", "A1:AZ10000"),
-    readRows(spreadsheetId, token, titles, "Listas", "A1:AZ2000"),
-    readRows(spreadsheetId, token, titles, "ListaItems", "A1:AZ10000")
-  ]);
+  const requested = [
+    ["objects", "Objetos", "A1:AZ5000"],
+    ["wardrobe", "Armario", "A1:AZ5000"],
+    ["looks", "Looks", "A1:AZ2000"],
+    ["lookItems", "LookItems", "A1:AZ10000"],
+    ["kits", "Kits", "A1:AZ2000"],
+    ["kitItems", "KitItems", "A1:AZ10000"],
+    ["lists", "Listas", "A1:AZ2000"],
+    ["listItems", "ListaItems", "A1:AZ10000"]
+  ];
+  const active = requested.filter(([, tab]) => titles.has(tab));
+  const batches = await sheetsBatchGet(
+    spreadsheetId,
+    active.map(([, tab, range]) => tab + "!" + range),
+    token
+  );
+  const rowsByKey = Object.fromEntries(requested.map(([key]) => [key, []]));
+  active.forEach(([key], index) => {
+    rowsByKey[key] = table(batches[index]?.values || []);
+  });
 
-  const payload = buildPayload({ objects, wardrobe, looks, lookItems, kits, kitItems, lists, listItems });
+  const payload = buildPayload(rowsByKey);
   cache.value = payload;
   cache.expiresAt = Date.now() + CACHE_MS;
   return { status: "ok-live", value: payload };
