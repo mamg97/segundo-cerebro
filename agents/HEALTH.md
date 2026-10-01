@@ -46,6 +46,9 @@ When nutritional values are estimated rather than label-confirmed, write the sou
 - Before serving the menu, Segundo Cerebro automatically filters superseded rows, removes hidden states and resolves missing nutrition from the linked recipe master only when that recipe has usable confirmed/estimated per-serving macros.
 - If a linked recipe is explicitly `pendiente` or the note says a quantity must still be confirmed, kcal/protein remain unknown. The UI must say that confirmation is pending and show only the known subtotal; it must not invent macros or reuse stale ingredient assumptions.
 - This reconciliation is a permanent runtime rule. Do not fix recurring menu inconsistencies by manually editing the same day's rows each time.
+- **Content/presentation separation is mandatory:** meal/date/menu changes are data mutations in the private Health Sheet (`MenuSemanal`, plus `Registro` when consumed), never frontend-code changes.
+- The web/Worker must remain a generic renderer/reconciler of the canonical Sheet schema. Do not hard-code real dates, meal names, portions, household substitutions or weekly totals in Git.
+- A code change is justified only for a reusable rendering/reconciliation defect that would affect arbitrary menu rows. After that generic defect is fixed, future menu edits must be Sheet-only.
 
 ## Energy expenditure
 
