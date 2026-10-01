@@ -6,7 +6,7 @@ let cachedAt = 0;
 let weeklyBootstrapCache = { value: null, expiresAt: 0 };
 let researchCache = { value: null, expiresAt: 0, spreadsheetId: null, spreadsheetIdExpiresAt: 0 };
 
-const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
+const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "capital_cycle_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
 
 function optionalNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
