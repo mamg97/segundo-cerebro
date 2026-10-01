@@ -6174,7 +6174,11 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
             segments
           } = model;
           const leaderLayout = buildLiquidityLeaderLayout(segments);
-          const leaderCountClass = `leader-count-${Math.min(20, leaderLayout.length)}`;
+          const denseLegend = leaderLayout.length > 6;
+          const leaderCountClass = [
+            `leader-count-${Math.min(20, leaderLayout.length)}`,
+            denseLegend ? "is-variable-height" : ""
+          ].filter(Boolean).join(" ");
 
           return `
             <article class="liquidity-account-card ${excess > 0.01 ? "has-overflow" : ""}">
@@ -6191,7 +6195,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
                 </div>
               </header>
 
-              <div class="liquidity-account-chart">
+              <div class="liquidity-account-chart ${denseLegend ? "has-variable-legend" : ""}">
                 <svg class="liquidity-leader-layer" width="100%" height="258" aria-hidden="true">
                   ${leaderLayout.map((segment) => segment.visiblePct > 0 ? `
                     <line class="liquidity-leader-line"
