@@ -773,6 +773,20 @@ try {
     await auditVisualSnapshot(`desktop · ${areaId}`);
 
     if (areaId === "area-finance") {
+      const sheetLink = page.locator(".account-transactions-sheet-link").first();
+      const sheetLinkVisible = await sheetLink.isVisible().catch(() => false);
+      assertCheck(sheetLinkVisible, "Finanzas · enlace al Sheet de movimientos visible");
+      if (sheetLinkVisible) {
+        const href = await sheetLink.getAttribute("href");
+        const target = await sheetLink.getAttribute("target");
+        assertCheck(
+          href === "/api/source-link?target=finance-records",
+          "Finanzas · enlace al Sheet usa resolver privado",
+          String(href || "")
+        );
+        assertCheck(target === "_blank", "Finanzas · Sheet abre en pestaña nueva", String(target || ""));
+      }
+
       await auditTabSet(
         "Finanzas · movimientos por cuenta",
         ".account-transactions-tabs [data-account-transactions-tab]",
