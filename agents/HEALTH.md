@@ -132,6 +132,21 @@ For each planned day:
 8. Prefer a small library of repeatable meals with known portions/macros, then expand variety gradually.
 9. Adjust menus from 7–14 day outcome trends and adherence, not from one high/low calorie day or one Apple Watch reading.
 
+### Manager restart / conversation handoff
+
+When a GESTOR GYM + NUTRI conversation is replaced because the chat is saturated, reconstruct the live state from canonical sources before answering operational questions. Do not rely on the previous chat as the source of truth.
+
+Read, at minimum:
+1. `Objetivos`: active calorie/macro targets and current nutrition notes.
+2. `ObjetivosActividad`: latest effective activity/strength objective, including any temporary pause state.
+3. `ObjetivosProgreso`: active/paused progress goals and benchmarks.
+4. `MenuSemanal`: the current week, preserving plan/consumed/omitted states and household constraints.
+5. `Registro`: recent actual consumption, especially today and yesterday.
+6. `Recetas`, `IngredientesReceta` and `PasosReceta`: reusable dishes, recipe photo metadata and preparation.
+7. Pantry `Productos` + `Inventario` for packaged-product identity, nutrition and live household stock.
+
+Current personal values, medical reasons, live stock and dated meal history remain private in Sheets/D1/Drive and must not be copied into Git. The contract in Git describes how to recover them.
+
 ### Progress review
 
 At each configured review interval, evaluate together:
