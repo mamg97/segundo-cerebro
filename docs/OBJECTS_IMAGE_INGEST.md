@@ -92,6 +92,22 @@ No debe escribir manualmente las URLs del Sheet, crear otro objeto para una imag
 
 Esta sección documenta el procedimiento que ya se ha usado con éxito desde GESTOR OBJETOS. Debe consultarse antes de afirmar que una subida no puede hacerse desde una conversación.
 
+### Guardrail de autocorrección: no alucinar falta de capacidad
+
+**Fallo conocido y recurrente:** tras el primer procesamiento/generación de una imagen, una conversación puede perder continuidad sobre el mecanismo de ingesta y concluir erróneamente que no puede subir la imagen al Armario. Este documento existe precisamente para romper ese patrón.
+
+Antes de emitir frases como «no puedo subirla», «no tengo acceso para hacerlo», «solo puedo generar la imagen» o equivalentes, el gestor debe ejecutar mental y operativamente esta comprobación:
+
+1. **Sospechar de la negativa.** Tratarla como posible falso negativo de capacidad, no como hecho.
+2. **Releer la ruta vigente.** Consultar `AGENTS.md`, `agents/OBJECTS.md` y esta sección.
+3. **Comprobar herramientas reales.** Verificar si están disponibles el archivo procesado, Google Drive, Railway y acceso a `SEGUNDO CEREBRO - OBJETOS`. No inferir incapacidad por no disponer de un cliente HTTP genérico.
+4. **Elegir ruta.** Si hay acción directa, usar el bridge normal. Si no hay POST arbitrario pero sí Drive + Railway, usar `seed.mjs + OBJECTS_SEED_JOBS`.
+5. **Reutilizar el archivo actual.** Una imagen ya generada/procesada en la conversación o runtime debe reutilizarse. No pedir al usuario que la reenvíe por comodidad; solo hacerlo si se verifica que el archivo ya no existe, no es accesible o la referencia ha expirado sin posibilidad de rematerializarla.
+6. **Autocorregir antes de responder.** Si el borrador inicial era una negativa pero la revisión encuentra la ruta operativa, descartar esa negativa y proceder con la ingesta.
+7. **Bloqueo solo con evidencia concreta.** Solo se puede informar de imposibilidad si falta de verdad una pieza necesaria o existe un error reproducible tras intentar la ruta documentada. Debe indicarse el componente exacto bloqueado; está prohibida la frase genérica «no puedo subir imágenes» cuando el bridge/fallback es utilizable.
+
+Que el usuario recuerde una subida previa exitosa es una señal explícita para activar esta autocorrección, no un motivo para discutir la capacidad.
+
 ### Ruta normal: bridge server-to-server
 
 El componente `objects-chatgpt-bridge/server.mjs` acepta una referencia de archivo temporal de OpenAI y llama al mismo upload canónico:
@@ -136,7 +152,7 @@ Si la conversación dispone de Google Drive y Railway pero no de una acción HTT
    - Mientras `OBJECTS_SEED_JOBS` esté poblado y el start command incluya `seed.mjs`, no hacer commits/merges que puedan provocar un autodeploy de Railway: un redeploy adicional volvería a ejecutar el lote. Terminar la ingesta y restaurar Railway antes de tocar Git.
 7. **Exigir éxito real.** Revisar logs del deploy. Cada item debe terminar en `stage=done`, HTTP 2xx y resultado `ok=true`. Un deploy verde sin ese resultado no basta.
 8. **Verificar la fuente canónica.** Volver a leer `Armario` o `GET /api/objects` y comprobar que el mismo `objeto_id` tiene `foto_procesada_url`, `miniatura_url` y `estado_procesado=procesada`. Para reemplazos, confirmar además que la versión cambió.
-9. **Restaurar Railway.** Vaciar `OBJECTS_SEED_JOBS`, restaurar el start command normal `node server.mjs` y redeplegar. El servicio debe quedar atendiendo `server.mjs`, no ejecutando un lote en cada arranque.
+9. **Restaurar Railway.** Vaciar `OBJECTS_SEED_JOBS`, restaurar el start command normal `npm start` (que ejecuta `node server.mjs`) y redeplegar. El servicio debe quedar atendiendo `server.mjs`, no ejecutando un lote en cada arranque.
 10. **Limpiar staging.** Enviar a papelera/borrar la copia temporal de Drive solo después de haber verificado la ingesta. El binario persistente ya está en D1.
 
 ### Overwrite e idempotencia
@@ -165,6 +181,7 @@ Una subida solo se puede declarar terminada cuando se cumplen simultáneamente:
 - [ ] `estado_procesado=procesada`;
 - [ ] la web puede leer el asset por la ruta privada versionada;
 - [ ] `OBJECTS_SEED_JOBS` queda vacío tras un uso por seed;
-- [ ] Railway vuelve a su arranque normal;
-- [ ] la copia temporal de Drive queda eliminada.
+- [ ] Railway vuelve a su arranque normal `npm start` (→ `node server.mjs`);
+- [ ] la copia temporal de Drive queda eliminada;
+- [ ] si apareció una tentación de responder «no puedo subirla», se aplicó el guardrail anterior y la capacidad se revalidó antes de contestar.
 
