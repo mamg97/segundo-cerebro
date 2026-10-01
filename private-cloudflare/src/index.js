@@ -2168,6 +2168,67 @@ async function persistHealthActivityDetail(env, history) {
   }
 }
 
+async function persistHealthBodyDetail(env, history) {
+  if (!hasHealthGoogleConfig(env) || !history) return;
+  const generatedAt = new Date().toISOString();
+  const bodySamples = Array.isArray(history.bodySamples) ? history.bodySamples : [];
+  const rows = bodySamples.slice(-4999).map((sample) => [
+    sample.measuredAt || "",
+    sample.date || "",
+    sample.type || "",
+    sample.value ?? "",
+    sample.unit || "",
+    sample.source || "",
+    sample.importedAt || "",
+    generatedAt
+  ]);
+
+  await clearHealthSheetRange(env, "MedicionesCorporalesApple!A2:H5000");
+  if (rows.length) {
+    await updateHealthSheetRange(
+      env,
+      `MedicionesCorporalesApple!A2:H${rows.length + 1}`,
+      rows
+    );
+  }
+}
+
+async function persistHealthRecoveryDetail(env, history) {
+  if (!hasHealthGoogleConfig(env) || !history) return;
+  const generatedAt = new Date().toISOString();
+  const recovery = Array.isArray(history.recovery) ? history.recovery : [];
+  const rows = recovery.slice(-1999).map((row) => [
+    row.date || "",
+    row.restingHeartRate ?? "",
+    row.walkingHeartRateAverage ?? "",
+    row.hrvSdnnMs ?? "",
+    row.respiratoryRate ?? "",
+    row.oxygenSaturationPct ?? "",
+    row.vo2Max ?? "",
+    row.wristTemperatureC ?? "",
+    row.sleepAsleepMinutes ?? "",
+    row.sleepInBedMinutes ?? "",
+    row.sleepAwakeMinutes ?? "",
+    row.sleepCoreMinutes ?? "",
+    row.sleepDeepMinutes ?? "",
+    row.sleepRemMinutes ?? "",
+    row.source || "",
+    row.sampledAt || "",
+    row.importedAt || "",
+    JSON.stringify(Array.isArray(row.sourceDetails) ? row.sourceDetails : []),
+    generatedAt
+  ]);
+
+  await clearHealthSheetRange(env, "RecuperacionDiariaApple!A2:S2000");
+  if (rows.length) {
+    await updateHealthSheetRange(
+      env,
+      `RecuperacionDiariaApple!A2:S${rows.length + 1}`,
+      rows
+    );
+  }
+}
+
 function healthHistoryWeightStats(bodySamples = [], endDate) {
   const weightSamples = bodySamples.filter((sample) =>
     sample?.type === "bodyMass" &&
@@ -2347,7 +2408,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   }
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:L1000", "IngredientesReceta!A1:L5000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:L1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -2531,12 +2592,34 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     updatedAt: item.updated_at || null
   })).filter((item) => item.recipeId && item.name);
 
-  const recipeById = new Map(recipeRows.map((recipe) => [recipe.id, recipe]));
+  const recipeStepRows = parseTableRows(valueRanges[10]?.values || []).map((item) => ({
+    recipeId: String(item.recipe_id || "").trim(),
+    order: toNumber(item.orden),
+    instruction: String(item.instruccion || "").trim(),
+    timeMinutes: toNumber(item.tiempo_min),
+    temperature: item.temperatura || null,
+    utensil: item.utensilio || null,
+    source: item.fuente || null,
+    precision: item.precision || null,
+    note: item.nota || null,
+    updatedAt: item.updated_at || null
+  })).filter((item) => item.recipeId && item.instruction)
+    .sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
+
   const ingredientsByRecipeId = new Map();
   for (const ingredient of recipeIngredientRows) {
     if (!ingredientsByRecipeId.has(ingredient.recipeId)) ingredientsByRecipeId.set(ingredient.recipeId, []);
     ingredientsByRecipeId.get(ingredient.recipeId).push(ingredient);
   }
+  const stepsByRecipeId = new Map();
+  for (const step of recipeStepRows) {
+    if (!stepsByRecipeId.has(step.recipeId)) stepsByRecipeId.set(step.recipeId, []);
+    stepsByRecipeId.get(step.recipeId).push(step);
+  }
+  const recipeById = new Map(recipeRows.map((recipe) => [recipe.id, {
+    ...recipe,
+    steps: stepsByRecipeId.get(recipe.id) || []
+  }]));
 
   const historyStart = healthAddDays(date, -13);
   const bodyHistoryStart = healthAddDays(date, -27);
@@ -2655,6 +2738,10 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const value = {
     date,
     foods,
+    recipes: [...recipeById.values()].map((recipe) => ({
+      ...recipe,
+      ingredients: ingredientsByRecipeId.get(recipe.id) || []
+    })),
     entries: dayEntries,
     objective,
     activityObjective,
@@ -4265,11 +4352,18 @@ export default {
           return json({ ok: false, code: "INVALID_HEALTH_HISTORY_RANGE" }, 400);
         }
         const history = await fetchHealthHistory(env, { endDate, range });
+        const sheetHistory = range === "all"
+          ? history
+          : await fetchHealthHistory(env, { endDate, range: "all" });
         try {
-          await Promise.all([
+          const syncJobs = [
             persistHealthHistorySummary(env, history),
-            persistHealthActivityDetail(env, history)
-          ]);
+            persistHealthActivityDetail(env, sheetHistory),
+            persistHealthBodyDetail(env, sheetHistory),
+            persistHealthRecoveryDetail(env, sheetHistory)
+          ];
+          if (range !== "all") syncJobs.push(persistHealthHistorySummary(env, sheetHistory));
+          await Promise.all(syncJobs);
         } catch (summaryError) {
           console.warn("Health history derived-sheet sync failed", String(summaryError?.message || summaryError));
         }
