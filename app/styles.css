@@ -19043,3 +19043,277 @@ html[data-theme="dark"] .home-weekly-menu-corner {
   }
 }
 
+
+
+/* v0.40.19 — global readability and Home weekly-menu repair */
+:root {
+  --text-micro: 10px;
+  --text-meta: 11.5px;
+  --text-small: 12.5px;
+  --text-regular: 14px;
+}
+
+body {
+  font-size: 14px;
+}
+
+/* Shared text: raise the minimum readable scale without changing data density. */
+.main-content p,
+.detail-dialog p {
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.main-content small,
+.detail-dialog small {
+  font-size: 10px;
+}
+
+.main-content label,
+.detail-dialog label,
+.main-content li {
+  font-size: 11.5px;
+}
+
+.main-content button,
+.detail-dialog button,
+.main-content input,
+.detail-dialog input,
+.main-content select,
+.detail-dialog select,
+.main-content textarea,
+.detail-dialog textarea {
+  font-size: 11.5px;
+}
+
+.main-content table th,
+.main-content table td,
+.detail-dialog table th,
+.detail-dialog table td {
+  font-size: 10px;
+}
+
+.sidebar .nav-link {
+  font-size: 12px;
+}
+
+.sidebar .brand strong {
+  font-size: 14px;
+}
+
+.sidebar .brand small,
+.privacy-note small {
+  font-size: 10px;
+}
+
+.day-context p {
+  font-size: 12px;
+}
+
+.day-context time {
+  font-size: 13px;
+}
+
+.context-label {
+  font-size: 10.5px;
+}
+
+.section-heading h2 {
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.text-action {
+  font-size: 13px;
+}
+
+.count-pill,
+.source-note,
+footer {
+  font-size: 12px;
+}
+
+.calendar-legend {
+  font-size: 12px;
+}
+
+.week-day-header span,
+.week-event-time,
+.week-event small {
+  font-size: 11px;
+}
+
+.week-event strong {
+  font-size: 13px;
+}
+
+.daily-card-heading small,
+.daily-energy-grid small,
+.daily-card-status {
+  font-size: 11px;
+}
+
+.daily-card-heading strong {
+  font-size: 16px;
+}
+
+.daily-card-main > span {
+  font-size: 12px;
+}
+
+.health-tabs button {
+  font-size: 13px;
+}
+
+.health-section-heading > div > p {
+  font-size: 12.5px;
+}
+
+.health-event-item time,
+.health-event-item span,
+.gym-overview span,
+.gym-day-switch button span {
+  font-size: 11px;
+}
+
+.health-event-item strong,
+.gym-day-switch button strong {
+  font-size: 13px;
+}
+
+.health-empty,
+.health-empty-card p {
+  font-size: 12px;
+}
+
+/* The Home menu is a readable dashboard preview again: day cards, not a compressed 7×N matrix. */
+.home-weekly-menu-panel {
+  padding: 22px 24px;
+}
+
+.home-weekly-menu-subtitle {
+  max-width: 760px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.home-weekly-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(230px, 1fr));
+  gap: 12px;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.home-weekly-menu-day {
+  min-width: 0;
+}
+
+.home-weekly-menu-day > header {
+  gap: 10px;
+  padding: 13px 14px;
+}
+
+.home-weekly-menu-day > header small {
+  font-size: 9.5px;
+}
+
+.home-weekly-menu-day > header strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.home-weekly-menu-day > header > span {
+  max-width: 48%;
+  font-size: 10px;
+  line-height: 1.25;
+  white-space: normal;
+  text-align: right;
+}
+
+.home-weekly-menu-progress {
+  gap: 9px;
+  padding: 11px 14px;
+}
+
+.home-weekly-menu-progress span {
+  font-size: 10px;
+}
+
+.home-weekly-menu-progress b {
+  font-size: 11.5px;
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.home-weekly-menu-meals .weekly-menu-meal {
+  gap: 7px;
+  padding: 12px 14px;
+}
+
+.home-weekly-menu-meals .weekly-menu-moment {
+  font-size: 9.5px !important;
+}
+
+.home-weekly-menu-meals .weekly-menu-meal-copy > strong,
+.home-weekly-menu-meals .weekly-menu-group-item-copy strong {
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.home-weekly-menu-meals .weekly-menu-meal-copy p,
+.home-weekly-menu-meals .weekly-menu-group-item-copy small {
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+
+.home-weekly-menu-meals .weekly-menu-meal-macros b,
+.home-weekly-menu-meals .weekly-menu-meal-macros span,
+.home-weekly-menu-meals .weekly-menu-group-item-macros b,
+.home-weekly-menu-meals .weekly-menu-group-item-macros span {
+  font-size: 10px;
+}
+
+.home-weekly-menu-day > footer {
+  padding: 10px 14px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+@media (max-width: 1180px) {
+  .home-weekly-menu-grid {
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .home-weekly-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+    overflow: visible;
+  }
+
+  .home-weekly-menu-day {
+    flex: initial;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-weekly-menu-panel {
+    padding: 18px 16px;
+  }
+
+  .home-weekly-menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading h2 {
+    font-size: 20px;
+  }
+
+  .main-content p,
+  .detail-dialog p {
+    font-size: 11px;
+  }
+}
