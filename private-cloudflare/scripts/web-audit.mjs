@@ -21,6 +21,7 @@ const networkFailures = [];
 const ignoredNetworkAborts = [];
 const browserErrors = [];
 const resourceConsoleErrors = [];
+const recoveredSourcePaths = new Set();
 
 function pass(name, detail = "") {
   checks.push({ name, ok: true, detail });
@@ -124,28 +125,74 @@ async function probeApi(path, label, options = {}) {
 }
 
 async function reconcileTransientSourceFailures() {
-  const retryPaths = new Set([
-    "/api/pantry",
-    "/api/projects",
-    "/api/objects",
-    "/api/health/adherence",
-    "/api/finance/delta"
+  const retryTargets = new Map([
+    ["/api/pantry", "/api/pantry"],
+    ["/api/projects", "/api/projects"],
+    ["/api/objects", "/api/objects"],
+    ["/api/health/adherence", "/api/health/adherence"],
+    ["/api/finance/delta", "/api/finance/delta?limit=1"]
   ]);
   const paths = [...new Set(
     networkFailures
       .filter((entry) => /^http5\d\d:/.test(entry))
       .map((entry) => entry.split(":")[1])
-      .filter((path) => retryPaths.has(path))
+      .filter((path) => retryTargets.has(path))
   )];
   for (const path of paths) {
-    const result = await probeApi(path, `Fuente ${path}`, { attempts: 2, waitMs: 900 });
+    const result = await probeApi(retryTargets.get(path), `Fuente ${path}`, { attempts: 2, waitMs: 900 });
     if (!result?.ok) continue;
     for (let index = networkFailures.length - 1; index >= 0; index -= 1) {
       if (networkFailures[index].startsWith("http5") && networkFailures[index].includes(`:${path}`)) {
         networkFailures.splice(index, 1);
       }
     }
+    recoveredSourcePaths.add(path);
     info("5xx transitorio recuperado", path);
+  }
+}
+
+async function revalidateRecoveredSources() {
+  const areaChecks = new Map([
+    ["/api/pantry", { areaId: "area-pantry", selector: "[data-pantry-view]" }],
+    ["/api/projects", { areaId: "area-projects", selector: "[data-project-tab]" }],
+    ["/api/objects", { areaId: "area-objects", selector: "[data-objects-tab]" }]
+  ]);
+
+  for (const path of recoveredSourcePaths) {
+    const check = areaChecks.get(path);
+    if (!check) continue;
+    await closeDialogIfOpen();
+    const link = page.locator(`[data-nav-area-id="${check.areaId}"]`).first();
+    if (!await link.count()) {
+      fail(`Recuperación ${path}`, `falta navegación ${check.areaId}`);
+      continue;
+    }
+    await link.click();
+    const visible = await page.locator(check.selector).first()
+      .waitFor({ state: "visible", timeout: 7000 })
+      .then(() => true)
+      .catch(() => false);
+    assertCheck(visible, `Recuperación UI ${path}`, visible ? "API y vista recuperadas" : "API recuperó pero la vista no");
+    await closeDialogIfOpen();
+  }
+
+  if (recoveredSourcePaths.has("/api/health/adherence")) {
+    await closeDialogIfOpen();
+    const link = page.locator('[data-nav-area-id="area-health"]').first();
+    if (await link.count()) {
+      await link.click();
+      const button = page.locator('[data-health-tab="adherence"]');
+      const exists = await button.waitFor({ state: "visible", timeout: 7000 }).then(() => true).catch(() => false);
+      if (exists) {
+        await button.click();
+        await page.waitForTimeout(500);
+        const text = normalizeAuditValue(await page.locator('[data-health-panel="adherence"]').textContent().catch(() => ""));
+        assertCheck(!/no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text), "Recuperación UI /api/health/adherence");
+      } else {
+        fail("Recuperación UI /api/health/adherence", "pestaña no disponible");
+      }
+      await closeDialogIfOpen();
+    }
   }
 }
 
@@ -329,7 +376,7 @@ try {
         "[data-objects-tab]",
         "objectsTab",
         null,
-        { htmlDataName: "objects-tab", attributeName: "objects-tab", attr: "objects-tab", settle: 180 }
+        { htmlDataName: "objects-tab", attributeName: "objects-tab", attr: "objects-tab", settle: 180, sourcePath: "/api/objects" }
       );
     } else if (areaId === "area-projects") {
       if (!(projectsProbe.ok && projectsProbe.body?.ok === true)) {
@@ -486,6 +533,7 @@ try {
   }
 
   await reconcileTransientSourceFailures();
+  await revalidateRecoveredSources();
 
   if (ignoredNetworkAborts.length) {
     info("Abortos de navegación ignorados", ignoredNetworkAborts.slice(0, 5).join(","));
