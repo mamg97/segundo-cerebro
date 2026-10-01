@@ -247,6 +247,7 @@ Estado:
 - Un 5xx de fuente/backend debe diagnosticarse como tal antes de culpar a una pestaña que no llegó a renderizarse.
 - No modificar datos privados ni lógica funcional para forzar un verde. Reproducir, clasificar y corregir la causa propietaria.
 - Evidencia: GitHub Actions → `Audit production web` → job `audit` → step `Navigate and audit production`; buscar `[FAIL]`, `[SUMMARY]`, `[AUDIT_FAILED]` o `[AUDIT_OK]`.
+- Incidente 2026-10-01: tras el `schedule` #20 dejaron de aparecer varios disparos horarios pese a que el workflow seguía válido/activo; se mitigó con cron primario `:17`, respaldo `:42` en el mismo workflow y watchdog externo `:45`. Ver `docs/WEB_AUDIT.md`.
 
 ### Configuración CI/CD completada
 
