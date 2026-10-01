@@ -4406,7 +4406,11 @@ function renderHomeWeeklyMenu(data) {
             const rows = weeklyMenuItemsForMoment(day, moment.key);
             const allConsumed = rows.length > 0 && rows.every(weeklyMenuItemIsConsumed);
             return `
-              <div class="home-weekly-menu-table-cell ${allConsumed ? "is-consumed" : ""}">
+              <div
+                class="home-weekly-menu-table-cell ${allConsumed ? "is-consumed" : ""}"
+                data-menu-date="${escapeHtml(day.date)}"
+                data-menu-moment="${escapeHtml(moment.key)}"
+              >
                 ${renderHomeWeeklyMenuMatrixCell(rows)}
               </div>`;
           }).join("")}
