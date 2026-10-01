@@ -9,7 +9,7 @@ let weeklyBootstrapCache = { value: null, expiresAt: 0 };
 let workflowHealthCache = { value: null, expiresAt: 0 };
 let researchCache = { value: null, expiresAt: 0, spreadsheetId: null, spreadsheetIdExpiresAt: 0 };
 
-const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "capital_cycle_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
+const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "capital_cycle_demo", "buy_the_dip_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
 
 function optionalNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -26,6 +26,50 @@ function normalizeEquityHistory(value, limit = 520) {
     points.push({ date, nav });
   }
   return points;
+}
+
+function riskMetricsFromHistory(points) {
+  if (!Array.isArray(points) || !points.length) {
+    return { annualized_volatility_pct: null, max_drawdown_pct: null, sharpe_0rf: null, risk_observations: 0 };
+  }
+  const valid = points.filter((point) => point?.date && Number.isFinite(point?.nav) && point.nav >= 0);
+  if (!valid.length) {
+    return { annualized_volatility_pct: null, max_drawdown_pct: null, sharpe_0rf: null, risk_observations: 0 };
+  }
+  let peak = valid[0].nav;
+  let maxDrawdown = 0;
+  const returns = [];
+  const gaps = [];
+  for (let index = 0; index < valid.length; index += 1) {
+    const point = valid[index];
+    peak = Math.max(peak, point.nav);
+    if (peak > 0) maxDrawdown = Math.min(maxDrawdown, point.nav / peak - 1);
+    if (index > 0 && valid[index - 1].nav > 0) {
+      returns.push(point.nav / valid[index - 1].nav - 1);
+      const current = Date.parse(point.date + "T12:00:00Z");
+      const previous = Date.parse(valid[index - 1].date + "T12:00:00Z");
+      const gap = Math.round((current - previous) / 86400000);
+      if (gap > 0) gaps.push(gap);
+    }
+  }
+  let annualizedVolatility = null;
+  let sharpe = null;
+  if (returns.length >= 2) {
+    const mean = returns.reduce((sum, value) => sum + value, 0) / returns.length;
+    const variance = returns.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (returns.length - 1);
+    const sd = Math.sqrt(Math.max(variance, 0));
+    const sortedGaps = [...gaps].sort((a, b) => a - b);
+    const medianGap = sortedGaps.length ? sortedGaps[Math.floor(sortedGaps.length / 2)] : 1;
+    const periods = medianGap <= 3 ? 252 : medianGap <= 10 ? 52 : medianGap <= 40 ? 12 : 4;
+    annualizedVolatility = sd * Math.sqrt(periods) * 100;
+    if (sd > 1e-15) sharpe = mean / sd * Math.sqrt(periods);
+  }
+  return {
+    annualized_volatility_pct: Number.isFinite(annualizedVolatility) ? annualizedVolatility : null,
+    max_drawdown_pct: maxDrawdown * 100,
+    sharpe_0rf: Number.isFinite(sharpe) ? sharpe : null,
+    risk_observations: valid.length
+  };
 }
 
 function normalizeDashboard(data) {
@@ -48,6 +92,11 @@ function normalizeDashboard(data) {
       last_equity: optionalNumber(row.last_equity),
       day_return_pct: optionalNumber(row.day_return_pct),
       return_pct: optionalNumber(row.return_pct),
+      annualized_volatility_pct: optionalNumber(row.annualized_volatility_pct),
+      max_drawdown_pct: optionalNumber(row.max_drawdown_pct),
+      sharpe_0rf: optionalNumber(row.sharpe_0rf),
+      risk_observations: Number.isInteger(row.risk_observations) && row.risk_observations >= 0
+        ? Math.min(row.risk_observations, 100000) : 0,
       equity_history: normalizeEquityHistory(row.equity_history),
       note: typeof row.note === "string" ? row.note.slice(0, 500) : ""
     };
@@ -332,12 +381,14 @@ export async function addPrivateGeneticDiary(db, dashboard) {
     const first = history[0];
     const previous = history.at(-2);
     const last = history.at(-1);
+    const equityHistory = history.slice(-520).map((point) => ({ date: point[0], nav: point[1] }));
     return {
       ...row, status: "diario_heredado_observado", first_session: first[0], last_session: last[0],
       currency: "USD", last_equity: last[1],
-      equity_history: history.slice(-520).map((point) => ({ date: point[0], nav: point[1] })),
+      equity_history: equityHistory,
       return_pct: Math.round((last[1] / legacy.initial_capital - 1) * 100_000_000) / 1_000_000,
       day_return_pct: previous[1] > 0 ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
+      ...riskMetricsFromHistory(equityHistory),
       note: `Diario ficticio desde ${first[0]}; la fecha mostrada es la del asiento, que puede ser posterior a la vela usada. Las operaciones se contabilizaban al mismo cierre que generaba la señal: no son ejecuciones verificadas ni rentabilidad alcanzable.`
     };
   });
@@ -353,12 +404,14 @@ export async function addPrivateGeneticDiary(db, dashboard) {
     const first = history[0];
     const previous = history.at(-2);
     const last = history.at(-1);
+    const equityHistory = history.slice(-520).map((point) => ({ date: point[0], nav: point[1] }));
     Object.assign(forwardRow, {
       status: "demo_con_diario", first_session: first[0], last_session: last[0], last_equity: last[1],
-      equity_history: history.slice(-520).map((point) => ({ date: point[0], nav: point[1] })),
+      equity_history: equityHistory,
       return_pct: Math.round((last[1] / forward.initial_capital - 1) * 100_000_000) / 1_000_000,
       day_return_pct: previous && previous[1] > 0
         ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
+      ...riskMetricsFromHistory(equityHistory),
       note: "Patrimonio ficticio al cierre de la sesión indicada; fills modelados en la siguiente apertura con comisión, deslizamiento y stops OHLC. No hay confirmación de bróker."
     });
   }
