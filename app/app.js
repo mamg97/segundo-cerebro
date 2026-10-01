@@ -4384,7 +4384,7 @@ function renderHomeWeeklyMenu(data) {
 
   content.innerHTML = `
     <div class="home-weekly-menu-table-scroll">
-      <div class="home-weekly-menu-table" style="--menu-day-count:${model.days.length}">
+      <div class="home-weekly-menu-table">
         <div class="home-weekly-menu-corner">
           <span>Momento</span>
         </div>
