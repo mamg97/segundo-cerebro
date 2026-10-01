@@ -138,6 +138,8 @@ test("dessert and snack are components of canonical meal moments", () => {
   assert.equal(canonicalWeeklyMenuMoment({ moment: "Snack después oficina", note: "Toma de la tarde." }), "Merienda");
   assert.equal(canonicalWeeklyMenuMoment({ moment: "Snack mañana", note: "Antes de comer." }), "Media mañana");
   assert.equal(canonicalWeeklyMenuMoment({ moment: "Cena · complemento" }), "Cena");
+  assert.equal(canonicalWeeklyMenuMoment({ moment: "Cierre" }), "Cena");
+  assert.equal(canonicalWeeklyMenuMoment({ moment: "Cierre proteico" }), "Cena");
 });
 
 test("legacy dessert/snack rows dedupe against their canonical parent meal", () => {
@@ -153,10 +155,11 @@ test("legacy dessert/snack rows dedupe against their canonical parent meal", () 
   assert.equal(result[1].moment, "Cena");
 });
 
-test("prepared menu never exposes postre or snack as standalone moments", () => {
+test("prepared menu never exposes postre, snack or cierre as standalone moments", () => {
   const rows = prepareWeeklyMenuRows([
     { date: "2026-10-01", moment: "Postre", name: "Postre coco", status: "planificado", note: "Con la cena" },
-    { date: "2026-10-01", moment: "Snack", name: "Pistachos", status: "planificado" }
+    { date: "2026-10-01", moment: "Snack", name: "Pistachos", status: "planificado" },
+    { date: "2026-10-01", moment: "Cierre", name: "Batido proteico", status: "planificado" }
   ]);
-  assert.deepEqual(rows.map((row) => row.moment), ["Cena", "Merienda"]);
+  assert.deepEqual(rows.map((row) => row.moment), ["Cena", "Merienda", "Cena"]);
 });
