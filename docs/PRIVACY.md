@@ -73,6 +73,14 @@ No añadir escritura a un dominio nuevo sin revisar fuente de verdad, amenaza y 
 - Añadir un tipo HealthKit nuevo requiere justificar su uso en Salud y actualizar este contrato antes de enviarlo.
 - La app no solicita permisos de escritura en HealthKit.
 
+## Fotos de recetas
+
+- Las fotos de recetas son datos privados de Salud/Nutrición y no se publican en GitHub Pages ni se versionan en Git.
+- Los bytes permanecen en Drive privado bajo la estructura operativa de Segundo Cerebro; el Sheet de Salud conserva solo la referencia mínima necesaria.
+- La aplicación privada entrega la imagen mediante proxy autenticado same-origin y no expone el identificador bruto de Drive al frontend.
+- Solo se aceptan referencias a archivos de imagen; una referencia ausente o inválida debe fallar de forma segura y mostrarse como receta sin foto.
+- Los ingredientes y pasos reales permanecen únicamente en las fuentes privadas canónicas.
+
 ## Frontera pública
 
 GitHub Pages publica únicamente la demo mock. Un fallo o cambio en la aplicación privada nunca debe provocar que datos reales terminen en Pages.
