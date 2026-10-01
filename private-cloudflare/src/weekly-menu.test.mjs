@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  canonicalWeeklyMenuMoment,
   dedupeWeeklyMenuRows,
   prepareWeeklyMenuRows,
   weeklyMenuItemIsVisibleServer
@@ -128,4 +129,34 @@ test("lightweight menu marks explicit pending notes without inventing nutrition"
   }]);
   assert.equal(row.nutritionStatus, "pending-confirmation");
   assert.match(row.nutritionPendingReason, /confirmar cuántos huevos/i);
+});
+
+
+test("dessert and snack are components of canonical meal moments", () => {
+  assert.equal(canonicalWeeklyMenuMoment({ moment: "Postre", note: "Consumido con la cena." }), "Cena");
+  assert.equal(canonicalWeeklyMenuMoment({ moment: "Postre", note: "Postre de la comida del mediodía." }), "Comida");
+  assert.equal(canonicalWeeklyMenuMoment({ moment: "Snack después oficina", note: "Toma de la tarde." }), "Merienda");
+  assert.equal(canonicalWeeklyMenuMoment({ moment: "Snack mañana", note: "Antes de comer." }), "Media mañana");
+  assert.equal(canonicalWeeklyMenuMoment({ moment: "Cena · complemento" }), "Cena");
+});
+
+test("legacy dessert/snack rows dedupe against their canonical parent meal", () => {
+  const rows = [
+    { date: "2026-10-01", moment: "Snack", foodId: "food-1", name: "Pistachos", status: "planificado", updatedAt: "2026-10-01T09:00:00+02:00" },
+    { date: "2026-10-01", moment: "Merienda", foodId: "food-1", name: "Pistachos", status: "planificado", updatedAt: "2026-10-01T10:00:00+02:00" },
+    { date: "2026-10-01", moment: "Postre", foodId: "food-2", name: "Postre proteico", status: "planificado", note: "Con la cena", updatedAt: "2026-10-01T09:00:00+02:00" },
+    { date: "2026-10-01", moment: "Cena", foodId: "food-2", name: "Postre proteico", status: "consumido", updatedAt: "2026-10-01T22:00:00+02:00" }
+  ];
+  const result = dedupeWeeklyMenuRows(rows);
+  assert.equal(result.length, 2);
+  assert.equal(result[0].moment, "Merienda");
+  assert.equal(result[1].moment, "Cena");
+});
+
+test("prepared menu never exposes postre or snack as standalone moments", () => {
+  const rows = prepareWeeklyMenuRows([
+    { date: "2026-10-01", moment: "Postre", name: "Postre coco", status: "planificado", note: "Con la cena" },
+    { date: "2026-10-01", moment: "Snack", name: "Pistachos", status: "planificado" }
+  ]);
+  assert.deepEqual(rows.map((row) => row.moment), ["Cena", "Merienda"]);
 });
