@@ -118,7 +118,7 @@ function inventoryView(payload) {
 
 function wardrobeVisualCard(x) {
   const src=visualUrl(x);
-  return '<button class="wardrobe-card wardrobe-card-visual" type="button" data-object-open="'+e(x.objectId)+'" data-name="'+e(String(x.name||"").toLocaleLowerCase("es"))+'" data-garment="'+e(x.subcategory||"")+'" data-brand="'+e(x.brand||"")+'" data-color="'+e(x.primaryColor||x.color||"")+'" data-formality="'+e(x.formality||"")+'" data-season="'+e(x.season||"")+'" data-office="'+(x.office===true?"yes":x.office===false?"no":"")+'" data-frequency="'+e(useFrequency(x))+'">'+
+  return '<button class="wardrobe-card wardrobe-card-visual" type="button" data-object-open="'+e(x.objectId)+'" data-name="'+e(String(x.name||"").toLocaleLowerCase("es"))+'" data-garment="'+e(x.visualCategory||x.subcategory||"")+'" data-brand="'+e(x.brand||"")+'" data-color="'+e(x.primaryColor||x.color||"")+'" data-formality="'+e(x.formality||"")+'" data-season="'+e(x.season||"")+'" data-office="'+(x.office===true?"yes":x.office===false?"no":"")+'" data-frequency="'+e(useFrequency(x))+'">'+
     '<span class="wardrobe-visual">'+(src?'<img loading="lazy" src="'+e(src)+'" alt="'+e(x.name||"Prenda")+'">':'<span class="wardrobe-placeholder">◫</span>')+processedBadge(x)+'</span>'+
     '<span class="wardrobe-card-body"><span class="wardrobe-card-top"><span>'+e(x.subcategory||x.visualCategory||"Prenda")+'</span>'+(x.office===true?'<b>Oficina</b>':'')+'</span>'+
     '<strong>'+e(x.name||"Prenda")+'</strong><small>'+e([x.brand,x.primaryColor||x.color].filter(Boolean).join(" · ")||"Sin marca/color")+'</small>'+
