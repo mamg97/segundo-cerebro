@@ -15,7 +15,7 @@ No modifica fuentes privadas ni corrige datos para conseguir un test verde.
 
 ## Periodicidad y disparadores
 
-El mismo workflow tiene tres vías de entrada:
+El mismo workflow tiene cuatro vías de entrada:
 
 1. **horaria primaria:** minuto 17 de cada hora;
 2. **respaldo de scheduler:** minuto 42 de cada hora; ejecuta Chromium solo si GitHub no creó la ejecución primaria durante los 40 minutos anteriores;
