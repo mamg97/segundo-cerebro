@@ -27,6 +27,9 @@ Construir un segundo cerebro personal y privado: un sistema operativo de vida co
 
 - Flujo conceptual objetivo: Usuario → CEREBRO GLOBAL / Coordinador → enrutamiento por intención → módulos especializados → fuentes canónicas / D1 → respuesta unificada.
 - Los módulos no crean memorias aisladas ni estados paralelos.
+- La aplicación debe ser **data-driven**: el frontend, el Worker y los adaptadores implementan lógica genérica y estable; el estado operativo real vive en la fuente canónica de cada dominio.
+- Un cambio ordinario de datos o estado (movimiento, saldo, reserva, comida, prenda, inventario, objetivo, evento derivado, etc.) debe resolverse actualizando la fuente canónica autorizada, no hardcodeando el caso ni desplegando código.
+- Tocar código se reserva para nueva capacidad, cambio de contrato/esquema, nueva integración, corrección de bug, seguridad, rendimiento o mejora deliberada de interfaz/arquitectura. Si un dato nuevo ya cabe en el contrato vigente, modificar código solo para mostrarlo es un defecto de diseño.
 - GitHub Pages sigue siendo exclusivamente la demo pública mock.
 - La aplicación privada usa Cloudflare Worker + Access + D1.
 - Algunas fuentes son estrictamente de lectura, como iCloud Calendar.
@@ -71,3 +74,4 @@ Si un gestor necesita objetos, ropa, equipaje, kits o listas contextuales, debe 
 - Tratar los archivos bajo `sources/` como referencias de solo lectura.
 - No incorporar datos privados en ejemplos de documentación; usar nombres y valores genéricos.
 - No cambiar la fuente de verdad de un dominio sin registrarlo en `docs/DECISIONS.md`.
+- **Puerta previa a Git:** antes de modificar frontend, Worker o lógica de dominio para atender una petición operativa, comprobar si puede resolverse con una mutación de la fuente canónica existente. Si puede, no tocar código; si el gestor no tiene permiso de escritura, debe enrutar la intención al propietario funcional de esa fuente.
