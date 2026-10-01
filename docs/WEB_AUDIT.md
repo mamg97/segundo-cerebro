@@ -64,7 +64,7 @@ Como mínimo:
 - dato ausente permanece ausente, nunca se transforma en 0;
 - barras de kcal/proteína: existencia, porcentaje/anchura y estado visual lógico;
 - APIs privadas clave de Despensa, Proyectos y Delta/Finanzas;
-- respuestas 5xx y fallos de red;
+- respuestas 5xx y fallos de red; un 5xx observado se revalida tras una pausa corta y solo se considera regresión si persiste;
 - errores JavaScript/console;
 - regresiones de navegación/estilos compartidos provocadas por cualquier dominio.
 
@@ -124,7 +124,7 @@ Corregir el auditor y añadir test cuando sea posible. No modificar datos privad
 
 - Un aborto de una petición secundaria durante navegación se registra como información y no falla por sí solo.
 - Un aborto de bootstrap crítico, especialmente `/api/state`, `/api/health` o `/api/nutrition`, sí es fallo: esas peticiones no deben desaparecer durante la inicialización.
-- Un 5xx nunca se degrada a aborto esperado.
+- Un 5xx nunca se degrada a aborto esperado. Si una petición de lectura devuelve 5xx y una revalidación controlada inmediata vuelve a 200, se registra como incidencia transitoria de backend y no como regresión funcional persistente; si el reintento vuelve a fallar, la auditoría debe quedar roja.
 
 ## Diagnóstico
 
