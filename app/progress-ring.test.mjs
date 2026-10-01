@@ -126,7 +126,7 @@ assert.match(css, /home-liquidity-bar/);
 assert.match(css, /v0\.38\.2 — compact mobile liquidity cards/);
 assert.match(css, /v0\.38\.3 — two-column mobile liquidity grid/);
 assert.match(css, /v0\.38\.4 — readability typography pass/);
-assert.match(app, /pantry\.js\?v=0\.38\.7/);
+assert.match(app, /pantry\.js\?v=0\.38\.8/);
 assert.match(app, /objects\.js\?v=0\.40\.1/);
 assert.match(objects, /Armario visual/);
 assert.match(objects, /Combinador/);

@@ -1128,6 +1128,9 @@ try {
 
   await reconcileTransientSourceFailures();
   await revalidateRecoveredSources();
+  // Revalidation itself can observe another transient 5xx before the UI retry succeeds.
+  // Reconcile once more so recovered requests do not leave a stale network failure behind.
+  await reconcileTransientSourceFailures();
   await resolveDeferredApiChecks();
 
   if (ignoredNetworkAborts.length) {
