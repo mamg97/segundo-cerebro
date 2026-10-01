@@ -1,3 +1,5 @@
+import { googleReadFetch, sheetsBatchGet } from "./google-read.js";
+
 const SHEET_TITLE = "SEGUNDO CEREBRO - PROYECTOS";
 const SOURCE_KEY = "PROJECTS_SHEET_ID";
 const CACHE_MS = 30_000;
@@ -21,7 +23,7 @@ async function readRegistry(env,token){
   const range=encodeURIComponent("IntegracionesPrivadas!A1:B50");
   const url="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(String(env.FINANCE_SHEET_ID).trim())+"/values/"+range+"?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
   try{
-    const r=await fetch(url,{headers:{Authorization:"Bearer "+token}});
+    const r=await googleReadFetch(url,{headers:{Authorization:"Bearer "+token}});
     if(!r.ok) return null;
     const rows=(await r.json())?.values||[];
     const found=rows.find(row=>String(row?.[0]||"").trim()===SOURCE_KEY);
@@ -36,7 +38,7 @@ async function resolveId(env,token){
   const registered=await readRegistry(env,token);
   if(registered){ cache.spreadsheetId=registered; cache.spreadsheetIdExpiresAt=Date.now()+10*60_000; return registered; }
   const q=new URLSearchParams({q:"name = '"+SHEET_TITLE+"' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",fields:"files(id,name,modifiedTime)",orderBy:"modifiedTime desc",pageSize:"10"});
-  const r=await fetch("https://www.googleapis.com/drive/v3/files?"+q,{headers:{Authorization:"Bearer "+token}});
+  const r=await googleReadFetch("https://www.googleapis.com/drive/v3/files?"+q,{headers:{Authorization:"Bearer "+token}});
   if(!r.ok) throw new Error("GOOGLE_DRIVE_"+r.status);
   const files=(await r.json())?.files||[];
   const found=files.find(x=>x?.name===SHEET_TITLE);
@@ -106,11 +108,14 @@ export async function fetchProjectsSummary(env,getGoogleAccessToken){
   const token=await getGoogleAccessToken(env);
   const id=await resolveId(env,token);
   if(!id) return {status:"source-pending",value:empty()};
-  const [projects,docs,relations]=await Promise.all([
-    readRows(id,token,"Proyectos","A1:Z1000"),
-    readRows(id,token,"Documentacion","A1:Z1000"),
-    readRows(id,token,"Relaciones","A1:Z1000")
-  ]);
+  const batches=await sheetsBatchGet(id,[
+    "Proyectos!A1:Z1000",
+    "Documentacion!A1:Z1000",
+    "Relaciones!A1:Z1000"
+  ],token);
+  const projects=table(batches[0]?.values||[]);
+  const docs=table(batches[1]?.values||[]);
+  const relations=table(batches[2]?.values||[]);
   const value=build(projects,docs,relations);
   cache.value=value; cache.expiresAt=Date.now()+CACHE_MS;
   return {status:"ok-live",value};
