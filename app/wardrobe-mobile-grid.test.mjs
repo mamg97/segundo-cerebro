@@ -16,3 +16,5 @@ assert.match(audit, /mobile", width: 390, height: 844, wardrobeColumns: 2/);
 assert.match(audit, /Visual \$\{label\} · Armario \$\{expectedColumns\} columnas/);
 
 assert.match(index, /styles\.css\?v=0\.40\.12/);
+
+assert.match(audit, /waitFor\(\{ state: "visible", timeout: 8000 \}\)/);
