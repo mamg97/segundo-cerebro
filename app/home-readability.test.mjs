@@ -37,13 +37,17 @@ test("Home uses primary-only top navigation and keeps the orb without quick quer
   assert.doesNotMatch(app, /<div class="nav-subnav"/);
 });
 
-test("Home Health card uses five circular daily summaries", () => {
+test("Home Health card uses four progress rings plus static weight", () => {
   assert.match(index, /id="home-health-card"/);
   assert.doesNotMatch(index, /id="home-habits-card"|id="home-nutrition-card"/);
   for (const id of ["habits", "kcal", "protein", "gym", "weight"]) {
     assert.match(index, new RegExp(`id="home-health-${id}-main"`));
+  }
+  for (const id of ["habits", "kcal", "protein", "gym"]) {
     assert.match(index, new RegExp(`id="home-health-${id}-ring"`));
   }
+  assert.doesNotMatch(index, /id="home-health-weight-ring"/);
+  assert.match(index, /class="home-health-metric home-health-weight-metric"/);
   assert.doesNotMatch(index, /home-health-activity-main|home-health-macros-main/);
   for (const label of ["Resumen", "Hábitos", "Médicos", "Gimnasio", "Nutrición", "Recetas", "Menú"]) {
     assert.ok(index.includes(">" + label + "</button>"), "Missing Health shortcut: " + label);
@@ -53,7 +57,7 @@ test("Home Health card uses five circular daily summaries", () => {
   assert.match(app, /home-health-medical/);
   assert.match(app, /openHealthTabFromHome\("recipes"\)/);
   assert.match(css, /\.home-health-card\s*\{[\s\S]*?grid-column:\s*1 \/ -1/);
-  assert.match(css, /v0\.41\.1 — circular daily Health summary/);
+  assert.match(css, /v0\.41\.4 — compact balanced Home \+ unified typography/);
   assert.match(css, /\.home-health-metrics\s*\{[\s\S]*?repeat\(5, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.home-health-links\s*\{[\s\S]*?justify-content:\s*flex-start/);
 });
@@ -83,9 +87,10 @@ test("Home lower cards are compact and expose section shortcuts", () => {
   assert.doesNotMatch(index, /class="credit-panel"/);
   assert.match(app, /home-debt-credit-summary/);
   assert.match(app, /no se suma de nuevo al total/);
-  assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?grid-auto-rows:\s*auto !important/);
-  assert.match(css, /\.money-horizon\s*\{[\s\S]*?align-items:\s*start !important[\s\S]*?grid-auto-rows:\s*auto !important/);
+  assert.match(css, /#home-pantry-card,[\s\S]*?#home-objects-card\s*\{[\s\S]*?height:\s*100% !important[\s\S]*?align-self:\s*stretch !important/);
+  assert.match(css, /\.money-horizon\s*\{[\s\S]*?align-items:\s*stretch !important[\s\S]*?grid-auto-rows:\s*auto !important/);
   assert.match(css, /\.home-card-links\s*\{/);
+  assert.doesNotMatch(css, /Iowan Old Style/);
 });
 
 test("weekly matrix is larger but remains compact and internally scrollable", () => {
