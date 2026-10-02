@@ -1,3 +1,11 @@
+
+## GESTOR OBJETOS - ROPA 2 · referencias visuales resueltas en LookItems · 2026-10-02
+
+- Para evitar que las imágenes de looks se generen a partir de descripciones genéricas, `GET /api/objects` resuelve ahora cada fila de `LookItems` contra la prenda canónica de `Armario`.
+- Cada item de look expone dinámicamente `photoUrl`, `processedPhotoUrl`, `thumbnailUrl`, `originalPhotoUrl` y `visualReferenceUrl`, además de marca, subcategoría, color, patrón, vista y capa.
+- No se añaden URLs duplicadas al Sheet: `LookItems` sigue conteniendo solo `look_id + objeto_id + rol`; las referencias siempre se obtienen de `Armario`, por lo que un overwrite de una prenda no deja referencias antiguas.
+- Regla operativa nueva: antes de generar con IA una imagen de un look, cargar las referencias visuales reales de todos sus `LookItems`; los nombres y colores son solo apoyo y no deben sustituir a las imágenes canónicas cuando existen.
+
 # Handoff — Segundo Cerebro
 
 ## Última actualización
