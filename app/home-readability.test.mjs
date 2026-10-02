@@ -68,7 +68,9 @@ test("Home Health shows freshness, brief Gym status and latest real weight", () 
   }
   assert.match(app, /function shortHomeGymReason/);
   assert.match(app, /Recuperación médica/);
-  assert.match(app, /const latestWeightSample = body\.weightToday \|\| weightSamples\.at\(-1\)/);
+  assert.match(app, /function healthWeightSummary/);
+  assert.match(app, /const latest = body\.weightToday \|\| samples\.at\(-1\) \|\| null/);
+  assert.match(app, /currentDays >= 5 && previousDays >= 5/);
   assert.doesNotMatch(app, /const displayedWeight = weightToday \?\? weightAverage/);
   assert.match(app, /latestWeightSample\?\.source/);
   assert.match(css, /\.home-health-updated\s*\{/);
