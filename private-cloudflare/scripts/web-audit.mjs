@@ -1098,7 +1098,8 @@ try {
   assertCheck(await page.locator("#home-health-card").count() === 1, "Home · tarjeta única Salud + Hábitos");
   assertCheck(await page.locator("#home-habits-card, #home-nutrition-card").count() === 0, "Home · sin tarjetas antiguas separadas");
   assertCheck(await page.locator("#home-health-card .home-health-metric").count() === 5, "Home · Salud resume hábitos, kcal, proteína, gym y peso");
-  assertCheck(await page.locator("#home-health-card .progress-ring").count() === 5, "Home · cinco resúmenes circulares de Salud");
+  assertCheck(await page.locator("#home-health-card .progress-ring").count() === 4, "Home · cuatro resúmenes de progreso circulares");
+  assertCheck(await page.locator("#home-health-weight-ring").count() === 0, "Home · Peso no usa rueda de progreso");
   assertCheck(await page.locator("#home-health-activity-main, #home-health-macros-main").count() === 0, "Home · sin pasos ni bloque Macros agregado");
   assertCheck(await page.locator("#home-health-menu").count() === 1, "Home · acceso directo Menú", "#home-health-menu");
   assertCheck(await page.locator("#home-health-recipes").count() === 1, "Home · acceso directo Recetas", "#home-health-recipes");
@@ -1168,25 +1169,54 @@ try {
     const pantry = document.querySelector("#home-pantry-card");
     const objects = document.querySelector("#home-objects-card");
     const money = document.querySelector(".money-horizon");
-    const visibleHeight = (node) => node && !node.hidden ? Math.round(node.getBoundingClientRect().height) : null;
+    const wealth = document.querySelector(".money-horizon > .wealth-panel");
+    const debt = document.querySelector(".money-horizon > .debt-panel");
+    const rect = (node) => node && !node.hidden ? node.getBoundingClientRect() : null;
+    const compactRect = (node) => {
+      const box = rect(node);
+      return box ? {
+        width: Math.round(box.width),
+        height: Math.round(box.height),
+        top: Math.round(box.top)
+      } : null;
+    };
     return {
-      pantryHeight: visibleHeight(pantry),
-      objectsHeight: visibleHeight(objects),
+      viewportWidth: window.innerWidth,
+      pantry: compactRect(pantry),
+      objects: compactRect(objects),
+      wealth: compactRect(wealth),
+      debt: compactRect(debt),
       moneyAlignItems: money ? getComputedStyle(money).alignItems : "",
       moneyGridAutoRows: money ? getComputedStyle(money).gridAutoRows : ""
     };
   });
   assertCheck(
-    (compactHomeLayout.pantryHeight === null || compactHomeLayout.pantryHeight < 380) &&
-      (compactHomeLayout.objectsHeight === null || compactHomeLayout.objectsHeight < 380),
-    "Home · Despensa y Objetos sin altura vacía artificial",
+    !compactHomeLayout.pantry || !compactHomeLayout.objects ||
+      (compactHomeLayout.pantry.height < 300 && compactHomeLayout.objects.height < 300),
+    "Home · Despensa y Objetos compactos",
     JSON.stringify(compactHomeLayout)
   );
+  if (compactHomeLayout.viewportWidth >= 1180 && compactHomeLayout.pantry && compactHomeLayout.objects) {
+    assertCheck(
+      Math.abs(compactHomeLayout.pantry.width - compactHomeLayout.objects.width) <= 2 &&
+        Math.abs(compactHomeLayout.pantry.height - compactHomeLayout.objects.height) <= 2,
+      "Home · tarjetas contiguas Despensa/Objetos tienen el mismo tamaño",
+      JSON.stringify(compactHomeLayout)
+    );
+  }
   assertCheck(
-    compactHomeLayout.moneyAlignItems === "start" && compactHomeLayout.moneyGridAutoRows === "auto",
-    "Home · bloques financieros no se estiran a igual altura",
+    compactHomeLayout.moneyAlignItems === "stretch" && compactHomeLayout.moneyGridAutoRows === "auto",
+    "Home · bloques financieros contiguos usan altura equilibrada",
     JSON.stringify(compactHomeLayout)
   );
+  if (compactHomeLayout.viewportWidth >= 1180 && compactHomeLayout.wealth && compactHomeLayout.debt) {
+    assertCheck(
+      Math.abs(compactHomeLayout.wealth.width - compactHomeLayout.debt.width) <= 2 &&
+        Math.abs(compactHomeLayout.wealth.height - compactHomeLayout.debt.height) <= 2,
+      "Home · Patrimonio y Obligaciones tienen el mismo tamaño",
+      JSON.stringify(compactHomeLayout)
+    );
+  }
   const topNavLayout = await page.locator(".sidebar").evaluate((node) => {
     const style = getComputedStyle(node);
     const rect = node.getBoundingClientRect();

@@ -1314,22 +1314,18 @@ async function renderHomeHealthCard() {
       latestWeightSample?.measuredAt || latestWeightSample?.importedAt || latestWeightSample?.date || null,
       latestWeightSample?.source || "Peso"
     );
-    setHomeHealthRing("home-health-weight-ring", null, {
-      tone: "blue",
-      centerValue: displayedWeight === null ? "—" : displayedWeight.toFixed(1).replace(".", ","),
-      centerLabel: "kg",
-      ariaLabel: displayedWeight === null ? "Peso no disponible" : "Última medición de peso " + displayedWeight.toFixed(1).replace(".", ",") + " kilogramos"
-    });
   } catch (error) {
     for (const key of ["kcal", "protein", "gym", "weight"]) {
       setHomeHealthMetric("home-health-" + key + "-main", "home-health-" + key + "-detail", "—", "No se ha podido cargar");
       setHomeHealthUpdated(key, null, "");
-      setHomeHealthRing("home-health-" + key + "-ring", null, {
-        tone: key === "protein" ? "mint" : key === "kcal" ? "amber" : "blue",
-        centerValue: "—",
-        centerLabel: key === "protein" ? "prot" : key === "weight" ? "kg" : key,
-        ariaLabel: "No se ha podido cargar el resumen de Salud"
-      });
+      if (key !== "weight") {
+        setHomeHealthRing("home-health-" + key + "-ring", null, {
+          tone: key === "protein" ? "mint" : key === "kcal" ? "amber" : "blue",
+          centerValue: "—",
+          centerLabel: key === "protein" ? "prot" : key,
+          ariaLabel: "No se ha podido cargar el resumen de Salud"
+        });
+      }
     }
     console.warn("Home health load failed", error);
   }
