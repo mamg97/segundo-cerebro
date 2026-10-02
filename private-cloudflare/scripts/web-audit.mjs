@@ -1449,6 +1449,12 @@ try {
         continue;
       }
       await button.click();
+      if (tab === "overview") {
+        await page.waitForFunction(() => {
+          const panel = document.querySelector('[data-health-panel="overview"]');
+          return panel && panel.querySelectorAll("[data-health-summary]").length === 5;
+        }, null, { timeout: 12000 }).catch(() => {});
+      }
       if (tab === "menu") {
         await page.waitForFunction(
           (expected) => {
@@ -1481,13 +1487,17 @@ try {
       const text = normalizeAuditValue(await panel.textContent().catch(() => ""));
       assertCheck(!/no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text), `Salud · pestaña ${tab} sin error visible`);
       if (tab === "overview") {
+        const healthSummaryCount = await panel.locator("[data-health-summary]").count();
         assertCheck(
-          await panel.locator("[data-health-summary]").count() === 5,
-          "Salud · Resumen usa los cinco KPIs del Home"
+          healthSummaryCount === 5,
+          "Salud · Resumen usa los cinco KPIs del Home",
+          "n=" + healthSummaryCount
         );
+        const healthSummaryRingCount = await panel.locator("[data-health-summary] .progress-ring").count();
         assertCheck(
-          await panel.locator("[data-health-summary] .progress-ring").count() === 4,
-          "Salud · Resumen conserva cuatro anillos y Peso estático"
+          healthSummaryRingCount === 4,
+          "Salud · Resumen conserva cuatro anillos y Peso estático",
+          "n=" + healthSummaryRingCount
         );
         for (const key of ["habits", "kcal", "protein", "gym", "weight"]) {
           const detailValue = normalizeAuditValue(
