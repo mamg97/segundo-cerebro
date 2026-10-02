@@ -30,8 +30,11 @@ let failed = false;
 for (let index = 0; index < jobs.length; index += 1) {
   const job = jobs[index];
   const objetoId = String(job?.objeto_id || "");
-  console.info("[objects-seed]", { stage: "start", index: index + 1, objetoId });
-  const request = new Request("http://seed.local/ingest-object-image", {
+  const lookId = String(job?.look_id || "");
+  const target = lookId ? "look" : "object";
+  const targetId = lookId || objetoId;
+  console.info("[objects-seed]", { stage: "start", index: index + 1, target, targetId });
+  const request = new Request("http://seed.local/" + (lookId ? "ingest-look-image" : "ingest-object-image"), {
     method: "POST",
     headers: {
       Authorization: "Bearer " + String(process.env.CHATGPT_ACTION_API_KEY || ""),
@@ -45,7 +48,8 @@ for (let index = 0; index < jobs.length; index += 1) {
   console.info("[objects-seed]", {
     stage: response.ok ? "done" : "failed",
     index: index + 1,
-    objetoId,
+    target,
+    targetId,
     status: response.status,
     result: safeResult(body)
   });
