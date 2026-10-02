@@ -94,6 +94,84 @@ paths:
         '503':
           description: Canonical image storage is not configured.
 
+
+  /ingest-look-image:
+    post:
+      operationId: ingestLookImage
+      summary: Ingest one composed look image into Segundo Cerebro
+      description: >
+        Persist exactly one generated/rendered look image for an existing look_id.
+        The canonical look remains in Looks + LookItems; this endpoint only stores
+        the binary privately and updates Looks.foto_url.
+      security:
+        - actionBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - look_id
+                - openaiFileIdRefs
+              properties:
+                look_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,99}  securitySchemes:
+    actionBearer:
+      type: http
+      scheme: bearer
+  schemas:
+    IngestResult:
+      type: object
+      required: [ok, objeto_id, image_type]
+      properties:
+        ok:
+          type: boolean
+        objeto_id:
+          type: string
+        image_type:
+          type: string
+          enum: [original, processed]
+        estado_procesado:
+          type: [string, 'null']
+        version:
+          type: [string, 'null']
+        updated_at:
+          type: [string, 'null']
+        foto_original_url:
+          type: [string, 'null']
+        foto_procesada_url:
+          type: [string, 'null']
+        miniatura_url:
+          type: [string, 'null']
+
+                overwrite:
+                  type: boolean
+                  default: false
+                openaiFileIdRefs:
+                  type: array
+                  minItems: 1
+                  maxItems: 1
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Look image persisted and Looks.foto_url updated.
+        '400':
+          description: Invalid look or file reference.
+        '401':
+          description: Invalid or missing Action bearer key.
+        '409':
+          description: A look image already exists and overwrite was not requested.
+        '502':
+          description: Upstream Segundo Cerebro ingest failed.
+        '503':
+          description: Canonical image storage is not configured.
+
 components:
   securitySchemes:
     actionBearer:
