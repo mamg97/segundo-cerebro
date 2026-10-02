@@ -161,12 +161,24 @@ function imageDataUri(asset) {
   return "data:" + mime + ";base64," + bytesToBase64(asset.body);
 }
 
-function wardrobeImageKey(garment) {
+async function readCanonicalWardrobeAsset(garment, bucket) {
+  let hadCandidate = false;
   for (const url of [garment?.thumbnailUrl, garment?.processedPhotoUrl]) {
     const key = storedKeyFromUrl(url);
-    if (key) return key;
+    if (!key) continue;
+    hadCandidate = true;
+    try {
+      const asset = await bucket.get(key);
+      if (asset && String(asset?.httpMetadata?.contentType || "").toLowerCase().startsWith("image/")) {
+        return asset;
+      }
+    } catch {
+      // A broken/missing thumbnail must not block a look when the processed
+      // canonical asset for the same garment is still healthy.
+    }
   }
-  return null;
+  if (!hadCandidate) throw new ObjectsImageError("LOOK_ITEM_IMAGE_MISSING", 409);
+  throw new ObjectsImageError("LOOK_ITEM_IMAGE_UNREADABLE", 409);
 }
 
 async function renderCanonicalLookSvg(look, wardrobeRows, bucket) {
@@ -181,10 +193,8 @@ async function renderCanonicalLookSvg(look, wardrobeRows, bucket) {
     const slot = LOOK_ROLE_SLOTS[role];
     if (!slot || !item?.objectId) continue;
     const garment = wardrobe.get(String(item.objectId));
-    const key = wardrobeImageKey(garment);
-    if (!garment || !key) throw new ObjectsImageError("LOOK_ITEM_IMAGE_MISSING", 409);
-    const asset = await bucket.get(key);
-    if (!asset) throw new ObjectsImageError("LOOK_ITEM_IMAGE_MISSING", 409);
+    if (!garment) throw new ObjectsImageError("LOOK_ITEM_IMAGE_MISSING", 409);
+    const asset = await readCanonicalWardrobeAsset(garment, bucket);
     items.push({ role, slot, dataUri: imageDataUri(asset) });
   }
 
