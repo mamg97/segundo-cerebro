@@ -19,7 +19,8 @@ export default {
 
     const objectMatch = url.pathname.match(/^\/api\/internal\/objects\/([^/]+)\/image$/);
     const lookMatch = url.pathname.match(/^\/api\/internal\/objects\/look\/([^/]+)\/image$/);
-    if (!objectMatch && !lookMatch) return json({ ok: false, code: "NOT_FOUND" }, 404);
+    const lookRenderMatch = url.pathname.match(/^\/api\/internal\/objects\/look\/([^/]+)\/render$/);
+    if (!objectMatch && !lookMatch && !lookRenderMatch) return json({ ok: false, code: "NOT_FOUND" }, 404);
     if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
 
     const upstream = new Request(
