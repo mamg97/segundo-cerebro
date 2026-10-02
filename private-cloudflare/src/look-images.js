@@ -9,7 +9,8 @@ import {
   isObjectsImageRequestAuthenticated,
   normalizeObjectId,
   sanitizeFilename,
-  sniffImageMime
+  sniffImageMime,
+  storedKeyFromUrl
 } from "./objects-images.js";
 import { createObjectsD1MediaStore } from "./objects-media-d1.js";
 
@@ -133,6 +134,174 @@ async function resolveMediaStore(env, overrides = {}) {
 async function cleanupKey(bucket, key) {
   if (!key) return;
   try { await bucket.delete(key); } catch {}
+}
+
+const LOOK_CANVAS = { width: 900, height: 1200 };
+const LOOK_ROLE_SLOTS = {
+  superior: { x: 225, y: 95, width: 450, height: 430, z: 1 },
+  exterior: { x: 165, y: 45, width: 570, height: 535, z: 2 },
+  inferior: { x: 245, y: 430, width: 410, height: 555, z: 3 },
+  accesorio: { x: 350, y: 330, width: 200, height: 245, z: 4 },
+  calzado: { x: 245, y: 925, width: 410, height: 220, z: 5 }
+};
+
+function bytesToBase64(value) {
+  const bytes = value instanceof Uint8Array ? value : new Uint8Array(value || []);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length)));
+  }
+  return btoa(binary);
+}
+
+function imageDataUri(asset) {
+  const mime = String(asset?.httpMetadata?.contentType || "").toLowerCase();
+  if (!mime.startsWith("image/")) throw new ObjectsImageError("LOOK_ITEM_IMAGE_INVALID", 409);
+  return "data:" + mime + ";base64," + bytesToBase64(asset.body);
+}
+
+function wardrobeImageKey(garment) {
+  for (const url of [garment?.thumbnailUrl, garment?.processedPhotoUrl]) {
+    const key = storedKeyFromUrl(url);
+    if (key) return key;
+  }
+  return null;
+}
+
+async function renderCanonicalLookSvg(look, wardrobeRows, bucket) {
+  const wardrobe = new Map(
+    (Array.isArray(wardrobeRows) ? wardrobeRows : [])
+      .filter((item) => item?.objectId)
+      .map((item) => [String(item.objectId), item])
+  );
+  const items = [];
+  for (const item of Array.isArray(look?.items) ? look.items : []) {
+    const role = String(item?.role || "").trim().toLowerCase();
+    const slot = LOOK_ROLE_SLOTS[role];
+    if (!slot || !item?.objectId) continue;
+    const garment = wardrobe.get(String(item.objectId));
+    const key = wardrobeImageKey(garment);
+    if (!garment || !key) throw new ObjectsImageError("LOOK_ITEM_IMAGE_MISSING", 409);
+    const asset = await bucket.get(key);
+    if (!asset) throw new ObjectsImageError("LOOK_ITEM_IMAGE_MISSING", 409);
+    items.push({ role, slot, dataUri: imageDataUri(asset) });
+  }
+
+  for (const role of ["superior", "inferior", "calzado"]) {
+    if (!items.some((item) => item.role === role)) {
+      throw new ObjectsImageError("LOOK_REQUIRED_ROLE_MISSING", 409);
+    }
+  }
+
+  items.sort((a, b) => a.slot.z - b.slot.z);
+  const images = items.map(({ slot, dataUri }) =>
+    '<image x="' + slot.x + '" y="' + slot.y + '" width="' + slot.width + '" height="' + slot.height +
+    '" href="' + dataUri + '" preserveAspectRatio="xMidYMid meet" filter="url(#soft-shadow)"/>'
+  ).join("");
+
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="' + LOOK_CANVAS.width + '" height="' + LOOK_CANVAS.height +
+    '" viewBox="0 0 ' + LOOK_CANVAS.width + ' ' + LOOK_CANVAS.height + '">' +
+    '<defs><filter id="soft-shadow" x="-30%" y="-30%" width="160%" height="160%">' +
+    '<feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1f2937" flood-opacity="0.14"/>' +
+    '</filter></defs>' +
+    '<rect width="900" height="1200" fill="#f3f1ed"/>' +
+    '<ellipse cx="450" cy="1124" rx="245" ry="34" fill="#d7d3cc" opacity="0.42"/>' +
+    images +
+    '</svg>';
+
+  return {
+    bytes: new TextEncoder().encode(svg),
+    mime: "image/svg+xml",
+    itemCount: items.length
+  };
+}
+
+
+
+export async function renderObjectsLookImage(request, env, getGoogleAccessToken, lookId, overrides = {}) {
+  const id = normalizeLookId(lookId);
+  if (!(overrides.authenticated === true || isObjectsImageRequestAuthenticated(request))) {
+    throw new ObjectsImageError("AUTH_REQUIRED", 401);
+  }
+
+  let payload = {};
+  try {
+    const text = await request.text();
+    payload = text ? JSON.parse(text) : {};
+  } catch {
+    throw new ObjectsImageError("INVALID_JSON", 400);
+  }
+  const formId = String(payload?.look_id || "").trim();
+  if (formId && formId !== id) throw new ObjectsImageError("LOOK_ID_MISMATCH", 400);
+  const overwrite = parseBoolean(payload?.overwrite);
+
+  const fetchSummary = overrides.fetchObjectsSummary || fetchObjectsSummary;
+  const resolveSheet = overrides.resolveObjectsSpreadsheetId || resolveObjectsSpreadsheetId;
+  const invalidateCache = overrides.invalidateObjectsCache || invalidateObjectsCache;
+  const fetchImpl = overrides.fetch || fetch;
+  const readRow = overrides.getLookRow || getLookRow;
+  const writePhoto = overrides.writeLookPhoto || writeLookPhoto;
+  const bucket = await resolveMediaStore(env, overrides);
+
+  const source = await fetchSummary(env, getGoogleAccessToken);
+  const looks = Array.isArray(source?.value?.looks) ? source.value.looks : [];
+  const wardrobe = Array.isArray(source?.value?.wardrobe) ? source.value.wardrobe : [];
+  const look = looks.find((item) => String(item?.id) === id);
+  if (!look) throw new ObjectsImageError("LOOK_NOT_FOUND", 404);
+
+  const token = await getGoogleAccessToken(env);
+  const spreadsheetId = await resolveSheet(env, token);
+  if (!spreadsheetId) throw new ObjectsImageError("OBJECTS_SOURCE_PENDING", 503);
+
+  const row = await readRow(spreadsheetId, token, id, fetchImpl);
+  const previousUrl = currentPhotoUrl(row);
+  if (previousUrl && !overwrite) throw new ObjectsImageError("IMAGE_ALREADY_EXISTS", 409);
+
+  const rendered = await renderCanonicalLookSvg(look, wardrobe, bucket);
+  const version = crypto.randomUUID();
+  const updatedAt = new Date().toISOString();
+  const key = imageStorageKey(storageObjectId(id), "processed", version);
+  const url = lookReadUrl(id, version);
+
+  try {
+    await bucket.put(key, rendered.bytes, {
+      httpMetadata: { contentType: rendered.mime },
+      customMetadata: {
+        lookId: id,
+        entityType: "look",
+        renderSource: "canonical-wardrobe",
+        uploadedAt: updatedAt
+      }
+    });
+  } catch {
+    throw new ObjectsImageError("OBJECTS_MEDIA_UPLOAD_FAILED", 502);
+  }
+
+  try {
+    await writePhoto(spreadsheetId, token, row, url, fetchImpl);
+    invalidateCache();
+  } catch (error) {
+    await cleanupKey(bucket, key);
+    if (error instanceof ObjectsImageError) throw error;
+    throw new ObjectsImageError("OBJECTS_SHEET_UPDATE_FAILED", 502);
+  }
+
+  if (overwrite) {
+    const oldKey = storedKeyFromLookUrl(previousUrl);
+    if (oldKey && oldKey !== key) await cleanupKey(bucket, oldKey);
+  }
+
+  return {
+    ok: true,
+    look_id: id,
+    url,
+    version,
+    render_source: "canonical-wardrobe",
+    item_count: rendered.itemCount,
+    updated_at: updatedAt
+  };
 }
 
 export async function uploadObjectsLookImage(request, env, getGoogleAccessToken, lookId, overrides = {}) {
