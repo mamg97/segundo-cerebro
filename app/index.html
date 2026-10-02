@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.41.0">
-    <script type="module" src="./app.js?v=0.41.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.41.1">
+    <script type="module" src="./app.js?v=0.41.1"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -71,26 +71,56 @@
                 <span><small>Salud</small><strong>Estado de hoy</strong></span>
                 <span class="daily-card-arrow" aria-hidden="true">→</span>
               </div>
-              <div class="home-health-metrics" aria-label="Resumen de hábitos, macros, actividad y peso">
+              <div class="home-health-metrics" aria-label="Resumen de hábitos, calorías, proteína, gimnasio y peso">
                 <span class="home-health-metric">
-                  <small>Hábitos</small>
-                  <strong id="home-health-habits-main">—</strong>
-                  <em id="home-health-habits-detail">Cargando…</em>
+                  <span id="home-health-habits-ring" class="progress-ring tone-violet size-md is-empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Hábitos de hoy">
+                    <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>hoy</small></span>
+                  </span>
+                  <span class="home-health-metric-copy">
+                    <small>Hábitos</small>
+                    <strong id="home-health-habits-main">—</strong>
+                    <em id="home-health-habits-detail">Cargando…</em>
+                  </span>
                 </span>
                 <span class="home-health-metric">
-                  <small>Macros</small>
-                  <strong id="home-health-macros-main">—</strong>
-                  <em id="home-health-macros-detail">Cargando…</em>
+                  <span id="home-health-kcal-ring" class="progress-ring tone-amber size-md is-empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Calorías de hoy">
+                    <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>kcal</small></span>
+                  </span>
+                  <span class="home-health-metric-copy">
+                    <small>Kcal hoy</small>
+                    <strong id="home-health-kcal-main">—</strong>
+                    <em id="home-health-kcal-detail">Cargando…</em>
+                  </span>
                 </span>
                 <span class="home-health-metric">
-                  <small>Actividad</small>
-                  <strong id="home-health-activity-main">—</strong>
-                  <em id="home-health-activity-detail">Cargando…</em>
+                  <span id="home-health-protein-ring" class="progress-ring tone-mint size-md is-empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Proteína de hoy">
+                    <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>prot</small></span>
+                  </span>
+                  <span class="home-health-metric-copy">
+                    <small>Proteína hoy</small>
+                    <strong id="home-health-protein-main">—</strong>
+                    <em id="home-health-protein-detail">Cargando…</em>
+                  </span>
                 </span>
                 <span class="home-health-metric">
-                  <small>Peso</small>
-                  <strong id="home-health-weight-main">—</strong>
-                  <em id="home-health-weight-detail">Cargando…</em>
+                  <span id="home-health-gym-ring" class="progress-ring tone-blue size-md is-empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Estado del gimnasio hoy">
+                    <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>gym</small></span>
+                  </span>
+                  <span class="home-health-metric-copy">
+                    <small>Gym hoy</small>
+                    <strong id="home-health-gym-main">—</strong>
+                    <em id="home-health-gym-detail">Cargando…</em>
+                  </span>
+                </span>
+                <span class="home-health-metric">
+                  <span id="home-health-weight-ring" class="progress-ring tone-blue size-md is-empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Peso actual">
+                    <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>kg</small></span>
+                  </span>
+                  <span class="home-health-metric-copy">
+                    <small>Peso</small>
+                    <strong id="home-health-weight-main">—</strong>
+                    <em id="home-health-weight-detail">Cargando…</em>
+                  </span>
                 </span>
               </div>
             </button>
