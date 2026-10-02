@@ -2,7 +2,7 @@ import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.38.8";
-import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.40.1";
+import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.40.2";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
@@ -1017,6 +1017,51 @@ function setHomeHealthMetric(mainId, detailId, main, detail) {
   if (detailNode) detailNode.textContent = detail;
 }
 
+function homeHealthSourceLabel(source) {
+  const raw = String(source || "").trim();
+  const normalized = raw.toLowerCase();
+  if (!raw) return "";
+  if (normalized.includes("zepp")) return "Zepp";
+  if (normalized.includes("apple")) return "Apple Health";
+  if (normalized.includes("habit")) return "Hábitos";
+  if (normalized.includes("health_sheet")) return "Salud";
+  return raw.replace(/[_-]+/g, " ");
+}
+
+function formatHomeHealthUpdate(value, source = "") {
+  const sourceLabel = homeHealthSourceLabel(source);
+  if (!value) return sourceLabel ? sourceLabel + " · hora no disponible" : "Actualización no disponible";
+  const raw = String(value).trim();
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+    ? new Date(raw + "T12:00:00+02:00")
+    : new Date(raw);
+  if (!Number.isFinite(parsed.getTime())) return [sourceLabel, raw].filter(Boolean).join(" · ");
+  const hasTime = !/^\d{4}-\d{2}-\d{2}$/.test(raw);
+  const formatted = new Intl.DateTimeFormat("es-ES", hasTime
+    ? { timeZone: "Europe/Madrid", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }
+    : { timeZone: "Europe/Madrid", day: "2-digit", month: "short" }
+  ).format(parsed).replace(".", "");
+  return [sourceLabel, formatted].filter(Boolean).join(" · ");
+}
+
+function setHomeHealthUpdated(key, value, source = "") {
+  const node = document.querySelector("#home-health-" + key + "-updated");
+  if (!node) return;
+  node.textContent = formatHomeHealthUpdate(value, source);
+  if (value) node.setAttribute("datetime", String(value));
+  else node.removeAttribute("datetime");
+}
+
+function shortHomeGymReason(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "Pausa temporal";
+  const upper = raw.toUpperCase();
+  if (/MEDICAL_PAUSE|HERIDA|PUNTO|DERMAT|SANGR|RECUPER/.test(upper)) return "Recuperación médica";
+  if (/VIAJE|VACAC/.test(upper)) return "Viaje / descanso";
+  const cleaned = raw.replace(/^[A-Z0-9_ -]+\s*[·:\-]\s*/i, "").split(/[.;\n]/)[0].trim();
+  return cleaned.length > 52 ? cleaned.slice(0, 49).trimEnd() + "…" : (cleaned || "Pausa temporal");
+}
+
 function setHomeHealthRing(ringId, value, options = {}) {
   const ring = document.querySelector("#" + ringId);
   if (!ring) return;
@@ -1056,6 +1101,7 @@ function renderHomeHealthHabitsSummary() {
     label: "hoy",
     ariaLabel: total > 0 ? percentage + "% de hábitos completados hoy" : "Sin hábitos programados"
   });
+  setHomeHealthUpdated("habits", state.habitsSummary?.source?.updatedAt || null, "Hábitos");
 }
 
 function renderHomeGymSummary(healthData, gymData) {
@@ -1072,12 +1118,18 @@ function renderHomeGymSummary(healthData, gymData) {
 
   if (paused) {
     const reason = String(gymData?.trainingStatus?.reason || activityGoal.note || "Pausa temporal del entrenamiento de fuerza.");
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Pausado", reason);
+    const briefReason = shortHomeGymReason(reason);
+    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Pausado", briefReason);
+    setHomeHealthUpdated(
+      "gym",
+      gymData?.trainingStatus?.updatedAt || gymData?.trainingStatus?.effectiveDate || activityGoal.updatedAt || activityGoal.effectiveDate || null,
+      "Gym"
+    );
     setHomeHealthRing("home-health-gym-ring", null, {
       tone: "amber",
       centerValue: "⏸",
       centerLabel: "pausa",
-      ariaLabel: "Gimnasio pausado: " + reason
+      ariaLabel: "Gimnasio pausado: " + briefReason
     });
     return;
   }
@@ -1087,6 +1139,7 @@ function renderHomeGymSummary(healthData, gymData) {
     const day = plan.find((candidate) => candidate.id === todaySession.dayId);
     const title = day?.title || day?.focus || todaySession.dayId || "Sesión registrada";
     setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Hecho", title);
+    setHomeHealthUpdated("gym", todaySession.createdAt || todaySession.sessionDate || null, "Gym");
     setHomeHealthRing("home-health-gym-ring", 100, {
       tone: "mint",
       centerValue: "✓",
@@ -1097,7 +1150,8 @@ function renderHomeGymSummary(healthData, gymData) {
   }
 
   if (!plan.length) {
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sin plan", "No hay un plan de entrenamiento conectado");
+    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sin plan", "Plan no disponible");
+    setHomeHealthUpdated("gym", gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
     setHomeHealthRing("home-health-gym-ring", null, {
       tone: "blue",
       centerValue: "—",
@@ -1120,6 +1174,7 @@ function renderHomeGymSummary(healthData, gymData) {
       "Descanso",
       "Objetivo semanal cubierto · siguiente " + suggestedTitle
     );
+    setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
     setHomeHealthRing("home-health-gym-ring", 100, {
       tone: "mint",
       centerValue: "✓",
@@ -1136,6 +1191,7 @@ function renderHomeGymSummary(healthData, gymData) {
     ? " · " + sessionsThisWeek + "/" + Math.round(strengthTarget) + " esta semana"
     : "";
   setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sugerido", suggestedTitle + weekText);
+  setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
   setHomeHealthRing("home-health-gym-ring", weeklyProgress, {
     tone: "blue",
     centerValue: "Hoy",
@@ -1150,6 +1206,7 @@ async function renderHomeHealthCard() {
   if (privateModeKind !== "remote") {
     for (const key of ["kcal", "protein", "gym", "weight"]) {
       setHomeHealthMetric("home-health-" + key + "-main", "home-health-" + key + "-detail", "—", "Disponible en modo privado");
+      setHomeHealthUpdated(key, null, "");
       setHomeHealthRing("home-health-" + key + "-ring", null, {
         tone: key === "protein" ? "mint" : key === "kcal" ? "amber" : "blue",
         centerValue: "—",
@@ -1225,14 +1282,21 @@ async function renderHomeHealthCard() {
       displayPercent: proteinPct,
       ariaLabel: proteinPct === null ? "Objetivo de proteína pendiente" : proteinPct + "% del objetivo diario de proteína"
     });
+    const nutritionUpdatedAt = data.nutritionSummary?.updatedAt || null;
+    const nutritionUpdateSource = data.nutritionSummary?.updateKind === "objective" ? "Objetivo" : "Nutrición";
+    setHomeHealthUpdated("kcal", nutritionUpdatedAt, nutritionUpdateSource);
+    setHomeHealthUpdated("protein", nutritionUpdatedAt, nutritionUpdateSource);
 
     renderHomeGymSummary(data, gymData || {});
 
     const body = data.body || {};
-    const weightToday = homeHealthMetricNumber(body.weightToday?.value);
     const weightAverage = homeHealthMetricNumber(body.weight7dAverage);
     const weeklyChange = homeHealthMetricNumber(body.weightWeeklyChange);
-    const displayedWeight = weightToday ?? weightAverage;
+    const weightSamples = (Array.isArray(body.samples) ? body.samples : [])
+      .filter((sample) => sample?.type === "bodyMass" && homeHealthMetricNumber(sample.value) !== null)
+      .sort((a, b) => String(a.measuredAt || a.date || "").localeCompare(String(b.measuredAt || b.date || "")));
+    const latestWeightSample = body.weightToday || weightSamples.at(-1) || null;
+    const displayedWeight = homeHealthMetricNumber(latestWeightSample?.value);
     const weightDetail = [
       weightAverage !== null ? "Media 7 d " + formatHomeHealthDecimal(weightAverage, " kg") : null,
       weeklyChange !== null
@@ -1245,15 +1309,21 @@ async function renderHomeHealthCard() {
       formatHomeHealthDecimal(displayedWeight, " kg"),
       weightDetail
     );
+    setHomeHealthUpdated(
+      "weight",
+      latestWeightSample?.measuredAt || latestWeightSample?.importedAt || latestWeightSample?.date || null,
+      latestWeightSample?.source || "Peso"
+    );
     setHomeHealthRing("home-health-weight-ring", null, {
       tone: "blue",
       centerValue: displayedWeight === null ? "—" : displayedWeight.toFixed(1).replace(".", ","),
       centerLabel: "kg",
-      ariaLabel: displayedWeight === null ? "Peso no disponible" : "Peso actual " + displayedWeight.toFixed(1).replace(".", ",") + " kilogramos"
+      ariaLabel: displayedWeight === null ? "Peso no disponible" : "Última medición de peso " + displayedWeight.toFixed(1).replace(".", ",") + " kilogramos"
     });
   } catch (error) {
     for (const key of ["kcal", "protein", "gym", "weight"]) {
       setHomeHealthMetric("home-health-" + key + "-main", "home-health-" + key + "-detail", "—", "No se ha podido cargar");
+      setHomeHealthUpdated(key, null, "");
       setHomeHealthRing("home-health-" + key + "-ring", null, {
         tone: key === "protein" ? "mint" : key === "kcal" ? "amber" : "blue",
         centerValue: "—",
@@ -5356,6 +5426,23 @@ function renderDebtOverview() {
   const count = Number.isFinite(Number(debt.count)) ? Number(debt.count) : debt.debts.length;
   const totalBalance = firstFinite(debt.totalBalance);
   const monthlyPayment = firstFinite(debt.monthlyPayment);
+  const accounts = Array.isArray(finance.creditAccounts) ? finance.creditAccounts : [];
+  const credit = accounts.find((item) => String(item.status || "").toLowerCase() !== "closed") || null;
+
+  const obligations = debt.debts
+    .filter((item) => !/corte ingl[eé]s|financiera|\beci\b/i.test(String(item.title || "")))
+    .slice()
+    .sort((a, b) => {
+      const paymentDelta = (firstFinite(b.monthlyPayment) || 0) - (firstFinite(a.monthlyPayment) || 0);
+      if (paymentDelta) return paymentDelta;
+      return (firstFinite(b.balance) || 0) - (firstFinite(a.balance) || 0);
+    })
+    .slice(0, 4);
+
+  const grossPending = firstFinite(credit?.grossPending);
+  const netExposure = firstFinite(credit?.netHouseholdExposure);
+  const nextReceipt = firstFinite(credit?.estimatedNextReceipt);
+  const revolving = firstFinite(credit?.revolvingBalance);
 
   container.innerHTML = `
     <div class="debt-summary-grid">
@@ -5372,6 +5459,42 @@ function renderDebtOverview() {
         <strong>${count}</strong>
       </div>
     </div>
+
+    ${obligations.length ? `
+      <section class="home-debt-breakdown" aria-label="Principales obligaciones activas">
+        <div class="home-debt-breakdown-heading">
+          <strong>Principales obligaciones</strong>
+          <span>por cuota mensual</span>
+        </div>
+        <div class="home-debt-obligations">
+          ${obligations.map((item) => {
+            const balance = firstFinite(item.balance);
+            const payment = firstFinite(item.monthlyPayment);
+            return `
+              <div class="home-debt-obligation">
+                <strong>${escapeHtml(item.title || "Obligación")}</strong>
+                <span>${payment === null ? "Cuota —" : formatMoney(payment, currency) + "/mes"}</span>
+                <small>${balance === null ? "Saldo por completar" : formatMoney(balance, currency) + " pendiente"}</small>
+              </div>`;
+          }).join("")}
+        </div>
+      </section>` : ""}
+
+    ${credit ? `
+      <section class="home-debt-credit-summary" aria-label="Resumen de El Corte Inglés">
+        <div class="home-debt-breakdown-heading">
+          <strong>${escapeHtml(credit.name || "El Corte Inglés")}</strong>
+          <span>crédito · no se suma de nuevo al total</span>
+        </div>
+        <div class="home-debt-credit-grid">
+          <span><small>Pendiente bruto</small><strong>${grossPending === null ? "—" : formatMoney(grossPending, currency)}</strong></span>
+          <span><small>Próximo recibo</small><strong>${nextReceipt === null ? "—" : formatMoney(nextReceipt, currency)}</strong></span>
+          <span><small>Revolving</small><strong>${revolving === null ? "—" : formatMoney(revolving, currency)}</strong></span>
+          <span><small>Exposición propia</small><strong>${netExposure === null ? "—" : formatMoney(netExposure, currency)}</strong></span>
+        </div>
+      </section>` : ""}
+
+    ${debt.sourceUpdatedAt ? `<p class="debt-source-note">Fuente de deudas · ${escapeHtml(formatFinanceDate(debt.sourceUpdatedAt, debt.sourceUpdatedAt))}</p>` : ""}
     ${totalBalance === null
       ? '<p class="debt-source-note">Las cuotas están registradas; faltan saldos pendientes para calcular la deuda total real.</p>'
       : ""}`;
@@ -7480,9 +7603,18 @@ function bindInteractions() {
   document.querySelector("#home-health-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
   document.querySelector("#show-home-weekly-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
   document.querySelector("#home-pantry-open")?.addEventListener("click", () => openPantryDetail("inventory"));
-  document.querySelector("#home-pantry-open-footer")?.addEventListener("click", () => openPantryDetail("inventory"));
+  document.querySelector("#home-pantry-inventory")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-shopping-list")?.addEventListener("click", () => openPantryDetail("shopping"));
-  document.querySelector("#home-objects-card")?.addEventListener("click", openObjectsDetail);
+  document.querySelector("#home-objects-open")?.addEventListener("click", () => openObjectsDetail("summary"));
+  document.querySelector("#home-objects-inventory")?.addEventListener("click", () => openObjectsDetail("inventory"));
+  document.querySelector("#home-objects-wardrobe-link")?.addEventListener("click", () => openObjectsDetail("wardrobe"));
+  document.querySelector("#home-objects-looks")?.addEventListener("click", () => openObjectsDetail("looks"));
+  document.querySelector("#home-objects-kits")?.addEventListener("click", () => openObjectsDetail("kits"));
+  document.querySelector("#home-wealth-detail")?.addEventListener("click", openWealthDetail);
+  document.querySelector("#home-wealth-evolution")?.addEventListener("click", openWealthDetail);
+  document.querySelector("#home-wealth-midas")?.addEventListener("click", () => void openMidasDialog());
+  document.querySelector("#home-debt-detail")?.addEventListener("click", openDebtDetail);
+  document.querySelector("#home-debt-credit")?.addEventListener("click", openCreditDetail);
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#demo-mode-toggle")?.addEventListener("click", toggleDemoMode);
   document.querySelector("#refresh-app")?.addEventListener("click", refreshApp);

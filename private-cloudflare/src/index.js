@@ -1379,7 +1379,8 @@ async function fetchHabitQuestSummary(env, options = {}) {
       ...habit,
       count,
       target: habit.timesPerDay,
-      done: count >= habit.timesPerDay
+      done: count >= habit.timesPerDay,
+      updatedAt: state?.updatedAt || null
     };
   });
 
@@ -1580,7 +1581,10 @@ async function fetchHabitQuestSummary(env, options = {}) {
     source: {
       kind: "google-sheet",
       title: "HabitQuest Data",
-      updatedAt: meta.updatedAt || null
+      updatedAt: [meta.updatedAt, ...todayHabits.map((item) => item.updatedAt).filter(Boolean)]
+        .filter(Boolean)
+        .sort()
+        .at(-1) || null
     }
   };
 
@@ -2976,7 +2980,11 @@ async function fetchHealthNutritionSummary(env, options = {}) {
       balanceKcal: totalBurn === null ? null : consumed.kcal - totalBurn,
       remainingToTargetKcal: objective?.kcal === null || objective?.kcal === undefined
         ? null
-        : objective.kcal - consumed.kcal
+        : objective.kcal - consumed.kcal,
+      updatedAt: dayEntries.map((item) => item.updatedAt).filter(Boolean).sort().at(-1)
+        || objective?.updatedAt
+        || null,
+      updateKind: dayEntries.some((item) => item.updatedAt) ? "consumption" : objective?.updatedAt ? "objective" : null
     },
     history,
     progressObjectives,
@@ -4605,7 +4613,8 @@ export default {
           trainingStatus = {
             paused: toNumber(activityGoal?.strengthSessionsWeek) === 0,
             reason: activityGoal?.note || null,
-            effectiveDate: activityGoal?.effectiveDate || null
+            effectiveDate: activityGoal?.effectiveDate || null,
+            updatedAt: activityGoal?.updatedAt || activityGoal?.effectiveDate || null
           };
         } catch {}
       }

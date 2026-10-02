@@ -320,7 +320,7 @@ function renderWorkspace(payload) {
   bind(payload);
 }
 
-export async function openObjectsDetail() {
+export async function openObjectsDetail(initialTab = "summary") {
   const dialog=document.querySelector("#detail-dialog");
   if(!dialog)return;
   dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog","budget-dialog","parents-dialog","electricity-dialog","pantry-dialog");
@@ -332,7 +332,8 @@ export async function openObjectsDetail() {
   try {
     const response=await fetch("/api/objects",{headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"});
     if(!response.ok)throw new Error("OBJECTS_"+response.status);
-    activeTab="summary";
+    const validTabs = new Set(TABS.map(([id]) => id));
+    activeTab = validTabs.has(initialTab) ? initialTab : "summary";
     objectsFlash="";
     renderWorkspace(await response.json());
   } catch(error) {

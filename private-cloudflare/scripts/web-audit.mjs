@@ -963,6 +963,8 @@ try {
 
   const nutrition = await api("/api/nutrition");
   assertCheck(nutrition.ok && nutrition.body?.ok === true, "API de Nutrición", `HTTP ${nutrition.status}`);
+  const healthOverview = await api("/api/health/overview");
+  assertCheck(healthOverview.ok && healthOverview.body?.ok === true, "API resumen Salud Home", `HTTP ${healthOverview.status}`);
 
   await auditMidasCompetition();
 
@@ -1021,6 +1023,81 @@ try {
     healthLinksLayout?.justifyContent === "flex-start",
     "Home · accesos de Salud alineados abajo a la izquierda",
     healthLinksLayout ? JSON.stringify(healthLinksLayout) : "sin layout"
+  );
+  const healthUpdatedTexts = await page.locator("#home-health-card .home-health-updated").allTextContents();
+  assertCheck(healthUpdatedTexts.length === 5, "Home · cinco fechas de actualización de Salud", `n=${healthUpdatedTexts.length}`);
+  const pendingHealthUpdates = healthUpdatedTexts.filter((value) => /actualización pendiente/i.test(String(value || "")));
+  assertCheck(pendingHealthUpdates.length === 0, "Home · timestamps de Salud resueltos", pendingHealthUpdates.join(" | ") || "5/5 resueltos");
+
+  const gymMainText = normalizeAuditValue(await page.locator("#home-health-gym-main").textContent().catch(() => ""));
+  const gymDetailText = normalizeAuditValue(await page.locator("#home-health-gym-detail").textContent().catch(() => ""));
+  if (/pausado/i.test(gymMainText)) {
+    assertCheck(gymDetailText.length > 0 && gymDetailText.length <= 56, "Home · motivo de pausa Gym breve", gymDetailText);
+  }
+
+  const healthBody = healthOverview.body?.body || {};
+  const bodySamples = Array.isArray(healthBody.samples) ? healthBody.samples : [];
+  const weightSamples = bodySamples
+    .filter((sample) => sample?.type === "bodyMass" && Number.isFinite(Number(sample?.value)))
+    .sort((a, b) => String(a?.measuredAt || a?.date || "").localeCompare(String(b?.measuredAt || b?.date || "")));
+  const expectedWeightSample = healthBody.weightToday || weightSamples.at(-1) || null;
+  const expectedWeight = Number(expectedWeightSample?.value);
+  const homeWeightText = normalizeAuditValue(await page.locator("#home-health-weight-main").textContent().catch(() => ""));
+  const homeWeight = Number(String(homeWeightText).replace(",", ".").match(/-?\d+(?:\.\d+)?/)?.[0]);
+  if (Number.isFinite(expectedWeight)) {
+    assertCheck(
+      Number.isFinite(homeWeight) && Math.abs(homeWeight - expectedWeight) < 0.06,
+      "Home · Peso coincide con última medición real",
+      `UI=${homeWeightText} · API=${expectedWeight} · fuente=${expectedWeightSample?.source || "?"}`
+    );
+    const weightUpdatedText = normalizeAuditValue(await page.locator("#home-health-weight-updated").textContent().catch(() => ""));
+    assertCheck(
+      !/no disponible|pendiente/i.test(weightUpdatedText),
+      "Home · Peso muestra fuente y fecha de medición",
+      weightUpdatedText
+    );
+  }
+
+  for (const [selector, label] of [
+    ["#home-pantry-inventory", "Despensa · Inventario"],
+    ["#home-shopping-list", "Despensa · Lista compra"],
+    ["#home-objects-inventory", "Objetos · Inventario"],
+    ["#home-objects-wardrobe-link", "Objetos · Armario"],
+    ["#home-objects-looks", "Objetos · Looks"],
+    ["#home-objects-kits", "Objetos · Kits"],
+    ["#home-wealth-detail", "Patrimonio · Detalle"],
+    ["#home-wealth-evolution", "Patrimonio · Evolución"],
+    ["#home-wealth-midas", "Patrimonio · MIDAS"],
+    ["#home-debt-detail", "Deudas · Detalle"],
+    ["#home-debt-credit", "Deudas · El Corte Inglés"]
+  ]) {
+    assertCheck(await page.locator(selector).count() === 1, `Home · acceso ${label}`, selector);
+  }
+
+  assertCheck(await page.locator(".credit-panel").count() === 0, "Home · ECI ya no ocupa tarjeta independiente");
+  assertCheck(await page.locator("#debt-summary .home-debt-credit-summary").count() === 1, "Home · ECI integrado en Obligaciones activas");
+  const compactHomeLayout = await page.evaluate(() => {
+    const pantry = document.querySelector("#home-pantry-card");
+    const objects = document.querySelector("#home-objects-card");
+    const money = document.querySelector(".money-horizon");
+    const visibleHeight = (node) => node && !node.hidden ? Math.round(node.getBoundingClientRect().height) : null;
+    return {
+      pantryHeight: visibleHeight(pantry),
+      objectsHeight: visibleHeight(objects),
+      moneyAlignItems: money ? getComputedStyle(money).alignItems : "",
+      moneyGridAutoRows: money ? getComputedStyle(money).gridAutoRows : ""
+    };
+  });
+  assertCheck(
+    (compactHomeLayout.pantryHeight === null || compactHomeLayout.pantryHeight < 380) &&
+      (compactHomeLayout.objectsHeight === null || compactHomeLayout.objectsHeight < 380),
+    "Home · Despensa y Objetos sin altura vacía artificial",
+    JSON.stringify(compactHomeLayout)
+  );
+  assertCheck(
+    compactHomeLayout.moneyAlignItems === "start" && compactHomeLayout.moneyGridAutoRows === "auto",
+    "Home · bloques financieros no se estiran a igual altura",
+    JSON.stringify(compactHomeLayout)
   );
   const topNavLayout = await page.locator(".sidebar").evaluate((node) => {
     const style = getComputedStyle(node);
