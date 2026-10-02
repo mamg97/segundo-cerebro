@@ -57,7 +57,7 @@ Como mínimo:
 - subpestañas de dominios con navegación interna;
 - Agenda/Calendario: fuente, calendarios seleccionados/enlazados y conservación de eventos en el horizonte;
 - `MenuSemanal` y API de Nutrición;
-- pestaña `Salud → Recetas`: número de tarjetas frente a la API, ausencia de errores visibles y calidad visual de foto/ingredientes/pasos;
+- pestaña `Salud → Recetas`: catálogo compacto completo frente a la API, cada tarjeta con foto + nombre, apertura de ficha grande con ingredientes/preparación y retorno al catálogo sin perder tarjetas;
 - toda receta con `photoUrl` debe responder HTTP 200 con `Content-Type: image/*`; cuando exista preview en `RecipeMedia`, la respuesta puede indicar `X-Recipe-Image-Source: sheet-preview`. Un 403/502 de Drive no se considera aceptable si existe esa preview;
 - ausencia de versiones lógicas duplicadas;
 - estados `omitido | retirado | cancelado` no reaparecen;
