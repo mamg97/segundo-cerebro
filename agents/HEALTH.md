@@ -341,3 +341,17 @@ Endpoint privado:
 - `GET /api/health/adherence?month=YYYY-MM`
 
 La vista vive en `Salud → Adherencia`.
+
+
+## Freshness contract for automatic body measurements
+
+Automatic body-composition freshness is owned by the HealthKit → native bridge → ingest Worker → private D1 path. The private Sheet views are derived inspection surfaces and are not the source that Home polls for live weight.
+
+Operational cadence:
+- body mass, body-fat percentage, BMI and lean body mass request HealthKit Background Delivery with `.immediate`;
+- high-frequency activity/recovery signals remain `.hourly`;
+- bringing the bridge app to the foreground reconciles today + yesterday immediately;
+- `BGAppRefreshTask` requests an additional one-hour fallback reconciliation, but iOS may run it later;
+- a stale Home weight must therefore be diagnosed first as a device/HealthKit/bridge delivery issue, not “fixed” by manually overwriting `MedicionesCorporalesApple`.
+
+The derived Sheet remains useful for analysis and audit. It may lag D1 until its normal derived-history refresh executes; that lag must never cause the Home to ignore a newer D1 sample.
