@@ -5,6 +5,7 @@ import {
 } from "./objects.js";
 import {
   ObjectsImageError,
+  generateThumbnailWebp,
   imageStorageKey,
   isObjectsImageRequestAuthenticated,
   normalizeObjectId,
@@ -161,27 +162,44 @@ function imageDataUri(asset) {
   return "data:" + mime + ";base64," + bytesToBase64(asset.body);
 }
 
-async function readCanonicalWardrobeAsset(garment, bucket) {
+async function readCanonicalWardrobeAsset(garment, bucket, makeThumbnail = generateThumbnailWebp) {
   let hadCandidate = false;
-  for (const url of [garment?.thumbnailUrl, garment?.processedPhotoUrl]) {
-    const key = storedKeyFromUrl(url);
+  const candidates = [
+    { url: garment?.thumbnailUrl, kind: "thumbnail" },
+    { url: garment?.processedPhotoUrl, kind: "processed" }
+  ];
+
+  for (const candidate of candidates) {
+    const key = storedKeyFromUrl(candidate.url);
     if (!key) continue;
     hadCandidate = true;
     try {
       const asset = await bucket.get(key);
-      if (asset && String(asset?.httpMetadata?.contentType || "").toLowerCase().startsWith("image/")) {
-        return asset;
+      const mime = String(asset?.httpMetadata?.contentType || "").toLowerCase();
+      if (!asset || !mime.startsWith("image/")) continue;
+
+      if (candidate.kind === "processed") {
+        const normalized = await makeThumbnail(asset.body, 512);
+        return {
+          body: normalized.bytes,
+          httpMetadata: { contentType: normalized.mime || "image/webp" }
+        };
       }
+
+      return asset;
     } catch {
       // A broken/missing thumbnail must not block a look when the processed
-      // canonical asset for the same garment is still healthy.
+      // canonical asset for the same garment is still healthy. If processed
+      // is used, it is normalized back to a bounded 512 px WebP before
+      // embedding so one large source asset cannot explode the look SVG.
     }
   }
+
   if (!hadCandidate) throw new ObjectsImageError("LOOK_ITEM_IMAGE_MISSING", 409);
   throw new ObjectsImageError("LOOK_ITEM_IMAGE_UNREADABLE", 409);
 }
 
-async function renderCanonicalLookSvg(look, wardrobeRows, bucket) {
+async function renderCanonicalLookSvg(look, wardrobeRows, bucket, makeThumbnail = generateThumbnailWebp) {
   const wardrobe = new Map(
     (Array.isArray(wardrobeRows) ? wardrobeRows : [])
       .filter((item) => item?.objectId)
@@ -194,7 +212,7 @@ async function renderCanonicalLookSvg(look, wardrobeRows, bucket) {
     if (!slot || !item?.objectId) continue;
     const garment = wardrobe.get(String(item.objectId));
     if (!garment) throw new ObjectsImageError("LOOK_ITEM_IMAGE_MISSING", 409);
-    const asset = await readCanonicalWardrobeAsset(garment, bucket);
+    const asset = await readCanonicalWardrobeAsset(garment, bucket, makeThumbnail);
     items.push({ role, slot, dataUri: imageDataUri(asset) });
   }
 
@@ -269,7 +287,8 @@ export async function renderObjectsLookImage(request, env, getGoogleAccessToken,
   const previousUrl = currentPhotoUrl(row);
   if (previousUrl && !overwrite) throw new ObjectsImageError("IMAGE_ALREADY_EXISTS", 409);
 
-  const rendered = await renderCanonicalLookSvg(look, wardrobe, bucket);
+  const makeThumbnail = overrides.generateThumbnailWebp || generateThumbnailWebp;
+  const rendered = await renderCanonicalLookSvg(look, wardrobe, bucket, makeThumbnail);
   const version = crypto.randomUUID();
   const updatedAt = new Date().toISOString();
   const key = imageStorageKey(storageObjectId(id), "processed", version);
