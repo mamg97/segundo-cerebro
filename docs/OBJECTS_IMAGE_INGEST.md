@@ -212,6 +212,36 @@ Una subida solo se puede declarar terminada cuando se cumplen simultáneamente:
 
 Los looks continúan teniendo una única identidad canónica en `Looks + LookItems`. La imagen renderizada del conjunto es un derivado visual del `look_id`, no una prenda ni un objeto nuevo.
 
+### Ruta preferida cuando las prendas ya tienen imagen canónica
+
+Si el look existe y todos sus `LookItems` obligatorios tienen `miniatura_url` o `foto_procesada_url`, usar el render canónico:
+
+```text
+LookItems + Armario
+    ↓ imágenes canónicas existentes
+POST /render-look-image
+    ↓
+objects-chatgpt-bridge
+    ↓
+POST /api/internal/objects/look/:look_id/render
+    ↓
+composición editorial autocontenida
+    ↓
+D1 privado + Looks.foto_url
+```
+
+El render no llama a un generador externo ni inventa prendas. Reutiliza los bytes privados ya asociados a los mismos `objeto_id`, los dispone por rol en una composición sin persona visible y conserva el mismo contrato de lectura `GET /api/objects/look/:look_id/image?v=<version>`.
+
+Para el fallback Railway, un trabajo de render es:
+
+```json
+{"look_id":"look-existente","render":true,"overwrite":false}
+```
+
+Se mantienen el límite de 8 jobs por seed, el stop en primer fallo, la verificación `stage=done` + HTTP 2xx + `ok=true`, la relectura de `Looks.foto_url` y la restauración final a `npm start`.
+
+### Ruta de ingesta de una composición ya generada
+
 Flujo canónico:
 
 ```text
