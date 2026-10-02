@@ -127,6 +127,7 @@ Entre otros:
 - botón de cierre que tapa el título de un diálogo;
 - imagen deformada respecto de su proporción natural cuando no usa `cover/contain/scale-down`;
 - una imagen renderizada que todavía no esté completa se contrasta mediante `fetch` autenticado del mismo `src`: solo se considera recurso sano si responde correctamente, declara `Content-Type: image/*` y Chromium puede decodificar el blob; así un `loading="lazy"` pendiente no se confunde con un 404/500 o un binario corrupto;
+- ese probe visual se ejecuta de forma secuencial para las fuentes pendientes y, solo si el primer intento termina en `AbortError` por su timeout local de 6 s, repite una vez con hasta 15 s; un HTTP no exitoso, un MIME no-imagen o un blob que no decodifica siguen siendo fallo real y no se reintentan para poner verde el audit;
 - diálogo que excede el ancho útil de la pantalla;
 - tarjetas resumen que pierden de forma material la simetría documentada en escritorio;
 - modificación accidental de los tokens visuales canónicos light/dark;
