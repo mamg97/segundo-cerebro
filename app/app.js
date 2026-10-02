@@ -2459,9 +2459,11 @@ function renderHealthOverview(data, gymData = {}) {
   const fmt1 = (value, suffix = "") => Number.isFinite(value) ? value.toFixed(1).replace(".", ",") + suffix : "—";
   const fmt0 = (value, suffix = "") => Number.isFinite(value) ? Math.round(value).toLocaleString("es-ES") + suffix : "—";
 
-  const weightToday = metricNumber(body.weightToday?.value);
-  const weightAvg = metricNumber(body.weight7dAverage);
-  const weeklyChange = metricNumber(body.weightWeeklyChange);
+  const weightSummary = healthWeightSummary(body, data.date || localDateKey());
+  const latestWeightSample = weightSummary.latest;
+  const latestWeight = weightSummary.value;
+  const weightAvg = weightSummary.average;
+  const weeklyChange = weightSummary.weeklyChange;
   const bodyFat = metricNumber(body.bodyFat?.value);
   const bmi = metricNumber(body.bodyMassIndex?.value);
   const lean = metricNumber(body.leanBodyMass?.value);
@@ -2489,34 +2491,25 @@ function renderHealthOverview(data, gymData = {}) {
   const proteinTarget = metricNumber(nutritionGoal.protein);
   const carbsTarget = metricNumber(nutritionGoal.carbs);
   const fatTarget = metricNumber(nutritionGoal.fat);
+  const kcalProgress = homeHealthPercent(kcalConsumed, kcalTarget);
+  const proteinProgress = homeHealthPercent(proteinConsumed, proteinTarget);
+  const gymSummary = deriveGymTodaySummary(data, gymData);
 
-  const nutritionChecks = [
-    Number.isFinite(kcalTarget) ? kcalConsumed >= kcalTarget * 0.9 && kcalConsumed <= kcalTarget * 1.05 : null,
-    Number.isFinite(proteinTarget) ? proteinConsumed >= proteinTarget * 0.95 : null,
-    Number.isFinite(carbsTarget) ? carbsConsumed >= carbsTarget * 0.9 && carbsConsumed <= carbsTarget * 1.1 : null,
-    Number.isFinite(fatTarget) ? fatConsumed >= fatTarget * 0.9 && fatConsumed <= fatTarget * 1.1 : null
-  ].filter((value) => value !== null);
-  const nutritionDone = nutritionChecks.filter(Boolean).length;
-
-  const activityChecks = [
-    Number.isFinite(stepsFloor) && stepsFloor > 0 ? Number.isFinite(steps) && steps >= stepsFloor : null,
-    Number.isFinite(exerciseTarget) && exerciseTarget > 0 ? Number.isFinite(exerciseWeek) && exerciseWeek >= exerciseTarget : null,
-    Number.isFinite(strengthTarget) && strengthTarget > 0 ? sessionsThisWeek >= strengthTarget : null
-  ].filter((value) => value !== null);
-  const activityDone = activityChecks.filter(Boolean).length;
-  const nutritionProgress = nutritionChecks.length ? Math.round((nutritionDone / nutritionChecks.length) * 100) : null;
-  const activityProgress = activityChecks.length ? Math.round((activityDone / activityChecks.length) * 100) : null;
-  const strengthProgress = Number.isFinite(strengthTarget) && strengthTarget > 0
-    ? Math.round((sessionsThisWeek / strengthTarget) * 100)
+  const habitSummary = state.habitsSummary?.summary || {};
+  const habitTotal = Math.max(0, Number(habitSummary.total || 0));
+  const habitDone = Math.max(0, Number(habitSummary.done || 0));
+  const habitStreak = Math.max(0, Number(habitSummary.streak || 0));
+  const habitProgress = habitTotal > 0
+    ? Math.max(0, Math.min(100, Math.round((habitDone / habitTotal) * 100)))
     : null;
 
-  let recompositionStatus = "Baseline en construcción";
-  if (Number.isFinite(weeklyChange)) {
+  let recompositionStatus = "Cobertura insuficiente";
+  if (weightSummary.trendReady && Number.isFinite(weeklyChange)) {
     recompositionStatus = weeklyChange <= -0.15 && weeklyChange >= -0.45
       ? "En rumbo"
-      : "Seguir tendencia";
+      : "Revisar tendencia";
   } else if (Number.isFinite(waistDelta) && waistDelta < 0) {
-    recompositionStatus = "En rumbo";
+    recompositionStatus = "Cintura mejorando";
   }
 
   const performanceObjectives = progressObjectives.filter((item) => {
@@ -2539,6 +2532,26 @@ function renderHealthOverview(data, gymData = {}) {
   const changeClass = Number.isFinite(weeklyChange)
     ? (weeklyChange > 0 ? "up" : weeklyChange < 0 ? "down" : "flat")
     : "";
+  const weightCoverageText = weightSummary.currentDays > 0
+    ? weightSummary.currentDays + "/7 días"
+    : "sin mediciones";
+  const previousWeightCoverageText = weightSummary.previousDays > 0
+    ? weightSummary.previousDays + "/7 previos"
+    : "sin semana previa";
+  const nutritionUpdated = formatHomeHealthUpdate(
+    nutrition.updatedAt || nutritionGoal.updatedAt || null,
+    nutrition.updateKind === "objective" ? "Objetivo" : "Nutrición"
+  );
+  const habitsUpdated = formatHomeHealthUpdate(state.habitsSummary?.source?.updatedAt || null, "Hábitos");
+  const gymUpdated = formatHomeHealthUpdate(gymSummary.updatedAt, "Gym");
+  const weightUpdated = formatHomeHealthUpdate(
+    latestWeightSample?.measuredAt || latestWeightSample?.importedAt || latestWeightSample?.date || null,
+    latestWeightSample?.source || "Peso"
+  );
+  const bodyMetricUpdated = (sample, fallback = "") => formatHomeHealthUpdate(
+    sample?.measuredAt || sample?.importedAt || sample?.date || null,
+    sample?.source || fallback
+  );
 
   panel.innerHTML = `
     <div class="health-dashboard-status progress-ring-status">
