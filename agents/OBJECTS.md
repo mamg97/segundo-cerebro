@@ -104,6 +104,14 @@ Una prenda no debe existir solo en Armario: primero debe existir como objeto. `O
 - La `capa` puede inferirse temporalmente desde `tipo_prenda` para registros históricos; el campo explícito del Sheet tiene prioridad.
 - El pipeline automático de eliminación de fondo no es fuente de verdad: solo produce derivados visuales que vuelven a referenciar el mismo `objeto_id`.
 
+### Detalle interactivo de looks
+
+- En la pestaña `Looks`, cada tarjeta es interactiva.
+- Al abrir un look, la UI amplía `Looks.foto_url` como imagen principal.
+- En escritorio, las prendas de `LookItems` se muestran al lado; en móvil, debajo.
+- Cada prenda del detalle se resuelve desde `Armario` usando la prioridad visual canónica y permite abrir su ficha individual.
+- Esta vista no crea ni copia datos: deriva íntegramente de `Looks + LookItems + Armario`.
+
 ### `Looks` + `LookItems`
 
 `Looks`:

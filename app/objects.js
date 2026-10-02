@@ -156,9 +156,9 @@ function lookMosaic(look,payload) {
 function looksView(payload) {
   if (pending(payload)) return pendingView();
   const rows=payload.looks||[], office=rows.filter(x=>x.office===true).length;
-  return '<section class="objects-callout"><div><small>Armario inteligente</small><strong>Looks guardados</strong><p>Todos los looks referencian prendas existentes. El histórico permitirá evitar repeticiones y preparar viajes/eventos.</p></div><span>'+office+' oficina</span></section>'+
+  return '<section class="objects-callout"><div><small>Armario inteligente</small><strong>Looks guardados</strong><p>Pulsa un look para ampliar su imagen y ver las prendas reales que lo componen.</p></div><span>'+office+' oficina</span></section>'+
     '<div class="looks-actions"><button class="objects-primary-action" type="button" data-look-builder>Crear look visual</button></div><div class="looks-grid">'+
-    (rows.length?rows.map(x=>'<article class="look-card"><div class="look-visual">'+lookMosaic(x,payload)+'</div><div class="look-body"><span class="look-tags">'+(x.office===true?'<b>Oficina</b>':'')+(x.season?'<b>'+e(x.season)+'</b>':'')+(x.formality?'<b>'+e(x.formality)+'</b>':'')+'</span><strong>'+e(x.name||"Look")+'</strong><p>'+e((x.items||[]).map(i=>i.name).filter(Boolean).join(" · ")||"Sin prendas vinculadas")+'</p><small>'+e(x.context||"Contexto sin indicar")+' · '+(x.lastUsed?"último uso "+e(d(x.lastUsed)):"sin uso reciente")+'</small></div></article>').join(""):empty("Todavía no hay looks","El combinador puede crear el primero reutilizando prendas reales."))+
+    (rows.length?rows.map(x=>'<article class="look-card" role="button" tabindex="0" data-look-open="'+e(x.id)+'" aria-label="Abrir '+e(x.name||"look")+'"><div class="look-visual">'+lookMosaic(x,payload)+'</div><div class="look-body"><span class="look-tags">'+(x.office===true?'<b>Oficina</b>':'')+(x.season?'<b>'+e(x.season)+'</b>':'')+(x.formality?'<b>'+e(x.formality)+'</b>':'')+'</span><strong>'+e(x.name||"Look")+'</strong><p>'+e((x.items||[]).map(i=>i.name).filter(Boolean).join(" · ")||"Sin prendas vinculadas")+'</p><small>'+e(x.context||"Contexto sin indicar")+' · '+(x.lastUsed?"último uso "+e(d(x.lastUsed)):"sin uso reciente")+'</small></div></article>').join(""):empty("Todavía no hay looks","El combinador puede crear el primero reutilizando prendas reales."))+
     '</div>';
 }
 
@@ -218,6 +218,41 @@ function detailObject(item,payload) {
   body.querySelector("[data-objects-back]")?.addEventListener("click",()=>renderWorkspace(payload));
 }
 
+function detailLook(look,payload) {
+  const body=document.querySelector("#dialog-body");
+  const wardrobe=new Map((payload.wardrobe||[]).map(x=>[String(x.objectId),x]));
+  const objects=new Map((payload.objects||[]).map(x=>[String(x.id),x]));
+  const direct=imageUrl(look.photoUrl);
+  const itemCards=(look.items||[]).map(item=>{
+    const garment=wardrobe.get(String(item.objectId));
+    const object=objects.get(String(item.objectId));
+    const src=visualUrl(garment);
+    const name=garment?.name||item.name||object?.name||"Prenda";
+    const detail=[garment?.brand||object?.brand,garment?.primaryColor||garment?.color,garment?.subcategory||garment?.visualCategory].filter(Boolean).join(" · ");
+    return '<button class="look-detail-item" type="button" data-object-open="'+e(item.objectId)+'">'+
+      '<span class="look-detail-item-image">'+(src?'<img src="'+e(src)+'" alt="'+e(name)+'">':'<span>◫</span>')+'</span>'+
+      '<span class="look-detail-item-copy"><small>'+e(label(item.role||"prenda"))+'</small><strong>'+e(name)+'</strong><span>'+e(detail||"Ver prenda en Armario")+'</span></span>'+
+      '</button>';
+  }).join("");
+  body.innerHTML='<button class="objects-back" data-look-back type="button">← Volver a Looks</button>'+
+    '<section class="look-detail">'+
+      '<div class="look-detail-layout">'+
+        '<div class="look-detail-main">'+(direct?'<img src="'+e(direct)+'" alt="'+e(look.name||"Look")+'">':lookMosaic(look,payload))+'</div>'+
+        '<div class="look-detail-copy">'+
+          '<span class="look-tags">'+(look.office===true?'<b>Oficina</b>':'')+(look.season?'<b>'+e(look.season)+'</b>':'')+(look.formality?'<b>'+e(look.formality)+'</b>':'')+'</span>'+
+          '<div class="look-detail-heading"><small>Look completo</small><h3>'+e(look.name||"Look")+'</h3><p>'+e(look.context||"Contexto sin indicar")+'</p></div>'+
+          '<div class="look-detail-meta"><span><small>Prendas</small><strong>'+Number((look.items||[]).length)+'</strong></span><span><small>Último uso</small><strong>'+e(look.lastUsed?d(look.lastUsed):"Sin uso reciente")+'</strong></span></div>'+
+          '<div class="look-detail-components"><div><small>Composición</small><strong>Prendas del look</strong></div><div class="look-detail-items">'+(itemCards||empty("Sin prendas vinculadas"))+'</div></div>'+
+        '</div>'+
+      '</div>'+
+    '</section>';
+  body.querySelector("[data-look-back]")?.addEventListener("click",()=>{activeTab="looks";renderWorkspace(payload);});
+  body.querySelectorAll("[data-object-open]").forEach(button=>button.addEventListener("click",()=>{
+    const item=(payload.objects||[]).find(x=>String(x.id)===String(button.dataset.objectOpen));
+    if(item)detailObject(item,payload);
+  }));
+}
+
 function detailList(list,payload) {
   const body=document.querySelector("#dialog-body");
   body.innerHTML='<button class="objects-back" data-objects-back type="button">← Volver a Objetos</button><section class="object-detail"><div class="object-detail-head"><div><span class="object-category">'+e(list.context||"Lista")+'</span><h3>'+e(list.name||"Lista")+'</h3><p>'+e([list.destination,list.startDate?d(list.startDate):null,list.endDate?d(list.endDate):null].filter(Boolean).join(" · ")||"Sin fechas")+'</p></div><span class="object-status">'+e(list.status||"ACTIVA")+'</span></div><div class="packing-list">'+
@@ -230,6 +265,11 @@ function bind(payload) {
   body.querySelectorAll("[data-objects-tab]").forEach(b=>b.addEventListener("click",()=>{activeTab=b.dataset.objectsTab||"summary";objectsFlash="";renderWorkspace(payload);}));
   body.querySelectorAll("[data-look-builder]").forEach(b=>b.addEventListener("click",()=>{activeTab="builder";objectsFlash="";renderWorkspace(payload);}));
   body.querySelectorAll("[data-object-open]").forEach(b=>b.addEventListener("click",()=>{const item=(payload.objects||[]).find(x=>String(x.id)===String(b.dataset.objectOpen));if(item)detailObject(item,payload);}));
+  body.querySelectorAll("[data-look-open]").forEach(card=>{
+    const open=()=>{const look=(payload.looks||[]).find(x=>String(x.id)===String(card.dataset.lookOpen));if(look)detailLook(look,payload);};
+    card.addEventListener("click",open);
+    card.addEventListener("keydown",(event)=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();open();}});
+  });
   body.querySelectorAll("[data-list-open]").forEach(b=>b.addEventListener("click",()=>{const item=(payload.lists||[]).find(x=>String(x.id)===String(b.dataset.listOpen));if(item)detailList(item,payload);}));
 
   const filterObjects=()=>{const q=String(body.querySelector("#objects-search")?.value||"").trim().toLocaleLowerCase("es"),cat=body.querySelector("#objects-category")?.value||"",loc=body.querySelector("#objects-location")?.value||"",st=body.querySelector("#objects-status")?.value||"";let n=0;body.querySelectorAll(".object-card").forEach(c=>{const show=(!q||String(c.dataset.name||"").includes(q))&&(!cat||c.dataset.category===cat)&&(!loc||c.dataset.location===loc)&&(!st||c.dataset.status===st);c.hidden=!show;if(show)n++;});const out=body.querySelector("#objects-visible-count");if(out)out.textContent=n+(n===1?" objeto":" objetos");};
