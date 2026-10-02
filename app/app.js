@@ -2696,6 +2696,14 @@ function renderHealthOverview(data, gymData = {}) {
     </section>
   `;
 
+  const healthGymRing = panel.querySelector('[data-health-summary="gym"] .progress-ring');
+  if (healthGymRing) {
+    const centerValue = healthGymRing.querySelector(".progress-ring-value");
+    const centerLabel = healthGymRing.querySelector(".progress-ring-center small");
+    if (centerValue) centerValue.textContent = gymSummary.centerValue;
+    if (centerLabel) centerLabel.textContent = gymSummary.centerLabel;
+  }
+
   document.querySelectorAll("[data-health-history-range]").forEach((button) => {
     button.addEventListener("click", () => {
       document.querySelectorAll("[data-health-history-range]").forEach((item) => item.classList.toggle("active", item === button));
