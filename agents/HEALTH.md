@@ -32,6 +32,8 @@ When nutritional values are estimated rather than label-confirmed, write the sou
 
 ### Recipe capture and photo workflow
 
+Runbook operativo obligatorio para fotografías: antes de ingerir, sustituir o corregir una imagen de receta, leer `docs/RECIPES_IMAGE_INGEST.md` y cerrar su checklist end-to-end. La generación o edición visual por sí sola no completa la ingesta.
+
 When the user supplies a recipe, its durable representation remains data-driven and must not require a frontend deployment:
 
 1. Reuse or create a stable `recipe_id` in `Recetas`.
