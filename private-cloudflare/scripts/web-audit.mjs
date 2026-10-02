@@ -1607,6 +1607,24 @@ try {
               "Salud · Recetas vuelve al catálogo completo",
               `UI=${restoredCount} API=${expectedRecipeCount}`
             );
+            const restoredImages = panel.locator(".recipe-card img");
+            const restoredImageCount = await restoredImages.count();
+            for (let restoredIndex = 0; restoredIndex < restoredImageCount; restoredIndex += 1) {
+              const restoredImage = restoredImages.nth(restoredIndex);
+              const restoredSrc = await restoredImage.getAttribute("src");
+              await restoredImage.scrollIntoViewIfNeeded().catch(() => {});
+              if (restoredSrc) {
+                await page.waitForFunction(
+                  (expectedSrc) => {
+                    const candidate = [...document.querySelectorAll('[data-health-panel="recipes"] .recipe-card img')]
+                      .find((node) => node.getAttribute("src") === expectedSrc);
+                    return Boolean(candidate?.complete && candidate.naturalWidth > 0 && candidate.naturalHeight > 0);
+                  },
+                  restoredSrc,
+                  { timeout: 6000 }
+                ).catch(() => null);
+              }
+            }
           }
         }
       }
