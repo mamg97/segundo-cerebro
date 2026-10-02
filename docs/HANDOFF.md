@@ -1408,3 +1408,36 @@ Este relevo es continuación directa del gestor anterior. No reconstruir el arma
 - Los 2 fallos restantes de #98 son independientes:
   - `MIDAS TFM shadow forecasts`;
   - imágenes de Looks de OBJETOS.
+
+
+## ORGANIZADOR 8 · Home Salud v0.41.1 · 2026-10-02
+
+- PR #218 / `948fef12` refina la tarjeta unificada de Salud del Home.
+- Los accesos `Resumen · Hábitos · Médicos · Gimnasio · Nutrición · Recetas · Menú` quedan alineados en la parte baja izquierda de la tarjeta.
+- Los KPI superiores pasan a cinco resúmenes circulares con el componente común `progress-ring`:
+  - Hábitos;
+  - Kcal hoy;
+  - Proteína hoy;
+  - Gym hoy;
+  - Peso.
+- Ya no existe el resumen principal de Actividad/pasos en Home. Pasos siguen disponibles dentro de Salud cuando corresponda, pero no son KPI del Home.
+- Kcal y proteína muestran `actual / objetivo`, porcentaje circular y restante/superávit.
+- Gym hoy consume las fuentes canónicas ya existentes:
+  - `Hecho` si existe sesión registrada en la fecha;
+  - `Pausado` si `trainingStatus.paused` o el objetivo de fuerza está a 0;
+  - `Descanso` cuando el objetivo semanal ya está cubierto;
+  - `Sugerido` con la siguiente sesión del plan en el resto de casos.
+- El peso conserva valor actual/media 7 d/delta semanal; el anillo es informativo y no inventa un objetivo de peso.
+- La barra superior ya renderiza solamente las 10 áreas principales canónicas. Los subapartados `Eventos / Padres / Hábitos / Despensa` dejan de aparecer como enlaces secundarios arriba, pero siguen siendo accesibles desde sus dominios correspondientes.
+- PR #219 / `27549eed` corrige un falso positivo del auditor: el motivo textual de una pausa puede contener la palabra «pasos», por lo que la sustitución de Actividad por Gym se valida estructuralmente.
+- Audit production web #101: **729 checks / 2 failures**. Pasan:
+  - cinco anillos de Salud;
+  - links abajo a la izquierda;
+  - navegación superior 10/10 sin subapartados;
+  - progreso kcal y proteína;
+  - Gym hoy;
+  - desktop-wide, desktop, tablet, mobile-wide y mobile sin overflow, clipping, solapes ni problemas de proporción;
+  - red y consola.
+- Los 2 fallos restantes son independientes de este cambio:
+  - `MIDAS TFM shadow forecasts`;
+  - carga visual de imágenes de Looks/OBJETOS.
