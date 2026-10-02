@@ -416,6 +416,7 @@ async function closeDialogIfOpen() {
 
 
 const VISUAL_PROFILES = [
+  { name: "desktop-wide", width: 1760, height: 1000, wardrobeColumns: 4 },
   { name: "desktop", width: 1440, height: 1100, wardrobeColumns: 4 },
   { name: "tablet", width: 900, height: 1000, wardrobeColumns: 3 },
   { name: "mobile-wide", width: 440, height: 956, wardrobeColumns: 3 },
@@ -470,7 +471,7 @@ async function auditVisualSnapshot(label) {
     );
 
     document.querySelectorAll(
-      ".main-content,.topbar,.home-summary-card,#home-weekly-menu-panel,.home-weekly-menu-table-cell,.weekly-menu-day,.recipe-card,dialog[open],.detail-dialog[open]"
+      ".sidebar,.main-content,.topbar,.home-summary-card,.home-health-links,#home-weekly-menu-panel,.home-weekly-menu-table-cell,.weekly-menu-day,.recipe-card,dialog[open],.detail-dialog[open]"
     ).forEach((element) => {
       if (!visible(element) || insideHorizontalScroller(element)) return;
       const rect = element.getBoundingClientRect();
@@ -560,11 +561,11 @@ async function auditVisualSnapshot(label) {
       }
     });
 
-    const nutritionCard = document.querySelector("#home-nutrition-card");
-    if (nutritionCard && visible(nutritionCard)) {
-      const cardRect = nutritionCard.getBoundingClientRect();
-      nutritionCard.querySelectorAll(
-        ".home-nutrition-primary,.daily-card-heading,.daily-energy-grid,.daily-progress-footer,.daily-card-status,.home-summary-action,.home-nutrition-links,.home-nutrition-links button"
+    const healthCard = document.querySelector("#home-health-card");
+    if (healthCard && visible(healthCard)) {
+      const cardRect = healthCard.getBoundingClientRect();
+      healthCard.querySelectorAll(
+        ".home-health-primary,.daily-card-heading,.home-health-metrics,.home-health-metric,.home-health-links,.home-health-links button"
       ).forEach((element) => {
         if (!visible(element)) return;
         const style = getComputedStyle(element);
@@ -572,7 +573,7 @@ async function auditVisualSnapshot(label) {
         const rect = element.getBoundingClientRect();
         if (rect.left < cardRect.left - 3 || rect.right > cardRect.right + 3) {
           componentOverflows.push(
-            `#home-nutrition-card: ${shortName(element)} [${Math.round(rect.left)},${Math.round(rect.right)}] fuera de [${Math.round(cardRect.left)},${Math.round(cardRect.right)}]`
+            `#home-health-card: ${shortName(element)} [${Math.round(rect.left)},${Math.round(rect.right)}] fuera de [${Math.round(cardRect.left)},${Math.round(cardRect.right)}]`
           );
         }
       });
@@ -1002,8 +1003,32 @@ try {
 
   const homeMenuVisible = await page.locator("#home-weekly-menu-panel").evaluate((node) => !node.hidden).catch(() => false);
   assertCheck(homeMenuVisible, "Menú semanal permanece visible en Home");
-  assertCheck(await page.locator("#home-nutrition-menu").count() === 1, "Home · acceso directo Menú", "#home-nutrition-menu");
-  assertCheck(await page.locator("#home-nutrition-recipes").count() === 1, "Home · acceso directo Recetas", "#home-nutrition-recipes");
+  assertCheck(await page.locator("#ask-form").count() === 0, "Home · barra de consulta rápida retirada");
+  assertCheck(await page.locator("#system-orb").count() === 1, "Home · orbe del sistema conservado");
+  assertCheck(await page.locator("#home-health-card").count() === 1, "Home · tarjeta única Salud + Hábitos");
+  assertCheck(await page.locator("#home-habits-card, #home-nutrition-card").count() === 0, "Home · sin tarjetas antiguas separadas");
+  assertCheck(await page.locator("#home-health-card .home-health-metric").count() === 4, "Home · Salud resume hábitos, macros, actividad y peso");
+  assertCheck(await page.locator("#home-health-menu").count() === 1, "Home · acceso directo Menú", "#home-health-menu");
+  assertCheck(await page.locator("#home-health-recipes").count() === 1, "Home · acceso directo Recetas", "#home-health-recipes");
+  const topNavLayout = await page.locator(".sidebar").evaluate((node) => {
+    const style = getComputedStyle(node);
+    const rect = node.getBoundingClientRect();
+    return {
+      position: style.position,
+      width: Math.round(rect.width),
+      viewportWidth: window.innerWidth,
+      left: Math.round(rect.left),
+      top: Math.round(rect.top)
+    };
+  }).catch(() => null);
+  assertCheck(
+    Boolean(topNavLayout) &&
+      topNavLayout.position === "sticky" &&
+      topNavLayout.left >= -2 &&
+      topNavLayout.width >= topNavLayout.viewportWidth - 4,
+    "Home · navegación principal situada arriba",
+    topNavLayout ? JSON.stringify(topNavLayout) : "sin navegación"
+  );
   const homeMenuText = normalizeAuditValue(await page.locator("#home-weekly-menu-panel").textContent().catch(() => ""));
   assertCheck(!/temporalmente no disponible|no se ha podido/.test(homeMenuText), "Menú Home sin fallback de error");
 
