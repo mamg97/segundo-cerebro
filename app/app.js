@@ -2416,13 +2416,20 @@ async function loadHealthOverview(dateKey = localDateKey()) {
   const panel = document.querySelector("#health-overview-panel");
   if (panel) panel.innerHTML = '<p class="health-empty">Cargando Apple Health…</p>';
   try {
-    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(dateKey), {
-      headers: { Accept: "application/json" },
-      cache: "no-store"
-    });
+    const [response, gymResponse] = await Promise.all([
+      fetch("/api/health/overview?date=" + encodeURIComponent(dateKey), {
+        headers: { Accept: "application/json" },
+        cache: "no-store"
+      }),
+      fetch("/api/gym", {
+        headers: { Accept: "application/json" },
+        cache: "no-store"
+      }).catch(() => null)
+    ]);
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
     const payload = await response.json();
-    renderHealthOverview(payload);
+    const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
+    renderHealthOverview(payload, gymData || {});
     loadHealthHistory("365", payload.date || dateKey);
   } catch (error) {
     if (panel) panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Apple Health no disponible</strong><p>No se ha podido cargar el resumen de actividad y composición corporal.</p></div>';
@@ -2430,7 +2437,7 @@ async function loadHealthOverview(dateKey = localDateKey()) {
   }
 }
 
-function renderHealthOverview(data) {
+function renderHealthOverview(data, gymData = {}) {
   const panel = document.querySelector("#health-overview-panel");
   if (!panel) return;
 
