@@ -1298,3 +1298,13 @@ Estado que debe preservarse al continuar:
 - También pasan las comprobaciones globales de red y consola: sin 5xx/fallos de red y sin errores JavaScript/console.
 - El único fallo restante es `MIDAS TFM shadow forecasts`, porque la última ejecución schedule sigue siendo el run #5 fallido del 01/10. Mantenerlo rojo hasta que un nuevo schedule termine correctamente; no rebajar ni silenciar el control.
 - `mamg97/midas-paper-lab/main` ya contiene la corrección upstream `8bb6c174` (fallback de cierre Madrid desde barras horarias validadas + backup adelantado). La sesión perdida del 01/10 no se backfillea prospectivamente.
+
+
+## ORGANIZADOR 8 · Recetas muestran foto completa · 2026-10-02
+
+- PR #201 / `84db246c` corrige la presentación de Salud → Recetas: la foto principal deja de usar `object-fit: cover` y pasa a `object-fit: contain` + `object-position: center`.
+- Se mantiene el marco 16:9 y el fondo neutro del contenedor; la prioridad visual es mostrar la imagen completa sin recorte, aunque queden bandas libres.
+- `styles.css` usa cache-bust `v0.40.17`; los tests globales de assets quedaron alineados con esa versión.
+- Deploy private Cloudflare app #308 y Pages #499 terminaron correctamente.
+- Audit production web #89: **790 checks / 1 failure**. Salud → Recetas pasa: fuente completa, foto de `rec-fajitas-tiras-pollo-v1` visible, sin overflow, clipping, solapes, deformación ni problemas de carga/proporciones.
+- El único rojo de #89 sigue siendo `MIDAS TFM shadow forecasts`; es independiente de Recetas.
