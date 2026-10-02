@@ -1118,12 +1118,18 @@ function renderHomeGymSummary(healthData, gymData) {
 
   if (paused) {
     const reason = String(gymData?.trainingStatus?.reason || activityGoal.note || "Pausa temporal del entrenamiento de fuerza.");
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Pausado", reason);
+    const briefReason = shortHomeGymReason(reason);
+    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Pausado", briefReason);
+    setHomeHealthUpdated(
+      "gym",
+      gymData?.trainingStatus?.updatedAt || gymData?.trainingStatus?.effectiveDate || activityGoal.updatedAt || activityGoal.effectiveDate || null,
+      "Gym"
+    );
     setHomeHealthRing("home-health-gym-ring", null, {
       tone: "amber",
       centerValue: "⏸",
       centerLabel: "pausa",
-      ariaLabel: "Gimnasio pausado: " + reason
+      ariaLabel: "Gimnasio pausado: " + briefReason
     });
     return;
   }
