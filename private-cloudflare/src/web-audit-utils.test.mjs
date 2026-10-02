@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  canonicalMenuMoment,
   classifyRequestFailure,
   hiddenMenuStatus,
   logicalMenuKey,
@@ -22,6 +23,15 @@ test("logical key is stable for recipe rows", () => {
     logicalMenuKey({ date:"2026-10-01", moment:"Merienda", recipeId:"REC-1", name:"x" }),
     "2026-10-01|merienda|recipe:rec-1"
   );
+});
+
+test("canonical menu moments match the production folding contract", () => {
+  assert.equal(canonicalMenuMoment({ moment: "Postre", note: "después de comida" }), "Comida");
+  assert.equal(canonicalMenuMoment({ moment: "Postre", note: "después de cena" }), "Cena");
+  assert.equal(canonicalMenuMoment({ moment: "Snack", note: "media mañana" }), "Media mañana");
+  assert.equal(canonicalMenuMoment({ moment: "Snack", note: "después oficina" }), "Merienda");
+  assert.equal(canonicalMenuMoment({ moment: "Cena · complemento" }), "Cena");
+  assert.equal(canonicalMenuMoment({ moment: "Cierre" }), "Cena");
 });
 
 test("quality formula matches production UI contract", () => {

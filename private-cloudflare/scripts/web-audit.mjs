@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import {
+  canonicalMenuMoment,
   classifyRequestFailure,
   hiddenMenuStatus,
   logicalMenuKey,
@@ -59,7 +60,7 @@ function groupDayRows(rows) {
   return [...byDate.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, items]) => {
-      const moments = new Set(items.map((item) => normalizeAuditValue(item.moment || "otro")));
+      const moments = new Set(items.map((item) => normalizeAuditValue(canonicalMenuMoment(item))));
       return { date, items, momentCount: moments.size };
     });
 }
@@ -174,7 +175,32 @@ async function probeVisualImage(src) {
             decoded = width > 0 && height > 0;
             bitmap.close();
           } catch (error) {
-            decodeError = String(error?.message || error || "decode_failed");
+            decodeError = String(error?.message || error || "bitmap_decode_failed");
+          }
+
+          if (!decoded) {
+            const objectUrl = URL.createObjectURL(blob);
+            try {
+              const image = new Image();
+              const loaded = await new Promise((resolve) => {
+                const decodeTimeout = setTimeout(() => resolve(false), 5000);
+                image.onload = () => {
+                  clearTimeout(decodeTimeout);
+                  resolve(true);
+                };
+                image.onerror = () => {
+                  clearTimeout(decodeTimeout);
+                  resolve(false);
+                };
+                image.src = objectUrl;
+              });
+              width = Number(image.naturalWidth || 0);
+              height = Number(image.naturalHeight || 0);
+              decoded = loaded && width > 0 && height > 0;
+              if (!decoded && !decodeError) decodeError = "img_decode_failed";
+            } finally {
+              URL.revokeObjectURL(objectUrl);
+            }
           }
         }
         return {
@@ -1493,7 +1519,7 @@ try {
 
       const momentGroups = new Map();
       for (const item of group.items) {
-        const key = normalizeAuditValue(item.moment || "otro");
+        const key = normalizeAuditValue(canonicalMenuMoment(item));
         if (!momentGroups.has(key)) momentGroups.set(key, []);
         momentGroups.get(key).push(item);
       }
