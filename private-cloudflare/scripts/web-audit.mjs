@@ -873,6 +873,45 @@ async function auditWardrobeGridColumns(label, expectedColumns) {
   await auditVisualSnapshot(`${label} · Armario visual`);
 }
 
+async function auditLookDetail(label) {
+  const tab = page.locator('[data-objects-tab="looks"]').first();
+  const available = await tab
+    .waitFor({ state: "visible", timeout: 8000 })
+    .then(() => true)
+    .catch(() => false);
+
+  if (!available) {
+    fail(`Visual ${label} · Looks disponible`, "falta pestaña looks");
+    return;
+  }
+
+  await tab.click();
+  await page.waitForTimeout(250);
+
+  const card = page.locator("[data-look-open]").first();
+  const cardVisible = await card.isVisible().catch(() => false);
+  if (!cardVisible) {
+    fail(`Visual ${label} · Look ampliable`, "no hay tarjeta de look visible");
+    return;
+  }
+
+  await card.click();
+  await page.waitForTimeout(220);
+
+  const layout = page.locator(".look-detail-layout").first();
+  const mainImage = page.locator(".look-detail-main img").first();
+  const items = page.locator(".look-detail-items .look-detail-item");
+  const layoutVisible = await layout.isVisible().catch(() => false);
+  const imageVisible = await mainImage.isVisible().catch(() => false);
+  const itemCount = await items.count();
+
+  assertCheck(layoutVisible, `Visual ${label} · Look ampliado`);
+  assertCheck(imageVisible, `Visual ${label} · Imagen principal del look visible`);
+  assertCheck(itemCount > 0, `Visual ${label} · Prendas del look`, `prendas=${itemCount}`);
+
+  if (layoutVisible) await auditVisualSnapshot(`${label} · Look ampliado`);
+}
+
 async function auditResponsiveVisualLayout(navIds) {
   const originalViewport = page.viewportSize() || { width: 1440, height: 1100 };
 
@@ -894,6 +933,7 @@ async function auditResponsiveVisualLayout(navIds) {
       await auditVisualSnapshot(`${profile.name} · ${areaId}`);
       if (areaId === "area-objects" && profile.wardrobeColumns) {
         await auditWardrobeGridColumns(profile.name, profile.wardrobeColumns);
+        await auditLookDetail(profile.name);
       }
     }
 
