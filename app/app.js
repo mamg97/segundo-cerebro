@@ -500,7 +500,7 @@ function syncSystemOrbResponsiveSize() {
   const orb = document.querySelector("#system-orb");
   if (!orb) return;
   const mobile = window.matchMedia("(max-width: 760px)").matches;
-  const nextSize = mobile ? "64" : "96";
+  const nextSize = mobile ? "46" : "58";
   if (orb.getAttribute("size") !== nextSize) orb.setAttribute("size", nextSize);
 }
 
@@ -698,12 +698,15 @@ function renderMode() {
   document.querySelector("#privacy-mode-detail").textContent = remote ? "Protegido por autenticación" : local ? "No se publica en GitHub" : remoteUnavailable ? "Conexión temporalmente no disponible" : "Solo datos ficticios";
   document.querySelector("#data-mode-badge")?.replaceChildren(remote ? "Estado personal privado" : local ? "Estado personal local" : "Entorno mock");
   document.querySelector("#profile-button")?.setAttribute("aria-label", privateMode ? "Perfil privado" : "Perfil ficticio");
-  document.querySelector("#query-submit").setAttribute("aria-label", privateMode ? "Consultar estado privado" : "Consultar datos ficticios");
-  document.querySelector("#query-help").textContent = remote
-    ? "Consulta datos conectados o usa órdenes como «abre despensa», «ver presupuesto» o «qué tengo hoy»."
-    : local
-      ? "Consulta el estado local o abre módulos con órdenes cortas."
-      : "Prueba consultas y accesos rápidos sobre los datos de demostración.";
+  document.querySelector("#query-submit")?.setAttribute("aria-label", privateMode ? "Consultar estado privado" : "Consultar datos ficticios");
+  const queryHelp = document.querySelector("#query-help");
+  if (queryHelp) {
+    queryHelp.textContent = remote
+      ? "Consulta datos conectados o usa órdenes como «abre despensa», «ver presupuesto» o «qué tengo hoy»."
+      : local
+        ? "Consulta el estado local o abre módulos con órdenes cortas."
+        : "Prueba consultas y accesos rápidos sobre los datos de demostración.";
+  }
   document.querySelector("#footer-mode").textContent = remote
     ? "Acceso autenticado · Estado privado remoto"
     : local
@@ -1003,10 +1006,148 @@ function calendarClassForEvent(event) {
 
 
 function renderDailyOverview() {
-  renderHomeHabitsCard();
-  void renderHomeNutritionCard();
+  void renderHomeHealthCard();
+  if (privateModeKind === "remote") void loadHomeWeeklyMenu();
+  else hideHomeWeeklyMenu();
   renderHomePantryCard(state, privateModeKind);
   renderHomeObjectsCard(state, privateModeKind);
+}
+
+function homeHealthMetricNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function formatHomeHealthInteger(value, suffix = "") {
+  const number = homeHealthMetricNumber(value);
+  return number === null ? "—" : Math.round(number).toLocaleString("es-ES") + suffix;
+}
+
+function formatHomeHealthDecimal(value, suffix = "") {
+  const number = homeHealthMetricNumber(value);
+  return number === null ? "—" : number.toFixed(1).replace(".", ",") + suffix;
+}
+
+function setHomeHealthMetric(mainId, detailId, main, detail) {
+  const mainNode = document.querySelector("#" + mainId);
+  const detailNode = document.querySelector("#" + detailId);
+  if (mainNode) mainNode.textContent = main;
+  if (detailNode) detailNode.textContent = detail;
+}
+
+function renderHomeHealthHabitsSummary() {
+  const summary = state.habitsSummary?.summary || {};
+  const total = Math.max(0, Number(summary.total || 0));
+  const done = Math.max(0, Number(summary.done || 0));
+  const streak = Math.max(0, Number(summary.streak || 0));
+  const percentage = total > 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : null;
+  setHomeHealthMetric(
+    "home-health-habits-main",
+    "home-health-habits-detail",
+    total > 0 ? done + " / " + total : "—",
+    total > 0 ? percentage + "% hoy · racha " + streak + " d" : "Sin hábitos programados"
+  );
+}
+
+async function renderHomeHealthCard() {
+  renderHomeHealthHabitsSummary();
+
+  if (privateModeKind !== "remote") {
+    setHomeHealthMetric("home-health-macros-main", "home-health-macros-detail", "—", "Disponible en modo privado");
+    setHomeHealthMetric("home-health-activity-main", "home-health-activity-detail", "—", "Disponible en modo privado");
+    setHomeHealthMetric("home-health-weight-main", "home-health-weight-detail", "—", "Disponible en modo privado");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(localDateKey()), {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("HOME_HEALTH_" + response.status);
+    const data = await response.json();
+
+    const consumed = data.nutritionSummary?.consumed || {};
+    const nutritionGoal = data.nutritionObjective || {};
+    const protein = homeHealthMetricNumber(consumed.protein) ?? 0;
+    const carbs = homeHealthMetricNumber(consumed.carbs) ?? 0;
+    const fat = homeHealthMetricNumber(consumed.fat) ?? 0;
+    const kcal = homeHealthMetricNumber(consumed.kcal) ?? 0;
+    const proteinTarget = homeHealthMetricNumber(nutritionGoal.protein);
+    const carbsTarget = homeHealthMetricNumber(nutritionGoal.carbs);
+    const fatTarget = homeHealthMetricNumber(nutritionGoal.fat);
+    const kcalTarget = homeHealthMetricNumber(nutritionGoal.kcal);
+    const macroText = (label, value, target) => target !== null
+      ? label + " " + Math.round(value).toLocaleString("es-ES") + "/" + Math.round(target).toLocaleString("es-ES")
+      : label + " " + Math.round(value).toLocaleString("es-ES");
+    setHomeHealthMetric(
+      "home-health-macros-main",
+      "home-health-macros-detail",
+      proteinTarget !== null
+        ? "P " + Math.round(protein).toLocaleString("es-ES") + " / " + Math.round(proteinTarget).toLocaleString("es-ES") + " g"
+        : "P " + Math.round(protein).toLocaleString("es-ES") + " g",
+      [
+        macroText("C", carbs, carbsTarget),
+        macroText("G", fat, fatTarget),
+        kcalTarget !== null
+          ? Math.round(kcal).toLocaleString("es-ES") + "/" + Math.round(kcalTarget).toLocaleString("es-ES") + " kcal"
+          : Math.round(kcal).toLocaleString("es-ES") + " kcal"
+      ].join(" · ")
+    );
+
+    const activity = data.activity || {};
+    const activityGoal = data.activityObjective || {};
+    const gym = data.gym || {};
+    const steps = homeHealthMetricNumber(activity.steps);
+    const activeKcal = homeHealthMetricNumber(activity.activeKcal);
+    const exerciseWeek = homeHealthMetricNumber(activity.exerciseMinutesWeek);
+    const sessionsThisWeek = homeHealthMetricNumber(gym.sessionsThisWeek) ?? 0;
+    const stepsFloor = homeHealthMetricNumber(activityGoal.stepsFloor);
+    const exerciseTarget = homeHealthMetricNumber(activityGoal.moderateActivityMinWeek);
+    const strengthTarget = homeHealthMetricNumber(activityGoal.strengthSessionsWeek);
+    const checks = [
+      stepsFloor !== null && stepsFloor > 0 ? steps !== null && steps >= stepsFloor : null,
+      exerciseTarget !== null && exerciseTarget > 0 ? exerciseWeek !== null && exerciseWeek >= exerciseTarget : null,
+      strengthTarget !== null && strengthTarget > 0 ? sessionsThisWeek >= strengthTarget : null
+    ].filter((value) => value !== null);
+    const activityDone = checks.filter(Boolean).length;
+    const activityDetail = [
+      steps !== null ? Math.round(steps).toLocaleString("es-ES") + " pasos" : null,
+      activeKcal !== null ? Math.round(activeKcal).toLocaleString("es-ES") + " kcal activas" : null,
+      exerciseWeek !== null ? Math.round(exerciseWeek).toLocaleString("es-ES") + " min/sem" : null
+    ].filter(Boolean).join(" · ") || "Sin actividad disponible";
+    setHomeHealthMetric(
+      "home-health-activity-main",
+      "home-health-activity-detail",
+      checks.length ? activityDone + " / " + checks.length + " objetivos" : formatHomeHealthInteger(steps, " pasos"),
+      activityDetail
+    );
+
+    const body = data.body || {};
+    const weightToday = homeHealthMetricNumber(body.weightToday?.value);
+    const weightAverage = homeHealthMetricNumber(body.weight7dAverage);
+    const weeklyChange = homeHealthMetricNumber(body.weightWeeklyChange);
+    const displayedWeight = weightToday ?? weightAverage;
+    const weightDetail = [
+      weightAverage !== null ? "Media 7 d " + formatHomeHealthDecimal(weightAverage, " kg") : null,
+      weeklyChange !== null
+        ? "Δ " + (weeklyChange > 0 ? "+" : "") + weeklyChange.toFixed(1).replace(".", ",") + " kg"
+        : null
+    ].filter(Boolean).join(" · ") || "Sin tendencia disponible";
+    setHomeHealthMetric(
+      "home-health-weight-main",
+      "home-health-weight-detail",
+      formatHomeHealthDecimal(displayedWeight, " kg"),
+      weightDetail
+    );
+  } catch (error) {
+    setHomeHealthMetric("home-health-macros-main", "home-health-macros-detail", "—", "No se ha podido cargar");
+    setHomeHealthMetric("home-health-activity-main", "home-health-activity-detail", "—", "No se ha podido cargar");
+    setHomeHealthMetric("home-health-weight-main", "home-health-weight-detail", "—", "No se ha podido cargar");
+    console.warn("Home health load failed", error);
+  }
 }
 
 function renderHomeHabitsCard() {
@@ -7210,14 +7351,18 @@ function bindInteractions() {
   document.querySelector("#show-midas-detail")?.addEventListener("click", () => void openMidasDialog());
   document.querySelector("#close-midas-dialog")?.addEventListener("click", () => document.querySelector("#midas-dialog")?.close());
   document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspaceInline("history"));
-  document.querySelector("#home-habits-card")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
   const openHealthTabFromHome = (tab) => {
     openHealthDetail();
     document.querySelector(`[data-health-tab="${tab}"]`)?.click();
   };
-  document.querySelector("#home-nutrition-open")?.addEventListener("click", () => openHealthTabFromHome("nutrition"));
-  document.querySelector("#home-nutrition-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
-  document.querySelector("#home-nutrition-recipes")?.addEventListener("click", () => openHealthTabFromHome("recipes"));
+  document.querySelector("#home-health-open")?.addEventListener("click", () => openHealthTabFromHome("overview"));
+  document.querySelector("#home-health-summary")?.addEventListener("click", () => openHealthTabFromHome("overview"));
+  document.querySelector("#home-health-habits")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
+  document.querySelector("#home-health-medical")?.addEventListener("click", () => openHealthTabFromHome("medical"));
+  document.querySelector("#home-health-gym")?.addEventListener("click", () => openHealthTabFromHome("gym"));
+  document.querySelector("#home-health-nutrition")?.addEventListener("click", () => openHealthTabFromHome("nutrition"));
+  document.querySelector("#home-health-recipes")?.addEventListener("click", () => openHealthTabFromHome("recipes"));
+  document.querySelector("#home-health-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
   document.querySelector("#show-home-weekly-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
   document.querySelector("#home-pantry-open")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-pantry-open-footer")?.addEventListener("click", () => openPantryDetail("inventory"));
@@ -7229,7 +7374,7 @@ function bindInteractions() {
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
-  document.querySelector("#ask-form").addEventListener("submit", handleQuery);
+  document.querySelector("#ask-form")?.addEventListener("submit", handleQuery);
   document.querySelectorAll("[data-quick-query]").forEach((button) => button.addEventListener("click", () => {
     const input = document.querySelector("#ask-input");
     if (!input) return;
@@ -7237,7 +7382,7 @@ function bindInteractions() {
     document.querySelector("#ask-form")?.requestSubmit();
   }));
   const menuButton = document.querySelector("#menu-button");
-  menuButton.addEventListener("click", () => {
+  menuButton?.addEventListener("click", () => {
     const open = document.body.classList.toggle("nav-open");
     menuButton.setAttribute("aria-expanded", String(open));
   });
@@ -7245,7 +7390,7 @@ function bindInteractions() {
   document.querySelectorAll("[data-nav-area-id]").forEach((link) => link.addEventListener("click", (event) => {
     event.preventDefault();
     document.body.classList.remove("nav-open");
-    menuButton.setAttribute("aria-expanded", "false");
+    menuButton?.setAttribute("aria-expanded", "false");
     document.querySelectorAll("[data-nav-area-id]").forEach((node) => node.classList.toggle("active", node === link));
     openNavigationArea(link.dataset.navAreaId);
   }));
