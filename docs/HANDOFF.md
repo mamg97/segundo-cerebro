@@ -1308,3 +1308,47 @@ Estado que debe preservarse al continuar:
 - Deploy private Cloudflare app #308 y Pages #499 terminaron correctamente.
 - Audit production web #89: **790 checks / 1 failure**. Salud → Recetas pasa: fuente completa, foto de `rec-fajitas-tiras-pollo-v1` visible, sin overflow, clipping, solapes, deformación ni problemas de carga/proporciones.
 - El único rojo de #89 sigue siendo `MIDAS TFM shadow forecasts`; es independiente de Recetas.
+
+
+## Relevo GESTOR OBJETOS - ROPA → GESTOR OBJETOS - ROPA 2 · 2026-10-02
+
+Este relevo es continuación directa del gestor anterior. No reconstruir el armario desde conversaciones antiguas ni crear fuentes paralelas.
+
+### Fuente y contratos que mandan
+
+- Leer primero `AGENTS.md`, este `docs/HANDOFF.md`, `agents/OBJECTS.md`, `docs/OBJECTS_IMAGE_INGEST.md` y `docs/OBJECTS_VISUAL_PIPELINE.md`.
+- Continuar exclusivamente desde el `main` vivo y comprobar HEAD antes de cualquier cambio.
+- La única fuente canónica del dominio sigue siendo `SEGUNDO CEREBRO - OBJETOS`.
+- Inventario/prendas viven en `Objetos + Armario`; los conjuntos viven en `Looks + LookItems`. No duplicar prendas, looks ni relaciones en Git, D1 o una hoja auxiliar.
+- D1 es almacenamiento técnico privado de binarios visuales; Sheets conserva identidad, relaciones y referencias activas.
+
+### Imágenes de prendas y de looks
+
+- Para prendas, la UI prioriza `miniatura_url → foto_procesada_url → foto_original_url → Objetos.foto_url`.
+- Para looks, `Looks.foto_url` es la imagen compuesta principal. Si está vacío, el frontend cae al mosaico de las prendas de `LookItems`.
+- El commit `15a2a80a` añadió soporte canónico para imágenes compuestas de looks:
+  - `POST /api/objects/look/:look_id/image`;
+  - `GET /api/objects/look/:look_id/image?v=<version>`;
+  - bridge `POST /ingest-look-image`;
+  - fallback `OBJECTS_SEED_JOBS` con `look_id`.
+- Una imagen de look es un derivado visual del `look_id`: no crear un `objeto_id` ficticio, no duplicar `LookItems` y no escribir manualmente una URL provisional en `Looks.foto_url`.
+- Primera imagen de un look: `overwrite=false`. Sustitución deliberada: `overwrite=true`.
+- Una ingesta solo se considera terminada tras `ok=true`, `Looks.foto_url` same-origin versionada y verificación en la web.
+
+### Estado concreto al cerrar esta conversación
+
+- Las cuatro composiciones visuales generadas más recientemente ya tienen sus correspondientes filas canónicas en `Looks` y sus relaciones en `LookItems`.
+- Sus `foto_url` todavía deben considerarse **pendientes hasta verificación explícita**. Al iniciar ROPA 2, leer el Sheet y comprobar el estado real antes de escribir nada; si siguen vacías, ingerir las imágenes sobre esos `look_id` existentes, sin crear looks nuevos.
+- Las copias temporales privadas usadas como staging de esas cuatro imágenes existen en Drive. Reutilizarlas si siguen disponibles; no pedir al usuario que regenere o vuelva a subir las imágenes salvo que se compruebe que el staging ya no es recuperable. No documentar IDs privados ni URLs temporales en Git.
+- El primer intento de seed de looks falló porque Railway redeplegó una revisión antigua del bridge que todavía esperaba `objeto_id`; el síntoma fue `INVALID_OBJECT_ID` ante jobs con `look_id`.
+- Antes de reintentar, confirmar que `objects-chatgpt-bridge` está ejecutando un commit que contiene `ingest-look-image` y el soporte de `look_id` en `seed.mjs`. No basta con que GitHub `main` lo contenga: verificar el commit/runtime efectivo de Railway.
+- Tras el intento fallido se restauró el estado seguro del servicio: `OBJECTS_SEED_JOBS` vacío y start command normal `npm start`. ROPA 2 debe verificar que el redeploy de restauración terminó verde antes de usar el bridge.
+- Cuando el runtime correcto esté desplegado: materializar referencias frescas de los cuatro archivos de staging, cargar un lote de hasta 4 jobs con `look_id`, ejecutar seed, exigir `stage=done` + `ok=true` por item, releer `Looks.foto_url`, comprobar la web y solo entonces limpiar staging.
+- Si Railway vuelve a construir una revisión Git antigua, resolver primero la sincronización de fuente/deploy de Railway; no reintentar el seed contra código viejo y no modificar el Sheet a mano para saltarse el pipeline.
+
+### Invariantes de UI que ya están cerrados
+
+- Armario visual móvil: 2 columnas por debajo de 430 px; 3 columnas desde 430 px hasta tablet; 4 en escritorio según el contrato vigente.
+- Las fotos procesadas de prendas deben conservar transparencia real; un fondo blanco aplanado no supera QA.
+- El auditor web comprueba carga/decodificación real de imágenes y QA responsive; no tratar un `loading=lazy` incompleto como imagen rota sin verificar el recurso.
+- Los cambios ordinarios del armario o los looks se resuelven en la fuente canónica; tocar frontend solo ante un defecto genérico de contrato/renderizado.
