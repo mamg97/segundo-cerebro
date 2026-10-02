@@ -1007,7 +1007,8 @@ function calendarClassForEvent(event) {
 
 function renderDailyOverview() {
   void renderHomeHealthCard();
-  void loadHomeWeeklyMenu();
+  if (privateModeKind === "remote") void loadHomeWeeklyMenu();
+  else hideHomeWeeklyMenu();
   renderHomePantryCard(state, privateModeKind);
   renderHomeObjectsCard(state, privateModeKind);
 }
