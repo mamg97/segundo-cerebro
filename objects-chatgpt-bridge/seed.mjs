@@ -34,7 +34,8 @@ for (let index = 0; index < jobs.length; index += 1) {
   const target = lookId ? "look" : "object";
   const targetId = lookId || objetoId;
   console.info("[objects-seed]", { stage: "start", index: index + 1, target, targetId });
-  const request = new Request("http://seed.local/" + (lookId ? "ingest-look-image" : "ingest-object-image"), {
+  const route = lookId ? (job?.render === true ? "render-look-image" : "ingest-look-image") : "ingest-object-image";
+  const request = new Request("http://seed.local/" + route, {
     method: "POST",
     headers: {
       Authorization: "Bearer " + String(process.env.CHATGPT_ACTION_API_KEY || ""),
