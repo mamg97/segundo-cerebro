@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.41.1">
-    <script type="module" src="./app.js?v=0.41.1"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.41.2">
+    <script type="module" src="./app.js?v=0.41.2"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -80,6 +80,7 @@
                     <small>Hábitos</small>
                     <strong id="home-health-habits-main">—</strong>
                     <em id="home-health-habits-detail">Cargando…</em>
+                    <time id="home-health-habits-updated" class="home-health-updated" datetime="">Actualización pendiente</time>
                   </span>
                 </span>
                 <span class="home-health-metric">
@@ -90,6 +91,7 @@
                     <small>Kcal hoy</small>
                     <strong id="home-health-kcal-main">—</strong>
                     <em id="home-health-kcal-detail">Cargando…</em>
+                    <time id="home-health-kcal-updated" class="home-health-updated" datetime="">Actualización pendiente</time>
                   </span>
                 </span>
                 <span class="home-health-metric">
@@ -100,6 +102,7 @@
                     <small>Proteína hoy</small>
                     <strong id="home-health-protein-main">—</strong>
                     <em id="home-health-protein-detail">Cargando…</em>
+                    <time id="home-health-protein-updated" class="home-health-updated" datetime="">Actualización pendiente</time>
                   </span>
                 </span>
                 <span class="home-health-metric">
@@ -110,6 +113,7 @@
                     <small>Gym hoy</small>
                     <strong id="home-health-gym-main">—</strong>
                     <em id="home-health-gym-detail">Cargando…</em>
+                    <time id="home-health-gym-updated" class="home-health-updated" datetime="">Actualización pendiente</time>
                   </span>
                 </span>
                 <span class="home-health-metric">
@@ -120,6 +124,7 @@
                     <small>Peso</small>
                     <strong id="home-health-weight-main">—</strong>
                     <em id="home-health-weight-detail">Cargando…</em>
+                    <time id="home-health-weight-updated" class="home-health-updated" datetime="">Actualización pendiente</time>
                   </span>
                 </span>
               </div>
@@ -152,29 +157,36 @@
               <span id="home-shopping-preview" class="pantry-home-preview">Cargando lista…</span>
             </button>
             <div class="pantry-home-footer">
+              <nav class="home-card-links pantry-home-links" aria-label="Accesos de Despensa">
+                <button id="home-pantry-inventory" type="button">Inventario</button>
+                <button id="home-shopping-list" type="button">Lista compra</button>
+              </nav>
               <span class="pantry-home-meta"><span id="home-pantry-review" class="pantry-home-review">—</span><span>Coste <strong id="home-pantry-cost">—</strong></span></span>
-              <span class="pantry-home-actions">
-                <button id="home-shopping-list" class="pantry-home-shopping-action" type="button">🛒 Lista de la compra</button>
-                <button id="home-pantry-open-footer" class="pantry-home-open-action" type="button">Ver despensa →</button>
-              </span>
             </div>
           </article>
 
-          <button id="home-objects-card" class="daily-overview-card objects-home-card home-summary-card" type="button" hidden>
-            <div class="daily-card-heading">
-              <span class="daily-card-icon objects-accent" aria-hidden="true">◈</span>
-              <span><small>Objetos</small><strong>Inventario personal</strong></span>
-              <span class="daily-card-arrow" aria-hidden="true">→</span>
-            </div>
-            <div class="objects-home-grid home-summary-metrics">
-              <span><small>Objetos</small><strong id="home-objects-total">—</strong></span>
-              <span><small>Armario</small><strong id="home-objects-wardrobe">—</strong></span>
-              <span><small>Atención</small><strong id="home-objects-attention">—</strong></span>
-              <span><small>Listas</small><strong id="home-objects-lists">—</strong></span>
-            </div>
-            <span id="home-objects-status" class="daily-card-status">Cargando objetos…</span>
-            <span class="objects-home-footer"><span>Inventario · Armario · Looks · Kits</span><strong>Ver objetos →</strong></span>
-          </button>
+          <article id="home-objects-card" class="daily-overview-card objects-home-card home-summary-card" hidden>
+            <button id="home-objects-open" class="objects-home-primary" type="button" aria-label="Abrir Objetos">
+              <div class="daily-card-heading">
+                <span class="daily-card-icon objects-accent" aria-hidden="true">◈</span>
+                <span><small>Objetos</small><strong>Inventario personal</strong></span>
+                <span class="daily-card-arrow" aria-hidden="true">→</span>
+              </div>
+              <div class="objects-home-grid home-summary-metrics">
+                <span><small>Objetos</small><strong id="home-objects-total">—</strong></span>
+                <span><small>Armario</small><strong id="home-objects-wardrobe">—</strong></span>
+                <span><small>Atención</small><strong id="home-objects-attention">—</strong></span>
+                <span><small>Listas</small><strong id="home-objects-lists">—</strong></span>
+              </div>
+              <span id="home-objects-status" class="daily-card-status">Cargando objetos…</span>
+            </button>
+            <nav class="home-card-links objects-home-links" aria-label="Accesos de Objetos">
+              <button id="home-objects-inventory" type="button">Inventario</button>
+              <button id="home-objects-wardrobe-link" type="button">Armario</button>
+              <button id="home-objects-looks" type="button">Looks</button>
+              <button id="home-objects-kits" type="button">Kits</button>
+            </nav>
+          </article>
         </section>
         <section class="money-horizon" aria-label="Resumen financiero y eventos importantes">
           <article class="budget-panel compact-budget-panel">
@@ -203,6 +215,11 @@
               </div>
             </div>
             <div id="wealth-summary" class="wealth-summary"></div>
+            <nav class="home-card-links finance-home-links" aria-label="Accesos de Patrimonio">
+              <button id="home-wealth-detail" type="button">Detalle</button>
+              <button id="home-wealth-evolution" type="button">Evolución</button>
+              <button id="home-wealth-midas" type="button">MIDAS</button>
+            </nav>
           </article>
 
           <article class="debt-panel">
@@ -214,18 +231,13 @@
               <button id="show-debt-detail" class="text-action" type="button">Ver detalle</button>
             </div>
             <div id="debt-summary" class="debt-summary"></div>
+            <nav class="home-card-links finance-home-links" aria-label="Accesos de Obligaciones activas">
+              <button id="home-debt-detail" type="button">Detalle</button>
+              <button id="home-debt-credit" type="button">El Corte Inglés</button>
+            </nav>
           </article>
 
-          <article class="credit-panel">
-            <div class="section-heading">
-              <div>
-                <p class="context-label">Crédito</p>
-                <h2>El Corte Inglés</h2>
-              </div>
-              <button id="show-credit-detail" class="text-action" type="button">Ver cuenta</button>
-            </div>
-            <div id="credit-summary" class="credit-summary"></div>
-          </article>
+
 
         </section>
 
