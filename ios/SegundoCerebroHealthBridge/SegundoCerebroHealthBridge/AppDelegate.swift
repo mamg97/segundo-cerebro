@@ -3,6 +3,7 @@ import UIKit
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
     static let refreshIdentifier = "com.mamg97.segundocerebro.healthbridge.refresh"
+    private static let refreshInterval: TimeInterval = 60 * 60
 
     func application(
         _ application: UIApplication,
@@ -22,6 +23,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
         scheduleBackgroundRefresh()
         return true
+    }
+
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        guard UserDefaults.standard.bool(forKey: "healthBridge.didRequestHealthAuthorization") else { return }
+        Task {
+            _ = try? await SyncService.shared.syncRecentDays(days: 2)
+        }
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
@@ -54,8 +62,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     private func scheduleBackgroundRefresh() {
+        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: Self.refreshIdentifier)
         let request = BGAppRefreshTaskRequest(identifier: Self.refreshIdentifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 3 * 60 * 60)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: Self.refreshInterval)
         try? BGTaskScheduler.shared.submit(request)
     }
 }
