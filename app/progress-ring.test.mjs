@@ -65,8 +65,8 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.41\.3/);
-assert.match(index, /styles\.css\?v=0\.41\.3/);
+assert.match(index, /app\.js\?v=0\.41\.4/);
+assert.match(index, /styles\.css\?v=0\.41\.4/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -172,8 +172,11 @@ assert.match(css, /v0\.39\.13 — unified symmetric Home summary cards/);
 assert.match(index, /id="home-health-card"/);
 for (const id of ["habits", "kcal", "protein", "gym", "weight"]) {
   assert.match(index, new RegExp(`id="home-health-${id}-main"`));
+}
+for (const id of ["habits", "kcal", "protein", "gym"]) {
   assert.match(index, new RegExp(`id="home-health-${id}-ring"`));
 }
+assert.doesNotMatch(index, /id="home-health-weight-ring"/);
 assert.doesNotMatch(index, /id="home-habits-card"|id="home-nutrition-card"|id="home-health-activity-main"|id="home-health-macros-main"/);
 assert.match(css, /\.home-health-metrics\s*\{[\s\S]*?grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\)/);
 assert.match(css, /#home-pantry-status,[\s\S]*#home-shopping-preview,[\s\S]*#home-objects-status[\s\S]*display:\s*none/);
@@ -190,8 +193,10 @@ assert.match(css, /#home-objects-card\s*\{[\s\S]*?grid-template-areas:/);
 assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?gap:\s*10px/);
 assert.match(css, /\.pantry-home-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3/);
 
-assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?align-items:\s*start/);
-assert.match(css, /\.daily-overview-card\s*\{[\s\S]*?align-content:\s*start/);
+assert.match(css, /v0\.41\.4 — compact balanced Home \+ unified typography/);
+assert.match(css, /#home-pantry-card,[\s\S]*?#home-objects-card\s*\{[\s\S]*?align-self:\s*stretch !important/);
+assert.match(css, /\.money-horizon\s*\{[\s\S]*?align-items:\s*stretch !important/);
+assert.doesNotMatch(css, /Iowan Old Style|Palatino Linotype/);
 
 
 
