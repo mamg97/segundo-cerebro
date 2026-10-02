@@ -91,7 +91,7 @@ Como mínimo:
 - Armario visual: valida explícitamente 4 columnas en escritorio, 3 en tablet, 3 en móvil ancho de 440 px y 2 en móvil de 390 px, además de overflow/clipping/solapes de las tarjetas.
 - Home semanal de Nutrición: debe mantener la matriz día×momento, representar cada comida visible en la celda exacta de su fecha/momento, usar filas de altura automática y tipografía legible. Cuando el ancho no alcance, el scroll debe quedar confinado al contenedor de la tabla; nunca se permite solape, clipping ni overflow global.
 - La matriz semanal no debe exponer filas top-level `Postre`, `Snack` ni `Cierre`: esos componentes deben aparecer dentro de `Comida/Cena`, `Media mañana/Merienda` o `Cena` respectivamente. Etiquetas legacy deben reconciliarse antes del render.
-- Las comprobaciones de agrupación del auditor deben aplicar esa misma canonicalización antes de comparar tarjetas por índice; no se permite comparar momentos legacy crudos contra grupos canónicos de la UI.
+- Las comprobaciones de agrupación del auditor deben aplicar esa misma canonicalización y localizar cada tarjeta por su etiqueta de momento canónica; no deben depender del índice/orden de las filas de origen, porque la UI ordena y pliega los momentos antes del render.
 - Home general: el bloque retirado `Próximos movimientos` no forma parte de la superficie visual canónica; su ausencia no debe tratarse como regresión.
   - paleta canónica light/dark y contraste mínimo de texto/acento.
 
@@ -129,7 +129,7 @@ Entre otros:
 - imagen deformada respecto de su proporción natural cuando no usa `cover/contain/scale-down`;
 - una imagen renderizada que todavía no esté completa se contrasta mediante `fetch` autenticado del mismo `src`: solo se considera recurso sano si responde correctamente, declara `Content-Type: image/*` y Chromium puede decodificar el blob; así un `loading="lazy"` pendiente no se confunde con un 404/500 o un binario corrupto;
 - ese probe visual se ejecuta de forma secuencial para las fuentes pendientes y, solo si el primer intento termina en `AbortError` por su timeout local de 6 s, repite una vez con hasta 15 s; un HTTP no exitoso, un MIME no-imagen o un blob que no decodifica siguen siendo fallo real y no se reintentan para poner verde el audit;
-- la decodificación intenta `createImageBitmap` y, si el navegador no admite ese formato por esa vía (p. ej. SVG), valida el mismo blob mediante un elemento `img` y sus dimensiones naturales; solo se da por sano cuando alguna vía decodifica con ancho/alto reales positivos.
+- la decodificación intenta `createImageBitmap` y, si el navegador no admite ese formato por esa vía (p. ej. SVG), convierte el mismo blob a `data:` y lo valida mediante un elemento `img` y sus dimensiones naturales; se evita `blob:` porque la CSP de producción no lo permite en `img-src`. Solo se da por sano cuando alguna vía decodifica con ancho/alto reales positivos.
 - diálogo que excede el ancho útil de la pantalla;
 - tarjetas resumen que pierden de forma material la simetría documentada en escritorio;
 - modificación accidental de los tokens visuales canónicos light/dark;

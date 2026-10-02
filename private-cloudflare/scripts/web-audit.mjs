@@ -179,8 +179,14 @@ async function probeVisualImage(src) {
           }
 
           if (!decoded) {
-            const objectUrl = URL.createObjectURL(blob);
+            let dataUrl = "";
             try {
+              dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ""));
+                reader.onerror = () => reject(reader.error || new Error("data_url_read_failed"));
+                reader.readAsDataURL(blob);
+              });
               const image = new Image();
               const loaded = await new Promise((resolve) => {
                 const decodeTimeout = setTimeout(() => resolve(false), 5000);
@@ -192,14 +198,15 @@ async function probeVisualImage(src) {
                   clearTimeout(decodeTimeout);
                   resolve(false);
                 };
-                image.src = objectUrl;
+                image.src = dataUrl;
               });
               width = Number(image.naturalWidth || 0);
               height = Number(image.naturalHeight || 0);
               decoded = loaded && width > 0 && height > 0;
-              if (!decoded && !decodeError) decodeError = "img_decode_failed";
-            } finally {
-              URL.revokeObjectURL(objectUrl);
+              if (decoded) decodeError = "";
+              else if (!decodeError) decodeError = "img_decode_failed";
+            } catch (error) {
+              if (!decodeError) decodeError = String(error?.message || error || "img_decode_failed");
             }
           }
         }
@@ -1524,16 +1531,25 @@ try {
         momentGroups.get(key).push(item);
       }
       const cards = uiDay.locator(".weekly-menu-meal");
-      let cardIndex = 0;
-      for (const items of momentGroups.values()) {
-        const cardText = normalizeAuditValue(await cards.nth(cardIndex).textContent().catch(() => ""));
+      const cardByMoment = new Map();
+      for (let cardIndex = 0; cardIndex < await cards.count(); cardIndex += 1) {
+        const card = cards.nth(cardIndex);
+        const moment = normalizeAuditValue(
+          await card.locator(".weekly-menu-moment").first().textContent().catch(() => "")
+        );
+        if (moment) cardByMoment.set(moment, card);
+      }
+      for (const [moment, items] of momentGroups.entries()) {
+        const card = cardByMoment.get(moment);
+        assertCheck(Boolean(card), `Toma canónica presente día ${index + 1}`, moment);
+        if (!card) continue;
+        const cardText = normalizeAuditValue(await card.textContent().catch(() => ""));
         const missingAny = items.some((item) => item.kcal == null || item.protein == null);
         if (missingAny && items.length === 1) {
           assertCheck(cardText.includes("— kcal") || cardText.includes("p —"), `Dato ausente no se convierte en cero día ${index + 1}`);
         } else if (missingAny && items.length > 1) {
           assertCheck(cardText.includes("subtotal"), `Grupo incompleto se etiqueta como subtotal día ${index + 1}`);
         }
-        cardIndex += 1;
       }
     }
 
