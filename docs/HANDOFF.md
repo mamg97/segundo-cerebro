@@ -1472,3 +1472,109 @@ Este relevo es continuación directa del gestor anterior. No reconstruir el arma
 - Fallos restantes de #103, independientes de este cambio:
   - `MIDAS TFM shadow forecasts`: último schedule fallido;
   - validación visual de imágenes de `Objetos · looks`.
+
+
+## Relevo ORGANIZADOR 8 → ORGANIZADOR 9 · 2026-10-02
+
+Este relevo es continuación directa de ORGANIZADOR 8. No reconstruir el Home, Salud, Recetas, Objetos ni Finanzas desde conversaciones antiguas. Continuar exclusivamente desde el `main` vivo y aplicar PRE-GIT GATE antes de cualquier cambio.
+
+### HEAD de referencia al relevo
+
+- `main`: `131c2adf2976a12bf3edb8eae7aa515cdeaa8e2d`
+- Último bloque funcional cerrado:
+  - PR #221 · `ca7b812e` · Home freshness, tarjetas compactas y obligaciones enriquecidas.
+  - PR #222 · `ff34a700` · alturas naturales en tarjetas compactas.
+  - PR #223 · `131c2adf` · documentación del contrato anterior.
+- Deploy privado de referencia: **#321 success**.
+- Audit production web de referencia: **#103 · 750 checks / 2 failures**.
+
+### Contrato vigente del Home
+
+- No existe la barra `Consulta rápida`.
+- El Thinking Orb se conserva en el encabezado.
+- La navegación principal está arriba, `sticky`, horizontal y muestra **solo las 10 áreas principales canónicas**; no renderiza subapartados secundarios.
+- Salud es una única tarjeta de ancho completo con cinco resúmenes circulares:
+  1. Hábitos.
+  2. Kcal hoy.
+  3. Proteína hoy.
+  4. Gym hoy.
+  5. Peso.
+- Los accesos de Salud están abajo a la izquierda: Resumen, Hábitos, Médicos, Gimnasio, Nutrición, Recetas y Menú.
+- Gym hoy no usa pasos como KPI. Estados posibles con fuentes canónicas: `Hecho`, `Pausado`, `Descanso`, `Sugerido`.
+- El motivo de pausa mostrado en Home es breve; el detalle largo permanece en Salud/Gimnasio.
+- Debajo de cada resumen de Salud existe timestamp/fuente:
+  - Hábitos: freshness real de HabitQuest.
+  - Kcal/Proteína: última actualización real de nutrición/objetivo.
+  - Gym: timestamp del estado/pausa o de la sesión.
+  - Peso: **última medición real de bodyMass**, no la media de 7 días usada como sustituto.
+- La media 7 d y el delta semanal del peso son contexto, no el valor principal cuando falta muestra del día.
+- Audit #103 observó como ejemplo de producción: `79,1 kg · Zepp Life · 30 sept 07:43`. Es un dato observado, no hardcodearlo.
+
+### Tarjetas inferiores cerradas
+
+- Despensa y Objetos usan altura natural; no reservar grandes huecos por igualación artificial de filas.
+- Despensa tiene accesos rápidos existentes: Inventario y Lista compra.
+- Objetos tiene accesos: Inventario, Armario, Looks y Kits.
+- Patrimonio tiene accesos: Detalle, Evolución y MIDAS.
+- Obligaciones activas integra:
+  - saldo pendiente;
+  - cuota mensual;
+  - número de deudas;
+  - breakdown breve de obligaciones principales;
+  - resumen de Financiera El Corte Inglés.
+- La tarjeta independiente de El Corte Inglés fue eliminada para evitar duplicidad visual y contable.
+- ECI no debe sumarse dos veces; usar el resumen ya expuesto por las fuentes financieras existentes.
+- No se modificaron Sheets para estos cambios: fueron capacidades/UI sobre datos canónicos ya disponibles.
+
+### Recetas / Salud ya cerrados
+
+- Recetas vive en `SEGUNDO CEREBRO - SALUD`: `Recetas`, `IngredientesReceta`, `PasosReceta`, `RecipeMedia`.
+- La foto principal de Recetas usa `object-fit: contain`.
+- `rec-fajitas-tiras-pollo-v1` tiene derivada `RecipeMedia` 480×270 que conserva la foto completa.
+- No hacer públicas fotos privadas ni guardarlas en Git.
+- El gestor especializado `GESTOR - RECETAS` debe encargarse de nuevas fotos/recetas siguiendo el pipeline documentado; ORGANIZADOR solo coordina o corrige capacidades genéricas.
+
+### OBJETOS / Armario / Looks
+
+- Armario y looks tienen su propio gestor y contratos; no reconstruirlos desde ORGANIZADOR.
+- El pipeline visual canónico está documentado en `docs/OBJECTS_IMAGE_INGEST.md` y `docs/OBJECTS_VISUAL_PIPELINE.md`.
+- Los looks recientes ya fueron ingeridos y no deben reingerirse salvo sustitución deliberada con `overwrite=true`.
+
+### Auditoría y pendientes reales al relevo
+
+Audit #103 cerró correctamente:
+- Home responsive en desktop-wide, desktop, tablet, mobile-wide y mobile;
+- cinco timestamps de Salud;
+- motivo breve de pausa Gym;
+- peso coincidente con la última muestra real + fuente/fecha;
+- tarjetas inferiores con altura natural;
+- accesos rápidos de Despensa, Objetos, Patrimonio y Deudas;
+- ECI integrado en Obligaciones activas;
+- sin 5xx/fallos de red;
+- sin errores JavaScript/console.
+
+Los **2 fallos restantes de #103** son independientes del Home:
+
+1. `MIDAS TFM shadow forecasts`
+   - último schedule conocido: run #5 del 01/10, failure;
+   - no silenciar ni rebajar el control;
+   - la corrección upstream de MIDAS ya existía; mantener rojo hasta un nuevo schedule válido.
+
+2. `Visual desktop · Objetos · looks · imágenes cargadas`
+   - cuatro URLs same-origin de looks terminan en `AbortError` durante el probe de auditoría;
+   - no asumir automáticamente corrupción de D1 ni reingerir imágenes;
+   - diagnosticar con el gestor OBJETOS/ROPA y separar timeout/probe del estado real del asset.
+
+### Regla operativa para ORGANIZADOR 9
+
+Antes de cualquier cambio:
+1. leer `AGENTS.md` completo;
+2. leer `docs/HANDOFF.md` completo;
+3. leer `docs/WEB_AUDIT.md`;
+4. leer solo los contratos `agents/*` de los dominios realmente afectados;
+5. comprobar HEAD actual de `main`;
+6. aplicar PRE-GIT GATE;
+7. preferir cambios de datos en fuentes canónicas frente a código;
+8. para cambios de código: rama desde HEAD vivo → tests → PR → CI → merge → deploy → Audit production web;
+9. no ocultar fallos independientes para poner verde un audit;
+10. no rehacer capacidades ya documentadas como cerradas.
