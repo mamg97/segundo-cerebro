@@ -1577,6 +1577,38 @@ try {
               : "sin estilo computado"
           );
         }
+
+        const catalogCards = panel.locator("[data-recipe-open]");
+        const catalogCount = await catalogCards.count();
+        assertCheck(
+          catalogCount === expectedRecipeCount,
+          "Salud · Recetas catálogo compacto conserva toda la fuente",
+          `UI=${catalogCount} API=${expectedRecipeCount}`
+        );
+
+        if (catalogCount > 0) {
+          await catalogCards.first().click();
+          await page.waitForTimeout(120);
+          const detailVisible = await panel.locator(".recipe-detail-card").isVisible().catch(() => false);
+          assertCheck(detailVisible, "Salud · Recetas abre ficha completa");
+          assertCheck(
+            await panel.locator(".recipe-detail-card .recipe-ingredients").count() === 1
+              && await panel.locator(".recipe-detail-card .recipe-steps").count() === 1,
+            "Salud · Recetas detalle muestra ingredientes y preparación"
+          );
+          const backButton = panel.locator("[data-recipes-back]");
+          assertCheck(await backButton.count() === 1, "Salud · Recetas detalle ofrece volver");
+          if (await backButton.count()) {
+            await backButton.click();
+            await page.waitForTimeout(120);
+            const restoredCount = await panel.locator("[data-recipe-open]").count();
+            assertCheck(
+              restoredCount === expectedRecipeCount,
+              "Salud · Recetas vuelve al catálogo completo",
+              `UI=${restoredCount} API=${expectedRecipeCount}`
+            );
+          }
+        }
       }
       await auditVisualSnapshot(`desktop · Salud · ${tab}`);
     }
