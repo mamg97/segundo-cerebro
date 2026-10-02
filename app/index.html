@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.40.17">
-    <script type="module" src="./app.js?v=0.40.22"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.40.18">
+    <script type="module" src="./app.js?v=0.40.23"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -114,26 +114,32 @@
             <span class="home-summary-footer home-summary-desktop-only"><span id="home-habits-status">Cargando hábitos…</span><strong>Ver hábitos →</strong></span>
           </button>
 
-          <button id="home-nutrition-card" class="daily-overview-card home-summary-card" type="button">
-            <div class="daily-card-heading">
-              <span class="daily-card-icon accent" aria-hidden="true">◒</span>
-              <span><small>Nutrición</small><strong>Balance diario</strong></span>
-              <span class="daily-card-arrow" aria-hidden="true">→</span>
+          <article id="home-nutrition-card" class="daily-overview-card home-summary-card home-nutrition-card">
+            <button id="home-nutrition-open" class="home-nutrition-primary" type="button" aria-label="Abrir Nutrición">
+              <div class="daily-card-heading">
+                <span class="daily-card-icon accent" aria-hidden="true">◒</span>
+                <span><small>Nutrición</small><strong>Balance diario</strong></span>
+                <span class="daily-card-arrow" aria-hidden="true">→</span>
+              </div>
+              <div class="daily-energy-grid home-summary-metrics">
+                <span><small>Consumidas</small><strong id="home-kcal-consumed">—</strong></span>
+                <span><small>Gasto total</small><strong id="home-kcal-burned">—</strong></span>
+                <span><small>Objetivo</small><strong id="home-kcal-target">—</strong></span>
+                <span class="home-summary-desktop-only"><small>Progreso</small><strong id="home-kcal-percent">—</strong></span>
+              </div>
+              <div class="daily-progress-footer">
+                <span id="home-kcal-status" class="daily-card-status">Cargando nutrición…</span>
+                <span id="home-kcal-ring" class="progress-ring tone-amber size-lg is-empty home-summary-mobile-only" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Calorías consumidas frente al objetivo diario">
+                  <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>kcal</small></span>
+                </span>
+                <strong class="home-summary-action home-summary-desktop-only">Ver nutrición →</strong>
+              </div>
+            </button>
+            <div class="home-nutrition-links" aria-label="Accesos directos de nutrición">
+              <button id="home-nutrition-menu" type="button">Menú</button>
+              <button id="home-nutrition-recipes" type="button">Recetas</button>
             </div>
-            <div class="daily-energy-grid home-summary-metrics">
-              <span><small>Consumidas</small><strong id="home-kcal-consumed">—</strong></span>
-              <span><small>Gasto total</small><strong id="home-kcal-burned">—</strong></span>
-              <span><small>Objetivo</small><strong id="home-kcal-target">—</strong></span>
-              <span class="home-summary-desktop-only"><small>Progreso</small><strong id="home-kcal-percent">—</strong></span>
-            </div>
-            <div class="daily-progress-footer">
-              <span id="home-kcal-status" class="daily-card-status">Cargando nutrición…</span>
-              <span id="home-kcal-ring" class="progress-ring tone-amber size-lg is-empty home-summary-mobile-only" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Calorías consumidas frente al objetivo diario">
-                <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>kcal</small></span>
-              </span>
-              <strong class="home-summary-action home-summary-desktop-only">Ver nutrición →</strong>
-            </div>
-          </button>
+          </article>
 
           <article id="home-pantry-card" class="daily-overview-card pantry-home-card home-summary-card" hidden>
             <button id="home-pantry-open" class="pantry-home-primary" type="button" aria-label="Abrir Despensa">
