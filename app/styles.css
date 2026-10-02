@@ -21060,3 +21060,88 @@ textarea {
     margin-top: 14px;
   }
 }
+
+
+/* v0.41.5 — Health overview mirrors Home semantics */
+.health-dashboard-status {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.health-dashboard-status.progress-ring-status > span {
+  min-height: 86px;
+}
+
+.health-dashboard-status.progress-ring-status > span > span:not(.progress-ring),
+.health-dashboard-status.progress-ring-status .health-status-text-only {
+  align-content: center;
+}
+
+.health-dashboard-status em,
+.health-dashboard-status time {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 7px;
+  font-style: normal;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.health-dashboard-status time {
+  opacity: .8;
+}
+
+.health-status-weight {
+  grid-template-columns: 1fr !important;
+}
+
+.health-status-weight > strong {
+  font-size: 16px;
+}
+
+.health-recomp-kpis > div {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+}
+
+.health-recomp-kpis strong {
+  margin-top: 2px;
+}
+
+.health-metric-freshness {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 7px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  .health-dashboard-status {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .health-dashboard-status,
+  .health-dashboard-status.progress-ring-status {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .health-dashboard-status em,
+  .health-dashboard-status time,
+  .health-metric-freshness {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 520px) {
+  .health-dashboard-status,
+  .health-dashboard-status.progress-ring-status {
+    grid-template-columns: 1fr;
+  }
+}
