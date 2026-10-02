@@ -1261,3 +1261,20 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
   - `HistoricoResumen`: agregados 30/90/180/365/all.
 - Una lectura de `/api/health/history?range=30|90|180|365` ya no debe truncar el Sheet al rango solicitado: el API responde al rango pedido, pero la sincronización derivada del Sheet se refresca con `range=all`.
 - `MedicionesCorporales` se mantiene para medidas manuales/recuperaciones históricas compatibles; no se convierte en un volcado masivo para evitar mezclar fuente manual con espejo D1.
+
+
+## Relevo ORGANIZADOR 7 → ORGANIZADOR 8 · 2026-10-02
+
+Estado que debe preservarse al continuar:
+
+- Leer primero `AGENTS.md`, este `docs/HANDOFF.md`, los contratos `agents/*` relevantes y `docs/WEB_AUDIT.md`. Continuar siempre desde el `main` vivo; no reconstruir trabajo ya cerrado.
+- Regla arquitectónica prioritaria: **datos dinámicos en Sheets/almacenes privados; frontend y lógica genérica estables**. Antes de tocar Git, comprobar si el cambio solicitado se resuelve modificando la fuente canónica. Cambios ordinarios de menú, recetas, saldos, prendas, proyectos, etc. no deben provocar despliegues.
+- Home ya no muestra `Próximos movimientos`. El menú semanal usa matriz día×momento a ancho completo y el auditor exige que cada comida aparezca en su celda exacta sin clipping/solapes.
+- Momentos canónicos del menú: `Postre` se integra en `Comida` o `Cena`; `Snack` en `Media mañana` o `Merienda`; `Cierre` y `Cena · complemento` en `Cena`. El Sheet actual fue normalizado y el runtime mantiene compatibilidad con etiquetas legacy.
+- Salud → Recetas reutiliza exclusivamente `Recetas`, `IngredientesReceta`, `PasosReceta` y la pestaña técnica oculta `RecipeMedia`.
+- Foto de receta: el original privado vive en `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS`; `Recetas` guarda la referencia Drive/MIME/timestamp. Como el OAuth actual de Google puede leer Sheets pero responde 403 al descargar media de Drive, la preview web privada se materializa en `RecipeMedia`. El Worker sirve primero esa preview y usa Drive solo como fallback. No hacer públicas las fotos.
+- Caso verificado: `rec-fajitas-tiras-pollo-v1` tiene foto original privada y preview en `RecipeMedia`. Audit production web #87 verificó el 02/10/2026 que el endpoint de imagen devuelve `HTTP 200 · image/jpeg` y que la foto aparece visible en Salud → Recetas.
+- Último deploy del HEAD de este relevo: `14b22d5f1a8e...`, Deploy private Cloudflare app #306 = success.
+- Audit production web #87: 790 checks / 7 failures. Ninguno corresponde a menú ni recetario. Quedan: una ejecución schedule fallida de `MIDAS TFM shadow forecasts` y seis fallos de carga de imágenes de OBJETOS/Armario/Looks. No silenciar estos fallos: diagnosticarlos por separado.
+- La corrección de fotos de recetas y la normalización de `Postre/ Snack/ Cierre` están documentadas también en `agents/HEALTH.md` y `docs/WEB_AUDIT.md`.
+- Si el usuario muestra una captura antigua con la foto de fajitas rota, comprobar primero caché/versión desplegada: el backend actual ya está certificado como imagen válida por la auditoría. No rehacer el pipeline salvo que una comprobación nueva reproduzca el fallo.
