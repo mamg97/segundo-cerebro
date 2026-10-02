@@ -1638,3 +1638,30 @@ Antes de cualquier cambio:
   - Composición corporal muestra freshness/cobertura en sus seis métricas.
   - No hubo 5xx ni fallos de red.
   - Único fallo restante: `MIDAS TFM shadow forecasts`, independiente de Salud.
+
+### GESTOR RECETAS · catálogo compacto + ficha ampliada · 2026-10-02
+
+- Petición cerrada: `Salud → Recetas` usa una vista principal compacta tipo Armario.
+  - cada tarjeta muestra únicamente foto + nombre;
+  - densidad responsive: 4 columnas en escritorio, 3 en tablet/mobile-wide y 2 en móvil estrecho;
+  - al pulsar una receta se abre una ficha grande dentro del mismo panel con foto, raciones/macros, ingredientes, preparación y notas;
+  - la ficha incluye `← Volver al recetario` y restaura el catálogo completo.
+- PR #236 fusionado en `deacb80b`.
+- Deploy privado #329: **success**.
+- Audit production web #113, intento 1:
+  - Recetas pasó todos sus checks nuevos;
+  - el recorrido global terminó con dos fallos no atribuibles al recetario: `MIDAS TFM shadow forecasts` y una ráfaga transitoria de 5xx en APIs/miniaturas.
+- Audit production web #113, intento 2:
+  - **849 checks / 1 failure**;
+  - desaparecieron los 5xx transitorios;
+  - único fallo restante: `MIDAS TFM shadow forecasts`, independiente de Recetas.
+- Validación específica en producción:
+  - fuente completa: **35/35 recetas**;
+  - fotos servidas correctamente y con `object-fit: contain`;
+  - catálogo compacto conserva toda la fuente;
+  - abre ficha completa;
+  - muestra ingredientes + preparación;
+  - ofrece volver;
+  - vuelve al catálogo completo **35/35**.
+- No se cambiaron datos canónicos de Salud ni RecipeMedia para este trabajo; fue únicamente una capacidad genérica de presentación/auditoría.
+
