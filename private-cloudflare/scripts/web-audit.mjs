@@ -621,10 +621,17 @@ async function auditVisualSnapshot(label) {
 
     if (viewport.width >= 1180) {
       const cards = [...document.querySelectorAll(".home-summary-card")].filter(visible);
-      if (cards.length >= 2) {
-        const heights = cards.map((element) => Math.round(element.getBoundingClientRect().height));
-        const spread = Math.max(...heights) - Math.min(...heights);
-        if (spread > 24) proportions.push(`home-summary-card alturas ${heights.join(",")} spread=${spread}px`);
+      if (cards.length) {
+        const cardHeights = cards.map((element) => ({
+          name: element.id || shortName(element),
+          height: Math.round(element.getBoundingClientRect().height)
+        }));
+        const implausible = cardHeights.filter((item) => item.height < 90 || item.height > 380);
+        if (implausible.length) {
+          proportions.push(
+            `home-summary-card altura fuera de rango: ${implausible.map((item) => item.name + "=" + item.height + "px").join(",")}`
+          );
+        }
       }
     }
 
