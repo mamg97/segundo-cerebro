@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { inferWardrobeLayer, normalizeLookRole, validateObjectsLookSelection } from "./objects.js";
+import { buildPayload, inferWardrobeLayer, normalizeLookRole, validateObjectsLookSelection } from "./objects.js";
 
 test("inferWardrobeLayer maps common wardrobe types to visual layers", () => {
   assert.equal(inferWardrobeLayer("Camisa Oxford"), "superior");
@@ -80,4 +80,44 @@ test("look validation rejects a garment assigned to the wrong visual layer", () 
     ]),
     /INVALID_OBJECTS_LOOK_LAYER/
   );
+});
+
+
+test("look items expose canonical wardrobe image references without duplicating Sheet data", () => {
+  const payload = buildPayload({
+    objects: [{
+      objeto_id: "shirt-1",
+      nombre: "Camisa celeste",
+      categoria: "Ropa",
+      subcategoria: "Camisa",
+      marca: "Scalpers"
+    }],
+    wardrobe: [{
+      objeto_id: "shirt-1",
+      tipo_prenda: "Camisa",
+      color: "celeste",
+      foto_procesada_url: "/api/objects/shirt-1/image/processed?v=abc",
+      miniatura_url: "/api/objects/shirt-1/image/thumbnail?v=abc",
+      vista_prenda: "frontal",
+      patron: "liso",
+      capa: "superior"
+    }],
+    looks: [{ look_id: "look-1", nombre: "Look de prueba" }],
+    lookItems: [{ look_id: "look-1", objeto_id: "shirt-1", rol: "superior" }],
+    kits: [],
+    kitItems: [],
+    lists: [],
+    listItems: []
+  });
+
+  const item = payload.looks[0].items[0];
+  assert.equal(item.objectId, "shirt-1");
+  assert.equal(item.processedPhotoUrl, "/api/objects/shirt-1/image/processed?v=abc");
+  assert.equal(item.thumbnailUrl, "/api/objects/shirt-1/image/thumbnail?v=abc");
+  assert.equal(item.visualReferenceUrl, "/api/objects/shirt-1/image/processed?v=abc");
+  assert.equal(item.brand, "Scalpers");
+  assert.equal(item.color, "celeste");
+  assert.equal(item.pattern, "liso");
+  assert.equal(item.garmentView, "frontal");
+  assert.equal(item.layer, "superior");
 });
