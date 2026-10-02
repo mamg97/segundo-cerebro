@@ -292,7 +292,7 @@ No restaurar selectores legacy como `#home-kcal-ring`, `#home-kcal-target`, `#ho
 
 El auditor de producción debe conservar estos checks:
 
-- `#home-health-card` tiene exactamente cinco `.home-health-metric` y cinco `.progress-ring`;
+- `#home-health-card` tiene exactamente cinco `.home-health-metric` y cuatro `.progress-ring`: Hábitos, Kcal, Proteína y Gym. Peso es una métrica estática y no debe renderizar `#home-health-weight-ring`;
 - existen los resúmenes Hábitos, Kcal, Proteína, Gym y Peso;
 - no existen los antiguos `#home-health-activity-main` / `#home-health-activity-detail`;
 - Kcal y proteína tienen progreso numérico en sus anillos cuando existe objetivo canónico;
@@ -314,7 +314,17 @@ Desde PR #221 / #222, el auditor debe comprobar:
 - Objetos expone accesos a Inventario, Armario, Looks y Kits.
 - Patrimonio expone Detalle, Evolución y MIDAS.
 - Obligaciones activas expone Detalle y El Corte Inglés, y ECI no debe volver a aparecer como tarjeta independiente.
-- Las tarjetas inferiores no deben igualar alturas artificialmente: `.daily-overview-grid` y `.money-horizon` deben permitir altura natural de contenido.
+- Las tarjetas que comparten fila deben usar el mismo ancho y alto visual sin reservar huecos excesivos: Despensa/Objetos forman un par 50/50 compacto y Patrimonio/Obligaciones otro par equilibrado. La igualdad se consigue compactando el contenido y estirando solo dentro de su fila, no imponiendo mínimos altos globales.
 - La validación visual responsive sigue siendo obligatoria para desktop-wide, desktop, tablet, mobile-wide y mobile.
 
 Audit production web #103 validó este contrato con 750 checks y solo dos fallos externos al Home: MIDAS TFM shadow forecasts y una carga visual de imágenes de Looks/OBJETOS.
+
+
+## Home v0.41.4 · densidad, equilibrio y tipografía
+
+- Salud conserva cinco métricas, pero solo cuatro representan progreso circular: Hábitos, Kcal, Proteína y Gym. Peso muestra el valor real, tendencia y freshness sin rueda de progreso.
+- La tarjeta Salud usa únicamente dos filas estructurales: contenido + accesos; no debe conservar una tercera fila vacía heredada.
+- En escritorio, Despensa y Objetos deben ocupar columnas 50/50 y terminar con la misma altura; sus métricas y accesos se compactan antes de igualar la fila.
+- Patrimonio y Obligaciones activas siguen la misma regla: ancho 50/50 y altura pareja cuando comparten fila.
+- La familia tipográfica canónica de toda la aplicación es `Avenir Next → Avenir → Segoe UI → system-ui → sans-serif`; no deben reaparecer titulares o cifras con Iowan/Palatino.
+- El auditor comprueba estas invariantes además de overflow, clipping y solapes responsive.
