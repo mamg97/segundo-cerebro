@@ -82,9 +82,10 @@ assert.match(app, /updateProgressRing\(ring, percentage/);
 assert.match(app, /updateProgressRing\(ring, fillPct/);
 
 for (const marker of [
-  "Progreso de nutrición",
-  "Progreso de actividad",
-  "Progreso semanal de fuerza",
+  'data-health-summary="habits"',
+  'data-health-summary="kcal"',
+  'data-health-summary="protein"',
+  'data-health-summary="gym"',
   "nutrition-target-ring-card"
 ]) {
   assert.ok(app.includes(marker), "Missing audited app ring surface: " + marker);
