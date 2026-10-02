@@ -1382,3 +1382,29 @@ Este relevo es continuación directa del gestor anterior. No reconstruir el arma
 - Deploy private Cloudflare app #311 terminó correctamente.
 - Audit production web #93: **868 checks / 1 failure**. Pasa `Visual desktop · Home · componentes dentro de su tarjeta`, además de tablet, mobile-wide y mobile; pasan también Menú/Recetas, foto completa de Recetas, red y consola.
 - El único fallo restante continúa siendo `MIDAS TFM shadow forecasts`, independiente de Home/Nutrición.
+
+
+## ORGANIZADOR 8 · Home v0.41 · navegación superior + Salud unificada · 2026-10-02
+
+- PR #213 / `fbec1d57` elimina la barra de Consulta rápida del Home y conserva el Thinking Orb en el encabezado.
+- La navegación lateral pasa a navegación superior `sticky`, horizontal y desplazable cuando no cabe. El menú móvil ya no depende de un drawer lateral.
+- Hábitos + Salud/Nutrición se fusionan en una única `#home-health-card` de ancho completo.
+- La tarjeta resume cuatro estados canónicos:
+  - Hábitos de hoy: completados/total, porcentaje y racha;
+  - Macros: proteína como dato prioritario + carbohidratos, grasa y kcal;
+  - Actividad: cumplimiento de objetivos + pasos, kcal activas y minutos semanales;
+  - Peso: peso del día o media disponible + media 7 d y delta semanal.
+- Pie de tarjeta: Resumen, Hábitos, Médicos, Gimnasio, Nutrición, Recetas y Menú.
+- El resumen de Salud consume `/api/health/overview`; no crea fuente de verdad paralela. El menú semanal Home mantiene su endpoint existente.
+- PR #215 / `248f9129` elimina del auditor la dependencia legacy de `#home-kcal-ring` y valida el nuevo bloque Macros.
+- Audit production web #98: **900 checks / 2 failures**. Todo el contrato nuevo del Home pasa en:
+  - desktop-wide 1760×1000;
+  - desktop 1440×1100;
+  - tablet 900×1000;
+  - mobile-wide 440×956;
+  - mobile 390×844.
+- En esos perfiles Home pasa sin overflow global, contenido fuera de viewport, clipping, solapes, overflow local, deformaciones ni problemas de proporción. Paletas light/dark también pasan donde aplica.
+- #98 confirma carga real de la tarjeta: hábitos, macros/calorías, actividad y peso dejan de estar en estado `Cargando`.
+- Los 2 fallos restantes de #98 son independientes:
+  - `MIDAS TFM shadow forecasts`;
+  - imágenes de Looks de OBJETOS.
