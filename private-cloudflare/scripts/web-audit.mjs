@@ -1409,11 +1409,11 @@ try {
     fail("Salud accesible desde navegación", "falta area-health");
   }
 
-  const homeKcalTarget = (await page.locator("#home-kcal-target").textContent().catch(() => "") || "").trim();
-  const homeKcalRing = page.locator("#home-kcal-ring");
-  if (objectiveHasValue(nutrition.body?.objective?.kcal) && homeKcalTarget !== "Pendiente") {
-    const ariaNow = await homeKcalRing.getAttribute("aria-valuenow");
-    assertCheck(ariaNow !== null && Number.isFinite(Number(ariaNow)), "Indicador kcal Home tiene valor válido");
+  const homeHealthText = normalizeAuditValue(await page.locator("#home-health-card").textContent().catch(() => ""));
+  assertCheck(!/Cargando/i.test(homeHealthText), "Home · Salud termina de cargar su resumen", homeHealthText.slice(0, 180));
+  const homeMacroDetail = normalizeAuditValue(await page.locator("#home-health-macros-detail").textContent().catch(() => ""));
+  if (objectiveHasValue(nutrition.body?.objective?.kcal)) {
+    assertCheck(/kcal/i.test(homeMacroDetail), "Home · Salud conserva estado calórico dentro de Macros", homeMacroDetail);
   }
 
   await auditResponsiveVisualLayout(navIds);
