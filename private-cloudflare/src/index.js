@@ -2,7 +2,7 @@ import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-ca
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
-import { readObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
+import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { processObjectsImageQueue } from "./objects-staging.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
@@ -4662,6 +4662,37 @@ export default {
       } catch (error) {
         console.warn("Objects read failed", String(error?.message || "OBJECTS_READ_ERROR"));
         return json({ ok: false, code: "OBJECTS_READ_FAILED" }, 502);
+      }
+    }
+
+    const internalLookRenderMatch = url.pathname.match(/^\/api\/internal\/objects\/look\/([^/]+)\/render$/);
+    if (internalLookRenderMatch) {
+      const lookId = decodeURIComponent(internalLookRenderMatch[1]);
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        if (!(await isObjectsBridgeAuthenticated(request, env))) {
+          console.warn("Objects look render bridge request rejected", { lookId, code: "BRIDGE_AUTH_REQUIRED" });
+          return json({ ok: false, code: "BRIDGE_AUTH_REQUIRED" }, 401);
+        }
+        const result = await renderObjectsLookImage(request, env, getGoogleAccessToken, lookId, {
+          authenticated: true
+        });
+        console.info("Objects look canonical render completed", {
+          lookId,
+          ok: result?.ok === true,
+          itemCount: result?.item_count || null
+        });
+        return json(result, 201);
+      } catch (error) {
+        if (error instanceof ObjectsImageError) {
+          console.warn("Objects look canonical render failed", { lookId, code: error.code });
+          return json({ ok: false, code: error.code }, error.status);
+        }
+        console.warn("Objects look canonical render failed", {
+          lookId,
+          code: String(error?.message || "OBJECTS_LOOK_RENDER_FAILED")
+        });
+        return json({ ok: false, code: "OBJECTS_LOOK_RENDER_FAILED" }, 502);
       }
     }
 
