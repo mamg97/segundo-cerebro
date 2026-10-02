@@ -1572,6 +1572,7 @@ Los **2 fallos restantes de #103** son independientes del Home:
 - PRE-GIT GATE aplicado: no se modifican `SEGUNDO CEREBRO - OBJETOS`, D1, URLs ni imágenes existentes; no reingerir looks por este incidente.
 - PR #225 se fusionó y desplegó correctamente. Audit production web **#104** confirmó que los `AbortError` desaparecieron, pero dejó tres fallos: MIDAS TFM esperado; cuatro Looks HTTP 200 `image/svg+xml` que `createImageBitmap` no podía decodificar; y un falso positivo de MenuSemanal al comparar momentos legacy crudos contra grupos ya canonicalizados por la UI.
 - PR #226 corrige solo el auditor: fallback de decodificación mediante `<img>` para formatos no soportados por `createImageBitmap`, y canonicalización compartida de momentos del menú con tests. No toca Sheets, D1, imágenes ni contenido nutricional.
+- Audit production web **#106** mostró que el fallback de PR #226 todavía usaba `blob:`, bloqueado por la CSP (`img-src 'self' data: https:`), y que el check de menú seguía asociando las tarjetas por posición. Siguiente corrección: validar el SVG como `data:` y localizar cada tarjeta por su etiqueta canónica; MIDAS TFM continúa siendo el único fallo upstream esperado.
 
 ### Regla operativa para ORGANIZADOR 9
 
