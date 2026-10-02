@@ -214,6 +214,7 @@ Estado:
 - La vista patrimonial privada añade gráficos de composición de inversiones, comparación visual activos/deuda y un bloque explícito de activos pendientes de valorar; no presenta el neto incompleto como patrimonio total definitivo.
 - El detalle patrimonial se alimenta de la pestaña privada `PatrimonioPadres` de la fuente financiera y se fusiona con `family_wealth_items` de D1 para altas manuales; ningún importe real se versiona en Git ni entra en la demo pública.
 - Inmueble del negocio y valor operativo del negocio se modelan como partidas distintas para evitar doble conteo; LITOS puede actuar como referencia, no como contabilidad duplicada.
+- Para trámites con terceros, un acuse de recepción de documentación debe registrarse como evidencia de recepción y dejar el caso en `WAITING_EXTERNAL`; no debe interpretarse como aprobación ni como cambio ya efectivo. La resolución, subsanación o primer efecto verificable se registra como hito posterior en la fuente privada.
 
 
 ## Problemas o límites conocidos
