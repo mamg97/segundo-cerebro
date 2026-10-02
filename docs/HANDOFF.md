@@ -1352,3 +1352,22 @@ Este relevo es continuación directa del gestor anterior. No reconstruir el arma
 - Las fotos procesadas de prendas deben conservar transparencia real; un fondo blanco aplanado no supera QA.
 - El auditor web comprueba carga/decodificación real de imágenes y QA responsive; no tratar un `loading=lazy` incompleto como imagen rota sin verificar el recurso.
 - Los cambios ordinarios del armario o los looks se resuelven en la fuente canónica; tocar frontend solo ante un defecto genérico de contrato/renderizado.
+
+
+## ORGANIZADOR 8 · foto completa de Recetas + accesos Menú/Recetas · 2026-10-02
+
+- La foto original de `rec-fajitas-tiras-pollo-v1` en Drive estaba correcta y completa; el problema visible no era pérdida del original.
+- Se reparó la derivada privada `RecipeMedia` de esa receta a **480×270 (16:9)** preservando la foto vertical completa y usando relleno lateral, sin recortar el plato. Se mantuvo el mismo `foto_drive_file_id` original y se actualizó `foto_updated_at` a `2026-10-02T10:31:00+02:00` para romper caché.
+- El contrato `agents/HEALTH.md` establece que las previews de recetas deben preservar la imagen completa; para fuentes verticales/cuadradas se admite encajarlas en un derivado 16:9 con padding neutro o desenfocado, nunca crop destructivo.
+- PR #206 / `f9cabedd` añade al bloque inicial de Nutrición en Home accesos directos **Menú** y **Recetas**, conservando la acción principal de Nutrición y el layout responsive.
+- El auditor valida desde ahora el `object-fit` computado de las fotos de Recetas y la presencia de ambos accesos directos.
+- Deploy private Cloudflare app #310 terminó correctamente.
+- Audit production web #92: **793 checks / 1 failure**. Pasan:
+  - `Home · acceso directo Menú`;
+  - `Home · acceso directo Recetas`;
+  - foto `rec-fajitas-tiras-pollo-v1`: HTTP 200 image/jpeg;
+  - carga visible;
+  - foto completa: `object-fit=contain`, natural `480×270`, render `514×289`;
+  - sin 5xx/fallos de red;
+  - sin errores JavaScript/console.
+- El único fallo de #92 sigue siendo `MIDAS TFM shadow forecasts` por el último schedule rojo heredado; es independiente de Salud/Recetas.
