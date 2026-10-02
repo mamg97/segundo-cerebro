@@ -18,6 +18,7 @@ It receives the special GPT Actions `openaiFileIdRefs` file-reference array, dow
 
 - `GET /health`
 - `POST /ingest-object-image`
+- `POST /ingest-look-image`
 
 The POST contract is documented in `docs/objects-chatgpt-action.openapi.yaml`.
 
@@ -26,7 +27,7 @@ The POST contract is documented in `docs/objects-chatgpt-action.openapi.yaml`.
 
 El bridge se despliega como servicio `objects-chatgpt-bridge` y reenvía la escritura al gateway Cloudflare `segundo-cerebro-objects-ingest`. El gateway usa Service Binding hacia el Worker principal, por lo que el bridge no necesita atravesar la pantalla interactiva de Cloudflare Access.
 
-El almacenamiento final no está en Railway ni en Drive: `uploadObjectsImage` persiste los bytes visuales en D1 y actualiza `SEGUNDO CEREBRO - OBJETOS / Armario`.
+El almacenamiento final no está en Railway ni en Drive: `uploadObjectsImage` persiste los bytes visuales de prendas en D1 y actualiza `SEGUNDO CEREBRO - OBJETOS / Armario`. Las imágenes compuestas de looks usan el mismo almacén técnico D1 mediante la ruta de look y actualizan exclusivamente `Looks.foto_url`; el `look_id` y sus `LookItems` siguen siendo la identidad canónica.
 
 ## Bootstrap operativo desde una conversación ChatGPT
 
@@ -34,7 +35,7 @@ Cuando la sesión no puede invocar directamente `POST /ingest-object-image`, exi
 
 Procedimiento:
 
-1. Obtener una referencia temporal válida de la imagen (`openaiFileIdRefs`).
+1. Obtener una referencia temporal válida de la imagen (`openaiFileIdRefs`). El job usa `objeto_id` para prendas o `look_id` para imágenes compuestas de looks.
 2. Cargar temporalmente `OBJECTS_SEED_JOBS` con un array JSON de entre 1 y 8 jobs.
 3. Usar temporalmente el start command `node seed.mjs && node server.mjs`.
 4. Redeplegar y exigir en logs `stage=done` y respuesta `ok=true` para cada item.
