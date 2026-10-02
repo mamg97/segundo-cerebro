@@ -282,3 +282,19 @@ Desde 2026-10-02 el contrato visual del Home incluye:
 - cada uno de esos perfiles debe pasar overflow global, contenido dentro del viewport, clipping, solapes, overflow local de componentes, imágenes y proporciones.
 
 No restaurar selectores legacy como `#home-kcal-ring`, `#home-kcal-target`, `#home-habits-card` o `#home-nutrition-card` en el auditor salvo que vuelvan a existir deliberadamente en la UI.
+
+
+## Home Salud v0.41.1
+
+El contrato visual/funcional adicional del Home exige:
+
+- exactamente cinco `.home-health-metric` y cinco `.progress-ring` en `#home-health-card`;
+- KPI: Hábitos, Kcal hoy, Proteína hoy, Gym hoy y Peso;
+- no volver a introducir `#home-health-activity-main` ni `#home-health-macros-main`;
+- accesos de `.home-health-links` alineados con `justify-content: flex-start`;
+- navegación superior con exactamente las 10 áreas principales canónicas y sin `.nav-subnav` / `.nav-link-child`;
+- cuando existan objetivos de kcal/proteína, sus anillos deben exponer `aria-valuenow` numérico;
+- Gym hoy debe tener un estado no vacío;
+- la sustitución de Actividad/pasos por Gym se valida por estructura DOM, no buscando palabras dentro del texto libre del motivo de pausa.
+
+Audit #101 validó este contrato en producción en desktop-wide, desktop, tablet, mobile-wide y mobile.
