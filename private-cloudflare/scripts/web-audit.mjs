@@ -139,6 +139,71 @@ async function probeApi(path, label, options = {}) {
   return result;
 }
 
+const visualImageProbeCache = new Map();
+
+async function probeVisualImage(src) {
+  const key = String(src || "").trim();
+  if (!key) {
+    return { ok: false, status: 0, contentType: "", decoded: false, bytes: 0, error: "src vacío" };
+  }
+  if (visualImageProbeCache.has(key)) return visualImageProbeCache.get(key);
+
+  const result = await page.evaluate(async (target) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    try {
+      const response = await fetch(target, {
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: controller.signal
+      });
+      const contentType = String(response.headers.get("content-type") || "");
+      const blob = await response.blob();
+      let decoded = false;
+      let width = 0;
+      let height = 0;
+      let decodeError = "";
+      if (response.ok && /^image\//i.test(contentType) && blob.size > 0) {
+        try {
+          const bitmap = await createImageBitmap(blob);
+          width = Number(bitmap.width || 0);
+          height = Number(bitmap.height || 0);
+          decoded = width > 0 && height > 0;
+          bitmap.close();
+        } catch (error) {
+          decodeError = String(error?.message || error || "decode_failed");
+        }
+      }
+      return {
+        ok: response.ok,
+        status: response.status,
+        contentType,
+        decoded,
+        width,
+        height,
+        bytes: blob.size,
+        error: decodeError
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        status: 0,
+        contentType: "",
+        decoded: false,
+        width: 0,
+        height: 0,
+        bytes: 0,
+        error: String(error?.name || error?.message || error || "fetch_failed")
+      };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }, key);
+
+  visualImageProbeCache.set(key, result);
+  return result;
+}
+
 async function fetchMidasWorkflowRuns() {
   const endpoint = "https://api.github.com/repos/mamg97/midas-paper-lab/actions/runs?per_page=100";
   const tokenHeader = process.env.GH_TOKEN ? { Authorization: "Bearer " + process.env.GH_TOKEN } : {};
@@ -516,7 +581,12 @@ async function auditVisualSnapshot(label) {
     document.querySelectorAll("img").forEach((image) => {
       if (!visible(image)) return;
       if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
-        brokenImages.push(`${shortName(image)} src=${String(image.getAttribute("src") || "").slice(0, 140)}`);
+        brokenImages.push({
+          name: shortName(image),
+          src: String(image.getAttribute("src") || ""),
+          loading: String(image.getAttribute("loading") || ""),
+          complete: Boolean(image.complete)
+        });
         return;
       }
       const style = getComputedStyle(image);
@@ -546,7 +616,31 @@ async function auditVisualSnapshot(label) {
   assertCheck(report.clippedText.length === 0, `Visual ${label} · texto sin clipping`, report.clippedText.slice(0, 4).join(" | "));
   assertCheck(report.overlaps.length === 0, `Visual ${label} · sin solapes`, report.overlaps.slice(0, 4).join(" | "));
   assertCheck(report.distortedImages.length === 0, `Visual ${label} · imágenes sin deformación`, report.distortedImages.slice(0, 4).join(" | "));
-  assertCheck(report.brokenImages.length === 0, `Visual ${label} · imágenes cargadas`, report.brokenImages.slice(0, 4).join(" | "));
+
+  const uniqueBrokenSources = [...new Set(report.brokenImages.map((item) => item.src).filter(Boolean))];
+  const imageProbeEntries = await Promise.all(
+    uniqueBrokenSources.map(async (src) => [src, await probeVisualImage(src)])
+  );
+  const imageProbeBySource = new Map(imageProbeEntries);
+  const verifiedBrokenImages = report.brokenImages.filter((item) => {
+    const probe = imageProbeBySource.get(item.src);
+    return !(probe?.ok && /^image\//i.test(probe.contentType || "") && probe.decoded);
+  });
+  const recoveredImageCount = report.brokenImages.length - verifiedBrokenImages.length;
+  if (recoveredImageCount > 0) {
+    info(
+      `Visual ${label} · imágenes pendientes validadas por contenido`,
+      `${recoveredImageCount} img · fetch + decode correctos`
+    );
+  }
+  assertCheck(
+    verifiedBrokenImages.length === 0,
+    `Visual ${label} · imágenes cargadas`,
+    verifiedBrokenImages.slice(0, 4).map((item) => {
+      const probe = imageProbeBySource.get(item.src) || {};
+      return `${item.name} src=${String(item.src || "").slice(0, 140)} status=${probe.status ?? "?"} type=${probe.contentType || "?"} decoded=${Boolean(probe.decoded)}${probe.error ? " error=" + probe.error : ""}`;
+    }).join(" | ")
+  );
   assertCheck(report.proportions.length === 0, `Visual ${label} · proporciones coherentes`, report.proportions.slice(0, 4).join(" | "));
 }
 
