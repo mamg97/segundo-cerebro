@@ -1603,9 +1603,12 @@ Antes de cualquier cambio:
   - Home pasa en desktop-wide, desktop, tablet, mobile-wide y mobile sin overflow, clipping ni solapes.
   - El único fallo sigue siendo `MIDAS TFM shadow forecasts`, independiente del Home.
 - Diagnóstico del peso: el Home automático no depende de `MedicionesCorporalesApple`. El flujo vivo es HealthKit → bridge iOS → ingest Worker → D1 → Home; el Sheet corporal es derivado.
-- Rama en curso `organizador9/health-weight-freshness` desde `a4f2eba3`:
+- PR #231 / `c6a30ec5` fusionó la mejora de freshness del bridge:
   - los tipos corporales HealthKit solicitan Background Delivery `.immediate`;
   - actividad/recuperación permanecen `.hourly`;
   - el bridge reconcilia hoy + ayer al volver a primer plano;
   - el BGAppRefresh fallback pasa de 3 h a una solicitud a partir de 1 h (iOS conserva la decisión final de ejecución).
+- Validate iOS Health bridge #11: build success.
+- Importante: al ser una app iOS de desarrollo instalada desde Xcode, el merge en Git no actualiza por sí solo el binario que ya está en el iPhone. Para que la nueva cadencia entre en vigor hay que recompilar/instalar la versión actual del proyecto en el dispositivo.
+- Audit production web #109, ejecutado antes de actualizar el binario del iPhone, seguía viendo como última muestra corporal la misma medición antigua que ya existía en D1. Por tanto el frontend estaba leyendo correctamente D1; el punto pendiente real era dispositivo/HealthKit → bridge.
 - No “arreglar” freshness editando manualmente el Sheet derivado. Si una pesada nueva está en Apple Health y no llega a D1, diagnosticar bridge/autorización/background delivery.
