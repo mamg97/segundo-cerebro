@@ -1577,6 +1577,56 @@ try {
               : "sin estilo computado"
           );
         }
+
+        const catalogCards = panel.locator("[data-recipe-open]");
+        const catalogCount = await catalogCards.count();
+        assertCheck(
+          catalogCount === expectedRecipeCount,
+          "Salud · Recetas catálogo compacto conserva toda la fuente",
+          `UI=${catalogCount} API=${expectedRecipeCount}`
+        );
+
+        if (catalogCount > 0) {
+          await catalogCards.first().click();
+          await page.waitForTimeout(120);
+          const detailVisible = await panel.locator(".recipe-detail-card").isVisible().catch(() => false);
+          assertCheck(detailVisible, "Salud · Recetas abre ficha completa");
+          assertCheck(
+            await panel.locator(".recipe-detail-card .recipe-ingredients").count() === 1
+              && await panel.locator(".recipe-detail-card .recipe-steps").count() === 1,
+            "Salud · Recetas detalle muestra ingredientes y preparación"
+          );
+          const backButton = panel.locator("[data-recipes-back]");
+          assertCheck(await backButton.count() === 1, "Salud · Recetas detalle ofrece volver");
+          if (await backButton.count()) {
+            await backButton.click();
+            await page.waitForTimeout(120);
+            const restoredCount = await panel.locator("[data-recipe-open]").count();
+            assertCheck(
+              restoredCount === expectedRecipeCount,
+              "Salud · Recetas vuelve al catálogo completo",
+              `UI=${restoredCount} API=${expectedRecipeCount}`
+            );
+            const restoredImages = panel.locator(".recipe-card img");
+            const restoredImageCount = await restoredImages.count();
+            for (let restoredIndex = 0; restoredIndex < restoredImageCount; restoredIndex += 1) {
+              const restoredImage = restoredImages.nth(restoredIndex);
+              const restoredSrc = await restoredImage.getAttribute("src");
+              await restoredImage.scrollIntoViewIfNeeded().catch(() => {});
+              if (restoredSrc) {
+                await page.waitForFunction(
+                  (expectedSrc) => {
+                    const candidate = [...document.querySelectorAll('[data-health-panel="recipes"] .recipe-card img')]
+                      .find((node) => node.getAttribute("src") === expectedSrc);
+                    return Boolean(candidate?.complete && candidate.naturalWidth > 0 && candidate.naturalHeight > 0);
+                  },
+                  restoredSrc,
+                  { timeout: 6000 }
+                ).catch(() => null);
+              }
+            }
+          }
+        }
       }
       await auditVisualSnapshot(`desktop · Salud · ${tab}`);
     }

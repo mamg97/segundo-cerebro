@@ -4889,6 +4889,82 @@ function formatRecipeAmount(ingredient) {
   return "";
 }
 
+function recipePhotoMarkup(recipe, loading = "lazy") {
+  return recipe.photoUrl
+    ? `<img src="${escapeHtml(recipe.photoUrl)}" alt="Foto de ${escapeHtml(recipe.name || "receta")}" loading="${escapeHtml(loading)}">`
+    : `<div class="recipe-photo-placeholder" aria-label="Receta sin foto"><span>⌁</span><small>Sin foto todavía</small></div>`;
+}
+
+function recipeMacrosLabel(recipe) {
+  return [
+    recipe.kcalPerServing == null ? null : formatKcal(recipe.kcalPerServing),
+    recipe.proteinPerServing == null ? null : `P ${formatMacro(recipe.proteinPerServing)}`
+  ].filter(Boolean).join(" · ");
+}
+
+function renderRecipeDetail(panel, data, recipe) {
+  const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+  const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
+  const macros = recipeMacrosLabel(recipe);
+
+  panel.innerHTML = `
+    <div class="recipe-detail-toolbar">
+      <button class="recipe-back" type="button" data-recipes-back>← Volver al recetario</button>
+      <a class="master-source-link" href="/api/source-link?target=health-recipes" target="_blank" rel="noopener noreferrer">Abrir Sheet ↗</a>
+    </div>
+
+    <article class="recipe-card recipe-detail-card" data-recipe-id="${escapeHtml(recipe.id || "")}">
+      <div class="recipe-photo recipe-detail-photo">
+        ${recipePhotoMarkup(recipe, "eager")}
+      </div>
+      <div class="recipe-card-body">
+        <header>
+          <div>
+            <p class="context-label">Nutrición · receta</p>
+            <h4>${escapeHtml(recipe.name || "Receta")}</h4>
+            <p>${recipe.servings == null ? "Raciones pendientes" : `${Number(recipe.servings).toLocaleString("es-ES")} ración${Number(recipe.servings) === 1 ? "" : "es"}`}${macros ? " · " + escapeHtml(macros) : ""}</p>
+          </div>
+          ${recipe.precision ? `<span class="recipe-precision">${escapeHtml(recipe.precision)}</span>` : ""}
+        </header>
+
+        <div class="recipe-detail-sections">
+          <section class="recipe-section recipe-ingredients">
+            <h5>Ingredientes</h5>
+            ${ingredients.length
+              ? `<ul>${ingredients.map((ingredient) => `
+                  <li>
+                    <span>${escapeHtml(ingredient.name || "Ingrediente")}</span>
+                    <strong>${escapeHtml(formatRecipeAmount(ingredient) || "—")}</strong>
+                  </li>`).join("")}</ul>`
+              : '<p class="recipe-pending">Ingredientes pendientes de confirmar.</p>'}
+          </section>
+
+          <section class="recipe-section recipe-steps">
+            <h5>Preparación</h5>
+            ${steps.length
+              ? `<ol>${steps.map((step) => `
+                  <li>
+                    <span>${escapeHtml(step.instruction || "")}</span>
+                    ${step.timeMinutes != null || step.temperature || step.utensil
+                      ? `<small>${[
+                          step.timeMinutes != null ? `${Number(step.timeMinutes)} min` : null,
+                          step.temperature || null,
+                          step.utensil || null
+                        ].filter(Boolean).map(escapeHtml).join(" · ")}</small>`
+                      : ""}
+                  </li>`).join("")}</ol>`
+              : '<p class="recipe-pending">Preparación pendiente de confirmar.</p>'}
+          </section>
+        </div>
+
+        ${recipe.note ? `<p class="recipe-note">${escapeHtml(recipe.note)}</p>` : ""}
+      </div>
+    </article>
+  `;
+
+  panel.querySelector("[data-recipes-back]")?.addEventListener("click", () => renderRecipesPanel(data));
+}
+
 function renderRecipesPanel(data) {
   const panel = document.querySelector("#recipes-panel");
   if (!panel) return;
@@ -4899,71 +4975,36 @@ function renderRecipesPanel(data) {
       <div>
         <p class="context-label">Nutrición · recetario</p>
         <h3>Recetas</h3>
-        <p>Foto, ingredientes y preparación proceden de la fuente privada de Salud. Los pasos pendientes no se completan por inferencia.</p>
+        <p>Pulsa una receta para abrir su ficha completa con ingredientes y preparación.</p>
       </div>
       <a class="master-source-link" href="/api/source-link?target=health-recipes" target="_blank" rel="noopener noreferrer">Abrir Sheet ↗</a>
     </div>
 
     ${recipes.length ? `
       <div class="recipes-grid">
-        ${recipes.map((recipe) => {
-          const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
-          const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
-          const macros = [
-            recipe.kcalPerServing == null ? null : formatKcal(recipe.kcalPerServing),
-            recipe.proteinPerServing == null ? null : `P ${formatMacro(recipe.proteinPerServing)}`
-          ].filter(Boolean).join(" · ");
-          return `
-            <article class="recipe-card" data-recipe-id="${escapeHtml(recipe.id || "")}">
-              <div class="recipe-photo">
-                ${recipe.photoUrl
-                  ? `<img src="${escapeHtml(recipe.photoUrl)}" alt="Foto de ${escapeHtml(recipe.name || "receta")}" loading="lazy">`
-                  : `<div class="recipe-photo-placeholder" aria-label="Receta sin foto"><span>⌁</span><small>Sin foto todavía</small></div>`}
-              </div>
-              <div class="recipe-card-body">
-                <header>
-                  <div>
-                    <h4>${escapeHtml(recipe.name || "Receta")}</h4>
-                    <p>${recipe.servings == null ? "Raciones pendientes" : `${Number(recipe.servings).toLocaleString("es-ES")} ración${Number(recipe.servings) === 1 ? "" : "es"}`}${macros ? " · " + escapeHtml(macros) : ""}</p>
-                  </div>
-                  ${recipe.precision ? `<span class="recipe-precision">${escapeHtml(recipe.precision)}</span>` : ""}
-                </header>
-
-                <section class="recipe-section recipe-ingredients">
-                  <h5>Ingredientes</h5>
-                  ${ingredients.length
-                    ? `<ul>${ingredients.map((ingredient) => `
-                        <li>
-                          <span>${escapeHtml(ingredient.name || "Ingrediente")}</span>
-                          <strong>${escapeHtml(formatRecipeAmount(ingredient) || "—")}</strong>
-                        </li>`).join("")}</ul>`
-                    : '<p class="recipe-pending">Ingredientes pendientes de confirmar.</p>'}
-                </section>
-
-                <section class="recipe-section recipe-steps">
-                  <h5>Preparación</h5>
-                  ${steps.length
-                    ? `<ol>${steps.map((step) => `
-                        <li>
-                          <span>${escapeHtml(step.instruction || "")}</span>
-                          ${step.timeMinutes != null || step.temperature || step.utensil
-                            ? `<small>${[
-                                step.timeMinutes != null ? `${Number(step.timeMinutes)} min` : null,
-                                step.temperature || null,
-                                step.utensil || null
-                              ].filter(Boolean).map(escapeHtml).join(" · ")}</small>`
-                            : ""}
-                        </li>`).join("")}</ol>`
-                    : '<p class="recipe-pending">Preparación pendiente de confirmar.</p>'}
-                </section>
-
-                ${recipe.note ? `<p class="recipe-note">${escapeHtml(recipe.note)}</p>` : ""}
-              </div>
-            </article>`;
-        }).join("")}
+        ${recipes.map((recipe) => `
+          <button
+            class="recipe-card recipe-catalog-card"
+            type="button"
+            data-recipe-open="${escapeHtml(recipe.id || "")}"
+            aria-label="Abrir receta ${escapeHtml(recipe.name || "Receta")}"
+          >
+            <span class="recipe-photo recipe-catalog-photo">
+              ${recipePhotoMarkup(recipe)}
+            </span>
+            <strong>${escapeHtml(recipe.name || "Receta")}</strong>
+          </button>
+        `).join("")}
       </div>`
       : '<div class="health-empty health-empty-card"><strong>Recetario preparado</strong><p>Cuando se añada la primera receta a la fuente privada, aparecerá aquí automáticamente.</p></div>'}
   `;
+
+  panel.querySelectorAll("[data-recipe-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const recipe = recipes.find((candidate) => String(candidate.id || "") === String(button.dataset.recipeOpen || ""));
+      if (recipe) renderRecipeDetail(panel, data, recipe);
+    });
+  });
 }
 
 function renderNutritionEntries(entries) {
