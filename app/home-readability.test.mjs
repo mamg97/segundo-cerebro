@@ -28,18 +28,27 @@ test("Home weekly menu keeps a readable meal-by-day matrix", () => {
   assert.doesNotMatch(renderer, /class="home-weekly-menu-grid"/);
 });
 
-test("Home nutrition card exposes direct Menu and Recipes access", () => {
-  assert.match(index, /id="home-nutrition-open"/);
-  assert.match(index, /id="home-nutrition-menu"[^>]*>Menú<\/button>/);
-  assert.match(index, /id="home-nutrition-recipes"[^>]*>Recetas<\/button>/);
-  assert.match(app, /home-nutrition-menu/);
-  assert.match(app, /openHealthTabFromHome\("menu"\)/);
-  assert.match(app, /home-nutrition-recipes/);
+test("Home uses top navigation and keeps the orb without quick query", () => {
+  assert.doesNotMatch(index, /id="ask-form"|id="ask-input"|id="query-submit"/);
+  assert.match(index, /id="system-orb"/);
+  assert.match(css, /\.sidebar\s*\{[\s\S]*?position:\s*sticky[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\) auto/);
+  assert.match(css, /\.area-nav\s*\{[\s\S]*?flex-direction:\s*row[\s\S]*?overflow-x:\s*auto/);
+});
+
+test("Home unifies Habits and Health into one daily card", () => {
+  assert.match(index, /id="home-health-card"/);
+  assert.doesNotMatch(index, /id="home-habits-card"|id="home-nutrition-card"/);
+  for (const id of ["habits", "macros", "activity", "weight"]) {
+    assert.match(index, new RegExp(`id="home-health-${id}-main"`));
+  }
+  for (const label of ["Resumen", "Hábitos", "Médicos", "Gimnasio", "Nutrición", "Recetas", "Menú"]) {
+    assert.ok(index.includes(">" + label + "</button>"), "Missing Health shortcut: " + label);
+  }
+  assert.match(app, /async function renderHomeHealthCard\(\)/);
+  assert.match(app, /home-health-medical/);
   assert.match(app, /openHealthTabFromHome\("recipes"\)/);
-  assert.match(css, /\.home-nutrition-links\s*\{/);
-  assert.match(css, /\.home-nutrition-primary\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
-  assert.doesNotMatch(css, /\.home-nutrition-primary\s*\{[\s\S]{0,260}?minmax\(300px/);
-  assert.match(css, /\.home-nutrition-primary \.daily-progress-footer\s*\{[\s\S]*?flex-wrap:\s*wrap/);
+  assert.match(css, /\.home-health-card\s*\{[\s\S]*?grid-column:\s*1 \/ -1/);
+  assert.match(css, /\.home-health-metrics\s*\{[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/);
 });
 
 test("weekly matrix is larger but remains compact and internally scrollable", () => {
