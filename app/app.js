@@ -1104,7 +1104,7 @@ function renderHomeHealthHabitsSummary() {
   setHomeHealthUpdated("habits", state.habitsSummary?.source?.updatedAt || null, "Hábitos");
 }
 
-function renderHomeGymSummary(healthData, gymData) {
+function deriveGymTodaySummary(healthData, gymData = {}) {
   const activityGoal = healthData.activityObjective || {};
   const overviewGym = healthData.gym || {};
   const plan = Array.isArray(gymData?.plan) ? gymData.plan : [];
@@ -1118,47 +1118,46 @@ function renderHomeGymSummary(healthData, gymData) {
 
   if (paused) {
     const reason = String(gymData?.trainingStatus?.reason || activityGoal.note || "Pausa temporal del entrenamiento de fuerza.");
-    const briefReason = shortHomeGymReason(reason);
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Pausado", briefReason);
-    setHomeHealthUpdated(
-      "gym",
-      gymData?.trainingStatus?.updatedAt || gymData?.trainingStatus?.effectiveDate || activityGoal.updatedAt || activityGoal.effectiveDate || null,
-      "Gym"
-    );
-    setHomeHealthRing("home-health-gym-ring", null, {
+    const detail = shortHomeGymReason(reason);
+    return {
+      main: "Pausado",
+      detail,
+      updatedAt: gymData?.trainingStatus?.updatedAt || gymData?.trainingStatus?.effectiveDate || activityGoal.updatedAt || activityGoal.effectiveDate || null,
+      progress: null,
       tone: "amber",
       centerValue: "⏸",
       centerLabel: "pausa",
-      ariaLabel: "Gimnasio pausado: " + briefReason
-    });
-    return;
+      ariaLabel: "Gimnasio pausado: " + detail
+    };
   }
 
   const todaySession = sessions.find((session) => String(session?.sessionDate || "") === selectedDate) || null;
   if (todaySession) {
     const day = plan.find((candidate) => candidate.id === todaySession.dayId);
-    const title = day?.title || day?.focus || todaySession.dayId || "Sesión registrada";
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Hecho", title);
-    setHomeHealthUpdated("gym", todaySession.createdAt || todaySession.sessionDate || null, "Gym");
-    setHomeHealthRing("home-health-gym-ring", 100, {
+    const detail = day?.title || day?.focus || todaySession.dayId || "Sesión registrada";
+    return {
+      main: "Hecho",
+      detail,
+      updatedAt: todaySession.createdAt || todaySession.sessionDate || null,
+      progress: 100,
       tone: "mint",
       centerValue: "✓",
       centerLabel: "hecho",
-      ariaLabel: "Entrenamiento de hoy completado: " + title
-    });
-    return;
+      ariaLabel: "Entrenamiento de hoy completado: " + detail
+    };
   }
 
   if (!plan.length) {
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sin plan", "Plan no disponible");
-    setHomeHealthUpdated("gym", gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
-    setHomeHealthRing("home-health-gym-ring", null, {
+    return {
+      main: "Sin plan",
+      detail: "Plan no disponible",
+      updatedAt: gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null,
+      progress: null,
       tone: "blue",
       centerValue: "—",
       centerLabel: "gym",
       ariaLabel: "Sin plan de entrenamiento conectado"
-    });
-    return;
+    };
   }
 
   const lastDayId = sessions[0]?.dayId || null;
@@ -1168,35 +1167,70 @@ function renderHomeGymSummary(healthData, gymData) {
   const suggestedTitle = suggested?.title || suggested?.focus || "Siguiente sesión";
 
   if (strengthTarget !== null && strengthTarget > 0 && sessionsThisWeek >= strengthTarget) {
-    setHomeHealthMetric(
-      "home-health-gym-main",
-      "home-health-gym-detail",
-      "Descanso",
-      "Objetivo semanal cubierto · siguiente " + suggestedTitle
-    );
-    setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
-    setHomeHealthRing("home-health-gym-ring", 100, {
+    return {
+      main: "Descanso",
+      detail: "Objetivo semanal cubierto · siguiente " + suggestedTitle,
+      updatedAt: sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null,
+      progress: 100,
       tone: "mint",
       centerValue: "✓",
       centerLabel: "sem",
       ariaLabel: "Objetivo semanal de gimnasio cubierto. Siguiente sesión: " + suggestedTitle
-    });
-    return;
+    };
   }
 
-  const weeklyProgress = strengthTarget !== null && strengthTarget > 0
+  const progress = strengthTarget !== null && strengthTarget > 0
     ? Math.max(0, Math.round((sessionsThisWeek / strengthTarget) * 100))
     : 0;
   const weekText = strengthTarget !== null && strengthTarget > 0
     ? " · " + sessionsThisWeek + "/" + Math.round(strengthTarget) + " esta semana"
     : "";
-  setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sugerido", suggestedTitle + weekText);
-  setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
-  setHomeHealthRing("home-health-gym-ring", weeklyProgress, {
+  return {
+    main: "Sugerido",
+    detail: suggestedTitle + weekText,
+    updatedAt: sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null,
+    progress,
     tone: "blue",
     centerValue: "Hoy",
     centerLabel: "gym",
     ariaLabel: "Siguiente entrenamiento sugerido: " + suggestedTitle
+  };
+}
+
+function healthWeightSummary(body = {}, selectedDate = localDateKey()) {
+  const samples = (Array.isArray(body.samples) ? body.samples : [])
+    .filter((sample) => sample?.type === "bodyMass" && homeHealthMetricNumber(sample.value) !== null)
+    .sort((a, b) => String(a.measuredAt || a.date || "").localeCompare(String(b.measuredAt || b.date || "")));
+  const latest = body.weightToday || samples.at(-1) || null;
+  const currentStart = shiftDateKey(selectedDate, -6);
+  const previousStart = shiftDateKey(selectedDate, -13);
+  const previousEnd = shiftDateKey(selectedDate, -7);
+  const currentDays = new Set(samples.filter((sample) => sample.date >= currentStart && sample.date <= selectedDate).map((sample) => sample.date)).size;
+  const previousDays = new Set(samples.filter((sample) => sample.date >= previousStart && sample.date <= previousEnd).map((sample) => sample.date)).size;
+  const average = homeHealthMetricNumber(body.weight7dAverage);
+  const rawWeeklyChange = homeHealthMetricNumber(body.weightWeeklyChange);
+  const trendReady = currentDays >= 5 && previousDays >= 5 && rawWeeklyChange !== null;
+  return {
+    latest,
+    value: homeHealthMetricNumber(latest?.value),
+    average,
+    weeklyChange: trendReady ? rawWeeklyChange : null,
+    rawWeeklyChange,
+    currentDays,
+    previousDays,
+    trendReady
+  };
+}
+
+function renderHomeGymSummary(healthData, gymData) {
+  const summary = deriveGymTodaySummary(healthData, gymData);
+  setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", summary.main, summary.detail);
+  setHomeHealthUpdated("gym", summary.updatedAt, "Gym");
+  setHomeHealthRing("home-health-gym-ring", summary.progress, {
+    tone: summary.tone,
+    centerValue: summary.centerValue,
+    centerLabel: summary.centerLabel,
+    ariaLabel: summary.ariaLabel
   });
 }
 
@@ -1290,18 +1324,16 @@ async function renderHomeHealthCard() {
     renderHomeGymSummary(data, gymData || {});
 
     const body = data.body || {};
-    const weightAverage = homeHealthMetricNumber(body.weight7dAverage);
-    const weeklyChange = homeHealthMetricNumber(body.weightWeeklyChange);
-    const weightSamples = (Array.isArray(body.samples) ? body.samples : [])
-      .filter((sample) => sample?.type === "bodyMass" && homeHealthMetricNumber(sample.value) !== null)
-      .sort((a, b) => String(a.measuredAt || a.date || "").localeCompare(String(b.measuredAt || b.date || "")));
-    const latestWeightSample = body.weightToday || weightSamples.at(-1) || null;
-    const displayedWeight = homeHealthMetricNumber(latestWeightSample?.value);
+    const weightSummary = healthWeightSummary(body, data.date || localDateKey());
+    const latestWeightSample = weightSummary.latest;
+    const displayedWeight = weightSummary.value;
     const weightDetail = [
-      weightAverage !== null ? "Media 7 d " + formatHomeHealthDecimal(weightAverage, " kg") : null,
-      weeklyChange !== null
-        ? "Δ " + (weeklyChange > 0 ? "+" : "") + weeklyChange.toFixed(1).replace(".", ",") + " kg"
-        : null
+      weightSummary.average !== null ? "Media 7 d " + formatHomeHealthDecimal(weightSummary.average, " kg") : null,
+      weightSummary.trendReady && weightSummary.weeklyChange !== null
+        ? "Δ " + (weightSummary.weeklyChange > 0 ? "+" : "") + weightSummary.weeklyChange.toFixed(1).replace(".", ",") + " kg"
+        : weightSummary.currentDays > 0
+          ? "cobertura " + weightSummary.currentDays + "/7 días"
+          : null
     ].filter(Boolean).join(" · ") || "Sin tendencia disponible";
     setHomeHealthMetric(
       "home-health-weight-main",
