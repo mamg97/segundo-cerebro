@@ -296,3 +296,21 @@ El auditor de producción debe conservar estos checks:
 - `.home-health-links` usa `justify-content: flex-start`;
 - la barra superior contiene solamente las 10 áreas principales y no renderiza `.nav-subnav` / `.nav-link-child`;
 - no validar la ausencia de la palabra “pasos” mediante búsqueda global de texto: puede aparecer legítimamente en notas o motivos libres. La sustitución debe comprobarse por estructura de la UI.
+
+
+## Home freshness y compactación · contrato adicional
+
+Desde PR #221 / #222, el auditor debe comprobar:
+
+- `#home-health-card` conserva exactamente cinco resúmenes: Hábitos, Kcal, Proteína, Gym y Peso.
+- Cada resumen de Salud tiene una línea de actualización resuelta; no se debe inventar una hora cuando la fuente no la expone.
+- El motivo de pausa de Gym mostrado en Home debe ser breve. El texto clínico/operativo largo pertenece a la vista de detalle.
+- El peso de Home debe compararse contra la última muestra real `bodyMass` de la API, no contra la media 7 d. También debe mostrar fuente y fecha/hora de la medición cuando existan.
+- Despensa expone accesos a Inventario y Lista compra.
+- Objetos expone accesos a Inventario, Armario, Looks y Kits.
+- Patrimonio expone Detalle, Evolución y MIDAS.
+- Obligaciones activas expone Detalle y El Corte Inglés, y ECI no debe volver a aparecer como tarjeta independiente.
+- Las tarjetas inferiores no deben igualar alturas artificialmente: `.daily-overview-grid` y `.money-horizon` deben permitir altura natural de contenido.
+- La validación visual responsive sigue siendo obligatoria para desktop-wide, desktop, tablet, mobile-wide y mobile.
+
+Audit production web #103 validó este contrato con 750 checks y solo dos fallos externos al Home: MIDAS TFM shadow forecasts y una carga visual de imágenes de Looks/OBJETOS.
