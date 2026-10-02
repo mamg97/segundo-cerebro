@@ -1007,9 +1007,21 @@ try {
   assertCheck(await page.locator("#system-orb").count() === 1, "Home · orbe del sistema conservado");
   assertCheck(await page.locator("#home-health-card").count() === 1, "Home · tarjeta única Salud + Hábitos");
   assertCheck(await page.locator("#home-habits-card, #home-nutrition-card").count() === 0, "Home · sin tarjetas antiguas separadas");
-  assertCheck(await page.locator("#home-health-card .home-health-metric").count() === 4, "Home · Salud resume hábitos, macros, actividad y peso");
+  assertCheck(await page.locator("#home-health-card .home-health-metric").count() === 5, "Home · Salud resume hábitos, kcal, proteína, gym y peso");
+  assertCheck(await page.locator("#home-health-card .progress-ring").count() === 5, "Home · cinco resúmenes circulares de Salud");
+  assertCheck(await page.locator("#home-health-activity-main, #home-health-macros-main").count() === 0, "Home · sin pasos ni bloque Macros agregado");
   assertCheck(await page.locator("#home-health-menu").count() === 1, "Home · acceso directo Menú", "#home-health-menu");
   assertCheck(await page.locator("#home-health-recipes").count() === 1, "Home · acceso directo Recetas", "#home-health-recipes");
+  const healthLinksLayout = await page.locator(".home-health-links").evaluate((node) => ({
+    justifyContent: getComputedStyle(node).justifyContent,
+    left: Math.round(node.getBoundingClientRect().left),
+    firstButtonLeft: Math.round(node.querySelector("button")?.getBoundingClientRect().left || 0)
+  })).catch(() => null);
+  assertCheck(
+    healthLinksLayout?.justifyContent === "flex-start",
+    "Home · accesos de Salud alineados abajo a la izquierda",
+    healthLinksLayout ? JSON.stringify(healthLinksLayout) : "sin layout"
+  );
   const topNavLayout = await page.locator(".sidebar").evaluate((node) => {
     const style = getComputedStyle(node);
     const rect = node.getBoundingClientRect();
@@ -1080,13 +1092,16 @@ try {
     [...new Set(nodes.map((node) => node.dataset.navAreaId).filter(Boolean))]
   );
   const expectedNavIds = [
-    "area-general", "area-career", "area-finance", "area-calendar", "area-events",
-    "area-partner", "area-family", "area-parents", "area-health", "area-habits",
-    "area-objects", "area-pantry", "area-wealth", "area-projects"
+    "area-general", "area-career", "area-finance", "area-calendar",
+    "area-partner", "area-family", "area-health", "area-objects",
+    "area-wealth", "area-projects"
   ];
   const missingNavIds = expectedNavIds.filter((id) => !navIds.includes(id));
-  assertCheck(navIds.length >= 5, "Navegación principal disponible", `${navIds.length} áreas`);
-  assertCheck(missingNavIds.length === 0, "Navegación conserva áreas canónicas", missingNavIds.length ? missingNavIds.join(", ") : "14/14");
+  const unexpectedNavIds = navIds.filter((id) => !expectedNavIds.includes(id));
+  assertCheck(navIds.length === expectedNavIds.length, "Navegación superior muestra solo áreas principales", `${navIds.length}/${expectedNavIds.length}`);
+  assertCheck(missingNavIds.length === 0, "Navegación conserva áreas principales canónicas", missingNavIds.length ? missingNavIds.join(", ") : "10/10");
+  assertCheck(unexpectedNavIds.length === 0, "Navegación superior sin subapartados", unexpectedNavIds.length ? unexpectedNavIds.join(", ") : "sin subapartados");
+  assertCheck(await page.locator(".nav-subnav, .nav-link-child").count() === 0, "Navegación no renderiza enlaces secundarios");
 
   for (const areaId of navIds) {
     const link = page.locator(`[data-nav-area-id="${areaId}"]`).first();
@@ -1410,11 +1425,22 @@ try {
   }
 
   const homeHealthText = normalizeAuditValue(await page.locator("#home-health-card").textContent().catch(() => ""));
-  assertCheck(!/Cargando/i.test(homeHealthText), "Home · Salud termina de cargar su resumen", homeHealthText.slice(0, 180));
-  const homeMacroDetail = normalizeAuditValue(await page.locator("#home-health-macros-detail").textContent().catch(() => ""));
+  assertCheck(!/Cargando/i.test(homeHealthText), "Home · Salud termina de cargar su resumen", homeHealthText.slice(0, 220));
+  assertCheck(!/pasos/i.test(homeHealthText), "Home · Salud no usa pasos como resumen principal", homeHealthText.slice(0, 220));
+  const homeKcalMain = normalizeAuditValue(await page.locator("#home-health-kcal-main").textContent().catch(() => ""));
+  const homeProteinMain = normalizeAuditValue(await page.locator("#home-health-protein-main").textContent().catch(() => ""));
+  const homeGymMain = normalizeAuditValue(await page.locator("#home-health-gym-main").textContent().catch(() => ""));
   if (objectiveHasValue(nutrition.body?.objective?.kcal)) {
-    assertCheck(/kcal/i.test(homeMacroDetail), "Home · Salud conserva estado calórico dentro de Macros", homeMacroDetail);
+    assertCheck(/kcal/i.test(homeKcalMain), "Home · progreso diario de kcal visible", homeKcalMain);
+    const kcalNow = await page.locator("#home-health-kcal-ring").getAttribute("aria-valuenow");
+    assertCheck(kcalNow !== null && Number.isFinite(Number(kcalNow)), "Home · anillo kcal tiene progreso válido", String(kcalNow));
   }
+  if (objectiveHasValue(nutrition.body?.objective?.protein)) {
+    assertCheck(/g/i.test(homeProteinMain), "Home · progreso diario de proteína visible", homeProteinMain);
+    const proteinNow = await page.locator("#home-health-protein-ring").getAttribute("aria-valuenow");
+    assertCheck(proteinNow !== null && Number.isFinite(Number(proteinNow)), "Home · anillo proteína tiene progreso válido", String(proteinNow));
+  }
+  assertCheck(Boolean(homeGymMain) && homeGymMain !== "—", "Home · estado de Gym hoy visible", homeGymMain);
 
   await auditResponsiveVisualLayout(navIds);
 
