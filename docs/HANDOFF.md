@@ -1625,3 +1625,16 @@ Antes de cualquier cambio:
   - Composición corporal muestra fecha/fuente o cobertura para último peso, media 7 d, cambio, cintura, grasa y masa magra;
   - el auditor compara los cinco valores principales de Salud contra Home para impedir divergencias futuras.
 - No se modifican datos del Sheet: es una corrección reutilizable de semántica/presentación.
+
+- PR #233 fusionado en `f48d6ed7`: cambio funcional desplegado.
+- PR #234 fusionado en `d4a4b9ae`: el auditor espera a que Resumen termine de cargar antes de contar KPIs/anillos; no cambia UI ni datos.
+- Audit production web **#112**: **844 checks / 1 failure**.
+  - Resumen Salud usa exactamente cinco KPIs y cuatro anillos.
+  - Hábitos coincide con Home: `1 / 16`.
+  - Kcal coincide con Home: `514 / 1950 kcal`.
+  - Proteína coincide con Home: `32 / 175 g`.
+  - Gym coincide con Home: `Pausado`.
+  - Peso coincide con Home: `79,1 kg`.
+  - Composición corporal muestra freshness/cobertura en sus seis métricas.
+  - No hubo 5xx ni fallos de red.
+  - Único fallo restante: `MIDAS TFM shadow forecasts`, independiente de Salud.
