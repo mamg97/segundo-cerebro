@@ -741,43 +741,24 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   const metaAreas = new Set(["area-loops", "area-goals"]);
-  const childMap = new Map([
-    ["area-calendar", ["area-events"]],
-    ["area-family", ["area-parents"]],
-    ["area-health", ["area-habits"]],
-    ["area-objects", ["area-pantry"]]
-  ]);
-  const childIds = new Set([...childMap.values()].flat());
+  const childIds = new Set(["area-events", "area-parents", "area-habits", "area-pantry"]);
   const canonicalOrder = [
     "area-general", "area-career", "area-finance", "area-calendar",
     "area-partner", "area-family", "area-health", "area-objects",
     "area-wealth", "area-projects"
   ];
-  const allAreas = state.areas.filter((area) => !metaAreas.has(area.id));
   const orderRank = new Map(canonicalOrder.map((id, index) => [id, index]));
-  const parents = allAreas
-    .filter((area) => !childIds.has(area.id))
+  const parents = state.areas
+    .filter((area) => !metaAreas.has(area.id) && !childIds.has(area.id))
     .sort((a, b) => (orderRank.get(a.id) ?? 999) - (orderRank.get(b.id) ?? 999));
 
-  nav.innerHTML = parents.map((area, index) => {
-    const children = (childMap.get(area.id) || [])
-      .map((id) => allAreas.find((candidate) => candidate.id === id))
-      .filter(Boolean);
-    return `
-      <div class="nav-group" data-nav-group="${escapeHtml(area.id)}">
-        <a class="nav-link nav-link-parent nav-tone-${escapeHtml(area.tone || "blue")} ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}">
-          ${escapeHtml(area.shortTitle)}
-        </a>
-        ${children.length ? `
-          <div class="nav-subnav" aria-label="Subapartados de ${escapeHtml(area.shortTitle)}">
-            ${children.map((child) => `
-              <a class="nav-link nav-link-child nav-tone-${escapeHtml(child.tone || area.tone || "blue")}" href="#overview" data-nav-area-id="${child.id}">
-                ${escapeHtml(child.shortTitle)}
-              </a>
-            `).join("")}
-          </div>` : ""}
-      </div>`;
-  }).join("");
+  nav.innerHTML = parents.map((area, index) => `
+    <div class="nav-group" data-nav-group="${escapeHtml(area.id)}">
+      <a class="nav-link nav-link-parent nav-tone-${escapeHtml(area.tone || "blue")} ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}">
+        ${escapeHtml(area.shortTitle)}
+      </a>
+    </div>`
+  ).join("");
 }
 
 function renderFocus() {
@@ -1036,6 +1017,28 @@ function setHomeHealthMetric(mainId, detailId, main, detail) {
   if (detailNode) detailNode.textContent = detail;
 }
 
+function setHomeHealthRing(ringId, value, options = {}) {
+  const ring = document.querySelector("#" + ringId);
+  if (!ring) return;
+  updateProgressRing(ring, value, {
+    tone: options.tone || "blue",
+    label: options.label || "",
+    displayPercent: options.displayPercent,
+    ariaLabel: options.ariaLabel || "Resumen de Salud"
+  });
+  const valueNode = ring.querySelector(".progress-ring-value");
+  const labelNode = ring.querySelector(".progress-ring-center small");
+  if (valueNode && options.centerValue !== undefined) valueNode.textContent = options.centerValue;
+  if (labelNode && options.centerLabel !== undefined) labelNode.textContent = options.centerLabel;
+}
+
+function homeHealthPercent(value, target) {
+  const current = homeHealthMetricNumber(value);
+  const goal = homeHealthMetricNumber(target);
+  if (current === null || goal === null || goal <= 0) return null;
+  return Math.max(0, Math.round((current / goal) * 100));
+}
+
 function renderHomeHealthHabitsSummary() {
   const summary = state.habitsSummary?.summary || {};
   const total = Math.max(0, Number(summary.total || 0));
@@ -1048,82 +1051,182 @@ function renderHomeHealthHabitsSummary() {
     total > 0 ? done + " / " + total : "—",
     total > 0 ? percentage + "% hoy · racha " + streak + " d" : "Sin hábitos programados"
   );
+  setHomeHealthRing("home-health-habits-ring", percentage, {
+    tone: "violet",
+    label: "hoy",
+    ariaLabel: total > 0 ? percentage + "% de hábitos completados hoy" : "Sin hábitos programados"
+  });
+}
+
+function renderHomeGymSummary(healthData, gymData) {
+  const activityGoal = healthData.activityObjective || {};
+  const overviewGym = healthData.gym || {};
+  const plan = Array.isArray(gymData?.plan) ? gymData.plan : [];
+  const sessions = Array.isArray(gymData?.sessions)
+    ? gymData.sessions
+    : Array.isArray(overviewGym.sessions) ? overviewGym.sessions : [];
+  const sessionsThisWeek = homeHealthMetricNumber(overviewGym.sessionsThisWeek) ?? 0;
+  const strengthTarget = homeHealthMetricNumber(activityGoal.strengthSessionsWeek);
+  const paused = Boolean(gymData?.trainingStatus?.paused) || strengthTarget === 0;
+  const selectedDate = healthData.date || localDateKey();
+
+  if (paused) {
+    const reason = String(gymData?.trainingStatus?.reason || activityGoal.note || "Pausa temporal del entrenamiento de fuerza.");
+    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Pausado", reason);
+    setHomeHealthRing("home-health-gym-ring", null, {
+      tone: "amber",
+      centerValue: "⏸",
+      centerLabel: "pausa",
+      ariaLabel: "Gimnasio pausado: " + reason
+    });
+    return;
+  }
+
+  const todaySession = sessions.find((session) => String(session?.sessionDate || "") === selectedDate) || null;
+  if (todaySession) {
+    const day = plan.find((candidate) => candidate.id === todaySession.dayId);
+    const title = day?.title || day?.focus || todaySession.dayId || "Sesión registrada";
+    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Hecho", title);
+    setHomeHealthRing("home-health-gym-ring", 100, {
+      tone: "mint",
+      centerValue: "✓",
+      centerLabel: "hecho",
+      ariaLabel: "Entrenamiento de hoy completado: " + title
+    });
+    return;
+  }
+
+  if (!plan.length) {
+    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sin plan", "No hay un plan de entrenamiento conectado");
+    setHomeHealthRing("home-health-gym-ring", null, {
+      tone: "blue",
+      centerValue: "—",
+      centerLabel: "gym",
+      ariaLabel: "Sin plan de entrenamiento conectado"
+    });
+    return;
+  }
+
+  const lastDayId = sessions[0]?.dayId || null;
+  const lastIndex = plan.findIndex((day) => day.id === lastDayId);
+  const suggestedIndex = lastIndex >= 0 ? (lastIndex + 1) % plan.length : 0;
+  const suggested = plan[suggestedIndex] || plan[0];
+  const suggestedTitle = suggested?.title || suggested?.focus || "Siguiente sesión";
+
+  if (strengthTarget !== null && strengthTarget > 0 && sessionsThisWeek >= strengthTarget) {
+    setHomeHealthMetric(
+      "home-health-gym-main",
+      "home-health-gym-detail",
+      "Descanso",
+      "Objetivo semanal cubierto · siguiente " + suggestedTitle
+    );
+    setHomeHealthRing("home-health-gym-ring", 100, {
+      tone: "mint",
+      centerValue: "✓",
+      centerLabel: "sem",
+      ariaLabel: "Objetivo semanal de gimnasio cubierto. Siguiente sesión: " + suggestedTitle
+    });
+    return;
+  }
+
+  const weeklyProgress = strengthTarget !== null && strengthTarget > 0
+    ? Math.max(0, Math.round((sessionsThisWeek / strengthTarget) * 100))
+    : 0;
+  const weekText = strengthTarget !== null && strengthTarget > 0
+    ? " · " + sessionsThisWeek + "/" + Math.round(strengthTarget) + " esta semana"
+    : "";
+  setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sugerido", suggestedTitle + weekText);
+  setHomeHealthRing("home-health-gym-ring", weeklyProgress, {
+    tone: "blue",
+    centerValue: "Hoy",
+    centerLabel: "gym",
+    ariaLabel: "Siguiente entrenamiento sugerido: " + suggestedTitle
+  });
 }
 
 async function renderHomeHealthCard() {
   renderHomeHealthHabitsSummary();
 
   if (privateModeKind !== "remote") {
-    setHomeHealthMetric("home-health-macros-main", "home-health-macros-detail", "—", "Disponible en modo privado");
-    setHomeHealthMetric("home-health-activity-main", "home-health-activity-detail", "—", "Disponible en modo privado");
-    setHomeHealthMetric("home-health-weight-main", "home-health-weight-detail", "—", "Disponible en modo privado");
+    for (const key of ["kcal", "protein", "gym", "weight"]) {
+      setHomeHealthMetric("home-health-" + key + "-main", "home-health-" + key + "-detail", "—", "Disponible en modo privado");
+      setHomeHealthRing("home-health-" + key + "-ring", null, {
+        tone: key === "protein" ? "mint" : key === "kcal" ? "amber" : "blue",
+        centerValue: "—",
+        centerLabel: key === "protein" ? "prot" : key === "weight" ? "kg" : key,
+        ariaLabel: "Disponible en modo privado"
+      });
+    }
     return;
   }
 
   try {
-    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(localDateKey()), {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-      credentials: "same-origin"
-    });
+    const [response, gymResponse] = await Promise.all([
+      fetch("/api/health/overview?date=" + encodeURIComponent(localDateKey()), {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        credentials: "same-origin"
+      }),
+      fetch("/api/gym", {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        credentials: "same-origin"
+      }).catch(() => null)
+    ]);
     if (!response.ok) throw new Error("HOME_HEALTH_" + response.status);
     const data = await response.json();
+    const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
 
     const consumed = data.nutritionSummary?.consumed || {};
     const nutritionGoal = data.nutritionObjective || {};
-    const protein = homeHealthMetricNumber(consumed.protein) ?? 0;
-    const carbs = homeHealthMetricNumber(consumed.carbs) ?? 0;
-    const fat = homeHealthMetricNumber(consumed.fat) ?? 0;
     const kcal = homeHealthMetricNumber(consumed.kcal) ?? 0;
-    const proteinTarget = homeHealthMetricNumber(nutritionGoal.protein);
-    const carbsTarget = homeHealthMetricNumber(nutritionGoal.carbs);
-    const fatTarget = homeHealthMetricNumber(nutritionGoal.fat);
+    const protein = homeHealthMetricNumber(consumed.protein) ?? 0;
     const kcalTarget = homeHealthMetricNumber(nutritionGoal.kcal);
-    const macroText = (label, value, target) => target !== null
-      ? label + " " + Math.round(value).toLocaleString("es-ES") + "/" + Math.round(target).toLocaleString("es-ES")
-      : label + " " + Math.round(value).toLocaleString("es-ES");
-    setHomeHealthMetric(
-      "home-health-macros-main",
-      "home-health-macros-detail",
-      proteinTarget !== null
-        ? "P " + Math.round(protein).toLocaleString("es-ES") + " / " + Math.round(proteinTarget).toLocaleString("es-ES") + " g"
-        : "P " + Math.round(protein).toLocaleString("es-ES") + " g",
-      [
-        macroText("C", carbs, carbsTarget),
-        macroText("G", fat, fatTarget),
-        kcalTarget !== null
-          ? Math.round(kcal).toLocaleString("es-ES") + "/" + Math.round(kcalTarget).toLocaleString("es-ES") + " kcal"
-          : Math.round(kcal).toLocaleString("es-ES") + " kcal"
-      ].join(" · ")
-    );
+    const proteinTarget = homeHealthMetricNumber(nutritionGoal.protein);
 
-    const activity = data.activity || {};
-    const activityGoal = data.activityObjective || {};
-    const gym = data.gym || {};
-    const steps = homeHealthMetricNumber(activity.steps);
-    const activeKcal = homeHealthMetricNumber(activity.activeKcal);
-    const exerciseWeek = homeHealthMetricNumber(activity.exerciseMinutesWeek);
-    const sessionsThisWeek = homeHealthMetricNumber(gym.sessionsThisWeek) ?? 0;
-    const stepsFloor = homeHealthMetricNumber(activityGoal.stepsFloor);
-    const exerciseTarget = homeHealthMetricNumber(activityGoal.moderateActivityMinWeek);
-    const strengthTarget = homeHealthMetricNumber(activityGoal.strengthSessionsWeek);
-    const checks = [
-      stepsFloor !== null && stepsFloor > 0 ? steps !== null && steps >= stepsFloor : null,
-      exerciseTarget !== null && exerciseTarget > 0 ? exerciseWeek !== null && exerciseWeek >= exerciseTarget : null,
-      strengthTarget !== null && strengthTarget > 0 ? sessionsThisWeek >= strengthTarget : null
-    ].filter((value) => value !== null);
-    const activityDone = checks.filter(Boolean).length;
-    const activityDetail = [
-      steps !== null ? Math.round(steps).toLocaleString("es-ES") + " pasos" : null,
-      activeKcal !== null ? Math.round(activeKcal).toLocaleString("es-ES") + " kcal activas" : null,
-      exerciseWeek !== null ? Math.round(exerciseWeek).toLocaleString("es-ES") + " min/sem" : null
-    ].filter(Boolean).join(" · ") || "Sin actividad disponible";
+    const kcalPct = homeHealthPercent(kcal, kcalTarget);
+    const kcalRemaining = kcalTarget === null ? null : kcalTarget - kcal;
     setHomeHealthMetric(
-      "home-health-activity-main",
-      "home-health-activity-detail",
-      checks.length ? activityDone + " / " + checks.length + " objetivos" : formatHomeHealthInteger(steps, " pasos"),
-      activityDetail
+      "home-health-kcal-main",
+      "home-health-kcal-detail",
+      kcalTarget !== null
+        ? Math.round(kcal).toLocaleString("es-ES") + " / " + Math.round(kcalTarget).toLocaleString("es-ES") + " kcal"
+        : Math.round(kcal).toLocaleString("es-ES") + " kcal",
+      kcalRemaining === null
+        ? "Objetivo pendiente"
+        : kcalRemaining >= 0
+          ? "Faltan " + Math.round(kcalRemaining).toLocaleString("es-ES") + " kcal"
+          : "+" + Math.round(Math.abs(kcalRemaining)).toLocaleString("es-ES") + " kcal sobre objetivo"
     );
+    setHomeHealthRing("home-health-kcal-ring", kcalPct, {
+      tone: kcalPct !== null && kcalPct > 105 ? "coral" : "amber",
+      label: "kcal",
+      displayPercent: kcalPct,
+      ariaLabel: kcalPct === null ? "Objetivo de calorías pendiente" : kcalPct + "% del objetivo diario de calorías"
+    });
+
+    const proteinPct = homeHealthPercent(protein, proteinTarget);
+    const proteinRemaining = proteinTarget === null ? null : proteinTarget - protein;
+    setHomeHealthMetric(
+      "home-health-protein-main",
+      "home-health-protein-detail",
+      proteinTarget !== null
+        ? Math.round(protein).toLocaleString("es-ES") + " / " + Math.round(proteinTarget).toLocaleString("es-ES") + " g"
+        : Math.round(protein).toLocaleString("es-ES") + " g",
+      proteinRemaining === null
+        ? "Objetivo pendiente"
+        : proteinRemaining > 0
+          ? "Faltan " + Math.round(proteinRemaining).toLocaleString("es-ES") + " g"
+          : "Objetivo cumplido"
+    );
+    setHomeHealthRing("home-health-protein-ring", proteinPct, {
+      tone: "mint",
+      label: "prot",
+      displayPercent: proteinPct,
+      ariaLabel: proteinPct === null ? "Objetivo de proteína pendiente" : proteinPct + "% del objetivo diario de proteína"
+    });
+
+    renderHomeGymSummary(data, gymData || {});
 
     const body = data.body || {};
     const weightToday = homeHealthMetricNumber(body.weightToday?.value);
@@ -1142,10 +1245,22 @@ async function renderHomeHealthCard() {
       formatHomeHealthDecimal(displayedWeight, " kg"),
       weightDetail
     );
+    setHomeHealthRing("home-health-weight-ring", null, {
+      tone: "blue",
+      centerValue: displayedWeight === null ? "—" : displayedWeight.toFixed(1).replace(".", ","),
+      centerLabel: "kg",
+      ariaLabel: displayedWeight === null ? "Peso no disponible" : "Peso actual " + displayedWeight.toFixed(1).replace(".", ",") + " kilogramos"
+    });
   } catch (error) {
-    setHomeHealthMetric("home-health-macros-main", "home-health-macros-detail", "—", "No se ha podido cargar");
-    setHomeHealthMetric("home-health-activity-main", "home-health-activity-detail", "—", "No se ha podido cargar");
-    setHomeHealthMetric("home-health-weight-main", "home-health-weight-detail", "—", "No se ha podido cargar");
+    for (const key of ["kcal", "protein", "gym", "weight"]) {
+      setHomeHealthMetric("home-health-" + key + "-main", "home-health-" + key + "-detail", "—", "No se ha podido cargar");
+      setHomeHealthRing("home-health-" + key + "-ring", null, {
+        tone: key === "protein" ? "mint" : key === "kcal" ? "amber" : "blue",
+        centerValue: "—",
+        centerLabel: key === "protein" ? "prot" : key === "weight" ? "kg" : key,
+        ariaLabel: "No se ha podido cargar el resumen de Salud"
+      });
+    }
     console.warn("Home health load failed", error);
   }
 }
