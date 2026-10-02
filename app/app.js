@@ -5426,6 +5426,23 @@ function renderDebtOverview() {
   const count = Number.isFinite(Number(debt.count)) ? Number(debt.count) : debt.debts.length;
   const totalBalance = firstFinite(debt.totalBalance);
   const monthlyPayment = firstFinite(debt.monthlyPayment);
+  const accounts = Array.isArray(finance.creditAccounts) ? finance.creditAccounts : [];
+  const credit = accounts.find((item) => String(item.status || "").toLowerCase() !== "closed") || null;
+
+  const obligations = debt.debts
+    .filter((item) => !/corte ingl[eé]s|financiera|\beci\b/i.test(String(item.title || "")))
+    .slice()
+    .sort((a, b) => {
+      const paymentDelta = (firstFinite(b.monthlyPayment) || 0) - (firstFinite(a.monthlyPayment) || 0);
+      if (paymentDelta) return paymentDelta;
+      return (firstFinite(b.balance) || 0) - (firstFinite(a.balance) || 0);
+    })
+    .slice(0, 4);
+
+  const grossPending = firstFinite(credit?.grossPending);
+  const netExposure = firstFinite(credit?.netHouseholdExposure);
+  const nextReceipt = firstFinite(credit?.estimatedNextReceipt);
+  const revolving = firstFinite(credit?.revolvingBalance);
 
   container.innerHTML = `
     <div class="debt-summary-grid">
@@ -5442,6 +5459,42 @@ function renderDebtOverview() {
         <strong>${count}</strong>
       </div>
     </div>
+
+    ${obligations.length ? `
+      <section class="home-debt-breakdown" aria-label="Principales obligaciones activas">
+        <div class="home-debt-breakdown-heading">
+          <strong>Principales obligaciones</strong>
+          <span>por cuota mensual</span>
+        </div>
+        <div class="home-debt-obligations">
+          ${obligations.map((item) => {
+            const balance = firstFinite(item.balance);
+            const payment = firstFinite(item.monthlyPayment);
+            return `
+              <div class="home-debt-obligation">
+                <strong>${escapeHtml(item.title || "Obligación")}</strong>
+                <span>${payment === null ? "Cuota —" : formatMoney(payment, currency) + "/mes"}</span>
+                <small>${balance === null ? "Saldo por completar" : formatMoney(balance, currency) + " pendiente"}</small>
+              </div>`;
+          }).join("")}
+        </div>
+      </section>` : ""}
+
+    ${credit ? `
+      <section class="home-debt-credit-summary" aria-label="Resumen de El Corte Inglés">
+        <div class="home-debt-breakdown-heading">
+          <strong>${escapeHtml(credit.name || "El Corte Inglés")}</strong>
+          <span>crédito · no se suma de nuevo al total</span>
+        </div>
+        <div class="home-debt-credit-grid">
+          <span><small>Pendiente bruto</small><strong>${grossPending === null ? "—" : formatMoney(grossPending, currency)}</strong></span>
+          <span><small>Próximo recibo</small><strong>${nextReceipt === null ? "—" : formatMoney(nextReceipt, currency)}</strong></span>
+          <span><small>Revolving</small><strong>${revolving === null ? "—" : formatMoney(revolving, currency)}</strong></span>
+          <span><small>Exposición propia</small><strong>${netExposure === null ? "—" : formatMoney(netExposure, currency)}</strong></span>
+        </div>
+      </section>` : ""}
+
+    ${debt.sourceUpdatedAt ? `<p class="debt-source-note">Fuente de deudas · ${escapeHtml(formatFinanceDate(debt.sourceUpdatedAt, debt.sourceUpdatedAt))}</p>` : ""}
     ${totalBalance === null
       ? '<p class="debt-source-note">Las cuotas están registradas; faltan saldos pendientes para calcular la deuda total real.</p>'
       : ""}`;
