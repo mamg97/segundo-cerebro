@@ -1140,7 +1140,6 @@ function renderHomeGymSummary(healthData, gymData) {
     const title = day?.title || day?.focus || todaySession.dayId || "Sesión registrada";
     setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Hecho", title);
     setHomeHealthUpdated("gym", todaySession.createdAt || todaySession.sessionDate || null, "Gym");
-    setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
     setHomeHealthRing("home-health-gym-ring", 100, {
       tone: "mint",
       centerValue: "✓",
@@ -1175,6 +1174,7 @@ function renderHomeGymSummary(healthData, gymData) {
       "Descanso",
       "Objetivo semanal cubierto · siguiente " + suggestedTitle
     );
+    setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
     setHomeHealthRing("home-health-gym-ring", 100, {
       tone: "mint",
       centerValue: "✓",
@@ -1206,6 +1206,7 @@ async function renderHomeHealthCard() {
   if (privateModeKind !== "remote") {
     for (const key of ["kcal", "protein", "gym", "weight"]) {
       setHomeHealthMetric("home-health-" + key + "-main", "home-health-" + key + "-detail", "—", "Disponible en modo privado");
+      setHomeHealthUpdated(key, null, "");
       setHomeHealthRing("home-health-" + key + "-ring", null, {
         tone: key === "protein" ? "mint" : key === "kcal" ? "amber" : "blue",
         centerValue: "—",
