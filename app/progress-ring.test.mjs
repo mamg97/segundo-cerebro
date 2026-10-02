@@ -65,8 +65,8 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.41\.0/);
-assert.match(index, /styles\.css\?v=0\.41\.0/);
+assert.match(index, /app\.js\?v=0\.41\.1/);
+assert.match(index, /styles\.css\?v=0\.41\.1/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -170,15 +170,18 @@ assert.match(css, /v0\.39\.10 — denser Home summary cards/);
 assert.match(css, /v0\.39\.12 — desktop 2x2 horizontal summary layout/);
 assert.match(css, /v0\.39\.13 — unified symmetric Home summary cards/);
 assert.match(index, /id="home-health-card"/);
-assert.match(index, /id="home-health-habits-main"/);
-assert.match(index, /id="home-health-macros-main"/);
-assert.match(index, /id="home-health-activity-main"/);
-assert.match(index, /id="home-health-weight-main"/);
-assert.doesNotMatch(index, /id="home-habits-card"|id="home-nutrition-card"/);
-assert.match(css, /\.home-health-metrics\s*\{[\s\S]*?grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
+for (const id of ["habits", "kcal", "protein", "gym", "weight"]) {
+  assert.match(index, new RegExp(`id="home-health-${id}-main"`));
+  assert.match(index, new RegExp(`id="home-health-${id}-ring"`));
+}
+assert.doesNotMatch(index, /id="home-habits-card"|id="home-nutrition-card"|id="home-health-activity-main"|id="home-health-macros-main"/);
+assert.match(css, /\.home-health-metrics\s*\{[\s\S]*?grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\)/);
 assert.match(css, /#home-pantry-status,[\s\S]*#home-shopping-preview,[\s\S]*#home-objects-status[\s\S]*display:\s*none/);
 assert.match(app, /async function renderHomeHealthCard\(\)/);
 assert.match(app, /renderHomeHealthHabitsSummary\(\)/);
+assert.match(app, /setHomeHealthRing\("home-health-kcal-ring"/);
+assert.match(app, /setHomeHealthRing\("home-health-protein-ring"/);
+assert.match(app, /setHomeHealthRing\("home-health-gym-ring"/);
 
 assert.match(css, /\.home-health-card\s*\{[\s\S]*?grid-column:\s*1 \/ -1/);
 assert.match(css, /\.pantry-home-primary\s*\{[\s\S]*?grid-template-columns:/);
