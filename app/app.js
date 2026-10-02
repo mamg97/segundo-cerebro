@@ -1101,6 +1101,7 @@ function renderHomeHealthHabitsSummary() {
     label: "hoy",
     ariaLabel: total > 0 ? percentage + "% de hábitos completados hoy" : "Sin hábitos programados"
   });
+  setHomeHealthUpdated("habits", state.habitsSummary?.source?.updatedAt || null, "Hábitos");
 }
 
 function renderHomeGymSummary(healthData, gymData) {
