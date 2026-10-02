@@ -1154,6 +1154,16 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Assets app/styles: `v0.40.7`.
 
 
+## MIDAS · incidente TFM detectado por auditor · 02/10/2026
+
+- El auditor funcionó correctamente: el único fallo operativo MIDAS observado en el corte era `MIDAS TFM shadow forecasts`; campañas diarias, Capital Cycle y Buy The Dip estaban verdes.
+- Causa raíz: Yahoo entregó las barras diarias `.MC` del 01/10 con `Close=NaN` para todo el universo, aunque el intradía regular estaba completo.
+- `midas-paper-lab` corrigió TFM en `8bb6c174d6e207592b69d6adf5c6986ddfc66cad` usando un fallback restringido al cierre de la sesión objetivo desde barras horarias validadas.
+- El backup cron TFM se adelantó a 23:23 UTC del mismo día porque GitHub estaba retrasando schedules 3–4 horas.
+- La sesión 01/10 no se backfillea después de la apertura del 02/10; se considera perdida prospectivamente.
+- El panel y `Audit production web` deben seguir mostrando TFM en rojo hasta que un nuevo schedule termine correctamente y materialice el diario. No rebajar ese rojo manualmente.
+- Fallos visuales del Armario detectados en el mismo audit son independientes de MIDAS y deben tratarse en OBJETOS.
+
 ## MIDAS · fuente robusta de salud operativa · 01/10/2026
 
 - Cada workflow programado de la competición escribe un artefacto mínimo en `mamg97/midas-paper-lab/strategy_runtime/*.json` mediante un step `always()`; por tanto registra también el fallo del motor antes del commit.
