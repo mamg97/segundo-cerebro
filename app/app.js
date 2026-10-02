@@ -2555,31 +2555,84 @@ function renderHealthOverview(data, gymData = {}) {
 
   panel.innerHTML = `
     <div class="health-dashboard-status progress-ring-status">
-      <span>
-        ${progressRingMarkup(nutritionProgress, { tone: "amber", size: "sm", label: "nutri", ariaLabel: "Progreso de nutrición" })}
-        <span><small>Nutrición</small><strong>${nutritionChecks.length ? `${nutritionDone}/${nutritionChecks.length}` : "Sin objetivo"}</strong></span>
+      <span data-health-summary="habits">
+        ${progressRingMarkup(habitProgress, { tone: "violet", size: "sm", label: "hoy", ariaLabel: habitTotal > 0 ? habitProgress + "% de hábitos completados hoy" : "Sin hábitos programados" })}
+        <span>
+          <small>Hábitos</small>
+          <strong id="health-summary-habits-main">${habitTotal > 0 ? habitDone + " / " + habitTotal : "—"}</strong>
+          <em>${habitTotal > 0 ? habitProgress + "% hoy · racha " + habitStreak + " d" : "Sin hábitos programados"}</em>
+          <time>${escapeHtml(habitsUpdated)}</time>
+        </span>
       </span>
-      <span>
-        ${progressRingMarkup(activityProgress, { tone: "blue", size: "sm", label: "actividad", ariaLabel: "Progreso de actividad" })}
-        <span><small>Actividad</small><strong>${activityChecks.length ? `${activityDone}/${activityChecks.length}` : "Sin objetivo"}</strong></span>
+      <span data-health-summary="kcal">
+        ${progressRingMarkup(kcalProgress, { tone: kcalProgress !== null && kcalProgress > 105 ? "coral" : "amber", size: "sm", label: "kcal", ariaLabel: kcalProgress === null ? "Objetivo de calorías pendiente" : kcalProgress + "% del objetivo diario de calorías" })}
+        <span>
+          <small>Kcal hoy</small>
+          <strong id="health-summary-kcal-main">${kcalTarget !== null ? fmt0(kcalConsumed) + " / " + fmt0(kcalTarget) + " kcal" : fmt0(kcalConsumed, " kcal")}</strong>
+          <em>${kcalTarget === null ? "Objetivo pendiente" : kcalTarget - kcalConsumed >= 0 ? "Faltan " + fmt0(kcalTarget - kcalConsumed) + " kcal" : "+" + fmt0(Math.abs(kcalTarget - kcalConsumed)) + " kcal sobre objetivo"}</em>
+          <time>${escapeHtml(nutritionUpdated)}</time>
+        </span>
       </span>
-      <span>
-        ${progressRingMarkup(strengthProgress, { tone: "mint", size: "sm", label: "fuerza", ariaLabel: "Progreso semanal de fuerza" })}
-        <span><small>Fuerza</small><strong>${strengthTarget === 0 ? "Pausa" : Number.isFinite(strengthTarget) ? `${sessionsThisWeek}/${fmt0(strengthTarget)} sesiones` : `${sessionsThisWeek} sesiones`}</strong></span>
+      <span data-health-summary="protein">
+        ${progressRingMarkup(proteinProgress, { tone: "mint", size: "sm", label: "prot", ariaLabel: proteinProgress === null ? "Objetivo de proteína pendiente" : proteinProgress + "% del objetivo diario de proteína" })}
+        <span>
+          <small>Proteína hoy</small>
+          <strong id="health-summary-protein-main">${proteinTarget !== null ? fmt0(proteinConsumed) + " / " + fmt0(proteinTarget) + " g" : fmt0(proteinConsumed, " g")}</strong>
+          <em>${proteinTarget === null ? "Objetivo pendiente" : proteinTarget - proteinConsumed > 0 ? "Faltan " + fmt0(proteinTarget - proteinConsumed) + " g" : "Objetivo cumplido"}</em>
+          <time>${escapeHtml(nutritionUpdated)}</time>
+        </span>
       </span>
-      <span class="health-status-text-only"><small>Recomposición</small><strong>${escapeHtml(recompositionStatus)}</strong></span>
+      <span data-health-summary="gym">
+        ${progressRingMarkup(gymSummary.progress, { tone: gymSummary.tone, size: "sm", label: gymSummary.centerLabel, ariaLabel: gymSummary.ariaLabel, centerValue: gymSummary.centerValue })}
+        <span>
+          <small>Gym hoy</small>
+          <strong id="health-summary-gym-main">${escapeHtml(gymSummary.main)}</strong>
+          <em>${escapeHtml(gymSummary.detail)}</em>
+          <time>${escapeHtml(gymUpdated)}</time>
+        </span>
+      </span>
+      <span class="health-status-text-only health-status-weight" data-health-summary="weight">
+        <small>Peso</small>
+        <strong id="health-summary-weight-main">${fmt1(latestWeight, " kg")}</strong>
+        <em>${weightAvg !== null ? "Media 7 d " + fmt1(weightAvg, " kg") + " · " + weightCoverageText : "Sin media disponible"}</em>
+        <time>${escapeHtml(weightUpdated)}</time>
+      </span>
     </div>
 
     <div class="health-recomp-grid">
       <section class="health-recomp-card">
-        <header><span>Composición corporal</span><strong>Tendencia</strong></header>
+        <header><span>Composición corporal</span><strong>${escapeHtml(recompositionStatus)}</strong></header>
         <div class="health-recomp-kpis">
-          <div><small>Peso hoy</small><strong>${fmt1(weightToday, " kg")}</strong></div>
-          <div><small>Media 7 días</small><strong>${fmt1(weightAvg, " kg")}</strong></div>
-          <div><small>Cambio semanal</small><strong class="${changeClass}">${changeText}</strong></div>
-          <div><small>Cintura</small><strong>${fmt1(waist, " cm")}</strong></div>
-          <div><small>Grasa</small><strong>${fmt1(bodyFat, "%")}</strong></div>
-          <div><small>Masa magra</small><strong>${fmt1(lean, " kg")}</strong></div>
+          <div>
+            <small>Último peso</small>
+            <strong>${fmt1(latestWeight, " kg")}</strong>
+            <span class="health-metric-freshness">${escapeHtml(weightUpdated)}</span>
+          </div>
+          <div>
+            <small>Media 7 días</small>
+            <strong>${fmt1(weightAvg, " kg")}</strong>
+            <span class="health-metric-freshness">${weightCoverageText}</span>
+          </div>
+          <div>
+            <small>Cambio semanal</small>
+            <strong class="${changeClass}">${changeText}</strong>
+            <span class="health-metric-freshness">${weightSummary.trendReady ? weightCoverageText + " · " + previousWeightCoverageText : "Pendiente · " + weightCoverageText + " · " + previousWeightCoverageText}</span>
+          </div>
+          <div>
+            <small>Cintura</small>
+            <strong>${fmt1(waist, " cm")}</strong>
+            <span class="health-metric-freshness">${escapeHtml(bodyMetricUpdated(body.waist, "Salud"))}</span>
+          </div>
+          <div>
+            <small>Grasa</small>
+            <strong>${fmt1(bodyFat, "%")}</strong>
+            <span class="health-metric-freshness">${escapeHtml(bodyMetricUpdated(body.bodyFat, "Peso"))}</span>
+          </div>
+          <div>
+            <small>Masa magra</small>
+            <strong>${fmt1(lean, " kg")}</strong>
+            <span class="health-metric-freshness">${escapeHtml(bodyMetricUpdated(body.leanBodyMass, "Peso"))}</span>
+          </div>
         </div>
         <div class="health-objective-notes">
           ${weightGoal?.target ? `<p><b>Peso:</b> ${escapeHtml(weightGoal.target)}</p>` : ""}
