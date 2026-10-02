@@ -1282,14 +1282,21 @@ async function renderHomeHealthCard() {
       displayPercent: proteinPct,
       ariaLabel: proteinPct === null ? "Objetivo de proteína pendiente" : proteinPct + "% del objetivo diario de proteína"
     });
+    const nutritionUpdatedAt = data.nutritionSummary?.updatedAt || null;
+    const nutritionUpdateSource = data.nutritionSummary?.updateKind === "objective" ? "Objetivo" : "Nutrición";
+    setHomeHealthUpdated("kcal", nutritionUpdatedAt, nutritionUpdateSource);
+    setHomeHealthUpdated("protein", nutritionUpdatedAt, nutritionUpdateSource);
 
     renderHomeGymSummary(data, gymData || {});
 
     const body = data.body || {};
-    const weightToday = homeHealthMetricNumber(body.weightToday?.value);
     const weightAverage = homeHealthMetricNumber(body.weight7dAverage);
     const weeklyChange = homeHealthMetricNumber(body.weightWeeklyChange);
-    const displayedWeight = weightToday ?? weightAverage;
+    const weightSamples = (Array.isArray(body.samples) ? body.samples : [])
+      .filter((sample) => sample?.type === "bodyMass" && homeHealthMetricNumber(sample.value) !== null)
+      .sort((a, b) => String(a.measuredAt || a.date || "").localeCompare(String(b.measuredAt || b.date || "")));
+    const latestWeightSample = body.weightToday || weightSamples.at(-1) || null;
+    const displayedWeight = homeHealthMetricNumber(latestWeightSample?.value);
     const weightDetail = [
       weightAverage !== null ? "Media 7 d " + formatHomeHealthDecimal(weightAverage, " kg") : null,
       weeklyChange !== null
@@ -1302,15 +1309,21 @@ async function renderHomeHealthCard() {
       formatHomeHealthDecimal(displayedWeight, " kg"),
       weightDetail
     );
+    setHomeHealthUpdated(
+      "weight",
+      latestWeightSample?.measuredAt || latestWeightSample?.importedAt || latestWeightSample?.date || null,
+      latestWeightSample?.source || "Peso"
+    );
     setHomeHealthRing("home-health-weight-ring", null, {
       tone: "blue",
       centerValue: displayedWeight === null ? "—" : displayedWeight.toFixed(1).replace(".", ","),
       centerLabel: "kg",
-      ariaLabel: displayedWeight === null ? "Peso no disponible" : "Peso actual " + displayedWeight.toFixed(1).replace(".", ",") + " kilogramos"
+      ariaLabel: displayedWeight === null ? "Peso no disponible" : "Última medición de peso " + displayedWeight.toFixed(1).replace(".", ",") + " kilogramos"
     });
   } catch (error) {
     for (const key of ["kcal", "protein", "gym", "weight"]) {
       setHomeHealthMetric("home-health-" + key + "-main", "home-health-" + key + "-detail", "—", "No se ha podido cargar");
+      setHomeHealthUpdated(key, null, "");
       setHomeHealthRing("home-health-" + key + "-ring", null, {
         tone: key === "protein" ? "mint" : key === "kcal" ? "amber" : "blue",
         centerValue: "—",
