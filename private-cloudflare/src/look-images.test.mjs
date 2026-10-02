@@ -158,6 +158,7 @@ test("falls back to processed image when a canonical thumbnail is unreadable", a
   fallbackSource.value.wardrobe[0].processedPhotoUrl =
     "/api/objects/obj-top/image/processed?v=version-top-1234";
 
+  let normalizedFallbacks = 0;
   const result = await renderObjectsLookImage(
     request({ look_id: "look-test" }),
     {},
@@ -174,10 +175,20 @@ test("falls back to processed image when a canonical thumbnail is unreadable", a
         row: ["look-test", "Look test", ""]
       }),
       writeLookPhoto: async () => {},
-      invalidateObjectsCache: () => {}
+      invalidateObjectsCache: () => {},
+      generateThumbnailWebp: async () => {
+        normalizedFallbacks += 1;
+        return {
+          bytes: new Uint8Array([0x52, 0x49, 0x46, 0x46, 9, 8, 7, 6, 0x57, 0x45, 0x42, 0x50]),
+          mime: "image/webp",
+          width: 512,
+          height: 512
+        };
+      }
     }
   );
 
   assert.equal(result.ok, true);
+  assert.equal(normalizedFallbacks, 1);
   assert.equal(store.writes.length, 1);
 });
