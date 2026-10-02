@@ -1335,16 +1335,16 @@ Este relevo es continuación directa del gestor anterior. No reconstruir el arma
 - Primera imagen de un look: `overwrite=false`. Sustitución deliberada: `overwrite=true`.
 - Una ingesta solo se considera terminada tras `ok=true`, `Looks.foto_url` same-origin versionada y verificación en la web.
 
-### Estado concreto al cerrar esta conversación
+### Estado concreto tras cierre ROPA 2
 
-- Las cuatro composiciones visuales generadas más recientemente ya tienen sus correspondientes filas canónicas en `Looks` y sus relaciones en `LookItems`.
-- Sus `foto_url` todavía deben considerarse **pendientes hasta verificación explícita**. Al iniciar ROPA 2, leer el Sheet y comprobar el estado real antes de escribir nada; si siguen vacías, ingerir las imágenes sobre esos `look_id` existentes, sin crear looks nuevos.
-- Las copias temporales privadas usadas como staging de esas cuatro imágenes existen en Drive. Reutilizarlas si siguen disponibles; no pedir al usuario que regenere o vuelva a subir las imágenes salvo que se compruebe que el staging ya no es recuperable. No documentar IDs privados ni URLs temporales en Git.
-- El primer intento de seed de looks falló porque Railway redeplegó una revisión antigua del bridge que todavía esperaba `objeto_id`; el síntoma fue `INVALID_OBJECT_ID` ante jobs con `look_id`.
-- Antes de reintentar, confirmar que `objects-chatgpt-bridge` está ejecutando un commit que contiene `ingest-look-image` y el soporte de `look_id` en `seed.mjs`. No basta con que GitHub `main` lo contenga: verificar el commit/runtime efectivo de Railway.
-- Tras el intento fallido se restauró y verificó el estado seguro del servicio: `OBJECTS_SEED_JOBS` vacío, start command normal `npm start` y redeploy de restauración terminado en verde el 02/10/2026.
-- Cuando el runtime correcto esté desplegado: materializar referencias frescas de los cuatro archivos de staging, cargar un lote de hasta 4 jobs con `look_id`, ejecutar seed, exigir `stage=done` + `ok=true` por item, releer `Looks.foto_url`, comprobar la web y solo entonces limpiar staging.
-- Si Railway vuelve a construir una revisión Git antigua, resolver primero la sincronización de fuente/deploy de Railway; no reintentar el seed contra código viejo y no modificar el Sheet a mano para saltarse el pipeline.
+- Los cuatro looks compuestos recientes siguen siendo las filas canónicas existentes; no se creó ningún look ni relación adicional.
+- Verificación 2026-10-02: `Looks.foto_url` contiene una ruta privada same-origin versionada para los cuatro `look-render-*` recientes.
+- Railway `objects-chatgpt-bridge` ejecutó el commit `15a2a80a`, que contiene `POST /ingest-look-image` y soporte de `look_id` en `seed.mjs`.
+- El deploy de ingesta registró para los cuatro jobs `stage=done` y `ok=true`; los cuatro `foto_url` resultantes coinciden con los valores leídos posteriormente en `Looks`.
+- El servicio quedó restaurado a `npm start`. El deploy de restauración terminó en `SUCCESS` y los logs muestran `OBJECTS_SEED_JOBS_EMPTY`; no volver a ejecutar el lote.
+- Las copias temporales específicas de estas cuatro composiciones ya no están en la carpeta de staging de Drive. Permanecen allí otros ficheros históricos de prendas de septiembre; no eliminarlos como si pertenecieran a esta operación.
+- `Audit production web` sobre `e9d8e125` verificó después de la ingesta la pestaña `Objetos → Looks`: imágenes cargadas/decodificadas, sin deformación, overflow, clipping ni solapes. El único fallo del audit fue MIDAS TFM y es ajeno a OBJETOS.
+- Esta tarea queda cerrada. No reingerir estas cuatro imágenes ni escribir manualmente `Looks.foto_url` salvo sustitución futura deliberada con `overwrite=true`.
 
 ### Invariantes de UI que ya están cerrados
 
