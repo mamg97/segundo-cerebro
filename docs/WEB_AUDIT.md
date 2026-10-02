@@ -328,3 +328,20 @@ Audit production web #103 validó este contrato con 750 checks y solo dos fallos
 - Patrimonio y Obligaciones activas siguen la misma regla: ancho 50/50 y altura pareja cuando comparten fila.
 - La familia tipográfica canónica de toda la aplicación es `Avenir Next → Avenir → Segoe UI → system-ui → sans-serif`; no deben reaparecer titulares o cifras con Iowan/Palatino.
 - El auditor comprueba estas invariantes además de overflow, clipping y solapes responsive.
+
+
+## Salud · paridad Resumen ↔ Home
+
+Desde v0.41.5, `Salud → Resumen` no mantiene un sistema de puntuación paralelo. Su fila superior replica la semántica del Home para los cinco KPIs diarios:
+
+- Hábitos: completados/total, porcentaje y racha.
+- Kcal hoy: consumidas/objetivo y progreso real sobre el objetivo diario.
+- Proteína hoy: consumida/objetivo y progreso real.
+- Gym hoy: mismo estado `Hecho | Pausado | Descanso | Sugerido | Sin plan` y mismo motivo breve.
+- Peso: última medición real disponible, no media 7 d como sustituto.
+
+El auditor debe abrir Salud y comparar los valores principales de esos cinco resúmenes contra los que estaban visibles en Home. Debe haber cuatro anillos de progreso; Peso permanece estático.
+
+La tendencia semanal de peso solo se presenta como cambio semanal interpretable cuando existen al menos 5 días con peso en la ventana actual de 7 días y 5 días en la ventana previa. Con cobertura menor, Home y Salud muestran la media disponible y la cobertura, pero no convierten el delta parcial en un juicio de recomposición.
+
+Composición corporal debe mostrar freshness/cobertura junto a último peso, media 7 d, cambio semanal, cintura, grasa y masa magra.
