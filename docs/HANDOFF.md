@@ -1612,3 +1612,16 @@ Antes de cualquier cambio:
 - Importante: al ser una app iOS de desarrollo instalada desde Xcode, el merge en Git no actualiza por sí solo el binario que ya está en el iPhone. Para que la nueva cadencia entre en vigor hay que recompilar/instalar la versión actual del proyecto en el dispositivo.
 - Audit production web #109, ejecutado antes de actualizar el binario del iPhone, seguía viendo como última muestra corporal la misma medición antigua que ya existía en D1. Por tanto el frontend estaba leyendo correctamente D1; el punto pendiente real era dispositivo/HealthKit → bridge.
 - No “arreglar” freshness editando manualmente el Sheet derivado. Si una pesada nueva está en Apple Health y no llega a D1, diagnosticar bridge/autorización/background delivery.
+
+
+### ORGANIZADOR 9 · paridad Salud Resumen / Home · 2026-10-02
+
+- Petición: el Resumen de Salud debe cuadrar con la tarjeta Salud del Home y no presentar `Nutrición 0/4` como si fuese progreso diario.
+- Rama `organizador9/health-summary-home-parity`:
+  - la fila superior de Salud pasa a Hábitos / Kcal hoy / Proteína hoy / Gym hoy / Peso, con las mismas reglas del Home;
+  - Gym usa una derivación compartida para que estados y motivo sean idénticos;
+  - Peso usa una derivación compartida y la última muestra real en ambas superficies;
+  - la tendencia semanal de peso exige ≥5/7 días con dato tanto en la ventana actual como en la previa; si no, se muestra cobertura y no un delta semanal engañoso;
+  - Composición corporal muestra fecha/fuente o cobertura para último peso, media 7 d, cambio, cintura, grasa y masa magra;
+  - el auditor compara los cinco valores principales de Salud contra Home para impedir divergencias futuras.
+- No se modifican datos del Sheet: es una corrección reutilizable de semántica/presentación.

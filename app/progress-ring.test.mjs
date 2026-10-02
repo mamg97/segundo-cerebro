@@ -65,8 +65,8 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.41\.4/);
-assert.match(index, /styles\.css\?v=0\.41\.4/);
+assert.match(index, /app\.js\?v=0\.41\.5/);
+assert.match(index, /styles\.css\?v=0\.41\.5/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -82,9 +82,10 @@ assert.match(app, /updateProgressRing\(ring, percentage/);
 assert.match(app, /updateProgressRing\(ring, fillPct/);
 
 for (const marker of [
-  "Progreso de nutrición",
-  "Progreso de actividad",
-  "Progreso semanal de fuerza",
+  'data-health-summary="habits"',
+  'data-health-summary="kcal"',
+  'data-health-summary="protein"',
+  'data-health-summary="gym"',
   "nutrition-target-ring-card"
 ]) {
   assert.ok(app.includes(marker), "Missing audited app ring surface: " + marker);

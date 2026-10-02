@@ -1104,7 +1104,7 @@ function renderHomeHealthHabitsSummary() {
   setHomeHealthUpdated("habits", state.habitsSummary?.source?.updatedAt || null, "Hábitos");
 }
 
-function renderHomeGymSummary(healthData, gymData) {
+function deriveGymTodaySummary(healthData, gymData = {}) {
   const activityGoal = healthData.activityObjective || {};
   const overviewGym = healthData.gym || {};
   const plan = Array.isArray(gymData?.plan) ? gymData.plan : [];
@@ -1118,47 +1118,46 @@ function renderHomeGymSummary(healthData, gymData) {
 
   if (paused) {
     const reason = String(gymData?.trainingStatus?.reason || activityGoal.note || "Pausa temporal del entrenamiento de fuerza.");
-    const briefReason = shortHomeGymReason(reason);
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Pausado", briefReason);
-    setHomeHealthUpdated(
-      "gym",
-      gymData?.trainingStatus?.updatedAt || gymData?.trainingStatus?.effectiveDate || activityGoal.updatedAt || activityGoal.effectiveDate || null,
-      "Gym"
-    );
-    setHomeHealthRing("home-health-gym-ring", null, {
+    const detail = shortHomeGymReason(reason);
+    return {
+      main: "Pausado",
+      detail,
+      updatedAt: gymData?.trainingStatus?.updatedAt || gymData?.trainingStatus?.effectiveDate || activityGoal.updatedAt || activityGoal.effectiveDate || null,
+      progress: null,
       tone: "amber",
       centerValue: "⏸",
       centerLabel: "pausa",
-      ariaLabel: "Gimnasio pausado: " + briefReason
-    });
-    return;
+      ariaLabel: "Gimnasio pausado: " + detail
+    };
   }
 
   const todaySession = sessions.find((session) => String(session?.sessionDate || "") === selectedDate) || null;
   if (todaySession) {
     const day = plan.find((candidate) => candidate.id === todaySession.dayId);
-    const title = day?.title || day?.focus || todaySession.dayId || "Sesión registrada";
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Hecho", title);
-    setHomeHealthUpdated("gym", todaySession.createdAt || todaySession.sessionDate || null, "Gym");
-    setHomeHealthRing("home-health-gym-ring", 100, {
+    const detail = day?.title || day?.focus || todaySession.dayId || "Sesión registrada";
+    return {
+      main: "Hecho",
+      detail,
+      updatedAt: todaySession.createdAt || todaySession.sessionDate || null,
+      progress: 100,
       tone: "mint",
       centerValue: "✓",
       centerLabel: "hecho",
-      ariaLabel: "Entrenamiento de hoy completado: " + title
-    });
-    return;
+      ariaLabel: "Entrenamiento de hoy completado: " + detail
+    };
   }
 
   if (!plan.length) {
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sin plan", "Plan no disponible");
-    setHomeHealthUpdated("gym", gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
-    setHomeHealthRing("home-health-gym-ring", null, {
+    return {
+      main: "Sin plan",
+      detail: "Plan no disponible",
+      updatedAt: gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null,
+      progress: null,
       tone: "blue",
       centerValue: "—",
       centerLabel: "gym",
       ariaLabel: "Sin plan de entrenamiento conectado"
-    });
-    return;
+    };
   }
 
   const lastDayId = sessions[0]?.dayId || null;
@@ -1168,35 +1167,70 @@ function renderHomeGymSummary(healthData, gymData) {
   const suggestedTitle = suggested?.title || suggested?.focus || "Siguiente sesión";
 
   if (strengthTarget !== null && strengthTarget > 0 && sessionsThisWeek >= strengthTarget) {
-    setHomeHealthMetric(
-      "home-health-gym-main",
-      "home-health-gym-detail",
-      "Descanso",
-      "Objetivo semanal cubierto · siguiente " + suggestedTitle
-    );
-    setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
-    setHomeHealthRing("home-health-gym-ring", 100, {
+    return {
+      main: "Descanso",
+      detail: "Objetivo semanal cubierto · siguiente " + suggestedTitle,
+      updatedAt: sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null,
+      progress: 100,
       tone: "mint",
       centerValue: "✓",
       centerLabel: "sem",
       ariaLabel: "Objetivo semanal de gimnasio cubierto. Siguiente sesión: " + suggestedTitle
-    });
-    return;
+    };
   }
 
-  const weeklyProgress = strengthTarget !== null && strengthTarget > 0
+  const progress = strengthTarget !== null && strengthTarget > 0
     ? Math.max(0, Math.round((sessionsThisWeek / strengthTarget) * 100))
     : 0;
   const weekText = strengthTarget !== null && strengthTarget > 0
     ? " · " + sessionsThisWeek + "/" + Math.round(strengthTarget) + " esta semana"
     : "";
-  setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sugerido", suggestedTitle + weekText);
-  setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
-  setHomeHealthRing("home-health-gym-ring", weeklyProgress, {
+  return {
+    main: "Sugerido",
+    detail: suggestedTitle + weekText,
+    updatedAt: sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null,
+    progress,
     tone: "blue",
     centerValue: "Hoy",
     centerLabel: "gym",
     ariaLabel: "Siguiente entrenamiento sugerido: " + suggestedTitle
+  };
+}
+
+function healthWeightSummary(body = {}, selectedDate = localDateKey()) {
+  const samples = (Array.isArray(body.samples) ? body.samples : [])
+    .filter((sample) => sample?.type === "bodyMass" && homeHealthMetricNumber(sample.value) !== null)
+    .sort((a, b) => String(a.measuredAt || a.date || "").localeCompare(String(b.measuredAt || b.date || "")));
+  const latest = body.weightToday || samples.at(-1) || null;
+  const currentStart = shiftDateKey(selectedDate, -6);
+  const previousStart = shiftDateKey(selectedDate, -13);
+  const previousEnd = shiftDateKey(selectedDate, -7);
+  const currentDays = new Set(samples.filter((sample) => sample.date >= currentStart && sample.date <= selectedDate).map((sample) => sample.date)).size;
+  const previousDays = new Set(samples.filter((sample) => sample.date >= previousStart && sample.date <= previousEnd).map((sample) => sample.date)).size;
+  const average = homeHealthMetricNumber(body.weight7dAverage);
+  const rawWeeklyChange = homeHealthMetricNumber(body.weightWeeklyChange);
+  const trendReady = currentDays >= 5 && previousDays >= 5 && rawWeeklyChange !== null;
+  return {
+    latest,
+    value: homeHealthMetricNumber(latest?.value),
+    average,
+    weeklyChange: trendReady ? rawWeeklyChange : null,
+    rawWeeklyChange,
+    currentDays,
+    previousDays,
+    trendReady
+  };
+}
+
+function renderHomeGymSummary(healthData, gymData) {
+  const summary = deriveGymTodaySummary(healthData, gymData);
+  setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", summary.main, summary.detail);
+  setHomeHealthUpdated("gym", summary.updatedAt, "Gym");
+  setHomeHealthRing("home-health-gym-ring", summary.progress, {
+    tone: summary.tone,
+    centerValue: summary.centerValue,
+    centerLabel: summary.centerLabel,
+    ariaLabel: summary.ariaLabel
   });
 }
 
@@ -1290,18 +1324,16 @@ async function renderHomeHealthCard() {
     renderHomeGymSummary(data, gymData || {});
 
     const body = data.body || {};
-    const weightAverage = homeHealthMetricNumber(body.weight7dAverage);
-    const weeklyChange = homeHealthMetricNumber(body.weightWeeklyChange);
-    const weightSamples = (Array.isArray(body.samples) ? body.samples : [])
-      .filter((sample) => sample?.type === "bodyMass" && homeHealthMetricNumber(sample.value) !== null)
-      .sort((a, b) => String(a.measuredAt || a.date || "").localeCompare(String(b.measuredAt || b.date || "")));
-    const latestWeightSample = body.weightToday || weightSamples.at(-1) || null;
-    const displayedWeight = homeHealthMetricNumber(latestWeightSample?.value);
+    const weightSummary = healthWeightSummary(body, data.date || localDateKey());
+    const latestWeightSample = weightSummary.latest;
+    const displayedWeight = weightSummary.value;
     const weightDetail = [
-      weightAverage !== null ? "Media 7 d " + formatHomeHealthDecimal(weightAverage, " kg") : null,
-      weeklyChange !== null
-        ? "Δ " + (weeklyChange > 0 ? "+" : "") + weeklyChange.toFixed(1).replace(".", ",") + " kg"
-        : null
+      weightSummary.average !== null ? "Media 7 d " + formatHomeHealthDecimal(weightSummary.average, " kg") : null,
+      weightSummary.trendReady && weightSummary.weeklyChange !== null
+        ? "Δ " + (weightSummary.weeklyChange > 0 ? "+" : "") + weightSummary.weeklyChange.toFixed(1).replace(".", ",") + " kg"
+        : weightSummary.currentDays > 0
+          ? "cobertura " + weightSummary.currentDays + "/7 días"
+          : null
     ].filter(Boolean).join(" · ") || "Sin tendencia disponible";
     setHomeHealthMetric(
       "home-health-weight-main",
@@ -2384,13 +2416,20 @@ async function loadHealthOverview(dateKey = localDateKey()) {
   const panel = document.querySelector("#health-overview-panel");
   if (panel) panel.innerHTML = '<p class="health-empty">Cargando Apple Health…</p>';
   try {
-    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(dateKey), {
-      headers: { Accept: "application/json" },
-      cache: "no-store"
-    });
+    const [response, gymResponse] = await Promise.all([
+      fetch("/api/health/overview?date=" + encodeURIComponent(dateKey), {
+        headers: { Accept: "application/json" },
+        cache: "no-store"
+      }),
+      fetch("/api/gym", {
+        headers: { Accept: "application/json" },
+        cache: "no-store"
+      }).catch(() => null)
+    ]);
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
     const payload = await response.json();
-    renderHealthOverview(payload);
+    const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
+    renderHealthOverview(payload, gymData || {});
     loadHealthHistory("365", payload.date || dateKey);
   } catch (error) {
     if (panel) panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Apple Health no disponible</strong><p>No se ha podido cargar el resumen de actividad y composición corporal.</p></div>';
@@ -2398,7 +2437,7 @@ async function loadHealthOverview(dateKey = localDateKey()) {
   }
 }
 
-function renderHealthOverview(data) {
+function renderHealthOverview(data, gymData = {}) {
   const panel = document.querySelector("#health-overview-panel");
   if (!panel) return;
 
@@ -2420,9 +2459,11 @@ function renderHealthOverview(data) {
   const fmt1 = (value, suffix = "") => Number.isFinite(value) ? value.toFixed(1).replace(".", ",") + suffix : "—";
   const fmt0 = (value, suffix = "") => Number.isFinite(value) ? Math.round(value).toLocaleString("es-ES") + suffix : "—";
 
-  const weightToday = metricNumber(body.weightToday?.value);
-  const weightAvg = metricNumber(body.weight7dAverage);
-  const weeklyChange = metricNumber(body.weightWeeklyChange);
+  const weightSummary = healthWeightSummary(body, data.date || localDateKey());
+  const latestWeightSample = weightSummary.latest;
+  const latestWeight = weightSummary.value;
+  const weightAvg = weightSummary.average;
+  const weeklyChange = weightSummary.weeklyChange;
   const bodyFat = metricNumber(body.bodyFat?.value);
   const bmi = metricNumber(body.bodyMassIndex?.value);
   const lean = metricNumber(body.leanBodyMass?.value);
@@ -2450,34 +2491,25 @@ function renderHealthOverview(data) {
   const proteinTarget = metricNumber(nutritionGoal.protein);
   const carbsTarget = metricNumber(nutritionGoal.carbs);
   const fatTarget = metricNumber(nutritionGoal.fat);
+  const kcalProgress = homeHealthPercent(kcalConsumed, kcalTarget);
+  const proteinProgress = homeHealthPercent(proteinConsumed, proteinTarget);
+  const gymSummary = deriveGymTodaySummary(data, gymData);
 
-  const nutritionChecks = [
-    Number.isFinite(kcalTarget) ? kcalConsumed >= kcalTarget * 0.9 && kcalConsumed <= kcalTarget * 1.05 : null,
-    Number.isFinite(proteinTarget) ? proteinConsumed >= proteinTarget * 0.95 : null,
-    Number.isFinite(carbsTarget) ? carbsConsumed >= carbsTarget * 0.9 && carbsConsumed <= carbsTarget * 1.1 : null,
-    Number.isFinite(fatTarget) ? fatConsumed >= fatTarget * 0.9 && fatConsumed <= fatTarget * 1.1 : null
-  ].filter((value) => value !== null);
-  const nutritionDone = nutritionChecks.filter(Boolean).length;
-
-  const activityChecks = [
-    Number.isFinite(stepsFloor) && stepsFloor > 0 ? Number.isFinite(steps) && steps >= stepsFloor : null,
-    Number.isFinite(exerciseTarget) && exerciseTarget > 0 ? Number.isFinite(exerciseWeek) && exerciseWeek >= exerciseTarget : null,
-    Number.isFinite(strengthTarget) && strengthTarget > 0 ? sessionsThisWeek >= strengthTarget : null
-  ].filter((value) => value !== null);
-  const activityDone = activityChecks.filter(Boolean).length;
-  const nutritionProgress = nutritionChecks.length ? Math.round((nutritionDone / nutritionChecks.length) * 100) : null;
-  const activityProgress = activityChecks.length ? Math.round((activityDone / activityChecks.length) * 100) : null;
-  const strengthProgress = Number.isFinite(strengthTarget) && strengthTarget > 0
-    ? Math.round((sessionsThisWeek / strengthTarget) * 100)
+  const habitSummary = state.habitsSummary?.summary || {};
+  const habitTotal = Math.max(0, Number(habitSummary.total || 0));
+  const habitDone = Math.max(0, Number(habitSummary.done || 0));
+  const habitStreak = Math.max(0, Number(habitSummary.streak || 0));
+  const habitProgress = habitTotal > 0
+    ? Math.max(0, Math.min(100, Math.round((habitDone / habitTotal) * 100)))
     : null;
 
-  let recompositionStatus = "Baseline en construcción";
-  if (Number.isFinite(weeklyChange)) {
+  let recompositionStatus = "Cobertura insuficiente";
+  if (weightSummary.trendReady && Number.isFinite(weeklyChange)) {
     recompositionStatus = weeklyChange <= -0.15 && weeklyChange >= -0.45
       ? "En rumbo"
-      : "Seguir tendencia";
+      : "Revisar tendencia";
   } else if (Number.isFinite(waistDelta) && waistDelta < 0) {
-    recompositionStatus = "En rumbo";
+    recompositionStatus = "Cintura mejorando";
   }
 
   const performanceObjectives = progressObjectives.filter((item) => {
@@ -2500,34 +2532,107 @@ function renderHealthOverview(data) {
   const changeClass = Number.isFinite(weeklyChange)
     ? (weeklyChange > 0 ? "up" : weeklyChange < 0 ? "down" : "flat")
     : "";
+  const weightCoverageText = weightSummary.currentDays > 0
+    ? weightSummary.currentDays + "/7 días"
+    : "sin mediciones";
+  const previousWeightCoverageText = weightSummary.previousDays > 0
+    ? weightSummary.previousDays + "/7 previos"
+    : "sin semana previa";
+  const nutritionUpdated = formatHomeHealthUpdate(
+    nutrition.updatedAt || nutritionGoal.updatedAt || null,
+    nutrition.updateKind === "objective" ? "Objetivo" : "Nutrición"
+  );
+  const habitsUpdated = formatHomeHealthUpdate(state.habitsSummary?.source?.updatedAt || null, "Hábitos");
+  const gymUpdated = formatHomeHealthUpdate(gymSummary.updatedAt, "Gym");
+  const weightUpdated = formatHomeHealthUpdate(
+    latestWeightSample?.measuredAt || latestWeightSample?.importedAt || latestWeightSample?.date || null,
+    latestWeightSample?.source || "Peso"
+  );
+  const bodyMetricUpdated = (sample, fallback = "") => formatHomeHealthUpdate(
+    sample?.measuredAt || sample?.importedAt || sample?.date || null,
+    sample?.source || fallback
+  );
 
   panel.innerHTML = `
     <div class="health-dashboard-status progress-ring-status">
-      <span>
-        ${progressRingMarkup(nutritionProgress, { tone: "amber", size: "sm", label: "nutri", ariaLabel: "Progreso de nutrición" })}
-        <span><small>Nutrición</small><strong>${nutritionChecks.length ? `${nutritionDone}/${nutritionChecks.length}` : "Sin objetivo"}</strong></span>
+      <span data-health-summary="habits">
+        ${progressRingMarkup(habitProgress, { tone: "violet", size: "sm", label: "hoy", ariaLabel: habitTotal > 0 ? habitProgress + "% de hábitos completados hoy" : "Sin hábitos programados" })}
+        <span>
+          <small>Hábitos</small>
+          <strong id="health-summary-habits-main">${habitTotal > 0 ? habitDone + " / " + habitTotal : "—"}</strong>
+          <em>${habitTotal > 0 ? habitProgress + "% hoy · racha " + habitStreak + " d" : "Sin hábitos programados"}</em>
+          <time>${escapeHtml(habitsUpdated)}</time>
+        </span>
       </span>
-      <span>
-        ${progressRingMarkup(activityProgress, { tone: "blue", size: "sm", label: "actividad", ariaLabel: "Progreso de actividad" })}
-        <span><small>Actividad</small><strong>${activityChecks.length ? `${activityDone}/${activityChecks.length}` : "Sin objetivo"}</strong></span>
+      <span data-health-summary="kcal">
+        ${progressRingMarkup(kcalProgress, { tone: kcalProgress !== null && kcalProgress > 105 ? "coral" : "amber", size: "sm", label: "kcal", ariaLabel: kcalProgress === null ? "Objetivo de calorías pendiente" : kcalProgress + "% del objetivo diario de calorías" })}
+        <span>
+          <small>Kcal hoy</small>
+          <strong id="health-summary-kcal-main">${kcalTarget !== null ? fmt0(kcalConsumed) + " / " + fmt0(kcalTarget) + " kcal" : fmt0(kcalConsumed, " kcal")}</strong>
+          <em>${kcalTarget === null ? "Objetivo pendiente" : kcalTarget - kcalConsumed >= 0 ? "Faltan " + fmt0(kcalTarget - kcalConsumed) + " kcal" : "+" + fmt0(Math.abs(kcalTarget - kcalConsumed)) + " kcal sobre objetivo"}</em>
+          <time>${escapeHtml(nutritionUpdated)}</time>
+        </span>
       </span>
-      <span>
-        ${progressRingMarkup(strengthProgress, { tone: "mint", size: "sm", label: "fuerza", ariaLabel: "Progreso semanal de fuerza" })}
-        <span><small>Fuerza</small><strong>${strengthTarget === 0 ? "Pausa" : Number.isFinite(strengthTarget) ? `${sessionsThisWeek}/${fmt0(strengthTarget)} sesiones` : `${sessionsThisWeek} sesiones`}</strong></span>
+      <span data-health-summary="protein">
+        ${progressRingMarkup(proteinProgress, { tone: "mint", size: "sm", label: "prot", ariaLabel: proteinProgress === null ? "Objetivo de proteína pendiente" : proteinProgress + "% del objetivo diario de proteína" })}
+        <span>
+          <small>Proteína hoy</small>
+          <strong id="health-summary-protein-main">${proteinTarget !== null ? fmt0(proteinConsumed) + " / " + fmt0(proteinTarget) + " g" : fmt0(proteinConsumed, " g")}</strong>
+          <em>${proteinTarget === null ? "Objetivo pendiente" : proteinTarget - proteinConsumed > 0 ? "Faltan " + fmt0(proteinTarget - proteinConsumed) + " g" : "Objetivo cumplido"}</em>
+          <time>${escapeHtml(nutritionUpdated)}</time>
+        </span>
       </span>
-      <span class="health-status-text-only"><small>Recomposición</small><strong>${escapeHtml(recompositionStatus)}</strong></span>
+      <span data-health-summary="gym">
+        ${progressRingMarkup(gymSummary.progress, { tone: gymSummary.tone, size: "sm", label: gymSummary.centerLabel, ariaLabel: gymSummary.ariaLabel, centerValue: gymSummary.centerValue })}
+        <span>
+          <small>Gym hoy</small>
+          <strong id="health-summary-gym-main">${escapeHtml(gymSummary.main)}</strong>
+          <em>${escapeHtml(gymSummary.detail)}</em>
+          <time>${escapeHtml(gymUpdated)}</time>
+        </span>
+      </span>
+      <span class="health-status-text-only health-status-weight" data-health-summary="weight">
+        <small>Peso</small>
+        <strong id="health-summary-weight-main">${fmt1(latestWeight, " kg")}</strong>
+        <em>${weightAvg !== null ? "Media 7 d " + fmt1(weightAvg, " kg") + " · " + weightCoverageText : "Sin media disponible"}</em>
+        <time>${escapeHtml(weightUpdated)}</time>
+      </span>
     </div>
 
     <div class="health-recomp-grid">
       <section class="health-recomp-card">
-        <header><span>Composición corporal</span><strong>Tendencia</strong></header>
+        <header><span>Composición corporal</span><strong>${escapeHtml(recompositionStatus)}</strong></header>
         <div class="health-recomp-kpis">
-          <div><small>Peso hoy</small><strong>${fmt1(weightToday, " kg")}</strong></div>
-          <div><small>Media 7 días</small><strong>${fmt1(weightAvg, " kg")}</strong></div>
-          <div><small>Cambio semanal</small><strong class="${changeClass}">${changeText}</strong></div>
-          <div><small>Cintura</small><strong>${fmt1(waist, " cm")}</strong></div>
-          <div><small>Grasa</small><strong>${fmt1(bodyFat, "%")}</strong></div>
-          <div><small>Masa magra</small><strong>${fmt1(lean, " kg")}</strong></div>
+          <div>
+            <small>Último peso</small>
+            <strong>${fmt1(latestWeight, " kg")}</strong>
+            <span class="health-metric-freshness">${escapeHtml(weightUpdated)}</span>
+          </div>
+          <div>
+            <small>Media 7 días</small>
+            <strong>${fmt1(weightAvg, " kg")}</strong>
+            <span class="health-metric-freshness">${weightCoverageText}</span>
+          </div>
+          <div>
+            <small>Cambio semanal</small>
+            <strong class="${changeClass}">${changeText}</strong>
+            <span class="health-metric-freshness">${weightSummary.trendReady ? weightCoverageText + " · " + previousWeightCoverageText : "Pendiente · " + weightCoverageText + " · " + previousWeightCoverageText}</span>
+          </div>
+          <div>
+            <small>Cintura</small>
+            <strong>${fmt1(waist, " cm")}</strong>
+            <span class="health-metric-freshness">${escapeHtml(bodyMetricUpdated(body.waist, "Salud"))}</span>
+          </div>
+          <div>
+            <small>Grasa</small>
+            <strong>${fmt1(bodyFat, "%")}</strong>
+            <span class="health-metric-freshness">${escapeHtml(bodyMetricUpdated(body.bodyFat, "Peso"))}</span>
+          </div>
+          <div>
+            <small>Masa magra</small>
+            <strong>${fmt1(lean, " kg")}</strong>
+            <span class="health-metric-freshness">${escapeHtml(bodyMetricUpdated(body.leanBodyMass, "Peso"))}</span>
+          </div>
         </div>
         <div class="health-objective-notes">
           ${weightGoal?.target ? `<p><b>Peso:</b> ${escapeHtml(weightGoal.target)}</p>` : ""}
@@ -2590,6 +2695,14 @@ function renderHealthOverview(data) {
       </div>
     </section>
   `;
+
+  const healthGymRing = panel.querySelector('[data-health-summary="gym"] .progress-ring');
+  if (healthGymRing) {
+    const centerValue = healthGymRing.querySelector(".progress-ring-value");
+    const centerLabel = healthGymRing.querySelector(".progress-ring-center small");
+    if (centerValue) centerValue.textContent = gymSummary.centerValue;
+    if (centerLabel) centerLabel.textContent = gymSummary.centerLabel;
+  }
 
   document.querySelectorAll("[data-health-history-range]").forEach((button) => {
     button.addEventListener("click", () => {
