@@ -982,6 +982,8 @@ try {
 
   const homeMenuVisible = await page.locator("#home-weekly-menu-panel").evaluate((node) => !node.hidden).catch(() => false);
   assertCheck(homeMenuVisible, "Menú semanal permanece visible en Home");
+  assertCheck(await page.locator("#home-nutrition-menu").count() === 1, "Home · acceso directo Menú", "#home-nutrition-menu");
+  assertCheck(await page.locator("#home-nutrition-recipes").count() === 1, "Home · acceso directo Recetas", "#home-nutrition-recipes");
   const homeMenuText = normalizeAuditValue(await page.locator("#home-weekly-menu-panel").textContent().catch(() => ""));
   assertCheck(!/temporalmente no disponible|no se ha podido/.test(homeMenuText), "Menú Home sin fallback de error");
 
