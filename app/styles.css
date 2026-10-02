@@ -19821,16 +19821,33 @@ footer {
   }
 
   .home-nutrition-primary {
-    grid-template-columns: minmax(150px, .65fr) minmax(300px, 1.45fr) minmax(170px, .8fr);
-    align-items: center;
-    gap: 8px 12px;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 9px;
   }
 
-  .home-nutrition-primary .daily-card-heading { grid-column: 1; }
-  .home-nutrition-primary .daily-energy-grid { grid-column: 2; }
-  .home-nutrition-primary .daily-progress-footer { grid-column: 3 !important; }
+  .home-nutrition-primary .daily-card-heading,
+  .home-nutrition-primary .daily-energy-grid,
+  .home-nutrition-primary .daily-progress-footer {
+    grid-column: auto !important;
+    min-width: 0;
+  }
+
+  .home-nutrition-primary .daily-progress-footer {
+    flex-wrap: wrap;
+  }
+
+  .home-nutrition-primary .daily-card-status {
+    flex: 1 1 220px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .home-nutrition-primary .home-summary-action {
+    margin-left: auto;
+  }
 
   .home-nutrition-links {
-    grid-column: 1;
+    grid-column: auto;
   }
 }
