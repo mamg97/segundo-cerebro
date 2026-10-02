@@ -148,57 +148,65 @@ async function probeVisualImage(src) {
   }
   if (visualImageProbeCache.has(key)) return visualImageProbeCache.get(key);
 
-  const result = await page.evaluate(async (target) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
-    try {
-      const response = await fetch(target, {
-        cache: "no-store",
-        credentials: "same-origin",
-        signal: controller.signal
-      });
-      const contentType = String(response.headers.get("content-type") || "");
-      const blob = await response.blob();
-      let decoded = false;
-      let width = 0;
-      let height = 0;
-      let decodeError = "";
-      if (response.ok && /^image\//i.test(contentType) && blob.size > 0) {
-        try {
-          const bitmap = await createImageBitmap(blob);
-          width = Number(bitmap.width || 0);
-          height = Number(bitmap.height || 0);
-          decoded = width > 0 && height > 0;
-          bitmap.close();
-        } catch (error) {
-          decodeError = String(error?.message || error || "decode_failed");
+  let result = null;
+  const timeouts = [6000, 15000];
+  for (let attempt = 0; attempt < timeouts.length; attempt += 1) {
+    result = await page.evaluate(async ({ target, timeoutMs, attemptNumber }) => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(target, {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal
+        });
+        const contentType = String(response.headers.get("content-type") || "");
+        const blob = await response.blob();
+        let decoded = false;
+        let width = 0;
+        let height = 0;
+        let decodeError = "";
+        if (response.ok && /^image\//i.test(contentType) && blob.size > 0) {
+          try {
+            const bitmap = await createImageBitmap(blob);
+            width = Number(bitmap.width || 0);
+            height = Number(bitmap.height || 0);
+            decoded = width > 0 && height > 0;
+            bitmap.close();
+          } catch (error) {
+            decodeError = String(error?.message || error || "decode_failed");
+          }
         }
+        return {
+          ok: response.ok,
+          status: response.status,
+          contentType,
+          decoded,
+          width,
+          height,
+          bytes: blob.size,
+          error: decodeError,
+          attempts: attemptNumber
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          status: 0,
+          contentType: "",
+          decoded: false,
+          width: 0,
+          height: 0,
+          bytes: 0,
+          error: String(error?.name || error?.message || error || "fetch_failed"),
+          attempts: attemptNumber
+        };
+      } finally {
+        clearTimeout(timeout);
       }
-      return {
-        ok: response.ok,
-        status: response.status,
-        contentType,
-        decoded,
-        width,
-        height,
-        bytes: blob.size,
-        error: decodeError
-      };
-    } catch (error) {
-      return {
-        ok: false,
-        status: 0,
-        contentType: "",
-        decoded: false,
-        width: 0,
-        height: 0,
-        bytes: 0,
-        error: String(error?.name || error?.message || error || "fetch_failed")
-      };
-    } finally {
-      clearTimeout(timeout);
-    }
-  }, key);
+    }, { target: key, timeoutMs: timeouts[attempt], attemptNumber: attempt + 1 });
+
+    if (result.ok || result.status > 0 || result.error !== "AbortError") break;
+  }
 
   visualImageProbeCache.set(key, result);
   return result;
@@ -646,10 +654,10 @@ async function auditVisualSnapshot(label) {
   assertCheck(report.distortedImages.length === 0, `Visual ${label} · imágenes sin deformación`, report.distortedImages.slice(0, 4).join(" | "));
 
   const uniqueBrokenSources = [...new Set(report.brokenImages.map((item) => item.src).filter(Boolean))];
-  const imageProbeEntries = await Promise.all(
-    uniqueBrokenSources.map(async (src) => [src, await probeVisualImage(src)])
-  );
-  const imageProbeBySource = new Map(imageProbeEntries);
+  const imageProbeBySource = new Map();
+  for (const src of uniqueBrokenSources) {
+    imageProbeBySource.set(src, await probeVisualImage(src));
+  }
   const verifiedBrokenImages = report.brokenImages.filter((item) => {
     const probe = imageProbeBySource.get(item.src);
     return !(probe?.ok && /^image\//i.test(probe.contentType || "") && probe.decoded);
