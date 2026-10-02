@@ -1139,6 +1139,8 @@ function renderHomeGymSummary(healthData, gymData) {
     const day = plan.find((candidate) => candidate.id === todaySession.dayId);
     const title = day?.title || day?.focus || todaySession.dayId || "Sesión registrada";
     setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Hecho", title);
+    setHomeHealthUpdated("gym", todaySession.createdAt || todaySession.sessionDate || null, "Gym");
+    setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
     setHomeHealthRing("home-health-gym-ring", 100, {
       tone: "mint",
       centerValue: "✓",
@@ -1149,7 +1151,8 @@ function renderHomeGymSummary(healthData, gymData) {
   }
 
   if (!plan.length) {
-    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sin plan", "No hay un plan de entrenamiento conectado");
+    setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sin plan", "Plan no disponible");
+    setHomeHealthUpdated("gym", gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
     setHomeHealthRing("home-health-gym-ring", null, {
       tone: "blue",
       centerValue: "—",
@@ -1188,6 +1191,7 @@ function renderHomeGymSummary(healthData, gymData) {
     ? " · " + sessionsThisWeek + "/" + Math.round(strengthTarget) + " esta semana"
     : "";
   setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", "Sugerido", suggestedTitle + weekText);
+  setHomeHealthUpdated("gym", sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null, "Gym");
   setHomeHealthRing("home-health-gym-ring", weeklyProgress, {
     tone: "blue",
     centerValue: "Hoy",
