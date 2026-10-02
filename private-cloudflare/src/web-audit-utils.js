@@ -28,6 +28,28 @@ export function visibleMenuRow(item) {
 export const consumedMenuStatus = (status) =>
   /^(consumid[oa]|hech[oa]|completad[oa]|done|completed)$/.test(normalizeAuditValue(status));
 
+export function canonicalMenuMoment(item) {
+  const raw = String(item?.moment || "Otro").trim() || "Otro";
+  const moment = normalizeAuditValue(raw);
+  const context = normalizeAuditValue([raw, item?.name || item?.itemName, item?.note].filter(Boolean).join(" "));
+
+  if (/^postre\b/.test(moment)) {
+    if (/\b(comida|almuerzo|mediodia)\b/.test(context)) return "Comida";
+    return "Cena";
+  }
+
+  if (/^snack\b/.test(moment)) {
+    if (/\b(media manana|manana)\b/.test(context) && !/\b(despues oficina|tarde|merienda)\b/.test(context)) {
+      return "Media mañana";
+    }
+    return "Merienda";
+  }
+
+  if (/^(cena\s*·?\s*complemento|complemento\s+cena)$/.test(moment)) return "Cena";
+  if (/^cierre\b/.test(moment)) return "Cena";
+  return raw;
+}
+
 export function menuDisplayTotals(items, date, today, objective = {}) {
   const rows = Array.isArray(items) ? items : [];
   const useConsumed = String(date || "") <= String(today || "") && rows.some((item) => consumedMenuStatus(item?.status));
