@@ -1371,3 +1371,14 @@ Este relevo es continuación directa del gestor anterior. No reconstruir el arma
   - sin 5xx/fallos de red;
   - sin errores JavaScript/console.
 - El único fallo de #92 sigue siendo `MIDAS TFM shadow forecasts` por el último schedule rojo heredado; es independiente de Salud/Recetas.
+
+
+## ORGANIZADOR 8 · cierre overflow Home Nutrición · 2026-10-02
+
+- Tras añadir los accesos directos Menú/Recetas, la tarjeta Home de Nutrición reintrodujo una rejilla interna horizontal con mínimos `150 + 300 + 170 px`. Como Home usa dos tarjetas por fila en escritorio, ese mínimo podía superar el ancho real de media fila y hacer que estado + `Ver nutrición →` salieran de la tarjeta.
+- PR #208 / `335f13fa` corrige el layout sin reducir tipografía ni ocultar información: Nutrición vuelve a una composición interna de una columna, las métricas conservan su grid compartido, el estado puede envolver texto y Menú/Recetas permanecen como pie independiente.
+- `styles.css` usa cache-bust `v0.40.19`.
+- El auditor incorpora un control de **overflow local de componentes dentro de `#home-nutrition-card`**, además del overflow global de viewport, para detectar exactamente esta clase de regresión.
+- Deploy private Cloudflare app #311 terminó correctamente.
+- Audit production web #93: **868 checks / 1 failure**. Pasa `Visual desktop · Home · componentes dentro de su tarjeta`, además de tablet, mobile-wide y mobile; pasan también Menú/Recetas, foto completa de Recetas, red y consola.
+- El único fallo restante continúa siendo `MIDAS TFM shadow forecasts`, independiente de Home/Nutrición.
