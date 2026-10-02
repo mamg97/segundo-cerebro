@@ -81,6 +81,20 @@ Para derivados futuros:
 - miniatura separada del original;
 - conservar original sin modificaciones destructivas.
 
+## Referencias visuales para composición/generación de looks
+
+`LookItems` no duplica URLs de imágenes. La referencia se resuelve por `objeto_id` contra `Armario`, que sigue siendo la única extensión visual canónica.
+
+El payload privado de `GET /api/objects` expone en cada elemento del look:
+- `processedPhotoUrl`;
+- `thumbnailUrl`;
+- `originalPhotoUrl`;
+- `photoUrl`;
+- `visualReferenceUrl` como referencia preferida;
+- metadatos de apoyo: marca, subcategoría, color, patrón, vista y capa.
+
+Para generación con IA desde ChatGPT, la secuencia correcta es: resolver el look → recuperar las referencias visuales de todas sus prendas → cargar esas imágenes como referencias → generar la composición. No generar únicamente desde los nombres del look si las imágenes canónicas existen.
+
 ## Constructor de looks
 
 El MVP usa cuatro capas visibles:

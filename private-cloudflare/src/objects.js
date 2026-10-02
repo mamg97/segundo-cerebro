@@ -259,7 +259,7 @@ function emptyPayload() {
   };
 }
 
-function buildPayload(rows) {
+export function buildPayload(rows) {
   const objects = rows.objects.map((row) => {
     const id = String(value(row, "objeto_id", "id") || "").trim();
     return {
@@ -337,16 +337,31 @@ function buildPayload(rows) {
     };
   }).filter((item) => item.objectId && item.name);
 
+  const wardrobeById = new Map(wardrobe.map((item) => [String(item.objectId), item]));
+
   const lookItems = new Map();
   for (const row of rows.lookItems) {
     const lookId = String(value(row, "look_id") || "").trim();
     if (!lookId) continue;
     if (!lookItems.has(lookId)) lookItems.set(lookId, []);
     const objectId = String(value(row, "objeto_id") || "").trim();
+    const garment = wardrobeById.get(objectId) || null;
     lookItems.get(lookId).push({
       objectId: objectId || null,
-      name: byId.get(objectId)?.name || value(row, "nombre"),
-      role: normalizeLookRole(value(row, "rol", "role"))
+      name: garment?.name || byId.get(objectId)?.name || value(row, "nombre"),
+      role: normalizeLookRole(value(row, "rol", "role")),
+      photoUrl: garment?.photoUrl || null,
+      processedPhotoUrl: garment?.processedPhotoUrl || null,
+      thumbnailUrl: garment?.thumbnailUrl || null,
+      originalPhotoUrl: garment?.originalPhotoUrl || null,
+      visualReferenceUrl: garment?.processedPhotoUrl || garment?.thumbnailUrl || garment?.originalPhotoUrl || garment?.photoUrl || null,
+      brand: garment?.brand || byId.get(objectId)?.brand || null,
+      subcategory: garment?.subcategory || byId.get(objectId)?.subcategory || null,
+      color: garment?.color || null,
+      primaryColor: garment?.primaryColor || garment?.color || null,
+      pattern: garment?.pattern || null,
+      garmentView: garment?.garmentView || null,
+      layer: garment?.layer || null
     });
   }
 
