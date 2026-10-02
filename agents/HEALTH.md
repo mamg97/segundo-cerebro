@@ -38,6 +38,7 @@ When the user supplies a recipe, its durable representation remains data-driven 
 2. Store the original recipe photo as a private file under `DOCUMENTOS/SEGUNDO CEREBRO/AUXILIARES/RECETAS - FOTOS`; do not make it public and do not store the bytes in Git.
 3. Save the private Drive file reference, MIME type and photo update timestamp in the matching `Recetas` row.
 4. Generate a compact web preview and store it in hidden technical tab `RecipeMedia` (`recipe_id`, MIME, base64 preview, dimensions/hash, original Drive ref and timestamp). This preview exists because the current production Google OAuth can read Sheets but Drive media may answer 403. The original remains the archival image; `RecipeMedia` is only the private web derivative.
+   - The preview must preserve the complete original photo. For portrait/square sources shown in the 16:9 recipe hero, fit the whole image inside a 16:9 derivative (neutral or blurred side padding is acceptable) rather than cropping with `cover`.
 5. Store ingredient rows in `IngredientesReceta`.
 6. Store preparation instructions in `PasosReceta`, preserving explicit order and only instructions confirmed by the user or supported by the supplied source.
 7. Verify that the private `Recetas` view renders the photo first and, underneath, ingredients and preparation. Missing photo/ingredients/steps stay visibly pending rather than being invented.

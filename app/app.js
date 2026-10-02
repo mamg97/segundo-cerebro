@@ -7211,14 +7211,14 @@ function bindInteractions() {
   document.querySelector("#close-midas-dialog")?.addEventListener("click", () => document.querySelector("#midas-dialog")?.close());
   document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspaceInline("history"));
   document.querySelector("#home-habits-card")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
-  document.querySelector("#home-nutrition-card")?.addEventListener("click", async () => {
-    await openHealthDetail();
-    document.querySelector('[data-health-tab="nutrition"]')?.click();
-  });
-  document.querySelector("#show-home-weekly-menu")?.addEventListener("click", async () => {
-    await openHealthDetail();
-    document.querySelector('[data-health-tab="menu"]')?.click();
-  });
+  const openHealthTabFromHome = (tab) => {
+    openHealthDetail();
+    document.querySelector(`[data-health-tab="${tab}"]`)?.click();
+  };
+  document.querySelector("#home-nutrition-open")?.addEventListener("click", () => openHealthTabFromHome("nutrition"));
+  document.querySelector("#home-nutrition-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
+  document.querySelector("#home-nutrition-recipes")?.addEventListener("click", () => openHealthTabFromHome("recipes"));
+  document.querySelector("#show-home-weekly-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
   document.querySelector("#home-pantry-open")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-pantry-open-footer")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-shopping-list")?.addEventListener("click", () => openPantryDetail("shopping"));

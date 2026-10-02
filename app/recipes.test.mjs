@@ -40,4 +40,6 @@ test("production audit scrolls lazy recipe photos into view before judging load 
   assert.match(audit, /scrollIntoViewIfNeeded/);
   assert.match(audit, /candidate\?\.complete && candidate\.naturalWidth > 0 && candidate\.naturalHeight > 0/);
   assert.match(audit, /Salud · Recetas carga foto visible/);
+  assert.match(audit, /Salud · Recetas conserva foto completa/);
+  assert.match(audit, /objectFit/);
 });
