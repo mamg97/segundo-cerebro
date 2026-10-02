@@ -1408,3 +1408,39 @@ Este relevo es continuación directa del gestor anterior. No reconstruir el arma
 - Los 2 fallos restantes de #98 son independientes:
   - `MIDAS TFM shadow forecasts`;
   - imágenes de Looks de OBJETOS.
+
+
+## ORGANIZADOR 8 · Home v0.41.1 · anillos de Salud + Gym hoy + navegación principal · 2026-10-02
+
+- PR #218 / `948fef12` refina la tarjeta unificada de Salud del Home.
+- Los accesos inferiores de Salud quedan alineados **abajo a la izquierda**: Resumen, Hábitos, Médicos, Gimnasio, Nutrición, Recetas y Menú.
+- La cabecera de Salud contiene ahora exactamente **cinco resúmenes circulares** usando el componente común `progress-ring`:
+  1. Hábitos: completados/total, porcentaje de hoy y racha.
+  2. Kcal hoy: consumidas/objetivo, porcentaje y margen/exceso.
+  3. Proteína hoy: gramos/objetivo, porcentaje y gramos pendientes.
+  4. Gym hoy: sustituye al resumen de pasos/Actividad.
+  5. Peso: dato actual/media disponible + media 7 d y delta semanal.
+- Gym hoy consume fuentes canónicas existentes (`/api/health/overview` + `/api/gym`) y no inventa calendario:
+  - `Pausado` si el estado de fuerza está pausado, mostrando el motivo;
+  - `Hecho` si existe sesión registrada en la fecha actual;
+  - `Descanso` si el objetivo semanal ya está cubierto;
+  - `Sugerido` en otro caso, usando la siguiente sesión del plan según la misma lógica del panel Gimnasio.
+- El Home ya no usa pasos como KPI principal de Salud.
+- La navegación superior muestra únicamente las **10 áreas principales canónicas**. No se renderizan `.nav-subnav` ni `.nav-link-child`.
+- Assets Home: `app.js?v=0.41.1` y `styles.css?v=0.41.1`.
+- PR #219 / `27549eed` corrige un falso positivo del auditor: la palabra “pasos” puede aparecer en texto libre (por ejemplo un motivo de pausa); el control valida estructuralmente la desaparición del antiguo bloque Actividad y la existencia de Gym hoy.
+- Audit production web #101, reintento final: **729 checks / 2 failures**.
+- Pasan explícitamente:
+  - cinco resúmenes circulares;
+  - accesos de Salud abajo a la izquierda;
+  - navegación 10/10 solo con áreas principales y sin subapartados;
+  - sustitución Actividad/pasos → Gym hoy;
+  - progreso diario de kcal;
+  - progreso diario de proteína;
+  - estado Gym hoy;
+  - Home responsive sin overflow/clipping/solapes en desktop-wide, desktop, tablet, mobile-wide y mobile;
+  - sin 5xx/fallos de red;
+  - sin errores JavaScript/console.
+- Los dos fallos restantes son independientes:
+  - `MIDAS TFM shadow forecasts`;
+  - carga de imágenes de Looks de OBJETOS.
