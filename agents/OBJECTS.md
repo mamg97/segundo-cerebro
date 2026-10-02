@@ -236,6 +236,7 @@ La participación es compartida, pero la propiedad funcional no.
 - `POST /api/objects/look` guarda un look nuevo en la fuente canónica `Looks + LookItems`.
 - `POST /api/objects/look/:look_id/image` asocia una imagen compuesta al look existente; los bytes viven en D1 privado y `Looks.foto_url` conserva la URL same-origin activa.
 - `GET /api/objects/look/:look_id/image?v=<version>` sirve esa imagen privada. La imagen no crea objetos ni duplica `LookItems`.
+- `POST /api/internal/objects/look/:look_id/render` genera server-to-server un derivado visual a partir de las imágenes canónicas de sus `LookItems`, lo persiste en D1 y actualiza `Looks.foto_url`. No inventa prendas ni crea relaciones.
 - `POST /api/objects/:objeto_id/image` recibe `multipart/form-data` autenticado por Cloudflare Access con `image_type=original|processed|thumbnail` y un archivo `image`.
 - `POST /api/internal/objects/:objeto_id/image` es la variante server-to-server; exige Bearer upstream y reutiliza exactamente `uploadObjectsImage`.
 - `GET /api/objects/:objeto_id/image/:image_type?v=<version>` sirve el asset privado mediante el Worker.
@@ -319,3 +320,30 @@ Si la sesión no dispone de una acción HTTP arbitraria pero sí de Drive + Rail
 La antigua cola `ImageIngestQueue` y su cron de Drive quedan como legado/fallback histórico; no son el procedimiento operativo normal. Las filas antiguas con `OBJECTS_STAGING_META_403` no deben reintentarse ni duplicarse.
 
 El procedimiento completo y checklist de cierre están en `docs/OBJECTS_IMAGE_INGEST.md`.
+
+### Render canónico de looks existentes
+
+Cuando un look ya existe en `Looks + LookItems` y sus prendas tienen miniaturas/recortes canónicos, el procedimiento preferido para completar `Looks.foto_url` es el render server-to-server, no regenerar manualmente el outfit.
+
+```text
+look_id + LookItems
+        ↓
+Armario.miniatura_url / foto_procesada_url
+        ↓
+POST /api/internal/objects/look/:look_id/render
+        ↓
+composición privada autocontenida
+        ↓
+D1 visual
+        ↓
+Looks.foto_url versionada
+```
+
+Reglas:
+- solo usa imágenes ya canónicas de las prendas referenciadas;
+- exige `superior + inferior + calzado`;
+- no crea `objeto_id`, `look_id` ni `LookItems`;
+- `overwrite=false` en la primera materialización y `overwrite=true` solo para una sustitución deliberada;
+- el bridge expone `/render-look-image` y el seed admite jobs `{ look_id, render: true, overwrite }`;
+- el render actual es una composición editorial tipo *ghost mannequin* sin persona visible, con fondo neutro y prendas alineadas por rol;
+- la fuente canónica sigue siendo el Sheet; D1 contiene exclusivamente el binario derivado.
