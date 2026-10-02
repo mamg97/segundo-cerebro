@@ -19851,3 +19851,399 @@ footer {
     grid-column: auto;
   }
 }
+
+
+/* v0.41.0 — top navigation + unified Health home card */
+.app-shell {
+  display: block;
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  inset: auto;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  padding: 10px clamp(18px, 3vw, 42px);
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+}
+
+.sidebar .brand {
+  flex: none;
+  min-width: max-content;
+}
+
+.sidebar .brand-mark {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
+}
+
+.sidebar .brand strong {
+  font-size: 13px;
+}
+
+.sidebar .brand small {
+  font-size: 10px;
+}
+
+.area-nav {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0 2px 2px;
+  flex-direction: row;
+  gap: 3px;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+}
+
+.area-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-group {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  align-items: center;
+}
+
+.nav-subnav {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border-left: 0;
+}
+
+.nav-link {
+  min-height: 34px;
+  padding: 7px 9px;
+  white-space: nowrap;
+}
+
+.nav-link-child {
+  min-height: 30px;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+.privacy-note {
+  flex: none;
+  min-width: max-content;
+  padding: 0 0 0 14px;
+  border-top: 0;
+  border-left: 1px solid var(--line);
+}
+
+.privacy-note strong {
+  font-size: 10px;
+}
+
+.privacy-note small {
+  font-size: 9px;
+}
+
+.main-content {
+  width: min(100%, 1720px);
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: 0 clamp(22px, 3vw, 52px) 32px;
+}
+
+.menu-button {
+  display: none !important;
+}
+
+.topbar {
+  height: 82px;
+}
+
+.topbar-context {
+  display: flex;
+  min-width: 0;
+  gap: 14px;
+  align-items: center;
+}
+
+#system-orb {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  display: block !important;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.day-context {
+  min-width: 0;
+  margin: 0;
+}
+
+.daily-overview-grid {
+  margin-top: 24px;
+}
+
+.home-health-card {
+  grid-column: 1 / -1;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  cursor: default;
+}
+
+.home-health-primary {
+  display: grid;
+  grid-template-columns: minmax(170px, .55fr) minmax(0, 2.45fr);
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 18px 20px 15px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-health-primary .daily-card-heading {
+  min-width: 0;
+}
+
+.daily-card-icon.health-accent {
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  color: var(--mint);
+}
+
+.home-health-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.home-health-metric {
+  display: grid;
+  min-width: 0;
+  min-height: 76px;
+  gap: 4px;
+  align-content: center;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.home-health-metric small {
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.home-health-metric strong {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.home-health-metric em {
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.home-health-links {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  min-width: 0;
+  padding: 9px 16px 11px;
+  border-top: 1px solid var(--line);
+}
+
+.home-health-links button {
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--blue);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.home-health-links button:hover {
+  background: color-mix(in srgb, var(--blue) 9%, transparent);
+}
+
+.home-health-primary:focus-visible,
+.home-health-links button:focus-visible {
+  outline: 3px solid #79a4f8;
+  outline-offset: 3px;
+}
+
+html[data-theme="dark"] .sidebar {
+  border-right: 0;
+  border-bottom-color: rgba(95, 168, 255, .14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .14);
+}
+
+html[data-theme="light"] .sidebar {
+  border-right: 0;
+  border-bottom-color: rgba(47, 107, 255, .10);
+  box-shadow: 0 10px 30px rgba(34, 62, 99, .055);
+}
+
+@media (max-width: 1180px) {
+  .home-health-primary {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .home-health-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --sidebar: 0px;
+  }
+
+  .sidebar {
+    position: sticky;
+    width: 100%;
+    transform: none !important;
+    grid-template-columns: auto auto;
+    gap: 7px 10px;
+    padding: 8px 14px 7px;
+    box-shadow: 0 8px 24px rgba(18, 35, 63, .12);
+  }
+
+  body.nav-open .sidebar {
+    transform: none !important;
+  }
+
+  .sidebar .brand-mark {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+
+  .sidebar .brand > span {
+    display: none;
+  }
+
+  .privacy-note {
+    justify-self: end;
+    padding-left: 10px;
+  }
+
+  .privacy-note small {
+    display: none;
+  }
+
+  .area-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    padding-bottom: 1px;
+  }
+
+  .nav-link {
+    min-height: 30px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .nav-link-child {
+    min-height: 28px;
+    padding: 5px 7px;
+    font-size: 9px;
+  }
+
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    padding-inline: 16px;
+  }
+
+  .topbar {
+    height: 70px;
+  }
+
+  .topbar-context {
+    gap: 10px;
+  }
+
+  #system-orb {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .day-context {
+    margin: 0;
+  }
+
+  .daily-overview-grid {
+    margin-top: 18px;
+  }
+
+  .home-health-card {
+    grid-column: auto;
+  }
+
+  .home-health-primary {
+    padding: 15px 15px 12px;
+  }
+
+  .home-health-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-health-metric {
+    min-height: 70px;
+    padding: 10px;
+  }
+
+  .home-health-links {
+    justify-content: flex-start;
+    padding: 8px 12px 10px;
+    overflow-x: visible;
+  }
+}
+
+@media (max-width: 350px) {
+  .home-health-metrics {
+    grid-template-columns: 1fr;
+  }
+}
