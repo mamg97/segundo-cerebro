@@ -1147,6 +1147,13 @@ try {
     );
   }
 
+  const homeHealthMainValues = {};
+  for (const key of ["habits", "kcal", "protein", "gym", "weight"]) {
+    homeHealthMainValues[key] = normalizeAuditValue(
+      await page.locator("#home-health-" + key + "-main").textContent().catch(() => "")
+    );
+  }
+
   for (const [selector, label] of [
     ["#home-pantry-inventory", "Despensa · Inventario"],
     ["#home-shopping-list", "Despensa · Lista compra"],
@@ -1473,6 +1480,28 @@ try {
       assertCheck(active, `Salud · pestaña ${tab} activa`);
       const text = normalizeAuditValue(await panel.textContent().catch(() => ""));
       assertCheck(!/no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text), `Salud · pestaña ${tab} sin error visible`);
+      if (tab === "overview") {
+        assertCheck(
+          await panel.locator("[data-health-summary]").count() === 5,
+          "Salud · Resumen usa los cinco KPIs del Home"
+        );
+        assertCheck(
+          await panel.locator("[data-health-summary] .progress-ring").count() === 4,
+          "Salud · Resumen conserva cuatro anillos y Peso estático"
+        );
+        for (const key of ["habits", "kcal", "protein", "gym", "weight"]) {
+          const detailValue = normalizeAuditValue(
+            await panel.locator("#health-summary-" + key + "-main").textContent().catch(() => "")
+          );
+          assertCheck(
+            detailValue === homeHealthMainValues[key],
+            "Salud · Resumen " + key + " coincide con Home",
+            "Home=" + (homeHealthMainValues[key] || "∅") + " · Salud=" + (detailValue || "∅")
+          );
+        }
+        const weightFreshness = await panel.locator(".health-recomp-kpis .health-metric-freshness").count();
+        assertCheck(weightFreshness >= 6, "Salud · composición muestra freshness/cobertura por métrica", "n=" + weightFreshness);
+      }
       if (tab === "recipes") {
         const recipeCount = await panel.locator(".recipe-card").count();
         assertCheck(
