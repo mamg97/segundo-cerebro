@@ -1288,3 +1288,13 @@ Estado que debe preservarse al continuar:
 - Audit production web #87: 790 checks / 7 failures. Ninguno corresponde a menú ni recetario. Quedan: una ejecución schedule fallida de `MIDAS TFM shadow forecasts` y seis fallos de carga de imágenes de OBJETOS/Armario/Looks. No silenciar estos fallos: diagnosticarlos por separado.
 - La corrección de fotos de recetas y la normalización de `Postre/ Snack/ Cierre` están documentadas también en `agents/HEALTH.md` y `docs/WEB_AUDIT.md`.
 - Si el usuario muestra una captura antigua con la foto de fajitas rota, comprobar primero caché/versión desplegada: el backend actual ya está certificado como imagen válida por la auditoría. No rehacer el pipeline salvo que una comprobación nueva reproduzca el fallo.
+
+
+## ORGANIZADOR 8 · cierre diagnóstico Audit production web #88 · 2026-10-02
+
+- PR #199 / `74d94a44` corrige un falso positivo genérico del auditor visual: un `<img loading="lazy">` aún incompleto ya no se trata automáticamente como recurso roto. El auditor contrasta el mismo `src` mediante fetch autenticado y exige respuesta correcta, `Content-Type: image/*` y decodificación real por Chromium.
+- Deploy private Cloudflare app #307 terminó correctamente y disparó Audit production web #88 sobre `74d94a44`.
+- Audit #88: **790 checks / 1 failure**. Los seis fallos heredados de OBJETOS/Armario/Looks desaparecen: el auditor validó por contenido las 60 imágenes del Armario en desktop/tablet/mobile y las imágenes de Looks. No reingerir esas prendas ni modificar `SEGUNDO CEREBRO - OBJETOS`/D1 por este incidente.
+- También pasan las comprobaciones globales de red y consola: sin 5xx/fallos de red y sin errores JavaScript/console.
+- El único fallo restante es `MIDAS TFM shadow forecasts`, porque la última ejecución schedule sigue siendo el run #5 fallido del 01/10. Mantenerlo rojo hasta que un nuevo schedule termine correctamente; no rebajar ni silenciar el control.
+- `mamg97/midas-paper-lab/main` ya contiene la corrección upstream `8bb6c174` (fallback de cierre Madrid desde barras horarias validadas + backup adelantado). La sesión perdida del 01/10 no se backfillea prospectivamente.
