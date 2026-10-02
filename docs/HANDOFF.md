@@ -1445,3 +1445,30 @@ Este relevo es continuación directa del gestor anterior. No reconstruir el arma
 - Los dos fallos restantes son independientes:
   - `MIDAS TFM shadow forecasts`;
   - carga de imágenes de Looks de OBJETOS.
+
+
+## ORGANIZADOR 8 · Home freshness + tarjetas compactas + obligaciones · 2026-10-02
+
+- PR #221 integra el ajuste solicitado sobre Home:
+  - Salud muestra timestamp/fuente debajo de Hábitos, Kcal, Proteína, Gym y Peso;
+  - el motivo de pausa de Gym se resume en Home y el detalle largo permanece en Salud/Gimnasio;
+  - Peso deja de sustituirse por la media de 7 días cuando no hay muestra del día: usa la última medición real de `bodyMass`, con fuente y fecha/hora; media 7 d y delta quedan solo como contexto;
+  - Despensa y Objetos incorporan accesos directos a sus apartados existentes;
+  - Patrimonio incorpora accesos Detalle / Evolución / MIDAS;
+  - Obligaciones activas integra resumen de principales deudas y Financiera El Corte Inglés;
+  - la tarjeta independiente de El Corte Inglés desaparece para evitar duplicación visual;
+  - no se modificaron Sheets ni se creó ninguna fuente paralela.
+- PR #222 corrige el último detalle de layout: las tarjetas compactas usan altura natural y ya no se estiran artificialmente por la altura de tarjetas vecinas.
+- Estado validado en producción por Audit production web #103:
+  - 750 checks;
+  - Home pasa en desktop-wide, desktop, tablet, mobile-wide y mobile sin overflow, clipping ni solapes;
+  - cinco timestamps de Salud resueltos;
+  - Gym con motivo breve;
+  - Peso de Home coincide con la última muestra real de la API y muestra fuente/fecha;
+  - Despensa/Objetos y bloques financieros usan altura natural;
+  - accesos de Despensa, Objetos, Patrimonio y Deudas disponibles;
+  - ECI integrado en Obligaciones activas.
+- En la validación #103, la última muestra real de peso era 79,1 kg desde Zepp Life, 30 sept 07:43. Este valor es un ejemplo observado de producción y no debe hardcodearse.
+- Fallos restantes de #103, independientes de este cambio:
+  - `MIDAS TFM shadow forecasts`: último schedule fallido;
+  - validación visual de imágenes de `Objetos · looks`.
