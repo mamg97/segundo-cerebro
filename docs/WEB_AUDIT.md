@@ -89,6 +89,7 @@ Como mínimo:
   - consistencia de tarjetas resumen en escritorio;
   - responsive en 1440×1100, 900×1000 y 390×844;
 - Armario visual: valida explícitamente 4 columnas en escritorio, 3 en tablet, 3 en móvil ancho de 440 px y 2 en móvil de 390 px, además de overflow/clipping/solapes de las tarjetas.
+- Looks: abre una tarjeta real, exige detalle ampliado visible, imagen principal cargada y al menos una prenda canónica de `LookItems`; el mismo detalle debe pasar QA visual responsive en desktop/tablet/mobile sin overflow, clipping ni solapes.
 - Home semanal de Nutrición: debe mantener la matriz día×momento, representar cada comida visible en la celda exacta de su fecha/momento, usar filas de altura automática y tipografía legible. Cuando el ancho no alcance, el scroll debe quedar confinado al contenedor de la tabla; nunca se permite solape, clipping ni overflow global.
 - La matriz semanal no debe exponer filas top-level `Postre`, `Snack` ni `Cierre`: esos componentes deben aparecer dentro de `Comida/Cena`, `Media mañana/Merienda` o `Cena` respectivamente. Etiquetas legacy deben reconciliarse antes del render.
 - Las comprobaciones de agrupación del auditor deben aplicar esa misma canonicalización y localizar cada tarjeta por su etiqueta de momento canónica; no deben depender del índice/orden de las filas de origen, porque la UI ordena y pliega los momentos antes del render.
