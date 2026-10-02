@@ -121,6 +121,89 @@ export async function handleRequest(request, env = process.env, fetchImpl = fetc
     });
   }
 
+  if (url.pathname === "/render-look-image") {
+    if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+    if (!config.actionKey || !config.upstreamSecret) return json({ ok: false, code: "BRIDGE_NOT_CONFIGURED" }, 503);
+    if (!safeEqual(bearer(request), config.actionKey)) return json({ ok: false, code: "AUTH_REQUIRED" }, 401);
+
+    let payload;
+    try {
+      payload = await request.json();
+    } catch {
+      return json({ ok: false, code: "INVALID_JSON" }, 400);
+    }
+
+    let lookId;
+    try {
+      lookId = normalizeObjectId(payload?.look_id);
+    } catch {
+      return json({ ok: false, code: "INVALID_LOOK_ID" }, 400);
+    }
+
+    const upstreamUrl = config.upstreamBaseUrl + "/api/internal/objects/look/" + encodeURIComponent(lookId) + "/render";
+    console.info("[objects-bridge]", { stage: "look_render_upstream_start", lookId });
+
+    let upstream;
+    try {
+      upstream = await fetchImpl(upstreamUrl, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + config.upstreamSecret,
+          "Content-Type": "application/json",
+          "user-agent": "SegundoCerebroObjectsBridge/1.0"
+        },
+        body: JSON.stringify({
+          look_id: lookId,
+          overwrite: payload?.overwrite === true
+        })
+      });
+    } catch {
+      console.warn("[objects-bridge]", { stage: "look_render_network_failed", lookId });
+      return json({ ok: false, code: "UPSTREAM_UNREACHABLE" }, 502);
+    }
+
+    let result;
+    try {
+      result = await upstream.json();
+    } catch {
+      const contentType = String(upstream.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+      console.warn("[objects-bridge]", {
+        stage: "look_render_invalid_response",
+        lookId,
+        status: upstream.status,
+        contentType: contentType || null
+      });
+      return json({
+        ok: false,
+        code: "UPSTREAM_INVALID_RESPONSE",
+        upstream_status: upstream.status,
+        upstream_content_type: contentType || null
+      }, 502);
+    }
+
+    if (!upstream.ok || result?.ok !== true) {
+      const code = String(result?.code || "UPSTREAM_RENDER_FAILED");
+      console.warn("[objects-bridge]", { stage: "look_render_failed", lookId, code, status: upstream.status });
+      return json({ ok: false, code }, upstream.status >= 400 ? upstream.status : 502);
+    }
+
+    console.info("[objects-bridge]", {
+      stage: "look_render_done",
+      lookId,
+      version: result.version || null,
+      itemCount: result.item_count || null
+    });
+    return json({
+      ok: true,
+      look_id: result.look_id,
+      foto_url: result.url || null,
+      version: result.version || null,
+      render_source: result.render_source || null,
+      item_count: result.item_count || null,
+      updated_at: result.updated_at || null
+    }, 201);
+  }
+
   if (url.pathname === "/ingest-look-image") {
     if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
     if (!config.actionKey || !config.upstreamSecret) return json({ ok: false, code: "BRIDGE_NOT_CONFIGURED" }, 503);
