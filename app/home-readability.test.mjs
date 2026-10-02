@@ -28,6 +28,17 @@ test("Home weekly menu keeps a readable meal-by-day matrix", () => {
   assert.doesNotMatch(renderer, /class="home-weekly-menu-grid"/);
 });
 
+test("Home nutrition card exposes direct Menu and Recipes access", () => {
+  assert.match(index, /id="home-nutrition-open"/);
+  assert.match(index, /id="home-nutrition-menu"[^>]*>Menú<\/button>/);
+  assert.match(index, /id="home-nutrition-recipes"[^>]*>Recetas<\/button>/);
+  assert.match(app, /home-nutrition-menu/);
+  assert.match(app, /openHealthTabFromHome\("menu"\)/);
+  assert.match(app, /home-nutrition-recipes/);
+  assert.match(app, /openHealthTabFromHome\("recipes"\)/);
+  assert.match(css, /\.home-nutrition-links\s*\{/);
+});
+
 test("weekly matrix is larger but remains compact and internally scrollable", () => {
   assert.match(css, /v0\.40\.20 — readable weekly matrix \+ private recipe book/);
   assert.match(css, /body\s*\{\s*font-size:\s*14px/);
