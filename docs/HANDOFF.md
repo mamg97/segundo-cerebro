@@ -1570,7 +1570,8 @@ Los **2 fallos restantes de #103** son independientes del Home:
 - MIDAS TFM: el fallo rojo heredado sigue siendo correcto por ahora. La corrección upstream está fusionada en `mamg97/midas-paper-lab` commit `8bb6c174` (PR #28, 2026-10-02 08:59 CEST), pero el workflow `MIDAS TFM shadow forecasts` solo considera ejecuciones `schedule`; el siguiente slot primario es hoy a las **21:23 CEST**. No forzar verde con `workflow_dispatch` ni relajar el auditor.
 - Looks/OBJETOS: el probe visual tenía un timeout local de 6 s y reintentaba todas las imágenes pendientes en paralelo. Esto puede provocar `AbortError` por contención sin demostrar corrupción del asset. PR #225 cambia únicamente el auditor: probes secuenciales y un segundo intento de hasta 15 s solo cuando el primero termina en `AbortError`; 404/5xx, MIME no imagen y fallo de decodificación siguen siendo errores reales.
 - PRE-GIT GATE aplicado: no se modifican `SEGUNDO CEREBRO - OBJETOS`, D1, URLs ni imágenes existentes; no reingerir looks por este incidente.
-- PR #225: CI completa verde. Pendiente merge → deploy → nueva auditoría de producción para confirmar si desaparece exclusivamente el falso positivo de Looks. MIDAS debe seguir rojo hasta un nuevo `schedule` TFM válido.
+- PR #225 se fusionó y desplegó correctamente. Audit production web **#104** confirmó que los `AbortError` desaparecieron, pero dejó tres fallos: MIDAS TFM esperado; cuatro Looks HTTP 200 `image/svg+xml` que `createImageBitmap` no podía decodificar; y un falso positivo de MenuSemanal al comparar momentos legacy crudos contra grupos ya canonicalizados por la UI.
+- PR #226 corrige solo el auditor: fallback de decodificación mediante `<img>` para formatos no soportados por `createImageBitmap`, y canonicalización compartida de momentos del menú con tests. No toca Sheets, D1, imágenes ni contenido nutricional.
 
 ### Regla operativa para ORGANIZADOR 9
 
