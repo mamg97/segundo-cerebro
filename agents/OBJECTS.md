@@ -234,6 +234,8 @@ La participación es compartida, pero la propiedad funcional no.
 - `/api/state` puede transportar únicamente `objectsSummary`.
 - `GET /api/objects` entrega el detalle estructurado bajo demanda, incluidos metadatos visuales y facetas de armario.
 - `POST /api/objects/look` guarda un look nuevo en la fuente canónica `Looks + LookItems`.
+- `POST /api/objects/look/:look_id/image` asocia una imagen compuesta al look existente; los bytes viven en D1 privado y `Looks.foto_url` conserva la URL same-origin activa.
+- `GET /api/objects/look/:look_id/image?v=<version>` sirve esa imagen privada. La imagen no crea objetos ni duplica `LookItems`.
 - `POST /api/objects/:objeto_id/image` recibe `multipart/form-data` autenticado por Cloudflare Access con `image_type=original|processed|thumbnail` y un archivo `image`.
 - `POST /api/internal/objects/:objeto_id/image` es la variante server-to-server; exige Bearer upstream y reutiliza exactamente `uploadObjectsImage`.
 - `GET /api/objects/:objeto_id/image/:image_type?v=<version>` sirve el asset privado mediante el Worker.

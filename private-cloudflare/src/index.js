@@ -2,6 +2,7 @@ import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-ca
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
+import { readObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { processObjectsImageQueue } from "./objects-staging.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
@@ -4664,6 +4665,33 @@ export default {
       }
     }
 
+    const internalLookImageMatch = url.pathname.match(/^\/api\/internal\/objects\/look\/([^/]+)\/image$/);
+    if (internalLookImageMatch) {
+      const lookId = decodeURIComponent(internalLookImageMatch[1]);
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        if (!(await isObjectsBridgeAuthenticated(request, env))) {
+          console.warn("Objects look bridge request rejected", { lookId, code: "BRIDGE_AUTH_REQUIRED" });
+          return json({ ok: false, code: "BRIDGE_AUTH_REQUIRED" }, 401);
+        }
+        const result = await uploadObjectsLookImage(request, env, getGoogleAccessToken, lookId, {
+          authenticated: true
+        });
+        console.info("Objects look bridge ingest completed", { lookId, ok: result?.ok === true });
+        return json(result, 201);
+      } catch (error) {
+        if (error instanceof ObjectsImageError) {
+          console.warn("Objects look bridge ingest failed", { lookId, code: error.code });
+          return json({ ok: false, code: error.code }, error.status);
+        }
+        console.warn("Objects look bridge ingest failed", {
+          lookId,
+          code: String(error?.message || "OBJECTS_LOOK_BRIDGE_INGEST_FAILED")
+        });
+        return json({ ok: false, code: "OBJECTS_LOOK_BRIDGE_INGEST_FAILED" }, 502);
+      }
+    }
+
     const internalObjectImageMatch = url.pathname.match(/^\/api\/internal\/objects\/([^/]+)\/image$/);
     if (internalObjectImageMatch) {
       const objetoId = decodeURIComponent(internalObjectImageMatch[1]);
@@ -4692,6 +4720,32 @@ export default {
           code: String(error?.message || "OBJECTS_BRIDGE_INGEST_FAILED")
         });
         return json({ ok: false, code: "OBJECTS_BRIDGE_INGEST_FAILED" }, 502);
+      }
+    }
+
+    const lookImageMatch = url.pathname.match(/^\/api\/objects\/look\/([^/]+)\/image$/);
+    if (lookImageMatch) {
+      const lookId = decodeURIComponent(lookImageMatch[1]);
+      try {
+        if (request.method === "GET") {
+          const response = await readObjectsLookImage(request, env, lookId);
+          return withSecurityHeaders(response);
+        }
+        if (request.method === "POST") {
+          const result = await uploadObjectsLookImage(request, env, getGoogleAccessToken, lookId);
+          return json(result, 201);
+        }
+        return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      } catch (error) {
+        if (error instanceof ObjectsImageError) {
+          console.warn("Objects look image request failed", { lookId, code: error.code });
+          return json({ ok: false, code: error.code }, error.status);
+        }
+        console.warn("Objects look image request failed", {
+          lookId,
+          code: String(error?.message || "OBJECTS_LOOK_IMAGE_ERROR")
+        });
+        return json({ ok: false, code: "OBJECTS_LOOK_IMAGE_FAILED" }, 502);
       }
     }
 
