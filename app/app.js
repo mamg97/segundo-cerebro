@@ -1017,6 +1017,51 @@ function setHomeHealthMetric(mainId, detailId, main, detail) {
   if (detailNode) detailNode.textContent = detail;
 }
 
+function homeHealthSourceLabel(source) {
+  const raw = String(source || "").trim();
+  const normalized = raw.toLowerCase();
+  if (!raw) return "";
+  if (normalized.includes("zepp")) return "Zepp";
+  if (normalized.includes("apple")) return "Apple Health";
+  if (normalized.includes("habit")) return "Hábitos";
+  if (normalized.includes("health_sheet")) return "Salud";
+  return raw.replace(/[_-]+/g, " ");
+}
+
+function formatHomeHealthUpdate(value, source = "") {
+  const sourceLabel = homeHealthSourceLabel(source);
+  if (!value) return sourceLabel ? sourceLabel + " · hora no disponible" : "Actualización no disponible";
+  const raw = String(value).trim();
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+    ? new Date(raw + "T12:00:00+02:00")
+    : new Date(raw);
+  if (!Number.isFinite(parsed.getTime())) return [sourceLabel, raw].filter(Boolean).join(" · ");
+  const hasTime = !/^\d{4}-\d{2}-\d{2}$/.test(raw);
+  const formatted = new Intl.DateTimeFormat("es-ES", hasTime
+    ? { timeZone: "Europe/Madrid", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }
+    : { timeZone: "Europe/Madrid", day: "2-digit", month: "short" }
+  ).format(parsed).replace(".", "");
+  return [sourceLabel, formatted].filter(Boolean).join(" · ");
+}
+
+function setHomeHealthUpdated(key, value, source = "") {
+  const node = document.querySelector("#home-health-" + key + "-updated");
+  if (!node) return;
+  node.textContent = formatHomeHealthUpdate(value, source);
+  if (value) node.setAttribute("datetime", String(value));
+  else node.removeAttribute("datetime");
+}
+
+function shortHomeGymReason(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "Pausa temporal";
+  const upper = raw.toUpperCase();
+  if (/MEDICAL_PAUSE|HERIDA|PUNTO|DERMAT|SANGR|RECUPER/.test(upper)) return "Recuperación médica";
+  if (/VIAJE|VACAC/.test(upper)) return "Viaje / descanso";
+  const cleaned = raw.replace(/^[A-Z0-9_ -]+\s*[·:\-]\s*/i, "").split(/[.;\n]/)[0].trim();
+  return cleaned.length > 52 ? cleaned.slice(0, 49).trimEnd() + "…" : (cleaned || "Pausa temporal");
+}
+
 function setHomeHealthRing(ringId, value, options = {}) {
   const ring = document.querySelector("#" + ringId);
   if (!ring) return;
