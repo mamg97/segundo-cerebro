@@ -30,7 +30,7 @@ test("recipe cards render photo, ingredients and confirmed preparation", () => {
 test("recipe book remains responsive and readable", () => {
   assert.match(css, /\.recipes-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.recipe-photo\s*\{[\s\S]*?aspect-ratio:\s*16 \/ 9/);
-  assert.match(css, /\.recipe-photo img\s*\{[\s\S]*?object-fit:\s*cover/);
+  assert.match(css, /\.recipe-photo img\s*\{[\s\S]*?object-fit:\s*contain[\s\S]*?object-position:\s*center/);
   assert.match(css, /@media \(max-width: 820px\)[\s\S]*?\.recipes-grid\s*\{\s*grid-template-columns:\s*1fr/);
 });
 
