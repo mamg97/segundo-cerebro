@@ -6,6 +6,12 @@ final class HealthKitService {
 
     private let store = HKHealthStore()
     private var observerQueries: [HKObserverQuery] = []
+    private let immediateBackgroundIdentifiers: Set<String> = [
+        HKQuantityTypeIdentifier.bodyMass.rawValue,
+        HKQuantityTypeIdentifier.bodyFatPercentage.rawValue,
+        HKQuantityTypeIdentifier.bodyMassIndex.rawValue,
+        HKQuantityTypeIdentifier.leanBodyMass.rawValue
+    ]
 
     private init() {}
 
@@ -80,7 +86,10 @@ final class HealthKitService {
     func enableBackgroundDelivery() {
         guard isAvailable else { return }
         for type in readTypes {
-            store.enableBackgroundDelivery(for: type, frequency: .hourly) { _, _ in }
+            let frequency: HKUpdateFrequency = immediateBackgroundIdentifiers.contains(type.identifier)
+                ? .immediate
+                : .hourly
+            store.enableBackgroundDelivery(for: type, frequency: frequency) { _, _ in }
         }
     }
 
