@@ -1573,6 +1573,7 @@ Los **2 fallos restantes de #103** son independientes del Home:
 - PR #225 se fusionó y desplegó correctamente. Audit production web **#104** confirmó que los `AbortError` desaparecieron, pero dejó tres fallos: MIDAS TFM esperado; cuatro Looks HTTP 200 `image/svg+xml` que `createImageBitmap` no podía decodificar; y un falso positivo de MenuSemanal al comparar momentos legacy crudos contra grupos ya canonicalizados por la UI.
 - PR #226 corrige solo el auditor: fallback de decodificación mediante `<img>` para formatos no soportados por `createImageBitmap`, y canonicalización compartida de momentos del menú con tests. No toca Sheets, D1, imágenes ni contenido nutricional.
 - Audit production web **#106** mostró que el fallback de PR #226 todavía usaba `blob:`, bloqueado por la CSP (`img-src 'self' data: https:`), y que el check de menú seguía asociando las tarjetas por posición. Siguiente corrección: validar el SVG como `data:` y localizar cada tarjeta por su etiqueta canónica; MIDAS TFM continúa siendo el único fallo upstream esperado.
+- PR #227 se fusionó y desplegó en `main` `2c0161a1`. Audit production web **#107**: **775 checks / 1 failure**. Looks pasa (SVG validado sin falsos positivos), MenuSemanal pasa incluida la comprobación de macros ausentes y no hay errores JS/CSP. El único fallo restante es `MIDAS TFM shadow forecasts`, que debe permanecer rojo hasta una nueva ejecución `schedule` correcta posterior al fix upstream `8bb6c174`.
 
 ### Regla operativa para ORGANIZADOR 9
 
