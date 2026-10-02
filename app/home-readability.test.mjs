@@ -37,6 +37,9 @@ test("Home nutrition card exposes direct Menu and Recipes access", () => {
   assert.match(app, /home-nutrition-recipes/);
   assert.match(app, /openHealthTabFromHome\("recipes"\)/);
   assert.match(css, /\.home-nutrition-links\s*\{/);
+  assert.match(css, /\.home-nutrition-primary\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
+  assert.doesNotMatch(css, /\.home-nutrition-primary\s*\{[\s\S]{0,260}?minmax\(300px/);
+  assert.match(css, /\.home-nutrition-primary \.daily-progress-footer\s*\{[\s\S]*?flex-wrap:\s*wrap/);
 });
 
 test("weekly matrix is larger but remains compact and internally scrollable", () => {

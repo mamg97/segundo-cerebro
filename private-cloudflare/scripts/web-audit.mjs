@@ -461,6 +461,7 @@ async function auditVisualSnapshot(label) {
     const distortedImages = [];
     const brokenImages = [];
     const proportions = [];
+    const componentOverflows = [];
 
     const rootOverflow = Math.max(
       0,
@@ -559,6 +560,24 @@ async function auditVisualSnapshot(label) {
       }
     });
 
+    const nutritionCard = document.querySelector("#home-nutrition-card");
+    if (nutritionCard && visible(nutritionCard)) {
+      const cardRect = nutritionCard.getBoundingClientRect();
+      nutritionCard.querySelectorAll(
+        ".home-nutrition-primary,.daily-card-heading,.daily-energy-grid,.daily-progress-footer,.daily-card-status,.home-summary-action,.home-nutrition-links,.home-nutrition-links button"
+      ).forEach((element) => {
+        if (!visible(element)) return;
+        const style = getComputedStyle(element);
+        if (style.position === "absolute" || style.position === "fixed") return;
+        const rect = element.getBoundingClientRect();
+        if (rect.left < cardRect.left - 3 || rect.right > cardRect.right + 3) {
+          componentOverflows.push(
+            `#home-nutrition-card: ${shortName(element)} [${Math.round(rect.left)},${Math.round(rect.right)}] fuera de [${Math.round(cardRect.left)},${Math.round(cardRect.right)}]`
+          );
+        }
+      });
+    }
+
     const dialog = document.querySelector(".detail-dialog[open]");
     const close = document.querySelector(".detail-dialog[open] .dialog-close");
     const title = document.querySelector(".detail-dialog[open] #dialog-title");
@@ -608,13 +627,14 @@ async function auditVisualSnapshot(label) {
       }
     }
 
-    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, brokenImages, proportions };
+    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, brokenImages, proportions, componentOverflows };
   });
 
   assertCheck(report.rootOverflow <= 3, `Visual ${label} · sin overflow global`, `overflow=${report.rootOverflow}px`);
   assertCheck(report.outOfBounds.length === 0, `Visual ${label} · contenido dentro del viewport`, report.outOfBounds.slice(0, 4).join(" | "));
   assertCheck(report.clippedText.length === 0, `Visual ${label} · texto sin clipping`, report.clippedText.slice(0, 4).join(" | "));
   assertCheck(report.overlaps.length === 0, `Visual ${label} · sin solapes`, report.overlaps.slice(0, 4).join(" | "));
+  assertCheck(report.componentOverflows.length === 0, `Visual ${label} · componentes dentro de su tarjeta`, report.componentOverflows.slice(0, 4).join(" | "));
   assertCheck(report.distortedImages.length === 0, `Visual ${label} · imágenes sin deformación`, report.distortedImages.slice(0, 4).join(" | "));
 
   const uniqueBrokenSources = [...new Set(report.brokenImages.map((item) => item.src).filter(Boolean))];
