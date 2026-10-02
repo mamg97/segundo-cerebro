@@ -1261,6 +1261,25 @@ try {
               ).then(() => true).catch(() => false)
             : false;
           assertCheck(loaded, "Salud · Recetas carga foto visible", src || "sin src");
+          const presentation = await image.evaluate((candidate) => {
+            const style = getComputedStyle(candidate);
+            const rect = candidate.getBoundingClientRect();
+            return {
+              objectFit: style.objectFit,
+              objectPosition: style.objectPosition,
+              naturalWidth: candidate.naturalWidth,
+              naturalHeight: candidate.naturalHeight,
+              renderedWidth: Math.round(rect.width),
+              renderedHeight: Math.round(rect.height)
+            };
+          }).catch(() => null);
+          assertCheck(
+            presentation?.objectFit === "contain",
+            "Salud · Recetas conserva foto completa",
+            presentation
+              ? `object-fit=${presentation.objectFit} · natural=${presentation.naturalWidth}x${presentation.naturalHeight} · render=${presentation.renderedWidth}x${presentation.renderedHeight}`
+              : "sin estilo computado"
+          );
         }
       }
       await auditVisualSnapshot(`desktop · Salud · ${tab}`);
