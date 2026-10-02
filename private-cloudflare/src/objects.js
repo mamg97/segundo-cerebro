@@ -259,7 +259,7 @@ function emptyPayload() {
   };
 }
 
-function buildPayload(rows) {
+export function buildPayload(rows) {
   const objects = rows.objects.map((row) => {
     const id = String(value(row, "objeto_id", "id") || "").trim();
     return {
