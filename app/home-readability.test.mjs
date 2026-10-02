@@ -58,6 +58,36 @@ test("Home Health card uses five circular daily summaries", () => {
   assert.match(css, /\.home-health-links\s*\{[\s\S]*?justify-content:\s*flex-start/);
 });
 
+test("Home Health shows freshness, brief Gym status and latest real weight", () => {
+  for (const id of ["habits", "kcal", "protein", "gym", "weight"]) {
+    assert.match(index, new RegExp(`id="home-health-${id}-updated"`));
+  }
+  assert.match(app, /function shortHomeGymReason/);
+  assert.match(app, /Recuperación médica/);
+  assert.match(app, /const latestWeightSample = body\.weightToday \|\| weightSamples\.at\(-1\)/);
+  assert.doesNotMatch(app, /const displayedWeight = weightToday \?\? weightAverage/);
+  assert.match(app, /latestWeightSample\?\.source/);
+  assert.match(css, /\.home-health-updated\s*\{/);
+  assert.match(css, /-webkit-line-clamp:\s*2/);
+});
+
+test("Home lower cards are compact and expose section shortcuts", () => {
+  for (const id of [
+    "home-pantry-inventory", "home-shopping-list",
+    "home-objects-inventory", "home-objects-wardrobe-link", "home-objects-looks", "home-objects-kits",
+    "home-wealth-detail", "home-wealth-evolution", "home-wealth-midas",
+    "home-debt-detail", "home-debt-credit"
+  ]) {
+    assert.match(index, new RegExp(`id="${id}"`));
+  }
+  assert.doesNotMatch(index, /class="credit-panel"/);
+  assert.match(app, /home-debt-credit-summary/);
+  assert.match(app, /no se suma de nuevo al total/);
+  assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?grid-auto-rows:\s*auto !important/);
+  assert.match(css, /\.money-horizon\s*\{[\s\S]*?align-items:\s*start !important[\s\S]*?grid-auto-rows:\s*auto !important/);
+  assert.match(css, /\.home-card-links\s*\{/);
+});
+
 test("weekly matrix is larger but remains compact and internally scrollable", () => {
   assert.match(css, /v0\.40\.20 — readable weekly matrix \+ private recipe book/);
   assert.match(css, /body\s*\{\s*font-size:\s*14px/);
