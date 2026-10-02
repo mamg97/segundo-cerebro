@@ -19763,3 +19763,74 @@ footer {
     padding: 14px;
   }
 }
+
+
+/* v0.40.21 — direct Menu/Recetas access from Home nutrition */
+.home-nutrition-card {
+  cursor: default;
+}
+
+.home-nutrition-primary {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-nutrition-links {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.home-nutrition-links button {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--blue);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.home-nutrition-links button:hover {
+  background: color-mix(in srgb, var(--blue) 9%, transparent);
+}
+
+.home-nutrition-primary:focus-visible,
+.home-nutrition-links button:focus-visible {
+  outline: 3px solid #79a4f8;
+  outline-offset: 3px;
+}
+
+@media (min-width: 1180px) {
+  #home-nutrition-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .home-nutrition-primary {
+    grid-template-columns: minmax(150px, .65fr) minmax(300px, 1.45fr) minmax(170px, .8fr);
+    align-items: center;
+    gap: 8px 12px;
+  }
+
+  .home-nutrition-primary .daily-card-heading { grid-column: 1; }
+  .home-nutrition-primary .daily-energy-grid { grid-column: 2; }
+  .home-nutrition-primary .daily-progress-footer { grid-column: 3 !important; }
+
+  .home-nutrition-links {
+    grid-column: 1;
+  }
+}
