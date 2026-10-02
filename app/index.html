@@ -9,8 +9,8 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.40.19">
-    <script type="module" src="./app.js?v=0.40.23"></script>
+    <link rel="stylesheet" href="./styles.css?v=0.41.0">
+    <script type="module" src="./app.js?v=0.41.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -31,12 +31,20 @@
 
       <main id="main-content" class="main-content">
         <header class="topbar">
-          <button id="menu-button" class="icon-button menu-button" type="button" aria-label="Abrir navegación" aria-expanded="false" aria-controls="area-nav">
-            <span></span><span></span>
-          </button>
-          <div class="day-context">
-            <p id="greeting">Buenos días</p>
-            <time id="current-date"></time>
+          <div class="topbar-context">
+            <thinking-orb
+              id="system-orb"
+              state="idle"
+              size="58"
+              theme="auto"
+              variant="classic"
+              speed="3.6"
+              role="img"
+            ></thinking-orb>
+            <div class="day-context">
+              <p id="greeting">Buenos días</p>
+              <time id="current-date"></time>
+            </div>
           </div>
           <div class="top-actions">
             <button id="refresh-app" class="refresh-app" type="button" aria-label="Actualizar Segundo Cerebro" title="Volver a cargar datos y aplicación" data-demo-unmasked="true">
@@ -55,90 +63,46 @@
 
         <span id="overview" class="overview-anchor" aria-hidden="true"></span>
 
-        <section class="ask-panel" aria-labelledby="ask-title">
-          <thinking-orb
-            id="system-orb"
-            state="idle"
-            size="96"
-            theme="auto"
-            variant="classic"
-            speed="3.6"
-            aria-hidden="true"
-          ></thinking-orb>
-          <form id="ask-form" class="ask-form">
-            <div class="ask-copy">
-              <label id="ask-title" for="ask-input">Consulta rápida</label>
-              <p>Pregunta por tu estado o abre una sección del Segundo Cerebro.</p>
-            </div>
-            <div class="ask-row">
-              <input id="ask-input" name="query" type="search" autocomplete="off" placeholder="Ej.: «qué tengo hoy», «abre despensa», «ver presupuesto»">
-              <button id="query-submit" type="submit" aria-label="Ejecutar consulta rápida">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.5-5.5L5 12Z"></path></svg>
-              </button>
-            </div>
-            <div class="ask-suggestions" aria-label="Ejemplos de consultas rápidas">
-              <button type="button" data-quick-query="Qué tengo hoy">Qué tengo hoy</button>
-              <button type="button" data-quick-query="Abre despensa">Abrir despensa</button>
-              <button type="button" data-quick-query="Cómo va nutrición">Nutrición hoy</button>
-              <button type="button" data-quick-query="Ver presupuesto">Ver presupuesto</button>
-              <button type="button" data-quick-query="Abre objetos">Abrir objetos</button>
-              <button type="button" data-quick-query="Abre proyectos">Abrir proyectos</button>
-            </div>
-            <p id="query-help">Usa esta barra para consultar datos conectados o saltar a un módulo.</p>
-          </form>
-        </section>
-        <div id="query-result" class="query-result" role="status" aria-live="polite" hidden></div>
-
         <section class="daily-overview-grid" aria-label="Resumen de hoy">
-          <button id="home-habits-card" class="daily-overview-card home-summary-card" type="button">
-            <div class="daily-card-heading">
-              <span class="daily-card-icon" aria-hidden="true">✓</span>
-              <span><small>Hábitos</small><strong>Hoy</strong></span>
-              <span class="daily-card-arrow" aria-hidden="true">→</span>
-            </div>
-            <div class="home-summary-metrics home-summary-desktop-only" aria-label="Indicadores de hábitos de hoy">
-              <span><small>Completados</small><strong id="home-habits-done">—</strong></span>
-              <span><small>Pendientes</small><strong id="home-habits-pending">—</strong></span>
-              <span><small>Progreso</small><strong id="home-habits-percent">—</strong></span>
-              <span><small>Racha</small><strong id="home-habits-streak">—</strong></span>
-            </div>
-            <div class="daily-progress-summary home-summary-mobile-only">
-              <div class="daily-card-main">
-                <strong id="home-habits-value">—</strong>
-                <span id="home-habits-label">Cargando hábitos…</span>
-              </div>
-              <span id="home-habits-ring" class="progress-ring tone-violet size-lg is-empty" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de hábitos de hoy">
-                <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>hoy</small></span>
-              </span>
-            </div>
-            <span class="home-summary-footer home-summary-desktop-only"><span id="home-habits-status">Cargando hábitos…</span><strong>Ver hábitos →</strong></span>
-          </button>
-
-          <article id="home-nutrition-card" class="daily-overview-card home-summary-card home-nutrition-card">
-            <button id="home-nutrition-open" class="home-nutrition-primary" type="button" aria-label="Abrir Nutrición">
+          <article id="home-health-card" class="daily-overview-card home-summary-card home-health-card">
+            <button id="home-health-open" class="home-health-primary" type="button" aria-label="Abrir resumen de Salud">
               <div class="daily-card-heading">
-                <span class="daily-card-icon accent" aria-hidden="true">◒</span>
-                <span><small>Nutrición</small><strong>Balance diario</strong></span>
+                <span class="daily-card-icon health-accent" aria-hidden="true">♥</span>
+                <span><small>Salud</small><strong>Estado de hoy</strong></span>
                 <span class="daily-card-arrow" aria-hidden="true">→</span>
               </div>
-              <div class="daily-energy-grid home-summary-metrics">
-                <span><small>Consumidas</small><strong id="home-kcal-consumed">—</strong></span>
-                <span><small>Gasto total</small><strong id="home-kcal-burned">—</strong></span>
-                <span><small>Objetivo</small><strong id="home-kcal-target">—</strong></span>
-                <span class="home-summary-desktop-only"><small>Progreso</small><strong id="home-kcal-percent">—</strong></span>
-              </div>
-              <div class="daily-progress-footer">
-                <span id="home-kcal-status" class="daily-card-status">Cargando nutrición…</span>
-                <span id="home-kcal-ring" class="progress-ring tone-amber size-lg is-empty home-summary-mobile-only" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Calorías consumidas frente al objetivo diario">
-                  <span class="progress-ring-center"><strong class="progress-ring-value">—</strong><small>kcal</small></span>
+              <div class="home-health-metrics" aria-label="Resumen de hábitos, macros, actividad y peso">
+                <span class="home-health-metric">
+                  <small>Hábitos</small>
+                  <strong id="home-health-habits-main">—</strong>
+                  <em id="home-health-habits-detail">Cargando…</em>
                 </span>
-                <strong class="home-summary-action home-summary-desktop-only">Ver nutrición →</strong>
+                <span class="home-health-metric">
+                  <small>Macros</small>
+                  <strong id="home-health-macros-main">—</strong>
+                  <em id="home-health-macros-detail">Cargando…</em>
+                </span>
+                <span class="home-health-metric">
+                  <small>Actividad</small>
+                  <strong id="home-health-activity-main">—</strong>
+                  <em id="home-health-activity-detail">Cargando…</em>
+                </span>
+                <span class="home-health-metric">
+                  <small>Peso</small>
+                  <strong id="home-health-weight-main">—</strong>
+                  <em id="home-health-weight-detail">Cargando…</em>
+                </span>
               </div>
             </button>
-            <div class="home-nutrition-links" aria-label="Accesos directos de nutrición">
-              <button id="home-nutrition-menu" type="button">Menú</button>
-              <button id="home-nutrition-recipes" type="button">Recetas</button>
-            </div>
+            <nav class="home-health-links" aria-label="Apartados principales de Salud">
+              <button id="home-health-summary" type="button">Resumen</button>
+              <button id="home-health-habits" type="button">Hábitos</button>
+              <button id="home-health-medical" type="button">Médicos</button>
+              <button id="home-health-gym" type="button">Gimnasio</button>
+              <button id="home-health-nutrition" type="button">Nutrición</button>
+              <button id="home-health-recipes" type="button">Recetas</button>
+              <button id="home-health-menu" type="button">Menú</button>
+            </nav>
           </article>
 
           <article id="home-pantry-card" class="daily-overview-card pantry-home-card home-summary-card" hidden>
