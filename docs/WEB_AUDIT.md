@@ -126,6 +126,7 @@ Entre otros:
 - dos hijos de un mismo layout flex/grid que se pisan;
 - botón de cierre que tapa el título de un diálogo;
 - imagen deformada respecto de su proporción natural cuando no usa `cover/contain/scale-down`;
+- una imagen renderizada que todavía no esté completa se contrasta mediante `fetch` autenticado del mismo `src`: solo se considera recurso sano si responde correctamente, declara `Content-Type: image/*` y Chromium puede decodificar el blob; así un `loading="lazy"` pendiente no se confunde con un 404/500 o un binario corrupto;
 - diálogo que excede el ancho útil de la pantalla;
 - tarjetas resumen que pierden de forma material la simetría documentada en escritorio;
 - modificación accidental de los tokens visuales canónicos light/dark;
