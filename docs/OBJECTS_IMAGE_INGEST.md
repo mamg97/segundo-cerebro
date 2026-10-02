@@ -206,3 +206,37 @@ Una subida solo se puede declarar terminada cuando se cumplen simultáneamente:
 - [ ] la copia temporal de Drive queda eliminada;
 - [ ] si apareció una tentación de responder «no puedo subirla», se aplicó el guardrail anterior y la capacidad se revalidó antes de contestar.
 
+
+
+## Imágenes compuestas de looks
+
+Los looks continúan teniendo una única identidad canónica en `Looks + LookItems`. La imagen renderizada del conjunto es un derivado visual del `look_id`, no una prenda ni un objeto nuevo.
+
+Flujo canónico:
+
+```text
+imagen generada del look
+    ↓
+POST /ingest-look-image
+    ↓
+objects-chatgpt-bridge
+    ↓
+POST /api/internal/objects/look/:look_id/image
+    ↓
+almacén visual privado D1
+    ↓
+actualización de Looks.foto_url
+    ↓
+GET /api/objects/look/:look_id/image?v=<version>
+```
+
+Reglas:
+
+- no crear un `objeto_id` ficticio para una imagen de look;
+- no escribir manualmente una URL provisional en `Looks.foto_url`;
+- el `look_id` debe existir antes de la ingesta;
+- `overwrite=false` para la primera imagen y `overwrite=true` solo al sustituirla;
+- el frontend usa `Looks.foto_url` como imagen principal y cae al mosaico de prendas si está vacío;
+- el fallback de conversación usa también `OBJECTS_SEED_JOBS`: un job de look lleva `look_id` en vez de `objeto_id`;
+- tras la ingesta hay que verificar que `Looks.foto_url` apunta a una ruta same-origin `/api/objects/look/<look_id>/image?v=...`;
+- después se limpian variables de seed y cualquier staging temporal exactamente igual que con prendas.
