@@ -137,6 +137,17 @@ Para cada documento relevante basta inicialmente con metadatos privados:
 
 Si en el futuro se necesita archivo propio, debe diseñarse almacenamiento privado independiente (por ejemplo R2/Drive autorizado) antes de persistir documentos completos.
 
+### Acuses, justificantes y resoluciones de terceros
+
+Un acuse automático de recepción de documentación no equivale a una resolución favorable ni confirma por sí solo que una modificación solicitada ya esté aplicada. Para estos casos:
+
+- conservar la referencia al email/documento en la fuente privada;
+- registrar el caso como `WAITING_EXTERNAL` mientras el tercero revisa la documentación;
+- distinguir entre `documentación recibida`, `solicitud aceptada` y `cambio efectivo`;
+- si el tercero indica que contactará únicamente cuando falte información, la siguiente acción es esperar revisión, no volver a enviar la misma documentación;
+- cuando exista un primer pago, cargo, certificado o resolución posterior que demuestre el cambio efectivo, añadirlo como hito separado;
+- si el justificante se comparte con otro gestor o entidad (por ejemplo una operación bancaria), tratarlo únicamente como evidencia de recepción/tramitación y no ampliar su significado.
+
 ## Contrato con el dashboard
 
 La aplicación privada debe poder mostrar:
