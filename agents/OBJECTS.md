@@ -114,6 +114,10 @@ Una prenda no debe existir solo en Armario: primero debe existir como objeto. `O
 
 ### `Looks` + `LookItems`
 
+`LookItems` conserva solo la relación canónica `look_id + objeto_id + rol`. Para consumo, `GET /api/objects` resuelve cada `objeto_id` contra `Armario` y adjunta dinámicamente las referencias visuales vigentes de la prenda (`photoUrl`, `processedPhotoUrl`, `thumbnailUrl`, `originalPhotoUrl`, `visualReferenceUrl`) y sus metadatos visuales básicos. No se copian esas URLs al Sheet, evitando que queden obsoletas tras un overwrite.
+
+**Regla para generar imágenes de looks con IA:** si los `LookItems` disponen de referencias visuales canónicas, el gestor debe cargar/usar esas imágenes reales como referencias antes de generar. No basta con describir la prenda por nombre, marca o color. La descripción textual es apoyo, no sustituto de la referencia visual. Si una referencia visual no puede recuperarse, se debe identificar esa carencia antes de generar para no inventar una variante genérica.
+
 `Looks`:
 - `look_id`
 - `nombre`
