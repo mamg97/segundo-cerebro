@@ -125,3 +125,59 @@ test("refuses to render a look missing a required visual role", async () => {
     (error) => error?.code === "LOOK_REQUIRED_ROLE_MISSING"
   );
 });
+
+
+test("falls back to processed image when a canonical thumbnail is unreadable", async () => {
+  const writes = [];
+  const store = {
+    writes,
+    async get(key) {
+      if (key.includes("obj-top/thumbnail/")) throw new Error("OBJECTS_MEDIA_CORRUPT");
+      if (key.includes("obj-top/processed/")) {
+        return {
+          body: new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50]),
+          httpMetadata: { contentType: "image/webp" }
+        };
+      }
+      return {
+        body: new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50]),
+        httpMetadata: { contentType: "image/webp" }
+      };
+    },
+    async put(key, bytes, options) {
+      writes.push({ key, bytes: new Uint8Array(bytes), options });
+    },
+    async delete() {}
+  };
+
+  const fallbackSource = source([
+    { objectId: "obj-top", role: "superior" },
+    { objectId: "obj-bottom", role: "inferior" },
+    { objectId: "obj-shoes", role: "calzado" }
+  ]);
+  fallbackSource.value.wardrobe[0].processedPhotoUrl =
+    "/api/objects/obj-top/image/processed?v=version-top-1234";
+
+  const result = await renderObjectsLookImage(
+    request({ look_id: "look-test" }),
+    {},
+    async () => "token",
+    "look-test",
+    {
+      authenticated: true,
+      mediaStore: store,
+      fetchObjectsSummary: async () => fallbackSource,
+      resolveObjectsSpreadsheetId: async () => "sheet",
+      getLookRow: async () => ({
+        rowNumber: 2,
+        headerMap: new Map([["look_id", 0], ["foto_url", 2]]),
+        row: ["look-test", "Look test", ""]
+      }),
+      writeLookPhoto: async () => {},
+      invalidateObjectsCache: () => {}
+    }
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(store.writes.length, 1);
+});
