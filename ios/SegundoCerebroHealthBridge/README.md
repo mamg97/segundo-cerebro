@@ -18,6 +18,8 @@ D1 privado
 
 La aplicación no es una segunda app de Salud ni una interfaz paralela de Segundo Cerebro. Su trabajo es exclusivamente recoger datos autorizados de HealthKit y sincronizarlos con la infraestructura privada existente.
 
+Para actividad y composición corporal, la fuente operativa automática es **D1 privado**. Las pestañas derivadas del Sheet (por ejemplo `MedicionesCorporalesApple`) son superficies de inspección/revisión y no deben utilizarse como dependencia del Home ni como mecanismo para arreglar freshness.
+
 ### Datos
 
 Cuando existen muestras y el usuario autoriza su lectura:
@@ -35,8 +37,10 @@ Los datos ausentes se envían como ausentes. La app no estima valores ni genera 
 - Cada sincronización procesa **hoy + ayer**, de más antiguo a más reciente.
 - El backend usa UPSERT; repetir una sincronización no duplica días.
 - `HKObserverQuery` + HealthKit Background Delivery permiten que iOS despierte la app cuando cambian tipos observados.
-- `BGAppRefreshTask` funciona como reconciliación adicional.
-- iOS decide el momento exacto de ejecución en segundo plano: no es un cron.
+- Los tipos corporales (`bodyMass`, grasa corporal, IMC y masa magra) solicitan Background Delivery con frecuencia `.immediate`, porque cambian pocas veces al día y el Home debe reflejar una pesada nueva cuanto antes.
+- Actividad, entrenamientos, sueño y recuperación mantienen entrega `.hourly` para no provocar despertares continuos por señales de alta frecuencia.
+- Al volver la app al primer plano se ejecuta una reconciliación inmediata de hoy + ayer.
+- `BGAppRefreshTask` solicita una reconciliación adicional a partir de una hora; iOS decide el momento real y puede retrasarla.
 - El botón **Sincronizar ahora** existe para instalación, diagnóstico y recuperación puntual.
 
 ## Seguridad

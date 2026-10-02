@@ -1588,3 +1588,24 @@ Antes de cualquier cambio:
 8. para cambios de código: rama desde HEAD vivo → tests → PR → CI → merge → deploy → Audit production web;
 9. no ocultar fallos independientes para poner verde un audit;
 10. no rehacer capacidades ya documentadas como cerradas.
+
+
+### ORGANIZADOR 9 · Home v0.41.4 + freshness de peso · 2026-10-02
+
+- PR #230 / `a4f2eba3` cerró el ajuste visual solicitado en Home:
+  - Peso ya no usa rueda de progreso; mantiene valor real, media 7 d, delta y fuente/hora.
+  - Salud elimina la fila vacía heredada y reduce densidad sin reducir legibilidad.
+  - Despensa/Objetos comparten fila 50/50 con misma altura y contenido compacto.
+  - Patrimonio/Obligaciones comparten fila 50/50 con altura equilibrada.
+  - Toda la aplicación usa la familia sans canónica Avenir Next/Avenir/Segoe UI/system-ui; se eliminó Iowan/Palatino.
+- Deploy privado #326: success.
+- Audit production web #109: **836 checks / 1 failure**.
+  - Home pasa en desktop-wide, desktop, tablet, mobile-wide y mobile sin overflow, clipping ni solapes.
+  - El único fallo sigue siendo `MIDAS TFM shadow forecasts`, independiente del Home.
+- Diagnóstico del peso: el Home automático no depende de `MedicionesCorporalesApple`. El flujo vivo es HealthKit → bridge iOS → ingest Worker → D1 → Home; el Sheet corporal es derivado.
+- Rama en curso `organizador9/health-weight-freshness` desde `a4f2eba3`:
+  - los tipos corporales HealthKit solicitan Background Delivery `.immediate`;
+  - actividad/recuperación permanecen `.hourly`;
+  - el bridge reconcilia hoy + ayer al volver a primer plano;
+  - el BGAppRefresh fallback pasa de 3 h a una solicitud a partir de 1 h (iOS conserva la decisión final de ejecución).
+- No “arreglar” freshness editando manualmente el Sheet derivado. Si una pesada nueva está en Apple Health y no llega a D1, diagnosticar bridge/autorización/background delivery.
