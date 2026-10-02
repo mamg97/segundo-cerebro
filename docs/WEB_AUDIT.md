@@ -265,3 +265,20 @@ La defensa vigente es:
 - watcher de 90 minutos.
 
 No crear otro workflow horario en paralelo sin una decisión explícita: produciría ejecuciones solapadas y diagnósticos ambiguos.
+
+
+## Home v0.41 · navegación superior y Salud unificada
+
+Desde 2026-10-02 el contrato visual del Home incluye:
+
+- no existe la barra `Consulta rápida` ni sus inputs/botón de envío;
+- el `thinking-orb` se conserva y vive en el encabezado junto al contexto del día;
+- la navegación principal ya no es una barra lateral: `.sidebar` funciona como navegación superior `sticky`, a ancho completo, y `.area-nav` es horizontal con scroll interno cuando no cabe;
+- Hábitos y Nutrición/Salud no son tarjetas independientes: existe una única `#home-health-card` a ancho completo;
+- esa tarjeta contiene exactamente cuatro resúmenes principales: Hábitos, Macros, Actividad y Peso;
+- en su pie aparecen accesos a Resumen, Hábitos, Médicos, Gimnasio, Nutrición, Recetas y Menú;
+- el auditor comprueba que la tarjeta termina de cargar y que el estado calórico sigue visible dentro de Macros;
+- el QA responsive incluye `desktop-wide` de **1760×1000**, además de desktop 1440, tablet 900, mobile-wide 440 y mobile 390;
+- cada uno de esos perfiles debe pasar overflow global, contenido dentro del viewport, clipping, solapes, overflow local de componentes, imágenes y proporciones.
+
+No restaurar selectores legacy como `#home-kcal-ring`, `#home-kcal-target`, `#home-habits-card` o `#home-nutrition-card` en el auditor salvo que vuelvan a existir deliberadamente en la UI.
