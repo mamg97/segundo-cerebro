@@ -1426,7 +1426,12 @@ try {
 
   const homeHealthText = normalizeAuditValue(await page.locator("#home-health-card").textContent().catch(() => ""));
   assertCheck(!/Cargando/i.test(homeHealthText), "Home · Salud termina de cargar su resumen", homeHealthText.slice(0, 220));
-  assertCheck(!/pasos/i.test(homeHealthText), "Home · Salud no usa pasos como resumen principal", homeHealthText.slice(0, 220));
+  assertCheck(
+    await page.locator("#home-health-activity-main, #home-health-activity-detail").count() === 0 &&
+      await page.locator("#home-health-gym-main").count() === 1,
+    "Home · Salud sustituye Actividad/pasos por Gym hoy",
+    homeHealthText.slice(0, 220)
+  );
   const homeKcalMain = normalizeAuditValue(await page.locator("#home-health-kcal-main").textContent().catch(() => ""));
   const homeProteinMain = normalizeAuditValue(await page.locator("#home-health-protein-main").textContent().catch(() => ""));
   const homeGymMain = normalizeAuditValue(await page.locator("#home-health-gym-main").textContent().catch(() => ""));
