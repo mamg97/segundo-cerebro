@@ -113,3 +113,52 @@ test("propagates canonical ingest errors without marking success", async () => {
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), { ok: false, code: "OBJECTS_MEDIA_NOT_CONFIGURED" });
 });
+
+
+test("renders an existing look without external file staging", async () => {
+  const calls = [];
+  const request = new Request("https://bridge.example.test/render-look-image", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer action-key",
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      look_id: "look-curated-office-blue-beige-001",
+      overwrite: false
+    })
+  });
+
+  const fakeFetch = async (input, init = {}) => {
+    calls.push({ input: String(input), init });
+    assert.equal(
+      String(input),
+      "https://brain.example.test/api/internal/objects/look/look-curated-office-blue-beige-001/render"
+    );
+    assert.equal(init.headers.Authorization, "Bearer upstream-secret");
+    assert.equal(init.headers["Content-Type"], "application/json");
+    assert.deepEqual(JSON.parse(init.body), {
+      look_id: "look-curated-office-blue-beige-001",
+      overwrite: false
+    });
+    return new Response(JSON.stringify({
+      ok: true,
+      look_id: "look-curated-office-blue-beige-001",
+      url: "/api/objects/look/look-curated-office-blue-beige-001/image?v=version-5678",
+      version: "version-5678",
+      render_source: "canonical-wardrobe",
+      item_count: 3,
+      updated_at: "2026-10-02T09:10:00.000Z"
+    }), { status: 201, headers: { "content-type": "application/json" } });
+  };
+
+  const response = await handleRequest(request, ENV, fakeFetch);
+  assert.equal(response.status, 201);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.look_id, "look-curated-office-blue-beige-001");
+  assert.equal(body.foto_url.includes("/api/objects/look/"), true);
+  assert.equal(body.render_source, "canonical-wardrobe");
+  assert.equal(body.item_count, 3);
+  assert.equal(calls.length, 1);
+});
