@@ -151,7 +151,7 @@ async function probeVisualImage(src) {
   let result = null;
   const timeouts = [6000, 15000];
   for (let attempt = 0; attempt < timeouts.length; attempt += 1) {
-    result = await page.evaluate(async ({ target, timeoutMs }) => {
+    result = await page.evaluate(async ({ target, timeoutMs, attemptNumber }) => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -186,7 +186,7 @@ async function probeVisualImage(src) {
           height,
           bytes: blob.size,
           error: decodeError,
-          attempts: attempt + 1
+          attempts: attemptNumber
         };
       } catch (error) {
         return {
@@ -198,12 +198,12 @@ async function probeVisualImage(src) {
           height: 0,
           bytes: 0,
           error: String(error?.name || error?.message || error || "fetch_failed"),
-          attempts: attempt + 1
+          attempts: attemptNumber
         };
       } finally {
         clearTimeout(timeout);
       }
-    }, { target: key, timeoutMs: timeouts[attempt], attempt });
+    }, { target: key, timeoutMs: timeouts[attempt], attemptNumber: attempt + 1 });
 
     if (result.ok || result.status > 0 || result.error !== "AbortError") break;
   }
