@@ -5870,6 +5870,138 @@ function openCreditDetail() {
   dialog.showModal();
 }
 
+function formatLoanBenchmarkPercent(value, { signed = true, suffix = "%" } = {}) {
+  const number = firstFinite(value);
+  if (number === null) return "—";
+  const pct = number * 100;
+  const sign = signed && pct > 0 ? "+" : "";
+  return `${sign}${pct.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${suffix}`;
+}
+
+function loanInvestmentBenchmarkTone(item) {
+  const advantage = firstFinite(item?.netAdvantage);
+  if (advantage === null || Math.abs(advantage) < 0.005) return "neutral";
+  return advantage > 0 ? "positive" : "negative";
+}
+
+function loanInvestmentBenchmarkOutcome(item, currency) {
+  const advantage = firstFinite(item?.netAdvantage);
+  if (advantage === null) return { label: "Resultado pendiente", amount: "—" };
+  if (Math.abs(advantage) < 0.005) return { label: "Empate técnico", amount: formatMoney(0, currency) };
+  return advantage > 0
+    ? { label: "Batiendo al banco", amount: "+" + formatMoney(Math.abs(advantage), currency) }
+    : { label: "Por debajo del banco", amount: "−" + formatMoney(Math.abs(advantage), currency) };
+}
+
+function renderLoanInvestmentBenchmarkCards(wealth, compact = false) {
+  const rows = Array.isArray(wealth?.loanInvestmentBenchmarks)
+    ? wealth.loanInvestmentBenchmarks.filter((item) => item?.id)
+    : [];
+  if (!rows.length) return "";
+
+  return `<section class="loan-benchmark-list ${compact ? "is-compact" : ""}" aria-label="Préstamos frente a inversiones">
+    ${rows.map((item) => {
+      const currency = item.currency || wealth?.currency || "EUR";
+      const tone = loanInvestmentBenchmarkTone(item);
+      const outcome = loanInvestmentBenchmarkOutcome(item, currency);
+      const provisional = String(item.dataStatus || "").toLowerCase() === "provisional";
+      const through = formatFinanceDate(item.throughDate, item.throughDate || "Sin fecha");
+      return `
+        <button
+          type="button"
+          class="loan-benchmark-card is-${tone}"
+          data-loan-investment-benchmark-id="${escapeHtml(item.id)}"
+          aria-label="Abrir detalle de ${escapeHtml(item.label || "préstamo frente a inversión")}">
+          <span class="loan-benchmark-head">
+            <span>
+              <small>Préstamo vs inversión</small>
+              <strong>${escapeHtml(item.label || "Comparativa")}</strong>
+            </span>
+            <em class="loan-benchmark-status ${provisional ? "is-provisional" : ""}">${provisional ? "Provisional" : "Actualizado"}</em>
+          </span>
+          <span class="loan-benchmark-outcome">
+            <strong>${escapeHtml(outcome.label)}</strong>
+            <b>${escapeHtml(outcome.amount)}</b>
+          </span>
+          <span class="loan-benchmark-metrics">
+            <span><small>Cartera</small><strong>${escapeHtml(formatLoanBenchmarkPercent(item.portfolioReturnPct))}</strong></span>
+            <span><small>Banco · periodo</small><strong>${escapeHtml(formatLoanBenchmarkPercent(item.loanEquivalentReturnPct, { signed: false }))}</strong></span>
+            <span><small>Spread bruto</small><strong>${escapeHtml(formatLoanBenchmarkPercent(item.grossSpreadPct, { suffix: "pp" }))}</strong></span>
+          </span>
+          <span class="loan-benchmark-foot">Resultado neto tras costes · ${escapeHtml(through)} <i aria-hidden="true">→</i></span>
+        </button>`;
+    }).join("")}
+  </section>`;
+}
+
+function openLoanInvestmentBenchmarkDetail(benchmarkId) {
+  const wealth = state.financeSummary?.wealth || {};
+  const rows = Array.isArray(wealth.loanInvestmentBenchmarks) ? wealth.loanInvestmentBenchmarks : [];
+  const item = rows.find((candidate) => String(candidate.id) === String(benchmarkId));
+  const dialog = document.querySelector("#detail-dialog");
+  if (!dialog || !item) return;
+
+  const currency = item.currency || wealth.currency || "EUR";
+  const tone = loanInvestmentBenchmarkTone(item);
+  const outcome = loanInvestmentBenchmarkOutcome(item, currency);
+  const provisional = String(item.dataStatus || "").toLowerCase() === "provisional";
+  const netAdvantage = firstFinite(item.netAdvantage);
+  const grossGain = firstFinite(item.grossInvestmentGain);
+  const netGain = firstFinite(item.netInvestmentGain);
+  const loanCost = firstFinite(item.loanCostEquivalent);
+  const tracedCapital = firstFinite(item.tracedCapital);
+  const initialCosts = firstFinite(item.initialCosts);
+
+  dialog.classList.remove("important-events-dialog", "health-dialog", "budget-dialog", "parents-dialog", "electricity-dialog", "pantry-dialog", "objects-dialog", "projects-dialog");
+  dialog.classList.add("wealth-dialog");
+  document.querySelector("#dialog-context").textContent = "Patrimonio · Préstamo vs inversión";
+  document.querySelector("#dialog-title").textContent = item.label || "Comparativa préstamo e inversión";
+  document.querySelector("#dialog-body").innerHTML = `
+    <div class="loan-benchmark-detail">
+      <section class="loan-benchmark-detail-hero is-${tone}">
+        <div>
+          <span>Resultado neto hasta ${escapeHtml(formatFinanceDate(item.throughDate, item.throughDate || "—"))}</span>
+          <strong>${escapeHtml(outcome.label)}</strong>
+          <small>${provisional ? "Cálculo provisional · hay datos pendientes de reconciliar" : "Cálculo actualizado con las fuentes privadas disponibles"}</small>
+        </div>
+        <b>${escapeHtml(outcome.amount)}</b>
+      </section>
+
+      <section class="loan-benchmark-detail-grid">
+        <article><span>Capital trazado</span><strong>${tracedCapital === null ? "—" : formatMoney(tracedCapital, currency)}</strong><small>${escapeHtml(item.investmentLabel || "Inversión")}</small></article>
+        <article><span>Rentabilidad cartera</span><strong>${escapeHtml(formatLoanBenchmarkPercent(item.portfolioReturnPct))}</strong><small>Anualizada: ${escapeHtml(formatLoanBenchmarkPercent(item.portfolioAnnualizedPct))}</small></article>
+        <article><span>Coste banco equivalente</span><strong>${escapeHtml(formatLoanBenchmarkPercent(item.loanEquivalentReturnPct, { signed: false }))}</strong><small>TAE: ${escapeHtml(formatLoanBenchmarkPercent(item.loanTae, { signed: false }))}</small></article>
+        <article><span>Spread bruto</span><strong>${escapeHtml(formatLoanBenchmarkPercent(item.grossSpreadPct, { suffix: "pp" }))}</strong><small>Antes de costes iniciales</small></article>
+      </section>
+
+      <section class="loan-benchmark-money-grid">
+        <article><span>Ganancia inversión bruta</span><strong>${grossGain === null ? "—" : formatMoney(grossGain, currency)}</strong></article>
+        <article><span>Costes iniciales</span><strong>${initialCosts === null ? "—" : formatMoney(initialCosts, currency)}</strong></article>
+        <article><span>Ganancia inversión tras costes</span><strong>${netGain === null ? "—" : formatMoney(netGain, currency)}</strong></article>
+        <article><span>Coste equivalente del banco</span><strong>${loanCost === null ? "—" : formatMoney(loanCost, currency)}</strong></article>
+        <article class="is-result"><span>Ventaja neta inversión − banco</span><strong class="is-${tone}">${netAdvantage === null ? "—" : (netAdvantage > 0 ? "+" : "") + formatMoney(netAdvantage, currency)}</strong></article>
+      </section>
+
+      <section class="loan-benchmark-period">
+        <div><span>Periodo comparable</span><strong>${escapeHtml(formatFinanceDate(item.startDate, item.startDate || "—"))} → ${escapeHtml(formatFinanceDate(item.throughDate, item.throughDate || "—"))}</strong></div>
+        <div><span>Préstamo de referencia</span><strong>${escapeHtml(item.loanLabel || "Préstamo")}</strong></div>
+      </section>
+
+      <section class="loan-benchmark-explanation">
+        <h3>Cómo leerlo</h3>
+        <p>La comparación usa el mismo periodo para ambos lados. La cartera se mide sin confundir aportaciones o retiradas con rentabilidad; el banco se convierte desde la TAE a un coste equivalente para ese mismo intervalo. Después se restan los costes iniciales atribuibles a la inversión.</p>
+        ${item.methodology ? `<p><strong>Metodología:</strong> ${escapeHtml(item.methodology)}</p>` : ""}
+        ${item.note ? `<p><strong>Estado del dato:</strong> ${escapeHtml(item.note)}</p>` : ""}
+        ${item.sourceBasis ? `<p class="loan-benchmark-source"><strong>Fuentes:</strong> ${escapeHtml(item.sourceBasis)}</p>` : ""}
+      </section>
+
+      <button type="button" class="loan-benchmark-back text-action" data-loan-benchmark-back>← Volver a Patrimonio</button>
+    </div>`;
+
+  document.querySelector("[data-loan-benchmark-back]")?.addEventListener("click", openWealthDetail);
+  dialog.showModal();
+}
+
 function renderWealthOverview() {
   const wealth = state.financeSummary?.wealth || null;
   const container = document.querySelector("#wealth-summary");
@@ -5903,6 +6035,7 @@ function renderWealthOverview() {
       <small>PatrimonioDetalle · ${escapeHtml(asOf)}${needsRefresh ? " · refresco pendiente en alguna fuente" : ""}</small>
     </div>
     ${renderHomeWealthAllocation(allocation, currency)}
+    ${renderLoanInvestmentBenchmarkCards(wealth, true)}
     ${renderEtoroAllocationBar(wealth, currency, true)}
   `;
 }
@@ -6162,6 +6295,8 @@ function openWealthDetail() {
   document.querySelector("#dialog-body").innerHTML = `
     <div class="wealth-detail">
       ${renderWealthAllocation(wealth, currency)}
+
+      ${renderLoanInvestmentBenchmarkCards(wealth, false)}
 
       ${renderEtoroAllocationBar(wealth, currency, false)}
 
@@ -7736,6 +7871,11 @@ function bindInteractions() {
   document.querySelector("#show-debt-detail")?.addEventListener("click", openDebtDetail);
   document.querySelector("#show-credit-detail")?.addEventListener("click", openCreditDetail);
   document.querySelector("#show-wealth-detail")?.addEventListener("click", openWealthDetail);
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest?.("[data-loan-investment-benchmark-id]");
+    if (!trigger) return;
+    openLoanInvestmentBenchmarkDetail(trigger.dataset.loanInvestmentBenchmarkId);
+  });
   document.querySelector("#show-midas-detail")?.addEventListener("click", () => void openMidasDialog());
   document.querySelector("#close-midas-dialog")?.addEventListener("click", () => document.querySelector("#midas-dialog")?.close());
   document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspaceInline("history"));
