@@ -105,6 +105,20 @@ Resumen financiero operativo para la portada. No sustituye a la fuente de verdad
 `wealth` resume patrimonio y evolución salarial. Incluye `currentPatrimony`, `currentDate`, `currentSalaryMiguel`, `currentSalaryAndrea`, `currency`, `history`, `allocation` y `dailyDiary`. Cada punto de `history` contiene fecha, período, salarios individuales y patrimonio mensual. `allocation` describe la distribución actual por custodio/plataforma. `dailyDiary` representa cierres diarios derivados de la fuente privada `PatrimonioDiario`: `date`, `patrimony` nullable, `currency`, `changePct`, `pnlDay`, `movement`, contexto opcional y trazabilidad de fuente. Un patrimonio diario ausente no se reconstruye a partir del P/L o del porcentaje; permanece `null`. La portada mantiene el resumen patrimonial vigente y el detalle de Patrimonio combina distribución, diario y series históricas sin proyectar valores futuros.
 
 
+### Benchmark privado de deuda frente a inversión
+
+`financeSummary.wealth.loanInvestmentBenchmarks` es una proyección de solo lectura de la pestaña privada `PrestamoVsInversion`. Cada elemento puede contener:
+
+- `id`, `label`, `loanLabel`, `investmentLabel`;
+- `startDate`, `throughDate`, `currency`;
+- `tracedCapital`, `initialCosts`;
+- `portfolioReturnPct`, `portfolioAnnualizedPct`;
+- `loanTae`, `loanEquivalentReturnPct`, `grossSpreadPct`;
+- `grossInvestmentGain`, `netInvestmentGain`, `loanCostEquivalent`, `netAdvantage`;
+- `winner`, `dataStatus`, `methodology`, `sourceBasis`, `updatedAt`, `note`.
+
+La interfaz no recalcula ni hardcodea datos personales: representa los valores ya derivados en la fuente privada. `netAdvantage > 0` significa que la inversión lleva ventaja monetaria después de costes frente a la referencia de amortización; `netAdvantage < 0` significa lo contrario. Un benchmark provisional conserva visibles sus limitaciones.
+
 ### PERSON
 
 Referencia mínima a una relación relevante. Evitar almacenar datos de contacto salvo necesidad y autorización futura.
