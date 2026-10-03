@@ -672,6 +672,7 @@ async function fetchFinanceSummary(env) {
     creditMovementRows,
     creditFutureRows,
     etoroAllocationRows,
+    loanInvestmentBenchmarkRows,
     movementRows
   ] = await Promise.all([
     fetchOptionalFinanceRows("Cuentas!A1:J200"),
@@ -684,6 +685,7 @@ async function fetchFinanceSummary(env) {
     fetchOptionalFinanceRows("ECIMovimientos!A1:N300"),
     fetchOptionalFinanceRows("ECIFuturo!A1:O300"),
     fetchOptionalFinanceRows("EtoroAsignaciones!A1:M200"),
+    fetchOptionalFinanceRows("PrestamoVsInversion!A1:X200"),
     fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000")
   ]);
 
@@ -1045,6 +1047,35 @@ async function fetchFinanceSummary(env) {
     .filter((item) => item.id && item.reservedAmount !== null && String(item.status).toLowerCase() !== "closed")
     .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
 
+  const loanInvestmentBenchmarks = parseTableRows(loanInvestmentBenchmarkRows)
+    .map((item) => ({
+      id: item.benchmark_id || null,
+      label: item.label || item.benchmark_id || "Préstamo vs inversión",
+      loanLabel: item.loan_label || null,
+      investmentLabel: item.investment_label || null,
+      startDate: sheetDateOrNull(item.start_date),
+      throughDate: sheetDateOrNull(item.through_date),
+      currency: item.currency || summary.currency || "EUR",
+      tracedCapital: moneyOrNull(item.traced_capital),
+      initialCosts: moneyOrNull(item.initial_costs),
+      portfolioReturnPct: toNumber(item.portfolio_return_pct),
+      portfolioAnnualizedPct: toNumber(item.portfolio_annualized_pct),
+      loanTae: toNumber(item.loan_tae),
+      loanEquivalentReturnPct: toNumber(item.loan_equiv_return_pct),
+      grossSpreadPct: toNumber(item.gross_spread_pct),
+      grossInvestmentGain: moneyOrNull(item.gross_investment_gain),
+      netInvestmentGain: moneyOrNull(item.net_investment_gain),
+      loanCostEquivalent: moneyOrNull(item.loan_cost_equivalent),
+      netAdvantage: moneyOrNull(item.net_advantage),
+      winner: item.winner || null,
+      dataStatus: item.data_status || null,
+      methodology: item.methodology || null,
+      sourceBasis: item.source_basis || null,
+      updatedAt: item.updated_at || null,
+      note: item.note || null
+    }))
+    .filter((item) => item.id);
+
   const wealthSummary = {
     currency: summary.currency || "EUR",
     currentPatrimony: currentWealth?.patrimony ?? null,
@@ -1054,7 +1085,8 @@ async function fetchFinanceSummary(env) {
     history: wealthHistory,
     allocation: wealthAllocation,
     dailyDiary: wealthDailyDiary,
-    etoroAllocations
+    etoroAllocations,
+    loanInvestmentBenchmarks
   };
 
   const importantEventRules = parseTableRows(importantEventRows)
