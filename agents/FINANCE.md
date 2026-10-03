@@ -219,6 +219,28 @@ Reglas:
 - una retirada ejecutada reduce o cierra el bloque correspondiente; no se descuenta dos veces del patrimonio;
 - si maestro, comentario y tabla fechada discrepan en la fecha final, conservar la discrepancia en la nota y usar la tabla fechada más explícita para la programación operativa.
 
+### Benchmark préstamo frente a inversión
+
+La fuente privada derivada puede exponer `PrestamoVsInversion` para comparar capital mantenido invertido frente al coste de una deuda que podría amortizarse. La comparación es analítica: no cambia por sí sola ni la deuda ni las posiciones de inversión.
+
+Campos mínimos:
+- identidad y etiquetas del benchmark;
+- `start_date` y `through_date`, que delimitan exactamente el mismo periodo para ambos lados;
+- `traced_capital` e `initial_costs`;
+- rentabilidad acumulada y anualizada de la inversión;
+- TAE de la deuda y coste equivalente durante el periodo;
+- spread bruto, ganancias monetarias, coste equivalente de la deuda y ventaja neta;
+- `winner`, `data_status`, metodología, fuente, actualización y nota de limitaciones.
+
+Reglas:
+- comparar siempre el mismo intervalo temporal;
+- la rentabilidad de inversión debe separar rendimiento de aportaciones y retiradas, mediante una metodología adecuada como TWR, Modified Dietz o una reconstrucción equivalente documentada;
+- el benchmark de deuda usa la TAE o coste efectivo contractual convertido al mismo intervalo; nunca se usa el porcentaje de intereses acumulados de toda la vida del préstamo como tasa comparable;
+- comisiones, cambio de divisa u otros costes atribuibles a la inversión se descuentan por separado antes de decidir la ventaja neta;
+- un capital no trazado, una ventana incompleta o una valoración inicial/final no fiable obliga a marcar el benchmark como provisional y explicarlo;
+- la UI muestra un resumen compacto y un drilldown, pero todos los importes y resultados proceden de la fuente privada; Git no contiene valores personales hardcodeados;
+- añadir otro préstamo o inversión compatible debe requerir una fila nueva o actualizada en la fuente, no una modificación del frontend.
+
 ### Distribución patrimonial
 
 La fuente derivada puede exponer `PatrimonioDetalle` con:

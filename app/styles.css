@@ -21265,3 +21265,344 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Finance · generic loan-versus-investment benchmark */
+.loan-benchmark-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.loan-benchmark-card {
+  width: 100%;
+  padding: 14px 15px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255,255,255,.78);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.loan-benchmark-card:hover,
+.loan-benchmark-card:focus-visible {
+  border-color: var(--line-strong);
+  box-shadow: 0 8px 24px rgba(18,35,63,.08);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.loan-benchmark-card.is-positive { border-left: 4px solid var(--mint); }
+.loan-benchmark-card.is-negative { border-left: 4px solid var(--amber); }
+.loan-benchmark-card.is-neutral { border-left: 4px solid var(--line-strong); }
+
+.loan-benchmark-head,
+.loan-benchmark-outcome,
+.loan-benchmark-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.loan-benchmark-head > span {
+  min-width: 0;
+}
+
+.loan-benchmark-head small,
+.loan-benchmark-head strong,
+.loan-benchmark-outcome strong,
+.loan-benchmark-foot {
+  display: block;
+}
+
+.loan-benchmark-head small {
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.loan-benchmark-head strong {
+  overflow: hidden;
+  margin-top: 2px;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loan-benchmark-status {
+  flex: none;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #eaf8f5;
+  color: #276c5e;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.loan-benchmark-status.is-provisional {
+  background: #fff5df;
+  color: #8b6017;
+}
+
+.loan-benchmark-outcome {
+  margin-top: 12px;
+}
+
+.loan-benchmark-outcome strong {
+  font-size: 14px;
+}
+
+.loan-benchmark-outcome b {
+  flex: none;
+  font-family: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.loan-benchmark-card.is-positive .loan-benchmark-outcome b { color: var(--mint); }
+.loan-benchmark-card.is-negative .loan-benchmark-outcome b { color: var(--amber); }
+
+.loan-benchmark-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.loan-benchmark-metrics > span {
+  min-width: 0;
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: rgba(18,35,63,.035);
+}
+
+.loan-benchmark-metrics small,
+.loan-benchmark-metrics strong {
+  display: block;
+}
+
+.loan-benchmark-metrics small {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loan-benchmark-metrics strong {
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.loan-benchmark-foot {
+  margin-top: 9px;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.loan-benchmark-foot i {
+  color: var(--ink);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.loan-benchmark-detail {
+  display: grid;
+  gap: 15px;
+}
+
+.loan-benchmark-detail-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.loan-benchmark-detail-hero.is-positive { border-left-color: var(--mint); }
+.loan-benchmark-detail-hero.is-negative { border-left-color: var(--amber); }
+.loan-benchmark-detail-hero.is-neutral { border-left-color: var(--line-strong); }
+
+.loan-benchmark-detail-hero span,
+.loan-benchmark-detail-hero strong,
+.loan-benchmark-detail-hero small {
+  display: block;
+}
+
+.loan-benchmark-detail-hero span {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.loan-benchmark-detail-hero strong {
+  margin-top: 3px;
+  font-size: 18px;
+}
+
+.loan-benchmark-detail-hero small {
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.loan-benchmark-detail-hero > b {
+  flex: none;
+  font-size: 27px;
+}
+
+.loan-benchmark-detail-hero.is-positive > b { color: var(--mint); }
+.loan-benchmark-detail-hero.is-negative > b { color: var(--amber); }
+
+.loan-benchmark-detail-grid,
+.loan-benchmark-money-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.loan-benchmark-detail-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.loan-benchmark-money-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.loan-benchmark-detail-grid article,
+.loan-benchmark-money-grid article,
+.loan-benchmark-period > div {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.loan-benchmark-detail-grid span,
+.loan-benchmark-money-grid span,
+.loan-benchmark-period span {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.loan-benchmark-detail-grid strong,
+.loan-benchmark-money-grid strong,
+.loan-benchmark-period strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.loan-benchmark-detail-grid small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.loan-benchmark-money-grid .is-result {
+  border-width: 2px;
+}
+
+.loan-benchmark-money-grid .is-positive { color: var(--mint); }
+.loan-benchmark-money-grid .is-negative { color: var(--amber); }
+
+.loan-benchmark-period {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.loan-benchmark-explanation {
+  padding: 14px 15px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(18,35,63,.025);
+}
+
+.loan-benchmark-explanation h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.loan-benchmark-explanation p {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.loan-benchmark-source {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.loan-benchmark-back {
+  justify-self: start;
+}
+
+html[data-theme="dark"] .loan-benchmark-card,
+html[data-theme="dark"] .loan-benchmark-detail-hero,
+html[data-theme="dark"] .loan-benchmark-detail-grid article,
+html[data-theme="dark"] .loan-benchmark-money-grid article,
+html[data-theme="dark"] .loan-benchmark-period > div {
+  background: #172231;
+}
+
+html[data-theme="dark"] .loan-benchmark-metrics > span,
+html[data-theme="dark"] .loan-benchmark-explanation {
+  background: rgba(255,255,255,.035);
+}
+
+@media (max-width: 760px) {
+  .loan-benchmark-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .loan-benchmark-money-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .loan-benchmark-money-grid .is-result {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .loan-benchmark-card {
+    padding: 12px;
+  }
+  .loan-benchmark-head {
+    align-items: flex-start;
+  }
+  .loan-benchmark-outcome b {
+    font-size: 18px;
+  }
+  .loan-benchmark-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .loan-benchmark-detail-hero {
+    display: grid;
+    gap: 9px;
+    padding: 13px;
+  }
+  .loan-benchmark-detail-hero > b {
+    font-size: 22px;
+  }
+  .loan-benchmark-detail-grid,
+  .loan-benchmark-money-grid,
+  .loan-benchmark-period {
+    grid-template-columns: 1fr 1fr;
+  }
+  .loan-benchmark-money-grid .is-result {
+    grid-column: 1 / -1;
+  }
+}

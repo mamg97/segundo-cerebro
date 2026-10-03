@@ -1170,6 +1170,23 @@ try {
     assertCheck(await page.locator(selector).count() === 1, `Home · acceso ${label}`, selector);
   }
 
+  const loanBenchmarkCards = page.locator("#wealth-summary [data-loan-investment-benchmark-id]");
+  const loanBenchmarkCount = await loanBenchmarkCards.count();
+  assertCheck(loanBenchmarkCount >= 1, "Patrimonio · benchmark préstamo vs inversión visible en Home", `${loanBenchmarkCount} tarjetas`);
+  if (loanBenchmarkCount) {
+    const firstBenchmark = loanBenchmarkCards.first();
+    assertCheck(await firstBenchmark.isVisible().catch(() => false), "Patrimonio · benchmark visible y accionable");
+    const benchmarkText = normalizeAuditValue(await firstBenchmark.textContent().catch(() => ""));
+    assertCheck(!/nan|undefined|null/.test(benchmarkText), "Patrimonio · benchmark sin valores inválidos", benchmarkText);
+    await firstBenchmark.click();
+    await page.waitForTimeout(120);
+    assertCheck(await page.locator("#detail-dialog[open] .loan-benchmark-detail").count() === 1, "Patrimonio · benchmark abre detalle");
+    assertCheck(await page.locator(".loan-benchmark-detail-grid article").count() >= 4, "Patrimonio · detalle muestra comparación financiera");
+    await page.locator("[data-loan-benchmark-back]").click().catch(() => {});
+    await page.waitForTimeout(80);
+    await page.locator("#close-dialog").click().catch(() => {});
+  }
+
   assertCheck(await page.locator(".credit-panel").count() === 0, "Home · ECI ya no ocupa tarjeta independiente");
   assertCheck(await page.locator("#debt-summary .home-debt-credit-summary").count() === 1, "Home · ECI integrado en Obligaciones activas");
   const compactHomeLayout = await page.evaluate(() => {

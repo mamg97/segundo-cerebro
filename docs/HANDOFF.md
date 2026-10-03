@@ -63,6 +63,16 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 
 ### Finanzas
 
+### Finanzas · benchmark préstamo frente a inversión
+
+- La fuente financiera privada incorpora la pestaña `PrestamoVsInversion` como contrato genérico para comparar dinero mantenido invertido con el coste efectivo de una deuda durante exactamente el mismo periodo.
+- El Worker lee esta pestaña de forma opcional y la proyecta como `financeSummary.wealth.loanInvestmentBenchmarks`.
+- Patrimonio muestra un resumen compacto con estado, rentabilidad de cartera, coste equivalente del banco, spread bruto y ventaja/desventaja neta tras costes.
+- Al pulsar el resumen se abre un detalle con capital trazado, periodo, TAE, rentabilidad anualizada, costes iniciales, resultados monetarios, metodología, fuentes y limitaciones.
+- Los datos concretos permanecen en el Sheet privado. El frontend y el Worker son genéricos: nuevos benchmarks compatibles se añaden o actualizan desde la fuente sin hardcodear cifras en Git.
+- Un benchmark incompleto debe conservar `data_status=provisional` y explicar qué capital, fechas o valoraciones siguen pendientes.
+
+
 - Fuente oficial externa + memoria de reglas + hoja privada derivada.
 - Resumen mensual, presupuesto, próximos movimientos y conciliación.
 - Separación entre partidas comunes e individuales.
