@@ -5342,6 +5342,12 @@ function renderHealthEvent(event) {
 
 let gymPanelData = null;
 let gymLibraryMeta = null;
+const GYM_CUSTOM_ANIMATIONS = [
+  {
+    key: "press-banca-plano-barra",
+    labels: ["press de banca plano barra", "press banca plano barra", "flat barbell bench press"]
+  }
+];
 let gymLibraryState = {
   query: "",
   muscle: "",
@@ -5351,6 +5357,30 @@ let gymLibraryState = {
   contextPlanExerciseId: null,
   results: []
 };
+
+function normalizeGymAnimationLabel(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function gymCustomAnimationFor(exercise) {
+  if (!exercise) return null;
+  const normalizedId = normalizeGymAnimationLabel(exercise.id);
+  const normalizedName = normalizeGymAnimationLabel(exercise.name);
+  return GYM_CUSTOM_ANIMATIONS.find((animation) =>
+    normalizedId === animation.key.replaceAll("-", " ") ||
+    animation.labels.some((label) => normalizedName === label || normalizedName.includes(label))
+  ) || null;
+}
+
+function gymCustomAnimationMarkup(animation, label, className = "") {
+  if (!animation) return "";
+  return `<span class="gym-exercise-sprite gym-exercise-sprite--${escapeHtml(animation.key)} ${escapeHtml(className)}" role="img" aria-label="${escapeHtml(label)}"></span>`;
+}
 
 function gymPlanExerciseLinkMap(data = gymPanelData) {
   return new Map(
@@ -5701,8 +5731,12 @@ function bindGymLibraryControls() {
 }
 
 function gymLibraryPreview(exercise, index) {
+  const animation = gymCustomAnimationFor(exercise);
   const video = exercise?.videos?.[0] || null;
   const image = exercise?.images?.find((item) => item.isMain) || exercise?.images?.[0] || null;
+  if (animation) {
+    return gymCustomAnimationMarkup(animation, `Animación de ${exercise.name}`, "gym-library-preview-animation");
+  }
   if (video && index < 8) {
     return `<video class="gym-library-preview-media" src="${escapeHtml(video.url)}" ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""} muted loop playsinline autoplay preload="metadata"></video>`;
   }
@@ -5732,13 +5766,14 @@ function renderGymLibraryResults(exercises) {
 
   status.textContent = exercises.length + " ejercicios cargados";
   grid.innerHTML = exercises.map((exercise, index) => {
+    const customAnimation = gymCustomAnimationFor(exercise);
     const muscles = (exercise.muscles || []).map((item) => item.name).filter(Boolean).slice(0, 2).join(" · ");
     const equipment = (exercise.equipment || []).map((item) => item.name).filter(Boolean).slice(0, 2).join(" · ");
     return `
       <button type="button" class="gym-library-card" data-gym-library-id="${escapeHtml(exercise.id)}">
         <span class="gym-library-card-media">
           ${gymLibraryPreview(exercise, index)}
-          ${exercise.hasVideo ? '<b class="gym-library-media-badge">▶ vídeo</b>' : ""}
+          ${customAnimation ? '<b class="gym-library-media-badge">Animación</b>' : exercise.hasVideo ? '<b class="gym-library-media-badge">▶ vídeo</b>' : ""}
           ${exercise.inPlan ? '<b class="gym-library-plan-badge">En tu plan</b>' : ""}
         </span>
         <span class="gym-library-card-copy">
@@ -5823,6 +5858,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
   const video = exercise?.videos?.find((item) => item.isMain) || exercise?.videos?.[0] || null;
   const image = exercise?.images?.find((item) => item.isMain) || exercise?.images?.[0] || null;
   const planExercise = contextPlanExerciseId ? gymPlanExerciseById(contextPlanExerciseId) : null;
+  const customAnimation = gymCustomAnimationFor(planExercise || exercise);
   const existingLink = contextPlanExerciseId ? gymPlanExerciseLinkMap().get(String(contextPlanExerciseId)) : null;
   const linkedToThis = existingLink && String(existingLink.providerExerciseId) === String(exercise.id);
   const days = Array.isArray(gymPanelData?.plan) ? gymPanelData.plan : [];
@@ -5830,11 +5866,13 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
   const secondaryNames = (exercise.secondaryMuscles || []).map((item) => item.name).filter(Boolean);
   const equipmentNames = (exercise.equipment || []).map((item) => item.name).filter(Boolean);
 
-  const mediaMarkup = video
-    ? `<video class="gym-exercise-hero-media" src="${escapeHtml(video.url)}" ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""} controls autoplay muted loop playsinline preload="metadata"></video>`
-    : image
-      ? `<img class="gym-exercise-hero-media" src="${escapeHtml(image.originalUrl || image.previewUrl)}" alt="${escapeHtml(exercise.name)}">`
-      : '<div class="gym-exercise-hero-empty">Sin recurso visual disponible</div>';
+  const mediaMarkup = customAnimation
+    ? gymCustomAnimationMarkup(customAnimation, `Animación técnica de ${planExercise?.name || exercise.name}`, "gym-exercise-hero-animation")
+    : video
+      ? `<video class="gym-exercise-hero-media" src="${escapeHtml(video.url)}" ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""} controls autoplay muted loop playsinline preload="metadata"></video>`
+      : image
+        ? `<img class="gym-exercise-hero-media" src="${escapeHtml(image.originalUrl || image.previewUrl)}" alt="${escapeHtml(exercise.name)}">`
+        : '<div class="gym-exercise-hero-empty">Sin recurso visual disponible</div>';
 
   detail.hidden = false;
   detail.innerHTML = `
@@ -5842,7 +5880,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
     <article class="gym-exercise-detail-card">
       <div class="gym-exercise-detail-media">
         ${mediaMarkup}
-        <span class="gym-exercise-media-caption">${video ? "Demostración en bucle" : image ? "Referencia visual" : "Sin multimedia"} · wger</span>
+        <span class="gym-exercise-media-caption">${customAnimation ? "Animación propia en bucle" : video ? "Demostración en bucle" : image ? "Referencia visual" : "Sin multimedia"}${customAnimation ? " · técnica contrastada con wger" : " · wger"}</span>
       </div>
       <div class="gym-exercise-detail-copy">
         <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>

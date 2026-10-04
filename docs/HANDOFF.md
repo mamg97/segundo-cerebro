@@ -1732,6 +1732,18 @@ Antes de cualquier cambio:
   - únicos rojos: `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Gym.
 - No se han vinculado automáticamente ejercicios privados del plan a resultados fuzzy: al pulsar `Técnica` se propone una ficha y el usuario confirma `Usar esta ficha para mi ejercicio`. Esto evita guardar asociaciones incorrectas.
 
+### GESTOR GYM Y NUTRI · animaciones ilustradas propias · piloto v0.42.1 · 2026-10-04
+
+- Preferencia confirmada: las demostraciones principales deben evolucionar desde vídeo real hacia bucles ilustrados tipo GIF, limpios y coherentes con la interfaz.
+- No se usan packs de GIF comerciales, mirrors de ExerciseDB ni repositorios con derechos ambiguos. wger continúa como referencia técnica libre y como fallback multimedia.
+- La rama `codex/gym-nutri-next`, creada desde el `origin/main` vivo `3c18f7c`, incorpora el primer piloto para `Press de Banca Plano (Barra)`:
+  - sprite propio RGBA de cuatro fases, sin persona real ni fondo;
+  - animación CSS sin estilos inline, compatible con la CSP;
+  - prioridad visual únicamente por nombre/ID canónico exacto;
+  - fallback intacto a vídeo/imagen wger para el resto;
+  - `prefers-reduced-motion` deja un fotograma estático.
+- El piloto está en rama de revisión y todavía no se ha fusionado ni desplegado. Antes de producir el resto del plan, confirmar el estilo y revisar visualmente cada movimiento por lotes pequeños.
+- Validación local: 137/137 tests y build privado correctos; bucle comprobado en navegador en sus cuatro posiciones sin clipping.
 
 
 ### RECETARIO · fichas de alimentos desde ingredientes · 2026-10-04

@@ -403,6 +403,8 @@ The visual exercise library is an external **read-only reference layer**, not a 
 - Linking an existing plan exercise to a visual reference must never rename or rewrite the canonical exercise implicitly.
 - Media is fetched server-side and exposed only through authenticated same-origin Gym media routes. The browser must not receive a direct dependency on a premium provider.
 - Only media with explicit license metadata may be exposed. Attribution/license information must remain visible on the exercise detail.
+- Curated first-party illustrated animations may replace the visual presentation of an exact canonical exercise when their provenance is known, the movement has been reviewed and the asset contains no personal data. They remain presentation assets: wger still supplies the public technical reference and `GimnasioPlan` still supplies the plan.
+- A generated animation must be mapped by an exact canonical ID/name, never by an unattended fuzzy match. Unsupported exercises keep the licensed wger media or an explicit empty state.
 - The library must introduce **no paid dependency**. Do not scrape Lyfta, RepDB Premium, ExerciseDB paid assets, or ambiguous third-party mirrors merely to improve coverage.
 - If wger has no licensed media for an exercise, the UI must show that limitation rather than fabricate or copy a paid animation.
 - Search/filter requests may send generic exercise names/categories to wger. Never send private loads, session history, health data, plan notes, or user identity to the external provider.

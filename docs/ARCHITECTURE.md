@@ -532,4 +532,6 @@ wger es una referencia externa de técnica y multimedia, no almacena ni recibe e
 
 La UI sirve vídeo/imagen mediante rutas same-origin autenticadas. Esto evita exponer una dependencia directa del navegador y permite validar host, recurso y licencia antes de retransmitirlo. El sistema no mantiene un mirror completo del catálogo: obtiene únicamente el contenido solicitado y usa caché efímera.
 
+Para ejercicios curados puede existir una animación ilustrada propia versionada como asset estático de la aplicación. La selección se realiza únicamente por ID/nombre canónico exacto y afecta solo a la presentación: la ficha técnica, músculos/equipo y atribución pública continúan viniendo de wger, mientras que plan, cargas e histórico permanecen en sus fuentes privadas. Si no existe animación propia revisada, se conserva el vídeo/imagen libre de wger como fallback.
+
 La restricción de producto es coste incremental cero: no se introducen APIs premium, R2 ni licencias de pago para esta capacidad. La ausencia de media libre se representa explícitamente; nunca se rellena mediante scraping de proveedores comerciales.

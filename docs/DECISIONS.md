@@ -481,7 +481,7 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Fuente de verdad:** `GimnasioPlan` continúa siendo la autoridad del plan activo; las sesiones y progresión continúan en D1. wger no se convierte en una segunda rutina.
 - **Vinculación:** D1 `gym_exercise_links` guarda únicamente la relación entre un `exercise_id` del plan y una ficha externa. No guarda cargas, objetivos ni histórico.
 - **Altas:** añadir un ejercicio desde la biblioteca escribe una fila normal en `GimnasioPlan`; después se consume por el flujo existente.
-- **Multimedia:** imágenes/vídeos se resuelven server-side y se sirven por proxy same-origin. Solo se muestran assets con metadatos de licencia y la ficha conserva atribución visible.
+- **Multimedia:** imágenes/vídeos de wger se resuelven server-side y se sirven por proxy same-origin. Solo se muestran assets con metadatos de licencia y la ficha conserva atribución visible. Una animación ilustrada propia, con procedencia conocida y movimiento revisado, puede tener prioridad visual para un ejercicio canónico exacto sin sustituir los metadatos técnicos de wger.
 - **Coste:** la capacidad no puede introducir servicios, APIs o licencias de pago. Lyfta, RepDB Premium, ExerciseDB de pago y mirrors de procedencia dudosa no son fuentes válidas.
 - **Degradación:** si falta multimedia libre o wger está temporalmente indisponible, el plan/histórico siguen funcionando y la UI informa de la limitación.
 - **Motivo:** conseguir una experiencia visual tipo enciclopedia de ejercicios sin romper el diseño data-driven, la privacidad ni la regla de coste operativo cero.
