@@ -155,13 +155,23 @@ For each planned day:
 When either `GESTOR GYM` or `GESTOR NUTRI` is replaced because the chat is saturated, reconstruct the live state from canonical sources before answering operational questions. Do not assume the sibling manager's conversation history is canonical. Do not rely on the previous chat as the source of truth.
 
 Read, at minimum:
+
+For `GESTOR GYM`:
+1. `ObjetivosActividad`: latest effective strength/activity objective and any temporary pause.
+2. `ObjetivosProgreso`: active/paused strength, skill, body-composition and recovery benchmarks.
+3. Canonical `GimnasioPlan`: days, exercise order, prescribed sets/reps/load/rest and coaching notes.
+4. D1 `gym_sessions` + `gym_entries`: completed sessions and actual load/reps/notes; never infer completion from the plan.
+5. D1 `gym_exercise_links`: current visual-reference mappings; wger remains reference-only.
+6. Apple Health/D1 activity and recovery context when it materially affects training readiness or interpretation.
+7. Nutrition only as supporting recovery/performance context; do not own or duplicate intake records.
+
+For `GESTOR NUTRI`:
 1. `Objetivos`: active calorie/macro targets and current nutrition notes.
-2. `ObjetivosActividad`: latest effective activity/strength objective, including any temporary pause state.
-3. `ObjetivosProgreso`: active/paused progress goals and benchmarks.
-4. `MenuSemanal`: the current week, preserving plan/consumed/omitted states and household constraints.
-5. `Registro`: recent actual consumption, especially today and yesterday.
-6. `Recetas`, `IngredientesReceta` and `PasosReceta`: reusable dishes, recipe photo metadata and preparation.
-7. Pantry `Productos` + `Inventario` for packaged-product identity, nutrition and live household stock.
+2. `ObjetivosActividad` and relevant `ObjetivosProgreso` only as activity/body-trend context.
+3. `MenuSemanal`: the current week, preserving plan/consumed/omitted states and household constraints.
+4. `Registro`: recent actual consumption, especially today and yesterday.
+5. `Recetas`, `IngredientesReceta` and `PasosReceta`: reusable dishes, recipe photo metadata and preparation.
+6. Pantry `Productos` + `Inventario` for packaged-product identity, nutrition and live household stock.
 
 Current personal values, medical reasons, live stock and dated meal history remain private in Sheets/D1/Drive and must not be copied into Git. The contract in Git describes how to recover them.
 
