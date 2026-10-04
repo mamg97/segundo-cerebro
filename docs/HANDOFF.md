@@ -1683,3 +1683,38 @@ Antes de cualquier cambio:
   - vuelve al catálogo completo **35/35**.
 - No se cambiaron datos canónicos de Salud ni RecipeMedia para este trabajo; fue únicamente una capacidad genérica de presentación/auditoría.
 
+
+
+### ORGANIZADOR 9 · Biblioteca visual gratuita de ejercicios · 2026-10-04
+
+- Petición: incorporar en `Salud → Gimnasio` una biblioteca visual tipo Lyfta/RepDB, con demostraciones animadas, buscador, ficha técnica y posibilidad de asociar/añadir ejercicios, manteniendo coste incremental cero.
+- Decisión D-047: wger es la fuente pública de referencia; `GimnasioPlan` sigue siendo la fuente canónica del plan y las sesiones/progreso siguen en D1.
+- PR #240 / `8441a510` implementó:
+  - subvista `Mi plan | Biblioteca de ejercicios`;
+  - buscador + filtros por músculo/equipamiento y vista inicial `Con vídeo`;
+  - tarjetas visuales con vídeo en loop o imagen/placeholder;
+  - ficha grande con demostración, descripción, músculos principales/secundarios, equipamiento y atribución/licencia;
+  - botón `Técnica` en ejercicios del plan, también visible durante pausas;
+  - mapping técnico D1 `gym_exercise_links` entre `exercise_id` canónico y ficha wger;
+  - acción explícita para vincular una ficha a un ejercicio existente sin renombrar/recrear el plan;
+  - acción `Añadir al plan` que escribe una fila normal en `GimnasioPlan` con día/series/reps elegidos;
+  - proxy same-origin para multimedia: el navegador no consume directamente una API premium;
+  - solo se muestran assets con metadatos de licencia.
+- Restricción permanente: **sin APIs/licencias de pago y sin scraping de Lyfta, RepDB Premium, ExerciseDB de pago o mirrors de procedencia ambigua**.
+- Audit #134 detectó el único bug funcional inicial de Gym: 502 al usar una ruta antigua de vídeos wger.
+- PR #241 / `7375af09` corrigió la ruta oficial a `/api/v2/video/` y añadió test anti-regresión.
+- Deploy privado #333: success.
+- Audit production web #135: **882 checks / 2 failures**.
+  - Gym: Mi plan PASS.
+  - Gym: Biblioteca PASS.
+  - fuente libre + 0 € PASS.
+  - biblioteca real PASS con **24 ejercicios** cargados.
+  - recurso visual PASS.
+  - ficha visual PASS.
+  - demostración/referencia PASS.
+  - atribución PASS.
+  - control `Añadir al plan` presente PASS, sin ejecutar escrituras durante el audit.
+  - sin respuestas 5xx ni fallos de red PASS.
+  - QA visual general responsive de Salud pasa en tablet y móvil sin overflow, clipping ni solapes.
+  - únicos rojos: `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Gym.
+- No se han vinculado automáticamente ejercicios privados del plan a resultados fuzzy: al pulsar `Técnica` se propone una ficha y el usuario confirma `Usar esta ficha para mi ejercicio`. Esto evita guardar asociaciones incorrectas.
