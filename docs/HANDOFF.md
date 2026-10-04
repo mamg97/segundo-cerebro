@@ -1750,3 +1750,14 @@ Antes de cualquier cambio:
 - Validación: CI `Validate private Cloudflare app` #280 success; deploy privado #335 success.
 - Audit production web #138: 918 checks. Salud → Menú/Nutrición, agrupación de tomas y barras de kcal/proteína pasan para todos los días. Los dos únicos fallos son `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Nutrición.
 - Los backfills concretos de consumos se hicieron únicamente en la fuente privada canónica `SEGUNDO CEREBRO - SALUD`; no se guardaron valores personales en Git.
+
+
+### Separación operativa GESTOR GYM / GESTOR NUTRI · 2026-10-04
+
+- El antiguo ámbito conversacional combinado de gimnasio + nutrición queda dividido en dos gestores especializados que comparten las mismas fuentes canónicas de Salud y no crean memorias paralelas.
+- **GESTOR GYM** es responsable funcional de entrenamiento, ejercicios, sesiones realizadas, progresión, técnica, programación, fuerza/rendimiento y recuperación deportiva. Debe leer antes de aconsejar el plan activo, objetivos de actividad/progreso, histórico real de sesiones y señales de recuperación disponibles.
+- **GESTOR NUTRI** es responsable funcional de alimentación, macros, comidas, menú semanal y recetas. GESTOR GYM puede consultar ese contexto cuando afecte a rendimiento/recuperación, pero no duplica ni mantiene registros nutricionales.
+- Las pausas/restricciones de entrenamiento continúan modelándose en las fuentes privadas canónicas; ningún gestor debe reactivar el plan por fecha o por inferencia conversacional.
+- El plan activo conserva su fuente canónica vigente y las sesiones/progresión conservan D1 según D-015/D-047. La biblioteca visual wger es solo referencia técnica y no sustituye el plan.
+- Los cambios ordinarios de cargas, repeticiones, sesiones, objetivos o ejercicios se realizan en la fuente privada autorizada; Git solo cambia ante nueva capacidad, contrato, bug o arquitectura.
+- Git no debe contener marcas, peso, estado médico, cargas reales ni otro dato personal del usuario; este relevo documenta únicamente responsabilidades y reglas operativas.
