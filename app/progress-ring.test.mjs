@@ -194,7 +194,7 @@ assert.match(css, /#home-objects-card\s*\{[\s\S]*?grid-template-areas:/);
 assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?gap:\s*10px/);
 assert.match(css, /\.pantry-home-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3/);
 
-assert.match(css, /v0\.41\.5 — compact balanced Home \+ unified typography/);
+assert.match(css, /v0\.41\.4 — compact balanced Home \+ unified typography/);
 assert.match(css, /#home-pantry-card,[\s\S]*?#home-objects-card\s*\{[\s\S]*?align-self:\s*stretch !important/);
 assert.match(css, /\.money-horizon\s*\{[\s\S]*?align-items:\s*stretch !important/);
 assert.doesNotMatch(css, /Iowan Old Style|Palatino Linotype/);
