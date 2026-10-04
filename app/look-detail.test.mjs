@@ -28,7 +28,15 @@ test("look usage history is exposed from canonical usage fields", () => {
   assert.match(objects, /function lookUsageHistoryView\(payload\)/);
   assert.match(objects, /Historial de looks usados/);
   assert.match(objects, /data-look-history-open/);
-  assert.match(css, /\.look-history-item\s*\{/);
+  assert.match(objects, /data-garment-history-open/);
+  assert.match(objects, /data-look-history-mode="looks"/);
+  assert.match(objects, /data-look-history-mode="garments"/);
+  assert.match(objects, /data-look-history-sort/);
+  assert.match(objects, /Usos totales/);
+  assert.match(objects, /Últimos 30 días/);
+  assert.match(objects, /Fechas registradas/);
+  assert.match(objects, /function usageHistoryRows\(payload,mode="looks"\)/);
+  assert.match(css, /\.look-history-table\s*\{/);
 });
 
 test("look detail enlarges the look and shows component garments responsively", () => {
@@ -41,9 +49,9 @@ test("look detail enlarges the look and shows component garments responsively", 
 });
 
 test("look detail cache bust and production audit are wired", () => {
-  assert.match(app, /objects\.js\?v=0\.41\.4/);
-  assert.match(index, /styles\.css\?v=0\.42\.14/);
-  assert.match(index, /app\.js\?v=0\.42\.6/);
+  assert.match(app, /objects\.js\?v=0\.41\.5/);
+  assert.match(index, /styles\.css\?v=0\.42\.15/);
+  assert.match(index, /app\.js\?v=0\.42\.7/);
   assert.match(audit, /auditLookDetail/);
   assert.match(audit, /Look ampliado/);
   assert.match(audit, /Prendas del look/);
