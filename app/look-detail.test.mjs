@@ -26,7 +26,7 @@ test("look usage history is exposed from canonical usage fields", () => {
   assert.match(objects, /usageHistory/);
   assert.match(objects, /lastUsed/);
   assert.match(objects, /function lookUsageHistoryView\(payload\)/);
-  assert.match(objects, /Historial de looks usados/);
+  assert.match(objects, /Historial de uso/);
   assert.match(objects, /data-look-history-open/);
   assert.match(objects, /data-garment-history-open/);
   assert.match(objects, /data-look-history-mode="looks"/);
