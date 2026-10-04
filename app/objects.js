@@ -231,9 +231,9 @@ function lookUsageEntries(payload) {
 
 function looksView(payload) {
   if (pending(payload)) return pendingView();
-  const rows=payload.looks||[], office=rows.filter(x=>x.office===true).length, usages=lookUsageEntries(payload).length;
+  const rows=payload.looks||[], office=rows.filter(x=>x.office===true).length;
   return '<section class="objects-callout"><div><small>Armario inteligente</small><strong>Looks guardados</strong><p>Pulsa un look para ampliar su imagen y ver las prendas reales que lo componen.</p></div><span>'+office+' oficina</span></section>'+
-    '<div class="looks-actions"><button class="objects-secondary-action" type="button" data-look-history>Historial de uso'+(usages?' · '+usages:'')+'</button><button class="objects-primary-action" type="button" data-look-builder>Crear look visual</button></div><div class="looks-grid">'+
+    '<div class="looks-actions"><button class="objects-secondary-action" type="button" data-look-history>Historial de uso</button><button class="objects-primary-action" type="button" data-look-builder>Crear look visual</button></div><div class="looks-grid">'+
     (rows.length?rows.map(x=>'<article class="look-card" role="button" tabindex="0" data-look-open="'+e(x.id)+'" aria-label="Abrir '+e(x.name||"look")+'"><div class="look-visual">'+lookMosaic(x,payload)+'</div><div class="look-body"><span class="look-tags">'+(x.office===true?'<b>Oficina</b>':'')+(x.season?'<b>'+e(x.season)+'</b>':'')+(x.formality?'<b>'+e(x.formality)+'</b>':'')+'</span><strong>'+e(x.name||"Look")+'</strong><p>'+e((x.items||[]).map(i=>i.name).filter(Boolean).join(" · ")||"Sin prendas vinculadas")+'</p><small>'+e(x.context||"Contexto sin indicar")+' · '+(x.lastUsed?"último uso "+e(d(x.lastUsed)):"sin uso reciente")+'</small></div></article>').join(""):empty("Todavía no hay looks","El combinador puede crear el primero reutilizando prendas reales."))+
     '</div>';
 }
