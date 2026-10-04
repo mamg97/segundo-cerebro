@@ -1718,3 +1718,19 @@ Antes de cualquier cambio:
   - QA visual general responsive de Salud pasa en tablet y móvil sin overflow, clipping ni solapes.
   - únicos rojos: `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Gym.
 - No se han vinculado automáticamente ejercicios privados del plan a resultados fuzzy: al pulsar `Técnica` se propone una ficha y el usuario confirma `Usar esta ficha para mi ejercicio`. Esto evita guardar asociaciones incorrectas.
+
+
+
+### RECETARIO · fichas de alimentos desde ingredientes · 2026-10-04
+
+- Nueva capacidad: cada ingrediente de una receta abre la ficha compartida de producto dentro de Salud y permite volver a la misma receta.
+- Contrato añadido: `IngredientesReceta.producto_id` opcional (L), referencia a `Productos.producto_id`; `Productos.imagen_url` opcional (R).
+- Identidad/nutrición/imagen/precios siguen siendo autoridad de Despensa; recetas/cantidades/preparación siguen en Salud. No se crea una fuente paralela.
+- Ficha: contexto/cantidad/macros del ingrediente, macros por 100 g con fuente, formato/EAN, stock cuando exista, precios fechados con base/fuente y enlace comercial. Datos ausentes permanecen pendientes.
+- API privada read-only: `GET /api/pantry/products/:producto_id`, válida también para productos sin inventario actual.
+- Mercadona: referencia pública opcional por SKU exacto de una URL canónica; imagen/precio online orientativo, timeout/cache y degradación sin bloquear la ficha ni sustituir macros. Sin dependencia de pago.
+- No hay matching fuzzy; los IDs explícitos prevalecen y un ID roto no se reemplaza por nombre. Sin ID solo se admite coincidencia única exacta normalizada.
+- Nuevos enlaces ordinarios se hacen solo en el Sheet. Las subrecetas o ingredientes genéricos pendientes siguen abriendo su contexto sin inventar un producto comercial.
+- Auditor ampliado: apertura, contexto, macros por 100 g, retorno y QA responsive de la ficha de alimento.
+- Pruebas locales: 14/14 dirigidas pasan; sintaxis frontend/Worker pasa. CI/deploy/audit posteriores deben confirmarse antes de dar el cierre de producción.
+- La verificación manual en navegador de esta sesión quedó bloqueada por acceso denegado; no se intentó eludirla. El resultado manual no está certificado.

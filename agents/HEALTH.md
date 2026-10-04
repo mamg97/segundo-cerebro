@@ -32,6 +32,14 @@ When nutritional values are estimated rather than label-confirmed, write the sou
 
 ### Recipe capture and photo workflow
 
+Recipe ingredient product cards:
+- `IngredientesReceta.producto_id` is an optional stable reference to canonical Pantry `Productos.producto_id` (column L in the current table).
+- Every ingredient opens a card inside the recipe panel and returns to the same recipe. Product identity, photo URL, nutrition and dated price observations remain Pantry-owned.
+- An explicit ID is authoritative. A missing ID may use a unique exact normalized-name match; never use fuzzy matching or substitute a different packaged product. A broken explicit ID stays pending rather than falling back by name.
+- Ingredient quantities/macros stay separate from the product's per-100-g nutrition. Missing data is pending, never zero.
+- Generic ingredients and composed subrecipes without an exact packaged-product reference still open their ingredient context; do not attach an unrelated Mercadona SKU merely to fill the card.
+- Ordinary new links and catalogue enrichment are canonical Sheet updates, without a deployment.
+
 Runbook operativo obligatorio para fotografías: antes de ingerir, sustituir o corregir una imagen de receta, leer `docs/RECIPES_IMAGE_INGEST.md` y cerrar su checklist end-to-end. La generación o edición visual por sí sola no completa la ingesta.
 
 When the user supplies a recipe, its durable representation remains data-driven and must not require a frontend deployment:

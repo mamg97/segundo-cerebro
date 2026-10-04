@@ -147,7 +147,7 @@ export async function resolvePantrySpreadsheetId(env, getGoogleAccessToken) {
   return resolveSpreadsheetId(env, token);
 }
 
-function buildPayload(valueRanges = []) {
+export function buildPayload(valueRanges = []) {
   const productRows = table(valueRanges[0]?.values || []);
   const inventoryRows = table(valueRanges[1]?.values || []);
   const priceRows = table(valueRanges[2]?.values || []);
@@ -163,6 +163,7 @@ function buildPayload(valueRanges = []) {
     format: row.formato || null,
     ean: row.ean || null,
     productUrl: row.url_producto || null,
+    imageUrl: row.imagen_url || null,
     nutrition: {
       kcal100g: numberOrNull(row.kcal_100g),
       protein100g: numberOrNull(row.proteinas_g_100),
@@ -199,6 +200,16 @@ function buildPayload(valueRanges = []) {
     rows.sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
   }
 
+  for (const product of products) {
+    const history = pricesByProduct.get(product.id) || [];
+    const tickets = history.filter((price) => price.ticketId || /ticket/i.test(String(price.source || "")));
+    product.latestPrice = history.at(-1) || null;
+    product.lastTicketPrice = tickets.at(-1) || null;
+    product.lastPurchaseDate = product.lastTicketPrice?.date || null;
+    product.priceHistory = history.slice(-12);
+    product.productUrl ||= product.latestPrice?.productUrl || null;
+  }
+
   const inventory = inventoryRows.map((row) => {
     const productId = String(row.producto_id || "").trim();
     const product = productsById.get(productId) || {};
@@ -225,6 +236,7 @@ function buildPayload(valueRanges = []) {
       lastReviewedAt: dateOrNull(row.ultima_revision),
       notes: row.notas || product.notes || null,
       productUrl: product.productUrl || latestPrice?.productUrl || null,
+      imageUrl: product.imageUrl || null,
       latestPrice,
       lastTicketPrice,
       lastPurchaseDate: lastTicketPrice?.date || null,
@@ -377,7 +389,7 @@ export async function fetchPantrySummary(env, getGoogleAccessToken) {
   const token = await getGoogleAccessToken(env);
   const spreadsheetId = await resolveSpreadsheetId(env, token);
   const ranges = [
-    "Productos!A1:Q2000",
+    "Productos!A1:R2000",
     "Inventario!A1:M2000",
     "Precios!A1:J4000",
     "Tickets!A1:G2000",

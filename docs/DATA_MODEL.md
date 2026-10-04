@@ -75,6 +75,7 @@ Campos/relaciones principales:
 - `recipe_id`: identidad estable;
 - datos de receta/raciones/macros en `Recetas`;
 - ingredientes 1:N en `IngredientesReceta`;
+- `IngredientesReceta.producto_id` opcional: FK al catálogo canónico de Despensa. Se proyecta como `ingredient.productId`; las cantidades y macros de la receta se conservan separados de los macros del producto por 100 g.
 - pasos ordenados 1:N en `PasosReceta`;
 - `foto_drive_file_id`, `foto_mime_type`, `foto_updated_at`: referencia técnica opcional a una foto privada.
 
@@ -386,7 +387,7 @@ No se incluyen dirección, contrato, titularidad ni contenido de PDFs.
 Fuente canónica privada: `SEGUNDO CEREBRO - DESPENSA`.
 
 Entidades lógicas:
-- `Producto`: `producto_id`, identidad, marca, formato, EAN/URL, categoría y nutrición de producto disponible.
+- `Producto`: `producto_id`, identidad, marca, formato, EAN/URL, `imagen_url` HTTPS opcional, categoría y nutrición de producto disponible.
 - `Inventario`: observación física con ubicación, cantidad aproximada, unidad, nivel de stock, apertura, confianza y fecha de revisión.
 - `Precio`: observación fechada con importe, base, tienda, fuente, ticket/referencia y URL cuando exista.
 - `Ticket`: resumen de una compra; no sustituye el detalle de precio por producto.
@@ -411,6 +412,8 @@ Proyección de Home (`pantrySummary`):
 - `homeMessage`
 
 `GET /api/pantry` entrega el detalle enriquecido bajo demanda: inventario unido al maestro de producto, último precio, último precio procedente de ticket, histórico reciente, nutrición disponible, lista de compra y agregados por ubicación/categoría. Los valores desconocidos siguen siendo `null`, nunca cero inventado.
+
+`products` conserva también precios fechados para productos sin stock. `GET /api/pantry/products/:producto_id` entrega su ficha read-only, con stock cuando exista y una referencia pública opcional de imagen/precio online Mercadona. No crea un segundo catálogo ni altera los datos canónicos.
 
 
 ## Objetos y armario

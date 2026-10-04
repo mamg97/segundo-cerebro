@@ -33,9 +33,10 @@ test("Gym library can map current plan exercises and add new canonical plan rows
   assert.match(libraryWorker, /gym_exercise_links/);
 });
 
-test("Gym library is responsive and uses the v0.42.0 visual contract", () => {
+test("Gym library is responsive and uses the v0.42.1 visual contract", () => {
   assert.match(css, /v0\.42\.0 — free visual Gym exercise library/);
   assert.match(css, /\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.gym-exercise-detail-card\s*\{[\s\S]*?grid-template-columns:/);
 });
+

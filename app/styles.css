@@ -22275,3 +22275,29 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     grid-column: 1;
   }
 }
+
+
+/* Ingredient drilldown reuses the canonical Pantry product card. */
+.recipe-ingredient-hint { color: var(--ink-soft); font-size: 12px; margin: 0 0 12px; }
+.recipe-ingredient-link { min-width: 0; padding: 4px 0; border: 0; background: transparent; color: var(--blue); text-align: left; font: inherit; font-size: 14px; line-height: 1.45; cursor: pointer; overflow-wrap: anywhere; }
+.recipe-ingredient-link:hover { text-decoration: underline; }
+.recipe-ingredient-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 4px; }
+.recipe-ingredient-link:disabled { opacity: .6; cursor: wait; }
+.recipe-ingredient-context { display: grid; gap: 8px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+.recipe-ingredient-context h4, .recipe-ingredient-context p { margin: 0; }
+.recipe-ingredient-context small { color: var(--ink-soft); }
+.pantry-product-image { display: grid; place-items: center; gap: 8px; min-height: 150px; padding: 18px; border-radius: 16px; background: var(--paper); color: var(--ink-soft); }
+.pantry-product-image img { width: 100%; max-width: 320px; height: 240px; object-fit: contain; }
+.pantry-detail-grid strong small { display: block; margin-top: 5px; line-height: 1.5; font-weight: 400; }
+#recipes-panel .pantry-product-detail { display: grid; gap: 20px; }
+#recipes-panel .pantry-detail-head h3 { font-size: 24px; overflow-wrap: anywhere; }
+#recipes-panel .pantry-detail-head p, #recipes-panel .pantry-detail-notes p { font-size: 14px; }
+#recipes-panel .pantry-detail-grid strong, #recipes-panel .pantry-nutrition b { font-size: 16px; }
+#recipes-panel .pantry-detail-grid small, #recipes-panel .pantry-nutrition small { font-size: 12px; overflow-wrap: anywhere; }
+#recipes-panel .pantry-product-link { font-size: 16px; }
+#recipes-panel .pantry-detail-head > div { min-width: 0; }
+@media (max-width: 760px) {
+  #recipes-panel .pantry-detail-grid, #recipes-panel .pantry-nutrition > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #recipes-panel .pantry-detail-head { flex-wrap: wrap; gap: 10px; }
+  .pantry-product-image img { height: 190px; }
+}

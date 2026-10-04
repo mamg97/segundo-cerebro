@@ -28,6 +28,7 @@ The private spreadsheet **`SEGUNDO CEREBRO - DESPENSA`** is the canonical source
 
 Core tabs:
 - `Productos`: master product identity, canonical `producto_id`, brand/store/category, format, EAN, Mercadona URL when known and product-level nutrition when available.
+- `Productos.imagen_url` (optional column R): confirmed HTTPS product image reference, independent from private recipe photos.
 - `Inventario`: what is physically available at home, approximate quantity, storage location, stock level and confidence.
 - `ListaCompra`: replenishment needs and candidates.
 - `Precios` / `Tickets`: pantry-owned price and purchase evidence when present.
@@ -159,6 +160,14 @@ The Worker resolves the canonical private spreadsheet by its exact Drive title a
 The home summary may derive human wording such as fridge fullness, items to review and estimated next-basket cost, but it must stay traceable to live inventory/list rows and explicitly mark partial price coverage.
 
 The Organizer owns presentation only. GESTOR DESPENSA Y SUMINISTROS remains the functional owner of inventory, product identity, price evidence and `ListaCompra`.
+
+### Product card reused by recipes
+
+`GET /api/pantry/products/:producto_id` returns the canonical product even when it has no current inventory row. Unknown stock is not zero. Dated price history is attached to the complete catalogue, not only stocked products.
+
+For an exact canonical Mercadona URL, a lazy server-side public catalogue reference may supply an image and an online price. It sends only the public numeric SKU to the official host, has a bounded timeout/cache and does not overwrite canonical nutrition, identity or historical prices. Missing public data must not break the card. The optional `imagen_url` takes priority over this reference.
+
+Show all four main macros with an explicit per-100-g basis and their source. Show price basis, date and source; a receipt observation is historical and an online price is indicative, never a guaranteed local shelf price. The recipe card remains read-only and must never change inventory, shopping state or consumption.
 
 ## Apple Reminders synchronization
 
