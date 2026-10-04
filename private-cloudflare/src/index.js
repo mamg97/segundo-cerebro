@@ -13,6 +13,14 @@ import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fe
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
 import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
 import { googleReadFetch } from "./google-read.js";
+import {
+  searchGymExerciseLibrary,
+  getGymExerciseLibraryMeta,
+  getGymLibraryExercise,
+  getGymExerciseLinks,
+  linkGymExercise,
+  proxyGymExerciseMedia
+} from "./gym-library.js";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -3366,6 +3374,149 @@ async function saveHealthSync(request, env) {
 }
 
 
+async function appendFinanceSheetRow(env, range, values) {
+  if (!hasFinanceGoogleConfig(env)) throw new Error("FINANCE_NOT_CONFIGURED");
+  const token = await getGoogleAccessToken(env);
+  const endpoint =
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+    encodeURIComponent(env.FINANCE_SHEET_ID) +
+    "/values/" + encodeURIComponent(range) +
+    ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS";
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ values: [values] })
+  });
+  if (!response.ok) throw new Error("FINANCE_WRITE_" + response.status);
+  financeCache = { value: null, expiresAt: 0 };
+}
+
+function gymPlanExercises(plan = []) {
+  return (Array.isArray(plan) ? plan : []).flatMap((day) =>
+    (Array.isArray(day?.exercises) ? day.exercises : []).map((exercise) => ({
+      ...exercise,
+      dayId: day.id,
+      dayTitle: day.title,
+      dayOrder: day.order,
+      focus: day.focus,
+      restSeconds: day.restSeconds
+    }))
+  );
+}
+
+async function saveGymExerciseLink(request, env) {
+  let payload;
+  try { payload = await request.json(); }
+  catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const planExerciseId = String(payload?.planExerciseId || "").trim();
+  const providerExerciseId = String(payload?.providerExerciseId || "").trim();
+  if (!planExerciseId || !/^\d+$/.test(providerExerciseId)) {
+    return json({ ok: false, code: "INVALID_GYM_EXERCISE_LINK" }, 400);
+  }
+
+  let plan = [];
+  if (hasFinanceGoogleConfig(env)) {
+    const finance = await fetchFinanceSummary(env);
+    plan = finance.value?.health?.gymPlan || [];
+  }
+  if (!gymPlanExercises(plan).some((exercise) => exercise.id === planExerciseId)) {
+    return json({ ok: false, code: "GYM_PLAN_EXERCISE_NOT_FOUND" }, 404);
+  }
+
+  try {
+    const link = await linkGymExercise(env, { planExerciseId, providerExerciseId });
+    return json({ ok: true, link }, 201);
+  } catch (error) {
+    const code = String(error?.message || "GYM_EXERCISE_LINK_FAILED");
+    if (code === "INVALID_WGER_EXERCISE_ID" || code === "GYM_PLAN_EXERCISE_ID_REQUIRED") {
+      return json({ ok: false, code }, 400);
+    }
+    if (/^WGER_\d+$/.test(code)) return json({ ok: false, code: "GYM_LIBRARY_UPSTREAM_FAILED" }, 502);
+    throw error;
+  }
+}
+
+async function saveGymPlanExercise(request, env) {
+  if (!hasFinanceGoogleConfig(env)) return json({ ok: false, code: "FINANCE_NOT_CONFIGURED" }, 503);
+
+  let payload;
+  try { payload = await request.json(); }
+  catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+
+  const dayId = String(payload?.dayId || "").trim();
+  const providerExerciseId = String(payload?.providerExerciseId || "").trim();
+  const setsTarget = Math.max(1, Math.min(12, Math.floor(Number(payload?.setsTarget || 3) || 3)));
+  const repsTarget = String(payload?.repsTarget || "8-12").trim().slice(0, 30) || "8-12";
+  if (!dayId || !/^\d+$/.test(providerExerciseId)) {
+    return json({ ok: false, code: "INVALID_GYM_PLAN_EXERCISE" }, 400);
+  }
+
+  const finance = await fetchFinanceSummary(env);
+  const plan = finance.value?.health?.gymPlan || [];
+  const day = plan.find((item) => String(item?.id) === dayId);
+  if (!day) return json({ ok: false, code: "GYM_DAY_NOT_FOUND" }, 404);
+
+  const exerciseId = "wger-" + providerExerciseId;
+  if (gymPlanExercises(plan).some((exercise) => exercise.id === exerciseId)) {
+    return json({ ok: false, code: "GYM_EXERCISE_ALREADY_IN_PLAN" }, 409);
+  }
+
+  let exercise;
+  try {
+    exercise = await getGymLibraryExercise(providerExerciseId);
+  } catch (error) {
+    const code = String(error?.message || "GYM_LIBRARY_UPSTREAM_FAILED");
+    if (code === "INVALID_WGER_EXERCISE_ID") return json({ ok: false, code }, 400);
+    return json({ ok: false, code: "GYM_LIBRARY_UPSTREAM_FAILED" }, 502);
+  }
+
+  const nextOrder = Math.max(
+    0,
+    ...(Array.isArray(day.exercises) ? day.exercises : []).map((item) => Number(item?.order) || 0)
+  ) + 1;
+
+  await appendFinanceSheetRow(env, "GimnasioPlan!A:N", [
+    day.id,
+    day.order ?? "",
+    day.title || day.id,
+    day.focus || "",
+    day.restSeconds ?? "",
+    nextOrder,
+    exerciseId,
+    exercise.name,
+    setsTarget,
+    repsTarget,
+    "",
+    "",
+    "",
+    ""
+  ]);
+
+  const link = await linkGymExercise(env, {
+    planExerciseId: exerciseId,
+    providerExerciseId
+  });
+
+  return json({
+    ok: true,
+    added: {
+      dayId: day.id,
+      exerciseId,
+      exerciseName: exercise.name,
+      setsTarget,
+      repsTarget,
+      provider: "wger",
+      providerExerciseId
+    },
+    link
+  }, 201);
+}
+
+
 async function ensureGymTables(env) {
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS gym_sessions (
@@ -4627,6 +4778,104 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/gym/exercises/meta") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        return json({ ok: true, ...(await getGymExerciseLibraryMeta()) });
+      } catch (error) {
+        console.warn("Gym exercise library meta failed", String(error?.message || error));
+        return json({ ok: false, code: "GYM_LIBRARY_UPSTREAM_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/gym/exercises") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const [library, links, finance] = await Promise.all([
+          searchGymExerciseLibrary({
+            q: url.searchParams.get("q") || "",
+            muscle: url.searchParams.get("muscle") || "",
+            equipment: url.searchParams.get("equipment") || "",
+            category: url.searchParams.get("category") || "",
+            featured: url.searchParams.get("featured") || "",
+            limit: url.searchParams.get("limit") || 24,
+            offset: url.searchParams.get("offset") || 0
+          }),
+          getGymExerciseLinks(env),
+          hasFinanceGoogleConfig(env) ? fetchFinanceSummary(env).catch(() => null) : Promise.resolve(null)
+        ]);
+        const plan = finance?.value?.health?.gymPlan || [];
+        const linkedIds = new Set(links.map((item) => String(item.providerExerciseId)));
+        const directIds = new Set(
+          gymPlanExercises(plan)
+            .map((item) => /^wger-(\d+)$/.exec(String(item.id || ""))?.[1] || null)
+            .filter(Boolean)
+        );
+        return json({
+          ok: true,
+          ...library,
+          exercises: library.exercises.map((item) => ({
+            ...item,
+            inPlan: linkedIds.has(String(item.id)) || directIds.has(String(item.id))
+          })),
+          links
+        });
+      } catch (error) {
+        console.warn("Gym exercise library search failed", String(error?.message || error));
+        return json({ ok: false, code: "GYM_LIBRARY_UPSTREAM_FAILED" }, 502);
+      }
+    }
+
+    const gymExerciseMediaMatch = url.pathname.match(/^\/api\/gym\/exercises\/(\d+)\/media\/(video|image)\/(\d+)$/);
+    if (gymExerciseMediaMatch) {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const mediaResponse = await proxyGymExerciseMedia(
+          request,
+          gymExerciseMediaMatch[1],
+          gymExerciseMediaMatch[2],
+          gymExerciseMediaMatch[3]
+        );
+        return withSecurityHeaders(mediaResponse);
+      } catch (error) {
+        console.warn("Gym exercise media proxy failed", String(error?.message || error));
+        return json({ ok: false, code: "GYM_LIBRARY_MEDIA_FAILED" }, 502);
+      }
+    }
+
+    const gymExerciseDetailMatch = url.pathname.match(/^\/api\/gym\/exercises\/(\d+)$/);
+    if (gymExerciseDetailMatch) {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const exercise = await getGymLibraryExercise(gymExerciseDetailMatch[1]);
+        const links = await getGymExerciseLinks(env);
+        const inPlan = links.some((item) => String(item.providerExerciseId) === String(exercise.id));
+        return json({ ok: true, exercise: { ...exercise, inPlan } });
+      } catch (error) {
+        const code = String(error?.message || "GYM_LIBRARY_UPSTREAM_FAILED");
+        if (code === "INVALID_WGER_EXERCISE_ID") return json({ ok: false, code }, 400);
+        return json({ ok: false, code: "GYM_LIBRARY_UPSTREAM_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/gym/exercise-link") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try { return await saveGymExerciseLink(request, env); }
+      catch (error) {
+        console.warn("Gym exercise link failed", String(error?.message || error));
+        return json({ ok: false, code: "GYM_EXERCISE_LINK_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/gym/plan/exercise") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try { return await saveGymPlanExercise(request, env); }
+      catch (error) {
+        console.warn("Gym plan exercise write failed", String(error?.message || error));
+        return json({ ok: false, code: "GYM_PLAN_WRITE_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/gym") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       let gymPlan = [];
@@ -4651,8 +4900,11 @@ export default {
         } catch {}
       }
 
-      const history = await fetchGymHistory(env);
-      return json({ ok: true, plan: gymPlan, trainingStatus, ...history });
+      const [history, exerciseLinks] = await Promise.all([
+        fetchGymHistory(env),
+        getGymExerciseLinks(env).catch(() => [])
+      ]);
+      return json({ ok: true, plan: gymPlan, trainingStatus, exerciseLinks, ...history });
     }
 
     if (url.pathname === "/api/gym/session") {
