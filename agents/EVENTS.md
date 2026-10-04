@@ -39,11 +39,13 @@ Cuando exista en las fuentes, el gestor puede coordinar:
 
 ## Fuentes y autoridad
 
-- Calendar/iCloud es la fuente principal de fechas y horarios cuando el evento exista allí.
-- Emails, tickets, reservas y documentos originales permanecen en sus fuentes propietarias.
+- La fuente operativa canónica del dominio es el Sheet privado **`SEGUNDO CEREBRO - EVENTOS`**.
+- Calendar/iCloud y los demás calendarios conservan autoridad sobre sus propias fechas/horarios; el Sheet guarda la versión reconciliada y el `calendar_ref`, sin escribir de vuelta en iCloud.
+- Emails, tickets, reservas y documentos originales permanecen en sus fuentes propietarias; Eventos guarda solo referencias y síntesis operativa.
 - GESTOR FINANZAS PERSONALES mantiene presupuesto, provisiones, compromisos y dinero libre.
 - GESTOR EVENTOS puede identificar un gasto asociado a un evento, pero no crea contabilidad paralela.
-- ORGANIZADOR / WEB GENERAL mantiene la visión global y la interfaz.
+- ORGANIZADOR / WEB GENERAL es un frontal de esa fuente canónica.
+- D1 queda limitado a caché, resiliencia, auditoría técnica y fallback de migración; no es la memoria de negocio primaria de Eventos.
 
 ## Consulta federada obligatoria
 
@@ -51,16 +53,17 @@ Toda consulta del usuario sobre eventos o calendario debe comenzar por una **bú
 
 Orden operativo:
 
-1. consultar **todos los calendarios iCloud/CalDAV configurados**, no solo uno, usando la lectura fresca y el `last-known-good` privado cuando la lectura sea parcial;
-2. consultar **todos los calendarios accesibles de Google Calendar**, no únicamente `primary`;
-3. consultar Eventos/D1 (`active` y, cuando afecte a identidad o continuidad, `history`) para no perder eventos persistidos fuera del horizonte temporal de un proveedor;
+1. leer **`SEGUNDO CEREBRO - EVENTOS` completo** (`Eventos`, `EventoHechos`, `EventoRefs`, `EventosImportantes`);
+2. consultar **todos los calendarios iCloud/CalDAV configurados**, no solo uno, usando la lectura fresca y el `last-known-good` privado cuando la lectura sea parcial;
+3. consultar **todos los calendarios accesibles de Google Calendar**, no únicamente `primary`;
 4. contrastar, para candidatos relevantes, las fuentes propietarias disponibles: email, reservas, entradas, billetes y documentos;
-5. reconciliar duplicados por identidad, fecha/hora, título normalizado y referencias; una copia derivada nunca sustituye a la fuente propietaria;
-6. ordenar los eventos futuros reconciliados por fecha real y solo entonces responder cuál es el próximo evento.
+5. reconciliar duplicados por `evento_id`/`calendar_ref`, fecha/hora, título normalizado y referencias;
+6. actualizar el Sheet canónico cuando aparezca información nueva autorizada y ordenar los eventos futuros reconciliados por fecha real antes de responder cuál es el próximo evento.
 
 Regla de completitud:
 
 - una búsqueda únicamente en Gmail/Google Calendar **nunca** se considera suficiente;
+- una lectura únicamente del Sheet tampoco es suficiente si existen calendarios/fuentes externas accesibles que puedan contener cambios todavía no reconciliados;
 - una búsqueda únicamente en iCloud tampoco es suficiente cuando existen otras fuentes autorizadas accesibles;
 - si cualquier fuente esperable está inaccesible, responde `PARCIAL/PROVISIONAL`, identifica la fuente no comprobada y evita afirmar de forma absoluta «el próximo evento es…»;
 - obligaciones puramente financieras, recordatorios técnicos y tareas sin semántica de evento se filtran después de la reconciliación, no antes de consultar las fuentes.
@@ -105,15 +108,14 @@ Las necesidades `FALTA_COMPRAR` pueden trasladarse al gestor competente, pero no
 
 Los eventos tienen ciclo de vida persistente. La desaparición de un evento del horizonte de iCloud no elimina su identidad ni su crónica.
 
-La capa privada D1 conserva únicamente:
+El Sheet `SEGUNDO CEREBRO - EVENTOS` conserva:
 
-- identidad estable del evento;
-- tipo y estado operativo;
-- referencias a calendario, finanzas y lista de objetos;
-- participantes cuando se hayan registrado explícitamente;
-- síntesis operativa y balance final;
-- hechos fechados de la crónica;
-- punteros mínimos a fuentes externas.
+- `Eventos`: identidad estable, tipo/estado, fechas reconciliadas, referencias, participantes explícitos, síntesis y balance final;
+- `EventoHechos`: crónica mínima fechada;
+- `EventoRefs`: punteros a fuentes externas;
+- `EventosImportantes`: reglas privadas de reconocimiento y alias.
+
+D1 puede conservar un espejo técnico/fallback, pero ninguna edición ordinaria debe depender exclusivamente de él.
 
 Tipos iniciales de hecho:
 
@@ -137,4 +139,4 @@ Un hecho no sustituye a su fuente propietaria. Por ejemplo, un hecho `GASTO` pue
 - `POST /api/events/:id/facts`
 - `POST /api/events/:id/references`
 
-La sincronización de lectura de `/api/state` persiste automáticamente los eventos importantes detectados en iCloud que coinciden con reglas privadas. No escribe en iCloud.
+La sincronización de lectura de `/api/state` reconcilia automáticamente los eventos importantes detectados en iCloud contra `SEGUNDO CEREBRO - EVENTOS`. No escribe en iCloud. Las rutas `/api/events` leen y escriben el Sheet canónico; D1 queda como fallback técnico durante la migración.
