@@ -65,4 +65,6 @@ test("look detail cache bust and production audit are wired", () => {
   assert.match(audit, /Historial ordenable/);
   assert.match(audit, /Vista Prendas disponible/);
   assert.match(audit, /Vista Prendas activa/);
+  assert.match(audit, /Miniaturas de Looks/);
+  assert.match(audit, /Miniaturas de Prendas/);
 });
