@@ -81,6 +81,47 @@ test("missing menu macros resolve automatically from a complete recipe master", 
   assert.equal(row.ingredients[0].kcalForMeal, 320);
 });
 
+test("fractional shared recipe units resolve from the complete recipe master", () => {
+  const recipeById = new Map([["rec-shared", {
+    id: "rec-shared",
+    servings: 2,
+    kcalPerServing: 320,
+    proteinPerServing: 28,
+    carbsPerServing: 35,
+    fatPerServing: 8,
+    precision: "estimada"
+  }]]);
+  const ingredientsByRecipeId = new Map([["rec-shared", [{
+    name: "Ingrediente",
+    quantity: 200,
+    grams: 200,
+    kcal: 640,
+    protein: 56
+  }]]]);
+
+  const [row] = prepareWeeklyMenuRows([{
+    date: "2026-01-15",
+    moment: "Cena",
+    recipeId: "rec-shared",
+    name: "Receta compartida",
+    quantity: 0.5,
+    unit: "plato compartido",
+    status: "consumido",
+    kcal: null,
+    protein: null,
+    carbs: null,
+    fat: null
+  }], { recipeById, ingredientsByRecipeId });
+
+  assert.equal(row.kcal, 320);
+  assert.equal(row.protein, 28);
+  assert.equal(row.carbs, 35);
+  assert.equal(row.fat, 8);
+  assert.equal(row.nutritionStatus, "resolved-from-recipe");
+  assert.equal(row.ingredients[0].gramsForMeal, 100);
+  assert.equal(row.ingredients[0].kcalForMeal, 320);
+});
+
 test("pending recipe never invents macros or exposes stale ingredient assumptions", () => {
   const recipeById = new Map([["rec-pending", {
     id: "rec-pending",

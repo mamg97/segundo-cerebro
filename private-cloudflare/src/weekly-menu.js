@@ -103,8 +103,17 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
     const recipe = recipeId ? recipeById.get(recipeId) || null : null;
     const pendingRecipe = recipePending(recipe);
     const menuQuantity = finite(item?.quantity) ?? 1;
-    const isServingUnit = /raci[oó]n/i.test(String(item?.unit || ""));
-    const canResolveFromRecipe = Boolean(recipe && isServingUnit && !pendingRecipe);
+    const recipeServings = finite(recipe?.servings);
+    const hasRecipeServings = recipeServings !== null && recipeServings > 0;
+    const unit = String(item?.unit || "");
+    const isServingUnit = /raci[oó]n/i.test(unit);
+    const isSharedFractionUnit = /compartid[oa]/i.test(unit);
+    const nutritionFactor = isServingUnit
+      ? menuQuantity
+      : isSharedFractionUnit && hasRecipeServings
+        ? recipeServings * menuQuantity
+        : null;
+    const canResolveFromRecipe = Boolean(recipe && nutritionFactor !== null && !pendingRecipe);
 
     const fields = [
       ["kcal", "kcalPerServing"],
@@ -119,14 +128,15 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
       if (finite(hydrated[menuField]) !== null) continue;
       const perServing = finite(recipe?.[recipeField]);
       if (!canResolveFromRecipe || perServing === null) continue;
-      hydrated[menuField] = perServing * menuQuantity;
+      hydrated[menuField] = perServing * nutritionFactor;
       derivedFields.push(menuField);
     }
 
-    const recipeServings = finite(recipe?.servings);
-    const ingredientFactor = recipe && isServingUnit && recipeServings !== null && recipeServings > 0
+    const ingredientFactor = recipe && isServingUnit && hasRecipeServings
       ? menuQuantity / recipeServings
-      : 1;
+      : recipe && isSharedFractionUnit
+        ? menuQuantity
+        : 1;
     const baseIngredients = recipe && !pendingRecipe
       ? ingredientsByRecipeId.get(recipeId) || []
       : [];
