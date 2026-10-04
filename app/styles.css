@@ -22388,3 +22388,76 @@ html[data-theme="dark"] .loan-benchmark-explanation {
   #recipes-panel .pantry-detail-head { flex-wrap: wrap; gap: 10px; }
   .pantry-product-image img { height: 190px; }
 }
+
+
+/* v0.42.6 — mobile weekly calendar fits all seven days without horizontal scrolling */
+@media (max-width: 520px) {
+  .weekly-calendar {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .week-day {
+    min-width: 0;
+  }
+
+  .week-day-header {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: 6px 1px;
+  }
+
+  .week-day-header span {
+    font-size: 7px !important;
+    line-height: 1.05;
+  }
+
+  .week-day-header strong {
+    font-size: 15px !important;
+  }
+
+  .week-day.today .week-day-header strong {
+    width: 22px;
+    height: 22px;
+    font-size: 12px !important;
+  }
+
+  .week-day-events {
+    gap: 4px;
+    min-height: 190px;
+    padding: 4px 2px;
+  }
+
+  .week-event {
+    gap: 2px;
+    min-width: 0;
+    padding: 5px 3px;
+    border-left-width: 3px;
+    border-radius: 5px;
+  }
+
+  .week-event-time {
+    font-size: 6px !important;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+
+  .week-event strong {
+    font-size: 7px !important;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .week-event small {
+    font-size: 6px !important;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .week-day-empty {
+    padding: 2px;
+    font-size: 7px;
+  }
+}
