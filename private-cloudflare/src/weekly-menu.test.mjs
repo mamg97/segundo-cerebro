@@ -204,3 +204,74 @@ test("prepared menu never exposes postre, snack or cierre as standalone moments"
   ]);
   assert.deepEqual(rows.map((row) => row.moment), ["Cena", "Merienda", "Cena"]);
 });
+
+
+test("menu food identity links to the canonical Pantry product and can fill missing gram macros", () => {
+  const pantryProductById = new Map([["merc-food-1", {
+    id: "merc-food-1",
+    name: "Producto canónico",
+    nutrition: { kcal100g: 200, protein100g: 10, carbs100g: 20, fat100g: 8 }
+  }]]);
+  const [row] = prepareWeeklyMenuRows([{
+    date: "2026-10-04",
+    moment: "Merienda",
+    foodId: "merc-food-1",
+    name: "Nombre de snapshot",
+    quantity: 25,
+    unit: "g",
+    status: "planificado",
+    kcal: null,
+    protein: null,
+    carbs: null,
+    fat: null
+  }], { pantryProductById });
+
+  assert.equal(row.pantryProductId, "merc-food-1");
+  assert.equal(row.pantrySyncStatus, "linked");
+  assert.equal(row.product.name, "Producto canónico");
+  assert.equal(row.kcal, 50);
+  assert.equal(row.protein, 2.5);
+  assert.equal(row.carbs, 5);
+  assert.equal(row.fat, 2);
+  assert.equal(row.nutritionStatus, "resolved-from-pantry");
+});
+
+test("explicit menu macros stay historical while Pantry remains the linked product master", () => {
+  const pantryProductById = new Map([["merc-food-2", {
+    id: "merc-food-2",
+    nutrition: { kcal100g: 999, protein100g: 99, carbs100g: 99, fat100g: 99 }
+  }]]);
+  const [row] = prepareWeeklyMenuRows([{
+    date: "2026-10-04",
+    moment: "Cena",
+    foodId: "merc-food-2",
+    name: "Producto servido",
+    quantity: 10,
+    unit: "g",
+    status: "consumido",
+    kcal: 42,
+    protein: 3,
+    carbs: 4,
+    fat: 2
+  }], { pantryProductById });
+
+  assert.equal(row.pantrySyncStatus, "linked");
+  assert.equal(row.kcal, 42);
+  assert.equal(row.protein, 3);
+  assert.equal(row.nutritionStatus, "explicit");
+});
+
+test("a menu food with no Pantry match is explicit about the broken synchronization", () => {
+  const [row] = prepareWeeklyMenuRows([{
+    date: "2026-10-04",
+    moment: "Merienda",
+    foodId: "missing-product",
+    name: "Producto",
+    quantity: 1,
+    unit: "ud",
+    status: "planificado"
+  }], { pantryProductById: new Map() });
+
+  assert.equal(row.pantryProductId, null);
+  assert.equal(row.pantrySyncStatus, "missing");
+});

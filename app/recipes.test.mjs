@@ -21,7 +21,7 @@ test("recipe catalog renders compact image and name cards that open canonical de
   assert.match(app, /data-recipe-open=/);
   assert.match(app, /class="recipe-card recipe-catalog-card"/);
   assert.match(app, /class="recipe-photo recipe-catalog-photo"/);
-  assert.match(app, /function renderRecipeDetail\(panel, data, recipe\)/);
+  assert.match(app, /function renderRecipeDetail\(panel, data, recipe, options = \{\}\)/);
   assert.match(app, /data-recipes-back/);
   assert.match(app, /class="recipe-card recipe-detail-card"/);
   assert.match(app, /class="recipe-detail-sections"/);
