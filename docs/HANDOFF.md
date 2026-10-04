@@ -1732,5 +1732,11 @@ Antes de cualquier cambio:
 - No hay matching fuzzy; los IDs explícitos prevalecen y un ID roto no se reemplaza por nombre. Sin ID solo se admite coincidencia única exacta normalizada.
 - Nuevos enlaces ordinarios se hacen solo en el Sheet. Las subrecetas o ingredientes genéricos pendientes siguen abriendo su contexto sin inventar un producto comercial.
 - Auditor ampliado: apertura, contexto, macros por 100 g, retorno y QA responsive de la ficha de alimento.
-- Pruebas locales: 14/14 dirigidas pasan; sintaxis frontend/Worker pasa. CI/deploy/audit posteriores deben confirmarse antes de dar el cierre de producción.
+- Entregado en PR #245 / `6dc3a8c5`; CI privado #279 y deploy privado #334: success, incluido `Deploy production Worker`.
+- Pruebas locales dirigidas y suite completa de CI pasan; frontend/Worker/auditor sin errores de sintaxis.
+- Audit production web #137: 918 checks / 3 failures. Recetario PASS: catálogo completo, ingredientes pulsables, apertura de ficha, contexto/cantidad, separación de macros por 100 g, retorno a la misma receta y al catálogo.
+- QA responsive de la ficha PASS a 1440, 900 y 390 px: sin overflow, clipping, solapes ni deformación.
+- Rojos globales ajenos al recorrido del Recetario: dos workflows MIDAS previos (`TFM shadow forecasts`, `weekly ML paper`) e HTTP 500 en rutas de imágenes de Looks. La auditoría completa NO se declara verde.
+- Alcance de la comprobación: el auditor abre un ingrediente de la primera receta; no certifica cada vínculo comercial ni la disponibilidad de imagen/precio online de todos los SKU. La referencia Mercadona degrada a pendiente si falla.
+- Siguiente paso de datos, sin despliegue: completar en las fuentes canónicas los productos comerciales pendientes, sus enlaces exactos, imagen y nutrición documentada; no asignar genéricos o subrecetas por similitud.
 - La verificación manual en navegador de esta sesión quedó bloqueada por acceso denegado; no se intentó eludirla. El resultado manual no está certificado.
