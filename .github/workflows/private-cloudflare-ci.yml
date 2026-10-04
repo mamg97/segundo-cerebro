@@ -78,7 +78,9 @@ jobs:
 
       - run: node --check src/projects.js
 
-      - run: node --check src/events.js\n\n      - run: node --check src/events-sheet.js
+      - run: node --check src/events.js
+
+      - run: node --check src/events-sheet.js
 
       - run: node --check src/adherence.js
 
