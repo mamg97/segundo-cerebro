@@ -2619,6 +2619,12 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   }
 
   const token = await getGoogleAccessToken(env);
+  const pantryPromise = hasPantryGoogleConfig(env)
+    ? fetchPantrySummary(env, getGoogleAccessToken).catch((error) => {
+        console.warn("Nutrition Pantry sync failed", String(error?.message || error));
+        return null;
+      })
+    : Promise.resolve(null);
   const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:O1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
@@ -2631,6 +2637,11 @@ async function fetchHealthNutritionSummary(env, options = {}) {
 
   const payload = await response.json();
   const valueRanges = payload.valueRanges || [];
+  const pantryResult = await pantryPromise;
+  const pantryProducts = Array.isArray(pantryResult?.value?.products) ? pantryResult.value.products : [];
+  const pantryProductById = pantryResult?.value
+    ? new Map(pantryProducts.map((product) => [String(product.id || "").trim(), product]).filter(([id]) => id))
+    : null;
 
   const foods = parseTableRows(valueRanges[0]?.values || []).map((item) => ({
     id: String(item.id || "").trim(),
@@ -2643,13 +2654,17 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     fat: toNumber(item.grasas_g),
     source: item.fuente || null,
     note: item.nota || null,
-    updatedAt: item.updated_at || null
+    updatedAt: item.updated_at || null,
+    pantryProductId: pantryProductById?.has(String(item.id || "").trim())
+      ? String(item.id || "").trim()
+      : null
   })).filter((item) => item.id && item.name);
 
   const foodById = new Map(foods.map((food) => [food.id, food]));
   const entries = parseTableRows(valueRanges[1]?.values || []).map((item, index) => {
     const itemId = item.item_id || null;
     const linkedFood = itemId ? foodById.get(String(itemId)) : null;
+    const linkedProduct = itemId && pantryProductById ? pantryProductById.get(String(itemId)) || null : null;
     const quantity = toNumber(item.cantidad);
     const serving = linkedFood?.serving;
     const factor = linkedFood && quantity !== null && serving !== null && serving > 0
@@ -2663,7 +2678,8 @@ async function fetchHealthNutritionSummary(env, options = {}) {
       date: String(item.fecha || "").trim(),
       moment: String(item.momento || "Otro").trim(),
       itemId,
-      itemName: String(item.item_nombre || linkedFood?.name || "").trim(),
+      productId: linkedProduct?.id || null,
+      itemName: String(item.item_nombre || linkedFood?.name || linkedProduct?.name || "").trim(),
       quantity,
       unit: item.unidad || linkedFood?.unit || null,
       kcal: toNumber(item.kcal) ?? derived("kcal") ?? 0,
@@ -2915,7 +2931,11 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const weekEnd = healthAddDays(weekStart, 6);
   const weeklyMenu = prepareWeeklyMenuRows(
     weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd),
-    { recipeById, ingredientsByRecipeId }
+    {
+      recipeById,
+      ingredientsByRecipeId,
+      ...(pantryProductById ? { pantryProductById } : {})
+    }
   );
   const waistHistory = bodySheetRows
     .filter((item) => item.waistCm !== null && item.date <= date)
