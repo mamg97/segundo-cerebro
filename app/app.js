@@ -5824,7 +5824,10 @@ function renderGymDay(day, latestByExercise = new Map()) {
         return `
         <article class="gym-exercise-row" data-exercise-id="${escapeHtml(exercise.id)}">
           <div class="gym-exercise-info">
-            <strong>${escapeHtml(exercise.name)}</strong>
+            <div class="gym-exercise-title-row">
+              <strong>${escapeHtml(exercise.name)}</strong>
+              <button type="button" class="gym-technique-button" data-gym-technique-id="${escapeHtml(exercise.id)}">Técnica</button>
+            </div>
             <span>${escapeHtml(formatTarget(exercise))}</span>
             ${exercise.loadNote ? `<small>Referencia: ${escapeHtml(exercise.loadNote)}</small>` : ""}
             ${latestLabel ? `<small class="gym-last-record">${escapeHtml(latestLabel)}</small>` : ""}
@@ -5868,6 +5871,7 @@ function renderGymDay(day, latestByExercise = new Map()) {
       if (input) input.value = select.value;
     });
   });
+  bindGymTechniqueButtons(container);
 }
 
 function renderMobileRepOptions(currentValue) {
