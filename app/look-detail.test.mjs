@@ -20,6 +20,17 @@ test("look cards open a canonical detail view", () => {
   assert.match(objects, /event\.key==="Enter"\|\|event\.key===" "/);
 });
 
+test("look usage history is exposed from canonical usage fields", () => {
+  assert.match(objects, /data-look-history/);
+  assert.match(objects, /function lookUsageEntries\(payload\)/);
+  assert.match(objects, /usageHistory/);
+  assert.match(objects, /lastUsed/);
+  assert.match(objects, /function lookUsageHistoryView\(payload\)/);
+  assert.match(objects, /Historial de looks usados/);
+  assert.match(objects, /data-look-history-open/);
+  assert.match(css, /\.look-history-item\s*\{/);
+});
+
 test("look detail enlarges the look and shows component garments responsively", () => {
   assert.match(css, /\.look-detail-layout\s*\{[\s\S]*?grid-template-columns:\s*minmax\(320px, 1\.35fr\) minmax\(300px, \.85fr\)/);
   assert.match(css, /\.look-detail-main\s*\{[\s\S]*?min-height:\s*560px/);
@@ -30,10 +41,12 @@ test("look detail enlarges the look and shows component garments responsively", 
 });
 
 test("look detail cache bust and production audit are wired", () => {
-  assert.match(app, /objects\.js\?v=0\.41\.3/);
-  assert.match(index, /styles\.css\?v=0\.42\.13/);
-  assert.match(index, /app\.js\?v=0\.42\.5/);
+  assert.match(app, /objects\.js\?v=0\.41\.4/);
+  assert.match(index, /styles\.css\?v=0\.42\.14/);
+  assert.match(index, /app\.js\?v=0\.42\.6/);
   assert.match(audit, /auditLookDetail/);
   assert.match(audit, /Look ampliado/);
   assert.match(audit, /Prendas del look/);
+  assert.match(audit, /Historial de looks disponible/);
+  assert.match(audit, /Historial de looks abre/);
 });
