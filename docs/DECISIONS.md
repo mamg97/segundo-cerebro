@@ -485,3 +485,14 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Coste:** la capacidad no puede introducir servicios, APIs o licencias de pago. Lyfta, RepDB Premium, ExerciseDB de pago y mirrors de procedencia dudosa no son fuentes válidas.
 - **Degradación:** si falta multimedia libre o wger está temporalmente indisponible, el plan/histórico siguen funcionando y la UI informa de la limitación.
 - **Motivo:** conseguir una experiencia visual tipo enciclopedia de ejercicios sin romper el diseño data-driven, la privacidad ni la regla de coste operativo cero.
+
+## D-048 — Descubrimiento federado de eventos y calendarios
+
+- **Estado:** aceptada.
+- **Decisión:** cualquier consulta sobre agenda o eventos debe reconciliar todas las fuentes autorizadas accesibles antes de responder. La búsqueda incluye todos los calendarios iCloud/CalDAV configurados, todos los calendarios accesibles de Google Calendar, el estado persistente de Eventos en D1 y, cuando aporten confirmación o detalle, email, reservas, entradas, billetes y documentos.
+- **Completitud:** una cuenta, un proveedor o el calendario `primary` no representan por sí solos la agenda global. Si una fuente esperable no puede leerse o devuelve una lectura parcial, el resultado se etiqueta como provisional y no se afirma de forma absoluta cuál es el siguiente evento.
+- **Autoridad:** iCloud mantiene la autoridad temporal cuando el evento existe allí; D1 conserva continuidad/identidad y las demás fuentes conservan la autoridad de sus propios datos. La reconciliación no crea una nueva fuente de verdad.
+- **Filtrado:** después de reunir y deduplicar candidatos se excluyen recordatorios puramente financieros/técnicos sin semántica de evento.
+- **Motivo:** evitar falsos negativos al responder desde un único calendario y asegurar que bodas, cumpleaños, viajes, celebraciones y otros compromisos no desaparezcan de la planificación por estar repartidos entre calendarios o fuentes.
+- **Privacidad:** Git solo documenta la regla; nombres, fechas y detalles reales permanecen en fuentes privadas.
+
