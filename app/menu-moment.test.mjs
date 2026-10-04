@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("./app.js", import.meta.url), "utf8");
+const css = await readFile(new URL("./styles.css", import.meta.url), "utf8");
 
 test("weekly menu folds dessert and snack into canonical parent meals", () => {
   assert.match(app, /function canonicalWeeklyMenuMoment\(item\)/);
@@ -73,4 +74,6 @@ test("linked meals expose a large tappable title on the detailed mobile menu", (
   assert.match(app, /data-menu-recipe-open=/);
   assert.match(app, /data-menu-product-open=/);
   assert.match(app, /renderWeeklyMenuItemTitle\(item, !compact\)/);
+  assert.match(css, /\.weekly-menu-title-link\s*\{[\s\S]*?min-height:\s*40px/);
+  assert.match(css, /touch-action:\s*manipulation/);
 });
