@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isTrustedWgerMediaUrl, normalizeWgerExercise } from "./gym-library.js";
+import { WGER_VIDEO_PATH, isTrustedWgerMediaUrl, normalizeWgerExercise } from "./gym-library.js";
+
+test("wger uses the current public video endpoint", () => {
+  assert.equal(WGER_VIDEO_PATH, "/video/");
+});
 
 test("wger media proxy only trusts HTTPS wger hosts", () => {
   assert.equal(isTrustedWgerMediaUrl("https://wger.de/media/exercises/demo.mp4"), true);
