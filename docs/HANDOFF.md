@@ -1740,3 +1740,12 @@ Antes de cualquier cambio:
 - Alcance de la comprobación: el auditor abre un ingrediente de la primera receta; no certifica cada vínculo comercial ni la disponibilidad de imagen/precio online de todos los SKU. La referencia Mercadona degrada a pendiente si falla.
 - Siguiente paso de datos, sin despliegue: completar en las fuentes canónicas los productos comerciales pendientes, sus enlaces exactos, imagen y nutrición documentada; no asignar genéricos o subrecetas por similitud.
 - La verificación manual en navegador de esta sesión quedó bloqueada por acceso denegado; no se intentó eludirla. El resultado manual no está certificado.
+
+
+### GESTOR GYM Y NUTRI · reconciliación de recetas compartidas · 2026-10-04
+
+- Diagnóstico cerrado: la hidratación genérica de `MenuSemanal` resolvía macros desde `Recetas` para unidades tipo `ración`, pero no para fracciones explícitas de una receta completa como `plato compartido` o `pieza compartida`. Una fila consumida podía existir correctamente y seguir mostrando nutrición incompleta aunque la receta maestra ya tuviera macros.
+- PR #246 / `96810e78` amplía `prepareWeeklyMenuRows` para que las unidades compartidas escalen macros e ingredientes por la fracción indicada y por el número de raciones de la receta. Las recetas pendientes siguen sin inventar nutrición y el comportamiento de `ración` permanece sin cambios.
+- Validación: CI `Validate private Cloudflare app` #280 success; deploy privado #335 success.
+- Audit production web #138: 918 checks. Salud → Menú/Nutrición, agrupación de tomas y barras de kcal/proteína pasan para todos los días. Los dos únicos fallos son `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Nutrición.
+- Los backfills concretos de consumos se hicieron únicamente en la fuente privada canónica `SEGUNDO CEREBRO - SALUD`; no se guardaron valores personales en Git.
