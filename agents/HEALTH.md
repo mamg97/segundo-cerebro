@@ -96,17 +96,23 @@ Do not treat Apple Watch active calories alone as total daily expenditure.
 
 Do not invent calorie deficits, weight-loss targets or macro goals. `Objetivos` stays empty until the user explicitly defines or asks to calculate a target.
 
-## GESTOR GYM Y NUTRI — continuity protocol
+## GESTOR GYM / GESTOR NUTRI — continuity protocol
 
-This conversation is the operational manager for training, nutrition and the interpretation of Apple Health / Zepp signals. If the chat reaches its context limit or another ChatGPT/Codex session takes over, the new session must recover state in this order:
+Health is operated by two specialized conversations that share the same canonical sources without creating parallel state:
+
+- `GESTOR GYM`: training plan, exercise selection, completed strength sessions, progression, technique, training recovery and return-to-training decisions.
+- `GESTOR NUTRI`: food intake, macros, weekly menu, recipes and nutrition planning.
+
+Both may read Apple Health / Zepp context when it is relevant to their own decisions. Neither owns a duplicate health dataset. If the chat reaches its context limit or another ChatGPT/Codex session takes over, the new session must recover state in this order:
 
 1. Read `agents/HEALTH.md` and the current `docs/HANDOFF.md`.
 2. Read the live private targets from `Objetivos`, `ObjetivosActividad` and `ObjetivosProgreso`; never copy personal target values into Git.
 3. Read current nutrition from `Registro`, recipes from the private Health Sheet and planned meals from `MenuSemanal`.
 4. Read Pantry `Productos`, `Inventario` and `ListaCompra` before resolving packaged products or recommending what to eat.
-5. Read gym plan from the private source and completed gym sessions from D1.
-6. Read automatic Apple Health activity and body data from D1; use Sheet body measurements only as historical/manual fallback.
-7. Continue the same measurement and decision rules below instead of rebuilding a new plan from conversation memory.
+5. For `GESTOR GYM`, read the gym plan from the private canonical source and completed gym sessions from D1 before making progression decisions.
+6. Read automatic Apple Health activity/body/recovery data from D1 when relevant; use derived Sheet surfaces only as inspection/history fallbacks.
+7. For `GESTOR NUTRI`, read current intake/menu/recipes from the Health Sheet and use activity/body trends only as context, never as a second nutrition source.
+8. Continue the same measurement and decision rules below instead of rebuilding state from conversation memory.
 
 ### Measurement conventions
 
@@ -146,7 +152,7 @@ For each planned day:
 
 ### Manager restart / conversation handoff
 
-When a GESTOR GYM + NUTRI conversation is replaced because the chat is saturated, reconstruct the live state from canonical sources before answering operational questions. Do not rely on the previous chat as the source of truth.
+When either `GESTOR GYM` or `GESTOR NUTRI` is replaced because the chat is saturated, reconstruct the live state from canonical sources before answering operational questions. Do not assume the sibling manager's conversation history is canonical. Do not rely on the previous chat as the source of truth.
 
 Read, at minimum:
 1. `Objetivos`: active calorie/macro targets and current nutrition notes.
@@ -255,7 +261,7 @@ Body-fat percentage and other consumer bioimpedance metrics are treated as trend
 
 Apple Watch energy is observational. Never adjust calorie intake 1:1 from the watch's calorie estimate. Nutrition decisions should use 7–14 day trends together with weight/composition trends, adherence and training context.
 
-The operational manager for these signals is the conversation `GESTOR GYM Y NUTRI`.
+`GESTOR GYM` owns training/recovery interpretation for these signals; `GESTOR NUTRI` may consume them as context for nutrition but does not own training progression.
 
 ## Zepp / Zepp Life source audit
 
