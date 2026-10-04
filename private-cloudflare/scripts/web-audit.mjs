@@ -1809,22 +1809,36 @@ try {
 
 
     const recipeLinkedRows = comparisonRows.filter((item) => item?.recipeId && item?.recipe);
-    const recipeLinks = menuPanel.locator("[data-menu-recipe-open]");
-    const recipeLinkCount = await recipeLinks.count();
+    const recipeTitleLinks = menuPanel.locator(".weekly-menu-title-link[data-menu-recipe-open]");
+    const recipeActionLinks = menuPanel.locator(".weekly-menu-entity-link[data-menu-recipe-open]");
+    const recipeTitleLinkCount = await recipeTitleLinks.count();
+    const recipeActionLinkCount = await recipeActionLinks.count();
     assertCheck(
-      recipeLinkCount === recipeLinkedRows.length,
-      "Menú · cada comida con receta enlaza su ficha",
-      `UI=${recipeLinkCount} API=${recipeLinkedRows.length}`
+      recipeTitleLinkCount === recipeLinkedRows.length,
+      "Menú · cada comida con receta tiene título pulsable",
+      `UI=${recipeTitleLinkCount} API=${recipeLinkedRows.length}`
+    );
+    assertCheck(
+      recipeActionLinkCount === recipeLinkedRows.length,
+      "Menú · cada comida con receta conserva Abrir receta",
+      `UI=${recipeActionLinkCount} API=${recipeLinkedRows.length}`
     );
 
     const foodRows = comparisonRows.filter((item) => item?.foodId);
     const pantryLinkedRows = foodRows.filter((item) => item?.pantrySyncStatus === "linked" && item?.pantryProductId);
-    const pantryLinks = menuPanel.locator("[data-menu-product-open]");
-    const pantryLinkCount = await pantryLinks.count();
+    const pantryTitleLinks = menuPanel.locator(".weekly-menu-title-link[data-menu-product-open]");
+    const pantryActionLinks = menuPanel.locator(".weekly-menu-entity-link[data-menu-product-open]");
+    const pantryTitleLinkCount = await pantryTitleLinks.count();
+    const pantryActionLinkCount = await pantryActionLinks.count();
     assertCheck(
-      pantryLinkCount === pantryLinkedRows.length,
-      "Menú · productos enlazados abren la ficha canónica de Despensa",
-      `UI=${pantryLinkCount} API=${pantryLinkedRows.length}`
+      pantryTitleLinkCount === pantryLinkedRows.length,
+      "Menú · cada producto enlazado tiene título pulsable hacia Despensa",
+      `UI=${pantryTitleLinkCount} API=${pantryLinkedRows.length}`
+    );
+    assertCheck(
+      pantryActionLinkCount === pantryLinkedRows.length,
+      "Menú · productos enlazados conservan la acción de Despensa",
+      `UI=${pantryActionLinkCount} API=${pantryLinkedRows.length}`
     );
     if (pantryProbe.ok && pantryProbe.body?.ok === true) {
       const unlinkedFoodRows = foodRows.filter((item) => item?.pantrySyncStatus !== "linked");
@@ -1835,8 +1849,8 @@ try {
       );
     }
 
-    if (recipeLinkCount > 0) {
-      const trigger = recipeLinks.first();
+    if (recipeTitleLinkCount > 0) {
+      const trigger = recipeTitleLinks.first();
       const expectedRecipeId = await trigger.getAttribute("data-menu-recipe-open");
       const details = trigger.locator("xpath=ancestor::details[1]");
       if (await details.count()) await details.evaluate((node) => { node.open = true; });
@@ -1860,7 +1874,7 @@ try {
       }
     }
 
-    const livePantryLinks = page.locator('[data-health-panel="menu"] [data-menu-product-open]');
+    const livePantryLinks = page.locator('[data-health-panel="menu"] .weekly-menu-title-link[data-menu-product-open]');
     if (await livePantryLinks.count()) {
       const trigger = livePantryLinks.first();
       const details = trigger.locator("xpath=ancestor::details[1]");

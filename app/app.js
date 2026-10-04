@@ -4488,6 +4488,29 @@ function renderWeeklyMenuIngredients(item) {
     </details>`;
 }
 
+function renderWeeklyMenuItemTitle(item, interactive = true) {
+  const label = escapeHtml(item?.name || "Comida");
+  if (!interactive) return `<strong>${label}</strong>`;
+
+  const recipeId = String(item?.recipeId || "").trim();
+  if (recipeId && item?.recipe) {
+    return `
+      <button class="weekly-menu-title-link" type="button" data-menu-recipe-open="${escapeHtml(recipeId)}" aria-label="Abrir receta: ${label}">
+        <strong>${label}</strong><span aria-hidden="true">↗</span>
+      </button>`;
+  }
+
+  const pantryProductId = String(item?.pantryProductId || "").trim();
+  if (pantryProductId && item?.pantrySyncStatus === "linked") {
+    return `
+      <button class="weekly-menu-title-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}" aria-label="Abrir alimento en Despensa: ${label}">
+        <strong>${label}</strong><span aria-hidden="true">↗</span>
+      </button>`;
+  }
+
+  return `<strong>${label}</strong>`;
+}
+
 function renderWeeklyMenuMeal(item, compact = false, showMoment = true) {
   const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
   const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
@@ -4500,7 +4523,7 @@ function renderWeeklyMenuMeal(item, compact = false, showMoment = true) {
       <div class="weekly-menu-meal-main">
         <div class="weekly-menu-meal-copy">
           ${showMoment ? `<span class="weekly-menu-moment">${escapeHtml(item.moment || "Otro")}</span>` : ""}
-          <strong>${escapeHtml(item.name)}</strong>
+          ${renderWeeklyMenuItemTitle(item, !compact)}
           ${!compact && (quantity || item.note || item.gymSession) ? `
             <p>${[
               quantity,
@@ -4530,7 +4553,7 @@ function renderWeeklyMenuGroupItems(rows, compact = false) {
         return `
           <div class="weekly-menu-group-item ${consumed ? "is-consumed" : ""}">
             <div class="weekly-menu-group-item-copy">
-              <strong>${escapeHtml(item.name || "Comida")}</strong>
+              ${renderWeeklyMenuItemTitle(item, !compact)}
               ${!compact && quantity ? `<small>${escapeHtml(quantity)}</small>` : ""}
             </div>
             <div class="weekly-menu-group-item-macros">

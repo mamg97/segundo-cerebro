@@ -16062,6 +16062,41 @@ html[data-theme="dark"] .home-liquidity-account {
   line-height: 1.35;
 }
 
+.weekly-menu-title-link {
+  all: unset;
+  display: inline-flex;
+  min-height: 40px;
+  max-width: 100%;
+  align-items: center;
+  gap: 5px;
+  color: var(--mint);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.weekly-menu-title-link strong {
+  color: inherit;
+}
+
+.weekly-menu-title-link > span {
+  flex: 0 0 auto;
+  color: var(--blue);
+  font-size: .9em;
+  font-weight: 900;
+}
+
+.weekly-menu-title-link:hover {
+  color: color-mix(in srgb, var(--mint) 82%, var(--blue));
+}
+
+.weekly-menu-title-link:focus-visible {
+  outline: 2px solid #79a4f8;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
 .weekly-menu-entity-link {
   display: inline-flex;
   gap: 4px;
