@@ -1801,4 +1801,5 @@ Antes de cualquier cambio:
 - `Looks` usa `Looks.historico_usos + ultimo_uso + veces_usado`.
 - `Prendas` deriva fechas de los usos de los looks que contienen cada `objeto_id` y añade `Armario.ultimo_uso`; `Armario.veces_usado` conserva prioridad para el total global cuando existe.
 - No se fabrican fechas para completar contadores sin detalle temporal. Por ello el total global puede ser superior al número de fechas visibles y el contador de últimos 30 días solo incluye fechas realmente disponibles.
-- El auditor de producción comprueba acceso al historial, tabla, ordenación y conmutación real a la vista `Prendas`.
+- El historial muestra una miniatura compacta a la izquierda tanto en `Looks` como en `Prendas`, reutilizando la imagen canónica vigente (`look.photoUrl`/mosaico o prioridad visual de `Armario`) y sin duplicar assets.
+- El auditor de producción comprueba acceso al historial, tabla, ordenación, miniaturas por fila y conmutación real a la vista `Prendas`.
