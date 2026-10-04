@@ -44,3 +44,24 @@ test("incomplete grouped meals and day totals are labeled as known subtotals", (
   const header = app.slice(headerStart, headerEnd);
   assert.match(header, /<small>Subtotal <\/small>/);
 });
+
+
+test("expanded menu meals deep-link to recipes and Pantry product cards", () => {
+  assert.match(app, /data-menu-recipe-open=/);
+  assert.match(app, /Abrir receta/);
+  assert.match(app, /data-menu-product-open=/);
+  assert.match(app, /Ver alimento en Despensa/);
+  assert.match(app, /function bindMenuEntityLinks\(panel, data\)/);
+  assert.match(app, /data-health-tab="recipes"/);
+  assert.match(app, /backLabel: "← Volver al menú"/);
+});
+
+test("recipe detail can preserve a menu-specific return action", () => {
+  const start = app.indexOf("function renderRecipeDetail(panel, data, recipe, options = {})");
+  const end = app.indexOf("function renderRecipesPanel", start);
+  assert.ok(start >= 0 && end > start);
+  const detail = app.slice(start, end);
+  assert.match(detail, /typeof options\.onBack === "function"/);
+  assert.match(detail, /options\.backLabel \|\| "← Volver al recetario"/);
+  assert.match(detail, /renderRecipeDetail\(panel, data, recipe, options\)/);
+});
