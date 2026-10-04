@@ -49,3 +49,12 @@ test("exercise normalization prefers Spanish and keeps licensed media proxied", 
   assert.match(exercise.images[0].previewUrl, /^\/api\/gym\/exercises\/42\/media\/image\/9\?variant=medium$/);
   assert.equal(exercise.videos[0].license.title, "CC BY-SA 4.0");
 });
+
+
+test("featured visual catalogue uses current public wger video endpoint", async () => {
+  const source = await import("node:fs/promises").then(({ readFile }) =>
+    readFile(new URL("./gym-library.js", import.meta.url), "utf8")
+  );
+  assert.match(source, /fetchWgerJson\("\/video\/"/);
+  assert.doesNotMatch(source, /fetchWgerJson\("\/exercisevideo\/"/);
+});
