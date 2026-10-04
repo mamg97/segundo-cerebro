@@ -68,6 +68,8 @@ iCloud Calendar se consulta mediante CalDAV. Esta integración es deliberadament
 
 La disponibilidad de CalDAV no condiciona la continuidad visual de la agenda. El Worker mantiene en D1 una copia derivada `last-known-good` de la última lectura completa y no vacía. iCloud sigue siendo autoridad: la copia solo actúa como caché de resiliencia. Un timeout, una respuesta vacía sospechosa o un descubrimiento parcial de calendarios no puede reemplazarla. En una lectura parcial se mezclan los calendarios frescos con la última copia de los calendarios temporalmente ausentes.
 
+La **resolución conversacional de agenda/eventos es federada** y está separada de la autoridad temporal de iCloud. Cualquier agente que responda preguntas como «qué eventos tengo», «cuál es el próximo» o «qué tengo este fin de semana» debe consultar todos los calendarios y fuentes de eventos autorizadas disponibles (todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles, Eventos/D1 y, para confirmación, email/reservas/documentos). Un resultado parcial de un proveedor no puede presentarse como agenda global completa. Si una fuente no puede consultarse, la respuesta se marca provisional y explicita la carencia.
+
 ### Habits / HabitQuest
 
 El Google Sheet original de HabitQuest sigue siendo la fuente de verdad. Segundo Cerebro puede leer el estado diario y gestionar hábitos mediante endpoints privados. La escritura conserva la semántica de sincronización de HabitQuest.
