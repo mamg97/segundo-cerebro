@@ -670,3 +670,39 @@ Campos históricos:
 
 Las filas históricas con `OBJECTS_STAGING_META_403` no deben reintentarse ni duplicarse. La ruta vigente usa `objects-chatgpt-bridge` y, cuando hace falta desde una conversación sin POST directo, el bootstrap temporal `seed.mjs` con `OBJECTS_SEED_JOBS`. Solo `Armario` mantiene el estado visual canónico de la prenda.
 
+
+
+## Gym visual exercise reference
+
+### Canonical plan row
+
+The existing private `GimnasioPlan` row remains the authority for:
+- `day_id`, order, day title/focus and rest;
+- canonical `exercise_id` / exercise name;
+- target sets/reps/load and coaching notes.
+
+An exercise added from the public library receives a stable canonical ID such as `wger-<provider_id>` and is appended through the same `GimnasioPlan` schema. It is not stored only in the external catalogue or in D1.
+
+### `gym_exercise_links` (D1 technical mapping)
+
+| Field | Meaning |
+| --- | --- |
+| `plan_exercise_id` | Canonical private plan exercise ID; primary key |
+| `provider` | Public reference provider; currently `wger` |
+| `provider_exercise_id` | Provider exercise identifier |
+| `provider_exercise_uuid` | Optional stable provider UUID |
+| `created_at` | Mapping creation timestamp |
+| `updated_at` | Last mapping update timestamp |
+
+This table contains no sets, loads, reps, health measurements or session history. Deleting/changing a mapping must not delete or change the canonical plan exercise.
+
+### External exercise view model
+
+The Worker derives an ephemeral exercise object containing:
+- provider ID/UUID and translated display name;
+- aliases/description;
+- category, primary/secondary muscles and equipment;
+- licensed image/video references proxied same-origin;
+- source and per-asset license/attribution metadata.
+
+This external object is reference data only and is not persisted as a second exercise catalogue inside the user's private canonical stores.
