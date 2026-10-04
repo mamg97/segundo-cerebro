@@ -140,11 +140,18 @@ function matchRule(event, rules) {
   }) || null;
 }
 
+function isNonEventOperationalReminder(event) {
+  const text = normalize([event && event.title, event && (event.location || event.locationRef)].filter(Boolean).join(" "));
+  return /(^|\b)(cobro|pago|pagar|ingresar|cuota|recibo|cargo|transferencia|transferir|saldo|paypal|tarjeta)(\b|$)/.test(text)
+    || /check[ -]?in|facturacion|recordatorio/.test(text);
+}
+
 function inferCalendarEventKind(event) {
   const text = normalize([event && event.title, event && (event.location || event.locationRef)].filter(Boolean).join(" "));
-  if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|hotel|airbnb/.test(text)) return "travel";
+  if (isNonEventOperationalReminder(event)) return null;
   if (/cumple|cumpleanos/.test(text)) return "birthday";
-  if (/boda|preboda|celebracion|aniversario/.test(text)) return "social";
+  if (/boda|preboda|celebracion|aniversario|brunch|comida|cena|concierto|teatro|fiesta|quedada/.test(text)) return "social";
+  if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|airbnb/.test(text)) return "travel";
   return null;
 }
 
@@ -259,6 +266,48 @@ export async function fetchEventHomeSummary(env) {
       const value = String(item.updatedAt || "");
       return !latest || value > latest ? value : latest;
     }, null)
+  };
+}
+
+export async function fetchEventLedgerSnapshot(env) {
+  await ensureEventTables(env);
+  const [eventResult, factResult, refResult] = await Promise.all([
+    env.DB.prepare(
+      "SELECT id, title, kind, status, starts_at, ends_at, location, participants_json, calendar_ref, " +
+             "finance_ref, objects_list_ref, summary, final_summary, sensitivity, created_at, updated_at " +
+      "FROM event_records ORDER BY starts_at ASC"
+    ).all(),
+    env.DB.prepare(
+      "SELECT id, event_id, fact_type, summary, happened_at, source_provider, source_ref, created_at " +
+      "FROM event_facts ORDER BY happened_at ASC, created_at ASC"
+    ).all(),
+    env.DB.prepare(
+      "SELECT id, event_id, ref_type, source_provider, source_ref, label, created_at " +
+      "FROM event_refs ORDER BY created_at ASC"
+    ).all()
+  ]);
+
+  return {
+    events: (eventResult.results || []).map(fromRow),
+    facts: (factResult.results || []).map((item) => ({
+      id: item.id,
+      eventId: item.event_id,
+      type: item.fact_type,
+      summary: item.summary,
+      happenedAt: item.happened_at,
+      sourceProvider: item.source_provider || null,
+      sourceRef: item.source_ref || null,
+      createdAt: item.created_at || null
+    })),
+    references: (refResult.results || []).map((item) => ({
+      id: item.id,
+      eventId: item.event_id,
+      type: item.ref_type || null,
+      sourceProvider: item.source_provider,
+      sourceRef: item.source_ref,
+      label: item.label || null,
+      createdAt: item.created_at || null
+    }))
   };
 }
 
