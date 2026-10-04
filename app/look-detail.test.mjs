@@ -37,6 +37,11 @@ test("look usage history is exposed from canonical usage fields", () => {
   assert.match(objects, /Fechas registradas/);
   assert.match(objects, /function usageHistoryRows\(payload,mode="looks"\)/);
   assert.match(css, /\.look-history-table\s*\{/);
+  assert.match(objects, /function usageHistoryThumbnail\(row,payload\)/);
+  assert.match(objects, /look-history-thumb-cell/);
+  assert.match(css, /\.look-history-thumb\s*\{/);
+  assert.match(css, /width:\s*52px/);
+  assert.match(css, /height:\s*60px/);
 });
 
 test("look detail enlarges the look and shows component garments responsively", () => {
@@ -49,9 +54,9 @@ test("look detail enlarges the look and shows component garments responsively", 
 });
 
 test("look detail cache bust and production audit are wired", () => {
-  assert.match(app, /objects\.js\?v=0\.41\.5/);
-  assert.match(index, /styles\.css\?v=0\.42\.15/);
-  assert.match(index, /app\.js\?v=0\.42\.7/);
+  assert.match(app, /objects\.js\?v=0\.41\.6/);
+  assert.match(index, /styles\.css\?v=0\.42\.16/);
+  assert.match(index, /app\.js\?v=0\.42\.8/);
   assert.match(audit, /auditLookDetail/);
   assert.match(audit, /Look ampliado/);
   assert.match(audit, /Prendas del look/);
@@ -60,4 +65,6 @@ test("look detail cache bust and production audit are wired", () => {
   assert.match(audit, /Historial ordenable/);
   assert.match(audit, /Vista Prendas disponible/);
   assert.match(audit, /Vista Prendas activa/);
+  assert.match(audit, /Miniaturas de Looks/);
+  assert.match(audit, /Miniaturas de Prendas/);
 });

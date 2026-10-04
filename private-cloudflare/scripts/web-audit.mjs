@@ -904,13 +904,34 @@ async function auditLookDetail(label) {
     assertCheck(await sortControl.isVisible().catch(() => false), `Visual ${label} · Historial ordenable`);
     assertCheck(await looksMode.isVisible().catch(() => false), `Visual ${label} · Vista Looks disponible`);
     assertCheck(await garmentsMode.isVisible().catch(() => false), `Visual ${label} · Vista Prendas disponible`);
+    const lookRows = page.locator('.look-history-table[data-history-mode="looks"] tbody tr');
+    const lookRowCount = await lookRows.count();
+    const lookThumbCount = await page.locator('.look-history-table[data-history-mode="looks"] .look-history-thumb').count();
+    if (lookRowCount > 0 && lookThumbCount > 0) {
+      assertCheck(
+        lookThumbCount === lookRowCount,
+        `Visual ${label} · Miniaturas de Looks`,
+        `filas=${lookRowCount} miniaturas=${lookThumbCount}`
+      );
+    }
     if (await garmentsMode.isVisible().catch(() => false)) {
       await garmentsMode.click();
       await page.waitForTimeout(120);
+      const garmentTable = page.locator('.look-history-table[data-history-mode="garments"]').first();
       assertCheck(
-        await page.locator('.look-history-table[data-history-mode="garments"]').count() === 1,
+        await garmentTable.count() === 1,
         `Visual ${label} · Vista Prendas activa`
       );
+      const garmentRows = page.locator('.look-history-table[data-history-mode="garments"] tbody tr');
+      const garmentRowCount = await garmentRows.count();
+      const garmentThumbCount = await page.locator('.look-history-table[data-history-mode="garments"] .look-history-thumb').count();
+      if (garmentRowCount > 0 && garmentThumbCount > 0) {
+        assertCheck(
+          garmentThumbCount === garmentRowCount,
+          `Visual ${label} · Miniaturas de Prendas`,
+          `filas=${garmentRowCount} miniaturas=${garmentThumbCount}`
+        );
+      }
     }
     await page.locator("[data-look-history-back]").click().catch(() => {});
     await page.waitForTimeout(160);
