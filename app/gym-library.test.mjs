@@ -2,10 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [app, css, worker] = await Promise.all([
+const [app, css, worker, libraryWorker] = await Promise.all([
   readFile(new URL("./app.js", import.meta.url), "utf8"),
   readFile(new URL("./styles.css", import.meta.url), "utf8"),
-  readFile(new URL("../private-cloudflare/src/index.js", import.meta.url), "utf8")
+  readFile(new URL("../private-cloudflare/src/index.js", import.meta.url), "utf8"),
+  readFile(new URL("../private-cloudflare/src/gym-library.js", import.meta.url), "utf8")
 ]);
 
 test("Gym exposes a free visual exercise library beside the canonical plan", () => {
@@ -29,7 +30,7 @@ test("Gym library can map current plan exercises and add new canonical plan rows
   assert.match(app, /\/api\/gym\/plan\/exercise/);
   assert.match(worker, /"GimnasioPlan!A:N"/);
   assert.match(worker, /GYM_PLAN_EXERCISE_NOT_FOUND/);
-  assert.match(worker, /gym_exercise_links/);
+  assert.match(libraryWorker, /gym_exercise_links/);
 });
 
 test("Gym library is responsive and uses the v0.42.0 visual contract", () => {
