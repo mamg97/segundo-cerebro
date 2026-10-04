@@ -575,25 +575,25 @@ No se almacena como fuente independiente.
 
 ## Eventos persistentes e histórico
 
-El calendario conserva la autoridad sobre fechas y horarios, pero su ventana de lectura no constituye un archivo histórico. D1 mantiene una capa mínima de identidad y crónica para que un evento siga siendo consultable después de desaparecer del horizonte de calendario.
+La fuente operativa canónica es el Sheet privado `SEGUNDO CEREBRO - EVENTOS`. Los calendarios conservan autoridad sobre sus propias fechas/horarios y el Worker reconcilia esos valores en el Sheet mediante `calendar_ref`. D1 puede mantener un espejo técnico o caché, pero no es la fuente de negocio primaria.
 
-### EVENT_RECORD
+### `Eventos` / EVENT_RECORD
 
-- `id`: ID estable; para eventos sincronizados se reutiliza el ID normalizado de iCloud.
+- `evento_id` / `id`: ID operativo estable; los eventos sincronizados conservan además `calendar_ref` para enlazar el ID del proveedor.
 - `title`, `kind`.
 - `status`: `PROPUESTO | PENDIENTE | CONFIRMADO | EN_CURSO | CERRADO | CANCELADO`.
 - `starts_at`, `ends_at`, `location`.
-- `participants_json`: participantes explícitamente registrados; no se infieren.
+- `participants`: lista compacta de participantes explícitamente registrados; no se infieren.
 - `calendar_ref`.
 - `finance_ref`.
 - `objects_list_ref`.
 - `summary`, `final_summary`.
 - `sensitivity`.
-- `created_at`, `updated_at`.
+- `source_provider`, `source_updated_at`, `updated_at`.
 
 El estado `EN_CURSO` y el paso a `CERRADO` se derivan de las fechas al leer. No hace falta una tarea programada para mover registros.
 
-### EVENT_FACT
+### `EventoHechos` / EVENT_FACT
 
 Hecho cronológico mínimo:
 
@@ -606,7 +606,7 @@ Hecho cronológico mínimo:
 
 Tipos v0.1: `PLAN`, `GASTO`, `COMIDA`, `NUTRICION`, `TRANSPORTE`, `LUGAR`, `INCIDENCIA`, `DECISION`, `NOTA`.
 
-### EVENT_REF
+### `EventoRefs` / EVENT_REF
 
 Puntero a una fuente propietaria:
 
@@ -622,7 +622,9 @@ No se copian tickets, reservas, movimientos financieros, registros de Nutrición
 
 La ficha de evento compone bajo demanda:
 
-`EVENT_RECORD + EVENT_FACT + Finanzas + Salud/Nutrición + OBJETOS + referencias`.
+`Eventos + EventoHechos + EventoRefs + Finanzas + Salud/Nutrición + OBJETOS`.
+
+`EventosImportantes` vive en el mismo spreadsheet y contiene únicamente reglas/alias de reconocimiento (`match_terms`, `display_title`, `kind`, `enabled`, `exclude_terms`). La copia histórica de esas reglas en la hoja financiera queda como compatibilidad temporal y no es canónica.
 
 La Home solo recibe un resumen minimizado `eventsSummary` con conteos de activos, en curso e históricos.
 
