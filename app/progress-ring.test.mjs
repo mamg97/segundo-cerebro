@@ -245,4 +245,3 @@ assert.match(css, /allocation-free/);
 console.log("geometric progress rings: static geometry, overflow, dynamic update and all live surfaces OK");
 
 assert.doesNotMatch(app, /is-warning">Falta/);
-

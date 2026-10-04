@@ -5345,6 +5345,8 @@ let gymLibraryMeta = null;
 const GYM_CUSTOM_ANIMATIONS = [
   {
     key: "press-banca-plano-barra",
+    animationUrl: "./assets/gym-animations/press-banca-plano-barra-v2.gif",
+    posterUrl: "./assets/gym-animations/press-banca-plano-barra-poster-v2.png",
     labels: ["press de banca plano barra", "press banca plano barra", "flat barbell bench press"]
   }
 ];
@@ -5379,7 +5381,11 @@ function gymCustomAnimationFor(exercise) {
 
 function gymCustomAnimationMarkup(animation, label, className = "") {
   if (!animation) return "";
-  return `<span class="gym-exercise-sprite gym-exercise-sprite--${escapeHtml(animation.key)} ${escapeHtml(className)}" role="img" aria-label="${escapeHtml(label)}"></span>`;
+  return `
+    <span class="gym-exercise-animation ${escapeHtml(className)}" role="img" aria-label="${escapeHtml(label)}">
+      <img class="gym-exercise-animation-media gym-exercise-animation-gif" src="${escapeHtml(animation.animationUrl)}" alt="" loading="lazy" decoding="async">
+      <img class="gym-exercise-animation-media gym-exercise-animation-poster" src="${escapeHtml(animation.posterUrl)}" alt="" loading="lazy" decoding="async">
+    </span>`;
 }
 
 function gymPlanExerciseLinkMap(data = gymPanelData) {
