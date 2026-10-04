@@ -1759,3 +1759,14 @@ Antes de cualquier cambio:
 - Validación: CI `Validate private Cloudflare app` #280 success; deploy privado #335 success.
 - Audit production web #138: 918 checks. Salud → Menú/Nutrición, agrupación de tomas y barras de kcal/proteína pasan para todos los días. Los dos únicos fallos son `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Nutrición.
 - Los backfills concretos de consumos se hicieron únicamente en la fuente privada canónica `SEGUNDO CEREBRO - SALUD`; no se guardaron valores personales en Git.
+
+
+### Salud · separación GESTOR GYM / GESTOR NUTRI · 2026-10-04
+
+- El antiguo rol operativo `GESTOR GYM Y NUTRI` queda dividido en dos gestores especializados que comparten las mismas fuentes canónicas de Salud y no crean estados paralelos.
+- `GESTOR GYM` es propietario funcional de entrenamiento, plan de gimnasio, ejercicios, sesiones realizadas, progresión, técnica, programación, fatiga/recuperación deportiva y retorno progresivo tras pausas.
+- `GESTOR NUTRI` es propietario funcional de ingesta, macros, comidas, menú semanal, recetas y planificación nutricional.
+- `GESTOR GYM` debe leer antes de aconsejar: objetivos vivos de Salud, plan canónico, sesiones D1, benchmarks/progresión, pausa/restricciones y contexto Apple Health cuando sea relevante.
+- `GESTOR NUTRI` puede consultar contexto de actividad/entrenamiento para interpretar necesidades, pero no modifica el plan de fuerza; `GESTOR GYM` puede consultar nutrición para recuperación/rendimiento, pero no duplica ni reescribe el registro nutricional.
+- La biblioteca visual wger sigue siendo solo referencia pública; `GimnasioPlan` conserva el plan canónico y D1 conserva sesiones/progresión. No reconstruir esta capacidad.
+- Los valores personales, marcas, métricas corporales, restricciones médicas y sesiones reales permanecen exclusivamente en fuentes privadas. Git documenta solo responsabilidades y contratos.
