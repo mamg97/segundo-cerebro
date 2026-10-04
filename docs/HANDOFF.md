@@ -1783,3 +1783,11 @@ Antes de cualquier cambio:
 - La lectura completa de Nutrición hidrata Pantry de forma fail-soft: un fallo temporal de Despensa no rompe Salud, pero tampoco crea una identidad alternativa.
 - Auditoría canónica previa a la migración: 14 filas de `MenuSemanal` con `food_id`, todas resuelven contra Despensa; 77 ingredientes de receta con `producto_id`, sin referencias rotas. `Comidas` sigue siendo catálogo de platos personales/compatibilidad, no maestro de producto envasado.
 - El auditor de producción valida enlaces Menú→Receta, retorno al menú, enlaces de alimentos a Despensa y ausencia de `food_id` desincronizados cuando Despensa responde correctamente.
+
+
+### Corrección Home · recipe_id en payload ligero · 2026-10-04
+
+- Incidencia reproducida en producción: el auditor detectó `UI=0 / API=17` enlaces de receta en el menú semanal de Home.
+- Causa: Home podía ser re-renderizado por `/api/nutrition/menu` (payload ligero), que conserva `recipe_id` pero no adjunta el objeto `recipe`. El renderer exigía ambas cosas y degradaba el título a texto no interactivo.
+- Regla corregida: en Home, la existencia de `recipe_id` basta para renderizar el nombre como enlace. Al pulsar, `openHomeWeeklyMenuRecipe` reutiliza la receta si ya está cargada o solicita `/api/nutrition` de forma perezosa para abrir la ficha canónica.
+- Se sube versión de assets para evitar caché móvil y se añade regresión específica para payload ligero.
