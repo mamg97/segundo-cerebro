@@ -31,7 +31,7 @@ test("look detail enlarges the look and shows component garments responsively", 
 
 test("look detail cache bust and production audit are wired", () => {
   assert.match(app, /objects\.js\?v=0\.41\.3/);
-  assert.match(index, /styles\.css\?v=0\.42\.9/);
+  assert.match(index, /styles\.css\?v=0\.42\.10/);
   assert.match(index, /app\.js\?v=0\.42\.5/);
   assert.match(audit, /auditLookDetail/);
   assert.match(audit, /Look ampliado/);
