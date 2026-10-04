@@ -2,7 +2,7 @@ import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.1";
-import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.3";
+import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.4";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
