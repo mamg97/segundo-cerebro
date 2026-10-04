@@ -65,3 +65,12 @@ test("recipe detail can preserve a menu-specific return action", () => {
   assert.match(detail, /options\.backLabel \|\| "← Volver al recetario"/);
   assert.match(detail, /renderRecipeDetail\(panel, data, recipe, options\)/);
 });
+
+
+test("linked meals expose a large tappable title on the detailed mobile menu", () => {
+  assert.match(app, /function renderWeeklyMenuItemTitle\(item, interactive = true\)/);
+  assert.match(app, /weekly-menu-title-link/);
+  assert.match(app, /data-menu-recipe-open=/);
+  assert.match(app, /data-menu-product-open=/);
+  assert.match(app, /renderWeeklyMenuItemTitle\(item, !compact\)/);
+});
