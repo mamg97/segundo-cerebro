@@ -895,7 +895,23 @@ async function auditLookDetail(label) {
     await historyButton.click();
     await page.waitForTimeout(180);
     const historyPanel = page.locator(".look-history").first();
+    const historyTable = page.locator(".look-history-table").first();
+    const sortControl = page.locator("[data-look-history-sort]").first();
+    const looksMode = page.locator('[data-look-history-mode="looks"]').first();
+    const garmentsMode = page.locator('[data-look-history-mode="garments"]').first();
     assertCheck(await historyPanel.isVisible().catch(() => false), `Visual ${label} · Historial de looks abre`);
+    assertCheck(await historyTable.isVisible().catch(() => false), `Visual ${label} · Historial en tabla`);
+    assertCheck(await sortControl.isVisible().catch(() => false), `Visual ${label} · Historial ordenable`);
+    assertCheck(await looksMode.isVisible().catch(() => false), `Visual ${label} · Vista Looks disponible`);
+    assertCheck(await garmentsMode.isVisible().catch(() => false), `Visual ${label} · Vista Prendas disponible`);
+    if (await garmentsMode.isVisible().catch(() => false)) {
+      await garmentsMode.click();
+      await page.waitForTimeout(120);
+      assertCheck(
+        await page.locator('.look-history-table[data-history-mode="garments"]').count() === 1,
+        `Visual ${label} · Vista Prendas activa`
+      );
+    }
     await page.locator("[data-look-history-back]").click().catch(() => {});
     await page.waitForTimeout(160);
   }
