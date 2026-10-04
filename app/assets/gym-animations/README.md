@@ -2,21 +2,17 @@
 
 These assets are first-party presentation aids for Segundo Cerebro. They do not replace the canonical gym plan or the public technical reference supplied by wger.
 
-## `press-banca-plano-barra-v3.gif`
+## `press-banca-plano-barra-v4.gif`
 
 - Generated: 2026-10-04 with the built-in OpenAI image generation tool.
 - Format: transparent GIF89a, 360×480, eight frames, infinite loop.
-- Visual language: matte white anatomical mannequin; pectoral highlighted orange-red; triceps and anterior deltoids highlighted amber; dark navy equipment.
-- Runtime: native animated GIF; reduced-motion users receive `press-banca-plano-barra-poster-v2.png`.
+- Visual language: clean 2D anatomical line art; pale gray body; restrained contour hatching; pectorals, anterior deltoids and triceps in flat muted red; simple charcoal equipment.
+- Runtime: native animated GIF; reduced-motion users receive `press-banca-plano-barra-poster-v4.png`.
 - Mapping: exact canonical exercise ID/name only.
 - Review rule: confirm movement and equipment consistency before production use. Never infer technique from an unreviewed generated frame.
 
 Final generation prompt:
 
-> Restyle the supplied four-frame flat barbell bench-press sprite into a clean anatomical exercise animation. Keep the same movement phases, fixed side camera, bench, barbell and transparent layout. Use a matte white gender-neutral athletic mannequin. Highlight pectoralis major as the strongest warm orange-red region and triceps/anterior deltoids as secondary amber regions in every frame. Use subtle light-gray anatomy contours and dark navy equipment. Preserve a safe bar path from arms extended to near mid-chest and back. Exactly four equal frames; no real person, opaque background, text, labels, arrows, logos or watermark.
+> Create one 4-column by 2-row sprite sheet containing exactly eight sequential frames of a flat barbell bench press. Reading order is left-to-right across the top row, then left-to-right across the bottom row. Frames 1-4 smoothly lower the bar from straight arms toward mid-chest. Frames 5-8 smoothly press it back to the starting position. Each adjacent frame must be a small, even change in elbow angle and bar height. Use a clean premium 2D anatomical fitness illustration like a modern exercise encyclopedia: thin charcoal-gray ink outlines, restrained light-gray muscle contour hatching, off-white or very pale gray body, flat muted red highlights on pectoralis major, anterior deltoids and triceps, and simple matte charcoal bench, rack and barbell. Keep an identical fixed side-to-three-quarter camera, athlete, body proportions, equipment, scale and placement in all eight panels. Head, upper back, glutes and feet remain planted; hands stay on the same grip; wrists stay stacked; elbows bend symmetrically; the bar follows a smooth safe path to the mid-chest and back. Exactly eight equal panels, genuinely transparent background. No interface, cards, labels, text, numbers, logos, watermark, real person, skin-tone rendering, glossy 3D, dramatic lighting, blue equipment, changing camera or anatomy, extra limbs, duplicated parts, ghosting, motion blur or cropping.
 
-Intermediate-frame prompt:
-
-> Using the supplied transparent four-panel bench-press animation strip as the exact style and motion reference, create a new horizontal strip of exactly four equal panels containing only the missing midpoint poses. Panel 1 must be halfway between source panels 1 and 2; panel 2 halfway between source panels 2 and 3; panel 3 halfway between source panels 3 and 4; panel 4 halfway between source panel 4 and source panel 1 to close the loop smoothly. Preserve the same matte white gender-neutral anatomical mannequin, body proportions, fixed camera, bench, rack, barbell, plate count, dark navy and blue equipment, pectoralis major orange-red highlight, and triceps/anterior deltoids amber highlights. Keep both hands fixed on the bar, the body fixed on the bench, and the bar path vertical and safe. Each midpoint must be a plausible transitional pose, not a duplicate of a source pose. Exactly four equal frames in one horizontal strip, one centered complete athlete and one complete bench/barbell setup per frame, consistent scale and alignment, no overlap between panels, no cropped limbs or equipment. Genuinely transparent background; no text, labels, arrows, logos, watermark, extra people, extra limbs, duplicated equipment, ghosting, motion blur, panel borders, or opaque background.
-
-The original RGBA strip and the generated midpoint strip were resized, aligned, cleaned at the frame boundaries and interleaved into eight phases. The GIF uses per-frame background disposal so transparent frames never accumulate. The first original frame is retained as the reduced-motion poster; `v2` remains the reviewed four-frame source.
+The supplied app capture was used only as a visual-language reference; its interface, branding and content were not copied. The previous four-frame render was used only as a movement reference. The generated 4×2 sheet was split into eight equal frames, normalized onto 360×480 transparent canvases and encoded with per-frame background disposal. `v1`–`v3` remain unreleased review history and are not runtime assets.

@@ -1732,21 +1732,22 @@ Antes de cualquier cambio:
   - únicos rojos: `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Gym.
 - No se han vinculado automáticamente ejercicios privados del plan a resultados fuzzy: al pulsar `Técnica` se propone una ficha y el usuario confirma `Usar esta ficha para mi ejercicio`. Esto evita guardar asociaciones incorrectas.
 
-### GESTOR GYM Y NUTRI · GIF anatómico propio · piloto v0.42.3 · 2026-10-04
+### GESTOR GYM Y NUTRI · GIF anatómico 2D propio · piloto v0.42.4 · 2026-10-04
 
 - Preferencia confirmada: las demostraciones principales deben evolucionar desde vídeo real hacia bucles ilustrados tipo GIF, limpios y coherentes con la interfaz.
 - No se usan packs de GIF comerciales, mirrors de ExerciseDB ni repositorios con derechos ambiguos. wger continúa como referencia técnica libre y como fallback multimedia.
 - La rama `codex/gym-nutri-next`, actualizada sobre el `origin/main` vivo `8f18a02`, incorpora el primer piloto para `Press de Banca Plano (Barra)`:
   - GIF real propio de ocho fases, 360×480 y fondo transparente;
-  - figura anatómica blanca con pectoral principal en naranja-rojo y tríceps/deltoide anterior secundarios en ámbar;
-  - equipo azul noche y encuadre fijo, sin persona real;
+  - ilustración anatómica 2D gris/blanca, con contorno fino y sombreado muscular discreto;
+  - pectoral, tríceps y deltoide anterior marcados en rojo plano;
+  - equipo gris carbón y encuadre fijo, sin persona real ni volumen 3D brillante;
   - poster PNG estático para `prefers-reduced-motion`, compatible con la CSP;
   - prioridad visual únicamente por nombre/ID canónico exacto;
   - fallback intacto a vídeo/imagen wger para el resto;
   - `prefers-reduced-motion` deja un fotograma estático.
 - El piloto está en rama de revisión y todavía no se ha fusionado ni desplegado. Antes de producir el resto del plan, confirmar el estilo y revisar visualmente cada movimiento por lotes pequeños.
-- El primer sprite oscuro v0.42.1 y el GIF anatómico de cuatro fases v0.42.2 quedan sustituidos por el bucle más fluido v0.42.3; ninguno de los dos anteriores debe desplegarse.
-- Validación sobre `8f18a02`: 144/144 tests y build privado correctos; los ocho fotogramas y el bucle se comprobaron en navegador, sin acumulación, restos laterales ni recortes del movimiento.
+- El usuario rechazó el aspecto 3D de v0.42.3. `v0.42.4` adopta el lenguaje de una enciclopedia anatómica de ejercicios; la captura facilitada se usó solo como referencia estilística, sin copiar marca, interfaz ni contenido.
+- Las versiones v0.42.1–v0.42.3 no deben desplegarse. Validación de v0.42.4 sobre `8f18a02`: 144/144 tests y build privado correctos; ocho posiciones coherentes, bucle limpio, escala/cámara estables y sin restos laterales.
 
 
 ### RECETARIO · fichas de alimentos desde ingredientes · 2026-10-04
