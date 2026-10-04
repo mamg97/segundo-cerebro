@@ -80,6 +80,8 @@ jobs:
 
       - run: node --check src/events.js
 
+      - run: node --check src/events-sheet.js
+
       - run: node --check src/adherence.js
 
       - run: node --check src/icloud-calendar.js

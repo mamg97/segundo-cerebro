@@ -11,6 +11,7 @@ import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
+import { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, fetchEventSheetHomeSummary, fetchEventSheetDetail, syncCalendarEventsToEventsSheet, createEventSheetRecord, updateEventSheetRecord, appendEventSheetFact, appendEventSheetReference } from "./events-sheet.js";
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
 import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
 import { googleReadFetch } from "./google-read.js";
@@ -5213,8 +5214,17 @@ export default {
           }
           const year = url.searchParams.get("year") || null;
           const kind = url.searchParams.get("kind") || null;
+          if (hasEventsGoogleConfig(env)) {
+            return json({
+              ok: true,
+              source: "sheet",
+              events: await fetchEventSheetRecords(env, getGoogleAccessToken, { scope, year, kind }),
+              summary: await fetchEventSheetHomeSummary(env, getGoogleAccessToken)
+            });
+          }
           return json({
             ok: true,
+            source: "d1-fallback",
             events: await fetchEventRecords(env, { scope, year, kind }),
             summary: await fetchEventHomeSummary(env)
           });
@@ -5223,6 +5233,9 @@ export default {
           let payload;
           try { payload = await request.json(); }
           catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+          if (hasEventsGoogleConfig(env)) {
+            return json({ ok: true, ...(await createEventSheetRecord(env, getGoogleAccessToken, payload)) }, 201);
+          }
           return json({ ok: true, ...(await createEventRecord(env, payload)) }, 201);
         }
         return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
@@ -5241,14 +5254,19 @@ export default {
       try {
         if (parts.length === 1) {
           if (request.method === "GET") {
-            const detail = await fetchEventDetail(env, eventId);
+            const detail = hasEventsGoogleConfig(env)
+              ? await fetchEventSheetDetail(env, getGoogleAccessToken, eventId)
+              : await fetchEventDetail(env, eventId);
             return detail ? json({ ok: true, ...detail }) : json({ ok: false, code: "EVENT_NOT_FOUND" }, 404);
           }
           if (request.method === "PATCH") {
             let payload;
             try { payload = await request.json(); }
             catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
-            return json({ ok: true, ...(await updateEventRecord(env, eventId, payload)) });
+            const updated = hasEventsGoogleConfig(env)
+              ? await updateEventSheetRecord(env, getGoogleAccessToken, eventId, payload)
+              : await updateEventRecord(env, eventId, payload);
+            return json({ ok: true, ...updated });
           }
           return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
         }
@@ -5258,7 +5276,10 @@ export default {
           let payload;
           try { payload = await request.json(); }
           catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
-          return json({ ok: true, ...(await appendEventFact(env, eventId, payload)) }, 201);
+          const created = hasEventsGoogleConfig(env)
+            ? await appendEventSheetFact(env, getGoogleAccessToken, eventId, payload)
+            : await appendEventFact(env, eventId, payload);
+          return json({ ok: true, ...created }, 201);
         }
 
         if (parts.length === 2 && parts[1] === "references") {
@@ -5266,7 +5287,10 @@ export default {
           let payload;
           try { payload = await request.json(); }
           catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
-          return json({ ok: true, ...(await appendEventReference(env, eventId, payload)) }, 201);
+          const created = hasEventsGoogleConfig(env)
+            ? await appendEventSheetReference(env, getGoogleAccessToken, eventId, payload)
+            : await appendEventReference(env, eventId, payload);
+          return json({ ok: true, ...created }, 201);
         }
 
         return json({ ok: false, code: "NOT_FOUND" }, 404);
@@ -5436,13 +5460,14 @@ export default {
         return json({ ok: false, code: "INVALID_STATE_JSON" }, 500);
       }
 
-      const [finance, habits, nutrition, pantry, objects, projects, calendar, family] = await Promise.all([
+      const [finance, habits, nutrition, pantry, objects, projects, eventsStore, calendar, family] = await Promise.all([
         loadStateSource(hasFinanceGoogleConfig(env), "Finance", () => fetchFinanceSummary(env)),
         loadStateSource(hasHabitQuestGoogleConfig(env), "HabitQuest", () => fetchHabitQuestSummary(env)),
         loadStateSource(hasHealthGoogleConfig(env), "Nutrition", () => fetchHealthNutritionSummary(env)),
         loadStateSource(hasPantryGoogleConfig(env), "Pantry", () => fetchPantrySummary(env, getGoogleAccessToken)),
         loadStateSource(hasObjectsGoogleConfig(env), "Objects", () => fetchObjectsSummary(env, getGoogleAccessToken)),
         loadStateSource(hasProjectsGoogleConfig(env), "Projects", () => fetchProjectsSummary(env, getGoogleAccessToken)),
+        loadStateSource(hasEventsGoogleConfig(env), "EventsSheet", () => fetchEventsSheetSource(env, getGoogleAccessToken)),
         loadStateSource(
           hasIcloudCalendarConfig(env),
           "iCloud",
@@ -5477,6 +5502,14 @@ export default {
       const projectsSync = projects.status || "error";
       if (projects.value) state.projectsSummary = projects.value.summary || null;
 
+      const eventsSheetSync = eventsStore.status || "error";
+      if (eventsStore.value?.rules?.length) {
+        state.importantEventRules = eventsStore.value.rules;
+      }
+      if (eventsStore.value?.summary) {
+        state.eventsSummary = eventsStore.value.summary;
+      }
+
       const calendarSync = calendar.status || "error";
       if (calendar.value) {
         state.calendarSummary = calendar.value;
@@ -5492,8 +5525,26 @@ export default {
         updatedAt: null
       };
 
-      // Event persistence must never block the initial dashboard load.
-      // It is best-effort: the current state is returned even if D1 is briefly slow.
+      // Eventos usa el Sheet privado como fuente canónica. D1 queda como espejo técnico/fallback.
+      // La sincronización nunca debe bloquear la carga del dashboard.
+      try {
+        if (hasEventsGoogleConfig(env)) {
+          await withStateTimeout(
+            syncCalendarEventsToEventsSheet(
+              env,
+              getGoogleAccessToken,
+              Array.isArray(state.events) ? state.events : [],
+              Array.isArray(state.importantEventRules) ? state.importantEventRules : [],
+              state.financeSummary || {}
+            ),
+            3000,
+            "EventsSheetPersist"
+          );
+        }
+      } catch (error) {
+        console.warn("Events Sheet persistence deferred", String(error?.message || error));
+      }
+
       try {
         await withStateTimeout(
           syncImportantEventRecords(
@@ -5503,14 +5554,16 @@ export default {
             state.financeSummary || {}
           ),
           1200,
-          "EventsPersist"
+          "EventsD1Mirror"
         );
       } catch (error) {
-        console.warn("Events persistence deferred", String(error?.message || error));
+        console.warn("Events D1 mirror deferred", String(error?.message || error));
       }
 
       try {
-        state.eventsSummary = await withStateTimeout(fetchEventHomeSummary(env), 1000, "EventsSummary");
+        state.eventsSummary = hasEventsGoogleConfig(env)
+          ? await withStateTimeout(fetchEventSheetHomeSummary(env, getGoogleAccessToken), 2500, "EventsSheetSummary")
+          : await withStateTimeout(fetchEventHomeSummary(env), 1000, "EventsSummary");
       } catch (error) {
         console.warn("Events summary read failed", String(error?.message || error));
         state.eventsSummary = state.eventsSummary || {
@@ -5533,6 +5586,7 @@ export default {
         pantrySync,
         objectsSync,
         projectsSync,
+        eventsSheetSync,
         calendarSync
       };
 

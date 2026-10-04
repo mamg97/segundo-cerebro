@@ -489,10 +489,20 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 ## D-048 — Descubrimiento federado de eventos y calendarios
 
 - **Estado:** aceptada.
-- **Decisión:** cualquier consulta sobre agenda o eventos debe reconciliar todas las fuentes autorizadas accesibles antes de responder. La búsqueda incluye todos los calendarios iCloud/CalDAV configurados, todos los calendarios accesibles de Google Calendar, el estado persistente de Eventos en D1 y, cuando aporten confirmación o detalle, email, reservas, entradas, billetes y documentos.
+- **Decisión:** cualquier consulta sobre agenda o eventos debe reconciliar todas las fuentes autorizadas accesibles antes de responder. La búsqueda parte del Sheet canónico `SEGUNDO CEREBRO - EVENTOS` e incluye todos los calendarios iCloud/CalDAV configurados, todos los calendarios accesibles de Google Calendar y, cuando aporten confirmación o detalle, email, reservas, entradas, billetes y documentos.
 - **Completitud:** una cuenta, un proveedor o el calendario `primary` no representan por sí solos la agenda global. Si una fuente esperable no puede leerse o devuelve una lectura parcial, el resultado se etiqueta como provisional y no se afirma de forma absoluta cuál es el siguiente evento.
-- **Autoridad:** iCloud mantiene la autoridad temporal cuando el evento existe allí; D1 conserva continuidad/identidad y las demás fuentes conservan la autoridad de sus propios datos. La reconciliación no crea una nueva fuente de verdad.
+- **Autoridad:** `SEGUNDO CEREBRO - EVENTOS` es la fuente operativa de estado/crónica; iCloud mantiene la autoridad temporal cuando el evento existe allí; las demás fuentes conservan autoridad sobre sus propios datos. D1 es solo caché/espejo técnico.
 - **Filtrado:** después de reunir y deduplicar candidatos se excluyen recordatorios puramente financieros/técnicos sin semántica de evento.
 - **Motivo:** evitar falsos negativos al responder desde un único calendario y asegurar que bodas, cumpleaños, viajes, celebraciones y otros compromisos no desaparezcan de la planificación por estar repartidos entre calendarios o fuentes.
 - **Privacidad:** Git solo documenta la regla; nombres, fechas y detalles reales permanecen en fuentes privadas.
+
+## D-049 — Eventos usa Sheet canónico y la web es frontal
+
+- **Estado:** aceptada.
+- **Decisión:** crear el spreadsheet privado `SEGUNDO CEREBRO - EVENTOS` como fuente operativa canónica de GESTOR EVENTOS, con pestañas `Eventos`, `EventoHechos`, `EventoRefs` y `EventosImportantes`.
+- **Calendarios:** iCloud/CalDAV y los demás calendarios siguen siendo fuentes propietarias de sus fechas; la integración es de lectura y reconcilia en el Sheet mediante `calendar_ref`.
+- **Web/API:** `/api/events` y la UI privada leen/escriben el Sheet. Un cambio ordinario de estado, nota, participante, referencia o hecho no requiere despliegue.
+- **D1:** `event_records`, `event_facts` y `event_refs` se conservan como fallback técnico/caché durante la transición; dejan de ser la fuente operativa primaria.
+- **Motivo:** permitir que ChatGPT y los gestores accedan a la misma información que muestra la web, evitar memorias inaccesibles y mantener el patrón data-driven usado por otros dominios.
+- **Privacidad:** el ID real del Sheet vive en el registro privado `IntegracionesPrivadas`; Git solo contiene el contrato y el adaptador genérico.
 

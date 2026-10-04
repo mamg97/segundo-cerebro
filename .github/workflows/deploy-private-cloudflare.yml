@@ -84,6 +84,7 @@ jobs:
           node --check src/objects-media-d1.js
           node --check src/projects.js
           node --check src/events.js
+          node --check src/events-sheet.js
           node --check src/adherence.js
           node --check src/icloud-calendar.js
           node --check src/health-ingest.js

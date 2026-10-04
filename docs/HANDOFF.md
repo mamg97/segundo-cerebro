@@ -95,10 +95,12 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 
 - Contrato vigente: `agents/EVENTS.md`.
 - Coordina logística de viajes, celebraciones y compromisos sin crear calendario ni contabilidad paralelos.
-- Calendar/iCloud conserva fechas y horarios; tickets, reservas, emails y documentos permanecen en sus fuentes propietarias.
+- Fuente operativa canónica: `SEGUNDO CEREBRO - EVENTOS` (`Eventos`, `EventoHechos`, `EventoRefs`, `EventosImportantes`).
+- Calendar/iCloud conserva autoridad sobre sus fechas y horarios; tickets, reservas, emails y documentos permanecen en sus fuentes propietarias.
 - Finanzas conserva presupuesto, provisiones y dinero libre.
 - Estados operativos del gestor: `CONFIRMADO`, `PROPUESTO`, `PENDIENTE`, `CERRADO`.
-- **Regla de consulta vigente:** toda pregunta sobre próximos eventos/agenda requiere reconciliar todos los calendarios y fuentes autorizadas disponibles. No responder desde Google `primary`/Gmail ni desde un único proveedor. Consultar todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles, Eventos/D1 y fuentes de confirmación (email/reservas/entradas/documentos) cuando existan. Si una fuente no se puede comprobar, marcar la respuesta como provisional.
+- La web/API de Eventos actúa como frontal del Sheet; D1 queda como fallback técnico/caché de transición.
+- **Regla de consulta vigente:** toda pregunta sobre próximos eventos/agenda requiere leer el Sheet canónico y reconciliar todos los calendarios y fuentes autorizadas disponibles. No responder desde Google `primary`/Gmail ni desde un único proveedor. Consultar todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles y fuentes de confirmación (email/reservas/entradas/documentos) cuando existan. Si una fuente no se puede comprobar, marcar la respuesta como provisional.
 
 ### Hábitos
 
@@ -519,10 +521,11 @@ Implementado un dominio persistente de Eventos:
 - workspace con activos/en curso e histórico;
 - ficha agregada con Finanzas, Nutrición/actividad por fechas, lista de OBJETOS, crónica, referencias y balance final;
 - Home deja de tratar compromisos puramente financieros como eventos;
-- eventos finalizados salen automáticamente de Home cuando termina su fecha y permanecen en D1;
+- eventos finalizados salen automáticamente de Home cuando termina su fecha y permanecen en el histórico;
 - API privada `/api/events` y subrutas de detalle/hechos/referencias;
-- tablas D1 `event_records`, `event_facts`, `event_refs`, creadas de forma idempotente; migración declarativa `0002_events.sql`;
-- sincronización iCloud → D1 de solo lectura durante `/api/state`;
+- desde 04/10/2026 la fuente canónica es `SEGUNDO CEREBRO - EVENTOS`; el Worker resuelve su ID mediante `EVENTS_SHEET_ID` en `IntegracionesPrivadas`;
+- sincronización iCloud → Sheet de solo lectura durante `/api/state`; no se escribe en iCloud;
+- las tablas D1 `event_records`, `event_facts`, `event_refs` permanecen como fallback/espejo técnico de transición;
 - `eventsSummary` minimizado en el estado general.
 
 No se ha hardcodeado ningún viaje real en Git. Los eventos reales aparecen por reglas privadas + iCloud y sus gestores pueden enriquecer la crónica mediante la API.

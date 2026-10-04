@@ -68,7 +68,7 @@ iCloud Calendar se consulta mediante CalDAV. Esta integración es deliberadament
 
 La disponibilidad de CalDAV no condiciona la continuidad visual de la agenda. El Worker mantiene en D1 una copia derivada `last-known-good` de la última lectura completa y no vacía. iCloud sigue siendo autoridad: la copia solo actúa como caché de resiliencia. Un timeout, una respuesta vacía sospechosa o un descubrimiento parcial de calendarios no puede reemplazarla. En una lectura parcial se mezclan los calendarios frescos con la última copia de los calendarios temporalmente ausentes.
 
-La **resolución conversacional de agenda/eventos es federada** y está separada de la autoridad temporal de iCloud. Cualquier agente que responda preguntas como «qué eventos tengo», «cuál es el próximo» o «qué tengo este fin de semana» debe consultar todos los calendarios y fuentes de eventos autorizadas disponibles (todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles, Eventos/D1 y, para confirmación, email/reservas/documentos). Un resultado parcial de un proveedor no puede presentarse como agenda global completa. Si una fuente no puede consultarse, la respuesta se marca provisional y explicita la carencia.
+La **resolución conversacional de agenda/eventos es federada** y está separada de la autoridad temporal de iCloud. Cualquier agente que responda preguntas como «qué eventos tengo», «cuál es el próximo» o «qué tengo este fin de semana» debe partir del Sheet canónico `SEGUNDO CEREBRO - EVENTOS` y contrastarlo con todos los calendarios y fuentes autorizadas disponibles (todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles y, para confirmación, email/reservas/documentos). Un resultado parcial de un proveedor no puede presentarse como agenda global completa. Si una fuente no puede consultarse, la respuesta se marca provisional y explicita la carencia.
 
 ### Habits / HabitQuest
 
@@ -427,33 +427,35 @@ La hoja de ruta completa está en `docs/EVOLUTION_GLOBAL_BRAIN.md`.
 
 ## Eventos e histórico privado
 
-La agenda de iCloud sigue siendo de solo lectura y autoridad temporal. El histórico necesita persistencia mínima porque CalDAV se consulta con una ventana acotada.
+La fuente operativa canónica es el Sheet privado `SEGUNDO CEREBRO - EVENTOS`. La agenda de iCloud sigue siendo de solo lectura y autoridad temporal sobre sus fechas; el Worker reconcilia esos datos en el Sheet para que web y gestores compartan una superficie accesible y editable sin depender de D1.
 
 ```text
-iCloud Calendar (fechas/horas)
-        ↓ read-only
-importantEventRules privadas
+iCloud/CalDAV + otros calendarios
+        ↓ lectura / reconciliación
+SEGUNDO CEREBRO - EVENTOS
+        ├── Eventos             ← estado y fechas reconciliadas
+        ├── EventoHechos        ← crónica mínima
+        ├── EventoRefs          ← punteros a fuentes
+        └── EventosImportantes  ← reglas/alias privados
         ↓
-D1 event_records
-        ├── event_facts        ← crónica mínima
-        └── event_refs         ← punteros a fuentes
-        ↓
-GET /api/events
+GET/POST/PATCH /api/events
         ↓
 Eventos / Histórico / ficha
         ├── Finanzas (referencia, no copia)
         ├── Salud-Nutrición (consulta por fechas)
         └── OBJETOS (lista contextual por evento_ref/lista_id)
+
+D1 event_* → caché/espejo técnico y fallback de migración
 ```
 
 ### Reglas de composición
 
-- Un evento sincronizado usa como identidad el ID estable producido por el adaptador iCloud.
-- La lectura de `/api/state` hace upsert de los eventos importantes actualmente visibles; nunca escribe en calendario.
+- `evento_id` es la identidad operativa del Sheet; `calendar_ref` enlaza la identidad del proveedor sin hacerla obligatoria para eventos manuales.
+- La lectura de `/api/state` hace upsert/reconciliación en el Sheet de los eventos importantes actualmente visibles; nunca escribe en calendario.
 - La fecha de fin determina automáticamente cuándo deja Home y aparece solo en Histórico.
-- D1 no replica el detalle financiero, nutricional ni material.
+- D1 no es la memoria primaria de Eventos y no replica detalle financiero, nutricional ni material.
 - Las obligaciones financieras sin semántica de viaje/celebración no se presentan como eventos históricos.
-- El dashboard expone `Eventos` como dominio de primer nivel y permite abrir la ficha desde Home o desde el histórico.
+- El dashboard expone `Eventos` como dominio de primer nivel y actúa como frontal de la fuente canónica.
 
 ## MIDAS: informe diario de estrategias demo
 
