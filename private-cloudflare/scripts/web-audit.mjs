@@ -904,6 +904,31 @@ async function auditLookDetail(label) {
     assertCheck(await sortControl.isVisible().catch(() => false), `Visual ${label} · Historial ordenable`);
     assertCheck(await looksMode.isVisible().catch(() => false), `Visual ${label} · Vista Looks disponible`);
     assertCheck(await garmentsMode.isVisible().catch(() => false), `Visual ${label} · Vista Prendas disponible`);
+    assertCheck(
+      await sortControl.inputValue().catch(() => "") === "recent",
+      `Visual ${label} · Historial orden por defecto reciente`
+    );
+    const defaultDateFlags = await page.locator('.look-history-table[data-history-mode="looks"] tbody tr').evaluateAll(
+      (nodes) => nodes.map((node) => node.dataset.historyHasDate || "")
+    );
+    const firstUndated = defaultDateFlags.indexOf("0");
+    assertCheck(
+      firstUndated < 0 || defaultDateFlags.slice(firstUndated).every((value) => value !== "1"),
+      `Visual ${label} · Looks sin fecha al final por defecto`,
+      defaultDateFlags.join(",")
+    );
+    if (/mobile/.test(label)) {
+      const firstHistoryRow = page.locator('.look-history-table[data-history-mode="looks"] tbody tr').first();
+      if (await firstHistoryRow.isVisible().catch(() => false)) {
+        const rowHeight = await firstHistoryRow.evaluate((node) => Math.round(node.getBoundingClientRect().height));
+        assertCheck(
+          rowHeight <= 180,
+          `Visual ${label} · Historial móvil compacto`,
+          `altura_fila=${rowHeight}px`
+        );
+      }
+    }
+    if (await historyPanel.isVisible().catch(() => false)) await auditVisualSnapshot(`${label} · Historial de uso`);
     const lookRows = page.locator('.look-history-table[data-history-mode="looks"] tbody tr');
     const lookRowCount = await lookRows.count();
     const lookThumbCount = await page.locator('.look-history-table[data-history-mode="looks"] .look-history-thumb').count();

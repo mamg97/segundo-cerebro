@@ -153,10 +153,36 @@ function lookMosaic(look,payload) {
   return '<span class="look-mosaic">'+images.map(src=>'<img loading="lazy" src="'+e(src)+'" alt="">').join("")+'</span>';
 }
 
+function usageDateKey(value) {
+  const text=String(value??"").trim();
+  if (!text) return "";
+  const iso=text.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|[T\s])/);
+  if (iso) {
+    const key=iso[1]+"-"+iso[2]+"-"+iso[3];
+    const date=new Date(key+"T12:00:00");
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10)===key ? key : "";
+  }
+  const es=text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (es) {
+    const key=es[3]+"-"+String(es[2]).padStart(2,"0")+"-"+String(es[1]).padStart(2,"0");
+    const date=new Date(key+"T12:00:00");
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10)===key ? key : "";
+  }
+  const monthNames={ene:1,enero:1,feb:2,febrero:2,mar:3,marzo:3,abr:4,abril:4,may:5,mayo:5,jun:6,junio:6,jul:7,julio:7,ago:8,agosto:8,sep:9,sept:9,septiembre:9,oct:10,octubre:10,nov:11,noviembre:11,dic:12,diciembre:12};
+  const normalized=text.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  const named=normalized.match(/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/);
+  if (named && monthNames[named[2]]) {
+    const key=named[3]+"-"+String(monthNames[named[2]]).padStart(2,"0")+"-"+String(named[1]).padStart(2,"0");
+    const date=new Date(key+"T12:00:00");
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10)===key ? key : "";
+  }
+  return "";
+}
+
 function normalizedUsageDates(values=[], lastUsed=null) {
   const raw=[...(Array.isArray(values)?values:[])];
   if (lastUsed) raw.push(lastUsed);
-  return [...new Set(raw.map(value=>String(value||"").trim().slice(0,10)).filter(Boolean))].sort().reverse();
+  return [...new Set(raw.map(usageDateKey).filter(Boolean))].sort().reverse();
 }
 
 function isUsageWithinLast30Days(value) {
@@ -213,12 +239,22 @@ function usageHistoryRows(payload,mode="looks") {
   }).filter(row=>row.totalUses>0||row.dates.length>0);
 }
 
+function compareUsageDate(a,b,direction="desc") {
+  const aDate=String(a.latestDate||"");
+  const bDate=String(b.latestDate||"");
+  if (!aDate && !bDate) return String(a.name||"").localeCompare(String(b.name||""),"es");
+  if (!aDate) return 1;
+  if (!bDate) return -1;
+  const compared=aDate.localeCompare(bDate);
+  return direction==="asc" ? compared : -compared;
+}
+
 function sortUsageRows(rows,sort="recent") {
   const copy=[...rows];
-  if (sort==="oldest") return copy.sort((a,b)=>String(a.latestDate||"9999").localeCompare(String(b.latestDate||"9999")));
-  if (sort==="total") return copy.sort((a,b)=>b.totalUses-a.totalUses||String(b.latestDate).localeCompare(String(a.latestDate)));
-  if (sort==="month") return copy.sort((a,b)=>b.recentUses-a.recentUses||String(b.latestDate).localeCompare(String(a.latestDate)));
-  return copy.sort((a,b)=>String(b.latestDate).localeCompare(String(a.latestDate)));
+  if (sort==="oldest") return copy.sort((a,b)=>compareUsageDate(a,b,"asc"));
+  if (sort==="total") return copy.sort((a,b)=>b.totalUses-a.totalUses||compareUsageDate(a,b,"desc"));
+  if (sort==="month") return copy.sort((a,b)=>b.recentUses-a.recentUses||compareUsageDate(a,b,"desc"));
+  return copy.sort((a,b)=>compareUsageDate(a,b,"desc"));
 }
 
 function lookUsageEntries(payload) {
@@ -258,13 +294,13 @@ function lookUsageHistoryView(payload,mode="looks",sort="recent") {
   const dateCells=(row)=>row.dates.length
     ? '<div class="look-history-dates">'+row.dates.map(date=>'<span>'+e(d(date))+'</span>').join("")+'</div>'
     : '<span class="look-history-none">Sin fechas</span>';
-  const tableRows=rows.map(row=>'<tr>'+
+  const tableRows=rows.map(row=>'<tr data-history-has-date="'+(row.latestDate?"1":"0")+'" data-history-latest="'+e(row.latestDate||"")+'>'+
     '<td class="look-history-thumb-cell"><button class="look-history-thumb" type="button" aria-label="Abrir '+e(row.name)+'" '+(isGarments?'data-garment-history-open="'+e(row.id)+'"':'data-look-history-open="'+e(row.id)+'"')+'>'+usageHistoryThumbnail(row,payload)+'</button></td>'+
     '<td class="look-history-entity-cell"><button class="look-history-entity" type="button" '+(isGarments?'data-garment-history-open="'+e(row.id)+'"':'data-look-history-open="'+e(row.id)+'"')+'><strong>'+e(row.name)+'</strong><small>'+e(row.detail||"Sin detalle")+'</small></button></td>'+
-    '<td data-label="Último uso"><strong>'+e(row.latestDate?d(row.latestDate):"—")+'</strong></td>'+
-    '<td data-label="Usos totales"><strong>'+e(row.totalUses)+'</strong></td>'+
-    '<td data-label="Últimos 30 días"><strong>'+e(row.recentUses)+'</strong></td>'+
-    '<td data-label="Fechas registradas">'+dateCells(row)+'</td>'+
+    '<td class="look-history-last-cell" data-label="Último uso"><strong>'+e(row.latestDate?d(row.latestDate):"—")+'</strong></td>'+
+    '<td class="look-history-total-cell" data-label="Usos totales"><strong>'+e(row.totalUses)+'</strong></td>'+
+    '<td class="look-history-month-cell" data-label="Últimos 30 días"><strong>'+e(row.recentUses)+'</strong></td>'+
+    '<td class="look-history-dates-cell" data-label="Fechas registradas">'+dateCells(row)+'</td>'+
     '</tr>').join("");
   body.innerHTML='<button class="objects-back" data-look-history-back type="button">← Volver a Looks</button>'+
     '<section class="look-history">'+
