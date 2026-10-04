@@ -4365,16 +4365,43 @@ function weeklyMenuIngredientAmount(ingredient) {
   return "—";
 }
 
+function renderWeeklyMenuEntityAction(item) {
+  const recipeId = String(item?.recipeId || "").trim();
+  if (recipeId) {
+    if (!item?.recipe) {
+      return '<span class="weekly-menu-sync-note">Receta vinculada pendiente de cargar</span>';
+    }
+    return `
+      <button class="weekly-menu-entity-link" type="button" data-menu-recipe-open="${escapeHtml(recipeId)}">
+        Abrir receta <span aria-hidden="true">→</span>
+      </button>`;
+  }
+
+  const foodId = String(item?.foodId || "").trim();
+  const pantryProductId = String(item?.pantryProductId || "").trim();
+  if (foodId && item?.pantrySyncStatus === "linked" && pantryProductId) {
+    return `
+      <button class="weekly-menu-entity-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}">
+        Ver alimento en Despensa <span aria-hidden="true">→</span>
+      </button>`;
+  }
+  if (foodId && item?.pantrySyncStatus === "missing") {
+    return '<span class="weekly-menu-sync-note is-warning">Pendiente de sincronizar con Despensa</span>';
+  }
+  return "";
+}
+
 function renderWeeklyMenuIngredients(item) {
   const ingredients = Array.isArray(item?.ingredients) ? item.ingredients : [];
   const totalKcal = item.kcal == null ? null : Number(item.kcal);
   const totalProtein = item.protein == null ? null : Number(item.protein);
+  const entityAction = renderWeeklyMenuEntityAction(item);
 
   if (!ingredients.length) {
     const quantity = Number(item?.quantity);
     const hasQuantity = Number.isFinite(quantity);
     const note = String(item?.note || "").trim();
-    if (!hasQuantity && !note) return "";
+    if (!hasQuantity && !note && !entityAction) return "";
 
     const amount = hasQuantity
       ? `${quantity.toLocaleString("es-ES", { maximumFractionDigits: quantity < 10 ? 1 : 0 })} ${item?.unit || ""}`.trim()
@@ -4410,6 +4437,7 @@ function renderWeeklyMenuIngredients(item) {
           </table>
         </div>
         ${note ? `<small class="weekly-menu-ingredients-note weekly-menu-ingredients-detail">${escapeHtml(note)}</small>` : ""}
+        ${entityAction}
       </details>`;
   }
 
@@ -4456,6 +4484,7 @@ function renderWeeklyMenuIngredients(item) {
         </table>
       </div>
       <small class="weekly-menu-ingredients-note">${weeklyMenuItemIsConsumed(item) ? "Cantidades registradas como consumidas." : "Cantidades previstas para tu ración; se registrarán como consumidas cuando confirmes la comida."}</small>
+      ${entityAction}
     </details>`;
 }
 
@@ -4550,7 +4579,10 @@ function renderWeeklyMenuMealGroup(items) {
                   : "—";
                 return `
                   <tr class="${weeklyMenuItemIsConsumed(item) ? "is-consumed" : ""}">
-                    <td>${escapeHtml(item.name || "Comida")}</td>
+                    <td>
+                      ${escapeHtml(item.name || "Comida")}
+                      ${renderWeeklyMenuEntityAction(item)}
+                    </td>
                     <td>${escapeHtml(quantity)}</td>
                     <td>${item.kcal == null ? "—" : escapeHtml(formatKcal(item.kcal))}</td>
                     <td>${item.protein == null ? "—" : escapeHtml(formatMacro(item.protein))}</td>
@@ -4571,6 +4603,70 @@ function renderMenuMasterLinks() {
       <a href="/api/source-link?target=health-foods" target="_blank" rel="noopener noreferrer">Comidas ↗</a>
       <a href="/api/source-link?target=health-recipes" target="_blank" rel="noopener noreferrer">Recetas ↗</a>
     </nav>`;
+}
+
+async function openMenuPantryProduct(panel, data, productId) {
+  const onBack = () => renderMenuPanel(data);
+  panel.innerHTML = `
+    <button type="button" class="recipe-back" data-menu-product-back>← Volver al menú</button>
+    <p class="recipe-pending" role="status">Cargando ficha de Despensa…</p>`;
+  panel.querySelector("[data-menu-product-back]")?.addEventListener("click", onBack);
+
+  try {
+    const [pantryResponse, detailResponse] = await Promise.all([
+      fetch("/api/pantry", { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } }),
+      fetch(`/api/pantry/products/${encodeURIComponent(productId)}`, { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } })
+    ]);
+    if (!pantryResponse.ok || !detailResponse.ok) throw new Error("PANTRY_PRODUCT_" + detailResponse.status);
+    const [pantry, detail] = await Promise.all([pantryResponse.json(), detailResponse.json()]);
+    const { renderProductDetail } = await import("./pantry.js?v=0.42.1");
+    renderProductDetail(detail.item, pantry, {
+      container: panel,
+      onBack,
+      backLabel: "← Volver al menú"
+    });
+  } catch (error) {
+    panel.innerHTML = `
+      <button type="button" class="recipe-back" data-menu-product-back>← Volver al menú</button>
+      <div class="pantry-source-error">
+        <strong>No se ha podido cargar la ficha de Despensa</strong>
+        <p>El vínculo canónico se conserva. Puedes reintentar sin crear otro alimento.</p>
+        <button type="button" data-menu-product-retry>Reintentar</button>
+      </div>`;
+    panel.querySelector("[data-menu-product-back]")?.addEventListener("click", onBack);
+    panel.querySelector("[data-menu-product-retry]")?.addEventListener("click", () => void openMenuPantryProduct(panel, data, productId));
+    console.warn("Menu Pantry product load failed", error);
+  }
+}
+
+function bindMenuEntityLinks(panel, data) {
+  const recipes = Array.isArray(data?.recipes) ? data.recipes : [];
+
+  panel.querySelectorAll("[data-menu-recipe-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const recipeId = String(button.dataset.menuRecipeOpen || "");
+      const recipe = recipes.find((candidate) => String(candidate.id || "") === recipeId);
+      const recipesPanel = document.querySelector("#recipes-panel");
+      if (!recipe || !recipesPanel) return;
+
+      document.querySelector('[data-health-tab="recipes"]')?.click();
+      renderRecipeDetail(recipesPanel, data, recipe, {
+        backLabel: "← Volver al menú",
+        onBack: () => {
+          document.querySelector('[data-health-tab="menu"]')?.click();
+          renderMenuPanel(data);
+        }
+      });
+      recipesPanel.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  });
+
+  panel.querySelectorAll("[data-menu-product-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const productId = String(button.dataset.menuProductOpen || "");
+      if (productId) void openMenuPantryProduct(panel, data, productId);
+    });
+  });
 }
 
 function renderMenuPanel(data) {
@@ -4636,6 +4732,8 @@ function renderMenuPanel(data) {
           </section>`;
       }).join("")}
     </div>`;
+
+  bindMenuEntityLinks(panel, data);
 }
 
 function hideHomeWeeklyMenu() {
@@ -4902,14 +5000,16 @@ function recipeMacrosLabel(recipe) {
   ].filter(Boolean).join(" · ");
 }
 
-function renderRecipeDetail(panel, data, recipe) {
+function renderRecipeDetail(panel, data, recipe, options = {}) {
   const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+  const onBack = typeof options.onBack === "function" ? options.onBack : () => renderRecipesPanel(data);
+  const backLabel = options.backLabel || "← Volver al recetario";
   const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
   const macros = recipeMacrosLabel(recipe);
 
   panel.innerHTML = `
     <div class="recipe-detail-toolbar">
-      <button class="recipe-back" type="button" data-recipes-back>← Volver al recetario</button>
+      <button class="recipe-back" type="button" data-recipes-back>${escapeHtml(backLabel)}</button>
       <a class="master-source-link" href="/api/source-link?target=health-recipes" target="_blank" rel="noopener noreferrer">Abrir Sheet ↗</a>
     </div>
 
@@ -4962,7 +5062,7 @@ function renderRecipeDetail(panel, data, recipe) {
     </article>
   `;
 
-  panel.querySelector("[data-recipes-back]")?.addEventListener("click", () => renderRecipesPanel(data));
+  panel.querySelector("[data-recipes-back]")?.addEventListener("click", onBack);
   panel.querySelectorAll("[data-recipe-ingredient]").forEach((button) => {
     button.addEventListener("click", async () => {
       button.disabled = true;
@@ -4970,7 +5070,7 @@ function renderRecipeDetail(panel, data, recipe) {
         const { openRecipeIngredient } = await import("./recipe-products.js?v=0.42.1");
         if (!button.isConnected) return;
         await openRecipeIngredient(panel, ingredients[Number(button.dataset.recipeIngredient)], recipe, () => {
-          renderRecipeDetail(panel, data, recipe);
+          renderRecipeDetail(panel, data, recipe, options);
           panel.querySelector(`[data-recipe-ingredient="${button.dataset.recipeIngredient}"]`)?.focus({ preventScroll: true });
         });
       } catch {
