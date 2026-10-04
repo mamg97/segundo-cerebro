@@ -22616,3 +22616,21 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     padding-top: 82px;
   }
 }
+
+
+/* v0.42.12 — keep refresh control permanently reachable at top-right on mobile */
+@media screen and (max-width: 760px) {
+  #refresh-app.refresh-app {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    right: 12px;
+    z-index: 2147483640 !important;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    border-radius: 50%;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
