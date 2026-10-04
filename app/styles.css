@@ -22568,3 +22568,21 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     align-self: start;
   }
 }
+
+
+/* v0.42.10 — iOS-safe mobile navigation: fixed viewport header, not sticky */
+@media (max-width: 760px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+  }
+
+  .main-content {
+    padding-top: 82px;
+  }
+}
