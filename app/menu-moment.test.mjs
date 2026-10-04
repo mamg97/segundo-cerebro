@@ -77,3 +77,22 @@ test("linked meals expose a large tappable title on the detailed mobile menu", (
   assert.match(css, /\.weekly-menu-title-link\s*\{[\s\S]*?min-height:\s*40px/);
   assert.match(css, /touch-action:\s*manipulation/);
 });
+
+
+test("home weekly menu recipe names open the canonical recipe", () => {
+  assert.match(app, /data-home-menu-recipe-open=/);
+  assert.match(app, /function bindHomeWeeklyMenuRecipeLinks\(content, data\)/);
+  assert.match(app, /function openHomeWeeklyMenuRecipe\(data, recipeId\)/);
+  assert.match(app, /openHealthDetail\(\{ skipNutritionLoad: true \}\)/);
+  assert.match(app, /backLabel: "← Volver al resumen"/);
+  assert.match(app, /bindHomeWeeklyMenuRecipeLinks\(content, data\)/);
+  assert.match(css, /\.home-weekly-menu-recipe-link\s*\{[\s\S]*?min-height:\s*40px/);
+});
+
+test("opening a recipe from Home does not race the regular nutrition loader", () => {
+  const start = app.indexOf("function openHealthDetail(options = {})");
+  const end = app.indexOf("async function loadHealthOverview", start);
+  assert.ok(start >= 0 && end > start);
+  const healthDetail = app.slice(start, end);
+  assert.match(healthDetail, /options\.skipNutritionLoad !== true/);
+});

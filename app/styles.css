@@ -16087,6 +16087,13 @@ html[data-theme="dark"] .home-liquidity-account {
   font-weight: 900;
 }
 
+.home-weekly-menu-recipe-link {
+  width: 100%;
+  min-height: 40px;
+  justify-content: flex-start;
+  padding-block: 2px;
+}
+
 .weekly-menu-title-link:hover {
   color: color-mix(in srgb, var(--mint) 82%, var(--blue));
 }

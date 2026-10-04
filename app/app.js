@@ -2363,7 +2363,7 @@ function formatFamilyDate(value) {
   }).format(date);
 }
 
-function openHealthDetail() {
+function openHealthDetail(options = {}) {
   const dialog = document.querySelector("#detail-dialog");
   dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog");
   dialog.classList.add("health-dialog");
@@ -2409,7 +2409,7 @@ function openHealthDetail() {
   void loadHealthOverview(localDateKey());
   void loadMedicalAppointments();
   void loadGymPanel();
-  void loadNutritionPanel(localDateKey());
+  if (options.skipNutritionLoad !== true) void loadNutritionPanel(localDateKey());
 }
 
 async function loadHealthOverview(dateKey = localDateKey()) {
@@ -4877,7 +4877,76 @@ function weeklyMenuItemsForMoment(day, momentKey) {
 function renderHomeWeeklyMenuMatrixCell(items) {
   const rows = Array.isArray(items) ? items.filter(Boolean) : [];
   if (!rows.length) return '<span class="home-weekly-menu-empty-cell">—</span>';
-  return renderWeeklyMenuGroupItems(rows, true);
+
+  return `
+    <div class="weekly-menu-group-items is-compact">
+      ${rows.map((item) => {
+        const consumed = weeklyMenuItemIsConsumed(item);
+        const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
+        const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
+        const recipeId = String(item?.recipeId || "").trim();
+        const title = recipeId && item?.recipe
+          ? `
+            <button class="weekly-menu-title-link home-weekly-menu-recipe-link" type="button" data-home-menu-recipe-open="${escapeHtml(recipeId)}" aria-label="Abrir receta: ${escapeHtml(item.name || "Comida")}">
+              <strong>${escapeHtml(item.name || "Comida")}</strong><span aria-hidden="true">↗</span>
+            </button>`
+          : `<strong>${escapeHtml(item.name || "Comida")}</strong>`;
+
+        return `
+          <div class="weekly-menu-group-item ${consumed ? "is-consumed" : ""}">
+            <div class="weekly-menu-group-item-copy">
+              ${title}
+            </div>
+            <div class="weekly-menu-group-item-macros">
+              <b>${kcal}</b>
+              <span>${protein}</span>
+            </div>
+          </div>`;
+      }).join("")}
+    </div>`;
+}
+
+async function openHomeWeeklyMenuRecipe(data, recipeId) {
+  let payload = data;
+  let recipe = (Array.isArray(payload?.recipes) ? payload.recipes : [])
+    .find((candidate) => String(candidate?.id || "") === String(recipeId || ""));
+
+  if (!recipe) {
+    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(localDateKey()), {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("HOME_RECIPE_" + response.status);
+    payload = await response.json();
+    recipe = (Array.isArray(payload?.recipes) ? payload.recipes : [])
+      .find((candidate) => String(candidate?.id || "") === String(recipeId || ""));
+  }
+
+  if (!recipe) throw new Error("HOME_RECIPE_NOT_FOUND");
+
+  openHealthDetail({ skipNutritionLoad: true });
+  document.querySelector('[data-health-tab="recipes"]')?.click();
+  const recipesPanel = document.querySelector("#recipes-panel");
+  if (!recipesPanel) return;
+
+  renderRecipeDetail(recipesPanel, payload, recipe, {
+    backLabel: "← Volver al resumen",
+    onBack: () => document.querySelector("#detail-dialog")?.close()
+  });
+}
+
+function bindHomeWeeklyMenuRecipeLinks(content, data) {
+  content.querySelectorAll("[data-home-menu-recipe-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.disabled = true;
+      void openHomeWeeklyMenuRecipe(data, button.dataset.homeMenuRecipeOpen)
+        .catch((error) => {
+          console.warn("Home weekly menu recipe open failed", error);
+          button.disabled = false;
+        });
+    });
+  });
 }
 
 function focusHomeWeeklyMenuOnToday(content) {
@@ -4995,6 +5064,7 @@ function renderHomeWeeklyMenu(data) {
     </div>`;
 
   focusHomeWeeklyMenuOnToday(content);
+  bindHomeWeeklyMenuRecipeLinks(content, data);
 }
 
 function formatRecipeAmount(ingredient) {
