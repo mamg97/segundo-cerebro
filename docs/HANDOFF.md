@@ -1777,7 +1777,7 @@ Antes de cualquier cambio:
 
 ## Relevo · Menú → Recetas + alimentos canónicos de Despensa · 2026-10-04
 
-- Se cerró la navegación desde `Salud → Menú`: al desplegar una comida con `recipe_id`, aparece **Abrir receta →** y se abre la ficha exacta del recetario. La vuelta desde esa ficha regresa al menú. En móvil, además, el título verde de cada comida enlazada es directamente pulsable (zona táctil amplia) para no depender del botón situado al final del desplegable.
+- Se cerró la navegación desde `Salud → Menú`: al desplegar una comida con `recipe_id`, aparece **Abrir receta →** y se abre la ficha exacta del recetario. La vuelta desde esa ficha regresa al menú. En móvil, además, el título verde de cada comida enlazada es directamente pulsable (zona táctil amplia) para no depender del botón situado al final del desplegable. La misma navegación se extiende al **Menú de la semana de Home**: el nombre de una comida con receta abre directamente la receta canónica y `Volver al resumen` cierra la ficha y devuelve a portada.
 - Las filas simples con `food_id` usan ese valor como identidad canónica de `SEGUNDO CEREBRO - DESPENSA / Productos`; cuando resuelve, el desplegable ofrece **Ver alimento en Despensa →** y reutiliza la misma ficha de producto.
 - `prepareWeeklyMenuRows` acepta el maestro de productos de Pantry, expone estado de sincronización y solo completa macros ausentes desde nutrición por 100 g cuando la cantidad está expresada inequívocamente en gramos. Macros explícitos ya registrados no se sobrescriben.
 - La lectura completa de Nutrición hidrata Pantry de forma fail-soft: un fallo temporal de Despensa no rompe Salud, pero tampoco crea una identidad alternativa.
