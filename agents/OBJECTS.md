@@ -111,7 +111,7 @@ Una prenda no debe existir solo en Armario: primero debe existir como objeto. `O
 - En escritorio, las prendas de `LookItems` se muestran al lado; en móvil, debajo.
 - Cada prenda del detalle se resuelve desde `Armario` usando la prioridad visual canónica y permite abrir su ficha individual.
 - Esta vista no crea ni copia datos: deriva íntegramente de `Looks + LookItems + Armario`.
-- La pestaña `Looks` expone un acceso `Historial de uso` que agrega cronológicamente los usos ya registrados en `Looks.historico_usos`; `ultimo_uso` se incorpora como último uso conocido cuando no está ya presente. La vista es solo lectura y no crea una fuente paralela.
+- La pestaña `Looks` expone un acceso `Historial de uso` con dos vistas: `Looks` y `Prendas`. La vista `Looks` usa `Looks.historico_usos`, `ultimo_uso` y `veces_usado`. La vista `Prendas` deriva fechas desde los usos de los looks que contienen cada `objeto_id` y añade `Armario.ultimo_uso`; para el total global, `Armario.veces_usado` tiene prioridad cuando existe. Ambas vistas muestran usos globales, usos con fecha en los últimos 30 días y fechas registradas, y permiten ordenar por uso más reciente, más antiguo, total o últimos 30 días. No se inventan fechas para cubrir usos sin fecha y no se crea una fuente paralela.
 
 ### `Looks` + `LookItems`
 
