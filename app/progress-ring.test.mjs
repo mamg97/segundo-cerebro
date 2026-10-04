@@ -65,8 +65,8 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.42\.6/);
-assert.match(index, /styles\.css\?v=0\.42\.14/);
+assert.match(index, /app\.js\?v=0\.42\.7/);
+assert.match(index, /styles\.css\?v=0\.42\.15/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -125,7 +125,7 @@ assert.match(css, /v0\.38\.2 — compact mobile liquidity cards/);
 assert.match(css, /v0\.38\.3 — two-column mobile liquidity grid/);
 assert.match(css, /v0\.38\.4 — readability typography pass/);
 assert.match(app, /pantry\.js\?v=0\.42\.1/);
-assert.match(app, /objects\.js\?v=0\.41\.4/);
+assert.match(app, /objects\.js\?v=0\.41\.5/);
 assert.match(objects, /Armario visual/);
 assert.match(objects, /Combinador/);
 assert.match(objects, /wardrobe-brand/);
@@ -194,7 +194,7 @@ assert.match(css, /#home-objects-card\s*\{[\s\S]*?grid-template-areas:/);
 assert.match(css, /\.daily-overview-grid\s*\{[\s\S]*?gap:\s*10px/);
 assert.match(css, /\.pantry-home-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3/);
 
-assert.match(css, /v0\.41\.4 — compact balanced Home \+ unified typography/);
+assert.match(css, /v0\.41\.5 — compact balanced Home \+ unified typography/);
 assert.match(css, /#home-pantry-card,[\s\S]*?#home-objects-card\s*\{[\s\S]*?align-self:\s*stretch !important/);
 assert.match(css, /\.money-horizon\s*\{[\s\S]*?align-items:\s*stretch !important/);
 assert.doesNotMatch(css, /Iowan Old Style|Palatino Linotype/);
