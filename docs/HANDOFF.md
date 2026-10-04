@@ -1683,3 +1683,37 @@ Antes de cualquier cambio:
   - vuelve al catálogo completo **35/35**.
 - No se cambiaron datos canónicos de Salud ni RecipeMedia para este trabajo; fue únicamente una capacidad genérica de presentación/auditoría.
 
+
+
+### ORGANIZADOR 9 · Biblioteca visual gratuita de ejercicios · 2026-10-04
+
+- Capacidad cerrada en `Salud → Gimnasio`: existen `Mi plan` y `Biblioteca de ejercicios`.
+- Fuente externa de referencia: **wger**, gratuita/open; no usar Lyfta, RepDB Premium, ExerciseDB de pago ni mirrors de licencia dudosa.
+- Arquitectura:
+  - `GimnasioPlan` sigue siendo la fuente canónica del plan;
+  - sesiones/progreso siguen en D1;
+  - D1 `gym_exercise_links` guarda únicamente el mapping técnico plan ↔ wger;
+  - añadir un ejercicio desde Biblioteca escribe una fila normal en `GimnasioPlan`;
+  - multimedia se sirve por proxy same-origin y conserva atribución/licencia.
+- UX:
+  - buscador + filtros por músculo/equipamiento;
+  - vista inicial prioriza ejercicios con vídeo;
+  - catálogo responsive con preview animada;
+  - ficha grande con vídeo en loop, músculos principales/secundarios, equipamiento, instrucciones y atribución;
+  - cada ejercicio del plan tiene acceso `Técnica` para buscar/vincular su ficha;
+  - una ficha libre puede añadirse a un día del plan definiendo series y reps.
+- PR #240 / `8441a510`: capacidad completa.
+- Audit #134 detectó un único defecto propio de la biblioteca: la vista inicial llamaba al endpoint legacy inexistente `/api/v2/exercisevideo/`.
+- PR #241 / `7375af09`: corregido al endpoint oficial `/api/v2/video/` y protegido con test.
+- Deploy privado #333: **success**.
+- Audit production web #135: **882 checks / 2 failures**.
+  - Biblioteca termina de cargar.
+  - Fuente/coste visible: wger · 0 €.
+  - **24 ejercicios** devueltos en la muestra inicial.
+  - recurso visual presente;
+  - ficha visual abre;
+  - demostración/referencia visual presente;
+  - atribución/licencia visible;
+  - control `Añadir al plan` presente sin ejecutar escritura en auditoría;
+  - no queda fallo Gym.
+  - Los dos rojos restantes son MIDAS: `TFM shadow forecasts` y `weekly ML paper`, independientes de Gym.
