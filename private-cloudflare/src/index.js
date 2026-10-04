@@ -10,7 +10,8 @@ import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
-import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";\nimport { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, fetchEventSheetHomeSummary, fetchEventSheetDetail, syncCalendarEventsToEventsSheet, createEventSheetRecord, updateEventSheetRecord, appendEventSheetFact, appendEventSheetReference } from "./events-sheet.js";
+import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
+import { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, fetchEventSheetHomeSummary, fetchEventSheetDetail, syncCalendarEventsToEventsSheet, createEventSheetRecord, updateEventSheetRecord, appendEventSheetFact, appendEventSheetReference } from "./events-sheet.js";
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
 import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
 import { googleReadFetch } from "./google-read.js";
