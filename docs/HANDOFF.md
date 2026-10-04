@@ -1791,3 +1791,14 @@ Antes de cualquier cambio:
 - Causa: Home podía ser re-renderizado por `/api/nutrition/menu` (payload ligero), que conserva `recipe_id` pero no adjunta el objeto `recipe`. El renderer exigía ambas cosas y degradaba el título a texto no interactivo.
 - Regla corregida: en Home, la existencia de `recipe_id` basta para renderizar el nombre como enlace. Al pulsar, `openHomeWeeklyMenuRecipe` reutiliza la receta si ya está cargada o solicita `/api/nutrition` de forma perezosa para abrir la ficha canónica.
 - Se sube versión de assets para evitar caché móvil y se añade regresión específica para payload ligero.
+
+
+### ORGANIZADOR 10 · historial de uso de Looks y Prendas · 2026-10-04
+
+- PR #270 amplía `Objetos → Looks → Historial de uso` sin crear nuevas fuentes.
+- La vista tiene dos modos: `Looks` y `Prendas`.
+- Ambos modos muestran tabla con último uso, usos totales, usos con fecha en los últimos 30 días y todas las fechas registradas; se puede ordenar por fecha más reciente, más antigua, total o últimos 30 días.
+- `Looks` usa `Looks.historico_usos + ultimo_uso + veces_usado`.
+- `Prendas` deriva fechas de los usos de los looks que contienen cada `objeto_id` y añade `Armario.ultimo_uso`; `Armario.veces_usado` conserva prioridad para el total global cuando existe.
+- No se fabrican fechas para completar contadores sin detalle temporal. Por ello el total global puede ser superior al número de fechas visibles y el contador de últimos 30 días solo incluye fechas realmente disponibles.
+- El auditor de producción comprueba acceso al historial, tabla, ordenación y conmutación real a la vista `Prendas`.

@@ -22859,3 +22859,263 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     grid-row: 1 / span 2;
   }
 }
+
+
+/* v0.42.15 — sortable look / garment usage history tables */
+.look-history-controls {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.look-history-mode {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--paper);
+}
+
+.look-history-mode button {
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.look-history-mode button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--blue) 15%, var(--surface));
+  color: var(--blue);
+}
+
+.look-history-controls > label {
+  display: grid;
+  min-width: 210px;
+  gap: 5px;
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.look-history-controls select {
+  min-height: 36px;
+  padding: 7px 28px 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 9px;
+}
+
+.look-history-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.look-history-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.look-history-table th,
+.look-history-table td {
+  padding: 10px 11px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  text-align: left;
+}
+
+.look-history-table th {
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--paper) 90%, var(--blue) 10%);
+  font-size: 8px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.look-history-table th:first-child,
+.look-history-table td:first-child {
+  width: 30%;
+}
+
+.look-history-table th:nth-child(2),
+.look-history-table td:nth-child(2) {
+  width: 14%;
+}
+
+.look-history-table th:nth-child(3),
+.look-history-table td:nth-child(3),
+.look-history-table th:nth-child(4),
+.look-history-table td:nth-child(4) {
+  width: 12%;
+}
+
+.look-history-table th:nth-child(5),
+.look-history-table td:nth-child(5) {
+  width: 32%;
+}
+
+.look-history-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.look-history-table td > strong {
+  font-size: 10px;
+}
+
+.look-history-entity {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.look-history-entity strong {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.look-history-entity small {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 8px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.look-history-entity:hover strong,
+.look-history-entity:focus-visible strong {
+  color: var(--blue);
+}
+
+.look-history-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.look-history-dates span,
+.look-history-none {
+  display: inline-flex;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 7px;
+  white-space: nowrap;
+}
+
+.look-history-note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .look-history-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .look-history-controls > label {
+    min-width: 0;
+  }
+
+  .look-history-mode {
+    width: 100%;
+  }
+
+  .look-history-mode button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 560px) {
+  .look-history-table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .look-history-table {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+  }
+
+  .look-history-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .look-history-table tbody,
+  .look-history-table tr,
+  .look-history-table td {
+    display: block;
+    width: 100% !important;
+  }
+
+  .look-history-table tr {
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: var(--surface);
+  }
+
+  .look-history-table td {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    padding: 6px 0;
+    border: 0;
+  }
+
+  .look-history-table td:first-child {
+    display: block;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .look-history-table td:not(:first-child)::before {
+    content: attr(data-label);
+    color: var(--ink-soft);
+    font-size: 8px;
+    font-weight: 800;
+  }
+
+  .look-history-entity strong {
+    white-space: normal;
+  }
+
+  .look-history-entity small {
+    white-space: normal;
+  }
+}

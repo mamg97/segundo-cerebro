@@ -153,41 +153,130 @@ function lookMosaic(look,payload) {
   return '<span class="look-mosaic">'+images.map(src=>'<img loading="lazy" src="'+e(src)+'" alt="">').join("")+'</span>';
 }
 
+function normalizedUsageDates(values=[], lastUsed=null) {
+  const raw=[...(Array.isArray(values)?values:[])];
+  if (lastUsed) raw.push(lastUsed);
+  return [...new Set(raw.map(value=>String(value||"").trim().slice(0,10)).filter(Boolean))].sort().reverse();
+}
+
+function isUsageWithinLast30Days(value) {
+  const date=new Date(String(value||"").slice(0,10)+"T12:00:00");
+  if (!Number.isFinite(date.getTime())) return false;
+  const today=new Date();
+  today.setHours(23,59,59,999);
+  const cutoff=new Date(today);
+  cutoff.setDate(cutoff.getDate()-29);
+  cutoff.setHours(0,0,0,0);
+  return date>=cutoff && date<=today;
+}
+
+function usageDatesForLook(look) {
+  return normalizedUsageDates(look?.usageHistory||[],look?.lastUsed);
+}
+
+function usageHistoryRows(payload,mode="looks") {
+  if (mode==="garments") {
+    const looks=payload.looks||[];
+    return (payload.wardrobe||[]).map(item=>{
+      const related=looks.filter(look=>(look.items||[]).some(part=>String(part.objectId)===String(item.objectId)));
+      const dates=normalizedUsageDates(related.flatMap(usageDatesForLook),item.lastUsed);
+      const canonical=Number(item.useCount);
+      const totalUses=Number.isFinite(canonical)?Math.max(canonical,dates.length):dates.length;
+      return {
+        id:String(item.objectId),
+        kind:"garment",
+        name:item.name||"Prenda",
+        detail:[item.brand,item.subcategory||item.visualCategory,item.primaryColor||item.color].filter(Boolean).join(" · "),
+        dates,
+        latestDate:dates[0]||item.lastUsed||"",
+        totalUses,
+        recentUses:dates.filter(isUsageWithinLast30Days).length,
+        item
+      };
+    }).filter(row=>row.totalUses>0||row.dates.length>0);
+  }
+  return (payload.looks||[]).map(look=>{
+    const dates=usageDatesForLook(look);
+    const canonical=Number(look.useCount);
+    const totalUses=Number.isFinite(canonical)?Math.max(canonical,dates.length):dates.length;
+    return {
+      id:String(look.id),
+      kind:"look",
+      name:look.name||"Look",
+      detail:[look.context,look.formality,look.season].filter(Boolean).join(" · "),
+      dates,
+      latestDate:dates[0]||look.lastUsed||"",
+      totalUses,
+      recentUses:dates.filter(isUsageWithinLast30Days).length,
+      look
+    };
+  }).filter(row=>row.totalUses>0||row.dates.length>0);
+}
+
+function sortUsageRows(rows,sort="recent") {
+  const copy=[...rows];
+  if (sort==="oldest") return copy.sort((a,b)=>String(a.latestDate||"9999").localeCompare(String(b.latestDate||"9999")));
+  if (sort==="total") return copy.sort((a,b)=>b.totalUses-a.totalUses||String(b.latestDate).localeCompare(String(a.latestDate)));
+  if (sort==="month") return copy.sort((a,b)=>b.recentUses-a.recentUses||String(b.latestDate).localeCompare(String(a.latestDate)));
+  return copy.sort((a,b)=>String(b.latestDate).localeCompare(String(a.latestDate)));
+}
+
 function lookUsageEntries(payload) {
   const entries=[];
   for (const look of payload.looks||[]) {
-    const dates=[...(look.usageHistory||[])];
-    if (look.lastUsed && !dates.includes(look.lastUsed)) dates.push(look.lastUsed);
-    for (const date of [...new Set(dates.filter(Boolean).map(value=>String(value).trim()))]) {
-      entries.push({date,look});
-    }
+    for (const date of usageDatesForLook(look)) entries.push({date,look});
   }
   return entries.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
 }
 
 function looksView(payload) {
   if (pending(payload)) return pendingView();
-  const rows=payload.looks||[], office=rows.filter(x=>x.office===true).length, usages=lookUsageEntries(payload).length;
+  const rows=payload.looks||[], office=rows.filter(x=>x.office===true).length;
   return '<section class="objects-callout"><div><small>Armario inteligente</small><strong>Looks guardados</strong><p>Pulsa un look para ampliar su imagen y ver las prendas reales que lo componen.</p></div><span>'+office+' oficina</span></section>'+
-    '<div class="looks-actions"><button class="objects-secondary-action" type="button" data-look-history>Historial de uso'+(usages?' · '+usages:'')+'</button><button class="objects-primary-action" type="button" data-look-builder>Crear look visual</button></div><div class="looks-grid">'+
+    '<div class="looks-actions"><button class="objects-secondary-action" type="button" data-look-history>Historial de uso</button><button class="objects-primary-action" type="button" data-look-builder>Crear look visual</button></div><div class="looks-grid">'+
     (rows.length?rows.map(x=>'<article class="look-card" role="button" tabindex="0" data-look-open="'+e(x.id)+'" aria-label="Abrir '+e(x.name||"look")+'"><div class="look-visual">'+lookMosaic(x,payload)+'</div><div class="look-body"><span class="look-tags">'+(x.office===true?'<b>Oficina</b>':'')+(x.season?'<b>'+e(x.season)+'</b>':'')+(x.formality?'<b>'+e(x.formality)+'</b>':'')+'</span><strong>'+e(x.name||"Look")+'</strong><p>'+e((x.items||[]).map(i=>i.name).filter(Boolean).join(" · ")||"Sin prendas vinculadas")+'</p><small>'+e(x.context||"Contexto sin indicar")+' · '+(x.lastUsed?"último uso "+e(d(x.lastUsed)):"sin uso reciente")+'</small></div></article>').join(""):empty("Todavía no hay looks","El combinador puede crear el primero reutilizando prendas reales."))+
     '</div>';
 }
 
-function lookUsageHistoryView(payload) {
+function lookUsageHistoryView(payload,mode="looks",sort="recent") {
   const body=document.querySelector("#dialog-body");
-  const entries=lookUsageEntries(payload), usedLooks=new Set(entries.map(entry=>String(entry.look.id))).size;
+  const rows=sortUsageRows(usageHistoryRows(payload,mode),sort);
+  const totalUses=rows.reduce((sum,row)=>sum+Number(row.totalUses||0),0);
+  const recentUses=rows.reduce((sum,row)=>sum+Number(row.recentUses||0),0);
+  const isGarments=mode==="garments";
+  const entityLabel=isGarments?"Prenda":"Look";
+  const dateCells=(row)=>row.dates.length
+    ? '<div class="look-history-dates">'+row.dates.map(date=>'<span>'+e(d(date))+'</span>').join("")+'</div>'
+    : '<span class="look-history-none">Sin fechas</span>';
+  const tableRows=rows.map(row=>'<tr>'+
+    '<td><button class="look-history-entity" type="button" '+(isGarments?'data-garment-history-open="'+e(row.id)+'"':'data-look-history-open="'+e(row.id)+'"')+'><strong>'+e(row.name)+'</strong><small>'+e(row.detail||"Sin detalle")+'</small></button></td>'+
+    '<td data-label="Último uso"><strong>'+e(row.latestDate?d(row.latestDate):"—")+'</strong></td>'+
+    '<td data-label="Usos totales"><strong>'+e(row.totalUses)+'</strong></td>'+
+    '<td data-label="Últimos 30 días"><strong>'+e(row.recentUses)+'</strong></td>'+
+    '<td data-label="Fechas registradas">'+dateCells(row)+'</td>'+
+    '</tr>').join("");
   body.innerHTML='<button class="objects-back" data-look-history-back type="button">← Volver a Looks</button>'+
     '<section class="look-history">'+
-      '<header class="look-history-head"><div><small>Armario inteligente</small><h3>Historial de looks usados</h3><p>Usos registrados en la fuente canónica de Objetos.</p></div><div class="look-history-kpis"><span><small>Usos</small><strong>'+entries.length+'</strong></span><span><small>Looks</small><strong>'+usedLooks+'</strong></span></div></header>'+
-      '<div class="look-history-list">'+
-        (entries.length?entries.map(({date,look})=>'<button class="look-history-item" type="button" data-look-history-open="'+e(look.id)+'"><span class="look-history-image">'+lookMosaic(look,payload)+'</span><span class="look-history-date"><small>Usado</small><strong>'+e(d(date))+'</strong></span><span class="look-history-copy"><strong>'+e(look.name||"Look")+'</strong><small>'+e([look.context,look.formality,look.season].filter(Boolean).join(" · ")||"Sin contexto registrado")+'</small></span><span class="look-history-arrow" aria-hidden="true">→</span></button>').join(""):empty("Todavía no hay usos registrados","Cuando un look tenga histórico_usos o último_uso aparecerá aquí."))+
+      '<header class="look-history-head"><div><small>Armario inteligente</small><h3>Historial de uso</h3><p>Lectura de usos registrados en la fuente canónica de Objetos.</p></div><div class="look-history-kpis"><span><small>Usos totales</small><strong>'+totalUses+'</strong></span><span><small>Últimos 30 días</small><strong>'+recentUses+'</strong></span></div></header>'+
+      '<div class="look-history-controls">'+
+        '<div class="look-history-mode" role="group" aria-label="Vista del historial"><button type="button" data-look-history-mode="looks" aria-pressed="'+(!isGarments)+'">Looks</button><button type="button" data-look-history-mode="garments" aria-pressed="'+isGarments+'">Prendas</button></div>'+
+        '<label>Ordenar por<select data-look-history-sort><option value="recent"'+(sort==="recent"?" selected":"")+'>Uso más reciente</option><option value="oldest"'+(sort==="oldest"?" selected":"")+'>Uso más antiguo</option><option value="total"'+(sort==="total"?" selected":"")+'>Más usos totales</option><option value="month"'+(sort==="month"?" selected":"")+'>Más usos · últimos 30 días</option></select></label>'+
       '</div>'+
+      '<div class="look-history-table-wrap"><table class="look-history-table" data-history-mode="'+e(mode)+'"><thead><tr><th>'+entityLabel+'</th><th>Último uso</th><th>Usos totales</th><th>Últimos 30 días</th><th>Fechas registradas</th></tr></thead><tbody>'+
+        (tableRows||'<tr><td colspan="5">'+empty("Todavía no hay usos registrados",isGarments?"Las prendas aparecerán cuando exista uso canónico o una fecha derivable de un look registrado.":"Los looks aparecerán cuando tengan historico_usos, ultimo_uso o veces_usado.")+'</td></tr>')+
+      '</tbody></table></div>'+
+      (isGarments?'<p class="look-history-note">En Prendas, las fechas se derivan de los usos registrados de los looks que contienen cada prenda y de su último uso canónico. El total usa Armario.veces_usado cuando existe. El cómputo de 30 días solo cuenta fechas disponibles.</p>':'<p class="look-history-note">En Looks, el total usa Looks.veces_usado cuando existe; las fechas proceden de historico_usos y ultimo_uso. El cómputo de 30 días solo cuenta fechas disponibles.</p>')+
     '</section>';
   body.querySelector("[data-look-history-back]")?.addEventListener("click",()=>{activeTab="looks";renderWorkspace(payload);});
+  body.querySelectorAll("[data-look-history-mode]").forEach(button=>button.addEventListener("click",()=>lookUsageHistoryView(payload,button.dataset.lookHistoryMode||"looks",sort)));
+  body.querySelector("[data-look-history-sort]")?.addEventListener("change",event=>lookUsageHistoryView(payload,mode,event.target.value||"recent"));
   body.querySelectorAll("[data-look-history-open]").forEach(button=>button.addEventListener("click",()=>{
     const look=(payload.looks||[]).find(x=>String(x.id)===String(button.dataset.lookHistoryOpen));
     if(look) detailLook(look,payload);
+  }));
+  body.querySelectorAll("[data-garment-history-open]").forEach(button=>button.addEventListener("click",()=>{
+    const item=(payload.objects||[]).find(x=>String(x.id)===String(button.dataset.garmentHistoryOpen));
+    if(item) detailObject(item,payload);
   }));
 }
 
