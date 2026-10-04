@@ -16062,6 +16062,51 @@ html[data-theme="dark"] .home-liquidity-account {
   line-height: 1.35;
 }
 
+.weekly-menu-entity-link {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--blue) 7%, transparent);
+  color: var(--blue);
+  font: inherit;
+  font-size: 6.7px;
+  font-weight: 850;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+
+.weekly-menu-entity-link:hover {
+  border-color: color-mix(in srgb, var(--blue) 48%, var(--line));
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+}
+
+.weekly-menu-entity-link:focus-visible {
+  outline: 2px solid #79a4f8;
+  outline-offset: 2px;
+}
+
+.weekly-menu-sync-note {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 6.2px;
+  line-height: 1.35;
+}
+
+.weekly-menu-sync-note.is-warning {
+  color: var(--orange);
+}
+
+.weekly-menu-ingredients-table td:first-child .weekly-menu-entity-link {
+  width: fit-content;
+}
+
 @media (max-width: 560px) {
   .weekly-menu-meal-main {
     grid-template-columns: minmax(0, 1fr) auto;
