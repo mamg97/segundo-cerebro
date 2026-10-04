@@ -182,3 +182,16 @@ Las imágenes generadas por ChatGPT pueden pasar temporalmente por la carpeta pr
 - Tras éxito, el archivo de staging se envía a papelera.
 - Las URLs que persisten en `Armario` apuntan únicamente a lectura privada same-origin de Segundo Cerebro.
 - No se publican secretos, tokens, rutas locales ni URLs firmadas externas.
+
+
+## Gym exercise library
+
+The public exercise catalogue is kept separate from private training data.
+
+- External catalogue requests contain only generic exercise search/filter terms.
+- Personal training state remains in the existing private sources.
+- Exercise media is resolved by the Worker and served through authenticated same-origin routes.
+- The media route only accepts resources resolved from the configured wger provider.
+- D1 stores only the minimal mapping between a canonical plan exercise and its public reference exercise.
+- Only resources with explicit license metadata are shown, and attribution remains visible.
+- Commercial or ambiguous third-party exercise media must not be copied into Segundo Cerebro.

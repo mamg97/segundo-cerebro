@@ -500,3 +500,30 @@ El procedimiento operativo detallado y el checklist de cierre están en `docs/OB
 El detalle patrimonial consume bajo demanda un export histórico privado de Delta. La referencia al spreadsheet vive en `IntegracionesPrivadas` de la fuente financiera; Git no contiene IDs reales ni operaciones.
 
 El Worker expone `GET /api/finance/delta`, protegido por la misma capa privada, con paginación y separación entre compraventas operativas y ajustes automáticos de sincronización. El navegador no descarga las miles de filas durante el arranque del Home: la consulta se realiza al abrir Patrimonio y se cachea brevemente en el Worker.
+
+
+## Salud — biblioteca visual de ejercicios
+
+La biblioteca de ejercicios amplía Gimnasio sin cambiar la autoridad del plan:
+
+```text
+wger público (catálogo + media con licencia)
+        ↓ lectura server-side
+Cloudflare Worker privado
+        ├── /api/gym/exercises
+        ├── /api/gym/exercises/:id
+        └── /api/gym/exercises/:id/media/...  ← proxy same-origin
+        ↓
+Salud → Gimnasio → Biblioteca / ficha técnica
+        │
+        ├── vincular ficha → D1 gym_exercise_links (mapping técnico)
+        └── añadir al plan → GimnasioPlan canónico
+                              ↓
+                        /api/gym normal
+```
+
+wger es una referencia externa de técnica y multimedia, no almacena ni recibe el estado personal del entrenamiento. Segundo Cerebro solo envía términos genéricos de búsqueda/filtros y recupera catálogo/media pública. Cargas, repeticiones realizadas, notas, histórico y objetivos permanecen en las fuentes privadas.
+
+La UI sirve vídeo/imagen mediante rutas same-origin autenticadas. Esto evita exponer una dependencia directa del navegador y permite validar host, recurso y licencia antes de retransmitirlo. El sistema no mantiene un mirror completo del catálogo: obtiene únicamente el contenido solicitado y usa caché efímera.
+
+La restricción de producto es coste incremental cero: no se introducen APIs premium, R2 ni licencias de pago para esta capacidad. La ausencia de media libre se representa explícitamente; nunca se rellena mediante scraping de proveedores comerciales.

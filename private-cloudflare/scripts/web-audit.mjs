@@ -1529,6 +1529,62 @@ try {
         const weightFreshness = await panel.locator(".health-recomp-kpis .health-metric-freshness").count();
         assertCheck(weightFreshness >= 6, "Salud · composición muestra freshness/cobertura por métrica", "n=" + weightFreshness);
       }
+      if (tab === "gym") {
+        const planButton = panel.locator('[data-gym-view="plan"]');
+        const libraryButton = panel.locator('[data-gym-view="library"]');
+        assertCheck(await planButton.count() === 1, "Salud · Gym conserva Mi plan");
+        assertCheck(await libraryButton.count() === 1, "Salud · Gym ofrece Biblioteca de ejercicios");
+
+        if (await libraryButton.count()) {
+          await libraryButton.click();
+          const libraryReady = await page.waitForFunction(() => {
+            const gym = document.querySelector('[data-health-panel="gym"]');
+            const status = gym?.querySelector("#gym-library-status")?.textContent || "";
+            return gym?.querySelectorAll(".gym-library-card").length > 0 ||
+              /no está disponible|no hay ejercicios/i.test(status);
+          }, null, { timeout: 16000 }).then(() => true).catch(() => false);
+
+          assertCheck(libraryReady, "Salud · Gym biblioteca termina de cargar");
+          const sourceText = normalizeAuditValue(await panel.locator(".gym-library-source").textContent().catch(() => ""));
+          assertCheck(
+            /wger/.test(sourceText) && /0 €/.test(sourceText),
+            "Salud · Gym biblioteca declara fuente libre y coste cero",
+            sourceText
+          );
+
+          const libraryCards = panel.locator(".gym-library-card");
+          const libraryCount = await libraryCards.count();
+          assertCheck(libraryCount > 0, "Salud · Gym biblioteca devuelve ejercicios", "n=" + libraryCount);
+
+          if (libraryCount > 0) {
+            const firstCard = libraryCards.first();
+            const hasMedia = await firstCard.locator(".gym-library-preview-media,.gym-library-video-placeholder").count() > 0;
+            assertCheck(hasMedia, "Salud · Gym ejercicio muestra recurso visual");
+            await firstCard.click();
+            const detailVisible = await panel.locator(".gym-exercise-detail-card")
+              .waitFor({ state: "visible", timeout: 12000 })
+              .then(() => true)
+              .catch(() => false);
+            assertCheck(detailVisible, "Salud · Gym abre ficha visual de ejercicio");
+            if (detailVisible) {
+              const detailMediaCount = await panel.locator(".gym-exercise-hero-media,.gym-exercise-hero-empty").count();
+              assertCheck(detailMediaCount === 1, "Salud · Gym ficha tiene demostración/referencia visual");
+              const attribution = normalizeAuditValue(
+                await panel.locator(".gym-exercise-attribution").textContent().catch(() => "")
+              );
+              assertCheck(
+                /fuente libre: wger/.test(attribution),
+                "Salud · Gym ficha conserva atribución",
+                attribution
+              );
+              assertCheck(
+                await panel.locator("#gym-library-add").count() === 1,
+                "Salud · Gym ficha permite añadir al plan sin ejecutar escritura"
+              );
+            }
+          }
+        }
+      }
       if (tab === "recipes") {
         const recipeCount = await panel.locator(".recipe-card").count();
         assertCheck(

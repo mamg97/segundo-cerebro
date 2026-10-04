@@ -471,3 +471,17 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Privacidad:** el frontend recibe una URL same-origin; el identificador bruto de Drive no forma parte del contrato visible. Git no almacena fotos ni contenido real de recetas.
 - **Integridad:** si faltan foto, ingredientes o pasos, la UI conserva el hueco como pendiente. Los pasos nunca se completan por inferencia.
 - **Motivo:** mantener la arquitectura data-driven, evitar una fuente paralela y permitir que los gestores capturen recetas futuras únicamente mutando las fuentes privadas autorizadas.
+
+
+## D-047 — Gimnasio usa una biblioteca visual libre sin cambiar la fuente canónica del plan
+
+- **Estado:** aceptada.
+- **Fecha:** 2026-10-04.
+- **Decisión:** incorporar una biblioteca visual de ejercicios basada en wger como fuente pública de referencia para técnica, músculos, equipo y multimedia con licencia.
+- **Fuente de verdad:** `GimnasioPlan` continúa siendo la autoridad del plan activo; las sesiones y progresión continúan en D1. wger no se convierte en una segunda rutina.
+- **Vinculación:** D1 `gym_exercise_links` guarda únicamente la relación entre un `exercise_id` del plan y una ficha externa. No guarda cargas, objetivos ni histórico.
+- **Altas:** añadir un ejercicio desde la biblioteca escribe una fila normal en `GimnasioPlan`; después se consume por el flujo existente.
+- **Multimedia:** imágenes/vídeos se resuelven server-side y se sirven por proxy same-origin. Solo se muestran assets con metadatos de licencia y la ficha conserva atribución visible.
+- **Coste:** la capacidad no puede introducir servicios, APIs o licencias de pago. Lyfta, RepDB Premium, ExerciseDB de pago y mirrors de procedencia dudosa no son fuentes válidas.
+- **Degradación:** si falta multimedia libre o wger está temporalmente indisponible, el plan/histórico siguen funcionando y la UI informa de la limitación.
+- **Motivo:** conseguir una experiencia visual tipo enciclopedia de ejercicios sin romper el diseño data-driven, la privacidad ni la regla de coste operativo cero.

@@ -5129,31 +5129,88 @@ function renderHealthEvent(event) {
     </article>`;
 }
 
-function renderGymPanel(data) {
-  const panel = document.querySelector("#gym-panel");
-  if (!panel) return;
+let gymPanelData = null;
+let gymLibraryMeta = null;
+let gymLibraryState = {
+  query: "",
+  muscle: "",
+  equipment: "",
+  category: "",
+  featured: "video",
+  contextPlanExerciseId: null,
+  results: []
+};
 
+function gymPlanExerciseLinkMap(data = gymPanelData) {
+  return new Map(
+    (Array.isArray(data?.exerciseLinks) ? data.exerciseLinks : [])
+      .map((item) => [String(item.planExerciseId || ""), item])
+      .filter(([id]) => id)
+  );
+}
+
+function gymPlanExerciseById(exerciseId, data = gymPanelData) {
+  const id = String(exerciseId || "");
+  for (const day of Array.isArray(data?.plan) ? data.plan : []) {
+    const exercise = (Array.isArray(day.exercises) ? day.exercises : []).find((item) => String(item.id) === id);
+    if (exercise) return { ...exercise, dayId: day.id, dayTitle: day.title };
+  }
+  return null;
+}
+
+function renderGymPlanReference(plan) {
+  return `
+    <section class="gym-plan-reference-section">
+      <div class="health-section-heading">
+        <div>
+          <strong>Tu plan actual</strong>
+          <p>Puedes abrir la técnica de cualquier ejercicio aunque el entrenamiento esté pausado.</p>
+        </div>
+      </div>
+      <div class="gym-plan-reference-grid">
+        ${plan.map((day) => `
+          <article class="gym-plan-reference-day">
+            <header>
+              <small>${escapeHtml(day.title || day.id)}</small>
+              <strong>${escapeHtml(day.focus || "")}</strong>
+            </header>
+            <div>
+              ${(day.exercises || []).map((exercise) => `
+                <button type="button" class="gym-plan-reference-exercise" data-gym-technique-id="${escapeHtml(exercise.id)}">
+                  <span>
+                    <strong>${escapeHtml(exercise.name)}</strong>
+                    <small>${escapeHtml(formatTarget(exercise))}</small>
+                  </span>
+                  <b>Técnica →</b>
+                </button>`).join("")}
+            </div>
+          </article>`).join("")}
+      </div>
+    </section>`;
+}
+
+function renderGymPlanView(data) {
   const plan = Array.isArray(data?.plan) ? data.plan : [];
   const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
   const progress = data?.progress && typeof data.progress === "object" ? data.progress : {};
   const trainingStatus = data?.trainingStatus && typeof data.trainingStatus === "object"
     ? data.trainingStatus
     : { paused: false };
-  const latestByExercise = getLatestGymEntries(sessions);
 
   if (!plan.length) {
-    panel.innerHTML = '<p class="health-empty">Todavía no hay un plan de entrenamiento conectado.</p>';
-    return;
+    return '<p class="health-empty">Todavía no hay un plan de entrenamiento conectado.</p>';
   }
 
   if (trainingStatus.paused) {
-    panel.innerHTML = `
+    return `
       <section class="gym-pause-card">
         <span>Recuperación temporal</span>
         <strong>Entrenamiento de fuerza pausado</strong>
         <p>${escapeHtml(trainingStatus.reason || "El objetivo activo marca una pausa temporal. El plan base se conserva para la reanudación.")}</p>
         <small>No se propone ni se registra una sesión mientras esta pausa siga activa.</small>
       </section>
+
+      ${renderGymPlanReference(plan)}
 
       <section class="gym-progress-section">
         <div class="health-section-heading">
@@ -5176,14 +5233,13 @@ function renderGymPanel(data) {
         </div>
         ${renderGymHistory(sessions)}
       </section>`;
-    return;
   }
 
   const lastDayId = sessions[0]?.dayId || null;
   const lastIndex = plan.findIndex((day) => day.id === lastDayId);
   const suggestedIndex = lastIndex >= 0 ? (lastIndex + 1) % plan.length : 0;
 
-  panel.innerHTML = `
+  return `
     <div class="gym-overview">
       <div>
         <span>Plan activo</span>
@@ -5245,7 +5301,71 @@ function renderGymPanel(data) {
       </div>
       ${renderGymHistory(sessions)}
     </section>`;
+}
 
+function renderGymLibraryShell() {
+  return `
+    <div class="gym-library-toolbar">
+      <form id="gym-library-search" class="gym-library-search">
+        <label>
+          <span>Buscar ejercicio</span>
+          <input id="gym-library-query" type="search" autocomplete="off" placeholder="Press banca, curl, dominadas…" value="${escapeHtml(gymLibraryState.query)}">
+        </label>
+        <label>
+          <span>Músculo</span>
+          <select id="gym-library-muscle"><option value="">Todos</option></select>
+        </label>
+        <label>
+          <span>Equipo</span>
+          <select id="gym-library-equipment"><option value="">Todo</option></select>
+        </label>
+        <button type="submit">Buscar</button>
+      </form>
+      <div class="gym-library-mode">
+        <button type="button" class="${gymLibraryState.featured === "video" ? "active" : ""}" data-gym-library-featured="video">Con vídeo</button>
+        <button type="button" class="${gymLibraryState.featured === "" ? "active" : ""}" data-gym-library-featured="">Todo el catálogo</button>
+      </div>
+      <p class="gym-library-source">Biblioteca libre · wger · 0 € · se conserva la atribución/licencia de cada recurso.</p>
+    </div>
+    <div id="gym-library-status" class="gym-library-status" role="status">Cargando biblioteca…</div>
+    <div id="gym-library-results" class="gym-library-grid"></div>
+    <div id="gym-library-detail" class="gym-library-detail" hidden></div>`;
+}
+
+function renderGymPanel(data) {
+  const panel = document.querySelector("#gym-panel");
+  if (!panel) return;
+  gymPanelData = data || {};
+  const plan = Array.isArray(data?.plan) ? data.plan : [];
+
+  panel.innerHTML = `
+    <div class="gym-view-switch" role="tablist" aria-label="Vista de gimnasio">
+      <button type="button" class="active" data-gym-view="plan">Mi plan</button>
+      <button type="button" data-gym-view="library">Biblioteca de ejercicios</button>
+    </div>
+    <section class="gym-view-panel active" data-gym-view-panel="plan">
+      ${renderGymPlanView(data)}
+    </section>
+    <section class="gym-view-panel" data-gym-view-panel="library" hidden>
+      ${renderGymLibraryShell()}
+    </section>`;
+
+  panel.querySelectorAll("[data-gym-view]").forEach((button) => {
+    button.addEventListener("click", () => setGymPanelView(button.dataset.gymView));
+  });
+
+  bindGymTechniqueButtons(panel);
+
+  const trainingStatus = data?.trainingStatus && typeof data.trainingStatus === "object"
+    ? data.trainingStatus
+    : { paused: false };
+  if (trainingStatus.paused || !plan.length) return;
+
+  const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
+  const lastDayId = sessions[0]?.dayId || null;
+  const lastIndex = plan.findIndex((day) => day.id === lastDayId);
+  const suggestedIndex = lastIndex >= 0 ? (lastIndex + 1) % plan.length : 0;
+  const latestByExercise = getLatestGymEntries(sessions);
   const planById = new Map(plan.map((day) => [day.id, day]));
   const initialDay = plan[suggestedIndex];
   renderGymDay(initialDay, latestByExercise);
@@ -5270,6 +5390,402 @@ function renderGymPanel(data) {
       await deleteGymSession(button.dataset.sessionId);
     });
   });
+}
+
+function setGymPanelView(view) {
+  const panel = document.querySelector("#gym-panel");
+  if (!panel) return;
+  const target = view === "library" ? "library" : "plan";
+  panel.querySelectorAll("[data-gym-view]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.gymView === target);
+  });
+  panel.querySelectorAll("[data-gym-view-panel]").forEach((section) => {
+    const active = section.dataset.gymViewPanel === target;
+    section.hidden = !active;
+    section.classList.toggle("active", active);
+  });
+  if (target === "library") void loadGymExerciseLibrary();
+}
+
+function bindGymTechniqueButtons(root = document) {
+  root.querySelectorAll("[data-gym-technique-id]").forEach((button) => {
+    if (button.dataset.bound === "1") return;
+    button.dataset.bound = "1";
+    button.addEventListener("click", () => {
+      const exercise = gymPlanExerciseById(button.dataset.gymTechniqueId);
+      if (!exercise) return;
+      void openGymTechniqueForPlanExercise(exercise);
+    });
+  });
+}
+
+async function openGymTechniqueForPlanExercise(exercise) {
+  setGymPanelView("library");
+  gymLibraryState.contextPlanExerciseId = exercise.id;
+  const link = gymPlanExerciseLinkMap().get(String(exercise.id));
+  if (link?.providerExerciseId) {
+    await openGymLibraryExercise(link.providerExerciseId, exercise.id);
+    return;
+  }
+  gymLibraryState.query = exercise.name || "";
+  const queryInput = document.querySelector("#gym-library-query");
+  if (queryInput) queryInput.value = gymLibraryState.query;
+  await loadGymExerciseLibrary({ autoOpenFirst: true, contextPlanExerciseId: exercise.id });
+}
+
+async function ensureGymLibraryMeta() {
+  if (gymLibraryMeta) return gymLibraryMeta;
+  const response = await fetch("/api/gym/exercises/meta", {
+    headers: { Accept: "application/json" },
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error("GYM_LIBRARY_META_" + response.status);
+  gymLibraryMeta = await response.json();
+  return gymLibraryMeta;
+}
+
+function populateGymLibraryFilters(meta) {
+  const muscle = document.querySelector("#gym-library-muscle");
+  const equipment = document.querySelector("#gym-library-equipment");
+  if (muscle && muscle.options.length <= 1) {
+    muscle.insertAdjacentHTML("beforeend", (meta?.muscles || []).map((item) =>
+      `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name || item.nameOriginal || "Músculo")}</option>`
+    ).join(""));
+  }
+  if (equipment && equipment.options.length <= 1) {
+    equipment.insertAdjacentHTML("beforeend", (meta?.equipment || []).map((item) =>
+      `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name || "Equipo")}</option>`
+    ).join(""));
+  }
+  if (muscle) muscle.value = gymLibraryState.muscle;
+  if (equipment) equipment.value = gymLibraryState.equipment;
+}
+
+function bindGymLibraryControls() {
+  const form = document.querySelector("#gym-library-search");
+  if (form && form.dataset.bound !== "1") {
+    form.dataset.bound = "1";
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      gymLibraryState.query = document.querySelector("#gym-library-query")?.value?.trim() || "";
+      gymLibraryState.muscle = document.querySelector("#gym-library-muscle")?.value || "";
+      gymLibraryState.equipment = document.querySelector("#gym-library-equipment")?.value || "";
+      gymLibraryState.featured = gymLibraryState.query || gymLibraryState.muscle || gymLibraryState.equipment ? "" : gymLibraryState.featured;
+      void loadGymExerciseLibrary({ force: true });
+    });
+  }
+  document.querySelectorAll("[data-gym-library-featured]").forEach((button) => {
+    if (button.dataset.bound === "1") return;
+    button.dataset.bound = "1";
+    button.addEventListener("click", () => {
+      gymLibraryState.featured = button.dataset.gymLibraryFeatured || "";
+      gymLibraryState.query = "";
+      gymLibraryState.muscle = "";
+      gymLibraryState.equipment = "";
+      const input = document.querySelector("#gym-library-query");
+      if (input) input.value = "";
+      void loadGymExerciseLibrary({ force: true });
+    });
+  });
+}
+
+function gymLibraryPreview(exercise, index) {
+  const video = exercise?.videos?.[0] || null;
+  const image = exercise?.images?.find((item) => item.isMain) || exercise?.images?.[0] || null;
+  if (video && index < 8) {
+    return `<video class="gym-library-preview-media" src="${escapeHtml(video.url)}" ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""} muted loop playsinline autoplay preload="metadata"></video>`;
+  }
+  if (image) {
+    return `<img class="gym-library-preview-media" src="${escapeHtml(image.previewUrl || image.originalUrl)}" alt="" loading="lazy">`;
+  }
+  if (video) {
+    return `<div class="gym-library-video-placeholder"><span>▶</span><small>Vídeo disponible</small></div>`;
+  }
+  return '<div class="gym-library-video-placeholder"><span>◇</span><small>Sin multimedia</small></div>';
+}
+
+function renderGymLibraryResults(exercises) {
+  const grid = document.querySelector("#gym-library-results");
+  const status = document.querySelector("#gym-library-status");
+  const detail = document.querySelector("#gym-library-detail");
+  if (!grid || !status) return;
+  if (detail) detail.hidden = true;
+  grid.hidden = false;
+  gymLibraryState.results = exercises;
+
+  if (!exercises.length) {
+    grid.innerHTML = "";
+    status.textContent = "No hay ejercicios que coincidan con esos filtros.";
+    return;
+  }
+
+  status.textContent = exercises.length + " ejercicios cargados";
+  grid.innerHTML = exercises.map((exercise, index) => {
+    const muscles = (exercise.muscles || []).map((item) => item.name).filter(Boolean).slice(0, 2).join(" · ");
+    const equipment = (exercise.equipment || []).map((item) => item.name).filter(Boolean).slice(0, 2).join(" · ");
+    return `
+      <button type="button" class="gym-library-card" data-gym-library-id="${escapeHtml(exercise.id)}">
+        <span class="gym-library-card-media">
+          ${gymLibraryPreview(exercise, index)}
+          ${exercise.hasVideo ? '<b class="gym-library-media-badge">▶ vídeo</b>' : ""}
+          ${exercise.inPlan ? '<b class="gym-library-plan-badge">En tu plan</b>' : ""}
+        </span>
+        <span class="gym-library-card-copy">
+          <strong>${escapeHtml(exercise.name)}</strong>
+          <small>${escapeHtml(muscles || exercise.category?.name || "Ejercicio")}</small>
+          <em>${escapeHtml(equipment || "Sin equipo indicado")}</em>
+        </span>
+      </button>`;
+  }).join("");
+
+  grid.querySelectorAll("[data-gym-library-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      void openGymLibraryExercise(button.dataset.gymLibraryId, gymLibraryState.contextPlanExerciseId);
+    });
+  });
+}
+
+async function loadGymExerciseLibrary(options = {}) {
+  const view = document.querySelector('[data-gym-view-panel="library"]');
+  if (!view || view.hidden) return;
+
+  bindGymLibraryControls();
+  const status = document.querySelector("#gym-library-status");
+  if (status) status.textContent = "Cargando biblioteca libre…";
+
+  if (options.contextPlanExerciseId !== undefined) {
+    gymLibraryState.contextPlanExerciseId = options.contextPlanExerciseId || null;
+  }
+
+  try {
+    const meta = await ensureGymLibraryMeta();
+    populateGymLibraryFilters(meta);
+    bindGymLibraryControls();
+
+    const params = new URLSearchParams();
+    const query = gymLibraryState.query || "";
+    if (query) params.set("q", query);
+    if (gymLibraryState.muscle) params.set("muscle", gymLibraryState.muscle);
+    if (gymLibraryState.equipment) params.set("equipment", gymLibraryState.equipment);
+    if (!query && !gymLibraryState.muscle && !gymLibraryState.equipment && gymLibraryState.featured) {
+      params.set("featured", gymLibraryState.featured);
+    }
+    params.set("limit", "24");
+
+    const response = await fetch("/api/gym/exercises?" + params.toString(), {
+      headers: { Accept: "application/json" },
+      cache: options.force ? "reload" : "no-store"
+    });
+    if (!response.ok) throw new Error("GYM_LIBRARY_" + response.status);
+    const payload = await response.json();
+    renderGymLibraryResults(Array.isArray(payload.exercises) ? payload.exercises : []);
+
+    if (options.autoOpenFirst && payload.exercises?.[0]) {
+      await openGymLibraryExercise(payload.exercises[0].id, gymLibraryState.contextPlanExerciseId);
+    }
+  } catch (error) {
+    const grid = document.querySelector("#gym-library-results");
+    if (grid) grid.innerHTML = "";
+    if (status) status.textContent = "La biblioteca libre no está disponible ahora. Tu plan y tu histórico siguen intactos.";
+    console.warn("Gym exercise library load failed", error);
+  }
+}
+
+function gymExerciseLicenseText(exercise) {
+  const media = exercise?.videos?.[0] || exercise?.images?.[0] || null;
+  const license = media?.license || exercise?.license || null;
+  const parts = [
+    license?.title || "Licencia declarada por wger",
+    license?.author ? "Autor: " + license.author : null
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
+function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
+  const grid = document.querySelector("#gym-library-results");
+  const status = document.querySelector("#gym-library-status");
+  const detail = document.querySelector("#gym-library-detail");
+  if (!detail) return;
+  if (grid) grid.hidden = true;
+  if (status) status.textContent = "";
+
+  const video = exercise?.videos?.find((item) => item.isMain) || exercise?.videos?.[0] || null;
+  const image = exercise?.images?.find((item) => item.isMain) || exercise?.images?.[0] || null;
+  const planExercise = contextPlanExerciseId ? gymPlanExerciseById(contextPlanExerciseId) : null;
+  const existingLink = contextPlanExerciseId ? gymPlanExerciseLinkMap().get(String(contextPlanExerciseId)) : null;
+  const linkedToThis = existingLink && String(existingLink.providerExerciseId) === String(exercise.id);
+  const days = Array.isArray(gymPanelData?.plan) ? gymPanelData.plan : [];
+  const muscleNames = (exercise.muscles || []).map((item) => item.name).filter(Boolean);
+  const secondaryNames = (exercise.secondaryMuscles || []).map((item) => item.name).filter(Boolean);
+  const equipmentNames = (exercise.equipment || []).map((item) => item.name).filter(Boolean);
+
+  const mediaMarkup = video
+    ? `<video class="gym-exercise-hero-media" src="${escapeHtml(video.url)}" ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""} controls autoplay muted loop playsinline preload="metadata"></video>`
+    : image
+      ? `<img class="gym-exercise-hero-media" src="${escapeHtml(image.originalUrl || image.previewUrl)}" alt="${escapeHtml(exercise.name)}">`
+      : '<div class="gym-exercise-hero-empty">Sin recurso visual disponible</div>';
+
+  detail.hidden = false;
+  detail.innerHTML = `
+    <button type="button" class="gym-library-back" id="gym-library-back">← Volver a la biblioteca</button>
+    <article class="gym-exercise-detail-card">
+      <div class="gym-exercise-detail-media">
+        ${mediaMarkup}
+        <span class="gym-exercise-media-caption">${video ? "Demostración en bucle" : image ? "Referencia visual" : "Sin multimedia"} · wger</span>
+      </div>
+      <div class="gym-exercise-detail-copy">
+        <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>
+        <h3>${escapeHtml(exercise.name)}</h3>
+        <div class="gym-exercise-tags">
+          ${muscleNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
+          ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}
+        </div>
+        ${exercise.description ? `<p class="gym-exercise-description">${escapeHtml(exercise.description)}</p>` : '<p class="gym-exercise-description is-muted">wger no aporta instrucciones textuales para esta variante.</p>'}
+        <dl class="gym-exercise-anatomy">
+          <div><dt>Principal</dt><dd>${escapeHtml(muscleNames.join(", ") || "—")}</dd></div>
+          <div><dt>Secundarios</dt><dd>${escapeHtml(secondaryNames.join(", ") || "—")}</dd></div>
+          <div><dt>Equipo</dt><dd>${escapeHtml(equipmentNames.join(", ") || "—")}</dd></div>
+        </dl>
+
+        ${planExercise ? `
+          <section class="gym-library-link-card">
+            <small>Ejercicio de tu plan</small>
+            <strong>${escapeHtml(planExercise.name)}</strong>
+            <button type="button" id="gym-link-current-exercise" ${linkedToThis ? "disabled" : ""}>
+              ${linkedToThis ? "Ficha vinculada ✓" : "Usar esta ficha para mi ejercicio"}
+            </button>
+          </section>` : ""}
+
+        <section class="gym-library-add-card">
+          <div>
+            <small>Añadir al plan</small>
+            <strong>${exercise.inPlan ? "Este ejercicio ya está asociado a tu plan" : "Configura la entrada inicial"}</strong>
+          </div>
+          <div class="gym-library-add-fields">
+            <label><span>Día</span><select id="gym-library-add-day">
+              ${days.map((day) => `<option value="${escapeHtml(day.id)}">${escapeHtml(day.title || day.id)}</option>`).join("")}
+            </select></label>
+            <label><span>Series</span><input id="gym-library-add-sets" type="number" min="1" max="12" value="3"></label>
+            <label><span>Reps</span><input id="gym-library-add-reps" type="text" maxlength="30" value="8-12"></label>
+          </div>
+          <button type="button" id="gym-library-add" ${exercise.inPlan || !days.length ? "disabled" : ""}>
+            ${exercise.inPlan ? "Ya está en tu plan" : "Añadir al plan"}
+          </button>
+          <p id="gym-library-action-status" class="gym-library-action-status"></p>
+        </section>
+
+        <footer class="gym-exercise-attribution">
+          <strong>Fuente libre: wger</strong>
+          <span>${escapeHtml(gymExerciseLicenseText(exercise))}</span>
+          <small>Segundo Cerebro no copia contenido premium ni multimedia de Lyfta/RepDB.</small>
+        </footer>
+      </div>
+    </article>`;
+
+  document.querySelector("#gym-library-back")?.addEventListener("click", () => {
+    detail.hidden = true;
+    if (grid) grid.hidden = false;
+    if (status) status.textContent = gymLibraryState.results.length + " ejercicios cargados";
+    gymLibraryState.contextPlanExerciseId = null;
+  });
+
+  document.querySelector("#gym-link-current-exercise")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const actionStatus = document.querySelector("#gym-library-action-status");
+    button.disabled = true;
+    if (actionStatus) actionStatus.textContent = "Vinculando ficha…";
+    try {
+      const response = await fetch("/api/gym/exercise-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          planExerciseId: contextPlanExerciseId,
+          providerExerciseId: exercise.id
+        })
+      });
+      if (!response.ok) throw new Error("GYM_LINK_" + response.status);
+      const payload = await response.json();
+      const links = Array.isArray(gymPanelData.exerciseLinks) ? gymPanelData.exerciseLinks : [];
+      gymPanelData.exerciseLinks = links.filter((item) => String(item.planExerciseId) !== String(contextPlanExerciseId)).concat(payload.link);
+      exercise.inPlan = true;
+      button.textContent = "Ficha vinculada ✓";
+      if (actionStatus) actionStatus.textContent = "Ficha visual vinculada a tu ejercicio.";
+    } catch (error) {
+      button.disabled = false;
+      if (actionStatus) actionStatus.textContent = "No se ha podido vincular la ficha.";
+      console.warn("Gym exercise link save failed", error);
+    }
+  });
+
+  document.querySelector("#gym-library-add")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const actionStatus = document.querySelector("#gym-library-action-status");
+    const dayId = document.querySelector("#gym-library-add-day")?.value || "";
+    const setsTarget = document.querySelector("#gym-library-add-sets")?.value || "3";
+    const repsTarget = document.querySelector("#gym-library-add-reps")?.value || "8-12";
+    button.disabled = true;
+    if (actionStatus) actionStatus.textContent = "Añadiendo a la fuente canónica…";
+    try {
+      const response = await fetch("/api/gym/plan/exercise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          dayId,
+          providerExerciseId: exercise.id,
+          setsTarget,
+          repsTarget
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (payload.code === "GYM_EXERCISE_ALREADY_IN_PLAN") {
+          exercise.inPlan = true;
+          button.textContent = "Ya está en tu plan";
+          if (actionStatus) actionStatus.textContent = "Ese ejercicio ya estaba en el plan.";
+          return;
+        }
+        throw new Error(payload.code || "GYM_PLAN_WRITE_" + response.status);
+      }
+      exercise.inPlan = true;
+      button.textContent = "Añadido ✓";
+      const day = (gymPanelData.plan || []).find((item) => String(item.id) === String(dayId));
+      if (day) {
+        day.exercises = [...(day.exercises || []), {
+          id: payload.added.exerciseId,
+          name: payload.added.exerciseName,
+          setsTarget: payload.added.setsTarget,
+          repsTarget: payload.added.repsTarget,
+          order: (day.exercises?.length || 0) + 1
+        }];
+      }
+      gymPanelData.exerciseLinks = [...(gymPanelData.exerciseLinks || []), payload.link].filter(Boolean);
+      if (actionStatus) actionStatus.textContent = "Añadido al plan y guardado en GimnasioPlan.";
+    } catch (error) {
+      button.disabled = false;
+      if (actionStatus) actionStatus.textContent = "No se ha podido añadir al plan.";
+      console.warn("Gym plan exercise add failed", error);
+    }
+  });
+}
+
+async function openGymLibraryExercise(exerciseId, contextPlanExerciseId = null) {
+  const status = document.querySelector("#gym-library-status");
+  if (status) status.textContent = "Cargando ficha…";
+  try {
+    let exercise = gymLibraryState.results.find((item) => String(item.id) === String(exerciseId)) || null;
+    if (!exercise || !exercise.description) {
+      const response = await fetch("/api/gym/exercises/" + encodeURIComponent(exerciseId), {
+        headers: { Accept: "application/json" },
+        cache: "no-store"
+      });
+      if (!response.ok) throw new Error("GYM_EXERCISE_" + response.status);
+      exercise = (await response.json()).exercise;
+    }
+    renderGymLibraryDetail(exercise, contextPlanExerciseId);
+  } catch (error) {
+    if (status) status.textContent = "No se ha podido abrir la ficha de este ejercicio.";
+    console.warn("Gym exercise detail load failed", error);
+  }
 }
 
 function getLatestGymEntries(sessions) {
@@ -5308,7 +5824,10 @@ function renderGymDay(day, latestByExercise = new Map()) {
         return `
         <article class="gym-exercise-row" data-exercise-id="${escapeHtml(exercise.id)}">
           <div class="gym-exercise-info">
-            <strong>${escapeHtml(exercise.name)}</strong>
+            <div class="gym-exercise-title-row">
+              <strong>${escapeHtml(exercise.name)}</strong>
+              <button type="button" class="gym-technique-button" data-gym-technique-id="${escapeHtml(exercise.id)}">Técnica</button>
+            </div>
             <span>${escapeHtml(formatTarget(exercise))}</span>
             ${exercise.loadNote ? `<small>Referencia: ${escapeHtml(exercise.loadNote)}</small>` : ""}
             ${latestLabel ? `<small class="gym-last-record">${escapeHtml(latestLabel)}</small>` : ""}
@@ -5352,6 +5871,7 @@ function renderGymDay(day, latestByExercise = new Map()) {
       if (input) input.value = select.value;
     });
   });
+  bindGymTechniqueButtons(container);
 }
 
 function renderMobileRepOptions(currentValue) {

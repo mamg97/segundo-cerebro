@@ -345,3 +345,17 @@ El auditor debe abrir Salud y comparar los valores principales de esos cinco res
 La tendencia semanal de peso solo se presenta como cambio semanal interpretable cuando existen al menos 5 días con peso en la ventana actual de 7 días y 5 días en la ventana previa. Con cobertura menor, Home y Salud muestran la media disponible y la cobertura, pero no convierten el delta parcial en un juicio de recomposición.
 
 Composición corporal debe mostrar freshness/cobertura junto a último peso, media 7 d, cambio semanal, cintura, grasa y masa magra.
+
+## Salud · biblioteca visual de ejercicios
+
+El auditor debe comprobar la capacidad de biblioteca de Gimnasio sin ejecutar ninguna escritura:
+
+- `Salud → Gimnasio` conserva la vista `Mi plan` y ofrece `Biblioteca de ejercicios`.
+- La biblioteca termina de cargar y declara `wger` como fuente libre con coste `0 €`.
+- La vista inicial `Con vídeo` devuelve al menos una tarjeta cuando la fuente pública está operativa.
+- Cada tarjeta tiene un recurso visual o un placeholder explícito; no debe romper el layout por ausencia de media.
+- Abrir una tarjeta debe mostrar una ficha visual con demostración/referencia y atribución visible.
+- Debe existir el control `Añadir al plan`, pero la auditoría **nunca** debe pulsarlo ni pulsar el control de vinculación, porque ambos escriben en fuentes privadas.
+- La disponibilidad de la biblioteca no puede ocultar ni sustituir el plan/histórico canónico.
+- Los perfiles responsive siguen siendo desktop-wide, desktop, tablet, mobile-wide y mobile; la parrilla de biblioteca debe mantener 4/3/2 columnas según espacio y la ficha debe colapsar a una columna en móvil.
+- Un 5xx persistente de las rutas de biblioteca se clasifica como fallo de fuente externa/integración. Una degradación visual explícita no debe eliminar ni corromper el plan existente.
