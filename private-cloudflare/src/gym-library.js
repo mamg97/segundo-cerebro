@@ -303,7 +303,7 @@ function clampInteger(value, min, max, fallback) {
 }
 
 async function featuredVideoExercises(limit, offset) {
-  const videoPayload = await fetchWgerJson("/exercisevideo/", {
+  const videoPayload = await fetchWgerJson("/video/", {
     limit: Math.min(80, Math.max(24, limit * 3)),
     offset,
     ordering: "-id"
