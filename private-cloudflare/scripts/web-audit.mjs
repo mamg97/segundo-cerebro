@@ -1307,6 +1307,39 @@ try {
     }
   }
 
+  const homeRecipeRows = visibleRows.filter((item) => item?.recipeId && item?.recipe);
+  const homeRecipeLinks = page.locator("#home-weekly-menu-content [data-home-menu-recipe-open]");
+  const homeRecipeLinkCount = await homeRecipeLinks.count();
+  assertCheck(
+    homeRecipeLinkCount === homeRecipeRows.length,
+    "Home · cada comida con receta tiene enlace directo",
+    `UI=${homeRecipeLinkCount} API=${homeRecipeRows.length}`
+  );
+
+  if (homeRecipeLinkCount > 0) {
+    const trigger = homeRecipeLinks.first();
+    const expectedRecipeId = await trigger.getAttribute("data-home-menu-recipe-open");
+    await trigger.click();
+    await page.locator("#detail-dialog[open]").waitFor({ state: "visible", timeout: 12000 }).catch(() => {});
+    const recipePanelActive = await page.locator('[data-health-panel="recipes"].active').count() === 1;
+    const openedRecipeId = await page.locator('[data-health-panel="recipes"] .recipe-detail-card').getAttribute("data-recipe-id").catch(() => null);
+    assertCheck(
+      recipePanelActive && openedRecipeId === expectedRecipeId,
+      "Home · enlace abre la receta exacta",
+      `esperada=${expectedRecipeId || "∅"} abierta=${openedRecipeId || "∅"}`
+    );
+    const backToHome = page.locator('[data-health-panel="recipes"] [data-recipes-back]');
+    assertCheck(await backToHome.count() === 1, "Home · receta ofrece Volver al resumen");
+    if (await backToHome.count()) {
+      await backToHome.click();
+      await page.waitForTimeout(100);
+      assertCheck(
+        await page.locator("#detail-dialog[open]").count() === 0,
+        "Home · Volver al resumen cierra la ficha de receta"
+      );
+    }
+  }
+
   const navIds = await page.locator("[data-nav-area-id]").evaluateAll((nodes) =>
     [...new Set(nodes.map((node) => node.dataset.navAreaId).filter(Boolean))]
   );
