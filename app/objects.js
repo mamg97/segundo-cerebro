@@ -153,13 +153,42 @@ function lookMosaic(look,payload) {
   return '<span class="look-mosaic">'+images.map(src=>'<img loading="lazy" src="'+e(src)+'" alt="">').join("")+'</span>';
 }
 
+function lookUsageEntries(payload) {
+  const entries=[];
+  for (const look of payload.looks||[]) {
+    const dates=[...(look.usageHistory||[])];
+    if (look.lastUsed && !dates.includes(look.lastUsed)) dates.push(look.lastUsed);
+    for (const date of [...new Set(dates.filter(Boolean).map(value=>String(value).trim()))]) {
+      entries.push({date,look});
+    }
+  }
+  return entries.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+}
+
 function looksView(payload) {
   if (pending(payload)) return pendingView();
-  const rows=payload.looks||[], office=rows.filter(x=>x.office===true).length;
+  const rows=payload.looks||[], office=rows.filter(x=>x.office===true).length, usages=lookUsageEntries(payload).length;
   return '<section class="objects-callout"><div><small>Armario inteligente</small><strong>Looks guardados</strong><p>Pulsa un look para ampliar su imagen y ver las prendas reales que lo componen.</p></div><span>'+office+' oficina</span></section>'+
-    '<div class="looks-actions"><button class="objects-primary-action" type="button" data-look-builder>Crear look visual</button></div><div class="looks-grid">'+
+    '<div class="looks-actions"><button class="objects-secondary-action" type="button" data-look-history>Historial de uso'+(usages?' · '+usages:'')+'</button><button class="objects-primary-action" type="button" data-look-builder>Crear look visual</button></div><div class="looks-grid">'+
     (rows.length?rows.map(x=>'<article class="look-card" role="button" tabindex="0" data-look-open="'+e(x.id)+'" aria-label="Abrir '+e(x.name||"look")+'"><div class="look-visual">'+lookMosaic(x,payload)+'</div><div class="look-body"><span class="look-tags">'+(x.office===true?'<b>Oficina</b>':'')+(x.season?'<b>'+e(x.season)+'</b>':'')+(x.formality?'<b>'+e(x.formality)+'</b>':'')+'</span><strong>'+e(x.name||"Look")+'</strong><p>'+e((x.items||[]).map(i=>i.name).filter(Boolean).join(" · ")||"Sin prendas vinculadas")+'</p><small>'+e(x.context||"Contexto sin indicar")+' · '+(x.lastUsed?"último uso "+e(d(x.lastUsed)):"sin uso reciente")+'</small></div></article>').join(""):empty("Todavía no hay looks","El combinador puede crear el primero reutilizando prendas reales."))+
     '</div>';
+}
+
+function lookUsageHistoryView(payload) {
+  const body=document.querySelector("#dialog-body");
+  const entries=lookUsageEntries(payload), usedLooks=new Set(entries.map(entry=>String(entry.look.id))).size;
+  body.innerHTML='<button class="objects-back" data-look-history-back type="button">← Volver a Looks</button>'+
+    '<section class="look-history">'+
+      '<header class="look-history-head"><div><small>Armario inteligente</small><h3>Historial de looks usados</h3><p>Usos registrados en la fuente canónica de Objetos.</p></div><div class="look-history-kpis"><span><small>Usos</small><strong>'+entries.length+'</strong></span><span><small>Looks</small><strong>'+usedLooks+'</strong></span></div></header>'+
+      '<div class="look-history-list">'+
+        (entries.length?entries.map(({date,look})=>'<button class="look-history-item" type="button" data-look-history-open="'+e(look.id)+'"><span class="look-history-image">'+lookMosaic(look,payload)+'</span><span class="look-history-date"><small>Usado</small><strong>'+e(d(date))+'</strong></span><span class="look-history-copy"><strong>'+e(look.name||"Look")+'</strong><small>'+e([look.context,look.formality,look.season].filter(Boolean).join(" · ")||"Sin contexto registrado")+'</small></span><span class="look-history-arrow" aria-hidden="true">→</span></button>').join(""):empty("Todavía no hay usos registrados","Cuando un look tenga histórico_usos o último_uso aparecerá aquí."))+
+      '</div>'+
+    '</section>';
+  body.querySelector("[data-look-history-back]")?.addEventListener("click",()=>{activeTab="looks";renderWorkspace(payload);});
+  body.querySelectorAll("[data-look-history-open]").forEach(button=>button.addEventListener("click",()=>{
+    const look=(payload.looks||[]).find(x=>String(x.id)===String(button.dataset.lookHistoryOpen));
+    if(look) detailLook(look,payload);
+  }));
 }
 
 function builderOptions(rows,role) {
@@ -264,6 +293,7 @@ function bind(payload) {
   const body=document.querySelector("#dialog-body");
   body.querySelectorAll("[data-objects-tab]").forEach(b=>b.addEventListener("click",()=>{activeTab=b.dataset.objectsTab||"summary";objectsFlash="";renderWorkspace(payload);}));
   body.querySelectorAll("[data-look-builder]").forEach(b=>b.addEventListener("click",()=>{activeTab="builder";objectsFlash="";renderWorkspace(payload);}));
+  body.querySelectorAll("[data-look-history]").forEach(b=>b.addEventListener("click",()=>lookUsageHistoryView(payload)));
   body.querySelectorAll("[data-object-open]").forEach(b=>b.addEventListener("click",()=>{const item=(payload.objects||[]).find(x=>String(x.id)===String(b.dataset.objectOpen));if(item)detailObject(item,payload);}));
   body.querySelectorAll("[data-look-open]").forEach(card=>{
     const open=()=>{const look=(payload.looks||[]).find(x=>String(x.id)===String(card.dataset.lookOpen));if(look)detailLook(look,payload);};
