@@ -10,8 +10,8 @@ import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
-import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
-import { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, fetchEventSheetHomeSummary, fetchEventSheetDetail, syncCalendarEventsToEventsSheet, createEventSheetRecord, updateEventSheetRecord, appendEventSheetFact, appendEventSheetReference } from "./events-sheet.js";
+import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, fetchEventLedgerSnapshot, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
+import { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, fetchEventSheetHomeSummary, fetchEventSheetDetail, syncCalendarEventsToEventsSheet, migrateLegacyEventLedgerToSheet, createEventSheetRecord, updateEventSheetRecord, appendEventSheetFact, appendEventSheetReference } from "./events-sheet.js";
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
 import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
 import { googleReadFetch } from "./google-read.js";
@@ -5526,7 +5526,21 @@ export default {
       };
 
       // Eventos usa el Sheet privado como fuente canónica. D1 queda como espejo técnico/fallback.
-      // La sincronización nunca debe bloquear la carga del dashboard.
+      // Migra una sola fuente histórica de D1 de forma idempotente para no perder crónica previa.
+      try {
+        if (hasEventsGoogleConfig(env)) {
+          await withStateTimeout(
+            fetchEventLedgerSnapshot(env)
+              .then((legacy) => migrateLegacyEventLedgerToSheet(env, getGoogleAccessToken, legacy)),
+            3000,
+            "EventsLegacyMigration"
+          );
+        }
+      } catch (error) {
+        console.warn("Events legacy migration deferred", String(error?.message || error));
+      }
+
+      // La reconciliación del calendario nunca debe bloquear la carga del dashboard.
       try {
         if (hasEventsGoogleConfig(env)) {
           await withStateTimeout(

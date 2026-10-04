@@ -156,11 +156,18 @@ function matchRule(event, rules) {
   }) || null;
 }
 
+function isNonEventOperationalReminder(event) {
+  const text = normalize([event?.title, event?.location, event?.locationRef].filter(Boolean).join(" "));
+  return /(^|\b)(cobro|pago|pagar|ingresar|cuota|recibo|cargo|transferencia|transferir|saldo|paypal|tarjeta)(\b|$)/.test(text)
+    || /check[ -]?in|facturacion|recordatorio/.test(text);
+}
+
 function inferCalendarEventKind(event) {
   const text = normalize([event?.title, event?.location, event?.locationRef].filter(Boolean).join(" "));
-  if (/viaje|vuelo|escapada|hotel|airbnb|puy du fou/.test(text)) return "travel";
+  if (isNonEventOperationalReminder(event)) return null;
   if (/cumple|cumpleanos/.test(text)) return "birthday";
-  if (/boda|preboda|celebracion|aniversario/.test(text)) return "social";
+  if (/boda|preboda|celebracion|aniversario|brunch|comida|cena|concierto|teatro|fiesta|quedada/.test(text)) return "social";
+  if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|airbnb/.test(text)) return "travel";
   return null;
 }
 
@@ -516,6 +523,124 @@ export async function syncCalendarEventsToEventsSheet(env, getGoogleAccessToken,
   if (appends.length) await appendRows(spreadsheetId, token, "Eventos", appends, "Q");
   invalidateEventsSheetCache();
   return changed;
+}
+
+export async function migrateLegacyEventLedgerToSheet(env, getGoogleAccessToken, legacySnapshot) {
+  if (!legacySnapshot || !hasEventsGoogleConfig(env)) return { events: 0, facts: 0, references: 0 };
+
+  const source = await fetchEventsSheetSource(env, getGoogleAccessToken, { force: true });
+  if (!source.value?.source?.available) return { events: 0, facts: 0, references: 0 };
+
+  const token = await getGoogleAccessToken(env);
+  const spreadsheetId = source.value.spreadsheetId || await resolveSpreadsheetId(env, token);
+  const existingEvents = source.value.events || [];
+  const existingFacts = new Set((source.value.facts || []).map((item) => item.id));
+  const existingRefs = new Set((source.value.references || []).map((item) => item.id));
+  const idMap = new Map();
+
+  const eventAppends = [];
+  const factAppends = [];
+  const refAppends = [];
+  let updatedEvents = 0;
+
+  for (const legacy of Array.isArray(legacySnapshot.events) ? legacySnapshot.events : []) {
+    if (!legacy?.id || !legacy?.startsAt || isNonEventOperationalReminder(legacy)) continue;
+    const day = eventDay(legacy.startsAt);
+    let target = existingEvents.find((item) => item.id === legacy.id)
+      || (legacy.calendarRef && existingEvents.find((item) => item.calendarRef === legacy.calendarRef))
+      || existingEvents.find((item) =>
+        eventDay(item.startsAt) === day &&
+        normalize(item.title) === normalize(legacy.title)
+      );
+
+    if (!target) {
+      const next = {
+        id: trim(legacy.id, 500),
+        title: trim(legacy.title || "Evento", 240),
+        kind: trim(legacy.kind || "important", 40).toLowerCase(),
+        status: trim(legacy.status || "CONFIRMADO", 24).toUpperCase(),
+        startsAt: dateOrNull(legacy.startsAt),
+        endsAt: dateOrNull(legacy.endsAt) || dateOrNull(legacy.startsAt),
+        location: nullable(legacy.location, 500),
+        participants: Array.isArray(legacy.participants) ? legacy.participants.slice(0, 50) : [],
+        calendarRef: nullable(legacy.calendarRef, 1000),
+        financeRef: nullable(legacy.financeRef, 500),
+        objectsListRef: nullable(legacy.objectsListRef, 500),
+        summary: nullable(legacy.summary, 4000),
+        finalSummary: nullable(legacy.finalSummary, 8000),
+        sensitivity: nullable(legacy.sensitivity, 40) || "confidencial",
+        sourceProvider: "d1-migration",
+        sourceUpdatedAt: nullable(legacy.updatedAt, 100),
+        updatedAt: nullable(legacy.updatedAt, 100) || new Date().toISOString()
+      };
+      eventAppends.push(eventToRow(next));
+      target = { ...next, _rowNumber: null };
+      existingEvents.push(target);
+    } else if (target._rowNumber) {
+      const next = {
+        ...target,
+        calendarRef: target.calendarRef || nullable(legacy.calendarRef, 1000),
+        financeRef: target.financeRef || nullable(legacy.financeRef, 500),
+        objectsListRef: target.objectsListRef || nullable(legacy.objectsListRef, 500),
+        summary: target.summary || nullable(legacy.summary, 4000),
+        finalSummary: target.finalSummary || nullable(legacy.finalSummary, 8000),
+        participants: target.participants?.length ? target.participants : (Array.isArray(legacy.participants) ? legacy.participants.slice(0, 50) : []),
+        updatedAt: target.updatedAt || nullable(legacy.updatedAt, 100) || new Date().toISOString()
+      };
+      const changed = JSON.stringify(eventToRow(next)) !== JSON.stringify(eventToRow(target));
+      if (changed) {
+        await updateRow(spreadsheetId, token, "Eventos", target._rowNumber, eventToRow(next), "Q");
+        Object.assign(target, next);
+        updatedEvents += 1;
+      }
+    }
+
+    idMap.set(legacy.id, target.id);
+  }
+
+  for (const fact of Array.isArray(legacySnapshot.facts) ? legacySnapshot.facts : []) {
+    if (!fact?.id || existingFacts.has(fact.id)) continue;
+    const targetEventId = idMap.get(fact.eventId);
+    if (!targetEventId) continue;
+    factAppends.push(factToRow({
+      id: fact.id,
+      eventId: targetEventId,
+      type: fact.type || "NOTA",
+      summary: fact.summary,
+      happenedAt: fact.happenedAt,
+      sourceProvider: fact.sourceProvider,
+      sourceRef: fact.sourceRef,
+      createdAt: fact.createdAt
+    }));
+    existingFacts.add(fact.id);
+  }
+
+  for (const ref of Array.isArray(legacySnapshot.references) ? legacySnapshot.references : []) {
+    if (!ref?.id || existingRefs.has(ref.id)) continue;
+    const targetEventId = idMap.get(ref.eventId);
+    if (!targetEventId) continue;
+    refAppends.push(refToRow({
+      id: ref.id,
+      eventId: targetEventId,
+      type: ref.type,
+      sourceProvider: ref.sourceProvider || "other",
+      sourceRef: ref.sourceRef,
+      label: ref.label,
+      createdAt: ref.createdAt
+    }));
+    existingRefs.add(ref.id);
+  }
+
+  await appendRows(spreadsheetId, token, "Eventos", eventAppends, "Q");
+  await appendRows(spreadsheetId, token, "EventoHechos", factAppends, "H");
+  await appendRows(spreadsheetId, token, "EventoRefs", refAppends, "G");
+
+  if (eventAppends.length || factAppends.length || refAppends.length || updatedEvents) invalidateEventsSheetCache();
+  return {
+    events: eventAppends.length + updatedEvents,
+    facts: factAppends.length,
+    references: refAppends.length
+  };
 }
 
 export async function createEventSheetRecord(env, getGoogleAccessToken, payload) {
