@@ -33,7 +33,7 @@ test("Home and Health share guarded weight trend semantics", () => {
 });
 
 test("Health summary layout supports five equal desktop metrics", () => {
-  assert.match(css, /v0\.41\.5 — Health overview mirrors Home semantics/);
+  assert.match(css, /v0\.41\.6 — Health overview mirrors Home semantics/);
   assert.match(css, /\.health-dashboard-status\s*\{[\s\S]*?grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.health-metric-freshness\s*\{/);
 });
