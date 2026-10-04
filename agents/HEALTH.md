@@ -355,3 +355,20 @@ Operational cadence:
 - a stale Home weight must therefore be diagnosed first as a device/HealthKit/bridge delivery issue, not “fixed” by manually overwriting `MedicionesCorporalesApple`.
 
 The derived Sheet remains useful for analysis and audit. It may lag D1 until its normal derived-history refresh executes; that lag must never cause the Home to ignore a newer D1 sample.
+
+
+## Gym exercise library contract
+
+The visual exercise library is an external **read-only reference layer**, not a new source of truth for the user's training plan.
+
+- Canonical plan: the private `GimnasioPlan` table already consumed by Segundo Cerebro.
+- Completed sessions and progression: private D1 gym session tables.
+- Reference catalogue: public wger exercise API.
+- Technical mapping: D1 `gym_exercise_links` only links an existing canonical `exercise_id` to a wger exercise. It does not copy the plan, targets, loads or session history.
+- Adding an exercise from the library must append a normal row to canonical `GimnasioPlan`; future rendering then comes from the same plan reader as every other exercise.
+- Linking an existing plan exercise to a visual reference must never rename or rewrite the canonical exercise implicitly.
+- Media is fetched server-side and exposed only through authenticated same-origin Gym media routes. The browser must not receive a direct dependency on a premium provider.
+- Only media with explicit license metadata may be exposed. Attribution/license information must remain visible on the exercise detail.
+- The library must introduce **no paid dependency**. Do not scrape Lyfta, RepDB Premium, ExerciseDB paid assets, or ambiguous third-party mirrors merely to improve coverage.
+- If wger has no licensed media for an exercise, the UI must show that limitation rather than fabricate or copy a paid animation.
+- Search/filter requests may send generic exercise names/categories to wger. Never send private loads, session history, health data, plan notes, or user identity to the external provider.
