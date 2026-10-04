@@ -22510,3 +22510,49 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     line-height: 1.15;
   }
 }
+
+
+/* v0.42.8 — mobile important events: explicit four cards per row */
+@media (max-width: 520px) {
+  .important-events-panel .event-budget-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .important-events-panel .event-budget-item {
+    display: block;
+    min-height: 78px;
+    padding: 7px 4px;
+    text-align: left;
+  }
+
+  .important-events-panel .event-budget-date {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+    margin-bottom: 4px;
+  }
+
+  .important-events-panel .event-budget-date strong {
+    font-size: 16px;
+  }
+
+  .important-events-panel .event-budget-date small,
+  .important-events-panel .important-event-tag {
+    font-size: 6px;
+  }
+
+  .important-events-panel .event-budget-copy strong {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 7px;
+    line-height: 1.15;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+
+  .important-events-panel .event-budget-copy p,
+  .important-events-panel .event-budget-amount {
+    display: none;
+  }
+}
