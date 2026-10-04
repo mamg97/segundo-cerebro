@@ -97,12 +97,20 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
   const ingredientsByRecipeId = options.ingredientsByRecipeId instanceof Map
     ? options.ingredientsByRecipeId
     : new Map();
+  const pantryProductById = options.pantryProductById instanceof Map
+    ? options.pantryProductById
+    : null;
 
   return dedupeWeeklyMenuRows(rows).map((item) => {
     const recipeId = item?.recipeId ? String(item.recipeId) : "";
+    const foodId = item?.foodId ? String(item.foodId) : "";
     const recipe = recipeId ? recipeById.get(recipeId) || null : null;
     const pendingRecipe = recipePending(recipe);
-    const menuQuantity = finite(item?.quantity) ?? 1;
+    const rawMenuQuantity = finite(item?.quantity);
+    const menuQuantity = rawMenuQuantity ?? 1;
+    const pantryProduct = foodId && pantryProductById
+      ? pantryProductById.get(foodId) || null
+      : null;
     const recipeServings = finite(recipe?.servings);
     const hasRecipeServings = recipeServings !== null && recipeServings > 0;
     const unit = String(item?.unit || "");
@@ -121,8 +129,21 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
       ["carbs", "carbsPerServing"],
       ["fat", "fatPerServing"]
     ];
-    const hydrated = { ...item, moment: canonicalWeeklyMenuMoment(item) };
+    const hydrated = {
+      ...item,
+      moment: canonicalWeeklyMenuMoment(item),
+      pantryProductId: pantryProduct?.id || null,
+      pantrySyncStatus: !foodId
+        ? "not-applicable"
+        : !pantryProductById
+          ? "unavailable"
+          : pantryProduct
+            ? "linked"
+            : "missing",
+      product: pantryProduct
+    };
     const derivedFields = [];
+    const pantryDerivedFields = [];
 
     for (const [menuField, recipeField] of fields) {
       if (finite(hydrated[menuField]) !== null) continue;
@@ -130,6 +151,25 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
       if (!canResolveFromRecipe || perServing === null) continue;
       hydrated[menuField] = perServing * nutritionFactor;
       derivedFields.push(menuField);
+    }
+
+    const pantryNutrition = pantryProduct?.nutrition || null;
+    const normalizedUnit = normalize(item?.unit);
+    const pantryFactor = pantryProduct && rawMenuQuantity !== null && /^(g|gramo|gramos)$/.test(normalizedUnit)
+      ? rawMenuQuantity / 100
+      : null;
+    const pantryFields = [
+      ["kcal", "kcal100g"],
+      ["protein", "protein100g"],
+      ["carbs", "carbs100g"],
+      ["fat", "fat100g"]
+    ];
+    for (const [menuField, pantryField] of pantryFields) {
+      if (finite(hydrated[menuField]) !== null) continue;
+      const per100g = finite(pantryNutrition?.[pantryField]);
+      if (pantryFactor === null || per100g === null) continue;
+      hydrated[menuField] = per100g * pantryFactor;
+      pantryDerivedFields.push(menuField);
     }
 
     const ingredientFactor = recipe && isServingUnit && hasRecipeServings
@@ -159,11 +199,13 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
         : "incomplete"
       : derivedFields.length
         ? "resolved-from-recipe"
-        : "explicit";
+        : pantryDerivedFields.length
+          ? "resolved-from-pantry"
+          : "explicit";
     hydrated.nutritionPendingReason = pendingNutrition && missingNutrition
       ? String(item?.note || recipe?.note || "").trim() || null
       : null;
-    hydrated.nutritionDerivedFields = derivedFields;
+    hydrated.nutritionDerivedFields = [...derivedFields, ...pantryDerivedFields];
 
     return hydrated;
   });
