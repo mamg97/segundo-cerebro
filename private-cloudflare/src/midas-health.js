@@ -29,16 +29,32 @@ export function evaluateMidasWorkflowRuns(runs, now = Date.now()) {
       .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
     const latest = scheduled[0] || null;
     if (due === null) return { name: spec.name, ok: true, state: "not_due_yet", latest };
-    if (!latest || Date.parse(latest.created_at) < due) {
+
+    const cycle = scheduled.filter((run) => Date.parse(run.created_at) >= due);
+    if (!cycle.length) {
       return { name: spec.name, ok: false, state: "missing_due_run", latest,
         detail: "no existe ejecución schedule para la última ventana debida" };
     }
-    if (latest.status !== "completed") return { name: spec.name, ok: true, state: "running", latest };
-    if (latest.conclusion !== "success") {
-      return { name: spec.name, ok: false, state: "failed", latest,
-        detail: "última ejecución schedule terminó " + String(latest.conclusion || "sin conclusión") };
+
+    // Primario y backup pertenecen al mismo ciclo. Si cualquiera completó con
+    // éxito, el ciclo está cubierto aunque un backup posterior falle.
+    const successful = cycle.find((run) => run.status === "completed" && run.conclusion === "success");
+    if (successful) {
+      return {
+        name: spec.name, ok: true, state: "success", latest: successful,
+        attempts: cycle.length,
+        detail: cycle.some((run) => run !== successful && run.conclusion && run.conclusion !== "success")
+          ? "ciclo cubierto por una ejecución válida; otro intento de respaldo no fue necesario"
+          : null
+      };
     }
-    return { name: spec.name, ok: true, state: "success", latest };
+
+    const running = cycle.find((run) => run.status !== "completed");
+    if (running) return { name: spec.name, ok: true, state: "running", latest: running, attempts: cycle.length };
+
+    return { name: spec.name, ok: false, state: "failed", latest,
+      attempts: cycle.length,
+      detail: "ningún intento schedule de la última ventana terminó correctamente" };
   });
   return { ok: workflows.every((item) => item.ok), workflows, issues: workflows.filter((item) => !item.ok) };
 }

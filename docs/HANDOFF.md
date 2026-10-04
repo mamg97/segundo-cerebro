@@ -1174,6 +1174,15 @@ Assets actuales: `styles.css?v=0.39.1`, `app.js?v=0.39.5`, `pantry.js?v=0.38.7`.
 - Assets app/styles: `v0.40.7`.
 
 
+## MIDAS · primario + backup y salud por ciclo · 04/10/2026
+
+- La revisión del primer fin de semana completo confirmó que los automatismos sí se ejecutaron: paper diario, TFM, Capital Cycle, Buy The Dip, Weekly ML, TFG y genético prospectivo tienen ejecuciones schedule reales.
+- TFM registró correctamente la sesión 02/10 en el run primario; el backup posterior devolvió `already_recorded` y el workflow acabó rojo solo por una carrera de `git push`.
+- Weekly ML registró correctamente su primer forecast/ledger forward del 02/10 en el primario; el backup posterior volvió a descargar datos revisados y activó el guard de inmutabilidad.
+- La salud MIDAS se evalúa desde ahora por **ventana/ciclo**: si al menos un intento schedule del ciclo termina correctamente, un backup posterior fallido no convierte el algoritmo en caído.
+- En `midas-paper-lab` los backups TFM/Weekly pasan a no-op sobre estado ya congelado y los workflows que escriben `strategy_state/strategy_runtime` se serializan para eliminar carreras de push.
+- El domingo no se espera ejecución de las campañas diarias; el siguiente ciclo diario corresponde al cierre del lunes.
+
 ## MIDAS · incidente TFM detectado por auditor · 02/10/2026
 
 - El auditor funcionó correctamente: el único fallo operativo MIDAS observado en el corte era `MIDAS TFM shadow forecasts`; campañas diarias, Capital Cycle y Buy The Dip estaban verdes.

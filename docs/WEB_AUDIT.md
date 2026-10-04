@@ -72,8 +72,8 @@ Como mínimo:
   - las nueve estrategias diarias mantienen sesión registrada;
   - el genético prospectivo privado está enlazado y fechado;
   - workflows públicos `paper`, `TFM`, `Capital Cycle`, `Weekly ML` y `TFG` se contrastan contra su cadencia real;
-  - una ejecución debida ausente o cuyo último `schedule` termine en fallo deja la auditoría roja;
-  - tras un workflow verde, el auditor exige que aparezcan los diarios correspondientes y no acepta “esperando primera sesión” como sustituto de una ejecución fallida;
+  - cada ventana debida se evalúa como un ciclo primario+respaldo: basta una ejecución `schedule` válida para cubrirla; solo queda roja si no existe intento debido o si ninguno de los intentos del ciclo termina correctamente;
+  - tras un ciclo verde, el auditor exige que aparezcan los diarios correspondientes y no acepta “esperando primera sesión” como sustituto de una ventana realmente fallida;
   - la vista MIDAS expone el mismo estado operativo en un bloque `Salud operativa`; el auditor comprueba que las incidencias detectadas también sean visibles para el usuario;
   - la UI obtiene ese estado desde artefactos versionados `strategy_runtime/*.json`, no desde una llamada en vivo a GitHub Actions; el auditor sí consulta Actions directamente como control independiente;
 - respuestas 5xx y fallos de red;

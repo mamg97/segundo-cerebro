@@ -90,6 +90,24 @@ test("MIDAS audit detects a failed due workflow without penalizing not-yet-due w
   assert.equal(health.workflows.find((item) => item.name === "MIDAS weekly ML paper").state, "not_due_yet");
 });
 
+test("MIDAS audit keeps a cycle healthy when primary succeeds and backup later fails", () => {
+  const now = Date.parse("2026-10-04T14:00:00Z");
+  const health = evaluateMidasWorkflowRuns([
+    { name: "MIDAS TFM shadow forecasts", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-02T23:05:22Z", run_number: 6 },
+    { name: "MIDAS TFM shadow forecasts", event: "schedule", status: "completed", conclusion: "failure", created_at: "2026-10-03T02:06:42Z", run_number: 7 },
+    { name: "MIDAS weekly ML paper", event: "schedule", status: "completed", conclusion: "success", created_at: "2026-10-03T01:57:52Z", run_number: 1 },
+    { name: "MIDAS weekly ML paper", event: "schedule", status: "completed", conclusion: "failure", created_at: "2026-10-03T08:07:30Z", run_number: 2 }
+  ], now);
+  const tfm = health.workflows.find((item) => item.name === "MIDAS TFM shadow forecasts");
+  const weekly = health.workflows.find((item) => item.name === "MIDAS weekly ML paper");
+  assert.equal(tfm.state, "success");
+  assert.equal(tfm.latest.run_number, 6);
+  assert.equal(tfm.attempts, 2);
+  assert.equal(weekly.state, "success");
+  assert.equal(weekly.latest.run_number, 1);
+  assert.equal(weekly.attempts, 2);
+});
+
 test("MIDAS audit detects a missing daily schedule after its grace window", () => {
   const now = Date.parse("2026-10-02T16:00:00Z");
   const health = evaluateMidasWorkflowRuns([
