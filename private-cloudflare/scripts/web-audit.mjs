@@ -1807,6 +1807,82 @@ try {
       }
     }
 
+
+    const recipeLinkedRows = comparisonRows.filter((item) => item?.recipeId && item?.recipe);
+    const recipeLinks = menuPanel.locator("[data-menu-recipe-open]");
+    const recipeLinkCount = await recipeLinks.count();
+    assertCheck(
+      recipeLinkCount === recipeLinkedRows.length,
+      "Menú · cada comida con receta enlaza su ficha",
+      `UI=${recipeLinkCount} API=${recipeLinkedRows.length}`
+    );
+
+    const foodRows = comparisonRows.filter((item) => item?.foodId);
+    const pantryLinkedRows = foodRows.filter((item) => item?.pantrySyncStatus === "linked" && item?.pantryProductId);
+    const pantryLinks = menuPanel.locator("[data-menu-product-open]");
+    const pantryLinkCount = await pantryLinks.count();
+    assertCheck(
+      pantryLinkCount === pantryLinkedRows.length,
+      "Menú · productos enlazados abren la ficha canónica de Despensa",
+      `UI=${pantryLinkCount} API=${pantryLinkedRows.length}`
+    );
+    if (pantryProbe.ok && pantryProbe.body?.ok === true) {
+      const unlinkedFoodRows = foodRows.filter((item) => item?.pantrySyncStatus !== "linked");
+      assertCheck(
+        unlinkedFoodRows.length === 0,
+        "Menú · food_id sincronizados con Despensa",
+        unlinkedFoodRows.map((item) => item.foodId || item.name).join(", ") || `${foodRows.length} enlazados`
+      );
+    }
+
+    if (recipeLinkCount > 0) {
+      const trigger = recipeLinks.first();
+      const expectedRecipeId = await trigger.getAttribute("data-menu-recipe-open");
+      const details = trigger.locator("xpath=ancestor::details[1]");
+      if (await details.count()) await details.evaluate((node) => { node.open = true; });
+      await trigger.click();
+      await page.waitForTimeout(120);
+      const recipePanelActive = await page.locator('[data-health-panel="recipes"].active').count() === 1;
+      const openedRecipeId = await page.locator('[data-health-panel="recipes"] .recipe-detail-card').getAttribute("data-recipe-id").catch(() => null);
+      assertCheck(
+        recipePanelActive && openedRecipeId === expectedRecipeId,
+        "Menú · Abrir receta navega a la receta exacta",
+        `esperada=${expectedRecipeId || "∅"} abierta=${openedRecipeId || "∅"}`
+      );
+      const backToMenu = page.locator('[data-health-panel="recipes"] [data-recipes-back]');
+      if (await backToMenu.count()) {
+        await backToMenu.click();
+        await page.waitForTimeout(100);
+        assertCheck(
+          await page.locator('[data-health-panel="menu"].active').count() === 1,
+          "Menú · receta permite volver al menú"
+        );
+      }
+    }
+
+    const livePantryLinks = page.locator('[data-health-panel="menu"] [data-menu-product-open]');
+    if (await livePantryLinks.count()) {
+      const trigger = livePantryLinks.first();
+      const details = trigger.locator("xpath=ancestor::details[1]");
+      if (await details.count()) await details.evaluate((node) => { node.open = true; });
+      await trigger.click();
+      const productDetail = page.locator('[data-health-panel="menu"] .pantry-product-detail');
+      await productDetail.waitFor({ state: "visible", timeout: 12000 }).catch(() => {});
+      assertCheck(
+        await productDetail.isVisible().catch(() => false),
+        "Menú · alimento abre ficha real de Despensa"
+      );
+      const backToMenu = page.locator('[data-health-panel="menu"] #pantry-back');
+      if (await backToMenu.count()) {
+        await backToMenu.click();
+        await page.waitForTimeout(100);
+        assertCheck(
+          await page.locator('[data-health-panel="menu"] .weekly-menu-day').count() === comparisonDayGroups.length,
+          "Menú · ficha de Despensa vuelve al menú completo"
+        );
+      }
+    }
+
     await closeDialogIfOpen();
   } else {
     fail("Salud accesible desde navegación", "falta area-health");
