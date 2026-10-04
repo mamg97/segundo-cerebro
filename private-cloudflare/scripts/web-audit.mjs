@@ -888,6 +888,18 @@ async function auditLookDetail(label) {
   await tab.click();
   await page.waitForTimeout(250);
 
+  const historyButton = page.locator("[data-look-history]").first();
+  const historyVisible = await historyButton.isVisible().catch(() => false);
+  assertCheck(historyVisible, `Visual ${label} · Historial de looks disponible`);
+  if (historyVisible) {
+    await historyButton.click();
+    await page.waitForTimeout(180);
+    const historyPanel = page.locator(".look-history").first();
+    assertCheck(await historyPanel.isVisible().catch(() => false), `Visual ${label} · Historial de looks abre`);
+    await page.locator("[data-look-history-back]").click().catch(() => {});
+    await page.waitForTimeout(160);
+  }
+
   const card = page.locator("[data-look-open]").first();
   const cardVisible = await card.isVisible().catch(() => false);
   if (!cardVisible) {
