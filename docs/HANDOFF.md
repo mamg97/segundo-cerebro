@@ -1732,12 +1732,12 @@ Antes de cualquier cambio:
   - únicos rojos: `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Gym.
 - No se han vinculado automáticamente ejercicios privados del plan a resultados fuzzy: al pulsar `Técnica` se propone una ficha y el usuario confirma `Usar esta ficha para mi ejercicio`. Esto evita guardar asociaciones incorrectas.
 
-### GESTOR GYM Y NUTRI · GIF anatómico 2D propio · piloto v0.42.4 · 2026-10-04
+### GESTOR GYM · GIF anatómico 2D propio · piloto v0.42.14 · 2026-10-04
 
 - Preferencia confirmada: las demostraciones principales deben evolucionar desde vídeo real hacia bucles ilustrados tipo GIF, limpios y coherentes con la interfaz.
 - No se usan packs de GIF comerciales, mirrors de ExerciseDB ni repositorios con derechos ambiguos. wger continúa como referencia técnica libre y como fallback multimedia.
-- La rama `codex/gym-nutri-next`, actualizada sobre el `origin/main` vivo `8f18a02`, incorpora el primer piloto para `Press de Banca Plano (Barra)`:
-  - GIF real propio de ocho fases, 360×480 y fondo transparente;
+- La rama `codex/gym-nutri-next`, actualizada sobre el `origin/main` vivo `10efa41`, incorpora el primer piloto para `Press de Banca Plano (Barra)`:
+  - GIF real propio de 16 fases, 360×480 y fondo transparente;
   - ilustración anatómica 2D gris/blanca, con contorno fino y sombreado muscular discreto;
   - pectoral, tríceps y deltoide anterior marcados en rojo plano;
   - equipo gris carbón y encuadre fijo, sin persona real ni volumen 3D brillante;
@@ -1746,8 +1746,9 @@ Antes de cualquier cambio:
   - fallback intacto a vídeo/imagen wger para el resto;
   - `prefers-reduced-motion` deja un fotograma estático.
 - El piloto está en rama de revisión y todavía no se ha fusionado ni desplegado. Antes de producir el resto del plan, confirmar el estilo y revisar visualmente cada movimiento por lotes pequeños.
-- El usuario rechazó el aspecto 3D de v0.42.3. `v0.42.4` adopta el lenguaje de una enciclopedia anatómica de ejercicios; la captura facilitada se usó solo como referencia estilística, sin copiar marca, interfaz ni contenido.
-- Las versiones v0.42.1–v0.42.3 no deben desplegarse. Validación de v0.42.4 sobre `8f18a02`: 144/144 tests y build privado correctos; ocho posiciones coherentes, bucle limpio, escala/cámara estables y sin restos laterales.
+- El usuario rechazó el aspecto 3D de v0.42.3. `v0.42.4` adoptó el lenguaje de una enciclopedia anatómica de ejercicios; la captura facilitada se usó solo como referencia estilística, sin copiar marca, interfaz ni contenido.
+- `v0.42.14` normaliza las ocho fases aprobadas a la misma anchura visible y línea de apoyo, y añade un intermedio neuronal local entre cada par —incluido el cierre del bucle—. El resultado duplica la cadencia a 16 fases sin redibujar ocho escenas independientes, sin fundidos fantasma y con lienzo, encuadre y escala bloqueados.
+- Las versiones v0.42.1–v0.42.4 no deben desplegarse. Validación final de v0.42.14 sobre `origin/main` `10efa41`: 156/156 tests, build privado y copia byte a byte de GIF/póster al artefacto compilado correctos; revisión visual del bucle en tarjeta clara sin saltos de encuadre, fondos negros ni extremidades fantasma.
 
 
 ### RECETARIO · fichas de alimentos desde ingredientes · 2026-10-04

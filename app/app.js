@@ -5345,8 +5345,8 @@ let gymLibraryMeta = null;
 const GYM_CUSTOM_ANIMATIONS = [
   {
     key: "press-banca-plano-barra",
-    animationUrl: "./assets/gym-animations/press-banca-plano-barra-v4.gif",
-    posterUrl: "./assets/gym-animations/press-banca-plano-barra-poster-v4.png",
+    animationUrl: "./assets/gym-animations/press-banca-plano-barra-v5.gif",
+    posterUrl: "./assets/gym-animations/press-banca-plano-barra-poster-v5.png",
     labels: ["press de banca plano barra", "press banca plano barra", "flat barbell bench press"]
   }
 ];

@@ -20,8 +20,8 @@ test("Gym exposes a free visual exercise library beside the canonical plan", () 
 test("Gym library uses attractive looping media and keeps attribution visible", () => {
   assert.match(app, /muted loop playsinline autoplay preload="metadata"/);
   assert.match(app, /GYM_CUSTOM_ANIMATIONS/);
-  assert.match(app, /press-banca-plano-barra-v4\.gif/);
-  assert.match(app, /press-banca-plano-barra-poster-v4\.png/);
+  assert.match(app, /press-banca-plano-barra-v5\.gif/);
+  assert.match(app, /press-banca-plano-barra-poster-v5\.png/);
   assert.match(app, /Animación propia en bucle/);
   assert.match(app, /gym-exercise-hero-media/);
   assert.match(app, /Demostración en bucle/);
@@ -37,8 +37,8 @@ test("Gym library can map current plan exercises and add new canonical plan rows
   assert.match(libraryWorker, /gym_exercise_links/);
 });
 
-test("Gym library is responsive and uses the v0.42.4 line-art anatomical GIF contract", () => {
-  assert.match(css, /v0\.42\.4 — line-art anatomical Gym GIF demonstrations/);
+test("Gym library is responsive and uses the v0.42.14 locked-frame anatomical GIF contract", () => {
+  assert.match(css, /v0\.42\.14 — locked-frame 16-phase anatomical Gym GIF demonstrations/);
   assert.match(css, /gym-exercise-animation-gif/);
   assert.match(css, /gym-exercise-animation-poster/);
   assert.match(css, /prefers-reduced-motion: reduce/);
