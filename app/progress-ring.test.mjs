@@ -65,8 +65,8 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.8/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.42\.0/);
-assert.match(index, /styles\.css\?v=0\.42\.0/);
+assert.match(index, /app\.js\?v=0\.42\.1/);
+assert.match(index, /styles\.css\?v=0\.42\.1/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
@@ -245,3 +245,4 @@ assert.match(css, /allocation-free/);
 console.log("geometric progress rings: static geometry, overflow, dynamic update and all live surfaces OK");
 
 assert.doesNotMatch(app, /is-warning">Falta/);
+

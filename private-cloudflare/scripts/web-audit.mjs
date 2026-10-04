@@ -1669,6 +1669,28 @@ try {
               && await panel.locator(".recipe-detail-card .recipe-steps").count() === 1,
             "Salud · Recetas detalle muestra ingredientes y preparación"
           );
+          const ingredientButtons = panel.locator("[data-recipe-ingredient]");
+          const ingredientCount = await ingredientButtons.count();
+          assertCheck(ingredientCount === await panel.locator(".recipe-ingredients li").count(), "Salud · Recetas todos los ingredientes abren ficha");
+          if (ingredientCount > 0) {
+            await ingredientButtons.first().click();
+            const ingredientDetail = panel.locator('[data-ingredient-detail="true"]');
+            await ingredientDetail.waitFor({ state: "visible", timeout: 25000 }).catch(() => {});
+            assertCheck(await ingredientDetail.isVisible().catch(() => false), "Salud · Recetas abre ficha del alimento");
+            assertCheck(await panel.locator(".recipe-ingredient-context").count() === 1, "Salud · Recetas ficha conserva cantidad y contexto");
+            assertCheck(await panel.locator(".pantry-nutrition").count() === 1, "Salud · Recetas ficha separa macros por 100 g");
+            const ingredientViewport = page.viewportSize();
+            for (const viewport of [{ width: 1440, height: 1100 }, { width: 900, height: 1000 }, { width: 390, height: 844 }]) {
+              await page.setViewportSize(viewport);
+              await auditVisualSnapshot(`${viewport.width}px · Salud · alimento de receta`);
+            }
+            if (ingredientViewport) await page.setViewportSize(ingredientViewport);
+            const ingredientBack = panel.locator("#pantry-back");
+            if (await ingredientBack.count()) {
+              await ingredientBack.click();
+              assertCheck(await panel.locator(".recipe-detail-card").isVisible(), "Salud · Recetas vuelve a la misma receta");
+            }
+          }
           const backButton = panel.locator("[data-recipes-back]");
           assertCheck(await backButton.count() === 1, "Salud · Recetas detalle ofrece volver");
           if (await backButton.count()) {

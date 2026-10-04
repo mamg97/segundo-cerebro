@@ -1,7 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.38.8";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.1";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.3";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
@@ -4877,8 +4877,8 @@ function renderHomeWeeklyMenu(data) {
 }
 
 function formatRecipeAmount(ingredient) {
-  const quantity = Number(ingredient?.quantity);
-  const grams = Number(ingredient?.grams);
+  const quantity = ingredient?.quantity == null || ingredient.quantity === "" ? NaN : Number(ingredient.quantity);
+  const grams = ingredient?.grams == null || ingredient.grams === "" ? NaN : Number(ingredient.grams);
   if (Number.isFinite(quantity)) {
     const unit = String(ingredient?.unit || "").trim();
     return `${quantity.toLocaleString("es-ES", { maximumFractionDigits: quantity < 10 ? 1 : 0 })}${unit ? " " + unit : ""}`;
@@ -4931,9 +4931,9 @@ function renderRecipeDetail(panel, data, recipe) {
           <section class="recipe-section recipe-ingredients">
             <h5>Ingredientes</h5>
             ${ingredients.length
-              ? `<ul>${ingredients.map((ingredient) => `
+              ? `<p class="recipe-ingredient-hint">Pulsa un alimento para ver macros, precio y ficha de producto.</p><ul>${ingredients.map((ingredient, index) => `
                   <li>
-                    <span>${escapeHtml(ingredient.name || "Ingrediente")}</span>
+                    <button class="recipe-ingredient-link" type="button" data-recipe-ingredient="${index}" aria-label="Ver ficha de ${escapeHtml(ingredient.name || "Ingrediente")}">${escapeHtml(ingredient.name || "Ingrediente")} <span aria-hidden="true">↗</span></button>
                     <strong>${escapeHtml(formatRecipeAmount(ingredient) || "—")}</strong>
                   </li>`).join("")}</ul>`
               : '<p class="recipe-pending">Ingredientes pendientes de confirmar.</p>'}
@@ -4963,6 +4963,24 @@ function renderRecipeDetail(panel, data, recipe) {
   `;
 
   panel.querySelector("[data-recipes-back]")?.addEventListener("click", () => renderRecipesPanel(data));
+  panel.querySelectorAll("[data-recipe-ingredient]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        const { openRecipeIngredient } = await import("./recipe-products.js?v=0.42.1");
+        if (!button.isConnected) return;
+        await openRecipeIngredient(panel, ingredients[Number(button.dataset.recipeIngredient)], recipe, () => {
+          renderRecipeDetail(panel, data, recipe);
+          panel.querySelector(`[data-recipe-ingredient="${button.dataset.recipeIngredient}"]`)?.focus({ preventScroll: true });
+        });
+      } catch {
+        if (button.isConnected) {
+          button.disabled = false;
+          button.textContent = "No se pudo abrir. Pulsa para reintentar";
+        }
+      }
+    });
+  });
 }
 
 function renderRecipesPanel(data) {

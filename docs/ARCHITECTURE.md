@@ -361,6 +361,8 @@ Salud → Recetas
 
 La identidad, nombre, raciones, macros, ingredientes y pasos siguen siendo autoridad del Sheet. Drive conserva la foto original y la pestaña técnica oculta `RecipeMedia` conserva únicamente una preview privada compacta para el frontal. No se crea un catálogo paralelo: ambas referencias dependen del mismo `recipe_id`. El frontend muestra foto → ingredientes → preparación y se actualiza al cambiar la fuente, sin hardcodes por receta.
 
+Cada ingrediente puede abrir la ficha compartida de Despensa mediante `IngredientesReceta.producto_id`. El módulo de detalle se carga bajo demanda; conserva la receta y permite volver a ella. La identidad, nutrición por 100 g, imagen pública y precios son propiedad del catálogo canónico de Despensa. La referencia pública Mercadona solo enriquece la ficha con imagen/precio orientativo de un SKU exacto, con timeout y caché; no modifica fuentes ni el registro de consumo.
+
 ## Salud — adherencia mensual
 
 La adherencia es una proyección derivada en tiempo de lectura:

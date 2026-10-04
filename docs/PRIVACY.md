@@ -195,3 +195,12 @@ The public exercise catalogue is kept separate from private training data.
 - D1 stores only the minimal mapping between a canonical plan exercise and its public reference exercise.
 - Only resources with explicit license metadata are shown, and attribution remains visible.
 - Commercial or ambiguous third-party exercise media must not be copied into Segundo Cerebro.
+
+## Recipe ingredient product reference
+
+- Recipe quantities, consumption, targets, inventory and receipt history remain private.
+- `/api/pantry/products/:producto_id` is served through the existing authenticated private application boundary.
+- The optional Mercadona reference sends only the public numeric SKU resolved from a canonical official product URL. Never send ingredient quantities, recipe names, health history, stock, notes, user identity or Google authorization to Mercadona.
+- Official catalogue image references are HTTPS and use `referrerpolicy="no-referrer"`. Recipe photographs keep their existing private same-origin pipeline.
+- External reference failures leave the canonical card usable, with missing fields explicitly pending. No paid dependency is introduced.
+

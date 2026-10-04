@@ -177,48 +177,71 @@ function setPantryView(body, view) {
   });
 }
 
-function renderProductDetail(item, payload) {
-  const body = document.querySelector("#dialog-body");
+function safeHttpsUrl(value) {
+  try { const url = new URL(value); return url.protocol === "https:" && !url.username && !url.password ? url.href : null; }
+  catch { return null; }
+}
+
+function priceObservation(price, currency) {
+  if (!price) return "Sin precio registrado";
+  return escapeHtml(money(price.price, currency)) + '<small>' + escapeHtml([price.priceBase, price.date ? formatDate(price.date) : "Sin fecha", price.source].filter(Boolean).join(" · ")) + '</small>';
+}
+
+export function renderProductDetail(item, payload, options = {}) {
+  const body = options.container || document.querySelector("#dialog-body");
   const currency = payload.summary?.currency || "EUR";
   const nutrition = item.nutrition || {};
   const nutritionRows = [
     ["Kcal / 100 g", nutrition.kcal100g, ""],
-    ["Proteína", nutrition.protein100g, " g"],
-    ["Carbohidratos", nutrition.carbs100g, " g"],
-    ["Grasas", nutrition.fat100g, " g"]
-  ].filter((row) => row[1] !== null && row[1] !== undefined && row[1] !== "");
+    ["Proteína / 100 g", nutrition.protein100g, " g"],
+    ["Carbohidratos / 100 g", nutrition.carbs100g, " g"],
+    ["Grasas / 100 g", nutrition.fat100g, " g"]
+  ];
+  const imageUrl = safeHttpsUrl(item.imageUrl);
+  const productUrl = safeHttpsUrl(item.productUrl);
+  const context = options.ingredient;
+  const contextMarkup = context ? '<section class="recipe-ingredient-context"><small>En la receta · ' + escapeHtml(context.recipeName) + '</small><h4>' + escapeHtml(context.name) + '</h4><p>Cantidad registrada: <strong>' + escapeHtml(context.amount) + '</strong></p><p>Kcal: ' + escapeHtml(context.kcal == null ? "Pendiente" : context.kcal + " kcal") + ' · Proteína: ' + escapeHtml(context.protein == null ? "Pendiente" : context.protein + " g") + '</p><small>' + escapeHtml([context.precision, context.source].filter(Boolean).join(" · ")) + '</small></section>' : '';
 
   body.innerHTML =
-    '<button id="pantry-back" class="pantry-back" type="button">← Volver a despensa</button>' +
-    '<section class="pantry-product-detail">' +
+    '<button id="pantry-back" class="pantry-back" type="button">' + escapeHtml(options.backLabel || "← Volver a despensa") + '</button>' +
+    '<section class="pantry-product-detail" data-ingredient-detail="' + (context ? 'true' : 'false') + '">' +
+      contextMarkup +
+      (options.pendingMessage ? '<p class="recipe-pending">' + escapeHtml(options.pendingMessage) + '</p>' : '') +
+      '<div class="pantry-product-image">' + (imageUrl
+        ? '<img src="' + escapeHtml(imageUrl) + '" alt="' + escapeHtml(item.name || "Producto") + '" referrerpolicy="no-referrer"><small>Imagen de producto</small>'
+        : '<span>Imagen pendiente</span>') + '</div>' +
       '<div class="pantry-detail-head"><div>' +
         '<span class="pantry-product-category">' + escapeHtml(item.categoryLabel || "Otros") + '</span>' +
         '<h3>' + escapeHtml(item.name || "Producto") + '</h3>' +
         '<p>' + escapeHtml([item.brand, item.format].filter(Boolean).join(" · ") || "Sin marca/formato") + '</p>' +
+        (item.ean ? '<small>EAN: ' + escapeHtml(item.ean) + '</small>' : '') +
       '</div><span class="stock-chip stock-' + escapeHtml(item.stockStatus || "unknown") + '">' + escapeHtml(stockLabel(item.stockStatus)) + '</span></div>' +
       '<div class="pantry-detail-grid">' +
         '<span><small>Stock</small><strong>' + escapeHtml(quantityLabel(item)) + '</strong></span>' +
-        '<span><small>Ubicación</small><strong>' + escapeHtml(item.location || "Otros") + '</strong></span>' +
-        '<span><small>Precio reciente</small><strong>' + escapeHtml(money(item.latestPrice?.price, currency)) + '</strong></span>' +
-        '<span><small>Último ticket</small><strong>' + escapeHtml(money(item.lastTicketPrice?.price, currency)) + '</strong></span>' +
+        '<span><small>Ubicación</small><strong>' + escapeHtml(item.location || "Sin confirmar") + '</strong></span>' +
+        '<span><small>Precio registrado</small><strong>' + priceObservation(item.latestPrice, currency) + '</strong></span>' +
+        '<span><small>Último ticket</small><strong>' + priceObservation(item.lastTicketPrice, currency) + '</strong></span>' +
+        (item.cataloguePrice ? '<span><small>Catálogo online Mercadona</small><strong>' + priceObservation(item.cataloguePrice, currency) + '</strong><small>' + escapeHtml(item.cataloguePrice.note) + '</small></span>' : '') +
         '<span><small>Última compra</small><strong>' + escapeHtml(formatDate(item.lastPurchaseDate)) + '</strong></span>' +
         '<span><small>Confianza</small><strong>' + escapeHtml(item.confidence || "Sin indicar") + '</strong></span>' +
       '</div>' +
       (Array.isArray(item.priceHistory) && item.priceHistory.length > 1
         ? '<div class="pantry-price-history"><div><strong>Evolución de precio</strong><span>' + item.priceHistory.length + ' observaciones</span></div>' + sparkline(item.priceHistory) + '</div>'
         : '') +
-      (nutritionRows.length
-        ? '<div class="pantry-nutrition"><strong>Información nutricional</strong><div>' +
-          nutritionRows.map((row) => '<span><small>' + escapeHtml(row[0]) + '</small><b>' + escapeHtml(String(row[1]) + row[2]) + '</b></span>').join('') +
-          '</div></div>'
-        : '') +
+      '<div class="pantry-nutrition"><strong>Información nutricional · por 100 g</strong><div>' +
+        nutritionRows.map((row) => '<span><small>' + escapeHtml(row[0]) + '</small><b>' + escapeHtml(row[1] == null || row[1] === "" ? "Pendiente" : String(row[1]) + row[2]) + '</b></span>').join('') +
+        '</div><small>' + escapeHtml(item.nutritionSource || "Fuente nutricional pendiente") + '</small></div>' +
       '<div class="pantry-detail-notes"><strong>Notas / confianza</strong><p>' + escapeHtml(item.notes || "Sin notas.") + '</p></div>' +
-      (item.productUrl
-        ? '<a class="pantry-product-link" href="' + escapeHtml(item.productUrl) + '" target="_blank" rel="noreferrer">Abrir producto ↗</a>'
-        : '') +
+      (productUrl
+        ? '<a class="pantry-product-link" href="' + escapeHtml(productUrl) + '" target="_blank" rel="noopener noreferrer">' + (/^https:\/\/tienda\.mercadona\.es\//.test(productUrl) ? 'Ver en Mercadona ↗' : 'Abrir producto ↗') + '</a>'
+        : '<p class="recipe-pending">Enlace comercial pendiente.</p>') +
     '</section>';
 
-  body.querySelector("#pantry-back")?.addEventListener("click", () => renderWorkspace(payload, "inventory"));
+  body.querySelector("#pantry-back")?.addEventListener("click", options.onBack || (() => renderWorkspace(payload, "inventory")));
+  body.querySelector(".pantry-product-image img")?.addEventListener("error", (event) => {
+    const holder = event.target.closest(".pantry-product-image");
+    if (holder) holder.innerHTML = '<span>Imagen no disponible</span>';
+  });
 }
 
 function renderWorkspace(payload, initialView = "inventory") {

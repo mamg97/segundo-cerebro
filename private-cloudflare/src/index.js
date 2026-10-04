@@ -1,5 +1,6 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
+import { fetchMercadonaReference } from "./mercadona.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
@@ -2804,6 +2805,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
 
   const recipeIngredientRows = parseTableRows(valueRanges[9]?.values || []).map((item) => ({
     recipeId: String(item.recipe_id || "").trim(),
+    productId: String(item.producto_id || "").trim() || null,
     name: String(item.ingrediente || "").trim(),
     quantity: toNumber(item.cantidad),
     unit: item.unidad || null,
@@ -4932,6 +4934,29 @@ export default {
         }
         console.warn("Source link resolve failed", code);
         return json({ ok: false, code: "SOURCE_LINK_FAILED" }, 502);
+      }
+    }
+
+    const pantryProductMatch = url.pathname.match(/^\/api\/pantry\/products\/([^/]+)$/);
+    if (pantryProductMatch) {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const id = decodeURIComponent(pantryProductMatch[1]);
+        const pantry = await fetchPantrySummary(env, getGoogleAccessToken);
+        if (!pantry.value) return json({ ok: false, code: "PANTRY_NOT_CONFIGURED" }, 503);
+        const product = pantry.value.products.find((item) => item.id === id);
+        if (!product) return json({ ok: false, code: "PRODUCT_NOT_FOUND" }, 404);
+        const stock = pantry.value.items.filter((item) => item.productId === id)
+          .sort((a, b) => String(b.lastReviewedAt || "").localeCompare(String(a.lastReviewedAt || "")))[0];
+        const reference = await fetchMercadonaReference(product);
+        return json({ ok: true, item: {
+          ...stock, ...product, productId: product.id,
+          imageUrl: product.imageUrl || reference?.imageUrl || null,
+          cataloguePrice: reference?.cataloguePrice || null
+        } });
+      } catch (error) {
+        console.warn("Pantry product read failed", String(error?.message || "PANTRY_READ_ERROR"));
+        return json({ ok: false, code: "PANTRY_READ_FAILED" }, 502);
       }
     }
 
