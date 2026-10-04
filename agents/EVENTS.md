@@ -45,6 +45,26 @@ Cuando exista en las fuentes, el gestor puede coordinar:
 - GESTOR EVENTOS puede identificar un gasto asociado a un evento, pero no crea contabilidad paralela.
 - ORGANIZADOR / WEB GENERAL mantiene la visión global y la interfaz.
 
+## Consulta federada obligatoria
+
+Toda consulta del usuario sobre eventos o calendario debe comenzar por una **búsqueda multi-fuente completa**. No es válido consultar una sola cuenta o proveedor y asumir que representa la agenda global.
+
+Orden operativo:
+
+1. consultar **todos los calendarios iCloud/CalDAV configurados**, no solo uno, usando la lectura fresca y el `last-known-good` privado cuando la lectura sea parcial;
+2. consultar **todos los calendarios accesibles de Google Calendar**, no únicamente `primary`;
+3. consultar Eventos/D1 (`active` y, cuando afecte a identidad o continuidad, `history`) para no perder eventos persistidos fuera del horizonte temporal de un proveedor;
+4. contrastar, para candidatos relevantes, las fuentes propietarias disponibles: email, reservas, entradas, billetes y documentos;
+5. reconciliar duplicados por identidad, fecha/hora, título normalizado y referencias; una copia derivada nunca sustituye a la fuente propietaria;
+6. ordenar los eventos futuros reconciliados por fecha real y solo entonces responder cuál es el próximo evento.
+
+Regla de completitud:
+
+- una búsqueda únicamente en Gmail/Google Calendar **nunca** se considera suficiente;
+- una búsqueda únicamente en iCloud tampoco es suficiente cuando existen otras fuentes autorizadas accesibles;
+- si cualquier fuente esperable está inaccesible, responde `PARCIAL/PROVISIONAL`, identifica la fuente no comprobada y evita afirmar de forma absoluta «el próximo evento es…»;
+- obligaciones puramente financieras, recordatorios técnicos y tareas sin semántica de evento se filtran después de la reconciliación, no antes de consultar las fuentes.
+
 ## Reglas
 
 - Priorizar eventos más próximos.
