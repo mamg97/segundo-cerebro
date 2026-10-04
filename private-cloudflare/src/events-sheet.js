@@ -165,10 +165,15 @@ function isNonEventOperationalReminder(event) {
 function inferCalendarEventKind(event) {
   const text = normalize([event?.title, event?.location, event?.locationRef].filter(Boolean).join(" "));
   if (isNonEventOperationalReminder(event)) return null;
-  if (/cumple|cumpleanos/.test(text)) return "birthday";
   if (/boda|preboda|celebracion|aniversario|brunch|comida|cena|concierto|teatro|fiesta|quedada/.test(text)) return "social";
   if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|airbnb/.test(text)) return "travel";
   return null;
+}
+
+function isSimpleBirthdayReminder(event) {
+  const text = normalize([event?.title, event?.summary].filter(Boolean).join(" "));
+  if (!/cumple|cumpleanos/.test(text)) return false;
+  return !/comida|cena|fiesta|quedada|celebracion|brunch|reserva|restaurante/.test(text);
 }
 
 function findFinanceRef(displayTitle, originalTitle, financeSummary) {
@@ -544,13 +549,20 @@ export async function migrateLegacyEventLedgerToSheet(env, getGoogleAccessToken,
   let updatedEvents = 0;
 
   for (const legacy of Array.isArray(legacySnapshot.events) ? legacySnapshot.events : []) {
-    if (!legacy?.id || !legacy?.startsAt || isNonEventOperationalReminder(legacy)) continue;
+    if (!legacy?.id || !legacy?.startsAt || isNonEventOperationalReminder(legacy) || isSimpleBirthdayReminder(legacy)) continue;
     const day = eventDay(legacy.startsAt);
     let target = existingEvents.find((item) => item.id === legacy.id)
       || (legacy.calendarRef && existingEvents.find((item) => item.calendarRef === legacy.calendarRef))
       || existingEvents.find((item) =>
         eventDay(item.startsAt) === day &&
         normalize(item.title) === normalize(legacy.title)
+      )
+      || existingEvents.find((item) =>
+        eventDay(item.startsAt) === day &&
+        normalize(item.kind) === normalize(legacy.kind) &&
+        normalize(item.kind) === "travel" &&
+        /^viaje\b/.test(normalize(item.title)) &&
+        /^viaje\b/.test(normalize(legacy.title))
       );
 
     if (!target) {

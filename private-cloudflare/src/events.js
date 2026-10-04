@@ -149,7 +149,6 @@ function isNonEventOperationalReminder(event) {
 function inferCalendarEventKind(event) {
   const text = normalize([event && event.title, event && (event.location || event.locationRef)].filter(Boolean).join(" "));
   if (isNonEventOperationalReminder(event)) return null;
-  if (/cumple|cumpleanos/.test(text)) return "birthday";
   if (/boda|preboda|celebracion|aniversario|brunch|comida|cena|concierto|teatro|fiesta|quedada/.test(text)) return "social";
   if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|airbnb/.test(text)) return "travel";
   return null;
