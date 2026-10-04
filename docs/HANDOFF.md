@@ -1732,12 +1732,12 @@ Antes de cualquier cambio:
   - únicos rojos: `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Gym.
 - No se han vinculado automáticamente ejercicios privados del plan a resultados fuzzy: al pulsar `Técnica` se propone una ficha y el usuario confirma `Usar esta ficha para mi ejercicio`. Esto evita guardar asociaciones incorrectas.
 
-### GESTOR GYM Y NUTRI · GIF anatómico propio · piloto v0.42.2 · 2026-10-04
+### GESTOR GYM Y NUTRI · GIF anatómico propio · piloto v0.42.3 · 2026-10-04
 
 - Preferencia confirmada: las demostraciones principales deben evolucionar desde vídeo real hacia bucles ilustrados tipo GIF, limpios y coherentes con la interfaz.
 - No se usan packs de GIF comerciales, mirrors de ExerciseDB ni repositorios con derechos ambiguos. wger continúa como referencia técnica libre y como fallback multimedia.
-- La rama `codex/gym-nutri-next`, actualizada sobre el `origin/main` vivo `6dc3a8c`, incorpora el primer piloto para `Press de Banca Plano (Barra)`:
-  - GIF real propio de cuatro fases, 360×480 y fondo transparente;
+- La rama `codex/gym-nutri-next`, actualizada sobre el `origin/main` vivo `8f18a02`, incorpora el primer piloto para `Press de Banca Plano (Barra)`:
+  - GIF real propio de ocho fases, 360×480 y fondo transparente;
   - figura anatómica blanca con pectoral principal en naranja-rojo y tríceps/deltoide anterior secundarios en ámbar;
   - equipo azul noche y encuadre fijo, sin persona real;
   - poster PNG estático para `prefers-reduced-motion`, compatible con la CSP;
@@ -1745,8 +1745,8 @@ Antes de cualquier cambio:
   - fallback intacto a vídeo/imagen wger para el resto;
   - `prefers-reduced-motion` deja un fotograma estático.
 - El piloto está en rama de revisión y todavía no se ha fusionado ni desplegado. Antes de producir el resto del plan, confirmar el estilo y revisar visualmente cada movimiento por lotes pequeños.
-- El primer sprite oscuro v0.42.1 queda sustituido por este GIF anatómico v0.42.2 y no debe desplegarse.
-- Validación local sobre `6dc3a8c`: 143/143 tests y build privado correctos; los cuatro fotogramas y el bucle se comprobaron en navegador, sin acumulación, restos laterales ni recortes del movimiento.
+- El primer sprite oscuro v0.42.1 y el GIF anatómico de cuatro fases v0.42.2 quedan sustituidos por el bucle más fluido v0.42.3; ninguno de los dos anteriores debe desplegarse.
+- Validación sobre `8f18a02`: 144/144 tests y build privado correctos; los ocho fotogramas y el bucle se comprobaron en navegador, sin acumulación, restos laterales ni recortes del movimiento.
 
 
 ### RECETARIO · fichas de alimentos desde ingredientes · 2026-10-04
