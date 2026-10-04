@@ -1803,3 +1803,12 @@ Antes de cualquier cambio:
 - No se fabrican fechas para completar contadores sin detalle temporal. Por ello el total global puede ser superior al número de fechas visibles y el contador de últimos 30 días solo incluye fechas realmente disponibles.
 - El historial muestra una miniatura compacta a la izquierda tanto en `Looks` como en `Prendas`, reutilizando la imagen canónica vigente (`look.photoUrl`/mosaico o prioridad visual de `Armario`) y sin duplicar assets.
 - El auditor de producción comprueba acceso al historial, tabla, ordenación, miniaturas por fila y conmutación real a la vista `Prendas`.
+
+
+### ORGANIZADOR 10 · compactación móvil del historial de armario · 2026-10-05
+
+- El historial `Objetos → Looks → Historial de uso` se compacta específicamente en móvil: cabecera/KPIs más densos, selector Looks/Prendas y ordenación en una misma franja, y cada fila agrupa miniatura + nombre + tres métricas en una sola banda.
+- Las fechas registradas permanecen disponibles, pero en móvil se muestran en una banda horizontal desplazable para evitar que cada tarjeta crezca verticalmente.
+- Orden canónico por defecto: uso más reciente; las filas sin fecha válida quedan siempre al final, también como desempate en ordenaciones por total/últimos 30 días.
+- Los valores de `historico_usos` que no sean fechas normalizables se ignoran como fecha (p. ej. notas textuales), sin alterar `veces_usado`.
+- El auditor comprueba explícitamente orden por defecto, filas sin fecha al final y altura máxima compacta en móvil.
