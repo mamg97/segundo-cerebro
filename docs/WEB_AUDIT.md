@@ -58,6 +58,7 @@ Como mínimo:
 - Agenda/Calendario: fuente, calendarios seleccionados/enlazados y conservación de eventos en el horizonte;
 - `MenuSemanal` y API de Nutrición;
 - `MenuSemanal`: cada fila con `recipe_id` expone `Abrir receta` y navega a la receta exacta con retorno al menú; cada `food_id` resuelve contra el `producto_id` canónico de Despensa y abre su ficha cuando la fuente está sana;
+- Home → Menú semanal: cada comida con receta expone un enlace directo desde su nombre, abre la receta exacta y `Volver al resumen` regresa a portada;
 - pestaña `Salud → Recetas`: catálogo compacto completo frente a la API, cada tarjeta con foto + nombre, apertura de ficha grande con ingredientes/preparación y retorno al catálogo sin perder tarjetas;
 - ingredientes del recetario: todos son pulsables; apertura de ficha read-only, conservación de cantidad/contexto, macros por 100 g separados, retorno a la misma receta y QA visual en desktop/tablet/móvil; datos ausentes no se inventan;
 - toda receta con `photoUrl` debe responder HTTP 200 con `Content-Type: image/*`; cuando exista preview en `RecipeMedia`, la respuesta puede indicar `X-Recipe-Image-Source: sheet-preview`. Un 403/502 de Drive no se considera aceptable si existe esa preview;
