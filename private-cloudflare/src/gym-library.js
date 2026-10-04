@@ -1,5 +1,6 @@
 const WGER_ORIGIN = "https://wger.de";
 const WGER_API_BASE = WGER_ORIGIN + "/api/v2";
+export const WGER_VIDEO_PATH = "/video/";
 const WGER_PROVIDER = "wger";
 const WGER_TIMEOUT_MS = 8000;
 const WGER_LIST_CACHE_MS = 15 * 60 * 1000;
@@ -303,7 +304,7 @@ function clampInteger(value, min, max, fallback) {
 }
 
 async function featuredVideoExercises(limit, offset) {
-  const videoPayload = await fetchWgerJson("/exercisevideo/", {
+  const videoPayload = await fetchWgerJson(WGER_VIDEO_PATH, {
     limit: Math.min(80, Math.max(24, limit * 3)),
     offset,
     ordering: "-id"
