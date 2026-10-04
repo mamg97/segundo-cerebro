@@ -1773,3 +1773,13 @@ Antes de cualquier cambio:
 - `GESTOR NUTRI` puede consultar contexto de actividad/entrenamiento para interpretar necesidades, pero no modifica el plan de fuerza; `GESTOR GYM` puede consultar nutrición para recuperación/rendimiento, pero no duplica ni reescribe el registro nutricional.
 - La biblioteca visual wger sigue siendo solo referencia pública; `GimnasioPlan` conserva el plan canónico y D1 conserva sesiones/progresión. No reconstruir esta capacidad.
 - Los valores personales, marcas, métricas corporales, restricciones médicas y sesiones reales permanecen exclusivamente en fuentes privadas. Git documenta solo responsabilidades y contratos.
+
+
+## Relevo · Menú → Recetas + alimentos canónicos de Despensa · 2026-10-04
+
+- Se cerró la navegación desde `Salud → Menú`: al desplegar una comida con `recipe_id`, aparece **Abrir receta →** y se abre la ficha exacta del recetario. La vuelta desde esa ficha regresa al menú.
+- Las filas simples con `food_id` usan ese valor como identidad canónica de `SEGUNDO CEREBRO - DESPENSA / Productos`; cuando resuelve, el desplegable ofrece **Ver alimento en Despensa →** y reutiliza la misma ficha de producto.
+- `prepareWeeklyMenuRows` acepta el maestro de productos de Pantry, expone estado de sincronización y solo completa macros ausentes desde nutrición por 100 g cuando la cantidad está expresada inequívocamente en gramos. Macros explícitos ya registrados no se sobrescriben.
+- La lectura completa de Nutrición hidrata Pantry de forma fail-soft: un fallo temporal de Despensa no rompe Salud, pero tampoco crea una identidad alternativa.
+- Auditoría canónica previa a la migración: 14 filas de `MenuSemanal` con `food_id`, todas resuelven contra Despensa; 77 ingredientes de receta con `producto_id`, sin referencias rotas. `Comidas` sigue siendo catálogo de platos personales/compatibilidad, no maestro de producto envasado.
+- El auditor de producción valida enlaces Menú→Receta, retorno al menú, enlaces de alimentos a Despensa y ausencia de `food_id` desincronizados cuando Despensa responde correctamente.
