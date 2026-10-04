@@ -10,7 +10,7 @@
 
 ## Última actualización
 
-- **Fecha:** 2026-10-01
+- **Fecha:** 2026-10-04
 - **Herramienta:** ChatGPT
 - **Rama operativa:** `main`
 - **Repositorio:** `mamg97/segundo-cerebro`
@@ -98,6 +98,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - Calendar/iCloud conserva fechas y horarios; tickets, reservas, emails y documentos permanecen en sus fuentes propietarias.
 - Finanzas conserva presupuesto, provisiones y dinero libre.
 - Estados operativos del gestor: `CONFIRMADO`, `PROPUESTO`, `PENDIENTE`, `CERRADO`.
+- **Regla de consulta vigente:** toda pregunta sobre próximos eventos/agenda requiere reconciliar todos los calendarios y fuentes autorizadas disponibles. No responder desde Google `primary`/Gmail ni desde un único proveedor. Consultar todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles, Eventos/D1 y fuentes de confirmación (email/reservas/entradas/documentos) cuando existan. Si una fuente no se puede comprobar, marcar la respuesta como provisional.
 
 ### Hábitos
 
