@@ -22634,3 +22634,22 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     -webkit-backdrop-filter: blur(14px);
   }
 }
+
+
+/* v0.42.13 — reserve header space for the fixed mobile refresh control */
+@media screen and (max-width: 760px) {
+  body .app-shell > .sidebar {
+    padding-right: 66px;
+  }
+
+  body .app-shell > .sidebar .privacy-note {
+    justify-self: end;
+    max-width: calc(100vw - 130px);
+    margin-right: 0;
+    white-space: nowrap;
+  }
+
+  #refresh-app.refresh-app {
+    right: 12px;
+  }
+}
