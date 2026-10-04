@@ -22556,3 +22556,15 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     display: none;
   }
 }
+
+
+/* v0.42.9 — keep primary navigation pinned while scrolling on mobile Safari */
+@media (max-width: 760px) {
+  .sidebar {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    align-self: start;
+  }
+}
