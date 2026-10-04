@@ -96,3 +96,25 @@ test("opening a recipe from Home does not race the regular nutrition loader", ()
   const healthDetail = app.slice(start, end);
   assert.match(healthDetail, /options\.skipNutritionLoad !== true/);
 });
+
+
+test("Home renders a recipe link from recipe_id even when the light menu payload has no recipe object", () => {
+  const start = app.indexOf("function renderHomeWeeklyMenuMatrixCell(items)");
+  const end = app.indexOf("async function openHomeWeeklyMenuRecipe", start);
+  assert.ok(start >= 0 && end > start);
+  const renderer = app.slice(start, end);
+  assert.match(renderer, /const recipeId = String\(item\?\.recipeId \|\| ""\)\.trim\(\)/);
+  assert.match(renderer, /const title = recipeId\s*\?/);
+  assert.doesNotMatch(renderer, /recipeId && item\?\.recipe/);
+  assert.match(renderer, /data-home-menu-recipe-open=/);
+});
+
+test("Home recipe navigation lazily loads the full nutrition payload when needed", () => {
+  const start = app.indexOf("async function openHomeWeeklyMenuRecipe(data, recipeId)");
+  const end = app.indexOf("function bindHomeWeeklyMenuRecipeLinks", start);
+  assert.ok(start >= 0 && end > start);
+  const opener = app.slice(start, end);
+  assert.match(opener, /if \(!recipe\) \{/);
+  assert.match(opener, /fetch\("\/api\/nutrition\?date="/);
+  assert.match(opener, /HOME_RECIPE_NOT_FOUND/);
+});

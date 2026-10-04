@@ -4885,7 +4885,7 @@ function renderHomeWeeklyMenuMatrixCell(items) {
         const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
         const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
         const recipeId = String(item?.recipeId || "").trim();
-        const title = recipeId && item?.recipe
+        const title = recipeId
           ? `
             <button class="weekly-menu-title-link home-weekly-menu-recipe-link" type="button" data-home-menu-recipe-open="${escapeHtml(recipeId)}" aria-label="Abrir receta: ${escapeHtml(item.name || "Comida")}">
               <strong>${escapeHtml(item.name || "Comida")}</strong><span aria-hidden="true">↗</span>
