@@ -79,6 +79,16 @@ The Worker proxies recipe images through an authenticated same-origin endpoint. 
 - The web/Worker must remain a generic renderer/reconciler of the canonical Sheet schema. Do not hard-code real dates, meal names, portions, household substitutions or weekly totals in Git.
 - A code change is justified only for a reusable rendering/reconciliation defect that would affect arbitrary menu rows. After that generic defect is fixed, future menu edits must be Sheet-only.
 
+
+### Navegación y sincronización de entidades
+
+- Una fila de `MenuSemanal` que represente una receta debe conservar `recipe_id` y la web debe permitir abrir directamente esa receta desde el desplegable de la comida.
+- Una fila que represente un producto/alimento comercial debe usar como `food_id` el `producto_id` canónico de `SEGUNDO CEREBRO - DESPENSA / Productos`.
+- La web puede enriquecer esos `food_id` en lectura desde Despensa y abrir la ficha canónica del producto; no debe crear una segunda ficha comercial en Salud.
+- `Comidas` queda reservado a platos/alimentos personales reutilizables y compatibilidad histórica. No es el maestro de productos envasados.
+- Los macros explícitos de un consumo histórico no se reescriben retroactivamente cuando cambia una ficha de producto. Para filas planificadas con cantidad en gramos y macros ausentes, el runtime puede completar desde la ficha canónica por 100 g de Despensa.
+- Si un `food_id` no resuelve en Despensa, debe quedar visible como incidencia de sincronización; nunca se corrige mediante coincidencia difusa.
+
 ## Energy expenditure
 
 Apple Health / Apple Watch is the intended source for daily active and resting energy. Automatic imports enter through the dedicated token-protected Health ingest Worker and are stored in private D1 (`health_energy_daily`). The Sheet tab `EnergiaDiaria` is retained as a manual/fallback source.
