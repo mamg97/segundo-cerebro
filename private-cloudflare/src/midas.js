@@ -98,6 +98,15 @@ function normalizeDashboard(data) {
       risk_observations: Number.isInteger(row.risk_observations) && row.risk_observations >= 0
         ? Math.min(row.risk_observations, 100000) : 0,
       equity_history: normalizeEquityHistory(row.equity_history),
+      activity_state: ["active", "active_pending", "pending", "cash", "waiting", "unknown"].includes(row.activity_state)
+        ? row.activity_state : "unknown",
+      activity_label: typeof row.activity_label === "string" ? row.activity_label.slice(0, 180) : "",
+      activity_tickers: Array.isArray(row.activity_tickers)
+        ? row.activity_tickers.slice(0, 12).map((ticker) => String(ticker || "").slice(0, 20)).filter(Boolean) : [],
+      open_positions_count: Number.isInteger(row.open_positions_count) && row.open_positions_count >= 0
+        ? Math.min(row.open_positions_count, 1000) : 0,
+      pending_orders_count: Number.isInteger(row.pending_orders_count) && row.pending_orders_count >= 0
+        ? Math.min(row.pending_orders_count, 1000) : 0,
       note: typeof row.note === "string" ? row.note.slice(0, 500) : ""
     };
   });
