@@ -22262,8 +22262,12 @@ html[data-theme="dark"] .loan-benchmark-explanation {
 }
 
 .gym-library-preview-animation {
-  width: 76%;
-  max-height: 100%;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  margin: 0;
 }
 
 .gym-exercise-hero-animation {

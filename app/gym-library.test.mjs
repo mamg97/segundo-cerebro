@@ -143,6 +143,7 @@ test("Gym library is responsive and uses the v0.42.14 locked-frame anatomical GI
   assert.match(css, /v0\.42\.14 — locked-frame 16-phase anatomical Gym GIF demonstrations/);
   assert.match(css, /gym-exercise-animation-gif/);
   assert.match(css, /gym-exercise-animation-poster/);
+  assert.match(css, /\.gym-library-preview-animation\s*\{[^}]*position: absolute;[^}]*inset: 0;[^}]*width: 100%;[^}]*height: 100%;[^}]*aspect-ratio: auto;/);
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
