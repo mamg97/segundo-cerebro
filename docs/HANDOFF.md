@@ -1812,3 +1812,11 @@ Antes de cualquier cambio:
 - Orden canónico por defecto: uso más reciente; las filas sin fecha válida quedan siempre al final, también como desempate en ordenaciones por total/últimos 30 días.
 - Los valores de `historico_usos` que no sean fechas normalizables se ignoran como fecha (p. ej. notas textuales), sin alterar `veces_usado`.
 - El auditor comprueba explícitamente orden por defecto, filas sin fecha al final y altura máxima compacta en móvil.
+
+
+### ORGANIZADOR 10 · corrección Safari del historial móvil · 2026-10-05
+
+- La captura real en iPhone mostró una regresión estructural: Safari separaba las celdas de la tabla convertida a CSS Grid, apilando miniaturas arriba y el resto de la fila debajo.
+- Solución canónica: escritorio/tablet conservan `<table>`; en `<=560px` la tabla se oculta y se renderiza `look-history-mobile-list` con una tarjeta por fila a partir del mismo array `rows`. No hay fuente ni cálculo duplicado.
+- Cada tarjeta móvil mantiene juntos miniatura, nombre/detalle, último uso, usos totales, usos 30 días y fechas registradas.
+- El auditor exige en móvil tarjetas visibles, tabla desktop oculta, una miniatura por tarjeta, orden reciente por defecto y looks sin fecha al final.
