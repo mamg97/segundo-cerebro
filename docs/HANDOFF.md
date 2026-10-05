@@ -6,6 +6,13 @@
 - No se añaden URLs duplicadas al Sheet: `LookItems` sigue conteniendo solo `look_id + objeto_id + rol`; las referencias siempre se obtienen de `Armario`, por lo que un overwrite de una prenda no deja referencias antiguas.
 - Regla operativa nueva: antes de generar con IA una imagen de un look, cargar las referencias visuales reales de todos sus `LookItems`; los nombres y colores son solo apoyo y no deben sustituir a las imágenes canónicas cuando existen.
 
+## MIDAS · laboratorio en tabla compacta · 2026-10-05
+
+- El bloque «Comportamiento de los algoritmos» deja las tarjetas 3×N y pasa a un registro compacto por algoritmo.
+- Cada grupo mantiene su cabecera y usa una tabla con columnas: Algoritmo, Actividad actual, Activos, Rentabilidad acumulada, Sesiones, Último cierre, DD y Evolución.
+- La última columna contiene siempre una sparkline miniatura del NAV.
+- En móvil no se reconvierte a tarjetas: la tabla conserva su estructura y permite scroll horizontal.
+
 ## MIDAS · actividad actual separada de rentabilidad · 2026-10-05
 
 - El laboratorio visual muestra por algoritmo dos bloques distintos: **Actividad actual** y **Rentabilidad acumulada**.
