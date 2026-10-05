@@ -46,7 +46,7 @@ test("look usage history is exposed from canonical usage fields", () => {
   assert.match(objects, /function compareUsageDate\(a,b,direction="desc"\)/);
   assert.match(objects, /if \(!aDate\) return 1/);
   assert.match(objects, /if \(!bDate\) return -1/);
-  assert.match(css, /v0\.42\.17 — compact mobile usage history/);
+  assert.match(css, /v0\.42\.18 — compact mobile usage history/);
   assert.match(css, /\.look-history-table td\.look-history-last-cell/);
   assert.match(css, /grid-column:\s*1 \/ 3/);
   assert.match(css, /\.look-history-dates\s*\{[\s\S]*?flex-wrap:\s*nowrap/);
@@ -62,9 +62,9 @@ test("look detail enlarges the look and shows component garments responsively", 
 });
 
 test("look detail cache bust and production audit are wired", () => {
-  assert.match(app, /objects\.js\?v=0\.41\.7/);
-  assert.match(index, /styles\.css\?v=0\.42\.17/);
-  assert.match(index, /app\.js\?v=0\.42\.9/);
+  assert.match(app, /objects\.js\?v=0\.41\.8/);
+  assert.match(index, /styles\.css\?v=0\.42\.18/);
+  assert.match(index, /app\.js\?v=0\.42\.10/);
   assert.match(audit, /auditLookDetail/);
   assert.match(audit, /Look ampliado/);
   assert.match(audit, /Prendas del look/);
