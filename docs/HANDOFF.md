@@ -1882,3 +1882,13 @@ Antes de cualquier cambio:
 3. Leer `agents/HEALTH.md` y `agents/PANTRY.md`.
 4. Leer en vivo `Objetivos`, `MenuSemanal`, `Registro`, `Recetas`/`IngredientesReceta` y en Despensa `Productos`, `Inventario`, `ListaCompra`.
 5. Continuar como **GESTOR NUTRI**, sin depender de recuerdos parciales de esta conversación.
+
+
+## GESTOR NUTRI · progreso confirmado + ListaCompra familiar · 05/10/2026
+
+- Las barras de progreso de `MenuSemanal` representan exclusivamente ingesta confirmada: se calculan con filas visibles cuyo `estado` es `consumido`. Las comidas `planificado` permanecen visibles como referencia, pero no rellenan kcal/proteína hasta confirmación.
+- El detalle semanal conserva simultáneamente **consumo confirmado** y **plan previsto**, de modo que una planificación futura no se confunde con adherencia real.
+- Despensa lee ya `Productos.nombres_familiares` (columna S) y expone el primer alias doméstico en `ListaCompra`; el nombre canónico se mantiene como contexto secundario.
+- Una fila `COMPRAR` enlazada a un producto con `url_producto` exacta de `tienda.mercadona.es/product/...` es pulsable y abre directamente esa ficha en Mercadona.
+- No se inventan enlaces comerciales: una fila genérica o un producto todavía sin URL exacta permanece no enlazado hasta que `Productos` sea enriquecido.
+- La Home de Despensa reutiliza también el alias familiar cuando existe; identidad, precio, URL y alias siguen perteneciendo al Sheet canónico, no al frontend.

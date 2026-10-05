@@ -279,12 +279,24 @@ function renderWorkspace(payload, initialView = "inventory") {
   const shoppingRows = shopping.map((item) => {
     const stateClass = String(item.state || "REVISAR").toLowerCase();
     const target = [item.targetQuantity, item.targetUnit].filter((value) => value !== null && value !== undefined && value !== "").join(" ");
-    return '<div class="pantry-shopping-row">' +
-      '<div><strong>' + escapeHtml(item.name || "Producto") + '</strong>' +
+    const familyName = String(item.familyName || "").trim();
+    const canonicalName = String(item.name || "Producto").trim();
+    const displayName = familyName || canonicalName;
+    const productUrl = String(item.productUrl || "").trim();
+    const mercadonaUrl = /^https:\/\/tienda\.mercadona\.es\/product\//.test(productUrl) ? productUrl : "";
+    const canonicalLine = familyName && familyName.toLocaleLowerCase("es") !== canonicalName.toLocaleLowerCase("es")
+      ? '<small class="pantry-shopping-canonical">' + escapeHtml(canonicalName) + '</small>'
+      : "";
+    const content =
+      '<div><strong>' + escapeHtml(displayName) + '</strong>' +
+      canonicalLine +
       '<span>' + escapeHtml(target || "Cantidad por definir") + ' · ' + escapeHtml(item.reason || "Sin motivo") + '</span></div>' +
       '<span class="purchase-state state-' + escapeHtml(stateClass) + '">' + escapeHtml(item.state || "REVISAR") + '</span>' +
-      '<span class="pantry-shopping-price">' + escapeHtml(money(item.estimatedCost, currency)) + '</span>' +
-      '</div>';
+      '<span class="pantry-shopping-price">' + escapeHtml(money(item.estimatedCost, currency)) + '</span>';
+
+    return mercadonaUrl
+      ? '<a class="pantry-shopping-row is-link" href="' + escapeHtml(mercadonaUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="Abrir ' + escapeHtml(displayName) + ' en Mercadona">' + content + '</a>'
+      : '<div class="pantry-shopping-row">' + content + '</div>';
   }).join("");
 
   body.innerHTML =
