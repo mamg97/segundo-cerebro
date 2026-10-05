@@ -28,6 +28,11 @@ The private spreadsheet **`SEGUNDO CEREBRO - DESPENSA`** is the canonical source
 
 Core tabs:
 - `Productos`: master product identity, canonical `producto_id`, brand/store/category, format, EAN, Mercadona URL when known and product-level nutrition when available.
+- `Productos.nombres_familiares` (column S) stores household aliases used by Miguel/Andrea, separated by ` | ` when several names refer to the same product. Example: `enjuague bucal de miguel | listerine | enjuague bucal`.
+  - Alias matching is exact after normalization (case/accents/whitespace), and has priority over fuzzy matching.
+  - Several aliases may point to one canonical `producto_id`; one alias must never point ambiguously to several products.
+  - Keep `nombre_canonico` stable and product-facing; use `nombres_familiares` for colloquial household language and Apple Reminders titles.
+  - When a user clarifies "this is what we mean by X", enrich `nombres_familiares` rather than renaming the canonical product unnecessarily.
 - `Productos.imagen_url` (optional column R): confirmed HTTPS product image reference, independent from private recipe photos.
 - `Inventario`: what is physically available at home, approximate quantity, storage location, stock level and confidence.
 - `ListaCompra`: replenishment needs and candidates.
@@ -180,6 +185,6 @@ The shared Apple list is the daily interface for confirmed purchases and `ListaC
 - Completion never increments inventory.
 - Apple titles stay clean; product, format, price, store and reason remain in Pantry.
 - Unknown Apple products are valid rows with empty price and optional provisional `producto_id`; never invent a price.
-- Identity uses EventKit IDs after first link. Exact normalized-name matching is only a migration/deduplication aid.
+- Identity uses EventKit IDs after first link. Before fuzzy matching an unlinked reminder, normalize its title and resolve it against `Productos.nombre_canonico` plus every alias in `Productos.nombres_familiares`; a unique exact alias match is authoritative. Fuzzy matching is only a last-resort migration/deduplication aid and must not override an exact household alias.
 
 Operational setup and conflict rules live in `docs/APPLE_REMINDERS_SYNC.md`.
