@@ -1834,3 +1834,13 @@ Antes de cualquier cambio:
 - Solución canónica: escritorio/tablet conservan `<table>`; en `<=560px` la tabla se oculta y se renderiza `look-history-mobile-list` con una tarjeta por fila a partir del mismo array `rows`. No hay fuente ni cálculo duplicado.
 - Cada tarjeta móvil mantiene juntos miniatura, nombre/detalle, último uso, usos totales, usos 30 días y fechas registradas.
 - El auditor exige en móvil tarjetas visibles, tabla desktop oculta, una miniatura por tarjeta, orden reciente por defecto y looks sin fecha al final.
+
+
+## Nutrición · ownership del menú y semántica visual · 05/10/2026
+
+- Regla operativa de GESTOR NUTRI: **Miguel aporta Comida y Cena; el gestor completa Desayuno, Media mañana y Merienda** para acercar cada día a los objetivos activos de kcal/proteína.
+- Comida/Cena son restricciones del plan doméstico y no se sustituyen para cuadrar macros. El ajuste se hace con las tomas auxiliares, priorizando recetas/productos ya canónicos y stock de Despensa.
+- En días de oficina se respetan las reglas activas de `Objetivos`; si no se lleva comida por la mañana, el ajuste nutricional se desplaza a las tomas permitidas.
+- Si faltan macros de Comida/Cena, el cierre diario es provisional y debe recalcularse cuando esas cantidades se concreten.
+- **Verde/mint en el menú significa exclusivamente `estado=consumido`.** Una receta o producto puede ser pulsable sin ponerse verde. La existencia de `recipe_id`/`food_id` no codifica estado de consumo.
+- Los cambios de contenido del menú siguen siendo mutaciones de `MenuSemanal`/fuentes privadas; el frontend solo se toca para defectos genéricos de presentación o semántica como esta regla de color.
