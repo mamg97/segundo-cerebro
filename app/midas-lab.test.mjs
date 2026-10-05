@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { renderMidasVisualLab } from "./midas-lab.js";
 
-test("renders bootstrap cards when weekly forward has not started", () => {
+test("renders bootstrap rows when weekly forward has not started", () => {
   const dashboard = { tracks: [
     { id: "benchmark_spy", label: "SPY daily", group: "paper_nuevo", status: "demo_con_diario",
       return_pct: 0, last_session: "2026-09-28", equity_history: [{ date: "2026-09-28", nav: 100000 }] }
@@ -14,7 +14,7 @@ test("renders bootstrap cards when weekly forward has not started", () => {
   assert.match(html, /LABORATORIO VIVO/);
   assert.match(html, /Ensemble/);
   assert.match(html, /SMCI/);
-  assert.match(html, /Prueba retrospectiva de arranque/);
+  assert.match(html, /Prueba retrospectiva · no cuenta en forward/);
 });
 
 test("forward weekly rows replace bootstrap duplicates", () => {
@@ -29,10 +29,51 @@ test("forward weekly rows replace bootstrap duplicates", () => {
   } } };
   const html = renderMidasVisualLab(dashboard, lab);
   assert.match(html, /ML semanal · ensemble/);
-  assert.doesNotMatch(html, /Prueba retrospectiva de arranque/);
+  assert.doesNotMatch(html, /Prueba retrospectiva · no cuenta en forward/);
   assert.match(html, /\+1,20 %/);
 });
 
+
+test("renders current activity separately from cumulative return", () => {
+  const dashboard = { tracks: [
+    { id: "weekly_ml_ensemble_2026", label: "ML semanal · ensemble", group: "weekly_ml_demo",
+      status: "demo_con_diario", return_pct: 0, last_session: "2026-10-02",
+      activity_label: "10 compras para próxima apertura",
+      activity_tickers: ["AMD", "INTC", "UAL"],
+      equity_history: [{ date: "2026-10-02", nav: 100000 }] }
+  ] };
+  const html = renderMidasVisualLab(dashboard, null);
+  assert.match(html, /<table class="midas-lab-table">/);
+  assert.match(html, /<th>Algoritmo<\/th>/);
+  assert.match(html, /<th>Actividad actual<\/th>/);
+  assert.match(html, /<th>Rent\. acum\.<\/th>/);
+  assert.match(html, /<th>Evolución<\/th>/);
+  assert.match(html, /10 compras para próxima apertura/);
+  assert.match(html, /AMD/);
+  assert.match(html, /INTC/);
+  assert.match(html, /Rent\. acum\./);
+  assert.match(html, /0,00 %/);
+});
+
+test("renders one compact row per algorithm and chart in last column", () => {
+  const dashboard = { tracks: [
+    { id: "a", label: "Algoritmo A", group: "paper_nuevo", status: "demo_con_diario",
+      return_pct: 1.25, last_session: "2026-10-05", max_drawdown_pct: -0.4,
+      activity_label: "2 posiciones abiertas", activity_tickers: ["AAA", "BBB"],
+      equity_history: [{ date: "2026-10-02", nav: 100000 }, { date: "2026-10-05", nav: 101250 }] },
+    { id: "b", label: "Algoritmo B", group: "paper_nuevo", status: "demo_con_diario",
+      return_pct: 0, last_session: "2026-10-05", activity_label: "Sin compras · en efectivo",
+      activity_tickers: [], equity_history: [{ date: "2026-10-05", nav: 100000 }] }
+  ] };
+  const html = renderMidasVisualLab(dashboard, null);
+  assert.equal((html.match(/class="midas-lab-row/g) || []).length, 2);
+  assert.match(html, /2 posiciones abiertas/);
+  assert.match(html, /AAA/);
+  assert.match(html, /BBB/);
+  assert.match(html, /midas-lab-col-chart/);
+  assert.match(html, /midas-lab-mini-chart/);
+  assert.ok(html.indexOf("midas-lab-col-chart") > html.indexOf("midas-lab-col-dd"));
+});
 
 test("renders corrected TFG as its own live algorithm group", () => {
   const dashboard = { tracks: [

@@ -9,7 +9,9 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
     group: "paper_nuevo", status: "demo_con_diario",
     first_session: "2026-09-28", last_session: "2026-09-29", currency: "USD",
     last_equity: 101000, day_return_pct: 1, return_pct: 1,
-    equity_history: [{ date: "2026-09-28", nav: 100000 }, { date: "2026-09-29", nav: 101000 }], note: "Demo"
+    equity_history: [{ date: "2026-09-28", nav: 100000 }, { date: "2026-09-29", nav: 101000 }],
+    activity_state: "active", activity_label: "1 posición abierta", activity_tickers: ["SPY"],
+    open_positions_count: 1, pending_orders_count: 0, note: "Demo"
   };
   const tfg = {
     id: "tfg_corrected_2026", label: "TFG corregido 2026", provenance: "TFG 2021 · arquitectura portada",
@@ -37,6 +39,9 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
   assert.equal(first.dashboard.tracks[0].day_return_pct, 1);
   assert.equal(first.dashboard.tracks[0].provenance, row.provenance);
   assert.deepEqual(first.dashboard.tracks[0].equity_history, row.equity_history);
+  assert.equal(first.dashboard.tracks[0].activity_label, "1 posición abierta");
+  assert.deepEqual(first.dashboard.tracks[0].activity_tickers, ["SPY"]);
+  assert.equal(first.dashboard.tracks[0].open_positions_count, 1);
   assert.equal(first.dashboard.tracks[1].group, "tfg_demo_adaptado");
   assert.equal(first.dashboard.tracks[1].return_pct, .5);
   assert.equal(first.dashboard.tracks[2].group, "buy_the_dip_demo");
