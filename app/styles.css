@@ -17725,6 +17725,49 @@ html[data-theme="dark"] .wealth-daily-kpis article {
   box-shadow: 0 0 0 0 rgba(212,91,100,.28);
 }
 
+.midas-lab-live-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(105px, .55fr);
+  gap: 7px;
+}
+
+.midas-lab-live-cell {
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 42%, transparent);
+}
+
+.midas-lab-live-cell > span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink-soft);
+  font-size: 6.8px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.midas-lab-live-cell > strong {
+  display: block;
+  min-width: 0;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.midas-lab-performance {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+}
+
+.midas-lab-performance .midas-lab-return {
+  margin-top: 3px;
+  font-size: 15px;
+}
+
 .midas-lab-return {
   flex: none;
   font-size: 12px;
@@ -17827,6 +17870,10 @@ html[data-theme="dark"] .wealth-daily-kpis article {
   font-weight: 700;
 }
 
+.midas-lab-activity .midas-lab-picks {
+  margin-top: 5px;
+}
+
 .midas-lab-picks b {
   padding: 2px 5px;
   border-radius: 999px;
@@ -17911,7 +17958,9 @@ html[data-theme="dark"] .midas-lab-card {
   }
 
   .midas-lab-card-head strong { font-size: 10.5px; }
-  .midas-lab-return { font-size: 11px; }
+  .midas-lab-live-grid { grid-template-columns: minmax(0, 1.35fr) minmax(92px, .65fr); }
+  .midas-lab-live-cell { padding: 7px 8px; }
+  .midas-lab-performance .midas-lab-return { font-size: 13px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

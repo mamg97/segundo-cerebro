@@ -106,18 +106,27 @@ function renderMidasLabCard(item) {
   const status = item.bootstrap ? "Bootstrap técnico" : statusLabel(item.status);
   const latestDate = item.last_session || item.mark_date || null;
   const positions = Array.isArray(item.positions) ? item.positions : [];
-  const topTickers = positions.map((position) => position.ticker).filter(Boolean).slice(0, 4);
+  const fallbackTickers = positions.map((position) => position.ticker).filter(Boolean);
+  const activityTickers = (Array.isArray(item.activity_tickers) && item.activity_tickers.length
+    ? item.activity_tickers : fallbackTickers).filter(Boolean).slice(0, 6);
+  const activityLabel = item.activity_label ||
+    (fallbackTickers.length ? fallbackTickers.length + " posiciones" :
+      item.status === "demo_con_diario" ? "Sin compras · en efectivo" : "Esperando actividad");
   const sessions = history.length;
   const riskBits = [];
   if (typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)) riskBits.push("DD " + formatPercent(item.max_drawdown_pct));
   if (typeof item.annualized_volatility_pct === "number" && Number.isFinite(item.annualized_volatility_pct)) riskBits.push("Vol " + formatPercent(item.annualized_volatility_pct));
   return '<article class="midas-lab-card is-' + tone(returnPct) + (item.bootstrap ? ' is-bootstrap' : '') + '">' +
-    '<div class="midas-lab-card-head"><div><span class="midas-lab-state"><i></i>' + escapeHtml(status) + '</span><strong>' + escapeHtml(item.label) + '</strong></div>' +
-    '<span class="midas-lab-return">' + formatPercent(returnPct) + '</span></div>' +
+    '<div class="midas-lab-card-head"><div><span class="midas-lab-state"><i></i>' + escapeHtml(status) + '</span><strong>' + escapeHtml(item.label) + '</strong></div></div>' +
+    '<div class="midas-lab-live-grid">' +
+      '<div class="midas-lab-live-cell midas-lab-activity"><span>Actividad actual</span><strong>' + escapeHtml(activityLabel) + '</strong>' +
+        (activityTickers.length ? '<div class="midas-lab-picks">' + activityTickers.map((ticker) => '<b>' + escapeHtml(ticker) + '</b>').join("") + '</div>' : '') +
+      '</div>' +
+      '<div class="midas-lab-live-cell midas-lab-performance"><span>Rentabilidad acumulada</span><strong class="midas-lab-return">' + formatPercent(returnPct) + '</strong></div>' +
+    '</div>' +
     renderSparkline(history, item.label, returnPct) +
     '<div class="midas-lab-card-meta"><span>' + (sessions ? sessions + (sessions === 1 ? " sesión" : " sesiones") : "Esperando histórico") + '</span><span>' + escapeHtml(formatDate(latestDate)) + '</span></div>' +
     (riskBits.length ? '<div class="midas-lab-card-meta"><span>' + escapeHtml(riskBits.join(" · ")) + '</span><span></span></div>' : "") +
-    (topTickers.length ? '<div class="midas-lab-picks"><span>Selección</span>' + topTickers.map((ticker) => '<b>' + escapeHtml(ticker) + '</b>').join("") + '</div>' : "") +
     (item.bootstrap ? '<small class="midas-lab-disclaimer">Prueba retrospectiva de arranque · pre-fracciones · no cuenta en forward</small>' : "") +
   '</article>';
 }

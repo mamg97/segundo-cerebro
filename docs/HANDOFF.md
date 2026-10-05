@@ -6,6 +6,13 @@
 - No se añaden URLs duplicadas al Sheet: `LookItems` sigue conteniendo solo `look_id + objeto_id + rol`; las referencias siempre se obtienen de `Armario`, por lo que un overwrite de una prenda no deja referencias antiguas.
 - Regla operativa nueva: antes de generar con IA una imagen de un look, cargar las referencias visuales reales de todos sus `LookItems`; los nombres y colores son solo apoyo y no deben sustituir a las imágenes canónicas cuando existen.
 
+## MIDAS · actividad actual separada de rentabilidad · 2026-10-05
+
+- El laboratorio visual muestra por algoritmo dos bloques distintos: **Actividad actual** y **Rentabilidad acumulada**.
+- Actividad proviene del ledger canónico público de MIDAS y distingue posiciones abiertas, compras/órdenes pendientes, efectivo sin señal y espera de primera sesión; incluye hasta seis tickers visibles por tarjeta.
+- La rentabilidad acumulada sigue viniendo exclusivamente del NAV/diario forward; una señal pendiente puede convivir correctamente con 0,00 % acumulado.
+- Esto evita interpretar los primeros forecasts Weekly ML/TFM como algoritmos inactivos solo porque aún no existe P&L realizado.
+
 # Handoff — Segundo Cerebro
 
 ## Última actualización
