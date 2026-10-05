@@ -46,10 +46,13 @@ test("look usage history is exposed from canonical usage fields", () => {
   assert.match(objects, /function compareUsageDate\(a,b,direction="desc"\)/);
   assert.match(objects, /if \(!aDate\) return 1/);
   assert.match(objects, /if \(!bDate\) return -1/);
-  assert.match(css, /v0\.42\.18 — compact mobile usage history/);
-  assert.match(css, /\.look-history-table td\.look-history-last-cell/);
-  assert.match(css, /grid-column:\s*1 \/ 3/);
-  assert.match(css, /\.look-history-dates\s*\{[\s\S]*?flex-wrap:\s*nowrap/);
+  assert.match(css, /v0\.42\.18 — native mobile cards for usage history \(Safari-safe\)/);
+  assert.match(objects, /look-history-mobile-list/);
+  assert.match(objects, /look-history-mobile-card/);
+  assert.match(objects, /look-history-mobile-main/);
+  assert.match(css, /\.look-history-table-wrap\s*\{[\s\S]*?display:\s*none !important/);
+  assert.match(css, /\.look-history-mobile-list\s*\{[\s\S]*?display:\s*grid/);
+  assert.match(css, /\.look-history-mobile-metrics\s*\{/);
 });
 
 test("look detail enlarges the look and shows component garments responsively", () => {
