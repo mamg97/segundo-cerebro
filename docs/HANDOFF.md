@@ -1844,3 +1844,41 @@ Antes de cualquier cambio:
 - Si faltan macros de Comida/Cena, el cierre diario es provisional y debe recalcularse cuando esas cantidades se concreten.
 - **Verde/mint en el menú significa exclusivamente `estado=consumido`.** Una receta o producto puede ser pulsable sin ponerse verde. La existencia de `recipe_id`/`food_id` no codifica estado de consumo.
 - Los cambios de contenido del menú siguen siendo mutaciones de `MenuSemanal`/fuentes privadas; el frontend solo se toca para defectos genéricos de presentación o semántica como esta regla de color.
+
+
+## GESTOR NUTRI · relevo de conversación · 05/10/2026
+
+### Reglas operativas cerradas
+
+- Miguel define **Comida** y **Cena** del menú doméstico. GESTOR NUTRI completa **Desayuno**, **Media mañana** y **Merienda** para aproximar cada día a los objetivos activos de energía/proteína, sin cambiar las comidas/cenas fijadas.
+- Las tomas auxiliares se construyen con recetas/productos canónicos y stock real de Despensa; en días de oficina se respetan las reglas activas de `Objetivos`.
+- Si una comida/cena todavía no tiene cantidades/macros suficientes, el cierre diario es provisional y debe reajustarse cuando esos datos existan.
+- En la UI del menú, **verde/mint = `estado=consumido` exclusivamente**. Una receta o producto puede ser pulsable sin ponerse verde.
+- Los cambios ordinarios del menú son Sheet-only. El frontend solo se toca por defectos genéricos; queda una corrección genérica preparada para que los enlaces planificados no hereden el color mint.
+
+### Despensa / ListaCompra
+
+- `SEGUNDO CEREBRO - DESPENSA / Productos` incorpora la columna **`nombres_familiares`** (S).
+- Puede contener varios alias separados por ` | `; se usan para resolver vocabulario de Miguel/Andrea y títulos de Apple Reminders contra un único `producto_id`.
+- Prioridad de identidad: `producto_id` explícito → nombre canónico exacto normalizado → alias familiar exacto normalizado → revisión manual. No usar fuzzy matching para sobreescribir una coincidencia exacta.
+- Alias iniciales ya sembrados incluyen, entre otros: `enjuague bucal de miguel`→Listerine, `enjuague blanquete`→Deliplus blanqueador, `desodorante de miguel`→Rexona Invisible Ice Fresh, `huevos`→pack 12 L Mercadona 31504, `fajitas`→tortillas integrales, `pavo`→lomo de pavo, `ñoquis`, `quinoa`, `ensalada cesar`, `tomates`, `pechugas de pollo`, etc.
+- Productos personales exactos confirmados por Miguel:
+  - Desodorante: Mercadona **44400**, Rexona Men Invisible Ice Fresh.
+  - Enjuague habitual: Mercadona **23067**, Listerine menta.
+  - Enjuague blanqueador: Mercadona **52524**, Deliplus Bicarbonato zero alcohol.
+  - Huevos: Mercadona **31504**, **siempre pack de 12 huevos grandes L**; el inventario puede tener menos unidades restantes, pero la reposición habitual es siempre el pack de 12.
+
+### Estado del menú actual
+
+- `MenuSemanal` contiene el plan de comidas/cenas aportado por Miguel para 05/10→12/10, con sábado explícitamente abierto (`Sin plan · posible salida`) para preservar la matriz de siete días sin inventar comida.
+- El siguiente GESTOR NUTRI debe **leer el Sheet vivo antes de continuar** y completar las tomas auxiliares del resto de la semana; no reconstruirlas desde memoria de chat.
+- Lunes 05/10 ya tiene consumo real registrado por la mañana/mediodía; no convertir automáticamente futuros `planificado` a `consumido`.
+- La lista de la compra ya fue reconciliada con Recordatorios Apple, inventario, precios/tickets y productos canónicos, pero debe seguir enriqueciendo alias/productos exactos cuando Miguel/Andrea aclaren una referencia.
+
+### Arranque recomendado del nuevo chat
+
+1. Leer `AGENTS.md` completo.
+2. Leer `docs/HANDOFF.md` completo, especialmente este bloque.
+3. Leer `agents/HEALTH.md` y `agents/PANTRY.md`.
+4. Leer en vivo `Objetivos`, `MenuSemanal`, `Registro`, `Recetas`/`IngredientesReceta` y en Despensa `Productos`, `Inventario`, `ListaCompra`.
+5. Continuar como **GESTOR NUTRI**, sin depender de recuerdos parciales de esta conversación.
