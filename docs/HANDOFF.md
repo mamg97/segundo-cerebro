@@ -26,6 +26,7 @@
 
 - PR #281 integrado: press de banca observado en producción con `v0.42.22`, botón `Ver GIF`, asset cargado 360×480, sin errores de consola y revisión de viewport móvil 390×844. No requiere buscarlo en wger.
 - Segunda entrega: press militar con barra, mismo estilo y 16 fases transparentes. Prueba binaria de GIF verifica cada frame y póster de todos los assets publicados; los originales/contactos quedan en `design/gym-animations`, fuera del bundle servido. Los borradores rechazados se conservan localmente.
+- Corrección de la captura del usuario: la biblioteca wger llama al ejercicio plano con barra `Press de Banca`, no como el nombre completo del plan. Se añade ese alias exacto revisado y regresión de la tarjeta real: debe mostrar GIF/Animación en vez del vídeo. Mancuernas, declinado e inclinado permanecen separados.
 
 - El press de banca plano con barra dispone de GIF anatómico propio de 16 fases, con póster para movimiento reducido. El resto se incorpora ejercicio a ejercicio tras revisión; no declarar todo el catálogo terminado.
 - `Mi plan → Ver GIF` abre la animación local sin depender de búsqueda, enlaces ni disponibilidad de wger. Cerrar devuelve el foco al ejercicio. La biblioteca técnica sigue disponible por separado.

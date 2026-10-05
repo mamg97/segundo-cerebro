@@ -20,11 +20,29 @@ test("Local animation matching is exact and never substitutes another bench vari
   vm.runInContext(context.source, context);
   const match = (name) => vm.runInContext(`gymCustomAnimationFor(${JSON.stringify({ name })})`, context);
   assert.equal(match("Press de Banca Plano (Barra)").key, "press-banca-plano-barra");
+  assert.equal(match("Press de Banca").key, "press-banca-plano-barra");
+  assert.equal(match("Press de banca con mancuernas"), null);
+  assert.equal(match("Press de Banca Declinado con Barra"), null);
   assert.equal(match("Press Inclinado (Barra)"), null);
   assert.equal(match("Press de Banca Plano (Barra) agarre cerrado"), null);
   assert.equal(match("Press Militar").key, "military-press");
   assert.equal(match("Press militar con mancuernas"), null);
   assert.equal(match(""), null);
+});
+
+test("The actual wger bench card shows the GIF instead of the real-person video", () => {
+  const grid = { innerHTML: "", querySelectorAll: () => [] };
+  const status = {};
+  const context = animationContext({
+    document: { querySelector: (selector) => ({ "#gym-library-results": grid, "#gym-library-status": status }[selector] || null) },
+    escapeHtml: String
+  });
+  vm.runInContext(context.source, context);
+  vm.runInContext(app.slice(app.indexOf("function gymLibraryPreview("), app.indexOf("async function loadGymExerciseLibrary(")), context);
+  vm.runInContext('renderGymLibraryResults([{id: "library-bench", name: "Press de Banca", hasVideo: true, videos: [{url: "/example-video.mp4"}], muscles: [{name: "Chest"}], equipment: [{name: "Barbell"}, {name: "Bench"}]}])', context);
+  assert.match(grid.innerHTML, /press-banca-plano-barra-v5\.gif/);
+  assert.match(grid.innerHTML, />Animación<\/b>/);
+  assert.doesNotMatch(grid.innerHTML, /<video/);
 });
 
 test("Every published GIF has 16 transparent full-size frames and a matching poster", async () => {

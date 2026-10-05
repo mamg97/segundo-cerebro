@@ -5357,7 +5357,7 @@ const GYM_CUSTOM_ANIMATIONS = [
     key: "press-banca-plano-barra",
     animationUrl: "./assets/gym-animations/press-banca-plano-barra-v5.gif",
     posterUrl: "./assets/gym-animations/press-banca-plano-barra-poster-v5.png",
-    labels: ["press de banca plano barra", "press banca plano barra", "flat barbell bench press"]
+    labels: ["press de banca plano barra", "press banca plano barra", "flat barbell bench press", "press de banca", "press banca"]
   },
   {
     key: "military-press",
