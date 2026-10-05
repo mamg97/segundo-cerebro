@@ -366,7 +366,7 @@ export function buildPayload(valueRanges = []) {
       estimatedBasketTotal,
       estimatedBasketPartial: missingPriceCount > 0,
       missingPriceCount,
-      previewItems: confirmedShopping.slice(0, 5).map((item) => item.name),
+      previewItems: confirmedShopping.slice(0, 5).map((item) => item.familyName || item.name),
       lastInventoryReview,
       currency: "EUR",
       homeMessage: [fridgePhrase, reviewPhrase, purchasePhrase].join(" · ")
@@ -396,7 +396,7 @@ export async function fetchPantrySummary(env, getGoogleAccessToken) {
   const token = await getGoogleAccessToken(env);
   const spreadsheetId = await resolveSpreadsheetId(env, token);
   const ranges = [
-    "Productos!A1:R2000",
+    "Productos!A1:S2000",
     "Inventario!A1:M2000",
     "Precios!A1:J4000",
     "Tickets!A1:G2000",
