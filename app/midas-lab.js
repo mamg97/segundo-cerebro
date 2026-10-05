@@ -126,8 +126,9 @@ function renderMidasLabRow(item) {
   const activityTickers = (Array.isArray(item.activity_tickers) && item.activity_tickers.length
     ? item.activity_tickers : fallbackTickers).filter(Boolean);
   const activityLabel = item.activity_label ||
-    (fallbackTickers.length ? fallbackTickers.length + " posiciones" :
-      item.status === "demo_con_diario" ? "Sin compras · en efectivo" : "Esperando actividad");
+    (fallbackTickers.length
+      ? fallbackTickers.length + (fallbackTickers.length === 1 ? " posición" : " posiciones")
+      : item.status === "demo_con_diario" ? "Sin compras · en efectivo" : "Esperando actividad");
   const status = item.bootstrap ? "Bootstrap técnico" : statusLabel(item.status);
   const sessions = history.length;
   const drawdown = typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)
