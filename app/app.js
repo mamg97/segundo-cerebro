@@ -1,7 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.20";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.21";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
@@ -4648,7 +4648,7 @@ async function openMenuPantryProduct(panel, data, productId) {
     ]);
     if (!pantryResponse.ok || !detailResponse.ok) throw new Error("PANTRY_PRODUCT_" + detailResponse.status);
     const [pantry, detail] = await Promise.all([pantryResponse.json(), detailResponse.json()]);
-    const { renderProductDetail } = await import("./pantry.js?v=0.42.20");
+    const { renderProductDetail } = await import("./pantry.js?v=0.42.21");
     renderProductDetail(detail.item, pantry, {
       container: panel,
       onBack,

@@ -283,7 +283,8 @@ function renderWorkspace(payload, initialView = "inventory") {
     const canonicalName = String(item.name || "Producto").trim();
     const displayName = familyName || canonicalName;
     const productUrl = String(item.productUrl || "").trim();
-    const mercadonaUrl = /^https:\/\/tienda\.mercadona\.es\/product\//.test(productUrl) ? productUrl : "";
+    const exactMercadonaUrl = /^https:\/\/tienda\.mercadona\.es\/product\//.test(productUrl) ? productUrl : "";
+    const mercadonaUrl = exactMercadonaUrl || ("https://tienda.mercadona.es/search-results?query=" + encodeURIComponent(displayName));
     const canonicalLine = familyName && familyName.toLocaleLowerCase("es") !== canonicalName.toLocaleLowerCase("es")
       ? '<small class="pantry-shopping-canonical">' + escapeHtml(canonicalName) + '</small>'
       : "";
@@ -294,9 +295,9 @@ function renderWorkspace(payload, initialView = "inventory") {
       '<span class="purchase-state state-' + escapeHtml(stateClass) + '">' + escapeHtml(item.state || "REVISAR") + '</span>' +
       '<span class="pantry-shopping-price">' + escapeHtml(money(item.estimatedCost, currency)) + '</span>';
 
-    return mercadonaUrl
-      ? '<a class="pantry-shopping-row is-link" href="' + escapeHtml(mercadonaUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="Abrir ' + escapeHtml(displayName) + ' en Mercadona">' + content + '</a>'
-      : '<div class="pantry-shopping-row">' + content + '</div>';
+    return '<a class="pantry-shopping-row is-link" href="' + escapeHtml(mercadonaUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="' +
+      escapeHtml(exactMercadonaUrl ? ("Abrir " + displayName + " en Mercadona") : ("Buscar " + displayName + " en Mercadona")) +
+      '">' + content + '</a>';
   }).join("");
 
   body.innerHTML =
