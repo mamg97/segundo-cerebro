@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import vm from "node:vm";
 
 const [app, css, worker, libraryWorker] = await Promise.all([
   readFile(new URL("./app.js", import.meta.url), "utf8"),
@@ -8,6 +9,37 @@ const [app, css, worker, libraryWorker] = await Promise.all([
   readFile(new URL("../private-cloudflare/src/index.js", import.meta.url), "utf8"),
   readFile(new URL("../private-cloudflare/src/gym-library.js", import.meta.url), "utf8")
 ]);
+
+function animationContext(extra = {}) {
+  const source = app.slice(app.indexOf("const GYM_CUSTOM_ANIMATIONS"), app.indexOf("function gymPlanExerciseLinkMap"));
+  return vm.createContext({ ...extra, source });
+}
+
+test("Local animation matching is exact and never substitutes another bench variant", () => {
+  const context = animationContext();
+  vm.runInContext(context.source, context);
+  const match = (name) => vm.runInContext(`gymCustomAnimationFor(${JSON.stringify({ name })})`, context);
+  assert.equal(match("Press de Banca Plano (Barra)").key, "press-banca-plano-barra");
+  assert.equal(match("Press Inclinado (Barra)"), null);
+  assert.equal(match("Press de Banca Plano (Barra) agarre cerrado"), null);
+  assert.equal(match(""), null);
+});
+
+test("Opening a curated plan GIF does not require the external library", async () => {
+  const detail = { hidden: true, innerHTML: "", scrollIntoView() {} };
+  const context = animationContext({
+    document: { querySelector: (selector) => selector === "#gym-plan-animation-detail" ? detail : null },
+    escapeHtml: (value) => String(value),
+    setGymPanelView: (view) => assert.equal(view, "plan"),
+    openGymExternalTechnique: () => { throw new Error("Unexpected external lookup"); }
+  });
+  vm.runInContext(context.source, context);
+  vm.runInContext(app.slice(app.indexOf("async function openGymTechniqueForPlanExercise"), app.indexOf("async function openGymExternalTechnique")), context);
+  await vm.runInContext('openGymTechniqueForPlanExercise({ id: "bench-flat", name: "Press de Banca Plano (Barra)" })', context);
+  assert.equal(detail.hidden, false);
+  assert.match(detail.innerHTML, /press-banca-plano-barra-v5\.gif/);
+  assert.match(detail.innerHTML, /ilustración orientativa/);
+});
 
 test("Gym exposes a free visual exercise library beside the canonical plan", () => {
   assert.match(app, /data-gym-view="plan">Mi plan/);

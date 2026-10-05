@@ -5375,7 +5375,7 @@ function gymCustomAnimationFor(exercise) {
   const normalizedName = normalizeGymAnimationLabel(exercise.name);
   return GYM_CUSTOM_ANIMATIONS.find((animation) =>
     normalizedId === animation.key.replaceAll("-", " ") ||
-    animation.labels.some((label) => normalizedName === label || normalizedName.includes(label))
+    animation.labels.some((label) => normalizedName === label)
   ) || null;
 }
 
@@ -5428,7 +5428,7 @@ function renderGymPlanReference(plan) {
                     <strong>${escapeHtml(exercise.name)}</strong>
                     <small>${escapeHtml(formatTarget(exercise))}</small>
                   </span>
-                  <b>Técnica →</b>
+                  <b>${gymCustomAnimationFor(exercise) ? "Ver GIF →" : "Técnica →"}</b>
                 </button>`).join("")}
             </div>
           </article>`).join("")}
@@ -5591,6 +5591,7 @@ function renderGymPanel(data) {
       <button type="button" data-gym-view="library">Biblioteca de ejercicios</button>
     </div>
     <section class="gym-view-panel active" data-gym-view-panel="plan">
+      <section id="gym-plan-animation-detail" aria-label="Demostración del ejercicio" hidden></section>
       ${renderGymPlanView(data)}
     </section>
     <section class="gym-view-panel" data-gym-view-panel="library" hidden>
@@ -5667,6 +5668,45 @@ function bindGymTechniqueButtons(root = document) {
 }
 
 async function openGymTechniqueForPlanExercise(exercise) {
+  const animation = gymCustomAnimationFor(exercise);
+  const detail = document.querySelector("#gym-plan-animation-detail");
+  if (animation && detail) {
+    setGymPanelView("plan");
+    detail.hidden = false;
+    detail.innerHTML = `
+      <button type="button" class="gym-library-back" id="gym-animation-close">← Volver al plan</button>
+      <article class="gym-exercise-detail-card">
+        <div class="gym-exercise-detail-media">
+          ${gymCustomAnimationMarkup(animation, `Animación de ${exercise.name}`, "gym-exercise-hero-animation")}
+          <span class="gym-exercise-media-caption">Animación propia en bucle · ilustración orientativa</span>
+        </div>
+        <div class="gym-exercise-detail-copy">
+          <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
+          <p class="gym-exercise-description">El GIF corresponde a esta variante del ejercicio. Puedes consultar por separado las fichas técnicas de la biblioteca.</p>
+          <button type="button" class="gym-library-back" id="gym-animation-library">Consultar biblioteca</button>
+        </div>
+      </article>`;
+    document.querySelector("#gym-animation-close")?.addEventListener("click", () => {
+      detail.hidden = true;
+      // Release the image while the demonstration is closed.
+      detail.innerHTML = "";
+      const trigger = [...document.querySelectorAll("[data-gym-technique-id]")]
+        .find((button) => button.dataset.gymTechniqueId === String(exercise.id));
+      trigger?.focus();
+    });
+    document.querySelector("#gym-animation-library")?.addEventListener("click", () => {
+      detail.hidden = true;
+      detail.innerHTML = "";
+      void openGymExternalTechnique(exercise);
+    });
+    document.querySelector("#gym-animation-heading")?.focus({ preventScroll: true });
+    detail.scrollIntoView({ block: "start" });
+    return;
+  }
+  await openGymExternalTechnique(exercise);
+}
+
+async function openGymExternalTechnique(exercise) {
   setGymPanelView("library");
   gymLibraryState.contextPlanExerciseId = exercise.id;
   const link = gymPlanExerciseLinkMap().get(String(exercise.id));
@@ -5864,7 +5904,8 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
   const video = exercise?.videos?.find((item) => item.isMain) || exercise?.videos?.[0] || null;
   const image = exercise?.images?.find((item) => item.isMain) || exercise?.images?.[0] || null;
   const planExercise = contextPlanExerciseId ? gymPlanExerciseById(contextPlanExerciseId) : null;
-  const customAnimation = gymCustomAnimationFor(planExercise || exercise);
+  // A candidate library result may be a different variant from the plan row.
+  const customAnimation = gymCustomAnimationFor(exercise);
   const existingLink = contextPlanExerciseId ? gymPlanExerciseLinkMap().get(String(contextPlanExerciseId)) : null;
   const linkedToThis = existingLink && String(existingLink.providerExerciseId) === String(exercise.id);
   const days = Array.isArray(gymPanelData?.plan) ? gymPanelData.plan : [];
@@ -5886,7 +5927,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
     <article class="gym-exercise-detail-card">
       <div class="gym-exercise-detail-media">
         ${mediaMarkup}
-        <span class="gym-exercise-media-caption">${customAnimation ? "Animación propia en bucle" : video ? "Demostración en bucle" : image ? "Referencia visual" : "Sin multimedia"}${customAnimation ? " · técnica contrastada con wger" : " · wger"}</span>
+        <span class="gym-exercise-media-caption">${customAnimation ? "Animación propia en bucle" : video ? "Demostración en bucle" : image ? "Referencia visual" : "Sin multimedia"}${customAnimation ? " · ilustración orientativa" : " · wger"}</span>
       </div>
       <div class="gym-exercise-detail-copy">
         <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>
