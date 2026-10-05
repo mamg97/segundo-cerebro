@@ -302,6 +302,21 @@ function lookUsageHistoryView(payload,mode="looks",sort="recent") {
     '<td class="look-history-month-cell" data-label="Últimos 30 días"><strong>'+e(row.recentUses)+'</strong></td>'+
     '<td class="look-history-dates-cell" data-label="Fechas registradas">'+dateCells(row)+'</td>'+
     '</tr>').join("");
+  const mobileCards=rows.map(row=>{
+    const openAttrs=isGarments?'data-garment-history-open="'+e(row.id)+'"':'data-look-history-open="'+e(row.id)+'"';
+    return '<article class="look-history-mobile-card" data-history-has-date="'+(row.latestDate?"1":"0")+'" data-history-latest="'+e(row.latestDate||"")+'>'+
+      '<button class="look-history-mobile-main" type="button" '+openAttrs+'>'+
+        '<span class="look-history-mobile-thumb">'+usageHistoryThumbnail(row,payload)+'</span>'+
+        '<span class="look-history-mobile-copy"><strong>'+e(row.name)+'</strong><small>'+e(row.detail||"Sin detalle")+'</small></span>'+
+      '</button>'+
+      '<div class="look-history-mobile-metrics">'+
+        '<span><small>Último uso</small><strong>'+e(row.latestDate?d(row.latestDate):"—")+'</strong></span>'+
+        '<span><small>Usos</small><strong>'+e(row.totalUses)+'</strong></span>'+
+        '<span><small>30 días</small><strong>'+e(row.recentUses)+'</strong></span>'+
+      '</div>'+
+      '<div class="look-history-mobile-dates"><small>Fechas</small>'+dateCells(row)+'</div>'+
+    '</article>';
+  }).join("");
   body.innerHTML='<button class="objects-back" data-look-history-back type="button">← Volver a Looks</button>'+
     '<section class="look-history">'+
       '<header class="look-history-head"><div><small>Armario inteligente</small><h3>Historial de uso</h3><p>Lectura de usos registrados en la fuente canónica de Objetos.</p></div><div class="look-history-kpis"><span><small>Usos totales</small><strong>'+totalUses+'</strong></span><span><small>Últimos 30 días</small><strong>'+recentUses+'</strong></span></div></header>'+
@@ -312,6 +327,9 @@ function lookUsageHistoryView(payload,mode="looks",sort="recent") {
       '<div class="look-history-table-wrap"><table class="look-history-table" data-history-mode="'+e(mode)+'"><thead><tr><th class="look-history-photo-head">Foto</th><th>'+entityLabel+'</th><th>Último uso</th><th>Usos totales</th><th>Últimos 30 días</th><th>Fechas registradas</th></tr></thead><tbody>'+
         (tableRows||'<tr><td colspan="6">'+empty("Todavía no hay usos registrados",isGarments?"Las prendas aparecerán cuando exista uso canónico o una fecha derivable de un look registrado.":"Los looks aparecerán cuando tengan historico_usos, ultimo_uso o veces_usado.")+'</td></tr>')+
       '</tbody></table></div>'+
+      '<div class="look-history-mobile-list" data-history-mode="'+e(mode)+'">'+
+        (mobileCards||empty("Todavía no hay usos registrados",isGarments?"Las prendas aparecerán cuando exista uso canónico o una fecha derivable de un look registrado.":"Los looks aparecerán cuando tengan historico_usos, ultimo_uso o veces_usado."))+
+      '</div>'+
       (isGarments?'<p class="look-history-note">En Prendas, las fechas se derivan de los usos registrados de los looks que contienen cada prenda y de su último uso canónico. El total usa Armario.veces_usado cuando existe. El cómputo de 30 días solo cuenta fechas disponibles.</p>':'<p class="look-history-note">En Looks, el total usa Looks.veces_usado cuando existe; las fechas proceden de historico_usos y ultimo_uso. El cómputo de 30 días solo cuenta fechas disponibles.</p>')+
     '</section>';
   body.querySelector("[data-look-history-back]")?.addEventListener("click",()=>{activeTab="looks";renderWorkspace(payload);});
