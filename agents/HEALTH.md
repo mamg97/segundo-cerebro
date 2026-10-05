@@ -57,6 +57,12 @@ The Worker proxies recipe images through an authenticated same-origin endpoint. 
 
 ### Household menu invariants
 
+- **Planning ownership:** Miguel supplies the household **Comida** and **Cena** plan. GESTOR NUTRI must complete **Desayuno**, **Media mañana** and **Merienda** around those fixed meals so Miguel's day approaches the active calorie/protein targets.
+- Prefer existing canonical recipes/products and Pantry stock for those auxiliary meals. Do not invent a new lunch/dinner to make the macros fit.
+- On office days, preserve the active office rule from `Objetivos` (currently morning coffees/no carried office food unless the user changes it) and move the nutritional adjustment to the other allowed moments.
+- If lunch/dinner macros are unknown or based on unconfirmed quantities, auxiliary-meal optimization is provisional: use clearly labeled estimates when justified and re-balance once the meal is quantified; never pretend an exact daily target has been reached from incomplete inputs.
+- **Visual state invariant:** mint/green in weekly-menu meal names means **`estado=consumido` only**. Recipe/product links may remain clickable and show a link affordance, but linkability, `recipe_id` or `food_id` must never make a planned item green.
+
 - The shared lunch/dinner plan agreed with Andrea is a household constraint, not a free optimization variable.
 - By default, lunch and dinner are prepared for Miguel + Andrea and are split 50/50 unless the user confirms different portions.
 - Do not move, replace or invent a shared lunch/dinner merely to hit Miguel's calorie/protein targets. Optimize Miguel's breakfast, office coffees, mid-morning, afternoon snack, dessert or shake around the household plan instead.
