@@ -888,6 +888,105 @@ async function auditLookDetail(label) {
   await tab.click();
   await page.waitForTimeout(250);
 
+  const historyButton = page.locator("[data-look-history]").first();
+  const historyVisible = await historyButton.isVisible().catch(() => false);
+  assertCheck(historyVisible, `Visual ${label} · Historial de looks disponible`);
+  if (historyVisible) {
+    await historyButton.click();
+    await page.waitForTimeout(180);
+    const historyPanel = page.locator(".look-history").first();
+    const historyTable = page.locator(".look-history-table").first();
+    const historyMobileList = page.locator('.look-history-mobile-list[data-history-mode="looks"]').first();
+    const sortControl = page.locator("[data-look-history-sort]").first();
+    const looksMode = page.locator('[data-look-history-mode="looks"]').first();
+    const garmentsMode = page.locator('[data-look-history-mode="garments"]').first();
+    const mobileProfile = /mobile/.test(label);
+    assertCheck(await historyPanel.isVisible().catch(() => false), `Visual ${label} · Historial de looks abre`);
+    assertCheck(
+      mobileProfile
+        ? await historyMobileList.isVisible().catch(() => false)
+        : await historyTable.isVisible().catch(() => false),
+      mobileProfile ? `Visual ${label} · Historial en tarjetas móviles` : `Visual ${label} · Historial en tabla`
+    );
+    assertCheck(await sortControl.isVisible().catch(() => false), `Visual ${label} · Historial ordenable`);
+    assertCheck(await looksMode.isVisible().catch(() => false), `Visual ${label} · Vista Looks disponible`);
+    assertCheck(await garmentsMode.isVisible().catch(() => false), `Visual ${label} · Vista Prendas disponible`);
+    assertCheck(
+      await sortControl.inputValue().catch(() => "") === "recent",
+      `Visual ${label} · Historial orden por defecto reciente`
+    );
+    const lookRowsSelector = mobileProfile
+      ? '.look-history-mobile-list[data-history-mode="looks"] .look-history-mobile-card'
+      : '.look-history-table[data-history-mode="looks"] tbody tr';
+    const defaultDateFlags = await page.locator(lookRowsSelector).evaluateAll(
+      (nodes) => nodes.map((node) => node.dataset.historyHasDate || "")
+    );
+    const firstUndated = defaultDateFlags.indexOf("0");
+    assertCheck(
+      firstUndated < 0 || defaultDateFlags.slice(firstUndated).every((value) => value !== "1"),
+      `Visual ${label} · Looks sin fecha al final por defecto`,
+      defaultDateFlags.join(",")
+    );
+    if (mobileProfile) {
+      const firstHistoryCard = page.locator(lookRowsSelector).first();
+      if (await firstHistoryCard.isVisible().catch(() => false)) {
+        const cardBox = await firstHistoryCard.boundingBox();
+        assertCheck(
+          Boolean(cardBox && cardBox.height <= 150 && cardBox.width >= 260),
+          `Visual ${label} · Historial móvil compacto`,
+          cardBox ? `ancho=${Math.round(cardBox.width)}px altura=${Math.round(cardBox.height)}px` : "sin caja"
+        );
+      }
+      assertCheck(
+        !(await historyTable.isVisible().catch(() => false)),
+        `Visual ${label} · Tabla desktop oculta en móvil`
+      );
+    }
+    if (await historyPanel.isVisible().catch(() => false)) await auditVisualSnapshot(`${label} · Historial de uso`);
+    const lookRows = page.locator(lookRowsSelector);
+    const lookRowCount = await lookRows.count();
+    const lookThumbSelector = mobileProfile
+      ? '.look-history-mobile-list[data-history-mode="looks"] .look-history-mobile-thumb'
+      : '.look-history-table[data-history-mode="looks"] .look-history-thumb';
+    const lookThumbCount = await page.locator(lookThumbSelector).count();
+    if (lookRowCount > 0 && lookThumbCount > 0) {
+      assertCheck(
+        lookThumbCount === lookRowCount,
+        `Visual ${label} · Miniaturas de Looks`,
+        `filas=${lookRowCount} miniaturas=${lookThumbCount}`
+      );
+    }
+    if (await garmentsMode.isVisible().catch(() => false)) {
+      await garmentsMode.click();
+      await page.waitForTimeout(120);
+      const garmentSurface = mobileProfile
+        ? page.locator('.look-history-mobile-list[data-history-mode="garments"]').first()
+        : page.locator('.look-history-table[data-history-mode="garments"]').first();
+      assertCheck(
+        await garmentSurface.isVisible().catch(() => false),
+        `Visual ${label} · Vista Prendas activa`
+      );
+      const garmentRowsSelector = mobileProfile
+        ? '.look-history-mobile-list[data-history-mode="garments"] .look-history-mobile-card'
+        : '.look-history-table[data-history-mode="garments"] tbody tr';
+      const garmentRows = page.locator(garmentRowsSelector);
+      const garmentRowCount = await garmentRows.count();
+      const garmentThumbSelector = mobileProfile
+        ? '.look-history-mobile-list[data-history-mode="garments"] .look-history-mobile-thumb'
+        : '.look-history-table[data-history-mode="garments"] .look-history-thumb';
+      const garmentThumbCount = await page.locator(garmentThumbSelector).count();
+      if (garmentRowCount > 0 && garmentThumbCount > 0) {
+        assertCheck(
+          garmentThumbCount === garmentRowCount,
+          `Visual ${label} · Miniaturas de Prendas`,
+          `filas=${garmentRowCount} miniaturas=${garmentThumbCount}`
+        );
+      }
+    }
+    await page.locator("[data-look-history-back]").click().catch(() => {});
+    await page.waitForTimeout(160);
+  }
+
   const card = page.locator("[data-look-open]").first();
   const cardVisible = await card.isVisible().catch(() => false);
   if (!cardVisible) {

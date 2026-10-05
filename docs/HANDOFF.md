@@ -1808,3 +1808,32 @@ Antes de cualquier cambio:
 - Causa: Home podía ser re-renderizado por `/api/nutrition/menu` (payload ligero), que conserva `recipe_id` pero no adjunta el objeto `recipe`. El renderer exigía ambas cosas y degradaba el título a texto no interactivo.
 - Regla corregida: en Home, la existencia de `recipe_id` basta para renderizar el nombre como enlace. Al pulsar, `openHomeWeeklyMenuRecipe` reutiliza la receta si ya está cargada o solicita `/api/nutrition` de forma perezosa para abrir la ficha canónica.
 - Se sube versión de assets para evitar caché móvil y se añade regresión específica para payload ligero.
+
+
+### ORGANIZADOR 10 · historial de uso de Looks y Prendas · 2026-10-04
+
+- PR #270 amplía `Objetos → Looks → Historial de uso` sin crear nuevas fuentes.
+- La vista tiene dos modos: `Looks` y `Prendas`.
+- Ambos modos muestran tabla con último uso, usos totales, usos con fecha en los últimos 30 días y todas las fechas registradas; se puede ordenar por fecha más reciente, más antigua, total o últimos 30 días.
+- `Looks` usa `Looks.historico_usos + ultimo_uso + veces_usado`.
+- `Prendas` deriva fechas de los usos de los looks que contienen cada `objeto_id` y añade `Armario.ultimo_uso`; `Armario.veces_usado` conserva prioridad para el total global cuando existe.
+- No se fabrican fechas para completar contadores sin detalle temporal. Por ello el total global puede ser superior al número de fechas visibles y el contador de últimos 30 días solo incluye fechas realmente disponibles.
+- El historial muestra una miniatura compacta a la izquierda tanto en `Looks` como en `Prendas`, reutilizando la imagen canónica vigente (`look.photoUrl`/mosaico o prioridad visual de `Armario`) y sin duplicar assets.
+- El auditor de producción comprueba acceso al historial, tabla, ordenación, miniaturas por fila y conmutación real a la vista `Prendas`.
+
+
+### ORGANIZADOR 10 · compactación móvil del historial de armario · 2026-10-05
+
+- El historial `Objetos → Looks → Historial de uso` se compacta específicamente en móvil: cabecera/KPIs más densos, selector Looks/Prendas y ordenación en una misma franja, y cada fila agrupa miniatura + nombre + tres métricas en una sola banda.
+- Las fechas registradas permanecen disponibles, pero en móvil se muestran en una banda horizontal desplazable para evitar que cada tarjeta crezca verticalmente.
+- Orden canónico por defecto: uso más reciente; las filas sin fecha válida quedan siempre al final, también como desempate en ordenaciones por total/últimos 30 días.
+- Los valores de `historico_usos` que no sean fechas normalizables se ignoran como fecha (p. ej. notas textuales), sin alterar `veces_usado`.
+- El auditor comprueba explícitamente orden por defecto, filas sin fecha al final y altura máxima compacta en móvil.
+
+
+### ORGANIZADOR 10 · corrección Safari del historial móvil · 2026-10-05
+
+- La captura real en iPhone mostró una regresión estructural: Safari separaba las celdas de la tabla convertida a CSS Grid, apilando miniaturas arriba y el resto de la fila debajo.
+- Solución canónica: escritorio/tablet conservan `<table>`; en `<=560px` la tabla se oculta y se renderiza `look-history-mobile-list` con una tarjeta por fila a partir del mismo array `rows`. No hay fuente ni cálculo duplicado.
+- Cada tarjeta móvil mantiene juntos miniatura, nombre/detalle, último uso, usos totales, usos 30 días y fechas registradas.
+- El auditor exige en móvil tarjetas visibles, tabla desktop oculta, una miniatura por tarjeta, orden reciente por defecto y looks sin fecha al final.
