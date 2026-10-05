@@ -22,6 +22,14 @@
 
 # Handoff — Segundo Cerebro
 
+## Gym · primera entrega visible de GIF · 2026-10-05
+
+- El press de banca plano con barra dispone de GIF anatómico propio de 16 fases, con póster para movimiento reducido. El resto se incorpora ejercicio a ejercicio tras revisión; no declarar todo el catálogo terminado.
+- `Mi plan → Ver GIF` abre la animación local sin depender de búsqueda, enlaces ni disponibilidad de wger. Cerrar devuelve el foco al ejercicio. La biblioteca técnica sigue disponible por separado.
+- La asociación visual exige nombre/ID exacto normalizado. Una ficha externa candidata no hereda el GIF de otro ejercicio por estar abierta desde ese plan.
+- Los assets son ilustraciones orientativas, no una validación profesional de técnica. No se modifica `GimnasioPlan`, la pausa de entrenamiento ni sesiones/datos privados.
+- Se incorporó `origin/main` hasta `a1ad6c7`, conservando los cambios concurrentes de Nutri, Despensa, MIDAS y Objetos. Assets de interfaz `v0.42.22`; 163 pruebas locales y build correctos antes de publicación.
+
 ## Última actualización
 
 - **Fecha:** 2026-10-04
@@ -1746,6 +1754,23 @@ Antes de cualquier cambio:
   - únicos rojos: `MIDAS TFM shadow forecasts` y `MIDAS weekly ML paper`, independientes de Gym.
 - No se han vinculado automáticamente ejercicios privados del plan a resultados fuzzy: al pulsar `Técnica` se propone una ficha y el usuario confirma `Usar esta ficha para mi ejercicio`. Esto evita guardar asociaciones incorrectas.
 
+### GESTOR GYM · GIF anatómico 2D propio · piloto v0.42.14 · 2026-10-04
+
+- Preferencia confirmada: las demostraciones principales deben evolucionar desde vídeo real hacia bucles ilustrados tipo GIF, limpios y coherentes con la interfaz.
+- No se usan packs de GIF comerciales, mirrors de ExerciseDB ni repositorios con derechos ambiguos. wger continúa como referencia técnica libre y como fallback multimedia.
+- La rama `codex/gym-nutri-next`, actualizada sobre el `origin/main` vivo `10efa41`, incorpora el primer piloto para `Press de Banca Plano (Barra)`:
+  - GIF real propio de 16 fases, 360×480 y fondo transparente;
+  - ilustración anatómica 2D gris/blanca, con contorno fino y sombreado muscular discreto;
+  - pectoral, tríceps y deltoide anterior marcados en rojo plano;
+  - equipo gris carbón y encuadre fijo, sin persona real ni volumen 3D brillante;
+  - poster PNG estático para `prefers-reduced-motion`, compatible con la CSP;
+  - prioridad visual únicamente por nombre/ID canónico exacto;
+  - fallback intacto a vídeo/imagen wger para el resto;
+  - `prefers-reduced-motion` deja un fotograma estático.
+- El piloto está en rama de revisión y todavía no se ha fusionado ni desplegado. Antes de producir el resto del plan, confirmar el estilo y revisar visualmente cada movimiento por lotes pequeños.
+- El usuario rechazó el aspecto 3D de v0.42.3. `v0.42.4` adoptó el lenguaje de una enciclopedia anatómica de ejercicios; la captura facilitada se usó solo como referencia estilística, sin copiar marca, interfaz ni contenido.
+- `v0.42.14` normaliza las ocho fases aprobadas a la misma anchura visible y línea de apoyo, y añade un intermedio neuronal local entre cada par —incluido el cierre del bucle—. El resultado duplica la cadencia a 16 fases sin redibujar ocho escenas independientes, sin fundidos fantasma y con lienzo, encuadre y escala bloqueados.
+- Las versiones v0.42.1–v0.42.4 no deben desplegarse. Validación final de v0.42.14 sobre `origin/main` `10efa41`: 156/156 tests, build privado y copia byte a byte de GIF/póster al artefacto compilado correctos; revisión visual del bucle en tarjeta clara sin saltos de encuadre, fondos negros ni extremidades fantasma.
 
 
 ### RECETARIO · fichas de alimentos desde ingredientes · 2026-10-04

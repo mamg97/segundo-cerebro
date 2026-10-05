@@ -21951,7 +21951,7 @@ html[data-theme="dark"] .loan-benchmark-explanation {
 }
 
 
-/* v0.42.0 — free visual Gym exercise library */
+/* v0.42.14 — locked-frame 16-phase anatomical Gym GIF demonstrations */
 .gym-view-switch {
   display: inline-flex;
   gap: 4px;
@@ -22244,6 +22244,39 @@ html[data-theme="dark"] .loan-benchmark-explanation {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.gym-exercise-animation {
+  display: grid;
+  width: min(100%, 430px);
+  aspect-ratio: 3 / 4;
+  margin: auto;
+  filter: drop-shadow(0 14px 26px rgb(0 0 0 / 16%));
+}
+
+.gym-exercise-animation-media {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gym-library-preview-animation {
+  width: 76%;
+  max-height: 100%;
+}
+
+.gym-exercise-hero-animation {
+  width: min(100%, 440px);
+}
+
+.gym-exercise-animation-poster {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gym-exercise-animation-gif { display: none; }
+  .gym-exercise-animation-poster { display: block; }
 }
 
 .gym-library-video-placeholder {
