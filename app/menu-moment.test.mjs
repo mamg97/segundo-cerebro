@@ -43,7 +43,8 @@ test("incomplete grouped meals and day totals are labeled as known subtotals", (
   const headerStart = app.indexOf("function renderHomeWeeklyMenuDayHeader");
   const headerEnd = app.indexOf("function renderHomeWeeklyMenu(data)", headerStart);
   const header = app.slice(headerStart, headerEnd);
-  assert.match(header, /<small>Subtotal <\/small>/);
+  assert.match(header, /plannedIncomplete \? "subtotal previsto" : "previsto"/);
+  assert.match(header, /consumedIncomplete \? "Subtotal consumido conocido" : "Consumido"/);
 });
 
 
