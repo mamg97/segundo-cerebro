@@ -164,6 +164,10 @@ export function buildPayload(valueRanges = []) {
     ean: row.ean || null,
     productUrl: row.url_producto || null,
     imageUrl: row.imagen_url || null,
+    familyNames: String(row.nombres_familiares || "")
+      .split("|")
+      .map((value) => value.trim())
+      .filter(Boolean),
     nutrition: {
       kcal100g: numberOrNull(row.kcal_100g),
       protein100g: numberOrNull(row.proteinas_g_100),
@@ -268,6 +272,9 @@ export function buildPayload(valueRanges = []) {
       appleReminderId: row.apple_reminder_id || null,
       productId,
       name: row.nombre || product.name || "Producto",
+      familyNames: Array.isArray(product.familyNames) ? product.familyNames : [],
+      familyName: Array.isArray(product.familyNames) && product.familyNames.length ? product.familyNames[0] : null,
+      productUrl: product.productUrl || latestPrice?.productUrl || null,
       normalizedName: row.normalized_name || null,
       state: purchaseState(row.estado),
       priority: row.prioridad || null,
