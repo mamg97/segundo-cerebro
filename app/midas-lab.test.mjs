@@ -34,6 +34,23 @@ test("forward weekly rows replace bootstrap duplicates", () => {
 });
 
 
+test("renders current activity separately from cumulative return", () => {
+  const dashboard = { tracks: [
+    { id: "weekly_ml_ensemble_2026", label: "ML semanal · ensemble", group: "weekly_ml_demo",
+      status: "demo_con_diario", return_pct: 0, last_session: "2026-10-02",
+      activity_label: "10 compras para próxima apertura",
+      activity_tickers: ["AMD", "INTC", "UAL"],
+      equity_history: [{ date: "2026-10-02", nav: 100000 }] }
+  ] };
+  const html = renderMidasVisualLab(dashboard, null);
+  assert.match(html, /Actividad actual/);
+  assert.match(html, /10 compras para próxima apertura/);
+  assert.match(html, /AMD/);
+  assert.match(html, /INTC/);
+  assert.match(html, /Rentabilidad acumulada/);
+  assert.match(html, /0,00 %/);
+});
+
 test("renders corrected TFG as its own live algorithm group", () => {
   const dashboard = { tracks: [
     { id: "tfg_corrected_2026", label: "TFG corregido 2026 · técnico + AHP + MAD",
