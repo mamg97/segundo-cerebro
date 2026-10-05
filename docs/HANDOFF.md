@@ -1890,5 +1890,5 @@ Antes de cualquier cambio:
 - El detalle semanal conserva simultáneamente **consumo confirmado** y **plan previsto**, de modo que una planificación futura no se confunde con adherencia real.
 - Despensa lee ya `Productos.nombres_familiares` (columna S) y expone el primer alias doméstico en `ListaCompra`; el nombre canónico se mantiene como contexto secundario.
 - Una fila `COMPRAR` enlazada a un producto con `url_producto` exacta de `tienda.mercadona.es/product/...` es pulsable y abre directamente esa ficha en Mercadona.
-- No se inventan enlaces comerciales: una fila genérica o un producto todavía sin URL exacta permanece no enlazado hasta que `Productos` sea enriquecido.
+- Las filas con `Productos.url_producto` exacta abren directamente la ficha canónica. Si una fila todavía es genérica o no tiene URL exacta, sigue siendo pulsable pero abre `tienda.mercadona.es/search-results?query=...` con el nombre familiar/lista; así no se asigna un SKU falso y el usuario puede seleccionar el producto correcto.
 - La Home de Despensa reutiliza también el alias familiar cuando existe; identidad, precio, URL y alias siguen perteneciendo al Sheet canónico, no al frontend.
