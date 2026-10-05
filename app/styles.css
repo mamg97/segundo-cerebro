@@ -23460,3 +23460,207 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     line-height: 1.3;
   }
 }
+
+
+/* v0.42.18 — native mobile cards for usage history (Safari-safe) */
+.look-history-mobile-list {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .objects-dialog {
+    padding: 14px 10px;
+  }
+
+  .objects-back {
+    margin-bottom: 7px;
+    padding: 6px 8px;
+    font-size: 8px;
+  }
+
+  .look-history {
+    gap: 7px;
+  }
+
+  .look-history-head {
+    width: 100%;
+    gap: 7px;
+    padding: 9px 10px;
+  }
+
+  .look-history-head h3 {
+    font-size: 17px;
+  }
+
+  .look-history-head p {
+    font-size: 7.5px;
+  }
+
+  .look-history-kpis {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .look-history-kpis > span {
+    min-width: 0;
+    padding: 5px 6px;
+  }
+
+  .look-history-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .look-history-mode {
+    width: 100%;
+  }
+
+  .look-history-controls > label {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 7px;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    font-size: 7px;
+  }
+
+  .look-history-controls select {
+    width: 100%;
+    min-width: 0;
+    min-height: 30px;
+  }
+
+  .look-history-table-wrap {
+    display: none !important;
+  }
+
+  .look-history-mobile-list {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .look-history-mobile-card {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 7px 8px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--surface);
+  }
+
+  .look-history-mobile-main {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+  }
+
+  .look-history-mobile-thumb {
+    display: grid;
+    width: 42px;
+    height: 50px;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+    border-radius: 7px;
+    background: var(--paper);
+  }
+
+  .look-history-mobile-thumb > img,
+  .look-history-mobile-thumb > .look-mosaic {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .look-history-mobile-copy {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .look-history-mobile-copy strong {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 9px;
+    line-height: 1.18;
+  }
+
+  .look-history-mobile-copy small {
+    overflow: hidden;
+    color: var(--ink-soft);
+    font-size: 7px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .look-history-mobile-metrics {
+    display: grid;
+    grid-template-columns: 1.35fr .8fr .8fr;
+    gap: 5px;
+    padding-top: 5px;
+    border-top: 1px solid var(--line);
+  }
+
+  .look-history-mobile-metrics > span {
+    display: grid;
+    min-width: 0;
+    gap: 1px;
+  }
+
+  .look-history-mobile-metrics small,
+  .look-history-mobile-dates > small {
+    color: var(--ink-soft);
+    font-size: 6.2px;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .look-history-mobile-metrics strong {
+    overflow: hidden;
+    font-size: 8.5px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .look-history-mobile-dates {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .look-history-mobile-dates .look-history-dates {
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .look-history-mobile-dates .look-history-dates span,
+  .look-history-mobile-dates .look-history-none {
+    padding: 2px 5px;
+    font-size: 6px;
+  }
+
+  .look-history-note {
+    font-size: 6.8px;
+  }
+}
