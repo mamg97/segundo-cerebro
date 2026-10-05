@@ -5358,6 +5358,12 @@ const GYM_CUSTOM_ANIMATIONS = [
     animationUrl: "./assets/gym-animations/press-banca-plano-barra-v5.gif",
     posterUrl: "./assets/gym-animations/press-banca-plano-barra-poster-v5.png",
     labels: ["press de banca plano barra", "press banca plano barra", "flat barbell bench press"]
+  },
+  {
+    key: "military-press",
+    animationUrl: "./assets/gym-animations/military-press-v2.gif",
+    posterUrl: "./assets/gym-animations/military-press-v2-poster.png",
+    labels: ["press militar", "press militar con barra", "standing barbell military press"]
   }
 ];
 let gymLibraryState = {

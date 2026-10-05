@@ -2,6 +2,20 @@
 
 These assets are first-party presentation aids for Segundo Cerebro. They do not replace the canonical gym plan or the public technical reference supplied by wger.
 
+## `military-press-v2.gif`
+
+- Generated 2026-10-05 with the built-in image generation tool, using the approved bench poster as a style reference only. Same anonymous pale athlete, flat red muscles, gray contours, black briefs and charcoal equipment.
+- Standing barbell overhead press; highlighted deltoids and triceps. Exact generic names only, never dumbbell/seated variants by substring.
+- Transparent 360×480, 16 frames, 7 cs each; a poster supports reduced motion. An offline builder applies one common scale to all source phases, aligns the stationary lower support, interpolates RGB and alpha separately, and retains transparency in the common GIF palette.
+- Source and review contact sheet: `design/gym-animations/`; offline build tool: `private-cloudflare/scripts/build-gym-animation.mjs`. The rejected opaque first encode is retained locally, not published.
+- Generic visual checks: full-body framing, planted feet, connected bar/hands, bottom-to-overhead-to-bottom cycle. This is an illustrative movement aid, not professional technique certification.
+
+Shared generation brief (2026-10-05):
+
+> Use case: scientific-educational. Asset: a coherent exercise-animation sprite sheet. Image 1 is the APPROVED STYLE reference, not the movement reference. Match that exact anonymous bald faceless pale-white anatomical athlete, gray thin anatomical contours, charcoal briefs, barefoot, flat bright-red target muscles and matte charcoal equipment. Keep the 2D illustrated aesthetic, avoid realistic human face/hair, shoes, glossy rendering or lighting. Create exactly EIGHT frames in a strict 4-column x 2-row grid with equal cells and clear transparent margins. Read order left-to-right top then bottom. One fixed 3/4 camera, athlete proportions, equipment, color and scale; the stationary supports must be in the EXACT same cell coordinates in all frames. Movement must be symmetric, controlled, continuous with no teleportation. No text, labels, borders, numbers, UI, logos, watermark, ghosting or motion blur. Transparent background with real alpha, no background pixels or cast shadow.
+
+Military movement specification: standing barbell overhead press, fixed feet and torso, symmetric press from upper chest to overhead and return, deltoids/triceps highlighted. Selected source order: `0,2,5,4,3,4,5,2`; lower stationary region starts at 0.73 of each cell. Source sheet poses are reordered for a continuous up/down cycle before midpoint interpolation.
+
 ## `press-banca-plano-barra-v5.gif`
 
 - Generated: 2026-10-04 from the approved v4 artwork, with deterministic local frame normalization and neural midpoint interpolation.
