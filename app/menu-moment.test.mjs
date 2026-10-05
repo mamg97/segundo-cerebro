@@ -118,3 +118,14 @@ test("Home recipe navigation lazily loads the full nutrition payload when needed
   assert.match(opener, /fetch\("\/api\/nutrition\?date="/);
   assert.match(opener, /HOME_RECIPE_NOT_FOUND/);
 });
+
+
+test("weekly menu mint is reserved for consumed items", () => {
+  const linkStart = css.indexOf(".weekly-menu-title-link {");
+  const linkEnd = css.indexOf("}", linkStart);
+  assert.ok(linkStart >= 0 && linkEnd > linkStart);
+  const linkRule = css.slice(linkStart, linkEnd + 1);
+  assert.match(linkRule, /color:\s*var\(--ink\)/);
+  assert.doesNotMatch(linkRule, /color:\s*var\(--mint\)/);
+  assert.match(css, /\.weekly-menu-meal\.is-consumed \.weekly-menu-title-link,[\s\S]*?\.weekly-menu-group-item\.is-consumed \.weekly-menu-title-link\s*\{[\s\S]*?color:\s*var\(--mint\)/);
+});

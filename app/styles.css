@@ -16240,7 +16240,7 @@ html[data-theme="dark"] .home-liquidity-account {
   max-width: 100%;
   align-items: center;
   gap: 5px;
-  color: var(--mint);
+  color: var(--ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -16266,6 +16266,16 @@ html[data-theme="dark"] .home-liquidity-account {
 }
 
 .weekly-menu-title-link:hover {
+  color: var(--blue);
+}
+
+.weekly-menu-meal.is-consumed .weekly-menu-title-link,
+.weekly-menu-group-item.is-consumed .weekly-menu-title-link {
+  color: var(--mint);
+}
+
+.weekly-menu-meal.is-consumed .weekly-menu-title-link:hover,
+.weekly-menu-group-item.is-consumed .weekly-menu-title-link:hover {
   color: color-mix(in srgb, var(--mint) 82%, var(--blue));
 }
 
