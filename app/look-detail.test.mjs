@@ -79,4 +79,6 @@ test("look detail cache bust and production audit are wired", () => {
   assert.match(audit, /Historial orden por defecto reciente/);
   assert.match(audit, /Looks sin fecha al final por defecto/);
   assert.match(audit, /Historial móvil compacto/);
+  assert.match(audit, /Historial en tarjetas móviles/);
+  assert.match(audit, /Tabla desktop oculta en móvil/);
 });
