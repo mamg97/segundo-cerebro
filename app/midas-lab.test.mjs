@@ -14,7 +14,7 @@ test("renders bootstrap rows when weekly forward has not started", () => {
   assert.match(html, /LABORATORIO VIVO/);
   assert.match(html, /Ensemble/);
   assert.match(html, /SMCI/);
-  assert.match(html, /Prueba retrospectiva de arranque/);
+  assert.match(html, /Prueba retrospectiva · no cuenta en forward/);
 });
 
 test("forward weekly rows replace bootstrap duplicates", () => {
@@ -29,7 +29,7 @@ test("forward weekly rows replace bootstrap duplicates", () => {
   } } };
   const html = renderMidasVisualLab(dashboard, lab);
   assert.match(html, /ML semanal · ensemble/);
-  assert.doesNotMatch(html, /Prueba retrospectiva de arranque/);
+  assert.doesNotMatch(html, /Prueba retrospectiva · no cuenta en forward/);
   assert.match(html, /\+1,20 %/);
 });
 
@@ -51,7 +51,7 @@ test("renders current activity separately from cumulative return", () => {
   assert.match(html, /10 compras para próxima apertura/);
   assert.match(html, /AMD/);
   assert.match(html, /INTC/);
-  assert.match(html, /Rentabilidad acumulada/);
+  assert.match(html, /Rent\. acum\./);
   assert.match(html, /0,00 %/);
 });
 
