@@ -9437,11 +9437,37 @@ html[data-theme="dark"] .electricity-chart-card {
   align-items: center;
   padding: 11px 0;
   border-top: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
 }
 
-.pantry-shopping-row > div { display: grid; gap: 3px; }
+.pantry-shopping-row.is-link {
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.pantry-shopping-row.is-link:hover,
+.pantry-shopping-row.is-link:focus-visible {
+  background: color-mix(in srgb, var(--blue) 7%, transparent);
+}
+
+.pantry-shopping-row.is-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--blue) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.pantry-shopping-row > div { display: grid; gap: 3px; min-width: 0; }
 .pantry-shopping-row > div strong { font-size: 12px; }
 .pantry-shopping-row > div span { color: var(--ink-soft); font-size: 11px; }
+.pantry-shopping-canonical {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .pantry-shopping-price { text-align: right; font-size: 11px; font-weight: 750; }
 
 .pantry-shopping-total {
