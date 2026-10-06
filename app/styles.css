@@ -24520,3 +24520,259 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
     font-size: 9px;
   }
 }
+
+
+/* v0.42.28 — gifts envelope reconciliation + 2027 wedding plan */
+.finance-right-stack .gifts-summary-grid {
+  grid-template-columns: minmax(0, 1.05fr) minmax(235px, .95fr);
+  gap: 9px;
+}
+
+.finance-right-stack .gift-funds-column,
+.finance-right-stack .gift-paid-column {
+  gap: 7px;
+  padding: 9px 10px;
+}
+
+.gift-envelope-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.gift-envelope-head > div:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.gift-envelope-head strong {
+  font-size: 12px;
+}
+
+.gift-envelope-head > div:first-child > span {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.gift-envelope-kpi {
+  display: grid;
+  flex: none;
+  gap: 2px;
+  max-width: 210px;
+  text-align: right;
+}
+
+.gift-envelope-kpi > span {
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.gift-envelope-kpi small {
+  color: var(--ink-soft);
+  font-size: 8.5px;
+  line-height: 1.2;
+}
+
+.finance-right-stack .gift-fund-card {
+  gap: 5px;
+  padding: 8px 9px;
+}
+
+.finance-right-stack .gift-fund-head strong {
+  font-size: 10.5px;
+}
+
+.finance-right-stack .gift-fund-head span {
+  font-size: 9.5px;
+}
+
+.finance-right-stack .gift-fund-meta {
+  gap: 3px 8px;
+  font-size: 8.5px;
+  line-height: 1.2;
+}
+
+.gift-reconciliation {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.gift-reconciliation > span {
+  display: grid;
+  gap: 1px;
+  padding: 6px 7px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 7.8px;
+  line-height: 1.15;
+}
+
+.gift-reconciliation strong {
+  color: var(--ink);
+  font-size: 9.5px;
+}
+
+.finance-right-stack .gift-month-row {
+  grid-template-columns: 58px minmax(0, 1fr) 84px;
+  gap: 6px;
+  padding: 4px 7px;
+  font-size: 8.5px;
+}
+
+.finance-right-stack .gift-month-head {
+  font-size: 7.8px;
+}
+
+.finance-right-stack .gift-month-row > span:last-child {
+  text-align: right;
+}
+
+.finance-right-stack .gift-month-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-right-stack .gift-column-heading strong {
+  font-size: 12.5px;
+}
+
+.finance-right-stack .gift-column-heading span,
+.finance-right-stack .gift-column-heading small {
+  font-size: 9px;
+}
+
+.finance-right-stack .gift-total-kpi > span {
+  font-size: 18px;
+}
+
+.finance-right-stack .gift-wedding-row {
+  padding: 6px 8px;
+}
+
+.finance-right-stack .gift-wedding-row strong {
+  font-size: 10.5px;
+}
+
+.finance-right-stack .gift-wedding-row small {
+  font-size: 8.5px;
+}
+
+.finance-right-stack .gift-wedding-row > span {
+  font-size: 10.5px;
+}
+
+.gift-wedding-row.is-pending {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--orange) 48%, var(--line));
+}
+
+.gift-wedding-row.is-future {
+  background: color-mix(in srgb, var(--paper) 84%, var(--blue) 16%);
+}
+
+.gift-next-year {
+  display: grid;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+
+.gift-next-year-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.gift-next-year-head > div {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.gift-next-year-head strong {
+  font-size: 10.5px;
+}
+
+.gift-next-year-head span {
+  color: var(--ink-soft);
+  font-size: 8.5px;
+}
+
+.gift-next-year-head b {
+  flex: none;
+  font-size: 11px;
+}
+
+@media (max-width: 1179px) {
+  .finance-right-stack .gifts-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .gift-envelope-head {
+    align-items: flex-end;
+  }
+
+  .gift-envelope-head strong,
+  .finance-right-stack .gift-column-heading strong {
+    font-size: 13px;
+  }
+
+  .gift-envelope-kpi > span {
+    font-size: 20px;
+  }
+
+  .gift-envelope-kpi small,
+  .gift-envelope-head > div:first-child > span,
+  .finance-right-stack .gift-column-heading span,
+  .finance-right-stack .gift-column-heading small {
+    font-size: 9.5px;
+  }
+
+  .finance-right-stack .gift-month-row {
+    min-width: 0;
+    grid-template-columns: 54px minmax(0, 1fr) 80px;
+    font-size: 9px;
+  }
+
+  .gift-reconciliation {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media (max-width: 440px) {
+  .gift-envelope-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gift-envelope-kpi {
+    max-width: none;
+    text-align: left;
+  }
+
+  .gift-fund-cards,
+  .gift-reconciliation {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-right-stack .gift-monthly-table {
+    overflow-x: hidden;
+  }
+
+  .finance-right-stack .gift-month-row {
+    grid-template-columns: 52px minmax(0, 1fr) 76px;
+  }
+}

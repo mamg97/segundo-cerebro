@@ -302,9 +302,11 @@ Campos mínimos por fila:
 Reglas:
 - una aportación futura no se suma a `stored_cumulative` hasta que el dinero exista realmente;
 - una boda solo entra en «pagadas» cuando existe pago confirmado/conciliado; una planificación o una reserva no equivale a pago;
-- `stored_cumulative` representa dinero acumulado por aportaciones, mientras que la UI puede mostrar aparte el disponible tras pagos;
+- `stored_cumulative` representa dinero acumulado por aportaciones; el disponible físico se obtiene restando pagos conciliados y nunca debe confundirse con el acumulado bruto aportado;
+- una devolución/entrada futura marcada `awaiting_cash` permanece fuera del disponible actual y se expone aparte como efectivo pendiente de recibir;
+- las bodas del siguiente año pueden registrarse en las mismas filas `wedding` con su `year`, `event_date` y `planned_amount`; no se cargan contra el sobre del año actual salvo asignación explícita;
 - los objetivos y aportaciones viven en el Sheet privado; Git contiene únicamente el contrato y la lógica genérica;
-- el Home muestra el histórico mensual y objetivo anual en una columna y las bodas pagadas en otra, sin inferir pagos a partir del nombre de un movimiento ambiguo.
+- el Home muestra el sobre físico reconciliado, el histórico mensual de aportaciones, bodas pagadas/pendientes del año y las bodas futuras conocidas, sin inferir pagos a partir del nombre de un movimiento ambiguo.
 
 ## Responsabilidad de ORGANIZADOR sobre Finanzas
 
