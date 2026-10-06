@@ -1,10 +1,12 @@
 ## Salud · Adherencia integrada en Resumen · 2026-10-07
 
-- Adherencia deja de ocupar una pestaña superior propia en Salud.
+- PR #301 fusionada y desplegada: Adherencia deja de ocupar una pestaña superior propia en Salud.
 - `Salud → Resumen` incorpora un bloque mensual compacto con porcentaje de adherencia, cobertura, cumplidos, parciales, no cumplidos, racha actual y estado/motivos de hoy.
 - `Ver mes completo` despliega dentro del mismo Resumen el calendario mensual y el detalle diario existentes.
 - La carga es secuencial para preservar la resiliencia: primero `/api/health/overview`, después `/api/health/adherence` y después el histórico; no se reintroduce la ráfaga simultánea corregida previamente.
 - Compacto y detalle reutilizan el mismo payload mensual; abrir el calendario no vuelve a consultar la fuente si ese mes ya está cargado.
+- Audit production web #206 validó en producción: ausencia de la pestaña superior, bloque compacto, métricas clave, acción de detalle, calendario mensual y detalle diario.
+- El auditor global #206 sigue rojo por incidencias separadas —MIDAS, solapes de Finanzas, imágenes de Objetos y un 500 transitorio de `/api/health/overview`—; los checks específicos de Adherencia pasaron.
 - No cambia la fuente canónica ni la fórmula de adherencia.
 
 ## Salud · balance calórico gráfico · 2026-10-07
