@@ -21849,6 +21849,9 @@ textarea {
   --health-calorie-plot-height: 224px;
   position: relative;
   width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
   padding: 24px 10px 4px 52px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -21864,15 +21867,21 @@ textarea {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
-  min-width: 0;
+  grid-template-columns: repeat(30, minmax(24px, 1fr));
+  gap: 3px;
+  min-width: 900px;
 }
 
 .health-calorie-chart-day {
   display: grid;
-  grid-template-rows: var(--health-calorie-plot-height) 38px;
+  grid-template-rows: var(--health-calorie-plot-height) 34px;
   min-width: 0;
+  border-radius: 8px;
+  outline: none;
+}
+
+.health-calorie-chart-day:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--blue);
 }
 
 .health-calorie-chart-plot {
@@ -21900,7 +21909,7 @@ textarea {
 .health-calorie-bar {
   position: relative;
   display: block;
-  width: clamp(16px, 42%, 34px);
+  width: clamp(9px, 58%, 20px);
   min-height: 4px;
   box-shadow: 0 6px 16px color-mix(in srgb, currentColor 12%, transparent);
 }
@@ -21942,12 +21951,20 @@ textarea {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  opacity: 0;
   color: currentColor;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
   text-shadow: 0 1px 8px var(--paper);
+  transition: opacity .12s ease;
+}
+
+.health-calorie-chart-day.is-key-label .health-calorie-bar strong,
+.health-calorie-chart-day:hover .health-calorie-bar strong,
+.health-calorie-chart-day:focus-visible .health-calorie-bar strong {
+  opacity: 1;
 }
 
 .health-calorie-chart-half.is-positive .health-calorie-bar strong {
@@ -21962,8 +21979,9 @@ textarea {
   position: absolute;
   z-index: 1;
   top: calc(24px + var(--health-calorie-plot-height) / 2);
-  right: 10px;
+  right: auto;
   left: 52px;
+  width: max(calc(100% - 62px), 900px);
   height: 1px;
   background: color-mix(in srgb, var(--ink-soft) 55%, transparent);
 }
@@ -22097,8 +22115,9 @@ textarea {
   }
 
   .health-calorie-zero-line {
-    right: 6px;
+    right: auto;
     left: 36px;
+    width: max(calc(100% - 42px), 900px);
   }
 
   .health-calorie-axis-label {
@@ -22108,11 +22127,11 @@ textarea {
   }
 
   .health-calorie-chart-days {
-    gap: 4px;
+    gap: 3px;
   }
 
   .health-calorie-bar {
-    width: clamp(14px, 48%, 26px);
+    width: clamp(9px, 58%, 20px);
   }
 
   .health-calorie-bar strong {
@@ -22147,14 +22166,19 @@ textarea {
 
   .health-calorie-chart-days {
     gap: 2px;
+    min-width: 840px;
+  }
+
+  .health-calorie-zero-line {
+    width: 840px;
   }
 
   .health-calorie-chart-day {
-    grid-template-rows: var(--health-calorie-plot-height) 36px;
+    grid-template-rows: var(--health-calorie-plot-height) 34px;
   }
 
   .health-calorie-bar {
-    width: clamp(12px, 52%, 22px);
+    width: clamp(8px, 60%, 18px);
   }
 
   .health-calorie-bar strong {
