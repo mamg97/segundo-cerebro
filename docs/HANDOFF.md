@@ -1929,3 +1929,15 @@ Antes de cualquier cambio:
 - Las barras y el porcentaje continúan calculándose exclusivamente con filas confirmadas como `consumido`.
 - Bajo cada barra se muestra el acumulado consumido (kcal/proteína + porcentaje), evitando confundir plan y ejecución.
 - Si faltan macros en alguna fila planificada o consumida, la UI identifica el dato como subtotal conocido y no inventa valores.
+
+## GESTOR EVENTOS · relevo de conversación · 06/10/2026
+
+- La fuente operativa canónica sigue siendo el Sheet privado `SEGUNDO CEREBRO - EVENTOS`; los datos personales concretos, fechas, participantes y propuestas viven allí, no en Git.
+- La web/API de Eventos actúa como frontal del Sheet. D1 es solo caché/espejo técnico y fallback de transición.
+- iCloud/CalDAV y Google Calendar conservan autoridad sobre sus propias fechas/horarios; la integración los reconcilia con el Sheet sin convertir un único proveedor en agenda global.
+- La regla de consulta federada sigue vigente: antes de afirmar «qué tengo» o «cuál es el próximo evento», leer el Sheet y contrastar todos los calendarios/fuentes accesibles; si falta alguna fuente esperable, responder como parcial/provisional.
+- PR #253 introdujo el Sheet canónico y conectó la API/web; PR #254 migró el histórico D1 y filtró recordatorios financieros/operativos; PR #255 restauró la regla de que cumpleaños simples permanecen en Agenda y añadió deduplicación de viajes migrados.
+- Los recordatorios puramente financieros/técnicos no son Eventos. Los cumpleaños simples tampoco; solo entran en Eventos cuando existe un plan concreto.
+- Las propuestas abiertas también deben registrarse en el Sheet como `PROPUESTO` con hechos/notas privadas, de modo que el siguiente gestor pueda continuar sin depender del chat anterior.
+- Al iniciar un nuevo GESTOR EVENTOS: leer `AGENTS.md`, `agents/EVENTS.md`, este HANDOFF y, después, el Sheet vivo completo (`Eventos`, `EventoHechos`, `EventoRefs`, `EventosImportantes`). No reconstruir el estado desde memoria parcial.
+
