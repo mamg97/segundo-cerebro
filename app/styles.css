@@ -24048,15 +24048,27 @@ html[data-theme="dark"] .loan-benchmark-explanation {
 }
 
 .gift-progress {
+  width: 100%;
   height: 6px;
   overflow: hidden;
+  border: 0;
   border-radius: 999px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+.gift-progress::-webkit-progress-bar {
+  border-radius: inherit;
   background: color-mix(in srgb, var(--line) 72%, transparent);
 }
 
-.gift-progress > span {
-  display: block;
-  height: 100%;
+.gift-progress::-webkit-progress-value {
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), var(--orange));
+}
+
+.gift-progress::-moz-progress-bar {
   border-radius: inherit;
   background: linear-gradient(90deg, var(--blue), var(--orange));
 }
