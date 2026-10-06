@@ -2281,7 +2281,7 @@ async function fetchHealthEnergyRows(env, startDate, endDate) {
   }]));
 }
 
-async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = []) {
+async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], recoveryRows = []) {
   const recoveredEnergy = energyRows.filter((row) =>
     row?.date &&
     String(row?.source || "") === "apple_health_export_recovery"
@@ -2365,7 +2365,64 @@ async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = []) 
     }
   }
 
-  return { energy: recoveredEnergy.length, bodyRows: recoveredBody.length };
+  const recoveredRecovery = recoveryRows.filter((row) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(String(row?.date || "")) &&
+    String(row?.source || "") === "apple_health_export_recovery"
+  );
+
+  if (recoveredRecovery.length) {
+    await ensureHealthRecoveryTable(env);
+    for (const row of recoveredRecovery) {
+      await env.DB.prepare(`
+        INSERT INTO health_recovery_daily (
+          recovery_date, resting_hr_bpm, walking_hr_bpm, hrv_sdnn_ms,
+          respiratory_rate, oxygen_saturation_pct, vo2_max, wrist_temperature_c,
+          sleep_asleep_minutes, sleep_in_bed_minutes, sleep_awake_minutes,
+          sleep_core_minutes, sleep_deep_minutes, sleep_rem_minutes,
+          source, sampled_at, source_details, recorded_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(recovery_date) DO UPDATE SET
+          resting_hr_bpm = excluded.resting_hr_bpm,
+          walking_hr_bpm = excluded.walking_hr_bpm,
+          hrv_sdnn_ms = excluded.hrv_sdnn_ms,
+          respiratory_rate = excluded.respiratory_rate,
+          oxygen_saturation_pct = excluded.oxygen_saturation_pct,
+          vo2_max = excluded.vo2_max,
+          wrist_temperature_c = excluded.wrist_temperature_c,
+          sleep_asleep_minutes = excluded.sleep_asleep_minutes,
+          sleep_in_bed_minutes = excluded.sleep_in_bed_minutes,
+          sleep_awake_minutes = excluded.sleep_awake_minutes,
+          sleep_core_minutes = excluded.sleep_core_minutes,
+          sleep_deep_minutes = excluded.sleep_deep_minutes,
+          sleep_rem_minutes = excluded.sleep_rem_minutes,
+          source = excluded.source,
+          sampled_at = excluded.sampled_at,
+          source_details = excluded.source_details,
+          recorded_at = excluded.recorded_at
+      `).bind(
+        row.date,
+        row.restingHeartRate,
+        row.walkingHeartRateAverage,
+        row.hrvSdnnMs,
+        row.respiratoryRate,
+        row.oxygenSaturationPct,
+        row.vo2Max,
+        row.wristTemperatureC,
+        row.sleepAsleepMinutes,
+        row.sleepInBedMinutes,
+        row.sleepAwakeMinutes,
+        row.sleepCoreMinutes,
+        row.sleepDeepMinutes,
+        row.sleepRemMinutes,
+        "apple_health_export_recovery",
+        row.sampledAt || `${row.date}T23:59:59+02:00`,
+        JSON.stringify(Array.isArray(row.sourceDetails) ? row.sourceDetails : []),
+        row.importedAt || new Date().toISOString()
+      ).run();
+    }
+  }
+
+  return { energy: recoveredEnergy.length, bodyRows: recoveredBody.length, recoveryRows: recoveredRecovery.length };
 }
 
 
@@ -2752,7 +2809,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
         return null;
       })
     : Promise.resolve(null);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:O1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:O1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000", "RecuperacionDiariaApple!A1:S2000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -2976,6 +3033,29 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   })).filter((item) => item.recipeId && item.instruction)
     .sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
 
+  const recoverySheetRows = parseTableRows(valueRanges[11]?.values || []).map((item) => ({
+    date: String(item.fecha || "").trim(),
+    restingHeartRate: toNumber(item.resting_hr_bpm),
+    walkingHeartRateAverage: toNumber(item.walking_hr_bpm),
+    hrvSdnnMs: toNumber(item.hrv_sdnn_ms),
+    respiratoryRate: toNumber(item.respiratory_rate),
+    oxygenSaturationPct: toNumber(item.oxygen_saturation_pct),
+    vo2Max: toNumber(item.vo2_max),
+    wristTemperatureC: toNumber(item.wrist_temperature_c),
+    sleepAsleepMinutes: toNumber(item.sleep_asleep_minutes),
+    sleepInBedMinutes: toNumber(item.sleep_in_bed_minutes),
+    sleepAwakeMinutes: toNumber(item.sleep_awake_minutes),
+    sleepCoreMinutes: toNumber(item.sleep_core_minutes),
+    sleepDeepMinutes: toNumber(item.sleep_deep_minutes),
+    sleepRemMinutes: toNumber(item.sleep_rem_minutes),
+    source: String(item.source || "").trim(),
+    sampledAt: item.sampled_at || null,
+    importedAt: item.imported_at || null,
+    sourceDetails: item.source_details_json ? (() => {
+      try { return JSON.parse(item.source_details_json); } catch { return []; }
+    })() : []
+  })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date));
+
   const ingredientsByRecipeId = new Map();
   for (const ingredient of recipeIngredientRows) {
     if (!ingredientsByRecipeId.has(ingredient.recipeId)) ingredientsByRecipeId.set(ingredient.recipeId, []);
@@ -2993,7 +3073,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
 
   const historyStart = healthAddDays(date, -13);
   const bodyHistoryStart = healthAddDays(date, -27);
-  await reconcileHealthRecoveryRows(env, energyRows, bodySheetRows);
+  await reconcileHealthRecoveryRows(env, energyRows, bodySheetRows, recoverySheetRows);
   const [d1EnergyByDate, d1BodySamples] = await Promise.all([
     fetchHealthEnergyRows(env, historyStart, date),
     fetchHealthBodySamples(env, bodyHistoryStart, date)
