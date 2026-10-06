@@ -1289,7 +1289,7 @@ try {
   assertCheck(await page.locator(".credit-panel").count() === 0, "Home · ECI ya no ocupa tarjeta independiente");
   assertCheck(await page.locator("#debt-summary .home-debt-credit-summary").count() === 1, "Home · ECI integrado en Obligaciones activas");
 
-  const giftsPanel = page.locator(".money-horizon > .gifts-panel").first();
+  const giftsPanel = page.locator(".finance-right-stack > .gifts-panel").first();
   assertCheck(await giftsPanel.isVisible().catch(() => false), "Regalos · panel visible");
   const giftsText = normalizeAuditValue(await page.locator("#gifts-summary").textContent().catch(() => ""));
   assertCheck(
@@ -1327,11 +1327,16 @@ try {
     const objects = document.querySelector("#home-objects-card");
     const money = document.querySelector(".money-horizon");
     const wealth = document.querySelector(".money-horizon > .wealth-panel");
-    const debt = document.querySelector(".money-horizon > .debt-panel");
+    const financeStack = document.querySelector(".money-horizon > .finance-right-stack");
+    const debt = document.querySelector(".finance-right-stack > .debt-panel");
+    const gifts = document.querySelector(".finance-right-stack > .gifts-panel");
     const rect = (node) => node && !node.hidden ? node.getBoundingClientRect() : null;
     const compactRect = (node) => {
       const box = rect(node);
       return box ? {
+        left: Math.round(box.left),
+        right: Math.round(box.right),
+        bottom: Math.round(box.bottom),
         width: Math.round(box.width),
         height: Math.round(box.height),
         top: Math.round(box.top)
@@ -1342,7 +1347,9 @@ try {
       pantry: compactRect(pantry),
       objects: compactRect(objects),
       wealth: compactRect(wealth),
+      financeStack: compactRect(financeStack),
       debt: compactRect(debt),
+      gifts: compactRect(gifts),
       moneyAlignItems: money ? getComputedStyle(money).alignItems : "",
       moneyGridAutoRows: money ? getComputedStyle(money).gridAutoRows : ""
     };
@@ -1366,11 +1373,24 @@ try {
     "Home · bloques financieros contiguos usan altura equilibrada",
     JSON.stringify(compactHomeLayout)
   );
-  if (compactHomeLayout.viewportWidth >= 1180 && compactHomeLayout.wealth && compactHomeLayout.debt) {
+  if (
+    compactHomeLayout.viewportWidth >= 1180 &&
+    compactHomeLayout.wealth &&
+    compactHomeLayout.financeStack &&
+    compactHomeLayout.debt &&
+    compactHomeLayout.gifts
+  ) {
     assertCheck(
-      Math.abs(compactHomeLayout.wealth.width - compactHomeLayout.debt.width) <= 2 &&
-        Math.abs(compactHomeLayout.wealth.height - compactHomeLayout.debt.height) <= 2,
-      "Home · Patrimonio y Obligaciones tienen el mismo tamaño",
+      Math.abs(compactHomeLayout.wealth.width - compactHomeLayout.financeStack.width) <= 2 &&
+        Math.abs(compactHomeLayout.debt.width - compactHomeLayout.gifts.width) <= 2 &&
+        Math.abs(compactHomeLayout.wealth.top - compactHomeLayout.debt.top) <= 2,
+      "Home · Patrimonio y columna Obligaciones/Regalos alineados",
+      JSON.stringify(compactHomeLayout)
+    );
+    assertCheck(
+      compactHomeLayout.gifts.top >= compactHomeLayout.debt.bottom + 8 &&
+        compactHomeLayout.gifts.top <= compactHomeLayout.debt.bottom + 16,
+      "Home · Regalos ocupa el hueco bajo Obligaciones sin solape",
       JSON.stringify(compactHomeLayout)
     );
   }
