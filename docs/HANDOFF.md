@@ -1945,11 +1945,11 @@ Antes de cualquier cambio:
 
 ### ORGANIZADOR 10 · panel Regalos / Bodas y Reyes · 2026-10-06
 
-- Se añade una tercera superficie financiera en Home: `Regalos · Bodas y Reyes`, a ancho completo bajo Patrimonio/Obligaciones para no degradar la densidad de esos dos paneles.
+- Se añade una tercera superficie financiera en Home: `Regalos · Bodas y Reyes`. En desktop comparte la columna derecha con `Obligaciones activas`, colocándose justo debajo para aprovechar el hueco vertical que antes quedaba vacío frente al panel más alto de Patrimonio. En tablet/móvil vuelve a apilarse de forma natural.
 - Fuente: nueva pestaña privada derivada `Regalos` dentro de `SEGUNDO CEREBRO - ESTADO FINANCIERO`; el frontend no contiene importes, personas ni bodas hardcodeadas.
 - Contrato: filas `fund_month` para aportación mensual/acumulado/objetivo y filas `wedding` para previsto/pagado conciliado.
 - Columna izquierda: dinero almacenado mes a mes, objetivo anual, fondos por categoría y disponible tras pagos cuando aplica.
 - Columna derecha: únicamente bodas con pago conciliado; las bodas previstas/no conciliadas permanecen identificadas como pendientes y no se cuentan como pagadas.
 - Una aportación futura de Reyes no se cuenta como dinero almacenado hasta existir realmente. Esta regla evita volver a inflar el saldo por una previsión del ciclo.
-- Responsive: dos columnas internas en escritorio y una columna en tablet/móvil; el histórico mensual puede desplazarse internamente si fuese necesario, sin overflow global.
+- Responsive: dos columnas internas en escritorio y una columna en tablet/móvil; el histórico mensual puede desplazarse internamente si fuese necesario, sin overflow global. La tipografía interna se mantiene compacta pero legible: no debe reducirse por debajo de lo necesario para hacer caber el panel.
 - El auditor de producción comprueba panel visible, ambas columnas y ausencia de overflow.

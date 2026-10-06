@@ -11,6 +11,7 @@ const [index, app, css, worker, audit] = await Promise.all([
 ]);
 
 test("Home exposes the data-driven gifts panel", () => {
+  assert.match(index, /class="finance-right-stack"/);
   assert.match(index, /class="gifts-panel"/);
   assert.match(index, /id="gifts-year"/);
   assert.match(index, /id="gifts-summary"/);
@@ -34,7 +35,7 @@ test("Finance summary reads gifts from the canonical derived Sheet", () => {
 });
 
 test("Gifts panel is responsive and audit-covered", () => {
-  assert.match(css, /v0\.42\.26 — data-driven gifts funds panel/);
+  assert.match(css, /v0\.42\.27 — gifts fill the obligations gap \+ readable finance density/);
   assert.match(css, /\.gifts-summary-grid\s*\{[\s\S]*?grid-template-columns:/);
   assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.gifts-summary-grid\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
   assert.match(css, /\.gift-monthly-table\s*\{/);
@@ -43,4 +44,6 @@ test("Gifts panel is responsive and audit-covered", () => {
   assert.match(audit, /Regalos · panel visible/);
   assert.match(audit, /Regalos · columnas disponibles/);
   assert.match(audit, /Regalos · sin overflow/);
+  assert.match(audit, /Patrimonio y columna Obligaciones\/Regalos alineados/);
+  assert.match(audit, /Regalos ocupa el hueco bajo Obligaciones sin solape/);
 });

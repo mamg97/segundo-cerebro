@@ -24308,3 +24308,215 @@ html[data-theme="light"] .money-horizon > .gifts-panel {
     padding: 8px 9px;
   }
 }
+
+
+/* v0.42.27 — gifts fill the obligations gap + readable finance density */
+.finance-right-stack {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  align-content: start;
+}
+
+.finance-right-stack > .debt-panel,
+.finance-right-stack > .gifts-panel {
+  min-width: 0;
+}
+
+.finance-right-stack > .debt-panel {
+  display: flex;
+  height: auto !important;
+  min-height: 0 !important;
+  align-self: start !important;
+  flex-direction: column;
+  padding: 16px 18px;
+}
+
+.finance-right-stack > .debt-panel .debt-summary {
+  height: auto !important;
+  flex: 0 0 auto;
+}
+
+.finance-right-stack > .debt-panel .finance-home-links {
+  margin-top: 10px;
+}
+
+.finance-right-stack > .gifts-panel {
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.finance-right-stack .gifts-summary {
+  margin-top: 10px;
+}
+
+.finance-right-stack .gifts-summary-grid {
+  grid-template-columns: minmax(0, 1.3fr) minmax(170px, .7fr);
+  gap: 10px;
+}
+
+.finance-right-stack .gift-funds-column,
+.finance-right-stack .gift-paid-column {
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.finance-right-stack .gift-column-heading {
+  gap: 8px;
+}
+
+.finance-right-stack .gift-column-heading strong {
+  font-size: 12px;
+}
+
+.finance-right-stack .gift-column-heading span,
+.finance-right-stack .gift-column-heading small {
+  font-size: 9px;
+}
+
+.finance-right-stack .gift-total-kpi > span {
+  font-size: 17px;
+}
+
+.finance-right-stack .gift-total-kpi > small {
+  font-size: 8px;
+}
+
+.finance-right-stack .gift-fund-cards {
+  gap: 7px;
+}
+
+.finance-right-stack .gift-fund-card {
+  gap: 5px;
+  padding: 8px 9px;
+}
+
+.finance-right-stack .gift-fund-head {
+  display: grid;
+  gap: 2px;
+}
+
+.finance-right-stack .gift-fund-head strong {
+  font-size: 11px;
+}
+
+.finance-right-stack .gift-fund-head span {
+  font-size: 9.5px;
+}
+
+.finance-right-stack .gift-fund-meta {
+  gap: 4px 8px;
+  font-size: 8.5px;
+}
+
+.finance-right-stack .gift-month-row {
+  grid-template-columns: 58px minmax(58px, 1fr) 72px 78px;
+  gap: 5px;
+  padding: 5px 7px;
+  font-size: 8.5px;
+}
+
+.finance-right-stack .gift-month-head {
+  font-size: 8px;
+}
+
+.finance-right-stack .gift-wedding-row {
+  gap: 7px;
+  padding: 7px 8px;
+}
+
+.finance-right-stack .gift-wedding-row strong {
+  font-size: 10.5px;
+}
+
+.finance-right-stack .gift-wedding-row small {
+  font-size: 8px;
+}
+
+.finance-right-stack .gift-wedding-row > span {
+  font-size: 11.5px;
+}
+
+.finance-right-stack .gift-unreconciled {
+  padding: 7px 8px;
+  font-size: 8.5px;
+}
+
+.finance-right-stack .gift-unreconciled strong {
+  font-size: 9.5px;
+}
+
+.finance-right-stack .gift-empty-inline,
+.finance-right-stack .gifts-empty,
+.finance-right-stack .gift-source-note {
+  font-size: 9px;
+}
+
+html[data-theme="dark"] .finance-right-stack > .gifts-panel {
+  border-color: rgba(95, 168, 255, .2);
+  background: linear-gradient(145deg, rgba(18, 42, 75, .42), rgba(11, 23, 40, .98));
+}
+
+html[data-theme="light"] .finance-right-stack > .gifts-panel {
+  border-color: rgba(47, 107, 255, .16);
+  background: linear-gradient(145deg, rgba(244, 248, 255, .98), rgba(255, 255, 255, .98));
+}
+
+@media (min-width: 1180px) {
+  .money-horizon > .wealth-panel,
+  .money-horizon > .finance-right-stack {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .money-horizon > .finance-right-stack {
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 1179px) {
+  .finance-right-stack .gifts-summary-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(160px, .75fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .money-horizon > .finance-right-stack {
+    grid-column: 1;
+  }
+
+  .finance-right-stack .gifts-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .finance-right-stack > .debt-panel,
+  .finance-right-stack > .gifts-panel {
+    padding: 14px;
+  }
+
+  .finance-right-stack .gift-column-heading strong {
+    font-size: 13px;
+  }
+
+  .finance-right-stack .gift-column-heading span,
+  .finance-right-stack .gift-column-heading small {
+    font-size: 9.5px;
+  }
+
+  .finance-right-stack .gift-fund-head strong,
+  .finance-right-stack .gift-wedding-row strong {
+    font-size: 11px;
+  }
+
+  .finance-right-stack .gift-fund-meta,
+  .finance-right-stack .gift-wedding-row small,
+  .finance-right-stack .gift-unreconciled {
+    font-size: 9px;
+  }
+}
