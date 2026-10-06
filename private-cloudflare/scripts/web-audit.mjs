@@ -1288,6 +1288,40 @@ try {
 
   assertCheck(await page.locator(".credit-panel").count() === 0, "Home · ECI ya no ocupa tarjeta independiente");
   assertCheck(await page.locator("#debt-summary .home-debt-credit-summary").count() === 1, "Home · ECI integrado en Obligaciones activas");
+
+  const giftsPanel = page.locator(".money-horizon > .gifts-panel").first();
+  assertCheck(await giftsPanel.isVisible().catch(() => false), "Regalos · panel visible");
+  const giftsText = normalizeAuditValue(await page.locator("#gifts-summary").textContent().catch(() => ""));
+  assertCheck(
+    /dinero almacenado/.test(giftsText) && /bodas pagadas/.test(giftsText),
+    "Regalos · columnas disponibles",
+    giftsText
+  );
+  assertCheck(
+    await page.locator("#gifts-summary .gift-funds-column").count() === 1 &&
+      await page.locator("#gifts-summary .gift-paid-column").count() === 1,
+    "Regalos · estructura de fondos y pagos"
+  );
+  const giftsGeometry = await giftsPanel.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return {
+      left: Math.round(rect.left),
+      right: Math.round(rect.right),
+      width: Math.round(rect.width),
+      scrollWidth: Math.round(node.scrollWidth),
+      clientWidth: Math.round(node.clientWidth),
+      viewportWidth: window.innerWidth
+    };
+  }).catch(() => null);
+  assertCheck(
+    Boolean(giftsGeometry) &&
+      giftsGeometry.left >= -2 &&
+      giftsGeometry.right <= giftsGeometry.viewportWidth + 2 &&
+      giftsGeometry.scrollWidth <= giftsGeometry.clientWidth + 2,
+    "Regalos · sin overflow",
+    giftsGeometry ? JSON.stringify(giftsGeometry) : "sin geometría"
+  );
+
   const compactHomeLayout = await page.evaluate(() => {
     const pantry = document.querySelector("#home-pantry-card");
     const objects = document.querySelector("#home-objects-card");
