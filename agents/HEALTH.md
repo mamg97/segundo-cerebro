@@ -212,7 +212,7 @@ El histórico de Salud no debe forzar una lectura completa adicional si existe u
 
 ## Balance calórico diario en Resumen
 
-Salud → Resumen muestra una gráfica divergente de los últimos 7 días que cruza ingesta confirmada de Nutrición con gasto total de Apple Health/D1. No crea una tabla canónica nueva. El eje 0 separa superávit arriba y déficit abajo.
+Salud → Resumen muestra una gráfica divergente de los últimos 30 días que cruza ingesta confirmada de Nutrición con gasto total de Apple Health/D1. No crea una tabla canónica nueva. El eje 0 separa superávit arriba y déficit abajo.
 
 Contrato:
 - ingesta = suma de filas `Registro` con estado `consumido`;
