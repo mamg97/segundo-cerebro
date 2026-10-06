@@ -20,7 +20,7 @@ test("Home exposes the data-driven gifts panel", () => {
   assert.match(app, /function renderGiftsOverview\(\)/);
   assert.match(app, /Sobre de regalos/);
   assert.match(app, /próximas bodas/);
-  assert.match(app, /pendiente de tu madre/);
+  assert.match(app, /pendiente de recibir/);
   assert.match(app, /gift-monthly-table/);
   assert.match(app, /gift-paid-list/);\n  assert.match(app, /gift-envelope-head/);\n  assert.match(app, /gift-next-year/);
 });
@@ -31,7 +31,7 @@ test("Finance summary reads gifts from the canonical derived Sheet", () => {
   assert.match(worker, /kind === "fund_month"/);
   assert.match(worker, /kind === "wedding"/);
   assert.match(worker, /gifts: giftSummary/);\n  assert.match(worker, /nextYearWeddings: giftNextYearWeddingRows/);\n  assert.match(worker, /cashAvailable:/);\n  assert.match(worker, /pendingCash:/);
-  assert.doesNotMatch(worker, /Panzuela|Mariadolores|Silvia|Pablo/);
+  assert.doesNotMatch(worker, /Panzuela|Mariadolores|Silvia|Pablo/);\n  assert.doesNotMatch(app, /Panzuela|Mariadolores|Silvia|Pablo/);
 });
 
 test("Gifts panel is responsive and audit-covered", () => {
