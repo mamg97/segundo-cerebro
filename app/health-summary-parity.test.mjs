@@ -55,3 +55,27 @@ test("Health overview exposes a reliable seven-day calorie balance table", () =>
   assert.match(css, /\.health-calorie-balance-card\s*\{[\s\S]*?grid-column:\s*1 \/ -1/);
   assert.match(css, /\.health-calorie-table-wrap\s*\{[\s\S]*?overflow-x:\s*auto/);
 });
+
+
+test("Health workspace lazy-loads heavy tabs and avoids duplicate startup reads", () => {
+  const openStart = app.indexOf("function openHealthDetail(options = {})");
+  const overviewStart = app.indexOf("async function loadHealthOverview", openStart);
+  assert.ok(openStart >= 0 && overviewStart > openStart);
+  const openBlock = app.slice(openStart, overviewStart);
+  assert.match(openBlock, /void loadHealthOverview\(localDateKey\(\)\)/);
+  assert.doesNotMatch(openBlock, /void loadMedicalAppointments\(\)/);
+  assert.doesNotMatch(openBlock, /void loadGymPanel\(\)/);
+  assert.doesNotMatch(openBlock, /loadNutritionPanel\(localDateKey\(\)\)/);
+
+  const overviewEnd = app.indexOf("function renderHealthCalorieBalance", overviewStart);
+  const overviewBlock = app.slice(overviewStart, overviewEnd);
+  assert.match(overviewBlock, /fetch\("\/api\/health\/overview\?date="/);
+  assert.doesNotMatch(overviewBlock, /fetch\("\/api\/gym"/);
+
+  const tabsStart = app.indexOf("function bindHealthTabs()");
+  const tabsEnd = app.indexOf("function renderMedicalSection", tabsStart);
+  const tabsBlock = app.slice(tabsStart, tabsEnd);
+  assert.match(tabsBlock, /tab === "gym"/);
+  assert.match(tabsBlock, /ensureHealthNutritionPanels\(localDateKey\(\)\)/);
+  assert.match(tabsBlock, /\["nutrition", "recipes", "menu"\]\.includes\(tab\)/);
+});
