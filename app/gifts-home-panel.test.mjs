@@ -22,7 +22,9 @@ test("Home exposes the data-driven gifts panel", () => {
   assert.match(app, /próximas bodas/);
   assert.match(app, /pendiente de recibir/);
   assert.match(app, /gift-monthly-table/);
-  assert.match(app, /gift-paid-list/);\n  assert.match(app, /gift-envelope-head/);\n  assert.match(app, /gift-next-year/);
+  assert.match(app, /gift-paid-list/);
+  assert.match(app, /gift-envelope-head/);
+  assert.match(app, /gift-next-year/);
 });
 
 test("Finance summary reads gifts from the canonical derived Sheet", () => {
@@ -30,8 +32,12 @@ test("Finance summary reads gifts from the canonical derived Sheet", () => {
   assert.match(worker, /const giftRecords = parseTableRows\(giftRows\)/);
   assert.match(worker, /kind === "fund_month"/);
   assert.match(worker, /kind === "wedding"/);
-  assert.match(worker, /gifts: giftSummary/);\n  assert.match(worker, /nextYearWeddings: giftNextYearWeddingRows/);\n  assert.match(worker, /cashAvailable:/);\n  assert.match(worker, /pendingCash:/);
-  assert.doesNotMatch(worker, /Panzuela|Mariadolores|Silvia|Pablo/);\n  assert.doesNotMatch(app, /Panzuela|Mariadolores|Silvia|Pablo/);
+  assert.match(worker, /gifts: giftSummary/);
+  assert.match(worker, /nextYearWeddings: giftNextYearWeddingRows/);
+  assert.match(worker, /cashAvailable:/);
+  assert.match(worker, /pendingCash:/);
+  assert.doesNotMatch(worker, /Panzuela|Mariadolores|Silvia|Pablo/);
+  assert.doesNotMatch(app, /Panzuela|Mariadolores|Silvia|Pablo/);
 });
 
 test("Gifts panel is responsive and audit-covered", () => {
@@ -43,7 +49,8 @@ test("Gifts panel is responsive and audit-covered", () => {
 
   assert.match(audit, /Regalos · panel visible/);
   assert.match(audit, /Regalos · sobre actual y bodas futuras disponibles/);
-  assert.match(audit, /Regalos · estructura de sobre, fondos y bodas/);\n  assert.match(audit, /Regalos · sin overflow/);
+  assert.match(audit, /Regalos · estructura de sobre, fondos y bodas/);
+  assert.match(audit, /Regalos · sin overflow/);
   assert.match(audit, /Patrimonio y columna Obligaciones\/Regalos alineados/);
   assert.match(audit, /Regalos ocupa el hueco bajo Obligaciones sin solape/);
 });
