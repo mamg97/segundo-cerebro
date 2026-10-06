@@ -2518,7 +2518,7 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
   let waistHistory = [];
   if (hasHealthGoogleConfig(env)) {
     try {
-      const health = await fetchHealthNutritionSummary(env, { date, force: true });
+      const health = await fetchHealthNutritionSummary(env, { date });
       waistHistory = health.value?.body?.waistHistory || [];
     } catch (error) {
       console.warn("Health history recovery/waist read failed", String(error?.message || error));
@@ -3360,8 +3360,35 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     }
   };
 
-  healthCache = { value, expiresAt: Date.now() + 20_000, date };
+  healthCache = { value, expiresAt: Date.now() + 60_000, date };
   return { status: "ok", value };
+}
+
+function staleHealthSnapshot(date) {
+  const key = /^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))
+    ? String(date)
+    : localHealthDateKey();
+  if (!healthCache.value || healthCache.date !== key) return null;
+  const staleUntil = Number(healthCache.expiresAt || 0) + 5 * 60_000;
+  return Date.now() <= staleUntil ? healthCache.value : null;
+}
+
+function healthOverviewPayload(value, status, gym = { sessionsThisWeek: 0, sessions: [], progress: {} }) {
+  return {
+    ok: true,
+    status,
+    date: value.date,
+    body: value.body || null,
+    activity: value.activity || null,
+    activityObjective: value.activityObjective || null,
+    nutritionObjective: value.objective || null,
+    nutritionSummary: value.summary || null,
+    nutritionHistory: value.history || [],
+    progressObjectives: value.progressObjectives || [],
+    weeklyMenu: value.weeklyMenu || [],
+    gym,
+    energy: value.energy || null
+  };
 }
 
 async function appendHealthSheetRow(env, range, values) {
@@ -4963,22 +4990,13 @@ export default {
         } catch (gymError) {
           console.warn("Health overview gym read failed", String(gymError?.message || gymError));
         }
-        return json({
-          ok: true,
-          status: health.status,
-          date: health.value.date,
-          body: health.value.body || null,
-          activity: health.value.activity || null,
-          activityObjective: health.value.activityObjective || null,
-          nutritionObjective: health.value.objective || null,
-          nutritionSummary: health.value.summary || null,
-          nutritionHistory: health.value.history || [],
-          progressObjectives: health.value.progressObjectives || [],
-          weeklyMenu: health.value.weeklyMenu || [],
-          gym,
-          energy: health.value.energy || null
-        });
+        return json(healthOverviewPayload(health.value, health.status, gym));
       } catch (error) {
+        const fallback = staleHealthSnapshot(date);
+        if (fallback) {
+          console.warn("Health overview live read failed; serving recent snapshot", String(error?.message || error));
+          return json(healthOverviewPayload(fallback, "ok-stale"));
+        }
         console.warn("Health overview read failed", String(error?.message || error));
         return json({ ok: false, code: "HEALTH_OVERVIEW_READ_FAILED" }, 502);
       }
@@ -5016,6 +5034,11 @@ export default {
         if (!nutrition.value) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
         return json({ ok: true, status: nutrition.status, ...nutrition.value });
       } catch (error) {
+        const fallback = staleHealthSnapshot(date);
+        if (fallback) {
+          console.warn("Nutrition live read failed; serving recent snapshot", String(error?.message || error));
+          return json({ ok: true, status: "ok-stale", ...fallback });
+        }
         console.warn("Nutrition read failed", String(error?.message || error));
         return json({ ok: false, code: "NUTRITION_READ_FAILED" }, 502);
       }
