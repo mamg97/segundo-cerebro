@@ -506,3 +506,18 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 - **Motivo:** permitir que ChatGPT y los gestores accedan a la misma información que muestra la web, evitar memorias inaccesibles y mantener el patrón data-driven usado por otros dominios.
 - **Privacidad:** el ID real del Sheet vive en el registro privado `IntegracionesPrivadas`; Git solo contiene el contrato y el adaptador genérico.
 
+
+
+## 2026-10-07 — Carrera profesional usa fuente privada propia
+
+Decisión:
+
+- Carrera pasa a ser un dominio nativo de Segundo Cerebro.
+- Su fuente canónica es el Google Sheet privado `SEGUNDO CEREBRO - CARRERA`.
+- La vista privada compone posición actual, oportunidades, organigrama, escenarios de compensación, activos profesionales, objetivos y decisiones.
+- Git conserva únicamente esquema, código, documentación y fixtures sintéticos.
+- La compensación de Carrera es contexto de decisión y negociación; Finanzas sigue siendo la autoridad de ingresos realmente registrados.
+- `/api/state` recibe solo un resumen minimizado y `GET /api/career` entrega el detalle bajo demanda.
+- Estimaciones y hechos confirmados deben permanecer diferenciados en origen y presentación.
+
+Motivo: la carrera profesional ya necesita continuidad estructurada y comparación de opciones, pero mezclar sus datos con Finanzas, Proyectos o memoria conversacional produciría duplicidad y pérdida de trazabilidad.
