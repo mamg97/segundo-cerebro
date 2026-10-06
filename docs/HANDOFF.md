@@ -6,8 +6,9 @@
 - El Worker resuelve la fuente por OAuth/título exacto (o `CAREER_SHEET_ID` opcional), expone `GET /api/career` y añade a `/api/state` solo un resumen de estado.
 - La vista prioriza posición actual, rutas profesionales, compensación con separación hecho/estimación, contexto organizativo, readiness de activos, decisiones y objetivos.
 - Finanzas sigue siendo autoridad de ingresos contabilizados; Carrera usa compensación únicamente como contexto de negociación y elección.
-- Rama de integración: `organizador11/career-private-domain-v2`.
-- Pendiente antes de cierre: ejecutar CI/build, integrar a `main` y validar producción.
+- PR #305 fusionada en `main`; CI `Validate private Cloudflare app` #389 pasó completa.
+- Deploy privado #384 y Pages #604 finalizaron correctamente tras el merge.
+- La fuente privada fue creada y verificada mediante lectura directa del Sheet; la vista ya está desplegada con separación estricta entre datos reales privados y fixtures públicos.
 
 ## Salud · Balance calórico ampliado a 30 días · 2026-10-07
 
