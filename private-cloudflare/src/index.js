@@ -8,6 +8,7 @@ import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { processObjectsImageQueue } from "./objects-staging.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
+import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, fetchEventLedgerSnapshot, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
@@ -5796,6 +5797,19 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/career") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      if (!hasCareerGoogleConfig(env)) return json({ ok: false, code: "CAREER_NOT_CONFIGURED" }, 503);
+      try {
+        const career = await fetchCareerSummary(env, getGoogleAccessToken);
+        if (!career.value) return json({ ok: false, code: "CAREER_SOURCE_EMPTY" }, 503);
+        return json({ ...career.value, syncStatus: career.status || "ok" });
+      } catch (error) {
+        console.warn("Career read failed", String(error?.message || error));
+        return json({ ok: false, code: "CAREER_READ_FAILED" }, 502);
+      }
+    }
+
     if (url.pathname === "/api/finance/delta") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       if (!hasFinanceGoogleConfig(env)) return json({ ok: false, code: "FINANCE_NOT_CONFIGURED" }, 503);
@@ -5845,13 +5859,14 @@ export default {
         return json({ ok: false, code: "INVALID_STATE_JSON" }, 500);
       }
 
-      const [finance, habits, nutrition, pantry, objects, projects, eventsStore, calendar, family] = await Promise.all([
+      const [finance, habits, nutrition, pantry, objects, projects, career, eventsStore, calendar, family] = await Promise.all([
         loadStateSource(hasFinanceGoogleConfig(env), "Finance", () => fetchFinanceSummary(env)),
         loadStateSource(hasHabitQuestGoogleConfig(env), "HabitQuest", () => fetchHabitQuestSummary(env)),
         loadStateSource(hasHealthGoogleConfig(env), "Nutrition", () => fetchHealthNutritionSummary(env)),
         loadStateSource(hasPantryGoogleConfig(env), "Pantry", () => fetchPantrySummary(env, getGoogleAccessToken)),
         loadStateSource(hasObjectsGoogleConfig(env), "Objects", () => fetchObjectsSummary(env, getGoogleAccessToken)),
         loadStateSource(hasProjectsGoogleConfig(env), "Projects", () => fetchProjectsSummary(env, getGoogleAccessToken)),
+        loadStateSource(hasCareerGoogleConfig(env), "Career", () => fetchCareerSummary(env, getGoogleAccessToken)),
         loadStateSource(hasEventsGoogleConfig(env), "EventsSheet", () => fetchEventsSheetSource(env, getGoogleAccessToken)),
         loadStateSource(
           hasIcloudCalendarConfig(env),
@@ -5886,6 +5901,24 @@ export default {
 
       const projectsSync = projects.status || "error";
       if (projects.value) state.projectsSummary = projects.value.summary || null;
+
+      const careerSync = career.status || "error";
+      if (career.value) {
+        state.careerSummary = career.value.summary || null;
+        state.areas = (Array.isArray(state.areas) ? state.areas : []).map((area) => {
+          if (area.id !== "area-career") return area;
+          const summary = career.value.summary || {};
+          const opportunityCount = Number(summary.activeOpportunityCount || 0);
+          const blockedCount = Number(summary.blockedAssetCount || 0);
+          return {
+            ...area,
+            summary: opportunityCount
+              ? opportunityCount + " ruta" + (opportunityCount === 1 ? "" : "s") + " profesional" + (opportunityCount === 1 ? "" : "es") + " abierta" + (opportunityCount === 1 ? "" : "s") + "."
+              : "Sin rutas profesionales abiertas.",
+            status: blockedCount > 0 ? "attention" : "steady"
+          };
+        });
+      }
 
       const eventsSheetSync = eventsStore.status || "error";
       if (eventsStore.value?.rules?.length) {
@@ -5985,6 +6018,7 @@ export default {
         pantrySync,
         objectsSync,
         projectsSync,
+        careerSync,
         eventsSheetSync,
         calendarSync
       };
