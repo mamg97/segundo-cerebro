@@ -40,6 +40,8 @@ jobs:
 
       - run: node --check ../app/projects.js
 
+      - run: node --check ../app/career.js
+
       - run: node --check ../app/events.js
 
       - run: node --check ../app/adherence.js
@@ -77,6 +79,8 @@ jobs:
         run: npm test
 
       - run: node --check src/projects.js
+
+      - run: node --check src/career.js
 
       - run: node --check src/events.js
 

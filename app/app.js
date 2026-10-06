@@ -4,6 +4,7 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.21";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
+import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasVisualLab } from "./midas-lab.js?v=0.40.18";
@@ -9173,6 +9174,10 @@ function openNavigationArea(areaId) {
 function openArea(areaId) {
   if (areaId === "area-events") {
     void openEventsWorkspaceInline("active");
+    return;
+  }
+  if (areaId === "area-career") {
+    void openCareerDetail(privateModeKind === "remote");
     return;
   }
   if (areaId === "area-finance") {

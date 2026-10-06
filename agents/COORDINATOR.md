@@ -60,6 +60,7 @@ Tabla inicial:
 | comida disponible, compras, precios domésticos | Despensa | Salud, Finanzas |
 | ropa, objetos, equipaje, kits | Objetos | Eventos |
 | padres, trámites familiares, patrimonio familiar | Padres | Finanzas, Eventos |
+| carrera, empleo, compensación laboral, candidaturas, movilidad | Carrera | Finanzas, Proyectos, Eventos |
 | proyectos, repositorios, documentación, relaciones | Proyectos | Finanzas, resto de dominios |
 | cambios de la web, navegación, UX | Organizador/Web | dominio afectado |
 
