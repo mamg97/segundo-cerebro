@@ -41,7 +41,10 @@ test("Finance summary reads gifts from the canonical derived Sheet", () => {
 });
 
 test("Gifts panel is responsive and audit-covered", () => {
-  assert.match(css, /v0\.42\.28 — gifts envelope reconciliation \+ 2027 wedding plan/);
+  assert.match(css, /v0\.42\.29 — gifts compact but readable in finance gap/);
+  assert.match(css, /\.gift-envelope-head strong\s*\{[\s\S]*?font-size:\s*13\.5px/);
+  assert.match(css, /\.finance-right-stack \.gift-month-row\s*\{[\s\S]*?font-size:\s*9\.4px/);
+  assert.match(css, /\.finance-right-stack \.gift-wedding-row strong\s*\{[\s\S]*?font-size:\s*11\.5px/);
   assert.match(css, /\.gifts-summary-grid\s*\{[\s\S]*?grid-template-columns:/);
   assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.gifts-summary-grid\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
   assert.match(css, /\.gift-monthly-table\s*\{/);
