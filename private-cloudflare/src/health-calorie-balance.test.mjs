@@ -18,3 +18,21 @@ test("Nutrition history carries intake completeness and Health coverage quality"
   assert.match(historyBuilder, /coverageQuality = dayEnergy \? healthCoverageQuality\(dayEnergy\) : "missing"/);
   assert.match(historyBuilder, /balanceKcal: burn === null \? null : dayConsumed\.kcal - burn/);
 });
+
+
+test("Health history reuses the nutrition cache instead of forcing a duplicate Google read", () => {
+  const historyStart = worker.indexOf("async function fetchHealthHistory");
+  const historyEnd = worker.indexOf("async function updateHealthSheetRange", historyStart);
+  assert.ok(historyStart >= 0 && historyEnd > historyStart);
+  const block = worker.slice(historyStart, historyEnd);
+  assert.match(block, /fetchHealthNutritionSummary\(env, \{ date \}\)/);
+  assert.doesNotMatch(block, /force:\s*true/);
+});
+
+test("Health routes keep a recent successful snapshot as transient fallback", () => {
+  assert.match(worker, /expiresAt:\s*Date\.now\(\) \+ 60_000/);
+  assert.match(worker, /function staleHealthSnapshot\(date\)/);
+  assert.match(worker, /Health overview live read failed; serving recent snapshot/);
+  assert.match(worker, /Nutrition live read failed; serving recent snapshot/);
+  assert.match(worker, /status:\s*"ok-stale"/);
+});
