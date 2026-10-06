@@ -626,6 +626,7 @@ async function init() {
   renderEvents();
   renderBudgetOverview();
   renderDebtOverview();
+  renderGiftsOverview();
   renderCreditOverview();
   renderWealthOverview();
   bindInteractions();
@@ -6487,6 +6488,136 @@ function renderDebtOverview() {
     ${totalBalance === null
       ? '<p class="debt-source-note">Las cuotas están registradas; faltan saldos pendientes para calcular la deuda total real.</p>'
       : ""}`;
+}
+
+function formatGiftPeriod(period) {
+  if (!/^\d{4}-\d{2}$/.test(String(period || ""))) return period || "—";
+  const [year, month] = String(period).split("-").map(Number);
+  return new Intl.DateTimeFormat("es-ES", { month: "short", year: "2-digit" })
+    .format(new Date(Date.UTC(year, month - 1, 1)))
+    .replace(".", "");
+}
+
+function giftCategoryLabel(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized === "bodas") return "Bodas";
+  if (normalized === "reyes") return "Reyes";
+  return value || "Fondo";
+}
+
+function renderGiftsOverview() {
+  const gifts = state.financeSummary?.gifts || null;
+  const container = document.querySelector("#gifts-summary");
+  const yearPill = document.querySelector("#gifts-year");
+  if (!container) return;
+
+  if (yearPill) yearPill.textContent = gifts?.year ? String(gifts.year) : "Sin datos";
+
+  if (!gifts || !Array.isArray(gifts.funds)) {
+    container.innerHTML = `
+      <div class="gifts-empty">
+        <strong>Fondos de regalos pendientes de conectar</strong>
+        <p>Cuando exista la tabla privada Regalos aparecerán aquí Bodas, Reyes y los pagos conciliados.</p>
+      </div>`;
+    return;
+  }
+
+  const currency = gifts.currency || "EUR";
+  const funds = gifts.funds;
+  const fundRows = Array.isArray(gifts.fundRows) ? gifts.fundRows : [];
+  const paidWeddings = Array.isArray(gifts.paidWeddings) ? gifts.paidWeddings : [];
+  const unreconciled = Array.isArray(gifts.unreconciledWeddings) ? gifts.unreconciledWeddings : [];
+  const totalStored = firstFinite(gifts.totalStored);
+  const totalTarget = firstFinite(gifts.totalTarget);
+  const totalPaid = firstFinite(gifts.totalPaidWeddings) ?? 0;
+  const totalPct = totalStored !== null && totalTarget !== null && totalTarget > 0
+    ? Math.max(0, Math.min(100, (totalStored / totalTarget) * 100))
+    : null;
+
+  const fundCards = funds.map((fund) => {
+    const stored = firstFinite(fund.stored);
+    const target = firstFinite(fund.target);
+    const paid = firstFinite(fund.paid) ?? 0;
+    const available = firstFinite(fund.available);
+    const progress = stored !== null && target !== null && target > 0
+      ? Math.max(0, Math.min(100, (stored / target) * 100))
+      : null;
+    const pending = firstFinite(fund.latestPlannedAmount);
+    return `
+      <article class="gift-fund-card">
+        <div class="gift-fund-head">
+          <strong>${escapeHtml(giftCategoryLabel(fund.category))}</strong>
+          <span>${stored === null ? "—" : formatMoney(stored, currency)}${target === null ? "" : " / " + formatMoney(target, currency)}</span>
+        </div>
+        <div class="gift-progress" aria-hidden="true"><span style="width:${progress === null ? 0 : progress.toFixed(1)}%"></span></div>
+        <div class="gift-fund-meta">
+          ${fund.category === "bodas" && available !== null
+            ? `<span>Disponible tras pagos <strong>${formatMoney(available, currency)}</strong></span>`
+            : pending !== null && pending > 0
+              ? `<span>Próxima aportación prevista <strong>${formatMoney(pending, currency)}</strong></span>`
+              : `<span>Último periodo <strong>${escapeHtml(formatGiftPeriod(fund.latestPeriod))}</strong></span>`}
+          ${fund.category === "bodas" && paid > 0 ? `<span>Pagado <strong>${formatMoney(paid, currency)}</strong></span>` : ""}
+        </div>
+      </article>`;
+  }).join("");
+
+  const monthlyRows = fundRows.map((row) => `
+    <div class="gift-month-row">
+      <span>${escapeHtml(formatGiftPeriod(row.period))}</span>
+      <strong>${escapeHtml(giftCategoryLabel(row.category))}</strong>
+      <span>${row.monthlySaved === null ? "—" : (row.monthlySaved > 0 ? "+" : "") + formatMoney(row.monthlySaved, currency)}</span>
+      <span>${row.storedCumulative === null ? "—" : formatMoney(row.storedCumulative, currency)}</span>
+    </div>`).join("");
+
+  const paidRows = paidWeddings.map((item) => `
+    <article class="gift-wedding-row">
+      <div>
+        <strong>${escapeHtml(item.label || "Boda")}</strong>
+        <small>${escapeHtml(formatFinanceDate(item.eventDate, item.eventDate || "Fecha no registrada"))}</small>
+      </div>
+      <span>${formatMoney(firstFinite(item.paidAmount) || 0, currency)}</span>
+    </article>`).join("");
+
+  container.innerHTML = `
+    <div class="gifts-summary-grid">
+      <section class="gift-funds-column">
+        <div class="gift-column-heading">
+          <div><strong>Dinero almacenado</strong><span>mes a mes · objetivo anual</span></div>
+          <div class="gift-total-kpi">
+            <span>${totalStored === null ? "—" : formatMoney(totalStored, currency)}</span>
+            <small>${totalTarget === null ? "Objetivo —" : "de " + formatMoney(totalTarget, currency)}</small>
+          </div>
+        </div>
+        ${totalPct === null ? "" : `<div class="gift-progress gift-progress-total" aria-label="Progreso anual de fondos"><span style="width:${totalPct.toFixed(1)}%"></span></div>`}
+        <div class="gift-fund-cards">${fundCards || '<p class="gift-empty-inline">Sin fondos registrados.</p>'}</div>
+        <div class="gift-monthly-table" role="table" aria-label="Aportaciones mensuales de Bodas y Reyes">
+          <div class="gift-month-row gift-month-head" role="row">
+            <span>Mes</span><strong>Fondo</strong><span>Aportación</span><span>Acumulado</span>
+          </div>
+          ${monthlyRows || '<p class="gift-empty-inline">Sin histórico mensual.</p>'}
+        </div>
+      </section>
+
+      <section class="gift-paid-column">
+        <div class="gift-column-heading">
+          <div><strong>Bodas pagadas</strong><span>solo pagos conciliados</span></div>
+          <div class="gift-total-kpi">
+            <span>${formatMoney(totalPaid, currency)}</span>
+            <small>${Number(gifts.paidWeddingCount || 0)} de ${Number(gifts.weddingCount || 0)} bodas</small>
+          </div>
+        </div>
+        <div class="gift-paid-list">
+          ${paidRows || '<div class="gift-empty-inline">Todavía no hay pagos de boda conciliados.</div>'}
+        </div>
+        ${unreconciled.length ? `
+          <div class="gift-unreconciled">
+            <strong>${unreconciled.length} sin pago conciliado</strong>
+            <span>${unreconciled.map((item) => escapeHtml(item.label || "Boda")).join(" · ")}</span>
+          </div>` : ""}
+      </section>
+    </div>
+    ${gifts.sourceUpdatedAt ? `<p class="gift-source-note">Fuente financiera · ${escapeHtml(formatFinanceDate(gifts.sourceUpdatedAt, gifts.sourceUpdatedAt))}</p>` : ""}
+  `;
 }
 
 function renderCreditOverview() {
