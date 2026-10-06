@@ -1,16 +1,15 @@
 ## Salud · balance calórico gráfico · 2026-10-07
 
-- Integración funcional cerrada: PR #295 añadió el balance calórico diario al Resumen y PR #296 estabilizó la carga del workspace.
-- Producción validada por Audit production web #203 sobre el código desplegado posterior:
+- Integración funcional cerrada: PR #295 añadió el balance diario, PR #296 estabilizó la carga del workspace y PR #299 sustituyó la tabla por una gráfica divergente.
+- Producción validada por Audit production web #205 sobre el código desplegado:
   - `/api/health/overview` responde y expone 14 días de `nutritionHistory`;
-  - Salud → Resumen carga sin error visible;
-  - conserva los 5 KPIs del Home y los 4 anillos + Peso estático;
-  - la gráfica `Balance calórico` está visible;
-  - muestra exactamente 7 días alrededor de un eje 0;
-  - cualquier balance negativo se representa como déficit verde y cualquier positivo como superávit rojo;
+  - Salud → Resumen muestra la gráfica `Balance calórico`;
+  - aparecen exactamente 7 días alrededor de un eje 0;
+  - cualquier balance negativo se clasifica como déficit verde;
+  - cualquier balance positivo se clasifica como superávit rojo;
   - los días incompletos permanecen sin barra y el día actual sigue marcado como provisional.
-- Por tanto, la integración del balance calórico se considera publicada y operativa.
-- El mismo auditor global quedó rojo por incidencias distintas que NO invalidan este cierre: un `502` transitorio inicial de `/api/nutrition`, tres workflows MIDAS fallidos y un solape visual de la leyenda de liquidez en Finanzas. Deben tratarse como incidencias separadas.
+- Los checks específicos de esta capacidad pasan en producción; la integración se considera publicada y operativa.
+- El auditor global #205 quedó rojo por incidencias ajenas a esta gráfica —entre ellas un aborto transitorio de `/api/state` y workflows MIDAS fallidos—. No deben reinterpretarse como fallo del balance calórico.
 
 ## Salud · resiliencia de lectura tras balance calórico · 2026-10-06
 
