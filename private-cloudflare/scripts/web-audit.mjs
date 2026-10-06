@@ -1293,14 +1293,16 @@ try {
   assertCheck(await giftsPanel.isVisible().catch(() => false), "Regalos · panel visible");
   const giftsText = normalizeAuditValue(await page.locator("#gifts-summary").textContent().catch(() => ""));
   assertCheck(
-    /dinero almacenado/.test(giftsText) && /bodas pagadas/.test(giftsText),
-    "Regalos · columnas disponibles",
+    /sobre de regalos/.test(giftsText) && /bodas/.test(giftsText) && /próximas bodas/.test(giftsText),
+    "Regalos · sobre actual y bodas futuras disponibles",
     giftsText
   );
   assertCheck(
     await page.locator("#gifts-summary .gift-funds-column").count() === 1 &&
-      await page.locator("#gifts-summary .gift-paid-column").count() === 1,
-    "Regalos · estructura de fondos y pagos"
+      await page.locator("#gifts-summary .gift-paid-column").count() === 1 &&
+      await page.locator("#gifts-summary .gift-envelope-head").count() === 1 &&
+      await page.locator("#gifts-summary .gift-next-year").count() === 1,
+    "Regalos · estructura de sobre, fondos y bodas"
   );
   const giftsGeometry = await giftsPanel.evaluate((node) => {
     const rect = node.getBoundingClientRect();
