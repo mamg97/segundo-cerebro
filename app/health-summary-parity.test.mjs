@@ -55,6 +55,8 @@ test("Health overview exposes a reliable seven-day divergent calorie chart", () 
   assert.doesNotMatch(renderer, /balance < -50|balance > 50/);
   assert.match(renderer, /health-calorie-chart-days/);
   assert.match(renderer, /data-balance=/);
+  assert.match(renderer, /level-\$\{barLevel\}/);
+  assert.doesNotMatch(renderer, /style="height:/);
   assert.match(renderer, /Verde = déficit \(negativo\); rojo = superávit \(positivo\)/);
   assert.match(app, /renderHealthCalorieBalance\(data\.nutritionHistory \|\| \[\]\)/);
 
