@@ -84,6 +84,26 @@ Salud agrupa Médicos, Gimnasio y Nutrición.
 - `MenuSemanal` es la fuente canónica del contenido semanal. La web y el Worker solo interpretan su esquema y estados; un cambio de plato, día, ración o sustitución doméstica se realiza en el Sheet, sin modificar frontend ni versionar datos reales en Git.
 - El gasto energético automático se almacena en D1 y puede entrar desde Apple Health mediante el Worker de ingesta dedicado.
 
+### Career / Carrera profesional
+
+Carrera es un dominio privado orientado a decisiones laborales, no una copia del CV ni una extensión de Finanzas.
+
+```text
+SEGUNDO CEREBRO - CARRERA (Google Sheet privado)
+        ↓ OAuth Google existente
+Cloudflare Worker
+        ├── /api/state → careerSummary minimizado
+        └── /api/career → detalle bajo demanda
+        ↓
+Dashboard privado protegido por Access
+```
+
+La fuente conserva posición actual, oportunidades internas/externas, contexto organizativo, escenarios de compensación, activos profesionales, objetivos y decisiones. Cada cifra o afirmación distingue hecho confirmado, estimación e hipótesis de trabajo.
+
+La compensación laboral de Carrera sirve para comparar opciones y negociar; Finanzas sigue siendo la autoridad de los ingresos realmente contabilizados, presupuesto, liquidez y patrimonio.
+
+La demo pública puede mostrar la capacidad con fixtures inequívocamente sintéticos. Nombres reales, remuneración, organigramas, candidaturas y notas de transición nunca se versionan en Git.
+
 ### Parents / Gestor Padres
 
 Gestor Padres es un dominio privado separado de la salud personal del usuario. D1 es la fuente operativa para `family_cases`, acciones y referencias mínimas cuando no existe una fuente externa propietaria.
