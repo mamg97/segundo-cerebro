@@ -2009,3 +2009,10 @@ Antes de cualquier cambio:
 - Un fallo de reconciliación ya no tumba `/api/health/overview`: se registra warning y la lectura continúa.
 - Para energía diaria, una fila más reciente `apple_health_export_recovery` del Sheet prevalece sobre un snapshot D1 live antiguo.
 - Las lecturas batch de Google Sheets para Salud reintentan 429/5xx antes de fallar.
+
+
+### NUTRI · coherencia MenuSemanal ↔ Registro · 07/10/2026
+- `Registro` sigue siendo la fuente principal para kcal/macros realmente consumidos.
+- La Home puede usar como fallback de solo lectura una fila `MenuSemanal.estado=consumido` cuando tenga `recipe_id` o `food_id` exacto y esa identidad no exista en `Registro`.
+- El fallback no escribe durante GET, no sustituye la obligación de registrar el consumo y no se aplica a filas sin identidad exacta.
+- Motivo: el 06/10/2026 el salmón con ñoquis estaba consumido en MenuSemanal pero faltaba en Registro; la Home mostraba 1296 kcal / 92 g en vez de 2062 kcal / 133 g.

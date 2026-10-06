@@ -45,3 +45,13 @@ test("health recovery import is idempotent and cannot block reads", () => {
 test("health Sheet reads retry transient Google failures", () => {
   assert.match(source, /async function fetchHealthNutritionSummary[\s\S]*googleReadFetch\([\s\S]*attempts: 3/);
 });
+
+
+test("nutrition summary can fall back to exact consumed menu identities missing from Registro", () => {
+  assert.match(source, /const registeredDayIds = new Set/);
+  assert.match(source, /const consumedMenuFallback = prepareWeeklyMenuRows/);
+  assert.match(source, /item\.status === "consumido"/);
+  assert.match(source, /\[item\.recipeId, item\.foodId\]/);
+  assert.match(source, /source: "menu_consumed_fallback"/);
+  assert.match(source, /const dayEntries = \[\.\.\.registeredDayEntries, \.\.\.consumedMenuFallback\]/);
+});
