@@ -6,7 +6,7 @@
 - Solo se clasifica un día con ingesta consumida registrada y cobertura Health comparable (`full`/`live`). No se convierte ausencia o cobertura incompleta en 0.
 - El día actual se marca provisional. La tarjeta resume balance medio y recuento de días en déficit/mantenimiento/superávit.
 - No se crea fuente canónica nueva: ingesta sigue en `SEGUNDO CEREBRO - SALUD` y gasto en Health/D1.
-- Pendiente de cierre: CI + publicación de la rama `organizador11/health-calorie-balance`.
+- Cierre operativo: la integración corresponde a PR #295; no declararla publicada hasta que validación y auditoría de producción estén verdes.
 
 
 ## GESTOR OBJETOS - ROPA 2 · referencias visuales resueltas en LookItems · 2026-10-02
