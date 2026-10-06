@@ -633,6 +633,87 @@ La ficha de evento compone bajo demanda:
 La Home solo recibe un resumen minimizado `eventsSummary` con conteos de activos, en curso e históricos.
 
 
+## Carrera profesional
+
+La fuente canónica privada `SEGUNDO CEREBRO - CARRERA` usa entidades tabulares sencillas. Los valores reales no se versionan.
+
+### CAREER_PROFILE
+
+Tabla clave/valor para el estado profesional actual:
+
+- `key`
+- `value`
+- `status`: evidencia o grado de confirmación
+- `source`
+- `updated_at`
+
+### CAREER_OPPORTUNITY
+
+- `opportunity_id`
+- `organization`
+- `role`
+- `type`: movimiento interno o proceso externo
+- `status`
+- `location`
+- `priority`
+- `fit_estimate`
+- `comp_min_eur`, `comp_mid_eur`, `comp_max_eur`
+- `comp_status`: diferencia oferta/confirmado/estimación/desconocido
+- `next_action`
+- `blocker`
+- `url`
+- `notes`
+- `updated_at`
+
+### CAREER_ORG_NODE
+
+- `person_id`
+- `name`
+- `role`
+- `function`
+- `reports_to`
+- `relation_to_user`
+- `evidence`
+- `updated_at`
+
+### CAREER_COMPENSATION_SCENARIO
+
+- `scenario_id`
+- `label`
+- `fixed_min_eur`, `fixed_mid_eur`, `fixed_max_eur`
+- `status`
+- `interpretation`
+- `source`
+- `updated_at`
+
+### CAREER_ASSET
+
+- `asset_id`
+- `type`
+- `label`
+- `status`
+- `url`
+- `next_action`
+- `notes`
+- `updated_at`
+
+### CAREER_GOAL / CAREER_DECISION
+
+Objetivos y decisiones permanecen en el dominio Carrera con identidad estable, estado, horizonte/pregunta, siguiente acción y fecha de actualización. No duplican las entidades financieras ni de proyectos.
+
+### CAREER_SUMMARY
+
+Proyección minimizada incluida en `/api/state`:
+
+- puesto/empleador actuales solo cuando la aplicación privada puede mostrarlos;
+- número de oportunidades activas;
+- decisiones abiertas;
+- activos profesionales bloqueados;
+- siguiente acción;
+- fecha de actualización.
+
+El detalle completo se consulta bajo demanda mediante `GET /api/career`.
+
 ## Apple Health — recuperación diaria privada
 
 La persistencia fisiológica automática usa D1 privado y no forma parte del modelo público de entidades personales.
