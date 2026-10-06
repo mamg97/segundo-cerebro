@@ -1977,3 +1977,12 @@ Antes de cualquier cambio:
 - Las filas de `RecuperacionDiariaApple` con `source=apple_health_export_recovery` se reconcilian idempotentemente hacia D1 `health_recovery_daily` durante la lectura de Salud.
 - La pestaña sigue siendo superficie derivada; solo las filas marcadas explícitamente como recovery de export se usan como staging. Las filas `apple_health` normales no se reingestan.
 - Esto permite sustituir snapshots live parciales cuando el bridge iOS falla, sin crear una segunda fuente de verdad ni subir datos privados a Git.
+
+
+### SALUD · hardening lectura tras backfill ZIP · 06/10/2026
+- El backfill `apple_health_export_recovery` ya no provoca UPSERTs repetidos en cada GET de Salud.
+- D1 guarda una firma de importación en `health_import_state`; si el staging no ha cambiado, la reconciliación se omite.
+- La importación nueva se ejecuta en un único `DB.batch` para reducir contención.
+- Un fallo de reconciliación ya no tumba `/api/health/overview`: se registra warning y la lectura continúa.
+- Para energía diaria, una fila más reciente `apple_health_export_recovery` del Sheet prevalece sobre un snapshot D1 live antiguo.
+- Las lecturas batch de Google Sheets para Salud reintentan 429/5xx antes de fallar.
