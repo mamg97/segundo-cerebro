@@ -328,6 +328,10 @@ export function planAppleActionsForMissingSecondBrainRow(link) {
   return [{ type: "setCompleted", desiredCompleted: true }];
 }
 
+export function stateAfterMissingAppleReminder(currentState) {
+  return cleanState(currentState) === "COMPRADO" ? "COMPRADO" : "CANCELADO";
+}
+
 async function processAppleEvents(request, env, getGoogleAccessToken) {
   let body;
   try { body = await request.json(); }
@@ -504,11 +508,14 @@ async function processAppleEvents(request, env, getGoogleAccessToken) {
     for (const missing of missingActive.results || []) {
       const sourceRow = sheet.rows.find((item) => String(item.record?.external_id || "") === missing.external_id);
       if (!sourceRow) continue;
-      sourceRow.record.estado = "CANCELADO";
+      const nextState = stateAfterMissingAppleReminder(sourceRow.record.estado);
+      sourceRow.record.estado = nextState;
       sourceRow.record.apple_completed = false;
       sourceRow.record.last_synced_at = now;
       sourceRow.record.sync_status = "synced";
-      sourceRow.record.sync_error = "APPLE_REMINDER_REMOVED";
+      sourceRow.record.sync_error = nextState === "COMPRADO"
+        ? "APPLE_REMINDER_REMOVED_AFTER_PURCHASE"
+        : "APPLE_REMINDER_REMOVED";
       sourceRow.record.updated_at = now;
       await updatePantryShoppingRow(sheet, sourceRow.rowNumber, sourceRow.record);
     }
