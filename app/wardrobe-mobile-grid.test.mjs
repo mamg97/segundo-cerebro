@@ -15,7 +15,7 @@ assert.match(audit, /mobile-wide", width: 440, height: 956, wardrobeColumns: 3/)
 assert.match(audit, /mobile", width: 390, height: 844, wardrobeColumns: 2/);
 assert.match(audit, /Visual \$\{label\} · Armario \$\{expectedColumns\} columnas/);
 
-  assert.match(index, /styles\.css\?v=0\.42\.33/);
+  assert.match(index, /styles\.css\?v=0\.43\.0/);
 
 assert.match(audit, /waitFor\(\{ state: "visible", timeout: 8000 \}\)/);
 assert.match(audit, /probeApi\("\/api\/objects", \`Armario \${label}\`, \{ attempts: 2, waitMs: 900 \}\)/);
