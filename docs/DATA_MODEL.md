@@ -105,6 +105,8 @@ Resumen financiero operativo para la portada. No sustituye a la fuente de verdad
 
 `wealth` resume patrimonio y evolución salarial. Incluye `currentPatrimony`, `currentDate`, `currentSalaryMiguel`, `currentSalaryAndrea`, `currency`, `history`, `allocation` y `dailyDiary`. Cada punto de `history` contiene fecha, período, salarios individuales y patrimonio mensual. `allocation` describe la distribución actual por custodio/plataforma. `dailyDiary` representa cierres diarios derivados de la fuente privada `PatrimonioDiario`: `date`, `patrimony` nullable, `currency`, `changePct`, `pnlDay`, `movement`, contexto opcional y trazabilidad de fuente. Un patrimonio diario ausente no se reconstruye a partir del P/L o del porcentaje; permanece `null`. La portada mantiene el resumen patrimonial vigente y el detalle de Patrimonio combina distribución, diario y series históricas sin proyectar valores futuros.
 
+`gifts` proyecta la pestaña privada derivada `Regalos`. Contiene `year`, `currency`, `funds[]`, `fundRows[]`, `weddings[]`, `paidWeddings[]`, `unreconciledWeddings[]`, `totalTarget`, `totalStored`, `totalPaidWeddings`, `paidWeddingCount` y `weddingCount`. Las filas de fondo usan `kind=fund_month` y distinguen aportación mensual, acumulado real, objetivo anual y aportación futura prevista. Las filas de boda usan `kind=wedding` y separan importe previsto de `paidAmount` conciliado. Una reserva o previsión nunca se convierte automáticamente en pago.
+
 
 ### Benchmark privado de deuda frente a inversión
 
