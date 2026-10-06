@@ -63,10 +63,10 @@ const objects = readFileSync(new URL("./objects.js", import.meta.url), "utf8");
 const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), "utf8");
 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(app, /adherence\.js\?v=0\.33\.8/);
+assert.match(app, /adherence\.js\?v=0\.33\.9/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.42\.30/);
-assert.match(index, /styles\.css\?v=0\.42\.31/);
+assert.match(index, /app\.js\?v=0\.42\.31/);
+assert.match(index, /styles\.css\?v=0\.42\.32/);
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);

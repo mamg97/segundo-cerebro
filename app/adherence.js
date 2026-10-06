@@ -250,21 +250,113 @@ function render(payload) {
   bind(payload);
 }
 
+
+function overviewStatusClass(status) {
+  if (status === "CUMPLIDO") return "fulfilled";
+  if (status === "PARCIAL") return "partial";
+  if (status === "NO_CUMPLIDO") return "failed";
+  return "nodata";
+}
+
+function renderOverview(payload) {
+  const host = document.querySelector("#health-overview-adherence");
+  if (!host) return;
+  const summary = payload.summary || {};
+  const adherenceValue = summary.adherencePct == null ? null : Number(summary.adherencePct);
+  const today = (payload.days || []).find(function (day) { return day.date === payload.today; }) || null;
+  const todayReasons = today && Array.isArray(today.reasons) ? today.reasons.slice(0, 2) : [];
+  const todayClass = overviewStatusClass(today && today.status);
+  const todayText = today ? statusLabel(today.status) : "Sin datos";
+
+  host.innerHTML = '<div class="health-adherence-overview">' +
+    '<div class="health-adherence-overview-main">' +
+      '<article class="health-adherence-overview-ring">' +
+        progressRingMarkup(adherenceValue, { tone: "blue", size: "md", label: "mes", ariaLabel: "Adherencia mensual" }) +
+        '<span><small>Adherencia del mes</small><strong>' + (adherenceValue == null ? "—" : esc(adherenceValue) + "%") + '</strong><em>' +
+          (summary.coveragePct == null ? "Cobertura pendiente" : esc(summary.coveragePct) + "% de cobertura") +
+        '</em></span>' +
+      '</article>' +
+      '<div class="health-adherence-overview-stats">' +
+        '<span><small>Cumplidos</small><strong class="fulfilled">' + esc(summary.fulfilled || 0) + '</strong></span>' +
+        '<span><small>Parciales</small><strong class="partial">' + esc(summary.partial || 0) + '</strong></span>' +
+        '<span><small>No cumplidos</small><strong class="failed">' + esc(summary.failed || 0) + '</strong></span>' +
+        '<span><small>Racha actual</small><strong>' + esc(summary.currentStreak || 0) + ' d</strong></span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="health-adherence-overview-today ' + todayClass + '">' +
+      '<span><small>Hoy</small><strong>' + esc(todayText) + '</strong></span>' +
+      '<p>' + esc(todayReasons.length ? todayReasons.join(" · ") : (today ? "Sin incidencias relevantes." : "Todavía no hay clasificación para hoy.")) + '</p>' +
+    '</div>' +
+    '<div class="health-adherence-overview-actions">' +
+      '<span>' + esc(monthName(payload.month)) + ' · ' + esc(summary.evaluatedDays || 0) + ' / ' + esc(summary.elapsedDays || 0) + ' días evaluados</span>' +
+      '<button type="button" data-adherence-expand aria-expanded="false">Ver mes completo</button>' +
+    '</div>' +
+  '</div>';
+
+  const button = host.querySelector("[data-adherence-expand]");
+  const detail = document.querySelector("#adherence-panel");
+  button?.addEventListener("click", function () {
+    if (!detail) return;
+    const willOpen = detail.hidden;
+    detail.hidden = !willOpen;
+    button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    button.textContent = willOpen ? "Ocultar mes completo" : "Ver mes completo";
+    if (willOpen) {
+      render(currentPayload || payload);
+      detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  });
+}
+
+async function fetchAdherencePayload(month) {
+  const response = await fetch("/api/health/adherence?month=" + encodeURIComponent(month), {
+    headers: { Accept: "application/json" },
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error("ADHERENCE_" + response.status);
+  return response.json();
+}
+
+export async function loadHealthAdherenceOverview(month) {
+  const host = document.querySelector("#health-overview-adherence");
+  if (!host) return false;
+  const requestedMonth = /^\d{4}-\d{2}$/.test(String(month || "")) ? String(month) : todayMonth();
+  host.innerHTML = '<p class="health-empty">Calculando adherencia del mes…</p>';
+  try {
+    const payload = currentPayload && currentPayload.month === requestedMonth
+      ? currentPayload
+      : await fetchAdherencePayload(requestedMonth);
+    currentPayload = payload;
+    activeMonth = payload.month || requestedMonth;
+    renderOverview(payload);
+    return true;
+  } catch (error) {
+    console.warn("Health adherence overview load failed", error);
+    host.innerHTML = '<div class="health-empty health-empty-card"><strong>Adherencia no disponible</strong><p>No se ha podido calcular el resumen mensual.</p><button id="adherence-overview-retry" type="button">Reintentar</button></div>';
+    document.querySelector("#adherence-overview-retry")?.addEventListener("click", function () {
+      void loadHealthAdherenceOverview(requestedMonth);
+    });
+    return false;
+  }
+}
+
 export async function loadHealthAdherence(month) {
   const panel = document.querySelector("#adherence-panel");
-  if (!panel) return;
+  if (!panel) return false;
   activeMonth = /^\d{4}-\d{2}$/.test(String(month || "")) ? String(month) : activeMonth || todayMonth();
+  panel.hidden = false;
   panel.innerHTML = '<p class="health-empty">Calculando adherencia mensual…</p>';
   try {
-    const response = await fetch("/api/health/adherence?month=" + encodeURIComponent(activeMonth), {
-      headers: { Accept: "application/json" },
-      cache: "no-store"
-    });
-    if (!response.ok) throw new Error("ADHERENCE_" + response.status);
-    render(await response.json());
+    const payload = currentPayload && currentPayload.month === activeMonth
+      ? currentPayload
+      : await fetchAdherencePayload(activeMonth);
+    currentPayload = payload;
+    render(payload);
+    return true;
   } catch (error) {
     console.warn("Health adherence load failed", error);
     panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Adherencia no disponible</strong><p>No se ha podido combinar el histórico de Salud, actividad, gimnasio y hábitos.</p><button id="adherence-retry" type="button">Reintentar</button></div>';
     document.querySelector("#adherence-retry")?.addEventListener("click", function () { void loadHealthAdherence(activeMonth); });
+    return false;
   }
 }

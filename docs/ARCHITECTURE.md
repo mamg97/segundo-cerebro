@@ -383,10 +383,10 @@ central adherence engine
         ↓
 GET /api/health/adherence?month=YYYY-MM
         ↓
-Salud → Adherencia
+Salud → Resumen → Adherencia
 ```
 
-No se persiste un segundo histórico calculado. El estado mensual se recalcula desde las fuentes canónicas y se cachea brevemente.
+No se persiste un segundo histórico calculado. El estado mensual se recalcula desde las fuentes canónicas y se cachea brevemente. El Resumen muestra primero una proyección compacta y despliega el calendario/detalle mensual en el mismo bloque; Adherencia no es una pestaña de navegación independiente.
 
 La clasificación manual en `AdherenciaManual` solo representa una decisión explícita sobre el estado del día; no duplica comidas, actividad, gym ni hábitos.
 

@@ -4,7 +4,7 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.21";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
-import { loadHealthAdherence } from "./adherence.js?v=0.33.8";
+import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasVisualLab } from "./midas-lab.js?v=0.40.18";
 
@@ -2401,7 +2401,6 @@ function openHealthDetail(options = {}) {
       <button type="button" data-health-tab="gym">Gimnasio</button>
       <button type="button" data-health-tab="nutrition">Nutrición</button>
       <button type="button" data-health-tab="recipes">Recetas</button>
-      <button type="button" data-health-tab="adherence">Adherencia</button>
       <button type="button" data-health-tab="menu">Menú</button>
     </div>
     <div class="health-tab-panels">
@@ -2420,9 +2419,6 @@ function openHealthDetail(options = {}) {
       <section class="health-tab-panel" data-health-panel="recipes">
         <div id="recipes-panel"><p class="health-empty">Cargando recetario…</p></div>
       </section>
-      <section class="health-tab-panel" data-health-panel="adherence">
-        <div id="adherence-panel"><p class="health-empty">Abre la vista para calcular la adherencia mensual.</p></div>
-      </section>
       <section class="health-tab-panel" data-health-panel="menu">
         <div id="menu-panel"><p class="health-empty">Cargando menú semanal…</p></div>
       </section>
@@ -2431,6 +2427,20 @@ function openHealthDetail(options = {}) {
   bindHealthTabs();
   dialog.showModal();
   void loadHealthOverview(localDateKey());
+}
+
+async function revealHealthAdherenceDetail() {
+  openHealthDetail();
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const button = document.querySelector("[data-adherence-expand]");
+    if (button) {
+      if (button.getAttribute("aria-expanded") !== "true") button.click();
+      document.querySelector(".health-adherence-overview-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return false;
 }
 
 async function loadHealthOverview(dateKey = localDateKey()) {
@@ -2444,6 +2454,7 @@ async function loadHealthOverview(dateKey = localDateKey()) {
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
     const payload = await response.json();
     renderHealthOverview(payload, {});
+    await loadHealthAdherenceOverview();
     loadHealthHistory("365", payload.date || dateKey);
   } catch (error) {
     if (panel) panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Apple Health no disponible</strong><p>No se ha podido cargar el resumen de actividad y composición corporal.</p></div>';
@@ -2831,6 +2842,12 @@ function renderHealthOverview(data, gymData = {}) {
       </section>
 
       ${renderHealthCalorieBalance(data.nutritionHistory || [])}
+
+      <section class="health-recomp-card health-adherence-overview-card">
+        <header><span>Adherencia</span><strong>Seguimiento mensual</strong></header>
+        <div id="health-overview-adherence"><p class="health-empty">Calculando adherencia del mes…</p></div>
+        <div id="adherence-panel" class="health-adherence-inline-detail" hidden></div>
+      </section>
     </div>
 
     ${activityGoal.appleWatchEnergyRule ? `<p class="health-trend-note">⌁ ${escapeHtml(activityGoal.appleWatchEnergyRule)}</p>` : ""}
@@ -3780,7 +3797,6 @@ function bindHealthTabs() {
       const tab = button.dataset.healthTab;
       document.querySelectorAll("[data-health-tab]").forEach((item) => item.classList.toggle("active", item === button));
       document.querySelectorAll("[data-health-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.healthPanel === tab));
-      if (tab === "adherence") void loadHealthAdherence();
       if (tab === "medical") void loadMedicalAppointments();
       if (tab === "gym" && !healthGymLoaded) {
         void loadGymPanel().then((ok) => {
@@ -9327,9 +9343,8 @@ async function handleQuickCommand(query, result) {
   }
 
   if (/\b(adherencia|cumplimiento|racha salud)\b/.test(normalized)) {
-    openHealthDetail();
-    document.querySelector('[data-health-tab="adherence"]')?.click();
-    openResult("<strong>Adherencia abierta.</strong> Ahí puedes revisar el mes y el motivo de cada día.");
+    await revealHealthAdherenceDetail();
+    openResult("<strong>Adherencia abierta en Resumen.</strong> Ahí puedes revisar el mes y el motivo de cada día.");
     return true;
   }
 

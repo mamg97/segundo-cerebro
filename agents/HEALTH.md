@@ -343,7 +343,7 @@ In particular:
 
 ## Adherencia mensual
 
-Salud dispone de una vista derivada mensual de adherencia. No crea una base paralela.
+Salud dispone de una vista derivada mensual de adherencia integrada en Resumen. No crea una base paralela.
 
 Fuentes:
 - `Registro` + `Objetivos` para kcal/proteína;
@@ -402,7 +402,7 @@ También se calculan:
 Endpoint privado:
 - `GET /api/health/adherence?month=YYYY-MM`
 
-La vista vive en `Salud → Adherencia`.
+La vista vive en `Salud → Resumen → Adherencia`. El Resumen enseña primero porcentaje mensual, cobertura, cumplidos/parciales/no cumplidos, racha y estado del día. `Ver mes completo` despliega en el mismo bloque el calendario y el detalle diario. No existe una pestaña superior independiente de Adherencia.
 
 
 ## Freshness contract for automatic body measurements
