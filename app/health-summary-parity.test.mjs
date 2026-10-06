@@ -113,6 +113,6 @@ test("Health adherence lives inside Summary instead of a top-level tab", () => {
   const loadEnd = app.indexOf("function renderHealthCalorieBalance", loadStart);
   const loader = app.slice(loadStart, loadEnd);
   assert.match(loader, /await loadHealthAdherenceOverview()/);
-  assert.match(loader, /loadHealthHistory("365"/);
+  assert.ok(loader.includes('loadHealthHistory("365"'));
   assert.ok(loader.indexOf("await loadHealthAdherenceOverview()") < loader.indexOf('loadHealthHistory("365"'));
 });
