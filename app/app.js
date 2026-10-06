@@ -6600,18 +6600,18 @@ function renderGiftsOverview() {
 
       <section class="gift-paid-column">
         <div class="gift-column-heading">
-          <div><strong>Bodas pagadas</strong><span>solo pagos conciliados</span></div>
+          <div><strong>Bodas pagadas</strong><span>pagos confirmados</span></div>
           <div class="gift-total-kpi">
             <span>${formatMoney(totalPaid, currency)}</span>
             <small>${Number(gifts.paidWeddingCount || 0)} de ${Number(gifts.weddingCount || 0)} bodas</small>
           </div>
         </div>
         <div class="gift-paid-list">
-          ${paidRows || '<div class="gift-empty-inline">Todavía no hay pagos de boda conciliados.</div>'}
+          ${paidRows || '<div class="gift-empty-inline">Todavía no hay pagos de boda confirmados.</div>'}
         </div>
         ${unreconciled.length ? `
           <div class="gift-unreconciled">
-            <strong>${unreconciled.length} sin pago conciliado</strong>
+            <strong>${unreconciled.length === 1 ? "1 pendiente de pago" : unreconciled.length + " pendientes de pago"}</strong>
             <span>${unreconciled.map((item) => escapeHtml(item.label || "Boda")).join(" · ")}</span>
           </div>` : ""}
       </section>
