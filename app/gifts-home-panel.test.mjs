@@ -44,6 +44,6 @@ test("Gifts panel is responsive and audit-covered", () => {
   assert.match(audit, /Regalos · panel visible/);
   assert.match(audit, /Regalos · columnas disponibles/);
   assert.match(audit, /Regalos · sin overflow/);
-  assert.match(audit, /Patrimonio y columna Obligaciones/Regalos alineados/);
+  assert.match(audit, /Patrimonio y columna Obligaciones\/Regalos alineados/);
   assert.match(audit, /Regalos ocupa el hueco bajo Obligaciones sin solape/);
 });
