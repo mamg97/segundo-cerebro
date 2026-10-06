@@ -38,7 +38,7 @@ let financeCache = { value: null, expiresAt: 0 };
 let habitsCache = { value: null, expiresAt: 0 };
 let healthCache = { value: null, expiresAt: 0, date: null };
 let recipePhotoCache = { value: new Map(), expiresAt: 0 };
-let recipePreviewCache = { value: new Map(), expiresAt: 0 };
+let recipePreviewCache = { value: new Map(), expiresAt: 0 };\nlet healthRecoveryImportStateReady = false;
 
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
@@ -2281,150 +2281,215 @@ async function fetchHealthEnergyRows(env, startDate, endDate) {
   }]));
 }
 
-async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], recoveryRows = []) {
+async function ensureHealthRecoveryImportStateTable(env) {
+  if (healthRecoveryImportStateReady) return;
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS health_import_state (
+      import_key TEXT PRIMARY KEY,
+      signature TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  healthRecoveryImportStateReady = true;
+}
+
+function healthRecoveryImportSignature(energyRows = [], bodyRows = [], recoveryRows = []) {
   const recoveredEnergy = energyRows.filter((row) =>
-    row?.date &&
-    String(row?.source || "") === "apple_health_export_recovery"
+    row?.date && String(row?.source || "") === "apple_health_export_recovery"
   );
-
-  if (recoveredEnergy.length) {
-    await ensureHealthEnergyTable(env);
-    for (const row of recoveredEnergy) {
-      await env.DB.prepare(`
-        INSERT INTO health_energy_daily (
-          energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at,
-          steps, exercise_minutes, workout_count, sampled_at, source_details, workouts_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(energy_date) DO UPDATE SET
-          active_kcal = excluded.active_kcal,
-          resting_kcal = excluded.resting_kcal,
-          total_kcal = excluded.total_kcal,
-          source = excluded.source,
-          note = excluded.note,
-          recorded_at = excluded.recorded_at,
-          steps = excluded.steps,
-          exercise_minutes = excluded.exercise_minutes,
-          workout_count = excluded.workout_count,
-          sampled_at = excluded.sampled_at,
-          source_details = excluded.source_details,
-          workouts_json = excluded.workouts_json
-      `).bind(
-        row.date,
-        row.activeKcal,
-        row.restingKcal,
-        row.totalKcal,
-        "apple_health_export_recovery",
-        row.note || "Apple Health export recovery",
-        row.importedAt || new Date().toISOString(),
-        row.steps === null || row.steps === undefined ? null : Math.round(Number(row.steps)),
-        row.exerciseMinutes,
-        row.workoutCount === null || row.workoutCount === undefined ? null : Math.round(Number(row.workoutCount)),
-        row.sampledAt || `${row.date}T23:59:59+02:00`,
-        JSON.stringify(Array.isArray(row.sourceDetails) ? row.sourceDetails : []),
-        JSON.stringify(Array.isArray(row.workouts) ? row.workouts : [])
-      ).run();
-    }
-  }
-
   const recoveredBody = bodyRows.filter((row) =>
     /^\d{4}-\d{2}-\d{2}$/.test(String(row?.date || "")) &&
     String(row?.note || "").includes("Recuperado del ZIP de Apple Salud") &&
     row?.measuredAt
   );
+  const recoveredRecovery = recoveryRows.filter((row) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(String(row?.date || "")) &&
+    String(row?.source || "") === "apple_health_export_recovery"
+  );
+  const latest = (rows, field) => rows.reduce((max, row) => {
+    const value = String(row?.[field] || "");
+    return value > max ? value : max;
+  }, "");
+  return JSON.stringify({
+    energyCount: recoveredEnergy.length,
+    energyImportedAt: latest(recoveredEnergy, "importedAt"),
+    energyDate: latest(recoveredEnergy, "date"),
+    bodyCount: recoveredBody.length,
+    bodyImportedAt: latest(recoveredBody, "importedAt") || latest(recoveredBody, "updatedAt"),
+    bodyMeasuredAt: latest(recoveredBody, "measuredAt"),
+    recoveryCount: recoveredRecovery.length,
+    recoveryImportedAt: latest(recoveredRecovery, "importedAt"),
+    recoveryDate: latest(recoveredRecovery, "date")
+  });
+}
 
-  if (recoveredBody.length) {
-    await ensureHealthBodyTable(env);
-    for (const row of recoveredBody) {
-      const samples = [
-        ["bodyMass", row.weightKg, "kg"],
-        ["bodyFatPercentage", row.bodyFatPct, "%"],
-        ["bodyMassIndex", row.bodyMassIndex, "count"],
-        ["leanBodyMass", row.leanBodyMassKg, "kg"]
-      ];
-      for (const [type, value, unit] of samples) {
-        if (!Number.isFinite(Number(value))) continue;
-        await env.DB.prepare(`
-          INSERT INTO health_body_samples (
-            metric_type, metric_value, unit, sample_date, measured_at, source, imported_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(metric_type, measured_at, source) DO UPDATE SET
-            metric_value = excluded.metric_value,
-            unit = excluded.unit,
-            sample_date = excluded.sample_date,
-            imported_at = excluded.imported_at
-        `).bind(
-          type,
-          Number(value),
-          unit,
-          row.date,
-          row.measuredAt,
-          String(row.source || "Zepp Life"),
-          row.importedAt || row.updatedAt || new Date().toISOString()
-        ).run();
-      }
-    }
+async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], recoveryRows = []) {
+  const signature = healthRecoveryImportSignature(energyRows, bodyRows, recoveryRows);
+  await ensureHealthRecoveryImportStateTable(env);
+  const importState = await env.DB.prepare(
+    "SELECT signature FROM health_import_state WHERE import_key = ? LIMIT 1"
+  ).bind("apple_health_export_recovery").first();
+  if (String(importState?.signature || "") === signature) {
+    return { energy: 0, bodyRows: 0, recoveryRows: 0, skipped: true };
   }
 
+  const recoveredEnergy = energyRows.filter((row) =>
+    row?.date &&
+    String(row?.source || "") === "apple_health_export_recovery"
+  );
+  const recoveredBody = bodyRows.filter((row) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(String(row?.date || "")) &&
+    String(row?.note || "").includes("Recuperado del ZIP de Apple Salud") &&
+    row?.measuredAt
+  );
   const recoveredRecovery = recoveryRows.filter((row) =>
     /^\d{4}-\d{2}-\d{2}$/.test(String(row?.date || "")) &&
     String(row?.source || "") === "apple_health_export_recovery"
   );
 
-  if (recoveredRecovery.length) {
-    await ensureHealthRecoveryTable(env);
-    for (const row of recoveredRecovery) {
-      await env.DB.prepare(`
-        INSERT INTO health_recovery_daily (
-          recovery_date, resting_hr_bpm, walking_hr_bpm, hrv_sdnn_ms,
-          respiratory_rate, oxygen_saturation_pct, vo2_max, wrist_temperature_c,
-          sleep_asleep_minutes, sleep_in_bed_minutes, sleep_awake_minutes,
-          sleep_core_minutes, sleep_deep_minutes, sleep_rem_minutes,
-          source, sampled_at, source_details, recorded_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(recovery_date) DO UPDATE SET
-          resting_hr_bpm = excluded.resting_hr_bpm,
-          walking_hr_bpm = excluded.walking_hr_bpm,
-          hrv_sdnn_ms = excluded.hrv_sdnn_ms,
-          respiratory_rate = excluded.respiratory_rate,
-          oxygen_saturation_pct = excluded.oxygen_saturation_pct,
-          vo2_max = excluded.vo2_max,
-          wrist_temperature_c = excluded.wrist_temperature_c,
-          sleep_asleep_minutes = excluded.sleep_asleep_minutes,
-          sleep_in_bed_minutes = excluded.sleep_in_bed_minutes,
-          sleep_awake_minutes = excluded.sleep_awake_minutes,
-          sleep_core_minutes = excluded.sleep_core_minutes,
-          sleep_deep_minutes = excluded.sleep_deep_minutes,
-          sleep_rem_minutes = excluded.sleep_rem_minutes,
-          source = excluded.source,
-          sampled_at = excluded.sampled_at,
-          source_details = excluded.source_details,
-          recorded_at = excluded.recorded_at
+  if (!recoveredEnergy.length && !recoveredBody.length && !recoveredRecovery.length) {
+    return { energy: 0, bodyRows: 0, recoveryRows: 0, skipped: true };
+  }
+
+  await Promise.all([
+    recoveredEnergy.length ? ensureHealthEnergyTable(env) : Promise.resolve(),
+    recoveredBody.length ? ensureHealthBodyTable(env) : Promise.resolve(),
+    recoveredRecovery.length ? ensureHealthRecoveryTable(env) : Promise.resolve()
+  ]);
+
+  const statements = [];
+
+  for (const row of recoveredEnergy) {
+    statements.push(env.DB.prepare(`
+      INSERT INTO health_energy_daily (
+        energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at,
+        steps, exercise_minutes, workout_count, sampled_at, source_details, workouts_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(energy_date) DO UPDATE SET
+        active_kcal = excluded.active_kcal,
+        resting_kcal = excluded.resting_kcal,
+        total_kcal = excluded.total_kcal,
+        source = excluded.source,
+        note = excluded.note,
+        recorded_at = excluded.recorded_at,
+        steps = excluded.steps,
+        exercise_minutes = excluded.exercise_minutes,
+        workout_count = excluded.workout_count,
+        sampled_at = excluded.sampled_at,
+        source_details = excluded.source_details,
+        workouts_json = excluded.workouts_json
+    `).bind(
+      row.date,
+      row.activeKcal,
+      row.restingKcal,
+      row.totalKcal,
+      "apple_health_export_recovery",
+      row.note || "Apple Health export recovery",
+      row.importedAt || new Date().toISOString(),
+      row.steps === null || row.steps === undefined ? null : Math.round(Number(row.steps)),
+      row.exerciseMinutes,
+      row.workoutCount === null || row.workoutCount === undefined ? null : Math.round(Number(row.workoutCount)),
+      row.sampledAt || `${row.date}T23:59:59+02:00`,
+      JSON.stringify(Array.isArray(row.sourceDetails) ? row.sourceDetails : []),
+      JSON.stringify(Array.isArray(row.workouts) ? row.workouts : [])
+    ));
+  }
+
+  for (const row of recoveredBody) {
+    const samples = [
+      ["bodyMass", row.weightKg, "kg"],
+      ["bodyFatPercentage", row.bodyFatPct, "%"],
+      ["bodyMassIndex", row.bodyMassIndex, "count"],
+      ["leanBodyMass", row.leanBodyMassKg, "kg"]
+    ];
+    for (const [type, value, unit] of samples) {
+      if (!Number.isFinite(Number(value))) continue;
+      statements.push(env.DB.prepare(`
+        INSERT INTO health_body_samples (
+          metric_type, metric_value, unit, sample_date, measured_at, source, imported_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(metric_type, measured_at, source) DO UPDATE SET
+          metric_value = excluded.metric_value,
+          unit = excluded.unit,
+          sample_date = excluded.sample_date,
+          imported_at = excluded.imported_at
       `).bind(
+        type,
+        Number(value),
+        unit,
         row.date,
-        row.restingHeartRate,
-        row.walkingHeartRateAverage,
-        row.hrvSdnnMs,
-        row.respiratoryRate,
-        row.oxygenSaturationPct,
-        row.vo2Max,
-        row.wristTemperatureC,
-        row.sleepAsleepMinutes,
-        row.sleepInBedMinutes,
-        row.sleepAwakeMinutes,
-        row.sleepCoreMinutes,
-        row.sleepDeepMinutes,
-        row.sleepRemMinutes,
-        "apple_health_export_recovery",
-        row.sampledAt || `${row.date}T23:59:59+02:00`,
-        JSON.stringify(Array.isArray(row.sourceDetails) ? row.sourceDetails : []),
-        row.importedAt || new Date().toISOString()
-      ).run();
+        row.measuredAt,
+        String(row.source || "Zepp Life"),
+        row.importedAt || row.updatedAt || new Date().toISOString()
+      ));
     }
   }
 
-  return { energy: recoveredEnergy.length, bodyRows: recoveredBody.length, recoveryRows: recoveredRecovery.length };
-}
+  for (const row of recoveredRecovery) {
+    statements.push(env.DB.prepare(`
+      INSERT INTO health_recovery_daily (
+        recovery_date, resting_hr_bpm, walking_hr_bpm, hrv_sdnn_ms,
+        respiratory_rate, oxygen_saturation_pct, vo2_max, wrist_temperature_c,
+        sleep_asleep_minutes, sleep_in_bed_minutes, sleep_awake_minutes,
+        sleep_core_minutes, sleep_deep_minutes, sleep_rem_minutes,
+        source, sampled_at, source_details, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(recovery_date) DO UPDATE SET
+        resting_hr_bpm = excluded.resting_hr_bpm,
+        walking_hr_bpm = excluded.walking_hr_bpm,
+        hrv_sdnn_ms = excluded.hrv_sdnn_ms,
+        respiratory_rate = excluded.respiratory_rate,
+        oxygen_saturation_pct = excluded.oxygen_saturation_pct,
+        vo2_max = excluded.vo2_max,
+        wrist_temperature_c = excluded.wrist_temperature_c,
+        sleep_asleep_minutes = excluded.sleep_asleep_minutes,
+        sleep_in_bed_minutes = excluded.sleep_in_bed_minutes,
+        sleep_awake_minutes = excluded.sleep_awake_minutes,
+        sleep_core_minutes = excluded.sleep_core_minutes,
+        sleep_deep_minutes = excluded.sleep_deep_minutes,
+        sleep_rem_minutes = excluded.sleep_rem_minutes,
+        source = excluded.source,
+        sampled_at = excluded.sampled_at,
+        source_details = excluded.source_details,
+        recorded_at = excluded.recorded_at
+    `).bind(
+      row.date,
+      row.restingHeartRate,
+      row.walkingHeartRateAverage,
+      row.hrvSdnnMs,
+      row.respiratoryRate,
+      row.oxygenSaturationPct,
+      row.vo2Max,
+      row.wristTemperatureC,
+      row.sleepAsleepMinutes,
+      row.sleepInBedMinutes,
+      row.sleepAwakeMinutes,
+      row.sleepCoreMinutes,
+      row.sleepDeepMinutes,
+      row.sleepRemMinutes,
+      "apple_health_export_recovery",
+      row.sampledAt || `${row.date}T23:59:59+02:00`,
+      JSON.stringify(Array.isArray(row.sourceDetails) ? row.sourceDetails : []),
+      row.importedAt || new Date().toISOString()
+    ));
+  }
 
+  statements.push(env.DB.prepare(`
+    INSERT INTO health_import_state (import_key, signature, updated_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(import_key) DO UPDATE SET
+      signature = excluded.signature,
+      updated_at = excluded.updated_at
+  `).bind("apple_health_export_recovery", signature, new Date().toISOString()));
+
+  await env.DB.batch(statements);
+  return {
+    energy: recoveredEnergy.length,
+    bodyRows: recoveredBody.length,
+    recoveryRows: recoveredRecovery.length,
+    skipped: false
+  };
+}
 
 function healthCoverageQuality(row) {
   const details = Array.isArray(row?.sourceDetails) ? row.sourceDetails : [];
@@ -2816,7 +2881,11 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   params.set("valueRenderOption", "UNFORMATTED_VALUE");
 
   const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}/values:batchGet?${params.toString()}`;
-  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+  const response = await googleReadFetch(
+    endpoint,
+    { headers: { Authorization: `Bearer ${token}` } },
+    { attempts: 3, baseDelayMs: 220 }
+  );
   if (!response.ok) throw new Error(`HEALTH_SHEETS_${response.status}`);
 
   const payload = await response.json();
@@ -3073,7 +3142,11 @@ async function fetchHealthNutritionSummary(env, options = {}) {
 
   const historyStart = healthAddDays(date, -13);
   const bodyHistoryStart = healthAddDays(date, -27);
-  await reconcileHealthRecoveryRows(env, energyRows, bodySheetRows, recoverySheetRows);
+  try {
+    await reconcileHealthRecoveryRows(env, energyRows, bodySheetRows, recoverySheetRows);
+  } catch (error) {
+    console.warn("Apple Health recovery reconcile failed", String(error?.message || error));
+  }
   const [d1EnergyByDate, d1BodySamples] = await Promise.all([
     fetchHealthEnergyRows(env, historyStart, date),
     fetchHealthBodySamples(env, bodyHistoryStart, date)
@@ -3082,7 +3155,24 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   for (const row of [...energyRows].sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")))) {
     if (!sheetEnergyByDate.has(row.date)) sheetEnergyByDate.set(row.date, row);
   }
-  const energyForDate = (dateKey) => d1EnergyByDate.get(dateKey) || sheetEnergyByDate.get(dateKey) || null;
+  const energyForDate = (dateKey) => {
+    const d1 = d1EnergyByDate.get(dateKey) || null;
+    const sheet = sheetEnergyByDate.get(dateKey) || null;
+    if (!sheet) return d1;
+    if (!d1) return sheet;
+    if (String(sheet.source || "") === "apple_health_export_recovery") {
+      const sheetImportedAt = String(sheet.importedAt || "");
+      const d1ImportedAt = String(d1.importedAt || "");
+      if (
+        String(d1.source || "") !== "apple_health_export_recovery" ||
+        !d1ImportedAt ||
+        sheetImportedAt >= d1ImportedAt
+      ) {
+        return sheet;
+      }
+    }
+    return d1;
+  };
 
   const dayEntries = entries.filter((item) => item.date === date);
   const consumed = sumNutrition(dayEntries, "consumido");
