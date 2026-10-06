@@ -1,14 +1,14 @@
-## Salud · balance calórico integrado y validado en producción · 2026-10-07
+## Salud · balance calórico gráfico · 2026-10-07
 
 - Integración funcional cerrada: PR #295 añadió el balance calórico diario al Resumen y PR #296 estabilizó la carga del workspace.
 - Producción validada por Audit production web #203 sobre el código desplegado posterior:
   - `/api/health/overview` responde y expone 14 días de `nutritionHistory`;
   - Salud → Resumen carga sin error visible;
   - conserva los 5 KPIs del Home y los 4 anillos + Peso estático;
-  - la tabla `Balance calórico` está visible;
-  - columnas verificadas: Día, Gasto, Ingesta, Diferencia, Estado;
-  - muestra exactamente 7 filas;
-  - el contenedor usa scroll horizontal contenido (`overflow-x: auto`).
+  - la gráfica `Balance calórico` está visible;
+  - muestra exactamente 7 días alrededor de un eje 0;
+  - cualquier balance negativo se representa como déficit verde y cualquier positivo como superávit rojo;
+  - los días incompletos permanecen sin barra y el día actual sigue marcado como provisional.
 - Por tanto, la integración del balance calórico se considera publicada y operativa.
 - El mismo auditor global quedó rojo por incidencias distintas que NO invalidan este cierre: un `502` transitorio inicial de `/api/nutrition`, tres workflows MIDAS fallidos y un solape visual de la leyenda de liquidez en Finanzas. Deben tratarse como incidencias separadas.
 
@@ -27,11 +27,11 @@
 
 ## Salud · balance calórico diario en Resumen · 2026-10-06
 
-- Salud → Resumen incorpora un bloque `Balance calórico` a ancho completo con los últimos 7 días: Gasto, Ingesta, Diferencia y Estado.
-- La diferencia usa `ingesta - gasto`: negativa = déficit, positiva = superávit; ±50 kcal se presenta como mantenimiento visual.
+- Salud → Resumen incorpora un bloque `Balance calórico` a ancho completo con una gráfica divergente de los últimos 7 días.
+- La diferencia usa `ingesta - gasto`: cualquier valor negativo = déficit verde, cualquier valor positivo = superávit rojo y 0 exacto = equilibrio.
 - El histórico ya existía en la lógica Nutri; `GET /api/health/overview` lo expone ahora como `nutritionHistory`, incluyendo `consumedEntryCount` y `coverageQuality`.
 - Solo se clasifica un día con ingesta consumida registrada y cobertura Health comparable (`full`/`live`). No se convierte ausencia o cobertura incompleta en 0.
-- El día actual se marca provisional. La tarjeta resume balance medio y recuento de días en déficit/mantenimiento/superávit.
+- El día actual se marca provisional. La tarjeta resume balance medio y recuento de días en déficit/superávit.
 - No se crea fuente canónica nueva: ingesta sigue en `SEGUNDO CEREBRO - SALUD` y gasto en Health/D1.
 - Cierre operativo: la integración corresponde a PR #295; no declararla publicada hasta que validación y auditoría de producción estén verdes.
 
