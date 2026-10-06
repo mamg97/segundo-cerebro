@@ -22,3 +22,13 @@ test("health history writers target stable derived tabs", () => {
   assert.match(source, /MedicionesCorporalesApple!A2:H5000/);
   assert.match(source, /RecuperacionDiariaApple!A2:S2000/);
 });
+
+
+test("health export recovery rows reconcile sleep and recovery into D1", () => {
+  assert.match(source, /RecuperacionDiariaApple!A1:S2000/);
+  assert.match(source, /const recoverySheetRows = parseTableRows\(valueRanges\[11\]/);
+  assert.match(source, /reconcileHealthRecoveryRows\(env, energyRows, bodySheetRows, recoverySheetRows\)/);
+  assert.match(source, /const recoveredRecovery = recoveryRows\.filter/);
+  assert.match(source, /INSERT INTO health_recovery_daily/);
+  assert.match(source, /source = excluded\.source/);
+});
