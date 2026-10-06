@@ -1132,10 +1132,15 @@ async function fetchFinanceSummary(env) {
       ? Math.max(...giftYears)
       : currentGiftYear;
   const giftYearRows = giftRecords.filter((item) => Number(item.year) === giftYear);
+  const giftNextYear = giftYear + 1;
+  const giftNextYearRows = giftRecords.filter((item) => Number(item.year) === giftNextYear);
   const giftFundRows = giftYearRows
     .filter((item) => item.kind === "fund_month" && item.category)
     .sort((a, b) => String(a.period || "").localeCompare(String(b.period || "")));
   const giftWeddingRows = giftYearRows
+    .filter((item) => item.kind === "wedding")
+    .sort((a, b) => String(a.eventDate || "9999-12-31").localeCompare(String(b.eventDate || "9999-12-31")));
+  const giftNextYearWeddingRows = giftNextYearRows
     .filter((item) => item.kind === "wedding")
     .sort((a, b) => String(a.eventDate || "9999-12-31").localeCompare(String(b.eventDate || "9999-12-31")));
   const monthKey = new Date().toISOString().slice(0, 7);
@@ -1150,12 +1155,18 @@ async function fetchFinanceSummary(env) {
       ? giftWeddingRows.reduce((sum, item) => sum + Math.max(0, item.paidAmount || 0), 0)
       : 0;
     const stored = latest?.storedCumulative ?? null;
+    const available = stored === null ? null : Math.max(0, stored - paid);
+    const pendingCash = String(latest?.status || "").toLowerCase() === "awaiting_cash"
+      ? Math.max(0, latest?.plannedAmount || 0)
+      : 0;
     return {
       category,
       stored,
       target,
       paid,
-      available: stored === null ? null : Math.max(0, stored - paid),
+      available,
+      pendingCash,
+      projectedAvailable: available === null ? null : available + pendingCash,
       latestPeriod: latest?.period || null,
       latestStatus: latest?.status || null,
       latestPlannedAmount: latest?.plannedAmount ?? null,
@@ -1172,6 +1183,15 @@ async function fetchFinanceSummary(env) {
   const giftStored = giftFunds
     .map((item) => item.stored)
     .filter((value) => value !== null);
+  const giftAvailable = giftFunds
+    .map((item) => item.available)
+    .filter((value) => value !== null);
+  const giftPendingCash = giftFunds.reduce((sum, item) => sum + Math.max(0, item.pendingCash || 0), 0);
+  const giftTotalPaid = giftPaidWeddings.reduce((sum, item) => sum + Math.max(0, item.paidAmount || 0), 0);
+  const giftNextYearWeddingTarget = giftNextYearWeddingRows.reduce(
+    (sum, item) => sum + Math.max(0, item.plannedAmount || 0),
+    0
+  );
   const giftSummary = {
     year: giftYear,
     currency: summary.currency || "EUR",
@@ -1180,15 +1200,28 @@ async function fetchFinanceSummary(env) {
     weddings: giftWeddingRows,
     paidWeddings: giftPaidWeddings,
     unreconciledWeddings: giftUnreconciledWeddings,
+    nextYear: giftNextYear,
+    nextYearWeddings: giftNextYearWeddingRows,
+    nextYearWeddingTarget: giftNextYearWeddingTarget,
     totalTarget: giftFunds.length && giftTargets.length === giftFunds.length
       ? giftTargets.reduce((sum, value) => sum + value, 0)
       : null,
     totalStored: giftFunds.length && giftStored.length === giftFunds.length
       ? giftStored.reduce((sum, value) => sum + value, 0)
       : null,
-    totalPaidWeddings: giftPaidWeddings.reduce((sum, item) => sum + Math.max(0, item.paidAmount || 0), 0),
+    cashAvailable: giftFunds.length && giftAvailable.length === giftFunds.length
+      ? giftAvailable.reduce((sum, value) => sum + value, 0)
+      : null,
+    pendingCash: giftPendingCash,
+    projectedCash: giftFunds.length && giftAvailable.length === giftFunds.length
+      ? giftAvailable.reduce((sum, value) => sum + value, 0) + giftPendingCash
+      : null,
+    totalPaidWeddings: giftTotalPaid,
     paidWeddingCount: giftPaidWeddings.length,
     weddingCount: giftWeddingRows.length,
+    contributedTotal: giftFunds.length && giftStored.length === giftFunds.length
+      ? giftStored.reduce((sum, value) => sum + value, 0)
+      : null,
     sourceUpdatedAt: summary.updated_at || null
   };
 
