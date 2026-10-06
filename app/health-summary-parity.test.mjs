@@ -39,21 +39,30 @@ test("Health summary layout supports five equal desktop metrics", () => {
 });
 
 
-test("Health overview exposes a reliable seven-day calorie balance table", () => {
+test("Health overview exposes a reliable seven-day divergent calorie chart", () => {
   const start = app.indexOf("function renderHealthCalorieBalance(history = [])");
   const end = app.indexOf("function renderHealthOverview(data, gymData = {})", start);
   assert.ok(start >= 0 && end > start);
   const renderer = app.slice(start, end);
 
-  for (const label of ["Balance calórico", "Gasto", "Ingesta", "Diferencia", "Estado"]) {
+  for (const label of ["Balance calórico", "Déficit · balance negativo", "Superávit · balance positivo"]) {
     assert.match(renderer, new RegExp(label));
   }
   assert.match(renderer, /\["full", "live"\]\.includes\(coverageQuality\)/);
   assert.match(renderer, /consumedEntryCount/);
-  assert.match(renderer, /Diferencia = ingesta − gasto total/);
+  assert.match(renderer, /balance < 0/);
+  assert.match(renderer, /balance > 0/);
+  assert.doesNotMatch(renderer, /balance < -50|balance > 50/);
+  assert.match(renderer, /health-calorie-chart-days/);
+  assert.match(renderer, /data-balance=/);
+  assert.match(renderer, /Verde = déficit \(negativo\); rojo = superávit \(positivo\)/);
   assert.match(app, /renderHealthCalorieBalance\(data\.nutritionHistory \|\| \[\]\)/);
+
   assert.match(css, /\.health-calorie-balance-card\s*\{[\s\S]*?grid-column:\s*1 \/ -1/);
-  assert.match(css, /\.health-calorie-table-wrap\s*\{[\s\S]*?overflow-x:\s*auto/);
+  assert.match(css, /\.health-calorie-chart-days\s*\{[\s\S]*?grid-template-columns:\s*repeat\(7, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.health-calorie-bar\.is-deficit\s*\{[\s\S]*?background:\s*var\(--mint\)/);
+  assert.match(css, /\.health-calorie-bar\.is-surplus\s*\{[\s\S]*?background:\s*var\(--coral\)/);
+  assert.match(css, /\.health-calorie-zero-line\s*\{/);
 });
 
 
