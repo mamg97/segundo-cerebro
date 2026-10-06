@@ -1953,3 +1953,12 @@ Antes de cualquier cambio:
 - Una aportación futura de Reyes no se cuenta como dinero almacenado hasta existir realmente. Esta regla evita volver a inflar el saldo por una previsión del ciclo.
 - Responsive: dos columnas internas en escritorio y una columna en tablet/móvil; el histórico mensual puede desplazarse internamente si fuese necesario, sin overflow global. La tipografía interna se mantiene compacta pero legible: no debe reducirse por debajo de lo necesario para hacer caber el panel.
 - El auditor de producción comprueba panel visible, ambas columnas y ausencia de overflow.
+
+
+### ORGANIZADOR 10 · Regalos reconciliados y bodas futuras · 2026-10-06
+
+- El panel `Regalos · Bodas y Reyes` distingue aportado acumulado, efectivo disponible y efectivo pendiente de recibir.
+- Las filas `awaiting_cash` no se suman al efectivo actual hasta cobrarse.
+- El Home muestra pagos de boda del año, bodas pendientes y bodas del año siguiente con fecha e importe previstos desde la tabla privada `Regalos`.
+- Las bodas futuras no consumen el sobre actual sin una asignación explícita.
+- La superficie permanece bajo `Obligaciones activas` y aumenta legibilidad sin volver a ocupar una fila completa.
