@@ -2464,14 +2464,17 @@ async function loadHealthOverview(dateKey = localDateKey()) {
 
 function renderHealthCalorieBalance(history = []) {
   const today = localDateKey();
-  const shortWeekday = (dateKey) => {
+  const labelParts = (dateKey) => {
     const date = new Date(`${dateKey}T12:00:00`);
-    if (Number.isNaN(date.getTime())) return String(dateKey || "");
-    return new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(date).replace(".", "");
+    if (Number.isNaN(date.getTime())) return { day: "", month: "" };
+    return {
+      day: String(date.getDate()),
+      month: new Intl.DateTimeFormat("es-ES", { month: "short" }).format(date).replace(".", "")
+    };
   };
   const rows = (Array.isArray(history) ? history : [])
     .filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || "")))
-    .slice(-7)
+    .slice(-30)
     .map((item) => {
       const consumed = Number(item?.consumedKcal);
       const burned = Number(item?.burnedKcal);
@@ -2513,7 +2516,7 @@ function renderHealthCalorieBalance(history = []) {
   if (!rows.length) {
     return `
       <section class="health-recomp-card health-calorie-balance-card">
-        <header><span>Balance calórico</span><strong>Últimos 7 días</strong></header>
+        <header><span>Balance calórico</span><strong>Últimos 30 días</strong></header>
         <p class="health-empty">Todavía no hay histórico diario suficiente.</p>
       </section>`;
   }
@@ -2539,7 +2542,7 @@ function renderHealthCalorieBalance(history = []) {
 
   return `
     <section class="health-recomp-card health-calorie-balance-card">
-      <header><span>Balance calórico</span><strong>Últimos 7 días</strong></header>
+      <header><span>Balance calórico</span><strong>Últimos 30 días</strong></header>
       <div class="health-calorie-balance-summary">
         <span>
           <small>Balance medio</small>
@@ -2553,26 +2556,30 @@ function renderHealthCalorieBalance(history = []) {
         <span class="is-deficit"><i aria-hidden="true"></i>Déficit · balance negativo</span>
         <span class="is-surplus"><i aria-hidden="true"></i>Superávit · balance positivo</span>
       </div>
-      <div class="health-calorie-chart" role="region" aria-label="Gráfica del balance calórico de los últimos siete días">
+      <div class="health-calorie-chart" role="region" aria-label="Gráfica del balance calórico de los últimos treinta días">
         <span class="health-calorie-axis-label is-positive" aria-hidden="true">Superávit +</span>
         <span class="health-calorie-zero-line" aria-hidden="true"><b>0 kcal</b></span>
         <span class="health-calorie-axis-label is-negative" aria-hidden="true">Déficit −</span>
         <div class="health-calorie-chart-days">
-          ${rows.map((item) => {
+          ${rows.map((item, index) => {
             const barLevel = item.balance === null
               ? 0
               : Math.max(5, Math.min(100, Math.ceil((Math.abs(item.balance) / maxAbsBalance) * 20) * 5));
-            const dayTitle = item.isToday ? "Hoy" : shortWeekday(item.date);
+            const parts = labelParts(item.date);
+            const dateNumber = Number(parts.day);
+            const showAxisLabel = item.isToday || index === 0 || index === rows.length - 1 || index % 5 === 0 || dateNumber === 1;
+            const dayTitle = item.isToday ? "Hoy" : parts.day;
             const detail = item.balance === null
               ? `${formatNutritionDate(item.date)} · ${item.stateLabel}`
               : `${formatNutritionDate(item.date)} · Gasto ${formatKcal(item.burned)} · Ingesta ${formatKcal(item.consumed)} · Balance ${signedKcal(item.balance)} · ${item.stateLabel}`;
             return `
               <div
-                class="health-calorie-chart-day ${item.isToday ? "is-today" : ""} ${item.stateClass}"
+                class="health-calorie-chart-day ${item.isToday ? "is-today" : ""} ${item.stateClass} ${showAxisLabel ? "is-key-label" : ""}"
                 data-date="${escapeHtml(item.date)}"
                 data-balance="${item.balance === null ? "" : Math.round(item.balance)}"
                 data-state="${item.stateClass}"
                 role="group"
+                tabindex="0"
                 aria-label="${escapeHtml(detail)}"
                 title="${escapeHtml(detail)}"
               >
@@ -2593,14 +2600,14 @@ function renderHealthCalorieBalance(history = []) {
                   ${item.balance === null ? '<span class="health-calorie-missing" aria-hidden="true">—</span>' : ""}
                 </div>
                 <div class="health-calorie-chart-day-label">
-                  <strong>${escapeHtml(dayTitle)}</strong>
-                  <small>${escapeHtml(formatNutritionDate(item.date))}</small>
+                  <strong>${showAxisLabel ? escapeHtml(dayTitle) : ""}</strong>
+                  <small>${showAxisLabel ? escapeHtml(parts.month) : ""}</small>
                 </div>
               </div>`;
           }).join("")}
         </div>
       </div>
-      <p class="health-card-footnote">Balance = ingesta − gasto total. Verde = déficit (negativo); rojo = superávit (positivo). Hoy es provisional hasta cerrar el día. Los días sin cobertura fiable de Health o sin ingesta registrada quedan sin barra.</p>
+      <p class="health-card-footnote">Balance = ingesta − gasto total. Verde = déficit (negativo); rojo = superávit (positivo). Se muestran los últimos 30 días; pasa el cursor o enfoca una barra para ver su balance exacto. Hoy es provisional hasta cerrar el día. Los días sin cobertura fiable de Health o sin ingesta registrada quedan sin barra.</p>
     </section>`;
 }
 
