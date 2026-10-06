@@ -38,7 +38,8 @@ let financeCache = { value: null, expiresAt: 0 };
 let habitsCache = { value: null, expiresAt: 0 };
 let healthCache = { value: null, expiresAt: 0, date: null };
 let recipePhotoCache = { value: new Map(), expiresAt: 0 };
-let recipePreviewCache = { value: new Map(), expiresAt: 0 };\nlet healthRecoveryImportStateReady = false;
+let recipePreviewCache = { value: new Map(), expiresAt: 0 };
+let healthRecoveryImportStateReady = false;
 
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
