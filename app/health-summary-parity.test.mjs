@@ -90,3 +90,29 @@ test("Health workspace lazy-loads heavy tabs and avoids duplicate startup reads"
   assert.match(tabsBlock, /ensureHealthNutritionPanels\(localDateKey\(\)\)/);
   assert.match(tabsBlock, /\["nutrition", "recipes", "menu"\]\.includes\(tab\)/);
 });
+
+
+test("Health adherence lives inside Summary instead of a top-level tab", () => {
+  const openStart = app.indexOf("function openHealthDetail(options = {})");
+  const overviewStart = app.indexOf("async function revealHealthAdherenceDetail", openStart);
+  assert.ok(openStart >= 0 && overviewStart > openStart);
+  const workspace = app.slice(openStart, overviewStart);
+
+  assert.doesNotMatch(workspace, /data-health-tab="adherence"/);
+  assert.doesNotMatch(workspace, /data-health-panel="adherence"/);
+
+  const summaryStart = app.indexOf("function renderHealthOverview(data, gymData = {})");
+  const summaryEnd = app.indexOf("async function loadHealthHistory", summaryStart);
+  const summary = app.slice(summaryStart, summaryEnd);
+  assert.match(summary, /health-adherence-overview-card/);
+  assert.match(summary, /id="health-overview-adherence"/);
+  assert.match(summary, /id="adherence-panel"/);
+  assert.match(summary, /Seguimiento mensual/);
+
+  const loadStart = app.indexOf("async function loadHealthOverview");
+  const loadEnd = app.indexOf("function renderHealthCalorieBalance", loadStart);
+  const loader = app.slice(loadStart, loadEnd);
+  assert.match(loader, /await loadHealthAdherenceOverview()/);
+  assert.match(loader, /loadHealthHistory("365"/);
+  assert.ok(loader.indexOf("await loadHealthAdherenceOverview()") < loader.indexOf('loadHealthHistory("365"'));
+});
