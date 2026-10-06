@@ -4,7 +4,8 @@ import {
   normalizeShoppingName,
   planAppleActionsForMissingSecondBrainRow,
   planAppleActionsForRow,
-  planShoppingDryRun
+  planShoppingDryRun,
+  stateAfterMissingAppleReminder
 } from "./shopping-sync.js";
 
 function row(rowNumber, values) {
@@ -89,6 +90,13 @@ test("a physically removed Segundo Cerebro row completes its linked Apple remind
     }),
     [{ type: "setCompleted", desiredCompleted: true }]
   );
+});
+
+test("missing Apple reminders do not downgrade a confirmed purchase", () => {
+  assert.equal(stateAfterMissingAppleReminder("COMPRADO"), "COMPRADO");
+  assert.equal(stateAfterMissingAppleReminder("COMPRAR"), "CANCELADO");
+  assert.equal(stateAfterMissingAppleReminder("REVISAR"), "CANCELADO");
+  assert.equal(stateAfterMissingAppleReminder("CANCELADO"), "CANCELADO");
 });
 
 test("a removed row does not repeat completion for an already terminal Apple reminder", () => {
