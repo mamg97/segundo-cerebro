@@ -6634,7 +6634,7 @@ function renderGiftsOverview() {
           </div>
           <div class="gift-envelope-kpi">
             <span>${cashAvailable === null ? "—" : formatMoney(cashAvailable, currency)}</span>
-            ${pendingCash > 0 ? `<small>+${formatMoney(pendingCash, currency)} pendiente de tu madre · ${projectedCash === null ? "—" : formatMoney(projectedCash, currency)} previsto</small>` : ""}
+            ${pendingCash > 0 ? `<small>+${formatMoney(pendingCash, currency)} pendiente de recibir · ${projectedCash === null ? "—" : formatMoney(projectedCash, currency)} previsto</small>` : ""}
           </div>
         </div>
 
