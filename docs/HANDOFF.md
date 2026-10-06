@@ -187,7 +187,7 @@ Las conversaciones especializadas gestionan su dominio, pero no crean fuentes de
 - `REVISAR` permanece interno; `COMPRAR` es recordatorio activo; `COMPRADO` es completado; `CANCELADO` se completa sin borrado destructivo. Completar nunca incrementa inventario.
 - La portada muestra compra confirmada, primeros cinco artículos, coste conocido con prefijo `≥` si faltan precios y contador sin precio. Despensa ofrece acceso superior directo a la lista.
 - El agente escucha cambios EventKit y reconcilia cada 90 segundos mediante `launchd`. Token en Keychain/Cloudflare Secret; el Mac no recibe OAuth Google.
-- La activación real está deliberadamente detenida antes del primer permiso/dry-run. Procedimiento en `docs/APPLE_REMINDERS_SYNC.md`.
+- La activación real ya está operativa: `ListaCompra` contiene enlaces EventKit y sincronizaciones reales recientes. El procedimiento de instalación/diagnóstico sigue en `docs/APPLE_REMINDERS_SYNC.md`. Si Apple elimina un recordatorio ya conciliado como compra real, el estado `COMPRADO` prevalece y no se degrada a `CANCELADO`.
 
 ### Apple Health
 
