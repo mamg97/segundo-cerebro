@@ -2453,10 +2453,14 @@ async function loadHealthOverview(dateKey = localDateKey()) {
 
 function renderHealthCalorieBalance(history = []) {
   const today = localDateKey();
+  const shortWeekday = (dateKey) => {
+    const date = new Date(`${dateKey}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return String(dateKey || "");
+    return new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(date).replace(".", "");
+  };
   const rows = (Array.isArray(history) ? history : [])
     .filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || "")))
     .slice(-7)
-    .reverse()
     .map((item) => {
       const consumed = Number(item?.consumedKcal);
       const burned = Number(item?.burnedKcal);
@@ -2471,14 +2475,14 @@ function renderHealthCalorieBalance(history = []) {
         stateLabel = "Gasto no fiable";
       } else if (!intakeReady) {
         stateLabel = "Sin ingesta registrada";
-      } else if (balance < -50) {
+      } else if (balance < 0) {
         stateLabel = "Déficit";
         stateClass = "is-deficit";
-      } else if (balance > 50) {
+      } else if (balance > 0) {
         stateLabel = "Superávit";
         stateClass = "is-surplus";
       } else {
-        stateLabel = "Mantenimiento";
+        stateLabel = "Equilibrio";
         stateClass = "is-maintenance";
       }
       if (isToday && balance !== null) stateLabel += " · provisional";
@@ -2508,16 +2512,19 @@ function renderHealthCalorieBalance(history = []) {
   const average = comparable.length
     ? comparable.reduce((sum, item) => sum + item.balance, 0) / comparable.length
     : null;
-  const deficitDays = comparable.filter((item) => item.balance < -50).length;
-  const maintenanceDays = comparable.filter((item) => item.balance >= -50 && item.balance <= 50).length;
-  const surplusDays = comparable.filter((item) => item.balance > 50).length;
+  const deficitDays = comparable.filter((item) => item.balance < 0).length;
+  const surplusDays = comparable.filter((item) => item.balance > 0).length;
   const averageClass = average === null
     ? "is-missing"
-    : average < -50
+    : average < 0
       ? "is-deficit"
-      : average > 50
+      : average > 0
         ? "is-surplus"
         : "is-maintenance";
+  const maxAbsBalance = Math.max(
+    100,
+    ...rows.filter((item) => item.balance !== null).map((item) => Math.abs(item.balance))
+  );
 
   return `
     <section class="health-recomp-card health-calorie-balance-card">
@@ -2528,34 +2535,61 @@ function renderHealthCalorieBalance(history = []) {
           <strong class="${averageClass}">${average === null ? "—" : signedKcal(average)}</strong>
           <em>${comparable.length ? comparable.length + " día" + (comparable.length === 1 ? "" : "s") + " comparable" + (comparable.length === 1 ? "" : "s") : "Sin días comparables"}</em>
         </span>
-        <span><small>Déficit</small><strong class="is-deficit">${deficitDays} d</strong></span>
-        <span><small>Mantenimiento</small><strong class="is-maintenance">${maintenanceDays} d</strong></span>
-        <span><small>Superávit</small><strong class="is-surplus">${surplusDays} d</strong></span>
+        <span><small>Días en déficit</small><strong class="is-deficit">${deficitDays} d</strong></span>
+        <span><small>Días en superávit</small><strong class="is-surplus">${surplusDays} d</strong></span>
       </div>
-      <div class="health-calorie-table-wrap">
-        <table class="health-calorie-table">
-          <thead>
-            <tr>
-              <th>Día</th>
-              <th>Gasto</th>
-              <th>Ingesta</th>
-              <th>Diferencia</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map((item) => `
-              <tr class="${item.isToday ? "is-today" : ""}">
-                <td><strong>${item.isToday ? "Hoy" : escapeHtml(formatNutritionDate(item.date))}</strong></td>
-                <td>${item.burnReady ? escapeHtml(formatKcal(item.burned)) : "—"}</td>
-                <td>${item.intakeReady ? escapeHtml(formatKcal(item.consumed)) : "—"}</td>
-                <td><strong class="${item.stateClass}">${item.balance === null ? "—" : escapeHtml(signedKcal(item.balance))}</strong></td>
-                <td><span class="health-calorie-state ${item.stateClass}">${escapeHtml(item.stateLabel)}</span></td>
-              </tr>`).join("")}
-          </tbody>
-        </table>
+      <div class="health-calorie-chart-legend" aria-label="Leyenda del balance calórico">
+        <span class="is-deficit"><i aria-hidden="true"></i>Déficit · balance negativo</span>
+        <span class="is-surplus"><i aria-hidden="true"></i>Superávit · balance positivo</span>
       </div>
-      <p class="health-card-footnote">Diferencia = ingesta − gasto total. Negativo = déficit; positivo = superávit. Hoy es provisional hasta cerrar el día. Los días sin cobertura fiable de Health o sin ingesta registrada no se clasifican.</p>
+      <div class="health-calorie-chart" role="region" aria-label="Gráfica del balance calórico de los últimos siete días">
+        <span class="health-calorie-axis-label is-positive" aria-hidden="true">Superávit +</span>
+        <span class="health-calorie-zero-line" aria-hidden="true"><b>0 kcal</b></span>
+        <span class="health-calorie-axis-label is-negative" aria-hidden="true">Déficit −</span>
+        <div class="health-calorie-chart-days">
+          ${rows.map((item) => {
+            const barLevel = item.balance === null
+              ? 0
+              : Math.max(5, Math.min(100, Math.ceil((Math.abs(item.balance) / maxAbsBalance) * 20) * 5));
+            const dayTitle = item.isToday ? "Hoy" : shortWeekday(item.date);
+            const detail = item.balance === null
+              ? `${formatNutritionDate(item.date)} · ${item.stateLabel}`
+              : `${formatNutritionDate(item.date)} · Gasto ${formatKcal(item.burned)} · Ingesta ${formatKcal(item.consumed)} · Balance ${signedKcal(item.balance)} · ${item.stateLabel}`;
+            return `
+              <div
+                class="health-calorie-chart-day ${item.isToday ? "is-today" : ""} ${item.stateClass}"
+                data-date="${escapeHtml(item.date)}"
+                data-balance="${item.balance === null ? "" : Math.round(item.balance)}"
+                data-state="${item.stateClass}"
+                role="group"
+                aria-label="${escapeHtml(detail)}"
+                title="${escapeHtml(detail)}"
+              >
+                <div class="health-calorie-chart-plot">
+                  <div class="health-calorie-chart-half is-positive">
+                    ${item.balance !== null && item.balance > 0 ? `
+                      <span class="health-calorie-bar is-surplus level-${barLevel}">
+                        <strong>${escapeHtml(signedKcal(item.balance).replace(" kcal", ""))}</strong>
+                      </span>` : ""}
+                  </div>
+                  <div class="health-calorie-chart-half is-negative">
+                    ${item.balance !== null && item.balance < 0 ? `
+                      <span class="health-calorie-bar is-deficit level-${barLevel}">
+                        <strong>${escapeHtml(signedKcal(item.balance).replace(" kcal", ""))}</strong>
+                      </span>` : ""}
+                  </div>
+                  ${item.balance === 0 ? '<span class="health-calorie-zero-dot" aria-hidden="true"></span>' : ""}
+                  ${item.balance === null ? '<span class="health-calorie-missing" aria-hidden="true">—</span>' : ""}
+                </div>
+                <div class="health-calorie-chart-day-label">
+                  <strong>${escapeHtml(dayTitle)}</strong>
+                  <small>${escapeHtml(formatNutritionDate(item.date))}</small>
+                </div>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>
+      <p class="health-card-footnote">Balance = ingesta − gasto total. Verde = déficit (negativo); rojo = superávit (positivo). Hoy es provisional hasta cerrar el día. Los días sin cobertura fiable de Health o sin ingesta registrada quedan sin barra.</p>
     </section>`;
 }
 

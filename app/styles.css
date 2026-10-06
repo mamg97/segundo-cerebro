@@ -21586,13 +21586,14 @@ textarea {
 
 .health-calorie-balance-card {
   grid-column: 1 / -1;
+  overflow: hidden;
 }
 
 .health-calorie-balance-summary {
   display: grid;
-  grid-template-columns: minmax(180px, 1.5fr) repeat(3, minmax(90px, .7fr));
+  grid-template-columns: minmax(180px, 1.5fr) repeat(2, minmax(100px, .75fr));
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .health-calorie-balance-summary > span {
@@ -21632,64 +21633,244 @@ textarea {
   color: var(--ink-soft);
 }
 
-.health-calorie-table-wrap {
+.health-calorie-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 0 0 10px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.health-calorie-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.health-calorie-chart-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.health-calorie-chart {
+  --health-calorie-plot-height: 224px;
+  position: relative;
   width: 100%;
-  overflow-x: auto;
+  padding: 24px 10px 4px 52px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
+  background:
+    linear-gradient(to bottom,
+      color-mix(in srgb, var(--coral) 3%, transparent) 0%,
+      transparent 48%,
+      color-mix(in srgb, var(--mint) 3%, transparent) 52%,
+      transparent 100%);
 }
 
-.health-calorie-table {
-  width: 100%;
-  min-width: 650px;
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
+.health-calorie-chart-days {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
 }
 
-.health-calorie-table th,
-.health-calorie-table td {
-  padding: 9px 11px;
-  border-bottom: 1px solid var(--line);
-  text-align: right;
+.health-calorie-chart-day {
+  display: grid;
+  grid-template-rows: var(--health-calorie-plot-height) 38px;
+  min-width: 0;
+}
+
+.health-calorie-chart-plot {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  min-width: 0;
+}
+
+.health-calorie-chart-half {
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  position: relative;
+}
+
+.health-calorie-chart-half.is-positive {
+  align-items: flex-end;
+}
+
+.health-calorie-chart-half.is-negative {
+  align-items: flex-start;
+}
+
+.health-calorie-bar {
+  position: relative;
+  display: block;
+  width: clamp(16px, 42%, 34px);
+  min-height: 4px;
+  box-shadow: 0 6px 16px color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.health-calorie-bar.is-surplus {
+  color: var(--coral);
+  border-radius: 8px 8px 2px 2px;
+  background: var(--coral);
+}
+
+.health-calorie-bar.is-deficit {
+  color: var(--mint);
+  border-radius: 2px 2px 8px 8px;
+  background: var(--mint);
+}
+
+.health-calorie-bar.level-5 { height: 5%; }
+.health-calorie-bar.level-10 { height: 10%; }
+.health-calorie-bar.level-15 { height: 15%; }
+.health-calorie-bar.level-20 { height: 20%; }
+.health-calorie-bar.level-25 { height: 25%; }
+.health-calorie-bar.level-30 { height: 30%; }
+.health-calorie-bar.level-35 { height: 35%; }
+.health-calorie-bar.level-40 { height: 40%; }
+.health-calorie-bar.level-45 { height: 45%; }
+.health-calorie-bar.level-50 { height: 50%; }
+.health-calorie-bar.level-55 { height: 55%; }
+.health-calorie-bar.level-60 { height: 60%; }
+.health-calorie-bar.level-65 { height: 65%; }
+.health-calorie-bar.level-70 { height: 70%; }
+.health-calorie-bar.level-75 { height: 75%; }
+.health-calorie-bar.level-80 { height: 80%; }
+.health-calorie-bar.level-85 { height: 85%; }
+.health-calorie-bar.level-90 { height: 90%; }
+.health-calorie-bar.level-95 { height: 95%; }
+.health-calorie-bar.level-100 { height: 100%; }
+
+.health-calorie-bar strong {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: currentColor;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 1px 8px var(--paper);
+}
+
+.health-calorie-chart-half.is-positive .health-calorie-bar strong {
+  top: -21px;
+}
+
+.health-calorie-chart-half.is-negative .health-calorie-bar strong {
+  bottom: -21px;
+}
+
+.health-calorie-zero-line {
+  position: absolute;
+  z-index: 1;
+  top: calc(24px + var(--health-calorie-plot-height) / 2);
+  right: 10px;
+  left: 52px;
+  height: 1px;
+  background: color-mix(in srgb, var(--ink-soft) 55%, transparent);
+}
+
+.health-calorie-zero-line b {
+  position: absolute;
+  right: 0;
+  bottom: 5px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.health-calorie-axis-label {
+  position: absolute;
+  left: 10px;
+  z-index: 3;
+  width: 36px;
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.health-calorie-axis-label.is-positive {
+  top: 36px;
+  color: color-mix(in srgb, var(--coral) 75%, var(--ink));
+}
+
+.health-calorie-axis-label.is-negative {
+  top: calc(24px + var(--health-calorie-plot-height) / 2 + 18px);
+  color: color-mix(in srgb, var(--mint) 75%, var(--ink));
+}
+
+.health-calorie-zero-dot,
+.health-calorie-missing {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.health-calorie-zero-dot {
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--blue);
+  border-radius: 999px;
+  background: var(--paper);
+}
+
+.health-calorie-missing {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.health-calorie-chart-day-label {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1px;
+  min-width: 0;
+  padding-top: 7px;
+  text-align: center;
+}
+
+.health-calorie-chart-day-label strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
   white-space: nowrap;
 }
 
-.health-calorie-table th {
+.health-calorie-chart-day-label small {
   color: var(--ink-soft);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: .03em;
-  text-transform: uppercase;
+  font-size: 8px;
+  white-space: nowrap;
 }
 
-.health-calorie-table td {
-  font-size: 11px;
-}
-
-.health-calorie-table th:first-child,
-.health-calorie-table td:first-child,
-.health-calorie-table th:last-child,
-.health-calorie-table td:last-child {
-  text-align: left;
-}
-
-.health-calorie-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.health-calorie-table tbody tr.is-today {
-  background: color-mix(in srgb, var(--blue) 6%, transparent);
-}
-
-.health-calorie-state {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, currentColor 9%, transparent);
-  font-size: 9px;
-  font-weight: 800;
+.health-calorie-chart-day.is-today .health-calorie-chart-day-label {
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--blue) 7%, transparent);
 }
 
 .health-calorie-balance-card > .health-card-footnote {
@@ -21722,14 +21903,33 @@ textarea {
     grid-column: 1 / -1;
   }
 
-  .health-calorie-table th,
-  .health-calorie-table td {
-    padding: 9px 10px;
-    font-size: 11px;
+  .health-calorie-chart {
+    --health-calorie-plot-height: 190px;
+    padding-right: 6px;
+    padding-left: 36px;
   }
 
-  .health-calorie-state {
-    font-size: 10px;
+  .health-calorie-zero-line {
+    right: 6px;
+    left: 36px;
+  }
+
+  .health-calorie-axis-label {
+    left: 3px;
+    width: 30px;
+    font-size: 7px;
+  }
+
+  .health-calorie-chart-days {
+    gap: 4px;
+  }
+
+  .health-calorie-bar {
+    width: clamp(14px, 48%, 26px);
+  }
+
+  .health-calorie-bar strong {
+    font-size: 9px;
   }
 }
 
@@ -21743,8 +21943,43 @@ textarea {
     grid-template-columns: 1fr 1fr;
   }
 
-  .health-calorie-table {
-    min-width: 610px;
+  .health-calorie-chart {
+    --health-calorie-plot-height: 176px;
+    padding-top: 22px;
+    padding-left: 30px;
+  }
+
+  .health-calorie-zero-line {
+    top: calc(22px + var(--health-calorie-plot-height) / 2);
+    left: 30px;
+  }
+
+  .health-calorie-axis-label {
+    display: none;
+  }
+
+  .health-calorie-chart-days {
+    gap: 2px;
+  }
+
+  .health-calorie-chart-day {
+    grid-template-rows: var(--health-calorie-plot-height) 36px;
+  }
+
+  .health-calorie-bar {
+    width: clamp(12px, 52%, 22px);
+  }
+
+  .health-calorie-bar strong {
+    font-size: 8px;
+  }
+
+  .health-calorie-chart-day-label strong {
+    font-size: 9px;
+  }
+
+  .health-calorie-chart-day-label small {
+    font-size: 7px;
   }
 }
 
