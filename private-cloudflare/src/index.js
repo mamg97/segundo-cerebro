@@ -1180,8 +1180,12 @@ async function fetchFinanceSummary(env) {
     weddings: giftWeddingRows,
     paidWeddings: giftPaidWeddings,
     unreconciledWeddings: giftUnreconciledWeddings,
-    totalTarget: giftTargets.length ? giftTargets.reduce((sum, value) => sum + value, 0) : null,
-    totalStored: giftStored.length ? giftStored.reduce((sum, value) => sum + value, 0) : null,
+    totalTarget: giftFunds.length && giftTargets.length === giftFunds.length
+      ? giftTargets.reduce((sum, value) => sum + value, 0)
+      : null,
+    totalStored: giftFunds.length && giftStored.length === giftFunds.length
+      ? giftStored.reduce((sum, value) => sum + value, 0)
+      : null,
     totalPaidWeddings: giftPaidWeddings.reduce((sum, item) => sum + Math.max(0, item.paidAmount || 0), 0),
     paidWeddingCount: giftPaidWeddings.length,
     weddingCount: giftWeddingRows.length,
