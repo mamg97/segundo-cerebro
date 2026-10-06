@@ -220,6 +220,8 @@ Las importaciones automáticas de Apple Health se almacenan en D1 `health_energy
 
 Para cada fecha, la fila D1 tiene prioridad sobre el fallback del Sheet. El gasto total usa `total_kcal` cuando Apple Health lo aporta; si no, se deriva como activa + reposo cuando ambas existen. El balance se calcula como `kcal consumidas - gasto total`. La ausencia de gasto se representa como `null`, nunca como 0, y no se infiere a partir de sesiones de gimnasio.
 
+El histórico nutricional derivado conserva por día `consumedKcal`, `consumedEntryCount`, `burnedKcal`, `balanceKcal` y `coverageQuality`. `GET /api/health/overview` lo expone como `nutritionHistory` para que Salud → Resumen muestre los últimos 7 días sin crear una fuente paralela. La UI solo clasifica déficit/mantenimiento/superávit cuando existe al menos una ingesta consumida registrada y la cobertura de Health es comparable (`full` o `live`); un día incompleto permanece explícitamente sin clasificar. La diferencia visible usa siempre la convención `ingesta - gasto`: negativa = déficit, positiva = superávit.
+
 ### Composición corporal
 
 El histórico/manual vive en `MedicionesCorporales`. El baseline existente se conserva intacto. Columnas opcionales añadidas: `body_mass_index`, `lean_body_mass_kg`, `measured_at` e `imported_at`.

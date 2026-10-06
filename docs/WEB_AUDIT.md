@@ -68,6 +68,7 @@ Como mínimo:
 - totales/subtotales nutricionales;
 - dato ausente permanece ausente, nunca se transforma en 0;
 - barras de kcal/proteína: existencia, porcentaje/anchura y estado visual lógico;
+- Salud → Resumen: tabla de balance calórico visible, siete filas diarias, columnas Día/Gasto/Ingesta/Diferencia/Estado y scroll horizontal contenido; el API debe exponer `nutritionHistory` suficiente para esa vista;
 - APIs privadas clave de Despensa, Proyectos y Delta/Finanzas;
 - **MIDAS Competition Health**:
   - `/api/midas` responde y conserva los diarios esperados;
