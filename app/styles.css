@@ -21730,6 +21730,27 @@ textarea {
   background: var(--mint);
 }
 
+.health-calorie-bar.level-5 { height: 5%; }
+.health-calorie-bar.level-10 { height: 10%; }
+.health-calorie-bar.level-15 { height: 15%; }
+.health-calorie-bar.level-20 { height: 20%; }
+.health-calorie-bar.level-25 { height: 25%; }
+.health-calorie-bar.level-30 { height: 30%; }
+.health-calorie-bar.level-35 { height: 35%; }
+.health-calorie-bar.level-40 { height: 40%; }
+.health-calorie-bar.level-45 { height: 45%; }
+.health-calorie-bar.level-50 { height: 50%; }
+.health-calorie-bar.level-55 { height: 55%; }
+.health-calorie-bar.level-60 { height: 60%; }
+.health-calorie-bar.level-65 { height: 65%; }
+.health-calorie-bar.level-70 { height: 70%; }
+.health-calorie-bar.level-75 { height: 75%; }
+.health-calorie-bar.level-80 { height: 80%; }
+.health-calorie-bar.level-85 { height: 85%; }
+.health-calorie-bar.level-90 { height: 90%; }
+.health-calorie-bar.level-95 { height: 95%; }
+.health-calorie-bar.level-100 { height: 100%; }
+
 .health-calorie-bar strong {
   position: absolute;
   left: 50%;
