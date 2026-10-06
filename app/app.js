@@ -4993,10 +4993,15 @@ function weeklyMenuDayDisplayTotals(day, model) {
 function renderHomeWeeklyMenuDayHeader(day, model) {
   const isToday = day.date === localDateKey();
   const display = weeklyMenuDayDisplayTotals(day, model);
-  const incomplete = !day.consumedNutritionComplete;
+  const plannedIncomplete = !day.nutritionComplete;
+  const consumedIncomplete = !day.consumedNutritionComplete;
   const stateLabel = display.hasConsumed
     ? (display.kcalPct == null ? "Consumo confirmado" : display.kcalPct + "% kcal consumidas")
     : "0% consumido";
+  const kcalPlanQualifier = plannedIncomplete ? "subtotal previsto" : "previsto";
+  const proteinPlanQualifier = plannedIncomplete ? "subtotal previsto" : "previsto";
+  const kcalConsumedLabel = consumedIncomplete ? "Subtotal consumido conocido" : "Consumido";
+  const proteinConsumedLabel = consumedIncomplete ? "Subtotal consumido conocido" : "Consumido";
 
   return `
     <div data-menu-date="${escapeHtml(day.date)}" class="home-weekly-menu-table-day ${isToday ? "is-today" : ""}">
@@ -5010,17 +5015,19 @@ function renderHomeWeeklyMenuDayHeader(day, model) {
       <div class="home-weekly-menu-progress">
         <div>
           <span><i class="kcal"></i>Kcal</span>
-          <b>${incomplete ? "<small>Subtotal </small>" : ""}${formatKcal(display.kcal)}${model.kcalTarget !== null ? ` / ${formatKcal(model.kcalTarget)}` : ""}</b>
+          <b>${formatKcal(day.kcal)} <small>${escapeHtml(kcalPlanQualifier)}${model.kcalTarget !== null ? ` · obj. ${formatKcal(model.kcalTarget)}` : ""}</small></b>
           ${model.kcalTarget !== null
-            ? renderNutritionQualityMeter("kcal", display.kcal, model.kcalTarget, "Kcal consumidas", !day.consumedNutritionComplete)
+            ? renderNutritionQualityMeter("kcal", display.kcal, model.kcalTarget, "Kcal consumidas", consumedIncomplete)
             : ""}
+          <small class="home-weekly-menu-consumed-line">${escapeHtml(kcalConsumedLabel)}: ${escapeHtml(formatKcal(display.kcal))}${display.kcalPct == null ? "" : ` · ${display.kcalPct}%`}</small>
         </div>
         <div>
           <span><i class="protein"></i>Proteína</span>
-          <b>${incomplete ? "<small>Subtotal </small>" : ""}${formatMacro(display.protein)}${model.proteinTarget !== null ? ` / ${formatMacro(model.proteinTarget)}` : ""}</b>
+          <b>${formatMacro(day.protein)} <small>${escapeHtml(proteinPlanQualifier)}${model.proteinTarget !== null ? ` · obj. ${formatMacro(model.proteinTarget)}` : ""}</small></b>
           ${model.proteinTarget !== null
-            ? renderNutritionQualityMeter("protein", display.protein, model.proteinTarget, "Proteína consumida", !day.consumedNutritionComplete)
+            ? renderNutritionQualityMeter("protein", display.protein, model.proteinTarget, "Proteína consumida", consumedIncomplete)
             : ""}
+          <small class="home-weekly-menu-consumed-line">${escapeHtml(proteinConsumedLabel)}: ${escapeHtml(formatMacro(display.protein))}${display.proteinPct == null ? "" : ` · ${display.proteinPct}%`}</small>
         </div>
       </div>
     </div>`;

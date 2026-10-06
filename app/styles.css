@@ -23957,3 +23957,20 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     font-size: 6.8px;
   }
 }
+
+
+/* v0.42.24 — weekly menu: planned totals + confirmed-consumption progress */
+.home-weekly-menu-table-day .home-weekly-menu-progress b > small {
+  color: var(--ink-soft);
+  font-size: .82em;
+  font-weight: 700;
+}
+
+.home-weekly-menu-table-day .home-weekly-menu-consumed-line {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.2;
+}
