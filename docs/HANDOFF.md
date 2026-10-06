@@ -1,3 +1,11 @@
+## Salud · Balance calórico ampliado a 30 días · 2026-10-07
+
+- Salud → Resumen amplía la gráfica divergente de balance calórico de 7 a 30 días.
+- `GET /api/health/overview` expone ahora 30 registros diarios de `nutritionHistory`; no cambia ninguna fuente canónica ni la fórmula `ingesta - gasto`.
+- La gráfica conserva eje 0, déficit negativo verde, superávit positivo rojo y días incompletos sin barra.
+- Para evitar saturación visual, solo algunos días de referencia muestran etiqueta/valor de forma persistente; cualquier barra expone el detalle exacto mediante hover/foco.
+- En viewports estrechos la gráfica mantiene las 30 barras y usa scroll horizontal contenido en vez de comprimirlas hasta hacerlas ilegibles.
+
 ## Salud · Adherencia integrada en Resumen · 2026-10-07
 
 - PR #301 fusionada y desplegada: Adherencia deja de ocupar una pestaña superior propia en Salud.

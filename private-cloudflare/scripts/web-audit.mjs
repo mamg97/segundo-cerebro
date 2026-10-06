@@ -1790,7 +1790,7 @@ try {
         const calorieHistory = Array.isArray(healthOverview.body?.nutritionHistory)
           ? healthOverview.body.nutritionHistory
           : [];
-        assertCheck(calorieHistory.length >= 7, "Salud · API expone histórico de balance calórico", "n=" + calorieHistory.length);
+        assertCheck(calorieHistory.length >= 30, "Salud · API expone histórico de balance calórico de 30 días", "n=" + calorieHistory.length);
 
         const calorieChart = panel.locator(".health-calorie-chart");
         assertCheck(await calorieChart.count() === 1, "Salud · Resumen muestra gráfica de balance calórico");
@@ -1801,7 +1801,14 @@ try {
 
         const calorieDays = calorieChart.locator(".health-calorie-chart-day");
         const calorieDayCount = await calorieDays.count();
-        assertCheck(calorieDayCount === 7, "Salud · gráfica muestra siete días", "n=" + calorieDayCount);
+        assertCheck(calorieDayCount === 30, "Salud · gráfica muestra treinta días", "n=" + calorieDayCount);
+
+        const calorieChartOverflow = await calorieChart.evaluate((node) => getComputedStyle(node).overflowX).catch(() => "");
+        assertCheck(
+          ["auto", "scroll"].includes(calorieChartOverflow),
+          "Salud · gráfica de 30 días permite scroll horizontal contenido",
+          calorieChartOverflow || "sin estilo"
+        );
 
         const calorieLegend = normalizeAuditValue(
           await panel.locator(".health-calorie-chart-legend").textContent().catch(() => "")
@@ -1818,10 +1825,10 @@ try {
           balance: node.dataset.balance === "" ? null : Number(node.dataset.balance),
           state: node.dataset.state || ""
         }))).catch(() => []);
-        const expectedChartDays = calorieHistory.slice(-7);
+        const expectedChartDays = calorieHistory.slice(-30);
         assertCheck(
           renderedBalances.length === expectedChartDays.length,
-          "Salud · gráfica representa los siete registros más recientes",
+          "Salud · gráfica representa los treinta registros más recientes",
           "UI=" + renderedBalances.length + " API=" + expectedChartDays.length
         );
         for (const item of renderedBalances) {

@@ -3141,7 +3141,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     steps: stepsByRecipeId.get(recipe.id) || []
   }]));
 
-  const historyStart = healthAddDays(date, -13);
+  const historyStart = healthAddDays(date, -29);
   const bodyHistoryStart = healthAddDays(date, -27);
   try {
     await reconcileHealthRecoveryRows(env, energyRows, bodySheetRows, recoverySheetRows);
@@ -3296,7 +3296,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     : null;
 
   const history = [];
-  for (let offset = 13; offset >= 0; offset -= 1) {
+  for (let offset = 29; offset >= 0; offset -= 1) {
     const historyDate = healthAddDays(date, -offset);
     const dayRows = entries.filter((item) => item.date === historyDate);
     const dayConsumed = sumNutrition(dayRows, "consumido");
