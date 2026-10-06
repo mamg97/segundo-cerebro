@@ -1737,6 +1737,30 @@ try {
         }
         const weightFreshness = await panel.locator(".health-recomp-kpis .health-metric-freshness").count();
         assertCheck(weightFreshness >= 6, "Salud · composición muestra freshness/cobertura por métrica", "n=" + weightFreshness);
+
+        const calorieHistory = Array.isArray(healthOverview.body?.nutritionHistory)
+          ? healthOverview.body.nutritionHistory
+          : [];
+        assertCheck(calorieHistory.length >= 7, "Salud · API expone histórico de balance calórico", "n=" + calorieHistory.length);
+        const calorieTable = panel.locator(".health-calorie-table");
+        assertCheck(await calorieTable.count() === 1, "Salud · Resumen muestra tabla de balance calórico");
+        const calorieHeaders = normalizeAuditValue(await calorieTable.locator("thead").textContent().catch(() => ""));
+        assertCheck(
+          /dia/.test(calorieHeaders) && /gasto/.test(calorieHeaders) && /ingesta/.test(calorieHeaders) &&
+            /diferencia/.test(calorieHeaders) && /estado/.test(calorieHeaders),
+          "Salud · tabla conserva columnas Día/Gasto/Ingesta/Diferencia/Estado",
+          calorieHeaders
+        );
+        const calorieRows = await calorieTable.locator("tbody tr").count();
+        assertCheck(calorieRows === 7, "Salud · tabla muestra siete días", "n=" + calorieRows);
+        const calorieWrapOverflow = await panel.locator(".health-calorie-table-wrap").evaluate((node) =>
+          getComputedStyle(node).overflowX
+        ).catch(() => "");
+        assertCheck(
+          ["auto", "scroll"].includes(calorieWrapOverflow),
+          "Salud · tabla de balance permite scroll horizontal contenido",
+          calorieWrapOverflow || "sin estilo"
+        );
       }
       if (tab === "gym") {
         const planButton = panel.locator('[data-gym-view="plan"]');
