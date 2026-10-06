@@ -3175,7 +3175,46 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     return d1;
   };
 
-  const dayEntries = entries.filter((item) => item.date === date);
+  const registeredDayEntries = entries.filter((item) => item.date === date);
+  const registeredDayIds = new Set(
+    registeredDayEntries
+      .map((item) => String(item.itemId || "").trim())
+      .filter(Boolean)
+  );
+  const consumedMenuFallback = prepareWeeklyMenuRows(
+    weeklyMenuRows.filter((item) => item.date === date),
+    {
+      recipeById,
+      ingredientsByRecipeId,
+      ...(pantryProductById ? { pantryProductById } : {})
+    }
+  )
+    .filter((item) => item.status === "consumido")
+    .filter((item) => {
+      const identities = [item.recipeId, item.foodId]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean);
+      return identities.length && !identities.some((identity) => registeredDayIds.has(identity));
+    })
+    .map((item, index) => ({
+      id: `menu-fallback-${index + 1}`,
+      date: item.date,
+      moment: item.moment,
+      itemId: item.recipeId || item.foodId || null,
+      productId: item.foodId || null,
+      itemName: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      kcal: Number(item.kcal || 0),
+      protein: Number(item.protein || 0),
+      carbs: Number(item.carbs || 0),
+      fat: Number(item.fat || 0),
+      status: "consumido",
+      source: "menu_consumed_fallback",
+      note: item.note || "Consumido en MenuSemanal; pendiente de reconciliar con Registro.",
+      updatedAt: item.updatedAt || null
+    }));
+  const dayEntries = [...registeredDayEntries, ...consumedMenuFallback];
   const consumed = sumNutrition(dayEntries, "consumido");
   const planned = sumNutrition(dayEntries, "planificado");
   const objective = objectives.find((item) => item.effectiveDate <= date) || null;
