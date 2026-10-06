@@ -20,7 +20,7 @@ test("Home exposes the data-driven gifts panel", () => {
   assert.match(app, /function renderGiftsOverview\(\)/);
   assert.match(app, /Dinero almacenado/);
   assert.match(app, /Bodas pagadas/);
-  assert.match(app, /solo pagos conciliados/);
+  assert.match(app, /pagos confirmados/);
   assert.match(app, /gift-monthly-table/);
   assert.match(app, /gift-paid-list/);
 });
