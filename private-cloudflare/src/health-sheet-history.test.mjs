@@ -32,3 +32,16 @@ test("health export recovery rows reconcile sleep and recovery into D1", () => {
   assert.match(source, /INSERT INTO health_recovery_daily/);
   assert.match(source, /source = excluded\.source/);
 });
+
+
+test("health recovery import is idempotent and cannot block reads", () => {
+  assert.match(source, /CREATE TABLE IF NOT EXISTS health_import_state/);
+  assert.match(source, /SELECT signature FROM health_import_state/);
+  assert.match(source, /await env\.DB\.batch\(statements\)/);
+  assert.match(source, /Apple Health recovery reconcile failed/);
+  assert.match(source, /String\(sheet\.source \|\| ""\) === "apple_health_export_recovery"/);
+});
+
+test("health Sheet reads retry transient Google failures", () => {
+  assert.match(source, /async function fetchHealthNutritionSummary[\s\S]*googleReadFetch\([\s\S]*attempts: 3/);
+});
