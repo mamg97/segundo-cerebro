@@ -318,7 +318,7 @@ Desde PR #221 / #222, el auditor debe comprobar:
 - Objetos expone accesos a Inventario, Armario, Looks y Kits.
 - Patrimonio expone Detalle, Evolución y MIDAS.
 - Obligaciones activas expone Detalle y El Corte Inglés, y ECI no debe volver a aparecer como tarjeta independiente.
-- Regalos expone un panel `Bodas y Reyes` alimentado por `financeSummary.gifts`: debe mostrar las dos superficies `Dinero almacenado` y `Bodas pagadas`, conservar el histórico mensual/objetivo sin overflow y no convertir bodas no conciliadas en pagadas. En desktop debe ocupar la columna derecha justo debajo de `Obligaciones activas`, alineado con ella, en vez de reservar una fila completa.
+- Regalos expone un panel `Bodas y Reyes` alimentado por `financeSummary.gifts`: debe mostrar el `Sobre de regalos` físico actual, efectivo pendiente de recibir sin sumarlo prematuramente, histórico mensual de aportaciones, bodas pagadas/pendientes del año y próximas bodas del siguiente año con sus fechas e importes previstos. No debe convertir bodas no conciliadas en pagadas ni usar el acumulado bruto como si fuese efectivo disponible. En desktop debe ocupar la columna derecha justo debajo de `Obligaciones activas`, alineado con ella, en vez de reservar una fila completa.
 - Las tarjetas que comparten fila deben usar el mismo ancho sin reservar huecos excesivos: Despensa/Objetos forman un par 50/50 compacto; en finanzas, Patrimonio ocupa la columna izquierda y la columna derecha apila Obligaciones + Regalos. No debe forzarse la altura de Obligaciones para igualarla artificialmente a Patrimonio.
 - La validación visual responsive sigue siendo obligatoria para desktop-wide, desktop, tablet, mobile-wide y mobile.
 
