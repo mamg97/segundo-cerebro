@@ -1293,7 +1293,7 @@ try {
   assertCheck(await giftsPanel.isVisible().catch(() => false), "Regalos · panel visible");
   const giftsText = normalizeAuditValue(await page.locator("#gifts-summary").textContent().catch(() => ""));
   assertCheck(
-    /sobre de regalos/.test(giftsText) && /bodas/.test(giftsText) && /próximas bodas/.test(giftsText),
+    /sobre de regalos/.test(giftsText) && /bodas/.test(giftsText) && /proximas bodas/.test(giftsText),
     "Regalos · sobre actual y bodas futuras disponibles",
     giftsText
   );
