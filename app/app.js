@@ -2438,6 +2438,114 @@ async function loadHealthOverview(dateKey = localDateKey()) {
   }
 }
 
+function renderHealthCalorieBalance(history = []) {
+  const today = localDateKey();
+  const rows = (Array.isArray(history) ? history : [])
+    .filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || "")))
+    .slice(-7)
+    .reverse()
+    .map((item) => {
+      const consumed = Number(item?.consumedKcal);
+      const burned = Number(item?.burnedKcal);
+      const intakeReady = Number(item?.consumedEntryCount || 0) > 0 && Number.isFinite(consumed);
+      const coverageQuality = String(item?.coverageQuality || "unknown");
+      const burnReady = Number.isFinite(burned) && ["full", "live"].includes(coverageQuality);
+      const balance = intakeReady && burnReady ? consumed - burned : null;
+      const isToday = item.date === today;
+      let stateLabel = "Datos incompletos";
+      let stateClass = "is-missing";
+      if (!burnReady) {
+        stateLabel = "Gasto no fiable";
+      } else if (!intakeReady) {
+        stateLabel = "Sin ingesta registrada";
+      } else if (balance < -50) {
+        stateLabel = "Déficit";
+        stateClass = "is-deficit";
+      } else if (balance > 50) {
+        stateLabel = "Superávit";
+        stateClass = "is-surplus";
+      } else {
+        stateLabel = "Mantenimiento";
+        stateClass = "is-maintenance";
+      }
+      if (isToday && balance !== null) stateLabel += " · provisional";
+      return {
+        ...item,
+        consumed,
+        burned,
+        intakeReady,
+        burnReady,
+        balance,
+        isToday,
+        stateLabel,
+        stateClass
+      };
+    });
+
+  if (!rows.length) {
+    return `
+      <section class="health-recomp-card health-calorie-balance-card">
+        <header><span>Balance calórico</span><strong>Últimos 7 días</strong></header>
+        <p class="health-empty">Todavía no hay histórico diario suficiente.</p>
+      </section>`;
+  }
+
+  const settled = rows.filter((item) => item.balance !== null && !item.isToday);
+  const comparable = settled.length ? settled : rows.filter((item) => item.balance !== null);
+  const average = comparable.length
+    ? comparable.reduce((sum, item) => sum + item.balance, 0) / comparable.length
+    : null;
+  const deficitDays = comparable.filter((item) => item.balance < -50).length;
+  const maintenanceDays = comparable.filter((item) => item.balance >= -50 && item.balance <= 50).length;
+  const surplusDays = comparable.filter((item) => item.balance > 50).length;
+  const averageClass = average === null
+    ? "is-missing"
+    : average < -50
+      ? "is-deficit"
+      : average > 50
+        ? "is-surplus"
+        : "is-maintenance";
+
+  return `
+    <section class="health-recomp-card health-calorie-balance-card">
+      <header><span>Balance calórico</span><strong>Últimos 7 días</strong></header>
+      <div class="health-calorie-balance-summary">
+        <span>
+          <small>Balance medio</small>
+          <strong class="${averageClass}">${average === null ? "—" : signedKcal(average)}</strong>
+          <em>${comparable.length ? comparable.length + " día" + (comparable.length === 1 ? "" : "s") + " comparable" + (comparable.length === 1 ? "" : "s") : "Sin días comparables"}</em>
+        </span>
+        <span><small>Déficit</small><strong class="is-deficit">${deficitDays} d</strong></span>
+        <span><small>Mantenimiento</small><strong class="is-maintenance">${maintenanceDays} d</strong></span>
+        <span><small>Superávit</small><strong class="is-surplus">${surplusDays} d</strong></span>
+      </div>
+      <div class="health-calorie-table-wrap">
+        <table class="health-calorie-table">
+          <thead>
+            <tr>
+              <th>Día</th>
+              <th>Gasto</th>
+              <th>Ingesta</th>
+              <th>Diferencia</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((item) => `
+              <tr class="${item.isToday ? "is-today" : ""}">
+                <td><strong>${item.isToday ? "Hoy" : escapeHtml(formatNutritionDate(item.date))}</strong></td>
+                <td>${item.burnReady ? escapeHtml(formatKcal(item.burned)) : "—"}</td>
+                <td>${item.intakeReady ? escapeHtml(formatKcal(item.consumed)) : "—"}</td>
+                <td><strong class="${item.stateClass}">${item.balance === null ? "—" : escapeHtml(signedKcal(item.balance))}</strong></td>
+                <td><span class="health-calorie-state ${item.stateClass}">${escapeHtml(item.stateLabel)}</span></td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+      <p class="health-card-footnote">Diferencia = ingesta − gasto total. Negativo = déficit; positivo = superávit. Hoy es provisional hasta cerrar el día. Los días sin cobertura fiable de Health o sin ingesta registrada no se clasifican.</p>
+    </section>`;
+}
+
 function renderHealthOverview(data, gymData = {}) {
   const panel = document.querySelector("#health-overview-panel");
   if (!panel) return;
@@ -2674,6 +2782,8 @@ function renderHealthOverview(data, gymData = {}) {
           ? `<div class="health-benchmark-list">${performanceObjectives.map((goal) => renderHealthBenchmark(goal, gym.sessions || [])).join("")}</div>`
           : '<p class="health-empty">Todavía no hay benchmarks de rendimiento definidos.</p>'}
       </section>
+
+      ${renderHealthCalorieBalance(data.nutritionHistory || [])}
     </div>
 
     ${activityGoal.appleWatchEnergyRule ? `<p class="health-trend-note">⌁ ${escapeHtml(activityGoal.appleWatchEnergyRule)}</p>` : ""}
