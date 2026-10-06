@@ -6549,7 +6549,7 @@ function renderGiftsOverview() {
           <strong>${escapeHtml(giftCategoryLabel(fund.category))}</strong>
           <span>${stored === null ? "—" : formatMoney(stored, currency)}${target === null ? "" : " / " + formatMoney(target, currency)}</span>
         </div>
-        <div class="gift-progress" aria-hidden="true"><span style="width:${progress === null ? 0 : progress.toFixed(1)}%"></span></div>
+        <progress class="gift-progress" max="100" value="${progress === null ? 0 : progress.toFixed(1)}" aria-label="Progreso de ${escapeHtml(giftCategoryLabel(fund.category))}"></progress>
         <div class="gift-fund-meta">
           ${fund.category === "bodas" && available !== null
             ? `<span>Disponible tras pagos <strong>${formatMoney(available, currency)}</strong></span>`
@@ -6588,7 +6588,7 @@ function renderGiftsOverview() {
             <small>${totalTarget === null ? "Objetivo —" : "de " + formatMoney(totalTarget, currency)}</small>
           </div>
         </div>
-        ${totalPct === null ? "" : `<div class="gift-progress gift-progress-total" aria-label="Progreso anual de fondos"><span style="width:${totalPct.toFixed(1)}%"></span></div>`}
+        ${totalPct === null ? "" : `<progress class="gift-progress gift-progress-total" max="100" value="${totalPct.toFixed(1)}" aria-label="Progreso anual de fondos"></progress>`}
         <div class="gift-fund-cards">${fundCards || '<p class="gift-empty-inline">Sin fondos registrados.</p>'}</div>
         <div class="gift-monthly-table" role="table" aria-label="Aportaciones mensuales de Bodas y Reyes">
           <div class="gift-month-row gift-month-head" role="row">
