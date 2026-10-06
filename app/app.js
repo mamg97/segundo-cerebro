@@ -6539,6 +6539,7 @@ function renderGiftsOverview() {
     (sum, item) => sum + Math.max(0, firstFinite(item.plannedAmount) || 0),
     0
   );
+  const currentPendingWeddingLabel = pendingWeddings[0]?.label || "boda pendiente";
 
   const fundCards = funds.map((fund) => {
     const stored = firstFinite(fund.stored);
@@ -6564,7 +6565,7 @@ function renderGiftsOverview() {
         <progress class="gift-progress" max="100" value="${progress === null ? 0 : progress.toFixed(1)}" aria-label="Progreso de ${escapeHtml(giftCategoryLabel(fund.category))}"></progress>
         <div class="gift-fund-meta">
           ${fund.category === "bodas"
-            ? `<span>Pagado <strong>${formatMoney(paid, currency)}</strong></span><span>Reservado Silvia <strong>${formatMoney(available ?? currentWeddingPending, currency)}</strong></span>`
+            ? `<span>Pagado <strong>${formatMoney(paid, currency)}</strong></span><span>Reservado ${escapeHtml(currentPendingWeddingLabel)} <strong>${formatMoney(available ?? currentWeddingPending, currency)}</strong></span>`
             : `<span>En sobre <strong>${formatMoney(available ?? stored ?? 0, currency)}</strong></span>${pending > 0 ? `<span>+ madre <strong>${formatMoney(pending, currency)}</strong></span>` : ""}${reyesRemaining !== null ? `<span>Faltan <strong>${formatMoney(reyesRemaining, currency)}</strong></span>` : ""}`}
         </div>
       </article>`;
@@ -6669,7 +6670,7 @@ function renderGiftsOverview() {
 
         <div class="gift-next-year">
           <div class="gift-next-year-head">
-            <div><strong>${escapeHtml(String(gifts.nextYear || ""))} · próximas bodas</strong><span>${nextYearWeddings.length} × 400 €</span></div>
+            <div><strong>${escapeHtml(String(gifts.nextYear || ""))} · próximas bodas</strong><span>${nextYearWeddings.length} previstas</span></div>
             <b>${formatMoney(nextYearTarget, currency)}</b>
           </div>
           <div class="gift-paid-list">
