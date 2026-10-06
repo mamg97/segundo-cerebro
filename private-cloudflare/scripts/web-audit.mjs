@@ -1304,6 +1304,27 @@ try {
       await page.locator("#gifts-summary .gift-next-year").count() === 1,
     "Regalos · estructura de sobre, fondos y bodas"
   );
+  const giftsTypography = await page.evaluate(() => {
+    const size = (selector) => {
+      const node = document.querySelector(selector);
+      if (!node) return null;
+      return Number.parseFloat(getComputedStyle(node).fontSize) || null;
+    };
+    return {
+      envelopeTitle: size("#gifts-summary .gift-envelope-head strong"),
+      monthRow: size("#gifts-summary .gift-month-row:not(.gift-month-head)"),
+      weddingTitle: size("#gifts-summary .gift-wedding-row strong")
+    };
+  }).catch(() => null);
+  if (giftsTypography?.envelopeTitle !== null && giftsTypography?.monthRow !== null && giftsTypography?.weddingTitle !== null) {
+    assertCheck(
+      giftsTypography.envelopeTitle >= 13 &&
+        giftsTypography.monthRow >= 9 &&
+        giftsTypography.weddingTitle >= 11,
+      "Regalos · tipografía compacta pero legible",
+      JSON.stringify(giftsTypography)
+    );
+  }
   const giftsGeometry = await giftsPanel.evaluate((node) => {
     const rect = node.getBoundingClientRect();
     return {

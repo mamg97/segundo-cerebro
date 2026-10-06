@@ -1962,3 +1962,11 @@ Antes de cualquier cambio:
 - El Home muestra pagos de boda del año, bodas pendientes y bodas del año siguiente con fecha e importe previstos desde la tabla privada `Regalos`.
 - Las bodas futuras no consumen el sobre actual sin una asignación explícita.
 - La superficie permanece bajo `Obligaciones activas` y aumenta legibilidad sin volver a ocupar una fila completa.
+
+
+### ORGANIZADOR 10 · Regalos: densidad legible en Home · 2026-10-06
+
+- `Regalos · Bodas y Reyes` permanece dentro de `finance-right-stack`, debajo de `Obligaciones activas`, aprovechando el hueco vertical frente a Patrimonio.
+- La tipografía interna se aumenta sin volver a expandir el panel: se reducen paddings/gaps y se elevan tamaños de títulos, histórico mensual, bodas y KPIs.
+- El auditor exige mínimos de legibilidad para título del sobre, filas mensuales y nombres de bodas, además de mantener el check de ausencia de overflow.
+- Los importes, personas, fechas y estados siguen viviendo exclusivamente en la pestaña privada `Regalos`; no se hardcodean en Git.
