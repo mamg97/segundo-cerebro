@@ -1,3 +1,17 @@
+## Salud · balance calórico integrado y validado en producción · 2026-10-07
+
+- Integración funcional cerrada: PR #295 añadió el balance calórico diario al Resumen y PR #296 estabilizó la carga del workspace.
+- Producción validada por Audit production web #203 sobre el código desplegado posterior:
+  - `/api/health/overview` responde y expone 14 días de `nutritionHistory`;
+  - Salud → Resumen carga sin error visible;
+  - conserva los 5 KPIs del Home y los 4 anillos + Peso estático;
+  - la tabla `Balance calórico` está visible;
+  - columnas verificadas: Día, Gasto, Ingesta, Diferencia, Estado;
+  - muestra exactamente 7 filas;
+  - el contenedor usa scroll horizontal contenido (`overflow-x: auto`).
+- Por tanto, la integración del balance calórico se considera publicada y operativa.
+- El mismo auditor global quedó rojo por incidencias distintas que NO invalidan este cierre: un `502` transitorio inicial de `/api/nutrition`, tres workflows MIDAS fallidos y un solape visual de la leyenda de liquidez en Finanzas. Deben tratarse como incidencias separadas.
+
 ## Salud · resiliencia de lectura tras balance calórico · 2026-10-06
 
 - Incidente detectado tras PR #295: el primer `/api/health/overview` respondía 200 y exponía `nutritionHistory`, pero al abrir Salud la UI lanzaba simultáneamente `overview`, `nutrition`, `gym` y `appointments`; durante esa ráfaga aparecían 5xx transitorios y el Resumen podía quedar vacío.
