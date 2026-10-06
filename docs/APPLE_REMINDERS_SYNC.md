@@ -29,7 +29,7 @@ iCloud propaga los cambios de la lista compartida entre los iPhone de Miguel y A
 | `COMPRADO` | Debe estar completado. |
 | `CANCELADO` | Se completa si aún existe; no se borra de forma destructiva. |
 
-Si un recordatorio activo enlazado desaparece de una instantánea completa de Apple, `ListaCompra` pasa a `CANCELADO`. Completar un recordatorio nunca aumenta inventario: ticket, confirmación o reconciliación posterior siguen siendo necesarios.
+Si un recordatorio activo enlazado desaparece de una instantánea completa de Apple, `ListaCompra` pasa a `CANCELADO`, salvo que la fila ya esté confirmada como `COMPRADO` por una evidencia más fuerte (por ejemplo, ticket o reconciliación de compra). En ese caso se conserva `COMPRADO` y se registra que el recordatorio de Apple desapareció; Apple nunca debe degradar una compra ya demostrada. Completar un recordatorio nunca aumenta inventario: ticket, confirmación o reconciliación posterior siguen siendo necesarios.
 
 Si una fila previamente enlazada se elimina físicamente de `ListaCompra`, Segundo Cerebro no la reconstruye desde la instantánea de Apple: encola una única acción idempotente para completar el recordatorio enlazado. Solo se aplica a vínculos persistidos en D1; un recordatorio manual que nunca estuvo enlazado no se toca. Apple lo oculta de la lista activa, pero lo conserva en el histórico de completados.
 
