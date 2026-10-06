@@ -9,7 +9,7 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.42.26">
+    <link rel="stylesheet" href="./styles.css?v=0.42.27">
     <script type="module" src="./app.js?v=0.42.25"></script>
   </head>
   <body>
@@ -219,31 +219,33 @@
             </nav>
           </article>
 
-          <article class="debt-panel">
-            <div class="section-heading">
-              <div>
-                <p class="context-label">Deudas</p>
-                <h2>Obligaciones activas</h2>
+          <div class="finance-right-stack">
+            <article class="debt-panel">
+              <div class="section-heading">
+                <div>
+                  <p class="context-label">Deudas</p>
+                  <h2>Obligaciones activas</h2>
+                </div>
+                <button id="show-debt-detail" class="text-action" type="button">Ver detalle</button>
               </div>
-              <button id="show-debt-detail" class="text-action" type="button">Ver detalle</button>
-            </div>
-            <div id="debt-summary" class="debt-summary"></div>
-            <nav class="home-card-links finance-home-links" aria-label="Accesos de Obligaciones activas">
-              <button id="home-debt-detail" type="button">Detalle</button>
-              <button id="home-debt-credit" type="button">El Corte Inglés</button>
-            </nav>
-          </article>
+              <div id="debt-summary" class="debt-summary"></div>
+              <nav class="home-card-links finance-home-links" aria-label="Accesos de Obligaciones activas">
+                <button id="home-debt-detail" type="button">Detalle</button>
+                <button id="home-debt-credit" type="button">El Corte Inglés</button>
+              </nav>
+            </article>
 
-          <article class="gifts-panel" aria-labelledby="gifts-panel-title">
-            <div class="section-heading">
-              <div>
-                <p class="context-label">Regalos</p>
-                <h2 id="gifts-panel-title">Bodas y Reyes</h2>
+            <article class="gifts-panel" aria-labelledby="gifts-panel-title">
+              <div class="section-heading">
+                <div>
+                  <p class="context-label">Regalos</p>
+                  <h2 id="gifts-panel-title">Bodas y Reyes</h2>
+                </div>
+                <span id="gifts-year" class="count-pill">Sin datos</span>
               </div>
-              <span id="gifts-year" class="count-pill">Sin datos</span>
-            </div>
-            <div id="gifts-summary" class="gifts-summary"></div>
-          </article>
+              <div id="gifts-summary" class="gifts-summary"></div>
+            </article>
+          </div>
 
         </section>
 
