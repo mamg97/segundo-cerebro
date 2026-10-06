@@ -1970,3 +1970,10 @@ Antes de cualquier cambio:
 - La tipografía interna se aumenta sin volver a expandir el panel: se reducen paddings/gaps y se elevan tamaños de títulos, histórico mensual, bodas y KPIs.
 - El auditor exige mínimos de legibilidad para título del sobre, filas mensuales y nombres de bodas, además de mantener el check de ausencia de overflow.
 - Los importes, personas, fechas y estados siguen viviendo exclusivamente en la pestaña privada `Regalos`; no se hardcodean en Git.
+
+
+### SALUD · backfill Apple Health completo desde ZIP · 06/10/2026
+- El mecanismo de recuperación por export de Apple Health cubre actividad/energía, composición corporal y ahora también recuperación/sueño.
+- Las filas de `RecuperacionDiariaApple` con `source=apple_health_export_recovery` se reconcilian idempotentemente hacia D1 `health_recovery_daily` durante la lectura de Salud.
+- La pestaña sigue siendo superficie derivada; solo las filas marcadas explícitamente como recovery de export se usan como staging. Las filas `apple_health` normales no se reingestan.
+- Esto permite sustituir snapshots live parciales cuando el bridge iOS falla, sin crear una segunda fuente de verdad ni subir datos privados a Git.
