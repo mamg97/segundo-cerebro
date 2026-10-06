@@ -2548,9 +2548,9 @@ function renderHealthCalorieBalance(history = []) {
         <span class="health-calorie-axis-label is-negative" aria-hidden="true">Déficit −</span>
         <div class="health-calorie-chart-days">
           ${rows.map((item) => {
-            const barPercent = item.balance === null
+            const barLevel = item.balance === null
               ? 0
-              : Math.max(5, Math.min(100, Math.round((Math.abs(item.balance) / maxAbsBalance) * 100)));
+              : Math.max(5, Math.min(100, Math.ceil((Math.abs(item.balance) / maxAbsBalance) * 20) * 5));
             const dayTitle = item.isToday ? "Hoy" : shortWeekday(item.date);
             const detail = item.balance === null
               ? `${formatNutritionDate(item.date)} · ${item.stateLabel}`
@@ -2568,13 +2568,13 @@ function renderHealthCalorieBalance(history = []) {
                 <div class="health-calorie-chart-plot">
                   <div class="health-calorie-chart-half is-positive">
                     ${item.balance !== null && item.balance > 0 ? `
-                      <span class="health-calorie-bar is-surplus" style="height:${barPercent}%">
+                      <span class="health-calorie-bar is-surplus level-${barLevel}">
                         <strong>${escapeHtml(signedKcal(item.balance).replace(" kcal", ""))}</strong>
                       </span>` : ""}
                   </div>
                   <div class="health-calorie-chart-half is-negative">
                     ${item.balance !== null && item.balance < 0 ? `
-                      <span class="health-calorie-bar is-deficit" style="height:${barPercent}%">
+                      <span class="health-calorie-bar is-deficit level-${barLevel}">
                         <strong>${escapeHtml(signedKcal(item.balance).replace(" kcal", ""))}</strong>
                       </span>` : ""}
                   </div>
