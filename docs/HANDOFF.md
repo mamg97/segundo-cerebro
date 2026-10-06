@@ -1,3 +1,14 @@
+## Carrera profesional · fuente privada y vista dedicada · 2026-10-07
+
+- Carrera deja de depender del fallback genérico del área y pasa a tener una vista propia orientada a decisiones.
+- Fuente canónica privada: `SEGUNDO CEREBRO - CARRERA`, con Perfil, Oportunidades, Organigrama, Compensacion, Activos, Objetivos y Decisiones.
+- Los datos profesionales reales permanecen fuera de Git; la demo usa fixtures sintéticos.
+- El Worker resuelve la fuente por OAuth/título exacto (o `CAREER_SHEET_ID` opcional), expone `GET /api/career` y añade a `/api/state` solo un resumen de estado.
+- La vista prioriza posición actual, rutas profesionales, compensación con separación hecho/estimación, contexto organizativo, readiness de activos, decisiones y objetivos.
+- Finanzas sigue siendo autoridad de ingresos contabilizados; Carrera usa compensación únicamente como contexto de negociación y elección.
+- Rama de integración: `organizador11/career-private-domain-v2`.
+- Pendiente antes de cierre: ejecutar CI/build, integrar a `main` y validar producción.
+
 ## Salud · Balance calórico ampliado a 30 días · 2026-10-07
 
 - Salud → Resumen amplía la gráfica divergente de balance calórico de 7 a 30 días.
