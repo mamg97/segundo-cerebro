@@ -432,15 +432,19 @@ async function revalidateRecoveredSources() {
     const link = page.locator('[data-nav-area-id="area-health"]').first();
     if (await link.count()) {
       await link.click();
-      const button = page.locator('[data-health-tab="adherence"]');
-      const exists = await button.waitFor({ state: "visible", timeout: 7000 }).then(() => true).catch(() => false);
+      const summary = page.locator("#health-overview-adherence");
+      const exists = await summary.waitFor({ state: "visible", timeout: 9000 }).then(() => true).catch(() => false);
       if (exists) {
-        await button.click();
-        await page.waitForTimeout(500);
-        const text = normalizeAuditValue(await page.locator('[data-health-panel="adherence"]').textContent().catch(() => ""));
-        assertCheck(!/no se ha podido cargar|temporalmente no disponible|error al cargar/.test(text), "Recuperación UI /api/health/adherence");
+        await page.waitForFunction(() => {
+          const node = document.querySelector("#health-overview-adherence");
+          const text = (node?.textContent || "").toLowerCase();
+          return node?.querySelector(".health-adherence-overview") ||
+            /no se ha podido calcular|adherencia no disponible/.test(text);
+        }, null, { timeout: 9000 }).catch(() => {});
+        const text = normalizeAuditValue(await summary.textContent().catch(() => ""));
+        assertCheck(!/no se ha podido calcular|adherencia no disponible|error al cargar/.test(text), "Recuperación UI /api/health/adherence");
       } else {
-        fail("Recuperación UI /api/health/adherence", "pestaña no disponible");
+        fail("Recuperación UI /api/health/adherence", "bloque de Resumen no disponible");
       }
       await closeDialogIfOpen();
     }
@@ -1661,10 +1665,10 @@ try {
       return Boolean(
         dialog?.open &&
         document.querySelector("#dialog-title")?.textContent?.trim() === "Salud" &&
-        document.querySelectorAll("[data-health-tab]").length === 7
+        document.querySelectorAll("[data-health-tab]").length === 6
       );
     }, null, { timeout: 12000 });
-    const healthTabs = ["overview", "medical", "gym", "nutrition", "recipes", "adherence", "menu"];
+    const healthTabs = ["overview", "medical", "gym", "nutrition", "recipes", "menu"];
     const healthNutritionSnapshot = uiNutrition?.ok === true ? uiNutrition : nutrition.body;
     const expectedRecipeCount = Array.isArray(healthNutritionSnapshot?.recipes) ? healthNutritionSnapshot.recipes.length : 0;
 
@@ -1737,6 +1741,51 @@ try {
         }
         const weightFreshness = await panel.locator(".health-recomp-kpis .health-metric-freshness").count();
         assertCheck(weightFreshness >= 6, "Salud · composición muestra freshness/cobertura por métrica", "n=" + weightFreshness);
+
+
+        assertCheck(
+          await page.locator('[data-health-tab="adherence"]').count() === 0,
+          "Salud · Adherencia ya no ocupa una pestaña superior"
+        );
+        const adherenceSummary = panel.locator("#health-overview-adherence");
+        const adherenceReady = await adherenceSummary.locator(".health-adherence-overview")
+          .waitFor({ state: "visible", timeout: 10000 })
+          .then(() => true)
+          .catch(() => false);
+        assertCheck(adherenceReady, "Salud · Resumen integra Adherencia mensual");
+        if (adherenceReady) {
+          const adherenceText = normalizeAuditValue(await adherenceSummary.textContent().catch(() => ""));
+          assertCheck(
+            /adherencia del mes/.test(adherenceText) &&
+              /cumplidos/.test(adherenceText) &&
+              /parciales/.test(adherenceText) &&
+              /no cumplidos/.test(adherenceText) &&
+              /racha actual/.test(adherenceText),
+            "Salud · Adherencia compacta muestra métricas clave",
+            adherenceText
+          );
+          const adherenceExpand = adherenceSummary.locator("[data-adherence-expand]");
+          assertCheck(await adherenceExpand.count() === 1, "Salud · Adherencia ofrece detalle mensual desde Resumen");
+          if (await adherenceExpand.count()) {
+            await adherenceExpand.click();
+            const fullAdherence = panel.locator("#adherence-panel .adherence-shell");
+            const fullReady = await fullAdherence.waitFor({ state: "visible", timeout: 5000 })
+              .then(() => true)
+              .catch(() => false);
+            assertCheck(fullReady, "Salud · Adherencia despliega calendario mensual dentro de Resumen");
+            if (fullReady) {
+              assertCheck(
+                await panel.locator("#adherence-panel .adherence-calendar-card").count() === 1,
+                "Salud · Adherencia conserva calendario mensual"
+              );
+              assertCheck(
+                await panel.locator("#adherence-panel #adherence-day-detail").count() === 1,
+                "Salud · Adherencia conserva detalle diario"
+              );
+            }
+            await adherenceExpand.click().catch(() => {});
+          }
+        }
 
         const calorieHistory = Array.isArray(healthOverview.body?.nutritionHistory)
           ? healthOverview.body.nutritionHistory
