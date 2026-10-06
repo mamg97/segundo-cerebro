@@ -212,14 +212,14 @@ El histórico de Salud no debe forzar una lectura completa adicional si existe u
 
 ## Balance calórico diario en Resumen
 
-Salud → Resumen muestra una tabla derivada de los últimos 7 días que cruza ingesta confirmada de Nutrición con gasto total de Apple Health/D1. No crea una tabla canónica nueva.
+Salud → Resumen muestra una gráfica divergente de los últimos 7 días que cruza ingesta confirmada de Nutrición con gasto total de Apple Health/D1. No crea una tabla canónica nueva. El eje 0 separa superávit arriba y déficit abajo.
 
 Contrato:
 - ingesta = suma de filas `Registro` con estado `consumido`;
 - gasto = `totalKcal` de la fila diaria Health; fallback técnico activa + reposo cuando ambas existen;
 - diferencia = `ingesta - gasto`;
 - diferencia negativa = déficit, positiva = superávit;
-- la UI usa una banda de ±50 kcal como mantenimiento visual;
+- la UI representa cualquier balance negativo como déficit verde, cualquier balance positivo como superávit rojo y 0 exacto como equilibrio;
 - solo se clasifica un día si hay al menos una ingesta consumida y `coverageQuality` es `full` o `live`;
 - días con cobertura parcial, solo teléfono, desconocida o sin gasto quedan sin clasificar;
 - el día actual se etiqueta como provisional porque el gasto todavía puede crecer hasta el cierre.
