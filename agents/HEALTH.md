@@ -204,6 +204,12 @@ At each configured review interval, evaluate together:
 
 If weight/waist are moving in the intended direction while strength is stable or improving, keep the plan unless adherence/recovery indicates a problem. If trends stall or move too quickly for multiple weeks, adjust intake or activity modestly rather than making large day-to-day corrections.
 
+## Resiliencia de carga del workspace
+
+Para evitar ráfagas innecesarias contra fuentes privadas, abrir Salud carga primero solo el Resumen. Médicos y Gimnasio se cargan al abrir sus pestañas. Nutrición, Recetas y Menú reutilizan una única carga diferida de `/api/nutrition`.
+
+El histórico de Salud no debe forzar una lectura completa adicional si existe un snapshot nutricional reciente. La caché operativa puede reutilizar el último snapshot válido durante una ventana corta ante errores transitorios de lectura, siempre marcándolo como `ok-stale` y sin prolongarlo indefinidamente.
+
 ## Balance calórico diario en Resumen
 
 Salud → Resumen muestra una tabla derivada de los últimos 7 días que cruza ingesta confirmada de Nutrición con gasto total de Apple Health/D1. No crea una tabla canónica nueva.

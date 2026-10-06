@@ -2364,7 +2364,30 @@ function formatFamilyDate(value) {
   }).format(date);
 }
 
+let healthNutritionLoadedDate = null;
+let healthNutritionLoadPromise = null;
+let healthGymLoaded = false;
+let healthSkipNextNutritionTabLoad = false;
+
+async function ensureHealthNutritionPanels(dateKey = localDateKey()) {
+  if (healthNutritionLoadedDate === dateKey) return true;
+  if (healthNutritionLoadPromise) return healthNutritionLoadPromise;
+  healthNutritionLoadPromise = loadNutritionPanel(dateKey)
+    .then((ok) => {
+      if (ok) healthNutritionLoadedDate = dateKey;
+      return ok;
+    })
+    .finally(() => {
+      healthNutritionLoadPromise = null;
+    });
+  return healthNutritionLoadPromise;
+}
+
 function openHealthDetail(options = {}) {
+  healthNutritionLoadedDate = null;
+  healthNutritionLoadPromise = null;
+  healthGymLoaded = false;
+  healthSkipNextNutritionTabLoad = options.skipNutritionLoad === true;
   const dialog = document.querySelector("#detail-dialog");
   dialog.classList.remove("wealth-dialog", "important-events-dialog", "budget-dialog", "parents-dialog", "electricity-dialog");
   dialog.classList.add("health-dialog");
@@ -2408,29 +2431,19 @@ function openHealthDetail(options = {}) {
   bindHealthTabs();
   dialog.showModal();
   void loadHealthOverview(localDateKey());
-  void loadMedicalAppointments();
-  void loadGymPanel();
-  if (options.skipNutritionLoad !== true) void loadNutritionPanel(localDateKey());
 }
 
 async function loadHealthOverview(dateKey = localDateKey()) {
   const panel = document.querySelector("#health-overview-panel");
   if (panel) panel.innerHTML = '<p class="health-empty">Cargando Apple Health…</p>';
   try {
-    const [response, gymResponse] = await Promise.all([
-      fetch("/api/health/overview?date=" + encodeURIComponent(dateKey), {
-        headers: { Accept: "application/json" },
-        cache: "no-store"
-      }),
-      fetch("/api/gym", {
-        headers: { Accept: "application/json" },
-        cache: "no-store"
-      }).catch(() => null)
-    ]);
+    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(dateKey), {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
     const payload = await response.json();
-    const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
-    renderHealthOverview(payload, gymData || {});
+    renderHealthOverview(payload, {});
     loadHealthHistory("365", payload.date || dateKey);
   } catch (error) {
     if (panel) panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Apple Health no disponible</strong><p>No se ha podido cargar el resumen de actividad y composición corporal.</p></div>';
@@ -3021,13 +3034,15 @@ function renderHealthBenchmark(goal, sessions) {
 
 async function loadGymPanel() {
   try {
-    const response = await fetch("/api/gym", { headers: { Accept: "application/json" } });
+    const response = await fetch("/api/gym", { headers: { Accept: "application/json" }, cache: "no-store" });
     if (!response.ok) throw new Error(`GYM_${response.status}`);
     renderGymPanel(await response.json());
+    return true;
   } catch (error) {
     const panel = document.querySelector("#gym-panel");
     if (panel) panel.innerHTML = '<p class="health-empty">No se ha podido cargar el plan de gimnasio.</p>';
     console.warn("Gym load failed", error);
+    return false;
   }
 }
 
@@ -3044,6 +3059,7 @@ async function loadNutritionPanel(dateKey) {
     renderNutritionPanel(payload);
     renderRecipesPanel(payload);
     renderMenuPanel(payload);
+    return true;
   } catch (error) {
     if (panel) {
       panel.innerHTML = `
@@ -3061,6 +3077,7 @@ async function loadNutritionPanel(dateKey) {
       menuPanel.innerHTML = '<div class="health-empty health-empty-card"><strong>Menú no disponible</strong><p>No se ha podido cargar MenuSemanal.</p></div>';
     }
     console.warn("Nutrition load failed", error);
+    return false;
   }
 }
 
@@ -3731,6 +3748,18 @@ function bindHealthTabs() {
       document.querySelectorAll("[data-health-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.healthPanel === tab));
       if (tab === "adherence") void loadHealthAdherence();
       if (tab === "medical") void loadMedicalAppointments();
+      if (tab === "gym" && !healthGymLoaded) {
+        void loadGymPanel().then((ok) => {
+          if (ok) healthGymLoaded = true;
+        });
+      }
+      if (["nutrition", "recipes", "menu"].includes(tab)) {
+        if (healthSkipNextNutritionTabLoad) {
+          healthSkipNextNutritionTabLoad = false;
+        } else {
+          void ensureHealthNutritionPanels(localDateKey());
+        }
+      }
     });
   });
 }

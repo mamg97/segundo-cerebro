@@ -1,3 +1,16 @@
+## Salud · resiliencia de lectura tras balance calórico · 2026-10-06
+
+- Incidente detectado tras PR #295: el primer `/api/health/overview` respondía 200 y exponía `nutritionHistory`, pero al abrir Salud la UI lanzaba simultáneamente `overview`, `nutrition`, `gym` y `appointments`; durante esa ráfaga aparecían 5xx transitorios y el Resumen podía quedar vacío.
+- Corrección:
+  - Salud abre solo con `/api/health/overview`;
+  - Médicos y Gimnasio cargan al entrar en su pestaña;
+  - Nutrición/Recetas/Menú comparten una única carga diferida de `/api/nutrition`;
+  - el Resumen deja de pedir `/api/gym` en paralelo porque `/api/health/overview` ya lleva el resumen de gimnasio;
+  - `fetchHealthHistory` reutiliza el snapshot nutricional y ya no fuerza una segunda lectura completa de Google;
+  - caché Health ampliada a 60 s y fallback de último snapshot válido durante un máximo adicional de 5 min ante fallo transitorio de `overview` o `nutrition`.
+- No cambia la fuente canónica ni el cálculo del balance. El objetivo es eliminar ráfagas redundantes y evitar que un tropiezo temporal de backend borre una vista que ya tenía datos válidos.
+- Rama de corrección: `organizador11/health-read-resilience`.
+
 ## Salud · balance calórico diario en Resumen · 2026-10-06
 
 - Salud → Resumen incorpora un bloque `Balance calórico` a ancho completo con los últimos 7 días: Gasto, Ingesta, Diferencia y Estado.
