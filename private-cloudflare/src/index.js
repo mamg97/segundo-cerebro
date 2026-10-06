@@ -3269,11 +3269,15 @@ async function fetchHealthNutritionSummary(env, options = {}) {
           : null
       ))
       : null;
+    const consumedEntryCount = dayRows.filter((item) => item.status === "consumido").length;
+    const coverageQuality = dayEnergy ? healthCoverageQuality(dayEnergy) : "missing";
     history.push({
       date: historyDate,
       consumedKcal: dayConsumed.kcal,
+      consumedEntryCount,
       burnedKcal: burn,
       balanceKcal: burn === null ? null : dayConsumed.kcal - burn,
+      coverageQuality,
       steps: dayEnergy?.steps ?? null,
       exerciseMinutes: dayEnergy?.exerciseMinutes ?? null,
       workoutCount: dayEnergy?.workoutCount ?? null
@@ -4968,6 +4972,7 @@ export default {
           activityObjective: health.value.activityObjective || null,
           nutritionObjective: health.value.objective || null,
           nutritionSummary: health.value.summary || null,
+          nutritionHistory: health.value.history || [],
           progressObjectives: health.value.progressObjectives || [],
           weeklyMenu: health.value.weeklyMenu || [],
           gym,
