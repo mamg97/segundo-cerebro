@@ -280,6 +280,32 @@ Reglas:
 
 
 
+### Fondos de regalos · Bodas y Reyes
+
+La capa financiera privada derivada puede exponer una tabla `Regalos` para separar claramente **dinero reservado/almacenado** de **regalos de boda ya pagados**. Esta tabla no sustituye al maestro histórico ni a los movimientos bancarios: los normaliza para una vista operativa estable.
+
+Campos mínimos por fila:
+- `record_id`: identidad estable;
+- `year`: año del fondo/evento;
+- `kind`: `fund_month` o `wedding`;
+- `category`: `bodas`, `reyes` u otra categoría futura;
+- `period`: mes `YYYY-MM` para aportaciones;
+- `event_date`: fecha conocida del evento/pago cuando exista;
+- `label`: etiqueta privada legible;
+- `monthly_saved`: aportación efectivamente contabilizada ese mes;
+- `stored_cumulative`: acumulado contabilizado del fondo;
+- `annual_target`: objetivo anual;
+- `planned_amount`: importe previsto todavía no ejecutado;
+- `paid_amount`: importe pagado y conciliado;
+- `status`, `source_status`, `source_ref`, `note`: estado y trazabilidad.
+
+Reglas:
+- una aportación futura no se suma a `stored_cumulative` hasta que el dinero exista realmente;
+- una boda solo entra en «pagadas» cuando existe pago confirmado/conciliado; una planificación o una reserva no equivale a pago;
+- `stored_cumulative` representa dinero acumulado por aportaciones, mientras que la UI puede mostrar aparte el disponible tras pagos;
+- los objetivos y aportaciones viven en el Sheet privado; Git contiene únicamente el contrato y la lógica genérica;
+- el Home muestra el histórico mensual y objetivo anual en una columna y las bodas pagadas en otra, sin inferir pagos a partir del nombre de un movimiento ambiguo.
+
 ## Responsabilidad de ORGANIZADOR sobre Finanzas
 
 ORGANIZADOR y la capa de interfaz son consumidores de solo lectura del estado financiero ya mantenido por GESTOR FINANZAS.
