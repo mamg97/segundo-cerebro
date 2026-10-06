@@ -204,3 +204,16 @@ The public exercise catalogue is kept separate from private training data.
 - Official catalogue image references are HTTPS and use `referrerpolicy="no-referrer"`. Recipe photographs keep their existing private same-origin pipeline.
 - External reference failures leave the canonical card usable, with missing fields explicitly pending. No paid dependency is introduced.
 
+
+
+## Carrera profesional
+
+El dominio Carrera es `confidencial`.
+
+- Nombres reales de managers/compañeros, organigramas, salarios, bandas, oportunidades, candidaturas, notas de negociación y preferencias de transición permanecen en la fuente privada.
+- Git contiene únicamente contrato, adaptador, UI y fixtures inequívocamente sintéticos.
+- `/api/state` recibe solo el resumen necesario para navegación/priorización; el detalle se obtiene bajo demanda con `GET /api/career`.
+- Una estimación salarial debe conservar su etiqueta de estimación; no se transforma en dato confirmado por aparecer en la interfaz.
+- Finanzas conserva la autoridad de ingresos y movimientos reales; Carrera no replica extractos, nóminas ni contabilidad.
+- URLs de procesos profesionales pueden conservarse en la fuente privada. No versionar referencias privadas, correos de recruiters, documentos de candidatura ni notas personales.
+- El portfolio público puede enseñar la arquitectura del módulo usando datos sintéticos, nunca el estado profesional real del usuario o de terceros.
