@@ -6526,23 +6526,35 @@ function renderGiftsOverview() {
   const funds = gifts.funds;
   const fundRows = Array.isArray(gifts.fundRows) ? gifts.fundRows : [];
   const paidWeddings = Array.isArray(gifts.paidWeddings) ? gifts.paidWeddings : [];
-  const unreconciled = Array.isArray(gifts.unreconciledWeddings) ? gifts.unreconciledWeddings : [];
-  const totalStored = firstFinite(gifts.totalStored);
-  const totalTarget = firstFinite(gifts.totalTarget);
+  const pendingWeddings = Array.isArray(gifts.unreconciledWeddings) ? gifts.unreconciledWeddings : [];
+  const nextYearWeddings = Array.isArray(gifts.nextYearWeddings) ? gifts.nextYearWeddings : [];
+  const cashAvailable = firstFinite(gifts.cashAvailable);
+  const pendingCash = firstFinite(gifts.pendingCash) ?? 0;
+  const projectedCash = firstFinite(gifts.projectedCash);
+  const contributedTotal = firstFinite(gifts.contributedTotal);
   const totalPaid = firstFinite(gifts.totalPaidWeddings) ?? 0;
-  const totalPct = totalStored !== null && totalTarget !== null && totalTarget > 0
-    ? Math.max(0, Math.min(100, (totalStored / totalTarget) * 100))
-    : null;
+  const nextYearTarget = firstFinite(gifts.nextYearWeddingTarget) ?? 0;
+
+  const currentWeddingPending = pendingWeddings.reduce(
+    (sum, item) => sum + Math.max(0, firstFinite(item.plannedAmount) || 0),
+    0
+  );
 
   const fundCards = funds.map((fund) => {
     const stored = firstFinite(fund.stored);
     const target = firstFinite(fund.target);
     const paid = firstFinite(fund.paid) ?? 0;
     const available = firstFinite(fund.available);
-    const progress = stored !== null && target !== null && target > 0
-      ? Math.max(0, Math.min(100, (stored / target) * 100))
+    const pending = firstFinite(fund.pendingCash) ?? 0;
+    const projected = firstFinite(fund.projectedAvailable);
+    const progressBase = fund.category === "bodas" ? stored : projected ?? stored;
+    const progress = progressBase !== null && target !== null && target > 0
+      ? Math.max(0, Math.min(100, (progressBase / target) * 100))
       : null;
-    const pending = firstFinite(fund.latestPlannedAmount);
+    const reyesRemaining = fund.category === "reyes" && target !== null && projected !== null
+      ? Math.max(0, target - projected)
+      : null;
+
     return `
       <article class="gift-fund-card">
         <div class="gift-fund-head">
@@ -6551,48 +6563,91 @@ function renderGiftsOverview() {
         </div>
         <progress class="gift-progress" max="100" value="${progress === null ? 0 : progress.toFixed(1)}" aria-label="Progreso de ${escapeHtml(giftCategoryLabel(fund.category))}"></progress>
         <div class="gift-fund-meta">
-          ${fund.category === "bodas" && available !== null
-            ? `<span>Disponible tras pagos <strong>${formatMoney(available, currency)}</strong></span>`
-            : pending !== null && pending > 0
-              ? `<span>Próxima aportación prevista <strong>${formatMoney(pending, currency)}</strong></span>`
-              : `<span>Último periodo <strong>${escapeHtml(formatGiftPeriod(fund.latestPeriod))}</strong></span>`}
-          ${fund.category === "bodas" && paid > 0 ? `<span>Pagado <strong>${formatMoney(paid, currency)}</strong></span>` : ""}
+          ${fund.category === "bodas"
+            ? `<span>Pagado <strong>${formatMoney(paid, currency)}</strong></span><span>Reservado Silvia <strong>${formatMoney(available ?? currentWeddingPending, currency)}</strong></span>`
+            : `<span>En sobre <strong>${formatMoney(available ?? stored ?? 0, currency)}</strong></span>${pending > 0 ? `<span>+ madre <strong>${formatMoney(pending, currency)}</strong></span>` : ""}${reyesRemaining !== null ? `<span>Faltan <strong>${formatMoney(reyesRemaining, currency)}</strong></span>` : ""}`}
         </div>
       </article>`;
   }).join("");
 
-  const monthlyRows = fundRows.map((row) => `
-    <div class="gift-month-row">
-      <span>${escapeHtml(formatGiftPeriod(row.period))}</span>
-      <strong>${escapeHtml(giftCategoryLabel(row.category))}</strong>
-      <span>${row.monthlySaved === null ? "—" : (row.monthlySaved > 0 ? "+" : "") + formatMoney(row.monthlySaved, currency)}</span>
-      <span>${row.storedCumulative === null ? "—" : formatMoney(row.storedCumulative, currency)}</span>
-    </div>`).join("");
+  const monthMap = new Map();
+  for (const row of fundRows) {
+    const period = String(row.period || "");
+    if (!period) continue;
+    const item = monthMap.get(period) || { period, bodas: 0, reyes: 0, cumulative: 0, categories: new Map() };
+    const amount = firstFinite(row.monthlySaved) ?? 0;
+    item[row.category] = (item[row.category] || 0) + amount;
+    item.categories.set(row.category, firstFinite(row.storedCumulative) ?? 0);
+    item.cumulative = [...item.categories.values()].reduce((sum, value) => sum + value, 0);
+    monthMap.set(period, item);
+  }
+  const monthlyRows = [...monthMap.values()]
+    .sort((a, b) => a.period.localeCompare(b.period))
+    .map((row) => {
+      const parts = [];
+      if (row.bodas) parts.push("Bodas +" + formatMoney(row.bodas, currency));
+      if (row.reyes) parts.push("Reyes +" + formatMoney(row.reyes, currency));
+      if (!parts.length) parts.push("Sin entrada");
+      return `
+        <div class="gift-month-row">
+          <span>${escapeHtml(formatGiftPeriod(row.period))}</span>
+          <strong>${escapeHtml(parts.join(" · "))}</strong>
+          <span>${formatMoney(row.cumulative, currency)}</span>
+        </div>`;
+    }).join("");
 
   const paidRows = paidWeddings.map((item) => `
     <article class="gift-wedding-row">
       <div>
         <strong>${escapeHtml(item.label || "Boda")}</strong>
-        <small>${escapeHtml(formatFinanceDate(item.eventDate, item.eventDate || "Fecha no registrada"))}</small>
+        <small>Pagada${item.eventDate ? " · " + escapeHtml(formatFinanceDate(item.eventDate, item.eventDate)) : ""}</small>
       </div>
       <span>${formatMoney(firstFinite(item.paidAmount) || 0, currency)}</span>
+    </article>`).join("");
+
+  const pendingRows = pendingWeddings.map((item) => `
+    <article class="gift-wedding-row is-pending">
+      <div>
+        <strong>${escapeHtml(item.label || "Boda")}</strong>
+        <small>${escapeHtml(formatFinanceDate(item.eventDate, item.eventDate || "Fecha pendiente"))} · pendiente</small>
+      </div>
+      <span>${formatMoney(firstFinite(item.plannedAmount) || 0, currency)}</span>
+    </article>`).join("");
+
+  const nextRows = nextYearWeddings.map((item) => `
+    <article class="gift-wedding-row is-future">
+      <div>
+        <strong>${escapeHtml(item.label || "Boda")}</strong>
+        <small>${escapeHtml(formatFinanceDate(item.eventDate, item.eventDate || "Fecha pendiente"))}</small>
+      </div>
+      <span>${formatMoney(firstFinite(item.plannedAmount) || 0, currency)}</span>
     </article>`).join("");
 
   container.innerHTML = `
     <div class="gifts-summary-grid">
       <section class="gift-funds-column">
-        <div class="gift-column-heading">
-          <div><strong>Dinero almacenado</strong><span>mes a mes · objetivo anual</span></div>
-          <div class="gift-total-kpi">
-            <span>${totalStored === null ? "—" : formatMoney(totalStored, currency)}</span>
-            <small>${totalTarget === null ? "Objetivo —" : "de " + formatMoney(totalTarget, currency)}</small>
+        <div class="gift-envelope-head">
+          <div>
+            <strong>Sobre de regalos</strong>
+            <span>dinero físico disponible ahora</span>
+          </div>
+          <div class="gift-envelope-kpi">
+            <span>${cashAvailable === null ? "—" : formatMoney(cashAvailable, currency)}</span>
+            ${pendingCash > 0 ? `<small>+${formatMoney(pendingCash, currency)} pendiente de tu madre · ${projectedCash === null ? "—" : formatMoney(projectedCash, currency)} previsto</small>` : ""}
           </div>
         </div>
-        ${totalPct === null ? "" : `<progress class="gift-progress gift-progress-total" max="100" value="${totalPct.toFixed(1)}" aria-label="Progreso anual de fondos"></progress>`}
+
         <div class="gift-fund-cards">${fundCards || '<p class="gift-empty-inline">Sin fondos registrados.</p>'}</div>
-        <div class="gift-monthly-table" role="table" aria-label="Aportaciones mensuales de Bodas y Reyes">
+
+        <div class="gift-reconciliation">
+          <span>Aportado ene–hoy <strong>${contributedTotal === null ? "—" : formatMoney(contributedTotal, currency)}</strong></span>
+          <span>− bodas pagadas <strong>${formatMoney(totalPaid, currency)}</strong></span>
+          <span>= sobre actual <strong>${cashAvailable === null ? "—" : formatMoney(cashAvailable, currency)}</strong></span>
+        </div>
+
+        <div class="gift-monthly-table" role="table" aria-label="Aportaciones mensuales a Bodas y Reyes">
           <div class="gift-month-row gift-month-head" role="row">
-            <span>Mes</span><strong>Fondo</strong><span>Aportación</span><span>Acumulado</span>
+            <span>Mes</span><strong>Aportación</strong><span>Acum. fondos</span>
           </div>
           ${monthlyRows || '<p class="gift-empty-inline">Sin histórico mensual.</p>'}
         </div>
@@ -6600,20 +6655,27 @@ function renderGiftsOverview() {
 
       <section class="gift-paid-column">
         <div class="gift-column-heading">
-          <div><strong>Bodas pagadas</strong><span>pagos confirmados</span></div>
+          <div><strong>Bodas</strong><span>${Number(gifts.paidWeddingCount || 0)} pagadas · ${pendingWeddings.length} pendiente ${gifts.year}</span></div>
           <div class="gift-total-kpi">
             <span>${formatMoney(totalPaid, currency)}</span>
-            <small>${Number(gifts.paidWeddingCount || 0)} de ${Number(gifts.weddingCount || 0)} bodas</small>
+            <small>pagado</small>
           </div>
         </div>
+
         <div class="gift-paid-list">
           ${paidRows || '<div class="gift-empty-inline">Todavía no hay pagos de boda confirmados.</div>'}
+          ${pendingRows}
         </div>
-        ${unreconciled.length ? `
-          <div class="gift-unreconciled">
-            <strong>${unreconciled.length === 1 ? "1 pendiente de pago" : unreconciled.length + " pendientes de pago"}</strong>
-            <span>${unreconciled.map((item) => escapeHtml(item.label || "Boda")).join(" · ")}</span>
-          </div>` : ""}
+
+        <div class="gift-next-year">
+          <div class="gift-next-year-head">
+            <div><strong>${escapeHtml(String(gifts.nextYear || ""))} · próximas bodas</strong><span>${nextYearWeddings.length} × 400 €</span></div>
+            <b>${formatMoney(nextYearTarget, currency)}</b>
+          </div>
+          <div class="gift-paid-list">
+            ${nextRows || '<div class="gift-empty-inline">Sin bodas futuras registradas.</div>'}
+          </div>
+        </div>
       </section>
     </div>
     ${gifts.sourceUpdatedAt ? `<p class="gift-source-note">Fuente financiera · ${escapeHtml(formatFinanceDate(gifts.sourceUpdatedAt, gifts.sourceUpdatedAt))}</p>` : ""}
