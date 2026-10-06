@@ -95,7 +95,7 @@ test("opening a recipe from Home does not race the regular nutrition loader", ()
   const end = app.indexOf("async function loadHealthOverview", start);
   assert.ok(start >= 0 && end > start);
   const healthDetail = app.slice(start, end);
-  assert.match(healthDetail, /options\.skipNutritionLoad !== true/);
+  assert.match(healthDetail, /healthSkipNextNutritionTabLoad = options\.skipNutritionLoad === true/);
 });
 
 
