@@ -12250,6 +12250,193 @@ html[data-theme="light"] :is(
 }
 
 
+/* Salud · Adherencia integrada en Resumen */
+.health-adherence-overview-card {
+  grid-column: 1 / -1;
+}
+
+.health-adherence-overview {
+  display: grid;
+  gap: 10px;
+}
+
+.health-adherence-overview-main {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.25fr) minmax(0, 2fr);
+  gap: 10px;
+}
+
+.health-adherence-overview-ring {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 13px;
+  background: var(--paper);
+}
+
+.health-adherence-overview-ring > span:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.health-adherence-overview-ring small,
+.health-adherence-overview-ring em,
+.health-adherence-overview-stats small,
+.health-adherence-overview-actions > span {
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-style: normal;
+}
+
+.health-adherence-overview-ring strong {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.health-adherence-overview-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.health-adherence-overview-stats > span {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: var(--paper);
+}
+
+.health-adherence-overview-stats strong {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.health-adherence-overview-stats .fulfilled,
+.health-adherence-overview-today.fulfilled strong {
+  color: var(--mint);
+}
+
+.health-adherence-overview-stats .partial,
+.health-adherence-overview-today.partial strong {
+  color: var(--amber);
+}
+
+.health-adherence-overview-stats .failed,
+.health-adherence-overview-today.failed strong {
+  color: var(--coral);
+}
+
+.health-adherence-overview-today {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+}
+
+.health-adherence-overview-today > span {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 1px;
+  min-width: 90px;
+}
+
+.health-adherence-overview-today small {
+  color: var(--ink-soft);
+  font-size: 8px;
+}
+
+.health-adherence-overview-today strong {
+  font-size: 12px;
+}
+
+.health-adherence-overview-today p {
+  min-width: 0;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.health-adherence-overview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.health-adherence-overview-actions button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.health-adherence-overview-actions button:hover,
+.health-adherence-overview-actions button:focus-visible {
+  border-color: var(--line-strong);
+  outline: none;
+}
+
+.health-adherence-inline-detail {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.health-adherence-inline-detail[hidden] {
+  display: none;
+}
+
+.health-adherence-inline-detail .adherence-shell {
+  width: 100%;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .health-adherence-overview-main {
+    grid-template-columns: 1fr;
+  }
+
+  .health-adherence-overview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .health-adherence-overview-today,
+  .health-adherence-overview-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .health-adherence-overview-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .health-adherence-overview-ring {
+    align-items: flex-start;
+  }
+
+  .health-adherence-overview-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* v0.30.0 — Salud / Adherencia mensual */
 .adherence-shell {
   display: grid;
