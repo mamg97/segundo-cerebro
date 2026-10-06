@@ -683,7 +683,8 @@ async function fetchFinanceSummary(env) {
     creditFutureRows,
     etoroAllocationRows,
     loanInvestmentBenchmarkRows,
-    movementRows
+    movementRows,
+    giftRows
   ] = await Promise.all([
     fetchOptionalFinanceRows("Cuentas!A1:J200"),
     fetchOptionalFinanceRows("ReservasCuenta!A1:J500"),
@@ -696,7 +697,8 @@ async function fetchFinanceSummary(env) {
     fetchOptionalFinanceRows("ECIFuturo!A1:O300"),
     fetchOptionalFinanceRows("EtoroAsignaciones!A1:M200"),
     fetchOptionalFinanceRows("PrestamoVsInversion!A1:X200"),
-    fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000")
+    fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000"),
+    fetchOptionalFinanceRows("Regalos!A1:P300")
   ]);
 
   let electricityRows = [];
@@ -1099,6 +1101,97 @@ async function fetchFinanceSummary(env) {
     loanInvestmentBenchmarks
   };
 
+  const giftRecords = parseTableRows(giftRows)
+    .map((item) => ({
+      id: item.record_id || item.id || null,
+      year: toNumber(item.year),
+      kind: item.kind || null,
+      category: String(item.category || "").trim().toLowerCase() || null,
+      period: item.period || null,
+      eventDate: sheetDateOrNull(item.event_date),
+      label: item.label || null,
+      monthlySaved: moneyOrNull(item.monthly_saved),
+      storedCumulative: moneyOrNull(item.stored_cumulative),
+      annualTarget: moneyOrNull(item.annual_target),
+      plannedAmount: moneyOrNull(item.planned_amount),
+      paidAmount: moneyOrNull(item.paid_amount),
+      status: item.status || null,
+      sourceStatus: item.source_status || null,
+      sourceRef: item.source_ref || null,
+      note: item.note || null
+    }))
+    .filter((item) => item.id && item.kind);
+
+  const giftYears = giftRecords
+    .map((item) => Number(item.year))
+    .filter((year) => Number.isFinite(year));
+  const currentGiftYear = new Date().getUTCFullYear();
+  const giftYear = giftYears.includes(currentGiftYear)
+    ? currentGiftYear
+    : giftYears.length
+      ? Math.max(...giftYears)
+      : currentGiftYear;
+  const giftYearRows = giftRecords.filter((item) => Number(item.year) === giftYear);
+  const giftFundRows = giftYearRows
+    .filter((item) => item.kind === "fund_month" && item.category)
+    .sort((a, b) => String(a.period || "").localeCompare(String(b.period || "")));
+  const giftWeddingRows = giftYearRows
+    .filter((item) => item.kind === "wedding")
+    .sort((a, b) => String(a.eventDate || "9999-12-31").localeCompare(String(b.eventDate || "9999-12-31")));
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const giftCategories = [...new Set(giftFundRows.map((item) => item.category).filter(Boolean))];
+  const giftFunds = giftCategories.map((category) => {
+    const rows = giftFundRows.filter((item) => item.category === category);
+    const eligible = rows.filter((item) => !item.period || item.period <= monthKey);
+    const latest = eligible.at(-1) || rows.at(-1) || null;
+    const targetValues = rows.map((item) => item.annualTarget).filter((value) => value !== null);
+    const target = targetValues.length ? Math.max(...targetValues) : null;
+    const paid = category === "bodas"
+      ? giftWeddingRows.reduce((sum, item) => sum + Math.max(0, item.paidAmount || 0), 0)
+      : 0;
+    const stored = latest?.storedCumulative ?? null;
+    return {
+      category,
+      stored,
+      target,
+      paid,
+      available: stored === null ? null : Math.max(0, stored - paid),
+      latestPeriod: latest?.period || null,
+      latestStatus: latest?.status || null,
+      latestPlannedAmount: latest?.plannedAmount ?? null,
+      rows
+    };
+  });
+  const giftPaidWeddings = giftWeddingRows.filter((item) =>
+    String(item.status || "").toLowerCase() === "paid" || (item.paidAmount !== null && item.paidAmount > 0)
+  );
+  const giftUnreconciledWeddings = giftWeddingRows.filter((item) => !giftPaidWeddings.includes(item));
+  const giftTargets = giftFunds
+    .map((item) => item.target)
+    .filter((value) => value !== null);
+  const giftStored = giftFunds
+    .map((item) => item.stored)
+    .filter((value) => value !== null);
+  const giftSummary = {
+    year: giftYear,
+    currency: summary.currency || "EUR",
+    funds: giftFunds,
+    fundRows: giftFundRows,
+    weddings: giftWeddingRows,
+    paidWeddings: giftPaidWeddings,
+    unreconciledWeddings: giftUnreconciledWeddings,
+    totalTarget: giftFunds.length && giftTargets.length === giftFunds.length
+      ? giftTargets.reduce((sum, value) => sum + value, 0)
+      : null,
+    totalStored: giftFunds.length && giftStored.length === giftFunds.length
+      ? giftStored.reduce((sum, value) => sum + value, 0)
+      : null,
+    totalPaidWeddings: giftPaidWeddings.reduce((sum, item) => sum + Math.max(0, item.paidAmount || 0), 0),
+    paidWeddingCount: giftPaidWeddings.length,
+    weddingCount: giftWeddingRows.length,
+    sourceUpdatedAt: summary.updated_at || null
+  };
+
   const importantEventRules = parseTableRows(importantEventRows)
     .map((item) => ({
       id: item.id || null,
@@ -1213,6 +1306,7 @@ async function fetchFinanceSummary(env) {
     creditFuture,
     accountTransactions,
     wealth: wealthSummary,
+    gifts: giftSummary,
     importantEventRules,
     health: { gymPlan, nutritionPlan },
     source: {
