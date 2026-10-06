@@ -1742,25 +1742,61 @@ try {
           ? healthOverview.body.nutritionHistory
           : [];
         assertCheck(calorieHistory.length >= 7, "Salud · API expone histórico de balance calórico", "n=" + calorieHistory.length);
-        const calorieTable = panel.locator(".health-calorie-table");
-        assertCheck(await calorieTable.count() === 1, "Salud · Resumen muestra tabla de balance calórico");
-        const calorieHeaders = normalizeAuditValue(await calorieTable.locator("thead").textContent().catch(() => ""));
+
+        const calorieChart = panel.locator(".health-calorie-chart");
+        assertCheck(await calorieChart.count() === 1, "Salud · Resumen muestra gráfica de balance calórico");
         assertCheck(
-          /dia/.test(calorieHeaders) && /gasto/.test(calorieHeaders) && /ingesta/.test(calorieHeaders) &&
-            /diferencia/.test(calorieHeaders) && /estado/.test(calorieHeaders),
-          "Salud · tabla conserva columnas Día/Gasto/Ingesta/Diferencia/Estado",
-          calorieHeaders
+          await calorieChart.locator(".health-calorie-zero-line").count() === 1,
+          "Salud · gráfica conserva eje cero"
         );
-        const calorieRows = await calorieTable.locator("tbody tr").count();
-        assertCheck(calorieRows === 7, "Salud · tabla muestra siete días", "n=" + calorieRows);
-        const calorieWrapOverflow = await panel.locator(".health-calorie-table-wrap").evaluate((node) =>
-          getComputedStyle(node).overflowX
-        ).catch(() => "");
+
+        const calorieDays = calorieChart.locator(".health-calorie-chart-day");
+        const calorieDayCount = await calorieDays.count();
+        assertCheck(calorieDayCount === 7, "Salud · gráfica muestra siete días", "n=" + calorieDayCount);
+
+        const calorieLegend = normalizeAuditValue(
+          await panel.locator(".health-calorie-chart-legend").textContent().catch(() => "")
+        );
         assertCheck(
-          ["auto", "scroll"].includes(calorieWrapOverflow),
-          "Salud · tabla de balance permite scroll horizontal contenido",
-          calorieWrapOverflow || "sin estilo"
+          /deficit/.test(calorieLegend) && /negativo/.test(calorieLegend) &&
+            /superavit/.test(calorieLegend) && /positivo/.test(calorieLegend),
+          "Salud · gráfica explica verde negativo y rojo positivo",
+          calorieLegend
         );
+
+        const renderedBalances = await calorieDays.evaluateAll((nodes) => nodes.map((node) => ({
+          date: node.dataset.date || "",
+          balance: node.dataset.balance === "" ? null : Number(node.dataset.balance),
+          state: node.dataset.state || ""
+        }))).catch(() => []);
+        const expectedChartDays = calorieHistory.slice(-7);
+        assertCheck(
+          renderedBalances.length === expectedChartDays.length,
+          "Salud · gráfica representa los siete registros más recientes",
+          "UI=" + renderedBalances.length + " API=" + expectedChartDays.length
+        );
+        for (const item of renderedBalances) {
+          if (!Number.isFinite(item.balance)) continue;
+          if (item.balance < 0) {
+            assertCheck(
+              item.state === "is-deficit",
+              "Salud · balance negativo se representa como déficit verde",
+              item.date + "=" + item.balance + " · " + item.state
+            );
+          } else if (item.balance > 0) {
+            assertCheck(
+              item.state === "is-surplus",
+              "Salud · balance positivo se representa como superávit rojo",
+              item.date + "=" + item.balance + " · " + item.state
+            );
+          } else {
+            assertCheck(
+              item.state === "is-maintenance",
+              "Salud · balance cero se representa como equilibrio",
+              item.date + "=" + item.balance + " · " + item.state
+            );
+          }
+        }
       }
       if (tab === "gym") {
         const planButton = panel.locator('[data-gym-view="plan"]');
