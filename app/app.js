@@ -2558,6 +2558,7 @@ function renderHealthCalorieBalance(history = []) {
             return `
               <div
                 class="health-calorie-chart-day ${item.isToday ? "is-today" : ""} ${item.stateClass}"
+                data-date="${escapeHtml(item.date)}"
                 data-balance="${item.balance === null ? "" : Math.round(item.balance)}"
                 data-state="${item.stateClass}"
                 role="group"
