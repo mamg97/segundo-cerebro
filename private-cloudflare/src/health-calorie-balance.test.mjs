@@ -5,7 +5,8 @@ import { readFile } from "node:fs/promises";
 const worker = await readFile(new URL("./index.js", import.meta.url), "utf8");
 
 test("Health overview exposes nutrition balance history", () => {
-  assert.match(worker, /nutritionHistory:\s*health\.value\.history \|\| \[\]/);
+  assert.match(worker, /nutritionHistory:\s*value\.history \|\| \[\]/);
+  assert.match(worker, /healthOverviewPayload\(health\.value, health\.status, gym\)/);
 });
 
 test("Nutrition history carries intake completeness and Health coverage quality", () => {
