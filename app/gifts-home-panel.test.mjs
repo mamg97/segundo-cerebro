@@ -52,6 +52,7 @@ test("Gifts panel is responsive and audit-covered", () => {
 
   assert.match(audit, /Regalos · panel visible/);
   assert.match(audit, /Regalos · sobre actual y bodas futuras disponibles/);
+  assert.match(audit, /\/proximas bodas\//);
   assert.match(audit, /Regalos · estructura de sobre, fondos y bodas/);
   assert.match(audit, /Regalos · tipografía compacta pero legible/);
   assert.match(audit, /Regalos · sin overflow/);
