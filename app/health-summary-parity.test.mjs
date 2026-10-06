@@ -65,6 +65,7 @@ test("Health overview exposes a reliable thirty-day divergent calorie chart", ()
 
   assert.match(css, /\.health-calorie-balance-card\s*\{[\s\S]*?grid-column:\s*1 \/ -1/);
   assert.match(css, /\.health-calorie-chart-days\s*\{[\s\S]*?grid-template-columns:\s*repeat\(30, minmax\(24px, 1fr\)\)/);
+  assert.match(css, /\.health-calorie-chart\s*\{[\s\S]*?overflow-x:\s*auto/);
   assert.match(css, /\.health-calorie-bar\.is-deficit\s*\{[\s\S]*?background:\s*var\(--mint\)/);
   assert.match(css, /\.health-calorie-bar\.is-surplus\s*\{[\s\S]*?background:\s*var\(--coral\)/);
   assert.match(css, /\.health-calorie-zero-line\s*\{/);
