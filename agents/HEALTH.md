@@ -204,6 +204,22 @@ At each configured review interval, evaluate together:
 
 If weight/waist are moving in the intended direction while strength is stable or improving, keep the plan unless adherence/recovery indicates a problem. If trends stall or move too quickly for multiple weeks, adjust intake or activity modestly rather than making large day-to-day corrections.
 
+## Balance calórico diario en Resumen
+
+Salud → Resumen muestra una tabla derivada de los últimos 7 días que cruza ingesta confirmada de Nutrición con gasto total de Apple Health/D1. No crea una tabla canónica nueva.
+
+Contrato:
+- ingesta = suma de filas `Registro` con estado `consumido`;
+- gasto = `totalKcal` de la fila diaria Health; fallback técnico activa + reposo cuando ambas existen;
+- diferencia = `ingesta - gasto`;
+- diferencia negativa = déficit, positiva = superávit;
+- la UI usa una banda de ±50 kcal como mantenimiento visual;
+- solo se clasifica un día si hay al menos una ingesta consumida y `coverageQuality` es `full` o `live`;
+- días con cobertura parcial, solo teléfono, desconocida o sin gasto quedan sin clasificar;
+- el día actual se etiqueta como provisional porque el gasto todavía puede crecer hasta el cierre.
+
+El API privado `GET /api/health/overview` expone este histórico como `nutritionHistory`; la fuente real sigue siendo Nutrición + Health/D1.
+
 ## Private historical summary bridge
 
 Raw Apple Health backfill remains canonical in private D1 and is not duplicated into Git. To let authorized ChatGPT health-manager sessions analyze trends without Cloudflare Access cookies, the private Health Sheet contains a derived tab `HistoricoResumen`.
