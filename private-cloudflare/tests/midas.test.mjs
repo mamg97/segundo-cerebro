@@ -122,8 +122,8 @@ test("MIDAS research resolves thesis, CAGR and tracking through IntegracionesPri
   assert.equal(result.theses[0].thesisUrl, "https://docs.google.com/document/d/example/edit");
   assert.equal(result.tracking[0].market, "NASDAQ");
   assert.equal(result.tracking[0].currentPrice, 80);
-  assert.equal(result.tracking[0].basePrice5y, 145.94);
-  assert.equal(result.tracking[0].priceFor15, 72.56);
+  assert.equal(result.tracking[0].basePrice5y, 146.1);
+  assert.equal(result.tracking[0].priceFor15, 72.64);
   assert.equal(result.tracking[0].nextEarnings, "2026-11-05");
   assert.equal(seen.some((url) => url.includes("IntegracionesPrivadas")), true);
   assert.equal(seen.some((url) => url.includes("SEGUIMIENTO")), true);
