@@ -1,4 +1,6 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
+import { fetchGoogleCalendarSummary, hasGoogleCalendarConfig, safeGoogleCalendarErrorCode } from "./google-calendar.js";
+import { mergeCalendarSources } from "./calendar-federation.js";
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
 import { fetchMercadonaReference } from "./mercadona.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
@@ -5859,7 +5861,7 @@ export default {
         return json({ ok: false, code: "INVALID_STATE_JSON" }, 500);
       }
 
-      const [finance, habits, nutrition, pantry, objects, projects, career, eventsStore, calendar, family] = await Promise.all([
+      const [finance, habits, nutrition, pantry, objects, projects, career, eventsStore, calendar, googleCalendar, family] = await Promise.all([
         loadStateSource(hasFinanceGoogleConfig(env), "Finance", () => fetchFinanceSummary(env)),
         loadStateSource(hasHabitQuestGoogleConfig(env), "HabitQuest", () => fetchHabitQuestSummary(env)),
         loadStateSource(hasHealthGoogleConfig(env), "Nutrition", () => fetchHealthNutritionSummary(env)),
@@ -5872,6 +5874,12 @@ export default {
           hasIcloudCalendarConfig(env),
           "iCloud",
           () => fetchIcloudCalendarSummary(env, { seedEvents: Array.isArray(state.events) ? state.events : [] }),
+          9000
+        ),
+        loadStateSource(
+          hasGoogleCalendarConfig(env),
+          "GoogleCalendar",
+          () => fetchGoogleCalendarSummary(env, getGoogleAccessToken),
           9000
         ),
         loadStateSource(true, "Family", async () => ({
@@ -5929,9 +5937,11 @@ export default {
       }
 
       const calendarSync = calendar.status || "error";
-      if (calendar.value) {
-        state.calendarSummary = calendar.value;
-        state.events = calendar.value.events;
+      const googleCalendarSync = googleCalendar.status || "error";
+      const federatedCalendar = mergeCalendarSources(calendar, googleCalendar);
+      if (federatedCalendar) {
+        state.calendarSummary = federatedCalendar;
+        state.events = federatedCalendar.events;
       }
 
       state.familySummary = family.value || {
@@ -6020,7 +6030,8 @@ export default {
         projectsSync,
         careerSync,
         eventsSheetSync,
-        calendarSync
+        calendarSync,
+        googleCalendarSync
       };
 
       return json(state);
