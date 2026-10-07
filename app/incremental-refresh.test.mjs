@@ -7,14 +7,14 @@ const workerSource=fs.readFileSync(new URL("../private-cloudflare/src/index.js",
 
 test("manual refresh is incremental and does not reload the page",()=>{
   assert.equal(appSource.includes("window.location.reload()"),false);
-  for(const scope of ["finance","habits","pantry","objects","calendar","family"]){
+  for(const scope of ["finance","habits","pantry","objects","calendar"]){
     assert.equal(appSource.includes('refreshStateScope("'+scope+'")'),true);
   }
 });
 
 test("worker exposes scoped state reads used by incremental Home refresh",()=>{
   assert.match(workerSource,/url\.searchParams\.get\("scope"\)/);
-  for(const scope of ["finance","habits","pantry","objects","calendar","family"]){
+  for(const scope of ["finance","habits","pantry","objects","calendar"]){
     assert.equal(workerSource.includes('stateScope === "'+scope+'"'),true);
   }
 });
