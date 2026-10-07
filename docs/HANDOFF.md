@@ -1,7 +1,7 @@
 ## Infraestructura · refresh incremental por dominio · 2026-10-07
 
 - El botón global `Actualizar` deja de ejecutar `window.location.reload()`: ya no vuelve a cargar toda la aplicación, assets y estado compuesto por una actualización ordinaria.
-- `GET /api/state?scope=<dominio>` permite refrescar de forma independiente `finance`, `habits`, `pantry`, `objects`, `calendar` y `family`.
+- `GET /api/state?scope=<dominio>` permite refrescar de forma independiente `finance`, `habits`, `pantry`, `objects` y `calendar`.
 - El frontal aplica cada respuesta únicamente al bloque correspondiente y lo vuelve a renderizar; Proyectos/Carrera y otros detalles siguen cargándose bajo demanda al abrirse.
 - Salud y Menú conservan sus endpoints dedicados y se refrescan aparte; no se mezclan con el presupuesto de CPU de Finanzas/Calendario.
 - El refresh manual se ejecuta en pequeños lotes para evitar una ráfaga única contra Google y, sobre todo, para que un dominio lento no invalide el resto.
