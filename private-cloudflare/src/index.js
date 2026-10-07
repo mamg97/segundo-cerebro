@@ -7,7 +7,6 @@ import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
-import { processObjectsImageQueue } from "./objects-staging.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
@@ -6069,16 +6068,5 @@ export default {
     return withSecurityHeaders(assetResponse, {
       "Cache-Control": "private, max-age=0, must-revalidate"
     });
-  },
-
-  async scheduled(_controller, env, ctx) {
-    ctx.waitUntil(
-      processObjectsImageQueue(env, getGoogleAccessToken).catch((error) => {
-        console.warn("[objects:staging]", {
-          stage: "scheduled_failed",
-          code: String(error?.message || "OBJECTS_STAGING_SCHEDULED_FAILED")
-        });
-      })
-    );
   }
 };
