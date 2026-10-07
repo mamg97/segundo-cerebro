@@ -846,20 +846,38 @@ function renderEvents() {
 
   if (sourceStatus) {
     const source = state.calendarSummary?.source || {};
+    const providers = source.providers || {};
+    const providerParts = [];
+    const providerLabel = (name, provider) => {
+      if (!provider || provider.status === "not-configured") return;
+      const selected = Number(provider.selectedCalendarCount);
+      const matched = Number(provider.matchedCalendarCount);
+      const ratio = Number.isFinite(selected) && selected > 0 && Number.isFinite(matched)
+        ? matched + "/" + selected
+        : "";
+      const degraded = ["error", "timeout"].includes(String(provider.status || ""))
+        || ["fallback", "degraded", "mixed"].includes(String(provider.freshness || ""));
+      providerParts.push([name, ratio, degraded ? "parcial" : ""].filter(Boolean).join(" "));
+    };
+
+    providerLabel("iCloud", providers.icloud);
+    providerLabel("Google", providers.google);
+
     const selected = Number(source.selectedCalendarCount);
     const matched = Number(source.matchedCalendarCount);
-    const freshness = String(source.freshness || "");
     const ratio = Number.isFinite(selected) && selected > 0 && Number.isFinite(matched)
       ? matched + "/" + selected + " calendarios"
       : "";
-    if (freshness === "fallback") {
-      sourceStatus.textContent = ["iCloud · copia estable", ratio].filter(Boolean).join(" · ");
-      sourceStatus.hidden = false;
-    } else if (freshness === "mixed" || freshness === "degraded") {
-      sourceStatus.textContent = ["iCloud · sincronización parcial", ratio, "completada con copia estable"].filter(Boolean).join(" · ");
+    const freshness = String(source.freshness || "");
+
+    if (providerParts.length) {
+      sourceStatus.textContent = [
+        providerParts.join(" · "),
+        ["mixed", "degraded", "fallback"].includes(freshness) ? "sincronización parcial" : ""
+      ].filter(Boolean).join(" · ");
       sourceStatus.hidden = false;
     } else if (ratio) {
-      sourceStatus.textContent = "iCloud · " + ratio;
+      sourceStatus.textContent = "Calendarios · " + ratio;
       sourceStatus.hidden = false;
     } else {
       sourceStatus.hidden = true;
