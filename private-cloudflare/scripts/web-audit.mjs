@@ -338,6 +338,71 @@ async function auditMidasCompetition() {
         .replace("MIDAS TFG corrected paper", "tfg corregido");
       assertCheck(runtimeText.includes(normalizeAuditValue(label)), `MIDAS · UI expone incidencia ${label}`);
     }
+
+    const midasTabs = page.locator("#midas-report [data-midas-tab]");
+    const midasTabCount = await midasTabs.count();
+    assertCheck(midasTabCount === 3, "MIDAS · workspace se divide en tres pestañas", "n=" + midasTabCount);
+    const midasTabText = normalizeAuditValue(await page.locator(".midas-workspace-tabs").textContent().catch(() => ""));
+    assertCheck(
+      /competicion de algoritmos/.test(midasTabText) && /seguimiento de tesis/.test(midasTabText) && /catalogo/.test(midasTabText),
+      "MIDAS · pestañas separan competición, tesis y catálogo",
+      midasTabText
+    );
+
+    const competitionTable = page.locator('[data-midas-panel="competition"] .midas-lab-table').first();
+    const competitionHeaders = normalizeAuditValue(await competitionTable.locator("thead").textContent().catch(() => ""));
+    assertCheck(
+      Boolean(competitionHeaders) && !/evolucion/.test(competitionHeaders),
+      "MIDAS · competición elimina columna Evolución",
+      competitionHeaders
+    );
+    const competitionRows = page.locator('[data-midas-panel="competition"] [data-midas-algorithm-id]');
+    const competitionRowCount = await competitionRows.count();
+    assertCheck(competitionRowCount > 0, "MIDAS · competición ofrece algoritmos clicables", "n=" + competitionRowCount);
+    if (competitionRowCount > 0) {
+      await competitionRows.first().click();
+      const detailVisible = await page.locator("[data-midas-algorithm-detail] .midas-algorithm-detail")
+        .waitFor({ state: "visible", timeout: 4000 }).then(() => true).catch(() => false);
+      assertCheck(detailVisible, "MIDAS · pulsar algoritmo abre detalle completo");
+      if (detailVisible) {
+        const detailText = normalizeAuditValue(await page.locator("[data-midas-algorithm-detail]").textContent().catch(() => ""));
+        assertCheck(
+          /rentabilidad acumulada/.test(detailText) && /max. drawdown|drawdown/.test(detailText) && /evolucion/.test(detailText),
+          "MIDAS · detalle conserva métricas y evolución",
+          detailText.slice(0, 220)
+        );
+        await page.locator("[data-midas-algorithm-back]").click().catch(() => {});
+      }
+    }
+
+    const researchTab = page.locator('[data-midas-tab="research"]');
+    await researchTab.click();
+    const researchPanel = page.locator('[data-midas-panel="research"]');
+    const researchVisible = await researchPanel.waitFor({ state: "visible", timeout: 3000 }).then(() => true).catch(() => false);
+    assertCheck(researchVisible, "MIDAS · pestaña Seguimiento de tesis visible");
+    const researchTable = researchPanel.locator(".midas-research-table");
+    if (await researchTable.count()) {
+      const sizing = await researchPanel.locator(".midas-research-table-scroll").evaluate((node) => ({
+        clientWidth: node.clientWidth,
+        scrollWidth: node.scrollWidth
+      })).catch(() => null);
+      assertCheck(
+        Boolean(sizing) && sizing.scrollWidth <= sizing.clientWidth + 2,
+        "MIDAS · tabla de tesis cabe sin scroll horizontal en escritorio",
+        sizing ? `client=${sizing.clientWidth} scroll=${sizing.scrollWidth}` : "sin medida"
+      );
+    } else {
+      fail("MIDAS · tabla de tesis disponible", "no se encontró .midas-research-table");
+    }
+
+    const catalogTab = page.locator('[data-midas-tab="catalog"]');
+    await catalogTab.click();
+    assertCheck(
+      await page.locator('[data-midas-panel="catalog"]').isVisible().catch(() => false),
+      "MIDAS · pestaña Catálogo / histórico visible"
+    );
+
+    await page.locator('[data-midas-tab="competition"]').click();
     await page.locator("#close-midas-dialog").click().catch(() => {});
   } else {
     fail("MIDAS · acceso visible al panel", "falta #show-midas-detail");

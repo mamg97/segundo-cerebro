@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { renderMidasVisualLab } from "./midas-lab.js";
+import { renderMidasAlgorithmDetail, renderMidasVisualLab } from "./midas-lab.js";
 
 test("renders bootstrap rows when weekly forward has not started", () => {
   const dashboard = { tracks: [
@@ -11,7 +11,7 @@ test("renders bootstrap rows when weekly forward has not started", () => {
     ensemble_consensus: { mark_to_market_nav: 98657.04, mark_to_market_return_pct: -1.343, positions: [{ ticker: "SMCI" }] }
   } } };
   const html = renderMidasVisualLab(dashboard, lab);
-  assert.match(html, /LABORATORIO VIVO/);
+  assert.match(html, /COMPETICIÓN/);
   assert.match(html, /Ensemble/);
   assert.match(html, /SMCI/);
   assert.match(html, /Prueba retrospectiva · no cuenta en forward/);
@@ -47,7 +47,6 @@ test("renders current activity separately from cumulative return", () => {
   assert.match(html, /<th>Algoritmo<\/th>/);
   assert.match(html, /<th>Actividad actual<\/th>/);
   assert.match(html, /<th>Rent\. acum\.<\/th>/);
-  assert.match(html, /<th>Evolución<\/th>/);
   assert.match(html, /10 compras para próxima apertura/);
   assert.match(html, /AMD/);
   assert.match(html, /INTC/);
@@ -55,7 +54,7 @@ test("renders current activity separately from cumulative return", () => {
   assert.match(html, /0,00 %/);
 });
 
-test("renders one compact row per algorithm and chart in last column", () => {
+test("renders one compact clickable row per algorithm without chart column", () => {
   const dashboard = { tracks: [
     { id: "a", label: "Algoritmo A", group: "paper_nuevo", status: "demo_con_diario",
       return_pct: 1.25, last_session: "2026-10-05", max_drawdown_pct: -0.4,
@@ -70,9 +69,11 @@ test("renders one compact row per algorithm and chart in last column", () => {
   assert.match(html, /2 posiciones abiertas/);
   assert.match(html, /AAA/);
   assert.match(html, /BBB/);
-  assert.match(html, /midas-lab-col-chart/);
-  assert.match(html, /midas-lab-mini-chart/);
-  assert.ok(html.indexOf("midas-lab-col-chart") > html.indexOf("midas-lab-col-dd"));
+  assert.match(html, /data-midas-algorithm-id="a"/);
+  assert.match(html, /role="button"/);
+  assert.doesNotMatch(html, /<th>Evolución<\/th>/);
+  assert.doesNotMatch(html, /midas-lab-col-chart/);
+  assert.doesNotMatch(html, /midas-lab-mini-chart/);
 });
 
 test("renders corrected TFG as its own live algorithm group", () => {
@@ -102,4 +103,24 @@ test("renders Buy The Dip corpus as its own live algorithm group", () => {
   assert.match(html, />Buy The Dip</);
   assert.match(html, /deep value/);
   assert.match(html, /\+1,25 %/);
+});
+
+
+test("algorithm detail restores the full metrics and equity evolution", () => {
+  const dashboard = { tracks: [
+    { id: "algo-detail", label: "Algoritmo detalle", group: "paper_nuevo", status: "demo_con_diario",
+      currency: "USD", last_equity: 101250, return_pct: 1.25, day_return_pct: 0.4,
+      annualized_volatility_pct: 8.2, max_drawdown_pct: -0.7, sharpe_0rf: 1.1,
+      last_session: "2026-10-06", activity_label: "2 posiciones abiertas",
+      activity_tickers: ["AAA", "BBB"], positions: [{ ticker: "AAA", weight: 0.55 }, { ticker: "BBB", weight: 0.45 }],
+      equity_history: [{ date: "2026-10-01", nav: 100000 }, { date: "2026-10-06", nav: 101250 }] }
+  ] };
+  const html = renderMidasAlgorithmDetail(dashboard, null, "algo-detail");
+  for (const label of ["Rentabilidad acumulada", "Rentabilidad día", "Volatilidad anual.", "Máx. drawdown", "Sharpe 0rf", "Capital demo", "Evolución"]) {
+    assert.match(html, new RegExp(label));
+  }
+  assert.match(html, /midas-algorithm-chart/);
+  assert.match(html, /AAA/);
+  assert.match(html, /BBB/);
+  assert.match(html, /data-midas-algorithm-back/);
 });

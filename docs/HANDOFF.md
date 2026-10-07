@@ -1,3 +1,13 @@
+## MIDAS · workspace por bloques y tablas compactas · 2026-10-07
+
+- Seguimiento MIDAS se organiza en tres pestañas superiores: `Competición de algoritmos`, `Seguimiento de tesis` y `Catálogo / histórico`.
+- Competición elimina la columna mini-gráfica `Evolución`; conserva Algoritmo, Actividad actual, Activos, Rentabilidad acumulada, Sesiones, Último cierre y DD.
+- Cada fila de algoritmo es clicable/accesible y abre una ficha dentro de MIDAS con rentabilidad acumulada/diaria, volatilidad, drawdown, Sharpe, sesiones, último cierre, capital demo, actividad, posiciones y curva completa. `Volver a la competición` restaura la tabla.
+- Seguimiento de tesis conserva las 11 variables de decisión pero usa encabezados abreviados y reparto porcentual de columnas; elimina el ancho mínimo artificial de 1600 px para evitar scroll horizontal en escritorio.
+- En móvil las tablas pueden conservar scroll horizontal cuando sea necesario; no se eliminan variables para forzar el encaje.
+- No cambia ninguna fuente, cálculo ni endpoint MIDAS; es una reorganización de navegación y presentación sobre el mismo `GET /api/midas`.
+- Rama de implementación: `organizador11/midas-workspace-tabs`. Pendiente de cerrar CI + auditor de producción antes de darlo por publicado.
+
 ## MIDAS · seguimiento de empresas orientado a decisión · 2026-10-07
 
 - La vista de tesis pasa de una tabla de CAGR aislada a una tabla de seguimiento por empresa.
@@ -88,8 +98,8 @@
 ## MIDAS · laboratorio en tabla compacta · 2026-10-05
 
 - El bloque «Comportamiento de los algoritmos» deja las tarjetas 3×N y pasa a un registro compacto por algoritmo.
-- Cada grupo mantiene su cabecera y usa una tabla con columnas: Algoritmo, Actividad actual, Activos, Rentabilidad acumulada, Sesiones, Último cierre, DD y Evolución.
-- La última columna contiene siempre una sparkline miniatura del NAV.
+- Cada grupo mantiene su cabecera y usa una tabla con columnas: Algoritmo, Actividad actual, Activos, Rentabilidad acumulada, Sesiones, Último cierre y DD.
+- La evolución deja de ocupar una columna: se consulta en la ficha completa que abre cada fila.
 - En móvil no se reconvierte a tarjetas: la tabla conserva su estructura y permite scroll horizontal.
 
 ## MIDAS · actividad actual separada de rentabilidad · 2026-10-05
