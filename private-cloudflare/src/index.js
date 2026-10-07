@@ -5959,19 +5959,6 @@ export default {
           });
         }
 
-        if (stateScope === "family") {
-          const family = await loadStateSource(true, "Family", async () => ({
-            status: "ok",
-            value: await fetchFamilyHomeSummary(env)
-          }), 3000);
-          return json({
-            ok: true,
-            scope: stateScope,
-            familySync: family.status || "error",
-            familySummary: family.value || null
-          });
-        }
-
         if (stateScope === "calendar") {
           const [eventsStore, calendar, googleCalendar] = await Promise.all([
             loadStateSource(hasEventsGoogleConfig(env), "EventsSheet", () => fetchEventsSheetSource(env, getGoogleAccessToken), 7000),
