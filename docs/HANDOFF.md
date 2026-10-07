@@ -6,7 +6,9 @@
 - Seguimiento de tesis conserva las 11 variables de decisión pero usa encabezados abreviados y reparto porcentual de columnas; elimina el ancho mínimo artificial de 1600 px para evitar scroll horizontal en escritorio.
 - En móvil las tablas pueden conservar scroll horizontal cuando sea necesario; no se eliminan variables para forzar el encaje.
 - No cambia ninguna fuente, cálculo ni endpoint MIDAS; es una reorganización de navegación y presentación sobre el mismo `GET /api/midas`.
-- Rama de implementación: `organizador11/midas-workspace-tabs`. Pendiente de cerrar CI + auditor de producción antes de darlo por publicado.
+- PR #310 fusionada y desplegada. CI `Validate private Cloudflare app` #393 pasó completa y el deploy privado #387 finalizó correctamente.
+- Audit production web #215 validó específicamente: 3 pestañas, 27 algoritmos clicables, tabla de competición sin `Evolución`, apertura de ficha completa, métricas + curva, pestañas Tesis/Catálogo y tabla de tesis sin scroll horizontal en escritorio (`clientWidth=1020`, `scrollWidth=1020`).
+- El auditor global #215 quedó rojo por incidencias separadas —502 en Carrera/Objetos/Health y fallos derivados de esas fuentes—; los checks específicos del rediseño MIDAS pasaron.
 
 ## MIDAS · seguimiento de empresas orientado a decisión · 2026-10-07
 
