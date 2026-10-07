@@ -5915,6 +5915,86 @@ export default {
     if (url.pathname === "/api/state") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
 
+      const stateScope = String(url.searchParams.get("scope") || "").trim().toLowerCase();
+      if (stateScope) {
+        if (stateScope === "finance") {
+          const finance = await loadStateSource(hasFinanceGoogleConfig(env), "Finance", () => fetchFinanceSummary(env), 8000);
+          return json({
+            ok: true,
+            scope: stateScope,
+            financeSync: finance.status || "error",
+            financeSummary: finance.value || null,
+            importantEventRules: finance.value?.importantEventRules || [],
+            healthSummary: finance.value?.health || null
+          });
+        }
+
+        if (stateScope === "habits") {
+          const habits = await loadStateSource(hasHabitQuestGoogleConfig(env), "HabitQuest", () => fetchHabitQuestSummary(env), 7000);
+          return json({
+            ok: true,
+            scope: stateScope,
+            habitSync: habits.status || "error",
+            habitsSummary: habits.value || null
+          });
+        }
+
+        if (stateScope === "pantry") {
+          const pantry = await loadStateSource(hasPantryGoogleConfig(env), "Pantry", () => fetchPantrySummary(env, getGoogleAccessToken), 7000);
+          return json({
+            ok: true,
+            scope: stateScope,
+            pantrySync: pantry.status || "error",
+            pantrySummary: pantry.value?.summary || null
+          });
+        }
+
+        if (stateScope === "objects") {
+          const objects = await loadStateSource(hasObjectsGoogleConfig(env), "Objects", () => fetchObjectsSummary(env, getGoogleAccessToken), 7000);
+          return json({
+            ok: true,
+            scope: stateScope,
+            objectsSync: objects.status || "error",
+            objectsSummary: objects.value?.summary || null
+          });
+        }
+
+        if (stateScope === "family") {
+          const family = await loadStateSource(true, "Family", async () => ({
+            status: "ok",
+            value: await fetchFamilyHomeSummary(env)
+          }), 3000);
+          return json({
+            ok: true,
+            scope: stateScope,
+            familySync: family.status || "error",
+            familySummary: family.value || null
+          });
+        }
+
+        if (stateScope === "calendar") {
+          const [eventsStore, calendar, googleCalendar] = await Promise.all([
+            loadStateSource(hasEventsGoogleConfig(env), "EventsSheet", () => fetchEventsSheetSource(env, getGoogleAccessToken), 7000),
+            loadStateSource(hasIcloudCalendarConfig(env), "iCloud", () => fetchIcloudCalendarSummary(env), 7000),
+            loadStateSource(hasGoogleCalendarConfig(env), "GoogleCalendar", () => fetchGoogleCalendarSummary(env, getGoogleAccessToken), 7000)
+          ]);
+          const federatedCalendar = mergeCalendarSources(calendar, googleCalendar);
+          return json({
+            ok: true,
+            scope: stateScope,
+            eventsSheetSync: eventsStore.status || "error",
+            calendarSync: calendar.status || "error",
+            googleCalendarSync: googleCalendar.status || "error",
+            importantEventRules: eventsStore.value?.rules || [],
+            eventsSummary: eventsStore.value?.summary || null,
+            calendarSummary: federatedCalendar || null,
+            events: Array.isArray(federatedCalendar?.events) ? federatedCalendar.events : []
+          });
+        }
+
+        return json({ ok: false, code: "INVALID_STATE_SCOPE" }, 400);
+      }
+
       const row = await env.DB.prepare(
         "SELECT id, schema_version, created_at, content_json FROM state_snapshots WHERE is_current = 1 ORDER BY id DESC LIMIT 1"
       ).first();
