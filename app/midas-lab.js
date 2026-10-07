@@ -1,41 +1,3 @@
-export function renderMidasVisualLab(dashboard, lab = null) {
-  const rows = Array.isArray(dashboard?.tracks) ? dashboard.tracks : [];
-  const liveWeekly = rows.some((row) => row.group === "weekly_ml_demo" && row.status === "demo_con_diario");
-  const bootstrapRows = liveWeekly ? [] : bootstrapMidasLabRows(lab);
-  const active = [...bootstrapRows, ...rows.filter((row) => row.group !== "historica_pendiente")];
-  if (!active.length) return "";
-
-  const groups = [
-    ["weekly_ml_demo", "Weekly ML"],
-    ["capital_cycle_demo", "Capital Cycle"],
-    ["buy_the_dip_demo", "Buy The Dip"],
-    ["tfg_demo_adaptado", "TFG"],
-    ["paper_nuevo", "Estrategias diarias"],
-    ["tfm_demo_adaptado", "TFM"],
-    ["diario_heredado", "Genético original"]
-  ];
-
-  return '<section class="midas-lab">' +
-    '<div class="midas-lab-heading">' +
-      '<div><span class="eyebrow">LABORATORIO VIVO</span><h3>Comportamiento de los algoritmos</h3>' +
-      '<p>Las curvas se dibujan al abrir MIDAS y avanzan con cada cierre registrado. El movimiento es visual; los datos siguen siendo los del diario.</p></div>' +
-      '<div class="midas-lab-legend"><span><i class="is-positive"></i>positivo</span><span><i class="is-negative"></i>negativo</span><span><i class="is-neutral"></i>esperando</span></div>' +
-    '</div>' +
-    groups.map(([group, title]) => {
-      const groupRows = active.filter((row) => row.group === group);
-      if (!groupRows.length) return "";
-      return '<div class="midas-lab-group"><div class="midas-lab-group-title"><strong>' + escapeHtml(title) + '</strong><span>' + groupRows.length + ' algoritmos</span></div>' +
-        '<div class="midas-lab-table-wrap"><table class="midas-lab-table">' +
-          '<thead><tr>' +
-            '<th>Algoritmo</th><th>Actividad actual</th><th>Activos</th><th>Rent. acum.</th>' +
-            '<th>Sesiones</th><th>Último cierre</th><th>DD</th><th>Evolución</th>' +
-          '</tr></thead>' +
-          '<tbody>' + groupRows.map(renderMidasLabRow).join("") + '</tbody>' +
-        '</table></div></div>';
-    }).join("") +
-  '</section>';
-}
-
 const BOOTSTRAP_LABELS = {
   lgbm_return: "LightGBM Return",
   lgbm_direction: "LightGBM Direction",
@@ -48,6 +10,134 @@ const BOOTSTRAP_LABELS = {
   benchmark_rsp: "RSP"
 };
 
+const MIDAS_LAB_GROUPS = [
+  ["weekly_ml_demo", "Weekly ML"],
+  ["capital_cycle_demo", "Capital Cycle"],
+  ["buy_the_dip_demo", "Buy The Dip"],
+  ["tfg_demo_adaptado", "TFG"],
+  ["paper_nuevo", "Estrategias diarias"],
+  ["tfm_demo_adaptado", "TFM"],
+  ["diario_heredado", "Genético original"]
+];
+
+export function renderMidasVisualLab(dashboard, lab = null) {
+  const active = activeMidasRows(dashboard, lab);
+  if (!active.length) return "";
+
+  return '<section class="midas-lab">' +
+    '<div class="midas-lab-heading">' +
+      '<div><span class="eyebrow">COMPETICIÓN</span><h3>Comportamiento de los algoritmos</h3>' +
+      '<p>Vista compacta del estado actual. Pulsa cualquier algoritmo para abrir su ficha completa, incluida la evolución del patrimonio ficticio.</p></div>' +
+      '<div class="midas-lab-legend"><span><i class="is-positive"></i>positivo</span><span><i class="is-negative"></i>negativo</span><span><i class="is-neutral"></i>esperando</span></div>' +
+    '</div>' +
+    MIDAS_LAB_GROUPS.map(([group, title]) => {
+      const groupRows = active.filter((row) => row.group === group);
+      if (!groupRows.length) return "";
+      return '<div class="midas-lab-group"><div class="midas-lab-group-title"><strong>' + escapeHtml(title) + '</strong><span>' + groupRows.length + ' algoritmos</span></div>' +
+        '<div class="midas-lab-table-wrap"><table class="midas-lab-table">' +
+          '<thead><tr>' +
+            '<th>Algoritmo</th><th>Actividad actual</th><th>Activos</th><th>Rent. acum.</th>' +
+            '<th>Sesiones</th><th>Último cierre</th><th>DD</th>' +
+          '</tr></thead>' +
+          '<tbody>' + groupRows.map(renderMidasLabRow).join("") + '</tbody>' +
+        '</table></div></div>';
+    }).join("") +
+  '</section>';
+}
+
+export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
+  const item = activeMidasRows(dashboard, lab).find((row) => String(row.id) === String(algorithmId));
+  if (!item) {
+    return '<div class="midas-algorithm-detail"><button type="button" class="midas-algorithm-back" data-midas-algorithm-back>← Volver a la competición</button><p class="midas-lab-empty">No se ha encontrado el algoritmo.</p></div>';
+  }
+
+  const meta = algorithmMeta(item);
+  const positions = Array.isArray(item.positions) ? item.positions : [];
+  const provenance = item.provenance || "";
+  const note = item.note || "";
+  const equity = typeof item.last_equity === "number" && Number.isFinite(item.last_equity)
+    ? formatMoney(item.last_equity, item.currency)
+    : "—";
+  const volatility = formatPercent(item.annualized_volatility_pct);
+  const sharpe = typeof item.sharpe_0rf === "number" && Number.isFinite(item.sharpe_0rf)
+    ? item.sharpe_0rf.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : "—";
+
+  return '<article class="midas-algorithm-detail">' +
+    '<button type="button" class="midas-algorithm-back" data-midas-algorithm-back>← Volver a la competición</button>' +
+    '<header class="midas-algorithm-detail-head">' +
+      '<div><span class="eyebrow">DETALLE DEL ALGORITMO</span><h3>' + escapeHtml(item.label) + '</h3>' +
+      '<p><span class="midas-lab-table-state"><i></i>' + escapeHtml(meta.status) + '</span>' +
+      (provenance ? '<small>Origen: ' + escapeHtml(provenance) + '</small>' : '') + '</p></div>' +
+      '<strong class="midas-algorithm-detail-return is-' + tone(meta.returnPct) + '">' + formatPercent(meta.returnPct) + '</strong>' +
+    '</header>' +
+    '<div class="midas-algorithm-detail-metrics">' +
+      metric("Rentabilidad acumulada", formatPercent(meta.returnPct)) +
+      metric("Rentabilidad día", formatPercent(item.day_return_pct)) +
+      metric("Volatilidad anual.", volatility) +
+      metric("Máx. drawdown", meta.drawdown) +
+      metric("Sharpe 0rf", sharpe) +
+      metric("Sesiones", meta.sessions || "—") +
+      metric("Último cierre", formatDate(meta.latestDate)) +
+      metric("Capital demo", equity) +
+    '</div>' +
+    '<div class="midas-algorithm-detail-grid">' +
+      '<section><small>Actividad actual</small><strong>' + escapeHtml(meta.activityLabel) + '</strong>' +
+        '<div class="midas-algorithm-detail-assets">' + renderTickerChips(meta.activityTickers, 12) + '</div></section>' +
+      '<section><small>Posiciones / señales</small>' +
+        (positions.length ? '<div class="midas-algorithm-position-list">' + positions.slice(0, 12).map(renderPosition).join("") + '</div>' : '<strong>Sin posiciones detalladas</strong>') +
+      '</section>' +
+    '</div>' +
+    '<section class="midas-algorithm-chart-card"><div><strong>Evolución</strong><small>Patrimonio ficticio · datos del diario</small></div>' +
+      '<div class="midas-algorithm-chart">' + renderSparkline(meta.history, item.label, meta.returnPct) + '</div></section>' +
+    (note ? '<p class="midas-algorithm-note">' + escapeHtml(note) + '</p>' : '') +
+    (item.bootstrap ? '<p class="midas-algorithm-note is-warning">Bootstrap técnico retrospectivo: no cuenta como resultado forward.</p>' : '') +
+  '</article>';
+}
+
+function activeMidasRows(dashboard, lab) {
+  const rows = Array.isArray(dashboard?.tracks) ? dashboard.tracks : [];
+  const liveWeekly = rows.some((row) => row.group === "weekly_ml_demo" && row.status === "demo_con_diario");
+  const bootstrapRows = liveWeekly ? [] : bootstrapMidasLabRows(lab);
+  return [...bootstrapRows, ...rows.filter((row) => row.group !== "historica_pendiente")];
+}
+
+function algorithmMeta(item) {
+  const history = Array.isArray(item.equity_history) ? item.equity_history : [];
+  const returnPct = typeof item.return_pct === "number" && Number.isFinite(item.return_pct) ? item.return_pct : null;
+  const latestDate = item.last_session || item.mark_date || null;
+  const positions = Array.isArray(item.positions) ? item.positions : [];
+  const fallbackTickers = positions.map((position) => position.ticker).filter(Boolean);
+  const activityTickers = (Array.isArray(item.activity_tickers) && item.activity_tickers.length
+    ? item.activity_tickers : fallbackTickers).filter(Boolean);
+  const activityLabel = item.activity_label ||
+    (fallbackTickers.length
+      ? fallbackTickers.length + (fallbackTickers.length === 1 ? " posición" : " posiciones")
+      : item.status === "demo_con_diario" ? "Sin compras · en efectivo" : "Esperando actividad");
+  const status = item.bootstrap ? "Bootstrap técnico" : statusLabel(item.status);
+  const drawdown = typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)
+    ? formatPercent(item.max_drawdown_pct) : "—";
+  return { history, returnPct, latestDate, activityTickers, activityLabel, status, sessions: history.length, drawdown };
+}
+
+function metric(label, value) {
+  return '<span><small>' + escapeHtml(label) + '</small><strong>' + escapeHtml(value) + '</strong></span>';
+}
+
+function renderPosition(position) {
+  const ticker = position?.ticker || position?.symbol || "Activo";
+  const details = [];
+  for (const [label, value] of [["peso", position?.weight], ["acciones", position?.shares], ["valor", position?.market_value]]) {
+    if (value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value))) {
+      const formatted = label === "peso"
+        ? (Number(value) * (Math.abs(Number(value)) <= 1 ? 100 : 1)).toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "%"
+        : Number(value).toLocaleString("es-ES", { maximumFractionDigits: 2 });
+      details.push(label + " " + formatted);
+    }
+  }
+  return '<span><strong>' + escapeHtml(ticker) + '</strong>' + (details.length ? '<small>' + escapeHtml(details.join(" · ")) + '</small>' : '') + '</span>';
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
@@ -57,6 +147,16 @@ function escapeHtml(value) {
 function formatPercent(value) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "—";
   return (value > 0 ? "+" : "") + value.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %";
+}
+
+function formatMoney(value, currency) {
+  if (!Number.isFinite(Number(value))) return "—";
+  if (!currency) return Number(value).toLocaleString("es-ES", { maximumFractionDigits: 2 });
+  try {
+    return new Intl.NumberFormat("es-ES", { style: "currency", currency, maximumFractionDigits: 2 }).format(Number(value));
+  } catch {
+    return Number(value).toLocaleString("es-ES", { maximumFractionDigits: 2 }) + " " + currency;
+  }
 }
 
 function formatDate(value) {
@@ -106,10 +206,10 @@ function renderSparkline(history, label, returnPct) {
     '<circle class="midas-lab-endpoint" cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="4"></circle></svg>';
 }
 
-function renderTickerChips(tickers) {
+function renderTickerChips(tickers, limit = 6) {
   const values = (Array.isArray(tickers) ? tickers : []).filter(Boolean);
   if (!values.length) return '<span class="midas-lab-empty">—</span>';
-  const visible = values.slice(0, 6);
+  const visible = values.slice(0, limit);
   const rest = values.length - visible.length;
   return '<div class="midas-lab-table-tickers">' +
     visible.map((ticker) => '<b>' + escapeHtml(ticker) + '</b>').join("") +
@@ -118,33 +218,19 @@ function renderTickerChips(tickers) {
 }
 
 function renderMidasLabRow(item) {
-  const history = Array.isArray(item.equity_history) ? item.equity_history : [];
-  const returnPct = typeof item.return_pct === "number" ? item.return_pct : null;
-  const latestDate = item.last_session || item.mark_date || null;
-  const positions = Array.isArray(item.positions) ? item.positions : [];
-  const fallbackTickers = positions.map((position) => position.ticker).filter(Boolean);
-  const activityTickers = (Array.isArray(item.activity_tickers) && item.activity_tickers.length
-    ? item.activity_tickers : fallbackTickers).filter(Boolean);
-  const activityLabel = item.activity_label ||
-    (fallbackTickers.length
-      ? fallbackTickers.length + (fallbackTickers.length === 1 ? " posición" : " posiciones")
-      : item.status === "demo_con_diario" ? "Sin compras · en efectivo" : "Esperando actividad");
-  const status = item.bootstrap ? "Bootstrap técnico" : statusLabel(item.status);
-  const sessions = history.length;
-  const drawdown = typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)
-    ? formatPercent(item.max_drawdown_pct) : "—";
-  return '<tr class="midas-lab-row is-' + tone(returnPct) + (item.bootstrap ? ' is-bootstrap' : '') + '">' +
+  const meta = algorithmMeta(item);
+  return '<tr class="midas-lab-row is-' + tone(meta.returnPct) + (item.bootstrap ? ' is-bootstrap' : '') + '" ' +
+    'data-midas-algorithm-id="' + escapeHtml(item.id) + '" tabindex="0" role="button" aria-label="Abrir detalle de ' + escapeHtml(item.label) + '">' +
     '<td class="midas-lab-col-algorithm"><strong>' + escapeHtml(item.label) + '</strong>' +
-      '<span class="midas-lab-table-state"><i></i>' + escapeHtml(status) + '</span>' +
+      '<span class="midas-lab-table-state"><i></i>' + escapeHtml(meta.status) + '</span>' +
       (item.bootstrap ? '<small>Prueba retrospectiva · no cuenta en forward</small>' : '') +
     '</td>' +
-    '<td class="midas-lab-col-activity"><strong>' + escapeHtml(activityLabel) + '</strong></td>' +
-    '<td class="midas-lab-col-assets">' + renderTickerChips(activityTickers) + '</td>' +
-    '<td class="midas-lab-col-return"><strong class="midas-lab-return">' + formatPercent(returnPct) + '</strong></td>' +
-    '<td class="midas-lab-col-sessions">' + (sessions || "—") + '</td>' +
-    '<td class="midas-lab-col-date">' + escapeHtml(formatDate(latestDate)) + '</td>' +
-    '<td class="midas-lab-col-dd">' + escapeHtml(drawdown) + '</td>' +
-    '<td class="midas-lab-col-chart"><div class="midas-lab-mini-chart">' + renderSparkline(history, item.label, returnPct) + '</div></td>' +
+    '<td class="midas-lab-col-activity"><strong>' + escapeHtml(meta.activityLabel) + '</strong></td>' +
+    '<td class="midas-lab-col-assets">' + renderTickerChips(meta.activityTickers) + '</td>' +
+    '<td class="midas-lab-col-return"><strong class="midas-lab-return">' + formatPercent(meta.returnPct) + '</strong></td>' +
+    '<td class="midas-lab-col-sessions">' + (meta.sessions || "—") + '</td>' +
+    '<td class="midas-lab-col-date">' + escapeHtml(formatDate(meta.latestDate)) + '</td>' +
+    '<td class="midas-lab-col-dd">' + escapeHtml(meta.drawdown) + '</td>' +
   '</tr>';
 }
 
