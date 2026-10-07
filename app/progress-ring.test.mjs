@@ -115,7 +115,7 @@ assert.match(app, /wealth\.dailyDiary/);
 assert.match(css, /v0\.39\.0 — diario de patrimonio/);
 assert.match(css, /wealth-daily-section/);
 assert.match(app, /function renderMidasResearch/);
-assert.match(app, /Tesis y CAGR 2031/);
+assert.match(app, /Seguimiento de empresas/);
 assert.match(css, /v0\.39\.1 — MIDAS thesis watchlist/);
 assert.match(app, /renderHomeLiquidityOverview\(monthly\.liquidityAccounts/);
 assert.match(app, /renderHomeWealthAllocation\(allocation/);

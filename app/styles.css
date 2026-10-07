@@ -17788,6 +17788,7 @@ html[data-theme="dark"] .wealth-daily-kpis article {
 .midas-research-rule { margin: 0; }
 
 .midas-research-table-scroll {
+  width: 100%;
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -17795,9 +17796,10 @@ html[data-theme="dark"] .wealth-daily-kpis article {
 
 .midas-research-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1600px;
   border-collapse: collapse;
   font-size: 9px;
+  font-variant-numeric: tabular-nums;
 }
 
 .midas-research-table th,
@@ -17805,74 +17807,109 @@ html[data-theme="dark"] .wealth-daily-kpis article {
   padding: 8px 9px;
   border-bottom: 1px solid var(--line);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .midas-research-table th {
   color: var(--ink-soft);
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: .035em;
+  background: color-mix(in srgb, var(--paper) 56%, transparent);
+  font-size: 7.5px;
+  font-weight: 850;
+  letter-spacing: .025em;
+  line-height: 1.25;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .midas-research-table tbody tr:last-child td { border-bottom: 0; }
+.midas-research-table tbody tr:hover { background: color-mix(in srgb, var(--blue) 4%, transparent); }
 
-.midas-research-table td:first-child {
-  min-width: 270px;
-}
+.midas-research-table th:nth-child(1), .midas-research-table td:nth-child(1) { width: 80px; }
+.midas-research-table th:nth-child(2), .midas-research-table td:nth-child(2) { width: 190px; }
+.midas-research-table th:nth-child(3), .midas-research-table td:nth-child(3) { width: 125px; }
+.midas-research-table th:nth-child(4), .midas-research-table td:nth-child(4) { width: 115px; }
+.midas-research-table th:nth-child(5), .midas-research-table td:nth-child(5),
+.midas-research-table th:nth-child(6), .midas-research-table td:nth-child(6),
+.midas-research-table th:nth-child(7), .midas-research-table td:nth-child(7) { width: 145px; }
+.midas-research-table th:nth-child(8), .midas-research-table td:nth-child(8),
+.midas-research-table th:nth-child(9), .midas-research-table td:nth-child(9) { width: 140px; }
+.midas-research-table th:nth-child(10), .midas-research-table td:nth-child(10) { width: 130px; }
+.midas-research-table th:nth-child(11), .midas-research-table td:nth-child(11) { width: 90px; }
 
-.midas-research-table td:first-child strong,
-.midas-research-table td:first-child span,
-.midas-research-table td:first-child small {
+.midas-company-ticker strong,
+.midas-company-name strong,
+.midas-company-name small,
+.midas-price-cell strong,
+.midas-price-cell small,
+.midas-case-value strong,
+.midas-case-value small {
   display: block;
 }
 
-.midas-research-table td:first-child strong { font-size: 10px; }
-.midas-research-table td:first-child span {
-  margin-top: 2px;
-  font-size: 9px;
-  font-weight: 700;
+.midas-company-ticker strong {
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 900;
 }
 
-.midas-research-table td:first-child small,
-.midas-cagr-value small {
-  margin-top: 4px;
-  color: var(--ink-soft);
-  font-size: 7.5px;
-  line-height: 1.35;
-}
-
-.midas-cagr-value {
-  min-width: 78px;
-  font-variant-numeric: tabular-nums;
+.midas-company-name strong {
+  color: var(--ink);
+  font-size: 9.5px;
   font-weight: 800;
+}
+
+.midas-company-name small,
+.midas-price-cell small,
+.midas-case-value small {
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 7px;
+  line-height: 1.25;
+}
+
+.midas-price-cell strong,
+.midas-case-value strong {
+  color: var(--ink);
+  font-size: 9.5px;
+  font-weight: 850;
   white-space: nowrap;
 }
 
-.midas-cagr-value.is-base {
-  min-width: 128px;
+.midas-case-value.is-base {
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--blue) 7%, transparent);
 }
 
-.midas-research-status {
+.midas-case-value.is-strong small { color: #2f9b70; font-weight: 850; }
+.midas-case-value.is-positive small { color: #a86918; font-weight: 850; }
+.midas-case-value.is-negative small { color: #d45b64; font-weight: 850; }
+
+.midas-price-cell.is-entry strong { color: var(--blue); }
+.midas-price-cell.is-target strong { font-weight: 900; }
+.midas-earnings-cell { white-space: nowrap; }
+
+.midas-thesis-link {
   display: inline-flex;
-  max-width: 170px;
-  padding: 4px 7px;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
   border-radius: 999px;
+  color: var(--blue);
   font-size: 7.5px;
-  font-weight: 800;
-  line-height: 1.2;
+  font-weight: 850;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.midas-research-status.is-complete {
-  background: color-mix(in srgb, #2f9b70 14%, transparent);
-  color: #2f9b70;
+.midas-thesis-link:hover {
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
 }
 
-.midas-research-status.is-pending {
-  background: color-mix(in srgb, #b47a2a 14%, transparent);
-  color: #a86918;
+.midas-thesis-missing {
+  color: var(--ink-soft);
+  font-size: 7.5px;
 }
 
 @media (max-width: 620px) {
@@ -17888,9 +17925,8 @@ html[data-theme="dark"] .wealth-daily-kpis article {
   }
 
   .midas-research-counts { text-align: left; }
-  .midas-research-table { min-width: 900px; }
+  .midas-research-table { min-width: 1500px; }
 }
-
 
 /* v0.39.9 — compact Home daily overview cards without reducing typography */
 @media (min-width: 761px) {

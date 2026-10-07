@@ -521,3 +521,14 @@ Decisión:
 - Estimaciones y hechos confirmados deben permanecer diferenciados en origen y presentación.
 
 Motivo: la carrera profesional necesita continuidad estructurada y comparación de opciones, pero mezclar sus datos con Finanzas, Proyectos o memoria conversacional produciría duplicidad y pérdida de trazabilidad.
+
+
+## D-050 — MIDAS separa tesis documental y seguimiento cuantitativo
+
+- **Estado:** aceptada e implementada.
+- **Fecha:** 2026-10-07.
+- **Decisión:** cada empresa analizada mantiene un Google Doc canónico de tesis enlazado desde `TESIS.artefacto_drive`; la pestaña privada `SEGUIMIENTO` contiene únicamente las variables estructuradas necesarias para comparar oportunidades en la web.
+- **Presentación:** Segundo Cerebro → MIDAS muestra una fila por empresa con mercado, cotización, escenarios bear/base/bull a 5 años con CAGR, precio que permitiría un 15% anual, objetivo central a 5 años, próximos resultados y enlace a la tesis.
+- **Estabilidad:** el objetivo de valoración de una tesis no se mueve porque cambie el precio de mercado. El precio actual y su fecha son observaciones separadas del precio de referencia del estudio.
+- **Revisión:** tras cada trimestre se añade una revisión fechada al Doc, se actualizan `TESIS`, `CAGR2031` y `SEGUIMIENTO` cuando proceda, conservando el histórico.
+- **Integridad:** cualquier dato ausente queda pendiente; la UI no infiere mercado, cotización, fecha de resultados ni objetivos que no estén soportados por la fuente privada.

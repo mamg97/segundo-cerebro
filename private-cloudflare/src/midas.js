@@ -325,9 +325,39 @@ function cleanText(value, max = 800) {
   return String(value).slice(0, max);
 }
 
+function parseSheetNumber(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (value === null || value === undefined || value === "") return null;
+  let raw = String(value).trim().replace(/[^0-9,+.\-]/g, "");
+  if (!raw) return null;
+  const comma = raw.lastIndexOf(",");
+  const dot = raw.lastIndexOf(".");
+  if (comma >= 0 && dot >= 0) {
+    raw = comma > dot ? raw.replace(/\./g, "").replace(",", ".") : raw.replace(/,/g, "");
+  } else if (comma >= 0) {
+    raw = raw.replace(",", ".");
+  }
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parsePercent(value) {
+  const parsed = parseSheetNumber(value);
+  return parsed === null ? null : parsed / 100;
+}
+
+function fiveYearTarget(referencePrice, cagr) {
+  const price = parseSheetNumber(referencePrice);
+  const rate = parsePercent(cagr);
+  if (price === null || price < 0 || rate === null || rate <= -1) return null;
+  const target = price * ((1 + rate) ** 5);
+  return Number.isFinite(target) ? Math.round(target * 100) / 100 : null;
+}
+
 function normalizeResearch(valueRanges = []) {
   const thesisRows = tableRows(valueRanges[0]?.values || []);
   const cagrRows = tableRows(valueRanges[1]?.values || []);
+  const trackingRows = tableRows(valueRanges[2]?.values || []);
 
   const theses = thesisRows.map((row) => ({
     ticker: cleanText(row.ticker, 40),
@@ -340,7 +370,9 @@ function normalizeResearch(valueRanges = []) {
     risks: cleanText(row.riesgos_clave, 1000),
     horizon: cleanText(row.horizonte, 80),
     status: cleanText(row.estado, 120),
-    rule: cleanText(row.regla_de_uso, 500)
+    rule: cleanText(row.regla_de_uso, 500),
+    thesisUrl: cleanText(row.artefacto_drive, 700),
+    origin: cleanText(row.origen_recuperado, 500)
   })).filter((row) => row.ticker && row.company);
 
   const cagr2031 = cagrRows.map((row) => ({
@@ -360,25 +392,59 @@ function normalizeResearch(valueRanges = []) {
     note: cleanText(row.nota, 600)
   })).filter((row) => row.ticker && row.company);
 
+  const cagrByTicker = new Map(cagr2031.map((row) => [row.ticker, row]));
+  const tracking = trackingRows.map((row) => {
+    const cagr = cagrByTicker.get(cleanText(row.ticker, 40)) || {};
+    const referencePrice = parseSheetNumber(row.precio_referencia_estudio);
+    const bearPrice5y = parseSheetNumber(row.precio_bear_5a) ?? fiveYearTarget(referencePrice, cagr.bear);
+    const basePrice5y = parseSheetNumber(row.precio_base_5a) ?? fiveYearTarget(referencePrice, cagr.base);
+    const bullPrice5y = parseSheetNumber(row.precio_bull_5a) ?? fiveYearTarget(referencePrice, cagr.bull);
+    const explicit15 = parseSheetNumber(row.precio_15pct_5a);
+    const priceFor15 = explicit15 ?? (basePrice5y === null ? null : Math.round((basePrice5y / (1.15 ** 5)) * 100) / 100);
+    return {
+      ticker: cleanText(row.ticker, 40),
+      market: cleanText(row.mercado, 120),
+      currency: cleanText(row.divisa, 12),
+      currentPrice: parseSheetNumber(row.precio_actual),
+      currentPriceDate: cleanText(row.precio_actual_fecha, 20),
+      referencePrice,
+      bearPrice5y,
+      basePrice5y,
+      bullPrice5y,
+      priceFor15,
+      nextEarnings: cleanText(row.proximos_resultados, 30),
+      lastUpdated: cleanText(row.ultima_actualizacion, 20),
+      note: cleanText(row.nota, 500)
+    };
+  }).filter((row) => row.ticker);
+
   return {
     status: "ok",
     theses,
     cagr2031,
+    tracking,
     counts: {
       theses: theses.length,
       cagr2031: cagr2031.length,
-      cagrComplete: cagr2031.filter((row) => row.bear && row.base && row.bull).length
+      cagrComplete: cagr2031.filter((row) => row.bear && row.base && row.bull).length,
+      tracking: tracking.length,
+      trackingComplete: tracking.filter((row) =>
+        row.currentPrice !== null && row.bearPrice5y !== null && row.basePrice5y !== null && row.bullPrice5y !== null
+      ).length
     }
   };
 }
 
 export async function fetchMidasResearch(env, getGoogleAccessToken, fetcher = fetch, now = Date.now()) {
-  if (!getGoogleAccessToken) return { status: "not-configured", theses: [], cagr2031: [], counts: { theses: 0, cagr2031: 0, cagrComplete: 0 } };
+  if (!getGoogleAccessToken) {
+    return { status: "not-configured", theses: [], cagr2031: [], tracking: [],
+      counts: { theses: 0, cagr2031: 0, cagrComplete: 0, tracking: 0, trackingComplete: 0 } };
+  }
   if (researchCache.value && researchCache.expiresAt > now) return researchCache.value;
 
   const token = await getGoogleAccessToken(env);
   const spreadsheetId = await resolveResearchSpreadsheetId(env, token, fetcher);
-  const ranges = ["TESIS!A1:P500", "CAGR2031!A1:N500"];
+  const ranges = ["TESIS!A1:P500", "CAGR2031!A1:N500", "SEGUIMIENTO!A1:M500"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");

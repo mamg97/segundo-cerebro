@@ -7609,52 +7609,121 @@ function renderMidasRows(rows) {
   </div>`;
 }
 
+function midasCagrNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(String(value).replace("%", "").replace(",", ".").replace("+", "").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatMidasTrackingPrice(value, currency) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  if (!currency) return value.toLocaleString("es-ES", { maximumFractionDigits: 2 });
+  try {
+    return new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: value >= 100 ? 0 : 2,
+      maximumFractionDigits: value >= 100 ? 0 : 2
+    }).format(value);
+  } catch {
+    return value.toLocaleString("es-ES", { maximumFractionDigits: 2 }) + " " + currency;
+  }
+}
+
+function safeMidasThesisUrl(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(String(value));
+    if (url.protocol !== "https:") return null;
+    if (!["docs.google.com", "drive.google.com"].includes(url.hostname)) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+function renderMidasCase(price, cagr, currency, base = false) {
+  const cagrValue = midasCagrNumber(cagr);
+  const tone = cagrValue === null ? "" : cagrValue >= 15 ? " is-strong" : cagrValue >= 0 ? " is-positive" : " is-negative";
+  return `<div class="midas-case-value${base ? " is-base" : ""}${tone}">
+    <strong>${escapeHtml(formatMidasTrackingPrice(price, currency))}</strong>
+    <small>${cagr ? escapeHtml(cagr) + " CAGR" : "CAGR pendiente"}</small>
+  </div>`;
+}
+
 function renderMidasResearch(research) {
   if (!research || research.status !== "ok") {
     return `<section class="midas-research midas-research-unavailable">
       <div class="midas-research-heading">
-        <div><strong>Tesis y CAGR 2031</strong><span>Watchlist privada</span></div>
+        <div><strong>Seguimiento de empresas</strong><span>Tesis, valoración y próximos resultados</span></div>
       </div>
       <p>La watchlist privada no está disponible en esta carga.</p>
     </section>`;
   }
 
-  const rows = Array.isArray(research.cagr2031) ? research.cagr2031 : [];
-  const theses = new Map((Array.isArray(research.theses) ? research.theses : []).map((item) => [item.ticker, item]));
-  const complete = rows.filter((row) => row.bear && row.base && row.bull).length;
-  const pending = Math.max(0, rows.length - complete);
+  const theses = Array.isArray(research.theses) ? research.theses : [];
+  const cagrByTicker = new Map((Array.isArray(research.cagr2031) ? research.cagr2031 : []).map((item) => [item.ticker, item]));
+  const trackingByTicker = new Map((Array.isArray(research.tracking) ? research.tracking : []).map((item) => [item.ticker, item]));
+  const rows = theses.map((thesis) => ({
+    thesis,
+    cagr: cagrByTicker.get(thesis.ticker) || {},
+    tracking: trackingByTicker.get(thesis.ticker) || {}
+  })).sort((a, b) => {
+    const av = midasCagrNumber(a.cagr.base);
+    const bv = midasCagrNumber(b.cagr.base);
+    if (av === null && bv === null) return a.thesis.ticker.localeCompare(b.thesis.ticker);
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return bv - av;
+  });
+  const complete = rows.filter(({ cagr, tracking, thesis }) =>
+    cagr.bear && cagr.base && cagr.bull &&
+    typeof tracking.currentPrice === "number" &&
+    typeof tracking.basePrice5y === "number" &&
+    safeMidasThesisUrl(thesis.thesisUrl)
+  ).length;
 
   return `<section class="midas-research">
     <div class="midas-research-heading">
       <div>
-        <strong>Tesis y CAGR 2031</strong>
-        <span>Watchlist privada para revisar cuando exista liquidez</span>
+        <strong>Seguimiento de empresas</strong>
+        <span>Tesis, valoración a 5 años y calendario de resultados</span>
       </div>
       <div class="midas-research-counts">
-        <b>${rows.length} tesis</b>
-        <small>${complete} con CAGR 2031 · ${pending} pendientes</small>
+        <b>${rows.length} empresas</b>
+        <small>${complete} con seguimiento completo · ${Math.max(0, rows.length - complete)} por actualizar</small>
       </div>
     </div>
-    <p class="midas-research-rule">Cada tesis nueva debe conservar escenarios bear / base / bull a 2031. Si el estudio histórico tenía otro horizonte, no se extrapola: aparece pendiente hasta recalcularlo.</p>
-    <div class="midas-research-table-scroll" role="region" aria-label="Tesis de inversión y CAGR a 2031" tabindex="0">
+    <p class="midas-research-rule">Los precios objetivo pertenecen a la tesis vigente y no se desplazan automáticamente con la cotización. “Precio 15%” = precio objetivo central a 5 años / 1,15⁵.</p>
+    <div class="midas-research-table-scroll" role="region" aria-label="Seguimiento de empresas y tesis de inversión" tabindex="0">
       <table class="midas-research-table">
         <thead><tr>
-          <th>Ticker / empresa</th><th>Tema</th><th>Bear 2031</th><th>Base 2031</th><th>Bull 2031</th><th>Última tesis</th><th>Estado</th>
+          <th>Ticker</th>
+          <th>Nombre empresa</th>
+          <th>Mercado</th>
+          <th>Precio actual</th>
+          <th>Bull case a 5 años</th>
+          <th>Bear case a 5 años</th>
+          <th>Caso central a 5 años</th>
+          <th>Precio para generar 15% anual</th>
+          <th>Precio objetivo a 5 años</th>
+          <th>Fecha próximos resultados</th>
+          <th>Tesis</th>
         </tr></thead>
-        <tbody>${rows.map((row) => {
-          const thesis = theses.get(row.ticker) || {};
-          const statusClass = row.bear && row.base && row.bull ? "is-complete" : "is-pending";
-          const original = row.originalHorizon && (row.originalBear || row.originalBase || row.originalBull)
-            ? `<small>Histórico ${escapeHtml(row.originalHorizon)}: ${escapeHtml([row.originalBear, row.originalBase, row.originalBull].filter(Boolean).join(" / "))}</small>`
-            : "";
+        <tbody>${rows.map(({ thesis, cagr, tracking }) => {
+          const thesisUrl = safeMidasThesisUrl(thesis.thesisUrl);
           return `<tr>
-            <td><strong>${escapeHtml(row.ticker)}</strong><span>${escapeHtml(row.company)}</span>${thesis.summary ? `<small>${escapeHtml(thesis.summary)}</small>` : ""}</td>
-            <td>${escapeHtml(row.theme || thesis.theme || "—")}</td>
-            <td class="midas-cagr-value">${row.bear ? escapeHtml(row.bear) : "—"}</td>
-            <td class="midas-cagr-value is-base">${row.base ? escapeHtml(row.base) : "—"}${!row.base ? original : ""}</td>
-            <td class="midas-cagr-value">${row.bull ? escapeHtml(row.bull) : "—"}</td>
-            <td>${escapeHtml(formatFinanceDate(row.studyDate || thesis.lastReview, "—"))}</td>
-            <td><span class="midas-research-status ${statusClass}">${escapeHtml(row.status || "Pendiente")}</span></td>
+            <td class="midas-company-ticker"><strong>${escapeHtml(thesis.ticker)}</strong></td>
+            <td class="midas-company-name"><strong>${escapeHtml(thesis.company)}</strong><small>${escapeHtml(thesis.theme || "—")}</small></td>
+            <td>${escapeHtml(tracking.market || "—")}</td>
+            <td class="midas-price-cell"><strong>${escapeHtml(formatMidasTrackingPrice(tracking.currentPrice, tracking.currency))}</strong><small>${tracking.currentPriceDate ? escapeHtml(formatFinanceDate(tracking.currentPriceDate, tracking.currentPriceDate)) : "Sin actualizar"}</small></td>
+            <td>${renderMidasCase(tracking.bullPrice5y, cagr.bull, tracking.currency)}</td>
+            <td>${renderMidasCase(tracking.bearPrice5y, cagr.bear, tracking.currency)}</td>
+            <td>${renderMidasCase(tracking.basePrice5y, cagr.base, tracking.currency, true)}</td>
+            <td class="midas-price-cell is-entry"><strong>${escapeHtml(formatMidasTrackingPrice(tracking.priceFor15, tracking.currency))}</strong><small>para 15% CAGR</small></td>
+            <td class="midas-price-cell is-target"><strong>${escapeHtml(formatMidasTrackingPrice(tracking.basePrice5y, tracking.currency))}</strong><small>caso central</small></td>
+            <td class="midas-earnings-cell">${tracking.nextEarnings ? escapeHtml(formatFinanceDate(tracking.nextEarnings, tracking.nextEarnings)) : "—"}</td>
+            <td class="midas-thesis-cell">${thesisUrl ? `<a class="midas-thesis-link" href="${escapeHtml(thesisUrl)}" target="_blank" rel="noopener noreferrer">Abrir tesis ↗</a>` : '<span class="midas-thesis-missing">Pendiente</span>'}</td>
           </tr>`;
         }).join("")}</tbody>
       </table>
