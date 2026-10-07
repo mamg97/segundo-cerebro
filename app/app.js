@@ -996,6 +996,9 @@ function formatCalendarWeekLabel(start, endExclusive) {
 }
 
 function calendarClassForEvent(event) {
+  const calendarName = String(event?.calendarName || "").trim().toLowerCase();
+  if (calendarName === "gemini_miguel") return "calendar-gemini";
+
   const byArea = {
     "area-general": "calendar-personal",
     "area-career": "calendar-work",
