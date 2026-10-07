@@ -193,9 +193,19 @@ Las filas de categorías usan `source_status`:
 La web puede mostrar un porcentaje provisional, pero nunca debe presentarlo como conciliado mientras la fuente oficial no lo confirme.
 
 
-## iCloud Calendar
+## Calendarios federados · iCloud + Google
 
-El calendario principal puede integrarse por CalDAV en modo lectura desde el Worker privado.
+La Agenda privada combina calendarios de solo lectura desde iCloud/CalDAV y Google Calendar. El Worker no crea, modifica ni elimina eventos en ninguno de los dos proveedores.
+
+### Google Calendar
+
+Google Calendar reutiliza `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y `GOOGLE_REFRESH_TOKEN`. La credencial debe incluir el scope `https://www.googleapis.com/auth/calendar.readonly` además de los permisos de Drive/Sheets que ya necesite Segundo Cerebro. El Worker enumera todos los calendarios Google legibles por esa cuenta y expande recurrencias dentro del mismo horizonte que iCloud.
+
+Si una credencial antigua no incluye Calendar, `/api/health` mostrará `googleCalendarSync=error` y un código técnico saneado; no se escriben scopes, tokens, IDs ni nombres de calendarios en Git.
+
+### iCloud Calendar
+
+El calendario iCloud se integra por CalDAV en modo lectura desde el Worker privado.
 
 ### Secretos
 
@@ -220,16 +230,16 @@ El Worker solo realiza operaciones CalDAV de lectura (`PROPFIND` y `REPORT`). El
 
 El horizonte inicial es de 90 días y la caché del Worker dura 60 segundos.
 
-`/api/health` expone `calendarSync` sin mostrar eventos ni credenciales.
+`/api/health` expone el estado federado y, por separado, `icloudCalendarSync` y `googleCalendarSync`, sin mostrar eventos ni credenciales.
 
 
 ### Eventos importantes y Salud
 
-La pestaña privada `EventosImportantes` almacena reglas y alias personales que nunca deben entrar en Git. El Worker entrega esas reglas al cliente autenticado, que las aplica sobre los eventos de iCloud.
+La pestaña privada `EventosImportantes` almacena reglas y alias personales que nunca deben entrar en Git. El Worker entrega esas reglas al cliente autenticado, que las aplica sobre la agenda federada.
 
-El horizonte de lectura CalDAV es de 550 días para poder detectar con antelación bodas, viajes y citas médicas relevantes. La semana visible continúa filtrándose al lunes-domingo actual.
+El horizonte de lectura es de 550 días para iCloud y Google. La semana visible continúa filtrándose al lunes-domingo actual. Ambos proveedores disponen de last-known-good privado para evitar desapariciones ante fallos transitorios.
 
-`Salud` es una vista derivada de iCloud: agrupa próximas citas médicas, gimnasio y nutrición. No escribe ni modifica el calendario.
+`Salud` puede derivar citas desde la agenda federada. No escribe ni modifica ningún calendario.
 
 
 ### Gimnasio
