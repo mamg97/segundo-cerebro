@@ -171,14 +171,14 @@ La barra visible de una categoría representa gasto ejecutado: `spent / budgeted
 
 ## Eventos importantes y salud derivados del calendario
 
-El estado remoto puede incluir `importantEventRules`, una lista privada procedente del bridge de Google Sheets. Cada regla contiene `matchTerms[]`, `displayTitle`, `kind` y `enabled`. Los términos se aplican únicamente en runtime sobre los eventos iCloud ya normalizados; nombres privados y alias no deben escribirse en Git.
+El estado remoto puede incluir `importantEventRules`, una lista privada procedente del bridge de Google Sheets. Cada regla contiene `matchTerms[]`, `displayTitle`, `kind` y `enabled`. Los términos se aplican únicamente en runtime sobre los eventos federados ya normalizados; nombres privados y alias no deben escribirse en Git.
 
 La vista `Eventos importantes` combina:
-- eventos iCloud que coinciden con reglas privadas;
+- eventos federados de iCloud/Google que coinciden con reglas privadas;
 - citas médicas detectadas por clasificación genérica;
 - compromisos financieros próximos.
 
-El área `Salud` es derivada y no crea una segunda fuente de verdad. Clasifica eventos iCloud en `medical`, `gym` y `nutrition` a partir de título/ubicación. La fuente sigue siendo iCloud.
+El área `Salud` es derivada y no crea una segunda fuente de verdad. Clasifica eventos del calendario federado en `medical`, `gym` y `nutrition` a partir de título/ubicación. Cada proveedor conserva autoridad sobre sus eventos y D1 solo mantiene caché de resiliencia.
 
 
 ## Gimnasio

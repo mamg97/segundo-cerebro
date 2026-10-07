@@ -1201,7 +1201,8 @@ try {
       "pantrySync",
       "objectsSync",
       "projectsSync",
-      "calendarSync"
+      "calendarSync",
+      "googleCalendarSync"
     ];
     for (const field of syncFields) {
       const value = String(health.body[field] || "");
@@ -1212,10 +1213,16 @@ try {
       assertCheck(Number(health.body.calendarMatchedCount) > 0, "Calendario conserva calendarios enlazados", `n=${Number(health.body.calendarMatchedCount) || 0}`);
       assertCheck(Number(health.body.calendarEventCount) > 0, "Calendario conserva eventos en horizonte", `n=${Number(health.body.calendarEventCount) || 0}`);
     }
+    if (health.body.googleCalendarSync !== "error" && health.body.googleCalendarSync !== "not-configured") {
+      assertCheck(Number(health.body.googleCalendarSelectedCount) > 0, "Google Calendar descubre calendarios", `n=${Number(health.body.googleCalendarSelectedCount) || 0}`);
+      assertCheck(Number(health.body.googleCalendarMatchedCount) > 0, "Google Calendar lee calendarios", `n=${Number(health.body.googleCalendarMatchedCount) || 0}`);
+      assertCheck(Number(health.body.googleCalendarEventCount) > 0, "Google Calendar conserva eventos en horizonte", `n=${Number(health.body.googleCalendarEventCount) || 0}`);
+    }
   }
 
   const calendarStatus = normalizeAuditValue(await page.locator("#calendar-source-status").textContent().catch(() => ""));
   assertCheck(!/(error|no disponible|fall)/.test(calendarStatus), "Agenda sin error visible de fuente");
+  assertCheck(/google/.test(calendarStatus), "Agenda incorpora Google Calendar", calendarStatus || "sin estado");
 
   const nutrition = await api("/api/nutrition");
   assertCheck(nutrition.ok && nutrition.body?.ok === true, "API de Nutrición", `HTTP ${nutrition.status}`);

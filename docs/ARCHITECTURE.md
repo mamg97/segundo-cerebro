@@ -64,11 +64,13 @@ El Worker lee `LuzHistorico` directamente desde la fuente privada, normaliza ún
 
 ### Calendar
 
-iCloud Calendar se consulta mediante CalDAV. Esta integración es deliberadamente de solo lectura: el Worker usa operaciones de consulta y no modifica calendarios.
+La Agenda privada es una vista federada de calendarios de solo lectura. El Worker consulta iCloud mediante CalDAV y Google Calendar mediante la API oficial usando el OAuth privado ya configurado. Ninguna de las dos integraciones modifica los calendarios.
 
-La disponibilidad de CalDAV no condiciona la continuidad visual de la agenda. El Worker mantiene en D1 una copia derivada `last-known-good` de la última lectura completa y no vacía. iCloud sigue siendo autoridad: la copia solo actúa como caché de resiliencia. Un timeout, una respuesta vacía sospechosa o un descubrimiento parcial de calendarios no puede reemplazarla. En una lectura parcial se mezclan los calendarios frescos con la última copia de los calendarios temporalmente ausentes.
+Cada proveedor mantiene autoridad sobre sus propios eventos. El Worker normaliza únicamente título, inicio, fin, ubicación y calendario de origen, fusiona ambas fuentes para `/api/state` y deduplica copias equivalentes por título normalizado + inicio + fin. Si un mismo evento existe en iCloud y Google, la copia iCloud conserva prioridad temporal y se mantienen ambas referencias de origen.
 
-La **resolución conversacional de agenda/eventos es federada** y está separada de la autoridad temporal de iCloud. Cualquier agente que responda preguntas como «qué eventos tengo», «cuál es el próximo» o «qué tengo este fin de semana» debe partir del Sheet canónico `SEGUNDO CEREBRO - EVENTOS` y contrastarlo con todos los calendarios y fuentes autorizadas disponibles (todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles y, para confirmación, email/reservas/documentos). Un resultado parcial de un proveedor no puede presentarse como agenda global completa. Si una fuente no puede consultarse, la respuesta se marca provisional y explicita la carencia.
+La disponibilidad de un proveedor no condiciona la continuidad visual de la agenda. iCloud y Google Calendar mantienen copias derivadas `last-known-good` en D1; una lectura vacía sospechosa, timeout o descubrimiento parcial no sustituye una copia sana. La UI expone por separado el estado de iCloud y Google y marca la agenda como parcial cuando una fuente está degradada.
+
+La **resolución conversacional de agenda/eventos es federada** y está separada de la autoridad de cada proveedor. Cualquier agente que responda preguntas como «qué eventos tengo», «cuál es el próximo» o «qué tengo este fin de semana» debe partir del Sheet canónico `SEGUNDO CEREBRO - EVENTOS` y contrastarlo con todos los calendarios y fuentes autorizadas disponibles (todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles y, para confirmación, email/reservas/documentos). Un resultado parcial de un proveedor no puede presentarse como agenda global completa.
 
 ### Habits / HabitQuest
 

@@ -1,4 +1,6 @@
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
+import { fetchGoogleCalendarSummary, hasGoogleCalendarConfig, safeGoogleCalendarErrorCode } from "./google-calendar.js";
+import { mergeCalendarSources } from "./calendar-federation.js";
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
 import { fetchMercadonaReference } from "./mercadona.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
@@ -4922,23 +4924,40 @@ export default {
         }
       }
 
-      let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
-      let calendarError = null;
-      let calendarMatchedCount = null;
-      let calendarSelectedCount = null;
-      let calendarEventCount = null;
+      let icloudCalendar = { status: "not-configured", value: null };
+      let googleCalendar = { status: "not-configured", value: null };
+      let icloudCalendarError = null;
+      let googleCalendarError = null;
+
       if (hasIcloudCalendarConfig(env)) {
         try {
-          const calendar = await fetchIcloudCalendarSummary(env);
-          calendarSync = calendar.status;
-          calendarMatchedCount = calendar.value?.source?.matchedCalendarCount ?? null;
-          calendarSelectedCount = calendar.value?.source?.selectedCalendarCount ?? null;
-          calendarEventCount = Array.isArray(calendar.value?.events) ? calendar.value.events.length : null;
+          icloudCalendar = await fetchIcloudCalendarSummary(env);
         } catch (error) {
-          calendarSync = "error";
-          calendarError = safeIcloudErrorCode(error);
+          icloudCalendar = { status: "error", value: null };
+          icloudCalendarError = safeIcloudErrorCode(error);
         }
       }
+
+      if (hasGoogleCalendarConfig(env)) {
+        try {
+          googleCalendar = await fetchGoogleCalendarSummary(env, getGoogleAccessToken);
+        } catch (error) {
+          googleCalendar = { status: "error", value: null };
+          googleCalendarError = safeGoogleCalendarErrorCode(error);
+        }
+      }
+
+      const federatedCalendar = mergeCalendarSources(icloudCalendar, googleCalendar);
+      const calendarSync = federatedCalendar?.source?.freshness || "not-configured";
+      const calendarError = [icloudCalendarError, googleCalendarError].filter(Boolean).join("|") || null;
+      const calendarMatchedCount = federatedCalendar?.source?.matchedCalendarCount ?? null;
+      const calendarSelectedCount = federatedCalendar?.source?.selectedCalendarCount ?? null;
+      const calendarEventCount = Array.isArray(federatedCalendar?.events) ? federatedCalendar.events.length : null;
+      const googleCalendarSync = googleCalendar.status;
+      const googleCalendarSelectedCount = googleCalendar.value?.source?.selectedCalendarCount ?? null;
+      const googleCalendarMatchedCount = googleCalendar.value?.source?.matchedCalendarCount ?? null;
+      const googleCalendarEventCount = Array.isArray(googleCalendar.value?.events) ? googleCalendar.value.events.length : null;
+      const icloudCalendarSync = icloudCalendar.status;
 
       return json({
         ok: true,
@@ -4965,7 +4984,14 @@ export default {
         calendarError,
         calendarMatchedCount,
         calendarSelectedCount,
-        calendarEventCount
+        calendarEventCount,
+        icloudCalendarSync,
+        icloudCalendarError,
+        googleCalendarSync,
+        googleCalendarError,
+        googleCalendarSelectedCount,
+        googleCalendarMatchedCount,
+        googleCalendarEventCount
       });
     }
 
@@ -5859,7 +5885,7 @@ export default {
         return json({ ok: false, code: "INVALID_STATE_JSON" }, 500);
       }
 
-      const [finance, habits, nutrition, pantry, objects, projects, career, eventsStore, calendar, family] = await Promise.all([
+      const [finance, habits, nutrition, pantry, objects, projects, career, eventsStore, calendar, googleCalendar, family] = await Promise.all([
         loadStateSource(hasFinanceGoogleConfig(env), "Finance", () => fetchFinanceSummary(env)),
         loadStateSource(hasHabitQuestGoogleConfig(env), "HabitQuest", () => fetchHabitQuestSummary(env)),
         loadStateSource(hasHealthGoogleConfig(env), "Nutrition", () => fetchHealthNutritionSummary(env)),
@@ -5872,6 +5898,12 @@ export default {
           hasIcloudCalendarConfig(env),
           "iCloud",
           () => fetchIcloudCalendarSummary(env, { seedEvents: Array.isArray(state.events) ? state.events : [] }),
+          9000
+        ),
+        loadStateSource(
+          hasGoogleCalendarConfig(env),
+          "GoogleCalendar",
+          () => fetchGoogleCalendarSummary(env, getGoogleAccessToken),
           9000
         ),
         loadStateSource(true, "Family", async () => ({
@@ -5929,9 +5961,11 @@ export default {
       }
 
       const calendarSync = calendar.status || "error";
-      if (calendar.value) {
-        state.calendarSummary = calendar.value;
-        state.events = calendar.value.events;
+      const googleCalendarSync = googleCalendar.status || "error";
+      const federatedCalendar = mergeCalendarSources(calendar, googleCalendar);
+      if (federatedCalendar) {
+        state.calendarSummary = federatedCalendar;
+        state.events = federatedCalendar.events;
       }
 
       state.familySummary = family.value || {
@@ -6020,7 +6054,8 @@ export default {
         projectsSync,
         careerSync,
         eventsSheetSync,
-        calendarSync
+        calendarSync,
+        googleCalendarSync
       };
 
       return json(state);
