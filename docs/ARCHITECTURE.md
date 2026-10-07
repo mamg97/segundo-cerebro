@@ -41,6 +41,8 @@ Worker
 
 La aplicación privada activa el modo `private-remote` y obtiene el estado desde el Worker protegido.
 
+El arranque puede componer `GET /api/state` para obtener una instantánea coherente de Home, pero las actualizaciones ordinarias no recargan toda la aplicación. El botón global usa **refresco incremental por dominio** mediante `GET /api/state?scope=finance|habits|pantry|objects|calendar`; Salud y Menú usan sus endpoints dedicados. Cada respuesta actualiza únicamente su bloque y los workspaces de detalle continúan cargándose bajo demanda. Este particionado aísla fallos y presupuesto CPU por petición, requisito importante para permanecer en Workers Free.
+
 ## Coordinador y estado común
 
 El Coordinador interpreta la intención del usuario y combina información entre áreas. Los módulos aportan reglas de dominio, pero no mantienen memorias independientes.

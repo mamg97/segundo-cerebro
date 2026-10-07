@@ -1,3 +1,13 @@
+## Infraestructura · refresh incremental por dominio · 2026-10-07
+
+- El botón global `Actualizar` deja de ejecutar `window.location.reload()`: ya no vuelve a cargar toda la aplicación, assets y estado compuesto por una actualización ordinaria.
+- `GET /api/state?scope=<dominio>` permite refrescar de forma independiente `finance`, `habits`, `pantry`, `objects` y `calendar`.
+- El frontal aplica cada respuesta únicamente al bloque correspondiente y lo vuelve a renderizar; Proyectos/Carrera y otros detalles siguen cargándose bajo demanda al abrirse.
+- Salud y Menú conservan sus endpoints dedicados y se refrescan aparte; no se mezclan con el presupuesto de CPU de Finanzas/Calendario.
+- El refresh manual se ejecuta en pequeños lotes para evitar una ráfaga única contra Google y, sobre todo, para que un dominio lento no invalide el resto.
+- La carga inicial `GET /api/state` se conserva por ahora porque tras PR #316 volvió a cargar Home correctamente; esta mejora reduce trabajo repetido sin sustituir una ruta que ya está estable.
+- Objetivo: respetar Workers Free, privacidad y coste 0 €, aislando CPU y fallos por dominio.
+
 ## Infraestructura · límite CPU Free y eliminación de polling legacy · 2026-10-07
 
 - Cloudflare notificó que Workers Free había superado el límite de CPU por ejecución 100+ veces en 24 h.
