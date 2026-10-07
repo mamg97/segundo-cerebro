@@ -19,7 +19,7 @@
 - La lectura redundante de `eventsSummary` al final de `/api/state` se elimina; se reutiliza el resumen ya obtenido de la fuente de Eventos.
 - Los presupuestos de espera de calendarios dentro de `/api/state` bajan a 7 s y el timeout live de iCloud a 5,5 s para conservar margen respecto al timeout de 9 s del navegador y permitir degradación/fallback en vez de abortar todo Home.
 - No cambia ninguna fuente canónica, privacidad ni contrato de imágenes.
-- Validación pendiente al cierre de la rama: CI, deploy y auditoría de producción; después comprobar si dejan de aparecer avisos CPU/1102.
+- Validación inmediata cerrada: PR #315 fusionada; CI y deploy privados pasaron. PR #318 añadió refresco incremental por dominio, con CI #406 y deploy privado #394 correctos. Audit production web #222 cargó el estado privado, Google Calendar y los módulos principales sin registrar respuestas 5xx, `1102`, `requestfailed` ni fallos de CPU. El auditor global quedó rojo por 23 comprobaciones funcionales/visuales ajenas a esta incidencia (Gym, barras Nutrición, enlace `cafe-solo` y compactación móvil de historial). La confirmación de largo plazo requiere observar si Cloudflare repite el aviso de CPU durante las siguientes 24 h.
 
 ## Agenda · federación iCloud + Google Calendar · 2026-10-07
 
