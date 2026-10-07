@@ -100,6 +100,23 @@ test("D1 object media store chunks, reads and deletes a multi-megabyte asset", a
 });
 
 
+
+test("D1 object media store returns a single chunk without rebuilding the asset", async () => {
+  const db=new FakeD1();
+  const store=createObjectsD1MediaStore({DB:db});
+  const key="objects/obj-thumbnail-example-001/thumbnail/12345678-abcd";
+  const input=new Uint8Array(4096);
+  for(let i=0;i<input.length;i+=1) input[i]=i%251;
+
+  await store.put(key,input,{httpMetadata:{contentType:"image/webp"}});
+  const rawChunk=db.chunks.get(key)[0].data;
+  const stored=await store.get(key);
+
+  assert.equal(db.assets.get(key).chunk_count,1);
+  assert.equal(stored.body.buffer,rawChunk);
+  assert.deepEqual(new Uint8Array(stored.body),input);
+});
+
 test("D1 object media store keeps each write below the aggregate batch payload limit", async () => {
   const db=new FakeD1({maxBatchBlobBytes:OBJECTS_D1_MEDIA_LIMITS.chunkBytes+1024});
   const store=createObjectsD1MediaStore({DB:db});
