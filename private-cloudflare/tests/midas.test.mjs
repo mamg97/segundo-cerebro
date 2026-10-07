@@ -82,9 +82,9 @@ test("weekly ML bootstrap is normalized and explicitly non-forward", async () =>
   assert.equal(result.ensemble[0].positive_votes, 5);
 });
 
-test("MIDAS research resolves its private sheet through IntegracionesPrivadas", async () => {
-  const env = { FINANCE_SHEET_ID: "10hS1pdS8oaQURmIo6nUZX9eo551gFh0b_qwWPIWQRww" };
-  const researchId = "15yXCjLP7Cg6N88lW88yo4duZEmoga-w7WniAl1bLXws";
+test("MIDAS research resolves thesis, CAGR and tracking through IntegracionesPrivadas", async () => {
+  const env = { FINANCE_SHEET_ID: "finance-sheet-example" };
+  const researchId = "research-sheet-example";
   const seen = [];
   const fetcher = async (url) => {
     seen.push(url);
@@ -97,12 +97,16 @@ test("MIDAS research resolves its private sheet through IntegracionesPrivadas", 
     if (url.includes("/spreadsheets/" + researchId + "/values:batchGet")) {
       return { ok: true, json: async () => ({ valueRanges: [
         { values: [
-          ["ticker","empresa","tema","tipo_estudio","ultima_revision","tesis_resumida","drivers_clave","riesgos_clave","escenario_bear","escenario_base","escenario_bull","horizonte","estado","regla_de_uso"],
-          ["NVEC","NVE Corporation","Sensores","CAGR","2026-09-23","Tesis","Driver","Riesgo","","","","2026–2031","RECUPERADA","Actualizar"]
+          ["ticker","empresa","tema","tipo_estudio","ultima_revision","tesis_resumida","drivers_clave","riesgos_clave","escenario_bear","escenario_base","escenario_bull","horizonte","estado","regla_de_uso","artefacto_drive","origen_recuperado"],
+          ["NVEC","NVE Corporation","Sensores","CAGR","2026-09-23","Tesis","Driver","Riesgo","","","","2026–2031","RECUPERADA","Actualizar","https://docs.google.com/document/d/example/edit","Estudio"]
         ] },
         { values: [
           ["ticker","empresa","tema","fecha_estudio","objetivo","cagr_bear_2031","cagr_base_2031","cagr_bull_2031","horizonte_original","cagr_bear_original","cagr_base_original","cagr_bull_original","estado","nota"],
           ["NVEC","NVE Corporation","Sensores","2026-09-23","2031","-6,9%","+12,8%","+34,3%","2026–2031","-6,9%","+12,8%","+34,3%","COMPLETO","Recuperado"]
+        ] },
+        { values: [
+          ["ticker","mercado","divisa","precio_actual","precio_actual_fecha","precio_referencia_estudio","precio_bear_5a","precio_base_5a","precio_bull_5a","precio_15pct_5a","proximos_resultados","ultima_actualizacion","nota"],
+          ["NVEC","NASDAQ","USD","80,00","2026-10-07","80,00","","","","","2026-11-05","2026-10-07","Seguimiento"]
         ] }
       ] }) };
     }
@@ -112,8 +116,17 @@ test("MIDAS research resolves its private sheet through IntegracionesPrivadas", 
   assert.equal(result.status, "ok");
   assert.equal(result.counts.theses, 1);
   assert.equal(result.counts.cagrComplete, 1);
+  assert.equal(result.counts.tracking, 1);
+  assert.equal(result.counts.trackingComplete, 1);
   assert.equal(result.cagr2031[0].base, "+12,8%");
+  assert.equal(result.theses[0].thesisUrl, "https://docs.google.com/document/d/example/edit");
+  assert.equal(result.tracking[0].market, "NASDAQ");
+  assert.equal(result.tracking[0].currentPrice, 80);
+  assert.equal(result.tracking[0].basePrice5y, 145.94);
+  assert.equal(result.tracking[0].priceFor15, 72.56);
+  assert.equal(result.tracking[0].nextEarnings, "2026-11-05");
   assert.equal(seen.some((url) => url.includes("IntegracionesPrivadas")), true);
+  assert.equal(seen.some((url) => url.includes("SEGUIMIENTO")), true);
   assert.equal(seen.some((url) => url.includes("/drive/v3/files")), false);
 });
 
