@@ -104,7 +104,20 @@ async function fetchJson(endpoint, token, code) {
   const response = await googleReadFetch(endpoint, {
     headers: { Authorization: "Bearer " + token }
   });
-  if (!response.ok) throw new Error(code + "_" + response.status);
+  if (!response.ok) {
+    let reason = "";
+    try {
+      const payload = await response.clone().json();
+      reason = String(
+        payload?.error?.errors?.[0]?.reason ||
+        payload?.error?.status ||
+        ""
+      ).replace(/[^A-Z0-9_-]/gi, "_").toUpperCase().slice(0, 80);
+    } catch {
+      reason = "";
+    }
+    throw new Error(code + "_" + response.status + (reason ? "_" + reason : ""));
+  }
   return response.json();
 }
 
