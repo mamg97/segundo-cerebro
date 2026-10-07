@@ -1,3 +1,13 @@
+## Infraestructura · límite CPU Free y eliminación de polling legacy · 2026-10-07
+
+- Cloudflare notificó que Workers Free había superado el límite de CPU por ejecución 100+ veces en 24 h.
+- Restricción permanente: privacidad + coste operativo incremental 0 €; no se usa Workers Paid como solución.
+- Se identificó un polling heredado de OBJETOS en el Worker principal: `wrangler.bootstrap.jsonc` ejecutaba `* * * * *` y `scheduled()` leía `ImageIngestQueue` cada minuto aunque el flujo canónico actual usa el bridge directo.
+- Se retira ese cron y el handler legacy, eliminando hasta 1.440 invocaciones/día que no aportaban funcionalidad vigente.
+- Las lecturas D1 de imágenes de un único chunk usan fast-path sin reconstruir/copiar el asset completo; beneficia especialmente miniaturas y looks pequeños.
+- No cambia ninguna fuente canónica, privacidad ni contrato de imágenes.
+- Validación pendiente al cierre de la rama: CI, deploy y auditoría de producción; después comprobar si dejan de aparecer avisos CPU/1102.
+
 ## Agenda · federación iCloud + Google Calendar · 2026-10-07
 
 - La agenda semanal deja de depender únicamente de iCloud/CalDAV: `/api/state` fusiona iCloud y Google Calendar antes de entregar `state.events`.

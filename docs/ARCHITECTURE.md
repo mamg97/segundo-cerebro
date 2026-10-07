@@ -520,7 +520,7 @@ D1 media + Armario
 
 Cuando una conversación no dispone de una acción HTTP directa al bridge pero sí puede operar Google Drive + Railway, se usa el bootstrap `objects-chatgpt-bridge/seed.mjs`: una copia privada de Drive sirve solo para materializar una referencia descargable, `OBJECTS_SEED_JOBS` alimenta temporalmente el lote (máximo 8), el servicio arranca con `node seed.mjs && npm start`, y tras `ok=true` se verifica `Armario`, se vacía la variable, se restaura `npm start` y se elimina el staging.
 
-La antigua ruta `Drive staging → ImageIngestQueue → cron` queda como legado histórico. Las filas `OBJECTS_STAGING_META_403` pertenecen a ese intento anterior y no representan el estado vigente.
+La antigua ruta `Drive staging → ImageIngestQueue → cron` queda como legado histórico. Las filas `OBJECTS_STAGING_META_403` pertenecen a ese intento anterior y no representan el estado vigente. El cron por minuto asociado a esa ruta está retirado: el Worker principal no hace polling periódico de `ImageIngestQueue`.
 
 El procedimiento operativo detallado y el checklist de cierre están en `docs/OBJECTS_IMAGE_INGEST.md`.
 

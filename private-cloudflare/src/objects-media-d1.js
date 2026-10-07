@@ -177,7 +177,9 @@ export function createObjectsD1MediaStore(env) {
       for (let index = 0; index < chunks.length; index += 1) {
         if (Number(chunks[index]?.chunk_index) !== index) throw new Error("OBJECTS_MEDIA_CORRUPT");
       }
-      const body = concatChunks(chunks.map((row) => row.data), Number(asset.size_bytes || 0));
+      const body = expectedCount === 1
+        ? bytesOf(chunks[0].data)
+        : concatChunks(chunks.map((row) => row.data), Number(asset.size_bytes || 0));
 
       return {
         body,

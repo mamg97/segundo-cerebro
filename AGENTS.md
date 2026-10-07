@@ -14,6 +14,14 @@ Construir un segundo cerebro personal y privado: un sistema operativo de vida co
 4. Leer el contrato de `agents/` correspondiente al dominio afectado.
 5. Revisar el estado de Git y entender el propósito del trabajo previo antes de modificarlo.
 
+## Restricción de coste operativo cero
+
+- **Privacidad y coste operativo cero son restricciones de primer nivel y tienen la misma prioridad.**
+- La solución ordinaria debe funcionar con infraestructura gratuita / free tier ya disponible. No introducir suscripciones, upgrades, APIs premium, licencias de pago ni servicios con coste recurrente.
+- Ante un límite de un free tier, la respuesta por defecto es reducir trabajo, cachear, hacer cargas bajo demanda, eliminar polling/cron innecesario, simplificar almacenamiento/procesamiento o redistribuir trabajo; pagar para ampliar límites no es una corrección válida.
+- Solo se puede proponer o activar gasto si el usuario revoca explícitamente esta restricción para un caso concreto.
+- Las optimizaciones de coste nunca pueden degradar la privacidad ni mover datos privados a una superficie pública.
+
 ## Límites de privacidad
 
 - GitHub solo puede contener código, documentación técnica, licencias y datos ficticios inequívocos.
