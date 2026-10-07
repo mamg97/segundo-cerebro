@@ -1863,6 +1863,7 @@ async function toggleHabitQuest(request, env) {
     ok: true,
     habitId,
     date,
+    previousCount: currentCount,
     count: nextCount,
     summary: refreshed.value
   });
@@ -5062,8 +5063,12 @@ export default {
       try {
         return await toggleHabitQuest(request, env);
       } catch (error) {
-        console.warn("HabitQuest toggle failed", String(error?.message || error));
-        return json({ ok: false, code: "HABITQUEST_WRITE_FAILED" }, 502);
+        const rawCode = String(error?.message || "");
+        console.warn("HabitQuest toggle failed", rawCode || error);
+        const code = /^HABITQUEST_WRITE_(401|403|404|409|429|5\d\d)$/.test(rawCode)
+          ? rawCode
+          : "HABITQUEST_WRITE_FAILED";
+        return json({ ok: false, code }, 502);
       }
     }
 
