@@ -7,7 +7,7 @@ import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
-import { renderMidasVisualLab } from "./midas-lab.js?v=0.40.18";
+import { renderMidasAlgorithmDetail, renderMidasVisualLab } from "./midas-lab.js?v=0.40.19";
 
 let state = mockState;
 let areaById = new Map();
@@ -7781,6 +7781,28 @@ function renderMidasExecutionHealth(health, dashboard) {
   </section>`;
 }
 
+function renderMidasCatalog(dashboard) {
+  const rows = dashboard.tracks || [];
+  const originalGenetic = rows.find((row) => row.id === "genetic_sp500_legacy");
+  return `
+    <div class="midas-catalog">
+      ${MIDAS_GROUPS.map(([group, title]) => {
+        const groupRows = rows.filter((row) => row.group === group);
+        if (!groupRows.length) return "";
+        if (group === "historica_pendiente") {
+          return `<details class="midas-pending"><summary>${title} <span>${groupRows.length}</span></summary>${renderMidasRows(groupRows)}</details>`;
+        }
+        const groupNote = group === "diario_heredado"
+          ? `<p class="midas-group-note">Diario antiguo congelado y campaña corregida separada. Compara la versión corregida solo cuando acumule sesiones prospectivas.</p>`
+          : group === "tfm_demo_adaptado"
+            ? '<p class="midas-group-note">Modelos reimplementados en 2026 con una regla de cartera provisional común.</p>'
+            : "";
+        return `<section class="midas-group"><h3>${title}</h3>${groupNote}${renderMidasRows(groupRows)}</section>`;
+      }).join("")}
+      <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>.${originalGenetic?.status === "diario_heredado_observado" ? " La cifra del genético original procede de un extracto validado de su diario privado; no se publican posiciones ni operaciones." : " La estrategia genética original mantiene su diario privado, aún no enlazado."}</p>
+    </div>`;
+}
+
 function renderMidasReport(dashboard, stale, research = null, lab = null) {
   const rows = dashboard.tracks || [];
   const observed = rows.filter((row) => ["demo_con_diario", "diario_heredado_observado"].includes(row.status)).length;
@@ -7792,26 +7814,86 @@ function renderMidasReport(dashboard, stale, research = null, lab = null) {
       <p><strong>${observed} ${observed === 1 ? "estrategia" : "estrategias"} con resultados en este informe</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
       <p class="midas-updated">Informe generado ${escapeHtml(formatFinanceDate(dashboard.generated_at_utc))}${stale ? " · copia temporal: la fuente no responde" : ""}</p>
     </div>
-    ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>El historial antiguo se conserva como referencia: anotaba operaciones al mismo cierre que generaba la señal y su rentabilidad no era alcanzable con esa regla. La fila «versión corregida» empieza una campaña nueva: señal al cierre y ejecución simulada en la apertura siguiente, con costes. Sus cifras siguen siendo ficticias, sin órdenes confirmadas por un bróker. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
-    ${renderMidasExecutionHealth(lab?.competitionHealth, dashboard)}
-    <p class="midas-caveat">Capital ficticio y operaciones simuladas. La comparación principal sigue rentabilidad acumulada y riesgo realizado (volatilidad anualizada según la cadencia registrada, máximo drawdown y Sharpe descriptivo con rf=0). Cada estrategia conserva sus propios plazos y reglas; si las fechas de inicio difieren no forman una clasificación común hasta disponer de una ventana solapada suficiente. «Día» compara el último cierre con el anterior registrado. Las líneas prospectivas nuevas admiten acciones fraccionadas; el bootstrap Weekly ML visible hasta el primer forward real es una prueba anterior a ese cambio y no se recalcula.</p>
-    ${renderMidasVisualLab(dashboard, lab)}
-    ${renderMidasResearch(research)}
-    ${MIDAS_GROUPS.map(([group, title]) => {
-      const groupRows = rows.filter((row) => row.group === group);
-      if (!groupRows.length) return "";
-      if (group === "historica_pendiente") {
-        return `<details class="midas-pending"><summary>${title} <span>${groupRows.length}</span></summary>${renderMidasRows(groupRows)}</details>`;
-      }
-      const groupNote = group === "diario_heredado"
-        ? `<p class="midas-group-note">Diario antiguo congelado y campaña corregida separada. Compara la versión corregida solo cuando acumule sesiones prospectivas.</p>`
-        : group === "tfm_demo_adaptado"
-          ? '<p class="midas-group-note">Modelos reimplementados en 2026 con una regla de cartera provisional común.</p>'
-          : "";
-      return `<section class="midas-group"><h3>${title}</h3>${groupNote}${renderMidasRows(groupRows)}</section>`;
-    }).join("")}
-    <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>.${originalGenetic?.status === "diario_heredado_observado" ? " La cifra del genético original procede de un extracto validado de su diario privado; no se publican posiciones ni operaciones." : " La estrategia genética original mantiene su diario privado, aún no enlazado."}</p>
+
+    <nav class="midas-workspace-tabs" aria-label="Bloques de MIDAS" role="tablist">
+      <button type="button" class="active" data-midas-tab="competition" role="tab" aria-selected="true">Competición de algoritmos</button>
+      <button type="button" data-midas-tab="research" role="tab" aria-selected="false">Seguimiento de tesis</button>
+      <button type="button" data-midas-tab="catalog" role="tab" aria-selected="false">Catálogo / histórico</button>
+    </nav>
+
+    <section class="midas-workspace-panel active" data-midas-panel="competition" role="tabpanel">
+      <div data-midas-competition-list>
+        ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>El historial antiguo se conserva como referencia: anotaba operaciones al mismo cierre que generaba la señal y su rentabilidad no era alcanzable con esa regla. La fila «versión corregida» empieza una campaña nueva: señal al cierre y ejecución simulada en la apertura siguiente, con costes. Sus cifras siguen siendo ficticias, sin órdenes confirmadas por un bróker. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
+        ${renderMidasExecutionHealth(lab?.competitionHealth, dashboard)}
+        <p class="midas-caveat">Capital ficticio y operaciones simuladas. La comparación principal sigue rentabilidad acumulada y riesgo realizado. Cada estrategia conserva sus propios plazos y reglas; pulsa una fila para consultar su detalle completo.</p>
+        ${renderMidasVisualLab(dashboard, lab)}
+      </div>
+      <div class="midas-algorithm-detail-host" data-midas-algorithm-detail hidden></div>
+    </section>
+
+    <section class="midas-workspace-panel" data-midas-panel="research" role="tabpanel" hidden>
+      ${renderMidasResearch(research)}
+    </section>
+
+    <section class="midas-workspace-panel" data-midas-panel="catalog" role="tabpanel" hidden>
+      ${renderMidasCatalog(dashboard)}
+    </section>
   </div>`;
+}
+
+function bindMidasWorkspace(dashboard, lab) {
+  const root = document.querySelector("#midas-report");
+  if (!root) return;
+  const tabs = [...root.querySelectorAll("[data-midas-tab]")];
+  const panels = [...root.querySelectorAll("[data-midas-panel]")];
+  const competitionList = root.querySelector("[data-midas-competition-list]");
+  const detailHost = root.querySelector("[data-midas-algorithm-detail]");
+
+  const showCompetitionList = () => {
+    if (competitionList) competitionList.hidden = false;
+    if (detailHost) {
+      detailHost.hidden = true;
+      detailHost.innerHTML = "";
+    }
+  };
+
+  const openAlgorithm = (id) => {
+    if (!competitionList || !detailHost || !id) return;
+    competitionList.hidden = true;
+    detailHost.innerHTML = renderMidasAlgorithmDetail(dashboard, lab, id);
+    detailHost.hidden = false;
+    detailHost.querySelector("[data-midas-algorithm-back]")?.addEventListener("click", () => {
+      showCompetitionList();
+      root.querySelector('[data-midas-algorithm-id="' + CSS.escape(String(id)) + '"]')?.focus();
+    });
+    detailHost.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  tabs.forEach((button) => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.midasTab;
+      tabs.forEach((item) => {
+        const selected = item === button;
+        item.classList.toggle("active", selected);
+        item.setAttribute("aria-selected", selected ? "true" : "false");
+      });
+      panels.forEach((panel) => {
+        const selected = panel.dataset.midasPanel === tab;
+        panel.classList.toggle("active", selected);
+        panel.hidden = !selected;
+      });
+      if (tab === "competition") showCompetitionList();
+    });
+  });
+
+  root.querySelectorAll("[data-midas-algorithm-id]").forEach((row) => {
+    row.addEventListener("click", () => openAlgorithm(row.dataset.midasAlgorithmId));
+    row.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openAlgorithm(row.dataset.midasAlgorithmId);
+    });
+  });
 }
 
 async function openMidasDialog() {
@@ -7830,7 +7912,10 @@ async function openMidasDialog() {
     if (!response.ok) throw new Error(`MIDAS_HTTP_${response.status}`);
     const result = await response.json();
     if (!result.ok || !Array.isArray(result.dashboard?.tracks)) throw new Error("MIDAS_INVALID_RESPONSE");
-    if (dialog.open) target.innerHTML = renderMidasReport(result.dashboard, result.stale, result.research, result.lab);
+    if (dialog.open) {
+      target.innerHTML = renderMidasReport(result.dashboard, result.stale, result.research, result.lab);
+      bindMidasWorkspace(result.dashboard, result.lab);
+    }
   } catch {
     if (dialog.open) {
       target.innerHTML = '<div class="midas-error"><strong>No se pudo cargar el informe.</strong><p>El diario público puede estar aún sin publicar o temporalmente inaccesible.</p><button id="midas-retry" type="button">Reintentar</button></div>';
