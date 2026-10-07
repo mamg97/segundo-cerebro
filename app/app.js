@@ -7702,12 +7702,12 @@ function renderMidasResearch(research) {
           <th>Nombre empresa</th>
           <th>Mercado</th>
           <th>Precio actual</th>
-          <th>Bull case a 5 años</th>
-          <th>Bear case a 5 años</th>
-          <th>Caso central a 5 años</th>
-          <th>Precio para generar 15% anual</th>
-          <th>Precio objetivo a 5 años</th>
-          <th>Fecha próximos resultados</th>
+          <th>Bull 5a</th>
+          <th>Bear 5a</th>
+          <th>Central 5a</th>
+          <th>Precio 15%</th>
+          <th>Objetivo 5a</th>
+          <th>Próx. resultados</th>
           <th>Tesis</th>
         </tr></thead>
         <tbody>${rows.map(({ thesis, cagr, tracking }) => {
