@@ -1,3 +1,14 @@
+## Agenda · federación iCloud + Google Calendar · 2026-10-07
+
+- La agenda semanal deja de depender únicamente de iCloud/CalDAV: `/api/state` fusiona iCloud y Google Calendar antes de entregar `state.events`.
+- Google Calendar se lee con el OAuth privado existente y requiere `calendar.readonly`; se enumeran todos los calendarios legibles y se expanden recurrencias en horizonte de 550 días.
+- La fusión deduplica copias equivalentes por título normalizado + inicio + fin y mantiene prioridad iCloud cuando el mismo evento existe en ambos proveedores.
+- Google dispone de last-known-good privado en D1, igual que iCloud, y `/api/health` separa `icloudCalendarSync` / `googleCalendarSync`.
+- La UI de Agenda muestra ambos proveedores y marca sincronización parcial si uno falla.
+- Los cursos, clases y otros compromisos ordinarios aparecen en Agenda sin convertirse por ello en filas de `SEGUNDO CEREBRO - EVENTOS`; el Sheet sigue reservado a estado/crónica operativa e importantes.
+- El auditor de producción exige Google Calendar operativo y visible en el indicador de fuente.
+- Pendiente de cierre en este relevo: validar CI, desplegar y confirmar en producción que el OAuth actual incluye `calendar.readonly`.
+
 ## MIDAS · workspace por bloques y tablas compactas · 2026-10-07
 
 - Seguimiento MIDAS se organiza en tres pestañas superiores: `Competición de algoritmos`, `Seguimiento de tesis` y `Catálogo / histórico`.
