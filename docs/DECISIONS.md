@@ -533,3 +533,13 @@ Motivo: la carrera profesional necesita continuidad estructurada y comparación 
 - **Estabilidad:** el objetivo de valoración de una tesis no se mueve porque cambie el precio de mercado. El precio actual y su fecha son observaciones separadas del precio de referencia del estudio.
 - **Revisión:** tras cada trimestre se añade una revisión fechada al Doc, se actualizan `TESIS`, `CAGR2031` y `SEGUIMIENTO` cuando proceda, conservando el histórico.
 - **Integridad:** cualquier dato ausente queda pendiente; la UI no infiere mercado, cotización, fecha de resultados ni objetivos que no estén soportados por la fuente privada.
+
+
+## D-051 — Privacidad y coste operativo cero como restricciones de primer nivel
+
+- **Estado:** aceptada.
+- **Fecha:** 2026-10-07.
+- **Decisión:** toda la arquitectura de Segundo Cerebro debe respetar simultáneamente privacidad y coste operativo incremental de 0 €. Ninguna de las dos se sacrifica para resolver la otra.
+- **Consecuencia:** un límite de free tier se resuelve reduciendo CPU/requests, eliminando polling innecesario, cacheando de forma segura, cargando por dominio/bajo demanda y evitando recomputaciones. Un upgrade de pago no es una vía de resolución ordinaria.
+- **Excepción:** cualquier gasto requiere una revocación explícita del usuario para ese caso concreto.
+- **Motivo:** el sistema debe ser sostenible como infraestructura personal permanente sin convertir el crecimiento funcional en una factura recurrente.
