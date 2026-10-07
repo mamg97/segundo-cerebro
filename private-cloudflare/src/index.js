@@ -42,6 +42,9 @@ let healthCache = { value: null, expiresAt: 0, date: null };
 let recipePhotoCache = { value: new Map(), expiresAt: 0 };
 let recipePreviewCache = { value: new Map(), expiresAt: 0 };
 let healthRecoveryImportStateReady = false;
+let stateEventMaintenanceNextAt = 0;
+let stateLegacyEventMigrationDone = false;
+const STATE_EVENT_MAINTENANCE_MS = 5 * 60_000;
 
 function withSecurityHeaders(response, extra = {}) {
   const headers = new Headers(response.headers);
@@ -138,6 +141,53 @@ async function loadStateSource(enabled, label, loader, timeoutMs = 4500) {
     console.warn(label + " sync failed", message);
     return { status: timedOut ? "timeout" : "error", value: null };
   }
+}
+
+function scheduleStateEventMaintenance(ctx, env, currentState) {
+  if (!ctx || typeof ctx.waitUntil !== "function" || !hasEventsGoogleConfig(env)) return;
+  const now = Date.now();
+  if (stateEventMaintenanceNextAt > now) return;
+  stateEventMaintenanceNextAt = now + STATE_EVENT_MAINTENANCE_MS;
+
+  const events = Array.isArray(currentState?.events) ? currentState.events : [];
+  const rules = Array.isArray(currentState?.importantEventRules) ? currentState.importantEventRules : [];
+  const finance = currentState?.financeSummary || {};
+
+  ctx.waitUntil((async () => {
+    if (!stateLegacyEventMigrationDone) {
+      try {
+        const legacy = await withStateTimeout(fetchEventLedgerSnapshot(env), 1500, "EventsLegacyRead");
+        await withStateTimeout(
+          migrateLegacyEventLedgerToSheet(env, getGoogleAccessToken, legacy),
+          2500,
+          "EventsLegacyMigration"
+        );
+        stateLegacyEventMigrationDone = true;
+      } catch (error) {
+        console.warn("Events legacy migration deferred", String(error?.message || error));
+      }
+    }
+
+    try {
+      await withStateTimeout(
+        syncCalendarEventsToEventsSheet(env, getGoogleAccessToken, events, rules, finance),
+        3000,
+        "EventsSheetPersist"
+      );
+    } catch (error) {
+      console.warn("Events Sheet persistence deferred", String(error?.message || error));
+    }
+
+    try {
+      await withStateTimeout(
+        syncImportantEventRecords(env, events, rules, finance),
+        1200,
+        "EventsD1Mirror"
+      );
+    } catch (error) {
+      console.warn("Events D1 mirror deferred", String(error?.message || error));
+    }
+  })());
 }
 
 function hasGoogleOauthConfig(env) {
@@ -4820,7 +4870,7 @@ async function appendFamilyReference(request, env, caseId) {
 
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (env.PRIVATE_APP_ENABLED !== "true") {
       return json({
         ok: false,
@@ -5897,13 +5947,13 @@ export default {
           hasIcloudCalendarConfig(env),
           "iCloud",
           () => fetchIcloudCalendarSummary(env, { seedEvents: Array.isArray(state.events) ? state.events : [] }),
-          9000
+          7000
         ),
         loadStateSource(
           hasGoogleCalendarConfig(env),
           "GoogleCalendar",
           () => fetchGoogleCalendarSummary(env, getGoogleAccessToken),
-          9000
+          7000
         ),
         loadStateSource(true, "Family", async () => ({
           status: "ok",
@@ -5976,68 +6026,9 @@ export default {
         updatedAt: null
       };
 
-      // Eventos usa el Sheet privado como fuente canónica. D1 queda como espejo técnico/fallback.
-      // Migra una sola fuente histórica de D1 de forma idempotente para no perder crónica previa.
-      try {
-        if (hasEventsGoogleConfig(env)) {
-          await withStateTimeout(
-            fetchEventLedgerSnapshot(env)
-              .then((legacy) => migrateLegacyEventLedgerToSheet(env, getGoogleAccessToken, legacy)),
-            3000,
-            "EventsLegacyMigration"
-          );
-        }
-      } catch (error) {
-        console.warn("Events legacy migration deferred", String(error?.message || error));
-      }
-
-      // La reconciliación del calendario nunca debe bloquear la carga del dashboard.
-      try {
-        if (hasEventsGoogleConfig(env)) {
-          await withStateTimeout(
-            syncCalendarEventsToEventsSheet(
-              env,
-              getGoogleAccessToken,
-              Array.isArray(state.events) ? state.events : [],
-              Array.isArray(state.importantEventRules) ? state.importantEventRules : [],
-              state.financeSummary || {}
-            ),
-            3000,
-            "EventsSheetPersist"
-          );
-        }
-      } catch (error) {
-        console.warn("Events Sheet persistence deferred", String(error?.message || error));
-      }
-
-      try {
-        await withStateTimeout(
-          syncImportantEventRecords(
-            env,
-            Array.isArray(state.events) ? state.events : [],
-            Array.isArray(state.importantEventRules) ? state.importantEventRules : [],
-            state.financeSummary || {}
-          ),
-          1200,
-          "EventsD1Mirror"
-        );
-      } catch (error) {
-        console.warn("Events D1 mirror deferred", String(error?.message || error));
-      }
-
-      try {
-        state.eventsSummary = hasEventsGoogleConfig(env)
-          ? await withStateTimeout(fetchEventSheetHomeSummary(env, getGoogleAccessToken), 2500, "EventsSheetSummary")
-          : await withStateTimeout(fetchEventHomeSummary(env), 1000, "EventsSummary");
-      } catch (error) {
-        console.warn("Events summary read failed", String(error?.message || error));
-        state.eventsSummary = state.eventsSummary || {
-          activeCount: 0,
-          historyCount: 0,
-          inProgressCount: 0,
-          updatedAt: null
-        };
-      }
+      // La lectura de estado no debe esperar migraciones ni persistencias derivadas.
+      // Se mantienen en background y como máximo una vez cada 5 minutos por isolate.
+      scheduleStateEventMaintenance(ctx, env, state);
 
       state.meta = {
         ...(state.meta || {}),

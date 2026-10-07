@@ -475,6 +475,7 @@ D1 event_* → caché/espejo técnico y fallback de migración
 - `evento_id` es la identidad operativa del Sheet; `calendar_ref` enlaza la identidad del proveedor sin hacerla obligatoria para eventos manuales.
 - La lectura de `/api/state` hace upsert/reconciliación en el Sheet de los eventos importantes actualmente visibles; nunca escribe en calendario.
 - La fecha de fin determina automáticamente cuándo deja Home y aparece solo en Histórico.
+- `/api/state` prioriza la lectura: el mantenimiento derivado de Eventos (migración legacy, reconciliación hacia el Sheet y espejo D1) no bloquea la respuesta. Se ejecuta con `waitUntil` y throttling por isolate; la fuente canónica no cambia.
 - D1 no es la memoria primaria de Eventos y no replica detalle financiero, nutricional ni material.
 - Las obligaciones financieras sin semántica de viaje/celebración no se presentan como eventos históricos.
 - El dashboard expone `Eventos` como dominio de primer nivel y actúa como frontal de la fuente canónica.

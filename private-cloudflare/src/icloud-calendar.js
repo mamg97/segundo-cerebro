@@ -2,7 +2,7 @@
 let calendarCache = { value: null, expiresAt: 0 };
 
 const CALENDAR_SNAPSHOT_KEY = "icloud-calendar-last-known-good";
-const CALENDAR_LIVE_TIMEOUT_MS = 7000;
+const CALENDAR_LIVE_TIMEOUT_MS = 5500;
 const CALENDAR_LIVE_CACHE_MS = 60_000;
 const CALENDAR_FALLBACK_CACHE_MS = 15_000;
 
