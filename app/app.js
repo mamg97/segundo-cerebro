@@ -484,15 +484,125 @@ function toggleTheme() {
   applyTheme(current === "dark" ? "light" : "dark", true);
 }
 
-function refreshApp() {
+async function fetchStateScope(scope, timeoutMs = 9000) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort("state-scope-timeout"), timeoutMs);
+  try {
+    const response = await fetch("/api/state?scope=" + encodeURIComponent(scope), {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: controller.signal
+    });
+    if (!response.ok) throw new Error("STATE_SCOPE_" + scope.toUpperCase() + "_" + response.status);
+    return response.json();
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+function applyStateScope(scope, payload) {
+  if (!payload?.ok) return false;
+
+  if (scope === "finance") {
+    if (payload.financeSummary) state.financeSummary = payload.financeSummary;
+    if (Array.isArray(payload.importantEventRules)) state.importantEventRules = payload.importantEventRules;
+    if (payload.healthSummary) state.healthSummary = payload.healthSummary;
+    renderBudgetOverview();
+    renderDebtOverview();
+    renderGiftsOverview();
+    renderCreditOverview();
+    renderWealthOverview();
+    return true;
+  }
+
+  if (scope === "habits") {
+    if (payload.habitsSummary) state.habitsSummary = payload.habitsSummary;
+    renderHomeHealthHabitsSummary();
+    renderHomeHabitsCard();
+    return true;
+  }
+
+  if (scope === "pantry") {
+    state.pantrySummary = payload.pantrySummary || null;
+    renderHomePantryCard(state, privateModeKind);
+    return true;
+  }
+
+  if (scope === "objects") {
+    state.objectsSummary = payload.objectsSummary || null;
+    renderHomeObjectsCard(state, privateModeKind);
+    return true;
+  }
+
+  if (scope === "family") {
+    state.familySummary = payload.familySummary || state.familySummary || {};
+    renderFocus();
+    return true;
+  }
+
+  if (scope === "calendar") {
+    if (Array.isArray(payload.importantEventRules) && payload.importantEventRules.length) {
+      state.importantEventRules = payload.importantEventRules;
+    }
+    if (payload.eventsSummary) state.eventsSummary = payload.eventsSummary;
+    if (payload.calendarSummary) state.calendarSummary = payload.calendarSummary;
+    if (Array.isArray(payload.events)) state.events = payload.events;
+    renderEvents();
+    return true;
+  }
+
+  return false;
+}
+
+async function refreshStateScope(scope) {
+  try {
+    const payload = await fetchStateScope(scope);
+    applyStateScope(scope, payload);
+    return { scope, ok: true };
+  } catch (error) {
+    console.warn("Incremental refresh failed", scope, error);
+    return { scope, ok: false };
+  }
+}
+
+async function refreshApp() {
   const button = document.querySelector("#refresh-app");
   if (button) {
     button.disabled = true;
     button.classList.add("is-refreshing");
-    button.setAttribute("aria-label", "Actualizando Segundo Cerebro");
+    button.setAttribute("aria-label", "Actualizando datos visibles");
     button.setAttribute("aria-busy", "true");
   }
-  window.setTimeout(() => window.location.reload(), 80);
+
+  try {
+    // Keep each domain in an independent request so one expensive source cannot
+    // consume the CPU budget of the whole dashboard. Detail workspaces remain
+    // lazy and refresh themselves when opened.
+    await Promise.allSettled([
+      refreshStateScope("finance"),
+      refreshStateScope("habits"),
+      refreshStateScope("pantry")
+    ]);
+    await Promise.allSettled([
+      refreshStateScope("objects"),
+      refreshStateScope("calendar"),
+      refreshStateScope("family")
+    ]);
+    await Promise.allSettled([
+      renderHomeHealthCard(),
+      loadHomeWeeklyMenu()
+    ]);
+    renderMode();
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.classList.remove("is-refreshing");
+      button.setAttribute("aria-label", "Actualizar datos visibles");
+      button.setAttribute("aria-busy", "false");
+    }
+  }
 }
 
 let orbMediaQuery = null;
