@@ -1,3 +1,12 @@
+## HabitQuest · toggle inmediato sin doble clic · 2026-10-07
+
+- Incidencia observada: al pulsar un hábito pendiente, Google Sheets sí registraba el cambio, pero la UI podía seguir mostrando el valor anterior durante unos segundos.
+- Evidencia real: `1 h formación` (`kx8yj8fj`) escribió `count=1` a las 18:57:10Z y, tras un segundo clic porque la pantalla seguía en `0/1`, escribió `count=0` a las 18:57:26Z.
+- Causa: tras el append a `SyncState`, el Worker hacía una lectura inmediata de Sheets; esa lectura puede devolver brevemente el snapshot anterior. El frontal confiaba en ese resumen stale y no en `count`, que sí era la transición autoritativa confirmada por el POST.
+- Corrección: el frontal reconcilia siempre el resumen devuelto con el `count` autoritativo antes de renderizar. Así un segundo clic ya no es necesario ni puede deshacer accidentalmente el primer cambio.
+- Los errores de escritura dejan de fallar en silencio: se muestra un aviso visible y el Worker conserva códigos sanitizados de permisos/limitación.
+- No cambia la fuente canónica: `HabitQuest Data` / `SyncState` sigue siendo la verdad; no se crea estado paralelo.
+
 ## Infraestructura · refresh incremental por dominio · 2026-10-07
 
 - El botón global `Actualizar` deja de ejecutar `window.location.reload()`: ya no vuelve a cargar toda la aplicación, assets y estado compuesto por una actualización ordinaria.
