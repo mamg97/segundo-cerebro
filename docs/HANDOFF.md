@@ -5,6 +5,9 @@
 - Se identificó un polling heredado de OBJETOS en el Worker principal: `wrangler.bootstrap.jsonc` ejecutaba `* * * * *` y `scheduled()` leía `ImageIngestQueue` cada minuto aunque el flujo canónico actual usa el bridge directo.
 - Se retira ese cron y el handler legacy, eliminando hasta 1.440 invocaciones/día que no aportaban funcionalidad vigente.
 - Las lecturas D1 de imágenes de un único chunk usan fast-path sin reconstruir/copiar el asset completo; beneficia especialmente miniaturas y looks pequeños.
+- `/api/state` deja de esperar la migración/persistencia derivada de Eventos en cada GET: responde con el estado compuesto y agenda ese mantenimiento mediante `waitUntil`, limitado a una vez cada 5 minutos por isolate.
+- La lectura redundante de `eventsSummary` al final de `/api/state` se elimina; se reutiliza el resumen ya obtenido de la fuente de Eventos.
+- Los presupuestos de espera de calendarios dentro de `/api/state` bajan a 7 s y el timeout live de iCloud a 5,5 s para conservar margen respecto al timeout de 9 s del navegador y permitir degradación/fallback en vez de abortar todo Home.
 - No cambia ninguna fuente canónica, privacidad ni contrato de imágenes.
 - Validación pendiente al cierre de la rama: CI, deploy y auditoría de producción; después comprobar si dejan de aparecer avisos CPU/1102.
 
