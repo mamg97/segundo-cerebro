@@ -628,6 +628,7 @@ html[data-theme="dark"] .brand-mark {
 .calendar-legend-dot.work { background: #0a84ff; }
 .calendar-legend-dot.partner { background: #e67a00; }
 .calendar-legend-dot.family { background: #34a853; }
+.calendar-legend-dot.gemini { background: #a78bfa; }
 
 .event-list { margin-top: 18px; }
 
@@ -715,6 +716,7 @@ html[data-theme="dark"] .brand-mark {
 .week-event.calendar-work { --calendar-color: #0a84ff; }
 .week-event.calendar-partner { --calendar-color: #e67a00; }
 .week-event.calendar-family { --calendar-color: #34a853; }
+.week-event.calendar-gemini { --calendar-color: #a78bfa; }
 
 .week-event-time {
   color: var(--calendar-color);
