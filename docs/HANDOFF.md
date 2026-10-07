@@ -7,7 +7,9 @@
 - La UI de Agenda muestra ambos proveedores y marca sincronización parcial si uno falla.
 - Los cursos, clases y otros compromisos ordinarios aparecen en Agenda sin convertirse por ello en filas de `SEGUNDO CEREBRO - EVENTOS`; el Sheet sigue reservado a estado/crónica operativa e importantes.
 - El auditor de producción exige Google Calendar operativo y visible en el indicador de fuente.
-- Pendiente de cierre en este relevo: validar CI, desplegar y confirmar en producción que el OAuth actual incluye `calendar.readonly`.
+- Producción validada: el código y despliegue están correctos, pero el OAuth actual devuelve `GOOGLE_CALENDAR_LIST_403_INSUFFICIENTPERMISSIONS`; la Agenda funciona en modo parcial solo con iCloud hasta renovar el refresh token.
+- Se añade `npm run google:reauthorize-calendar -- /ruta/authorized_user.json` para renovar de forma local y segura el consentimiento, validar Calendar y sustituir `GOOGLE_REFRESH_TOKEN` sin versionar secretos.
+- Cierre pendiente: ejecutar ese helper en el Mac con el `authorized_user.json` existente y confirmar en el auditor `googleCalendarSync != error`.
 
 ## MIDAS · workspace por bloques y tablas compactas · 2026-10-07
 

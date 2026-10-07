@@ -203,6 +203,15 @@ Google Calendar reutiliza `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y `GOOGLE_R
 
 Si una credencial antigua no incluye Calendar, `/api/health` mostrará `googleCalendarSync=error` y un código técnico saneado; no se escriben scopes, tokens, IDs ni nombres de calendarios en Git.
 
+Para renovar un `authorized_user.json` ya existente sin copiar credenciales al chat:
+
+```sh
+cd private-cloudflare
+npm run google:reauthorize-calendar -- /ruta/authorized_user.json
+```
+
+El helper abre el consentimiento de Google con los scopes de Sheets, Drive en lectura y Calendar en lectura, valida el acceso a Calendar y sustituye únicamente `GOOGLE_REFRESH_TOKEN` mediante `wrangler secret put`. El token nuevo no se imprime ni se guarda dentro del repositorio.
+
 ### iCloud Calendar
 
 El calendario iCloud se integra por CalDAV en modo lectura desde el Worker privado.

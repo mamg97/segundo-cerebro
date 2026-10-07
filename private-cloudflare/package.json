@@ -16,7 +16,8 @@
     "reminders:sync": "../macos/SegundoCerebroReminders/scripts/sync.sh",
     "reminders:status": "../macos/SegundoCerebroReminders/scripts/status.sh",
     "reminders:install": "../macos/SegundoCerebroReminders/scripts/install.sh",
-    "reminders:configure": "node scripts/configure-shopping-reminders.mjs"
+    "reminders:configure": "node scripts/configure-shopping-reminders.mjs",
+    "google:reauthorize-calendar": "node scripts/reauthorize-google-calendar.mjs"
   },
   "devDependencies": {
     "wrangler": "4.145.0"
