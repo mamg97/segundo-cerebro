@@ -1206,7 +1206,10 @@ try {
     ];
     for (const field of syncFields) {
       const value = String(health.body[field] || "");
-      assertCheck(value !== "error" && value !== "not-configured" && value !== "", `Fuente ${field}`, value || "sin estado");
+      const detail = field === "googleCalendarSync"
+        ? [value || "sin estado", health.body.googleCalendarError || ""].filter(Boolean).join(" · ")
+        : value || "sin estado";
+      assertCheck(value !== "error" && value !== "not-configured" && value !== "", `Fuente ${field}`, detail);
     }
     if (health.body.calendarSync !== "error" && health.body.calendarSync !== "not-configured") {
       assertCheck(Number(health.body.calendarSelectedCount) > 0, "Calendario conserva calendarios seleccionados", `n=${Number(health.body.calendarSelectedCount) || 0}`);
