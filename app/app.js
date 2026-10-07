@@ -3643,14 +3643,105 @@ function habitHaptic(wasDone) {
   setTimeout(() => input.remove(), 300);
 }
 
-function showHabitXpToast(xp) {
+function showHabitStatusToast(message, kind = "success") {
   document.querySelector(".habit-xp-toast")?.remove();
   const toast = document.createElement("div");
-  toast.className = "habit-xp-toast";
-  toast.textContent = `+${Number(xp || 0)} XP`;
+  toast.className = "habit-xp-toast" + (kind === "error" ? " error" : "");
+  toast.textContent = String(message || "");
+  toast.setAttribute("role", kind === "error" ? "alert" : "status");
   document.body.appendChild(toast);
   setTimeout(() => toast.classList.add("show"), 10);
-  setTimeout(() => toast.remove(), 1100);
+  setTimeout(() => toast.remove(), kind === "error" ? 2600 : 1100);
+}
+
+function showHabitXpToast(xp) {
+  showHabitStatusToast(`+${Number(xp || 0)} XP`);
+}
+
+function habitUiLevelFromXp(xp) {
+  const xpForLevel = (level) => {
+    if (level <= 1) return 0;
+    let total = 0;
+    let step = 100;
+    for (let current = 2; current <= level; current += 1) {
+      total += step;
+      step += 50;
+    }
+    return total;
+  };
+
+  let level = 1;
+  while (xpForLevel(level + 1) <= xp) level += 1;
+  const current = xpForLevel(level);
+  const next = xpForLevel(level + 1);
+  return {
+    level,
+    currentLevelXp: xp - current,
+    levelSpan: next - current,
+    progress: next > current ? Math.min(1, Math.max(0, (xp - current) / (next - current))) : 0
+  };
+}
+
+function reconcileHabitToggleSummary(data, habitId, authoritativeCount) {
+  if (!data || !Array.isArray(data.todayHabits)) return data;
+
+  const item = data.todayHabits.find((habit) => habit.id === habitId);
+  if (!item) return data;
+
+  const observedCount = Math.max(0, Number(item.count || 0));
+  const nextCount = Math.max(0, Number(authoritativeCount || 0));
+  const target = Math.max(1, Number(item.target || item.timesPerDay || 1));
+  const observedDone = observedCount >= target;
+  const nextDone = nextCount >= target;
+  const correction = nextCount - observedCount;
+
+  item.count = nextCount;
+  item.done = nextDone;
+
+  if (data.summary) {
+    data.summary.done = data.todayHabits.filter((habit) => Boolean(habit.done)).length;
+    if (correction !== 0) {
+      const xp = Math.max(0, Number(data.summary.xp || 0) + correction * Math.max(0, Number(item.xpReward || 0)));
+      data.summary.xp = xp;
+      data.summary.level = habitUiLevelFromXp(xp);
+      data.summary.totalCompletions = Math.max(0, Number(data.summary.totalCompletions || 0) + correction);
+    }
+  }
+
+  if (correction !== 0) {
+    const progressItem = Array.isArray(data.progress)
+      ? data.progress.find((entry) => entry.id === habitId)
+      : null;
+    if (progressItem) {
+      progressItem.totalCompletions = Math.max(0, Number(progressItem.totalCompletions || 0) + correction);
+      const point = Array.isArray(progressItem.points)
+        ? progressItem.points.find((entry) => entry.date === data.date)
+        : null;
+      if (point) {
+        const wasDone = Boolean(point.done);
+        point.count = nextCount;
+        point.done = nextDone;
+        if (wasDone !== nextDone) {
+          progressItem.completedDays = Math.max(0, Number(progressItem.completedDays || 0) + (nextDone ? 1 : -1));
+          progressItem.rate = Number(progressItem.scheduledDays || 0) > 0
+            ? progressItem.completedDays / Number(progressItem.scheduledDays)
+            : 0;
+        }
+      }
+    }
+    if (data.insights) {
+      data.insights.totalCompletions = Math.max(0, Number(data.insights.totalCompletions || 0) + correction);
+      const weekly = Array.isArray(data.insights.weekly)
+        ? data.insights.weekly.find((entry) => entry.date === data.date)
+        : null;
+      if (weekly && observedDone !== nextDone) {
+        weekly.done = Math.max(0, Number(weekly.done || 0) + (nextDone ? 1 : -1));
+        weekly.rate = Number(weekly.scheduled || 0) > 0 ? Math.min(1, weekly.done / Number(weekly.scheduled)) : 0;
+      }
+    }
+  }
+
+  return data;
 }
 
 function launchHabitConfetti() {
@@ -3875,10 +3966,15 @@ function bindHabitInteractions() {
         });
         const payload = await response.json();
         if (!response.ok || !payload.summary) throw new Error(payload.code || `HABIT_TOGGLE_${response.status}`);
-        const nextLevel = Number(payload.summary?.summary?.level?.level || 1);
-        const afterAllDone = Number(payload.summary?.summary?.total || 0) > 0 && Number(payload.summary?.summary?.done || 0) === Number(payload.summary?.summary?.total || 0);
+
+        // Sheets can briefly return the pre-write snapshot immediately after append.
+        // The POST response count is authoritative, so reconcile the UI before render
+        // instead of forcing the user into a second click that would toggle it back.
+        const reconciled = reconcileHabitToggleSummary(payload.summary, habitId, payload.count);
+        const nextLevel = Number(reconciled?.summary?.level?.level || 1);
+        const afterAllDone = Number(reconciled?.summary?.total || 0) > 0 && Number(reconciled?.summary?.done || 0) === Number(reconciled?.summary?.total || 0);
         const advanced = Number(payload.count || 0) > previousCount;
-        renderHabitsPanel(payload.summary);
+        renderHabitsPanel(reconciled);
         if (advanced) showHabitXpToast(beforeHabit?.xpReward || 0);
         if (!beforeAllDone && afterAllDone && (selectedHabitDate || localDateKey()) === localDateKey()) launchHabitConfetti();
         if (nextLevel > previousLevel) {
@@ -3889,6 +3985,13 @@ function bindHabitInteractions() {
         button.disabled = false;
         button.classList.remove("saving");
         console.warn("Habit toggle failed", error);
+        const code = String(error?.message || "");
+        showHabitStatusToast(
+          /HABITQUEST_WRITE_(401|403)/.test(code)
+            ? "Google Sheets no permite guardar el hábito."
+            : "No se ha podido guardar el hábito.",
+          "error"
+        );
       }
     });
   });

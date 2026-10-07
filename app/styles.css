@@ -5326,6 +5326,7 @@ html[data-theme="dark"] .gym-session-footer input {
 }
 
 .habit-xp-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.habit-xp-toast.error { background: var(--coral); }
 
 .habit-confetti-layer {
   position: fixed;
