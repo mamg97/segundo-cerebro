@@ -488,12 +488,13 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 
 ## D-048 — Descubrimiento federado de eventos y calendarios
 
-- **Estado:** aceptada.
+- **Estado:** aceptada e implementada en consulta y Agenda web.
 - **Decisión:** cualquier consulta sobre agenda o eventos debe reconciliar todas las fuentes autorizadas accesibles antes de responder. La búsqueda parte del Sheet canónico `SEGUNDO CEREBRO - EVENTOS` e incluye todos los calendarios iCloud/CalDAV configurados, todos los calendarios accesibles de Google Calendar y, cuando aporten confirmación o detalle, email, reservas, entradas, billetes y documentos.
 - **Completitud:** una cuenta, un proveedor o el calendario `primary` no representan por sí solos la agenda global. Si una fuente esperable no puede leerse o devuelve una lectura parcial, el resultado se etiqueta como provisional y no se afirma de forma absoluta cuál es el siguiente evento.
 - **Autoridad:** `SEGUNDO CEREBRO - EVENTOS` es la fuente operativa de estado/crónica; iCloud mantiene la autoridad temporal cuando el evento existe allí; las demás fuentes conservan autoridad sobre sus propios datos. D1 es solo caché/espejo técnico.
 - **Filtrado:** después de reunir y deduplicar candidatos se excluyen recordatorios puramente financieros/técnicos sin semántica de evento.
 - **Motivo:** evitar falsos negativos al responder desde un único calendario y asegurar que bodas, cumpleaños, viajes, celebraciones y otros compromisos no desaparezcan de la planificación por estar repartidos entre calendarios o fuentes.
+- **Implementación web:** `/api/state` fusiona iCloud/CalDAV + todos los calendarios Google legibles por el OAuth privado, deduplica copias equivalentes y conserva last-known-good por proveedor. La Agenda semanal usa esa colección federada; el Sheet de Eventos sigue reservado al estado/crónica operativa y no necesita almacenar cada clase o cita ordinaria.
 - **Privacidad:** Git solo documenta la regla; nombres, fechas y detalles reales permanecen en fuentes privadas.
 
 ## D-049 — Eventos usa Sheet canónico y la web es frontal
