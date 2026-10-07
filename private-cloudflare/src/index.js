@@ -4924,23 +4924,40 @@ export default {
         }
       }
 
-      let calendarSync = hasIcloudCalendarConfig(env) ? "configured" : "not-configured";
-      let calendarError = null;
-      let calendarMatchedCount = null;
-      let calendarSelectedCount = null;
-      let calendarEventCount = null;
+      let icloudCalendar = { status: "not-configured", value: null };
+      let googleCalendar = { status: "not-configured", value: null };
+      let icloudCalendarError = null;
+      let googleCalendarError = null;
+
       if (hasIcloudCalendarConfig(env)) {
         try {
-          const calendar = await fetchIcloudCalendarSummary(env);
-          calendarSync = calendar.status;
-          calendarMatchedCount = calendar.value?.source?.matchedCalendarCount ?? null;
-          calendarSelectedCount = calendar.value?.source?.selectedCalendarCount ?? null;
-          calendarEventCount = Array.isArray(calendar.value?.events) ? calendar.value.events.length : null;
+          icloudCalendar = await fetchIcloudCalendarSummary(env);
         } catch (error) {
-          calendarSync = "error";
-          calendarError = safeIcloudErrorCode(error);
+          icloudCalendar = { status: "error", value: null };
+          icloudCalendarError = safeIcloudErrorCode(error);
         }
       }
+
+      if (hasGoogleCalendarConfig(env)) {
+        try {
+          googleCalendar = await fetchGoogleCalendarSummary(env, getGoogleAccessToken);
+        } catch (error) {
+          googleCalendar = { status: "error", value: null };
+          googleCalendarError = safeGoogleCalendarErrorCode(error);
+        }
+      }
+
+      const federatedCalendar = mergeCalendarSources(icloudCalendar, googleCalendar);
+      const calendarSync = federatedCalendar?.source?.freshness || "not-configured";
+      const calendarError = [icloudCalendarError, googleCalendarError].filter(Boolean).join("|") || null;
+      const calendarMatchedCount = federatedCalendar?.source?.matchedCalendarCount ?? null;
+      const calendarSelectedCount = federatedCalendar?.source?.selectedCalendarCount ?? null;
+      const calendarEventCount = Array.isArray(federatedCalendar?.events) ? federatedCalendar.events.length : null;
+      const googleCalendarSync = googleCalendar.status;
+      const googleCalendarSelectedCount = googleCalendar.value?.source?.selectedCalendarCount ?? null;
+      const googleCalendarMatchedCount = googleCalendar.value?.source?.matchedCalendarCount ?? null;
+      const googleCalendarEventCount = Array.isArray(googleCalendar.value?.events) ? googleCalendar.value.events.length : null;
+      const icloudCalendarSync = icloudCalendar.status;
 
       return json({
         ok: true,
@@ -4967,7 +4984,14 @@ export default {
         calendarError,
         calendarMatchedCount,
         calendarSelectedCount,
-        calendarEventCount
+        calendarEventCount,
+        icloudCalendarSync,
+        icloudCalendarError,
+        googleCalendarSync,
+        googleCalendarError,
+        googleCalendarSelectedCount,
+        googleCalendarMatchedCount,
+        googleCalendarEventCount
       });
     }
 
