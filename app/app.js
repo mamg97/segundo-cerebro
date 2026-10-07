@@ -536,12 +536,6 @@ function applyStateScope(scope, payload) {
     return true;
   }
 
-  if (scope === "family") {
-    state.familySummary = payload.familySummary || state.familySummary || {};
-    renderFocus();
-    return true;
-  }
-
   if (scope === "calendar") {
     if (Array.isArray(payload.importantEventRules) && payload.importantEventRules.length) {
       state.importantEventRules = payload.importantEventRules;
@@ -587,8 +581,7 @@ async function refreshApp() {
     ]);
     await Promise.allSettled([
       refreshStateScope("objects"),
-      refreshStateScope("calendar"),
-      refreshStateScope("family")
+      refreshStateScope("calendar")
     ]);
     await Promise.allSettled([
       renderHomeHealthCard(),
