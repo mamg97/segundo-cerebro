@@ -1,3 +1,13 @@
+## MIDAS · seguimiento de empresas orientado a decisión · 2026-10-07
+
+- La vista de tesis pasa de una tabla de CAGR aislada a una tabla de seguimiento por empresa.
+- Fuente privada: `MIDAS - TESIS Y WATCHLIST`; `TESIS` mantiene identidad/tesis/documento, `CAGR2031` conserva los escenarios y la nueva pestaña `SEGUIMIENTO` guarda mercado, divisa, precio de referencia, precio actual, objetivos a 5 años, precio de entrada para 15% anual y próximos resultados.
+- Columnas visibles: Ticker, Nombre empresa, Mercado, Precio actual, Bull 5a, Bear 5a, Caso central 5a, Precio para generar 15% anual, Precio objetivo 5a, Fecha próximos resultados y enlace al Google Doc de la tesis.
+- Los objetivos a 5 años pertenecen a la revisión vigente y no se recalculan al moverse la cotización. Si faltan precios objetivo explícitos, el backend puede derivarlos una vez desde el precio de referencia del estudio y su CAGR; nunca desde el precio actual cambiante.
+- `Precio para generar 15% anual` usa el objetivo central: `objetivo_base_5a / 1.15^5`.
+- Cada fila enlaza al documento canónico individual de Drive mediante `TESIS.artefacto_drive`.
+- Los datos no reconstruidos permanecen vacíos/pendientes; no se inventan para rellenar la tabla.
+
 ## Carrera profesional · fuente privada y vista dedicada · 2026-10-07
 
 - Carrera deja de depender del fallback genérico del área y pasa a tener una vista propia orientada a decisiones.
