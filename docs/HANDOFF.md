@@ -1,6 +1,6 @@
 ## MIDAS · Corrección de doble inicialización y META V5 · 2026-10-08
 
-- Fuente MIDAS confirmada: Google Sheet "MIDAS - TESIS Y WATCHLIST" registra META `COMPLETA V5` y CAGR Base −5,80%, target Base 537,34 USD y enlace a tesis canónica V5. No repetir ese dato en código; al abrir MIDAS, el endpoint privado debe proyectar el Sheet.
+- Fuente MIDAS confirmada: Google Sheet privado `MIDAS - TESIS Y WATCHLIST` contiene el estado y enlace canónicos de META V5. No copiar cotizaciones, targets ni CAGRs reales a Git; al abrir MIDAS, el endpoint privado debe proyectar el Sheet.
 - Frontend: se retira una segunda llamada duplicada a `bindMidasResearchSorting(root)` en `bindMidasWorkspace()`; se mantiene una única inicialización que ordena por CAGR Base descendente y permite cabeceras/búsqueda. Prueba específica evita la regresión y `app.js?v=0.43.5` fuerza carga de nueva versión.
 - QA pendiente hasta ejecutarse en la instancia privada tras deploy: META aparece con V5, MSFT y PLTR con CAGR negativo ordenable, pendientes al final, búsqueda/toggle sin doble listener y responsive. CI/deploy no equivalen a certificación visual en Cloudflare Access; inspeccionar el auditor `Audit production web`.
 - Documentación oficial META: indexada pero carpetas de raw `01_FILINGS`, `02_EARNINGS_RELEASES`, `03_TRANSCRIPTS` y `04_PRESENTATIONS` aún vacías a 08/10. No declarar Source Pack físicamente archivado hasta que lo esté; no afecta los escenarios vigentes.
