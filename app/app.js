@@ -7916,7 +7916,7 @@ function renderMidasResearch(research) {
         <small>${complete} con seguimiento completo · ${Math.max(0, rows.length - complete)} por actualizar</small>
       </div>
     </div>
-    <p class="midas-research-rule">Los objetivos no cambian automáticamente con la cotización. Las sensibilidades estadísticas se muestran como PROVISIONALES, con la tesis publicada anterior debajo; no son precios objetivo fundamentales aprobados. “Precio 15%” = objetivo central / 1,15⁵.</p>
+    <p class="midas-research-rule">Los objetivos no cambian automáticamente con la cotización. La referencia V6 utiliza por defecto la media histórica homogénea EV/FCF IDC. Las valoraciones V5 son antecedentes; el contraste con el flujo de caja económico de V6 puede seguir pendiente. “Precio 15%” = objetivo central / 1,15⁵.</p>
     <div class="midas-research-toolbar"><label for="midas-thesis-search">Buscar ticker o empresa</label><input id="midas-thesis-search" type="search" autocomplete="off" placeholder="Ej.: MSFT o Microsoft" data-midas-thesis-search /><span data-midas-visible-count aria-live="polite"></span><small>Orden inicial: CAGR Base ↓ · Pulsa las cabeceras para ordenar.</small></div>
     <div class="midas-research-table-scroll" role="region" aria-label="Seguimiento de empresas y tesis de inversión" tabindex="0">
       <table class="midas-research-table">
@@ -7948,14 +7948,14 @@ function renderMidasResearch(research) {
           const searchValue = [thesis.ticker, thesis.company, tracking.market].filter(Boolean).join(" ");
           return `<tr ${sortAttrs} data-midas-search="${escapeHtml(searchValue)}">
             <td class="midas-company-ticker"><strong>${escapeHtml(thesis.ticker)}</strong></td>
-            <td class="midas-company-name"><strong>${escapeHtml(thesis.company)}</strong><small>${escapeHtml(thesis.theme || "—")}</small>${display.provisional ? '<small class="midas-valuation-status">Estadístico provisional · V5 histórica disponible</small>' : ""}</td>
+            <td class="midas-company-name"><strong>${escapeHtml(thesis.company)}</strong><small>${escapeHtml(thesis.theme || "—")}</small>${display.v6Reference ? '<small class="midas-valuation-status">V6 · media histórica · economía pendiente de validar</small>' : ""}</td>
             <td>${escapeHtml(tracking.market || "—")}</td>
             <td class="midas-price-cell"><strong>${escapeHtml(formatMidasTrackingPrice(tracking.currentPrice, tracking.currency))}</strong><small>${tracking.currentPriceDate ? escapeHtml(formatFinanceDate(tracking.currentPriceDate, tracking.currentPriceDate)) : "Sin actualizar"}</small></td>
             <td>${renderMidasCase(display.bullPrice5y, display.bull, tracking.currency)}</td>
             <td>${renderMidasCase(display.bearPrice5y, display.bear, tracking.currency)}</td>
-            <td>${renderMidasCase(display.basePrice5y, display.base, tracking.currency, true)}${display.provisional ? '<small class="midas-valuation-legacy">V5: ' + escapeHtml(cagr.base || "—") + ' · ' + escapeHtml(formatMidasTrackingPrice(tracking.basePrice5y, tracking.currency)) + '</small>' : ""}</td>
-            <td class="midas-price-cell is-entry"><strong>${escapeHtml(formatMidasTrackingPrice(display.priceFor15, tracking.currency))}</strong><small>${display.provisional ? "Estadístico provisional" : "para 15% CAGR"}</small></td>
-            <td class="midas-price-cell is-target"><strong>${escapeHtml(formatMidasTrackingPrice(display.basePrice5y, tracking.currency))}</strong><small>${display.provisional ? "No ratificado" : "caso central"}</small></td>
+            <td>${renderMidasCase(display.basePrice5y, display.base, tracking.currency, true)}${display.provisional ? '<small class="midas-valuation-legacy">V5: ' + escapeHtml(display.historical?.base || "—") + ' · ' + escapeHtml(formatMidasTrackingPrice(display.historical?.basePrice5y, tracking.currency)) + '</small>' : ""}</td>
+            <td class="midas-price-cell is-entry"><strong>${escapeHtml(formatMidasTrackingPrice(display.priceFor15, tracking.currency))}</strong><small>${display.v6Reference ? "Referencia V6" : "para 15% CAGR"}</small></td>
+            <td class="midas-price-cell is-target"><strong>${escapeHtml(formatMidasTrackingPrice(display.basePrice5y, tracking.currency))}</strong><small>${display.v6Reference ? "V6 · media histórica" : "caso central"}</small></td>
             <td class="midas-earnings-cell">${tracking.nextEarnings ? escapeHtml(formatFinanceDate(tracking.nextEarnings, tracking.nextEarnings)) : "—"}</td>
             <td class="midas-thesis-cell">${thesisUrl ? `<a class="midas-thesis-link" href="${escapeHtml(thesisUrl)}" target="_blank" rel="noopener noreferrer">Abrir tesis ↗</a>` : '<span class="midas-thesis-missing">Pendiente</span>'}</td>
           </tr>`;
