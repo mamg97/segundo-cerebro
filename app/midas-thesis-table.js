@@ -16,6 +16,38 @@ export function midasCagrNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+// MIDAS v1.2: use the active scenario columns as the main reference.
+// Statistical-only cases can be shown separately, and V5 legacy is optional.
+// Neither status nor the statistical anchor claims an audited fundamental fair value.
+export function midasDisplayValuation(cagr = {}, tracking = {}) {
+  const stats = cagr.statistical;
+  const activeV6 = /V6/i.test(String(cagr.status || "")) &&
+    /REFERENCIA|ESTAD.STICA/i.test(String(cagr.status || ""));
+  const statsAvailable = Boolean(
+    stats && /PROVISIONAL|V6 ACTIVA|V6 REFERENCIA/i.test(String(stats.status || "")) &&
+    [stats.bear, stats.base, stats.bull].every((v) => midasCagrNumber(v) !== null) &&
+    [stats.bearPrice5y, stats.basePrice5y, stats.bullPrice5y, stats.priceFor15].every((v) =>
+      typeof v === "number" && Number.isFinite(v) && v >= 0
+    )
+  );
+  const useStats = statsAvailable && !activeV6;
+  const main = useStats ? stats : cagr;
+  const price = useStats ? stats : tracking;
+  return {
+    v6Reference: activeV6 || useStats,
+    historical: cagr.historical || null,
+    bear: main.bear,
+    base: main.base,
+    bull: main.bull,
+    bearPrice5y: price.bearPrice5y,
+    basePrice5y: price.basePrice5y,
+    bullPrice5y: price.bullPrice5y,
+    priceFor15: price.priceFor15,
+    multiple: activeV6 ? (stats?.baseMultiple ?? null) : useStats ? stats.baseMultiple : null,
+    status: activeV6 ? cagr.status : useStats ? stats.status : cagr.status
+  };
+}
+
 export function compareMidasSortValues(a, b, { numeric = false, direction = "asc" } = {}) {
   const av = a === undefined || a === null ? "" : String(a).trim();
   const bv = b === undefined || b === null ? "" : String(b).trim();
