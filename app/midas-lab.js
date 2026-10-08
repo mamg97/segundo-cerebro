@@ -34,6 +34,7 @@ export function renderMidasVisualLab(dashboard, lab = null) {
       const groupRows = active.filter((row) => row.group === group);
       if (!groupRows.length) return "";
       return '<div class="midas-lab-group"><div class="midas-lab-group-title"><strong>' + escapeHtml(title) + '</strong><span>' + groupRows.length + ' algoritmos</span></div>' +
+        (group === "weekly_ml_demo" ? '<p class="midas-lab-group-note">Señales congeladas el viernes; liquidación simulada al cierre de la semana siguiente. Esta variante no registra compras ni rentabilidad diaria antes de liquidar.</p>' : '') +
         '<div class="midas-lab-table-wrap"><table class="midas-lab-table">' +
           '<thead><tr>' +
             '<th>Algoritmo</th><th>Actividad actual</th><th>Activos</th><th>Rent. acum.</th>' +
@@ -90,6 +91,8 @@ export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
     '</div>' +
     '<section class="midas-algorithm-chart-card"><div><strong>Evolución</strong><small>Patrimonio ficticio · datos del diario</small></div>' +
       '<div class="midas-algorithm-chart">' + renderSparkline(meta.history, item.label, meta.returnPct) + '</div></section>' +
+    (item.group === "weekly_ml_demo" && !item.bootstrap
+      ? '<p class="midas-algorithm-note is-warning">Liquidación semanal diferida: esta versión no registra entradas efectivas ni NAV diarios de lunes a jueves. Las señales no son posiciones abiertas.</p>' : '') +
     (note ? '<p class="midas-algorithm-note">' + escapeHtml(note) + '</p>' : '') +
     (item.bootstrap ? '<p class="midas-algorithm-note is-warning">Bootstrap técnico retrospectivo: no cuenta como resultado forward.</p>' : '') +
   '</article>';
@@ -104,17 +107,26 @@ function activeMidasRows(dashboard, lab) {
 
 function algorithmMeta(item) {
   const history = Array.isArray(item.equity_history) ? item.equity_history : [];
-  const returnPct = typeof item.return_pct === "number" && Number.isFinite(item.return_pct) ? item.return_pct : null;
+  const hasUnsettledWeeklySignal = item.group === "weekly_ml_demo" && !item.bootstrap &&
+    history.length === 1 && Array.isArray(item.activity_tickers) && item.activity_tickers.length > 0;
+  const returnPct = hasUnsettledWeeklySignal ? null :
+    (typeof item.return_pct === "number" && Number.isFinite(item.return_pct) ? item.return_pct : null);
   const latestDate = item.last_session || item.mark_date || null;
   const positions = Array.isArray(item.positions) ? item.positions : [];
   const fallbackTickers = positions.map((position) => position.ticker).filter(Boolean);
   const activityTickers = (Array.isArray(item.activity_tickers) && item.activity_tickers.length
     ? item.activity_tickers : fallbackTickers).filter(Boolean);
-  const activityLabel = item.activity_label ||
-    (fallbackTickers.length
-      ? fallbackTickers.length + (fallbackTickers.length === 1 ? " posición" : " posiciones")
-      : item.status === "demo_con_diario" ? "Sin compras · en efectivo" : "Esperando actividad");
-  const status = item.bootstrap ? "Bootstrap técnico" : statusLabel(item.status);
+  const staleWeeklyBuyLabel = item.group === "weekly_ml_demo" && !item.bootstrap &&
+    /compras? para próxima apertura/i.test(String(item.activity_label || ""));
+  const activityLabel = staleWeeklyBuyLabel
+    ? (activityTickers.length || Number(item.pending_orders_count) || 0) +
+        " señales congeladas · liquidación semanal pendiente"
+    : (item.activity_label ||
+      (fallbackTickers.length
+        ? fallbackTickers.length + (fallbackTickers.length === 1 ? " posición" : " posiciones")
+        : item.status === "demo_con_diario" ? "Sin compras · en efectivo" : "Esperando actividad"));
+  const status = item.bootstrap ? "Bootstrap técnico" :
+    (hasUnsettledWeeklySignal ? "Señal sin liquidar" : statusLabel(item.status));
   const drawdown = typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)
     ? formatPercent(item.max_drawdown_pct) : "—";
   return { history, returnPct, latestDate, activityTickers, activityLabel, status, sessions: history.length, drawdown };
