@@ -65,8 +65,10 @@ const ringSource = readFileSync(new URL("./progress-ring.js", import.meta.url), 
 assert.match(app, /progress-ring\.js\?v=0\.33\.8/);
 assert.match(app, /adherence\.js\?v=0\.33\.9/);
 assert.match(adherence, /progress-ring\.js\?v=0\.33\.8/);
-assert.match(index, /app\.js\?v=0\.43\.3/);
-assert.match(index, /styles\.css\?v=0\.43\.3/);
+const scriptVersion = index.match(/app\.js\?v=(\d+\.\d+\.\d+)/)?.[1];
+const stylesVersion = index.match(/styles\.css\?v=(\d+\.\d+\.\d+)/)?.[1];
+assert.ok(scriptVersion, "The app script must be versioned for cache busting");
+assert.equal(stylesVersion, scriptVersion, "Styles and app must share the bundle version");
 const ringCssStart = css.indexOf("/* v0.31.0 — shared compact progress rings */");
 const ringCssEnd = css.indexOf("/* Home: same cards", ringCssStart);
 const ringCss = css.slice(ringCssStart, ringCssEnd);
