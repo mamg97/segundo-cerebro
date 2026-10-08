@@ -8122,8 +8122,6 @@ function bindMidasWorkspace(dashboard, lab) {
     });
   });
 
-  bindMidasResearchSorting(root);
-
   root.querySelectorAll("[data-midas-algorithm-id]").forEach((row) => {
     row.addEventListener("click", () => openAlgorithm(row.dataset.midasAlgorithmId));
     row.addEventListener("keydown", (event) => {
