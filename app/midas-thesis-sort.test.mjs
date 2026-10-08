@@ -44,6 +44,6 @@ test("MIDAS: render hooks expose accessible interactive sort controls", () => {
 test("MIDAS: thesis sorting is initialized exactly once per workspace render", () => {
   const workspace = appSource.split("function bindMidasWorkspace(dashboard, lab) {")[1]?.split("async function openMidasDialog()")[0];
   assert.ok(workspace, "workspace bind function must exist");
-  const count = (workspace.match(/bindMidasResearchSorting\\(root\\);/g) || []).length;
+  const count = (workspace.match(/bindMidasResearchSorting\(root\);/g) || []).length;
   assert.equal(count, 1, "double event listeners can lead to redundant sorting");
 });
