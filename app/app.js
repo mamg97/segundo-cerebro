@@ -8,6 +8,7 @@ import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab } from "./midas-lab.js?v=0.40.19";
+import { midasCagrNumber, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.9";
 
 let state = mockState;
 let areaById = new Map();
@@ -7836,12 +7837,6 @@ function renderMidasRows(rows) {
   </div>`;
 }
 
-function midasCagrNumber(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const parsed = Number(String(value).replace("%", "").replace(",", ".").replace("+", "").trim());
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function formatMidasTrackingPrice(value, currency) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "—";
   if (!currency) return value.toLocaleString("es-ES", { maximumFractionDigits: 2 });
@@ -7922,24 +7917,36 @@ function renderMidasResearch(research) {
       </div>
     </div>
     <p class="midas-research-rule">Los precios objetivo pertenecen a la tesis vigente y no se desplazan automáticamente con la cotización. “Precio 15%” = precio objetivo central a 5 años / 1,15⁵.</p>
+    <div class="midas-research-toolbar"><label for="midas-thesis-search">Buscar ticker o empresa</label><input id="midas-thesis-search" type="search" autocomplete="off" placeholder="Ej.: MSFT o Microsoft" data-midas-thesis-search /><span data-midas-visible-count aria-live="polite"></span><small>Orden inicial: CAGR Base ↓ · Pulsa las cabeceras para ordenar.</small></div>
     <div class="midas-research-table-scroll" role="region" aria-label="Seguimiento de empresas y tesis de inversión" tabindex="0">
       <table class="midas-research-table">
         <thead><tr>
-          <th>Ticker</th>
-          <th>Nombre empresa</th>
-          <th>Mercado</th>
-          <th>Precio actual</th>
-          <th>Bull 5a</th>
-          <th>Bear 5a</th>
-          <th>Central 5a</th>
-          <th>Precio 15%</th>
-          <th>Objetivo 5a</th>
-          <th>Próx. resultados</th>
-          <th>Tesis</th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="ticker" title="Ordenar por ticker" aria-label="Ordenar por ticker">Ticker <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="company" title="Ordenar por nombre" aria-label="Ordenar por nombre">Nombre empresa <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="market" title="Ordenar por mercado" aria-label="Ordenar por mercado">Mercado <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="current" title="Ordenar por precio actual" aria-label="Ordenar por precio actual">Precio actual <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="bull" title="Ordenar por CAGR Bull" aria-label="Ordenar por CAGR Bull">Bull 5a <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="bear" title="Ordenar por CAGR Bear" aria-label="Ordenar por CAGR Bear">Bear 5a <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="descending"><button class="midas-research-sort" type="button" data-midas-sort-key="central" title="Ordenar por CAGR Base" aria-label="Ordenar por CAGR Base">Central 5a <span data-midas-sort-indicator aria-hidden="true">↓</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="entry" title="Ordenar por precio para 15% anual" aria-label="Ordenar por precio para 15% anual">Precio 15% <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="target" title="Ordenar por precio objetivo Base" aria-label="Ordenar por precio objetivo Base">Objetivo 5a <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="earnings" title="Ordenar por próxima fecha de resultados" aria-label="Ordenar por próxima fecha de resultados">Próx. resultados <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
+          <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="thesis" title="Ordenar por disponibilidad del enlace a la tesis" aria-label="Ordenar por disponibilidad del enlace a la tesis">Tesis <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
         </tr></thead>
         <tbody>${rows.map(({ thesis, cagr, tracking }) => {
           const thesisUrl = safeMidasThesisUrl(thesis.thesisUrl);
-          return `<tr>
+          const sortValues = {
+            ticker: thesis.ticker, company: thesis.company, market: tracking.market,
+            current: tracking.currentPrice, bull: midasCagrNumber(cagr.bull),
+            bear: midasCagrNumber(cagr.bear), central: midasCagrNumber(cagr.base),
+            entry: tracking.priceFor15, target: tracking.basePrice5y,
+            earnings: /^\d{4}-\d{2}-\d{2}$/.test(String(tracking.nextEarnings || "")) ? tracking.nextEarnings : "",
+            thesis: thesisUrl ? 1 : 0
+          };
+          const sortAttrs = Object.entries(sortValues)
+            .map(([key, value]) => `data-midas-sort-${key}="${escapeHtml(String(value ?? ""))}"`).join(" ");
+          const searchValue = [thesis.ticker, thesis.company, tracking.market].filter(Boolean).join(" ");
+          return `<tr ${sortAttrs} data-midas-search="${escapeHtml(searchValue)}">
             <td class="midas-company-ticker"><strong>${escapeHtml(thesis.ticker)}</strong></td>
             <td class="midas-company-name"><strong>${escapeHtml(thesis.company)}</strong><small>${escapeHtml(thesis.theme || "—")}</small></td>
             <td>${escapeHtml(tracking.market || "—")}</td>
@@ -7955,6 +7962,7 @@ function renderMidasResearch(research) {
         }).join("")}</tbody>
       </table>
     </div>
+    <p class="midas-research-no-matches" data-midas-no-matches role="status" hidden>No hay empresas que coincidan con la búsqueda.</p>
   </section>`;
 }
 
@@ -8112,6 +8120,8 @@ function bindMidasWorkspace(dashboard, lab) {
       if (tab === "competition") showCompetitionList();
     });
   });
+
+  bindMidasResearchSorting(root);
 
   root.querySelectorAll("[data-midas-algorithm-id]").forEach((row) => {
     row.addEventListener("click", () => openAlgorithm(row.dataset.midasAlgorithmId));
