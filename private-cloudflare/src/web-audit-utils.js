@@ -65,6 +65,17 @@ export function menuDisplayTotals(items, date, today, objective = {}) {
   };
 }
 
+// The production bars track confirmed consumption, not the full planned menu.
+// Keep the planned-vs-consumed helper above for other historical callers.
+export function confirmedMenuTotals(items) {
+  const consumed = (Array.isArray(items) ? items : []).filter((item) => consumedMenuStatus(item?.status));
+  return {
+    kcal: consumed.reduce((sum, item) => sum + (item?.kcal == null ? 0 : Number(item.kcal) || 0), 0),
+    protein: consumed.reduce((sum, item) => sum + (item?.protein == null ? 0 : Number(item.protein) || 0), 0),
+    incomplete: consumed.some((item) => item?.kcal == null || item?.protein == null)
+  };
+}
+
 export function qualityStep(metric, value, target) {
   const numericValue = Number(value);
   const numericTarget = Number(target);
