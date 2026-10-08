@@ -912,12 +912,27 @@ async function auditWardrobeGridColumns(label, expectedColumns) {
   }
 
   await tab.click();
-  await page.waitForTimeout(300);
 
-  const grid = page.locator(".wardrobe-visual-grid").first();
-  const visible = await grid.isVisible().catch(() => false);
+  // Do not confuse a valid async wardrobe render with a missing grid.
+  // A visible grid with real cards is still mandatory; no skipped asserts.
+  let grid = page.locator(".wardrobe-visual-grid").first();
+  let visible = await grid.waitFor({ state: "visible", timeout: 10000 })
+    .then(() => true).catch(() => false);
   if (!visible) {
-    fail(`Visual ${label} · grid Armario visible`);
+    const probe = await probeApi("/api/objects", `Armario ${label}`, { attempts: 1 });
+    if (probe?.ok) {
+      await openAreaForVisualAudit("area-objects");
+      const retryTab = page.locator('[data-objects-tab="wardrobe"]').first();
+      if (await retryTab.waitFor({ state: "visible", timeout: 6000 }).then(() => true).catch(() => false)) {
+        await retryTab.click();
+        grid = page.locator(".wardrobe-visual-grid").first();
+        visible = await grid.waitFor({ state: "visible", timeout: 8000 })
+          .then(() => true).catch(() => false);
+      }
+    }
+  }
+  if (!visible) {
+    fail(`Visual ${label} · grid Armario visible`, "no disponible tras espera asíncrona y único reintento verificado");
     return;
   }
 
@@ -944,14 +959,24 @@ async function auditWardrobeGridColumns(label, expectedColumns) {
 }
 
 async function auditLookDetail(label) {
-  const tab = page.locator('[data-objects-tab="looks"]').first();
-  const available = await tab
+  let tab = page.locator('[data-objects-tab="looks"]').first();
+  let available = await tab
     .waitFor({ state: "visible", timeout: 8000 })
     .then(() => true)
     .catch(() => false);
 
   if (!available) {
-    fail(`Visual ${label} · Looks disponible`, "falta pestaña looks");
+    const probe = await probeApi("/api/objects", `Looks ${label}`, { attempts: 1 });
+    if (probe?.ok) {
+      await openAreaForVisualAudit("area-objects");
+      tab = page.locator('[data-objects-tab="looks"]').first();
+      available = await tab.waitFor({ state: "visible", timeout: 8000 })
+        .then(() => true).catch(() => false);
+    }
+  }
+
+  if (!available) {
+    fail(`Visual ${label} · Looks disponible`, "falta pestaña looks tras carga y único reintento verificado");
     return;
   }
 
