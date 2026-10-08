@@ -6,6 +6,7 @@ import {
   hiddenMenuStatus,
   logicalMenuKey,
   menuDisplayTotals,
+  confirmedMenuTotals,
   qualityStep,
   visibleMenuRow
 } from "./web-audit-utils.js";
@@ -64,6 +65,18 @@ test("past/current menu bars use consumed totals when consumption exists", () =>
   assert.equal(result.useConsumed, true);
   assert.equal(result.kcal, 600);
   assert.equal(result.protein, 50);
+});
+
+test("actual nutrition progress counts ONLY confirmed intake including future planned meals", () => {
+  const rows = [
+    { status: "planificado", kcal: 900, protein: 80 },
+    { status: "consumido", kcal: 300, protein: 25 }
+  ];
+  assert.deepEqual(confirmedMenuTotals(rows), { kcal: 300, protein: 25, incomplete: false });
+  assert.deepEqual(confirmedMenuTotals([rows[0]]), { kcal: 0, protein: 0, incomplete: false });
+  assert.deepEqual(confirmedMenuTotals([{ status: "consumido", kcal: null, protein: 10 }]), {
+    kcal: 0, protein: 10, incomplete: true
+  });
 });
 
 test("future menu bars keep full planned totals", () => {
