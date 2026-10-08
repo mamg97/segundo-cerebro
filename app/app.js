@@ -9092,7 +9092,9 @@ function initializeAccountTransactionTabs(root = document) {
   activate(selected.dataset.accountTransactionsTab);
 }
 
-function openBudgetDetail() {
+let financeBudgetRefreshInFlight = false;
+
+function openBudgetDetail(options = {}) {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
   const dialog = document.querySelector("#detail-dialog");
@@ -9102,9 +9104,29 @@ function openBudgetDetail() {
   document.querySelector("#dialog-context").textContent = "Finanzas · Presupuesto mensual";
   document.querySelector("#dialog-title").textContent = monthly?.periodLabel || monthly?.period || "Presupuesto actual";
 
-  if (!monthly) {
-    document.querySelector("#dialog-body").innerHTML = "<p>No hay presupuesto mensual conectado.</p>";
-    dialog.showModal();
+  const hasAccountRows = Array.isArray(finance.accountTransactions) && finance.accountTransactions.length > 0;
+  const hasLiquidityRows = Array.isArray(monthly?.liquidityAccounts) && monthly.liquidityAccounts.length > 0;
+  const hasBudgetRows = Array.isArray(monthly?.categories) && monthly.categories.length > 0;
+  if (!monthly || (!hasAccountRows && !hasLiquidityRows && !hasBudgetRows)) {
+    document.querySelector("#dialog-body").innerHTML =
+      '<p class="account-transactions-empty">Datos bancarios pendientes de cargar desde la fuente privada; no se muestran importes supuestos.</p>';
+    if (!dialog.open) dialog.showModal();
+    if (!options.skipRefresh && privateModeKind === "private-remote" && !financeBudgetRefreshInFlight) {
+      financeBudgetRefreshInFlight = true;
+      void fetchStateScope("finance", 12000).then((payload) => {
+        if (!payload?.financeSummary?.monthlyBudget) throw new Error("FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
+        state.financeSummary = payload.financeSummary;
+        if (dialog.open && dialog.classList.contains("budget-dialog")) {
+          openBudgetDetail({ skipRefresh: true });
+        }
+      }).catch((error) => {
+        console.warn("Finance workspace on-demand load failed", String(error?.message || error));
+        if (dialog.open && dialog.classList.contains("budget-dialog")) {
+          document.querySelector("#dialog-body").innerHTML =
+            '<p class="account-transactions-empty">No se han podido recuperar los movimientos bancarios. La fuente original no se ha modificado.</p>';
+        }
+      }).finally(() => { financeBudgetRefreshInFlight = false; });
+    }
     return;
   }
 
@@ -9127,7 +9149,7 @@ function openBudgetDetail() {
   const andreaNet = firstFinite(monthly.andreaNet);
   const jointNet = firstFinite(monthly.jointNet);
 
-  document.querySelector("#dialog-body").innerHTML = (categories.length || liquidityAccounts.length)
+  document.querySelector("#dialog-body").innerHTML = (categories.length || liquidityAccounts.length || accountTransactions.length)
     ? `
       <div class="budget-net-strip">
         <div><span>Libre Miguel</span><strong>${miguelNet === null ? "—" : formatMoney(miguelNet, currency)}</strong></div>
@@ -9146,7 +9168,7 @@ function openBudgetDetail() {
     node.addEventListener("click", () => void openElectricityDetail());
   });
   initializeAccountTransactionTabs(document.querySelector("#dialog-body"));
-  dialog.showModal();
+  if (!dialog.open) dialog.showModal();
 }
 
 function renderBudgetGroup(name, items, currency) {
