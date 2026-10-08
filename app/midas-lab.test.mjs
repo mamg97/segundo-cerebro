@@ -47,11 +47,18 @@ test("renders current activity separately from cumulative return", () => {
   assert.match(html, /<th>Algoritmo<\/th>/);
   assert.match(html, /<th>Actividad actual<\/th>/);
   assert.match(html, /<th>Rent\. acum\.<\/th>/);
-  assert.match(html, /10 compras para próxima apertura/);
+  assert.match(html, /10 señales congeladas · liquidación semanal pendiente/);
+  assert.match(html, /Señales congeladas el viernes/);
+  assert.match(html, /Señal sin liquidar/);
+  assert.doesNotMatch(html, /10 compras para próxima apertura/);
   assert.match(html, /AMD/);
   assert.match(html, /INTC/);
   assert.match(html, /Rent\. acum\./);
-  assert.match(html, /0,00 %/);
+  assert.doesNotMatch(html, /0,00 %/);
+  assert.match(html, /<td class="midas-lab-col-return"><strong class="midas-lab-return">—<\/strong><\/td>/);
+  const detail = renderMidasAlgorithmDetail(dashboard, null, "weekly_ml_ensemble_2026");
+  assert.match(detail, /Liquidación semanal diferida/);
+  assert.match(detail, /Señal sin liquidar/);
 });
 
 test("renders one compact clickable row per algorithm without chart column", () => {
