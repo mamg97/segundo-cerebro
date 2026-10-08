@@ -1,3 +1,11 @@
+## MIDAS · Valuación estadística provisional separada de la tesis publicada · 2026-10-08
+
+- Fuente: `MIDAS - TESIS Y WATCHLIST`, pestaña `CAGR2031`; los campos históricos F:N mantienen la tesis publicada y los nuevos campos O:X aportan estadísticas v1.2 y el estado `PROVISIONAL`.
+- `private-cloudflare/src/midas.js` consulta ahora `CAGR2031!A1:X500` y expone un objeto opcional `statistical`. Si no hay estadística completa etiquetada como provisional, no reemplaza valores de la tesis histórica.
+- `app/midas-thesis-table.js` elige solo para la vista los escenarios provisionales completos, sin mutar los datos publicados. `app/app.js` usa esa vista para ranking y columnas de precio/CAGR, señala “Estadístico provisional” y presenta el Base V5 anterior como comparación. Sin cifras reales ni información privada hardcodeada.
+- Cambios limitados a MIDAS: no alterar algoritmos, otras empresas, finanzas personales ni contratos de origen. Verificar CI y deploy automático del PR, y no declarar verificación visual de Cloudflare Access hasta tener evidencia de producción. Si aparece una discrepancia, comprobar que `/api/midas` sirva `statistical` y que la vista use esos campos tras actualizar caché.
+- La ratificación económica y el Source Pack SEC/IR pertenecen al proyecto de tesis; mostrar una sensibilidad provisional NO supera el Publication Gate V6.
+
 ## MIDAS · Corrección de doble inicialización y META V5 · 2026-10-08
 
 - Fuente MIDAS confirmada: Google Sheet privado `MIDAS - TESIS Y WATCHLIST` contiene el estado y enlace canónicos de META V5. No copiar cotizaciones, targets ni CAGRs reales a Git; al abrir MIDAS, el endpoint privado debe proyectar el Sheet.
