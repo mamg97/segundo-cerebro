@@ -465,7 +465,7 @@ export async function readObjectsImage(request, env, getGoogleAccessToken, objet
   }
   const bucket = await resolveMediaStore(env, getGoogleAccessToken, overrides);
   const key = imageStorageKey(id, type, version);
-  const object = await bucket.get(key);
+  const object = await bucket.get(key, { stream: true });
   if (!object) throw new ObjectsImageError("IMAGE_NOT_FOUND", 404);
 
   const headers = new Headers({
