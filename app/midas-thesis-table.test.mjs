@@ -44,48 +44,60 @@ test("tracking table exposes accessible sort buttons for every column and a tick
   assert.match(src, /aria-sort="descending"/);
 });
 
-test("MIDAS v1.2: shows provisional statistical valuations without overwriting V5", () => {
-  const historical = { bear: "−13,66%", base: "−5,80%", bull: "+6,00%", status: "COMPLETA V5" };
-  const tracking = { bearPrice5y: 347.43, basePrice5y: 537.34, bullPrice5y: 969.30, priceFor15: 267.15 };
-  const stat = {
+
+test("MIDAS v1.2: active V6 shows 11.54% reference and archived V5 in parallel", () => {
+  const cagr = {
     bear: "+2,41%", base: "+11,54%", bull: "+22,69%",
-    bearPrice5y: 815.89, basePrice5y: 1250.24, bullPrice5y: 2013.64,
-    priceFor15: 621.59, baseMultiple: 22.56,
-    status: "PROVISIONAL · MULTIPLE_REVIEW_PENDING"
+    status: "V6 REFERENCIA ESTADÍSTICA ACTIVA · REVISIÓN ECONÓMICA ABIERTA",
+    historical: {
+      bear: "−13,66%", base: "−5,80%", bull: "+6,00%",
+      basePrice5y: 537.34, status: "V5 PUBLICADA HISTÓRICA"
+    },
+    statistical: { baseMultiple: 22.56, base: "+11,54%", status: "V6 ACTIVA COMO REFERENCIA" }
   };
-  const display = midasDisplayValuation({ ...historical, statistical: stat }, tracking);
-  assert.equal(display.provisional, true);
-  assert.equal(display.base, "+11,54%");
-  assert.equal(display.basePrice5y, 1250.24);
-  assert.equal(display.priceFor15, 621.59);
-  assert.equal(display.multiple, 22.56);
-  assert.equal(historical.base, "−5,80%");
-  assert.equal(tracking.basePrice5y, 537.34);
+  const tracking = { bearPrice5y: 815.89, basePrice5y: 1250.24, bullPrice5y: 2013.64, priceFor15: 621.59 };
+  const result = midasDisplayValuation(cagr, tracking);
+  assert.equal(result.v6Reference, true);
+  assert.equal(result.base, "+11,54%");
+  assert.equal(result.basePrice5y, 1250.24);
+  assert.equal(result.priceFor15, 621.59);
+  assert.equal(result.multiple, 22.56);
+  assert.equal(result.historical.base, "−5,80%");
+  assert.equal(result.historical.basePrice5y, 537.34);
 });
 
-test("MIDAS v1.2: missing or non-provisional statistical cases never supplant published targets", () => {
-  const historical = { bear: "-20%", base: "-1,22%", bull: "+10%", status: "COMPLETA" };
+test("MIDAS v1.2: other tickers and older data continue using their original values", () => {
+  const cagr = { bear: "-20%", base: "-1,22%", bull: "+10%", status: "COMPLETA" };
   const tracking = { bearPrice5y: 200, basePrice5y: 495.06, bullPrice5y: 890, priceFor15: 246.13 };
+  const result = midasDisplayValuation(cagr, tracking);
+  assert.equal(result.v6Reference, false);
+  assert.equal(result.base, "-1,22%");
+  assert.equal(result.basePrice5y, 495.06);
+  assert.equal(result.historical, null);
+});
+
+test("MIDAS v1.2: partial statistical states cannot override existing reference", () => {
+  const main = {bear:"-20%", base:"-1,22%", bull:"+10%", status:"COMPLETA"};
+  const tracking = {basePrice5y:495.06, priceFor15:246.13};
   for (const statistical of [
     null,
-    { status: "PUBLISHED", base: "+11%", basePrice5y: 1250 },
     { status: "PROVISIONAL", base: "+11%", basePrice5y: 1250 },
-    { status: "PROVISIONAL", bear: "x", base: "+11%", bull: "+20%", bearPrice5y: 800, basePrice5y: 1250, bullPrice5y: 2000, priceFor15: 621 }
+    { status: "V6 ACTIVA", bear:"oops", base:"+11%", bull:"+20%", bearPrice5y:800, basePrice5y:1250, bullPrice5y:2000, priceFor15:621 }
   ]) {
-    const display = midasDisplayValuation({ ...historical, statistical }, tracking);
-    assert.equal(display.provisional, false);
-    assert.equal(display.base, "-1,22%");
-    assert.equal(display.basePrice5y, 495.06);
+    const out = midasDisplayValuation({...main,statistical},tracking);
+    assert.equal(out.v6Reference,false);
+    assert.equal(out.base, "-1,22%");
+    assert.equal(out.basePrice5y,495.06);
   }
 });
 
-test("MIDAS v1.2: frontend sorts on displayed provisional CAGR and reads columns O:X", () => {
+test("MIDAS v1.2: frontend gets historical V5 columns Y:AG and sorts on active V6", () => {
   const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const worker = fs.readFileSync(new URL("../private-cloudflare/src/midas.js", import.meta.url), "utf8");
-  assert.match(worker, /CAGR2031!A1:X500/);
-  assert.match(worker, /estado_valoracion_estadistica/);
+  assert.match(worker, /CAGR2031!A1:AG500/);
+  assert.match(worker, /v5_cagr_base_historico/);
   assert.match(app, /midasDisplayValuation\(cagr, tracking\)/);
   assert.match(app, /midasCagrNumber\(a\.display\.base\)/);
-  assert.match(app, /Estadístico provisional/);
-  assert.match(app, /V5: /);
+  assert.match(app, /V6 · media histórica/);
+  assert.match(app, /display\.historical\?\.base/);
 });
