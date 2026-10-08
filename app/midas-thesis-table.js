@@ -16,27 +16,35 @@ export function midasCagrNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-// MIDAS v1.2: the statistical valuation is a labeled sensitivity, not a published thesis.
+// MIDAS v1.2: use the active scenario columns as the main reference.
+// Statistical-only cases can be shown separately, and V5 legacy is optional.
+// Neither status nor the statistical anchor claims an audited fundamental fair value.
 export function midasDisplayValuation(cagr = {}, tracking = {}) {
   const stats = cagr.statistical;
-  const provisional = Boolean(
-    stats && String(stats.status || "").toUpperCase().includes("PROVISIONAL") &&
+  const activeV6 = /V6/i.test(String(cagr.status || "")) &&
+    /REFERENCIA|ESTAD.STICA/i.test(String(cagr.status || ""));
+  const statsAvailable = Boolean(
+    stats && /PROVISIONAL|V6 ACTIVA|V6 REFERENCIA/i.test(String(stats.status || "")) &&
     [stats.bear, stats.base, stats.bull].every((v) => midasCagrNumber(v) !== null) &&
     [stats.bearPrice5y, stats.basePrice5y, stats.bullPrice5y, stats.priceFor15].every((v) =>
       typeof v === "number" && Number.isFinite(v) && v >= 0
     )
   );
+  const useStats = statsAvailable && !activeV6;
+  const main = useStats ? stats : cagr;
+  const price = useStats ? stats : tracking;
   return {
-    provisional,
-    bear: provisional ? stats.bear : cagr.bear,
-    base: provisional ? stats.base : cagr.base,
-    bull: provisional ? stats.bull : cagr.bull,
-    bearPrice5y: provisional ? stats.bearPrice5y : tracking.bearPrice5y,
-    basePrice5y: provisional ? stats.basePrice5y : tracking.basePrice5y,
-    bullPrice5y: provisional ? stats.bullPrice5y : tracking.bullPrice5y,
-    priceFor15: provisional ? stats.priceFor15 : tracking.priceFor15,
-    multiple: provisional ? stats.baseMultiple : null,
-    status: provisional ? stats.status : cagr.status
+    v6Reference: activeV6 || useStats,
+    historical: cagr.historical || null,
+    bear: main.bear,
+    base: main.base,
+    bull: main.bull,
+    bearPrice5y: price.bearPrice5y,
+    basePrice5y: price.basePrice5y,
+    bullPrice5y: price.bullPrice5y,
+    priceFor15: price.priceFor15,
+    multiple: activeV6 ? (stats?.baseMultiple ?? null) : useStats ? stats.baseMultiple : null,
+    status: activeV6 ? cagr.status : useStats ? stats.status : cagr.status
   };
 }
 
