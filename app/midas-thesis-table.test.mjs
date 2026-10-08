@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { midasCagrNumber, compareMidasSortValues } from "./midas-thesis-table.js";
+import { midasCagrNumber, midasDisplayValuation, compareMidasSortValues } from "./midas-thesis-table.js";
 
 test("MIDAS CAGR parser accepts minus signs from Google Sheets", () => {
   assert.equal(midasCagrNumber("−1,22%"), -1.22);
@@ -42,4 +42,50 @@ test("tracking table exposes accessible sort buttons for every column and a tick
   assert.match(src, /data-midas-thesis-search/);
   assert.match(src, /data-midas-search/);
   assert.match(src, /aria-sort="descending"/);
+});
+
+test("MIDAS v1.2: shows provisional statistical valuations without overwriting V5", () => {
+  const historical = { bear: "−13,66%", base: "−5,80%", bull: "+6,00%", status: "COMPLETA V5" };
+  const tracking = { bearPrice5y: 347.43, basePrice5y: 537.34, bullPrice5y: 969.30, priceFor15: 267.15 };
+  const stat = {
+    bear: "+2,41%", base: "+11,54%", bull: "+22,69%",
+    bearPrice5y: 815.89, basePrice5y: 1250.24, bullPrice5y: 2013.64,
+    priceFor15: 621.59, baseMultiple: 22.56,
+    status: "PROVISIONAL · MULTIPLE_REVIEW_PENDING"
+  };
+  const display = midasDisplayValuation({ ...historical, statistical: stat }, tracking);
+  assert.equal(display.provisional, true);
+  assert.equal(display.base, "+11,54%");
+  assert.equal(display.basePrice5y, 1250.24);
+  assert.equal(display.priceFor15, 621.59);
+  assert.equal(display.multiple, 22.56);
+  assert.equal(historical.base, "−5,80%");
+  assert.equal(tracking.basePrice5y, 537.34);
+});
+
+test("MIDAS v1.2: missing or non-provisional statistical cases never supplant published targets", () => {
+  const historical = { bear: "-20%", base: "-1,22%", bull: "+10%", status: "COMPLETA" };
+  const tracking = { bearPrice5y: 200, basePrice5y: 495.06, bullPrice5y: 890, priceFor15: 246.13 };
+  for (const statistical of [
+    null,
+    { status: "PUBLISHED", base: "+11%", basePrice5y: 1250 },
+    { status: "PROVISIONAL", base: "+11%", basePrice5y: 1250 },
+    { status: "PROVISIONAL", bear: "x", base: "+11%", bull: "+20%", bearPrice5y: 800, basePrice5y: 1250, bullPrice5y: 2000, priceFor15: 621 }
+  ]) {
+    const display = midasDisplayValuation({ ...historical, statistical }, tracking);
+    assert.equal(display.provisional, false);
+    assert.equal(display.base, "-1,22%");
+    assert.equal(display.basePrice5y, 495.06);
+  }
+});
+
+test("MIDAS v1.2: frontend sorts on displayed provisional CAGR and reads columns O:X", () => {
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const worker = fs.readFileSync(new URL("../private-cloudflare/src/midas.js", import.meta.url), "utf8");
+  assert.match(worker, /CAGR2031!A1:X500/);
+  assert.match(worker, /estado_valoracion_estadistica/);
+  assert.match(app, /midasDisplayValuation\(cagr, tracking\)/);
+  assert.match(app, /midasCagrNumber\(a\.display\.base\)/);
+  assert.match(app, /Estadístico provisional/);
+  assert.match(app, /V5: /);
 });
