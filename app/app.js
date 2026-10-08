@@ -9111,7 +9111,7 @@ function openBudgetDetail(options = {}) {
     document.querySelector("#dialog-body").innerHTML =
       '<p class="account-transactions-empty">Datos bancarios pendientes de cargar desde la fuente privada; no se muestran importes supuestos.</p>';
     if (!dialog.open) dialog.showModal();
-    if (!options.skipRefresh && privateModeKind === "private-remote" && !financeBudgetRefreshInFlight) {
+    if (!options.skipRefresh && privateModeKind === "remote" && !financeBudgetRefreshInFlight) {
       financeBudgetRefreshInFlight = true;
       void fetchStateScope("finance", 12000).then((payload) => {
         if (!payload?.financeSummary?.monthlyBudget) throw new Error("FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
