@@ -1,3 +1,11 @@
+## Finanzas · recuperación del workspace bancario · 2026-10-08
+
+- Auditoría #237 no detectó enlace al Sheet financiero ni pestañas de cuentas, aunque ambos componentes siguen definidos en el frontend.
+- Comprobación read-only de la fuente privada: `Cuentas` y `MovimientosCuenta` están presentes y contienen registros. No se copiaron saldos, movimientos ni identificadores personales al repositorio.
+- Causa de presentación a comprobar en producción: el diálogo de presupuesto ocultaba por completo el workspace si su estado inicial estaba ausente/vacío, y no ofrecía recuperación por dominio. Se añade recuperación de lectura on-demand usando el endpoint privado `/api/state?scope=finance` solamente si faltan datos en UI, con resultado explícito si la fuente sigue inaccesible; se muestra el workspace aunque solo existan transacciones sin categorías/filas de liquidez.
+- Sin escrituras a fuentes canónicas, sin suposiciones de saldos y sin exponer datos en Pages. Tests estáticos + CI y despliegue obligatorios; mantener incidencia ámbar hasta verificar las pestañas/enlace en navegador privado.
+- `MenuSemanal` contiene el `food_id` `cafe-solo`, que no aparece en la pestaña canónica `Productos` de Despensa. Es una discrepancia referencial real; no crear alias/producto artificial sin intervención del gestor Despensa.
+
 ## ORGANIZADOR · auditorías de producción #235–#237 · 2026-10-08
 
 - Se inspeccionaron auditorías completas #235, #236 y #237 (25, 22 y 25 fallos); CI/deploy verdes no equivalen a producción verde.
