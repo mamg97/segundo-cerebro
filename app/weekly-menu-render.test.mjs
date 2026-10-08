@@ -14,3 +14,10 @@ assert.doesNotMatch(menuPanel, /day\.items\.map\(\(item\) => renderWeeklyMenuMea
 assert.match(menuPanel, /mealGroups\.length} toma/);
 assert.match(app, /nutritionStatus === "pending-confirmation"/);
 assert.match(app, /no se inventan macros/);
+
+// A row may legitimately reference both a complete recipe and a canonical
+// pantry product; both independent destinations must remain accessible.
+assert.match(app, /const pantryAction = foodId && item\?\.pantrySyncStatus === "linked"/);
+assert.match(app, /data-menu-recipe-open/);
+assert.match(app, /data-menu-product-open/);
+assert.match(app, /return \x60[\s\S]*\+ pantryAction/);
