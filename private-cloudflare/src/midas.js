@@ -389,7 +389,19 @@ function normalizeResearch(valueRanges = []) {
     originalBase: cleanText(row.cagr_base_original, 80),
     originalBull: cleanText(row.cagr_bull_original, 80),
     status: cleanText(row.estado, 120),
-    note: cleanText(row.nota, 600)
+    note: cleanText(row.nota, 600),
+    statistical: cleanText(row.estado_valoracion_estadistica, 120) ? {
+      bear: cleanText(row.cagr_bear_estadistico_2031, 80),
+      base: cleanText(row.cagr_base_estadistico_2031, 80),
+      bull: cleanText(row.cagr_bull_estadistico_2031, 80),
+      bearPrice5y: parseSheetNumber(row.precio_bear_estadistico_2031),
+      basePrice5y: parseSheetNumber(row.precio_base_estadistico_2031),
+      bullPrice5y: parseSheetNumber(row.precio_bull_estadistico_2031),
+      priceFor15: parseSheetNumber(row.precio_15pct_estadistico_2031),
+      baseMultiple: parseSheetNumber(row.multiple_base_estadistico),
+      status: cleanText(row.estado_valoracion_estadistica, 120),
+      methodology: cleanText(row.metodologia_estadistica, 240)
+    } : null
   })).filter((row) => row.ticker && row.company);
 
   const cagrByTicker = new Map(cagr2031.map((row) => [row.ticker, row]));
@@ -444,7 +456,7 @@ export async function fetchMidasResearch(env, getGoogleAccessToken, fetcher = fe
 
   const token = await getGoogleAccessToken(env);
   const spreadsheetId = await resolveResearchSpreadsheetId(env, token, fetcher);
-  const ranges = ["TESIS!A1:P500", "CAGR2031!A1:N500", "SEGUIMIENTO!A1:M500"];
+  const ranges = ["TESIS!A1:P500", "CAGR2031!A1:X500", "SEGUIMIENTO!A1:M500"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
