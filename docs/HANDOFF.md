@@ -1,3 +1,11 @@
+## MIDAS · Seguimiento de tesis — ordenación por CAGR y MSFT · 2026-10-08
+
+- Petición: la tabla privada `MIDAS > Seguimiento de tesis` debe iniciar con **CAGR Base descendente** y permitir ordenar ascendente/descendente al pulsar cada cabecera; búsqueda rápida por ticker o empresa.
+- Diagnóstico confirmado contra el Sheet canónico `MIDAS - TESIS Y WATCHLIST`: MSFT aparece en `TESIS` (estado COMPLETA), `CAGR2031` (Base `−1,22%`) y `SEGUIMIENTO` (Base FY2031 495,06 USD, P15 246,13). La interfaz `app/app.js` parseaba negativos con guion `-` pero no U+2212 `−`; trataba MSFT como CAGR no numérico y lo relegaba al final. **No falta la empresa ni se debe duplicar en el Sheet.**
+- Implementación preparada en `fix/midas-thesis-sort-20261008`: `app/midas-thesis-table.js` parsea Unicode, compara valores y da ordenación accesible por cabecera; `app/app.js` utiliza estos cálculos y muestra tabla ordenable + búsqueda; `app/styles.css` añade estilos compactos; `app/index.html` renueva versiones de assets; `app/midas-thesis-sort.test.mjs` prueba `−1,22%`, orden relativo MSFT/PLTR y casos sin dato. Se conserva el endpoint `GET /api/midas` y el origen Sheets, sin hardcodear empresas ni modificar valores.
+- **Operativa de relevo:** verificar PR y CI `Validate private Cloudflare app`, fusionar/desplegar si pasa, recargar web privada y comprobar que MSFT aparece inmediatamente antes de PLTR cuando se ordena Base desc. Validar clic en cabeceras, búsqueda `MSFT`, tratamiento de nulos y móvil; revisar `Audit production web` posterior. No declarar deploy/QA producción PASS sin evidencia.
+- **Contexto del chat:** `MIDAS — ORGANIZADOR DE TESIS` pasa a continuación `SEGUIMIENTOS TESIS 2`. Este repositorio documenta el lado web/Segundo Cerebro. El método y estado de las tesis vive en el privado `mamg97/personal_mamg/MIDAS_GIT/` y las cifras oficiales exclusivamente en Google Sheet `MIDAS - TESIS Y WATCHLIST`.
+
 ## HabitQuest · toggle inmediato sin doble clic · 2026-10-07
 
 - Incidencia observada: al pulsar un hábito pendiente, Google Sheets sí registraba el cambio, pero la UI podía seguir mostrando el valor anterior durante unos segundos.
