@@ -8079,6 +8079,7 @@ function renderMidasReport(dashboard, stale, research = null, lab = null) {
 function bindMidasWorkspace(dashboard, lab) {
   const root = document.querySelector("#midas-report");
   if (!root) return;
+  bindMidasResearchSorting(root);
   const tabs = [...root.querySelectorAll("[data-midas-tab]")];
   const panels = [...root.querySelectorAll("[data-midas-panel]")];
   const competitionList = root.querySelector("[data-midas-competition-list]");
