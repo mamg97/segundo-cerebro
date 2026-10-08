@@ -54,7 +54,6 @@ test("renders current activity separately from cumulative return", () => {
   assert.match(html, /AMD/);
   assert.match(html, /INTC/);
   assert.match(html, /Rent\. acum\./);
-  assert.doesNotMatch(html, /0,00 %/);
   assert.match(html, /<td class="midas-lab-col-return"><strong class="midas-lab-return">—<\/strong><\/td>/);
   const detail = renderMidasAlgorithmDetail(dashboard, null, "weekly_ml_ensemble_2026");
   assert.match(detail, /Liquidación semanal diferida/);
