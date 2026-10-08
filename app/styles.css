@@ -24797,9 +24797,9 @@ html[data-theme="dark"] .loan-benchmark-explanation {
 
   .look-history-mobile-card {
     display: grid;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
-    padding: 7px 8px;
+    padding: 5px 8px;
     border: 1px solid var(--line);
     border-radius: 11px;
     background: var(--surface);
@@ -24865,7 +24865,7 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     display: grid;
     grid-template-columns: 1.35fr .8fr .8fr;
     gap: 5px;
-    padding-top: 5px;
+    padding-top: 4px;
     border-top: 1px solid var(--line);
   }
 

@@ -5,6 +5,7 @@ import {
   hiddenMenuStatus,
   logicalMenuKey,
   menuDisplayTotals,
+  confirmedMenuTotals,
   normalizeAuditValue,
   qualityStep,
   visibleMenuRow
@@ -1562,7 +1563,7 @@ try {
     }
   }
 
-  const homeRecipeRows = visibleRows.filter((item) => item?.recipeId && item?.recipe);
+  const homeRecipeRows = visibleRows.filter((item) => item?.recipeId);
   const homeRecipeLinks = page.locator("#home-weekly-menu-content [data-home-menu-recipe-open]");
   const homeRecipeLinkCount = await homeRecipeLinks.count();
   assertCheck(
@@ -1930,6 +1931,13 @@ try {
         }
       }
       if (tab === "gym") {
+        // Wait for the actual async panel (or its explicit error), not just 650 ms.
+        await page.waitForFunction(() => {
+          const gym = document.querySelector('[data-health-panel="gym"] #gym-panel');
+          return Boolean(gym?.querySelector('[data-gym-view="plan"]') &&
+            gym?.querySelector('[data-gym-view="library"]')) ||
+            /no se ha podido cargar el plan/i.test(gym?.textContent || "");
+        }, null, { timeout: 12000 }).catch(() => {});
         const planButton = panel.locator('[data-gym-view="plan"]');
         const libraryButton = panel.locator('[data-gym-view="library"]');
         assertCheck(await planButton.count() === 1, "Salud · Gym conserva Mi plan");
@@ -2154,8 +2162,8 @@ try {
       const mealCards = await uiDay.locator(".weekly-menu-meal").count();
       assertCheck(mealCards === group.momentCount, `Agrupación de tomas día ${index + 1}`, `UI=${mealCards} esperadas=${group.momentCount}`);
 
-      const display = menuDisplayTotals(group.items, group.date, localDateKeyForAudit(), objective);
-      const incomplete = !display.useConsumed && group.items.some((item) => item.kcal == null || item.protein == null);
+      const display = confirmedMenuTotals(group.items);
+      const incomplete = display.incomplete;
 
       for (const [metric, value, target, selector] of [
         ["kcal", display.kcal, objective.kcal, ".weekly-menu-progress.kcal .nutrition-quality-meter"],

@@ -4799,18 +4799,21 @@ function weeklyMenuIngredientAmount(ingredient) {
 
 function renderWeeklyMenuEntityAction(item) {
   const recipeId = String(item?.recipeId || "").trim();
+  const foodId = String(item?.foodId || "").trim();
+  const pantryProductId = String(item?.pantryProductId || "").trim();
+  const pantryAction = foodId && item?.pantrySyncStatus === "linked" && pantryProductId
+    ? `<button class="weekly-menu-entity-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}">Ver alimento en Despensa <span aria-hidden="true">→</span></button>`
+    : "";
   if (recipeId) {
     if (!item?.recipe) {
-      return '<span class="weekly-menu-sync-note">Receta vinculada pendiente de cargar</span>';
+      return '<span class="weekly-menu-sync-note">Receta vinculada pendiente de cargar</span>' + pantryAction;
     }
     return `
       <button class="weekly-menu-entity-link" type="button" data-menu-recipe-open="${escapeHtml(recipeId)}">
         Abrir receta <span aria-hidden="true">→</span>
-      </button>`;
+      </button>` + pantryAction;
   }
 
-  const foodId = String(item?.foodId || "").trim();
-  const pantryProductId = String(item?.pantryProductId || "").trim();
   if (foodId && item?.pantrySyncStatus === "linked" && pantryProductId) {
     return `
       <button class="weekly-menu-entity-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}">
@@ -4925,14 +4928,18 @@ function renderWeeklyMenuItemTitle(item, interactive = true) {
   if (!interactive) return `<strong>${label}</strong>`;
 
   const recipeId = String(item?.recipeId || "").trim();
+  const pantryProductId = String(item?.pantryProductId || "").trim();
+  const foodId = String(item?.foodId || "").trim();
   if (recipeId && item?.recipe) {
+    const pantryLink = foodId && pantryProductId && item?.pantrySyncStatus === "linked"
+      ? `<button class="weekly-menu-title-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}" aria-label="Abrir alimento en Despensa: ${label}">Despensa <span aria-hidden="true">↗</span></button>`
+      : "";
     return `
       <button class="weekly-menu-title-link" type="button" data-menu-recipe-open="${escapeHtml(recipeId)}" aria-label="Abrir receta: ${label}">
         <strong>${label}</strong><span aria-hidden="true">↗</span>
-      </button>`;
+      </button>` + pantryLink;
   }
 
-  const pantryProductId = String(item?.pantryProductId || "").trim();
   if (pantryProductId && item?.pantrySyncStatus === "linked") {
     return `
       <button class="weekly-menu-title-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}" aria-label="Abrir alimento en Despensa: ${label}">
