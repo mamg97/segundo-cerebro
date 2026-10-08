@@ -1,3 +1,12 @@
+## Integridad referencial privada · muestras read-only · 2026-10-08
+
+- Comprobación limitada a las fuentes privadas existentes, sin añadir ni corregir ninguna fila. El auditor de producción por sí solo no demuestra integridad de fuentes.
+- Finanzas: seis identidades de cuenta únicas y relaciones de los movimientos muestreados contra cuentas existentes, pero un identificador de movimiento está repetido en dos filas con campos de negocio coincidentes y metadatos de importación diferentes. **INCIDENCIA ABIERTA**: requiere reconciliar el lote/registro con el gestor financiero antes de considerar cualquier deduplicación. No calcular un saldo nuevo ni borrar filas.
+- Nutrición: el catálogo `Recetas` no presenta claves duplicadas en el rango leído, pero `MenuSemanal` contiene una referencia a `recipe_id` que no existe en el catálogo y una referencia de `food_id` que no corresponde a `Productos` de Despensa. En el último caso existe una entrada personal heredada en `Comidas`; su identidad comercial o no comercial debe resolverla el gestor de Salud/Despensa. **INCIDENCIAS ABIERTAS**: no completar ni inventar recetas/productos/IDs por coincidencia difusa.
+- Despensa: ningún `producto_id` duplicado en la muestra de Productos; solo indica unicidad en la muestra inspeccionada, no integridad histórica garantizada.
+- Privacidad: el repositorio principal tiene visibilidad pública; registrar únicamente defectos agregados/contratos en este handoff, nunca identificadores privados de movimientos, cuentas, salarios, consumos, datos médicos, contenidos de correo ni valores reales de fuentes canónicas.
+- Estado: **DESCONOCIDO** para integridad general completa (requeriría validación de todas las fuentes). **ROJO** para los defectos de referencias confirmados. No modificar fuentes canónicas desde el auditor técnico.
+
 ## Objetos · mitigación CPU/memoria en imágenes D1 · 2026-10-08
 
 - Auditores #236–#237 registraron HTTP 502 intermitentes al servir imágenes privadas de Looks, alguna miniatura y errores de red; #237 también encontró un 502 en Health Overview. La causa de cada 502 NO quedó probada por los logs del navegador: no afirmar resuelto solo por CI.
@@ -12,7 +21,7 @@
 - Comprobación read-only de la fuente privada: `Cuentas` y `MovimientosCuenta` están presentes y contienen registros. No se copiaron saldos, movimientos ni identificadores personales al repositorio.
 - Causa de presentación a comprobar en producción: el diálogo de presupuesto ocultaba por completo el workspace si su estado inicial estaba ausente/vacío, y no ofrecía recuperación por dominio. Se añade recuperación de lectura on-demand usando el endpoint privado `/api/state?scope=finance` solamente si faltan datos en UI, con resultado explícito si la fuente sigue inaccesible; se muestra el workspace aunque solo existan transacciones sin categorías/filas de liquidez.
 - Sin escrituras a fuentes canónicas, sin suposiciones de saldos y sin exponer datos en Pages. Tests estáticos + CI y despliegue obligatorios; mantener incidencia ámbar hasta verificar las pestañas/enlace en navegador privado.
-- `MenuSemanal` contiene el `food_id` `cafe-solo`, que no aparece en la pestaña canónica `Productos` de Despensa. Es una discrepancia referencial real; no crear alias/producto artificial sin intervención del gestor Despensa.
+- `MenuSemanal` contiene el `food_id` privado sin correspondencia con `Productos`, que no aparece en la pestaña canónica `Productos` de Despensa. Es una discrepancia referencial real; no crear alias/producto artificial sin intervención del gestor Despensa.
 
 ## ORGANIZADOR · auditorías de producción #235–#237 · 2026-10-08
 
@@ -77,7 +86,7 @@
 - La lectura redundante de `eventsSummary` al final de `/api/state` se elimina; se reutiliza el resumen ya obtenido de la fuente de Eventos.
 - Los presupuestos de espera de calendarios dentro de `/api/state` bajan a 7 s y el timeout live de iCloud a 5,5 s para conservar margen respecto al timeout de 9 s del navegador y permitir degradación/fallback en vez de abortar todo Home.
 - No cambia ninguna fuente canónica, privacidad ni contrato de imágenes.
-- Validación inmediata cerrada: PR #315 fusionada; CI y deploy privados pasaron. PR #318 añadió refresco incremental por dominio, con CI #406 y deploy privado #394 correctos. Audit production web #222 cargó el estado privado, Google Calendar y los módulos principales sin registrar respuestas 5xx, `1102`, `requestfailed` ni fallos de CPU. El auditor global quedó rojo por 23 comprobaciones funcionales/visuales ajenas a esta incidencia (Gym, barras Nutrición, enlace `cafe-solo` y compactación móvil de historial). La confirmación de largo plazo requiere observar si Cloudflare repite el aviso de CPU durante las siguientes 24 h.
+- Validación inmediata cerrada: PR #315 fusionada; CI y deploy privados pasaron. PR #318 añadió refresco incremental por dominio, con CI #406 y deploy privado #394 correctos. Audit production web #222 cargó el estado privado, Google Calendar y los módulos principales sin registrar respuestas 5xx, `1102`, `requestfailed` ni fallos de CPU. El auditor global quedó rojo por 23 comprobaciones funcionales/visuales ajenas a esta incidencia (Gym, barras Nutrición, un enlace de alimento sin correspondencia canónica y compactación móvil de historial). La confirmación de largo plazo requiere observar si Cloudflare repite el aviso de CPU durante las siguientes 24 h.
 
 ## Agenda · federación iCloud + Google Calendar · 2026-10-07
 
