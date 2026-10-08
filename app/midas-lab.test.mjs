@@ -47,7 +47,7 @@ test("renders current activity separately from cumulative return", () => {
   assert.match(html, /<th>Algoritmo<\/th>/);
   assert.match(html, /<th>Actividad actual<\/th>/);
   assert.match(html, /<th>Rent\. acum\.<\/th>/);
-  assert.match(html, /10 señales congeladas · liquidación semanal pendiente/);
+  assert.match(html, /3 señales congeladas · liquidación semanal pendiente/);
   assert.match(html, /Señales congeladas el viernes/);
   assert.match(html, /Señal sin liquidar/);
   assert.doesNotMatch(html, /10 compras para próxima apertura/);
