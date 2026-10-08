@@ -442,7 +442,7 @@ export async function readObjectsLookImage(request, env, lookId, overrides = {})
 
   const bucket = await resolveMediaStore(env, overrides);
   const key = imageStorageKey(storageObjectId(id), "processed", version);
-  const object = await bucket.get(key);
+  const object = await bucket.get(key, { stream: true });
   if (!object) throw new ObjectsImageError("IMAGE_NOT_FOUND", 404);
 
   const headers = new Headers({
