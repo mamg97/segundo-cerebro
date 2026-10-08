@@ -8,7 +8,7 @@ import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab } from "./midas-lab.js?v=0.40.19";
-import { midasCagrNumber, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.9";
+import { midasCagrNumber, midasDisplayValuation, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.10";
 
 let state = mockState;
 let areaById = new Map();
@@ -7886,22 +7886,22 @@ function renderMidasResearch(research) {
   const theses = Array.isArray(research.theses) ? research.theses : [];
   const cagrByTicker = new Map((Array.isArray(research.cagr2031) ? research.cagr2031 : []).map((item) => [item.ticker, item]));
   const trackingByTicker = new Map((Array.isArray(research.tracking) ? research.tracking : []).map((item) => [item.ticker, item]));
-  const rows = theses.map((thesis) => ({
-    thesis,
-    cagr: cagrByTicker.get(thesis.ticker) || {},
-    tracking: trackingByTicker.get(thesis.ticker) || {}
-  })).sort((a, b) => {
-    const av = midasCagrNumber(a.cagr.base);
-    const bv = midasCagrNumber(b.cagr.base);
+  const rows = theses.map((thesis) => {
+    const cagr = cagrByTicker.get(thesis.ticker) || {};
+    const tracking = trackingByTicker.get(thesis.ticker) || {};
+    return { thesis, cagr, tracking, display: midasDisplayValuation(cagr, tracking) };
+  }).sort((a, b) => {
+    const av = midasCagrNumber(a.display.base);
+    const bv = midasCagrNumber(b.display.base);
     if (av === null && bv === null) return a.thesis.ticker.localeCompare(b.thesis.ticker);
     if (av === null) return 1;
     if (bv === null) return -1;
     return bv - av;
   });
-  const complete = rows.filter(({ cagr, tracking, thesis }) =>
-    cagr.bear && cagr.base && cagr.bull &&
+  const complete = rows.filter(({ display, tracking, thesis }) =>
+    display.bear && display.base && display.bull &&
     typeof tracking.currentPrice === "number" &&
-    typeof tracking.basePrice5y === "number" &&
+    typeof display.basePrice5y === "number" &&
     safeMidasThesisUrl(thesis.thesisUrl)
   ).length;
 
@@ -7916,7 +7916,7 @@ function renderMidasResearch(research) {
         <small>${complete} con seguimiento completo · ${Math.max(0, rows.length - complete)} por actualizar</small>
       </div>
     </div>
-    <p class="midas-research-rule">Los precios objetivo pertenecen a la tesis vigente y no se desplazan automáticamente con la cotización. “Precio 15%” = precio objetivo central a 5 años / 1,15⁵.</p>
+    <p class="midas-research-rule">Los objetivos no cambian automáticamente con la cotización. Las sensibilidades estadísticas se muestran como PROVISIONALES, con la tesis publicada anterior debajo; no son precios objetivo fundamentales aprobados. “Precio 15%” = objetivo central / 1,15⁵.</p>
     <div class="midas-research-toolbar"><label for="midas-thesis-search">Buscar ticker o empresa</label><input id="midas-thesis-search" type="search" autocomplete="off" placeholder="Ej.: MSFT o Microsoft" data-midas-thesis-search /><span data-midas-visible-count aria-live="polite"></span><small>Orden inicial: CAGR Base ↓ · Pulsa las cabeceras para ordenar.</small></div>
     <div class="midas-research-table-scroll" role="region" aria-label="Seguimiento de empresas y tesis de inversión" tabindex="0">
       <table class="midas-research-table">
@@ -7933,13 +7933,13 @@ function renderMidasResearch(research) {
           <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="earnings" title="Ordenar por próxima fecha de resultados" aria-label="Ordenar por próxima fecha de resultados">Próx. resultados <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
           <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="thesis" title="Ordenar por disponibilidad del enlace a la tesis" aria-label="Ordenar por disponibilidad del enlace a la tesis">Tesis <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
         </tr></thead>
-        <tbody>${rows.map(({ thesis, cagr, tracking }) => {
+        <tbody>${rows.map(({ thesis, cagr, tracking, display }) => {
           const thesisUrl = safeMidasThesisUrl(thesis.thesisUrl);
           const sortValues = {
             ticker: thesis.ticker, company: thesis.company, market: tracking.market,
-            current: tracking.currentPrice, bull: midasCagrNumber(cagr.bull),
-            bear: midasCagrNumber(cagr.bear), central: midasCagrNumber(cagr.base),
-            entry: tracking.priceFor15, target: tracking.basePrice5y,
+            current: tracking.currentPrice, bull: midasCagrNumber(display.bull),
+            bear: midasCagrNumber(display.bear), central: midasCagrNumber(display.base),
+            entry: display.priceFor15, target: display.basePrice5y,
             earnings: /^\d{4}-\d{2}-\d{2}$/.test(String(tracking.nextEarnings || "")) ? tracking.nextEarnings : "",
             thesis: thesisUrl ? 1 : 0
           };
@@ -7948,14 +7948,14 @@ function renderMidasResearch(research) {
           const searchValue = [thesis.ticker, thesis.company, tracking.market].filter(Boolean).join(" ");
           return `<tr ${sortAttrs} data-midas-search="${escapeHtml(searchValue)}">
             <td class="midas-company-ticker"><strong>${escapeHtml(thesis.ticker)}</strong></td>
-            <td class="midas-company-name"><strong>${escapeHtml(thesis.company)}</strong><small>${escapeHtml(thesis.theme || "—")}</small></td>
+            <td class="midas-company-name"><strong>${escapeHtml(thesis.company)}</strong><small>${escapeHtml(thesis.theme || "—")}</small>${display.provisional ? '<small class="midas-valuation-status">Estadístico provisional · V5 histórica disponible</small>' : ""}</td>
             <td>${escapeHtml(tracking.market || "—")}</td>
             <td class="midas-price-cell"><strong>${escapeHtml(formatMidasTrackingPrice(tracking.currentPrice, tracking.currency))}</strong><small>${tracking.currentPriceDate ? escapeHtml(formatFinanceDate(tracking.currentPriceDate, tracking.currentPriceDate)) : "Sin actualizar"}</small></td>
-            <td>${renderMidasCase(tracking.bullPrice5y, cagr.bull, tracking.currency)}</td>
-            <td>${renderMidasCase(tracking.bearPrice5y, cagr.bear, tracking.currency)}</td>
-            <td>${renderMidasCase(tracking.basePrice5y, cagr.base, tracking.currency, true)}</td>
-            <td class="midas-price-cell is-entry"><strong>${escapeHtml(formatMidasTrackingPrice(tracking.priceFor15, tracking.currency))}</strong><small>para 15% CAGR</small></td>
-            <td class="midas-price-cell is-target"><strong>${escapeHtml(formatMidasTrackingPrice(tracking.basePrice5y, tracking.currency))}</strong><small>caso central</small></td>
+            <td>${renderMidasCase(display.bullPrice5y, display.bull, tracking.currency)}</td>
+            <td>${renderMidasCase(display.bearPrice5y, display.bear, tracking.currency)}</td>
+            <td>${renderMidasCase(display.basePrice5y, display.base, tracking.currency, true)}${display.provisional ? '<small class="midas-valuation-legacy">V5: ' + escapeHtml(cagr.base || "—") + ' · ' + escapeHtml(formatMidasTrackingPrice(tracking.basePrice5y, tracking.currency)) + '</small>' : ""}</td>
+            <td class="midas-price-cell is-entry"><strong>${escapeHtml(formatMidasTrackingPrice(display.priceFor15, tracking.currency))}</strong><small>${display.provisional ? "Estadístico provisional" : "para 15% CAGR"}</small></td>
+            <td class="midas-price-cell is-target"><strong>${escapeHtml(formatMidasTrackingPrice(display.basePrice5y, tracking.currency))}</strong><small>${display.provisional ? "No ratificado" : "caso central"}</small></td>
             <td class="midas-earnings-cell">${tracking.nextEarnings ? escapeHtml(formatFinanceDate(tracking.nextEarnings, tracking.nextEarnings)) : "—"}</td>
             <td class="midas-thesis-cell">${thesisUrl ? `<a class="midas-thesis-link" href="${escapeHtml(thesisUrl)}" target="_blank" rel="noopener noreferrer">Abrir tesis ↗</a>` : '<span class="midas-thesis-missing">Pendiente</span>'}</td>
           </tr>`;
