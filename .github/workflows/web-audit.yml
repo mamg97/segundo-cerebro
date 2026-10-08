@@ -16,9 +16,11 @@ permissions:
   actions: read
   id-token: write
 
+# Keep a full production audit running to completion. New schedule/deploy
+# events wait behind it instead of discarding its work halfway through.
 concurrency:
   group: segundo-cerebro-hourly-web-audit
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   audit:
