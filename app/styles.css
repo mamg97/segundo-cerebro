@@ -18207,6 +18207,21 @@ html[data-theme="dark"] .wealth-daily-kpis article {
 .midas-case-value.is-positive small { color: #a86918; font-weight: 850; }
 .midas-case-value.is-negative small { color: #d45b64; font-weight: 850; }
 
+.midas-company-name .midas-valuation-status {
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.midas-valuation-legacy {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-soft);
+  font-size: 7.5px;
+  line-height: 1.3;
+}
+
 .midas-price-cell.is-entry strong { color: var(--blue); }
 .midas-price-cell.is-target strong { font-weight: 900; }
 .midas-earnings-cell { white-space: nowrap; }
