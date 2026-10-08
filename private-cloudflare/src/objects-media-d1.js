@@ -153,7 +153,7 @@ export function createObjectsD1MediaStore(env) {
       }
     },
 
-    async get(key) {
+    async get(key, options = {}) {
       storageParts(key);
       await ensureSchema(db);
       const asset = await db.prepare(`
@@ -177,9 +177,23 @@ export function createObjectsD1MediaStore(env) {
       for (let index = 0; index < chunks.length; index += 1) {
         if (Number(chunks[index]?.chunk_index) !== index) throw new Error("OBJECTS_MEDIA_CORRUPT");
       }
+      const parts = chunks.map((row) => bytesOf(row.data));
+      const sizeBytes = Number(asset.size_bytes || 0);
+      const actualSize = parts.reduce((total, bytes) => total + bytes.byteLength, 0);
+      if (actualSize !== sizeBytes) throw new Error("OBJECTS_MEDIA_CORRUPT");
+      // Large immutable private images can stream from the validated D1 chunks
+      // without concatenating another full-size Uint8Array on every GET.
+      // Other callers keep the existing byte-array contract for image processing.
       const body = expectedCount === 1
-        ? bytesOf(chunks[0].data)
-        : concatChunks(chunks.map((row) => row.data), Number(asset.size_bytes || 0));
+        ? parts[0]
+        : options.stream === true
+          ? new ReadableStream({
+              start(controller) {
+                for (const part of parts) controller.enqueue(part);
+                controller.close();
+              }
+            })
+          : concatChunks(parts, sizeBytes);
 
       return {
         body,

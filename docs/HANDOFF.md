@@ -1,3 +1,11 @@
+## Objetos · mitigación CPU/memoria en imágenes D1 · 2026-10-08
+
+- Auditores #236–#237 registraron HTTP 502 intermitentes al servir imágenes privadas de Looks, alguna miniatura y errores de red; #237 también encontró un 502 en Health Overview. La causa de cada 502 NO quedó probada por los logs del navegador: no afirmar resuelto solo por CI.
+- Hipótesis técnica verificada en código: al servir assets de varios chunks, `objects-media-d1.get()` hacía una nueva concatenación y copia completa del recurso (además de la respuesta), contribuyendo a CPU y memoria de Workers Free.
+- Mitigación reversible: lecturas autenticadas de imágenes Objetos y Looks solicitan `{stream:true}` al almacén D1 y responden con chunks ordenados sin volver a concatenarlos. La API interna por defecto mantiene Uint8Array para procesamiento. Se verifica orden, conteo y suma exacta de bytes antes de servir; corrupción sigue fallando de forma segura.
+- Tests: paridad exacta de bytes stream-vs-lectura original, lectura regular sin cambios, detección de truncamiento, almacenamiento inalterado. Los originales y derivados válidos no se regeneran ni modifican.
+- Pendiente: comparar 502/errores HTTP y uso CPU real después de CI, deploy y auditoría completa. Los errores ajenos a procesamiento D1 (QUIC/Workers 1102/conectividad) pueden persistir.
+
 ## Finanzas · recuperación del workspace bancario · 2026-10-08
 
 - Auditoría #237 no detectó enlace al Sheet financiero ni pestañas de cuentas, aunque ambos componentes siguen definidos en el frontend.

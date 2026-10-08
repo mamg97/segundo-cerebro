@@ -101,6 +101,34 @@ test("D1 object media store chunks, reads and deletes a multi-megabyte asset", a
 
 
 
+test("D1 streams multi-chunk image reads without rewriting the stored asset", async () => {
+  const db = new FakeD1();
+  const store = createObjectsD1MediaStore({ DB: db });
+  const key = "objects/obj-safe-example-001/processed/12345678-abcd";
+  const input = new Uint8Array(OBJECTS_D1_MEDIA_LIMITS.chunkBytes * 2 + 31);
+  for (let i = 0; i < input.length; i += 1) input[i] = i % 251;
+  await store.put(key, input, { httpMetadata: { contentType: "image/jpeg" } });
+
+  const streamed = await store.get(key, { stream: true });
+  assert.ok(streamed.body instanceof ReadableStream);
+  const served = new Uint8Array(await new Response(streamed.body).arrayBuffer());
+  assert.deepEqual(served, input);
+
+  const original = await store.get(key);
+  assert.deepEqual(new Uint8Array(original.body), input);
+  assert.equal(db.assets.get(key).chunk_count, 3);
+  assert.equal(db.chunks.get(key).length, 3);
+});
+
+test("D1 detects corrupted streamed chunk lengths before delivering any bytes", async () => {
+  const db = new FakeD1();
+  const store = createObjectsD1MediaStore({ DB: db });
+  const key = "objects/obj-safe-example-001/processed/12345678-abcd";
+  await store.put(key, new Uint8Array(OBJECTS_D1_MEDIA_LIMITS.chunkBytes + 7));
+  db.chunks.get(key)[1].data = new ArrayBuffer(3);
+  await assert.rejects(store.get(key, { stream: true }), /OBJECTS_MEDIA_CORRUPT/);
+});
+
 test("D1 object media store returns a single chunk without rebuilding the asset", async () => {
   const db=new FakeD1();
   const store=createObjectsD1MediaStore({DB:db});
