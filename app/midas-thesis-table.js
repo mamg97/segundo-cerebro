@@ -16,6 +16,30 @@ export function midasCagrNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+// MIDAS v1.2: the statistical valuation is a labeled sensitivity, not a published thesis.
+export function midasDisplayValuation(cagr = {}, tracking = {}) {
+  const stats = cagr.statistical;
+  const provisional = Boolean(
+    stats && String(stats.status || "").toUpperCase().includes("PROVISIONAL") &&
+    [stats.bear, stats.base, stats.bull].every((v) => midasCagrNumber(v) !== null) &&
+    [stats.bearPrice5y, stats.basePrice5y, stats.bullPrice5y, stats.priceFor15].every((v) =>
+      typeof v === "number" && Number.isFinite(v) && v >= 0
+    )
+  );
+  return {
+    provisional,
+    bear: provisional ? stats.bear : cagr.bear,
+    base: provisional ? stats.base : cagr.base,
+    bull: provisional ? stats.bull : cagr.bull,
+    bearPrice5y: provisional ? stats.bearPrice5y : tracking.bearPrice5y,
+    basePrice5y: provisional ? stats.basePrice5y : tracking.basePrice5y,
+    bullPrice5y: provisional ? stats.bullPrice5y : tracking.bullPrice5y,
+    priceFor15: provisional ? stats.priceFor15 : tracking.priceFor15,
+    multiple: provisional ? stats.baseMultiple : null,
+    status: provisional ? stats.status : cagr.status
+  };
+}
+
 export function compareMidasSortValues(a, b, { numeric = false, direction = "asc" } = {}) {
   const av = a === undefined || a === null ? "" : String(a).trim();
   const bv = b === undefined || b === null ? "" : String(b).trim();
