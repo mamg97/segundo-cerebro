@@ -1,3 +1,10 @@
+## Cierre parcial de producción · auditoría completa #241 · 2026-10-08
+
+- Despliegues privados #402, #403, #404 y sus pruebas CI respectivos confirmados exitosos. Auditoría completa #239 registró siete fallos; la #241 (commit tras streaming D1) terminó con cinco de 1055 checks, sin 5xx de Health/Objetos y con Finanzas, Gym, barras nutricionales, enlaces y mobile-history correctos. Un pase sin 502 no demuestra ausencia permanente de fallos intermitentes.
+- Los fallos de #241 se reparten en dos cadencias de MIDAS (fuera del ámbito de Organizador), una relación incompleta de food_id a Pantry (requiere decisión canónica), y dos checks de carga asíncrona de Armario/Looks en mobile-wide 440px; ese mismo Armario pasó en desktop, tablet y mobile 390px.
+- Se refuerza el auditor mobile-wide para esperar la rejilla realmente renderizada (no una espera fija) y permitir **un único reintento read-only** si /api/objects responde bien. No omitir pruebas: si el grid o la pestaña Looks no aparecen tras ese intento se conserva FAIL, y siguen obligatorios el número de columnas, las imágenes y el historial.
+- Verificar CI, despliegue y nueva auditoría completa tras esta última modificación. No regenerar originales ni alterar datos canónicos.
+
 ## Integridad referencial privada · muestras read-only · 2026-10-08
 
 - Comprobación limitada a las fuentes privadas existentes, sin añadir ni corregir ninguna fila. El auditor de producción por sí solo no demuestra integridad de fuentes.
