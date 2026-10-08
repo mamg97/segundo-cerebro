@@ -60,6 +60,25 @@ test("renders current activity separately from cumulative return", () => {
   assert.match(detail, /Señal sin liquidar/);
 });
 
+test("labels live Weekly ML as daily paper rather than delayed settlement", () => {
+  const dashboard = { tracks: [
+    { id: "weekly_ml_ensemble_2026", label: "ML semanal · ensemble",
+      group: "weekly_ml_demo", status: "demo_con_diario", daily_mode: true,
+      return_pct: 0.25, last_session: "2026-10-12", activity_state: "active",
+      activity_label: "2 posiciones abiertas", activity_tickers: ["AAA", "BBB"],
+      equity_history: [{date: "2026-10-09", nav: 100000},
+                       {date: "2026-10-12", nav: 100250}]}
+  ] };
+  const html = renderMidasVisualLab(dashboard, null);
+  assert.match(html, /valoración diaria al cierre/);
+  assert.doesNotMatch(html, /Esta variante no registra compras ni rentabilidad diaria/);
+  assert.match(html, /2 posiciones abiertas/);
+  assert.match(html, /\+0,25 %/);
+  const detail = renderMidasAlgorithmDetail(dashboard, null, "weekly_ml_ensemble_2026");
+  assert.match(detail, /Modo paper diario prospectivo/);
+  assert.doesNotMatch(detail, /esta versión no registra entradas efectivas/);
+});
+
 test("renders one compact clickable row per algorithm without chart column", () => {
   const dashboard = { tracks: [
     { id: "a", label: "Algoritmo A", group: "paper_nuevo", status: "demo_con_diario",

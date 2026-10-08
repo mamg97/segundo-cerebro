@@ -33,8 +33,13 @@ export function renderMidasVisualLab(dashboard, lab = null) {
     MIDAS_LAB_GROUPS.map(([group, title]) => {
       const groupRows = active.filter((row) => row.group === group);
       if (!groupRows.length) return "";
+      const hasLiveWeeklyDaily = group === "weekly_ml_demo" && groupRows.some((row) => row.daily_mode === true);
       return '<div class="midas-lab-group"><div class="midas-lab-group-title"><strong>' + escapeHtml(title) + '</strong><span>' + groupRows.length + ' algoritmos</span></div>' +
-        (group === "weekly_ml_demo" ? '<p class="midas-lab-group-note">Señales congeladas el viernes; liquidación simulada al cierre de la semana siguiente. Esta variante no registra compras ni rentabilidad diaria antes de liquidar.</p>' : '') +
+        (group === "weekly_ml_demo" ? '<p class="midas-lab-group-note">' +
+          (hasLiveWeeklyDaily
+            ? 'Señales los viernes; compra paper en la primera apertura siguiente, valoración diaria al cierre y liquidación semanal. No se reconstruyen compras de semanas anteriores.'
+            : 'Señales congeladas el viernes; liquidación simulada al cierre de la semana siguiente. Esta variante no registra compras ni rentabilidad diaria antes de liquidar.') +
+          '</p>' : '') +
         '<div class="midas-lab-table-wrap"><table class="midas-lab-table">' +
           '<thead><tr>' +
             '<th>Algoritmo</th><th>Actividad actual</th><th>Activos</th><th>Rent. acum.</th>' +
@@ -92,7 +97,11 @@ export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
     '<section class="midas-algorithm-chart-card"><div><strong>Evolución</strong><small>Patrimonio ficticio · datos del diario</small></div>' +
       '<div class="midas-algorithm-chart">' + renderSparkline(meta.history, item.label, meta.returnPct) + '</div></section>' +
     (item.group === "weekly_ml_demo" && !item.bootstrap
-      ? '<p class="midas-algorithm-note is-warning">Liquidación semanal diferida: esta versión no registra entradas efectivas ni NAV diarios de lunes a jueves. Las señales no son posiciones abiertas.</p>' : '') +
+      ? '<p class="midas-algorithm-note is-warning">' +
+        (item.daily_mode
+          ? 'Modo paper diario prospectivo: compras simuladas tras señal semanal, NAV a cada cierre; no es operativa real ni reconstrucción retroactiva.'
+          : 'Liquidación semanal diferida: esta versión no registra entradas efectivas ni NAV diarios de lunes a jueves. Las señales no son posiciones abiertas.') +
+        '</p>' : '') +
     (note ? '<p class="midas-algorithm-note">' + escapeHtml(note) + '</p>' : '') +
     (item.bootstrap ? '<p class="midas-algorithm-note is-warning">Bootstrap técnico retrospectivo: no cuenta como resultado forward.</p>' : '') +
   '</article>';
