@@ -1,3 +1,10 @@
+## Auditor web · evitar cancelación de auditorías completas · 2026-10-08
+
+- Auditorías #238, #240 y #242 quedaron canceladas por el grupo de concurrencia de GitHub Actions cuando otra auditoría (horaria o postdeploy) fue puesta en cola. `cancel-in-progress: true` impedía obtener evidencia completa incluso con navegador correctamente iniciado.
+- Corrección segura: el grupo de concurrencia se mantiene único, pero pasa a `cancel-in-progress: false`, encolando la ejecución nueva en lugar de interrumpir la iniciada. La comprobación backup de cadencia sigue siendo ligera cuando existe una primaria reciente; no se crean workflows ni servicios.
+- Test automatizado evita volver a activar cancelación de runs completos y preserva horarios primary/backup y step `Navigate and audit production`.
+- En términos de integridad y coste, un paso `Navigate and audit production` realmente completado (success o failure con checks) es superior a un slot cancelado/no ejecutado. Registrar explícitamente que una auditoría cancelada no cuenta como validación. Evitar relanzamientos manuales en bucle.
+
 ## Cierre parcial de producción · auditoría completa #241 · 2026-10-08
 
 - Despliegues privados #402, #403, #404 y sus pruebas CI respectivos confirmados exitosos. Auditoría completa #239 registró siete fallos; la #241 (commit tras streaming D1) terminó con cinco de 1055 checks, sin 5xx de Health/Objetos y con Finanzas, Gym, barras nutricionales, enlaces y mobile-history correctos. Un pase sin 502 no demuestra ausencia permanente de fallos intermitentes.
