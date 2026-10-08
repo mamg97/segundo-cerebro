@@ -18043,6 +18043,71 @@ html[data-theme="dark"] .wealth-daily-kpis article {
 .midas-research-counts small { margin-top: 2px; }
 .midas-research-rule { margin: 0; }
 
+
+.midas-research-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 10px;
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+.midas-research-toolbar label { font-weight: 750; color: var(--ink); }
+.midas-research-toolbar input {
+  min-width: 160px;
+  max-width: 260px;
+  flex: 1 1 180px;
+  padding: 7px 9px;
+  font: inherit;
+  color: var(--ink);
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.midas-research-toolbar input:focus-visible,
+.midas-research-sort:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.midas-research-toolbar small { color: var(--ink-soft); }
+.midas-research-toolbar [data-midas-visible-count] { font-weight: 750; }
+.midas-research-no-matches { margin: 0; color: var(--ink-soft); font-size: 11px; }
+
+.midas-research-sort {
+  width: 100%;
+  display: flex;
+  gap: 3px;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-transform: inherit;
+}
+
+.midas-research-sort:hover { color: var(--blue); }
+.midas-research-sort [data-midas-sort-indicator] {
+  flex: 0 0 auto;
+  color: var(--blue);
+  font-size: 10px;
+  opacity: .75;
+}
+.midas-research-table th[aria-sort="descending"] .midas-research-sort,
+.midas-research-table th[aria-sort="ascending"] .midas-research-sort {
+  color: var(--ink);
+  font-weight: 900;
+}
+
 .midas-research-table-scroll {
   width: 100%;
   overflow-x: auto;
