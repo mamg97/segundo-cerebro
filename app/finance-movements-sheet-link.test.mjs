@@ -26,3 +26,6 @@ assert.match(app, /fetchStateScope\("finance", 12000\)/);
 assert.match(app, /hasAccountRows && !hasLiquidityRows && !hasBudgetRows/);
 assert.match(app, /categories\.length \|\| liquidityAccounts\.length \|\| accountTransactions\.length/);
 assert.match(app, /no se muestran importes supuestos/);
+
+assert.match(app, /privateModeKind === "remote" && !financeBudgetRefreshInFlight/);
+assert.doesNotMatch(app, /privateModeKind === "private-remote"/);
