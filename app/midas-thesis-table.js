@@ -48,6 +48,22 @@ export function midasDisplayValuation(cagr = {}, tracking = {}) {
   };
 }
 
+// The source Sheet, not the ticker symbol, determines the valuation method.
+// Never imply that a statistical reference passed the fundamental publication gate.
+export function midasThesisMethodLabel(cagr = {}, thesis = {}, display = {}) {
+  const state = String(cagr.status || thesis.status || "").toUpperCase();
+  if (!state) return "";
+  if (/IA_REGIME|R.GIMEN IA|v1\.2-IA/i.test(state)) return "v1.2 · régimen IA · compra en revisión";
+  if (/OPERATIVE_BASE_ACTIVE|FCF OPERATIVO|OPERATIVE_FCF/i.test(state)) return "v1.2 · FCF operativo · múltiplo en revisión";
+  if (/V6.*(REFERENCIA|ESTAD.STICA)|ESTAD.STICA.*V6/i.test(state) || display.v6Reference) {
+    return "V6 · media histórica · economía pendiente";
+  }
+  if (/EV\/FCF IDC.*[Μμ]±[Σσ]|V1\.2 ESTAD.STICA|V1\.2.*MEDIA HIST.RICA/i.test(state)) {
+    return "v1.2 · media histórica · validación pendiente";
+  }
+  return "";
+}
+
 export function compareMidasSortValues(a, b, { numeric = false, direction = "asc" } = {}) {
   const av = a === undefined || a === null ? "" : String(a).trim();
   const bv = b === undefined || b === null ? "" : String(b).trim();
