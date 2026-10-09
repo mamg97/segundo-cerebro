@@ -1,3 +1,11 @@
+## MIDAS: dos libros Weekly ML, sin sustituir resultados (09/10/2026)
+
+- Origen: `mamg97/midas-paper-lab`, PR #41, `strategy_comparison/report.py`. A partir de ahora hay nueve pistas `weekly_ml_demo` exclusivamente para el nuevo diario `weekly_ml_daily_state/ledger.json`, y nueve archivos `weekly_ml_legacy` con ID `weekly_legacy_weekly_ml_*`, exclusivamente del ledger de liquidación diferida `weekly_ml_state/ledger.json`.
+- El motor diario prospectivo se presenta en Competición, incluso antes de recibir la primera señal: estado sin diario, NAV/retorno sin rellenar, sin bootstrap retrospectivo. Después del viernes 09/10, su primera compra paper es a la siguiente apertura bursátil y el patrimonio se valora al cierre; no reconstruye operaciones del 05/10.
+- Los nueve archivos semanales están en Catálogo / histórico, sin competir ni sumarse a los retornos diarios. El rendimiento histórico semanal se presenta solo cuando el ledger contiene al menos dos observaciones de NAV semanal; la columna Última semana expresa el cambio entre esos puntos. Se conserva el ledger semanal antiguo tal como fue.
+- En el Worker `private-cloudflare/src/midas.js` se acepta el nuevo grupo `weekly_ml_legacy` sin alterar la API de privacidad del genético; la UI de Competición excluye esas filas archivadas. Los tests del Worker/frontend y el auditor de producción comprueban el contrato.
+- Despliegue de la UI: PR #348 en `mamg97/segundo-cerebro`. Dependencia obligatoria: fusionar PR #41 y generar primero el nuevo `strategy_state/dashboard.json` por el publicador canónico; no insertar NAV manuales ni crear ejecuciones de bróker. GitHub Actions publica el informe de forma natural durante los próximos ciclos tras el cierre, y el auditor verifica el resultado. Sin cambios en otros gestores.
+
 ## Auditoría #262 tras PR #343 · diagnóstico Finance DOM (2026-10-09)
 
 - Despliegue privado #416 y CI #449 terminaron correctos; auditoría completa #262 corrió en producción y terminó **1.069 checks / 7 fallos**, no verde.
