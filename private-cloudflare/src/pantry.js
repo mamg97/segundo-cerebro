@@ -294,6 +294,52 @@ export function buildPayload(valueRanges = []) {
     };
   }).filter((item) => item.productId || item.name);
 
+  // Receipts are a read-only projection of canonical Tickets + Precios.
+  // Do not infer stock or financial payment from a purchased item.
+  const recentTickets = ticketRows
+    .map((row) => ({
+      id: String(row.ticket || "").trim(),
+      date: dateOrNull(row.fecha),
+      store: row.tienda || null,
+      amount: numberOrNull(row.importe_total),
+      expectedLines: numberOrNull(row.n_lineas),
+      fileName: row.archivo_ticket || null
+    }))
+    .filter((item) => item.id)
+    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || a.id.localeCompare(b.id))
+    .slice(-10)
+    .reverse()
+    .map((ticket) => ({
+      ...ticket,
+      priceObservations: prices
+        .filter((price) => String(price.ticketId || "").trim() === ticket.id)
+        .map((price) => ({
+          productId: price.productId,
+          name: price.name || productsById.get(price.productId)?.name || "Producto",
+          price: price.price,
+          priceBase: price.priceBase,
+          source: price.source,
+          linkedProduct: productsById.has(price.productId)
+        }))
+    }));
+  const latestTicket = recentTickets[0] || null;
+  const latestTicketCount = latestTicket
+    ? ticketRows.filter((row) => String(row.ticket || "").trim() === latestTicket.id).length
+    : 0;
+  const latestTicketIntegrity = latestTicket
+    ? {
+        hasUniqueHeader: latestTicketCount === 1,
+        hasValidTotal: latestTicket.amount !== null,
+        expectedLineCount: latestTicket.expectedLines,
+        priceObservationCount: latestTicket.priceObservations.length,
+        allPricesLinked: latestTicket.priceObservations.every((row) => row.linkedProduct),
+        // TicketLineas is audited separately in the canonical source; these
+        // counts alone do not establish complete receipt-line reconciliation.
+        priceCoverageComplete: latestTicket.expectedLines !== null &&
+          latestTicket.expectedLines === latestTicket.priceObservations.length
+      }
+    : null;
+
   // Only explicitly confirmed COMPRAR rows belong to the shopping list and basket.
   // REVISAR is an internal pantry suggestion (low stock, uncertain need, etc.) and
   // must never inflate the shopping count or estimated purchase total.
@@ -381,6 +427,8 @@ export function buildPayload(valueRanges = []) {
       count: ticketRows.length,
       latestDate: ticketRows.map((row) => dateOrNull(row.fecha)).filter(Boolean).sort().at(-1) || null
     },
+    recentTickets,
+    latestTicketIntegrity,
     source: {
       kind: "private-sheet",
       name: "SEGUNDO CEREBRO - DESPENSA",
