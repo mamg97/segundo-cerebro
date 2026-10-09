@@ -247,7 +247,8 @@ async function probeVisualImage(src) {
 }
 
 async function fetchMidasWorkflowRuns() {
-  const endpoint = "https://api.github.com/repos/mamg97/midas-paper-lab/actions/runs?per_page=100";
+  // Only scheduled market runs count. PR/push CI can evict weekly runs from a 100-item page.
+  const endpoint = "https://api.github.com/repos/mamg97/midas-paper-lab/actions/runs?per_page=100&event=schedule";
   const tokenHeader = process.env.GH_TOKEN ? { Authorization: "Bearer " + process.env.GH_TOKEN } : {};
   let lastError = "unknown";
   for (let attempt = 1; attempt <= 3; attempt += 1) {
