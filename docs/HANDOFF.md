@@ -1,3 +1,12 @@
+## MIDAS · competición unificada y ordenable · 2026-10-09
+
+- Solicitud: sustituir siete tablas por bloques por **una única tabla de algoritmos** con columna `Bloque`, ordenación asc/desc por cada cabecera al estilo de Seguimiento de tesis y diseño compacto sin scroll horizontal innecesario.
+- Implementación frontend `app/midas-lab.js`: ocho columnas (Algoritmo, Bloque, Actividad actual, Activos, Rent. acum., Sesiones, Último cierre, DD). Arranque por rentabilidad acumulada descendente; valores desconocidos/pendientes quedan al final. Se reutiliza el comparador común de tesis y se conservan todas las filas y sus fichas internas, señales pendientes, etiquetas de bootstrap y curvas completas.
+- Responsive: tabla de escritorio con ancho flexible; en móvil las mismas filas se adaptan a tarjetas de dos columnas y se dispone de selector de columna/sentido sin scroll horizontal forzado. Sin reducir la tipografía de los datos.
+- Auditoría de producción ampliada (read-only): exige una sola tabla, ocho cabeceras, ordenación real de retorno y bloques, ausencia de overflow escritorio y apertura del detalle. Las pruebas unitarias cubren valores negativos, pendientes, empates y fechas.
+- No se modifica ningún dato, algoritmo, ledger, cálculo, endpoint ni ejecución de MIDAS, ni se introduce infraestructura de pago.
+- Verificar CI, despliegue y auditoría postdeploy antes de dar por cerrado el trabajo. Sin mezclar con la supervisión de cadencias del auditor especializado MIDAS.
+
 ## Auditor web · evitar cancelación de auditorías completas · 2026-10-08
 
 - Auditorías #238, #240 y #242 quedaron canceladas por el grupo de concurrencia de GitHub Actions cuando otra auditoría (horaria o postdeploy) fue puesta en cola. `cancel-in-progress: true` impedía obtener evidencia completa incluso con navegador correctamente iniciado.
