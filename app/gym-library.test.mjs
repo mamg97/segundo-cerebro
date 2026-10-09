@@ -202,7 +202,7 @@ test("Gym library is responsive and uses the v0.42.14 locked-frame anatomical GI
 
 test("Gym saves only exercise rows explicitly marked as performed, never all prefilled targets", async () => {
   assert.match(app, /class="gym-input-done" type="checkbox"/);
-  assert.match(css, /\\.gym-exercise-row \\.gym-exercise-completed/);
+  assert.ok(css.includes(".gym-exercise-row .gym-exercise-completed"));
 
   const begin = app.indexOf("async function saveGymSessionFromForm(");
   const end = app.indexOf("function renderGymProgress(", begin);
