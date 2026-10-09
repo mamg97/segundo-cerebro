@@ -1,3 +1,13 @@
+## Integridad · Facturas y tickets · 2026-10-09
+
+- Revisión read-only de `SEGUNDO CEREBRO - DESPENSA`: el ticket de Mercadona del día está una sola vez en `Tickets`; tiene exactamente cuatro `TicketLineas` distintas que suman el total en céntimos y cuatro observaciones `Precios` enlazadas por `ticket_id` y `producto_id`. Los tres IDs históricos se reutilizan y el único producto nuevo carece de EAN, nutrición o stock inventados.
+- `SEGUNDO CEREBRO - ESTADO FINANCIERO`: la categoría de alimentación registra el gasto ejecutado una vez y una conciliación bancaria pendiente. No hay movimiento bancario con ese identificador ni transferencia artificial del mismo importe y fecha en la muestra revisada. El futuro cargo de tarjeta NO debe incrementar una segunda vez el gastado al conciliarse.
+- `PEDIDOS LITOS / Gastos`: la factura de transporte está una sola vez como gasto general de pago no verificado y sin asignación artificial a pedido. Conserva referencia al correo y adjunto original; las celdas de documento/carpeta Drive están vacías, pendientes de enlace tras guardar/verificar el PDF privado. Remitir esta tarea al auditor LITOS, sin asumir que se ha guardado en Drive.
+- Limitación detectada: `/api/pantry` leía `Tickets` y `Precios` pero la UI solo presentaba inventario y lista de compra; los productos sin stock no resultaban visibles en esas tarjetas. Se añade proyección ligera `recentTickets` sin consultas adicionales ni datos públicos, pestaña privada Tickets y navegación a ficha de producto canónico con stock desconocido. No se crean duplicados.
+- El auditor web verifica que el último ticket y sus precios coinciden con la API y que la cabecera y los precios vinculados no están incompletos. Son controles de fuente proyectada: la conciliación completa con `TicketLineas` sigue siendo responsabilidad del gestor documental, y las observaciones de precio unitario no sustituyen el importe de línea.
+- La verificación automática vigente NO lee correo original, PDF, cargo bancario ni `TicketLineas`; no declarar integridad total sin esas verificaciones externas. La última lectura manual sí contrastó las cuatro líneas de la compra de hoy.
+- No alterar `ASUNTOS v3.xlsx`, correo, PDFs ni datos canónicos; privacidad estricta, 0 € adicionales. Pendiente CI, deploy y auditoría posterior del último commit.
+
 ## Auditoría #262 tras PR #343 · diagnóstico Finance DOM (2026-10-09)
 
 - Despliegue privado #416 y CI #449 terminaron correctos; auditoría completa #262 corrió en producción y terminó **1.069 checks / 7 fallos**, no verde.
