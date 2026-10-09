@@ -98,6 +98,7 @@ function normalizeDashboard(data) {
       risk_observations: Number.isInteger(row.risk_observations) && row.risk_observations >= 0
         ? Math.min(row.risk_observations, 100000) : 0,
       equity_history: normalizeEquityHistory(row.equity_history),
+      daily_mode: row.daily_mode === true,
       activity_state: ["active", "active_pending", "pending", "cash", "waiting", "unknown"].includes(row.activity_state)
         ? row.activity_state : "unknown",
       activity_label: typeof row.activity_label === "string" ? row.activity_label.slice(0, 180) : "",
@@ -137,6 +138,7 @@ export async function fetchMidasDashboard(fetcher = fetch, now = Date.now()) {
 }
 
 const RUNTIME_HEALTH_FILES = [
+  "weekly_ml_daily",
   "paper_us",
   "tfm_es",
   "capital_cycle",

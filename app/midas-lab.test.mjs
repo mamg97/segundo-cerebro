@@ -20,7 +20,7 @@ test("renders bootstrap rows when weekly forward has not started", () => {
 
 test("forward weekly rows replace bootstrap duplicates", () => {
   const dashboard = { tracks: [
-    { id: "weekly_ml_ensemble_2026", label: "ML semanal · ensemble", group: "weekly_ml_demo", status: "demo_con_diario",
+    { id: "weekly_ml_ensemble_2026", label: "ML semanal · ensemble", group: "weekly_ml_demo", status: "demo_con_diario", daily_mode: true,
       return_pct: 1.2, last_session: "2026-10-09", equity_history: [
         { date: "2026-10-02", nav: 100000 }, { date: "2026-10-09", nav: 101200 }
       ] }
@@ -134,6 +134,37 @@ test("renders Buy The Dip corpus as its own live algorithm group", () => {
 
 
 
+test("legacy genetic is catalog-only, private forward never masquerades as cash", () => {
+  const dashboard = { tracks: [
+    { id: "genetic_sp500_legacy", group: "diario_heredado", label: "Genético histórico",
+      status: "diario_heredado_observado", return_pct: 4.38, last_session: "2026-09-25",
+      equity_history: [{ date: "2026-09-25", nav: 104380 }] },
+    { id: "genetic_sp500_forward", group: "diario_heredado", label: "Genético corregido",
+      status: "demo_con_diario", return_pct: 1.01, last_session: "2026-10-07",
+      activity_tickers: [], equity_history: [{ date: "2026-10-07", nav: 101010 }] }
+  ] };
+  const html = renderMidasVisualLab(dashboard);
+  assert.doesNotMatch(html, /Genético histórico/);
+  assert.match(html, /Genético corregido/);
+  assert.match(html, /Actividad privada · detalle no disponible/);
+  assert.doesNotMatch(html, /Sin compras · en efectivo/);
+  const detail = renderMidasAlgorithmDetail(dashboard, null, "genetic_sp500_forward");
+  assert.match(detail, /actividad no enlazada/);
+  assert.match(detail, /Actividad privada/);
+});
+
+test("old weekly signals never display unverified return as realized P&L", () => {
+  const dashboard = { tracks: [{
+    id: "weekly_old", group: "weekly_ml_demo", label: "ML semanal legacy",
+    status: "demo_con_diario", return_pct: 0, last_session: "2026-10-02",
+    activity_tickers: [], equity_history: [{ date: "2026-10-02", nav: 100000 }]
+  }] };
+  const html = renderMidasVisualLab(dashboard);
+  assert.match(html, /Sin rentabilidad diaria validada/);
+  assert.match(html, /data-midas-lab-sort-return=""/);
+  assert.match(html, /clasificación acumulada provisional/);
+});
+
 test("competition uses ONE table, with block as an eighth sortable column", () => {
   const dashboard = { tracks: [
     { id: "one", label: "Estrategia A", group: "weekly_ml_demo", status: "programada_sin_diario",
@@ -194,6 +225,17 @@ test("algorithm detail restores the full metrics and equity evolution", () => {
   assert.match(html, /data-midas-algorithm-back/);
 });
 
+
+test("the health card never equates a private genetic snapshot with a passed workflow", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const fn = app.split("function renderMidasExecutionHealth(health, dashboard) {")[1]?.split("function renderMidasCatalog(")[0];
+  assert.ok(fn);
+  assert.match(fn, /Genético S&P 500 prospectivo", state: "unverified"/);
+  assert.match(fn, /la última ejecución GitHub no se valida aquí/);
+  assert.match(fn, /Cobertura de auditoría parcial/);
+  assert.match(fn, /Weekly ML diario/);
+  assert.doesNotMatch(fn, /state: genetic\?\.status === "demo_con_diario"/);
+});
 
 test("competition sorting initializes once per MIDAS render and mobile is responsive", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
