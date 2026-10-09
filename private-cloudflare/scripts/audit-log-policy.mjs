@@ -81,3 +81,17 @@ export function safeAuditNetworkFailureCode(entry) {
         : /net::ERR_FAILED/.test(raw) ? "ERR_FAILED" : "NETWORK_OTHER";
   return family+"_"+reason;
 }
+
+
+// Finance DOM diagnostics consume only booleans: never log a bank account identifier.
+export function safeAuditFinanceStructureCode(flags) {
+  if (!flags || typeof flags !== "object") return "FINANCE_DOM_UNKNOWN";
+  if (!flags.dialogOpen) return "FINANCE_DIALOG_CLOSED";
+  if (!flags.financeDialog) return "FINANCE_DIALOG_REPLACED";
+  if (!flags.workspacePresent) return "FINANCE_WORKSPACE_REMOVED";
+  if (flags.tabsShrunk) return "FINANCE_TAB_CATALOG_SHRUNK";
+  if (!flags.tabPresent) return "FINANCE_TAB_NOT_FOUND";
+  if (!flags.tabSelected) return "FINANCE_TAB_NOT_SELECTED";
+  if (!flags.panelVisible) return "FINANCE_PANEL_HIDDEN";
+  return "FINANCE_DOM_STABLE";
+}
