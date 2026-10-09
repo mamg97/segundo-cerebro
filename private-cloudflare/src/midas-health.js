@@ -3,6 +3,7 @@ const SPECS = [
   { name: "MIDAS TFM shadow forecasts", weekdays: [1,2,3,4,5], hour: 19, minute: 23, graceHours: 10, activeFrom: "2026-09-28T00:00:00Z" },
   { name: "MIDAS capital cycle paper", weekdays: [1,2,3,4,5], hour: 23, minute: 57, graceHours: 6, activeFrom: "2026-09-30T00:00:00Z" },
   { name: "MIDAS Buy The Dip paper", weekdays: [1,2,3,4,5], hour: 23, minute: 27, graceHours: 6, activeFrom: "2026-10-01T00:00:00Z" },
+  { name: "MIDAS Weekly ML daily paper", weekdays: [1,2,3,4,5], hour: 22, minute: 17, graceHours: 8, activeFrom: "2026-10-09T00:00:00Z" },
   { name: "MIDAS weekly ML paper", weekdays: [5], hour: 23, minute: 17, graceHours: 8, activeFrom: "2026-10-02T00:00:00Z" },
   { name: "MIDAS TFG corrected paper", weekdays: [5], hour: 23, minute: 47, graceHours: 8, activeFrom: "2026-10-02T00:00:00Z" }
 ];
