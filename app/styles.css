@@ -26157,3 +26157,29 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .midas-lab-mobile-sort select { flex: 1; min-width: 0; }
   .midas-lab-mobile-sort button { min-width: 40px; cursor: pointer; }
 }
+
+/* Gym: make completed exercises explicit; target series/reps remain references until confirmed. */
+.gym-exercise-row .gym-exercise-completed {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-top: 8px;
+  cursor: pointer;
+}
+.gym-exercise-row .gym-exercise-completed input.gym-input-done {
+  flex: 0 0 17px;
+  width: 17px;
+  min-width: 17px;
+  height: 17px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--mint);
+}
+.gym-exercise-row .gym-exercise-completed > span {
+  display: inline;
+  margin: 0;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+}
