@@ -74,10 +74,9 @@ export function renderMidasVisualLab(dashboard, lab = null) {
 }
 
 export function compareMidasLabRows(a, b, key, direction = "asc") {
-  const numeric = new Set(["return", "sessions", "dd"]).has(key);
-  const date = key === "date";
+  const numeric = ["return", "sessions", "dd"].includes(key);
   const get = (item) => item?.[key] ?? "";
-  return compareMidasSortValues(get(a), get(b), { numeric, direction: date ? direction : direction }) ||
+  return compareMidasSortValues(get(a), get(b), { numeric, direction }) ||
     compareMidasSortValues(a?.algorithm, b?.algorithm);
 }
 
@@ -95,16 +94,8 @@ export function bindMidasLabSorting(root) {
   let direction = "desc";
 
   function sort(key, nextDirection) {
-    const value = (row) => ({
-      algorithm: row.getAttribute("data-midas-lab-sort-algorithm"),
-      group: row.getAttribute("data-midas-lab-sort-group"),
-      activity: row.getAttribute("data-midas-lab-sort-activity"),
-      assets: row.getAttribute("data-midas-lab-sort-assets"),
-      return: row.getAttribute("data-midas-lab-sort-return"),
-      sessions: row.getAttribute("data-midas-lab-sort-sessions"),
-      date: row.getAttribute("data-midas-lab-sort-date"),
-      dd: row.getAttribute("data-midas-lab-sort-dd")
-    });
+    const value = (row) => Object.fromEntries(MIDAS_LAB_COLUMNS.map(([column]) =>
+      [column, row.getAttribute("data-midas-lab-sort-" + column)]));
     rows.sort((a, b) => compareMidasLabRows(value(a), value(b), key, nextDirection));
     const fragment = document.createDocumentFragment();
     rows.forEach((row) => fragment.appendChild(row));
