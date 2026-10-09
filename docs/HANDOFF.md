@@ -1,3 +1,11 @@
+## Finanzas · persistencia visual de pestañas por cuenta · 2026-10-09
+
+- Auditoría completa #257 después de contener el riesgo de logs: 1.043 controles, 4 fallos con códigos no identificativos; dos pertenecen a las pestañas de Finanzas, sin volcar datos reales a GitHub.
+- Diagnóstico técnico: `renderAccountTransactionsWorkspace` elige siempre la primera cuenta con histórico al reconstruir el diálogo; `initializeAccountTransactionTabs` toma esa selección inicial y puede revertir la pestaña elegida durante un refresco asíncrono. No es una pérdida ni alteración de `MovimientosCuenta`.
+- Mitigación reversible: guardar en memoria de la interfaz únicamente el ID de pestaña seleccionada y restaurarlo después del rerender si aún existe. No se modifican importes, movimientos, fuentes o navegador persistente. Si esa cuenta ya no está disponible, vuelve a la selección inicial válida.
+- Test de regresión: verifica selección actualizada en el click, selección preservada después de reconstruir DOM, y fallback seguro. Verificar en navegador de producción tras CI/deploy, sin desactivar auditoría ni inventar datos.
+- Continúan separados: posible 502 transitorio en Health/Objects y referencias canónicas Nutri/Despensa, cuyo arreglo no corresponde a este PR.
+
 ## Auditoría de producción · privacidad de logs y renovación OIDC · 2026-10-09
 
 - **Privacidad P1:** el auditor anterior escribía nombres y detalles derivados de DOM/API privados en los logs de GitHub Actions. Auditoría #256 mostró al menos una referencia potencialmente identificativa en fallos de imágenes; no reproducirla en documentación ni issues. PR #340 cambió el logging a códigos correlativos y categorías de una lista cerrada, preservando todas las comprobaciones; CI #446 y despliegue privado #413 correctos. Los logs anteriores a #257 no se borran por esta modificación y requieren limpieza separada de run logs mediante GitHub Actions API con permiso `actions:write` o por UI, sin eliminar datos canónicos. La conexión Github de esta conversación no expone la acción DELETE de logs; evitar reclamar limpieza sin evidencia.
