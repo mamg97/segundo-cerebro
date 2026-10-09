@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { renderMidasAlgorithmDetail, renderMidasVisualLab } from "./midas-lab.js";
+import { renderMidasAlgorithmDetail, renderMidasVisualLab, compareMidasLabRows } from "./midas-lab.js";
 
 test("renders bootstrap rows when weekly forward has not started", () => {
   const dashboard = { tracks: [
@@ -44,9 +44,9 @@ test("renders current activity separately from cumulative return", () => {
   ] };
   const html = renderMidasVisualLab(dashboard, null);
   assert.match(html, /<table class="midas-lab-table">/);
-  assert.match(html, /<th>Algoritmo<\/th>/);
-  assert.match(html, /<th>Actividad actual<\/th>/);
-  assert.match(html, /<th>Rent\. acum\.<\/th>/);
+  assert.match(html, /data-midas-lab-sort-key="algorithm"/);
+  assert.match(html, /data-midas-lab-sort-key="activity"/);
+  assert.match(html, /data-midas-lab-sort-key="return"/);
   assert.match(html, /3 señales congeladas · liquidación semanal pendiente/);
   assert.match(html, /Señales congeladas el viernes/);
   assert.match(html, /Señal sin liquidar/);
@@ -54,7 +54,8 @@ test("renders current activity separately from cumulative return", () => {
   assert.match(html, /AMD/);
   assert.match(html, /INTC/);
   assert.match(html, /Rent\. acum\./);
-  assert.match(html, /<td class="midas-lab-col-return"><strong class="midas-lab-return">—<\/strong><\/td>/);
+  assert.match(html, /data-midas-lab-sort-return=""/);
+  assert.match(html, /<strong class="midas-lab-return">—<\/strong>/);
   const detail = renderMidasAlgorithmDetail(dashboard, null, "weekly_ml_ensemble_2026");
   assert.match(detail, /Liquidación semanal diferida/);
   assert.match(detail, /Señal sin liquidar/);
@@ -130,6 +131,48 @@ test("renders Buy The Dip corpus as its own live algorithm group", () => {
   assert.match(html, /\+1,25 %/);
 });
 
+
+
+test("competition uses ONE table, with block as an eighth sortable column", () => {
+  const dashboard = { tracks: [
+    { id: "one", label: "Estrategia A", group: "weekly_ml_demo", status: "programada_sin_diario",
+      return_pct: null, activity_label: "Señal sin liquidar", last_session: "2026-10-02" },
+    { id: "two", label: "Estrategia B", group: "capital_cycle_demo", status: "demo_con_diario",
+      return_pct: 1.5, last_session: "2026-10-09", max_drawdown_pct: -0.2,
+      equity_history: [{ date: "2026-10-09", nav: 101500 }] },
+    { id: "three", label: "Estrategia C", group: "buy_the_dip_demo", status: "demo_con_diario",
+      return_pct: -0.5, last_session: "2026-10-08",
+      equity_history: [{ date: "2026-10-08", nav: 99500 }] }
+  ] };
+  const html = renderMidasVisualLab(dashboard, null);
+  assert.equal((html.match(/<table class="midas-lab-table"/g) || []).length, 1);
+  assert.equal((html.match(/<thead>/g) || []).length, 1);
+  assert.equal((html.match(/class="midas-lab-row/g) || []).length, 3);
+  assert.equal((html.match(/data-midas-lab-sort-key="/g) || []).length, 8);
+  assert.equal((html.match(/data-midas-lab-sort-group="/g) || []).length, 3);
+  assert.match(html, />Bloque\s*<span data-midas-lab-sort-indicator/);
+  assert.match(html, /Capital Cycle/);
+  assert.match(html, /Weekly ML/);
+  assert.match(html, /Buy The Dip/);
+  assert.match(html, /data-midas-lab-mobile-sort/);
+  assert.match(html, /data-midas-algorithm-id="two"/);
+  assert.doesNotMatch(html, /midas-lab-group-title/);
+  assert.doesNotMatch(html, /<th>Evolución<\/th>/);
+});
+
+test("competition sorting matches thesis behavior: numbers, dates, missing last, ties and text", () => {
+  const rows = [
+    { algorithm: "B", group: "Weekly ML", return: "", sessions: "1", date: "2026-10-02", dd: "" },
+    { algorithm: "C", group: "Buy The Dip", return: "-0.5", sessions: "7", date: "2026-10-08", dd: "-1.99" },
+    { algorithm: "A", group: "Capital Cycle", return: "1.32", sessions: "7", date: "2026-10-08", dd: "-1.33" },
+    { algorithm: "D", group: "Capital Cycle", return: "1.32", sessions: "0", date: "", dd: "0" }
+  ];
+  assert.deepEqual([...rows].sort((a,b) => compareMidasLabRows(a,b,"return","desc")).map(x=>x.algorithm),["A","D","C","B"]);
+  assert.deepEqual([...rows].sort((a,b) => compareMidasLabRows(a,b,"return","asc")).map(x=>x.algorithm),["C","A","D","B"]);
+  assert.deepEqual([...rows].sort((a,b) => compareMidasLabRows(a,b,"date","desc")).map(x=>x.algorithm),["A","C","B","D"]);
+  assert.deepEqual([...rows].sort((a,b) => compareMidasLabRows(a,b,"sessions","desc")).map(x=>x.algorithm),["A","C","B","D"]);
+  assert.deepEqual([...rows].sort((a,b) => compareMidasLabRows(a,b,"group","asc")).map(x=>x.algorithm),["C","A","D","B"]);
+});
 
 test("algorithm detail restores the full metrics and equity evolution", () => {
   const dashboard = { tracks: [
