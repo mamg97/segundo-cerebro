@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -1219,6 +1219,27 @@ async function auditResponsiveVisualLayout(navIds) {
   await openAreaForVisualAudit("area-general");
 }
 
+async function emitFinanceDomDiagnostic(accountId, initialCount) {
+  const flags=await page.evaluate(({ id, initial }) => {
+    const dialog=document.querySelector("#detail-dialog");
+    const section=dialog?.querySelector(".account-transactions-section");
+    const tabs=[...(section?.querySelectorAll("[data-account-transactions-tab]")||[])];
+    const tab=tabs.find(node=>node.dataset.accountTransactionsTab===id);
+    const panel=[...(section?.querySelectorAll("[data-account-transactions-panel]")||[])]
+      .find(node=>node.dataset.accountTransactionsPanel===id);
+    return {
+      dialogOpen:Boolean(dialog?.open),
+      financeDialog:Boolean(dialog?.classList.contains("budget-dialog")),
+      workspacePresent:Boolean(section),
+      tabsShrunk:tabs.length < initial,
+      tabPresent:Boolean(tab),
+      tabSelected:Boolean(tab?.getAttribute("aria-selected")==="true" && tab?.classList.contains("active")),
+      panelVisible:Boolean(panel && !panel.hidden && panel.classList.contains("active"))
+    };
+  },{id:accountId,initial:initialCount}).catch(()=>null);
+  console.error("[AUDIT_FINANCE_DOM] "+safeAuditFinanceStructureCode(flags));
+}
+
 async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null, options = {}) {
   const timeout = options.timeout || 6000;
   const settle = options.settle || 250;
@@ -1242,11 +1263,13 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
     [...new Set(nodes.map((node) => node.dataset[key]).filter(Boolean))], dataKey
   );
   assertCheck(values.length > 0, label + " · pestañas disponibles", values.join(", "));
+  const initialFinanceTabCount=options.htmlDataName === "account-transactions-tab" ? values.length : 0;
 
   for (const value of values) {
     // Re-query by the exact data attribute after each render; several workspaces rebuild their tab DOM.
     const exact = page.locator(`${buttonSelector}[data-${options.htmlDataName}="${value}"]`).first();
     if (!await exact.count()) {
+      if (initialFinanceTabCount) await emitFinanceDomDiagnostic(value, initialFinanceTabCount);
       fail(`${label} · pestaña ${value}`, "desapareció tras render");
       continue;
     }
@@ -1270,6 +1293,7 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
     const active = await exact.evaluate((node) =>
       node.classList.contains("active") || node.getAttribute("aria-selected") === "true"
     ).catch(() => false);
+    if (initialFinanceTabCount && !active) await emitFinanceDomDiagnostic(value, initialFinanceTabCount);
     assertCheck(active, `${label} · pestaña ${value} activa`);
 
     if (panelSelector) {
@@ -1277,6 +1301,7 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
       const panelOk = await panel.evaluate((node) =>
         !node.hidden && (node.classList.contains("active") || !node.hasAttribute("data-health-panel"))
       ).catch(() => false);
+      if (initialFinanceTabCount && !panelOk) await emitFinanceDomDiagnostic(value, initialFinanceTabCount);
       assertCheck(panelOk, `${label} · panel ${value} visible`);
     }
     if (options.visual !== false) {

@@ -1,3 +1,14 @@
+## Auditoría #262 tras PR #343 · diagnóstico Finance DOM (2026-10-09)
+
+- Despliegue privado #416 y CI #449 terminaron correctos; auditoría completa #262 corrió en producción y terminó **1.069 checks / 7 fallos**, no verde.
+- Nuevo detalle con PR #343: dos fallos pertenecen a una pestaña de movimientos bancarios no seleccionada y su panel oculto; cuatro fallos adicionales FINANCE son pestañas que desaparecen del DOM durante la auditoría. El enlace privado al Sheet y los demás checks de Finanzas pasan en esa ejecución.
+- El fallo final INFRA/5xx de #260 y #261 **no se reprodujo** en #262; los cuatro fallos iniciales de Home de #261 tampoco. No atribuir endpoint/CPU/OIDC sin una próxima incidencia acompañada de la clasificación segura introducida en #343.
+- Se mantiene **un** fallo OTHER al final del bloque de comparaciones de datos; probable referencia de menú con catálogo Despensa, pero la categoría anonimizada por sí sola no permite certificar qué check fue. La incompatibilidad histórica `food_id` ↔ `Productos.producto_id` permanece documentada, sin fabricar fichas ni retocar consumo.
+- Hipótesis para pestañas: redibujado asíncrono / falta parcial del resumen financiero; sin trazas suficiente para atribuir. Una ampliación de la espera a 3,5 s **no resolvió** la interacción. Próxima modificación es solo diagnóstico DOM de banderas: diálogo cerrado, cambiado a otro módulo, workspace ausente, catálogo de pestañas reducido, tab no seleccionada, panel oculto. Nunca se imprimen IDs, importes, cuentas ni URLs privadas.
+- Prohibido corregir quitando tests o escribiendo el Sheet. Pendiente: siguiente auditoría real tras CI/deploy de instrumentación, investigar código con la bandera resultante, luego corregir en rama aislada. No lanzar bucles de auditoría.
+- Contención de logs históricos: PR #340 sigue vigente; muestras de logs pre-#257 muestran datos no redactados. No se han borrado. Requiere `actions:write` y autorización explícita, preservando metadata de runs cuando sea posible.
+- Integridad canónica: existen referencias de movimientos a cuentas válidas y fuente financiera vigente; persiste 1 `movement_id` duplicado en la fuente histórica (no borrar registros ni corregir sin procedencia).
+
 ## Auditorías de producción #259–#261 · Diagnóstico seguro (2026-10-09)
 
 - Revisión de `main`, PR #340/#341/#342, CI y deploy #415. No hay un PR abierto que solucione las incidencias actuales de Finanzas/red. Dos PR antiguos (docs, UI) siguen abiertos, sin solapamiento directo.

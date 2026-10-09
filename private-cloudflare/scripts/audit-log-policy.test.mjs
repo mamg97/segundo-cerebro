@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
 
 const auditor = fs.readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
 
@@ -57,4 +57,19 @@ test("audit emits only diagnostic codes, not raw network or failure details", ()
   assert.match(auditor, /\[AUDIT_NETWORK_DIAG\]/);
   assert.match(auditor, /await page.waitForFunction\(\(accountId\) =>/);
   assert.match(auditor, /!panel.hidden && panel.classList.contains\("active"\)/);
+});
+
+
+test("finance state diagnostics expose only boolean-derived fixed codes",()=>{
+  assert.equal(safeAuditFinanceStructureCode(null),"FINANCE_DOM_UNKNOWN");
+  assert.equal(safeAuditFinanceStructureCode({dialogOpen:false}),"FINANCE_DIALOG_CLOSED");
+  assert.equal(safeAuditFinanceStructureCode({dialogOpen:true,financeDialog:false}),"FINANCE_DIALOG_REPLACED");
+  const base={dialogOpen:true,financeDialog:true,workspacePresent:true,tabsShrunk:false,tabPresent:true,tabSelected:true,panelVisible:true};
+  assert.equal(safeAuditFinanceStructureCode({...base,tabsShrunk:true}),"FINANCE_TAB_CATALOG_SHRUNK");
+  assert.equal(safeAuditFinanceStructureCode({...base,tabPresent:false}),"FINANCE_TAB_NOT_FOUND");
+  assert.equal(safeAuditFinanceStructureCode({...base,tabSelected:false}),"FINANCE_TAB_NOT_SELECTED");
+  assert.equal(safeAuditFinanceStructureCode({...base,panelVisible:false}),"FINANCE_PANEL_HIDDEN");
+  assert.equal(safeAuditFinanceStructureCode({...base,secret:"sensitive-account-id",email:"private@example.com"}),"FINANCE_DOM_STABLE");
+  assert.match(auditor, /emitFinanceDomDiagnostic\(value, initialFinanceTabCount\)/);
+  assert.doesNotMatch(auditor, /console\.(?:error|log)\([^)]*accountId\)/);
 });
