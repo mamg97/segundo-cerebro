@@ -160,9 +160,23 @@ test("old weekly signals never display unverified return as realized P&L", () =>
     activity_tickers: [], equity_history: [{ date: "2026-10-02", nav: 100000 }]
   }] };
   const html = renderMidasVisualLab(dashboard);
-  assert.match(html, /Sin rentabilidad diaria validada/);
+  assert.match(html, /Pendiente de primera liquidación/);
   assert.match(html, /data-midas-lab-sort-return=""/);
   assert.match(html, /clasificación acumulada provisional/);
+});
+
+test("settled old weekly NAV appears only after two genuine weekly marks", () => {
+  const dashboard = { tracks: [{
+    id: "weekly_settled", group: "weekly_ml_demo", label: "ML semanal liquidado",
+    status: "demo_con_diario", return_pct: 1.25, last_session: "2026-10-16",
+    activity_tickers: ["AAA"], activity_label: "1 señal congelada · liquidación semanal pendiente",
+    equity_history: [{ date: "2026-10-09", nav: 100000 }, { date: "2026-10-16", nav: 101250 }]
+  }] };
+  const html = renderMidasVisualLab(dashboard);
+  assert.match(html, /Resultado de liquidación semanal/);
+  assert.match(html, /\+1,25 %/);
+  assert.match(html, /data-midas-lab-sort-return="1.25"/);
+  assert.doesNotMatch(html, /Pendiente de primera liquidación/);
 });
 
 test("competition uses ONE table, with block as an eighth sortable column", () => {
