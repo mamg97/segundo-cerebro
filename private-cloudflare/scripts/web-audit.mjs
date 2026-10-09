@@ -376,6 +376,10 @@ async function auditMidasCompetition() {
         "MIDAS · competición sin desplazamiento horizontal en escritorio",
         sizing ? "client=" + sizing.client + " scroll=" + sizing.scroll : "sin medida");
 
+      // Initial order is already return DESC: one click gives ASC, a second restores DESC.
+      await competitionTable.locator('[data-midas-lab-sort-key="return"]').click();
+      const ascState = await competitionTable.locator('[data-midas-lab-sort-key="return"]').locator("..").getAttribute("aria-sort");
+      assertCheck(ascState === "ascending", "MIDAS · cabecera alterna a orden ascendente");
       await competitionTable.locator('[data-midas-lab-sort-key="return"]').click();
       const descending = await competitionTable.locator("tbody tr[data-midas-algorithm-id]")
         .evaluateAll((rows) => rows.map((row) => {
