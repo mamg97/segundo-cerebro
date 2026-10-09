@@ -7990,6 +7990,7 @@ function renderMidasExecutionHealth(health, dashboard) {
       .replace("MIDAS TFM shadow forecasts", "TFM diario")
       .replace("MIDAS capital cycle paper", "Capital Cycle")
       .replace("MIDAS Buy The Dip paper", "Buy The Dip")
+      .replace("MIDAS Weekly ML daily paper", "Weekly ML diario")
       .replace("MIDAS weekly ML paper", "Weekly ML")
       .replace("MIDAS TFG corrected paper", "TFG corregido"),
     state: row.state,
