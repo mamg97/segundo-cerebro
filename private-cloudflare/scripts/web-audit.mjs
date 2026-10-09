@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import { safeAuditLog } from "./audit-log-policy.mjs";
+import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
   classifyRequestFailure,
@@ -15,6 +16,11 @@ import { evaluateMidasWorkflowRuns } from "../src/midas-health.js";
 
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
 const token = process.env.AUDIT_TOKEN;
+const getAuditToken = createAuditOidcTokenProvider({
+  initialToken: token,
+  requestUrl: process.env.ACTIONS_ID_TOKEN_REQUEST_URL,
+  requestToken: process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN
+});
 if (!token) {
   console.error("AUDIT_TOKEN_MISSING");
   process.exit(2);
@@ -85,7 +91,8 @@ const page = await context.newPage();
 const auditOrigin = new URL(baseUrl).origin;
 
 await page.route(`${auditOrigin}/**`, async (route) => {
-  const headers = { ...route.request().headers(), authorization: `Bearer ${token}` };
+  const freshToken = await getAuditToken();
+  const headers = { ...route.request().headers(), authorization: `Bearer ${freshToken}` };
   await route.continue({ headers });
 });
 
