@@ -422,18 +422,22 @@ async function auditMidasCompetition() {
       !/sin compras|en efectivo/i.test(privateActivity) && privateAssets === "",
       "MIDAS · snapshot genético privado no se interpreta como efectivo ni filtra tickers",
       privateRowCount === 1 ? privateActivity : "fila prospectiva ausente");
-    const preSettlement = tracks.filter((row) => row.group === "weekly_ml_demo" &&
-      row.daily_mode !== true && Array.isArray(row.equity_history) && row.equity_history.length < 2);
-    const prematureReturns = [];
-    for (const row of preSettlement) {
-      const element = competitionTable.locator('tbody tr[data-midas-algorithm-id="' + row.id + '"]');
-      if (await element.count() !== 1 || (await element.getAttribute("data-midas-lab-sort-return")) !== "") {
-        prematureReturns.push(row.id);
-      }
-    }
-    assertCheck(prematureReturns.length === 0,
-      "MIDAS · Weekly ML previo sin primera liquidación no publica rentabilidad realizada",
-      prematureReturns.length ? "incidencias=" + prematureReturns.length : "sin liquidar=" + preSettlement.length);
+    const weeklyForward = tracks.filter((row) => row.group === "weekly_ml_demo");
+    const weeklyArchive = tracks.filter((row) => row.group === "weekly_ml_legacy");
+    const forwardRows = competitionTable.locator('tbody tr[data-midas-algorithm-id^="weekly_ml_"]');
+    const archiveRowsInRanking = competitionTable.locator('tbody tr[data-midas-algorithm-id^="weekly_legacy_"]');
+    assertCheck(weeklyForward.length === 9 && weeklyArchive.length === 9 &&
+      weeklyForward.every((row) => row.daily_mode === true) &&
+      await forwardRows.count() === 9 && await archiveRowsInRanking.count() === 0,
+      "MIDAS · histórico semanal separado del ranking diario",
+      "diarios=" + weeklyForward.length + " archivo=" + weeklyArchive.length);
+    const inventedDaily = weeklyForward.filter((row) => !row.last_session &&
+      (row.return_pct !== null || (row.equity_history || []).length !== 0));
+    const inventedSettlement = weeklyArchive.filter((row) =>
+      (row.equity_history || []).length < 2 && row.return_pct !== null);
+    assertCheck(!inventedDaily.length && !inventedSettlement.length,
+      "MIDAS · sin NAV diario heredado ni rentabilidad semanal antes de liquidar",
+      "diario sin fuente=" + inventedDaily.length + " semanal no liquidado=" + inventedSettlement.length);
     const competitionRowCount = await competitionRows.count();
     assertCheck(competitionRowCount > 0, "MIDAS · competición ofrece algoritmos clicables", "n=" + competitionRowCount);
     if (competitionRowCount > 0) {
@@ -478,6 +482,11 @@ async function auditMidasCompetition() {
       await page.locator('[data-midas-panel="catalog"]').isVisible().catch(() => false),
       "MIDAS · pestaña Catálogo / histórico visible"
     );
+    const archiveTable = page.locator('[data-midas-panel="catalog"] .midas-weekly-archive-table');
+    const archiveRowCount = await archiveTable.locator("tbody tr[data-midas-weekly-archive-id]").count();
+    assertCheck(archiveRowCount === 9,
+      "MIDAS · Catálogo muestra las nueve carteras semanales originales",
+      "filas=" + archiveRowCount);
 
     await page.locator('[data-midas-tab="competition"]').click();
     await page.locator("#close-midas-dialog").click().catch(() => {});
@@ -491,9 +500,16 @@ async function auditMidasCompetition() {
       "MIDAS · TFM materializa cuatro diarios tras run verde");
   }
   if (successful.has("MIDAS weekly ML paper")) {
-    const weekly = tracks.filter((row) => row.group === "weekly_ml_demo");
-    assertCheck(weekly.length === 9 && weekly.every((row) => row.status === "demo_con_diario" && row.last_session),
-      "MIDAS · Weekly ML materializa nueve diarios tras run verde");
+    const weekly = tracks.filter((row) => row.group === "weekly_ml_legacy");
+    assertCheck(weekly.length === 9 && weekly.every((row) => row.last_session && row.equity_history?.length),
+      "MIDAS · Weekly ML semanal materializa nueve libros de liquidación diferida");
+  }
+  if (successful.has("MIDAS Weekly ML daily paper")) {
+    const daily = tracks.filter((row) => row.group === "weekly_ml_demo");
+    // The workflow may be successful while waiting for the first eligible Friday signal.
+    assertCheck(daily.length === 9 && daily.every((row) => row.daily_mode === true) &&
+      daily.every((row) => row.status !== "demo_con_diario" || row.last_session),
+      "MIDAS · Weekly ML diario espera señal o dispone de NAV propio");
   }
   if (successful.has("MIDAS Buy The Dip paper")) {
     const buyTheDip = tracks.find((row) => row.id === "buy_the_dip_corpus_2026_v0");

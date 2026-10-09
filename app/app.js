@@ -7,7 +7,7 @@ import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
-import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.22";
+import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.23";
 import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.11";
 
 let state = mockState;
@@ -7822,7 +7822,8 @@ function openWealthDetail() {
 const MIDAS_GROUPS = [
   ["diario_heredado", "Algoritmo genético original · S&P 500"],
   ["paper_nuevo", "Campaña nueva 2026 · EE. UU. · USD"],
-  ["weekly_ml_demo", "Weekly ML · ensemble y expertos · USD"],
+  ["weekly_ml_demo", "Weekly ML · cartera diaria prospectiva · USD"],
+  ["weekly_ml_legacy", "Weekly ML · liquidación semanal diferida · registro separado"],
   ["capital_cycle_demo", "Capital Cycle · underinvestment + calidad + giro · USD"],
   ["buy_the_dip_demo", "Buy The Dip corpus · deep value + situaciones especiales · USD"],
   ["tfg_demo_adaptado", "TFG corregido 2026 · técnico + AHP + MAD · USD"],
@@ -7836,6 +7837,8 @@ const MIDAS_STATUS = {
   pendiente_modelo: "Modelo pendiente",
   sin_diario_disponible: "Diario privado no enlazado",
   diario_heredado_observado: "Simulación histórica registrada",
+  weekly_settled_demo: "Liquidación semanal observada",
+  weekly_awaiting_first_settlement: "Primera liquidación pendiente",
   sin_ejecucion_comparable: "Pendiente de adaptación"
 };
 
@@ -8055,6 +8058,32 @@ function renderMidasExecutionHealth(health, dashboard) {
   </section>`;
 }
 
+function renderMidasWeeklyArchive(rows) {
+  return `<div class="midas-table-scroll" role="region" aria-label="Histórico separado de liquidaciones Weekly ML" tabindex="0">
+    <table class="midas-table midas-weekly-archive-table">
+      <thead><tr><th scope="col">Algoritmo</th><th scope="col">Último cierre semanal</th>
+        <th scope="col">Última semana</th><th scope="col">Acumulado semanal</th>
+        <th scope="col">Sesiones</th><th scope="col">Estado</th></tr></thead>
+      <tbody>${rows.map((row) => {
+        const history = Array.isArray(row.equity_history) ? row.equity_history : [];
+        const previous = history.length >= 2 ? history[history.length - 2]?.nav : null;
+        const current = history.length >= 2 ? history[history.length - 1]?.nav : null;
+        const lastWeek = Number.isFinite(previous) && previous > 0 && Number.isFinite(current)
+          ? 100 * (current / previous - 1) : null;
+        const validSettlement = history.length >= 2 && row.status === "weekly_settled_demo";
+        return `<tr data-midas-weekly-archive-id="${escapeHtml(row.id)}">
+          <th scope="row">${escapeHtml(row.label)}<small class="midas-provenance">Libro semanal independiente · no participa en ranking</small></th>
+          <td data-label="Último cierre semanal">${escapeHtml(formatFinanceDate(row.last_session, "—"))}</td>
+          <td class="midas-number" data-label="Última semana">${formatMidasPercent(validSettlement ? lastWeek : null)}</td>
+          <td class="midas-number" data-label="Acumulado semanal">${formatMidasPercent(validSettlement ? row.return_pct : null)}</td>
+          <td data-label="Sesiones">${history.length}</td>
+          <td data-label="Estado"><span class="midas-status">${escapeHtml(MIDAS_STATUS[row.status] || row.status)}</span></td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table>
+  </div>`;
+}
+
 function renderMidasCatalog(dashboard) {
   const rows = dashboard.tracks || [];
   const originalGenetic = rows.find((row) => row.id === "genetic_sp500_legacy");
@@ -8063,6 +8092,14 @@ function renderMidasCatalog(dashboard) {
       ${MIDAS_GROUPS.map(([group, title]) => {
         const groupRows = rows.filter((row) => row.group === group);
         if (!groupRows.length) return "";
+        if (group === "weekly_ml_legacy") {
+          return `<section class="midas-group" data-midas-weekly-archive>
+            <h3>${title}</h3>
+            <p class="midas-group-note">Resultados paper del libro semanal original (señales desde el 2 de octubre de 2026).
+            Solo se publica rentabilidad tras la primera liquidación registrada.
+            No existe valoración diaria de este libro, no se mezcla con el nuevo motor diario y no cuenta como estrategia adicional de la competición.</p>
+            ${renderMidasWeeklyArchive(groupRows)}</section>`;
+        }
         if (group === "historica_pendiente") {
           return `<details class="midas-pending"><summary>${title} <span>${groupRows.length}</span></summary>${renderMidasRows(groupRows)}</details>`;
         }
@@ -8079,7 +8116,7 @@ function renderMidasCatalog(dashboard) {
 
 function renderMidasReport(dashboard, stale, research = null, lab = null) {
   const rows = dashboard.tracks || [];
-  const observed = rows.filter((row) => ["demo_con_diario", "diario_heredado_observado"].includes(row.status)).length;
+  const observed = rows.filter((row) => row.group !== "weekly_ml_legacy" && ["demo_con_diario", "diario_heredado_observado"].includes(row.status)).length;
   const originalGenetic = rows.find((row) => row.id === "genetic_sp500_legacy");
   const lastSessions = rows.map((row) => row.last_session).filter(Boolean).sort();
   const latest = lastSessions.length ? lastSessions[lastSessions.length - 1] : null;

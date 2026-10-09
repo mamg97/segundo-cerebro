@@ -188,9 +188,14 @@ export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
 
 function activeMidasRows(dashboard, lab) {
   const rows = Array.isArray(dashboard?.tracks) ? dashboard.tracks : [];
-  const liveWeekly = rows.some((row) => row.group === "weekly_ml_demo" && row.status === "demo_con_diario");
-  const bootstrapRows = liveWeekly ? [] : bootstrapMidasLabRows(lab);
-  return [...bootstrapRows, ...rows.filter((row) => row.group !== "historica_pendiente" && row.id !== "genetic_sp500_legacy")];
+  // Forward weekly rows always have their own IDs, even while waiting for 09/10 signal.
+  // Legacy settlement rows live in the catalog, never in the ranking or bootstrap.
+  const weeklyForwardExists = rows.some((row) => row.group === "weekly_ml_demo");
+  const bootstrapRows = weeklyForwardExists ? [] : bootstrapMidasLabRows(lab);
+  return [...bootstrapRows, ...rows.filter((row) =>
+    row.group !== "historica_pendiente" &&
+    row.group !== "weekly_ml_legacy" &&
+    row.id !== "genetic_sp500_legacy")];
 }
 
 function algorithmMeta(item) {

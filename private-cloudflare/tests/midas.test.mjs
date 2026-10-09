@@ -28,7 +28,15 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
     annualized_volatility_pct: 31.2, max_drawdown_pct: -2.94, sharpe_0rf: -0.4, risk_observations: 3,
     equity_history: [{ date: "2026-10-01", nav: 100000 }, { date: "2026-10-02", nav: 102000 }, { date: "2026-10-05", nav: 99000 }], note: "Paper"
   };
-  const dashboard = { schema_version: 1, generated_at_utc: "2026-09-29T23:45:00Z", tracks: [row, tfg, btd] };
+  const weeklyArchive = {
+    id: "weekly_legacy_weekly_ml_ensemble_2026",
+    label: "ML ensemble · liquidación diferida", group: "weekly_ml_legacy",
+    status: "weekly_settled_demo", daily_mode: false, currency: "USD",
+    first_session: "2026-10-02", last_session: "2026-10-09",
+    return_pct: 1.5, day_return_pct: null, last_equity: 101500,
+    equity_history: [{ date: "2026-10-02", nav: 100000 }, { date: "2026-10-09", nav: 101500 }]
+  };
+  const dashboard = { schema_version: 1, generated_at_utc: "2026-09-29T23:45:00Z", tracks: [row, tfg, btd, weeklyArchive] };
   let requests = 0;
   const fetcher = async (url) => {
     requests += 1;
@@ -49,6 +57,9 @@ test("MIDAS dashboard validates, caches and labels a stale fallback", async () =
   assert.equal(first.dashboard.tracks[2].max_drawdown_pct, -2.94);
   assert.equal(first.dashboard.tracks[2].sharpe_0rf, -0.4);
   assert.equal(first.dashboard.tracks[2].risk_observations, 3);
+  assert.equal(first.dashboard.tracks[3].group, "weekly_ml_legacy");
+  assert.equal(first.dashboard.tracks[3].return_pct, 1.5);
+  assert.equal(first.dashboard.tracks[3].daily_mode, false);
   assert.equal(first.stale, false);
   await fetchMidasDashboard(fetcher, 1_001_000);
   assert.equal(requests, 1);

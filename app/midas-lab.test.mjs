@@ -134,6 +134,38 @@ test("renders Buy The Dip corpus as its own live algorithm group", () => {
 
 
 
+test("archived weekly settlement never replaces prospective daily competition", () => {
+  const forwardId = "weekly_ml_ensemble_2026";
+  const archiveId = "weekly_legacy_weekly_ml_ensemble_2026";
+  const dashboard = { tracks: [
+    { id: forwardId, label: "ML ensemble prospectivo", group: "weekly_ml_demo",
+      daily_mode: true, status: "programada_sin_diario", return_pct: null,
+      last_session: null, equity_history: [], activity_label: "Esperando primera sesión" },
+    { id: archiveId, label: "ML ensemble liquidación semanal", group: "weekly_ml_legacy",
+      status: "weekly_settled_demo", return_pct: 5, last_session: "2026-10-09",
+      equity_history: [{ date: "2026-10-02", nav: 100000 }, { date: "2026-10-09", nav: 105000 }] }
+  ] };
+  const lab = { weeklyBootstrap: { status: "bootstrap_only", signal_asof: "2026-09-25",
+    mark_date: "2026-09-28", strategies: {
+      ensemble_consensus: { mark_to_market_nav: 98700, positions: [{ ticker: "SMCI" }] }
+    } } };
+  const html = renderMidasVisualLab(dashboard, lab);
+  assert.match(html, /data-midas-algorithm-id="weekly_ml_ensemble_2026"/);
+  assert.doesNotMatch(html, /data-midas-algorithm-id="weekly_legacy_weekly_ml_ensemble_2026"/);
+  assert.doesNotMatch(html, /Bootstrap técnico/);
+  assert.doesNotMatch(html, /\+5,00 %/);
+  assert.match(html, /Esperando primera sesión/);
+  assert.match(html, /data-midas-lab-sort-return=""/);
+});
+
+test("weekly archival table and daily ranks have distinct frontend sections", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /function renderMidasWeeklyArchive\(rows\)/);
+  assert.match(app, /data-midas-weekly-archive-id=/);
+  assert.match(app, /weekly_ml_legacy/);
+  assert.match(app, /Solo se publica rentabilidad tras la primera liquidación registrada/);
+});
+
 test("legacy genetic is catalog-only, private forward never masquerades as cash", () => {
   const dashboard = { tracks: [
     { id: "genetic_sp500_legacy", group: "diario_heredado", label: "Genético histórico",
@@ -255,7 +287,8 @@ test("production MIDAS audit guards historical ranking and NAV-only genetic acti
   const audit = readFileSync(new URL("../private-cloudflare/scripts/web-audit.mjs", import.meta.url), "utf8");
   assert.match(audit, /MIDAS · genético histórico no compite en el ranking prospectivo/);
   assert.match(audit, /MIDAS · snapshot genético privado no se interpreta como efectivo ni filtra tickers/);
-  assert.match(audit, /MIDAS · Weekly ML previo sin primera liquidación no publica rentabilidad realizada/);
+  assert.match(audit, /MIDAS · histórico semanal separado del ranking diario/);
+  assert.match(audit, /MIDAS · sin NAV diario heredado ni rentabilidad semanal antes de liquidar/);
 });
 
 test("competition sorting initializes once per MIDAS render and mobile is responsive", () => {
