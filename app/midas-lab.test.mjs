@@ -134,6 +134,37 @@ test("renders Buy The Dip corpus as its own live algorithm group", () => {
 
 
 
+test("legacy genetic is catalog-only, private forward never masquerades as cash", () => {
+  const dashboard = { tracks: [
+    { id: "genetic_sp500_legacy", group: "diario_heredado", label: "Genético histórico",
+      status: "diario_heredado_observado", return_pct: 4.38, last_session: "2026-09-25",
+      equity_history: [{ date: "2026-09-25", nav: 104380 }] },
+    { id: "genetic_sp500_forward", group: "diario_heredado", label: "Genético corregido",
+      status: "demo_con_diario", return_pct: 1.01, last_session: "2026-10-07",
+      activity_tickers: [], equity_history: [{ date: "2026-10-07", nav: 101010 }] }
+  ] };
+  const html = renderMidasVisualLab(dashboard);
+  assert.doesNotMatch(html, /Genético histórico/);
+  assert.match(html, /Genético corregido/);
+  assert.match(html, /Actividad privada · detalle no disponible/);
+  assert.doesNotMatch(html, /Sin compras · en efectivo/);
+  const detail = renderMidasAlgorithmDetail(dashboard, null, "genetic_sp500_forward");
+  assert.match(detail, /actividad no enlazada/);
+  assert.match(detail, /Actividad privada/);
+});
+
+test("old weekly signals never display unverified return as realized P&L", () => {
+  const dashboard = { tracks: [{
+    id: "weekly_old", group: "weekly_ml_demo", label: "ML semanal legacy",
+    status: "demo_con_diario", return_pct: 0, last_session: "2026-10-02",
+    activity_tickers: [], equity_history: [{ date: "2026-10-02", nav: 100000 }]
+  }] };
+  const html = renderMidasVisualLab(dashboard);
+  assert.match(html, /Sin rentabilidad diaria validada/);
+  assert.match(html, /data-midas-lab-sort-return=""/);
+  assert.match(html, /clasificación acumulada provisional/);
+});
+
 test("competition uses ONE table, with block as an eighth sortable column", () => {
   const dashboard = { tracks: [
     { id: "one", label: "Estrategia A", group: "weekly_ml_demo", status: "programada_sin_diario",
