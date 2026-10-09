@@ -400,6 +400,29 @@ async function auditMidasCompetition() {
     }
 
     const competitionRows = page.locator('[data-midas-panel="competition"] [data-midas-algorithm-id]');
+    // A public NAV-only ingest cannot attest private positions or last GitHub run.
+    const legacyInRanking = await competitionTable.locator('tbody tr[data-midas-algorithm-id="genetic_sp500_legacy"]').count();
+    const privateRow = competitionTable.locator('tbody tr[data-midas-algorithm-id="genetic_sp500_forward"]');
+    const privateRowCount = await privateRow.count();
+    const privateActivity = privateRowCount ? (await privateRow.locator(".midas-lab-col-activity").textContent() || "") : "";
+    const privateAssets = privateRowCount ? await privateRow.getAttribute("data-midas-lab-sort-assets") : null;
+    assertCheck(legacyInRanking === 0, "MIDAS · genético histórico no compite en el ranking prospectivo");
+    assertCheck(privateRowCount === 1 && /actividad privada/i.test(privateActivity) &&
+      !/sin compras|en efectivo/i.test(privateActivity) && privateAssets === "",
+      "MIDAS · snapshot genético privado no se interpreta como efectivo ni filtra tickers",
+      privateRowCount === 1 ? privateActivity : "fila prospectiva ausente");
+    const preSettlement = tracks.filter((row) => row.group === "weekly_ml_demo" &&
+      row.daily_mode !== true && Array.isArray(row.equity_history) && row.equity_history.length < 2);
+    const prematureReturns = [];
+    for (const row of preSettlement) {
+      const element = competitionTable.locator('tbody tr[data-midas-algorithm-id="' + row.id + '"]');
+      if (await element.count() !== 1 || (await element.getAttribute("data-midas-lab-sort-return")) !== "") {
+        prematureReturns.push(row.id);
+      }
+    }
+    assertCheck(prematureReturns.length === 0,
+      "MIDAS · Weekly ML previo sin primera liquidación no publica rentabilidad realizada",
+      prematureReturns.length ? "incidencias=" + prematureReturns.length : "sin liquidar=" + preSettlement.length);
     const competitionRowCount = await competitionRows.count();
     assertCheck(competitionRowCount > 0, "MIDAS · competición ofrece algoritmos clicables", "n=" + competitionRowCount);
     if (competitionRowCount > 0) {
