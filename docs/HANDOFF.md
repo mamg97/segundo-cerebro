@@ -1,3 +1,29 @@
+## ORGANIZADOR · cierre técnico de auditorías #259–#264 (2026-10-09)
+
+### Código, CI y despliegue verificables
+- PR #343: auditoría de FINANCE espera selección y panel activo hasta 3,5 s, sin eliminar asserts; añade códigos de diagnóstico de fallos y familias de endpoints seguros para logs públicos. CI #449 `success`, deploy privado #416 `success`.
+- PR #345: diagnóstico DOM financiero únicamente con banderas booleanas (diálogo cerrado, reemplazo de módulo, ausencia de workspace, catálogo reducido, tab no seleccionada, panel oculto); nunca se escriben a logs IDs de cuenta o contenido del DOM. CI #451 `success`, deploy privado #418 `success`. Se respetó despliegue concurrente Gym PR #344, completado antes del merge.
+- No se modificaron fuentes canónicas, saldos, movimientos, costes, esquemas, autenticación ni pruebas para obtener verde.
+
+### Evidencia de auditorías completas
+- #259: 1.105 checks / 1 fail; #260: 1.043 / 4; #261: 1.038 / 8. El fallo de red acumulado y los fallos financieros de #260–#261 se confirmaron en logs con códigos no identificativos, pero sus detalles originales ya no son recuperables desde el log anoninimizado.
+- #262: 1.069 / 7. Fallaron una pestaña y su panel financieros, otras cuatro pestañas dejaron de encontrarse tras cambios del DOM y un control OTHER persistió. El check final de red pasó; los cuatro fallos extra tempranos de Home de #261 no se reprodujeron.
+- #263: 1.105 / 2; FINANCE completo pasó, y el diagnóstico seguro atribuyó cuatro respuestas HTTP 502 al endpoint **privado** `GET /api/objects/look/{id}/image` (sin publicar id alguno). Se conserva un fallo OTHER de referencia/menú.
+- #264: 1.105 / 2; FINANCE pasó otra vez y no hubo fallo final de red; quedaron `HEALTH CHECK-00461` y `OTHER CHECK-00715`. HEALTH es posterior al trabajo concurrente Gym #344: propietario Gym debe verificarlo, sin intervención especulativa de este gestor. OTHER permanece sin atribución certificada; la referencia histórica `food_id` sin vínculo de Despensa puede estar relacionada, pero no deducir identidad del check solo por ordinal.
+- Conclusión: FINANCE operativa en dos auditorías sucesivas, pero conserva antecedente intermitente, por lo que **VERDE funcional puntual / ÁMBAR estabilidad**. Infraestructura LookImage **ÁMBAR/ROJO intermitente** al haberse reproducido HTTP 502 en #263; no se atribuye a CPU ni a D1 sin logs de Worker. HOME adicional de #261 no volvió a fallar en #262–#264.
+
+### Integridad y privacidad
+- Comprobación read-only de `SEGUNDO CEREBRO - ESTADO FINANCIERO`: fuente hoy actualizada, 6 cuentas distintas, referencias de movimientos a cuenta sin huérfanos; permanece 1 `movement_id` duplicado en la fuente, no corregido para no confundir importación/histórico. El API sirve una ventana reciente desde `MovimientosCuenta` sin escribir al Sheet; no equivale a verificar todos los datos visualizados contra 100% del histórico.
+- PR #340 mantiene los logs PASS/FAIL públicos limitados a categorías/códigos; PR #341 conserva renovación OIDC sin exponer secretos. Los nuevos diagnósticos de #343/#345 usan allowlists o booleanos, con pruebas de que no filtran valores privados.
+- Logs públicos históricos anteriores al saneamiento (#235, #237, #256 comprobados como muestras) siguen potencialmente identificativos. **No se borraron**: el conector GitHub no ofrece `DELETE /actions/runs/{run_id}/logs`, y la eliminación precisa aprobación por su irreversibilidad. GitHub permite el borrado selectivo con `Actions: write`; acortar retención aplica a nuevos logs, no elimina retrospectivamente los antiguos.
+- Sin secretos identificados mediante el barrido de rutas del repositorio; la ausencia de fugas en el pasado no queda demostrada por ello. Privacidad y coste operativo adicional 0 € siguen como restricciones absolutas.
+
+### Continuación delimitada
+1. Mantener auditoría horaria ya existente; no crear auditorías paralelas ni reintentos en bucle. Si FINANCE falla de nuevo, utilizar `AUDIT_FINANCE_DOM` para decidir si se sustituye diálogo, desaparece workspace o cambia catálogo y solo entonces reparar el código.
+2. Obtener evidencia de logs/Analytics gratuitos de Cloudflare para `/api/objects/look/{id}/image`, distinguir Worker 1102/D1/otro, sin exponer IDs de imágenes. No regenerar imágenes ni subir plan.
+3. Derivar `HEALTH CHECK-00461` al propietario Gym por interacción con PR #344; mantener `OTHER CHECK-00715` sin arreglo canónico hasta trazabilidad del id.
+4. Solicitar decisión expresa para borrar logs históricos señalados, preservando resultados técnicos agregados y metadata en GitHub. No publicar capturas o logs privados.
+
 ## Auditoría #262 tras PR #343 · diagnóstico Finance DOM (2026-10-09)
 
 - Despliegue privado #416 y CI #449 terminaron correctos; auditoría completa #262 corrió en producción y terminó **1.069 checks / 7 fallos**, no verde.
