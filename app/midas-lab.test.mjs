@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab, compareMidasLabRows } from "./midas-lab.js";
@@ -191,4 +192,17 @@ test("algorithm detail restores the full metrics and equity evolution", () => {
   assert.match(html, /AAA/);
   assert.match(html, /BBB/);
   assert.match(html, /data-midas-algorithm-back/);
+});
+
+
+test("competition sorting initializes once per MIDAS render and mobile is responsive", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  const workspace = app.split("function bindMidasWorkspace(dashboard, lab) {")[1]?.split("async function openMidasDialog()")[0];
+  assert.ok(workspace, "MIDAS workspace binder missing");
+  assert.equal((workspace.match(/bindMidasLabSorting\(root\);/g) || []).length, 1);
+  assert.match(css, /\.midas-lab-table\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.match(css, /\.midas-lab-mobile-sort\s*\{[\s\S]*?display:\s*flex;/);
+  assert.match(css, /\.midas-lab-table tbody tr\.midas-lab-row\s*\{[\s\S]*?grid-template-columns/);
+  assert.match(css, /\.midas-lab-table thead\s*\{[\s\S]*?clip-path:\s*inset\(50%\)/);
 });
