@@ -357,6 +357,43 @@ async function auditMidasCompetition() {
       "MIDAS · competición elimina columna Evolución",
       competitionHeaders
     );
+    const competitionTables = page.locator('[data-midas-panel="competition"] .midas-lab-table');
+    const competitionTableCount = await competitionTables.count();
+    assertCheck(competitionTableCount === 1, "MIDAS · competición es una única tabla para todos los bloques",
+      "tablas=" + competitionTableCount);
+    if (competitionTableCount === 1) {
+      const sortButtons = competitionTable.locator("[data-midas-lab-sort-key]");
+      const sortKeys = await sortButtons.evaluateAll((buttons) => buttons.map((button) => button.dataset.midasLabSortKey));
+      const requiredKeys = ["algorithm", "group", "activity", "assets", "return", "sessions", "date", "dd"];
+      assertCheck(requiredKeys.every((key) => sortKeys.includes(key)) && sortKeys.length === 8,
+        "MIDAS · ocho columnas ordenables, incluida Bloque", sortKeys.join(", "));
+      const blockValues = await competitionTable.locator("tbody tr[data-midas-algorithm-id]")
+        .evaluateAll((rows) => new Set(rows.map((row) => row.getAttribute("data-midas-lab-sort-group"))).size);
+      assertCheck(blockValues > 1, "MIDAS · varios bloques conviven en la misma tabla", "bloques=" + blockValues);
+      const sizing = await competitionTable.locator("..").evaluate((el) =>
+        ({ client: el.clientWidth, scroll: el.scrollWidth })).catch(() => null);
+      assertCheck(Boolean(sizing) && sizing.scroll <= sizing.client + 2,
+        "MIDAS · competición sin desplazamiento horizontal en escritorio",
+        sizing ? "client=" + sizing.client + " scroll=" + sizing.scroll : "sin medida");
+
+      await competitionTable.locator('[data-midas-lab-sort-key="return"]').click();
+      const descending = await competitionTable.locator("tbody tr[data-midas-algorithm-id]")
+        .evaluateAll((rows) => rows.map((row) => {
+          const raw = row.getAttribute("data-midas-lab-sort-return");
+          return raw === "" ? null : Number(raw);
+        }));
+      const descNumbers = descending.filter((value) => value !== null);
+      assertCheck(descNumbers.every((n, i) => i === 0 || descNumbers[i - 1] >= n) &&
+        descending.slice(descNumbers.length).every((value) => value === null),
+        "MIDAS · ordenar rentabilidad desc conserva cifras y deja pendientes al final");
+      await competitionTable.locator('[data-midas-lab-sort-key="group"]').click();
+      const orderedBlocks = await competitionTable.locator("tbody tr[data-midas-algorithm-id]")
+        .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-midas-lab-sort-group")));
+      assertCheck(orderedBlocks.every((name, i) => i === 0 ||
+        orderedBlocks[i - 1].localeCompare(name, "es", { numeric: true, sensitivity: "base" }) <= 0),
+        "MIDAS · columna Bloque ordena todas las estrategias");
+    }
+
     const competitionRows = page.locator('[data-midas-panel="competition"] [data-midas-algorithm-id]');
     const competitionRowCount = await competitionRows.count();
     assertCheck(competitionRowCount > 0, "MIDAS · competición ofrece algoritmos clicables", "n=" + competitionRowCount);
