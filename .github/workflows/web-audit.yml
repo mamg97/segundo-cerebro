@@ -84,14 +84,14 @@ jobs:
               // Fail open: if cadence inspection itself fails, run the browser audit.
               fs.appendFileSync(output, "run_audit=true\n");
               fs.appendFileSync(output, "reason=cadence-check-failed\n");
-              console.error(String(error?.message || error));
+              console.error("AUDIT_CADENCE_INSPECTION_FAILED");
             }
           }
 
           main().catch((error) => {
             fs.appendFileSync(output, "run_audit=true\n");
             fs.appendFileSync(output, "reason=cadence-check-crashed\n");
-            console.error(error);
+            console.error("AUDIT_CADENCE_CHECK_FAILED");
           });
           NODE
 
