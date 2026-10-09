@@ -9046,6 +9046,9 @@ function renderAccountTransactionsWorkspace(transactions, accounts, fallbackCurr
     </section>`;
 }
 
+// Only ephemeral UI selection: no financial records or balances are stored.
+let selectedAccountTransactionsTab = null;
+
 function initializeAccountTransactionTabs(root = document) {
   const section = root.querySelector?.(".account-transactions-section");
   if (!section) return;
@@ -9073,6 +9076,7 @@ function initializeAccountTransactionTabs(root = document) {
     });
 
     section.dataset.activeAccount = accountId;
+    selectedAccountTransactionsTab = accountId;
   };
 
   section.addEventListener("click", (event) => {
@@ -9099,7 +9103,9 @@ function initializeAccountTransactionTabs(root = document) {
   });
 
   const buttons = currentButtons();
-  const selected = buttons.find((button) => button.getAttribute("aria-selected") === "true") || buttons[0];
+  const selected = buttons.find((button) => button.dataset.accountTransactionsTab === selectedAccountTransactionsTab)
+    || buttons.find((button) => button.getAttribute("aria-selected") === "true")
+    || buttons[0];
   activate(selected.dataset.accountTransactionsTab);
 }
 

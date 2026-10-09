@@ -29,3 +29,10 @@ assert.match(app, /no se muestran importes supuestos/);
 
 assert.match(app, /privateModeKind === "remote" && !financeBudgetRefreshInFlight/);
 assert.doesNotMatch(app, /privateModeKind === "private-remote"/);
+
+// The real selected bank account must persist if an asynchronous finance refresh
+// reconstructs the workspace after the user selects another tab.
+assert.match(app, /let selectedAccountTransactionsTab = null/);
+assert.match(app, /selectedAccountTransactionsTab = accountId/);
+assert.match(app, /button\.dataset\.accountTransactionsTab === selectedAccountTransactionsTab/);
+assert.match(app, /buttons\.find\(\(button\) => button\.getAttribute\("aria-selected"\) === "true"\)/);
