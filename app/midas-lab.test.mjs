@@ -287,7 +287,8 @@ test("production MIDAS audit guards historical ranking and NAV-only genetic acti
   const audit = readFileSync(new URL("../private-cloudflare/scripts/web-audit.mjs", import.meta.url), "utf8");
   assert.match(audit, /MIDAS · genético histórico no compite en el ranking prospectivo/);
   assert.match(audit, /MIDAS · snapshot genético privado no se interpreta como efectivo ni filtra tickers/);
-  assert.match(audit, /MIDAS · Weekly ML previo sin primera liquidación no publica rentabilidad realizada/);
+  assert.match(audit, /MIDAS · histórico semanal separado del ranking diario/);
+  assert.match(audit, /MIDAS · sin NAV diario heredado ni rentabilidad semanal antes de liquidar/);
 });
 
 test("competition sorting initializes once per MIDAS render and mobile is responsive", () => {
