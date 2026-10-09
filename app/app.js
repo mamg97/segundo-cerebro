@@ -8,7 +8,7 @@ import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.21";
-import { midasCagrNumber, midasDisplayValuation, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.10";
+import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.11";
 
 let state = mockState;
 let areaById = new Map();
@@ -7896,7 +7896,8 @@ function renderMidasResearch(research) {
   const rows = theses.map((thesis) => {
     const cagr = cagrByTicker.get(thesis.ticker) || {};
     const tracking = trackingByTicker.get(thesis.ticker) || {};
-    return { thesis, cagr, tracking, display: midasDisplayValuation(cagr, tracking) };
+    const display = midasDisplayValuation(cagr, tracking);
+    return { thesis, cagr, tracking, display, methodology: midasThesisMethodLabel(cagr, thesis, display) };
   }).sort((a, b) => {
     const av = midasCagrNumber(a.display.base);
     const bv = midasCagrNumber(b.display.base);
@@ -7923,7 +7924,7 @@ function renderMidasResearch(research) {
         <small>${complete} con seguimiento completo · ${Math.max(0, rows.length - complete)} por actualizar</small>
       </div>
     </div>
-    <p class="midas-research-rule">Los objetivos no cambian automáticamente con la cotización. La referencia V6 utiliza por defecto la media histórica homogénea EV/FCF IDC. Las valoraciones V5 son antecedentes; el contraste con el flujo de caja económico de V6 puede seguir pendiente. “Precio 15%” = objetivo central / 1,15⁵.</p>
+    <p class="midas-research-rule">Los objetivos y CAGR proceden de la tesis vigente de cada empresa. Las referencias pueden utilizar media histórica, régimen económico o múltiplo operativo; las revisiones abiertas no equivalen a compras aprobadas. El precio observado y el precio de referencia de cada estudio pueden ser distintos. “Precio 15%” = objetivo central / 1,15⁵.</p>
     <div class="midas-research-toolbar"><label for="midas-thesis-search">Buscar ticker o empresa</label><input id="midas-thesis-search" type="search" autocomplete="off" placeholder="Ej.: MSFT o Microsoft" data-midas-thesis-search /><span data-midas-visible-count aria-live="polite"></span><small>Orden inicial: CAGR Base ↓ · Pulsa las cabeceras para ordenar.</small></div>
     <div class="midas-research-table-scroll" role="region" aria-label="Seguimiento de empresas y tesis de inversión" tabindex="0">
       <table class="midas-research-table">
@@ -7940,7 +7941,7 @@ function renderMidasResearch(research) {
           <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="earnings" title="Ordenar por próxima fecha de resultados" aria-label="Ordenar por próxima fecha de resultados">Próx. resultados <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
           <th aria-sort="none"><button class="midas-research-sort" type="button" data-midas-sort-key="thesis" title="Ordenar por disponibilidad del enlace a la tesis" aria-label="Ordenar por disponibilidad del enlace a la tesis">Tesis <span data-midas-sort-indicator aria-hidden="true">↕</span></button></th>
         </tr></thead>
-        <tbody>${rows.map(({ thesis, cagr, tracking, display }) => {
+        <tbody>${rows.map(({ thesis, cagr, tracking, display, methodology }) => {
           const thesisUrl = safeMidasThesisUrl(thesis.thesisUrl);
           const sortValues = {
             ticker: thesis.ticker, company: thesis.company, market: tracking.market,
@@ -7955,7 +7956,7 @@ function renderMidasResearch(research) {
           const searchValue = [thesis.ticker, thesis.company, tracking.market].filter(Boolean).join(" ");
           return `<tr ${sortAttrs} data-midas-search="${escapeHtml(searchValue)}">
             <td class="midas-company-ticker"><strong>${escapeHtml(thesis.ticker)}</strong></td>
-            <td class="midas-company-name"><strong>${escapeHtml(thesis.company)}</strong><small>${escapeHtml(thesis.theme || "—")}</small>${display.v6Reference ? '<small class="midas-valuation-status">V6 · media histórica · economía pendiente de validar</small>' : ""}</td>
+            <td class="midas-company-name"><strong>${escapeHtml(thesis.company)}</strong><small>${escapeHtml(thesis.theme || "—")}</small>${methodology ? '<small class="midas-valuation-status">' + escapeHtml(methodology) + '</small>' : ""}</td>
             <td>${escapeHtml(tracking.market || "—")}</td>
             <td class="midas-price-cell"><strong>${escapeHtml(formatMidasTrackingPrice(tracking.currentPrice, tracking.currency))}</strong><small>${tracking.currentPriceDate ? escapeHtml(formatFinanceDate(tracking.currentPriceDate, tracking.currentPriceDate)) : "Sin actualizar"}</small></td>
             <td>${renderMidasCase(display.bullPrice5y, display.bull, tracking.currency)}</td>
