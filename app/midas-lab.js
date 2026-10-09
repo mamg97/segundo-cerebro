@@ -197,9 +197,12 @@ function algorithmMeta(item) {
   const history = Array.isArray(item.equity_history) ? item.equity_history : [];
   const privateGenetic = item.id === "genetic_sp500_forward";
   const historicalWeekly = item.group === "weekly_ml_demo" && !item.bootstrap && item.daily_mode !== true;
+  // A Friday-only engine has a valid settled return once a second weekly NAV exists.
+  // Do not hide those eventual results forever because the engine is not daily.
+  const awaitingFirstWeeklySettlement = historicalWeekly && history.length < 2;
   const hasUnsettledWeeklySignal = item.group === "weekly_ml_demo" && !item.bootstrap &&
     history.length === 1 && Array.isArray(item.activity_tickers) && item.activity_tickers.length > 0;
-  const returnPct = hasUnsettledWeeklySignal || historicalWeekly ? null :
+  const returnPct = hasUnsettledWeeklySignal || awaitingFirstWeeklySettlement ? null :
     (typeof item.return_pct === "number" && Number.isFinite(item.return_pct) ? item.return_pct : null);
   const latestDate = item.last_session || item.mark_date || null;
   const positions = Array.isArray(item.positions) ? item.positions : [];
@@ -217,7 +220,8 @@ function algorithmMeta(item) {
         : item.status === "demo_con_diario" ? "Actividad sin detalle disponible" : "Esperando actividad"));
   const status = item.bootstrap ? "Bootstrap técnico" :
     (privateGenetic ? "Diario privado · actividad no enlazada" :
-      hasUnsettledWeeklySignal ? "Señal sin liquidar" : historicalWeekly ? "Sin rentabilidad diaria validada" : statusLabel(item.status));
+      hasUnsettledWeeklySignal ? "Señal sin liquidar" : awaitingFirstWeeklySettlement ? "Pendiente de primera liquidación" :
+      historicalWeekly ? "Resultado de liquidación semanal" : statusLabel(item.status));
   const drawdown = typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)
     ? formatPercent(item.max_drawdown_pct) : "—";
   return { history, returnPct, latestDate, activityTickers, activityLabel, status, sessions: history.length, drawdown };
