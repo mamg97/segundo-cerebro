@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { safeAuditLog } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode } from "./audit-log-policy.mjs";
 
 const auditor = fs.readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
 
@@ -27,4 +27,34 @@ test("untrusted failure names do not appear even in summary and error paths", ()
   assert.doesNotMatch(auditor, /console\.(?:log|error)\(\`\[(?:PASS|FAIL|INFO)\] \$\{name\}/);
   assert.doesNotMatch(auditor, /\[AUDIT_FAILED\].*failures\.map/);
   assert.match(auditor, /\[AUDIT_FAILED\] failures=/);
+});
+
+
+test("diagnostic labels are fixed allowlisted codes with no private identifiers", () => {
+  assert.equal(
+    safeAuditDiagnosticCode("Finanzas · movimientos por cuenta · pestaña cuenta-secreta-123 activa"),
+    "FINANCE_TAB_ACTIVE"
+  );
+  assert.equal(
+    safeAuditDiagnosticCode("Finanzas · movimientos por cuenta · panel cuenta-secreta-123 visible"),
+    "FINANCE_TAB_PANEL"
+  );
+  assert.equal(safeAuditDiagnosticCode("Home · Regalos ocupa el hueco bajo Obligaciones sin solape"), "HOME_GIFTS_GAP");
+  assert.equal(safeAuditDiagnosticCode("persona@example.com información confidencial"), "CHECK_UNMAPPED");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/health/overview"), "HEALTH_OVERVIEW_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("requestfailed:/api/objects/look/id-privado-123/image:net::ERR_FAILED"), "LOOK_IMAGE_ERR_FAILED");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/source/secret-123"), "UNMAPPED_HTTP_502");
+  const texts=[
+    safeAuditDiagnosticCode("Finanzas · movimientos por cuenta · pestaña cuenta-secreta-123 activa"),
+    safeAuditNetworkFailureCode("http502:/api/objects/look/id-privado-123/image")
+  ].join(" ");
+  assert.equal(/(secreta|privado-123|example.com)/.test(texts),false);
+});
+
+test("audit emits only diagnostic codes, not raw network or failure details", () => {
+  assert.match(auditor, /safeAuditDiagnosticCode\(name\)/);
+  assert.match(auditor, /safeAuditNetworkFailureCode\(entry\)/);
+  assert.match(auditor, /\[AUDIT_NETWORK_DIAG\]/);
+  assert.match(auditor, /await page.waitForFunction\(\(accountId\) =>/);
+  assert.match(auditor, /!panel.hidden && panel.classList.contains\("active"\)/);
 });
