@@ -5,7 +5,7 @@
 - Responsive: tabla de escritorio con ancho flexible; en móvil las mismas filas se adaptan a tarjetas de dos columnas y se dispone de selector de columna/sentido sin scroll horizontal forzado. Sin reducir la tipografía de los datos.
 - Auditoría de producción ampliada (read-only): exige una sola tabla, ocho cabeceras, ordenación real de retorno y bloques, ausencia de overflow escritorio y apertura del detalle. Las pruebas unitarias cubren valores negativos, pendientes, empates y fechas.
 - No se modifica ningún dato, algoritmo, ledger, cálculo, endpoint ni ejecución de MIDAS, ni se introduce infraestructura de pago.
-- Verificar CI, despliegue y auditoría postdeploy antes de dar por cerrado el trabajo. Sin mezclar con la supervisión de cadencias del auditor especializado MIDAS.
+- **Cerrado/verificado 09/10:** PR #334 fusionado (commit `6dd3afdf97a2830d2defa620d0bca9b41f38f4ef`); CI #436 `success`; despliegue privado #408 `success`; auditoría de producción #252 (1037 checks, 3 fallos globales ajenos a MIDAS) confirmó una única tabla para 7 bloques, 8 columnas ordenables, orden asc/desc real, pendientes al final, 27 filas clicables y detalle completo. En escritorio el contenedor midió `clientWidth=1014` y `scrollWidth=1014` (sin desplazamiento lateral). Móvil usa CSS responsive y selector probados en tests, pero no se ha realizado una validación visual browser específica de MIDAS móvil. Los 3 fallos globales son 2 checks de Finanzas (sheet/pestañas) y 1 referencia de food_id en Despensa; sin relación con este cambio.
 
 ## Auditor web · evitar cancelación de auditorías completas · 2026-10-08
 
