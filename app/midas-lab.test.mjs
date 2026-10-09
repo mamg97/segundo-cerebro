@@ -226,6 +226,17 @@ test("algorithm detail restores the full metrics and equity evolution", () => {
 });
 
 
+test("the health card never equates a private genetic snapshot with a passed workflow", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const fn = app.split("function renderMidasExecutionHealth(health, dashboard) {")[1]?.split("function renderMidasCatalog(")[0];
+  assert.ok(fn);
+  assert.match(fn, /Genético S&P 500 prospectivo", state: "unverified"/);
+  assert.match(fn, /la última ejecución GitHub no se valida aquí/);
+  assert.match(fn, /Cobertura de auditoría parcial/);
+  assert.match(fn, /Weekly ML diario/);
+  assert.doesNotMatch(fn, /state: genetic\?\.status === "demo_con_diario"/);
+});
+
 test("competition sorting initializes once per MIDAS render and mobile is responsive", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
