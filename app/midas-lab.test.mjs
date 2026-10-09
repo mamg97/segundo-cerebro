@@ -20,7 +20,7 @@ test("renders bootstrap rows when weekly forward has not started", () => {
 
 test("forward weekly rows replace bootstrap duplicates", () => {
   const dashboard = { tracks: [
-    { id: "weekly_ml_ensemble_2026", label: "ML semanal · ensemble", group: "weekly_ml_demo", status: "demo_con_diario",
+    { id: "weekly_ml_ensemble_2026", label: "ML semanal · ensemble", group: "weekly_ml_demo", status: "demo_con_diario", daily_mode: true,
       return_pct: 1.2, last_session: "2026-10-09", equity_history: [
         { date: "2026-10-02", nav: 100000 }, { date: "2026-10-09", nav: 101200 }
       ] }
