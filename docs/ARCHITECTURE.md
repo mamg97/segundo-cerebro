@@ -500,7 +500,7 @@ Para estrategias públicas, `strategy_state/dashboard.json` puede incluir un `eq
 
 La interfaz usa SVG/CSS y respeta `prefers-reduced-motion`. No añade librerías de gráficos ni persiste un segundo histórico.
 
-La interfaz MIDAS se organiza como un workspace con tres bloques de navegación: **Competición de algoritmos**, **Seguimiento de tesis** y **Catálogo / histórico**. La competición usa una tabla compacta sin gráfica embebida por fila; cada algoritmo abre una ficha interna que reutiliza el mismo payload y muestra métricas, actividad, posiciones y la curva completa de patrimonio ficticio. La tabla de tesis conserva todas las variables de decisión pero usa un layout fijo compacto para caber en el diálogo de escritorio sin scroll horizontal innecesario.
+La interfaz MIDAS se organiza como un workspace con tres bloques de navegación: **Competición de algoritmos**, **Seguimiento de tesis** y **Catálogo / histórico**. La competición usa **una sola tabla** para todos los grupos de estrategias, con `Bloque` como columna y ordenación interactiva ascendente/descendente en las ocho cabeceras (por defecto rentabilidad acumulada descendente, datos ausentes al final). La tabla no contiene gráfica embebida; cada algoritmo abre una ficha interna que reutiliza el mismo payload y muestra métricas, actividad, posiciones y la curva completa de patrimonio ficticio. En móvil conserva las ocho variables en filas adaptadas al ancho disponible y ordenación accesible sin scroll horizontal forzado. La tabla de tesis conserva todas las variables de decisión pero usa un layout fijo compacto para caber en el diálogo de escritorio sin scroll horizontal innecesario.
 
 
 ### Bridge ChatGPT → OBJETOS
