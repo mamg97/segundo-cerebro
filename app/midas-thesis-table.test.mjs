@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { midasCagrNumber, midasDisplayValuation, compareMidasSortValues } from "./midas-thesis-table.js";
+import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, compareMidasSortValues } from "./midas-thesis-table.js";
 
 test("MIDAS CAGR parser accepts minus signs from Google Sheets", () => {
   assert.equal(midasCagrNumber("−1,22%"), -1.22);
@@ -100,4 +100,25 @@ test("MIDAS v1.2: frontend gets historical V5 columns Y:AG and sorts on active V
   assert.match(app, /midasCagrNumber\(a\.display\.base\)/);
   assert.match(app, /V6 · media histórica/);
   assert.match(app, /display\.historical\?\.base/);
+});
+
+test("MIDAS: each canonical method keeps its own visible qualification", () => {
+  const items = [
+    [{ status: "V6 REFERENCIA ESTADÍSTICA ACTIVA · REVISIÓN ECONÓMICA ABIERTA" }, "V6 · media histórica · economía pendiente"],
+    [{ status: "VALORADA · EV/FCF IDC μ±σ v1.2 · QA PENDIENTE" }, "v1.2 · media histórica · validación pendiente"],
+    [{ status: "VALORADA · IA_REGIME_REFERENCIA_ANALÍTICA · BUY_REVIEW_PENDING" }, "v1.2 · régimen IA · compra en revisión"],
+    [{ status: "VALORADA v1.2 · OPERATIVE_BASE_ACTIVE · MULTIPLE/PEER_REVIEW_PENDING" }, "v1.2 · FCF operativo · múltiplo en revisión"],
+    [{ status: "COMPLETA" }, ""]
+  ];
+  for (const [cagr, expected] of items) {
+    assert.equal(midasThesisMethodLabel(cagr, {}, midasDisplayValuation(cagr, {})), expected);
+  }
+});
+
+test("MIDAS: public UI clarifies that valuations have distinct methodologies", () => {
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /midasThesisMethodLabel\(cagr, thesis, display\)/);
+  assert.match(app, /escapeHtml\(methodology\)/);
+  assert.match(app, /Las referencias pueden utilizar media histórica, régimen económico o múltiplo operativo/);
+  assert.doesNotMatch(app, /La referencia V6 utiliza por defecto la media histórica homogénea EV\/FCF IDC/);
 });
