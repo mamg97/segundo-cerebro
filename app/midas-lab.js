@@ -1,3 +1,5 @@
+import { compareMidasSortValues } from "./midas-thesis-table.js";
+
 const BOOTSTRAP_LABELS = {
   lgbm_return: "LightGBM Return",
   lgbm_direction: "LightGBM Direction",
@@ -20,35 +22,121 @@ const MIDAS_LAB_GROUPS = [
   ["diario_heredado", "Genético original"]
 ];
 
+const MIDAS_LAB_COLUMNS = [
+  ["algorithm", "Algoritmo"],
+  ["group", "Bloque"],
+  ["activity", "Actividad actual"],
+  ["assets", "Activos"],
+  ["return", "Rent. acum."],
+  ["sessions", "Sesiones"],
+  ["date", "Último cierre"],
+  ["dd", "DD"]
+];
+
+function midasLabGroupTitle(group) {
+  return MIDAS_LAB_GROUPS.find(([id]) => id === group)?.[1] || group || "Sin bloque";
+}
+
 export function renderMidasVisualLab(dashboard, lab = null) {
   const active = activeMidasRows(dashboard, lab);
   if (!active.length) return "";
+  const weekly = active.filter((row) => row.group === "weekly_ml_demo");
+  const hasLiveWeeklyDaily = weekly.some((row) => row.daily_mode === true);
+  const weeklyNote = !weekly.length ? "" :
+    '<p class="midas-lab-group-note"><strong>Weekly ML:</strong> ' +
+      (hasLiveWeeklyDaily
+        ? 'Señales los viernes; compra paper en la primera apertura siguiente, valoración diaria al cierre y liquidación semanal. No se reconstruyen compras de semanas anteriores.'
+        : 'Señales congeladas el viernes; liquidación simulada al cierre de la semana siguiente. Esta variante no registra compras ni rentabilidad diaria antes de liquidar.') +
+    '</p>';
 
   return '<section class="midas-lab">' +
     '<div class="midas-lab-heading">' +
       '<div><span class="eyebrow">COMPETICIÓN</span><h3>Comportamiento de los algoritmos</h3>' +
-      '<p>Vista compacta del estado actual. Pulsa cualquier algoritmo para abrir su ficha completa, incluida la evolución del patrimonio ficticio.</p></div>' +
+      '<p>Todos los bloques en una tabla. Ordena por cualquier columna y pulsa un algoritmo para consultar su ficha completa.</p></div>' +
       '<div class="midas-lab-legend"><span><i class="is-positive"></i>positivo</span><span><i class="is-negative"></i>negativo</span><span><i class="is-neutral"></i>esperando</span></div>' +
     '</div>' +
-    MIDAS_LAB_GROUPS.map(([group, title]) => {
-      const groupRows = active.filter((row) => row.group === group);
-      if (!groupRows.length) return "";
-      const hasLiveWeeklyDaily = group === "weekly_ml_demo" && groupRows.some((row) => row.daily_mode === true);
-      return '<div class="midas-lab-group"><div class="midas-lab-group-title"><strong>' + escapeHtml(title) + '</strong><span>' + groupRows.length + ' algoritmos</span></div>' +
-        (group === "weekly_ml_demo" ? '<p class="midas-lab-group-note">' +
-          (hasLiveWeeklyDaily
-            ? 'Señales los viernes; compra paper en la primera apertura siguiente, valoración diaria al cierre y liquidación semanal. No se reconstruyen compras de semanas anteriores.'
-            : 'Señales congeladas el viernes; liquidación simulada al cierre de la semana siguiente. Esta variante no registra compras ni rentabilidad diaria antes de liquidar.') +
-          '</p>' : '') +
-        '<div class="midas-lab-table-wrap"><table class="midas-lab-table">' +
-          '<thead><tr>' +
-            '<th>Algoritmo</th><th>Actividad actual</th><th>Activos</th><th>Rent. acum.</th>' +
-            '<th>Sesiones</th><th>Último cierre</th><th>DD</th>' +
-          '</tr></thead>' +
-          '<tbody>' + groupRows.map(renderMidasLabRow).join("") + '</tbody>' +
-        '</table></div></div>';
-    }).join("") +
+    '<div class="midas-lab-mobile-sort"><label for="midas-lab-sort-select">Ordenar por</label>' +
+      '<select id="midas-lab-sort-select" data-midas-lab-mobile-sort aria-label="Columna de ordenación">' +
+        MIDAS_LAB_COLUMNS.map(([key, title]) =>
+          '<option value="' + key + '"' + (key === "return" ? ' selected' : '') + '>' + escapeHtml(title) + '</option>').join("") +
+      '</select><button type="button" data-midas-lab-mobile-direction aria-label="Cambiar sentido de ordenación">↓</button></div>' +
+    '<div class="midas-lab-table-wrap"><table class="midas-lab-table">' +
+      '<thead><tr>' +
+        MIDAS_LAB_COLUMNS.map(([key, title]) =>
+          '<th scope="col" aria-sort="' + (key === "return" ? "descending" : "none") + '">' +
+          '<button type="button" class="midas-lab-sort" data-midas-lab-sort-key="' + key + '" aria-label="Ordenar por ' + escapeHtml(title) + '">' +
+          escapeHtml(title) + ' <span data-midas-lab-sort-indicator aria-hidden="true">' +
+          (key === "return" ? "↓" : "↕") + '</span></button></th>').join("") +
+      '</tr></thead>' +
+      '<tbody>' + active.map(renderMidasLabRow).join("") + '</tbody>' +
+    '</table></div>' + weeklyNote +
   '</section>';
+}
+
+export function compareMidasLabRows(a, b, key, direction = "asc") {
+  const numeric = new Set(["return", "sessions", "dd"]).has(key);
+  const date = key === "date";
+  const get = (item) => item?.[key] ?? "";
+  return compareMidasSortValues(get(a), get(b), { numeric, direction: date ? direction : direction }) ||
+    compareMidasSortValues(a?.algorithm, b?.algorithm);
+}
+
+// Same interaction model as the MIDAS thesis table: click to reverse the selected
+// column, use a stable algorithm-name tie-breaker, leave unknown metrics last.
+export function bindMidasLabSorting(root) {
+  const table = root.querySelector(".midas-lab-table");
+  if (!table?.tBodies[0]) return;
+  const tbody = table.tBodies[0];
+  const rows = [...tbody.rows];
+  const buttons = [...table.querySelectorAll("[data-midas-lab-sort-key]")];
+  const mobileSort = root.querySelector("[data-midas-lab-mobile-sort]");
+  const mobileDirection = root.querySelector("[data-midas-lab-mobile-direction]");
+  let activeKey = "return";
+  let direction = "desc";
+
+  function sort(key, nextDirection) {
+    const value = (row) => ({
+      algorithm: row.getAttribute("data-midas-lab-sort-algorithm"),
+      group: row.getAttribute("data-midas-lab-sort-group"),
+      activity: row.getAttribute("data-midas-lab-sort-activity"),
+      assets: row.getAttribute("data-midas-lab-sort-assets"),
+      return: row.getAttribute("data-midas-lab-sort-return"),
+      sessions: row.getAttribute("data-midas-lab-sort-sessions"),
+      date: row.getAttribute("data-midas-lab-sort-date"),
+      dd: row.getAttribute("data-midas-lab-sort-dd")
+    });
+    rows.sort((a, b) => compareMidasLabRows(value(a), value(b), key, nextDirection));
+    const fragment = document.createDocumentFragment();
+    rows.forEach((row) => fragment.appendChild(row));
+    tbody.appendChild(fragment);
+    activeKey = key;
+    direction = nextDirection;
+    for (const button of buttons) {
+      const selected = button.dataset.midasLabSortKey === key;
+      button.closest("th")?.setAttribute("aria-sort", selected ?
+        (direction === "desc" ? "descending" : "ascending") : "none");
+      const indicator = button.querySelector("[data-midas-lab-sort-indicator]");
+      if (indicator) indicator.textContent = selected ? (direction === "desc" ? "↓" : "↑") : "↕";
+    }
+    if (mobileSort) mobileSort.value = key;
+    if (mobileDirection) {
+      mobileDirection.textContent = direction === "desc" ? "↓" : "↑";
+      mobileDirection.setAttribute("aria-label", direction === "desc" ? "Orden descendente; cambiar a ascendente" : "Orden ascendente; cambiar a descendente");
+    }
+  }
+
+  buttons.forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.midasLabSortKey;
+    const next = key === activeKey ? (direction === "desc" ? "asc" : "desc") :
+      (["algorithm", "group", "activity", "assets"].includes(key) ? "asc" : "desc");
+    sort(key, next);
+  }));
+  mobileSort?.addEventListener("change", () => {
+    const key = mobileSort.value;
+    sort(key, ["algorithm", "group", "activity", "assets"].includes(key) ? "asc" : "desc");
+  });
+  mobileDirection?.addEventListener("click", () => sort(activeKey, direction === "desc" ? "asc" : "desc"));
+  sort("return", "desc");
 }
 
 export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
@@ -240,18 +328,35 @@ function renderTickerChips(tickers, limit = 6) {
 
 function renderMidasLabRow(item) {
   const meta = algorithmMeta(item);
+  const group = midasLabGroupTitle(item.group);
+  const ddValue = typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)
+    ? item.max_drawdown_pct : null;
+  const attrs = {
+    algorithm: item.label,
+    group,
+    activity: meta.activityLabel,
+    assets: meta.activityTickers.join(", "),
+    return: meta.returnPct,
+    sessions: meta.sessions || 0,
+    date: meta.latestDate,
+    dd: ddValue
+  };
+  const sortAttrs = Object.entries(attrs).map(([key, value]) =>
+    ' data-midas-lab-sort-' + key + '="' + escapeHtml(value == null ? "" : value) + '"').join("");
   return '<tr class="midas-lab-row is-' + tone(meta.returnPct) + (item.bootstrap ? ' is-bootstrap' : '') + '" ' +
-    'data-midas-algorithm-id="' + escapeHtml(item.id) + '" tabindex="0" role="button" aria-label="Abrir detalle de ' + escapeHtml(item.label) + '">' +
-    '<td class="midas-lab-col-algorithm"><strong>' + escapeHtml(item.label) + '</strong>' +
+    'data-midas-algorithm-id="' + escapeHtml(item.id) + '"' + sortAttrs +
+    ' tabindex="0" role="button" aria-label="Abrir detalle de ' + escapeHtml(item.label) + '">' +
+    '<td class="midas-lab-col-algorithm" data-label="Algoritmo"><strong title="' + escapeHtml(item.label) + '">' + escapeHtml(item.label) + '</strong>' +
       '<span class="midas-lab-table-state"><i></i>' + escapeHtml(meta.status) + '</span>' +
       (item.bootstrap ? '<small>Prueba retrospectiva · no cuenta en forward</small>' : '') +
     '</td>' +
-    '<td class="midas-lab-col-activity"><strong>' + escapeHtml(meta.activityLabel) + '</strong></td>' +
-    '<td class="midas-lab-col-assets">' + renderTickerChips(meta.activityTickers) + '</td>' +
-    '<td class="midas-lab-col-return"><strong class="midas-lab-return">' + formatPercent(meta.returnPct) + '</strong></td>' +
-    '<td class="midas-lab-col-sessions">' + (meta.sessions || "—") + '</td>' +
-    '<td class="midas-lab-col-date">' + escapeHtml(formatDate(meta.latestDate)) + '</td>' +
-    '<td class="midas-lab-col-dd">' + escapeHtml(meta.drawdown) + '</td>' +
+    '<td class="midas-lab-col-group" data-label="Bloque"><span>' + escapeHtml(group) + '</span></td>' +
+    '<td class="midas-lab-col-activity" data-label="Actividad" title="' + escapeHtml(meta.activityLabel) + '"><strong>' + escapeHtml(meta.activityLabel) + '</strong></td>' +
+    '<td class="midas-lab-col-assets" data-label="Activos" title="' + escapeHtml(meta.activityTickers.join(", ")) + '">' + renderTickerChips(meta.activityTickers, 3) + '</td>' +
+    '<td class="midas-lab-col-return" data-label="Rent. acum."><strong class="midas-lab-return">' + formatPercent(meta.returnPct) + '</strong></td>' +
+    '<td class="midas-lab-col-sessions" data-label="Sesiones">' + (meta.sessions || "—") + '</td>' +
+    '<td class="midas-lab-col-date" data-label="Último cierre">' + escapeHtml(formatDate(meta.latestDate)) + '</td>' +
+    '<td class="midas-lab-col-dd" data-label="DD">' + escapeHtml(meta.drawdown) + '</td>' +
   '</tr>';
 }
 
