@@ -1817,13 +1817,43 @@ try {
     } else if (areaId === "area-pantry") {
       if (!(pantryProbe.ok && pantryProbe.body?.ok === true)) {
         info("Despensa · pestañas omitidas", "backend no saludable; fallo ya clasificado por API");
-      } else await auditTabSet(
-        "Despensa",
-        "[data-pantry-view]",
-        "pantryView",
-        (value) => `[data-pantry-panel="${value}"]`,
-        { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180, sourcePath: "/api/pantry", timeout: 12000 }
-      );
+      } else {
+        await auditTabSet(
+          "Despensa",
+          "[data-pantry-view]",
+          "pantryView",
+          (value) => `[data-pantry-panel="${value}"]`,
+          { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180, sourcePath: "/api/pantry", timeout: 12000 }
+        );
+        const tickets = Array.isArray(pantryProbe.body.recentTickets) ? pantryProbe.body.recentTickets : [];
+        const latest = tickets[0] || null;
+        const integrity = pantryProbe.body.latestTicketIntegrity;
+        if (latest) {
+          const ticketTab = page.locator('[data-pantry-view="tickets"]');
+          await ticketTab.click();
+          const rendered = page.locator('[data-pantry-panel="tickets"] [data-pantry-ticket]');
+          assertCheck(await rendered.count() === tickets.length, "Despensa · listado de tickets corresponde a API privada",
+            "registros " + (await rendered.count()) + " / " + tickets.length);
+          const uiId = await rendered.first().getAttribute("data-pantry-ticket").catch(() => "");
+          assertCheck(uiId === latest.id, "Despensa · último ticket corresponde a API privada",
+            uiId === latest.id ? "identificador correcto" : "identificador diferente");
+          const observedPrices = await rendered.first().locator(".pantry-shopping-row").count();
+          assertCheck(observedPrices === latest.priceObservations.length,
+            "Despensa · precios de último ticket reflejados en dashboard",
+            "UI " + observedPrices + " / API " + latest.priceObservations.length);
+          assertCheck(integrity?.hasUniqueHeader === true,
+            "Despensa · último ticket sin cabecera duplicada", "única " + String(integrity?.hasUniqueHeader));
+          assertCheck(integrity?.allPricesLinked === true,
+            "Despensa · precios del último ticket con producto canónico",
+            "productos vinculados " + String(integrity?.allPricesLinked));
+          assertCheck(integrity?.priceCoverageComplete === true,
+            "Despensa · último ticket con observaciones de precio completas",
+            "vinculadas " + (integrity?.priceObservationCount ?? "?") + " / declaradas " + (integrity?.expectedLineCount ?? "?"));
+        } else {
+          assertCheck((await page.locator('[data-pantry-panel="tickets"] [data-pantry-ticket]').count()) === 0,
+            "Despensa · no se inventan tickets sin fuente");
+        }
+      }
     } else if (areaId === "area-objects") {
       await auditTabSet(
         "Objetos",

@@ -26,3 +26,12 @@ test("Pantry backend retries transient Google Sheets reads", async () => {
   assert.match(backend, /response\.status !== 429 && response\.status < 500/);
   assert.match(backend, /setTimeout\(resolve, 250 \* attempt\)/);
 });
+
+test("Pantry renders private receipts without inventing home inventory", () => {
+  assert.match(pantry,/data-pantry-view="tickets"/);
+  assert.match(pantry,/data-pantry-panel="tickets"/);
+  assert.match(pantry,/data-pantry-ticket/);
+  assert.match(pantry,/priceObservations/);
+  assert.match(pantry,/stockStatus: "unknown"/);
+  assert.match(pantry,/renderWorkspace\(payload, "tickets"\)/);
+});
