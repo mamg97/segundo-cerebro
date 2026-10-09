@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-import { safeAuditLog } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -45,6 +45,8 @@ function fail(name, detail = "") {
   checks.push({ name, ok: false, detail });
   failures.push({ name, detail });
   console.error(safeAuditLog("FAIL", checks.length, name, detail));
+  const diagnostic=safeAuditDiagnosticCode(name);
+  if (diagnostic !== "CHECK_UNMAPPED") console.error("[AUDIT_DIAG] " + diagnostic);
 }
 
 function info(name, detail = "") {
@@ -1249,7 +1251,22 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
       continue;
     }
     await exact.click();
-    await page.waitForTimeout(settle);
+    if (options.htmlDataName === "account-transactions-tab") {
+      // The workspace can rerender after a private source refresh. Verify the
+      // eventual selected tab *and* matching visible panel instead of treating
+      // a stale 120ms snapshot as a permanent navigation failure.
+      await page.waitForFunction((accountId) => {
+        const button=[...document.querySelectorAll(".account-transactions-tabs [data-account-transactions-tab]")]
+          .find((node) => node.dataset.accountTransactionsTab === accountId);
+        const panel=[...document.querySelectorAll("[data-account-transactions-panel]")]
+          .find((node) => node.dataset.accountTransactionsPanel === accountId);
+        return Boolean(button && panel &&
+          button.getAttribute("aria-selected") === "true" &&
+          button.classList.contains("active") &&
+          !panel.hidden && panel.classList.contains("active"));
+      }, value, { timeout: 3500 }).catch(() => {});
+      await page.waitForTimeout(Math.max(settle, 200));
+    } else await page.waitForTimeout(settle);
     const active = await exact.evaluate((node) =>
       node.classList.contains("active") || node.getAttribute("aria-selected") === "true"
     ).catch(() => false);
@@ -2446,6 +2463,17 @@ try {
   }
   if (resourceConsoleErrors.length && networkFailures.length) {
     info("Errores de recurso ya cubiertos por red", `n=${resourceConsoleErrors.length}`);
+  }
+  if (networkFailures.length) {
+    const families = new Map();
+    for (const entry of networkFailures) {
+      const key = safeAuditNetworkFailureCode(entry);
+      families.set(key, (families.get(key) || 0) + 1);
+    }
+    // Only fixed route-family and status codes reach public Actions logs.
+    for (const [key, count] of [...families].sort((a, b) => a[0].localeCompare(b[0]))) {
+      console.error("[AUDIT_NETWORK_DIAG] " + key + " count=" + count);
+    }
   }
   assertCheck(networkFailures.length === 0, "Sin respuestas 5xx ni fallos de red", networkFailures.length ? networkFailures.join(",") : "");
   assertCheck(browserErrors.length === 0, "Sin errores JavaScript/console", browserErrors.length ? browserErrors.slice(0, 3).join(" | ") : "");
