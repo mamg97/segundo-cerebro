@@ -7,7 +7,7 @@ import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
-import { renderMidasAlgorithmDetail, renderMidasVisualLab } from "./midas-lab.js?v=0.40.19";
+import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.20";
 import { midasCagrNumber, midasDisplayValuation, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.10";
 
 let state = mockState;
@@ -8087,6 +8087,7 @@ function bindMidasWorkspace(dashboard, lab) {
   const root = document.querySelector("#midas-report");
   if (!root) return;
   bindMidasResearchSorting(root);
+  bindMidasLabSorting(root);
   const tabs = [...root.querySelectorAll("[data-midas-tab]")];
   const panels = [...root.querySelectorAll("[data-midas-panel]")];
   const competitionList = root.querySelector("[data-midas-competition-list]");
