@@ -23049,6 +23049,31 @@ html[data-theme="dark"] .loan-benchmark-explanation {
   font-size: 8px;
 }
 
+/* Paused Gym keeps the complete plan readable even when sessions are disabled. */
+.gym-plan-reference-exercise > span {
+  flex: 1 1 auto;
+}
+
+.gym-plan-reference-exercise strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.gym-plan-reference-exercise small.gym-plan-reference-load {
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.gym-plan-reference-exercise small.gym-plan-reference-note {
+  margin-top: 3px;
+  font-size: 9px;
+  line-height: 1.4;
+  white-space: normal;
+}
+
 .gym-exercise-title-row {
   display: flex;
   gap: 8px;
