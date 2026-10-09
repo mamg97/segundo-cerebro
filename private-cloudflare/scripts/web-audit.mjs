@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { safeAuditLog } from "./audit-log-policy.mjs";
 import {
   canonicalMenuMoment,
   classifyRequestFailure,
@@ -20,6 +21,7 @@ if (!token) {
 }
 
 const failures = [];
+let infoCount = 0;
 const checks = [];
 const networkFailures = [];
 const ignoredNetworkAborts = [];
@@ -30,17 +32,17 @@ const deferredApiFailures = new Map();
 
 function pass(name, detail = "") {
   checks.push({ name, ok: true, detail });
-  console.log(`[PASS] ${name}${detail ? ` · ${detail}` : ""}`);
+  console.log(safeAuditLog("PASS", checks.length, name, detail));
 }
 
 function fail(name, detail = "") {
   checks.push({ name, ok: false, detail });
   failures.push({ name, detail });
-  console.error(`[FAIL] ${name}${detail ? ` · ${detail}` : ""}`);
+  console.error(safeAuditLog("FAIL", checks.length, name, detail));
 }
 
 function info(name, detail = "") {
-  console.log(`[INFO] ${name}${detail ? ` · ${detail}` : ""}`);
+  console.log(safeAuditLog("INFO", ++infoCount, name, detail));
 }
 
 function assertCheck(condition, name, detail = "") {
@@ -2452,7 +2454,7 @@ function objectiveHasValue(value) {
 
 console.log(`[SUMMARY] checks=${checks.length} failures=${failures.length}`);
 if (failures.length) {
-  console.error("[AUDIT_FAILED] " + failures.map((item) => item.name).join(" | "));
+  console.error(`[AUDIT_FAILED] failures=${failures.length}`);
   process.exit(1);
 }
 console.log("[AUDIT_OK] Segundo Cerebro production UI passed the hourly audit.");
