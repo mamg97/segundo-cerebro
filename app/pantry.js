@@ -166,7 +166,7 @@ function locationTiles(payload) {
 }
 
 function setPantryView(body, view) {
-  const nextView = view === "shopping" ? "shopping" : "inventory";
+  const nextView = ["inventory", "shopping", "tickets"].includes(view) ? view : "inventory";
   body.querySelectorAll("[data-pantry-view]").forEach((button) => {
     const active = button.dataset.pantryView === nextView;
     button.classList.toggle("active", active);
@@ -300,12 +300,37 @@ function renderWorkspace(payload, initialView = "inventory") {
       '">' + content + '</a>';
   }).join("");
 
+  const recentTickets = Array.isArray(payload.recentTickets) ? payload.recentTickets : [];
+  const ticketCards = recentTickets.map((ticket) => {
+    const prices = Array.isArray(ticket.priceObservations) ? ticket.priceObservations : [];
+    const lineCount = Number.isFinite(Number(ticket.expectedLines)) ? Number(ticket.expectedLines) : null;
+    const coverage = lineCount !== null && lineCount !== prices.length
+      ? '<small class="pantry-shopping-source">Precios vinculados: ' + prices.length + ' / ' + lineCount + ' líneas. Conciliación pendiente.</small>'
+      : '';
+    return '<article class="pantry-shopping-section" data-pantry-ticket="' + escapeHtml(ticket.id || "") + '">' +
+      '<div class="pantry-section-heading"><div><small>' + escapeHtml(formatDate(ticket.date)) + ' · Ticket real</small>' +
+      '<strong>' + escapeHtml(ticket.id || "Sin identificador") + '</strong></div>' +
+      '<strong>' + escapeHtml(money(ticket.amount, currency)) + '</strong></div>' +
+      '<p class="pantry-shopping-source">' + escapeHtml([ticket.store, lineCount === null ? null : lineCount + ' líneas', ticket.fileName].filter(Boolean).join(' · ')) + '</p>' +
+      coverage +
+      '<div class="pantry-shopping-list">' +
+      prices.map((price) => '<div class="pantry-shopping-row"><div><strong>' + escapeHtml(price.name || "Producto") +
+        '</strong><small>Precio observado en ticket · ' + escapeHtml(price.priceBase || "base sin confirmar") + '</small></div>' +
+        '<strong>' + escapeHtml(money(price.price, currency)) + '</strong>' +
+        (price.linkedProduct ? '<button type="button" class="weekly-menu-entity-link" data-pantry-ticket-product="' + escapeHtml(price.productId) + '">Ficha ↗</button>' : '') +
+        '</div>').join('') +
+      (prices.length ? '' : '<p class="pantry-empty">Precios de este ticket pendientes de vinculación.</p>') +
+      '</div>' +
+      '</article>';
+  }).join("");
+
   body.innerHTML =
     '<div class="pantry-shell">' +
       '<div class="pantry-topbar">' +
         '<nav class="pantry-view-nav" role="tablist" aria-label="Vistas de Despensa">' +
           '<button type="button" data-pantry-view="inventory" role="tab">Inventario</button>' +
           '<button type="button" data-pantry-view="shopping" role="tab">🛒 Lista de la compra <span>' + Number(summary.pendingPurchaseCount || shopping.length || 0) + '</span></button>' +
+          '<button type="button" data-pantry-view="tickets" role="tab">Tickets <span>' + Number(payload.ticketSummary?.count || recentTickets.length || 0) + '</span></button>' +
         '</nav>' +
         '<a class="master-source-link" href="/api/source-link?target=pantry-products" target="_blank" rel="noopener noreferrer">Maestro de productos ↗</a>' +
       '</div>' +
@@ -352,6 +377,11 @@ function renderWorkspace(payload, initialView = "inventory") {
             ? '<small>' + Number(summary.missingPriceCount) + (Number(summary.missingPriceCount) === 1 ? ' artículo sin precio' : ' artículos sin precio') + '</small>'
             : '') +
         '</strong></div>' +
+      '</section>' +
+      '<section class="pantry-shopping-view" data-pantry-panel="tickets">' +
+        '<div class="pantry-section-heading"><div><small>Compras registradas</small><strong>Últimos tickets</strong></div></div>' +
+        '<p class="pantry-shopping-source">Fuente: Tickets y Precios del Sheet privado de Despensa. Los precios observados no indican unidades consumidas ni pago bancario.</p>' +
+        (ticketCards || '<p class="pantry-empty">Todavía no hay tickets vinculados.</p>') +
       '</section>' +
     '</div>';
 
@@ -402,6 +432,14 @@ function renderWorkspace(payload, initialView = "inventory") {
     searchText = String(event.target.value || "").trim().toLocaleLowerCase("es");
     applyFilters();
   });
+
+  body.querySelectorAll("[data-pantry-ticket-product]").forEach((button) => button.addEventListener("click", () => {
+    const id = button.dataset.pantryTicketProduct;
+    const stocked = items.find((item) => item.productId === id);
+    const catalogue = (Array.isArray(payload.products) ? payload.products : []).find((item) => item.id === id);
+    const product = stocked || (catalogue ? { ...catalogue, productId: catalogue.id, stockStatus: "unknown" } : null);
+    if (product) renderProductDetail(product, payload, { onBack: () => renderWorkspace(payload, "tickets") });
+  }));
 
   body.querySelectorAll("[data-pantry-product]").forEach((button) => button.addEventListener("click", () => {
     const id = button.dataset.pantryProduct;
