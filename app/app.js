@@ -7981,7 +7981,8 @@ function renderMidasExecutionHealth(health, dashboard) {
     running: "Ejecutándose",
     not_due_yet: "Aún no toca",
     failed: "Fallo",
-    missing_due_run: "Ejecución ausente"
+    missing_due_run: "Ejecución ausente",
+    unverified: "Sin verificación operativa"
   };
   const rows = workflowRows.map((row) => ({
     label: row.name
@@ -7997,18 +7998,25 @@ function renderMidasExecutionHealth(health, dashboard) {
     timestamp: row.created_at,
     run: row.run_number
   }));
+  if (!workflowRows.some((row) => row.name === "MIDAS Weekly ML daily paper")) {
+    rows.push({
+      label: "Weekly ML diario", state: "unverified", ok: null,
+      detail: "Workflow diario fuera de la telemetría mostrada: no se verifica su ejecución ni el avance del ledger",
+      timestamp: null, run: null
+    });
+  }
   rows.push({
-    label: "Genético S&P 500 prospectivo",
-    state: genetic?.status === "demo_con_diario" && genetic?.last_session ? "success" : "missing_due_run",
-    ok: genetic?.status === "demo_con_diario" && Boolean(genetic?.last_session),
-    detail: genetic?.last_session ? "Diario privado enlazado hasta " + genetic.last_session : "Sin snapshot prospectivo enlazado",
-    timestamp: null,
-    run: null
+    label: "Genético S&P 500 prospectivo", state: "unverified", ok: null,
+    detail: genetic?.last_session
+      ? "Snapshot privado hasta " + genetic.last_session + "; la última ejecución GitHub no se valida aquí"
+      : "Snapshot prospectivo ausente; la ejecución GitHub no se valida aquí",
+    timestamp: null, run: null
   });
 
   const unavailable = health?.status !== "ok";
   const attention = !unavailable && rows.some((row) => row.ok === false);
-  const overall = unavailable ? "Estado operativo no disponible" : attention ? "Requiere atención" : "Ejecución controlada";
+  const incomplete = !unavailable && rows.some((row) => row.ok === null);
+  const overall = unavailable ? "Estado operativo no disponible" : attention ? "Requiere atención" : incomplete ? "Cobertura de auditoría parcial" : "Ejecución controlada";
   return `<section class="midas-runtime-health ${attention ? "is-attention" : unavailable ? "is-unknown" : "is-healthy"}">
     <div class="midas-runtime-heading">
       <div><span class="context-label">Salud operativa</span><strong>${escapeHtml(overall)}</strong></div>
@@ -8053,7 +8061,7 @@ function renderMidasReport(dashboard, stale, research = null, lab = null) {
   const latest = lastSessions.length ? lastSessions[lastSessions.length - 1] : null;
   return `<div class="midas-report">
     <div class="midas-intro">
-      <p><strong>${observed} ${observed === 1 ? "estrategia" : "estrategias"} con resultados en este informe</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
+      <p><strong>${observed} ${observed === 1 ? "estrategia" : "estrategias"} con seguimiento en este informe</strong><span>Último cierre registrado: ${escapeHtml(formatFinanceDate(latest, "aún ninguno"))}</span></p>
       <p class="midas-updated">Informe generado ${escapeHtml(formatFinanceDate(dashboard.generated_at_utc))}${stale ? " · copia temporal: la fuente no responde" : ""}</p>
     </div>
 
