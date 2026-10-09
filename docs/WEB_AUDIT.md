@@ -80,7 +80,8 @@ Como mínimo:
   - tras un ciclo verde, el auditor exige que aparezcan los diarios correspondientes y no acepta “esperando primera sesión” como sustituto de una ventana realmente fallida;
   - la vista MIDAS expone el mismo estado operativo en un bloque `Salud operativa`; el auditor comprueba que las incidencias detectadas también sean visibles para el usuario;
   - el workspace MIDAS mantiene tres pestañas superiores: Competición de algoritmos, Seguimiento de tesis y Catálogo / histórico;
-  - la tabla de competición no contiene columna Evolución; sus filas son accionables y abren una ficha con métricas completas + curva;
+  - la competición reúne **todos los bloques en una única tabla**, con columna `Bloque`, ocho cabeceras ordenables y rentabilidad por defecto descendente; los controles de ordenación deben cambiar el DOM y conservar los valores pendientes al final;
+  - la tabla de competición no contiene columna Evolución, no debe forzar desplazamiento horizontal en escritorio y adapta las filas en móvil; sus filas son accionables y abren una ficha con métricas completas + curva;
   - la tabla de tesis conserva todas las variables de decisión y, en escritorio, no debe requerir scroll horizontal si el diálogo dispone del ancho normal;
   - la UI obtiene ese estado desde artefactos versionados `strategy_runtime/*.json`, no desde una llamada en vivo a GitHub Actions; el auditor sí consulta Actions directamente como control independiente;
 - respuestas 5xx y fallos de red;
