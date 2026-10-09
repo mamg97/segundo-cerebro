@@ -5861,6 +5861,15 @@ function gymPlanExerciseById(exerciseId, data = gymPanelData) {
   return null;
 }
 
+function formatGymPlanReferenceLoad(exercise) {
+  const value = exercise?.loadValue;
+  if (value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value))) {
+    return `Carga de referencia: ${formatGymLoad(value, exercise.loadUnit)}`;
+  }
+  const note = String(exercise?.loadNote || "").trim();
+  return note ? `Carga de referencia: ${note}` : "Carga de referencia: pendiente";
+}
+
 function renderGymPlanReference(plan) {
   return `
     <section class="gym-plan-reference-section">
@@ -5883,6 +5892,9 @@ function renderGymPlanReference(plan) {
                   <span>
                     <strong>${escapeHtml(exercise.name)}</strong>
                     <small>${escapeHtml(formatTarget(exercise))}</small>
+                    <small class="gym-plan-reference-load">${escapeHtml(formatGymPlanReferenceLoad(exercise))}</small>
+                    ${exercise.loadValue != null && /;|si es|alternativa/i.test(String(exercise.loadNote || "")) ? `<small class="gym-plan-reference-note">${escapeHtml(exercise.loadNote)}</small>` : ""}
+                    ${exercise.coachingNote ? `<small class="gym-plan-reference-note">${escapeHtml(exercise.coachingNote)}</small>` : ""}
                   </span>
                   <b>${gymCustomAnimationFor(exercise) ? "Ver GIF →" : "Técnica →"}</b>
                 </button>`).join("")}

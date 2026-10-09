@@ -111,6 +111,55 @@ test("Opening a curated plan GIF does not require the external library", async (
   assert.match(detail.innerHTML, /ilustración orientativa/);
 });
 
+test("A medically paused Gym still displays canonical series, reps, loads and technique notes", () => {
+  const begin = app.indexOf("function formatGymPlanReferenceLoad(");
+  const end = app.indexOf("function renderGymPlanView(", begin);
+  assert.ok(begin >= 0 && end > begin, "paused plan renderer exists");
+  const context = vm.createContext({
+    escapeHtml: (value) => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+    formatTarget: ({ setsTarget, repsTarget }) => `${setsTarget} series × ${repsTarget} repeticiones`,
+    formatGymLoad: (value, unit) => `${value} ${unit || "kg"}`,
+    gymCustomAnimationFor: () => null
+  });
+  vm.runInContext(app.slice(begin, end), context);
+
+  const plan = [{
+    id: "example", title: "Día de ejemplo", focus: "Prueba",
+    exercises: [
+      { id: "barbell", name: "Prensa de ejemplo", setsTarget: 3, repsTarget: "8-12", loadValue: 25,
+        loadUnit: "kg/lado", loadNote: "25 kg/lado; si es otra máquina usar otro peso",
+        coachingNote: "No buscar el fallo." },
+      { id: "bodyweight", name: "Fondos de ejemplo", setsTarget: 4, repsTarget: "10-12",
+        loadValue: null, loadNote: "Peso corporal" },
+      { id: "unresolved", name: "Ejercicio por confirmar", setsTarget: 3, repsTarget: "10",
+        loadValue: null, loadNote: "27 o 49 kg: confirmar máquina" },
+      { id: "unknown", name: "Sin carga asignada", setsTarget: 3, repsTarget: "12",
+        loadValue: null, loadNote: "<script>invalid</script>" },
+      { id: "zero", name: "Carga cero", setsTarget: 2, repsTarget: "5",
+        loadValue: 0, loadUnit: "kg extra" }
+    ]
+  }];
+
+  const html = vm.runInContext(`renderGymPlanReference(${JSON.stringify(plan)})`, context);
+  assert.match(html, /3 series × 8-12 repeticiones/);
+  assert.match(html, /Carga de referencia: 25 kg\/lado/);
+  assert.match(html, /otra máquina usar otro peso/);
+  assert.match(html, /No buscar el fallo/);
+  assert.match(html, /Carga de referencia: Peso corporal/);
+  assert.match(html, /Carga de referencia: 27 o 49 kg: confirmar máquina/);
+  assert.match(html, /Carga de referencia: 0 kg extra/);
+  assert.match(html, /&lt;script&gt;invalid&lt;\/script&gt;/);
+  assert.doesNotMatch(html, /<script>/);
+  assert.match(css, /\.gym-plan-reference-exercise small\.gym-plan-reference-load/);
+
+  const pauseAt = app.indexOf("if (trainingStatus.paused)", end);
+  const activeAt = app.indexOf("const lastDayId", pauseAt);
+  assert.ok(pauseAt > end && activeAt > pauseAt);
+  const pausedBranch = app.slice(pauseAt, activeAt);
+  assert.match(pausedBranch, /renderGymPlanReference\(plan\)/);
+  assert.doesNotMatch(pausedBranch, /gym-session-form/);
+});
+
 test("Gym exposes a free visual exercise library beside the canonical plan", () => {
   assert.match(app, /data-gym-view="plan">Mi plan/);
   assert.match(app, /data-gym-view="library">Biblioteca de ejercicios/);
