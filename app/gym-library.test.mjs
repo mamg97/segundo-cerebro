@@ -198,3 +198,76 @@ test("Gym library is responsive and uses the v0.42.14 locked-frame anatomical GI
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.gym-exercise-detail-card\s*\{[\s\S]*?grid-template-columns:/);
 });
+
+
+test("Gym saves only exercise rows explicitly marked as performed, never all prefilled targets", async () => {
+  assert.match(app, /class="gym-input-done" type="checkbox"/);
+  assert.ok(css.includes(".gym-exercise-row .gym-exercise-completed"));
+
+  const begin = app.indexOf("async function saveGymSessionFromForm(");
+  const end = app.indexOf("function renderGymProgress(", begin);
+  assert.ok(begin >= 0 && end > begin, "Gym session submit handler exists");
+
+  const status = { textContent: "" };
+  const marked = { checked: false };
+  const makeRow = (exerciseId, checkedRef, sets, reps, load) => ({
+    dataset: { exerciseId },
+    querySelector(selector) {
+      return ({
+        ".gym-input-done": checkedRef,
+        ".gym-input-sets": { value: sets },
+        ".gym-input-reps": { value: reps },
+        ".gym-input-load": { value: load },
+        ".gym-input-note": { value: "" }
+      })[selector] || null;
+    }
+  });
+  const notMarked = { checked: false };
+  const rows = [
+    makeRow("real", marked, "2", "10,9", "22.5"),
+    makeRow("unperformed", notMarked, "3", "12", "25")
+  ];
+  const fields = new Map([
+    ["#gym-day-id", { value: "push" }],
+    ["#gym-session-date", { value: "2026-01-15" }],
+    ["#gym-session-notes", { value: "" }],
+    ["#gym-save-status", status]
+  ]);
+  const calls = [];
+  const context = vm.createContext({
+    document: {
+      querySelector(selector) { return fields.get(selector) || null; },
+      querySelectorAll(selector) {
+        assert.equal(selector, ".gym-exercise-row");
+        return rows;
+      }
+    },
+    planById: new Map([["push", { id: "push", title: "Ejemplo", exercises: [
+      { id: "real", name: "Press de ejemplo", loadUnit: "kg/lado" },
+      { id: "unperformed", name: "Otro ejercicio", loadUnit: "kg/lado" }
+    ] }]]),
+    renderGymPanel() {},
+    console: { warn: () => { throw Error("Unexpected console warning"); } },
+    fetch: async (url, init) => {
+      calls.push({ url, init });
+      return { ok: true, json: async () => ({ ok: true }) };
+    }
+  });
+  vm.runInContext(app.slice(begin, end), context);
+  await vm.runInContext("saveGymSessionFromForm(planById)", context);
+  assert.match(status.textContent, /Marca como realizado/);
+  assert.equal(calls.length, 0, "No exercises marked means no write");
+
+  marked.checked = true;
+  await vm.runInContext("saveGymSessionFromForm(planById)", context);
+  const post = calls.find((call) => call.url === "/api/gym/session");
+  assert.ok(post, "Save POST is sent");
+  const payload = JSON.parse(post.init.body);
+  assert.equal(payload.entries.length, 1, "Unperformed exercise is excluded");
+  assert.equal(payload.entries[0].exerciseId, "real");
+  assert.equal(payload.entries[0].setsDone, "2");
+  assert.equal(payload.entries[0].repsDone, "10,9");
+  assert.equal(payload.entries[0].loadValue, "22.5");
+  assert.equal(payload.entries[0].loadUnit, "kg/lado");
+  assert.equal(status.textContent, "Entrenamiento guardado ✓");
+});

@@ -6596,6 +6596,10 @@ function renderGymDay(day, latestByExercise = new Map()) {
             ${exercise.loadNote ? `<small>Referencia: ${escapeHtml(exercise.loadNote)}</small>` : ""}
             ${latestLabel ? `<small class="gym-last-record">${escapeHtml(latestLabel)}</small>` : ""}
             ${exercise.coachingNote ? `<p>${escapeHtml(exercise.coachingNote)}</p>` : ""}
+            <label class="gym-exercise-completed">
+              <input class="gym-input-done" type="checkbox" aria-label="Marcar ejercicio realizado">
+              <span>Realizado · incluir al guardar</span>
+            </label>
           </div>
           <label class="gym-number-field">
             <span>Series</span>
@@ -6685,8 +6689,14 @@ async function saveGymSessionFromForm(planById) {
   const sessionDate = document.querySelector("#gym-session-date")?.value;
   const notes = document.querySelector("#gym-session-notes")?.value || "";
   const rows = [...document.querySelectorAll(".gym-exercise-row")];
+  // Targets are prefilled for convenience. Only explicitly confirmed exercises are actual training.
+  const performedRows = rows.filter((row) => row.querySelector(".gym-input-done")?.checked);
+  if (!performedRows.length) {
+    if (status) status.textContent = "Marca como realizado al menos un ejercicio antes de guardar.";
+    return;
+  }
 
-  const entries = rows.map((row) => {
+  const entries = performedRows.map((row) => {
     const exercise = day.exercises.find((item) => item.id === row.dataset.exerciseId);
     return {
       exerciseId: row.dataset.exerciseId,
