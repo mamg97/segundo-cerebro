@@ -251,6 +251,13 @@ test("the health card never equates a private genetic snapshot with a passed wor
   assert.doesNotMatch(fn, /state: genetic\?\.status === "demo_con_diario"/);
 });
 
+test("production MIDAS audit guards historical ranking and NAV-only genetic activity", () => {
+  const audit = readFileSync(new URL("../private-cloudflare/scripts/web-audit.mjs", import.meta.url), "utf8");
+  assert.match(audit, /MIDAS · genético histórico no compite en el ranking prospectivo/);
+  assert.match(audit, /MIDAS · snapshot genético privado no se interpreta como efectivo ni filtra tickers/);
+  assert.match(audit, /MIDAS · Weekly ML previo sin primera liquidación no publica rentabilidad realizada/);
+});
+
 test("competition sorting initializes once per MIDAS render and mobile is responsive", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
