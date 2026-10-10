@@ -39,7 +39,7 @@ test("health recovery import is idempotent and cannot block reads", () => {
   assert.match(source, /SELECT signature FROM health_import_state/);
   assert.match(source, /await env\.DB\.batch\(statements\)/);
   assert.match(source, /Apple Health recovery reconcile failed/);
-  assert.match(source, /String\(sheet\.source \|\| ""\) === "apple_health_export_recovery"/);
+  assert.match(source, /const energyForDate = \(dateKey\) => selectHealthEnergyRow/);
 });
 
 test("health Sheet reads retry transient Google failures", () => {
@@ -54,4 +54,18 @@ test("nutrition summary can fall back to exact consumed menu identities missing 
   assert.match(source, /\[item\.recipeId, item\.foodId\]/);
   assert.match(source, /source: "menu_consumed_fallback"/);
   assert.match(source, /const dayEntries = \[\.\.\.registeredDayEntries, \.\.\.consumedMenuFallback\]/);
+});
+
+test("ZIP backfill never overwrites an existing HealthKit daily D1 snapshot", () => {
+  const reconcile = source.slice(
+    source.indexOf("async function reconcileHealthRecoveryRows("),
+    source.indexOf("function healthCoverageQuality(") >= 0 ? source.indexOf("function healthCoverageQuality(") : source.indexOf("async function fetchHealthHistory(")
+  );
+  const energyImport = reconcile.slice(
+    reconcile.indexOf("for (const row of recoveredEnergy)"),
+    reconcile.indexOf("for (const row of recoveredBody)")
+  );
+  assert.match(energyImport, /INSERT INTO health_energy_daily/);
+  assert.match(energyImport, /ON CONFLICT\(energy_date\) DO NOTHING/);
+  assert.doesNotMatch(energyImport, /ON CONFLICT\(energy_date\) DO UPDATE/);
 });

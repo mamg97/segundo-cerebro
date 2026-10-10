@@ -4224,8 +4224,10 @@ function renderNutritionPanel(data) {
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   };
-  const totalBurn = nullableNumber(summary.totalBurn);
-  const balance = nullableNumber(summary.balanceKcal);
+  const coverageQuality = String(energy?.coverageQuality || "unknown");
+  const energyComparable = ["full", "live"].includes(coverageQuality);
+  const totalBurn = energyComparable ? nullableNumber(summary.totalBurn) : null;
+  const balance = energyComparable ? nullableNumber(summary.balanceKcal) : null;
   const remainingTarget = nullableNumber(summary.remainingToTargetKcal);
   const energySampleTime = energy?.sampledAt && Number.isFinite(new Date(energy.sampledAt).getTime())
     ? new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(new Date(energy.sampledAt))
@@ -4251,13 +4253,13 @@ function renderNutritionPanel(data) {
         <span>Gasto total</span>
         <strong>${totalBurn === null ? "—" : formatKcal(totalBurn)}</strong>
         <small>${energy?.source
-          ? `${escapeHtml(String(energy.source))}${energySampleTime ? ` · actualizado ${escapeHtml(energySampleTime)}` : ""}`
+          ? `${escapeHtml(String(energy.source))}${energySampleTime ? ` · actualizado ${escapeHtml(energySampleTime)}` : ""}${energyComparable ? "" : " · cobertura parcial o sin confirmar"}`
           : "Sin registro para esta fecha"}</small>
       </article>
       <article>
         <span>Balance</span>
         <strong class="${balance !== null && balance < 0 ? "negative-balance" : ""}">${balance === null ? "—" : signedKcal(balance)}</strong>
-        <small>Ingeridas − gastadas</small>
+        <small>${energyComparable ? "Ingeridas − gastadas" : "Balance no fiable: falta el cierre energético"}</small>
       </article>
       <article>
         <span>Objetivo</span>
@@ -4272,7 +4274,7 @@ function renderNutritionPanel(data) {
     <div class="nutrition-status-grid">
       <article>
         <div>
-          <span class="nutrition-source-dot ${energy?.source ? "connected" : ""}"></span>
+          <span class="nutrition-source-dot ${energyComparable ? "connected" : ""}"></span>
           <strong>Apple Health</strong>
         </div>
         <p>${energy?.source

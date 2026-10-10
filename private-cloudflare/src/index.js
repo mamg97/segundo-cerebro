@@ -18,6 +18,7 @@ import { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, 
 import { handleShoppingSyncRequest } from "./shopping-sync.js";
 import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
 import { googleReadFetch } from "./google-read.js";
+import { healthCoverageQuality, isHealthEnergyComparable, selectHealthEnergyRow } from "./health-energy-quality.js";
 import {
   searchGymExerciseLibrary,
   getGymExerciseLibraryMeta,
@@ -2420,19 +2421,10 @@ async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], 
         energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at,
         steps, exercise_minutes, workout_count, sampled_at, source_details, workouts_json
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(energy_date) DO UPDATE SET
-        active_kcal = excluded.active_kcal,
-        resting_kcal = excluded.resting_kcal,
-        total_kcal = excluded.total_kcal,
-        source = excluded.source,
-        note = excluded.note,
-        recorded_at = excluded.recorded_at,
-        steps = excluded.steps,
-        exercise_minutes = excluded.exercise_minutes,
-        workout_count = excluded.workout_count,
-        sampled_at = excluded.sampled_at,
-        source_details = excluded.source_details,
-        workouts_json = excluded.workouts_json
+      -- A historical import may fill a missing day but MUST NOT replace a
+      -- newer HealthKit bridge snapshot (or any existing canonical observation).
+      -- Conflict resolution is performed separately after coverage/source QA.
+      ON CONFLICT(energy_date) DO NOTHING
     `).bind(
       row.date,
       row.activeKcal,
@@ -2544,19 +2536,6 @@ async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], 
     recoveryRows: recoveredRecovery.length,
     skipped: false
   };
-}
-
-function healthCoverageQuality(row) {
-  const details = Array.isArray(row?.sourceDetails) ? row.sourceDetails : [];
-  const coverage = details.find((item) => item && item.kind === "coverage");
-  if (coverage?.quality) return String(coverage.quality);
-  if (String(row?.source || "").includes("history_partial")) return "partial";
-  if (String(row?.source || "").includes("export_partial")) return "partial";
-  if (String(row?.source || "").includes("export_watch")) return "full";
-  if (String(row?.source || "").includes("export_recovery")) return "full";
-  if (String(row?.source || "").includes("export_phone")) return "phone_only";
-  if (String(row?.source || "").includes("apple_health")) return "live";
-  return "unknown";
 }
 
 async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
@@ -3210,24 +3189,10 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   for (const row of [...energyRows].sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")))) {
     if (!sheetEnergyByDate.has(row.date)) sheetEnergyByDate.set(row.date, row);
   }
-  const energyForDate = (dateKey) => {
-    const d1 = d1EnergyByDate.get(dateKey) || null;
-    const sheet = sheetEnergyByDate.get(dateKey) || null;
-    if (!sheet) return d1;
-    if (!d1) return sheet;
-    if (String(sheet.source || "") === "apple_health_export_recovery") {
-      const sheetImportedAt = String(sheet.importedAt || "");
-      const d1ImportedAt = String(d1.importedAt || "");
-      if (
-        String(d1.source || "") !== "apple_health_export_recovery" ||
-        !d1ImportedAt ||
-        sheetImportedAt >= d1ImportedAt
-      ) {
-        return sheet;
-      }
-    }
-    return d1;
-  };
+  const energyForDate = (dateKey) => selectHealthEnergyRow(
+    d1EnergyByDate.get(dateKey) || null,
+    sheetEnergyByDate.get(dateKey) || null
+  );
 
   const registeredDayEntries = entries.filter((item) => item.date === date);
   const registeredDayIds = new Set(
@@ -3341,7 +3306,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   }
 
   const energyForDay = energyForDate(date);
-  const totalBurn = energyForDay
+  const totalBurn = energyForDay && isHealthEnergyComparable(energyForDay)
     ? (energyForDay.totalKcal ?? (
       energyForDay.activeKcal !== null && energyForDay.restingKcal !== null
         ? energyForDay.activeKcal + energyForDay.restingKcal
@@ -3369,7 +3334,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
       consumedKcal: dayConsumed.kcal,
       consumedEntryCount,
       burnedKcal: burn,
-      balanceKcal: burn === null ? null : dayConsumed.kcal - burn,
+      balanceKcal: burn === null || !isHealthEnergyComparable(dayEnergy) ? null : dayConsumed.kcal - burn,
       coverageQuality,
       steps: dayEnergy?.steps ?? null,
       exerciseMinutes: dayEnergy?.exerciseMinutes ?? null,
@@ -3394,7 +3359,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     entries: dayEntries,
     objective,
     activityObjective,
-    energy: energyForDay,
+    energy: energyForDay ? { ...energyForDay, coverageQuality: healthCoverageQuality(energyForDay) } : null,
     body: {
       weightToday: latestMetric("bodyMass", date),
       weight7dAverage,
