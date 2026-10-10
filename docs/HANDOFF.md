@@ -1,3 +1,9 @@
+## Nutrición · relevo de integridad y media privada (2026-10-10)
+
+- Fuente operativa: Google Sheets privados de Salud y Despensa. Conservar `Registro` como fuente de consumos reales y `MenuSemanal` como plan; conciliar por fecha, toma e identidad estable antes de insertar. Las discrepancias de consumos ya confirmados se reparan en `Registro`, sin volver a sumar `MenuSemanal` ni crear recetas duplicadas.
+- En recetas, verificar que ingredientes, preparación, foto original, referencia de `Recetas` y preview de `RecipeMedia` son coherentes. Una foto original privada en Drive **no acredita** que exista preview válida ni que la web privada pueda servirla.
+- **Siguiente paso técnico:** reparar registros de `RecipeMedia` con preview ausente/incompleta mediante el runbook `docs/RECIPES_IMAGE_INGEST.md`, mantener la imagen real completa en formato 16:9 y validar endpoint autenticado y vista responsive. No hacer archivos públicos ni inventar preparación/cantidades ausentes. Priorizar mutaciones canónicas de Sheets y no modificar frontend para errores de datos.
+
 ## Salud · Visión y lentillas · trabajo aislado (2026-10-10)
 
 - Rama `feat/health-vision-contact-lenses` añade pestaña `Salud → Visión`, lectura/edición privada de SPH por ojo, marca/modelo, calendario mensual y registro explícito de sustituciones.
