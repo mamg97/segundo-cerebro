@@ -35,3 +35,10 @@
 - `private-cloudflare/src/home-command-lifecycle.js` representa las transiciones de órdenes. `accepted` solo significa que el proveedor admitió la orden; `observed` exige una comprobación posterior sobre el estado del robot.
 - Las órdenes `pending` pueden caducar sin haberse enviado. Las `dispatched` de resultado incierto pasan a `unknown` y no se reenvían solas.
 - Idempotencia y transiciones atómicas solo serán efectivas cuando se implemente una cola persistente privada; el módulo puro por sí solo **no es** un ejecutor ni una cola durable.
+
+## Cámaras privadas · vídeo en directo (NO OPERATIVO)
+- HOME cubre asimismo fuentes de vídeo privadas compatibles, pero no añade ninguna autorización de transmisión por el simple hecho de conocer una cuenta de fabricante.
+- El proveedor sigue siendo fuente de verdad; vídeo y audio **no** se persisten en Sheets, D1, Git, caché ni logs. El dashboard consumirá una señal autenticada solo al solicitarlo el usuario.
+- Para cámaras Tapo la integración RTSP/ONVIF es local en modelos compatibles; consultar `docs/HOME_TAPO_LIVE.md`. Acceso remoto web necesita un método autorizado o gateway seguro en la red del dispositivo.
+- Está prohibido abrir puertos RTSP/ONVIF a Internet, asumir que Cloudflare Worker reproduce RTSP, insertar capturas como falsa señal en directo o publicar IPs/IDs/credenciales.
+- Estado actual: modelo y transporte no verificados, sin cambio en cámara/router/dashboard. ORGANIZADOR es dueño de la interfaz; este contrato solo documenta el dominio.
