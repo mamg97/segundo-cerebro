@@ -319,11 +319,28 @@ export async function resolveEventsSpreadsheetId(env, getGoogleAccessToken) {
   return id;
 }
 
+export function parseCalendarVisibilityRows(values = []) {
+  const entries = new Map();
+  for (const { record } of tableWithRows(values)) {
+    const provider = trim(record.provider, 80).toLowerCase();
+    const calendarId = trim(record.calendar_id, 700);
+    if (provider !== "google-calendar" || !calendarId) continue;
+    entries.set(calendarId, {
+      provider,
+      calendarId,
+      calendarName: trim(record.calendar_name, 160),
+      visible: bool(record.visible)
+    });
+  }
+  return [...entries.values()];
+}
+
 export function buildEventsSheetPayload(valueRanges = []) {
   const eventRows = tableWithRows(valueRanges[0]?.values || []);
   const factRows = tableWithRows(valueRanges[1]?.values || []);
   const refRows = tableWithRows(valueRanges[2]?.values || []);
   const rules = rulesFromRows(valueRanges[3]?.values || []);
+  const calendarVisibility = parseCalendarVisibilityRows(valueRanges[4]?.values || []);
 
   const events = eventRows.map(({ record, rowNumber }) => eventFromRecord(record, rowNumber)).filter((item) => item.id && item.startsAt);
   const facts = factRows.map(({ record, rowNumber }) => factFromRecord(record, rowNumber)).filter((item) => item.id && item.eventId && item.summary);
@@ -338,6 +355,7 @@ export function buildEventsSheetPayload(valueRanges = []) {
     facts,
     references,
     rules,
+    calendarVisibility,
     summary: {
       activeCount: events.filter((item) => !["CERRADO", "CANCELADO"].includes(item.status)).length,
       historyCount: events.filter((item) => ["CERRADO", "CANCELADO"].includes(item.status)).length,
@@ -368,7 +386,8 @@ export async function fetchEventsSheetSource(env, getGoogleAccessToken, options 
     "Eventos!A1:Q5000",
     "EventoHechos!A1:H10000",
     "EventoRefs!A1:G10000",
-    "EventosImportantes!A1:G1000"
+    "EventosImportantes!A1:G1000",
+    "CalendariosAgenda!A1:E1000"
   ], token);
 
   const value = buildEventsSheetPayload(ranges);
