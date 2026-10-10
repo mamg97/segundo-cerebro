@@ -4,6 +4,16 @@
 
 Coordinate the private Health area of Segundo Cerebro without creating duplicate sources of truth.
 
+## Salud visual · lentillas
+
+- Nueva pestaña privada `Salud → Visión` para graduación de lentillas (SPH con signo por ojo), marca/modelo opcionales y fecha de último cambio.
+- No confundir graduación de gafas con la prescripción de lentillas ni inferir el signo o número a partir de transcripciones ambiguas.
+- D1 es la **fuente operativa autorizada** de la ficha y del histórico manual de sustituciones, sin introducir un Sheet paralelo: `health_vision_profile` y `health_vision_changes`.
+- `GET/PUT /api/health/vision` y `POST /api/health/vision/replace` sirven solo a la aplicación privada protegida por Cloudflare Access. Nunca devolver estos datos en `/api/state` ni en GitHub Pages.
+- Un cambio mensual es la regla de reemplazo indicada por el usuario, no una prueba de que las lentillas ya se hayan cambiado. Registrar solo el cambio confirmado con botón explícito.
+- La fecha siguiente se calcula por meses naturales desde la última sustitución conocida; no inventar la fecha de último uso, ni lanzar notificaciones programadas automáticamente.
+- La esfera/SPH por ojo es solo una parte de la receta. BC, DIA, CYL, AXIS y ADICIÓN pueden hacer falta según tipo/modelo y se deben recuperar de la caja o receta antes de recomendar una compra.
+
 ## Nutrition workflow
 
 The private spreadsheet `SEGUNDO CEREBRO - SALUD` is the source of truth for nutrition. It is never mirrored with real values in Git.
