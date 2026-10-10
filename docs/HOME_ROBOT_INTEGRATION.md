@@ -46,3 +46,18 @@ Controlar un aspirador desde el dashboard privado de Segundo Cerebro y ChatGPT s
 - Esta documentación contiene el próximo paso y los riesgos. No se ha modificado main, no se han desplegado rutas, no se ha contactado al robot.
 
 **Siguiente decisión técnica:** solicitar/verificar un método remoto cifrado y autorizado para el modelo 5090. Si no se acredita, evaluar Congatudo standalone en el propio robot con consentimiento específico y diseñar acceso remoto sin exponer la LAN.
+
+## Continuación técnica: máquina de estados pura (10/10/2026)
+- `private-cloudflare/src/home-command-lifecycle.js` modela: `pending → dispatched → accepted → observed`, más `failed`, `expired` y `unknown`. Los nombres no implican que haya conexión real.
+- **Aceptada ≠ ejecutada:** solo telemetría contrastada permite `observed`. La caducidad solo anula órdenes `pending`; una ya enviada no se reenvía porque puede estar ejecutándose aunque su confirmación se haya perdido.
+- El módulo no persiste, escucha, despacha ni abre sockets. La idempotencia definitiva exige una clave única en D1 y transición atómica al incorporarlo a la aplicación privada.
+- `private-cloudflare/src/home-command-lifecycle.test.mjs` añade seis pruebas de transición, duplicados, retrasos, resultados desconocidos y entradas inválidas. **12 pruebas locales del dominio pasan**; comprobar además CI del commit en GitHub.
+- Compatibilidad root: la guía comunitaria `congatudo/stuff/docs/rooting-conga.md` enumera varias Conga pero **no enumera explícitamente la 5090**; soporte Congatudo ≠ acceso SSH documentado o método de reversión probado para esta unidad. No hacer pruebas de root remotas.
+- La instalación standalone de Congatudo sustituye el acceso cloud normal por redirección local y publica un servidor HTTP doméstico; sin puente saliente autenticado no resuelve automáticamente el control desde Cloudflare. No exponer ese HTTP a Internet.
+- Google Play de la app Conga 5000 (s5090) publica una declaración del desarrollador de falta de cifrado de datos: https://play.google.com/store/apps/details?id=es.cecotec.s5090. Es una declaración de privacidad de la app, no una prueba exhaustiva de cada flujo. El usuario confirma que la app oficial funciona por 5G.
+- Canal oficial para solicitar API/documentación y posibilidades de integración: ficha pública de la aplicación o https://support.storececotec.com/es/ayuda/robots-aspiradores/app-robot-aspirador. No enviar datos privados ni contraseña en solicitudes iniciales.
+
+## Próximo paso bloqueante
+1. Obtener confirmación oficial o evidencia técnica de un endpoint HTTPS/TLS mutuamente validable para este modelo. Sin ello, no habilitar control real.
+2. Prototipar cola D1 y UI **únicamente simuladas**, en cambios independientes, con autenticación, CSRF, TTL y validación de la fuente de comandos. Evitar cambios en `main` hasta PR review.
+3. Si no existe API remota segura, evaluar el acceso local físico al robot exclusivamente bajo consentimiento informado y respaldo comprobable, sin prometer recuperación ni conservación de mapas.
