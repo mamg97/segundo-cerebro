@@ -80,13 +80,17 @@ El Google Sheet original de HabitQuest sigue siendo la fuente de verdad. Segundo
 
 ### Health
 
-Salud agrupa Médicos, Gimnasio y Nutrición.
+Salud agrupa Médicos, Visión, Gimnasio y Nutrición.
 
 - Médicos deriva citas desde iCloud y permanece lectura.
 - El plan de gimnasio vive en una fuente privada y las sesiones registradas se persisten en D1.
 - Nutrición usa un Sheet privado para comidas, registro, objetivos y `MenuSemanal`.
 - `MenuSemanal` es la fuente canónica del contenido semanal. La web y el Worker solo interpretan su esquema y estados; un cambio de plato, día, ración o sustitución doméstica se realiza en el Sheet, sin modificar frontend ni versionar datos reales en Git.
 - El gasto energético automático se almacena en D1 y puede entrar desde Apple Health mediante el Worker de ingesta dedicado.
+
+### Salud visual · lentillas
+
+Dentro de Salud hay una pestaña `Visión` que consulta bajo demanda `/api/health/vision`. Las graduaciones y fechas de cambio no forman parte del estado global ni de la demo. D1 privado es fuente operativa de estos registros manuales; los endpoints PUT y POST requieren el acceso privado existente. El seguimiento mensual calcula el próximo cambio sin crear eventos ni recordatorios implícitos. No se requieren servicios nuevos ni costes adicionales.
 
 ### Career / Carrera profesional
 

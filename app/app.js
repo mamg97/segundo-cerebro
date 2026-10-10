@@ -6,6 +6,7 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
+import { loadVisionPanel } from "./vision.js?v=0.44.0";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.23";
 import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.11";
@@ -2524,6 +2525,7 @@ function openHealthDetail(options = {}) {
     <div class="health-tabs" role="tablist" aria-label="Apartados de salud">
       <button class="active" type="button" data-health-tab="overview">Resumen</button>
       <button type="button" data-health-tab="medical">Médicos</button>
+      <button type="button" data-health-tab="vision">Visión</button>
       <button type="button" data-health-tab="gym">Gimnasio</button>
       <button type="button" data-health-tab="nutrition">Nutrición</button>
       <button type="button" data-health-tab="recipes">Recetas</button>
@@ -2535,6 +2537,9 @@ function openHealthDetail(options = {}) {
       </section>
       <section class="health-tab-panel" data-health-panel="medical">
         <div id="medical-panel"><p class="health-empty">Cargando citas médicas desde iCloud…</p></div>
+      </section>
+      <section class="health-tab-panel" data-health-panel="vision">
+        <div id="vision-panel"><p class="health-empty">Cargando salud visual…</p></div>
       </section>
       <section class="health-tab-panel" data-health-panel="gym">
         <div id="gym-panel"><p class="health-empty">Cargando plan e histórico…</p></div>
@@ -4034,6 +4039,7 @@ function bindHealthTabs() {
       document.querySelectorAll("[data-health-tab]").forEach((item) => item.classList.toggle("active", item === button));
       document.querySelectorAll("[data-health-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.healthPanel === tab));
       if (tab === "medical") void loadMedicalAppointments();
+      if (tab === "vision") void loadVisionPanel(privateMode);
       if (tab === "gym" && !healthGymLoaded) {
         void loadGymPanel().then((ok) => {
           if (ok) healthGymLoaded = true;

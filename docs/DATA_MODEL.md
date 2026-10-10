@@ -67,6 +67,15 @@ Elección abierta o cerrada. Campos: `areaId`, `question`, `options`, `decision`
 
 Compromiso temporal. Campos: `areaId`, `startsAt`, `endsAt`, `locationRef`.
 
+### HEALTH_VISION · lentillas
+
+Entidad de datos médicos `muy_confidencial`, fuente operativa D1 privada, sin copia en Git.
+
+- `health_vision_profile`: fila `id='primary'`, `right_sphere` y `left_sphere` (SPH numéricos **con signo** o `null`), `brand`, `model`, `replacement_months` (por defecto 1), `last_replaced_on` y `updated_at`.
+- `health_vision_changes`: una fila confirmada por fecha `replaced_on` y `recorded_at`; la inserción es idempotente por fecha.
+- `nextReplacementOn` es un derivado (mes natural y ajuste de fin de mes), nunca un cambio realizado ni una alerta existente.
+- Sin recetas ópticas ficticias ni valores médicos predeterminados. Los campos ausentes permanecen `null`; no se deduce el signo de la graduación.
+
 ### RECIPE
 
 Receta reutilizable de Salud. La autoridad vive en el Sheet privado `SEGUNDO CEREBRO - SALUD`.
