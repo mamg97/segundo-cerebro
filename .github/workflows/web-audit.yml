@@ -122,8 +122,8 @@ jobs:
                 }
               }
 
-              fs.appendFileSync(output, `run_audit=${fullAuditCovered ? "false" : "true"}\\n`);
-              fs.appendFileSync(output, `reason=${fullAuditCovered ? "full-audit-covered" : "full-audit-missing"}\\n`);
+              fs.appendFileSync(output, `run_audit=${fullAuditCovered ? "false" : "true"}\n`);
+              fs.appendFileSync(output, `reason=${fullAuditCovered ? "full-audit-covered" : "full-audit-missing"}\n`);
             } catch (error) {
               // Fail open: if cadence inspection itself fails, run the browser audit.
               fs.appendFileSync(output, "run_audit=true\n");
