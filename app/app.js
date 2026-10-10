@@ -4274,7 +4274,7 @@ function renderNutritionPanel(data) {
     <div class="nutrition-status-grid">
       <article>
         <div>
-          <span class="nutrition-source-dot ${energy?.source ? "connected" : ""}"></span>
+          <span class="nutrition-source-dot ${energyComparable ? "connected" : ""}"></span>
           <strong>Apple Health</strong>
         </div>
         <p>${energy?.source
