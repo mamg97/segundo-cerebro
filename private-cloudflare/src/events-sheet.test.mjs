@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildEventsSheetPayload } from "./events-sheet.js";
+import { buildEventsSheetPayload, parseCalendarVisibilityRows } from "./events-sheet.js";
 
 test("buildEventsSheetPayload parses canonical event rows and rules", () => {
   const payload = buildEventsSheetPayload([
@@ -35,4 +35,16 @@ test("buildEventsSheetPayload parses canonical event rows and rules", () => {
   assert.deepEqual(payload.rules[0].excludeTerms, ["preboda"]);
   assert.equal(payload.summary.activeCount, 1);
   assert.equal(payload.summary.historyCount, 1);
+});
+
+test("visibility rows from private Sheet preserve false and default untouched calendars", () => {
+  const rows = parseCalendarVisibilityRows([
+    ["provider", "calendar_id", "calendar_name", "visible", "updated_at"],
+    ["google-calendar", "private-cmu-id", "Origen institucional", false, "2099-01-01"],
+    ["google-calendar", "private-personal-id", "Personal", true, "2099-01-01"]
+  ]);
+  assert.deepEqual(rows.map(({ calendarId, visible }) => ({ calendarId, visible })), [
+    { calendarId: "private-cmu-id", visible: false },
+    { calendarId: "private-personal-id", visible: true }
+  ]);
 });
