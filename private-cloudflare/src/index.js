@@ -6001,7 +6001,7 @@ export default {
             loadStateSource(hasIcloudCalendarConfig(env), "iCloud", () => fetchIcloudCalendarSummary(env), 7000),
             loadStateSource(hasGoogleCalendarConfig(env), "GoogleCalendar", () => fetchGoogleCalendarSummary(env, getGoogleAccessToken), 7000)
           ]);
-          const federatedCalendar = mergeCalendarSources(calendar, googleCalendar);
+          const federatedCalendar = mergeCalendarSources(calendar, googleCalendar, eventsStore.value?.calendarVisibility || []);
           return json({
             ok: true,
             scope: stateScope,
@@ -6114,7 +6114,7 @@ export default {
 
       const calendarSync = calendar.status || "error";
       const googleCalendarSync = googleCalendar.status || "error";
-      const federatedCalendar = mergeCalendarSources(calendar, googleCalendar);
+      const federatedCalendar = mergeCalendarSources(calendar, googleCalendar, eventsStore.value?.calendarVisibility || []);
       if (federatedCalendar) {
         state.calendarSummary = federatedCalendar;
         state.events = federatedCalendar.events;
