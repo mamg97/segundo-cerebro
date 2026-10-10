@@ -80,7 +80,7 @@ El Google Sheet original de HabitQuest sigue siendo la fuente de verdad. Segundo
 
 ### Health
 
-Salud agrupa Médicos, Gimnasio y Nutrición.
+Salud agrupa Médicos, Visión, Gimnasio y Nutrición.
 
 - Médicos deriva citas desde iCloud y permanece lectura.
 - El plan de gimnasio vive en una fuente privada y las sesiones registradas se persisten en D1.
