@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Normalize an Apple Health export into idempotent D1 SQL for Segundo Cerebro.
+"""Normalize an Apple Health export into conservative, idempotent D1 SQL.
+
+Existing D1 dates and measurement identities are never overwritten by this bulk
+backfill. Upgrading a partial snapshot requires a separate read-before-write
+reconciliation with coverage and provenance verification.
 
 Privacy: the ZIP is read locally. Raw health data is never uploaded to GitHub.
 The generated SQL should live under .private/ (gitignored).
@@ -136,6 +140,7 @@ def build(zip_path: Path, through: str | None = None):
     watch_hours = collections.defaultdict(set)
     body = []
     workouts_by_day = collections.defaultdict(list)
+    latest_activity_sample = {}
     min_date = None
     max_date = None
     sources = collections.Counter()
@@ -144,7 +149,9 @@ def build(zip_path: Path, through: str | None = None):
         if tag == "Workout":
             if not a.get("startDate"):
                 continue
-            day = parse_health_dt(a["startDate"]).date().isoformat()
+            observed_at = parse_health_dt(a["startDate"])
+            day = observed_at.date().isoformat()
+            latest_activity_sample[day] = max(observed_at, latest_activity_sample.get(day, observed_at))
             workouts_by_day[day].append(a)
             min_date = day if min_date is None or day < min_date else min_date
             max_date = day if max_date is None or day > max_date else max_date
@@ -178,6 +185,8 @@ def build(zip_path: Path, through: str | None = None):
             })
             continue
 
+        observed_at = parse_health_dt(a["startDate"])
+        latest_activity_sample[day] = max(observed_at, latest_activity_sample.get(day, observed_at))
         sums[metric][day][source] += value
         if metric == "restingKcal" and source_is(source, WATCH_MARKER):
             watch_hours[day].add(parse_health_dt(a["startDate"]).hour)
@@ -265,8 +274,10 @@ def build(zip_path: Path, through: str | None = None):
             }]
 
         canonical_workouts = choose_workouts(workouts_by_day.get(day, []))
-        has_active = bool(sums["activeKcal"].get(day))
-        has_resting = bool(sums["restingKcal"].get(day))
+        # A phone record must not turn absent Apple Watch expenditure into zero.
+        selected_energy_source = WATCH_MARKER if after_watch else IPHONE_MARKER
+        has_active = any(source_is(src, selected_energy_source) for src in sums["activeKcal"].get(day, {}))
+        has_resting = any(source_is(src, selected_energy_source) for src in sums["restingKcal"].get(day, {}))
         has_steps = bool(sums["steps"].get(day))
         has_exercise = bool(sums["exerciseMinutes"].get(day))
 
@@ -290,6 +301,7 @@ def build(zip_path: Path, through: str | None = None):
 
         activity_rows.append({
             "date": day,
+            "sampledAt": latest_activity_sample[day].isoformat(timespec="seconds") if day in latest_activity_sample else None,
             "active": active_v,
             "resting": resting_v,
             "total": total_v,
@@ -366,11 +378,11 @@ def sql_for(activity_rows, body_rows) -> str:
                 q(row["steps"]),
                 q(row["exercise"]),
                 q(len(row["workouts"])),
-                q(row["date"] + "T23:59:59+02:00"),
+                q(row.get("sampledAt")),
                 q(json.dumps(row["details"], ensure_ascii=False, separators=(",", ":"))),
                 q(json.dumps(row["workouts"], ensure_ascii=False, separators=(",", ":"))),
             ])
-            + ") ON CONFLICT(energy_date) DO UPDATE SET active_kcal=excluded.active_kcal, resting_kcal=excluded.resting_kcal, total_kcal=excluded.total_kcal, source=excluded.source, note=excluded.note, recorded_at=excluded.recorded_at, steps=excluded.steps, exercise_minutes=excluded.exercise_minutes, workout_count=excluded.workout_count, sampled_at=excluded.sampled_at, source_details=excluded.source_details, workouts_json=excluded.workouts_json;"
+            + ") ON CONFLICT(energy_date) DO NOTHING;"
         )
 
     for row in body_rows:
@@ -385,7 +397,7 @@ def sql_for(activity_rows, body_rows) -> str:
                 q(row["source"]),
                 q(now),
             ])
-            + ") ON CONFLICT(metric_type,measured_at,source) DO UPDATE SET metric_value=excluded.metric_value, unit=excluded.unit, sample_date=excluded.sample_date, imported_at=excluded.imported_at;"
+            + ") ON CONFLICT(metric_type,measured_at,source) DO NOTHING;"
         )
 
     return "\n".join(lines) + "\n"

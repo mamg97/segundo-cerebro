@@ -1,3 +1,14 @@
+## ORGANIZADOR 13 · Apple Health backfill defensivo · 2026-10-10
+
+- Repo revisado con `main` en `6688d3ff`. El rediseño MIDAS de tabla unificada está ya en `main` por PR #334; no reimplantar ni modificar estrategias.
+- El archivo de usuario `exportación(4).zip` **no se recuperó** en los archivos accesibles de la conversación/Library ni se encontró en Drive con búsqueda de ZIP por nombre; no se importó esta exportación, no se realizaron escrituras a Sheets ni D1.
+- Inspección read-only del Sheet privado de Salud confirma histórico `ActividadDiaria` hasta 2026-10-09 y `RecuperacionDiariaApple` hasta 2026-10-09; no permite atribuir esos datos al ZIP ausente. La importación queda pendiente del archivo original y reconciliación fila a fila.
+- Riesgo confirmado por código del importador: `ON CONFLICT(energy_date) DO UPDATE` reemplazaba sin comparar el estado D1 anterior con una exportación parcial; un día posterior al inicio del Watch que solo tenía registros de iPhone se serializaba con energía Watch cero en vez de desconocida. Además se inventaba `23:59:59+02:00` como timestamp incluso en horario de invierno.
+- Esta rama de seguridad cambia el backfill masivo a `ON CONFLICT DO NOTHING` para días/muestras ya existentes; conserva valores desconocidos como `NULL`, usa un timestamp real de muestra con offset original y añade pruebas sintéticas SQLite/ZIP a CI. **No es una reconciliación de mejoras**: las fechas preexistentes necesitarán comparación privada de cobertura/procedencia antes de cualquier actualización.
+- Auditoría real más reciente al relevo: `Audit production web` #276 (`38066440473`), 393 checks y 3 fallos INFRA; Chromium corrió y falló. CI #464 y deploy privado #422 fueron correctos, lo que no certifica producción. #275 tuvo tres fallos (HEALTH, OTHER, INFRA), #274 cinco (FINANCE x2, HEALTH, OTHER, INFRA).
+- PR #351 de respaldo horario sigue abierta en borrador; no tocar su rama. PR #347 de cierre documental también permanece abierta. Logs históricos previos a redacción requieren autorización específica antes de cualquier borrado.
+- No exportar datos privados a Git, no ejecutar importación `--apply` sin ZIP/reconciliación, no confundir PR/CI verdes con despliegue/QA real. Coste adicional 0 €.
+
 ## Salud · Visión y lentillas · trabajo aislado (2026-10-10)
 
 - Rama `feat/health-vision-contact-lenses` añade pestaña `Salud → Visión`, lectura/edición privada de SPH por ojo, marca/modelo, calendario mensual y registro explícito de sustituciones.
