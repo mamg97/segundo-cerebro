@@ -39,7 +39,7 @@ test("health recovery import is idempotent and cannot block reads", () => {
   assert.match(source, /SELECT signature FROM health_import_state/);
   assert.match(source, /await env\.DB\.batch\(statements\)/);
   assert.match(source, /Apple Health recovery reconcile failed/);
-  assert.match(source, /String\(sheet\.source \|\| ""\) === "apple_health_export_recovery"/);
+  assert.match(source, /const energyForDate = \(dateKey\) => selectHealthEnergyRow/);
 });
 
 test("health Sheet reads retry transient Google failures", () => {
