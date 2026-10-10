@@ -1,3 +1,10 @@
+## Salud · Integridad del balance energético · revisión (2026-10-10)
+
+- Incidencia genérica: una observación de Apple Health recuperada a media jornada puede conservar `coverage=partial` mientras la fuente se etiqueta como `export_recovery`; no se debe interpretar como cierre completo ni calcular un superávit.
+- La protección se implementa de forma genérica: leer `coverage` explícito de `source_details`, reconciliar D1/Sheet por calidad antes de recencia y dejar `balanceKcal=null` cuando no haya cobertura comparable. La tarjeta de Nutrición comunica la falta de cierre sin publicar valores personales.
+- El fallback de Sheet admite conciliación manual trazable solo con evidencia autorizada, sin duplicar filas. La app requiere QA autenticada con `GET /api/nutrition?date=...` y `GET /api/health/overview?date=...` tras CI, merge y despliegue autorizados; esta rama no demuestra despliegue en producción.
+- Verificar el cierre de *ayer* del puente Apple Health del iPhone: el propio atajo/bridge debe sincronizar al día siguiente sin intervención manual y no sustituir un día completo por una lectura parcial obsoleta.
+
 ## ORGANIZADOR 13 · Salud: recuperar consulta diaria visible · 2026-10-10
 
 - Incidencia visible: Resumen iniciaba siempre en Hoy sin selector de fecha; el balance de 30 días existía, pero quedaba debajo de Composición, Nutrición, Actividad y Rendimiento; la pestaña Nutrición sí conservaba selector y KPIs de gasto/ingesta. No hay evidencia de borrado de datos.
