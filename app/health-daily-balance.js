@@ -40,7 +40,8 @@ export function healthDayBalanceModel(data, todayDate) {
 function kcal(value, signed = false) {
   if (value === null) return "—";
   const rounded = Math.round(value);
-  return (signed && rounded > 0 ? "+" : "") + rounded.toLocaleString("es-ES") + " kcal";
+  const grouped = Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return (rounded < 0 ? "-" : signed && rounded > 0 ? "+" : "") + grouped + " kcal";
 }
 
 export function renderHealthDayBalance(data, todayDate) {
