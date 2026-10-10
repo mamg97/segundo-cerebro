@@ -51,6 +51,7 @@ function normalizeEvent(event, calendar) {
     sensitivity: event.visibility === "private" ? "confidencial" : "personal",
     sourceRefs: ["source-google-calendar"],
     calendarName,
+    calendarId: safeText(calendar?.id, 700),
     sourceProvider: "google-calendar"
   };
 }
