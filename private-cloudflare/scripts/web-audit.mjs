@@ -2116,6 +2116,38 @@ try {
             );
           }
         }
+
+        // Date navigation is a user-facing part of Salud, not just a graph tooltip.
+        const datePicker = panel.locator("#health-overview-date");
+        const dayCards = panel.locator(".health-day-summary-grid article");
+        assertCheck(
+          await datePicker.count() === 1 && await dayCards.count() === 3,
+          "Salud · Resumen expone selector de fecha y balance diario visible"
+        );
+        const pickerDate = await datePicker.inputValue().catch(() => "");
+        assertCheck(
+          pickerDate === String(healthOverview.body?.date || ""),
+          "Salud · fecha del balance coincide con la API"
+        );
+        const priorDate = calorieHistory.at(-2)?.date || null;
+        if (priorDate && await datePicker.count()) {
+          await datePicker.fill(priorDate);
+          await datePicker.dispatchEvent("change");
+          const loadedPrevious = await page.waitForFunction((date) => {
+            const input = document.querySelector("#health-overview-date");
+            return input?.value === date &&
+              document.querySelectorAll(".health-day-summary-grid article").length === 3;
+          }, priorDate, { timeout: 20000 }).then(() => true).catch(() => false);
+          assertCheck(loadedPrevious, "Salud · selector recupera fecha anterior sin cambiar registros");
+          if (loadedPrevious) {
+            await panel.locator("[data-health-day-today]").click();
+            const returnedToday = await page.waitForFunction((date) =>
+              document.querySelector("#health-overview-date")?.value === date,
+              pickerDate, { timeout: 20000 }
+            ).then(() => true).catch(() => false);
+            assertCheck(returnedToday, "Salud · volver a Hoy restaura fecha y balance");
+          }
+        }
       }
       if (tab === "gym") {
         // Wait for the actual async panel (or its explicit error), not just 650 ms.
