@@ -62,6 +62,10 @@ HabitQuest, gimnasio, nutrición y energía permiten mutaciones privadas porque 
 
 No añadir escritura a un dominio nuevo sin revisar fuente de verdad, amenaza y reversibilidad.
 
+## Salud visual: minimización de datos ópticos
+
+La graduación de lentillas, la marca/modelo y las fechas reales de sustitución son datos médicos `muy_confidencial`. Se guardan exclusivamente en D1 privada y se sirven bajo demanda en `/api/health/vision` tras Cloudflare Access, con `Cache-Control: no-store` y sin reflejarse en `/api/state`. El repositorio público puede contener la estructura, validadores y pruebas con casos ficticios, **nunca** valores reales, eventos de uso ni capturas. Las operaciones de escritura se limitan a la API privada, con entrada validada y sin volcado de contenido en logs. No se crean copias de estos datos en calendarios, recordatorios o fuentes públicas por defecto.
+
 ## Apple Health
 
 - El navegador no accede directamente a Apple Health; HealthKit solo se lee dentro de la app nativa autorizada en el iPhone.
