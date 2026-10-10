@@ -20,6 +20,19 @@ function eventKey(event) {
   ].join("|");
 }
 
+export function filterGoogleEventsByVisibility(googleEvents, calendarVisibility = []) {
+  const hidden = (Array.isArray(calendarVisibility) ? calendarVisibility : [])
+    .filter((item) => item?.provider === "google-calendar" && item?.visible === false);
+  const hiddenIds = new Set(hidden.map((item) => String(item.calendarId || "").trim()).filter(Boolean));
+  const hiddenNames = new Set(hidden.map((item) => normalizeText(item.calendarName)).filter(Boolean));
+  const events = (Array.isArray(googleEvents) ? googleEvents : []).filter((event) => {
+    if (event?.calendarId) return !hiddenIds.has(String(event.calendarId).trim());
+    // Cached events from before calendarId was introduced still respect hidden sources.
+    return !hiddenNames.has(normalizeText(event?.calendarName));
+  });
+  return { events, hiddenCalendarCount: hidden.length };
+}
+
 function mergeEvents(icloudEvents, googleEvents) {
   const merged = [];
   const byKey = new Map();
@@ -63,9 +76,10 @@ function overallFreshness(providers) {
   return "degraded";
 }
 
-export function mergeCalendarSources(icloudResult, googleResult) {
+export function mergeCalendarSources(icloudResult, googleResult, calendarVisibility = []) {
   const icloudEvents = Array.isArray(icloudResult?.value?.events) ? icloudResult.value.events : [];
-  const googleEvents = Array.isArray(googleResult?.value?.events) ? googleResult.value.events : [];
+  const filteredGoogle = filterGoogleEventsByVisibility(googleResult?.value?.events, calendarVisibility);
+  const googleEvents = filteredGoogle.events;
   const providers = {
     icloud: providerInfo(icloudResult, "icloud-caldav"),
     google: providerInfo(googleResult, "google-calendar")
@@ -91,6 +105,7 @@ export function mergeCalendarSources(icloudResult, googleResult) {
       freshness: overallFreshness(providers),
       selectedCalendarCount,
       matchedCalendarCount,
+      hiddenCalendarCount: filteredGoogle.hiddenCalendarCount,
       providers,
       updatedAt
     }
