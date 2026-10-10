@@ -1,3 +1,10 @@
+## Salud · Visión y lentillas · trabajo aislado (2026-10-10)
+
+- Rama `feat/health-vision-contact-lenses` añade pestaña `Salud → Visión`, lectura/edición privada de SPH por ojo, marca/modelo, calendario mensual y registro explícito de sustituciones.
+- Persistencia exclusiva en D1 privada (`health_vision_profile`, `health_vision_changes`), endpoint bajo Access, sin gastos recurrentes ni reflejo en `/api/state` o GitHub Pages; datos reales no se versionan.
+- Datos de graduación dictados por voz pendientes de confirmar con signo y decimales; la aplicación **no precarga valores personales**. La fecha del último cambio tampoco se presume.
+- Pendientes antes de uso real: CI, revisión/merge, despliegue de Worker+assets privados, comprobar lectura/escritura autenticada. El diseño no constituye recordatorio automático.
+
 ## Integridad · Facturas y tickets · 2026-10-09
 
 - Revisión read-only de `SEGUNDO CEREBRO - DESPENSA`: el ticket de Mercadona del día está una sola vez en `Tickets`; tiene exactamente cuatro `TicketLineas` distintas que suman el total en céntimos y cuatro observaciones `Precios` enlazadas por `ticket_id` y `producto_id`. Los tres IDs históricos se reutilizan y el único producto nuevo carece de EAN, nutrición o stock inventados.
