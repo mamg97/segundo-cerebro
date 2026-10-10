@@ -3,7 +3,7 @@
 - Rama `feat/health-vision-contact-lenses` añade pestaña `Salud → Visión`, lectura/edición privada de SPH por ojo, marca/modelo, calendario mensual y registro explícito de sustituciones.
 - Persistencia exclusiva en D1 privada (`health_vision_profile`, `health_vision_changes`), endpoint bajo Access, sin gastos recurrentes ni reflejo en `/api/state` o GitHub Pages; datos reales no se versionan.
 - Datos de graduación dictados por voz pendientes de confirmar con signo y decimales; la aplicación **no precarga valores personales**. La fecha del último cambio tampoco se presume.
-- Pendientes antes de uso real: CI, revisión/merge, despliegue de Worker+assets privados, comprobar lectura/escritura autenticada. El diseño no constituye recordatorio automático.
+- CI #38066201044 correcta, con tests y compilación; revisión/merge, despliegue privado y comprobación autenticada de lectura/escritura siguen pendientes. El diseño no constituye recordatorio automático.
 
 ## Integridad · Facturas y tickets · 2026-10-09
 
