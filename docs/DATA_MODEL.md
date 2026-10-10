@@ -178,6 +178,10 @@ La configuración `system` del mock describe el Coordinador, capacidades transve
 La barra visible de una categoría representa gasto ejecutado: `spent / budgeted`. Los compromisos futuros (`committed`) se muestran por separado. Las partidas con presupuesto positivo deben aparecer aunque su gasto sea 0, para que la portada refleje el presupuesto completo del ciclo.
 
 
+## CalendariosAgenda (visibilidad de la Agenda)
+
+Pestaña privada en `SEGUNDO CEREBRO - EVENTOS`: columnas `provider | calendar_id | calendar_name | visible | updated_at`. Las filas con `provider=google-calendar` y `visible=false` ocultan eventos de esa fuente en la Agenda federada; ausencia de una fila equivale a visible. El filtro se aplica después de obtener los eventos, también a copias en caché, por ID estable del calendario y por nombre solo como fallback de snapshots antiguos. No elimina datos en Google ni altera las fuentes disponibles para reconciliación. No se versionan nombres/IDs reales en Git.
+
 ## Eventos importantes y salud derivados del calendario
 
 El estado remoto puede incluir `importantEventRules`, una lista privada procedente del bridge de Google Sheets. Cada regla contiene `matchTerms[]`, `displayTitle`, `kind` y `enabled`. Los términos se aplican únicamente en runtime sobre los eventos federados ya normalizados; nombres privados y alias no deben escribirse en Git.
