@@ -26183,3 +26183,119 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   font-size: 11px;
   font-weight: 700;
 }
+
+
+/* v0.44.1 — Salud: accessible daily balance above the fold */
+.health-day-summary {
+  margin-bottom: 16px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 14px 16px;
+}
+.health-day-summary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.health-day-summary-heading > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.health-day-summary-heading > div:first-child > strong {
+  font-size: 16px;
+  font-weight: 800;
+}
+.health-day-summary-heading > div:first-child > span {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.health-day-navigation {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.health-day-navigation button,
+.health-day-navigation input {
+  min-height: 38px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+.health-day-navigation button {
+  cursor: pointer;
+  padding: 5px 12px;
+  font-weight: 700;
+}
+.health-day-navigation button:disabled {
+  cursor: default;
+  opacity: .45;
+}
+.health-day-navigation button:focus-visible,
+.health-day-navigation input:focus-visible,
+.health-calorie-chart-day:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.health-day-navigation label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.health-day-navigation label input {
+  padding: 6px 9px;
+  max-width: 170px;
+  box-sizing: border-box;
+  color-scheme: light dark;
+}
+.health-day-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.health-day-summary-grid article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border-radius: 10px;
+  padding: 13px 14px;
+  background: var(--surface-alt, rgba(125, 150, 170, .07));
+}
+.health-day-summary-grid article small,
+.health-day-summary-grid article span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.health-day-summary-grid article strong {
+  font-size: clamp(18px, 1.8vw, 24px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.health-day-balance-result.is-deficit strong { color: var(--mint); }
+.health-day-balance-result.is-surplus strong { color: var(--coral); }
+.health-day-summary-note {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.health-calorie-chart-day[role="button"] { cursor: pointer; }
+@media (max-width: 760px) {
+  .health-day-summary-heading { flex-wrap: wrap; }
+  .health-day-navigation { flex-wrap: wrap; width: 100%; }
+  .health-day-summary-grid { grid-template-columns: 1fr; gap: 7px; }
+  .health-day-summary-grid article { padding: 10px 12px; }
+  .health-day-summary-grid article strong { font-size: 20px; }
+  .health-day-navigation label input { max-width: 160px; }
+}

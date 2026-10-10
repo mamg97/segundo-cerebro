@@ -1,3 +1,11 @@
+## ORGANIZADOR 13 · Salud: recuperar consulta diaria visible · 2026-10-10
+
+- Incidencia visible: Resumen iniciaba siempre en Hoy sin selector de fecha; el balance de 30 días existía, pero quedaba debajo de Composición, Nutrición, Actividad y Rendimiento; la pestaña Nutrición sí conservaba selector y KPIs de gasto/ingesta. No hay evidencia de borrado de datos.
+- Rama `organizador13/health-day-navigation-20261010`: nuevo resumen compacto arriba con fecha, anterior/siguiente/Hoy, consumidas confirmadas, gasto total con desglose de energía activa/reposo y balance = ingesta − gasto. Barras del histórico permiten navegar por ratón/teclado; la fecha elegida se conserva al entrar en Nutrición.
+- Solo se consulta `GET /api/health/overview?date=...`; no cambia modelos de datos, objetivos, registros, importación ni cálculos canónicos. La tarjeta de balance solo computa para días con ingesta confirmada y cobertura `full`/`live`, preservando `NULL` en días incompletos; Hoy es provisional. Hábitos y Gym permanecen como indicadores actuales para no fingir histórico de esos dominios.
+- Se añadieron pruebas sintéticas de déficits, superávits, días sin ingesta y cobertura Watch incompleta; auditoría de producción read-only comprueba que el selector realmente cambia a un día anterior y puede volver a Hoy. Los selectores de rango de histórico se conservan y las lecturas asíncronas tardías no sustituyen otra fecha seleccionada.
+- PR, CI, deploy y auditoría real: verificar estados tras el push y no declararlos completos antes de observar resultados. Sin archivos personales, secretos ni gasto adicional.
+
 ## Agenda · visibilidad por calendario · 2026-10-10
 
 - Causa de eventos ajenos en la Agenda: Google Calendar se conecta a todas las fuentes compartidas accesibles; la enumeración 5/5 era correcta, pero la Agenda necesita una preferencia de visibilidad separada.

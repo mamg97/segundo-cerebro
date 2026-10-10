@@ -91,7 +91,7 @@ test("Health workspace lazy-loads heavy tabs and avoids duplicate startup reads"
   const tabsEnd = app.indexOf("function renderMedicalSection", tabsStart);
   const tabsBlock = app.slice(tabsStart, tabsEnd);
   assert.match(tabsBlock, /tab === "gym"/);
-  assert.match(tabsBlock, /ensureHealthNutritionPanels\(localDateKey\(\)\)/);
+  assert.match(tabsBlock, /ensureHealthNutritionPanels\(healthOverviewDate\)/);
   assert.match(tabsBlock, /\["nutrition", "recipes", "menu"\]\.includes\(tab\)/);
 });
 
@@ -117,6 +117,6 @@ test("Health adherence lives inside Summary instead of a top-level tab", () => {
   const loadEnd = app.indexOf("function renderHealthCalorieBalance", loadStart);
   const loader = app.slice(loadStart, loadEnd);
   assert.match(loader, /await loadHealthAdherenceOverview()/);
-  assert.ok(loader.includes('loadHealthHistory("365"'));
-  assert.ok(loader.indexOf("await loadHealthAdherenceOverview()") < loader.indexOf('loadHealthHistory("365"'));
+  assert.ok(loader.includes('loadHealthHistory(healthOverviewHistoryRange'));
+  assert.ok(loader.indexOf("await loadHealthAdherenceOverview()") < loader.indexOf('loadHealthHistory(healthOverviewHistoryRange'));
 });

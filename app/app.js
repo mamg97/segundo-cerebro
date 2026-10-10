@@ -7,6 +7,7 @@ import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
+import { renderHealthDayBalance } from "./health-daily-balance.js?v=0.44.1";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.23";
 import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.11";
@@ -2497,6 +2498,10 @@ let healthNutritionLoadedDate = null;
 let healthNutritionLoadPromise = null;
 let healthGymLoaded = false;
 let healthSkipNextNutritionTabLoad = false;
+let healthOverviewDate = localDateKey();
+let healthOverviewRequestId = 0;
+let healthHistoryRequestId = 0;
+let healthOverviewHistoryRange = "365";
 
 async function ensureHealthNutritionPanels(dateKey = localDateKey()) {
   if (healthNutritionLoadedDate === dateKey) return true;
@@ -2513,6 +2518,10 @@ async function ensureHealthNutritionPanels(dateKey = localDateKey()) {
 }
 
 function openHealthDetail(options = {}) {
+  healthOverviewDate = localDateKey();
+  healthOverviewHistoryRange = "365";
+  ++healthOverviewRequestId;
+  ++healthHistoryRequestId;
   healthNutritionLoadedDate = null;
   healthNutritionLoadPromise = null;
   healthGymLoaded = false;
@@ -2577,22 +2586,58 @@ async function revealHealthAdherenceDetail() {
 }
 
 async function loadHealthOverview(dateKey = localDateKey()) {
+  const today = localDateKey();
+  const selected = /^\d{4}-\d{2}-\d{2}$/.test(String(dateKey)) && dateKey <= today ? dateKey : today;
+  healthOverviewDate = selected;
+  const requestId = ++healthOverviewRequestId;
   const panel = document.querySelector("#health-overview-panel");
   if (panel) panel.innerHTML = '<p class="health-empty">Cargando Apple Health…</p>';
   try {
-    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(dateKey), {
+    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(selected), {
       headers: { Accept: "application/json" },
       cache: "no-store"
     });
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
     const payload = await response.json();
+    if (requestId !== healthOverviewRequestId || !panel?.isConnected) return;
     renderHealthOverview(payload, {});
+    bindHealthDayNavigation(payload.date || selected);
     await loadHealthAdherenceOverview();
-    loadHealthHistory("365", payload.date || dateKey);
+    if (requestId !== healthOverviewRequestId) return;
+    void loadHealthHistory(healthOverviewHistoryRange, payload.date || selected);
   } catch (error) {
-    if (panel) panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Apple Health no disponible</strong><p>No se ha podido cargar el resumen de actividad y composición corporal.</p></div>';
+    if (requestId === healthOverviewRequestId && panel?.isConnected) {
+      panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Salud no disponible</strong><p>No se han podido consultar los datos del día seleccionado; no se han modificado los registros.</p><button type="button" id="health-overview-retry">Reintentar</button></div>';
+      panel.querySelector("#health-overview-retry")?.addEventListener("click", () => void loadHealthOverview(selected));
+    }
     console.warn("Health overview load failed", error);
   }
+}
+
+function bindHealthDayNavigation(selectedDate) {
+  const panel = document.querySelector("#health-overview-panel");
+  if (!panel) return;
+  const navigate = (date) => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(date)) && date <= localDateKey() && date !== selectedDate) {
+      void loadHealthOverview(date);
+    }
+  };
+  panel.querySelector("#health-overview-date")?.addEventListener("change", (event) => navigate(event.target.value));
+  panel.querySelectorAll("[data-health-day-step]").forEach((button) => {
+    button.addEventListener("click", () => navigate(shiftDateKey(selectedDate, Number(button.dataset.healthDayStep))));
+  });
+  panel.querySelector("[data-health-day-today]")?.addEventListener("click", () => navigate(localDateKey()));
+  panel.querySelectorAll(".health-calorie-chart-day[data-date]").forEach((bar) => {
+    const selectDay = () => navigate(bar.dataset.date);
+    bar.setAttribute("role", "button");
+    bar.addEventListener("click", selectDay);
+    bar.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectDay();
+      }
+    });
+  });
 }
 
 function renderHealthCalorieBalance(history = []) {
@@ -2861,6 +2906,7 @@ function renderHealthOverview(data, gymData = {}) {
   );
 
   panel.innerHTML = `
+    ${renderHealthDayBalance(data, localDateKey())}
     <div class="health-dashboard-status progress-ring-status">
       <span data-health-summary="habits">
         ${progressRingMarkup(habitProgress, { tone: "violet", size: "sm", label: "hoy", ariaLabel: habitTotal > 0 ? habitProgress + "% de hábitos completados hoy" : "Sin hábitos programados" })}
@@ -2950,7 +2996,7 @@ function renderHealthOverview(data, gymData = {}) {
       </section>
 
       <section class="health-recomp-card">
-        <header><span>Nutrición</span><strong>Hoy</strong></header>
+        <header><span>Nutrición</span><strong>${data.date === localDateKey() ? "Hoy" : "Día seleccionado"}</strong></header>
         <div class="health-target-list">
           ${renderHealthTargetRow("Calorías", kcalConsumed, kcalTarget, " kcal", pct(kcalConsumed, kcalTarget))}
           ${renderHealthTargetRow("Proteína", proteinConsumed, proteinTarget, " g", pct(proteinConsumed, proteinTarget))}
@@ -3022,12 +3068,14 @@ function renderHealthOverview(data, gymData = {}) {
   document.querySelectorAll("[data-health-history-range]").forEach((button) => {
     button.addEventListener("click", () => {
       document.querySelectorAll("[data-health-history-range]").forEach((item) => item.classList.toggle("active", item === button));
-      loadHealthHistory(button.dataset.healthHistoryRange, data.date || localDateKey());
+      healthOverviewHistoryRange = button.dataset.healthHistoryRange;
+      void loadHealthHistory(healthOverviewHistoryRange, data.date || localDateKey());
     });
   });
 }
 
 async function loadHealthHistory(range = "365", dateKey = localDateKey()) {
+  const requestId = ++healthHistoryRequestId;
   const panel = document.querySelector("#health-history-content");
   if (!panel) return;
   panel.innerHTML = '<p class="health-empty">Cargando histórico…</p>';
@@ -3037,8 +3085,11 @@ async function loadHealthHistory(range = "365", dateKey = localDateKey()) {
       { headers: { Accept: "application/json" }, cache: "no-store" }
     );
     if (!response.ok) throw new Error("HEALTH_HISTORY_" + response.status);
-    renderHealthHistory(await response.json());
+    const history = await response.json();
+    if (requestId !== healthHistoryRequestId || panel !== document.querySelector("#health-history-content")) return;
+    renderHealthHistory(history);
   } catch (error) {
+    if (requestId !== healthHistoryRequestId || panel !== document.querySelector("#health-history-content")) return;
     panel.innerHTML = '<div class="health-empty health-empty-card"><strong>Histórico no disponible</strong><p>Cuando termine el backfill de Apple Health aparecerá aquí.</p></div>';
     console.warn("Health history load failed", error);
   }
@@ -4051,7 +4102,7 @@ function bindHealthTabs() {
         if (healthSkipNextNutritionTabLoad) {
           healthSkipNextNutritionTabLoad = false;
         } else {
-          void ensureHealthNutritionPanels(localDateKey());
+          void ensureHealthNutritionPanels(healthOverviewDate);
         }
       }
     });

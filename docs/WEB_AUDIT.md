@@ -68,6 +68,7 @@ Como mínimo:
 - totales/subtotales nutricionales;
 - dato ausente permanece ausente, nunca se transforma en 0;
 - barras de kcal/proteína: existencia, porcentaje/anchura y estado visual lógico;
+- Salud → Resumen: selector de fecha operativo y balance diario visible antes de los cinco KPIs; se comprueban fecha API/UI, navegación efectiva a día anterior y retorno a Hoy sin escrituras canónicas, con 3 métricas (ingesta confirmada, gasto Watch, balance) y marca de provisional/ausente cuando procede;
 - Salud → Resumen: gráfica divergente de balance calórico visible, treinta días, eje 0, déficit negativo marcado en verde y superávit positivo marcado en rojo; el API debe exponer al menos 30 registros de `nutritionHistory` y la vista debe permitir scroll horizontal contenido cuando el viewport no tenga ancho suficiente;
 - Salud → Resumen → Adherencia: no debe existir pestaña superior independiente; el bloque compacto mensual debe mostrar adherencia/cobertura, estados y racha, y `Ver mes completo` debe desplegar calendario + detalle diario dentro del mismo Resumen;
 - APIs privadas clave de Despensa, Proyectos y Delta/Finanzas;
