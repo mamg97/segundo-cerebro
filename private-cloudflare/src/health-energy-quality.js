@@ -11,7 +11,7 @@ export function healthCoverageQuality(row) {
       if (COVERAGE.has(quality)) return quality;
     }
     if (typeof detail === "string") {
-      const match = detail.match(/(?:^|[;,\\s])coverage\\s*=\\s*([a-z_]+)/i);
+      const match = detail.match(/(?:^|[;,\s])coverage\s*=\s*([a-z_]+)/i);
       if (match && COVERAGE.has(match[1].toLowerCase())) return match[1].toLowerCase();
     }
   }
