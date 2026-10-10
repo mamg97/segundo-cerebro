@@ -28,4 +28,10 @@
 - Proveedor: solo un adaptador de conexión cifrada cuyo servidor, protocolo y credenciales puedan verificarse; no utilizar el cliente legado inseguro.
 
 ## Estado y relevo
-**Solo existe contrato y test sintáctico; no hay adaptador de proveedor, endpoint, D1, UI desplegada, credencial configurada ni robot controlado.** El bloqueo y plan de validación se documentan en docs/HOME_ROBOT_INTEGRATION.md.
+**Existen contrato, validador y máquina de estados puros con pruebas; no hay adaptador de proveedor, endpoint, D1, UI desplegada, credencial configurada ni robot controlado.** El bloqueo y plan de validación se documentan en docs/HOME_ROBOT_INTEGRATION.md.
+
+ 
+## Ciclo de vida sin ejecución remota (prototipo)
+- `private-cloudflare/src/home-command-lifecycle.js` representa las transiciones de órdenes. `accepted` solo significa que el proveedor admitió la orden; `observed` exige una comprobación posterior sobre el estado del robot.
+- Las órdenes `pending` pueden caducar sin haberse enviado. Las `dispatched` de resultado incierto pasan a `unknown` y no se reenvían solas.
+- Idempotencia y transiciones atómicas solo serán efectivas cuando se implemente una cola persistente privada; el módulo puro por sí solo **no es** un ejecutor ni una cola durable.
