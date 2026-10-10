@@ -32,3 +32,29 @@ test("one failed provider marks federation degraded without erasing the other", 
   assert.equal(merged.source.freshness, "degraded");
   assert.equal(merged.source.providers.google.status, "error");
 });
+
+test("a hidden Google calendar does not remove the owner's or iCloud events", () => {
+  const shared = { id: "shared", title: "Sesión institucional", calendarId: "shared-calendar", calendarName: "Origen institucional", startsAt: "2099-01-03T08:00:00Z", endsAt: "2099-01-03T09:00:00Z" };
+  const personal = { id: "mine", title: "Curso personal", calendarId: "my-calendar", calendarName: "Personal", startsAt: "2099-01-04T18:00:00Z", endsAt: "2099-01-04T19:00:00Z" };
+  const icloud = { id: "icloud", title: "Cita privada", startsAt: "2099-01-05T10:00:00Z", endsAt: "2099-01-05T11:00:00Z" };
+  const merged = mergeCalendarSources(
+    { status: "ok", value: { events: [icloud], source: { selectedCalendarCount: 1, matchedCalendarCount: 1 } } },
+    { status: "ok", value: { events: [shared, personal], source: { selectedCalendarCount: 2, matchedCalendarCount: 2 } } },
+    [{ provider: "google-calendar", calendarId: "shared-calendar", calendarName: "Origen institucional", visible: false }]
+  );
+  assert.deepEqual(merged.events.map((event) => event.id), ["mine", "icloud"]);
+  assert.equal(merged.source.hiddenCalendarCount, 1);
+  assert.equal(merged.source.providers.google.matchedCalendarCount, 2);
+});
+
+test("old Google snapshots without calendarId still respect a hidden source, and future visible sources remain", () => {
+  const hiddenCopy = { id: "old1", title: "Sesión institucional", calendarName: "Origen institucional", startsAt: "2099-01-03T08:00:00Z" };
+  const other = { id: "old2", title: "Otro evento", calendarName: "Familiar", startsAt: "2099-01-03T09:00:00Z" };
+  const merged = mergeCalendarSources(
+    { status: "not-configured", value: null },
+    { status: "fallback", value: { events: [hiddenCopy, other], source: { freshness: "fallback" } } },
+    [{ provider: "google-calendar", calendarId: "shared-calendar", calendarName: "Origen institucional", visible: false }]
+  );
+  assert.deepEqual(merged.events.map((item) => item.id), ["old2"]);
+  assert.equal(merged.source.freshness, "mixed");
+});

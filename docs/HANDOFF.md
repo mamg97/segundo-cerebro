@@ -1,3 +1,11 @@
+## Agenda · visibilidad por calendario · 2026-10-10
+
+- Causa de eventos ajenos en la Agenda: Google Calendar se conecta a todas las fuentes compartidas accesibles; la enumeración 5/5 era correcta, pero la Agenda necesita una preferencia de visibilidad separada.
+- Fuente canónica de presentación: pestaña privada `CalendariosAgenda` del Sheet `SEGUNDO CEREBRO - EVENTOS`, con `provider, calendar_id, calendar_name, visible, updated_at`. El calendario institucional no relevante se marcó `visible=false` en la fuente privada sin borrar ni cambiar eventos en Google.
+- El Worker aplica esas reglas a `/api/state?scope=calendar` y `/api/state` antes de entregar los eventos. El filtro también respeta snapshots Google previos que carecen de `calendarId`.
+- Google sigue informando el número completo de calendarios leídos; la UI muestra el número de calendarios ocultos. No se interfiere con iCloud, calendario personal ni otros calendarios.
+- Validar en producción después del deploy que el evento institucional no se muestra, Google continúa sincronizando y los cursos del calendario principal permanecen.
+
 ## ORGANIZADOR 13 · Apple Health backfill defensivo · 2026-10-10
 
 - Repo revisado con `main` en `6688d3ff`. El rediseño MIDAS de tabla unificada está ya en `main` por PR #334; no reimplantar ni modificar estrategias.

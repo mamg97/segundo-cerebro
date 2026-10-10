@@ -976,8 +976,10 @@ function renderEvents() {
     const freshness = String(source.freshness || "");
 
     if (providerParts.length) {
+      const hidden = Number(source.hiddenCalendarCount || 0);
       sourceStatus.textContent = [
         providerParts.join(" · "),
+        hidden > 0 ? hidden + (hidden === 1 ? " calendario oculto" : " calendarios ocultos") : "",
         ["mixed", "degraded", "fallback"].includes(freshness) ? "sincronización parcial" : ""
       ].filter(Boolean).join(" · ");
       sourceStatus.hidden = false;
