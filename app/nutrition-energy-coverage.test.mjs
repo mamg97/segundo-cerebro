@@ -15,4 +15,5 @@ test("Nutrition panel refuses to present a partial Watch snapshot as a final bal
   assert.match(panel, /const balance = energyComparable \? nullableNumber\(summary\.balanceKcal\) : null/);
   assert.match(panel, /cobertura parcial o sin confirmar/);
   assert.match(panel, /Balance no fiable: falta el cierre energético/);
+  assert.match(panel, /nutrition-source-dot \$\{energyComparable \? "connected" : ""\}/);
 });
