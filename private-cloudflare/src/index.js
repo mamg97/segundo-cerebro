@@ -11,6 +11,7 @@ import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
+import { readVision, saveVision, recordVisionReplacement } from "./vision.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, fetchEventLedgerSnapshot, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 import { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, fetchEventSheetHomeSummary, fetchEventSheetDetail, syncCalendarEventsToEventsSheet, migrateLegacyEventLedgerToSheet, createEventSheetRecord, updateEventSheetRecord, appendEventSheetFact, appendEventSheetReference } from "./events-sheet.js";
@@ -5083,6 +5084,36 @@ export default {
           return json({ ok: false, code }, 400);
         }
         return json({ ok: false, code: "HABITQUEST_MANAGE_FAILED" }, 502);
+      }
+    }
+
+    // Contact lenses: private D1 source, behind the existing Cloudflare Access gateway.
+    if (url.pathname === "/api/health/vision" || url.pathname === "/api/health/vision/replace") {
+      const isReplace = url.pathname.endsWith("/replace");
+      if (!isReplace && request.method === "GET") {
+        try { return json(await readVision(env)); }
+        catch { return json({ ok: false, code: "VISION_READ_FAILED" }, 502); }
+      }
+      if ((isReplace && request.method !== "POST") || (!isReplace && request.method !== "PUT")) {
+        return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      }
+      const origin = request.headers.get("Origin");
+      if (origin && origin !== url.origin) return json({ ok: false, code: "INVALID_ORIGIN" }, 403);
+      if (!request.headers.get("Content-Type")?.toLowerCase().startsWith("application/json")) {
+        return json({ ok: false, code: "CONTENT_TYPE_REQUIRED" }, 415);
+      }
+      let body;
+      try { body = await request.json(); }
+      catch { return json({ ok: false, code: "INVALID_JSON" }, 400); }
+      try {
+        return json(isReplace
+          ? await recordVisionReplacement(env, body?.replacedOn)
+          : await saveVision(env, body));
+      } catch (error) {
+        const code = String(error?.message || "");
+        return /^INVALID_VISION_[A-Z_]+$/.test(code)
+          ? json({ ok: false, code }, 400)
+          : json({ ok: false, code: "VISION_WRITE_FAILED" }, 502);
       }
     }
 
