@@ -106,6 +106,9 @@ jobs:
 
       - run: npm test
 
+      - name: Guard Apple Health ZIP backfill without personal data
+        run: python3 -m unittest discover -s scripts -p 'test_import_apple_health_history.py' -v
+
       - run: npx wrangler deploy --dry-run --config wrangler.health-ingest.jsonc
 
       - run: npx wrangler deploy --dry-run --config wrangler.shopping-reminders.jsonc
