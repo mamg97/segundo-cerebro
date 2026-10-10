@@ -2421,19 +2421,10 @@ async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], 
         energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at,
         steps, exercise_minutes, workout_count, sampled_at, source_details, workouts_json
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(energy_date) DO UPDATE SET
-        active_kcal = excluded.active_kcal,
-        resting_kcal = excluded.resting_kcal,
-        total_kcal = excluded.total_kcal,
-        source = excluded.source,
-        note = excluded.note,
-        recorded_at = excluded.recorded_at,
-        steps = excluded.steps,
-        exercise_minutes = excluded.exercise_minutes,
-        workout_count = excluded.workout_count,
-        sampled_at = excluded.sampled_at,
-        source_details = excluded.source_details,
-        workouts_json = excluded.workouts_json
+      -- A historical import may fill a missing day but MUST NOT replace a
+      -- newer HealthKit bridge snapshot (or any existing canonical observation).
+      -- Conflict resolution is performed separately after coverage/source QA.
+      ON CONFLICT(energy_date) DO NOTHING
     `).bind(
       row.date,
       row.activeKcal,
