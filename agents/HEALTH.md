@@ -109,7 +109,7 @@ The Worker proxies recipe images through an authenticated same-origin endpoint. 
 
 Apple Health / Apple Watch is the intended source for daily active and resting energy. Automatic imports enter through the dedicated token-protected Health ingest Worker and are stored in private D1 (`health_energy_daily`). The Sheet tab `EnergiaDiaria` is retained as a manual/fallback source.
 
-For each date, D1 keeps exactly one current energy snapshot. Repeated Apple Health synchronizations for the same day replace that row via UPSERT; the D1 row wins over the Sheet fallback. Missing expenditure remains unknown; never infer it from gym attendance.
+For each date, D1 keeps exactly one current energy snapshot. Repeated Apple Health synchronizations for the same day replace that row via UPSERT. During read reconciliation, a complete, explicitly supported Sheet fallback can outrank an older partial D1 snapshot; when both are comparable, the established D1 / export-recency priority applies. A partial observation must never become a final balance merely because its source label contains `export_recovery`. Missing or non-comparable expenditure remains unknown for the balance; never infer it from gym attendance.
 
 The intended calculation is:
 - total expenditure = Apple Health total energy when supplied;
