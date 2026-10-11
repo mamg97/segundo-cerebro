@@ -5890,6 +5890,13 @@ const GYM_CUSTOM_ANIMATIONS = [
     labels: ["press inclinado barra", "press de banca inclinado barra", "incline barbell bench press", "barbell incline bench press", "incline bench press with barbell"]
   },
   {
+    key: "aperturas-maquina-mariposa",
+    animationUrl: "./assets/gym-animations/aperturas-maquina-mariposa-v2-white.gif",
+    posterUrl: "./assets/gym-animations/aperturas-maquina-mariposa-v2-white-poster.png",
+    labels: ["aperturas plano", "aperturas en maquina mariposa", "pec deck", "machine chest fly", "butterfly machine"],
+    variantNote: "Esta animación muestra la máquina mariposa/pec deck, no aperturas con mancuernas ni poleas."
+  },
+  {
     key: "military-press",
     animationUrl: "./assets/gym-animations/military-press-v2-white.gif",
     posterUrl: "./assets/gym-animations/military-press-v2-white-poster.png",
@@ -5977,6 +5984,7 @@ function normalizeGymAnimationLabel(value) {
 const GYM_ILLUSTRATED_EXERCISES = {
   "press-banca-plano-barra": { name: "Press de banca plano (barra)", technique: "Apoya los pies, fija las escápulas al banco, baja la barra de forma controlada hacia el pecho y empuja sin perder estabilidad.", muscles: ["Chest", "Pectoralis major"], equipment: ["Barbell", "Bench"] },
   "press-inclinado-barra": { name: "Press inclinado (barra)", technique: "Ajusta el respaldo en inclinación, mantén los hombros estables y lleva la barra hacia la parte superior del pecho antes de empujar controladamente.", muscles: ["Chest", "Pectoralis major"], equipment: ["Barbell", "Bench"] },
+  "aperturas-maquina-mariposa": { name: "Aperturas plano (máquina mariposa)", technique: "Ajusta el asiento para mantener las manos a la altura del pecho. Con la espalda apoyada, acerca los agarres de forma controlada y vuelve sin perder el apoyo ni forzar los hombros.", muscles: ["Chest", "Pectoralis major"], equipment: ["Machine"] },
   "military-press": { name: "Press militar (barra)", technique: "Desde la altura de los hombros, aprieta abdomen y glúteos y empuja la barra hacia arriba sin arquear en exceso la zona lumbar.", muscles: ["Shoulders", "Anterior deltoid"], equipment: ["Barbell"] },
   "fondos-paralelas": { name: "Fondos en paralelas", technique: "Sujétate en las barras paralelas, desciende flexionando los codos hasta un recorrido cómodo y vuelve arriba sin balancearte.", muscles: ["Chest", "Triceps"], equipment: ["Bodyweight", "Parallel bars"] },
   "extension-triceps-polea-sobre-cabeza": { name: "Extensión de tríceps en polea alta por encima de la cabeza", technique: "Mantén los codos relativamente fijos y orientados hacia delante; extiende los brazos contra la resistencia de la polea sin mover el tronco.", muscles: ["Triceps"], equipment: ["Cable", "Cable machine"] },
@@ -6336,7 +6344,7 @@ function gymMediaInventoryMarkup() {
     </tr>`;
   }).join("");
   return `<details class="gym-media-inventory" open>
-    <summary>Disponibilidad multimedia · 12 ejercicios con GIF</summary>
+    <summary>Disponibilidad multimedia · ${GYM_CUSTOM_ANIMATIONS.length} ejercicios con GIF</summary>
     <div class="gym-media-inventory-toolbar">
       <span id="gym-media-inventory-count">Vídeos pendientes de comprobación</span>
       <button type="button" id="gym-media-inventory-refresh">Volver a comprobar vídeos</button>
@@ -6698,7 +6706,7 @@ async function openGymTechniqueForPlanExercise(exercise) {
         </div>
         <div class="gym-exercise-detail-copy">
           <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
-          <small class="gym-media-build-caption">Ficha multimedia · v0.44.7</small>
+          <small class="gym-media-build-caption">Ficha multimedia · v0.44.9</small>
           ${gymVideoStateMarkup(animation.key)}
           <div id="gym-plan-video-supplement" class="gym-technique-media-supplement"></div>
           ${gymTechniqueInstructionsMarkup(animation)}
@@ -6990,7 +6998,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
       <div class="gym-exercise-detail-copy">
         <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>
         <h3>${escapeHtml(exercise.name)}</h3>
-        <small class="gym-media-build-caption">Ficha multimedia · v0.44.7</small>
+        <small class="gym-media-build-caption">Ficha multimedia · v0.44.9</small>
         <div class="gym-exercise-tags">
           ${muscleNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
           ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}

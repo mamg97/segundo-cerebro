@@ -15,11 +15,11 @@ function animationContext(extra = {}) {
   return vm.createContext({ gymVideoInventory: new Map(), gymVideoChecks: new Map(), gymMediaInventoryRunning: false, ...extra, source });
 }
 
-test("The twelve reviewed animations match only their named exercise variants", () => {
+test("The thirteen reviewed animations match only their named exercise variants", () => {
   const context = animationContext();
   vm.runInContext(context.source, context);
   const match = (name) => vm.runInContext(`gymCustomAnimationFor(${JSON.stringify({ name })})`, context);
-  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 12);
+  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 13);
   assert.equal(match("Press de Banca Plano (Barra)").key, "press-banca-plano-barra");
   assert.equal(match("Press de Banca").key, "press-banca-plano-barra");
   assert.equal(match("Press de banca con mancuernas"), null);
@@ -43,7 +43,10 @@ test("The twelve reviewed animations match only their named exercise variants", 
   assert.equal(match("Gemelos en máquina o prensa").key, "gemelos-maquina-pie");
   assert.match(match("Gemelos en máquina o prensa").variantNote, /no la prensa/);
   assert.equal(match("Gemelos en prensa"), null);
-  assert.equal(match("Aperturas plano"), null);
+  assert.equal(match("Aperturas plano").key, "aperturas-maquina-mariposa");
+  assert.match(match("Aperturas plano").variantNote, /máquina mariposa/);
+  assert.equal(match("Aperturas con mancuernas"), null);
+  assert.equal(match("Aperturas en polea"), null);
   assert.equal(match("Prensa de piernas"), null);
   assert.equal(match(""), null);
 });
@@ -128,6 +131,9 @@ test("Opening a curated plan GIF does not require the external library", async (
   assert.equal(detail.hidden, false);
   assert.match(detail.innerHTML, /press-banca-plano-barra-v5-white\.gif/);
   assert.match(detail.innerHTML, /ilustración orientativa/);
+  await vm.runInContext('openGymTechniqueForPlanExercise({ id: "pec-deck", name: "Aperturas plano" })', context);
+  assert.match(detail.innerHTML, /aperturas-maquina-mariposa-v2-white\.gif/);
+  assert.match(detail.innerHTML, /máquina mariposa/);
 });
 
 test("A medically paused Gym still displays canonical series, reps, loads and technique notes", () => {

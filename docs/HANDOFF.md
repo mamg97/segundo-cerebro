@@ -1,3 +1,11 @@
+## GESTOR GYM · Aperturas plano en máquina mariposa · GIF 13/17 (2026-10-11)
+
+- El usuario confirmó que «Aperturas plano» de su plan corresponde a máquina mariposa/pec deck, no a mancuernas ni poleas. Se generó una lámina 4×2 del estilo anatómico blanco/rojo ya aprobado y se interpoló localmente a GIF blanco de 16 fotogramas, 360×480 y 7 cs, con póster correspondiente.
+- Se revisó visualmente el contacto de ocho fases: mismo cuerpo/máquina/encuadre, sin recortes. La ilustración sigue siendo orientativa y no certifica técnica. Fuente, contacto y metadatos están en `design/gym-animations/`; GIF y póster en `app/assets/gym-animations/`.
+- El enlace exacto cubre Mi plan, Biblioteca y detalles sin asociar el GIF a aperturas con mancuernas o poleas. Los vídeos wger compatibles continúan mostrándose en el detalle cuando se verifican; no se afirma que haya uno para esta variante sin observarlo.
+- Después de este ejercicio quedan cuatro del plan pendientes de GIF: Prensa de piernas, Hip thrust 45º, Extensiones de cuádriceps en máquina y Curl de pierna tumbado o sentado. No alterar el plan ni las series/pesos al añadir material ilustrativo.
+- Validación pendiente al integrar: pruebas, CI, deploy privado y comprobación real de Mi plan y Biblioteca. No declarar visible en producción antes de completar ese recorrido.
+
 ## ORGANIZADOR 13 · HabitQuest: registro privado y smoke test autenticado (2026-10-11)
 
 - El documento único `HabitQuest Data` y sus pestañas `Habits`, `History`, `Meta`, `SyncState` fueron comprobados con el conector autorizado de Google Drive. Existe backup con nombre diferente; no se modificó ni se tomó como fuente.

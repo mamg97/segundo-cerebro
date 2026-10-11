@@ -4,7 +4,12 @@ These assets are first-party presentation aids for Segundo Cerebro. They do not 
 
 ## White-background presentation set (2026-10-11)
 
-The twelve `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The app now uses these white versions; the original transparent versions remain available for future uses.
+The thirteen `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The app now uses these white versions; the original transparent versions remain available for future uses.
+
+## Machine butterfly / pec-deck chest fly
+
+- `aperturas-maquina-mariposa-v2-white.gif` illustrates the user's confirmed **Aperturas plano** pec-deck variant, not dumbbell or cable flyes. The frame-locked source, review contact sheet and build metadata are in `design/gym-animations/`.
+- Visual review: the same seated athlete, backrest, machine base and framing persist through the open-to-closed-to-open cycle; no hands, feet or machine parts are clipped. This is an illustrative aid, not a certified technique assessment.
 
 ## New movement assets, second batch
 
@@ -24,7 +29,7 @@ The twelve `*-white.gif` variants share a white 360×480 canvas, 16 full-size fr
 
 ## Presentation mapping
 
-- The private Gym UI uses the 12 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards.
+- The private Gym UI uses the 13 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards.
 - Matching uses exact normalized exercise names. The combined plan labels for row, rear-delt fly and calf raise show only the barbell, rear-delt-machine and standing-calf-machine variants respectively; the detail view names that limitation.
 - Unmapped exercises continue to use licensed wger media or an explicit empty state. These drawings are illustrative, not technique certification.
 

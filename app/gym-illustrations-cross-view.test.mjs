@@ -12,12 +12,16 @@ function context(extra = {}) {
   return ctx;
 }
 
-test("all twelve reviewed exercises have an independent Library ficha and the correct animation", () => {
+test("all thirteen reviewed exercises have an independent Library ficha and the correct animation", () => {
   const ctx = context();
   const rows = vm.runInContext("gymLibraryWithIllustrations([], { featured: 'video' }, {}, [])", ctx);
-  assert.equal(rows.length, 12);
-  assert.equal(new Set(rows.map((row) => row.id)).size, 12);
-  assert.equal(rows.filter((row) => row.source.provider === "segundo-cerebro-illustrations").length, 12);
+  assert.equal(rows.length, 13);
+  assert.equal(new Set(rows.map((row) => row.id)).size, 13);
+  assert.equal(rows.filter((row) => row.source.provider === "segundo-cerebro-illustrations").length, 13);
+  const pecDeck = rows.find((row) => row.animationKey === "aperturas-maquina-mariposa");
+  assert.equal(pecDeck.name, "Aperturas plano (máquina mariposa)");
+  assert.equal(vm.runInContext(`gymCustomAnimationFor(${JSON.stringify(pecDeck)})?.animationUrl`, ctx),
+    "./assets/gym-animations/aperturas-maquina-mariposa-v2-white.gif");
   for (const row of rows) {
     assert.match(row.id, /^illustration:/);
     assert.equal(vm.runInContext(`gymCustomAnimationFor(${JSON.stringify(row)})?.key`, ctx), row.animationKey);
@@ -32,7 +36,7 @@ test("when a real wger ficha represents the exact exercise, use its card once wi
     { id: 56, name: "Press de banca con mancuernas", source: { provider: "wger" } }
   ];
   const rows = vm.runInContext(`gymLibraryWithIllustrations(${JSON.stringify(wger)}, {}, {}, [])`, ctx);
-  assert.equal(rows.length, 13, "One genuine wger match plus eleven local fichas plus one unrelated wger");
+  assert.equal(rows.length, 14, "One genuine wger match plus twelve local fichas plus one unrelated wger");
   assert.equal(rows.filter((x) => x.id === 55).length, 1);
   assert.equal(rows.filter((x) => x.animationKey === "press-banca-plano-barra").length, 0);
   assert.equal(rows.filter((x) => x.id === 56).length, 1);
@@ -50,7 +54,7 @@ test("query and wger muscle/equipment selection also filter curated exercises", 
   );
   const chest = evaluate({ muscle: "1" });
   assert.deepEqual([...chest.map((x) => x.animationKey)].sort(), [
-    "fondos-paralelas", "press-banca-plano-barra", "press-inclinado-barra"
+    "aperturas-maquina-mariposa", "fondos-paralelas", "press-banca-plano-barra", "press-inclinado-barra"
   ]);
   const chestBarbell = evaluate({ muscle: "1", equipment: "3" });
   assert.equal(chestBarbell.length, 2);
@@ -63,7 +67,7 @@ test("being on the plan only changes the badge; never the existence or media of 
   const ctx = context();
   const plan = [{ id: "one", exercises: [{ id: "my-dips", name: "Fondos en paralelas" }] }];
   const rows = vm.runInContext(`gymLibraryWithIllustrations([], {}, {}, ${JSON.stringify(plan)})`, ctx);
-  assert.equal(rows.length, 12);
+  assert.equal(rows.length, 13);
   const dips = rows.find((row) => row.animationKey === "fondos-paralelas");
   assert.equal(dips.inPlan, true);
   assert.equal(rows.find((row) => row.animationKey === "curl-martillo-polea").inPlan, false);
