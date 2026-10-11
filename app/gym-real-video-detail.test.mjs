@@ -79,19 +79,20 @@ test("provider description and names are escaped before rendering", () => {
   assert.doesNotMatch(video, /<img src=x>/);
 });
 
-test("local-only illustration finds a wger video by public exercise name, not fake illustration ID", async () => {
+test("a publicly verified wger ID is revalidated against name, variant and video at the private API", async () => {
   const calls = [];
+  const observed = {
+    ...realBench, id: 73, videos: [{ ...realBench.videos[0], url: "/api/gym/exercises/73/media/video/21" }]
+  };
   const ctx = scenario({
     fetch: async (url) => {
       calls.push(url);
-      return { ok: true, json: async () => ({ exercises: [realBench] }) };
+      return { ok: true, json: async () => ({ exercise: observed }) };
     }
   });
-  const result = await vm.runInContext(
-    "gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS[0])", ctx);
-  assert.equal(result.id, realBench.id);
-  assert.equal(calls.length, 1);
-  assert.match(calls[0], /^\/api\/gym\/exercises\?q=/);
+  const result = await vm.runInContext("gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS[0])", ctx);
+  assert.equal(result.id, 73);
+  assert.deepEqual(calls, ["/api/gym/exercises/73"]);
   assert.doesNotMatch(calls.join(" "), /illustration:|GimnasioPlan|health/i);
 });
 
@@ -108,7 +109,9 @@ test("no equivalent verified wger video means local GIF and guidance still work"
   assert.equal(await vm.runInContext("gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS[0])", ctx), null);
   assert.match(vm.runInContext("gymTechniqueInstructionsMarkup(GYM_CUSTOM_ANIMATIONS[0])", ctx),
     /Cómo realizar el ejercicio/);
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
+  assert.match(calls[0], /\/api\/gym\/exercises\/73$/);
+  assert.match(calls[1], /\?q=/);
 });
 
 test("real video lookup failing offline cannot prevent existing GIF", async () => {
@@ -165,8 +168,9 @@ test("incline video lookup first tries English, falls back to Spanish and requir
   const match = await vm.runInContext(
     "gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS.find((x)=>x.key==='press-inclinado-barra'))", ctx);
   assert.equal(match?.id, matching.id);
-  assert.equal(calls.length, 1);
-  assert.match(calls[0], /q=incline&limit=48/);
+  assert.equal(calls.length, 2);
+  assert.match(calls[0], /\/api\/gym\/exercises\/538$/);
+  assert.match(calls[1], /q=incline&limit=48/);
 
   const fallbackCalls = [];
   const otherCtx = scenario({
@@ -180,8 +184,9 @@ test("incline video lookup first tries English, falls back to Spanish and requir
   const selected = await vm.runInContext(
     "gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS.find((x)=>x.key==='press-inclinado-barra'))", otherCtx);
   assert.equal(selected?.id, matching.id);
-  assert.equal(fallbackCalls.length, 2);
-  assert.match(fallbackCalls[1], /q=press%20inclinado/);
+  assert.equal(fallbackCalls.length, 3);
+  assert.match(fallbackCalls[0], /\/api\/gym\/exercises\/538$/);
+  assert.match(fallbackCalls[2], /q=press%20inclinado/);
 });
 
 test("user sees explicit video availability or loading state, even when wger has no match", () => {
@@ -194,4 +199,19 @@ test("user sees explicit video availability or loading state, even when wger has
   assert.match(plan, /gymVideoStateMarkup\(animation\.key\)/);
   assert.match(plan, /gymCheckVideoAvailability\(animation, exercise\)/);
   assert.match(css, /\.gym-real-video-status/);
+});
+
+test("the three known provider hints never cause a mismatched exercise or unlicensed video to display", async () => {
+  const ctx = scenario({
+    fetch: async (url) => ({ ok: true, json: async () => {
+      if (/\/73$/.test(url)) return { exercise: {
+        ...realBench, id: 73, name:"Press de banca con mancuernas",
+        videos:[{ url:"/api/gym/exercises/73/media/video/21", license:{title:"CC BY"} }]
+      } };
+      return { exercises: [] };
+    } })
+  });
+  assert.equal(await vm.runInContext("gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS[0])",ctx),null);
+  assert.deepEqual([...vm.runInContext("Object.values(GYM_WGER_VERIFIED_VIDEO_HINTS)",ctx)].sort(),[73,194,538]);
+  assert.match(app, /Ficha multimedia · v0\.44\.7/);
 });
