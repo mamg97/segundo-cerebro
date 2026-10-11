@@ -165,8 +165,8 @@ test("forward genetic campaign stays separate and never inherits legacy returns"
     { id: "genetic_sp500_legacy", status: "sin_diario_disponible", last_equity: null }
   ] };
   const forward = { strategy_id: "genetic_sp500_forward", quality: "next_open_raw_ohlc_v1",
-    initial_capital: 100000, first_session: "2026-09-28", last_session: "2026-09-28",
-    equity_history: [["2026-09-28", 100000]] };
+    initial_capital: 100000, first_session: "2026-10-12", last_session: "2026-10-12",
+    equity_history: [["2026-10-12", 100000]] };
   const db = { prepare: () => ({ bind: (id) => ({ first: async () =>
     id === "genetic_sp500_forward" ? { payload: JSON.stringify(forward) } : null }) }) };
   const merged = await addPrivateGeneticDiary(db, dashboard);
@@ -177,6 +177,39 @@ test("forward genetic campaign stays separate and never inherits legacy returns"
   assert.equal(merged.tracks[1].risk_observations, 1);
   assert.equal(merged.tracks[1].max_drawdown_pct, 0);
   assert.match(merged.tracks[1].note, /siguiente apertura/);
+});
+
+test("interrupted genetic forward is archived and the new cohort has no retroactive trades", async () => {
+  const dashboard = { generated_at_utc: "2026-10-11T23:00:00Z", tracks: [
+    { id: "genetic_sp500_legacy", status: "sin_diario_disponible", last_equity: null }
+  ] };
+  const original = { strategy_id: "genetic_sp500_forward_archive",
+    quality: "next_open_raw_ohlc_v1", initial_capital: 100000,
+    first_session: "2026-09-29", last_session: "2026-10-07",
+    equity_history: [["2026-09-29", 100000], ["2026-10-07", 101008.02822391805]] };
+  const db = { prepare: () => ({ bind: (id) => ({ first: async () =>
+    id === original.strategy_id ? { payload: JSON.stringify(original) } : null }) }) };
+  const waiting = await addPrivateGeneticDiary(db, dashboard);
+  const archive = waiting.tracks.find((row) => row.id === "genetic_sp500_forward_archive");
+  const fresh = waiting.tracks.find((row) => row.id === "genetic_sp500_forward");
+  assert.equal(archive.status, "diario_heredado_observado");
+  assert.equal(archive.last_session, "2026-10-07");
+  assert.equal(archive.return_pct, 1.008028);
+  assert.equal(fresh.status, "programada_sin_diario");
+  assert.equal(fresh.return_pct, null);
+  assert.match(archive.note, /no se une a la nueva/);
+
+  const current = { strategy_id: "genetic_sp500_forward", quality: "next_open_raw_ohlc_v1",
+    initial_capital: 100000, first_session: "2026-10-12", last_session: "2026-10-12",
+    equity_history: [["2026-10-12", 100000]] };
+  const activeDb = { prepare: () => ({ bind: (id) => ({ first: async () =>
+    id === original.strategy_id ? { payload: JSON.stringify(original) }
+      : id === current.strategy_id ? { payload: JSON.stringify(current) } : null }) }) };
+  const active = await addPrivateGeneticDiary(activeDb, dashboard);
+  assert.equal(active.tracks.find((row) => row.id === "genetic_sp500_forward").return_pct, 0);
+  assert.equal(active.tracks.find((row) => row.id === "genetic_sp500_forward").first_session, "2026-10-12");
+  assert.equal(active.tracks.find((row) => row.id === "genetic_sp500_forward_archive").return_pct, 1.008028);
+  assert.match(active.tracks.find((row) => row.id === "genetic_sp500_forward").note, /sin heredar/);
 });
 
 test("OIDC signature and workflow claims gate the private snapshot", async () => {
@@ -207,6 +240,11 @@ test("OIDC signature and workflow claims gate the private snapshot", async () =>
     equity_history: [["2026-09-28", 100000]] };
   assert.equal(normalizeSnapshot(prospective, "123").last_session, "2026-09-28");
   assert.equal(normalizeSnapshot({ ...prospective, quality: "legacy_same_close_model" }, "123"), null);
+  const archive = { ...prospective, strategy_id: "genetic_sp500_forward_archive",
+    equity_history: [["2026-09-29", 100000], ["2026-10-07", 101008.0]] };
+  assert.equal(normalizeSnapshot(archive, "123").last_session, "2026-10-07");
+  assert.equal(normalizeSnapshot({ ...archive,
+    equity_history: [["2026-09-29", 100000], ["2026-10-08", 100000]] }, "123"), null);
 });
 
 

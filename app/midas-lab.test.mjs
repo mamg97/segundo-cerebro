@@ -185,6 +185,22 @@ test("legacy genetic is catalog-only, private forward never masquerades as cash"
   assert.match(detail, /Actividad privada/);
 });
 
+test("interrupted private genetic campaign is archived, not double-ranked", () => {
+  const dashboard = { tracks: [
+    { id: "genetic_sp500_forward_archive", group: "diario_heredado",
+      label: "Genético campaña interrumpida", status: "diario_heredado_observado",
+      return_pct: 1.008028, last_session: "2026-10-07",
+      equity_history: [{ date: "2026-10-07", nav: 101008.028 }] },
+    { id: "genetic_sp500_forward", group: "diario_heredado",
+      label: "Genético prospectivo 12 octubre", status: "programada_sin_diario",
+      return_pct: null, last_session: null, equity_history: [] }
+  ] };
+  const html = renderMidasVisualLab(dashboard);
+  assert.doesNotMatch(html, /Genético campaña interrumpida/);
+  assert.match(html, /Genético prospectivo 12 octubre/);
+  assert.doesNotMatch(html, /1,01 %/);
+});
+
 test("old weekly signals never display unverified return as realized P&L", () => {
   const dashboard = { tracks: [{
     id: "weekly_old", group: "weekly_ml_demo", label: "ML semanal legacy",
