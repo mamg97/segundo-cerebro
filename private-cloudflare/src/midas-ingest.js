@@ -57,7 +57,9 @@ const money = (value) => typeof value === "number" && Number.isFinite(value) && 
 export function normalizeSnapshot(body, runId) {
   const legacy = body?.strategy_id === "genetic_sp500_legacy" && body.quality === "legacy_same_close_model";
   const forward = body?.strategy_id === "genetic_sp500_forward" && body.quality === "next_open_raw_ohlc_v1";
-  if (body?.schema_version !== 1 || (!legacy && !forward) || !money(body.initial_capital) ||
+  const archivedForward = body?.strategy_id === "genetic_sp500_forward_archive" &&
+    body.quality === "next_open_raw_ohlc_v1";
+  if (body?.schema_version !== 1 || (!legacy && !forward && !archivedForward) || !money(body.initial_capital) ||
       body.initial_capital === 0 || !Array.isArray(body.equity_history) ||
       body.equity_history.length < (legacy ? 2 : 1) || body.equity_history.length > 1000 ||
       !/^[a-f0-9]{64}$/.test(body.ledger_sha256 || "")) return null;
@@ -68,6 +70,9 @@ export function normalizeSnapshot(body, runId) {
     previous = point[0];
   }
   const first = body.equity_history[0][0];
+  // The Oct 7 interrupted cohort is immutable and can be ingested only under its
+  // explicit archival identity. Reject attempts to relabel another NAV series.
+  if (archivedForward && (first !== "2026-09-29" || previous !== "2026-10-07")) return null;
   if (previous > new Date(Date.now() + 86400000).toISOString().slice(0, 10)) return null;
   return {
     schema_version: 1,
