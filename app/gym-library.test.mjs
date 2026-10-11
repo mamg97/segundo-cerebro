@@ -60,7 +60,7 @@ test("The actual wger bench card shows the GIF instead of the real-person video"
   vm.runInContext('renderGymLibraryResults([{id: "library-bench", name: "Press de Banca", hasVideo: true, videos: [{url: "/example-video.mp4"}], muscles: [{name: "Chest"}], equipment: [{name: "Barbell"}, {name: "Bench"}]}])', context);
   assert.match(grid.innerHTML, /press-banca-plano-barra-v5-white\.gif/);
   assert.match(grid.innerHTML, /gym-library-card-media has-illustration/);
-  assert.match(grid.innerHTML, />Animación<\/b>/);
+  assert.match(grid.innerHTML, />GIF propio<\/b>/);
   assert.doesNotMatch(grid.innerHTML, /<video/);
 });
 
@@ -182,7 +182,7 @@ test("A medically paused Gym still displays canonical series, reps, loads and te
 test("Gym exposes a free visual exercise library beside the canonical plan", () => {
   assert.match(app, /data-gym-view="plan">Mi plan/);
   assert.match(app, /data-gym-view="library">Biblioteca de ejercicios/);
-  assert.match(app, /Biblioteca libre · wger · 0 €/);
+  assert.match(app, /Ejercicios con animación propia y biblioteca libre wger · 0 €/);
   assert.match(app, /data-gym-library-featured="video"/);
   assert.match(app, /data-gym-technique-id/);
 });

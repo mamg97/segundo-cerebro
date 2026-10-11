@@ -5864,13 +5864,13 @@ const GYM_CUSTOM_ANIMATIONS = [
     key: "press-inclinado-barra",
     animationUrl: "./assets/gym-animations/incline-bench-v1-white.gif",
     posterUrl: "./assets/gym-animations/incline-bench-v1-white-poster.png",
-    labels: ["press inclinado barra", "press de banca inclinado barra"]
+    labels: ["press inclinado barra", "press de banca inclinado barra", "incline barbell bench press"]
   },
   {
     key: "military-press",
     animationUrl: "./assets/gym-animations/military-press-v2-white.gif",
     posterUrl: "./assets/gym-animations/military-press-v2-white-poster.png",
-    labels: ["press militar", "press militar con barra", "standing barbell military press"]
+    labels: ["press militar", "press militar con barra", "standing barbell military press", "barbell military press"]
   },
   {
     key: "fondos-paralelas",
@@ -5894,7 +5894,7 @@ const GYM_CUSTOM_ANIMATIONS = [
     key: "remo-barra",
     animationUrl: "./assets/gym-animations/remo-barra-v1-white.gif",
     posterUrl: "./assets/gym-animations/remo-barra-v1-white-poster.png",
-    labels: ["remo con barra", "remo con barra o remo en maquina"],
+    labels: ["remo con barra", "remo con barra o remo en maquina", "bent over barbell row"],
     variantNote: "Esta animación muestra solo la variante con barra, no el remo en máquina."
   },
   {
@@ -5914,7 +5914,7 @@ const GYM_CUSTOM_ANIMATIONS = [
     key: "curl-biceps-barra-ez",
     animationUrl: "./assets/gym-animations/curl-biceps-barra-ez-v1-white.gif",
     posterUrl: "./assets/gym-animations/curl-biceps-barra-ez-v1-white-poster.png",
-    labels: ["curl de biceps con barra zigzag", "curl de biceps con barra ez"]
+    labels: ["curl de biceps con barra zigzag", "curl de biceps con barra ez", "ez bar curl"]
   },
   {
     key: "curl-martillo-polea",
@@ -5949,14 +5949,83 @@ function normalizeGymAnimationLabel(value) {
     .trim();
 }
 
+// Presentation-only catalogue entries, not rows in GimnasioPlan and not wger IDs.
+// Every key maps to an already reviewed local asset; these labels select the actual variant.
+const GYM_ILLUSTRATED_EXERCISES = {
+  "press-banca-plano-barra": { name: "Press de banca plano (barra)", muscles: ["Chest", "Pectoralis major"], equipment: ["Barbell", "Bench"] },
+  "press-inclinado-barra": { name: "Press inclinado (barra)", muscles: ["Chest", "Pectoralis major"], equipment: ["Barbell", "Bench"] },
+  "military-press": { name: "Press militar (barra)", muscles: ["Shoulders", "Anterior deltoid"], equipment: ["Barbell"] },
+  "fondos-paralelas": { name: "Fondos en paralelas", muscles: ["Chest", "Triceps"], equipment: ["Bodyweight", "Parallel bars"] },
+  "extension-triceps-polea-sobre-cabeza": { name: "Extensión de tríceps en polea alta por encima de la cabeza", muscles: ["Triceps"], equipment: ["Cable", "Cable machine"] },
+  "dominadas-explosivas": { name: "Dominadas (Enfoque Explosivo)", muscles: ["Back", "Latissimus dorsi"], equipment: ["Bodyweight", "Pull-up bar"] },
+  "remo-barra": { name: "Remo con barra", muscles: ["Back", "Latissimus dorsi"], equipment: ["Barbell"] },
+  "pullover-polea-alta": { name: "Pullover en polea alta", muscles: ["Back", "Latissimus dorsi"], equipment: ["Cable", "Cable machine"] },
+  "pajaros-maquina": { name: "Pájaros en máquina", muscles: ["Shoulders", "Posterior deltoid"], equipment: ["Machine"] },
+  "curl-biceps-barra-ez": { name: "Curl de bíceps con barra EZ", muscles: ["Biceps", "Biceps brachii"], equipment: ["Barbell", "EZ bar"] },
+  "curl-martillo-polea": { name: "Curl martillo en polea baja", muscles: ["Biceps", "Brachialis"], equipment: ["Cable", "Cable machine"] },
+  "gemelos-maquina-pie": { name: "Gemelos de pie en máquina", muscles: ["Calves", "Gastrocnemius"], equipment: ["Machine"] }
+};
+
+function gymOwnIllustration(exercise) {
+  return exercise?.source?.provider === "segundo-cerebro-illustrations" &&
+    GYM_ILLUSTRATED_EXERCISES[exercise?.animationKey]?.name;
+}
+
 function gymCustomAnimationFor(exercise) {
   if (!exercise) return null;
   const normalizedId = normalizeGymAnimationLabel(exercise.id);
   const normalizedName = normalizeGymAnimationLabel(exercise.name);
   return GYM_CUSTOM_ANIMATIONS.find((animation) =>
+    (gymOwnIllustration(exercise) && exercise.animationKey === animation.key) ||
     normalizedId === animation.key.replaceAll("-", " ") ||
     animation.labels.some((label) => normalizedName === label)
   ) || null;
+}
+
+// The library combines true wger records and local illustrated exercise fichas.
+// If wger already represents that exact variant, retain its richer record and show
+// the same local animation there; never create a second, duplicate card.
+function gymLibraryWithIllustrations(wgerExercises = [], filters = {}, meta = {}, plan = []) {
+  const base = Array.isArray(wgerExercises) ? wgerExercises : [];
+  const query = normalizeGymAnimationLabel(filters.query);
+  const selectedMuscle = (meta.muscles || []).find((x) => String(x.id) === String(filters.muscle || ""))?.name || null;
+  const selectedEquipment = (meta.equipment || []).find((x) => String(x.id) === String(filters.equipment || ""))?.name || null;
+  const selectedMuscleName = normalizeGymAnimationLabel(selectedMuscle);
+  const selectedEquipmentName = normalizeGymAnimationLabel(selectedEquipment);
+  const planNames = (Array.isArray(plan) ? plan : [])
+    .flatMap((day) => Array.isArray(day.exercises) ? day.exercises : []);
+  const covered = new Set(base.map(gymCustomAnimationFor).filter(Boolean).map((item) => item.key));
+  const curated = GYM_CUSTOM_ANIMATIONS
+    .filter((item) => !covered.has(item.key))
+    .filter((item) => GYM_ILLUSTRATED_EXERCISES[item.key])
+    .filter((item) => {
+      const spec = GYM_ILLUSTRATED_EXERCISES[item.key];
+      const keywords = [spec.name, ...item.labels].map(normalizeGymAnimationLabel);
+      if (query && !keywords.some((text) => text.includes(query))) return false;
+      if (filters.muscle && (!selectedMuscleName || !spec.muscles.some((name) =>
+        normalizeGymAnimationLabel(name) === selectedMuscleName))) return false;
+      if (filters.equipment && (!selectedEquipmentName || !spec.equipment.some((name) =>
+        normalizeGymAnimationLabel(name) === selectedEquipmentName))) return false;
+      return true;
+    })
+    .map((item) => {
+      const spec = GYM_ILLUSTRATED_EXERCISES[item.key];
+      return {
+        id: "illustration:" + item.key,
+        animationKey: item.key,
+        name: spec.name,
+        description: "Ilustración orientativa de esta variante concreta del ejercicio.",
+        category: { name: "Animación propia" },
+        muscles: spec.muscles.slice(0, 1).map((name) => ({ name })),
+        equipment: spec.equipment.slice(0, 1).map((name) => ({ name })),
+        images: [], videos: [], hasVideo: false,
+        inPlan: planNames.some((row) => gymCustomAnimationFor(row)?.key === item.key),
+        source: { provider: "segundo-cerebro-illustrations", label: "Segundo Cerebro" }
+      };
+    });
+  const matchingWger = base.filter((entry) => gymCustomAnimationFor(entry));
+  const remainingWger = base.filter((entry) => !gymCustomAnimationFor(entry));
+  return [...matchingWger, ...curated, ...remainingWger];
 }
 
 function gymCustomAnimationMarkup(animation, label, className = "") {
@@ -6161,10 +6230,10 @@ function renderGymLibraryShell() {
         <button type="submit">Buscar</button>
       </form>
       <div class="gym-library-mode">
-        <button type="button" class="${gymLibraryState.featured === "video" ? "active" : ""}" data-gym-library-featured="video">Con vídeo</button>
+        <button type="button" class="${gymLibraryState.featured === "video" ? "active" : ""}" data-gym-library-featured="video">Vídeos y GIFs</button>
         <button type="button" class="${gymLibraryState.featured === "" ? "active" : ""}" data-gym-library-featured="">Todo el catálogo</button>
       </div>
-      <p class="gym-library-source">Biblioteca libre · wger · 0 € · se conserva la atribución/licencia de cada recurso.</p>
+      <p class="gym-library-source">Ejercicios con animación propia y biblioteca libre wger · 0 € · autoría y licencia de cada recurso diferenciadas.</p>
     </div>
     <div id="gym-library-status" class="gym-library-status" role="status">Cargando biblioteca…</div>
     <div id="gym-library-results" class="gym-library-grid"></div>
@@ -6402,7 +6471,7 @@ function renderGymLibraryResults(exercises) {
     return;
   }
 
-  status.textContent = exercises.length + " ejercicios cargados";
+  status.textContent = exercises.length + " ejercicios cargados · " + exercises.filter((item) => gymCustomAnimationFor(item)).length + " con GIF propio";
   grid.innerHTML = exercises.map((exercise, index) => {
     const customAnimation = gymCustomAnimationFor(exercise);
     const muscles = (exercise.muscles || []).map((item) => item.name).filter(Boolean).slice(0, 2).join(" · ");
@@ -6411,7 +6480,7 @@ function renderGymLibraryResults(exercises) {
       <button type="button" class="gym-library-card" data-gym-library-id="${escapeHtml(exercise.id)}">
         <span class="gym-library-card-media${customAnimation ? " has-illustration" : ""}">
           ${gymLibraryPreview(exercise, index)}
-          ${customAnimation ? '<b class="gym-library-media-badge">Animación</b>' : exercise.hasVideo ? '<b class="gym-library-media-badge">▶ vídeo</b>' : ""}
+          ${customAnimation ? '<b class="gym-library-media-badge">GIF propio</b>' : exercise.hasVideo ? '<b class="gym-library-media-badge">▶ vídeo</b>' : ""}
           ${exercise.inPlan ? '<b class="gym-library-plan-badge">En tu plan</b>' : ""}
         </span>
         <span class="gym-library-card-copy">
@@ -6462,15 +6531,28 @@ async function loadGymExerciseLibrary(options = {}) {
     });
     if (!response.ok) throw new Error("GYM_LIBRARY_" + response.status);
     const payload = await response.json();
-    renderGymLibraryResults(Array.isArray(payload.exercises) ? payload.exercises : []);
+    const combined = gymLibraryWithIllustrations(
+      Array.isArray(payload.exercises) ? payload.exercises : [],
+      gymLibraryState,
+      meta,
+      gymPanelData?.plan || []
+    );
+    renderGymLibraryResults(combined);
 
-    if (options.autoOpenFirst && payload.exercises?.[0]) {
-      await openGymLibraryExercise(payload.exercises[0].id, gymLibraryState.contextPlanExerciseId);
+    if (options.autoOpenFirst && combined[0]) {
+      await openGymLibraryExercise(combined[0].id, gymLibraryState.contextPlanExerciseId);
     }
   } catch (error) {
     const grid = document.querySelector("#gym-library-results");
-    if (grid) grid.innerHTML = "";
-    if (status) status.textContent = "La biblioteca libre no está disponible ahora. Tu plan y tu histórico siguen intactos.";
+    // A wger/network outage must not hide our twelve local exercise illustrations.
+    const own = gymLibraryWithIllustrations([], gymLibraryState, gymLibraryMeta || {}, gymPanelData?.plan || []);
+    if (own.length) {
+      renderGymLibraryResults(own);
+      if (status) status.textContent = own.length + " GIF propios disponibles; catálogo wger temporalmente no disponible.";
+    } else {
+      if (grid) grid.innerHTML = "";
+      if (status) status.textContent = "La biblioteca libre no está disponible ahora. Tu plan y tu histórico siguen intactos.";
+    }
     console.warn("Gym exercise library load failed", error);
   }
 }
@@ -6496,6 +6578,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
   const video = exercise?.videos?.find((item) => item.isMain) || exercise?.videos?.[0] || null;
   const image = exercise?.images?.find((item) => item.isMain) || exercise?.images?.[0] || null;
   const planExercise = contextPlanExerciseId ? gymPlanExerciseById(contextPlanExerciseId) : null;
+  const isOwnIllustration = Boolean(gymOwnIllustration(exercise));
   // A candidate library result may be a different variant from the plan row.
   const customAnimation = gymCustomAnimationFor(exercise);
   const existingLink = contextPlanExerciseId ? gymPlanExerciseLinkMap().get(String(contextPlanExerciseId)) : null;
@@ -6529,13 +6612,14 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
           ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}
         </div>
         ${exercise.description ? `<p class="gym-exercise-description">${escapeHtml(exercise.description)}</p>` : '<p class="gym-exercise-description is-muted">wger no aporta instrucciones textuales para esta variante.</p>'}
+        ${customAnimation?.variantNote ? `<p class="gym-exercise-description">${escapeHtml(customAnimation.variantNote)}</p>` : ""}
         <dl class="gym-exercise-anatomy">
           <div><dt>Principal</dt><dd>${escapeHtml(muscleNames.join(", ") || "—")}</dd></div>
           <div><dt>Secundarios</dt><dd>${escapeHtml(secondaryNames.join(", ") || "—")}</dd></div>
           <div><dt>Equipo</dt><dd>${escapeHtml(equipmentNames.join(", ") || "—")}</dd></div>
         </dl>
 
-        ${planExercise ? `
+        ${planExercise && !isOwnIllustration ? `
           <section class="gym-library-link-card">
             <small>Ejercicio de tu plan</small>
             <strong>${escapeHtml(planExercise.name)}</strong>
@@ -6544,7 +6628,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
             </button>
           </section>` : ""}
 
-        <section class="gym-library-add-card">
+        ${isOwnIllustration ? `<p class="gym-exercise-description is-muted">Esta ficha ilustra el movimiento sin añadirlo al plan. Las modificaciones de tu plan se realizan desde sus fuentes canónicas.</p>` : `<section class="gym-library-add-card">
           <div>
             <small>Añadir al plan</small>
             <strong>${exercise.inPlan ? "Este ejercicio ya está asociado a tu plan" : "Configura la entrada inicial"}</strong>
@@ -6560,12 +6644,10 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
             ${exercise.inPlan ? "Ya está en tu plan" : "Añadir al plan"}
           </button>
           <p id="gym-library-action-status" class="gym-library-action-status"></p>
-        </section>
+        </section>`}
 
         <footer class="gym-exercise-attribution">
-          <strong>Fuente libre: wger</strong>
-          <span>${escapeHtml(gymExerciseLicenseText(exercise))}</span>
-          <small>Segundo Cerebro no copia contenido premium ni multimedia de Lyfta/RepDB.</small>
+          ${isOwnIllustration ? `<strong>Ilustración propia · Segundo Cerebro</strong><span>Recurso visual orientativo. No es una ficha de wger ni certificación técnica.</span>` : `<strong>Fuente libre: wger</strong><span>${escapeHtml(gymExerciseLicenseText(exercise))}</span><small>Segundo Cerebro no copia contenido premium ni multimedia de Lyfta/RepDB.</small>`}
         </footer>
       </div>
     </article>`;
@@ -6661,7 +6743,7 @@ async function openGymLibraryExercise(exerciseId, contextPlanExerciseId = null) 
   if (status) status.textContent = "Cargando ficha…";
   try {
     let exercise = gymLibraryState.results.find((item) => String(item.id) === String(exerciseId)) || null;
-    if (!exercise || !exercise.description) {
+    if (!gymOwnIllustration(exercise) && (!exercise || !exercise.description)) {
       const response = await fetch("/api/gym/exercises/" + encodeURIComponent(exerciseId), {
         headers: { Accept: "application/json" },
         cache: "no-store"
@@ -6714,7 +6796,7 @@ function renderGymDay(day, latestByExercise = new Map()) {
           <div class="gym-exercise-info">
             <div class="gym-exercise-title-row">
               <strong>${escapeHtml(exercise.name)}</strong>
-              <button type="button" class="gym-technique-button" data-gym-technique-id="${escapeHtml(exercise.id)}">Técnica</button>
+              <button type="button" class="gym-technique-button" data-gym-technique-id="${escapeHtml(exercise.id)}">${gymCustomAnimationFor(exercise) ? "Ver GIF" : "Técnica"}</button>
             </div>
             <span>${escapeHtml(formatTarget(exercise))}</span>
             ${exercise.loadNote ? `<small>Referencia: ${escapeHtml(exercise.loadNote)}</small>` : ""}
