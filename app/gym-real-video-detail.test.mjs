@@ -127,7 +127,7 @@ test("both plan and library details enrich the video without changing list tiles
   assert.match(plan, /gymTechniqueInstructionsMarkup\(animation\)/);
   assert.match(plan, /gymLoadVerifiedWgerTechnique\(animation, exercise\)/);
   assert.match(plan, /gymRealVideoMarkup\(provider, animation\)/);
-  assert.match(library, /customAnimation \? gymRealVideoMarkup\(exercise, customAnimation\)/);
+  assert.match(library, /customAnimation && !isOwnIllustration \? gymRealVideoMarkup\(exercise, customAnimation\)/);
   assert.match(library, /gymLoadVerifiedWgerTechnique\(animation\)/);
   const preview = app.slice(app.indexOf("function gymLibraryPreview("), app.indexOf("async function loadGymExerciseLibrary("));
   assert.match(preview, /return gymCustomAnimationMarkup\(animation/);
@@ -135,4 +135,63 @@ test("both plan and library details enrich the video without changing list tiles
   assert.match(css, /\.gym-real-video > \.gym-exercise-hero-media/);
   assert.match(css, /\.gym-technique-explanation/);
   assert.match(css, /@media \(max-width: 760px\)/);
+});
+
+test("incline wger English naming matches barbell only, never dumbbell versions", () => {
+  const ctx = scenario();
+  const key = (item) => vm.runInContext("gymCustomAnimationFor(" + JSON.stringify(item) + ")?.key || null", ctx);
+  const barbell = { ...realBench, id: 704, name: "Incline Bench Press", equipment: [{ name: "Barbell" }] };
+  const dumbbell = { ...barbell, id: 705, equipment: [{ name: "Dumbbell" }] };
+  const ambiguous = { ...barbell, equipment: [] };
+  assert.equal(key(barbell), "press-inclinado-barra");
+  assert.equal(key(dumbbell), null);
+  assert.equal(key(ambiguous), null);
+  assert.equal(key({ ...barbell, name: "Incline Dumbbell Bench Press" }), null);
+  assert.equal(key({ ...barbell, name: "Incline Barbell Bench Press" }), "press-inclinado-barra");
+});
+
+test("incline video lookup first tries English, falls back to Spanish and requires exact variant", async () => {
+  const calls = [];
+  const matching = {
+    ...realBench, id: 704, name: "Incline Bench Press", equipment: [{ name: "Barbell" }],
+    videos: [{ ...realBench.videos[0], url: "/api/gym/exercises/704/media/video/14" }]
+  };
+  const ctx = scenario({
+    fetch: async (url) => {
+      calls.push(url);
+      return { ok: true, json: async () => ({ exercises: [matching] }) };
+    }
+  });
+  const match = await vm.runInContext(
+    "gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS.find((x)=>x.key==='press-inclinado-barra'))", ctx);
+  assert.equal(match?.id, matching.id);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0], /q=incline&limit=48/);
+
+  const fallbackCalls = [];
+  const otherCtx = scenario({
+    fetch: async (url) => {
+      fallbackCalls.push(url);
+      return { ok: true, json: async () => ({ exercises: url.includes("q=incline")
+        ? [{ ...matching, equipment: [{ name: "Dumbbell" }] }]
+        : [matching] }) };
+    }
+  });
+  const selected = await vm.runInContext(
+    "gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS.find((x)=>x.key==='press-inclinado-barra'))", otherCtx);
+  assert.equal(selected?.id, matching.id);
+  assert.equal(fallbackCalls.length, 2);
+  assert.match(fallbackCalls[1], /q=press%20inclinado/);
+});
+
+test("user sees explicit video availability or loading state, even when wger has no match", () => {
+  const section = app.slice(app.indexOf("function renderGymLibraryDetail("),
+    app.indexOf("function getLatestGymEntries("));
+  const plan = app.slice(app.indexOf("async function openGymTechniqueForPlanExercise("),
+    app.indexOf("async function openGymExternalTechnique("));
+  assert.match(section, /Buscando vídeo real compatible/);
+  assert.match(section, /No se ha encontrado un vídeo real verificado/);
+  assert.match(plan, /Buscando vídeo real compatible/);
+  assert.match(plan, /No se ha encontrado un vídeo real verificado/);
+  assert.match(css, /\.gym-real-video-status/);
 });
