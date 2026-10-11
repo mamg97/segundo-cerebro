@@ -29,7 +29,7 @@ The thirteen `*-white.gif` variants share a white 360×480 canvas, 16 full-size 
 
 ## Presentation mapping
 
-- The private Gym UI uses the 13 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards.
+- The private Gym UI uses the 13 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards. Each matching exercise shows a GIF directly in the active plan row, paused-plan reference, Library card and detail; real wger videos, when verified, remain in the detail only.
 - Matching uses exact normalized exercise names. The combined plan labels for row, rear-delt fly and calf raise show only the barbell, rear-delt-machine and standing-calf-machine variants respectively; the detail view names that limitation.
 - Unmapped exercises continue to use licensed wger media or an explicit empty state. These drawings are illustrative, not technique certification.
 

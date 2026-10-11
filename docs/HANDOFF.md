@@ -1,3 +1,9 @@
+## GESTOR GYM · GIF visible en todas las vistas (2026-10-11)
+
+- Después de publicar el GIF 13/17 de «Aperturas plano» se comprobó en producción la tarjeta y el detalle de Biblioteca y el botón «Ver GIF» desde Mi plan. La ficha de Mi plan aún no mostraba el GIF directamente: era un incumplimiento de la petición de tenerlo en todas las vistas.
+- Corrección común para los 13 ejercicios mapeados: miniatura GIF blanca, fija en tamaño y sin recorte en cada fila del plan activo y en la referencia del plan pausado. Biblioteca y ambos detalles ya usaban el mismo archivo. Con preferencia de movimiento reducido se muestra el póster. El botón pasa a «Ver detalle»; los vídeos reales compatibles siguen exclusivos del detalle y nunca sustituyen el GIF principal.
+- No se cambian ejercicios, cargas, series, sesiones, datos privados ni búsquedas wger. Verificar pruebas, despliegue privado y visualmente Mi plan y Biblioteca; no dar por visible en producción antes de ello.
+
 ## GESTOR GYM · Aperturas plano en máquina mariposa · GIF 13/17 (2026-10-11)
 
 - El usuario confirmó que «Aperturas plano» de su plan corresponde a máquina mariposa/pec deck, no a mancuernas ni poleas. Se generó una lámina 4×2 del estilo anatómico blanco/rojo ya aprobado y se interpoló localmente a GIF blanco de 16 fotogramas, 360×480 y 7 cs, con póster correspondiente.
