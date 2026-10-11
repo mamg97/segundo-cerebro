@@ -699,6 +699,8 @@ Reglas:
 - no almacenar una copia de todas las muestras crudas cardiacas/sueño cuando el caso de uso solo necesita el resumen diario.
 - los valores reales permanecen en D1 privado; Git solo define contrato/esquema.
 
+`health_metric_daily` conserva resúmenes diarios adicionales por `(metric_date, metric_key)` cuando Apple Salud contiene muestras reales: unidad, tipo de agregación, suma/media/mínimo/máximo/último valor, número de muestras y procedencia. No se crean filas para métricas que el reloj o fuentes como Zepp no hayan escrito en Apple Salud. La API privada de histórico incluye estas filas en `metrics`; no sustituyen los datos canónicos de energía, composición ni recuperación.
+
 ## MIDAS · proyección externa de solo lectura
 
 `GET /api/midas` devuelve el `dashboard.json` público normalizado: `generated_at_utc`, `stale` y `tracks[]` con `id`, `label`, `group`, `status`, `first_session`, `last_session`, `currency`, `last_equity`, `day_return_pct`, `return_pct` y `note`. El porcentaje diario compara los dos últimos valores de patrimonio ficticio del diario; es `null` si aún no hay dos cierres. Los porcentajes de campañas con fechas, mercados o divisas distintos no son directamente comparables. Segundo Cerebro no persiste esas filas en D1.

@@ -80,6 +80,8 @@ Xcode permite probar la app con un Apple Account sin membresía de pago usando u
 - **Apple Developer Program / Team de pago:** apto para mantener una instalación de desarrollo mucho más duradera y para distribuir posteriormente mediante mecanismos oficiales.
 - no pagar ni cambiar de plan solo para completar la prueba inicial; primero validar que HealthKit, background y D1 funcionan como esperamos.
 
+Si se usa el renovador local gratuito, `scripts/renew-free-signing.sh` recibe `HEALTH_BRIDGE_DEVICE_ID` y `HEALTH_BRIDGE_TEAM_ID` únicamente del entorno local. El LaunchAgent debe apuntar al script del checkout **actual** que contiene el bridge instalado; una ruta a un checkout antiguo puede reinstalar una versión obsoleta. El script no descarga ni fusiona código automáticamente: tras un cambio de versión hay que actualizar el checkout de renovación de forma controlada. El token de ingesta permanece en Keychain del iPhone.
+
 
 1. En el Mac, actualizar `mamg97/segundo-cerebro`.
 2. Abrir:

@@ -180,7 +180,8 @@ segundo-cerebro
 D1
   ├── health_energy_daily
   ├── health_body_samples
-  └── health_recovery_daily
+  ├── health_recovery_daily
+  └── health_metric_daily
   ↓
 Salud / Nutrición / análisis longitudinal
 ```
