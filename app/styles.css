@@ -26531,3 +26531,187 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 
 /* v0.44.7: visible media-build stamp for identifying stale Gym frontend */
 .gym-media-build-caption { display: block; margin: 2px 0 10px; font-size: 10px; color: var(--ink-soft); font-weight: 500; }
+
+
+/* v0.44.12 · Menú semanal: navigation and compact expandable days, no loss of detail */
+.weekly-menu-week-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.weekly-menu-week-period {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.weekly-menu-week-period small {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.weekly-menu-week-period strong {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.weekly-menu-week-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.weekly-menu-week-controls button,
+.weekly-menu-week-picker input {
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+.weekly-menu-week-controls button {
+  cursor: pointer;
+  padding: 5px 10px;
+  font-weight: 750;
+}
+.weekly-menu-week-controls button[data-menu-week-step] {
+  min-width: 34px;
+  font-size: 17px;
+}
+.weekly-menu-week-controls button:disabled { opacity: .4; cursor: default; }
+.weekly-menu-week-controls button:focus-visible,
+.weekly-menu-week-controls input:focus-visible,
+.weekly-menu-day-summary:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.weekly-menu-week-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.weekly-menu-week-picker input {
+  width: 142px;
+  padding: 5px 7px;
+  color-scheme: dark;
+}
+.weekly-menu-week-error {
+  flex: 1 0 100%;
+  font-size: 11px;
+  color: var(--coral);
+  margin: 0;
+}
+.weekly-menu-week-error[hidden] { display: none; }
+#menu-panel .weekly-menu-hero {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 11px 12px;
+  border-radius: 12px;
+}
+#menu-panel .weekly-menu-hero h3 { font-size: 17px; margin: 2px 0 0; }
+#menu-panel .weekly-menu-hero .context-label { margin: 0; font-size: 10px; }
+#menu-panel .weekly-menu-objective-chips { justify-content: flex-start; }
+#menu-panel .weekly-menu-objective-chips > span {
+  min-width: 90px;
+  padding: 6px 9px;
+  border-radius: 8px;
+}
+#menu-panel .weekly-menu-objective-chips small { font-size: 10px; }
+#menu-panel .weekly-menu-objective-chips strong { font-size: 12px; margin-top: 2px; }
+#menu-panel .master-source-links { margin: 0 0 9px; }
+#menu-panel .weekly-menu-grid-rich {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+#menu-panel .weekly-menu-day-rich {
+  display: block;
+  border-radius: 11px;
+}
+#menu-panel .weekly-menu-day-collapse > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px 15px;
+  flex-wrap: wrap;
+  list-style: none;
+  cursor: pointer;
+  padding: 9px 12px;
+  min-height: 36px;
+}
+#menu-panel .weekly-menu-day-collapse > summary::-webkit-details-marker { display: none; }
+#menu-panel .weekly-menu-day-summary-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-width: 0;
+}
+#menu-panel .weekly-menu-day-summary-heading strong { font-size: 13px; font-weight: 800; }
+#menu-panel .weekly-menu-day-summary-heading small { color: var(--ink-soft); font-size: 11px; }
+#menu-panel .weekly-menu-day-summary-facts {
+  display: flex;
+  align-items: center;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+#menu-panel .weekly-menu-day-summary-facts small { color: var(--ink-soft); font-size: 11px; }
+#menu-panel .weekly-menu-day-summary::after {
+  content: "▾";
+  display: inline-block;
+  font-size: 13px;
+  color: var(--blue);
+  margin-left: auto;
+  transition: transform 140ms ease;
+}
+#menu-panel .weekly-menu-day-collapse[open] > summary::after { transform: rotate(180deg); }
+#menu-panel .weekly-menu-day-progress {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px 12px 7px;
+}
+#menu-panel .weekly-menu-progress { padding: 8px 9px; border-radius: 8px; }
+#menu-panel .weekly-menu-progress span,
+#menu-panel .weekly-menu-progress small,
+#menu-panel .weekly-menu-progress strong { font-size: 11px; }
+#menu-panel .weekly-menu-meal {
+  padding: 8px 12px;
+}
+#menu-panel .weekly-menu-moment { font-size: 10px !important; }
+#menu-panel .weekly-menu-day-collapse > footer {
+  padding: 8px 12px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.4;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 760px) {
+  .weekly-menu-week-navigation { padding: 9px; gap: 8px; }
+  .weekly-menu-week-period strong { font-size: 14px; }
+  .weekly-menu-week-controls { width: 100%; gap: 5px; }
+  .weekly-menu-week-controls button { font-size: 11px; }
+  .weekly-menu-week-picker { gap: 3px; }
+  .weekly-menu-week-picker input { width: 130px; }
+  #menu-panel .weekly-menu-day-summary-facts { font-size: 11px; }
+  #menu-panel .weekly-menu-day-summary-heading { gap: 3px 7px; }
+  #menu-panel .weekly-menu-day-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
