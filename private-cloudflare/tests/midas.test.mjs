@@ -165,8 +165,8 @@ test("forward genetic campaign stays separate and never inherits legacy returns"
     { id: "genetic_sp500_legacy", status: "sin_diario_disponible", last_equity: null }
   ] };
   const forward = { strategy_id: "genetic_sp500_forward", quality: "next_open_raw_ohlc_v1",
-    initial_capital: 100000, first_session: "2026-09-28", last_session: "2026-09-28",
-    equity_history: [["2026-09-28", 100000]] };
+    initial_capital: 100000, first_session: "2026-10-12", last_session: "2026-10-12",
+    equity_history: [["2026-10-12", 100000]] };
   const db = { prepare: () => ({ bind: (id) => ({ first: async () =>
     id === "genetic_sp500_forward" ? { payload: JSON.stringify(forward) } : null }) }) };
   const merged = await addPrivateGeneticDiary(db, dashboard);
