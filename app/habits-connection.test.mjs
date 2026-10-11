@@ -29,7 +29,7 @@ function setup({ response, reject = null } = {}) {
       return response;
     },
     localDateKey: () => "2026-10-11",
-    renderHabitsPanel: (data) => { ctx.rendered = data; },
+    renderHabitsPanel: (data) => { ctx.rendered = data; body.innerHTML = "<section>Hábitos</section>"; },
     console: { warn() {} },
     document: { querySelector: (id) => ({
       "#detail-dialog": dialog,
@@ -79,5 +79,5 @@ test("valid original HabitQuest response still displays data instead of the fall
   } });
   await vm.runInContext("openHabitsDetail('2026-10-11')", ctx);
   assert.equal(ctx.rendered.summary.total, 1);
-  assert.equal(body.innerHTML, "");
+  assert.match(body.innerHTML, /<section>Hábitos<\/section>/);
 });
