@@ -6119,8 +6119,8 @@ async function gymLoadVerifiedWgerTechnique(animation, planExercise = null) {
       matched.find((candidate) => candidate.description) || matched[0] || null;
     if (!best) return descriptionFallback;
     return best.description ? best : await readDetail(best.id) || best;
-  } catch (error) {
-    console.warn("Gym real-video lookup unavailable", error?.name || "unavailable");
+  } catch {
+    // Offline/unavailable wger is not a failure of the GIF detail itself.
     return null;
   }
 }
