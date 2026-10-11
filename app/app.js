@@ -6050,6 +6050,15 @@ function gymCustomAnimationMarkup(animation, label, className = "") {
     </span>`;
 }
 
+// IDs observed from public wger on 2026-10-11. A source ID is a lookup hint,
+// NOT an availability guarantee: each use rechecks provider, variant, proxy URL
+// and the actual media listing. No user data or records are added.
+const GYM_WGER_VERIFIED_VIDEO_HINTS = Object.freeze({
+  "press-banca-plano-barra": 73,
+  "press-inclinado-barra": 538,
+  "fondos-paralelas": 194
+});
+
 // Only show wger's same-origin proxy video for the exact GIF exercise variant.
 function gymVerifiedWgerVideo(exercise, animation) {
   if (exercise?.source?.provider !== "wger") return null;
@@ -6097,19 +6106,32 @@ async function gymLoadVerifiedWgerTechnique(animation, planExercise = null, diag
   if (!animation) return null;
   const readDetail = async (id) => {
     if (!/^\d+$/.test(String(id || ""))) return null;
-    const response = await fetch("/api/gym/exercises/" + encodeURIComponent(id), {
-      headers: { Accept: "application/json" }, cache: "no-store"
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch("/api/gym/exercises/" + encodeURIComponent(id), {
+        headers: { Accept: "application/json" }, cache: "no-store"
+      });
+      if (!response.ok) {
+        if (diagnostics) diagnostics.hadFailure = true;
+        return null;
+      }
+      const exercise = (await response.json()).exercise;
+      return exercise?.source?.provider === "wger" && gymCustomAnimationFor(exercise)?.key === animation.key
+        ? exercise : null;
+    } catch {
       if (diagnostics) diagnostics.hadFailure = true;
       return null;
     }
-    const exercise = (await response.json()).exercise;
-    return exercise?.source?.provider === "wger" && gymCustomAnimationFor(exercise)?.key === animation.key
-      ? exercise : null;
   };
   try {
     let descriptionFallback = null;
+    // First use a verified public exercise ID. If wger changes its record,
+    // discard the hint and continue with the free normal name search.
+    const observedId = GYM_WGER_VERIFIED_VIDEO_HINTS[animation.key];
+    if (observedId) {
+      const observed = await readDetail(observedId);
+      if (gymVerifiedWgerVideo(observed, animation)) return observed;
+      if (observed?.description) descriptionFallback = observed;
+    }
     const link = planExercise ? gymPlanExerciseLinkMap().get(String(planExercise.id)) : null;
     if (link?.provider === "wger" && /^\d+$/.test(String(link.providerExerciseId))) {
       const linked = await readDetail(link.providerExerciseId);
@@ -6656,6 +6678,7 @@ async function openGymTechniqueForPlanExercise(exercise) {
         </div>
         <div class="gym-exercise-detail-copy">
           <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
+          <small class="gym-media-build-caption">Ficha multimedia · v0.44.7</small>
           ${gymVideoStateMarkup(animation.key)}
           <div id="gym-plan-video-supplement" class="gym-technique-media-supplement"></div>
           ${gymTechniqueInstructionsMarkup(animation)}
@@ -6947,6 +6970,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
       <div class="gym-exercise-detail-copy">
         <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>
         <h3>${escapeHtml(exercise.name)}</h3>
+        <small class="gym-media-build-caption">Ficha multimedia · v0.44.7</small>
         <div class="gym-exercise-tags">
           ${muscleNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
           ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}
