@@ -6656,7 +6656,8 @@ async function openGymTechniqueForPlanExercise(exercise) {
         </div>
         <div class="gym-exercise-detail-copy">
           <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
-          <div id="gym-plan-video-supplement" class="gym-technique-media-supplement"><p class="gym-real-video-status" role="status">Buscando vídeo real compatible…</p></div>
+          ${gymVideoStateMarkup(animation.key)}
+          <div id="gym-plan-video-supplement" class="gym-technique-media-supplement"></div>
           ${gymTechniqueInstructionsMarkup(animation)}
           <div id="gym-plan-text-supplement" class="gym-technique-text-supplement"></div>
           <button type="button" class="gym-library-back" id="gym-animation-library">Consultar biblioteca</button>
@@ -6678,16 +6679,16 @@ async function openGymTechniqueForPlanExercise(exercise) {
     document.querySelector("#gym-animation-heading")?.focus({ preventScroll: true });
     detail.scrollIntoView({ block: "start" });
     // Keep the GIF usable immediately while verified wger media loads.
-    void gymLoadVerifiedWgerTechnique(animation, exercise).then((provider) => {
+    void gymCheckVideoAvailability(animation, exercise).then((provider) => {
       if (detail.hidden || !detail.isConnected ||
           document.querySelector("#gym-animation-heading")?.textContent !== String(exercise.name)) return;
       const videoSlot = detail.querySelector("#gym-plan-video-supplement");
       const textSlot = detail.querySelector("#gym-plan-text-supplement");
       if (!videoSlot || !textSlot) return;
-      videoSlot.innerHTML = (provider && gymRealVideoMarkup(provider, animation)) ||
-        '<p class="gym-real-video-status">No se ha encontrado un vídeo real verificado de esta variante en wger.</p>';
+      videoSlot.innerHTML = provider ? gymRealVideoMarkup(provider, animation) : "";
       textSlot.innerHTML = provider?.description
         ? `<p class="gym-exercise-description"><strong>Descripción de wger:</strong> ${escapeHtml(provider.description)}</p>` : "";
+      gymBindVideoPlaybackCheck(detail);
     });
     return;
   }
@@ -6791,10 +6792,11 @@ function renderGymLibraryResults(exercises) {
   if (detail) detail.hidden = true;
   grid.hidden = false;
   gymLibraryState.results = exercises;
-  gymBindMediaInventory();
-  // The matrix resolves in the background with two concurrent public-name lookups.
-  // Opening the grid, including an outage fallback, never waits for them.
-  void gymCheckVideoInventory();
+  if (document.querySelector("#gym-media-inventory")) {
+    gymBindMediaInventory();
+    // Two background searches at a time; never hold up the exercise tiles.
+    void gymCheckVideoInventory();
+  }
 
   if (!exercises.length) {
     grid.innerHTML = "";
@@ -6912,6 +6914,13 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
   const isOwnIllustration = Boolean(gymOwnIllustration(exercise));
   // A candidate library result may be a different variant from the plan row.
   const customAnimation = gymCustomAnimationFor(exercise);
+  const directVideo = customAnimation ? gymVerifiedWgerVideo(exercise, customAnimation) :
+    gymVerifiedWgerVideo(exercise);
+  if (customAnimation && directVideo) {
+    gymSetVideoAvailability(customAnimation.key, {
+      status: "linked", provider: exercise
+    });
+  }
   const existingLink = contextPlanExerciseId ? gymPlanExerciseLinkMap().get(String(contextPlanExerciseId)) : null;
   const linkedToThis = existingLink && String(existingLink.providerExerciseId) === String(exercise.id);
   const days = Array.isArray(gymPanelData?.plan) ? gymPanelData.plan : [];
@@ -6942,9 +6951,11 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
           ${muscleNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
           ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}
         </div>
-        ${customAnimation && !isOwnIllustration ? gymRealVideoMarkup(exercise, customAnimation) ||
-          '<p class="gym-real-video-status">No se ha encontrado un vídeo real verificado de esta variante en wger.</p>' : ""}
-        ${isOwnIllustration ? '<div id="gym-library-video-supplement" class="gym-technique-media-supplement"><p class="gym-real-video-status" role="status">Buscando vídeo real compatible…</p></div>' : ""}
+        ${customAnimation ? gymVideoStateMarkup(customAnimation.key) :
+          `<p class="gym-video-availability ${directVideo ? "is-present" : "is-absent"}" role="status"><strong>Vídeo en Segundo Cerebro:</strong> ${directVideo ? "Sí · enlazado desde wger" : "No · sin vídeo enlazado para esta ficha"}</p>`}
+        ${customAnimation && !isOwnIllustration ? gymRealVideoMarkup(exercise, customAnimation) : ""}
+        ${customAnimation && (isOwnIllustration || !directVideo) ?
+          '<div id="gym-library-video-supplement" class="gym-technique-media-supplement"></div>' : ""}
         ${customAnimation ? gymTechniqueInstructionsMarkup(customAnimation, isOwnIllustration ? null : exercise) :
           exercise.description ? `<p class="gym-exercise-description">${escapeHtml(exercise.description)}</p>` :
           '<p class="gym-exercise-description is-muted">wger no aporta instrucciones textuales para esta variante.</p>'}
@@ -6988,6 +6999,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
       </div>
     </article>`;
 
+  gymBindVideoPlaybackCheck(detail);
   document.querySelector("#gym-library-back")?.addEventListener("click", () => {
     detail.hidden = true;
     if (grid) grid.hidden = false;
@@ -7088,19 +7100,19 @@ async function openGymLibraryExercise(exerciseId, contextPlanExerciseId = null) 
       exercise = (await response.json()).exercise;
     }
     renderGymLibraryDetail(exercise, contextPlanExerciseId);
-    if (gymOwnIllustration(exercise)) {
-      const animation = gymCustomAnimationFor(exercise);
+    const animation = gymCustomAnimationFor(exercise);
+    if (animation && (!gymVerifiedWgerVideo(exercise, animation) || gymOwnIllustration(exercise))) {
       const detail = document.querySelector("#gym-library-detail");
-      void gymLoadVerifiedWgerTechnique(animation).then((provider) => {
+      void gymCheckVideoAvailability(animation).then((provider) => {
         if (!detail || detail.hidden ||
             detail.querySelector(".gym-exercise-detail-copy h3")?.textContent !== exercise.name) return;
         const videoSlot = detail.querySelector("#gym-library-video-supplement");
         const textSlot = detail.querySelector("#gym-library-text-supplement");
-        if (videoSlot) videoSlot.innerHTML = (provider && gymRealVideoMarkup(provider, animation)) ||
-          '<p class="gym-real-video-status">No se ha encontrado un vídeo real verificado de esta variante en wger.</p>';
+        if (videoSlot) videoSlot.innerHTML = provider ? gymRealVideoMarkup(provider, animation) : "";
         if (textSlot && provider?.description) {
           textSlot.innerHTML = `<p class="gym-exercise-description"><strong>Descripción de wger:</strong> ${escapeHtml(provider.description)}</p>`;
         }
+        gymBindVideoPlaybackCheck(detail);
       });
     }
   } catch (error) {
