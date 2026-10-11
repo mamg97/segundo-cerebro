@@ -2191,6 +2191,15 @@ try {
             "Salud · Gym ofrece doce GIF por ejercicio, sin duplicar variantes",
             "n=" + new Set(localGifUrls).size
           );
+          const mediaMatrix = panel.locator("#gym-media-inventory");
+          assertCheck(
+            await mediaMatrix.locator("tbody tr").count() === 12,
+            "Salud · Gym dispone tabla con doce ejercicios, GIF y vídeo"
+          );
+          assertCheck(
+            await mediaMatrix.locator(".gym-media-gif-state").count() === 12,
+            "Salud · Gym distingue GIF realmente publicado de vídeo verificado"
+          );
           if (libraryCount > 0) {
             const firstCard = libraryCards.first();
             const hasOwnIllustration = (await firstCard.getAttribute("data-gym-library-id") || "").startsWith("illustration:");
@@ -2212,8 +2221,8 @@ try {
                   "Salud · Gym ficha con GIF incluye instrucciones visibles"
                 );
                 assertCheck(
-                  await panel.locator(".gym-real-video,.gym-real-video-status").count() >= 1,
-                  "Salud · Gym declara vídeo real o su disponibilidad sin dejar un hueco vacío"
+                  await panel.locator(".gym-video-availability").count() >= 1,
+                  "Salud · Gym declara explícitamente disponibilidad de vídeo en la ficha"
                 );
               }
               const attribution = normalizeAuditValue(
