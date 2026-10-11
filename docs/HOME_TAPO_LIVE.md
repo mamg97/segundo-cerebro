@@ -59,3 +59,9 @@ Fuentes:
 2. Si el router no puede alojarlo y no hay endpoint autorizado en el servicio Tapo, declarar **vídeo embebido continuo sin equipo 24/7 adicional: no viable con la infraestructura verificada**, sin abrir puertos ni inventar URL cloud. La app Tapo sigue siendo la opción disponible.
 3. Si la red sí ofrece capacidad, construir integración privada bajo demanda, con flujo de vídeo nunca almacenado y costes medidos, y validar primero conexión desde fuera en un dispositivo propio. No introducir Tapo Care ni pagar servidores de streaming.
 4. Documentar consumo de subida del establecimiento, vida de sesión, desconexión, latencia, errores y riesgos de observación de terceros antes del despliegue.
+
+## Comprobación desde Tapo iOS (11/10/2026)
+- La pantalla del usuario muestra «Sobre la cuenta de la cámara» y la acción «Crear ahora». Tapo confirma explícitamente que puede crearse una cuenta de cámara separada para clientes RTSP/NVR/NAS.
+- **No consta que se haya pulsado «Crear ahora» ni que exista una cuenta RTSP configurada.** No suponer credenciales, emisión accesible, router identificado ni streaming remoto funcional.
+- Crear esta cuenta no proporciona acceso remoto público: TP-Link exige que el cliente esté en la misma red local salvo VPN/puente privado; no pedir ni registrar contraseñas, IP, URL RTSP o capturas del entorno.
+- Modelo C520WS + pantalla compatible confirman capacidad conceptual de transmisión local, pero el siguiente requisito bloqueante sigue siendo determinar una salida cifrada y autenticada desde la red del taller sin dispositivos adicionales.
