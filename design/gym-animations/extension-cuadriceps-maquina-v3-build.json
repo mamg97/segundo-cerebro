@@ -1,0 +1,13 @@
+{
+  "width": 360,
+  "height": 480,
+  "frames": 16,
+  "delayCentiseconds": 7,
+  "order": [0, 1, 2, 3, 4, 5, 6, 7],
+  "stationaryAnchor": 0.72,
+  "authoring": "ImageGen + RifeMetal HQ",
+  "source": "extension-cuadriceps-maquina-source-v1-aligned.png",
+  "sourceDimensions": [1776, 888],
+  "sourcePhaseVisibleHeightPx": [327, 328],
+  "review": "Frames 1, 13 and 15 use clean 0.25-time interpolation to avoid ankle-roller artifacts; all 16 final frames inspected in the contact sheet."
+}

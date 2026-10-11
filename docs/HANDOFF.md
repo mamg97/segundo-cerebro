@@ -1,3 +1,10 @@
+## GESTOR GYM · Extensiones de cuádriceps en máquina · GIF 14/17 (2026-10-11)
+
+- Se creó la animación de extensión de rodilla sentado en máquina, con cuádriceps resaltados, sin confundirla con prensa de piernas ni curl femoral. El recurso blanco `extension-cuadriceps-maquina-v3-white.gif` y su póster se enlazan por variante exacta al plan, Biblioteca y detalles; los vídeos wger verificados siguen solo en el detalle.
+- Ocho poses originales se normalizaron antes de interpolar: el contenido visible ocupa 327–328 px de alto en las ocho fases, con igual lienzo de 360×480, sin saltos de escala entre apertura y cierre. Se sustituyeron tres intermedios con artefactos del rodillo por interpolaciones a 0,25 del recorrido, visualmente revisadas. El GIF final tiene 16 fotogramas completos a 7 cs; fuente alineada, contacto de los 16 y metadatos se conservan en `design/gym-animations/`.
+- Restan tres ejercicios del plan sin GIF: Prensa de piernas (aclarar inclinada u horizontal), Hip thrust 45º (aclarar máquina/movimiento exacto) y Curl de pierna tumbado o sentado (aclarar variante). La ilustración no modifica el plan, registros, datos privados ni wger.
+- Antes de declarar publicado: ejecutar pruebas y build, fusionar solo con CI verde, verificar deploy privado y comprobar en la web real Mi plan, Biblioteca y detalle. El GIF es una ayuda visual, no una certificación técnica.
+
 ## GESTOR GYM · GIF visible en todas las vistas (2026-10-11)
 
 - Después de publicar el GIF 13/17 de «Aperturas plano» se comprobó en producción la tarjeta y el detalle de Biblioteca y el botón «Ver GIF» desde Mi plan. La ficha de Mi plan aún no mostraba el GIF directamente: era un incumplimiento de la petición de tenerlo en todas las vistas.

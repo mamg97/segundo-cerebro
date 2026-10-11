@@ -213,5 +213,5 @@ test("the three known provider hints never cause a mismatched exercise or unlice
   });
   assert.equal(await vm.runInContext("gymLoadVerifiedWgerTechnique(GYM_CUSTOM_ANIMATIONS[0])",ctx),null);
   assert.deepEqual([...vm.runInContext("Object.values(GYM_WGER_VERIFIED_VIDEO_HINTS)",ctx)].sort((a,b)=>a-b),[73,194,538]);
-  assert.match(app, /Ficha multimedia · v0\.44\.10/);
+  assert.match(app, /Ficha multimedia · v0\.44\.11/);
 });

@@ -15,11 +15,11 @@ function animationContext(extra = {}) {
   return vm.createContext({ gymVideoInventory: new Map(), gymVideoChecks: new Map(), gymMediaInventoryRunning: false, ...extra, source });
 }
 
-test("The thirteen reviewed animations match only their named exercise variants", () => {
+test("The fourteen reviewed animations match only their named exercise variants", () => {
   const context = animationContext();
   vm.runInContext(context.source, context);
   const match = (name) => vm.runInContext(`gymCustomAnimationFor(${JSON.stringify({ name })})`, context);
-  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 13);
+  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 14);
   assert.equal(match("Press de Banca Plano (Barra)").key, "press-banca-plano-barra");
   assert.equal(match("Press de Banca").key, "press-banca-plano-barra");
   assert.equal(match("Press de banca con mancuernas"), null);
@@ -48,6 +48,10 @@ test("The thirteen reviewed animations match only their named exercise variants"
   assert.equal(match("Aperturas con mancuernas"), null);
   assert.equal(match("Aperturas en polea"), null);
   assert.equal(match("Prensa de piernas"), null);
+  assert.equal(match("Extensiones de cuádriceps en máquina").key, "extension-cuadriceps-maquina");
+  assert.equal(match("Leg Extension").key, "extension-cuadriceps-maquina");
+  assert.equal(match("Curl de pierna sentado"), null);
+  assert.equal(match("Extensiones de cuádriceps con banda"), null);
   assert.equal(match(""), null);
 });
 

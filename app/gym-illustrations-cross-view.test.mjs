@@ -12,16 +12,20 @@ function context(extra = {}) {
   return ctx;
 }
 
-test("all thirteen reviewed exercises have an independent Library ficha and the correct animation", () => {
+test("all fourteen reviewed exercises have an independent Library ficha and the correct animation", () => {
   const ctx = context();
   const rows = vm.runInContext("gymLibraryWithIllustrations([], { featured: 'video' }, {}, [])", ctx);
-  assert.equal(rows.length, 13);
-  assert.equal(new Set(rows.map((row) => row.id)).size, 13);
-  assert.equal(rows.filter((row) => row.source.provider === "segundo-cerebro-illustrations").length, 13);
+  assert.equal(rows.length, 14);
+  assert.equal(new Set(rows.map((row) => row.id)).size, 14);
+  assert.equal(rows.filter((row) => row.source.provider === "segundo-cerebro-illustrations").length, 14);
   const pecDeck = rows.find((row) => row.animationKey === "aperturas-maquina-mariposa");
   assert.equal(pecDeck.name, "Aperturas plano (máquina mariposa)");
   assert.equal(vm.runInContext(`gymCustomAnimationFor(${JSON.stringify(pecDeck)})?.animationUrl`, ctx),
     "./assets/gym-animations/aperturas-maquina-mariposa-v2-white.gif");
+  const quad = rows.find((row) => row.animationKey === "extension-cuadriceps-maquina");
+  assert.equal(quad.name, "Extensiones de cuádriceps en máquina");
+  assert.equal(vm.runInContext(`gymCustomAnimationFor(${JSON.stringify(quad)})?.animationUrl`, ctx),
+    "./assets/gym-animations/extension-cuadriceps-maquina-v3-white.gif");
   for (const row of rows) {
     assert.match(row.id, /^illustration:/);
     assert.equal(vm.runInContext(`gymCustomAnimationFor(${JSON.stringify(row)})?.key`, ctx), row.animationKey);
@@ -36,7 +40,7 @@ test("when a real wger ficha represents the exact exercise, use its card once wi
     { id: 56, name: "Press de banca con mancuernas", source: { provider: "wger" } }
   ];
   const rows = vm.runInContext(`gymLibraryWithIllustrations(${JSON.stringify(wger)}, {}, {}, [])`, ctx);
-  assert.equal(rows.length, 14, "One genuine wger match plus twelve local fichas plus one unrelated wger");
+  assert.equal(rows.length, 15, "One genuine wger match plus thirteen local fichas plus one unrelated wger");
   assert.equal(rows.filter((x) => x.id === 55).length, 1);
   assert.equal(rows.filter((x) => x.animationKey === "press-banca-plano-barra").length, 0);
   assert.equal(rows.filter((x) => x.id === 56).length, 1);
@@ -67,7 +71,7 @@ test("being on the plan only changes the badge; never the existence or media of 
   const ctx = context();
   const plan = [{ id: "one", exercises: [{ id: "my-dips", name: "Fondos en paralelas" }] }];
   const rows = vm.runInContext(`gymLibraryWithIllustrations([], {}, {}, ${JSON.stringify(plan)})`, ctx);
-  assert.equal(rows.length, 13);
+  assert.equal(rows.length, 14);
   const dips = rows.find((row) => row.animationKey === "fondos-paralelas");
   assert.equal(dips.inPlan, true);
   assert.equal(rows.find((row) => row.animationKey === "curl-martillo-polea").inPlan, false);
@@ -75,7 +79,8 @@ test("being on the plan only changes the badge; never the existence or media of 
 
 test("a GIF is visible in active and paused plan rows, while videos stay in the detail", () => {
   const day = { id: "push", title: "Día 1", focus: "Pecho", restSeconds: 90, exercises: [
-    { id: "fly", name: "Aperturas plano", setsTarget: 3, repsTarget: "12", loadValue: 107, loadUnit: "kg" }
+    { id: "fly", name: "Aperturas plano", setsTarget: 3, repsTarget: "12", loadValue: 107, loadUnit: "kg" },
+    { id: "quad", name: "Extensiones de cuádriceps en máquina", setsTarget: 3, repsTarget: "12-15", loadValue: 50, loadUnit: "kg" }
   ] };
   const row = { innerHTML: "", querySelectorAll: () => [] };
   const ctx = context({
@@ -94,10 +99,12 @@ test("a GIF is visible in active and paused plan rows, while videos stay in the 
   vm.runInContext(`renderGymDay(${JSON.stringify(day)}, new Map())`, ctx);
   assert.match(row.innerHTML, /gym-plan-inline-animation/);
   assert.match(row.innerHTML, /aperturas-maquina-mariposa-v2-white\.gif/);
+  assert.match(row.innerHTML, /extension-cuadriceps-maquina-v3-white\.gif/);
   assert.doesNotMatch(row.innerHTML, /<video/);
   const paused = vm.runInContext(`renderGymPlanReference([${JSON.stringify(day)}])`, ctx);
   assert.match(paused, /gym-plan-inline-animation/);
   assert.match(paused, /aperturas-maquina-mariposa-v2-white\.gif/);
+  assert.match(paused, /extension-cuadriceps-maquina-v3-white\.gif/);
   assert.doesNotMatch(paused, /<video/);
 });
 
