@@ -26366,3 +26366,35 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .gym-real-video > .gym-exercise-hero-media { max-height: 240px; }
   .gym-technique-explanation > p { font-size: 13px; }
 }
+
+/* v0.44.5 · Show the real video within the visible detail copy */
+.gym-exercise-detail-copy > .gym-real-video,
+.gym-exercise-detail-copy > .gym-technique-media-supplement .gym-real-video {
+  margin: 0 0 18px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.gym-exercise-detail-copy > .gym-real-video .gym-exercise-hero-media,
+.gym-exercise-detail-copy .gym-technique-media-supplement .gym-exercise-hero-media {
+  display: block;
+  width: min(100%, 520px);
+  max-height: 240px;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
+.gym-real-video-status {
+  padding: 11px 12px;
+  margin: 0 0 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media(max-width: 760px) {
+  .gym-exercise-detail-copy > .gym-real-video .gym-exercise-hero-media,
+  .gym-exercise-detail-copy .gym-technique-media-supplement .gym-exercise-hero-media {
+    max-height: 230px;
+  }
+}
