@@ -6442,8 +6442,11 @@ function renderGymPlanReference(plan) {
               <strong>${escapeHtml(day.focus || "")}</strong>
             </header>
             <div>
-              ${(day.exercises || []).map((exercise) => `
+              ${(day.exercises || []).map((exercise) => {
+                const animation = gymCustomAnimationFor(exercise);
+                return `
                 <button type="button" class="gym-plan-reference-exercise" data-gym-technique-id="${escapeHtml(exercise.id)}">
+                  ${animation ? gymCustomAnimationMarkup(animation, `Animación de ${exercise.name}`, "gym-plan-inline-animation") : ""}
                   <span>
                     <strong>${escapeHtml(exercise.name)}</strong>
                     <small>${escapeHtml(formatTarget(exercise))}</small>
@@ -6451,8 +6454,9 @@ function renderGymPlanReference(plan) {
                     ${exercise.loadValue != null && /;|si es|alternativa/i.test(String(exercise.loadNote || "")) ? `<small class="gym-plan-reference-note">${escapeHtml(exercise.loadNote)}</small>` : ""}
                     ${exercise.coachingNote ? `<small class="gym-plan-reference-note">${escapeHtml(exercise.coachingNote)}</small>` : ""}
                   </span>
-                  <b>${gymCustomAnimationFor(exercise) ? "Ver GIF →" : "Técnica →"}</b>
-                </button>`).join("")}
+                  <b>${animation ? "Ver detalle →" : "Técnica →"}</b>
+                </button>`;
+              }).join("")}
             </div>
           </article>`).join("")}
       </div>
@@ -6706,7 +6710,7 @@ async function openGymTechniqueForPlanExercise(exercise) {
         </div>
         <div class="gym-exercise-detail-copy">
           <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
-          <small class="gym-media-build-caption">Ficha multimedia · v0.44.9</small>
+          <small class="gym-media-build-caption">Ficha multimedia · v0.44.10</small>
           ${gymVideoStateMarkup(animation.key)}
           <div id="gym-plan-video-supplement" class="gym-technique-media-supplement"></div>
           ${gymTechniqueInstructionsMarkup(animation)}
@@ -6998,7 +7002,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
       <div class="gym-exercise-detail-copy">
         <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>
         <h3>${escapeHtml(exercise.name)}</h3>
-        <small class="gym-media-build-caption">Ficha multimedia · v0.44.9</small>
+        <small class="gym-media-build-caption">Ficha multimedia · v0.44.10</small>
         <div class="gym-exercise-tags">
           ${muscleNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
           ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}
@@ -7206,12 +7210,15 @@ function renderGymDay(day, latestByExercise = new Map()) {
           ? (latest?.loadValue == null ? "Último: sin carga" : `Último: ${formatGymLoad(latest.loadValue, inputUnit)}`)
           : null;
         const repsValue = exercise.repsTarget || "";
+        const animation = gymCustomAnimationFor(exercise);
         return `
         <article class="gym-exercise-row" data-exercise-id="${escapeHtml(exercise.id)}">
-          <div class="gym-exercise-info">
+          <div class="gym-exercise-info${animation ? " has-inline-gif" : ""}">
+            ${animation ? gymCustomAnimationMarkup(animation, `Animación de ${exercise.name}`, "gym-plan-inline-animation") : ""}
+            <div class="gym-exercise-info-copy">
             <div class="gym-exercise-title-row">
               <strong>${escapeHtml(exercise.name)}</strong>
-              <button type="button" class="gym-technique-button" data-gym-technique-id="${escapeHtml(exercise.id)}">${gymCustomAnimationFor(exercise) ? "Ver GIF" : "Técnica"}</button>
+              <button type="button" class="gym-technique-button" data-gym-technique-id="${escapeHtml(exercise.id)}">${animation ? "Ver detalle" : "Técnica"}</button>
             </div>
             <span>${escapeHtml(formatTarget(exercise))}</span>
             ${exercise.loadNote ? `<small>Referencia: ${escapeHtml(exercise.loadNote)}</small>` : ""}
@@ -7221,6 +7228,7 @@ function renderGymDay(day, latestByExercise = new Map()) {
               <input class="gym-input-done" type="checkbox" aria-label="Marcar ejercicio realizado">
               <span>Realizado · incluir al guardar</span>
             </label>
+            </div>
           </div>
           <label class="gym-number-field">
             <span>Series</span>

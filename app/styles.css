@@ -3530,20 +3530,31 @@ html[data-theme="dark"] .important-events-detail-list .important-event-item {
   min-width: 0;
 }
 
+.gym-exercise-info.has-inline-gif {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.gym-exercise-info-copy {
+  min-width: 0;
+}
+
 .gym-exercise-info strong {
   display: block;
   font-size: 11px;
 }
 
-.gym-exercise-info > span,
-.gym-exercise-info > small {
+.gym-exercise-info-copy > span,
+.gym-exercise-info-copy > small {
   display: block;
   margin-top: 3px;
   color: var(--ink-soft);
   font-size: 9px;
 }
 
-.gym-exercise-info > p {
+.gym-exercise-info-copy > p {
   margin: 5px 0 0;
   color: var(--ink-soft);
   font-size: 9px;
@@ -23074,6 +23085,11 @@ html[data-theme="dark"] .loan-benchmark-explanation {
   white-space: normal;
 }
 
+.gym-plan-reference-exercise > .gym-plan-inline-animation {
+  flex: 0 0 58px;
+  width: 58px;
+}
+
 .gym-exercise-title-row {
   display: flex;
   gap: 8px;
@@ -23246,6 +23262,16 @@ html[data-theme="dark"] .loan-benchmark-explanation {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.gym-plan-inline-animation {
+  width: 68px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  filter: none;
 }
 
 .gym-library-preview-animation {

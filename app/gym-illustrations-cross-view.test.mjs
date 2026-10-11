@@ -73,6 +73,34 @@ test("being on the plan only changes the badge; never the existence or media of 
   assert.equal(rows.find((row) => row.animationKey === "curl-martillo-polea").inPlan, false);
 });
 
+test("a GIF is visible in active and paused plan rows, while videos stay in the detail", () => {
+  const day = { id: "push", title: "Día 1", focus: "Pecho", restSeconds: 90, exercises: [
+    { id: "fly", name: "Aperturas plano", setsTarget: 3, repsTarget: "12", loadValue: 107, loadUnit: "kg" }
+  ] };
+  const row = { innerHTML: "", querySelectorAll: () => [] };
+  const ctx = context({
+    document: { querySelector: (selector) => selector === "#gym-day-detail" ? row : null },
+    escapeHtml: String,
+    formatRestSeconds: () => "1:30 min",
+    formatTarget: () => "3 series × 12 repeticiones",
+    formatGymLoad: (value) => String(value),
+    formatGymPlanReferenceLoad: () => "107 kg",
+    renderMobilePickerOptions: () => "",
+    renderMobileRepOptions: () => "",
+    bindGymTechniqueButtons: () => {}
+  });
+  vm.runInContext(app.slice(app.indexOf("function renderGymDay("), app.indexOf("function renderMobileRepOptions(")), ctx);
+  vm.runInContext(app.slice(app.indexOf("function renderGymPlanReference("), app.indexOf("function renderGymPlanView(")), ctx);
+  vm.runInContext(`renderGymDay(${JSON.stringify(day)}, new Map())`, ctx);
+  assert.match(row.innerHTML, /gym-plan-inline-animation/);
+  assert.match(row.innerHTML, /aperturas-maquina-mariposa-v2-white\.gif/);
+  assert.doesNotMatch(row.innerHTML, /<video/);
+  const paused = vm.runInContext(`renderGymPlanReference([${JSON.stringify(day)}])`, ctx);
+  assert.match(paused, /gym-plan-inline-animation/);
+  assert.match(paused, /aperturas-maquina-mariposa-v2-white\.gif/);
+  assert.doesNotMatch(paused, /<video/);
+});
+
 test("opening an independent GIF ficha never looks up an invented provider ID or offers a wger write", async () => {
   const resultGrid = { hidden: false };
   const detail = { hidden: true, innerHTML: "", querySelector: () => null };
