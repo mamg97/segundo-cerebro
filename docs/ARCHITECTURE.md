@@ -78,7 +78,7 @@ La **resolución conversacional de agenda/eventos es federada** y está separada
 
 ### Habits / HabitQuest
 
-El Google Sheet original de HabitQuest sigue siendo la fuente de verdad. Segundo Cerebro puede leer el estado diario y gestionar hábitos mediante endpoints privados. La escritura conserva la semántica de sincronización de HabitQuest.
+El Google Sheet original de HabitQuest sigue siendo la fuente de verdad. Segundo Cerebro puede leer el estado diario y gestionar hábitos mediante endpoints privados. La escritura conserva la semántica de sincronización de HabitQuest. El Worker identifica ese Sheet exclusivamente en su entorno privado: primero mediante `HABITQUEST_SHEET_ID` si está configurado, después mediante la entrada `HABITQUEST_SHEET_ID` en `IntegracionesPrivadas`, y por último por el título exacto `HabitQuest Data` en Google Drive. Nunca acepta un resultado de búsqueda ambiguo ni la copia de seguridad. La UI distingue fallos de configuración, permisos y lectura; nunca finge datos vacíos.
 
 ### Health
 
