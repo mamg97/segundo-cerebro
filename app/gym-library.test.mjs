@@ -15,18 +15,36 @@ function animationContext(extra = {}) {
   return vm.createContext({ ...extra, source });
 }
 
-test("Local animation matching is exact and never substitutes another bench variant", () => {
+test("The twelve reviewed animations match only their named exercise variants", () => {
   const context = animationContext();
   vm.runInContext(context.source, context);
   const match = (name) => vm.runInContext(`gymCustomAnimationFor(${JSON.stringify({ name })})`, context);
+  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 12);
   assert.equal(match("Press de Banca Plano (Barra)").key, "press-banca-plano-barra");
   assert.equal(match("Press de Banca").key, "press-banca-plano-barra");
   assert.equal(match("Press de banca con mancuernas"), null);
   assert.equal(match("Press de Banca Declinado con Barra"), null);
-  assert.equal(match("Press Inclinado (Barra)"), null);
+  assert.equal(match("Press Inclinado (Barra)").key, "press-inclinado-barra");
+  assert.equal(match("Press inclinado con mancuernas"), null);
   assert.equal(match("Press de Banca Plano (Barra) agarre cerrado"), null);
   assert.equal(match("Press Militar").key, "military-press");
   assert.equal(match("Press militar con mancuernas"), null);
+  assert.equal(match("Fondos en paralelas").key, "fondos-paralelas");
+  assert.equal(match("Extensión de tríceps en polea alta por encima de la cabeza").key, "extension-triceps-polea-sobre-cabeza");
+  assert.equal(match("Dominadas (Enfoque Explosivo)").key, "dominadas-explosivas");
+  assert.equal(match("Remo con barra o Remo en máquina").key, "remo-barra");
+  assert.match(match("Remo con barra o Remo en máquina").variantNote, /solo la variante con barra/);
+  assert.equal(match("Remo en máquina"), null);
+  assert.equal(match("Pullover en Polea Alta").key, "pullover-polea-alta");
+  assert.equal(match("Apertura escapular / Pájaros").key, "pajaros-maquina");
+  assert.match(match("Apertura escapular / Pájaros").variantNote, /solo la variante en máquina/);
+  assert.equal(match("Curl de Bíceps con barra zigzag").key, "curl-biceps-barra-ez");
+  assert.equal(match("Curl Martillo (Polea braquial)").key, "curl-martillo-polea");
+  assert.equal(match("Gemelos en máquina o prensa").key, "gemelos-maquina-pie");
+  assert.match(match("Gemelos en máquina o prensa").variantNote, /no la prensa/);
+  assert.equal(match("Gemelos en prensa"), null);
+  assert.equal(match("Aperturas plano"), null);
+  assert.equal(match("Prensa de piernas"), null);
   assert.equal(match(""), null);
 });
 
@@ -40,12 +58,12 @@ test("The actual wger bench card shows the GIF instead of the real-person video"
   vm.runInContext(context.source, context);
   vm.runInContext(app.slice(app.indexOf("function gymLibraryPreview("), app.indexOf("async function loadGymExerciseLibrary(")), context);
   vm.runInContext('renderGymLibraryResults([{id: "library-bench", name: "Press de Banca", hasVideo: true, videos: [{url: "/example-video.mp4"}], muscles: [{name: "Chest"}], equipment: [{name: "Barbell"}, {name: "Bench"}]}])', context);
-  assert.match(grid.innerHTML, /press-banca-plano-barra-v5\.gif/);
+  assert.match(grid.innerHTML, /press-banca-plano-barra-v5-white\.gif/);
   assert.match(grid.innerHTML, />Animación<\/b>/);
   assert.doesNotMatch(grid.innerHTML, /<video/);
 });
 
-test("Every published GIF has 16 transparent full-size frames and a matching poster", async () => {
+test("Every mapped white-background GIF has 16 full-size frames and a matching poster", async () => {
   const context = animationContext();
   vm.runInContext(context.source, context);
   for (const animation of vm.runInContext("GYM_CUSTOM_ANIMATIONS", context)) {
@@ -75,7 +93,7 @@ test("Every published GIF has 16 transparent full-size frames and a matching pos
       } else if (marker === 0x2c) {
         assert.equal(data.readUInt16LE(offset + 4), 360);
         assert.equal(data.readUInt16LE(offset + 6), 480);
-        assert.equal(transparent, true, `${animation.key} frame ${frames} transparency`);
+        assert.equal(transparent, false, `${animation.key} frame ${frames} is opaque`);
         assert.equal(delay, 7);
         const packed = data[offset + 8];
         offset += 9 + ((packed & 128) ? 3 * (1 << ((packed & 7) + 1)) : 0);
@@ -107,7 +125,7 @@ test("Opening a curated plan GIF does not require the external library", async (
   vm.runInContext(app.slice(app.indexOf("async function openGymTechniqueForPlanExercise"), app.indexOf("async function openGymExternalTechnique")), context);
   await vm.runInContext('openGymTechniqueForPlanExercise({ id: "bench-flat", name: "Press de Banca Plano (Barra)" })', context);
   assert.equal(detail.hidden, false);
-  assert.match(detail.innerHTML, /press-banca-plano-barra-v5\.gif/);
+  assert.match(detail.innerHTML, /press-banca-plano-barra-v5-white\.gif/);
   assert.match(detail.innerHTML, /ilustración orientativa/);
 });
 
@@ -171,8 +189,8 @@ test("Gym exposes a free visual exercise library beside the canonical plan", () 
 test("Gym library uses attractive looping media and keeps attribution visible", () => {
   assert.match(app, /muted loop playsinline autoplay preload="metadata"/);
   assert.match(app, /GYM_CUSTOM_ANIMATIONS/);
-  assert.match(app, /press-banca-plano-barra-v5\.gif/);
-  assert.match(app, /press-banca-plano-barra-poster-v5\.png/);
+  assert.match(app, /press-banca-plano-barra-v5-white\.gif/);
+  assert.match(app, /press-banca-plano-barra-v5-white-poster\.png/);
   assert.match(app, /Animación propia en bucle/);
   assert.match(app, /gym-exercise-hero-media/);
   assert.match(app, /Demostración en bucle/);
@@ -193,6 +211,7 @@ test("Gym library is responsive and uses the v0.42.14 locked-frame anatomical GI
   assert.match(css, /gym-exercise-animation-gif/);
   assert.match(css, /gym-exercise-animation-poster/);
   assert.match(css, /\.gym-library-preview-animation\s*\{[^}]*position: absolute;[^}]*inset: 0;[^}]*width: 100%;[^}]*height: 100%;[^}]*aspect-ratio: auto;/);
+  assert.match(css, /\.gym-library-preview-animation \.gym-exercise-animation-media\s*\{[^}]*width: auto;[^}]*height: 100%;[^}]*max-width: 100%;[^}]*object-fit: contain;/);
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);

@@ -4,7 +4,7 @@ These assets are first-party presentation aids for Segundo Cerebro. They do not 
 
 ## White-background presentation set (2026-10-11)
 
-The twelve `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The original transparent versions remain available; choosing which set to show in the app is deliberately separate from asset generation.
+The twelve `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The app now uses these white versions; the original transparent versions remain available for future uses.
 
 ## New movement assets, second batch
 
@@ -20,7 +20,13 @@ The twelve `*-white.gif` variants share a white 360×480 canvas, 16 full-size fr
 - `remo-barra-v1.gif`: bent-over barbell row; **not** a seated row-machine animation.
 - `curl-martillo-polea-v1.gif`: low-cable rope hammer curl.
 - `gemelos-maquina-pie-v1.gif`: standing calf raise machine; **not** the leg-press variant.
-- Every one has a `-white.gif` and `-white-poster.png` presentation file plus source, contact sheet and build metadata. The plan-to-asset mapping remains for separate review.
+- Every one has a `-white.gif` and `-white-poster.png` presentation file plus source, contact sheet and build metadata.
+
+## Presentation mapping
+
+- The private Gym UI uses the 12 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards.
+- Matching uses exact normalized exercise names. The combined plan labels for row, rear-delt fly and calf raise show only the barbell, rear-delt-machine and standing-calf-machine variants respectively; the detail view names that limitation.
+- Unmapped exercises continue to use licensed wger media or an explicit empty state. These drawings are illustrative, not technique certification.
 
 ## `dominadas-explosivas-v1.gif`
 
@@ -30,7 +36,7 @@ The twelve `*-white.gif` variants share a white 360×480 canvas, 16 full-size fr
 
 ## `incline-bench-v1.gif`
 
-- Prepared for the exact **Press Inclinado (Barra)** movement. This is an asset only; no plan or catalogue mapping is changed here.
+- Prepared for the exact **Press Inclinado (Barra)** movement; the presentation layer maps that name without changing the canonical plan or catalogue.
 - Transparent 360×480 GIF89a, 16 frames at 7 cs each, infinite loop. The matching poster supports reduced motion.
 - The eight source poses use one fixed three-quarter view, one common normalization scale and a stationary rack/bench anchor. Midpoints, including the loop seam, were interpolated locally with RifeMetal HQ. Source sheet, contact sheet and build metadata are in `design/gym-animations/`.
 - Visual review: the bar remains connected to both hands, the bench stays inclined, feet remain planted and the sequence lowers then raises the bar. As with every generated movement aid, anatomical and technique accuracy should be reviewed before presenting it as instruction.
