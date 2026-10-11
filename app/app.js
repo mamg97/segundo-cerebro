@@ -5350,7 +5350,7 @@ function renderMenuPanel(data, options = {}) {
         const display = weeklyMenuDayDisplayTotals(day, model);
         return `
           <section class="weekly-menu-day weekly-menu-day-rich ${isToday ? "is-today" : ""}">
-            <details class="weekly-menu-day-collapse" ${isToday ? "open" : ""}>
+            <details class="weekly-menu-day-collapse">
               <summary class="weekly-menu-day-summary">
                 <span class="weekly-menu-day-summary-heading">
                   <strong>${escapeHtml(weeklyMenuDayLabel(day.date, { long: true }))}</strong>
