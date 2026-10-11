@@ -7,7 +7,7 @@ const app = await readFile(new URL("./app.js", import.meta.url), "utf8");
 const segment = app.slice(app.indexOf("const GYM_CUSTOM_ANIMATIONS"), app.indexOf("function gymPlanExerciseLinkMap"));
 
 function context(extra = {}) {
-  const ctx = vm.createContext({ ...extra });
+  const ctx = vm.createContext({ gymVideoInventory: new Map(), gymVideoChecks: new Map(), gymMediaInventoryRunning: false, ...extra });
   vm.runInContext(segment, ctx);
   return ctx;
 }

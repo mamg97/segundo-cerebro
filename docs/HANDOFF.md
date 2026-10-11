@@ -1,3 +1,11 @@
+## ORGANIZADOR 13 · Tabla de disponibilidad GIF y vídeo en Gym · 2026-10-11
+
+- Petición: mostrar tabla de los 12 movimientos GIF con columna GIF subido y vídeo disponible; añadir estado de vídeo dentro del detalle en Mi plan y Biblioteca.
+- El sistema **no tiene inventario canónico de vídeos en Segundo Cerebro**: vídeo de wger se enlaza al proxy privado, no se sube como archivo propio. No afirmar que una URL del catálogo implique reproducción. Se distingue `Sí · enlazado (wger)`, `Sí · reproducción comprobada`, `No · vídeo no localizado`, `Error · vídeo no reproducible`, y `Sin verificar` cuando el proveedor no está accesible.
+- Tabla `Disponibilidad multimedia · 12 ejercicios con GIF`, de solo lectura, dentro de Biblioteca. Todos los GIF propios ya estaban verificados y desplegados; sus estados son independientes de Mi plan. 2 consultas wger concurrentes, gratuitas y sin datos privados, cacheadas en sesión; permite volver a comprobar. Pulsar el nombre abre el detalle de la variante ilustrada.
+- Detalle: el estado de vídeo siempre visible. El vídeo enlazado requiere vídeo de misma variante, licencia declarada y URL local `/api/gym/exercises/<id>/media/video/<id>`. Al recibir evento `loadedmetadata` se confirma reproducción; error del elemento de vídeo marca incidencia, no lo convierte en vídeo ausente. No se asocian máquinas/mancuernas a barra.
+- No hay alteración de planes, series, pesos, sesiones, objetos, Sheets o D1. No servicios de pago, no claves en repositorio. Los estados calculados solo viven en memoria del navegador; no inventar existencia o ausencia permanente de vídeos. Mantener CI y comprobación funcional real postdespliegue antes de cerrar.
+  
 ## ORGANIZADOR 13 · Vídeo de Press inclinado y estado explicito · 2026-10-11
 
 - Captura de Salud → Gimnasio → Biblioteca mostraba ficha **Press inclinado (barra)** con solo GIF y sin explicación visible. El código esperado en `main` v0.44.4 ya incluía `gymTechniqueInstructionsMarkup`, pero no apareció en la captura: no atribuirlo categóricamente a un fallo de datos. Considerar JS antiguo en navegador hasta verificar bundle efectivo; aumentar versión a v0.44.5.
