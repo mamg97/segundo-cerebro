@@ -27,12 +27,12 @@ test("history uses only canonical week-scoped read endpoint, without writes or s
   const end = app.indexOf("function bindMenuWeekNavigation(", start);
   const chunk = app.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.match(chunk, /fetch\("\/api\/nutrition\/menu\?date="/);
+  assert.match(chunk, /fetch\("\/api\/nutrition\?date="/);
   assert.match(chunk, /credentials: "same-origin", cache: "no-store"/);
   assert.match(chunk, /menuWeekMonday\(weekly\.weekStart\) !== selected/);
-  assert.match(chunk, /healthMenuBaseData \|\| healthMenuViewData/);
-  assert.match(chunk, /weeklyMenu: weekly\.weeklyMenu/);
-  assert.match(chunk, /objective: weekly\.objective/);
+  assert.match(chunk, /renderMenuPanel\(weekly, \{ historicalFetch: true \}\)/);
+  assert.match(chunk, /Array\.isArray\(weekly\.weeklyMenu\)/);
+  assert.match(chunk, /Array\.isArray\(weekly\.recipes\)/);
   assert.match(chunk, /requestId !== healthMenuRequestId/);
   assert.match(chunk, /El menú anterior sigue visible/);
   assert.doesNotMatch(chunk, /method:\s*["'](?:POST|PUT|PATCH|DELETE)/i);
