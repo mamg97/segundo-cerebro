@@ -53,6 +53,7 @@ Como mínimo:
 
 - HTTP de entrada y carga del estado privado remoto;
 - salud de fuentes derivadas;
+- **HabitQuest: lectura autenticada directa** de `GET /api/habits` al comienzo de la auditoría, independiente del recorrido visual: HTTP correcto, `ok`, título exacto `HabitQuest Data`, arrays de hábitos y hábitos de hoy; salida `HABITQUEST_SMOKE` sin nombres, IDs ni otras referencias privadas. Un workflow completo puede fallar por otro dominio y mantener esta verificación correcta;
 - navegación de todas las áreas canónicas;
 - subpestañas de dominios con navegación interna;
 - Agenda/Calendario: fuente, calendarios seleccionados/enlazados y conservación de eventos en el horizonte;
