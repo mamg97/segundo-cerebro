@@ -5856,15 +5856,78 @@ let gymLibraryMeta = null;
 const GYM_CUSTOM_ANIMATIONS = [
   {
     key: "press-banca-plano-barra",
-    animationUrl: "./assets/gym-animations/press-banca-plano-barra-v5.gif",
-    posterUrl: "./assets/gym-animations/press-banca-plano-barra-poster-v5.png",
+    animationUrl: "./assets/gym-animations/press-banca-plano-barra-v5-white.gif",
+    posterUrl: "./assets/gym-animations/press-banca-plano-barra-v5-white-poster.png",
     labels: ["press de banca plano barra", "press banca plano barra", "flat barbell bench press", "press de banca", "press banca"]
   },
   {
+    key: "press-inclinado-barra",
+    animationUrl: "./assets/gym-animations/incline-bench-v1-white.gif",
+    posterUrl: "./assets/gym-animations/incline-bench-v1-white-poster.png",
+    labels: ["press inclinado barra", "press de banca inclinado barra"]
+  },
+  {
     key: "military-press",
-    animationUrl: "./assets/gym-animations/military-press-v2.gif",
-    posterUrl: "./assets/gym-animations/military-press-v2-poster.png",
+    animationUrl: "./assets/gym-animations/military-press-v2-white.gif",
+    posterUrl: "./assets/gym-animations/military-press-v2-white-poster.png",
     labels: ["press militar", "press militar con barra", "standing barbell military press"]
+  },
+  {
+    key: "fondos-paralelas",
+    animationUrl: "./assets/gym-animations/fondos-paralelas-v1-white.gif",
+    posterUrl: "./assets/gym-animations/fondos-paralelas-v1-white-poster.png",
+    labels: ["fondos en paralelas", "parallel bar dips"]
+  },
+  {
+    key: "extension-triceps-polea-sobre-cabeza",
+    animationUrl: "./assets/gym-animations/extension-triceps-polea-sobre-cabeza-v1-white.gif",
+    posterUrl: "./assets/gym-animations/extension-triceps-polea-sobre-cabeza-v1-white-poster.png",
+    labels: ["extension de triceps en polea alta por encima de la cabeza", "extension de triceps en polea por encima de la cabeza"]
+  },
+  {
+    key: "dominadas-explosivas",
+    animationUrl: "./assets/gym-animations/dominadas-explosivas-v1-white.gif",
+    posterUrl: "./assets/gym-animations/dominadas-explosivas-v1-white-poster.png",
+    labels: ["dominadas enfoque explosivo"]
+  },
+  {
+    key: "remo-barra",
+    animationUrl: "./assets/gym-animations/remo-barra-v1-white.gif",
+    posterUrl: "./assets/gym-animations/remo-barra-v1-white-poster.png",
+    labels: ["remo con barra", "remo con barra o remo en maquina"],
+    variantNote: "Esta animación muestra solo la variante con barra, no el remo en máquina."
+  },
+  {
+    key: "pullover-polea-alta",
+    animationUrl: "./assets/gym-animations/pullover-polea-alta-v1-white.gif",
+    posterUrl: "./assets/gym-animations/pullover-polea-alta-v1-white-poster.png",
+    labels: ["pullover en polea alta"]
+  },
+  {
+    key: "pajaros-maquina",
+    animationUrl: "./assets/gym-animations/pajaros-maquina-v1-white.gif",
+    posterUrl: "./assets/gym-animations/pajaros-maquina-v1-white-poster.png",
+    labels: ["apertura escapular pajaros", "pajaros en maquina"],
+    variantNote: "Esta animación muestra solo la variante en máquina de deltoides posterior."
+  },
+  {
+    key: "curl-biceps-barra-ez",
+    animationUrl: "./assets/gym-animations/curl-biceps-barra-ez-v1-white.gif",
+    posterUrl: "./assets/gym-animations/curl-biceps-barra-ez-v1-white-poster.png",
+    labels: ["curl de biceps con barra zigzag", "curl de biceps con barra ez"]
+  },
+  {
+    key: "curl-martillo-polea",
+    animationUrl: "./assets/gym-animations/curl-martillo-polea-v1-white.gif",
+    posterUrl: "./assets/gym-animations/curl-martillo-polea-v1-white-poster.png",
+    labels: ["curl martillo polea braquial", "curl martillo en polea baja"]
+  },
+  {
+    key: "gemelos-maquina-pie",
+    animationUrl: "./assets/gym-animations/gemelos-maquina-pie-v1-white.gif",
+    posterUrl: "./assets/gym-animations/gemelos-maquina-pie-v1-white-poster.png",
+    labels: ["gemelos en maquina o prensa", "gemelos de pie en maquina"],
+    variantNote: "Esta animación muestra solo la variante de pie en máquina, no la prensa."
   }
 ];
 let gymLibraryState = {
@@ -6211,7 +6274,7 @@ async function openGymTechniqueForPlanExercise(exercise) {
         </div>
         <div class="gym-exercise-detail-copy">
           <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
-          <p class="gym-exercise-description">El GIF corresponde a esta variante del ejercicio. Puedes consultar por separado las fichas técnicas de la biblioteca.</p>
+          <p class="gym-exercise-description">${escapeHtml(animation.variantNote || "El GIF corresponde a esta variante del ejercicio.")} Puedes consultar por separado las fichas técnicas de la biblioteca.</p>
           <button type="button" class="gym-library-back" id="gym-animation-library">Consultar biblioteca</button>
         </div>
       </article>`;
@@ -6346,7 +6409,7 @@ function renderGymLibraryResults(exercises) {
     const equipment = (exercise.equipment || []).map((item) => item.name).filter(Boolean).slice(0, 2).join(" · ");
     return `
       <button type="button" class="gym-library-card" data-gym-library-id="${escapeHtml(exercise.id)}">
-        <span class="gym-library-card-media">
+        <span class="gym-library-card-media${customAnimation ? " has-illustration" : ""}">
           ${gymLibraryPreview(exercise, index)}
           ${customAnimation ? '<b class="gym-library-media-badge">Animación</b>' : exercise.hasVideo ? '<b class="gym-library-media-badge">▶ vídeo</b>' : ""}
           ${exercise.inPlan ? '<b class="gym-library-plan-badge">En tu plan</b>' : ""}

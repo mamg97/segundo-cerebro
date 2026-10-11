@@ -2,6 +2,45 @@
 
 These assets are first-party presentation aids for Segundo Cerebro. They do not replace the canonical gym plan or the public technical reference supplied by wger.
 
+## White-background presentation set (2026-10-11)
+
+The twelve `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The app now uses these white versions; the original transparent versions remain available for future uses.
+
+## New movement assets, second batch
+
+- `fondos-paralelas-v1.gif`: parallel-bar bodyweight dip; chest, anterior deltoids and triceps highlighted; fixed bars and rack bases.
+- `curl-biceps-barra-ez-v1.gif`: standing EZ-bar curl; biceps/brachialis highlighted; planted feet and continuous bar path.
+- `pullover-polea-alta-v1.gif`: standing straight-arm high-cable pulldown; lats and triceps highlighted; cable remains connected to the fixed pulley tower.
+- Each has an identically named `-white.gif` presentation version and `-white-poster.png`, plus source, build metadata and contact sheet under `design/gym-animations/`. These are exercise illustrations, not technique certification or automatic matches to ambiguous plan labels.
+
+## New movement assets, third batch
+
+- `extension-triceps-polea-sobre-cabeza-v1.gif`: standing overhead high-cable triceps extension.
+- `pajaros-maquina-v1.gif`: seated reverse pec-deck fly; one variant of the plan's ambiguous rear-delt label.
+- `remo-barra-v1.gif`: bent-over barbell row; **not** a seated row-machine animation.
+- `curl-martillo-polea-v1.gif`: low-cable rope hammer curl.
+- `gemelos-maquina-pie-v1.gif`: standing calf raise machine; **not** the leg-press variant.
+- Every one has a `-white.gif` and `-white-poster.png` presentation file plus source, contact sheet and build metadata.
+
+## Presentation mapping
+
+- The private Gym UI uses the 12 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards.
+- Matching uses exact normalized exercise names. The combined plan labels for row, rear-delt fly and calf raise show only the barbell, rear-delt-machine and standing-calf-machine variants respectively; the detail view names that limitation.
+- Unmapped exercises continue to use licensed wger media or an explicit empty state. These drawings are illustrative, not technique certification.
+
+## `dominadas-explosivas-v1.gif`
+
+- Prepared for **Dominadas (Enfoque Explosivo)** as a bodyweight pull-up illustration. Not a claim that explosive speed or muscle-up technique can be certified from a generated drawing.
+- Eight source poses show dead hang, rising to chest-near-bar and descending with hands on one fixed bar; locally interpolated to 16 frames at 360×480 and 7 cs. Source, contact sheet and build metadata are under `design/gym-animations/`.
+- Visual review: bar and hands remain connected, camera and full-body framing are fixed. The white presentation variant is preferred on the app's dark background because the generated transparency contains low-contrast matte artifacts.
+
+## `incline-bench-v1.gif`
+
+- Prepared for the exact **Press Inclinado (Barra)** movement; the presentation layer maps that name without changing the canonical plan or catalogue.
+- Transparent 360×480 GIF89a, 16 frames at 7 cs each, infinite loop. The matching poster supports reduced motion.
+- The eight source poses use one fixed three-quarter view, one common normalization scale and a stationary rack/bench anchor. Midpoints, including the loop seam, were interpolated locally with RifeMetal HQ. Source sheet, contact sheet and build metadata are in `design/gym-animations/`.
+- Visual review: the bar remains connected to both hands, the bench stays inclined, feet remain planted and the sequence lowers then raises the bar. As with every generated movement aid, anatomical and technique accuracy should be reviewed before presenting it as instruction.
+
 ## `military-press-v2.gif`
 
 - Generated 2026-10-05 with the built-in image generation tool, using the approved bench poster as a style reference only. Same anonymous pale athlete, flat red muscles, gray contours, black briefs and charcoal equipment.

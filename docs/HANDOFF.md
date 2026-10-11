@@ -1,3 +1,10 @@
+## Gym · GIFs listos para publicación (2026-10-11)
+
+- PR #366 contiene 12 animaciones ilustradas con versión de presentación blanca, 16 fotogramas y póster de movimiento reducido. La UI las enlaza por nombre exacto en el plan y en las fichas coincidentes de biblioteca; los cinco ejercicios sin asset siguen con el fallback existente.
+- Remo combinado, pájaros y gemelos muestran solo una de sus variantes; la ficha indica expresamente cuál. No se ha cambiado `GimnasioPlan`, el historial ni wger.
+- La tarjeta de biblioteca contiene el GIF 3:4 dentro del marco 4:3; comprobación local en 440 px y 390 px sin recorte. Pasaron 270 pruebas y el build privado copió los 12 GIFs byte a byte.
+- Falta fusionar el PR, observar el despliegue privado y verificar en la web autenticada las tarjetas y `Mi plan → Ver GIF`. No considerar publicado por una prueba local.
+
 ## Salud · reconciliación y auditoría vigente (2026-10-11)
 
 - La última auditoría de producción consultada (`Audit production web` #287) no falló en controles HEALTH; sus fallos fueron FINANCE/INFRA y deben diagnosticarse aparte, sin modificar datos de Salud para volverla verde.

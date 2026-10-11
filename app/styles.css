@@ -23223,6 +23223,10 @@ html[data-theme="dark"] .loan-benchmark-explanation {
     var(--paper);
 }
 
+.gym-library-card-media.has-illustration {
+  background: #fff;
+}
+
 .gym-library-preview-media {
   width: 100%;
   height: 100%;
@@ -23247,10 +23251,22 @@ html[data-theme="dark"] .loan-benchmark-explanation {
 .gym-library-preview-animation {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
   aspect-ratio: auto;
   margin: 0;
+}
+
+.gym-library-preview-animation .gym-exercise-animation-media {
+  grid-area: auto;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .gym-exercise-hero-animation {
