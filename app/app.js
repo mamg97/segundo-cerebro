@@ -5952,18 +5952,18 @@ function normalizeGymAnimationLabel(value) {
 // Presentation-only catalogue entries, not rows in GimnasioPlan and not wger IDs.
 // Every key maps to an already reviewed local asset; these labels select the actual variant.
 const GYM_ILLUSTRATED_EXERCISES = {
-  "press-banca-plano-barra": { name: "Press de banca plano (barra)", muscles: ["Chest", "Pectoralis major"], equipment: ["Barbell", "Bench"] },
-  "press-inclinado-barra": { name: "Press inclinado (barra)", muscles: ["Chest", "Pectoralis major"], equipment: ["Barbell", "Bench"] },
-  "military-press": { name: "Press militar (barra)", muscles: ["Shoulders", "Anterior deltoid"], equipment: ["Barbell"] },
-  "fondos-paralelas": { name: "Fondos en paralelas", muscles: ["Chest", "Triceps"], equipment: ["Bodyweight", "Parallel bars"] },
-  "extension-triceps-polea-sobre-cabeza": { name: "Extensión de tríceps en polea alta por encima de la cabeza", muscles: ["Triceps"], equipment: ["Cable", "Cable machine"] },
-  "dominadas-explosivas": { name: "Dominadas (Enfoque Explosivo)", muscles: ["Back", "Latissimus dorsi"], equipment: ["Bodyweight", "Pull-up bar"] },
-  "remo-barra": { name: "Remo con barra", muscles: ["Back", "Latissimus dorsi"], equipment: ["Barbell"] },
-  "pullover-polea-alta": { name: "Pullover en polea alta", muscles: ["Back", "Latissimus dorsi"], equipment: ["Cable", "Cable machine"] },
-  "pajaros-maquina": { name: "Pájaros en máquina", muscles: ["Shoulders", "Posterior deltoid"], equipment: ["Machine"] },
-  "curl-biceps-barra-ez": { name: "Curl de bíceps con barra EZ", muscles: ["Biceps", "Biceps brachii"], equipment: ["Barbell", "EZ bar"] },
-  "curl-martillo-polea": { name: "Curl martillo en polea baja", muscles: ["Biceps", "Brachialis"], equipment: ["Cable", "Cable machine"] },
-  "gemelos-maquina-pie": { name: "Gemelos de pie en máquina", muscles: ["Calves", "Gastrocnemius"], equipment: ["Machine"] }
+  "press-banca-plano-barra": { name: "Press de banca plano (barra)", technique: "Apoya los pies, fija las escápulas al banco, baja la barra de forma controlada hacia el pecho y empuja sin perder estabilidad.", muscles: ["Chest", "Pectoralis major"], equipment: ["Barbell", "Bench"] },
+  "press-inclinado-barra": { name: "Press inclinado (barra)", technique: "Ajusta el respaldo en inclinación, mantén los hombros estables y lleva la barra hacia la parte superior del pecho antes de empujar controladamente.", muscles: ["Chest", "Pectoralis major"], equipment: ["Barbell", "Bench"] },
+  "military-press": { name: "Press militar (barra)", technique: "Desde la altura de los hombros, aprieta abdomen y glúteos y empuja la barra hacia arriba sin arquear en exceso la zona lumbar.", muscles: ["Shoulders", "Anterior deltoid"], equipment: ["Barbell"] },
+  "fondos-paralelas": { name: "Fondos en paralelas", technique: "Sujétate en las barras paralelas, desciende flexionando los codos hasta un recorrido cómodo y vuelve arriba sin balancearte.", muscles: ["Chest", "Triceps"], equipment: ["Bodyweight", "Parallel bars"] },
+  "extension-triceps-polea-sobre-cabeza": { name: "Extensión de tríceps en polea alta por encima de la cabeza", technique: "Mantén los codos relativamente fijos y orientados hacia delante; extiende los brazos contra la resistencia de la polea sin mover el tronco.", muscles: ["Triceps"], equipment: ["Cable", "Cable machine"] },
+  "dominadas-explosivas": { name: "Dominadas (Enfoque Explosivo)", technique: "Parte de un agarre firme, eleva el cuerpo con tracción potente y baja de forma controlada; evita depender del impulso de las piernas.", muscles: ["Back", "Latissimus dorsi"], equipment: ["Bodyweight", "Pull-up bar"] },
+  "remo-barra": { name: "Remo con barra", technique: "Inclina el torso desde la cadera con la espalda estable, lleva la barra hacia el abdomen y controla el descenso sin balancear el tronco.", muscles: ["Back", "Latissimus dorsi"], equipment: ["Barbell"] },
+  "pullover-polea-alta": { name: "Pullover en polea alta", technique: "Con el tronco estable y los brazos ligeramente flexionados, lleva la polea alta hacia las caderas y regresa controladamente.", muscles: ["Back", "Latissimus dorsi"], equipment: ["Cable", "Cable machine"] },
+  "pajaros-maquina": { name: "Pájaros en máquina", technique: "Ajusta la máquina de deltoides posterior, abre los brazos de forma controlada y evita elevar los hombros durante el movimiento.", muscles: ["Shoulders", "Posterior deltoid"], equipment: ["Machine"] },
+  "curl-biceps-barra-ez": { name: "Curl de bíceps con barra EZ", technique: "Mantén los codos junto al tronco, flexiona los brazos con la barra EZ sin balancear el cuerpo y controla la bajada.", muscles: ["Biceps", "Biceps brachii"], equipment: ["Barbell", "EZ bar"] },
+  "curl-martillo-polea": { name: "Curl martillo en polea baja", technique: "Usa un agarre neutro en la cuerda, conserva los codos cerca del cuerpo y flexiona sin balancear el tronco.", muscles: ["Biceps", "Brachialis"], equipment: ["Cable", "Cable machine"] },
+  "gemelos-maquina-pie": { name: "Gemelos de pie en máquina", technique: "Apoya la parte delantera de los pies en la máquina, eleva los talones de forma controlada y desciende hasta un recorrido cómodo.", muscles: ["Calves", "Gastrocnemius"], equipment: ["Machine"] }
 };
 
 function gymOwnIllustration(exercise) {
@@ -6035,6 +6035,94 @@ function gymCustomAnimationMarkup(animation, label, className = "") {
       <img class="gym-exercise-animation-media gym-exercise-animation-gif" src="${escapeHtml(animation.animationUrl)}" alt="" loading="lazy" decoding="async">
       <img class="gym-exercise-animation-media gym-exercise-animation-poster" src="${escapeHtml(animation.posterUrl)}" alt="" loading="lazy" decoding="async">
     </span>`;
+}
+
+// Only show wger's same-origin proxy video for the exact GIF exercise variant.
+function gymVerifiedWgerVideo(exercise, animation) {
+  if (exercise?.source?.provider !== "wger") return null;
+  if (animation && gymCustomAnimationFor(exercise)?.key !== animation.key) return null;
+  const video = exercise?.videos?.find((item) => item.isMain && item.url) ||
+    exercise?.videos?.find((item) => item.url) || null;
+  return video && /^\/api\/gym\/exercises\/\d+\/media\/video\/\d+(?:\?[^"<>]*)?$/.test(String(video.url || ""))
+    ? video : null;
+}
+
+function gymRealVideoMarkup(exercise, animation = null) {
+  const video = gymVerifiedWgerVideo(exercise, animation);
+  if (!video) return "";
+  const image = exercise?.images?.find((item) => item.isMain && item.previewUrl) ||
+    exercise?.images?.find((item) => item.previewUrl) || null;
+  const license = video.license || exercise.license || {};
+  const attribution = [license.title || "Licencia declarada por wger", license.author ? "Autor: " + license.author : null]
+    .filter(Boolean).join(" · ");
+  return `
+    <section class="gym-real-video" aria-label="Vídeo real del ejercicio">
+      <strong>Vídeo real · wger</strong>
+      <video class="gym-exercise-hero-media" controls playsinline preload="none"
+        src="${escapeHtml(video.url)}"
+        ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""}></video>
+      <small>Fuente: wger · ${escapeHtml(attribution)}</small>
+    </section>`;
+}
+
+function gymTechniqueInstructionsMarkup(animation, exercise = null) {
+  const own = animation && GYM_ILLUSTRATED_EXERCISES[animation.key]?.technique;
+  const remote = exercise?.source?.provider === "wger" ? String(exercise.description || "").trim() : "";
+  return `
+    <section class="gym-technique-explanation" aria-label="Explicación del ejercicio">
+      <strong>Cómo realizar el ejercicio</strong>
+      <p>${escapeHtml(own || remote || "No hay una explicación técnica disponible para esta variante.")}</p>
+      ${remote && remote !== own ? `<p><b>Descripción de wger:</b> ${escapeHtml(remote)}</p>` : ""}
+      ${animation?.variantNote ? `<p class="gym-exercise-variant-note">${escapeHtml(animation.variantNote)}</p>` : ""}
+    </section>`;
+}
+
+// Read-only free wger lookup, restricted to the reviewed GIF variant. Never use
+// a local illustration ID in a provider API or send private plan descriptions.
+async function gymLoadVerifiedWgerTechnique(animation, planExercise = null) {
+  if (!animation) return null;
+  const readDetail = async (id) => {
+    if (!/^\d+$/.test(String(id || ""))) return null;
+    const response = await fetch("/api/gym/exercises/" + encodeURIComponent(id), {
+      headers: { Accept: "application/json" }, cache: "no-store"
+    });
+    if (!response.ok) return null;
+    const exercise = (await response.json()).exercise;
+    return exercise?.source?.provider === "wger" && gymCustomAnimationFor(exercise)?.key === animation.key
+      ? exercise : null;
+  };
+  try {
+    let descriptionFallback = null;
+    const link = planExercise ? gymPlanExerciseLinkMap().get(String(planExercise.id)) : null;
+    if (link?.provider === "wger" && /^\d+$/.test(String(link.providerExerciseId))) {
+      const linked = await readDetail(link.providerExerciseId);
+      if (gymVerifiedWgerVideo(linked, animation)) return linked;
+      if (linked?.description) descriptionFallback = linked;
+    }
+    const cached = gymLibraryState.results.find((item) =>
+      item?.source?.provider === "wger" && gymCustomAnimationFor(item)?.key === animation.key &&
+      (gymVerifiedWgerVideo(item, animation) || item.description));
+    if (cached) {
+      const complete = cached.description ? cached : await readDetail(cached.id);
+      if (gymVerifiedWgerVideo(complete, animation)) return complete;
+      if (complete?.description) descriptionFallback = complete;
+    }
+    const search = [...animation.labels].sort((a, b) => a.length - b.length)[0];
+    const response = await fetch("/api/gym/exercises?q=" + encodeURIComponent(search) + "&limit=24", {
+      headers: { Accept: "application/json" }, cache: "no-store"
+    });
+    if (!response.ok) return descriptionFallback;
+    const results = (await response.json()).exercises || [];
+    const matched = results.filter((candidate) =>
+      candidate?.source?.provider === "wger" && gymCustomAnimationFor(candidate)?.key === animation.key);
+    const best = matched.find((candidate) => gymVerifiedWgerVideo(candidate, animation)) ||
+      matched.find((candidate) => candidate.description) || matched[0] || null;
+    if (!best) return descriptionFallback;
+    return best.description ? best : await readDetail(best.id) || best;
+  } catch {
+    // Offline/unavailable wger is not a failure of the GIF detail itself.
+    return null;
+  }
 }
 
 function gymPlanExerciseLinkMap(data = gymPanelData) {
@@ -6340,10 +6428,12 @@ async function openGymTechniqueForPlanExercise(exercise) {
         <div class="gym-exercise-detail-media">
           ${gymCustomAnimationMarkup(animation, `Animación de ${exercise.name}`, "gym-exercise-hero-animation")}
           <span class="gym-exercise-media-caption">Animación propia en bucle · ilustración orientativa</span>
+          <div id="gym-plan-video-supplement" class="gym-technique-media-supplement"></div>
         </div>
         <div class="gym-exercise-detail-copy">
           <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
-          <p class="gym-exercise-description">${escapeHtml(animation.variantNote || "El GIF corresponde a esta variante del ejercicio.")} Puedes consultar por separado las fichas técnicas de la biblioteca.</p>
+          ${gymTechniqueInstructionsMarkup(animation)}
+          <div id="gym-plan-text-supplement" class="gym-technique-text-supplement"></div>
           <button type="button" class="gym-library-back" id="gym-animation-library">Consultar biblioteca</button>
         </div>
       </article>`;
@@ -6362,6 +6452,17 @@ async function openGymTechniqueForPlanExercise(exercise) {
     });
     document.querySelector("#gym-animation-heading")?.focus({ preventScroll: true });
     detail.scrollIntoView({ block: "start" });
+    // Keep the GIF usable immediately while verified wger media loads.
+    void gymLoadVerifiedWgerTechnique(animation, exercise).then((provider) => {
+      if (!provider || detail.hidden || !detail.isConnected ||
+          document.querySelector("#gym-animation-heading")?.textContent !== String(exercise.name)) return;
+      const videoSlot = detail.querySelector("#gym-plan-video-supplement");
+      const textSlot = detail.querySelector("#gym-plan-text-supplement");
+      if (!videoSlot || !textSlot) return;
+      videoSlot.innerHTML = gymRealVideoMarkup(provider, animation);
+      textSlot.innerHTML = provider.description
+        ? `<p class="gym-exercise-description"><strong>Descripción de wger:</strong> ${escapeHtml(provider.description)}</p>` : "";
+    });
     return;
   }
   await openGymExternalTechnique(exercise);
@@ -6603,6 +6704,8 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
       <div class="gym-exercise-detail-media">
         ${mediaMarkup}
         <span class="gym-exercise-media-caption">${customAnimation ? "Animación propia en bucle" : video ? "Demostración en bucle" : image ? "Referencia visual" : "Sin multimedia"}${customAnimation ? " · ilustración orientativa" : " · wger"}</span>
+        ${customAnimation ? gymRealVideoMarkup(exercise, customAnimation) : ""}
+        ${isOwnIllustration ? '<div id="gym-library-video-supplement" class="gym-technique-media-supplement"></div>' : ""}
       </div>
       <div class="gym-exercise-detail-copy">
         <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>
@@ -6611,8 +6714,10 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
           ${muscleNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
           ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}
         </div>
-        ${exercise.description ? `<p class="gym-exercise-description">${escapeHtml(exercise.description)}</p>` : '<p class="gym-exercise-description is-muted">wger no aporta instrucciones textuales para esta variante.</p>'}
-        ${customAnimation?.variantNote ? `<p class="gym-exercise-description">${escapeHtml(customAnimation.variantNote)}</p>` : ""}
+        ${customAnimation ? gymTechniqueInstructionsMarkup(customAnimation, isOwnIllustration ? null : exercise) :
+          exercise.description ? `<p class="gym-exercise-description">${escapeHtml(exercise.description)}</p>` :
+          '<p class="gym-exercise-description is-muted">wger no aporta instrucciones textuales para esta variante.</p>'}
+        ${isOwnIllustration ? '<div id="gym-library-text-supplement" class="gym-technique-text-supplement"></div>' : ""}
         <dl class="gym-exercise-anatomy">
           <div><dt>Principal</dt><dd>${escapeHtml(muscleNames.join(", ") || "—")}</dd></div>
           <div><dt>Secundarios</dt><dd>${escapeHtml(secondaryNames.join(", ") || "—")}</dd></div>
@@ -6752,6 +6857,20 @@ async function openGymLibraryExercise(exerciseId, contextPlanExerciseId = null) 
       exercise = (await response.json()).exercise;
     }
     renderGymLibraryDetail(exercise, contextPlanExerciseId);
+    if (gymOwnIllustration(exercise)) {
+      const animation = gymCustomAnimationFor(exercise);
+      const detail = document.querySelector("#gym-library-detail");
+      void gymLoadVerifiedWgerTechnique(animation).then((provider) => {
+        if (!provider || !detail || detail.hidden ||
+            detail.querySelector(".gym-exercise-detail-copy h3")?.textContent !== exercise.name) return;
+        const videoSlot = detail.querySelector("#gym-library-video-supplement");
+        const textSlot = detail.querySelector("#gym-library-text-supplement");
+        if (videoSlot) videoSlot.innerHTML = gymRealVideoMarkup(provider, animation);
+        if (textSlot && provider.description) {
+          textSlot.innerHTML = `<p class="gym-exercise-description"><strong>Descripción de wger:</strong> ${escapeHtml(provider.description)}</p>`;
+        }
+      });
+    }
   } catch (error) {
     if (status) status.textContent = "No se ha podido abrir la ficha de este ejercicio.";
     console.warn("Gym exercise detail load failed", error);

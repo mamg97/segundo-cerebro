@@ -26315,3 +26315,54 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .health-day-summary-grid article strong { font-size: 20px; }
   .health-day-navigation label input { max-width: 160px; }
 }
+
+/* v0.44.4 · Gym detail: keep the GIF first and expose optional wger video below */
+.gym-real-video {
+  display: grid;
+  gap: 9px;
+  width: 100%;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.gym-real-video > strong,
+.gym-technique-explanation > strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+.gym-real-video > .gym-exercise-hero-media {
+  width: 100%;
+  max-height: 300px;
+  aspect-ratio: 16 / 9;
+  margin: 0;
+  background: #000;
+  object-fit: contain;
+}
+.gym-real-video > small {
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.gym-technique-explanation {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 16px;
+}
+.gym-technique-explanation > p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.gym-technique-explanation > .gym-exercise-variant-note {
+  color: var(--ink);
+}
+.gym-technique-text-supplement .gym-exercise-description {
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .gym-real-video { gap: 8px; margin-top: 12px; }
+  .gym-real-video > .gym-exercise-hero-media { max-height: 240px; }
+  .gym-technique-explanation > p { font-size: 13px; }
+}
