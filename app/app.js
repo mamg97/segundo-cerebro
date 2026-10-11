@@ -6796,7 +6796,7 @@ function renderGymDay(day, latestByExercise = new Map()) {
           <div class="gym-exercise-info">
             <div class="gym-exercise-title-row">
               <strong>${escapeHtml(exercise.name)}</strong>
-              <button type="button" class="gym-technique-button" data-gym-technique-id="${escapeHtml(exercise.id)}">Técnica</button>
+              <button type="button" class="gym-technique-button" data-gym-technique-id="${escapeHtml(exercise.id)}">${gymCustomAnimationFor(exercise) ? "Ver GIF" : "Técnica"}</button>
             </div>
             <span>${escapeHtml(formatTarget(exercise))}</span>
             ${exercise.loadNote ? `<small>Referencia: ${escapeHtml(exercise.loadNote)}</small>` : ""}
