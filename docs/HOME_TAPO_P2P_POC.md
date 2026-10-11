@@ -9,7 +9,7 @@ El usuario confirmó que la app Tapo iPad funciona en su Mac Apple Silicon y que
 - `private-cloudflare/src/tapo-rtc-signaling.js`: señalización efímera en D1 privada con dos capacidades de 256 bits distintas por sesión: emisor y receptor.
 - `private-cloudflare/tapo-lab/`: web para emitir desde Mac y ver desde iPhone, agregada exclusivamente al build del Worker privado; no se copia a GitHub Pages.
 - `private-cloudflare/src/index.js`: rutas bajo `/api/home/tapo/rtc`, bloqueadas por defecto por `TAPO_RTC_EXPERIMENTAL != "true"`; también bloquea la página `/app/tapo-lab/`.
-- 15 minutos de plazo para negociar conexión y máximo 3 salas efímeras simultáneas; no poll global ni cron.
+- 15 minutos de plazo lógico para negociar conexión y máximo 3 salas simultáneas; no poll global ni cron. **La eliminación física de D1 no es una TTL automática:** ocurre cuando el presentador pulsa Detener (DELETE) o, si se interrumpió abruptamente, de manera oportunista en la próxima petición posterior al vencimiento. Un registro abandonado puede permanecer en D1 hasta entonces; no prometer retención máxima física de 15 minutos.
 - Offer/answer SDP **sin imágenes** en D1, claves almacenadas solo como SHA-256, autorización por rol, controles de origen en escrituras y formato SDP. D1 puede ver metadatos de IP local/ICE dentro de SDP: confidencial y con caducidad, NO vídeo.
 - Sesiones ya conectadas pueden seguir funcionando tras los 15 minutos: la caducidad limita *señalización*, no interrumpe por sí sola una llamada WebRTC. Botón detener cierra captura y peer.
 - Usa STUN público `stun.cloudflare.com:3478` para intentar comunicación P2P. STUN revela IP públicas y metadatos de conexión a Cloudflare. No hay TURN ni SFU; el vídeo directo está cifrado por WebRTC DTLS-SRTP.
