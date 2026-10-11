@@ -30,7 +30,12 @@ test("health export recovery rows reconcile sleep and recovery into D1", () => {
   assert.match(source, /reconcileHealthRecoveryRows\(env, energyRows, bodySheetRows, recoverySheetRows\)/);
   assert.match(source, /const recoveredRecovery = recoveryRows\.filter/);
   assert.match(source, /INSERT INTO health_recovery_daily/);
-  assert.match(source, /source = excluded\.source/);
+  const recoveryImport = source.slice(
+    source.indexOf("for (const row of recoveredRecovery)"),
+    source.indexOf("statements.push(env.DB.prepare(`\n    INSERT INTO health_import_state")
+  );
+  assert.match(recoveryImport, /ON CONFLICT\(recovery_date\) DO NOTHING/);
+  assert.doesNotMatch(recoveryImport, /ON CONFLICT\(recovery_date\) DO UPDATE/);
 });
 
 
@@ -68,4 +73,15 @@ test("ZIP backfill never overwrites an existing HealthKit daily D1 snapshot", ()
   assert.match(energyImport, /INSERT INTO health_energy_daily/);
   assert.match(energyImport, /ON CONFLICT\(energy_date\) DO NOTHING/);
   assert.doesNotMatch(energyImport, /ON CONFLICT\(energy_date\) DO UPDATE/);
+});
+
+test("ZIP body timestamps are canonicalized before idempotent insertion", () => {
+  const bodyImport = source.slice(
+    source.indexOf("for (const row of recoveredBody)"),
+    source.indexOf("for (const row of recoveredRecovery)")
+  );
+  assert.match(bodyImport, /canonicalHealthTimestamp\(row\.measuredAt\)/);
+  assert.match(bodyImport, /value === null \|\| value === undefined \|\| value === ""/);
+  assert.match(bodyImport, /ON CONFLICT\(metric_type, measured_at, source\) DO UPDATE/);
+  assert.match(source, /return deduplicateHealthBodySamples\(\(result\.results \|\| \[\]\)\.map/);
 });

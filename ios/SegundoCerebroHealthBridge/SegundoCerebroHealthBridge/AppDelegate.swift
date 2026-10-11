@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
         HealthKitService.shared.installObserverQueries {
             Task {
-                _ = try? await SyncService.shared.syncRecentDays(days: 2)
+                _ = try? await SyncService.shared.syncRecentDays()
             }
         }
 
@@ -28,7 +28,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     func applicationDidBecomeActive(_ application: UIApplication) {
         guard UserDefaults.standard.bool(forKey: "healthBridge.didRequestHealthAuthorization") else { return }
         Task {
-            _ = try? await SyncService.shared.syncRecentDays(days: 2)
+            _ = try? await SyncService.shared.syncRecentDays()
         }
     }
 
@@ -49,7 +49,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
             self.scheduleBackgroundRefresh()
             let operation = Task {
                 do {
-                    _ = try await SyncService.shared.syncRecentDays(days: 2)
+                    _ = try await SyncService.shared.syncRecentDays()
                     refreshTask.setTaskCompleted(success: true)
                 } catch {
                     refreshTask.setTaskCompleted(success: false)

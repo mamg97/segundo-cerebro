@@ -1,3 +1,11 @@
+## Salud · reconciliación y auditoría vigente (2026-10-11)
+
+- La última auditoría de producción consultada (`Audit production web` #287) no falló en controles HEALTH; sus fallos fueron FINANCE/INFRA y deben diagnosticarse aparte, sin modificar datos de Salud para volverla verde.
+- La app privada ya elige una conciliación manual completa del Sheet frente a una observación parcial de D1, pero eso no repara por sí mismo la fila canónica antigua. La corrección de datos D1 requiere una operación privada trazable y verificación posterior; no versionar cifras ni ejecutar otra importación ZIP como sustituto.
+- Esta rama protege la recuperación histórica de energía **y recuperación** contra sobrescrituras, normaliza instantes corporales antes del UPSERT y deduplica identidades equivalentes al leer D1. No borra filas históricas. Un día `live` sin energía completa ya no cuenta como comparable para promedios/balance.
+- El bridge iOS amplía su ventana automática a hoy + dos días anteriores para dar margen a muestras tardías; solo será operativo después de compilar, firmar e instalar la versión nueva en el iPhone real. La compilación de simulador y el CI no prueban entrega en segundo plano.
+- Antes de cerrar: ejecutar la suite completa, confirmar deploy privado tras merge, revisar otra auditoría completa, renovar la app firmada por Wi-Fi si el iPhone está disponible y confirmar en la proyección privada que el día discrepante quedó conciliado sin doble conteo de muestras. El acceso D1 remoto desde este Mac debe revalidarse; no asumirlo.
+
 ## Salud · Integridad del balance energético · revisión (2026-10-10)
 
 - Incidencia genérica: una observación de Apple Health recuperada a media jornada puede conservar `coverage=partial` mientras la fuente se etiqueta como `export_recovery`; no se debe interpretar como cierre completo ni calcular un superávit.

@@ -291,7 +291,7 @@ The native bridge may read, when the user grants access and Apple Health contain
 
 These are observed signals, not diagnoses and not an automatically inferred recovery score. A missing HealthKit sample remains missing. Do not synthesize values.
 
-The bridge synchronizes today plus yesterday on each run. This keeps today's snapshot current while yesterday is repeatedly reconciled idempotently. HealthKit observer/background delivery is best-effort under iOS scheduling; manual sync remains a diagnostic action rather than the normal workflow.
+The bridge synchronizes today and the previous two days on each run. The extra day allows late HealthKit samples to be reconciled without a manual Shortcut, but HealthKit observer/background delivery remains best-effort under iOS scheduling. Manual sync remains a diagnostic action rather than the normal workflow. Historical ZIP recovery may fill a missing D1 day but must not overwrite any existing daily energy or recovery row. Body-sample identity uses metric, source and the canonical UTC instant; equivalent offset spellings are one logical sample.
 
 Security:
 - the app stores `HEALTH_INGEST_TOKEN` only in iOS Keychain;
