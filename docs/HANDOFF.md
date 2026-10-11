@@ -1,3 +1,11 @@
+## ORGANIZADOR 13 · Vídeo de Press inclinado y estado explicito · 2026-10-11
+
+- Captura de Salud → Gimnasio → Biblioteca mostraba ficha **Press inclinado (barra)** con solo GIF y sin explicación visible. El código esperado en `main` v0.44.4 ya incluía `gymTechniqueInstructionsMarkup`, pero no apareció en la captura: no atribuirlo categóricamente a un fallo de datos. Considerar JS antiguo en navegador hasta verificar bundle efectivo; aumentar versión a v0.44.5.
+- Causa técnica adicional verificada en código: `gymLoadVerifiedWgerTechnique` buscaba solo la etiqueta más corta, en español, mediante `name__search`, por lo que no encontraba una ficha wger denominada en inglés `Incline Bench Press`. Se añadió búsqueda `incline` y respaldo `press inclinado`; `Incline Bench Press` solo se vincula si wger informa equipo `Barbell`. Nunca utilizar vídeos de mancuernas ni confiar en nombres ambiguos sin equipamiento.
+- El detalle coloca el vídeo real en la zona visible de la derecha, separado del GIF principal de la izquierda, en ambas vistas (Mi plan y Biblioteca). Siempre muestra instrucciones; durante búsqueda indica `Buscando vídeo real compatible…`, y si no se verifica ninguno indica `No se ha encontrado un vídeo real verificado de esta variante en wger.` Sin vídeo se conserva GIF e instrucciones. No se afirma que wger posea un vídeo para Press inclinado sin observarlo en sus datos.
+- Ficheros afectados: `app/app.js`, `app/styles.css`, `app/index.html`, pruebas de detalle y auditoría de producción. El vídeo sigue siendo same-origin por el proxy ya existente, con atribución, sin autoplay y con carga diferida.
+- No se modificaron plan, series, pesos, sesiones, D1, Sheets, archivos GIF o recursos externos. Sin aumento de coste. Verificar CI, deploy y auditoría real antes de declarar resolución.
+
 ## ORGANIZADOR 13 · Detalle Gym: GIF + vídeo real cuando existe (2026-10-11)
 
 - Petición: miniatura principal del ejercicio mantiene el GIF; al abrir su detalle muestra **GIF, vídeo real de wger cuando exista y explicación**. Aplica a ejercicios de Mi plan y Biblioteca.
