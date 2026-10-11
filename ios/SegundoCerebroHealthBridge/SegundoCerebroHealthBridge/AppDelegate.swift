@@ -1,9 +1,11 @@
 import BackgroundTasks
 import UIKit
 
+@MainActor
 final class AppDelegate: NSObject, UIApplicationDelegate {
     static let refreshIdentifier = "com.mamg97.segundocerebro.healthbridge.refresh"
-    private static let refreshInterval: TimeInterval = 60 * 60
+
+    private var protectedDataRetryTask: Task<Void, Never>?
 
     func application(
         _ application: UIApplication,
@@ -11,29 +13,26 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         registerBackgroundRefresh()
 
-        HealthKitService.shared.installObserverQueries {
-            Task {
-                _ = try? await SyncService.shared.syncRecentDays()
-            }
+        HealthKitService.shared.installObserverQueries { [weak self] in
+            _ = await self?.performAutomaticSync(trigger: .healthKit)
         }
 
         if UserDefaults.standard.bool(forKey: "healthBridge.didRequestHealthAuthorization") {
             HealthKitService.shared.enableBackgroundDelivery()
         }
 
+        restorePendingRetryIfNeeded()
         scheduleBackgroundRefresh()
+        retryWhenProtectedDataIsAvailable(application)
         return true
-    }
-
-    func applicationDidBecomeActive(_ application: UIApplication) {
-        guard UserDefaults.standard.bool(forKey: "healthBridge.didRequestHealthAuthorization") else { return }
-        Task {
-            _ = try? await SyncService.shared.syncRecentDays()
-        }
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
         scheduleBackgroundRefresh()
+    }
+
+    func applicationProtectedDataDidBecomeAvailable(_ application: UIApplication) {
+        retryWhenProtectedDataIsAvailable(application)
     }
 
     private func registerBackgroundRefresh() {
@@ -48,12 +47,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
             self.scheduleBackgroundRefresh()
             let operation = Task {
-                do {
-                    _ = try await SyncService.shared.syncRecentDays()
-                    refreshTask.setTaskCompleted(success: true)
-                } catch {
-                    refreshTask.setTaskCompleted(success: false)
-                }
+                let success = await self.performAutomaticSync(trigger: .backgroundRefresh)
+                refreshTask.setTaskCompleted(success: success)
             }
             refreshTask.expirationHandler = {
                 operation.cancel()
@@ -63,8 +58,75 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
     private func scheduleBackgroundRefresh() {
         BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: Self.refreshIdentifier)
+
+        let defaults = UserDefaults.standard
+        let now = Date()
+        let earliest: Date
+        if let lastSuccessfulSync = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date {
+            earliest = max(now, lastSuccessfulSync.addingTimeInterval(SyncService.automaticSyncInterval))
+        } else {
+            earliest = now.addingTimeInterval(SyncService.automaticSyncInterval)
+        }
         let request = BGAppRefreshTaskRequest(identifier: Self.refreshIdentifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: Self.refreshInterval)
-        try? BGTaskScheduler.shared.submit(request)
+        request.earliestBeginDate = earliest
+
+        do {
+            try BGTaskScheduler.shared.submit(request)
+            defaults.set(earliest, forKey: SyncDefaults.nextBackgroundRefreshEarliest)
+            defaults.removeObject(forKey: SyncDefaults.backgroundScheduleFailure)
+        } catch {
+            UserDefaults.standard.set(error.localizedDescription, forKey: SyncDefaults.backgroundScheduleFailure)
+        }
+    }
+
+    private func performAutomaticSync(trigger: SyncTrigger) async -> Bool {
+        guard UIApplication.shared.isProtectedDataAvailable else {
+            UserDefaults.standard.set(true, forKey: SyncDefaults.pendingProtectedDataRetry)
+            return false
+        }
+
+        do {
+            _ = try await SyncService.shared.syncRecentDays(days: 2, trigger: trigger)
+            UserDefaults.standard.removeObject(forKey: SyncDefaults.pendingProtectedDataRetry)
+            scheduleBackgroundRefresh()
+            return true
+        } catch {
+            if !UIApplication.shared.isProtectedDataAvailable {
+                UserDefaults.standard.set(true, forKey: SyncDefaults.pendingProtectedDataRetry)
+            }
+            scheduleBackgroundRefresh()
+            return false
+        }
+    }
+
+    private func restorePendingRetryIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard defaults.string(forKey: SyncDefaults.lastFailure) != nil,
+              let attempt = defaults.object(forKey: SyncDefaults.lastAttempt) as? Date,
+              let triggerValue = defaults.string(forKey: SyncDefaults.lastAttemptTrigger),
+              let trigger = SyncTrigger(rawValue: triggerValue),
+              trigger.isAutomatic else {
+            return
+        }
+
+        let lastSuccess = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date
+        if lastSuccess.map({ attempt > $0 }) ?? true {
+            defaults.set(true, forKey: SyncDefaults.pendingProtectedDataRetry)
+        }
+    }
+
+    private func retryWhenProtectedDataIsAvailable(_ application: UIApplication) {
+        let defaults = UserDefaults.standard
+        guard application.isProtectedDataAvailable,
+              defaults.bool(forKey: SyncDefaults.pendingProtectedDataRetry),
+              protectedDataRetryTask == nil else {
+            return
+        }
+
+        protectedDataRetryTask = Task { [weak self] in
+            guard let self else { return }
+            _ = await self.performAutomaticSync(trigger: .protectedDataRetry)
+            self.protectedDataRetryTask = nil
+        }
     }
 }

@@ -110,6 +110,49 @@ function cleanRecovery(raw, fallbackDate) {
   return populated ? result : null;
 }
 
+function cleanMetricNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) && Math.abs(number) <= 1_000_000_000 ? number : null;
+}
+
+function cleanMetricSummary(raw, fallbackDate) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const key = String(raw.key || "").trim();
+  if (!/^[A-Za-z][A-Za-z0-9_]{1,79}$/.test(key)) return null;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(raw.date || ""))
+    ? String(raw.date)
+    : fallbackDate;
+  const aggregation = ["cumulative", "discrete"].includes(String(raw.aggregation || ""))
+    ? String(raw.aggregation)
+    : "discrete";
+  const sampleCountRaw = Number(raw.sampleCount);
+  const sampleCount = Number.isFinite(sampleCountRaw)
+    ? Math.max(0, Math.min(10_000_000, Math.round(sampleCountRaw)))
+    : 0;
+  const result = {
+    date,
+    key,
+    unit: String(raw.unit || "count").trim().slice(0, 32) || "count",
+    aggregation,
+    sum: cleanMetricNumber(raw.sum),
+    average: cleanMetricNumber(raw.average),
+    minimum: cleanMetricNumber(raw.minimum),
+    maximum: cleanMetricNumber(raw.maximum),
+    latest: cleanMetricNumber(raw.latest),
+    latestAt: cleanIso(raw.latestAt),
+    sampleCount,
+    sourceDetails: Array.isArray(raw.sources)
+      ? raw.sources.map((item) => String(item).trim()).filter(Boolean).slice(0, 20)
+      : [],
+    sampledAt: cleanIso(raw.sampledAt) || new Date().toISOString()
+  };
+  return [result.sum, result.average, result.minimum, result.maximum, result.latest]
+    .some((value) => value !== null) || result.sampleCount > 0
+    ? result
+    : null;
+}
+
 function cleanBodySample(sample) {
   const type = String(sample?.type || "").trim();
   if (!BODY_TYPES.has(type)) return null;
@@ -223,7 +266,10 @@ function normalizePayload(body, path) {
   }
 
   const recovery = cleanRecovery(body?.recovery, date);
-  return { activity, bodySamples, recovery };
+  const metrics = Array.isArray(body?.metrics)
+    ? body.metrics.map((item) => cleanMetricSummary(item, date)).filter(Boolean).slice(0, 200)
+    : [];
+  return { activity, bodySamples, recovery, metrics };
 }
 
 export default {
@@ -231,7 +277,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/health") {
-      return json({ ok: true, service: "segundo-cerebro-health-ingest", version: 2 });
+      return json({ ok: true, service: "segundo-cerebro-health-ingest", version: 3 });
     }
 
     if (!["/v1/energy", "/v1/sync"].includes(url.pathname)) {
@@ -256,7 +302,7 @@ export default {
     }
 
     const normalized = normalizePayload(body, url.pathname);
-    const { activity, bodySamples, recovery } = normalized;
+    const { activity, bodySamples, recovery, metrics } = normalized;
     const hasActivity = [
       activity.activeKcal,
       activity.restingKcal,
@@ -265,7 +311,7 @@ export default {
       activity.exerciseMinutes
     ].some((value) => value !== null) || activity.workouts.length > 0;
 
-    if (!hasActivity && bodySamples.length === 0 && !recovery) {
+    if (!hasActivity && bodySamples.length === 0 && !recovery && metrics.length === 0) {
       return json({ ok: false, code: "EMPTY_HEALTH_SYNC" }, 400);
     }
 
@@ -285,7 +331,8 @@ export default {
         recovery: recovery ? {
           ...recovery,
           source: "apple_health"
-        } : null
+        } : null,
+        metrics
       })
     });
 
@@ -311,7 +358,10 @@ export default {
         workoutCount: activity.workouts.length
       } : null,
       bodySamplesAccepted: bodySamples.length,
-      recoveryAccepted: Boolean(recovery)
+      recoveryAccepted: Boolean(recovery),
+      metricsAccepted: metrics.length
     }, 201);
   }
 };
+
+export { cleanMetricSummary, normalizePayload };

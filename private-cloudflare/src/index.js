@@ -2210,6 +2210,61 @@ async function ensureHealthRecoveryTable(env) {
   `).run();
 }
 
+async function ensureHealthMetricDailyTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS health_metric_daily (
+      metric_date TEXT NOT NULL,
+      metric_key TEXT NOT NULL,
+      unit TEXT NOT NULL,
+      aggregation TEXT NOT NULL,
+      sum_value REAL,
+      average_value REAL,
+      minimum_value REAL,
+      maximum_value REAL,
+      latest_value REAL,
+      latest_at TEXT,
+      sample_count INTEGER NOT NULL DEFAULT 0,
+      source_details TEXT,
+      sampled_at TEXT,
+      recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (metric_date, metric_key)
+    )
+  `).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_health_metric_key_date ON health_metric_daily(metric_key, metric_date)"
+  ).run();
+}
+
+async function fetchHealthMetricRows(env, startDate, endDate) {
+  await ensureHealthMetricDailyTable(env);
+  const result = await env.DB.prepare(`
+    SELECT metric_date, metric_key, unit, aggregation,
+           sum_value, average_value, minimum_value, maximum_value,
+           latest_value, latest_at, sample_count, source_details,
+           sampled_at, recorded_at
+    FROM health_metric_daily
+    WHERE metric_date BETWEEN ? AND ?
+    ORDER BY metric_date ASC, metric_key ASC
+  `).bind(startDate, endDate).all();
+
+  return (result.results || []).map((row) => ({
+    date: row.metric_date,
+    key: row.metric_key,
+    unit: row.unit,
+    aggregation: row.aggregation,
+    sum: toNumber(row.sum_value),
+    average: toNumber(row.average_value),
+    minimum: toNumber(row.minimum_value),
+    maximum: toNumber(row.maximum_value),
+    latest: toNumber(row.latest_value),
+    latestAt: row.latest_at || null,
+    sampleCount: Number(row.sample_count || 0),
+    sourceDetails: row.source_details ? (() => { try { return JSON.parse(row.source_details); } catch { return []; } })() : [],
+    sampledAt: row.sampled_at || null,
+    importedAt: row.recorded_at || null
+  }));
+}
+
 async function fetchHealthRecoveryRows(env, startDate, endDate) {
   await ensureHealthRecoveryTable(env);
   const result = await env.DB.prepare(`
@@ -2546,10 +2601,11 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
     }
   }
 
-  const [energyMap, bodySamples, recovery] = await Promise.all([
+  const [energyMap, bodySamples, recovery, metrics] = await Promise.all([
     fetchHealthEnergyRows(env, startDate, date),
     fetchHealthBodySamples(env, startDate, date),
-    fetchHealthRecoveryRows(env, startDate, date)
+    fetchHealthRecoveryRows(env, startDate, date),
+    fetchHealthMetricRows(env, startDate, date)
   ]);
 
   const activity = [...energyMap.values()].map((row) => ({
@@ -2569,6 +2625,7 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
     activity,
     bodySamples,
     recovery,
+    metrics,
     waistHistory,
     quality: {
       full: activity.filter((row) => row.coverageQuality === "full").length,
@@ -3571,6 +3628,7 @@ async function saveHealthSync(request, env) {
   const recovery = payload?.recovery && typeof payload.recovery === "object" && !Array.isArray(payload.recovery)
     ? payload.recovery
     : null;
+  const metrics = Array.isArray(payload?.metrics) ? payload.metrics.slice(0, 200) : [];
   let activitySaved = false;
 
   if (activity) {
@@ -3765,12 +3823,89 @@ async function saveHealthSync(request, env) {
     }
   }
 
-  if (!activitySaved && bodyImported === 0 && !recoverySaved) {
+  let metricsImported = 0;
+  if (metrics.length) {
+    await ensureHealthMetricDailyTable(env);
+    const finiteMetric = (value) => {
+      if (value === null || value === undefined || value === "") return null;
+      const number = Number(value);
+      return Number.isFinite(number) && Math.abs(number) <= 1_000_000_000 ? number : null;
+    };
+
+    for (const raw of metrics) {
+      const date = String(raw?.date || "").trim();
+      const key = String(raw?.key || "").trim();
+      const unit = String(raw?.unit || "count").trim().slice(0, 32) || "count";
+      const aggregation = ["cumulative", "discrete"].includes(String(raw?.aggregation || ""))
+        ? String(raw.aggregation)
+        : "discrete";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^[A-Za-z][A-Za-z0-9_]{1,79}$/.test(key)) continue;
+
+      const values = {
+        sum: finiteMetric(raw?.sum),
+        average: finiteMetric(raw?.average),
+        minimum: finiteMetric(raw?.minimum),
+        maximum: finiteMetric(raw?.maximum),
+        latest: finiteMetric(raw?.latest)
+      };
+      const sampleCountRaw = Number(raw?.sampleCount);
+      const sampleCount = Number.isFinite(sampleCountRaw)
+        ? Math.max(0, Math.min(10_000_000, Math.round(sampleCountRaw)))
+        : 0;
+      if (!Object.values(values).some((value) => value !== null) && sampleCount === 0) continue;
+
+      const latestDate = raw?.latestAt ? new Date(String(raw.latestAt)) : null;
+      const sampledDate = raw?.sampledAt ? new Date(String(raw.sampledAt)) : null;
+      const sources = Array.isArray(raw?.sourceDetails)
+        ? raw.sourceDetails.map((item) => String(item).trim()).filter(Boolean).slice(0, 20)
+        : [];
+
+      await env.DB.prepare(`
+        INSERT INTO health_metric_daily (
+          metric_date, metric_key, unit, aggregation,
+          sum_value, average_value, minimum_value, maximum_value,
+          latest_value, latest_at, sample_count, source_details,
+          sampled_at, recorded_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(metric_date, metric_key) DO UPDATE SET
+          unit = excluded.unit,
+          aggregation = excluded.aggregation,
+          sum_value = excluded.sum_value,
+          average_value = excluded.average_value,
+          minimum_value = excluded.minimum_value,
+          maximum_value = excluded.maximum_value,
+          latest_value = excluded.latest_value,
+          latest_at = excluded.latest_at,
+          sample_count = excluded.sample_count,
+          source_details = excluded.source_details,
+          sampled_at = excluded.sampled_at,
+          recorded_at = excluded.recorded_at
+      `).bind(
+        date,
+        key,
+        unit,
+        aggregation,
+        values.sum,
+        values.average,
+        values.minimum,
+        values.maximum,
+        values.latest,
+        latestDate && Number.isFinite(latestDate.getTime()) ? latestDate.toISOString() : null,
+        sampleCount,
+        JSON.stringify(sources),
+        sampledDate && Number.isFinite(sampledDate.getTime()) ? sampledDate.toISOString() : null,
+        new Date().toISOString()
+      ).run();
+      metricsImported += 1;
+    }
+  }
+
+  if (!activitySaved && bodyImported === 0 && !recoverySaved && metricsImported === 0) {
     return json({ ok: false, code: "EMPTY_HEALTH_SYNC" }, 400);
   }
 
   healthCache = { value: null, expiresAt: 0, date: null };
-  return json({ ok: true, activitySaved, bodySamplesImported: bodyImported, recoverySaved }, 201);
+  return json({ ok: true, activitySaved, bodySamplesImported: bodyImported, recoverySaved, metricsImported }, 201);
 }
 
 

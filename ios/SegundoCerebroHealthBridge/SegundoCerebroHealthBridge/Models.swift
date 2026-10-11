@@ -4,7 +4,24 @@ struct HealthSyncPayload: Codable {
     let activity: ActivityPayload?
     let bodySamples: [BodySamplePayload]
     let recovery: RecoveryPayload?
+    let metrics: [HealthMetricPayload]
     let note: String
+}
+
+struct HealthMetricPayload: Codable, Sendable {
+    let date: String
+    let key: String
+    let unit: String
+    let aggregation: String
+    let sum: Double?
+    let average: Double?
+    let minimum: Double?
+    let maximum: Double?
+    let latest: Double?
+    let latestAt: String?
+    let sampleCount: Int
+    let sources: [String]
+    let sampledAt: String
 }
 
 struct ActivityPayload: Codable {
@@ -78,6 +95,7 @@ struct SyncResponse: Codable {
     let date: String?
     let bodySamplesAccepted: Int?
     let recoveryAccepted: Bool?
+    let metricsAccepted: Int?
     let code: String?
 }
 
@@ -85,4 +103,5 @@ struct DailyHealthSnapshot {
     let activity: ActivityPayload?
     let bodySamples: [BodySamplePayload]
     let recovery: RecoveryPayload?
+    let metrics: [HealthMetricPayload]
 }

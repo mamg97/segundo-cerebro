@@ -1,22 +1,48 @@
 import Foundation
 
-struct SyncRunResult {
+enum SyncTrigger: String, Sendable {
+    case manual
+    case healthKit
+    case backgroundRefresh
+    case protectedDataRetry
+
+    var isAutomatic: Bool { self != .manual }
+}
+
+enum SyncDefaults {
+    static let lastSuccessfulSync = "healthBridge.lastSuccessfulSync"
+    static let lastSuccessfulTrigger = "healthBridge.lastSuccessfulSyncTrigger"
+    static let lastSuccessfulSummary = "healthBridge.lastSuccessfulSyncSummary"
+    static let lastAttempt = "healthBridge.lastSyncAttempt"
+    static let lastAttemptTrigger = "healthBridge.lastSyncAttemptTrigger"
+    static let lastFailure = "healthBridge.lastSyncFailure"
+    static let nextBackgroundRefreshEarliest = "healthBridge.nextBackgroundRefreshEarliest"
+    static let backgroundScheduleFailure = "healthBridge.backgroundScheduleFailure"
+    static let pendingProtectedDataRetry = "healthBridge.pendingProtectedDataRetry"
+    static let reconciliationRevision = "healthBridge.reconciliationRevision"
+}
+
+struct SyncRunResult: Sendable {
     let syncedDays: Int
     let bodySamples: Int
     let recoveryDays: Int
+    let extendedMetrics: Int
     let finishedAt: Date
+    let trigger: SyncTrigger
+    let wasSkipped: Bool
 }
 
 actor SyncService {
     static let shared = SyncService()
-    // Keep one extra completed day in the automatic window. HealthKit samples
-    // can arrive after the next day's first background wake-up.
+    static let automaticSyncInterval: TimeInterval = 8 * 60 * 60
     static let automaticReconciliationDays = 3
+    private static let currentReconciliationRevision = 3
 
     static let endpoint = URL(string: "https://segundo-cerebro-health-ingest.mamg97.workers.dev/v1/sync")!
 
     private let health = HealthKitService.shared
     private let session: URLSession
+    private var inFlightSync: Task<SyncRunResult, Error>?
 
     private init() {
         let configuration = URLSessionConfiguration.ephemeral
@@ -26,7 +52,48 @@ actor SyncService {
         self.session = URLSession(configuration: configuration)
     }
 
-    func syncRecentDays(days: Int = automaticReconciliationDays) async throws -> SyncRunResult {
+    func syncRecentDays(days: Int = automaticReconciliationDays, trigger: SyncTrigger = .manual) async throws -> SyncRunResult {
+        if let inFlightSync {
+            return try await inFlightSync.value
+        }
+
+        let defaults = UserDefaults.standard
+        let now = Date()
+        if trigger.isAutomatic,
+           defaults.integer(forKey: SyncDefaults.reconciliationRevision) >= Self.currentReconciliationRevision,
+           let last = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date,
+           now.timeIntervalSince(last) < Self.automaticSyncInterval {
+            return SyncRunResult(
+                syncedDays: 0,
+                bodySamples: 0,
+                recoveryDays: 0,
+                extendedMetrics: 0,
+                finishedAt: last,
+                trigger: trigger,
+                wasSkipped: true
+            )
+        }
+
+        defaults.set(now, forKey: SyncDefaults.lastAttempt)
+        defaults.set(trigger.rawValue, forKey: SyncDefaults.lastAttemptTrigger)
+
+        let task = Task { [self] in
+            try await performSync(days: days, trigger: trigger)
+        }
+        inFlightSync = task
+
+        do {
+            let result = try await task.value
+            inFlightSync = nil
+            return result
+        } catch {
+            inFlightSync = nil
+            defaults.set(error.localizedDescription, forKey: SyncDefaults.lastFailure)
+            throw error
+        }
+    }
+
+    private func performSync(days: Int, trigger: SyncTrigger) async throws -> SyncRunResult {
         guard let token = KeychainStore.loadToken(), !token.isEmpty else {
             throw HealthBridgeError.tokenMissing
         }
@@ -38,12 +105,14 @@ actor SyncService {
         var syncedDays = 0
         var bodySamples = 0
         var recoveryDays = 0
+        var extendedMetrics = 0
 
-        // Oldest first so completed days are reconciled before today's partial snapshot.
+        // Oldest first so late-arriving data from two completed days is reconciled
+        // before today's partial snapshot.
         for offset in stride(from: count - 1, through: 0, by: -1) {
             guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
             let snapshot = try await health.snapshot(for: date)
-            guard snapshot.activity != nil || !snapshot.bodySamples.isEmpty || snapshot.recovery != nil else {
+            guard snapshot.activity != nil || !snapshot.bodySamples.isEmpty || snapshot.recovery != nil || !snapshot.metrics.isEmpty else {
                 continue
             }
 
@@ -51,6 +120,7 @@ actor SyncService {
                 activity: snapshot.activity,
                 bodySamples: snapshot.bodySamples,
                 recovery: snapshot.recovery,
+                metrics: snapshot.metrics,
                 note: "Native iOS HealthKit bridge"
             )
 
@@ -58,15 +128,25 @@ actor SyncService {
             syncedDays += 1
             bodySamples += response.bodySamplesAccepted ?? 0
             if response.recoveryAccepted == true { recoveryDays += 1 }
+            extendedMetrics += response.metricsAccepted ?? 0
         }
 
         let finishedAt = Date()
-        UserDefaults.standard.set(finishedAt, forKey: "healthBridge.lastSuccessfulSync")
+        let summary = "\(syncedDays) días · \(bodySamples) muestras corporales · \(recoveryDays) días de recuperación · \(extendedMetrics) métricas ampliadas"
+        let defaults = UserDefaults.standard
+        defaults.set(finishedAt, forKey: SyncDefaults.lastSuccessfulSync)
+        defaults.set(trigger.rawValue, forKey: SyncDefaults.lastSuccessfulTrigger)
+        defaults.set(summary, forKey: SyncDefaults.lastSuccessfulSummary)
+        defaults.set(Self.currentReconciliationRevision, forKey: SyncDefaults.reconciliationRevision)
+        defaults.removeObject(forKey: SyncDefaults.lastFailure)
         return SyncRunResult(
             syncedDays: syncedDays,
             bodySamples: bodySamples,
             recoveryDays: recoveryDays,
-            finishedAt: finishedAt
+            extendedMetrics: extendedMetrics,
+            finishedAt: finishedAt,
+            trigger: trigger,
+            wasSkipped: false
         )
     }
 

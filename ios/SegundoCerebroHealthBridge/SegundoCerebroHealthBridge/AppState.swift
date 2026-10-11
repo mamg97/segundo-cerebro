@@ -7,9 +7,13 @@ final class AppState: ObservableObject {
     @Published var didRequestHealthAuthorization = UserDefaults.standard.bool(forKey: "healthBridge.didRequestHealthAuthorization")
     @Published var isSyncing = false
     @Published var statusMessage = "Preparado"
-    @Published var lastSuccessfulSync = UserDefaults.standard.object(forKey: "healthBridge.lastSuccessfulSync") as? Date
+    @Published var lastSuccessfulSync: Date?
+    @Published var lastSyncTrigger: SyncTrigger?
+    @Published var lastSyncSummary: String?
+    @Published var nextBackgroundRefreshEarliest: Date?
 
     init() {
+        refreshDiagnostics()
         if didRequestHealthAuthorization {
             HealthKitService.shared.enableBackgroundDelivery()
         }
@@ -57,11 +61,30 @@ final class AppState: ObservableObject {
         defer { isSyncing = false }
 
         do {
-            let result = try await SyncService.shared.syncRecentDays()
-            lastSuccessfulSync = result.finishedAt
-            statusMessage = "Sincronización correcta: \(result.syncedDays) días, \(result.bodySamples) muestras corporales y \(result.recoveryDays) días de recuperación."
+            let result = try await SyncService.shared.syncRecentDays(days: 2, trigger: .manual)
+            refreshDiagnostics()
+            statusMessage = "Sincronización correcta: \(result.syncedDays) días, \(result.bodySamples) muestras corporales, \(result.recoveryDays) días de recuperación y \(result.extendedMetrics) métricas ampliadas."
         } catch {
+            refreshDiagnostics()
             statusMessage = "Sincronización fallida: \(error.localizedDescription)"
+        }
+    }
+
+    func refreshDiagnostics() {
+        let defaults = UserDefaults.standard
+        lastSuccessfulSync = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date
+        lastSyncTrigger = defaults.string(forKey: SyncDefaults.lastSuccessfulTrigger).flatMap(SyncTrigger.init(rawValue:))
+        lastSyncSummary = defaults.string(forKey: SyncDefaults.lastSuccessfulSummary)
+        nextBackgroundRefreshEarliest = defaults.object(forKey: SyncDefaults.nextBackgroundRefreshEarliest) as? Date
+    }
+
+    var lastSyncTriggerLabel: String {
+        switch lastSyncTrigger {
+        case .manual: "Manual"
+        case .healthKit: "Automática · nuevos datos de Salud"
+        case .backgroundRefresh: "Automática · reconciliación periódica"
+        case .protectedDataRetry: "Automática · reintento tras desbloqueo"
+        case nil: "Sin información"
         }
     }
 }

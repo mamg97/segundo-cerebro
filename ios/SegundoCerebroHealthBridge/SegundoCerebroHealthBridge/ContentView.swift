@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var state: AppState
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -28,9 +29,35 @@ struct ContentView: View {
                             Text(last, format: .dateTime.day().month().hour().minute())
                                 .foregroundStyle(.secondary)
                         }
+
+                        LabeledContent("Origen") {
+                            Text(state.lastSyncTriggerLabel)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.trailing)
+                        }
+
+                        if let summary = state.lastSyncSummary {
+                            Text(summary)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    LabeledContent("Cadencia automática") {
+                        Text("Hasta 3 veces al día")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let earliest = state.nextBackgroundRefreshEarliest {
+                        LabeledContent("Próxima solicitud") {
+                            Text(earliest, format: .dateTime.day().month().hour().minute())
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 } header: {
                     Text("Estado")
+                } footer: {
+                    Text("La fecha es el primer momento permitido. iOS decide cuándo concede realmente la ejecución.")
                 }
 
                 Section {
@@ -101,6 +128,9 @@ struct ContentView: View {
                     metric("Recuperación", "FC en reposo, HRV, frecuencia respiratoria, SpO₂ y VO₂ máx.")
                     metric("Sueño", "Tiempo dormido, en cama, despierto, Core, Deep y REM")
                     metric("Temperatura", "Temperatura de muñeca durante el sueño, cuando el reloj la genere")
+                    metric("Cardiovascular", "Pulso diario, recuperación cardiaca, presión, glucosa y carga de fibrilación cuando existan")
+                    metric("Movilidad y deporte", "Distancias, desnivel, marcha, carrera, natación y ciclismo compatibles")
+                    metric("Entorno y nutrición", "Ruido, luz diurna, profundidad, agua y nutrientes escritos en Apple Health")
                 } header: {
                     Text("Datos recogidos")
                 } footer: {
@@ -117,6 +147,11 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Health Bridge")
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    state.refreshDiagnostics()
+                }
+            }
         }
     }
 

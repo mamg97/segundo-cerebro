@@ -6,21 +6,104 @@ final class HealthKitService {
 
     private let store = HKHealthStore()
     private var observerQueries: [HKObserverQuery] = []
-    private let immediateBackgroundIdentifiers: Set<String> = [
-        HKQuantityTypeIdentifier.bodyMass.rawValue,
-        HKQuantityTypeIdentifier.bodyFatPercentage.rawValue,
-        HKQuantityTypeIdentifier.bodyMassIndex.rawValue,
-        HKQuantityTypeIdentifier.leanBodyMass.rawValue
-    ]
 
     private init() {}
+
+    private enum MetricAggregation: String {
+        case cumulative
+        case discrete
+    }
+
+    private struct MetricDefinition {
+        let identifier: HKQuantityTypeIdentifier
+        let key: String
+        let unit: HKUnit
+        let unitName: String
+        let aggregation: MetricAggregation
+        let multiplier: Double
+
+        init(
+            _ identifier: HKQuantityTypeIdentifier,
+            _ key: String,
+            _ unit: HKUnit,
+            _ unitName: String,
+            _ aggregation: MetricAggregation,
+            multiplier: Double = 1
+        ) {
+            self.identifier = identifier
+            self.key = key
+            self.unit = unit
+            self.unitName = unitName
+            self.aggregation = aggregation
+            self.multiplier = multiplier
+        }
+    }
+
+    private var additionalMetricDefinitions: [MetricDefinition] {
+        let speed = HKUnit.meter().unitDivided(by: .second())
+        let bpm = countPerMinute()
+        return [
+            MetricDefinition(.height, "height", .meter(), "m", .discrete),
+            MetricDefinition(.waistCircumference, "waistCircumference", .meter(), "m", .discrete),
+            MetricDefinition(.appleMoveTime, "appleMoveTime", .minute(), "min", .cumulative),
+            MetricDefinition(.appleStandTime, "appleStandTime", .minute(), "min", .cumulative),
+            MetricDefinition(.distanceWalkingRunning, "distanceWalkingRunning", .meter(), "m", .cumulative),
+            MetricDefinition(.distanceCycling, "distanceCycling", .meter(), "m", .cumulative),
+            MetricDefinition(.distanceSwimming, "distanceSwimming", .meter(), "m", .cumulative),
+            MetricDefinition(.flightsClimbed, "flightsClimbed", .count(), "count", .cumulative),
+            MetricDefinition(.swimmingStrokeCount, "swimmingStrokeCount", .count(), "count", .cumulative),
+            MetricDefinition(.heartRate, "heartRate", bpm, "bpm", .discrete),
+            MetricDefinition(.heartRateRecoveryOneMinute, "heartRateRecoveryOneMinute", bpm, "bpm", .discrete),
+            MetricDefinition(.bodyTemperature, "bodyTemperature", .degreeCelsius(), "degC", .discrete),
+            MetricDefinition(.basalBodyTemperature, "basalBodyTemperature", .degreeCelsius(), "degC", .discrete),
+            MetricDefinition(.bloodPressureSystolic, "bloodPressureSystolic", .millimeterOfMercury(), "mmHg", .discrete),
+            MetricDefinition(.bloodPressureDiastolic, "bloodPressureDiastolic", .millimeterOfMercury(), "mmHg", .discrete),
+            MetricDefinition(.bloodGlucose, "bloodGlucose", HKUnit(from: "mg/dL"), "mg/dL", .discrete),
+            MetricDefinition(.peripheralPerfusionIndex, "peripheralPerfusionIndex", .percent(), "%", .discrete, multiplier: 100),
+            MetricDefinition(.atrialFibrillationBurden, "atrialFibrillationBurden", .percent(), "%", .discrete, multiplier: 100),
+            MetricDefinition(.electrodermalActivity, "electrodermalActivity", .siemen(), "S", .discrete),
+            MetricDefinition(.timeInDaylight, "timeInDaylight", .minute(), "min", .cumulative),
+            MetricDefinition(.environmentalAudioExposure, "environmentalAudioExposure", .decibelAWeightedSoundPressureLevel(), "dBA", .discrete),
+            MetricDefinition(.headphoneAudioExposure, "headphoneAudioExposure", .decibelAWeightedSoundPressureLevel(), "dBA", .discrete),
+            MetricDefinition(.walkingSpeed, "walkingSpeed", speed, "m/s", .discrete),
+            MetricDefinition(.walkingStepLength, "walkingStepLength", .meter(), "m", .discrete),
+            MetricDefinition(.walkingAsymmetryPercentage, "walkingAsymmetryPercentage", .percent(), "%", .discrete, multiplier: 100),
+            MetricDefinition(.walkingDoubleSupportPercentage, "walkingDoubleSupportPercentage", .percent(), "%", .discrete, multiplier: 100),
+            MetricDefinition(.sixMinuteWalkTestDistance, "sixMinuteWalkTestDistance", .meter(), "m", .discrete),
+            MetricDefinition(.stairAscentSpeed, "stairAscentSpeed", speed, "m/s", .discrete),
+            MetricDefinition(.stairDescentSpeed, "stairDescentSpeed", speed, "m/s", .discrete),
+            MetricDefinition(.runningPower, "runningPower", .watt(), "W", .discrete),
+            MetricDefinition(.runningSpeed, "runningSpeed", speed, "m/s", .discrete),
+            MetricDefinition(.runningStrideLength, "runningStrideLength", .meter(), "m", .discrete),
+            MetricDefinition(.runningVerticalOscillation, "runningVerticalOscillation", .meterUnit(with: .centi), "cm", .discrete),
+            MetricDefinition(.runningGroundContactTime, "runningGroundContactTime", .secondUnit(with: .milli), "ms", .discrete),
+            MetricDefinition(.cyclingCadence, "cyclingCadence", bpm, "count/min", .discrete),
+            MetricDefinition(.cyclingPower, "cyclingPower", .watt(), "W", .discrete),
+            MetricDefinition(.cyclingSpeed, "cyclingSpeed", speed, "m/s", .discrete),
+            MetricDefinition(.cyclingFunctionalThresholdPower, "cyclingFunctionalThresholdPower", .watt(), "W", .discrete),
+            MetricDefinition(.physicalEffort, "physicalEffort", HKUnit(from: "kcal/(kg*hr)"), "kcal/(kg*hr)", .discrete),
+            MetricDefinition(.dietaryEnergyConsumed, "dietaryEnergyConsumed", .kilocalorie(), "kcal", .cumulative),
+            MetricDefinition(.dietaryProtein, "dietaryProtein", .gram(), "g", .cumulative),
+            MetricDefinition(.dietaryCarbohydrates, "dietaryCarbohydrates", .gram(), "g", .cumulative),
+            MetricDefinition(.dietaryFatTotal, "dietaryFatTotal", .gram(), "g", .cumulative),
+            MetricDefinition(.dietaryFiber, "dietaryFiber", .gram(), "g", .cumulative),
+            MetricDefinition(.dietarySugar, "dietarySugar", .gram(), "g", .cumulative),
+            MetricDefinition(.dietarySodium, "dietarySodium", .gramUnit(with: .milli), "mg", .cumulative),
+            MetricDefinition(.dietaryWater, "dietaryWater", .literUnit(with: .milli), "mL", .cumulative),
+            MetricDefinition(.dietaryCaffeine, "dietaryCaffeine", .gramUnit(with: .milli), "mg", .cumulative),
+            MetricDefinition(.numberOfTimesFallen, "numberOfTimesFallen", .count(), "count", .cumulative),
+            MetricDefinition(.uvExposure, "uvExposure", .count(), "count", .discrete),
+            MetricDefinition(.underwaterDepth, "underwaterDepth", .meter(), "m", .discrete),
+            MetricDefinition(.waterTemperature, "waterTemperature", .degreeCelsius(), "degC", .discrete)
+        ]
+    }
 
     var isAvailable: Bool {
         HKHealthStore.isHealthDataAvailable()
     }
 
     private var quantityTypes: [HKQuantityTypeIdentifier: HKQuantityType] {
-        let identifiers: [HKQuantityTypeIdentifier] = [
+        let coreIdentifiers: [HKQuantityTypeIdentifier] = [
             .activeEnergyBurned,
             .basalEnergyBurned,
             .stepCount,
@@ -37,6 +120,7 @@ final class HealthKitService {
             .vo2Max,
             .appleSleepingWristTemperature
         ]
+        let identifiers = Set(coreIdentifiers + additionalMetricDefinitions.map(\.identifier))
         return Dictionary(uniqueKeysWithValues: identifiers.compactMap { identifier in
             HKObjectType.quantityType(forIdentifier: identifier).map { (identifier, $0) }
         })
@@ -69,14 +153,16 @@ final class HealthKitService {
         }
     }
 
-    func installObserverQueries(onUpdate: @escaping () -> Void) {
+    func installObserverQueries(onUpdate: @escaping @Sendable () async -> Void) {
         guard isAvailable, observerQueries.isEmpty else { return }
 
         for type in readTypes {
             guard let sampleType = type as? HKSampleType else { continue }
             let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { _, completion, _ in
-                onUpdate()
-                completion()
+                Task {
+                    await onUpdate()
+                    completion()
+                }
             }
             observerQueries.append(query)
             store.execute(query)
@@ -86,10 +172,7 @@ final class HealthKitService {
     func enableBackgroundDelivery() {
         guard isAvailable else { return }
         for type in readTypes {
-            let frequency: HKUpdateFrequency = immediateBackgroundIdentifiers.contains(type.identifier)
-                ? .immediate
-                : .hourly
-            store.enableBackgroundDelivery(for: type, frequency: frequency) { _, _ in }
+            store.enableBackgroundDelivery(for: type, frequency: .hourly) { _, _ in }
         }
     }
 
@@ -97,7 +180,8 @@ final class HealthKitService {
         let activity = try await activitySnapshot(for: date)
         let bodySamples = try await bodySamples(for: date)
         let recovery = try await recoverySnapshot(for: date)
-        return DailyHealthSnapshot(activity: activity, bodySamples: bodySamples, recovery: recovery)
+        let metrics = try await additionalMetricSnapshots(for: date)
+        return DailyHealthSnapshot(activity: activity, bodySamples: bodySamples, recovery: recovery, metrics: metrics)
     }
 
     private func activitySnapshot(for date: Date) async throws -> ActivityPayload? {
@@ -153,7 +237,7 @@ final class HealthKitService {
             output.append(contentsOf: samples.map {
                 BodySamplePayload(
                     type: typeName,
-                    value: $0.quantity.doubleValue(for: unit),
+                    value: $0.quantity.doubleValue(for: unit) * (identifier == .bodyFatPercentage ? 100 : 1),
                     unit: unitName,
                     measuredAt: iso($0.startDate),
                     source: $0.sourceRevision.source.name
@@ -182,7 +266,7 @@ final class HealthKitService {
             walkingHeartRateAverage: try await walkingHeartRate,
             hrvSdnnMs: try await hrv,
             respiratoryRate: try await respiratory,
-            oxygenSaturationPct: try await oxygenFraction,
+            oxygenSaturationPct: try await oxygenFraction.map { $0 * 100 },
             vo2Max: try await vo2Max,
             wristTemperatureC: try await wristTemperature,
             sleepAsleepMinutes: sleepValues?.asleep,
@@ -195,6 +279,99 @@ final class HealthKitService {
             sources: sleepValues.map { [$0.source] } ?? []
         )
         return recovery.hasValues ? recovery : nil
+    }
+
+    private func additionalMetricSnapshots(for date: Date) async throws -> [HealthMetricPayload] {
+        let interval = dayInterval(for: date)
+        var output: [HealthMetricPayload] = []
+        for definition in additionalMetricDefinitions {
+            guard let type = quantityTypes[definition.identifier],
+                  let metric = try await metricSnapshot(type: type, definition: definition, interval: interval) else {
+                continue
+            }
+            output.append(metric)
+        }
+        return output
+    }
+
+    private func metricSnapshot(
+        type: HKQuantityType,
+        definition: MetricDefinition,
+        interval: DateInterval
+    ) async throws -> HealthMetricPayload? {
+        let effectiveAggregation: MetricAggregation = type.aggregationStyle == .cumulative
+            ? .cumulative
+            : .discrete
+        async let samplesRequest = quantitySamples(type: type, interval: interval)
+        async let statisticsRequest = metricStatistics(
+            type: type,
+            definition: definition,
+            aggregation: effectiveAggregation,
+            interval: interval
+        )
+        let samples = try await samplesRequest
+        let values = try await statisticsRequest
+        guard !samples.isEmpty || values.sum != nil || values.average != nil else { return nil }
+
+        let latestSample = samples.max(by: { $0.startDate < $1.startDate })
+        let multiplier = definition.multiplier
+        return HealthMetricPayload(
+            date: dateKey(interval.start),
+            key: definition.key,
+            unit: definition.unitName,
+            aggregation: effectiveAggregation.rawValue,
+            sum: values.sum.map { $0 * multiplier },
+            average: values.average.map { $0 * multiplier },
+            minimum: values.minimum.map { $0 * multiplier },
+            maximum: values.maximum.map { $0 * multiplier },
+            latest: latestSample.map { $0.quantity.doubleValue(for: definition.unit) * multiplier },
+            latestAt: latestSample.map { iso($0.startDate) },
+            sampleCount: samples.count,
+            sources: Set(samples.map { $0.sourceRevision.source.name }).sorted(),
+            sampledAt: iso(Date())
+        )
+    }
+
+    private func metricStatistics(
+        type: HKQuantityType,
+        definition: MetricDefinition,
+        aggregation: MetricAggregation,
+        interval: DateInterval
+    ) async throws -> (sum: Double?, average: Double?, minimum: Double?, maximum: Double?) {
+        let predicate = HKQuery.predicateForSamples(
+            withStart: interval.start,
+            end: interval.end,
+            options: [.strictStartDate, .strictEndDate]
+        )
+        let options: HKStatisticsOptions = aggregation == .cumulative
+            ? .cumulativeSum
+            : [.discreteAverage, .discreteMin, .discreteMax]
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: options
+            ) { _, statistics, error in
+                if let error {
+                    let nsError = error as NSError
+                    if nsError.domain == HKErrorDomain,
+                       nsError.code == HKError.Code.errorNoData.rawValue {
+                        continuation.resume(returning: (nil, nil, nil, nil))
+                        return
+                    }
+                    continuation.resume(throwing: error)
+                    return
+                }
+                continuation.resume(returning: (
+                    statistics?.sumQuantity()?.doubleValue(for: definition.unit),
+                    statistics?.averageQuantity()?.doubleValue(for: definition.unit),
+                    statistics?.minimumQuantity()?.doubleValue(for: definition.unit),
+                    statistics?.maximumQuantity()?.doubleValue(for: definition.unit)
+                ))
+            }
+            store.execute(query)
+        }
     }
 
     private func cumulative(
@@ -233,6 +410,12 @@ final class HealthKitService {
                 options: option
             ) { _, statistics, error in
                 if let error {
+                    let nsError = error as NSError
+                    if nsError.domain == HKErrorDomain,
+                       nsError.code == HKError.Code.errorNoData.rawValue {
+                        continuation.resume(returning: nil)
+                        return
+                    }
                     continuation.resume(throwing: error)
                     return
                 }
