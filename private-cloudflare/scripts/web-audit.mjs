@@ -1873,6 +1873,21 @@ try {
         { htmlDataName: "project-tab", attributeName: "project-tab", attr: "project-tab", settle: 180, sourcePath: "/api/projects", timeout: 12000 }
       );
     } else if (areaId === "area-habits") {
+      // Verify the original private Sheet is readable, not just the modal shell.
+      const habitsProbe = await api("/api/habits");
+      assertCheck(
+        habitsProbe.ok && habitsProbe.body?.ok === true &&
+          habitsProbe.body?.source?.title === "HabitQuest Data",
+        "HabitQuest · fuente original accesible desde Worker privado",
+        "HTTP " + habitsProbe.status +
+          (habitsProbe.ok ? "" : " · " + String(habitsProbe.body?.code || "UNKNOWN"))
+      );
+      if (habitsProbe.ok && habitsProbe.body?.ok === true) {
+        assertCheck(
+          await page.locator('[data-habit-tab]').count() >= 2,
+          "HabitQuest · navegación diaria/histórico visible sin estado de error"
+        );
+      }
       await auditTabSet(
         "Hábitos",
         "[data-habit-tab]",
