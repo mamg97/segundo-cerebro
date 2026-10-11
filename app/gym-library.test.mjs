@@ -60,7 +60,7 @@ test("The actual wger bench card shows the GIF instead of the real-person video"
   vm.runInContext('renderGymLibraryResults([{id: "library-bench", name: "Press de Banca", hasVideo: true, videos: [{url: "/example-video.mp4"}], muscles: [{name: "Chest"}], equipment: [{name: "Barbell"}, {name: "Bench"}]}])', context);
   assert.match(grid.innerHTML, /press-banca-plano-barra-v5-white\.gif/);
   assert.match(grid.innerHTML, /gym-library-card-media has-illustration/);
-  assert.match(grid.innerHTML, />Animación<\/b>/);
+  assert.match(grid.innerHTML, />GIF propio<\/b>/);
   assert.doesNotMatch(grid.innerHTML, /<video/);
 });
 
