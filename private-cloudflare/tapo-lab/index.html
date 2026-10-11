@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Segundo Cerebro — laboratorio de vídeo privado</title>
+  <link rel="stylesheet" href="./tapo-lab.css">
+</head>
+<body>
+  <main>
+    <header><small>SEGUNDO CEREBRO · HOGAR</small><h1>Prueba de vídeo privado</h1></header>
+    <p class="warning">Laboratorio experimental. Solo comparte la <strong>ventana Tapo</strong>, no el escritorio completo. Sin grabación, sin audio y sin servidor multimedia. No es un servicio 24 horas.</p>
+
+    <section aria-labelledby="send-title">
+      <h2 id="send-title">1. Emitir desde el Mac</h2>
+      <p>Abre Tapo en el Mac y deja la cámara en directo. Pulsa el botón y selecciona la ventana de Tapo cuando Chrome pregunte qué compartir.</p>
+      <button id="start">Compartir la ventana de Tapo</button>
+      <video id="preview" playsinline autoplay muted aria-label="Vista previa de la ventana compartida"></video>
+      <label for="invitation">Invitación temporal para el otro dispositivo</label>
+      <textarea id="invitation" rows="3" readonly spellcheck="false" placeholder="Aparecerá al iniciar una sesión"></textarea>
+      <button id="copy" type="button" disabled>Copiar invitación</button>
+    </section>
+
+    <section aria-labelledby="receive-title">
+      <h2 id="receive-title">2. Ver desde iPhone u otro navegador</h2>
+      <p>Abre esta misma página con tu sesión privada de Segundo Cerebro en el otro dispositivo. Pega la invitación. No contiene contraseñas de Tapo, pero da acceso temporal a la retransmisión.</p>
+      <label for="join">Invitación recibida</label>
+      <textarea id="join" rows="3" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código recibido del Mac"></textarea>
+      <button id="watch">Conectar al directo</button>
+      <video id="remote" playsinline autoplay muted controls aria-label="Vídeo remoto recibido"></video>
+    </section>
+
+    <section class="controls" aria-live="polite">
+      <button id="stop" class="secondary" disabled>Detener sesión y compartir pantalla</button>
+      <p id="status" role="status">Listo para comenzar. Nadie está viendo vídeo.</p>
+      <p><small>La negociación se guarda como máximo 15 minutos en D1 privada. El vídeo se intenta transmitir directamente por WebRTC cifrado. No hay TURN contratado: si las redes bloquean la conexión directa, esta prueba fallará de forma segura.</small></p>
+    </section>
+  </main>
+  <script type="module" src="./tapo-lab.js"></script>
+</body>
+</html>
