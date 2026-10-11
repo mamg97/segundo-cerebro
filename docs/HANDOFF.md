@@ -1,3 +1,13 @@
+## ORGANIZADOR 13 · Comprobación en wger real de los 12 GIF · 2026-10-11
+
+- Consulta efectuada desde GitHub Actions al **catálogo público en vivo**, sin claves ni datos privados. Workflow `Verify public wger Gym videos`; los resultados no se dedujeron de fixtures sintéticos ni de screenshots.
+- Con GIF y vídeo **enlazado en metadatos wger** de la variante exacta: `press-banca-plano-barra` → exerciseinfo 73, vídeos 21/22/23; `press-inclinado-barra` → exerciseinfo 538, vídeo 16; `fondos-paralelas` → exerciseinfo 194, vídeos 64/65/66. Se verificaron coincidencias exactas de nombre/equipo y URLs de media normalizadas por el backend.
+- Otras nueve variantes: en las dos búsquedas públicas por variante no apareció **vídeo de esa misma variante**. No equivale a afirmar que no exista en otras bases; deben conservar `No · vídeo no localizado` o `Sin verificar` según respuesta en vivo. Rechazar videos de mancuernas, máquinas, gemelos sin máquina, dominadas normales en vez de explosivas, etc.
+- Se añadieron tres ID **como pistas de lectura en el frontend**: recuperar `GET /api/gym/exercises/{id}` y exigir de nuevo `provider === wger`, coincidencia exacta de variante, licencia y proxy de vídeo antes de mostrarlo; si falla, continuar la búsqueda normal. No escribir estos IDs a Sheets/D1 ni alterar el plan. Este cambio corrige la búsqueda por etiquetas cortas españolas, que impedía encontrar incluso los vídeos de banca plano/inclinado.
+- La captura del usuario de banca plano no muestra ni la matriz ni `Vídeo en Segundo Cerebro` pese a existir en código v0.44.6. Evidencia de versión anterior en navegador o un problema de entrega: v0.44.7 añade identificador discreto `Ficha multimedia · v0.44.7`. Verificar cuál carga el navegador antes de afirmar que la vista está corregida. No inspeccionamos sesión autenticada del usuario.
+- La disponibilidad en **el proxy privado** no se ha comprobado solo por existencia en wger. El estado UI permanece `Sí · enlazado (wger)` hasta que el evento `loadedmetadata` confirme reproducción; `error` muestra error. No se deben inventar los resultados de esa comprobación.
+- Script de comprobación pública bajo `app/gym-wger-live-audit.mjs`, workflow bajo `.github/workflows/gym-wger-media-audit.yml` sin programación recurrente. 0 € adicional, sin acceso a datos privados y sin acciones sobre otras ramas. Validar CI, deploy y auditoría.
+
 ## ORGANIZADOR 13 · Tabla de disponibilidad GIF y vídeo en Gym · 2026-10-11
 
 - Petición: mostrar tabla de los 12 movimientos GIF con columna GIF subido y vídeo disponible; añadir estado de vídeo dentro del detalle en Mi plan y Biblioteca.
