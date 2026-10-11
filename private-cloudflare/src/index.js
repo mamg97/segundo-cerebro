@@ -2,6 +2,7 @@ import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-ca
 import { fetchGoogleCalendarSummary, hasGoogleCalendarConfig, safeGoogleCalendarErrorCode } from "./google-calendar.js";
 import { mergeCalendarSources } from "./calendar-federation.js";
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
+import { habitQuestHasGoogleAuth, resolveHabitQuestSheetId } from "./habitquest-source.js";
 import { fetchMercadonaReference } from "./mercadona.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
@@ -206,7 +207,7 @@ function hasFinanceGoogleConfig(env) {
 }
 
 function hasHabitQuestGoogleConfig(env) {
-  return Boolean(hasGoogleOauthConfig(env) && env.HABITQUEST_SHEET_ID);
+  return habitQuestHasGoogleAuth(env);
 }
 
 function hasHealthGoogleConfig(env) {
@@ -1538,13 +1539,14 @@ async function fetchHabitQuestSummary(env, options = {}) {
   }
 
   const token = await getGoogleAccessToken(env);
+  const habitQuestSheetId = await resolveHabitQuestSheetId(env, token);
   const ranges = ["Habits!A1:M1200", "History!A1:F6000", "Meta!A1:B100", "SyncState!A1:D6000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
   params.set("valueRenderOption", "UNFORMATTED_VALUE");
 
-  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values:batchGet?${params.toString()}`;
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(habitQuestSheetId)}/values:batchGet?${params.toString()}`;
   const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
   if (!response.ok) throw new Error(`HABITQUEST_SHEETS_${response.status}`);
 
@@ -1847,8 +1849,9 @@ async function toggleHabitQuest(request, env) {
   const updatedAt = new Date().toISOString();
 
   const token = await getGoogleAccessToken(env);
+  const habitQuestSheetId = await resolveHabitQuestSheetId(env, token);
   const range = encodeURIComponent("SyncState!A:D");
-  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(habitQuestSheetId)}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -1886,13 +1889,14 @@ const HABITQUEST_DIFFICULTY_XP = { easy: 10, medium: 20, hard: 30 };
 
 async function fetchHabitQuestTables(env) {
   const token = await getGoogleAccessToken(env);
+  const habitQuestSheetId = await resolveHabitQuestSheetId(env, token);
   const ranges = ["Habits!A1:M1200", "History!A1:F6000", "Meta!A1:B100", "SyncState!A1:D6000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
   params.set("valueRenderOption", "UNFORMATTED_VALUE");
 
-  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values:batchGet?${params.toString()}`;
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(habitQuestSheetId)}/values:batchGet?${params.toString()}`;
   const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
   if (!response.ok) throw new Error(`HABITQUEST_SHEETS_${response.status}`);
 
@@ -2003,6 +2007,7 @@ function habitQuestSyncRow(item) {
 }
 
 async function rewriteHabitQuestRanges(env, token, { habits, history = null, syncStates = null, updatedAt }) {
+  const habitQuestSheetId = await resolveHabitQuestSheetId(env, token);
   const clearRanges = ["Habits!A2:M1200"];
   const data = [{
     range: "Habits!A1",
@@ -2029,7 +2034,7 @@ async function rewriteHabitQuestRanges(env, token, { habits, history = null, syn
   }
 
   const clearResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values:batchClear`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(habitQuestSheetId)}/values:batchClear`,
     {
       method: "POST",
       headers: {
@@ -2048,7 +2053,7 @@ async function rewriteHabitQuestRanges(env, token, { habits, history = null, syn
   });
 
   const writeResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HABITQUEST_SHEET_ID)}/values:batchUpdate`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(habitQuestSheetId)}/values:batchUpdate`,
     {
       method: "POST",
       headers: {
