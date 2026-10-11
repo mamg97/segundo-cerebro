@@ -2,6 +2,23 @@
 
 These assets are first-party presentation aids for Segundo Cerebro. They do not replace the canonical gym plan or the public technical reference supplied by wger.
 
+## White-background presentation set (2026-10-11)
+
+The four `*-white.gif` variants (flat bench, incline bench, military press and explosive pull-ups) share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The original transparent versions remain available; choosing which set to show in the app is deliberately separate from asset generation.
+
+## `dominadas-explosivas-v1.gif`
+
+- Prepared for **Dominadas (Enfoque Explosivo)** as a bodyweight pull-up illustration. Not a claim that explosive speed or muscle-up technique can be certified from a generated drawing.
+- Eight source poses show dead hang, rising to chest-near-bar and descending with hands on one fixed bar; locally interpolated to 16 frames at 360×480 and 7 cs. Source, contact sheet and build metadata are under `design/gym-animations/`.
+- Visual review: bar and hands remain connected, camera and full-body framing are fixed. The white presentation variant is preferred on the app's dark background because the generated transparency contains low-contrast matte artifacts.
+
+## `incline-bench-v1.gif`
+
+- Prepared for the exact **Press Inclinado (Barra)** movement. This is an asset only; no plan or catalogue mapping is changed here.
+- Transparent 360×480 GIF89a, 16 frames at 7 cs each, infinite loop. The matching poster supports reduced motion.
+- The eight source poses use one fixed three-quarter view, one common normalization scale and a stationary rack/bench anchor. Midpoints, including the loop seam, were interpolated locally with RifeMetal HQ. Source sheet, contact sheet and build metadata are in `design/gym-animations/`.
+- Visual review: the bar remains connected to both hands, the bench stays inclined, feet remain planted and the sequence lowers then raises the bar. As with every generated movement aid, anatomical and technique accuracy should be reviewed before presenting it as instruction.
+
 ## `military-press-v2.gif`
 
 - Generated 2026-10-05 with the built-in image generation tool, using the approved bench poster as a style reference only. Same anonymous pale athlete, flat red muscles, gray contours, black briefs and charcoal equipment.
