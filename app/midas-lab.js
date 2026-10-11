@@ -195,7 +195,8 @@ function activeMidasRows(dashboard, lab) {
   return [...bootstrapRows, ...rows.filter((row) =>
     row.group !== "historica_pendiente" &&
     row.group !== "weekly_ml_legacy" &&
-    row.id !== "genetic_sp500_legacy")];
+    row.id !== "genetic_sp500_legacy" &&
+    row.id !== "genetic_sp500_forward_archive")];
 }
 
 function algorithmMeta(item) {
