@@ -61,7 +61,7 @@ final class AppState: ObservableObject {
         defer { isSyncing = false }
 
         do {
-            let result = try await SyncService.shared.syncRecentDays(days: 2, trigger: .manual)
+            let result = try await SyncService.shared.syncRecentDays(trigger: .manual)
             refreshDiagnostics()
             statusMessage = "Sincronización correcta: \(result.syncedDays) días, \(result.bodySamples) muestras corporales, \(result.recoveryDays) días de recuperación y \(result.extendedMetrics) métricas ampliadas."
         } catch {

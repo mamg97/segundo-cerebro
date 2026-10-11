@@ -36,7 +36,7 @@ actor SyncService {
     static let shared = SyncService()
     static let automaticSyncInterval: TimeInterval = 8 * 60 * 60
     static let automaticReconciliationDays = 3
-    private static let currentReconciliationRevision = 3
+    private static let currentReconciliationRevision = 4
 
     static let endpoint = URL(string: "https://segundo-cerebro-health-ingest.mamg97.workers.dev/v1/sync")!
 

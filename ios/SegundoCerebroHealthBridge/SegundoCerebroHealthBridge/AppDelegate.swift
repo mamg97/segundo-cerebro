@@ -86,7 +86,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         }
 
         do {
-            _ = try await SyncService.shared.syncRecentDays(days: 2, trigger: trigger)
+            _ = try await SyncService.shared.syncRecentDays(trigger: trigger)
             UserDefaults.standard.removeObject(forKey: SyncDefaults.pendingProtectedDataRetry)
             scheduleBackgroundRefresh()
             return true
