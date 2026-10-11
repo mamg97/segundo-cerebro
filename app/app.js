@@ -6072,6 +6072,7 @@ function gymRealVideoMarkup(exercise, animation = null) {
     <section class="gym-real-video" aria-label="Vídeo real del ejercicio">
       <strong>Vídeo real · wger</strong>
       <video class="gym-exercise-hero-media" controls playsinline preload="none"
+        ${animation ? `data-gym-video-key="${escapeHtml(animation.key)}"` : ""}
         src="${escapeHtml(video.url)}"
         ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""}></video>
       <small>Fuente: wger · ${escapeHtml(attribution)}</small>
@@ -6092,14 +6093,17 @@ function gymTechniqueInstructionsMarkup(animation, exercise = null) {
 
 // Read-only free wger lookup, restricted to the reviewed GIF variant. Never use
 // a local illustration ID in a provider API or send private plan descriptions.
-async function gymLoadVerifiedWgerTechnique(animation, planExercise = null) {
+async function gymLoadVerifiedWgerTechnique(animation, planExercise = null, diagnostics = null) {
   if (!animation) return null;
   const readDetail = async (id) => {
     if (!/^\d+$/.test(String(id || ""))) return null;
     const response = await fetch("/api/gym/exercises/" + encodeURIComponent(id), {
       headers: { Accept: "application/json" }, cache: "no-store"
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      if (diagnostics) diagnostics.hadFailure = true;
+      return null;
+    }
     const exercise = (await response.json()).exercise;
     return exercise?.source?.provider === "wger" && gymCustomAnimationFor(exercise)?.key === animation.key
       ? exercise : null;
@@ -6131,7 +6135,11 @@ async function gymLoadVerifiedWgerTechnique(animation, planExercise = null) {
         const response = await fetch("/api/gym/exercises?q=" + encodeURIComponent(search) + "&limit=48", {
           headers: { Accept: "application/json" }, cache: "no-store"
         });
-        if (!response.ok) continue;
+        if (!response.ok) {
+          if (diagnostics) diagnostics.hadFailure = true;
+          continue;
+        }
+        if (diagnostics) diagnostics.anySuccessfulSearch = true;
         const results = (await response.json()).exercises || [];
         const matched = results.filter((candidate) =>
           candidate?.source?.provider === "wger" && gymCustomAnimationFor(candidate)?.key === animation.key);
@@ -6144,11 +6152,13 @@ async function gymLoadVerifiedWgerTechnique(animation, planExercise = null) {
           if (!descriptionFallback && complete?.description) descriptionFallback = complete;
         }
       } catch {
+        if (diagnostics) diagnostics.hadFailure = true;
         // One provider search failing must not block another language or the GIF.
       }
     }
     return descriptionFallback;
   } catch {
+    if (diagnostics) diagnostics.hadFailure = true;
     // Offline/unavailable wger is not a failure of the GIF detail itself.
     return null;
   }
@@ -6537,6 +6547,7 @@ function renderGymLibraryShell() {
       </div>
       <p class="gym-library-source">Ejercicios con animación propia y biblioteca libre wger · 0 € · autoría y licencia de cada recurso diferenciadas.</p>
     </div>
+    <div id="gym-media-inventory"></div>
     <div id="gym-library-status" class="gym-library-status" role="status">Cargando biblioteca…</div>
     <div id="gym-library-results" class="gym-library-grid"></div>
     <div id="gym-library-detail" class="gym-library-detail" hidden></div>`;
@@ -6780,6 +6791,10 @@ function renderGymLibraryResults(exercises) {
   if (detail) detail.hidden = true;
   grid.hidden = false;
   gymLibraryState.results = exercises;
+  gymBindMediaInventory();
+  // The matrix resolves in the background with two concurrent public-name lookups.
+  // Opening the grid, including an outage fallback, never waits for them.
+  void gymCheckVideoInventory();
 
   if (!exercises.length) {
     grid.innerHTML = "";
