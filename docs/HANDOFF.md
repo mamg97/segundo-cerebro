@@ -1,3 +1,12 @@
+## ORGANIZADOR 13 · Gym: GIF asociado al ejercicio, no a la vista (2026-10-11)
+
+- Causa verificada: la UI ya utilizaba `gymCustomAnimationFor(exercise)` tanto en plan como en wger, pero Biblioteca se alimentaba solo de una página de 24 resultados de wger; salvo nombres exactamente coincidentes, los 12 GIF locales no tenían ficha accesible. No era una pérdida de los archivos.
+- Esta rama añade las fichas ilustradas locales que no existen entre los resultados wger de la página; cuando wger trae exactamente la misma variante, utiliza su ficha original con la ilustración, sin duplicar entradas. Buscador y filtros de músculo/equipo también filtran fichas locales. La vista `Con vídeos y GIFs` mantiene ambos formatos.
+- El identificador local `illustration:<key>` es **solo de presentación**; abrirlo nunca consulta `/api/gym/exercises/:id` de wger y nunca ofrece botones para vincularlo o crear entradas en `GimnasioPlan` (esos POST requieren ID numérico wger). No se modifica plan, sesiones, wger, licencias o Sheets. Los créditos wger y las ilustraciones propias se identifican separadamente.
+- 12 recursos revisados, solo correspondencias exactas de variante; press con mancuernas, máquinas y alternativas no heredan erróneamente el GIF de barra. Para remo mixto, pájaros y gemelos se mantiene la nota explícita de variante.
+- Nuevos tests: 12 fichas sin plan, deduplicación cuando wger coincide, búsqueda/filtros, protección contra ID wger ficticio, ficha local accesible y sin POST.
+- Validar CI; abrir PR, fusionar solo con pruebas verdes, comprobar deploy privado y verificar en web real. Auditoría general puede seguir roja por fallos ajenos a Gym; no confundirla con fallo de los GIF. Documentar decisiones sin datos privados. Coste adicional 0 €.
+
 ## Gym · GIFs listos para publicación (2026-10-11)
 
 - PR #366 contiene 12 animaciones ilustradas con versión de presentación blanca, 16 fotogramas y póster de movimiento reducido. La UI las enlaza por nombre exacto en el plan y en las fichas coincidentes de biblioteca; los cinco ejercicios sin asset siguen con el fallback existente.
