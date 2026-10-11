@@ -486,7 +486,7 @@ export async function fetchMidasResearch(env, getGoogleAccessToken, fetcher = fe
 export async function addPrivateGeneticDiary(db, dashboard) {
   if (!db) return dashboard;
   const snapshots = {};
-  for (const id of ["genetic_sp500_legacy", "genetic_sp500_forward"]) {
+  for (const id of ["genetic_sp500_legacy", "genetic_sp500_forward", "genetic_sp500_forward_archive"]) {
     try {
       const stored = await db.prepare("SELECT payload FROM midas_legacy_snapshot WHERE strategy_id = ?")
         .bind(id).first();
@@ -507,6 +507,7 @@ export async function addPrivateGeneticDiary(db, dashboard) {
   };
   const legacy = snapshots.genetic_sp500_legacy;
   const forward = snapshots.genetic_sp500_forward;
+  const archivalSnapshot = snapshots.genetic_sp500_forward_archive;
   const tracks = dashboard.tracks.map((row) => {
     if (row.id !== "genetic_sp500_legacy" || !valid(legacy, row.id, "legacy_same_close_model", 2)) return row;
     const history = legacy.equity_history;
@@ -525,13 +526,13 @@ export async function addPrivateGeneticDiary(db, dashboard) {
     };
   });
   const forwardRow = {
-    id: "genetic_sp500_forward", label: "Genético original S&P 500 · versión corregida",
+    id: "genetic_sp500_forward", label: "Genético S&P 500 · campaña nueva desde 12/10",
     group: "diario_heredado", provenance: "Agente genético original · campaña prospectiva 2026",
     status: "programada_sin_diario", first_session: null, last_session: null, currency: "USD",
     last_equity: null, return_pct: null, day_return_pct: null,
-    note: "Aún sin primera sesión. Señal al cierre; órdenes simuladas en la apertura posterior con costes. No son operaciones de bróker."
+    note: "Campaña nueva independiente, prevista desde la señal del 12/10/2026: sin heredar posiciones ni resultados del 29/09–07/10. No existen operaciones retrospectivas del 08–09/10."
   };
-  if (valid(forward, "genetic_sp500_forward", "next_open_raw_ohlc_v1", 1)) {
+  if (valid(forward, "genetic_sp500_forward", "next_open_raw_ohlc_v1", 1) && forward.first_session === "2026-10-12") {
     const history = forward.equity_history;
     const first = history[0];
     const previous = history.at(-2);
@@ -544,7 +545,34 @@ export async function addPrivateGeneticDiary(db, dashboard) {
       day_return_pct: previous && previous[1] > 0
         ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
       ...riskMetricsFromHistory(equityHistory),
-      note: "Patrimonio ficticio al cierre de la sesión indicada; fills modelados en la siguiente apertura con comisión, deslizamiento y stops OHLC. No hay confirmación de bróker."
+      note: "Nueva campaña prospectiva desde el 12/10/2026, capital reiniciado en 100.000 USD ficticios y sin heredar el resultado anterior. Fills a la siguiente apertura con comisión, deslizamiento y stops OHLC; sin confirmación de bróker."
+    });
+  }
+  // The earlier next-open cohort has a real record until 07/10. Preserve it
+  // only as an archival reference; it must never compete with the new cohort.
+  const interrupted = valid(archivalSnapshot, "genetic_sp500_forward_archive",
+    "next_open_raw_ohlc_v1", 1) ? archivalSnapshot :
+    valid(forward, "genetic_sp500_forward", "next_open_raw_ohlc_v1", 1) &&
+    forward.last_session === "2026-10-07" ? forward : null;
+  if (interrupted) {
+    const history = interrupted.equity_history;
+    const first = history[0];
+    const previous = history.at(-2);
+    const last = history.at(-1);
+    const equityHistory = history.map((point) => ({ date: point[0], nav: point[1] }));
+    tracks.push({
+      id: "genetic_sp500_forward_archive",
+      label: "Genético S&P 500 · primera campaña interrumpida",
+      group: "diario_heredado", provenance: "Campaña prospectiva 29/09–07/10 · archivo privado",
+      status: "diario_heredado_observado",
+      first_session: first[0], last_session: last[0], currency: "USD",
+      initial_capital: interrupted.initial_capital, last_equity: last[1],
+      return_pct: Math.round((last[1] / interrupted.initial_capital - 1) * 100_000_000) / 1_000_000,
+      day_return_pct: previous && previous[1] > 0
+        ? Math.round((last[1] / previous[1] - 1) * 100_000_000) / 1_000_000 : null,
+      equity_history: equityHistory,
+      ...riskMetricsFromHistory(equityHistory),
+      note: "Archivo congelado el 07/10/2026 por un conflicto git push al publicar la sesión 08/10. Los días 08 y 09 no tienen fills paper válidos; esta curva no se une a la nueva ni participa en la competición actual."
     });
   }
   if (!tracks.some((row) => row.id === forwardRow.id)) tracks.push(forwardRow);
