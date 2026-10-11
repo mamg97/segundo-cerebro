@@ -8,6 +8,7 @@ import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
 import { renderHealthDayBalance } from "./health-daily-balance.js?v=0.44.1";
+import { menuWeekMonday, menuShiftWeek, menuWeekRangeLabel } from "./menu-week-history.js?v=0.44.12";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.24";
 import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.11";
@@ -2502,6 +2503,11 @@ let healthOverviewDate = localDateKey();
 let healthOverviewRequestId = 0;
 let healthHistoryRequestId = 0;
 let healthOverviewHistoryRange = "365";
+let healthMenuSelectedWeek = null;
+let healthMenuBaseData = null;
+let healthMenuViewData = null;
+let healthMenuRequestId = 0;
+let healthMenuLoading = false;
 
 async function ensureHealthNutritionPanels(dateKey = localDateKey()) {
   if (healthNutritionLoadedDate === dateKey) return true;
@@ -2524,6 +2530,11 @@ function openHealthDetail(options = {}) {
   ++healthHistoryRequestId;
   healthNutritionLoadedDate = null;
   healthNutritionLoadPromise = null;
+  healthMenuSelectedWeek = null;
+  healthMenuBaseData = null;
+  healthMenuViewData = null;
+  ++healthMenuRequestId;
+  healthMenuLoading = false;
   healthGymLoaded = false;
   healthSkipNextNutritionTabLoad = options.skipNutritionLoad === true;
   const dialog = document.querySelector("#detail-dialog");
@@ -5212,27 +5223,116 @@ function bindMenuEntityLinks(panel, data) {
   });
 }
 
-function renderMenuPanel(data) {
+function menuWeekNavigationMarkup(week) {
+  const current = menuWeekMonday(localDateKey());
+  const selected = menuWeekMonday(week) || current;
+  const nextAllowed = selected < current;
+  return `
+    <nav class="weekly-menu-week-navigation" aria-label="Histórico de menús semanales">
+      <div class="weekly-menu-week-period">
+        <small>Menú de la semana</small>
+        <strong id="menu-week-heading">${escapeHtml(menuWeekRangeLabel(selected))}</strong>
+      </div>
+      <div class="weekly-menu-week-controls">
+        <button type="button" data-menu-week-step="-1" aria-label="Ver semana anterior" title="Semana anterior">‹</button>
+        <label class="weekly-menu-week-picker">Fecha <input id="weekly-menu-week-picker" type="date"
+          value="${selected}" max="${localDateKey()}" aria-label="Ir a la semana de esta fecha"></label>
+        <button type="button" data-menu-week-step="1" aria-label="Ver semana siguiente"
+          title="Semana siguiente" ${nextAllowed ? "" : "disabled"}>›</button>
+        <button type="button" data-menu-week-current ${selected === current ? "disabled" : ""}>Esta semana</button>
+      </div>
+      <p id="menu-week-error" class="weekly-menu-week-error" role="status" hidden></p>
+    </nav>`;
+}
+
+async function loadHistoricalMenuWeek(dayKey) {
+  const selected = menuWeekMonday(dayKey);
+  const current = menuWeekMonday(localDateKey());
+  if (!selected || !current || selected > current) return false;
+  if (selected === healthMenuSelectedWeek && healthMenuViewData) return true;
+  const requestId = ++healthMenuRequestId;
+  healthMenuLoading = true;
+  const panel = document.querySelector("#menu-panel");
+  const status = panel?.querySelector("#menu-week-error");
+  if (status) { status.hidden = false; status.textContent = "Consultando menú de la semana…"; }
+  try {
+    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(selected), {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin", cache: "no-store"
+    });
+    if (!response.ok) throw new Error("MENU_WEEK_" + response.status);
+    const weekly = await response.json();
+    if (!weekly.ok || menuWeekMonday(weekly.weekStart) !== selected ||
+        !Array.isArray(weekly.weeklyMenu) || !Array.isArray(weekly.recipes)) {
+      throw new Error("MENU_WEEK_INVALID");
+    }
+    if (requestId !== healthMenuRequestId || !panel?.isConnected) return false;
+    // The complete read-only nutrition payload preserves recipe/product
+    // cross-references, food and ingredient data for historical weeks.
+    healthMenuSelectedWeek = selected;
+    renderMenuPanel(weekly, { historicalFetch: true });
+    return true;
+  } catch (error) {
+    if (requestId === healthMenuRequestId && panel?.isConnected) {
+      const message = panel.querySelector("#menu-week-error");
+      if (message) {
+        message.hidden = false;
+        message.textContent = "No se ha podido recuperar esa semana. El menú anterior sigue visible; vuelve a intentarlo.";
+      }
+      console.warn("Historical weekly menu read failed", String(error?.message || error));
+    }
+    return false;
+  } finally {
+    if (requestId === healthMenuRequestId) healthMenuLoading = false;
+  }
+}
+
+function bindMenuWeekNavigation(panel) {
+  if (!panel) return;
+  const go = (week) => {
+    if (healthMenuLoading) return;
+    void loadHistoricalMenuWeek(week);
+  };
+  panel.querySelectorAll("[data-menu-week-step]").forEach((button) =>
+    button.addEventListener("click", () =>
+      go(menuShiftWeek(healthMenuSelectedWeek, Number(button.dataset.menuWeekStep)))));
+  panel.querySelector("#weekly-menu-week-picker")?.addEventListener("change", (event) =>
+    go(event.target.value));
+  panel.querySelector("[data-menu-week-current]")?.addEventListener("click", () =>
+    go(menuWeekMonday(localDateKey())));
+}
+
+function renderMenuPanel(data, options = {}) {
   const panel = document.querySelector("#menu-panel");
   if (!panel) return;
-
+  if (!options.historicalFetch) healthMenuBaseData = data;
+  if (!healthMenuSelectedWeek) healthMenuSelectedWeek = menuWeekMonday(localDateKey());
+  const payloadWeek = menuWeekMonday(data?.weekStart || data?.date || localDateKey());
+  if (payloadWeek !== healthMenuSelectedWeek) {
+    // A refresh of Nutrición must not replace a historical menu selected by the user.
+    if (!healthMenuViewData) void loadHistoricalMenuWeek(healthMenuSelectedWeek);
+    return;
+  }
+  healthMenuViewData = data;
   const model = weeklyMenuModel(data);
   if (!model.rows.length) {
     panel.innerHTML = `
+      ${menuWeekNavigationMarkup(healthMenuSelectedWeek)}
       ${renderMenuMasterLinks()}
       <div class="health-empty health-empty-card">
-        <strong>Menú semanal preparado, pero todavía vacío</strong>
-        <p>La hoja MenuSemanal ya está conectada. Cuando el gestor de Salud añada propuestas o un menú objetivo, aparecerán aquí sin inventar comidas intermedias.</p>
+        <strong>Sin menú registrado para ${escapeHtml(menuWeekRangeLabel(healthMenuSelectedWeek))}</strong>
+        <p>No hay comidas en MenuSemanal para esta semana. Puedes consultar otra semana; no se han creado registros ni interpretado su ausencia como consumo cero.</p>
       </div>`;
+    bindMenuWeekNavigation(panel);
     return;
   }
 
   panel.innerHTML = `
+    ${menuWeekNavigationMarkup(healthMenuSelectedWeek)}
     <div class="weekly-menu-hero">
       <div>
-        <p class="context-label">Plan nutricional</p>
-        <h3>Menú objetivo de la semana</h3>
-        <p>Las barras se rellenan únicamente con consumo confirmado. El plan semanal permanece como referencia hasta que cada alimento o comida se marque como consumido.</p>
+        <p class="context-label">Plan nutricional · consumo confirmado</p>
+        <h3>Menú semanal</h3>
       </div>
       <div class="weekly-menu-objective-chips">
         <span><small>Objetivo kcal</small><strong>${model.kcalTarget === null ? "Pendiente" : formatKcal(model.kcalTarget)}</strong></span>
@@ -5250,32 +5350,39 @@ function renderMenuPanel(data) {
         const display = weeklyMenuDayDisplayTotals(day, model);
         return `
           <section class="weekly-menu-day weekly-menu-day-rich ${isToday ? "is-today" : ""}">
-            <header>
-              <div>
-                <small>${display.hasConsumed
-                  ? (day.hasPendingPlan ? "Consumo confirmado · plan pendiente" : "Consumo confirmado")
-                  : (isToday ? "Hoy · sin consumo confirmado" : "Planificado · sin consumo confirmado")}</small>
-                <strong>${escapeHtml(weeklyMenuDayLabel(day.date, { long: true }))}</strong>
+            <details class="weekly-menu-day-collapse">
+              <summary class="weekly-menu-day-summary">
+                <span class="weekly-menu-day-summary-heading">
+                  <strong>${escapeHtml(weeklyMenuDayLabel(day.date, { long: true }))}</strong>
+                  <small>${display.hasConsumed
+                    ? (day.hasPendingPlan ? "Consumo confirmado · plan pendiente" : "Consumo confirmado")
+                    : (isToday ? "Hoy · sin consumo confirmado" : "Planificado · sin consumo confirmado")}</small>
+                </span>
+                <span class="weekly-menu-day-summary-facts">
+                  <span>${escapeHtml(formatKcal(display.kcal))} / ${model.kcalTarget === null ? "—" : escapeHtml(formatKcal(model.kcalTarget))}</span>
+                  <span>P ${escapeHtml(formatMacro(display.protein))} / ${model.proteinTarget === null ? "—" : escapeHtml(formatMacro(model.proteinTarget))}</span>
+                  <small>${mealGroups.length} toma${mealGroups.length === 1 ? "" : "s"}</small>
+                </span>
+              </summary>
+
+              <div class="weekly-menu-day-progress">
+                ${renderWeeklyMenuProgress("Calorías", display.kcal, model.kcalTarget, display.kcalPct, "kcal", !day.consumedNutritionComplete)}
+                ${renderWeeklyMenuProgress("Proteína", display.protein, model.proteinTarget, display.proteinPct, "protein", !day.consumedNutritionComplete)}
               </div>
-              <span>${mealGroups.length} toma${mealGroups.length === 1 ? "" : "s"} · ${day.items.length} elemento${day.items.length === 1 ? "" : "s"}</span>
-            </header>
 
-            <div class="weekly-menu-day-progress">
-              ${renderWeeklyMenuProgress("Calorías", display.kcal, model.kcalTarget, display.kcalPct, "kcal", !day.consumedNutritionComplete)}
-              ${renderWeeklyMenuProgress("Proteína", display.protein, model.proteinTarget, display.proteinPct, "protein", !day.consumedNutritionComplete)}
-            </div>
+              <div class="weekly-menu-meal-list">
+                ${mealGroups.map((group) => renderWeeklyMenuMealGroup(group.items)).join("")}
+              </div>
 
-            <div class="weekly-menu-meal-list">
-              ${mealGroups.map((group) => renderWeeklyMenuMealGroup(group.items)).join("")}
-            </div>
-
-            ${day.hasPendingPlan
-              ? `<footer>Consumo confirmado: ${escapeHtml(formatKcal(display.kcal))} · ${escapeHtml(formatMacro(display.protein))}. Plan previsto: ${escapeHtml(formatKcal(day.kcal))} · ${escapeHtml(formatMacro(day.protein))}.${!day.nutritionComplete && targetLine ? " " + escapeHtml(targetLine) : ""}</footer>`
-              : (targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : "")}
+              ${day.hasPendingPlan
+                ? `<footer>Consumo confirmado: ${escapeHtml(formatKcal(display.kcal))} · ${escapeHtml(formatMacro(display.protein))}. Plan previsto: ${escapeHtml(formatKcal(day.kcal))} · ${escapeHtml(formatMacro(day.protein))}.${!day.nutritionComplete && targetLine ? " " + escapeHtml(targetLine) : ""}</footer>`
+                : (targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : "")}
+            </details>
           </section>`;
       }).join("")}
     </div>`;
 
+  bindMenuWeekNavigation(panel);
   bindMenuEntityLinks(panel, data);
 }
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
-const start = app.indexOf("function renderMenuPanel(data)");
+const start = app.search(/function renderMenuPanel\(data(?:, options = \{\})?\)/);
 const end = app.indexOf("function hideHomeWeeklyMenu()", start);
 assert.ok(start >= 0 && end > start, "renderMenuPanel must exist");
 const menuPanel = app.slice(start, end);

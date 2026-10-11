@@ -2589,6 +2589,39 @@ try {
       }
     }
 
+    const weekPicker = menuPanel.locator("#weekly-menu-week-picker");
+    assertCheck(await weekPicker.count() === 1, "Menú · selector de histórico semanal está visible");
+    const currentMenuWeek = await weekPicker.inputValue().catch(() => "");
+    if (/^\d{4}-\d{2}-\d{2}$/.test(currentMenuWeek)) {
+      assertCheck(
+        await menuPanel.locator(".weekly-menu-day-collapse > summary").count() === comparisonDayGroups.length,
+        "Menú · días compactos y desplegables conservan las filas del API"
+      );
+      const oldWeekDate = new Date(currentMenuWeek + "T12:00:00Z");
+      oldWeekDate.setUTCDate(oldWeekDate.getUTCDate() - 7);
+      const oldWeek = oldWeekDate.toISOString().slice(0, 10);
+      await menuPanel.locator('[data-menu-week-step="-1"]').click();
+      const movedBack = await page.waitForFunction((day) =>
+        document.querySelector("#weekly-menu-week-picker")?.value === day, oldWeek,
+        { timeout: 18000 }).then(() => true).catch(() => false);
+      assertCheck(movedBack, "Menú · se recupera una semana anterior sin escritura");
+      if (movedBack) {
+        assertCheck(
+          await menuPanel.locator(".weekly-menu-day").count() > 0 ||
+          await menuPanel.getByText(/sin menú registrado para/i).count() > 0,
+          "Menú · histórico muestra días reales o ausencia explícita"
+        );
+        await menuPanel.locator("[data-menu-week-current]").click();
+        const returned = await page.waitForFunction((day) =>
+          document.querySelector("#weekly-menu-week-picker")?.value === day,
+          currentMenuWeek, { timeout: 18000 }).then(() => true).catch(() => false);
+        assertCheck(returned, "Menú · volver a esta semana restaura semana actual");
+        if (returned) assertCheck(
+          await menuPanel.locator(".weekly-menu-day").count() === comparisonDayGroups.length,
+          "Menú · el regreso conserva íntegros los días del plan"
+        );
+      }
+    }
     await closeDialogIfOpen();
   } else {
     fail("Salud accesible desde navegación", "falta area-health");
