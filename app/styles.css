@@ -26502,3 +26502,6 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .gym-media-inventory-toolbar { align-items: start; }
   .gym-media-inventory-footnote { font-size: 11px; }
 }
+
+/* v0.44.7: visible media-build stamp for identifying stale Gym frontend */
+.gym-media-build-caption { display: block; margin: 2px 0 10px; font-size: 10px; color: var(--ink-soft); font-weight: 500; }
