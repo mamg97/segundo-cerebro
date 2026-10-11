@@ -3360,16 +3360,36 @@ async function openHabitsDetail(dateKey = null) {
       headers: { Accept: "application/json" },
       cache: "no-store"
     });
-    if (!response.ok) throw new Error(`HABITS_${response.status}`);
+    if (!response.ok) {
+      const failure = await response.json().catch(() => ({}));
+      const code = String(failure?.code || "HABITQUEST_UNKNOWN_ERROR");
+      const error = new Error(code);
+      error.status = response.status;
+      throw error;
+    }
     const data = await response.json();
     renderHabitsPanel(data);
   } catch (error) {
-    document.querySelector("#dialog-body").innerHTML = `
+    const code = String(error?.message || "");
+    const notConfigured = code === "HABITQUEST_NOT_CONFIGURED";
+    const heading = notConfigured ? "HabitQuest necesita conexión privada"
+      : "No se han podido cargar los hábitos";
+    const detail = notConfigured
+      ? "Falta alguna credencial de Google en el Worker. Los hábitos siguen en su hoja original."
+      : code === "HABITQUEST_READ_FAILED"
+        ? "El Worker no ha podido leer el Google Sheet. Puede ser un problema de acceso, permisos o disponibilidad de Google."
+        : "No se ha podido completar la consulta. La información original no se ha modificado.";
+    const panel = document.querySelector("#dialog-body");
+    if (!panel) return;
+    panel.innerHTML = `
       <div class="health-empty health-empty-card">
-        <strong>HabitQuest todavía no está conectado aquí</strong>
-        <p>La integración usa la misma hoja de Google Sheets como fuente de verdad. Falta configurar el identificador privado del Sheet en el Worker.</p>
+        <strong>${heading}</strong>
+        <p>${detail}</p>
+        <button type="button" id="habits-retry-load">Reintentar conexión</button>
       </div>`;
-    console.warn("HabitQuest load failed", error);
+    panel.querySelector("#habits-retry-load")?.addEventListener("click",
+      () => void openHabitsDetail(selectedHabitDate));
+    console.warn("HabitQuest load failed", code.slice(0, 70) || "NETWORK_ERROR");
   }
 }
 
