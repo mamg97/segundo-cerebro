@@ -6,6 +6,17 @@
 - No se mezclan curvas, CAGR, posiciones ni tickers en la UI. OIDC transporta solo patrimonio diario, fechas y SHA del ledger; ninguna información de posiciones privadas sale del repositorio genético.
 - No se han modificado otros gestores ni jobs; despliegue por PR aislada con validación y auditoría. El Worker receptor debe estar desplegado **antes** de habilitar el nuevo publicador privado. Verificar el primer job natural posterior al cierre del 12/10; no generar un backfill del hueco.
 
+## ORGANIZADOR 13 · Menú semanal histórico compacto (2026-10-12)
+
+- El usuario pidió poder consultar semanas anteriores desde **Salud → Menú** en interfaz muy compacta sin perder objetivos, consumo confirmado, ingredientes, recetas ni accesos a Despensa.
+- **Evidencia real** de la fuente `SEGUNDO CEREBRO - SALUD` → `MenuSemanal`: fechas entre 2026-09-28 y 2026-10-12, distribuidas en tres semanas naturales. No se añadieron filas ni registros canónicos.
+- Causa: `GET /api/nutrition?date=...` devuelve solo los siete días de esa semana; `renderMenuPanel` carecía de controles históricos y mostraba todos los días/ingredientes desplegados. El backend ya soportaba cualquier fecha pasada; no se necesita backend nuevo.
+- Solución rama `organizador13/weekly-menu-history-compact-20261012`: navegador por semana anterior/siguiente, fecha arbitraria, «Esta semana»; resumen compacto por día con fecha, kcal/proteína confirmadas y tomas, expandible en `details` sin pérdida del progreso, comidas agrupadas, ingredientes, notas y vínculos a Recetas/Despensa.
+- Se investigó la API ligera `/api/nutrition/menu` pero **no contiene todas las referencias a Recetas/Productos**; para el histórico se emplea el endpoint completo ya disponible `/api/nutrition?date=<lunes>`, de solo lectura. Así se mantiene el enlace `recipe_id`, `food_id` y el objetivo efectivo de la fecha correcta. Se hacen consultas solo cuando el usuario cambia de semana, no en bucle.
+- Aislamiento de estado: una actualización de Nutrición no debe sustituir la semana histórica elegida; llamadas asíncronas antiguas se ignoran, fallos mantienen la vista anterior con aviso, semanas sin registros muestran un vacío explícito y conservan el navegador. No se interpretan faltantes como consumo cero ni se inventan comidas.
+- Pruebas nuevas `app/weekly-menu-history.test.mjs` para lunes, cruces mes/año y fechas inválidas, protección del origen canónico, UX accesible, funcionalidades preservadas y ausencia de escrituras. Se añadieron verificaciones en auditoría read-only (semana anterior y vuelta a actual). Validar CI y despliegue privado antes de dar por cerrado.
+- Infraestructura y datos: sin cambios a D1, Sheets, permisos, servicios externos, objetivos canónicos ni otras ramas. Coste adicional 0 €.
+
 ## GESTOR GYM · Extensiones de cuádriceps en máquina · GIF 14/17 (2026-10-11)
 
 - Se creó la animación de extensión de rodilla sentado en máquina, con cuádriceps resaltados, sin confundirla con prensa de piernas ni curl femoral. El recurso blanco `extension-cuadriceps-maquina-v3-white.gif` y su póster se enlazan por variante exacta al plan, Biblioteca y detalles; los vídeos wger verificados siguen solo en el detalle.
