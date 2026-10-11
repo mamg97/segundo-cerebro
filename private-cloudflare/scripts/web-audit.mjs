@@ -2183,9 +2183,18 @@ try {
           const libraryCount = await libraryCards.count();
           assertCheck(libraryCount > 0, "Salud · Gym biblioteca devuelve ejercicios", "n=" + libraryCount);
 
+          const localGifUrls = await libraryCards.locator(".gym-library-preview-animation .gym-exercise-animation-gif")
+            .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("src")).filter(Boolean))
+            .catch(() => []);
+          assertCheck(
+            new Set(localGifUrls).size === 12,
+            "Salud · Gym ofrece doce GIF por ejercicio, sin duplicar variantes",
+            "n=" + new Set(localGifUrls).size
+          );
           if (libraryCount > 0) {
             const firstCard = libraryCards.first();
-            const hasMedia = await firstCard.locator(".gym-library-preview-media,.gym-library-video-placeholder").count() > 0;
+            const hasOwnIllustration = (await firstCard.getAttribute("data-gym-library-id") || "").startsWith("illustration:");
+            const hasMedia = await firstCard.locator(".gym-library-preview-animation,.gym-library-preview-media,.gym-library-video-placeholder").count() > 0;
             assertCheck(hasMedia, "Salud · Gym ejercicio muestra recurso visual");
             await firstCard.click();
             const detailVisible = await panel.locator(".gym-exercise-detail-card")
@@ -2194,19 +2203,19 @@ try {
               .catch(() => false);
             assertCheck(detailVisible, "Salud · Gym abre ficha visual de ejercicio");
             if (detailVisible) {
-              const detailMediaCount = await panel.locator(".gym-exercise-hero-media,.gym-exercise-hero-empty").count();
+              const detailMediaCount = await panel.locator(".gym-exercise-hero-media,.gym-exercise-hero-empty,.gym-exercise-hero-animation").count();
               assertCheck(detailMediaCount === 1, "Salud · Gym ficha tiene demostración/referencia visual");
               const attribution = normalizeAuditValue(
                 await panel.locator(".gym-exercise-attribution").textContent().catch(() => "")
               );
               assertCheck(
-                /fuente libre: wger/.test(attribution),
-                "Salud · Gym ficha conserva atribución",
-                attribution
+                (hasOwnIllustration ? /ilustracion propia/ : /fuente libre: wger/).test(attribution),
+                "Salud · Gym ficha conserva atribución según procedencia",
+                hasOwnIllustration ? "ilustracion" : "wger"
               );
               assertCheck(
-                await panel.locator("#gym-library-add").count() === 1,
-                "Salud · Gym ficha permite añadir al plan sin ejecutar escritura"
+                await panel.locator("#gym-library-add").count() === (hasOwnIllustration ? 0 : 1),
+                "Salud · Gym solo permite añadir desde fichas con ID real wger"
               );
             }
           }
