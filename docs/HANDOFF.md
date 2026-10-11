@@ -1,3 +1,12 @@
+## ORGANIZADOR 13 · HabitQuest: registro privado y smoke test autenticado (2026-10-11)
+
+- El documento único `HabitQuest Data` y sus pestañas `Habits`, `History`, `Meta`, `SyncState` fueron comprobados con el conector autorizado de Google Drive. Existe backup con nombre diferente; no se modificó ni se tomó como fuente.
+- Se insertó únicamente la clave `HABITQUEST_SHEET_ID` en la **fila vacía 8** de `IntegracionesPrivadas`, hoja privada del Sheet financiero canónico. Previamente se verificó que no había ninguna clave duplicada ni contenido en esa fila; después se comprobó por lectura que la clave apunta al ID de `HabitQuest Data`. **No incluir el valor del identificador en Git, comentarios, logs o APIs públicas.**
+- Ventaja: cuando el Worker dispone de credenciales Google Sheets, puede recuperar el ID desde `IntegracionesPrivadas` sin depender del permiso Drive de listado de archivos; la ruta de descubrimiento por título exacto permanece como reserva. No se ha alterado ninguna pestaña de hábitos, XP, históricos ni sincronización.
+- La PR #372 ya estaba desplegada (CI #515 correcto, deploy privado #438 correcto). Auditoría #302 posterior: 411 comprobaciones, 3 fallos de Finanzas/Infraestructura; fuente `habitSync` no falló, pero el resultado no demuestra por sí solo lectura completa de `GET /api/habits`.
+- Esta intervención introduce al comienzo del auditor `GET /api/habits` de solo lectura y verifica HTTP 2xx, `ok`, título exacto de fuente y existencia de arrays `habits` y `todayHabits`. Emite exclusivamente `[HABITQUEST_SMOKE] PASS` o `FAIL_HTTP_N`: nunca nombres, IDs ni detalles personales. Se conserva además la comprobación visual de HabitQuest más adelante.
+- Pendiente confirmar el resultado de ese smoke test en GitHub Actions posterior a fusión y el comportamiento interactivo iPhone; no afirmar funcionamiento final solo por CI verde. 0 € adicionales, ninguna operación destructiva.
+
 ## ORGANIZADOR 13 · Recuperación de HabitQuest tras modal de configuración (2026-10-11)
 
 - Incidencia reproducida visualmente en iPhone: modal de Hábitos muestra `HabitQuest todavía no está conectado aquí / Falta configurar el identificador privado del Sheet en el Worker`.
