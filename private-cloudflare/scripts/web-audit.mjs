@@ -1351,6 +1351,27 @@ try {
   const health = await api("/api/health");
   assertCheck(health.ok && health.body?.ok === true, "Healthcheck funcional de fuentes", `HTTP ${health.status}`);
 
+  // Early, read-only HabitQuest smoke test. The full UI audit can time out
+  // before visiting its modal; the canonical Sheet must still be checked.
+  const habitQuestProbe = await probeApi("/api/habits", "HabitQuest fuente privada", {
+    attempts: 2, waitMs: 550
+  });
+  const habitQuestReadable = habitQuestProbe.ok &&
+    habitQuestProbe.body?.ok === true &&
+    habitQuestProbe.body?.source?.title === "HabitQuest Data" &&
+    Array.isArray(habitQuestProbe.body?.habits) &&
+    Array.isArray(habitQuestProbe.body?.todayHabits);
+  assertCheck(
+    habitQuestReadable,
+    "HabitQuest · lectura del Sheet original comprobada antes del recorrido visual",
+    "HTTP " + habitQuestProbe.status +
+      (habitQuestReadable ? " · fuente y colecciones válidas" :
+        " · " + String(habitQuestProbe.body?.code || "READ_UNAVAILABLE").slice(0, 55))
+  );
+  // Explicit machine-readable status, no habit names, IDs, health data or credentials.
+  console.log("[HABITQUEST_SMOKE] " +
+    (habitQuestReadable ? "PASS" : "FAIL_HTTP_" + Number(habitQuestProbe.status || 0)));
+
   if (health.body?.ok) {
     const syncFields = [
       "financeSync",
