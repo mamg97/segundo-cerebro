@@ -39,10 +39,13 @@ export function selectHealthEnergyRow(d1, sheet) {
   const sheetComparable = isHealthEnergyComparable(sheet);
   if (sheetComparable && !d1Comparable) return sheet;
   if (d1Comparable && !sheetComparable) return d1;
-  // Preserve the existing recency rule for recovered Apple Health exports.
-  if (String(sheet.source || "") === "apple_health_export_recovery") {
+  // Recency only decides between two recovery imports. A comparable native D1
+  // snapshot must not be displaced by an older manual export in the Sheet.
+  if (
+    String(sheet.source || "") === "apple_health_export_recovery" &&
+    String(d1.source || "") === "apple_health_export_recovery"
+  ) {
     if (
-      String(d1.source || "") !== "apple_health_export_recovery" ||
       !d1.importedAt ||
       String(sheet.importedAt || "") >= String(d1.importedAt || "")
     ) return sheet;
