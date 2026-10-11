@@ -1,3 +1,11 @@
+## MIDAS genético: pausa irreversible del libro 08/10 y nueva campaña (12/10/2026)
+
+- Fuente `mamg97/personal_mamg`: el original `diario_portfolio_forward.json` se congela definitivamente en 07/10 tras el fallo de publicación `non-fast-forward` del 09/10 (job 37899091787). No se publicaron las órdenes de 08/10 y no hay registros prospectivos auténticos del 08–09/10; jamás reconstruirlos como fills.
+- El nuevo `diario_portfolio_forward_2026-10-12.json` es una **campaña independiente con capital inicial de 100.000 USD**, cuya primera señal debe corresponder al cierre del lunes 12/10, antes de la siguiente apertura. No hereda posiciones, retornos ni pendientes de la original; si pierde esta primera sesión, rechaza un arranque tardío.
+- `private-cloudflare/src/midas-ingest.js` acepta el ID adicional `genetic_sp500_forward_archive` exclusivamente con NAV observado entre 29/09 y 07/10 y la misma OIDC segura; `midas.js` presenta ese snapshot como `diario_heredado` (solo Catálogo / histórico) y el nuevo bajo el ID existente `genetic_sp500_forward` (competición). Antes de la primera nueva señal, un snapshot antiguo del ID principal se reconoce como archivo temporal, no como ranking vigente. El frontend excluye el archivo de la competición.
+- No se mezclan curvas, CAGR, posiciones ni tickers en la UI. OIDC transporta solo patrimonio diario, fechas y SHA del ledger; ninguna información de posiciones privadas sale del repositorio genético.
+- No se han modificado otros gestores ni jobs; despliegue por PR aislada con validación y auditoría. El Worker receptor debe estar desplegado **antes** de habilitar el nuevo publicador privado. Verificar el primer job natural posterior al cierre del 12/10; no generar un backfill del hueco.
+
 ## GESTOR GYM · Extensiones de cuádriceps en máquina · GIF 14/17 (2026-10-11)
 
 - Se creó la animación de extensión de rodilla sentado en máquina, con cuádriceps resaltados, sin confundirla con prensa de piernas ni curl femoral. El recurso blanco `extension-cuadriceps-maquina-v3-white.gif` y su póster se enlazan por variante exacta al plan, Biblioteca y detalles; los vídeos wger verificados siguen solo en el detalle.
