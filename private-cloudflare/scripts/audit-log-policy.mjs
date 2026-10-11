@@ -82,6 +82,18 @@ export function safeAuditNetworkFailureCode(entry) {
   return family+"_"+reason;
 }
 
+// Browser errors may contain private page text or URLs. Emit only fixed buckets.
+export function safeAuditBrowserFailureCode(entry) {
+  const raw = String(entry || "");
+  const channel = raw.startsWith("pageerror:") ? "PAGEERROR" : raw.startsWith("console:") ? "CONSOLE" : "OTHER";
+  const type = /\bTypeError\b/.test(raw) ? "TYPEERROR"
+    : /\bReferenceError\b/.test(raw) ? "REFERENCEERROR"
+      : /\bSyntaxError\b/.test(raw) ? "SYNTAXERROR"
+        : /\b(?:NetworkError|Failed to fetch)\b/i.test(raw) ? "NETWORK"
+          : "OTHER";
+  return channel + "_" + type;
+}
+
 
 // Finance DOM diagnostics consume only booleans: never log a bank account identifier.
 export function safeAuditFinanceStructureCode(flags) {

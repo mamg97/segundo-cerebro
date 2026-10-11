@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -2579,6 +2579,16 @@ try {
     }
   }
   assertCheck(networkFailures.length === 0, "Sin respuestas 5xx ni fallos de red", networkFailures.length ? networkFailures.join(",") : "");
+  if (browserErrors.length) {
+    const families = new Map();
+    for (const entry of browserErrors) {
+      const code = safeAuditBrowserFailureCode(entry);
+      families.set(code, (families.get(code) || 0) + 1);
+    }
+    for (const [code, count] of [...families].sort((a, b) => a[0].localeCompare(b[0]))) {
+      console.error("[AUDIT_BROWSER_DIAG] " + code + " count=" + count);
+    }
+  }
   assertCheck(browserErrors.length === 0, "Sin errores JavaScript/console", browserErrors.length ? browserErrors.slice(0, 3).join(" | ") : "");
 } catch (error) {
   fail("Auditoría ejecutable", String(error?.message || error).slice(0, 300));
