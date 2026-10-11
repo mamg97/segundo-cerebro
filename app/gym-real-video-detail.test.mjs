@@ -190,7 +190,7 @@ test("user sees explicit video availability or loading state, even when wger has
   const plan = app.slice(app.indexOf("async function openGymTechniqueForPlanExercise("),
     app.indexOf("async function openGymExternalTechnique("));
   assert.match(section, /gymVideoStateMarkup\(customAnimation\.key\)/);
-  assert.match(section, /gymVideoInventoryLabel/);
+  assert.match(section, /gymVideoStateMarkup\(customAnimation\.key\)/);
   assert.match(plan, /gymVideoStateMarkup\(animation\.key\)/);
   assert.match(plan, /gymCheckVideoAvailability\(animation, exercise\)/);
   assert.match(css, /\.gym-real-video-status/);
