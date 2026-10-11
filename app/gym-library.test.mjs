@@ -182,7 +182,7 @@ test("A medically paused Gym still displays canonical series, reps, loads and te
 test("Gym exposes a free visual exercise library beside the canonical plan", () => {
   assert.match(app, /data-gym-view="plan">Mi plan/);
   assert.match(app, /data-gym-view="library">Biblioteca de ejercicios/);
-  assert.match(app, /Biblioteca libre · wger · 0 €/);
+  assert.match(app, /Ejercicios con animación propia y biblioteca libre wger · 0 €/);
   assert.match(app, /data-gym-library-featured="video"/);
   assert.match(app, /data-gym-technique-id/);
 });
