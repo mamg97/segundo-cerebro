@@ -66,7 +66,7 @@ test("each day stays short and expandable, preserving progress, grouped meals an
   const ui = app.slice(start, end);
   assert.match(ui, /<details class="weekly-menu-day-collapse"/);
   assert.match(ui, /<summary class="weekly-menu-day-summary"/);
-  assert.match(ui, /isToday \? "open" : ""/);
+  assert.match(ui, /<details class="weekly-menu-day-collapse">/);
   assert.match(ui, /renderWeeklyMenuProgress\("Calorías"/);
   assert.match(ui, /renderWeeklyMenuProgress\("Proteína"/);
   assert.match(ui, /renderWeeklyMenuMealGroup\(group\.items\)/);
