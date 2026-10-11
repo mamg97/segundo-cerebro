@@ -102,9 +102,11 @@ export async function handleTapoRtcSignaling(request, env, now = Date.now()) {
 
   try {
     await ensureTable(env);
+    // Delete expired metadata opportunistically on *every* request.
+    // No background cron: a room abandoned without further traffic can remain at rest until the next request.
+    await env.DB.prepare("DELETE FROM home_tapo_rtc_sessions WHERE expires_at <= ?").bind(now).run();
     if (route.operation === "create") {
       // Bounded active sessions; no background polling/cron.
-      await env.DB.prepare("DELETE FROM home_tapo_rtc_sessions WHERE expires_at <= ?").bind(now).run();
       const count = await env.DB.prepare(
         "SELECT COUNT(*) AS total FROM home_tapo_rtc_sessions WHERE expires_at > ?"
       ).bind(now).first();
