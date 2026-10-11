@@ -34,7 +34,7 @@
     <section class="controls" aria-live="polite">
       <button id="stop" class="secondary" disabled>Detener sesión y compartir pantalla</button>
       <p id="status" role="status">Listo para comenzar. Nadie está viendo vídeo.</p>
-      <p><small>La negociación se guarda como máximo 15 minutos en D1 privada. El vídeo se intenta transmitir directamente por WebRTC cifrado. No hay TURN contratado: si las redes bloquean la conexión directa, esta prueba fallará de forma segura.</small></p>
+      <p><small>La negociación caduca a los 15 minutos. D1 borra la sesión al pulsar Detener en el Mac; si la página se cierra inesperadamente, los datos de conexión pueden permanecer almacenados hasta una siguiente petición que los limpie. El vídeo se intenta transmitir directamente por WebRTC cifrado. No hay TURN contratado: si las redes bloquean la conexión directa, esta prueba fallará de forma segura.</small></p>
     </section>
   </main>
   <script type="module" src="./tapo-lab.js"></script>
