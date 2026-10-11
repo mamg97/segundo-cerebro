@@ -12,7 +12,7 @@ const [app, css, worker, libraryWorker] = await Promise.all([
 
 function animationContext(extra = {}) {
   const source = app.slice(app.indexOf("const GYM_CUSTOM_ANIMATIONS"), app.indexOf("function gymPlanExerciseLinkMap"));
-  return vm.createContext({ ...extra, source });
+  return vm.createContext({ gymVideoInventory: new Map(), gymVideoChecks: new Map(), gymMediaInventoryRunning: false, ...extra, source });
 }
 
 test("The twelve reviewed animations match only their named exercise variants", () => {
