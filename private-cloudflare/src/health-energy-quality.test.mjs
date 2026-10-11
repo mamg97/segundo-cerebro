@@ -42,6 +42,22 @@ test("complete D1 snapshot still wins against a partial or unknown manual Sheet 
   assert.equal(selectHealthEnergyRow(d1, sheet), d1);
 });
 
+test("native HealthKit D1 snapshot wins over a comparable historical recovery import", () => {
+  const native = {
+    source: "apple_health",
+    sourceDetails: [{ kind: "coverage", quality: "full" }],
+    totalKcal: 2200,
+    importedAt: "2026-06-10T10:00:00Z"
+  };
+  const exportRecovery = {
+    source: "apple_health_export_recovery",
+    sourceDetails: ["coverage=full"],
+    totalKcal: 2100,
+    importedAt: "2026-06-11T10:00:00Z"
+  };
+  assert.equal(selectHealthEnergyRow(native, exportRecovery), native);
+});
+
 test("when both snapshots are comparable, existing D1 and export recency semantics remain stable", () => {
   const d1 = { source: "apple_health_export_recovery", sourceDetails: ["coverage=full"], importedAt: "2026-06-10T12:00:00Z" };
   const oldSheet = { source: "apple_health_export_recovery", sourceDetails: ["coverage=full"], importedAt: "2026-06-09T12:00:00Z" };
