@@ -2205,6 +2205,17 @@ try {
             if (detailVisible) {
               const detailMediaCount = await panel.locator(".gym-exercise-hero-media,.gym-exercise-hero-empty,.gym-exercise-hero-animation").count();
               assertCheck(detailMediaCount === 1, "Salud · Gym ficha tiene demostración/referencia visual");
+              const gifInDetail = await panel.locator(".gym-exercise-hero-animation").count();
+              if (gifInDetail) {
+                assertCheck(
+                  await panel.locator(".gym-technique-explanation").count() === 1,
+                  "Salud · Gym ficha con GIF incluye instrucciones visibles"
+                );
+                assertCheck(
+                  await panel.locator(".gym-real-video,.gym-real-video-status").count() >= 1,
+                  "Salud · Gym declara vídeo real o su disponibilidad sin dejar un hueco vacío"
+                );
+              }
               const attribution = normalizeAuditValue(
                 await panel.locator(".gym-exercise-attribution").textContent().catch(() => "")
               );

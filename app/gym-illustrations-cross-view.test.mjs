@@ -71,7 +71,7 @@ test("being on the plan only changes the badge; never the existence or media of 
 
 test("opening an independent GIF ficha never looks up an invented provider ID or offers a wger write", async () => {
   const resultGrid = { hidden: false };
-  const detail = { hidden: true, innerHTML: "" };
+  const detail = { hidden: true, innerHTML: "", querySelector: () => null };
   const status = { textContent: "" };
   const doc = {
     querySelector(selector) {
