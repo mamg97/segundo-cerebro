@@ -1,6 +1,6 @@
 # HOME — cámaras Tapo: vídeo en directo (diseño, NO OPERATIVO)
 
-**Estado:** modelo **Tapo C520WS** confirmado por referencia comercial; versión de hardware V1/V2 aún desconocida. RTSP y ONVIF constan explícitamente para ambas revisiones en la documentación oficial. Red/gateway remoto sin confirmar. **NO OPERATIVO**.
+**Estado:** modelo **Tapo C520WS** confirmado por referencia comercial; versión de hardware V1/V2 aún desconocida. RTSP y ONVIF constan explícitamente para ambas revisiones en la documentación oficial. Router identificado como **Movistar HGU Askey RTF3505VW**; gateway remoto sigue sin verificarse. **NO OPERATIVO**.
 
 ## Intención y propiedad
 - Incorporar al dashboard privado una ficha de cámara doméstica/de establecimiento autorizado en **Hogar → Cámaras**, con visualización en directo **solo bajo demanda**.
@@ -11,7 +11,7 @@
 ## Información pendiente de confirmar sin secretos
 1. **Confirmado:** familia Tapo C520WS; cámara fija alimentada con adaptador, Wi-Fi o RJ45, PTZ 360°/130°, flujo 2K QHD. Especificaciones oficiales V1 y V2 señalan RTSP=Sí y ONVIF=Sí. No se ha probado el flujo de esta unidad todavía.
 2. **Pendiente y opcional:** versión de hardware V1 o V2 y firmware, desde Tapo → cámara → ajustes → información del dispositivo. No solicitar ni registrar MAC, UID, IP pública, número de serie o credenciales.
-3. **Pendiente esencial:** modelo exacto del router ya encendido en la red donde está la cámara, y si puede ejecutar VPN/servicio seguro de salida **y** un gateway de vídeo (RTSP→WebRTC/HLS). Una VPN en el router, por sí sola, no convierte RTSP en vídeo HTML5 reproducible en Safari.
+3. **Identificado:** router existente Movistar HGU Askey RTF3505VW, con firmware de operador. No consta ninguna función estándar del firmware para ejecutar procesos arbitrarios, `cloudflared` ni un gateway RTSP→WebRTC/HLS; no tratarlo como servidor de streaming. Una VPN, aunque existiera, no convierte RTSP en vídeo HTML5 reproducible en Safari.
 4. **Pendiente:** confirmar condiciones de uso de grabación SD/Tapo Care y número de flujos simultáneos antes de abrir un RTSP de terceros; el fabricante documenta límites concurrentes.
 5. **Pendiente:** prueba local únicamente, si fuese necesaria, desde software confiable en la misma LAN y con cuenta de cámara independiente. No compartir cuenta, dirección IP o URL RTSP que contenga credenciales.
 
@@ -52,10 +52,10 @@ Fuentes:
 4. Medición del tráfico/capacidad para preservar coste operativo incremental cero.
 5. QA de autorización del establecimiento y privacidad; datos sensibles solo en superficies privadas.
 
-**Bloqueo actual:** modelo ya verificado, pero faltan capacidades concretas del router y un método de gateway remoto autenticado reproducible dentro de las cuotas gratuitas. No se ha modificado la cámara, creado cuenta RTSP, capturado vídeo ni desplegado una nueva interfaz.
+**Bloqueo actual:** cámara C520WS y router Askey RTF3505VW identificados; no se ha encontrado capacidad estándar del router para ejecutar un gateway remoto autenticado y compatible con Safari dentro de las cuotas gratuitas. No se ha modificado la cámara, creado cuenta RTSP, capturado vídeo ni desplegado una nueva interfaz.
 
 ## Plan de decisión para C520WS
-1. Identificar el router y evaluar sus funciones reales: no basta con decir que soporta VPN; para reproducción web remota hace falta solución para conversión/entrega de RTSP compatible con Safari (p. ej. gateway WebRTC/HLS) alojada en un host existente y de confianza.
+1. Router identificado: Movistar HGU Askey RTF3505VW. No consta función estándar para alojar servidor de vídeo ni `cloudflared`; no intentar firmware no oficial ni abrir puertos. Para reproducción web remota se necesita una solución de conversión/entrega de RTSP compatible con Safari (p. ej. gateway WebRTC/HLS) en un host existente y de confianza.
 2. Si el router no puede alojarlo y no hay endpoint autorizado en el servicio Tapo, declarar **vídeo embebido continuo sin equipo 24/7 adicional: no viable con la infraestructura verificada**, sin abrir puertos ni inventar URL cloud. La app Tapo sigue siendo la opción disponible.
 3. Si la red sí ofrece capacidad, construir integración privada bajo demanda, con flujo de vídeo nunca almacenado y costes medidos, y validar primero conexión desde fuera en un dispositivo propio. No introducir Tapo Care ni pagar servidores de streaming.
 4. Documentar consumo de subida del establecimiento, vida de sesión, desconexión, latencia, errores y riesgos de observación de terceros antes del despliegue.
@@ -65,3 +65,10 @@ Fuentes:
 - **No consta que se haya pulsado «Crear ahora» ni que exista una cuenta RTSP configurada.** No suponer credenciales, emisión accesible, router identificado ni streaming remoto funcional.
 - Crear esta cuenta no proporciona acceso remoto público: TP-Link exige que el cliente esté en la misma red local salvo VPN/puente privado; no pedir ni registrar contraseñas, IP, URL RTSP o capturas del entorno.
 - Modelo C520WS + pantalla compatible confirman capacidad conceptual de transmisión local, pero el siguiente requisito bloqueante sigue siendo determinar una salida cifrada y autenticada desde la red del taller sin dispositivos adicionales.
+
+## Comprobación del router mediante fotografías (11/10/2026)
+- El equipo muestra marca Movistar y ASKEY, diseño HGU fibra. Modelo **Askey RTF3505VW** identificado con alta confianza por etiqueta y carcasa, coherente con SACE 2847 según información de Movistar: https://www.movistar.es/blog/router/router-movistar-modelo-tipo-router/ . La imagen de la etiqueta tiene resolución limitada, por lo que si se requiere una revisión de hardware exacta será necesaria lectura adicional.
+- Este HGU con firmware habitual del operador no acredita capacidad para alojar procesos arbitrarios, `cloudflared` ni transcodificador o gateway RTSP→WebRTC/HLS. **No usar el router como puente de vídeo por defecto.** Las opciones de enrutamiento/port forwarding o pasar una VPN de terceros por NAT no equivalen a alojar ese software.
+- La documentación oficial Cloudflare exige ejecutar `cloudflared` en un host con acceso local a la cámara: https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/private-net/cloudflared/ ; la aplicación Tapo remota no satisface ese requisito.
+- **Privacidad:** las fotos originales de la etiqueta incluyen parámetros de acceso a la Wi-Fi y la administración del router. NO subirlas ni copiarlas a Git, Issue, logs, PR o infraestructura privada innecesariamente; este documento solo conserva familia/modelo sin MAC, SSID, número de serie ni contraseña.
+- **Resultado:** cámara RTSP compatible, pero ninguna ruta segura de vídeo incrustado remoto operativa sin endpoint oficial de streaming para terceros o host en LAN que funcione durante la visualización. No declarar entrega de vídeo implementada. Una opción inmediata es abrir la aplicación Tapo fuera del dashboard; cualquier botón de acceso directo deberá usar un enlace oficial verificado, nunca un esquema de URL inventado.
