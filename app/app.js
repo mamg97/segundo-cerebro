@@ -5853,6 +5853,9 @@ function renderHealthEvent(event) {
 
 let gymPanelData = null;
 let gymLibraryMeta = null;
+const gymVideoInventory = new Map();
+const gymVideoChecks = new Map();
+let gymMediaInventoryRunning = false;
 const GYM_CUSTOM_ANIMATIONS = [
   {
     key: "press-banca-plano-barra",
@@ -6149,6 +6152,191 @@ async function gymLoadVerifiedWgerTechnique(animation, planExercise = null) {
     // Offline/unavailable wger is not a failure of the GIF detail itself.
     return null;
   }
+}
+
+// Video inventory is read-only and session-scoped. A wger metadata URL is
+// "enlazado", NOT proof that the stream has loaded in Segundo Cerebro.
+// No video found by the provider search is not the same as no video on earth.
+function gymVideoInventoryLabel(record) {
+  switch (record?.status) {
+    case "checking": return "Comprobando…";
+    case "linked": return "Sí · enlazado (wger)";
+    case "playable": return "Sí · reproducción comprobada";
+    case "not_found": return "No · vídeo no localizado";
+    case "broken": return "Error · vídeo no reproducible";
+    case "unknown": return "Sin verificar · proveedor no disponible";
+    default: return "Pendiente de comprobación";
+  }
+}
+
+function gymVideoInventoryClass(record) {
+  if (record?.status === "linked" || record?.status === "playable") return "is-present";
+  if (record?.status === "not_found" || record?.status === "broken") return "is-absent";
+  return "is-unknown";
+}
+
+function gymVideoStateMarkup(key) {
+  const state = gymVideoInventory.get(key) || { status: "pending" };
+  return `<p class="gym-video-availability ${gymVideoInventoryClass(state)}"
+    data-gym-video-status="${escapeHtml(key)}" role="status">
+    <strong>Vídeo en Segundo Cerebro:</strong> ${escapeHtml(gymVideoInventoryLabel(state))}
+  </p>`;
+}
+
+function gymSetVideoAvailability(key, record) {
+  if (!GYM_ILLUSTRATED_EXERCISES[key]) return;
+  gymVideoInventory.set(key, record);
+  const label = gymVideoInventoryLabel(record);
+  if (typeof document === "undefined") return;
+  document.querySelectorAll?.("[data-gym-video-status]").forEach((element) => {
+    if (element.getAttribute("data-gym-video-status") !== key) return;
+    element.classList.remove("is-present", "is-absent", "is-unknown");
+    element.classList.add(gymVideoInventoryClass(record));
+    const strong = element.querySelector("strong");
+    if (strong) {
+      while (strong.nextSibling) strong.nextSibling.remove();
+      element.append(" " + label);
+    } else element.textContent = "Vídeo en Segundo Cerebro: " + label;
+  });
+  const tableCell = document.querySelector?.('[data-gym-media-video="' + key + '"]');
+  if (tableCell) {
+    tableCell.className = "gym-video-inventory-state " + gymVideoInventoryClass(record);
+    tableCell.textContent = label;
+  }
+  const counts = document.querySelector?.("#gym-media-inventory-count");
+  if (counts) {
+    const all = GYM_CUSTOM_ANIMATIONS.map((item) => gymVideoInventory.get(item.key)?.status || "pending");
+    counts.textContent = all.filter((value) => ["playable", "linked"].includes(value)).length +
+      " con vídeo enlazado · " + all.filter((value) => value === "not_found").length +
+      " no localizados · " + all.filter((value) => !["playable", "linked", "not_found"].includes(value)).length +
+      " pendientes o con incidencia";
+  }
+}
+
+async function gymCheckVideoAvailability(animation, planExercise = null, force = false) {
+  if (!animation) return null;
+  const key = animation.key;
+  const current = gymVideoInventory.get(key);
+  if (!force && current && ["linked", "playable", "not_found", "broken"].includes(current.status)) return current.provider || null;
+  if (gymVideoChecks.has(key)) return gymVideoChecks.get(key);
+  gymSetVideoAvailability(key, { status: "checking" });
+  const lookup = (async () => {
+    try {
+      const diagnostics = { anySuccessfulSearch: false, hadFailure: false };
+      const provider = await gymLoadVerifiedWgerTechnique(animation, planExercise, diagnostics);
+      const video = gymVerifiedWgerVideo(provider, animation);
+      const current = gymVideoInventory.get(key);
+      if (video) {
+        gymSetVideoAvailability(key, {
+          status: current?.status === "playable" ? "playable" : "linked", provider
+        });
+      } else {
+        gymSetVideoAvailability(key, {
+          status: diagnostics.anySuccessfulSearch ? "not_found" : "unknown",
+          provider: provider || null
+        });
+      }
+      return provider;
+    } catch {
+      gymSetVideoAvailability(key, { status: "unknown" });
+      return null;
+    } finally {
+      gymVideoChecks.delete(key);
+    }
+  })();
+  gymVideoChecks.set(key, lookup);
+  return lookup;
+}
+
+// Only two public-name searches at a time; never block the image catalogue.
+async function gymCheckVideoInventory(force = false) {
+  if (gymMediaInventoryRunning) return;
+  gymMediaInventoryRunning = true;
+  const button = document.querySelector?.("#gym-media-inventory-refresh");
+  if (button) button.disabled = true;
+  try {
+    const items = GYM_CUSTOM_ANIMATIONS.filter((item) =>
+      force || !["linked", "playable", "not_found"].includes(gymVideoInventory.get(item.key)?.status));
+    let index = 0;
+    const runner = async () => {
+      while (index < items.length) {
+        const animation = items[index++];
+        await gymCheckVideoAvailability(animation, null, force);
+      }
+    };
+    await Promise.all([runner(), runner()]);
+  } finally {
+    gymMediaInventoryRunning = false;
+    const freshButton = document.querySelector?.("#gym-media-inventory-refresh");
+    if (freshButton) freshButton.disabled = false;
+  }
+}
+
+function gymMediaInventoryMarkup() {
+  const rows = GYM_CUSTOM_ANIMATIONS.map((animation) => {
+    const label = GYM_ILLUSTRATED_EXERCISES[animation.key]?.name || animation.key;
+    const state = gymVideoInventory.get(animation.key) || { status: "pending" };
+    return `<tr>
+      <td><button type="button" class="gym-media-exercise-link" data-gym-media-open="${escapeHtml(animation.key)}">${escapeHtml(label)}</button></td>
+      <td><span class="gym-media-gif-state">Sí · subido</span></td>
+      <td><span class="gym-video-inventory-state ${gymVideoInventoryClass(state)}"
+        data-gym-media-video="${escapeHtml(animation.key)}">${escapeHtml(gymVideoInventoryLabel(state))}</span></td>
+    </tr>`;
+  }).join("");
+  return `<details class="gym-media-inventory" open>
+    <summary>Disponibilidad multimedia · 12 ejercicios con GIF</summary>
+    <div class="gym-media-inventory-toolbar">
+      <span id="gym-media-inventory-count">Vídeos pendientes de comprobación</span>
+      <button type="button" id="gym-media-inventory-refresh">Volver a comprobar vídeos</button>
+    </div>
+    <div class="gym-media-inventory-scroll">
+      <table><thead><tr><th scope="col">Ejercicio</th><th scope="col">GIF</th><th scope="col">Vídeo en Segundo Cerebro</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>
+    <p class="gym-media-inventory-footnote">«Enlazado» significa que existe un recurso compatible en wger a través del proxy de Segundo Cerebro. «Reproducción comprobada» exige cargar el vídeo. «No localizado» no demuestra que no exista fuera del catálogo consultado.</p>
+  </details>`;
+}
+
+function gymBindMediaInventory() {
+  const host = document.querySelector?.("#gym-media-inventory");
+  if (!host) return;
+  const summary = host.querySelector?.("details")?.open !== false;
+  host.innerHTML = gymMediaInventoryMarkup();
+  if (!summary) host.querySelector("details").open = false;
+  host.querySelector("#gym-media-inventory-refresh")?.addEventListener("click",
+    () => void gymCheckVideoInventory(true));
+  host.querySelectorAll("[data-gym-media-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const animation = GYM_CUSTOM_ANIMATIONS.find((item) => item.key === button.dataset.gymMediaOpen);
+      if (!animation) return;
+      const own = gymLibraryWithIllustrations([], {}, {}, gymPanelData?.plan || [])
+        .find((exercise) => exercise.animationKey === animation.key);
+      if (!own) return;
+      gymLibraryState.results = [...gymLibraryState.results.filter((item) => String(item.id) !== String(own.id)), own];
+      void openGymLibraryExercise(own.id, null);
+    });
+  });
+  for (const item of GYM_CUSTOM_ANIMATIONS) {
+    const record = gymVideoInventory.get(item.key);
+    if (record) gymSetVideoAvailability(item.key, record);
+  }
+}
+
+function gymBindVideoPlaybackCheck(scope) {
+  if (!scope?.querySelectorAll) return;
+  scope.querySelectorAll(".gym-real-video video[data-gym-video-key]").forEach((video) => {
+    if (video.dataset.bound === "1") return;
+    video.dataset.bound = "1";
+    const key = video.dataset.gymVideoKey;
+    video.addEventListener("loadedmetadata", () => {
+      const previous = gymVideoInventory.get(key);
+      gymSetVideoAvailability(key, { ...previous, status: "playable" });
+    });
+    video.addEventListener("error", () => {
+      const previous = gymVideoInventory.get(key);
+      gymSetVideoAvailability(key, { ...previous, status: "broken" });
+    });
+  });
 }
 
 function gymPlanExerciseLinkMap(data = gymPanelData) {
