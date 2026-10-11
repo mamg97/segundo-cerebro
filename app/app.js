@@ -6037,6 +6037,94 @@ function gymCustomAnimationMarkup(animation, label, className = "") {
     </span>`;
 }
 
+// Only show wger's same-origin proxy video for the exact GIF exercise variant.
+function gymVerifiedWgerVideo(exercise, animation) {
+  if (exercise?.source?.provider !== "wger") return null;
+  if (animation && gymCustomAnimationFor(exercise)?.key !== animation.key) return null;
+  const video = exercise?.videos?.find((item) => item.isMain && item.url) ||
+    exercise?.videos?.find((item) => item.url) || null;
+  return video && /^\/api\/gym\/exercises\/\d+\/media\/video\/\d+(?:\?[^"<>]*)?$/.test(String(video.url || ""))
+    ? video : null;
+}
+
+function gymRealVideoMarkup(exercise, animation = null) {
+  const video = gymVerifiedWgerVideo(exercise, animation);
+  if (!video) return "";
+  const image = exercise?.images?.find((item) => item.isMain && item.previewUrl) ||
+    exercise?.images?.find((item) => item.previewUrl) || null;
+  const license = video.license || exercise.license || {};
+  const attribution = [license.title || "Licencia declarada por wger", license.author ? "Autor: " + license.author : null]
+    .filter(Boolean).join(" · ");
+  return `
+    <section class="gym-real-video" aria-label="Vídeo real del ejercicio">
+      <strong>Vídeo real · wger</strong>
+      <video class="gym-exercise-hero-media" controls playsinline preload="none"
+        src="${escapeHtml(video.url)}"
+        ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""}></video>
+      <small>Fuente: wger · ${escapeHtml(attribution)}</small>
+    </section>`;
+}
+
+function gymTechniqueInstructionsMarkup(animation, exercise = null) {
+  const own = animation && GYM_ILLUSTRATED_EXERCISES[animation.key]?.technique;
+  const remote = exercise?.source?.provider === "wger" ? String(exercise.description || "").trim() : "";
+  return `
+    <section class="gym-technique-explanation" aria-label="Explicación del ejercicio">
+      <strong>Cómo realizar el ejercicio</strong>
+      <p>${escapeHtml(own || remote || "No hay una explicación técnica disponible para esta variante.")}</p>
+      ${remote && remote !== own ? `<p><b>Descripción de wger:</b> ${escapeHtml(remote)}</p>` : ""}
+      ${animation?.variantNote ? `<p class="gym-exercise-variant-note">${escapeHtml(animation.variantNote)}</p>` : ""}
+    </section>`;
+}
+
+// Read-only free wger lookup, restricted to the reviewed GIF variant. Never use
+// a local illustration ID in a provider API or send private plan descriptions.
+async function gymLoadVerifiedWgerTechnique(animation, planExercise = null) {
+  if (!animation) return null;
+  const readDetail = async (id) => {
+    if (!/^\d+$/.test(String(id || ""))) return null;
+    const response = await fetch("/api/gym/exercises/" + encodeURIComponent(id), {
+      headers: { Accept: "application/json" }, cache: "no-store"
+    });
+    if (!response.ok) return null;
+    const exercise = (await response.json()).exercise;
+    return exercise?.source?.provider === "wger" && gymCustomAnimationFor(exercise)?.key === animation.key
+      ? exercise : null;
+  };
+  try {
+    let descriptionFallback = null;
+    const link = planExercise ? gymPlanExerciseLinkMap().get(String(planExercise.id)) : null;
+    if (link?.provider === "wger" && /^\d+$/.test(String(link.providerExerciseId))) {
+      const linked = await readDetail(link.providerExerciseId);
+      if (gymVerifiedWgerVideo(linked, animation)) return linked;
+      if (linked?.description) descriptionFallback = linked;
+    }
+    const cached = gymLibraryState.results.find((item) =>
+      item?.source?.provider === "wger" && gymCustomAnimationFor(item)?.key === animation.key &&
+      (gymVerifiedWgerVideo(item, animation) || item.description));
+    if (cached) {
+      const complete = cached.description ? cached : await readDetail(cached.id);
+      if (gymVerifiedWgerVideo(complete, animation)) return complete;
+      if (complete?.description) descriptionFallback = complete;
+    }
+    const search = [...animation.labels].sort((a, b) => a.length - b.length)[0];
+    const response = await fetch("/api/gym/exercises?q=" + encodeURIComponent(search) + "&limit=24", {
+      headers: { Accept: "application/json" }, cache: "no-store"
+    });
+    if (!response.ok) return descriptionFallback;
+    const results = (await response.json()).exercises || [];
+    const matched = results.filter((candidate) =>
+      candidate?.source?.provider === "wger" && gymCustomAnimationFor(candidate)?.key === animation.key);
+    const best = matched.find((candidate) => gymVerifiedWgerVideo(candidate, animation)) ||
+      matched.find((candidate) => candidate.description) || matched[0] || null;
+    if (!best) return descriptionFallback;
+    return best.description ? best : await readDetail(best.id) || best;
+  } catch (error) {
+    console.warn("Gym real-video lookup unavailable", error?.name || "unavailable");
+    return null;
+  }
+}
+
 function gymPlanExerciseLinkMap(data = gymPanelData) {
   return new Map(
     (Array.isArray(data?.exerciseLinks) ? data.exerciseLinks : [])
@@ -6567,91 +6655,6 @@ async function loadGymExerciseLibrary(options = {}) {
       if (status) status.textContent = "La biblioteca libre no está disponible ahora. Tu plan y tu histórico siguen intactos.";
     }
     console.warn("Gym exercise library load failed", error);
-  }
-}
-
-// Only show wger's same-origin proxy video for the exact GIF exercise variant.
-function gymVerifiedWgerVideo(exercise, animation) {
-  if (exercise?.source?.provider !== "wger") return null;
-  if (animation && gymCustomAnimationFor(exercise)?.key !== animation.key) return null;
-  const video = exercise?.videos?.find((item) => item.isMain && item.url) ||
-    exercise?.videos?.find((item) => item.url) || null;
-  return video && /^\/api\/gym\/exercises\/\d+\/media\/video\/\d+(?:\?[^"<>]*)?$/.test(String(video.url || ""))
-    ? video : null;
-}
-
-function gymRealVideoMarkup(exercise, animation = null) {
-  const video = gymVerifiedWgerVideo(exercise, animation);
-  if (!video) return "";
-  const image = exercise?.images?.find((item) => item.isMain && item.previewUrl) ||
-    exercise?.images?.find((item) => item.previewUrl) || null;
-  const license = video.license || exercise.license || {};
-  const attribution = [license.title || "Licencia declarada por wger", license.author ? "Autor: " + license.author : null]
-    .filter(Boolean).join(" · ");
-  return `
-    <section class="gym-real-video" aria-label="Vídeo real del ejercicio">
-      <strong>Vídeo real · wger</strong>
-      <video class="gym-exercise-hero-media" controls playsinline preload="none"
-        src="${escapeHtml(video.url)}"
-        ${image?.previewUrl ? `poster="${escapeHtml(image.previewUrl)}"` : ""}></video>
-      <small>Fuente: wger · ${escapeHtml(attribution)}</small>
-    </section>`;
-}
-
-function gymTechniqueInstructionsMarkup(animation, exercise = null) {
-  const own = animation && GYM_ILLUSTRATED_EXERCISES[animation.key]?.technique;
-  const remote = exercise?.source?.provider === "wger" ? String(exercise.description || "").trim() : "";
-  return `
-    <section class="gym-technique-explanation" aria-label="Explicación del ejercicio">
-      <strong>Cómo realizar el ejercicio</strong>
-      <p>${escapeHtml(own || remote || "No hay una explicación técnica disponible para esta variante.")}</p>
-      ${remote && remote !== own ? `<p><b>Descripción de wger:</b> ${escapeHtml(remote)}</p>` : ""}
-      ${animation?.variantNote ? `<p class="gym-exercise-variant-note">${escapeHtml(animation.variantNote)}</p>` : ""}
-    </section>`;
-}
-
-// Read-only free wger lookup, restricted to the reviewed GIF variant. Never use
-// a local illustration ID in a provider API or send private plan descriptions.
-async function gymLoadVerifiedWgerTechnique(animation, planExercise = null) {
-  if (!animation) return null;
-  const readDetail = async (id) => {
-    if (!/^\d+$/.test(String(id || ""))) return null;
-    const response = await fetch("/api/gym/exercises/" + encodeURIComponent(id), {
-      headers: { Accept: "application/json" }, cache: "no-store"
-    });
-    if (!response.ok) return null;
-    const exercise = (await response.json()).exercise;
-    return exercise?.source?.provider === "wger" && gymCustomAnimationFor(exercise)?.key === animation.key
-      ? exercise : null;
-  };
-  try {
-    const link = planExercise ? gymPlanExerciseLinkMap().get(String(planExercise.id)) : null;
-    if (link?.provider === "wger" && /^\d+$/.test(String(link.providerExerciseId))) {
-      const linked = await readDetail(link.providerExerciseId);
-      if (linked && (gymVerifiedWgerVideo(linked, animation) || linked.description)) return linked;
-    }
-    const cached = gymLibraryState.results.find((item) =>
-      item?.source?.provider === "wger" && gymCustomAnimationFor(item)?.key === animation.key &&
-      (gymVerifiedWgerVideo(item, animation) || item.description));
-    if (cached) {
-      const complete = cached.description ? cached : await readDetail(cached.id);
-      if (complete) return complete;
-    }
-    const search = [...animation.labels].sort((a, b) => a.length - b.length)[0];
-    const response = await fetch("/api/gym/exercises?q=" + encodeURIComponent(search) + "&limit=24", {
-      headers: { Accept: "application/json" }, cache: "no-store"
-    });
-    if (!response.ok) return null;
-    const results = (await response.json()).exercises || [];
-    const matched = results.filter((candidate) =>
-      candidate?.source?.provider === "wger" && gymCustomAnimationFor(candidate)?.key === animation.key);
-    const best = matched.find((candidate) => gymVerifiedWgerVideo(candidate, animation)) ||
-      matched.find((candidate) => candidate.description) || matched[0] || null;
-    if (!best) return null;
-    return best.description ? best : await readDetail(best.id) || best;
-  } catch (error) {
-    console.warn("Gym real-video lookup unavailable", error?.name || "unavailable");
-    return null;
   }
 }
 
