@@ -4,7 +4,7 @@ These assets are first-party presentation aids for Segundo Cerebro. They do not 
 
 ## White-background presentation set (2026-10-11)
 
-The seven `*-white.gif` variants (flat bench, incline bench, military press, explosive pull-ups, parallel-bar dips, EZ-bar curl and high-cable pullover) share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The original transparent versions remain available; choosing which set to show in the app is deliberately separate from asset generation.
+The twelve `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The original transparent versions remain available; choosing which set to show in the app is deliberately separate from asset generation.
 
 ## New movement assets, second batch
 
@@ -12,6 +12,15 @@ The seven `*-white.gif` variants (flat bench, incline bench, military press, exp
 - `curl-biceps-barra-ez-v1.gif`: standing EZ-bar curl; biceps/brachialis highlighted; planted feet and continuous bar path.
 - `pullover-polea-alta-v1.gif`: standing straight-arm high-cable pulldown; lats and triceps highlighted; cable remains connected to the fixed pulley tower.
 - Each has an identically named `-white.gif` presentation version and `-white-poster.png`, plus source, build metadata and contact sheet under `design/gym-animations/`. These are exercise illustrations, not technique certification or automatic matches to ambiguous plan labels.
+
+## New movement assets, third batch
+
+- `extension-triceps-polea-sobre-cabeza-v1.gif`: standing overhead high-cable triceps extension.
+- `pajaros-maquina-v1.gif`: seated reverse pec-deck fly; one variant of the plan's ambiguous rear-delt label.
+- `remo-barra-v1.gif`: bent-over barbell row; **not** a seated row-machine animation.
+- `curl-martillo-polea-v1.gif`: low-cable rope hammer curl.
+- `gemelos-maquina-pie-v1.gif`: standing calf raise machine; **not** the leg-press variant.
+- Every one has a `-white.gif` and `-white-poster.png` presentation file plus source, contact sheet and build metadata. The plan-to-asset mapping remains for separate review.
 
 ## `dominadas-explosivas-v1.gif`
 
