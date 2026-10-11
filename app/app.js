@@ -5256,28 +5256,21 @@ async function loadHistoricalMenuWeek(dayKey) {
   const status = panel?.querySelector("#menu-week-error");
   if (status) { status.hidden = false; status.textContent = "Consultando menú de la semana…"; }
   try {
-    const response = await fetch("/api/nutrition/menu?date=" + encodeURIComponent(selected), {
+    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(selected), {
       headers: { Accept: "application/json" },
       credentials: "same-origin", cache: "no-store"
     });
     if (!response.ok) throw new Error("MENU_WEEK_" + response.status);
     const weekly = await response.json();
     if (!weekly.ok || menuWeekMonday(weekly.weekStart) !== selected ||
-        !Array.isArray(weekly.weeklyMenu)) throw new Error("MENU_WEEK_INVALID");
+        !Array.isArray(weekly.weeklyMenu) || !Array.isArray(weekly.recipes)) {
+      throw new Error("MENU_WEEK_INVALID");
+    }
     if (requestId !== healthMenuRequestId || !panel?.isConnected) return false;
-    const reference = healthMenuBaseData || healthMenuViewData || {};
-    // Recipe and pantry links reuse the already loaded private master data.
-    // Only the week-scoped menu and effective objective come from the canonical API.
+    // The complete read-only nutrition payload preserves recipe/product
+    // cross-references, food and ingredient data for historical weeks.
     healthMenuSelectedWeek = selected;
-    renderMenuPanel({
-      ...reference,
-      date: weekly.date,
-      weekStart: weekly.weekStart,
-      weekEnd: weekly.weekEnd,
-      weeklyMenu: weekly.weeklyMenu,
-      objective: weekly.objective,
-      source: weekly.source
-    }, { historicalFetch: true });
+    renderMenuPanel(weekly, { historicalFetch: true });
     return true;
   } catch (error) {
     if (requestId === healthMenuRequestId && panel?.isConnected) {
