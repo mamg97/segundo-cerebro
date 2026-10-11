@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
 
 const auditor = fs.readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
 
@@ -44,6 +44,8 @@ test("diagnostic labels are fixed allowlisted codes with no private identifiers"
   assert.equal(safeAuditNetworkFailureCode("http502:/api/health/overview"), "HEALTH_OVERVIEW_HTTP_502");
   assert.equal(safeAuditNetworkFailureCode("requestfailed:/api/objects/look/id-privado-123/image:net::ERR_FAILED"), "LOOK_IMAGE_ERR_FAILED");
   assert.equal(safeAuditNetworkFailureCode("http502:/api/source/secret-123"), "UNMAPPED_HTTP_502");
+  assert.equal(safeAuditBrowserFailureCode("pageerror:TypeError: patient@example.com https://private.invalid/path"), "PAGEERROR_TYPEERROR");
+  assert.equal(safeAuditBrowserFailureCode("console:private token 123"), "CONSOLE_OTHER");
   const texts=[
     safeAuditDiagnosticCode("Finanzas · movimientos por cuenta · pestaña cuenta-secreta-123 activa"),
     safeAuditNetworkFailureCode("http502:/api/objects/look/id-privado-123/image")
@@ -55,6 +57,8 @@ test("audit emits only diagnostic codes, not raw network or failure details", ()
   assert.match(auditor, /safeAuditDiagnosticCode\(name\)/);
   assert.match(auditor, /safeAuditNetworkFailureCode\(entry\)/);
   assert.match(auditor, /\[AUDIT_NETWORK_DIAG\]/);
+  assert.match(auditor, /safeAuditBrowserFailureCode\(entry\)/);
+  assert.match(auditor, /\[AUDIT_BROWSER_DIAG\]/);
   assert.match(auditor, /await page.waitForFunction\(\(accountId\) =>/);
   assert.match(auditor, /!panel.hidden && panel.classList.contains\("active"\)/);
 });
