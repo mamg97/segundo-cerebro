@@ -27,7 +27,9 @@ export function healthCoverageQuality(row) {
 }
 
 export function isHealthEnergyComparable(row) {
-  return ["full", "live"].includes(healthCoverageQuality(row));
+  if (!["full", "live"].includes(healthCoverageQuality(row))) return false;
+  const hasNumber = (value) => value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+  return hasNumber(row?.totalKcal) || (hasNumber(row?.activeKcal) && hasNumber(row?.restingKcal));
 }
 
 export function selectHealthEnergyRow(d1, sheet) {

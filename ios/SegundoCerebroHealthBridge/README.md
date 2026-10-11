@@ -34,12 +34,12 @@ Los datos ausentes se envían como ausentes. La app no estima valores ni genera 
 
 ## Sincronización
 
-- Cada sincronización procesa **hoy + ayer**, de más antiguo a más reciente.
+- Cada sincronización procesa **hoy y los dos días anteriores**, de más antiguo a más reciente. El día adicional permite recuperar muestras que Apple Health publique con retraso; no garantiza un horario de ejecución impuesto por iOS.
 - El backend usa UPSERT; repetir una sincronización no duplica días.
 - `HKObserverQuery` + HealthKit Background Delivery permiten que iOS despierte la app cuando cambian tipos observados.
 - Los tipos corporales (`bodyMass`, grasa corporal, IMC y masa magra) solicitan Background Delivery con frecuencia `.immediate`, porque cambian pocas veces al día y el Home debe reflejar una pesada nueva cuanto antes.
 - Actividad, entrenamientos, sueño y recuperación mantienen entrega `.hourly` para no provocar despertares continuos por señales de alta frecuencia.
-- Al volver la app al primer plano se ejecuta una reconciliación inmediata de hoy + ayer.
+- Al volver la app al primer plano se ejecuta una reconciliación inmediata de esos tres días.
 - `BGAppRefreshTask` solicita una reconciliación adicional a partir de una hora; iOS decide el momento real y puede retrasarla.
 - El botón **Sincronizar ahora** existe para instalación, diagnóstico y recuperación puntual.
 

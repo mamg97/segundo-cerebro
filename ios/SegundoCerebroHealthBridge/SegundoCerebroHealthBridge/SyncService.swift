@@ -9,6 +9,9 @@ struct SyncRunResult {
 
 actor SyncService {
     static let shared = SyncService()
+    // Keep one extra completed day in the automatic window. HealthKit samples
+    // can arrive after the next day's first background wake-up.
+    static let automaticReconciliationDays = 3
 
     static let endpoint = URL(string: "https://segundo-cerebro-health-ingest.mamg97.workers.dev/v1/sync")!
 
@@ -23,7 +26,7 @@ actor SyncService {
         self.session = URLSession(configuration: configuration)
     }
 
-    func syncRecentDays(days: Int = 2) async throws -> SyncRunResult {
+    func syncRecentDays(days: Int = automaticReconciliationDays) async throws -> SyncRunResult {
         guard let token = KeychainStore.loadToken(), !token.isEmpty else {
             throw HealthBridgeError.tokenMissing
         }
@@ -36,7 +39,7 @@ actor SyncService {
         var bodySamples = 0
         var recoveryDays = 0
 
-        // Oldest first so yesterday is finalized before today's partial snapshot.
+        // Oldest first so completed days are reconciled before today's partial snapshot.
         for offset in stride(from: count - 1, through: 0, by: -1) {
             guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
             let snapshot = try await health.snapshot(for: date)

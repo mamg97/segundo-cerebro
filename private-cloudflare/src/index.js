@@ -19,6 +19,7 @@ import { handleShoppingSyncRequest } from "./shopping-sync.js";
 import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
 import { googleReadFetch } from "./google-read.js";
 import { healthCoverageQuality, isHealthEnergyComparable, selectHealthEnergyRow } from "./health-energy-quality.js";
+import { canonicalHealthTimestamp, deduplicateHealthBodySamples } from "./health-body-identity.js";
 import {
   searchGymExerciseLibrary,
   getGymExerciseLibraryMeta,
@@ -2253,7 +2254,7 @@ async function fetchHealthBodySamples(env, startDate, endDate) {
     ORDER BY measured_at ASC
   `).bind(startDate, endDate).all();
 
-  return (result.results || []).map((row) => ({
+  return deduplicateHealthBodySamples((result.results || []).map((row) => ({
     type: row.metric_type,
     value: toNumber(row.metric_value),
     unit: row.unit || null,
@@ -2261,7 +2262,7 @@ async function fetchHealthBodySamples(env, startDate, endDate) {
     measuredAt: row.measured_at,
     source: row.source || "apple_health",
     importedAt: row.imported_at || null
-  }));
+  })));
 }
 
 async function ensureHealthEnergyTable(env) {
@@ -2443,6 +2444,8 @@ async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], 
   }
 
   for (const row of recoveredBody) {
+    const measuredAt = canonicalHealthTimestamp(row.measuredAt);
+    if (!measuredAt) continue;
     const samples = [
       ["bodyMass", row.weightKg, "kg"],
       ["bodyFatPercentage", row.bodyFatPct, "%"],
@@ -2450,7 +2453,7 @@ async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], 
       ["leanBodyMass", row.leanBodyMassKg, "kg"]
     ];
     for (const [type, value, unit] of samples) {
-      if (!Number.isFinite(Number(value))) continue;
+      if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) continue;
       statements.push(env.DB.prepare(`
         INSERT INTO health_body_samples (
           metric_type, metric_value, unit, sample_date, measured_at, source, imported_at
@@ -2465,7 +2468,7 @@ async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], 
         Number(value),
         unit,
         row.date,
-        row.measuredAt,
+        measuredAt,
         String(row.source || "Zepp Life"),
         row.importedAt || row.updatedAt || new Date().toISOString()
       ));
@@ -2481,24 +2484,9 @@ async function reconcileHealthRecoveryRows(env, energyRows = [], bodyRows = [], 
         sleep_core_minutes, sleep_deep_minutes, sleep_rem_minutes,
         source, sampled_at, source_details, recorded_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(recovery_date) DO UPDATE SET
-        resting_hr_bpm = excluded.resting_hr_bpm,
-        walking_hr_bpm = excluded.walking_hr_bpm,
-        hrv_sdnn_ms = excluded.hrv_sdnn_ms,
-        respiratory_rate = excluded.respiratory_rate,
-        oxygen_saturation_pct = excluded.oxygen_saturation_pct,
-        vo2_max = excluded.vo2_max,
-        wrist_temperature_c = excluded.wrist_temperature_c,
-        sleep_asleep_minutes = excluded.sleep_asleep_minutes,
-        sleep_in_bed_minutes = excluded.sleep_in_bed_minutes,
-        sleep_awake_minutes = excluded.sleep_awake_minutes,
-        sleep_core_minutes = excluded.sleep_core_minutes,
-        sleep_deep_minutes = excluded.sleep_deep_minutes,
-        sleep_rem_minutes = excluded.sleep_rem_minutes,
-        source = excluded.source,
-        sampled_at = excluded.sampled_at,
-        source_details = excluded.source_details,
-        recorded_at = excluded.recorded_at
+      -- A recovered ZIP may fill a missing date, never replace a newer
+      -- HealthKit recovery observation for that date.
+      ON CONFLICT(recovery_date) DO NOTHING
     `).bind(
       row.date,
       row.restingHeartRate,
@@ -2568,7 +2556,7 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
     ...row,
     coverageQuality: healthCoverageQuality(row)
   }));
-  const comparable = activity.filter((row) => ["full", "live"].includes(row.coverageQuality));
+  const comparable = activity.filter(isHealthEnergyComparable);
   const mean = (values) => {
     const clean = values.filter((value) => Number.isFinite(Number(value))).map(Number);
     return clean.length ? clean.reduce((sum, value) => sum + value, 0) / clean.length : null;
@@ -2775,7 +2763,9 @@ async function persistHealthHistorySummary(env, history) {
     : null;
   const quality = history.quality || {};
   const averages = history.comparableAverages || {};
-  const comparableDays = Number(quality.full || 0) + Number(quality.live || 0);
+  const comparableDays = Array.isArray(history.activity)
+    ? history.activity.filter(isHealthEnergyComparable).length
+    : 0;
 
   const row = [
     String(history.range || ""),

@@ -185,7 +185,7 @@ D1
 Salud / Nutrición / análisis longitudinal
 ```
 
-El bridge lee únicamente tipos HealthKit autorizados por el usuario. El token de ingesta se guarda en Keychain del dispositivo y no se versiona. La app sincroniza hoy y ayer de forma idempotente para que una actualización parcial del día actual pueda reconciliarse después.
+El bridge lee únicamente tipos HealthKit autorizados por el usuario. El token de ingesta se guarda en Keychain del dispositivo y no se versiona. La app sincroniza hoy y los dos días anteriores de forma idempotente para dar margen a muestras tardías; iOS sigue decidiendo cuándo la despierta. Una exportación histórica solo rellena fechas vacías en D1 y no sustituye lecturas posteriores del bridge.
 
 La ingesta admite tres grupos:
 - actividad: energía activa/basal, pasos, minutos de ejercicio y workouts;

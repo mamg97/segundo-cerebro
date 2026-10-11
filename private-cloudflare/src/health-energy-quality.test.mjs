@@ -21,6 +21,14 @@ test("screenshot review cannot claim full coverage without explicit evidence", (
   assert.equal(healthCoverageQuality({ ...screenshot, sourceDetails: ["coverage=full", "source=apple_health_ui"] }), "full");
 });
 
+test("steps-only HealthKit snapshots are not comparable energy days", () => {
+  const stepsOnly = { source: "apple_health", steps: 2000, activeKcal: null, restingKcal: null, totalKcal: null };
+  assert.equal(healthCoverageQuality(stepsOnly), "live");
+  assert.equal(isHealthEnergyComparable(stepsOnly), false);
+  const completedSheet = { source: "apple_health_manual_screenshot", sourceDetails: ["coverage=full"], totalKcal: 2300 };
+  assert.equal(selectHealthEnergyRow(stepsOnly, completedSheet), completedSheet);
+});
+
 test("complete snapshot outranks older partial D1 snapshot without using larger kcal as a heuristic", () => {
   const d1 = { source: "apple_health_export_recovery", sourceDetails: ["coverage=partial"], totalKcal: 900, importedAt: "2026-06-09T10:00:00Z" };
   const sheet = { source: "apple_health_manual_screenshot", sourceDetails: ["coverage=full"], totalKcal: 2450, importedAt: "2026-06-10T12:00:00Z" };
