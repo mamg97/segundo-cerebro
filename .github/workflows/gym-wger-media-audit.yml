@@ -1,0 +1,24 @@
+name: Verify public wger Gym videos
+
+on:
+  pull_request:
+    paths:
+      - "app/gym-wger-live-audit.mjs"
+      - ".github/workflows/gym-wger-media-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-public-catalogue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Read-only verification of twelve public wger exercise variants
+        continue-on-error: true
+        run: node app/gym-wger-live-audit.mjs
