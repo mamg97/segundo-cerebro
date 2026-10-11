@@ -59,6 +59,7 @@ test("The actual wger bench card shows the GIF instead of the real-person video"
   vm.runInContext(app.slice(app.indexOf("function gymLibraryPreview("), app.indexOf("async function loadGymExerciseLibrary(")), context);
   vm.runInContext('renderGymLibraryResults([{id: "library-bench", name: "Press de Banca", hasVideo: true, videos: [{url: "/example-video.mp4"}], muscles: [{name: "Chest"}], equipment: [{name: "Barbell"}, {name: "Bench"}]}])', context);
   assert.match(grid.innerHTML, /press-banca-plano-barra-v5-white\.gif/);
+  assert.match(grid.innerHTML, /gym-library-card-media has-illustration/);
   assert.match(grid.innerHTML, />Animación<\/b>/);
   assert.doesNotMatch(grid.innerHTML, /<video/);
 });
@@ -212,6 +213,7 @@ test("Gym library is responsive and uses the v0.42.14 locked-frame anatomical GI
   assert.match(css, /gym-exercise-animation-poster/);
   assert.match(css, /\.gym-library-preview-animation\s*\{[^}]*position: absolute;[^}]*inset: 0;[^}]*width: 100%;[^}]*height: 100%;[^}]*aspect-ratio: auto;/);
   assert.match(css, /\.gym-library-preview-animation \.gym-exercise-animation-media\s*\{[^}]*width: auto;[^}]*height: 100%;[^}]*max-width: 100%;[^}]*object-fit: contain;/);
+  assert.match(css, /\.gym-library-card-media\.has-illustration\s*\{[^}]*background: #fff;/);
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.gym-library-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);

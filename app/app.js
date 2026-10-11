@@ -6409,7 +6409,7 @@ function renderGymLibraryResults(exercises) {
     const equipment = (exercise.equipment || []).map((item) => item.name).filter(Boolean).slice(0, 2).join(" · ");
     return `
       <button type="button" class="gym-library-card" data-gym-library-id="${escapeHtml(exercise.id)}">
-        <span class="gym-library-card-media">
+        <span class="gym-library-card-media${customAnimation ? " has-illustration" : ""}">
           ${gymLibraryPreview(exercise, index)}
           ${customAnimation ? '<b class="gym-library-media-badge">Animación</b>' : exercise.hasVideo ? '<b class="gym-library-media-badge">▶ vídeo</b>' : ""}
           ${exercise.inPlan ? '<b class="gym-library-plan-badge">En tu plan</b>' : ""}
