@@ -5958,6 +5958,13 @@ const GYM_CUSTOM_ANIMATIONS = [
     posterUrl: "./assets/gym-animations/gemelos-maquina-pie-v1-white-poster.png",
     labels: ["gemelos en maquina o prensa", "gemelos de pie en maquina"],
     variantNote: "Esta animación muestra solo la variante de pie en máquina, no la prensa."
+  },
+  {
+    key: "extension-cuadriceps-maquina",
+    animationUrl: "./assets/gym-animations/extension-cuadriceps-maquina-v3-white.gif",
+    posterUrl: "./assets/gym-animations/extension-cuadriceps-maquina-v3-white-poster.png",
+    labels: ["extensiones de cuadriceps en maquina", "extension de cuadriceps en maquina", "leg extension", "leg extensions", "machine leg extension"],
+    variantNote: "Esta animación muestra la extensión de rodilla sentado en máquina, no la prensa de piernas ni el curl femoral."
   }
 ];
 let gymLibraryState = {
@@ -5994,7 +6001,8 @@ const GYM_ILLUSTRATED_EXERCISES = {
   "pajaros-maquina": { name: "Pájaros en máquina", technique: "Ajusta la máquina de deltoides posterior, abre los brazos de forma controlada y evita elevar los hombros durante el movimiento.", muscles: ["Shoulders", "Posterior deltoid"], equipment: ["Machine"] },
   "curl-biceps-barra-ez": { name: "Curl de bíceps con barra EZ", technique: "Mantén los codos junto al tronco, flexiona los brazos con la barra EZ sin balancear el cuerpo y controla la bajada.", muscles: ["Biceps", "Biceps brachii"], equipment: ["Barbell", "EZ bar"] },
   "curl-martillo-polea": { name: "Curl martillo en polea baja", technique: "Usa un agarre neutro en la cuerda, conserva los codos cerca del cuerpo y flexiona sin balancear el tronco.", muscles: ["Biceps", "Brachialis"], equipment: ["Cable", "Cable machine"] },
-  "gemelos-maquina-pie": { name: "Gemelos de pie en máquina", technique: "Apoya la parte delantera de los pies en la máquina, eleva los talones de forma controlada y desciende hasta un recorrido cómodo.", muscles: ["Calves", "Gastrocnemius"], equipment: ["Machine"] }
+  "gemelos-maquina-pie": { name: "Gemelos de pie en máquina", technique: "Apoya la parte delantera de los pies en la máquina, eleva los talones de forma controlada y desciende hasta un recorrido cómodo.", muscles: ["Calves", "Gastrocnemius"], equipment: ["Machine"] },
+  "extension-cuadriceps-maquina": { name: "Extensiones de cuádriceps en máquina", technique: "Ajusta el respaldo y el rodillo por encima de los tobillos. Extiende las rodillas de forma controlada, sin bloquearlas, y baja despacio sin separar la espalda del apoyo.", muscles: ["Quadriceps", "Quadriceps femoris"], equipment: ["Machine"] }
 };
 
 function gymOwnIllustration(exercise) {
@@ -6710,7 +6718,7 @@ async function openGymTechniqueForPlanExercise(exercise) {
         </div>
         <div class="gym-exercise-detail-copy">
           <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
-          <small class="gym-media-build-caption">Ficha multimedia · v0.44.10</small>
+          <small class="gym-media-build-caption">Ficha multimedia · v0.44.11</small>
           ${gymVideoStateMarkup(animation.key)}
           <div id="gym-plan-video-supplement" class="gym-technique-media-supplement"></div>
           ${gymTechniqueInstructionsMarkup(animation)}
@@ -7002,7 +7010,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
       <div class="gym-exercise-detail-copy">
         <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>
         <h3>${escapeHtml(exercise.name)}</h3>
-        <small class="gym-media-build-caption">Ficha multimedia · v0.44.10</small>
+        <small class="gym-media-build-caption">Ficha multimedia · v0.44.11</small>
         <div class="gym-exercise-tags">
           ${muscleNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
           ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}
