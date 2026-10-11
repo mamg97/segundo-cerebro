@@ -1,3 +1,13 @@
+## ORGANIZADOR 13 · Recuperación de HabitQuest tras modal de configuración (2026-10-11)
+
+- Incidencia reproducida visualmente en iPhone: modal de Hábitos muestra `HabitQuest todavía no está conectado aquí / Falta configurar el identificador privado del Sheet en el Worker`.
+- **Causa de mensaje erróneo confirmada en código**: `openHabitsDetail` presentaba ese texto fijo para cualquier fallo (503, 502, sesión o red). El backend exigía a la vez credenciales OAuth y `HABITQUEST_SHEET_ID`, sin recurrir al descubrimiento privado ya empleado por Despensa y Proyectos. **No se ha podido leer directamente la configuración de secretos de Cloudflare**, por lo que no afirmar ausencia real de esa variable.
+- Google Drive autenticado: existe un único documento de nombre exacto `HabitQuest Data` con pestañas `Habits`, `History`, `Meta`, `SyncState`. Existe una copia de seguridad con otro nombre; nunca utilizarla como fuente activa. El registro privado `IntegracionesPrivadas` aún no contiene `HABITQUEST_SHEET_ID`.
+- Recuperación en Worker: resolver ID mediante variable de Worker → registro privado → Drive con coincidencia de título y MIME exactos, rechazando duplicados, paginación ambigua o documentos ausentes; cachear 10 minutos en memoria. El ID no se registra ni se publica en frontend/logs/PR. Un único resolutor se utiliza en consultas diarias, toggles, gestión, batchClear y batchUpdate, sin cambiar las reglas canónicas del histórico.
+- UI ahora informa errores según respuesta real: credenciales no configuradas, fallo de lectura/permiso, fallo de red. Reintentar no recrea ni duplica el diálogo. Versión app y estilos v0.44.8 para invalidación de caché.
+- Pruebas sintéticas de resolución con y sin variable, título exacto excluyendo backup, registro privado, ambigüedad, Drive denegado y no escritura; pruebas de interfaz con estado real. No modificar el Sheet ni crear segunda base de datos. 0 € adicionales.
+- Pendiente: validación CI, despliegue privado, lectura autenticada `GET /api/habits` con estado real y comprobación visual iPhone. GitHub CI verde no prueba acceso OAuth/Drive del Worker desplegado.
+
 ## ORGANIZADOR 13 · Comprobación en wger real de los 12 GIF · 2026-10-11
 
 - Consulta efectuada desde GitHub Actions al **catálogo público en vivo**, sin claves ni datos privados. Workflow `Verify public wger Gym videos`; los resultados no se dedujeron de fixtures sintéticos ni de screenshots.
