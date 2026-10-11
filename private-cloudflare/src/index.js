@@ -12,6 +12,7 @@ import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { readVision, saveVision, recordVisionReplacement } from "./vision.js";
+import { handleTapoRtcSignaling } from "./tapo-rtc-signaling.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, fetchEventLedgerSnapshot, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 import { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, fetchEventSheetHomeSummary, fetchEventSheetDetail, syncCalendarEventsToEventsSheet, migrateLegacyEventLedgerToSheet, createEventSheetRecord, updateEventSheetRecord, appendEventSheetFact, appendEventSheetReference } from "./events-sheet.js";
@@ -4972,6 +4973,15 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // Experimental HOME webcam relay uses private signaling only; NEVER handles media.
+    // No route or private preview accessible until explicit opt-in after Access review.
+    if (url.pathname.startsWith("/api/home/tapo/rtc")) {
+      return withSecurityHeaders(await handleTapoRtcSignaling(request, env));
+    }
+    if (url.pathname.startsWith("/app/tapo-lab/") && env.TAPO_RTC_EXPERIMENTAL !== "true") {
+      return json({ ok: false, code: "TAPO_RTC_DISABLED" }, 404);
+    }
 
     if (url.pathname.startsWith("/v1/shopping-list/")) {
       return withSecurityHeaders(await handleShoppingSyncRequest(request, env, getGoogleAccessToken));
