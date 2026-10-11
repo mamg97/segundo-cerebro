@@ -3353,7 +3353,7 @@ async function openHabitsDetail(dateKey = null) {
   selectedHabitDate = dateKey || selectedHabitDate || localDateKey();
 
   document.querySelector("#dialog-body").innerHTML = '<p class="health-empty">Cargando HabitQuest…</p>';
-  dialog.showModal();
+  if (!dialog.open) dialog.showModal();
 
   try {
     const response = await fetch(`/api/habits?date=${encodeURIComponent(selectedHabitDate)}`, {
