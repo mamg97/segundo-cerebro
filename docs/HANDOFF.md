@@ -1,3 +1,12 @@
+## ORGANIZADOR 13 · Detalle Gym: GIF + vídeo real cuando existe (2026-10-11)
+
+- Petición: miniatura principal del ejercicio mantiene el GIF; al abrir su detalle muestra **GIF, vídeo real de wger cuando exista y explicación**. Aplica a ejercicios de Mi plan y Biblioteca.
+- Causa: el frontend elegía `customAnimation ? GIF : video`, ocultando vídeos válidos incluso en las fichas wger. Mi plan presentaba solo el GIF e invitaba a ir a Biblioteca.
+- Corrección solo de presentación: añade vídeo wger bajo el GIF, con controles manuales y carga diferida. Recupera descripción wger cuando la variante coincide; incluye guía técnica breve de la variante GIF y conserva notas de variantes limitadas. La ficha que solo tiene ilustración intenta consulta read-only de vídeo equivalente, sin asumir que exista.
+- Contrato de identidad: únicamente `source.provider === 'wger'`, vídeo de URL proxy same-origin `/api/gym/exercises/<id>/media/video/<id>` y coincidencia exacta de variante con `gymCustomAnimationFor`. Nunca reutilizar vídeos de mancuernas/máquinas/agarres diferentes ni pasar IDs ilustrados a la API wger. La fuente/autoría se identifica al mostrar el vídeo; sin licencia confirmada no se inventa una.
+- Privacidad/coste: cero cambios a D1, Sheets, ejercicios del plan, registros, recursos GIF o backend; no hay servicios pagados. Buscador usa nombres genéricos de ejercicios, nunca observaciones privadas.
+- Verificar pruebas automatizadas, CI, despliegue y QA real antes de dar por cerrado. Auditoría general roja por dominios no Gym no debe atribuirse a la funcionalidad sin evidencia.
+
 ## ORGANIZADOR 13 · Gym: GIF asociado al ejercicio, no a la vista (2026-10-11)
 
 - Causa verificada: la UI ya utilizaba `gymCustomAnimationFor(exercise)` tanto en plan como en wger, pero Biblioteca se alimentaba solo de una página de 24 resultados de wger; salvo nombres exactamente coincidentes, los 12 GIF locales no tenían ficha accesible. No era una pérdida de los archivos.
