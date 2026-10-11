@@ -13,7 +13,7 @@ const htmlEscape = (text) => String(text).replaceAll("&", "&amp;").replaceAll("<
   .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
 function scenario(extra = {}) {
-  const ctx = vm.createContext({ escapeHtml: htmlEscape, gymPanelData: { plan: [] }, ...extra });
+  const ctx = vm.createContext({ escapeHtml: htmlEscape, gymPanelData: { plan: [] }, gymVideoInventory: new Map(), gymVideoChecks: new Map(), gymMediaInventoryRunning: false, ...extra });
   vm.runInContext(curatedFunctions, ctx);
   return ctx;
 }
@@ -125,10 +125,10 @@ test("both plan and library details enrich the video without changing list tiles
     app.indexOf("function getLatestGymEntries("));
   assert.match(plan, /gymCustomAnimationMarkup\(animation/);
   assert.match(plan, /gymTechniqueInstructionsMarkup\(animation\)/);
-  assert.match(plan, /gymLoadVerifiedWgerTechnique\(animation, exercise\)/);
+  assert.match(plan, /gymCheckVideoAvailability\(animation, exercise\)/);
   assert.match(plan, /gymRealVideoMarkup\(provider, animation\)/);
   assert.match(library, /customAnimation && !isOwnIllustration \? gymRealVideoMarkup\(exercise, customAnimation\)/);
-  assert.match(library, /gymLoadVerifiedWgerTechnique\(animation\)/);
+  assert.match(library, /gymCheckVideoAvailability\(animation\)/);
   const preview = app.slice(app.indexOf("function gymLibraryPreview("), app.indexOf("async function loadGymExerciseLibrary("));
   assert.match(preview, /return gymCustomAnimationMarkup\(animation/);
   assert.doesNotMatch(preview, /gymRealVideoMarkup/);
@@ -189,9 +189,9 @@ test("user sees explicit video availability or loading state, even when wger has
     app.indexOf("function getLatestGymEntries("));
   const plan = app.slice(app.indexOf("async function openGymTechniqueForPlanExercise("),
     app.indexOf("async function openGymExternalTechnique("));
-  assert.match(section, /Buscando vídeo real compatible/);
-  assert.match(section, /No se ha encontrado un vídeo real verificado/);
-  assert.match(plan, /Buscando vídeo real compatible/);
-  assert.match(plan, /No se ha encontrado un vídeo real verificado/);
+  assert.match(section, /gymVideoStateMarkup\(customAnimation\.key\)/);
+  assert.match(section, /gymVideoInventoryLabel/);
+  assert.match(plan, /gymVideoStateMarkup\(animation\.key\)/);
+  assert.match(plan, /gymCheckVideoAvailability\(animation, exercise\)/);
   assert.match(css, /\.gym-real-video-status/);
 });
