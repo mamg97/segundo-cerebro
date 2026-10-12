@@ -7,6 +7,7 @@ import { fetchMercadonaReference } from "./mercadona.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
 import { safePrivateReadDiagnostic } from "./private-read-diagnostics.js";
+import { createSingleFlight } from "./single-flight.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
@@ -43,6 +44,7 @@ const securityHeaders = {
 
 let googleTokenCache = { token: null, expiresAt: 0 };
 let financeCache = { value: null, expiresAt: 0 };
+const shareFinanceSourceRead = createSingleFlight();
 let habitsCache = { value: null, expiresAt: 0 };
 let healthCache = { value: null, expiresAt: 0, date: null };
 let recipePhotoCache = { value: new Map(), expiresAt: 0, inFlight: null };
@@ -701,6 +703,12 @@ async function fetchFinanceSummary(env) {
     return { status: "ok-cache", value: financeCache.value };
   }
 
+  // Multiple independent API routes may request Finance during a cold load.
+  // Share that one expensive read within the isolate, never its failure.
+  return shareFinanceSourceRead(() => fetchFinanceSummaryUncached(env));
+}
+
+async function fetchFinanceSummaryUncached(env) {
   const token = await getGoogleAccessToken(env);
   const ranges = ["Resumen!A1:B100", "Categorias!A1:K500", "Compromisos!A1:I500", "Deudas!A1:K500", "Patrimonio!A1:H500", "EventosImportantes!A1:G200", "GimnasioPlan!A1:N500", "Nutricion!A1:G500"];
   const params = new URLSearchParams();
