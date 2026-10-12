@@ -41,3 +41,27 @@ test("public API retains daily-mode provenance and fetches separate daily teleme
   assert.match(api, /daily_mode: row\.daily_mode === true/);
   assert.match(api, /const RUNTIME_HEALTH_FILES = \[[\s\S]*?"weekly_ml_daily"/);
 });
+
+
+test("TimesFM weekly and daily due windows are checked independently", () => {
+  const before = evaluateMidasWorkflowRuns([], Date.parse("2026-10-13T00:02:00Z"));
+  assert.equal(before.workflows.find(x => x.name === "MIDAS TimesFM EUR daily paper").state, "not_due_yet");
+  assert.equal(before.workflows.find(x => x.name === "MIDAS TimesFM 2.5 EUR weekly signal").state, "not_due_yet");
+  const now = Date.parse("2026-10-13T10:00:00Z");
+  const run = [{ name: "MIDAS TimesFM EUR daily paper", event: "schedule",
+    created_at: "2026-10-13T02:12:00Z", status: "completed", conclusion: "success" }];
+  const ok = evaluateMidasWorkflowRuns(run, now);
+  assert.equal(ok.workflows.find(x => x.name === "MIDAS TimesFM EUR daily paper").state, "success");
+  assert.equal(ok.workflows.find(x => x.name === "MIDAS TimesFM 2.5 EUR weekly signal").state, "not_due_yet");
+  const missing = evaluateMidasWorkflowRuns([], now);
+  assert.equal(missing.workflows.find(x => x.name === "MIDAS TimesFM EUR daily paper").state, "missing_due_run");
+});
+
+test("MIDAS public schema supports TimesFM but requires EUR period metrics to be finite", () => {
+  const api = readFileSync(new URL("./midas.js", import.meta.url), "utf8");
+  assert.match(api, /"timesfm_demo"/);
+  assert.match(api, /"5_sessions", "21_sessions", "63_sessions"/);
+  assert.match(api, /optionalNumber\(row\.period_returns_pct\?\.\[key\]\)/);
+  assert.match(api, /"timesfm_daily"/);
+  assert.match(api, /"timesfm_weekly"/);
+});

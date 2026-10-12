@@ -318,3 +318,29 @@ test("competition sorting initializes once per MIDAS render and mobile is respon
   assert.match(css, /\.midas-lab-table tbody tr\.midas-lab-row\s*\{[\s\S]*?grid-template-columns/);
   assert.match(css, /\.midas-lab-table thead\s*\{[\s\S]*?clip-path:\s*inset\(50%\)/);
 });
+
+
+test("TimesFM EUR appears in competition without invented return and shows comparable windows", () => {
+  const dashboard = { tracks: [
+    { id: "timesfm_2p5_eur_paper", label: "TimesFM 2.5", group: "timesfm_demo",
+      currency: "EUR", status: "programada_sin_diario",
+      return_pct: null, period_returns_pct: { "5_sessions": null, "21_sessions": null, "63_sessions": null },
+      equity_history: [] },
+    { id: "timesfm_spy_eur", label: "SPY EUR", group: "timesfm_demo",
+      currency: "EUR", status: "demo_con_diario", return_pct: 0.4,
+      period_returns_pct: { "5_sessions": 0.4, "21_sessions": null, "63_sessions": null },
+      equity_history: [{ date: "2026-10-16", nav: 100000 }, { date: "2026-10-23", nav: 100400 }] }
+  ] };
+  const html = renderMidasVisualLab(dashboard);
+  assert.match(html, /TimesFM · EUR/);
+  assert.match(html, /data-midas-algorithm-id="timesfm_2p5_eur_paper"/);
+  assert.match(html, /data-midas-lab-sort-return=""/);
+  const details = renderMidasAlgorithmDetail(dashboard, null, "timesfm_spy_eur");
+  assert.match(details, /5 sesiones · mismo período/);
+  assert.match(details, /21 sesiones · mismo período/);
+  assert.match(details, /63 sesiones · mismo período/);
+  assert.match(details, /0,40 %/);
+  const pending = renderMidasAlgorithmDetail(dashboard, null, "timesfm_2p5_eur_paper");
+  assert.match(pending, /Esperando primera sesión/);
+  assert.match(pending, /5 sesiones · mismo período/);
+});
