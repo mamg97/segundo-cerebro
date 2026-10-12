@@ -144,27 +144,27 @@ jobs:
 
       - name: Deploy production Worker
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
-        run: npx wrangler deploy --config wrangler.bootstrap.jsonc
+        run: node scripts/deploy-wrangler-retry.mjs wrangler.bootstrap.jsonc
 
       - name: Deploy Health ingest Worker
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
-        run: npx wrangler deploy --config wrangler.health-ingest.jsonc
+        run: node scripts/deploy-wrangler-retry.mjs wrangler.health-ingest.jsonc
 
       - name: Deploy Objects ingest Worker
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
-        run: npx wrangler deploy --config wrangler.objects-ingest.jsonc
+        run: node scripts/deploy-wrangler-retry.mjs wrangler.objects-ingest.jsonc
 
       - name: Deploy MIDAS ingest Worker
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
-        run: npx wrangler deploy --config wrangler.midas-ingest.jsonc
+        run: node scripts/deploy-wrangler-retry.mjs wrangler.midas-ingest.jsonc
 
       - name: Deploy Shopping Reminders ingest Worker
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
-        run: npx wrangler deploy --config wrangler.shopping-reminders.jsonc
+        run: node scripts/deploy-wrangler-retry.mjs wrangler.shopping-reminders.jsonc
 
       - name: Deploy Web audit gateway
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
-        run: npx wrangler deploy --config wrangler.web-audit.jsonc
+        run: node scripts/deploy-wrangler-retry.mjs wrangler.web-audit.jsonc
 
       - name: Explain skipped deployment
         if: steps.cloudflare.outputs.configured != 'true'
