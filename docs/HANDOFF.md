@@ -1,4 +1,4 @@
- ## ORGANIZADOR 15 · Historial Looks/Prendas: HTML mal cerrado · 12/10/2026
+## ORGANIZADOR 15 · Historial Looks/Prendas: HTML mal cerrado · 12/10/2026
 
 - Causa reproducida en el renderer real: faltaba la comilla final de `data-history-latest` en `<tr>` y en la tarjeta móvil `<article>`. El parser absorbía la primera celda/botón en el atributo y el navegador desplazaba las miniaturas fuera de sus filas. Los cambios CSS #416/#417 no podían reparar esa estructura.
 - Corrección mínima: cerrar ambos atributos, conservar tabla nativa desktop/tablet y tarjetas móviles vigentes, versionar `objects.js` y el entrypoint como `0.44.23`. Sin nuevos estilos, fuentes, consultas o cambios canónicos.
