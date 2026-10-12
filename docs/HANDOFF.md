@@ -1,3 +1,11 @@
+## ORGANIZADOR 14 · Bug de falso verde de despliegue · 12/10/2026
+
+- Detectado en [run 38254317985, attempt 2](https://github.com/mamg97/segundo-cerebro/actions/runs/38254317985): el job aparece `success`, pero todos los pasos de deploy privado fueron `skipped` tras un commit **solo documental** en `main`. Eso no acredita publicación alguna; auditores posteriores pueden suponer un despliegue sano.
+- **Corrección:** verificar equivalencia del árbol de entradas del despliegue (`app/`, `core/`, `private-cloudflare/`, bridge y workflows críticos) entre el commit del job y la punta de `main` mediante `git diff --quiet`. Un commit documental no invalida un artefacto con las mismas entradas; cualquier divergencia del código/configuración sigue bloqueando por seguridad.
+- **Fail closed:** credenciales ausentes o ramas con diferencias de código **fallan explícitamente** el job, en vez de terminar en falso verde. Se conservan el orden de migración D1, validaciones, reintentos acotados y protección de secretos. Tests de contrato actualizados.
+- **Incidencia externa aún abierta:** el deploy de `c9efa3c8` falló dos veces con `CF_HTTP_504` de Cloudflare API; el bug de falso verde es independiente y no arregla los 504. La auditoría de producción completa sobre los cambios recientes sigue pendiente.
+- Gate: CI verde → PR aislada → despliegue realmente ejecutado y completo sobre entradas vigentes → auditoría Chromium completa con fallos = 0 → segunda ejecución sin intermitencias antes de declarar verde.
+
 ## ORGANIZADOR 14 · Despliegue bloqueado por Cloudflare API 504 · 12/10/2026
 
 - **Código validado y fusionado:** [PR #395](https://github.com/mamg97/segundo-cerebro/pull/395), commit `c9efa3c8fc4a95c4ea6b08d74264a9ff08e71448`. Conserva #393 (single-flight de fotos de Recetas), #392 (caché efímera del auditor), #391 (Finance readiness), #390 (14 GIF), #389 (migración D1). La PR conflictiva #394 se cerró sin fusionarla.
