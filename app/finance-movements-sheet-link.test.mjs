@@ -27,7 +27,7 @@ assert.match(app, /hasAccountRows && !hasLiquidityRows && !hasBudgetRows && !ban
 assert.match(app, /categories\.length \|\| liquidityAccounts\.length \|\| accountTransactions\.length \|\| bankCatalog\.length/);
 assert.match(app, /no se muestran importes supuestos/);
 
-assert.match(app, /privateModeKind === "remote" && !financeBudgetRefreshInFlight/);
+assert.match(app, /canReadPrivateFinanceBankWorkspace\(\) && !financeBudgetRefreshInFlight/);
 assert.doesNotMatch(app, /privateModeKind === "private-remote"/);
 
 // The real selected bank account must persist if an asynchronous finance refresh
