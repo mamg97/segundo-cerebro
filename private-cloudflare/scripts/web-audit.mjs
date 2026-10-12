@@ -1402,6 +1402,14 @@ async function emitFinanceDomDiagnostic(accountId, initialCount) {
     };
   },{id:accountId,initial:initialCount}).catch(()=>null);
   console.error("[AUDIT_FINANCE_DOM] "+safeAuditFinanceStructureCode(flags));
+  const shapeCodes = await page.evaluate(() =>
+    (globalThis.__auditFinanceResponseShapes || []).slice(-4)
+  ).catch(() => []);
+  const allowed = new Set(["RECORDS", "EMPTY", "INVALID", "PARSE_FAILED", "CLONE_FAILED"]);
+  const lastShape = shapeCodes.length ? shapeCodes.at(-1) : "NONE";
+  console.error("[AUDIT_FINANCE_RESPONSE_SHAPE] " +
+    (allowed.has(lastShape) ? lastShape : "UNKNOWN"));
+
   // Only bounded counts and a fixed HTTP class reach the public runner.
   console.error("[AUDIT_FINANCE_TRANSPORT] starts=" + Math.min(9, bankReadTransport.started) +
     " responses=" + Math.min(9, bankReadTransport.responses.length) +
@@ -1605,6 +1613,42 @@ try {
     }
   });
   // Only these booleans cross back to the public Actions runner.
+  // Audit-only browser probe: inspect the UI's later bank fetch in the
+  // authenticated browser, never transferring bank JSON into public Actions.
+  // The original fetch response and error semantics stay unchanged.
+  await page.evaluate(() => {
+    if (globalThis.__auditFinanceResponseShapes) return;
+    const shapes = [];
+    globalThis.__auditFinanceResponseShapes = shapes;
+    const nativeFetch = globalThis.fetch;
+    globalThis.fetch = function(...args) {
+      let isBankRead = false;
+      try {
+        const uri = args[0] instanceof Request ? args[0].url : String(args[0]);
+        const target = new URL(uri, location.href);
+        isBankRead = target.origin === location.origin &&
+          target.pathname === "/api/finance/accounts";
+      } catch {}
+      const pending = nativeFetch.apply(globalThis, args);
+      if (!isBankRead) return pending;
+      return pending.then((response) => {
+        const append = (code) => {
+          shapes.push(code);
+          if (shapes.length > 4) shapes.shift();
+        };
+        try {
+          void response.clone().json().then((body) => {
+            const valid = body?.ok === true && Array.isArray(body.accounts) &&
+              Array.isArray(body.transactions);
+            append(!valid ? "INVALID" :
+              body.accounts.length + body.transactions.length > 0 ? "RECORDS" : "EMPTY");
+          }).catch(() => append("PARSE_FAILED"));
+        } catch { append("CLONE_FAILED"); }
+        return response;
+      });
+    };
+  });
+
   const bankSourceReadable = bankSourceProbe.readable;
   const bankSourcePopulated = bankSourceProbe.populated;
   const bankSourceCode = !bankSourceReadable ? "SOURCE_UNAVAILABLE"
