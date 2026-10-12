@@ -156,6 +156,7 @@ const RUNTIME_HEALTH_FILES = [
   "timesfm_daily",
   "timesfm_weekly",
   "timesfm_one_day",
+  "classic_sp500",
   "weekly_ml",
   "tfg_ahp"
 ];
