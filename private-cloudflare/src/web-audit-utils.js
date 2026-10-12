@@ -108,3 +108,10 @@ export function classifyRequestFailure({ url, errorText, auditOrigin }) {
   }
   return { track: true, ignored: false, path, errorText: error };
 }
+
+export function scheduledTrackIsWithinFirstSessionWindow(track, now = Date.now()) {
+  if (track?.status !== "programada_sin_diario" || track?.last_session) return false;
+  const dueAt = Date.parse(String(track?.first_session_due_at || ""));
+  const current = now instanceof Date ? now.getTime() : Number(now);
+  return Number.isFinite(dueAt) && Number.isFinite(current) && current <= dueAt;
+}
