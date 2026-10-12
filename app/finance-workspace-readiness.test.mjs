@@ -45,7 +45,10 @@ test("partial optional ranges require explicit verification before treating empt
 
 test("partial budget path schedules one bounded canonical refresh and labels absent data", () => {
   assert.match(app, /const accountWorkspaceIncomplete = financeAccountWorkspaceIncomplete\(finance\)/);
-  assert.match(app, /if \(accountWorkspaceIncomplete && !options\.skipRefresh && canReadPrivateFinanceBankWorkspace\(\) && !financeBudgetRefreshInFlight\)/);
+  assert.match(app, /const bankReadNeedsVerification = canReadPrivateFinanceBankWorkspace\(\) &&/);
+  assert.match(app, /finance\.bankWorkspaceReadVerified !== true/);
+  assert.match(app, /if \(bankReadNeedsVerification && !options\.skipRefresh && !financeBudgetRefreshInFlight\)/);
+  assert.match(app, /if \(state\.financeSummary\?\.bankWorkspaceReadVerified !== true\)/);
   assert.match(app, /refreshFinanceAccountWorkspace\(dialog\)/);
   assert.match(app, /await fetchFinanceBankWorkspace\(12000\)/);
   assert.match(app, /openBudgetDetail\(\{ skipRefresh: true \}\)/);
@@ -74,4 +77,22 @@ test("interactive bank tabs are unavailable until both ranges are complete or di
   }), true);
   assert.match(app, /const bankTabsReady = financeBankWorkspaceReady\(finance\)/);
   assert.match(app, /bankTabsReady \? renderAccountTransactionsWorkspace\(accountTransactions, workspaceAccounts, currency\) : ""/);
+});
+
+test("private Finance fetches verified bank ranges regardless of optional budget completeness", () => {
+  const completeOptional = {
+    monthlyBudget: { liquidityAccounts: [{ id: "synthetic-bank" }] },
+    accountTransactions: [{ id: "synthetic-transaction", accountId: "synthetic-bank" }],
+    bankWorkspaceAccounts: [{ id: "synthetic-bank" }]
+  };
+  assert.equal(financeAccountWorkspaceIncomplete(completeOptional), false,
+    "optional ranges can already look complete");
+  assert.notEqual(completeOptional.bankWorkspaceReadVerified, true,
+    "only the dedicated canonical reader can confirm completeness");
+  assert.match(app, /const bankReadNeedsVerification = canReadPrivateFinanceBankWorkspace\(\) &&\s+finance\.bankWorkspaceReadVerified !== true/);
+  assert.match(app, /if \(bankReadNeedsVerification && !options\.skipRefresh && !financeBudgetRefreshInFlight\) \{\s+refreshFinanceAccountWorkspace\(dialog\)/);
+  assert.match(app, /if \(bankReadNeedsVerification && !options\.skipRefresh && !financeBudgetRefreshInFlight\) \{\s+refreshFinanceAccountWorkspace\(dialog, \{ replaceMissingView: true \}\)/);
+  assert.match(app, /if \(state\.financeSummary\?\.bankWorkspaceReadVerified !== true\) \{\s+const workspace = await fetchFinanceBankWorkspace\(12000\)/);
+  assert.match(app, /if \(!canReadPrivateFinanceBankWorkspace\(\) \|\| financeBudgetRefreshInFlight\) return/);
+  assert.match(app, /bankWorkspaceReadVerified: true/);
 });

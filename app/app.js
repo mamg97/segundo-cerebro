@@ -10017,7 +10017,7 @@ function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } =
     // Restore bank tabs without waiting for a potentially slow full Finance
     // rebuild. The global state loader owns the budget; this read-only
     // recovery only fetches the canonical bank ranges.
-    if (financeAccountWorkspaceIncomplete(state.financeSummary)) {
+    if (state.financeSummary?.bankWorkspaceReadVerified !== true) {
       const workspace = await fetchFinanceBankWorkspace(12000);
       state.financeSummary = {
         ...state.financeSummary,
@@ -10070,6 +10070,10 @@ function openBudgetDetail(options = {}) {
   const hasLiquidityRows = Array.isArray(monthly?.liquidityAccounts) && monthly.liquidityAccounts.length > 0;
   const hasBudgetRows = Array.isArray(monthly?.categories) && monthly.categories.length > 0;
   const accountWorkspaceIncomplete = financeAccountWorkspaceIncomplete(finance);
+  // Optional budget ranges are not proof that the separate canonical banking
+  // source was read. Always verify it once when opening private Finance.
+  const bankReadNeedsVerification = canReadPrivateFinanceBankWorkspace() &&
+    finance.bankWorkspaceReadVerified !== true;
   const bankCatalog = Array.isArray(finance.bankWorkspaceAccounts) ? finance.bankWorkspaceAccounts : [];
   const bankHistory = Array.isArray(finance.accountTransactions) ? finance.accountTransactions : [];
   if (!monthly && finance.bankWorkspaceReadVerified === true) {
@@ -10085,7 +10089,7 @@ function openBudgetDetail(options = {}) {
     document.querySelector("#dialog-body").innerHTML =
       '<p class="account-transactions-empty">Datos bancarios pendientes de cargar desde la fuente privada; no se muestran importes supuestos.</p>';
     if (!dialog.open) dialog.showModal();
-    if (!options.skipRefresh && canReadPrivateFinanceBankWorkspace() && !financeBudgetRefreshInFlight) {
+    if (bankReadNeedsVerification && !options.skipRefresh && !financeBudgetRefreshInFlight) {
       refreshFinanceAccountWorkspace(dialog, { replaceMissingView: true });
     }
     return;
@@ -10135,7 +10139,7 @@ function openBudgetDetail(options = {}) {
   if (!dialog.open) dialog.showModal();
   // Budget categories can be available even when optional bank ranges were
   // missing. Previously this path rendered without ever requesting recovery.
-  if (accountWorkspaceIncomplete && !options.skipRefresh && canReadPrivateFinanceBankWorkspace() && !financeBudgetRefreshInFlight) {
+  if (bankReadNeedsVerification && !options.skipRefresh && !financeBudgetRefreshInFlight) {
     refreshFinanceAccountWorkspace(dialog);
   }
 }
