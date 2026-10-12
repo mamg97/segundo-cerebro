@@ -104,3 +104,14 @@ test("desktop Looks and Prendas history use native table rows, not mixed block/g
   // The independent Safari-safe mobile cards still own phone layouts.
   assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.look-history-table-wrap \{\s*display: none !important/);
 });
+
+test("production layout diagnostics contain only allowlisted profile names and boolean flags", () => {
+  assert.match(audit, /\[AUDIT_LOOK_LAYOUT\]/);
+  assert.match(audit, /\["desktop-wide", "desktop", "tablet"\]\.includes\(label\) \? label : "other"/);
+  assert.match(audit, /geometry\.headerBeforeRows \? "1" : "0"/);
+  assert.match(audit, /geometry\.nativeRows \? "1" : "0"/);
+  assert.match(audit, /geometry\.alignedColumns \? "1" : "0"/);
+  assert.match(audit, /geometry\.mobileListHidden \? "1" : "0"/);
+  assert.match(audit, /assertCheck\(\s*nativeLayoutOk,/);
+  assert.doesNotMatch(audit, /\[AUDIT_LOOK_LAYOUT\].*outerHTML/);
+});
