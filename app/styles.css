@@ -26715,3 +26715,35 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   #menu-panel .weekly-menu-day-summary-heading { gap: 3px 7px; }
   #menu-panel .weekly-menu-day-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* v0.44.14 — read-only light-source recovery for historical menus */
+.weekly-menu-degraded {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--amber);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.weekly-menu-degraded button,
+.weekly-menu-week-error button {
+  padding: 5px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--blue);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.weekly-menu-degraded button:focus-visible,
+.weekly-menu-week-error button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
