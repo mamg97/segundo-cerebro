@@ -96,3 +96,15 @@ test("finance state diagnostics expose only boolean-derived fixed codes",()=>{
   assert.match(auditor, /emitFinanceDomDiagnostic\(value, initialFinanceTabCount\)/);
   assert.doesNotMatch(auditor, /console\.(?:error|log)\([^)]*accountId\)/);
 });
+
+test("Health and visual failures expose actionable fixed codes, never private labels", () => {
+  assert.equal(safeAuditDiagnosticCode("Salud · Gym inventario coincide con las variantes GIF vigentes"), "HEALTH_GYM_GIF_INVENTORY");
+  assert.equal(safeAuditDiagnosticCode("Salud · API expone histórico de balance calórico de 30 días"), "HEALTH_CALORIE_HISTORY");
+  assert.equal(safeAuditDiagnosticCode("Salud · Resumen weight coincide con Home"), "HEALTH_OVERVIEW_PARITY_WEIGHT");
+  assert.equal(safeAuditDiagnosticCode("Salud · Resumen patient@example.com coincide con Home"), "CHECK_UNMAPPED");
+  const safe = safeAuditDiagnosticCode("Visual mobile usuario@example.com · imágenes cargadas");
+  assert.equal(safe, "VISUAL_IMAGES_FAILED");
+  assert.doesNotMatch(safe, /usuario|example/);
+  assert.match(auditor, /sheetLink\.waitFor\(\{ state: "visible", timeout: 16000 \}\)/);
+  assert.match(auditor, /timeout: 16000/);
+});
