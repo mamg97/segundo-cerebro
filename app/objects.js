@@ -294,7 +294,7 @@ function lookUsageHistoryView(payload,mode="looks",sort="recent") {
   const dateCells=(row)=>row.dates.length
     ? '<div class="look-history-dates">'+row.dates.map(date=>'<span>'+e(d(date))+'</span>').join("")+'</div>'
     : '<span class="look-history-none">Sin fechas</span>';
-  const tableRows=rows.map(row=>'<tr data-history-has-date="'+(row.latestDate?"1":"0")+'" data-history-latest="'+e(row.latestDate||"")+'>'+
+  const tableRows=rows.map(row=>'<tr data-history-has-date="'+(row.latestDate?"1":"0")+'" data-history-latest="'+e(row.latestDate||"")+'">'+
     '<td class="look-history-thumb-cell"><button class="look-history-thumb" type="button" aria-label="Abrir '+e(row.name)+'" '+(isGarments?'data-garment-history-open="'+e(row.id)+'"':'data-look-history-open="'+e(row.id)+'"')+'>'+usageHistoryThumbnail(row,payload)+'</button></td>'+
     '<td class="look-history-entity-cell"><button class="look-history-entity" type="button" '+(isGarments?'data-garment-history-open="'+e(row.id)+'"':'data-look-history-open="'+e(row.id)+'"')+'><strong>'+e(row.name)+'</strong><small>'+e(row.detail||"Sin detalle")+'</small></button></td>'+
     '<td class="look-history-last-cell" data-label="Último uso"><strong>'+e(row.latestDate?d(row.latestDate):"—")+'</strong></td>'+
@@ -304,7 +304,7 @@ function lookUsageHistoryView(payload,mode="looks",sort="recent") {
     '</tr>').join("");
   const mobileCards=rows.map(row=>{
     const openAttrs=isGarments?'data-garment-history-open="'+e(row.id)+'"':'data-look-history-open="'+e(row.id)+'"';
-    return '<article class="look-history-mobile-card" data-history-has-date="'+(row.latestDate?"1":"0")+'" data-history-latest="'+e(row.latestDate||"")+'>'+
+    return '<article class="look-history-mobile-card" data-history-has-date="'+(row.latestDate?"1":"0")+'" data-history-latest="'+e(row.latestDate||"")+'">'+
       '<button class="look-history-mobile-main" type="button" '+openAttrs+'>'+
         '<span class="look-history-mobile-thumb">'+usageHistoryThumbnail(row,payload)+'</span>'+
         '<span class="look-history-mobile-copy"><strong>'+e(row.name)+'</strong><small>'+e(row.detail||"Sin detalle")+'</small></span>'+
@@ -566,3 +566,4 @@ export async function openObjectsDetail(initialTab = "summary") {
     document.querySelector("#objects-retry")?.addEventListener("click",openObjectsDetail);
   }
 }
+

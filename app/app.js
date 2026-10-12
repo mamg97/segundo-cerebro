@@ -3,7 +3,7 @@ import { mockState } from "../core/mock-state.js";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady } from "./finance-workspace-readiness.js?v=0.44.20";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.22";
-import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
+import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.44.23";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
@@ -10836,3 +10836,4 @@ function escapeHtml(value) {
 }
 
 init();
+

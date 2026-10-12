@@ -1,3 +1,10 @@
+## ORGANIZADOR 15 · Historial Looks/Prendas: HTML mal cerrado · 12/10/2026
+
+- Causa reproducida en el renderer real: faltaba la comilla final de `data-history-latest` en `<tr>` y en la tarjeta móvil `<article>`. El parser absorbía la primera celda/botón en el atributo y el navegador desplazaba las miniaturas fuera de sus filas. Los cambios CSS #416/#417 no podían reparar esa estructura.
+- Corrección mínima: cerrar ambos atributos, conservar tabla nativa desktop/tablet y tarjetas móviles vigentes, versionar `objects.js` y el entrypoint como `0.44.23`. Sin nuevos estilos, fuentes, consultas o cambios canónicos.
+- Regresión `app/look-history-markup.test.mjs`: ejecuta el renderer real con fixtures inequívocos y parsea el HTML con la biblioteca estándar de Python; cubre ambas vistas, cuatro ordenaciones, filas con/sin fecha, seis celdas, thumbnail dentro de la celda y botón dentro de la tarjeta, y vacío. Antes del fix fallaban los ocho casos con filas; después pasan 10/10 y 6/6 pruebas de detalle existentes.
+- Pendiente operativo al preparar la PR: CI completo, merge, deploy privado y auditoría postdeploy. No declarar sana toda la aplicación por esta reparación; Finanzas y las incidencias ajenas conservan su propio diagnóstico. No se guardan capturas ni inventario privado en Git.
+
 ## Estado auditoría · 12/10/2026 · Finance, imágenes D1, PR #409–#414
 
 - Cierre integral PENDIENTE. Exige dos auditorías Chromium independientes y completas con 0 fallos y 0 HTTP 5xx, y trazabilidad privada canónica.
@@ -2589,3 +2596,4 @@ Antes de cualquier cambio:
 - La Home puede usar como fallback de solo lectura una fila `MenuSemanal.estado=consumido` cuando tenga `recipe_id` o `food_id` exacto y esa identidad no exista en `Registro`.
 - El fallback no escribe durante GET, no sustituye la obligación de registrar el consumo y no se aplica a filas sin identidad exacta.
 - Motivo: el 06/10/2026 el salmón con ñoquis estaba consumido en MenuSemanal pero faltaba en Registro; la Home mostraba 1296 kcal / 92 g en vez de 2062 kcal / 133 g.
+
