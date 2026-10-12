@@ -12,3 +12,11 @@ export function financeAccountWorkspaceIncomplete(financeSummary) {
   if (financeSummary?.bankWorkspaceReadVerified === true) return false;
   return !hasAccounts || !hasMovements;
 }
+
+export function financeBankWorkspaceReady(financeSummary) {
+  // A partial optional range is not enough for interactive bank tabs:
+  // render them only after both ranges are present or the dedicated source
+  // has explicitly verified that an empty range is genuine.
+  return financeSummary?.bankWorkspaceReadVerified === true ||
+    !financeAccountWorkspaceIncomplete(financeSummary);
+}
