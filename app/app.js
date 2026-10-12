@@ -1,6 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
-import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.16";
+import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.17";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.22";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
@@ -10009,11 +10009,17 @@ function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } =
   if (privateModeKind !== "remote" || financeBudgetRefreshInFlight) return;
   financeBudgetRefreshInFlight = true;
   void (async () => {
-    // The full budget fetch remains necessary only when it has never loaded.
+    // A failed budget is independent of the two canonical bank history tabs.
+    // Continue to the smaller bank-only reader if the full scope is unavailable.
     if (!state.financeSummary?.monthlyBudget) {
-      const payload = await fetchStateScope("finance", 12000);
-      if (!payload?.financeSummary?.monthlyBudget) throw new Error("FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
-      state.financeSummary = payload.financeSummary;
+      try {
+        const payload = await fetchStateScope("finance", 12000);
+        if (payload?.financeSummary?.monthlyBudget) {
+          state.financeSummary = payload.financeSummary;
+        }
+      } catch {
+        // The banking area may still be usable; never invent budget values.
+      }
     }
     if (financeAccountWorkspaceIncomplete(state.financeSummary)) {
       const workspace = await fetchFinanceBankWorkspace(12000);
@@ -10055,7 +10061,18 @@ function openBudgetDetail(options = {}) {
   const hasLiquidityRows = Array.isArray(monthly?.liquidityAccounts) && monthly.liquidityAccounts.length > 0;
   const hasBudgetRows = Array.isArray(monthly?.categories) && monthly.categories.length > 0;
   const accountWorkspaceIncomplete = financeAccountWorkspaceIncomplete(finance);
-  if (!monthly || (!hasAccountRows && !hasLiquidityRows && !hasBudgetRows)) {
+  const bankCatalog = Array.isArray(finance.bankWorkspaceAccounts) ? finance.bankWorkspaceAccounts : [];
+  const bankHistory = Array.isArray(finance.accountTransactions) ? finance.accountTransactions : [];
+  if (!monthly && finance.bankWorkspaceReadVerified === true) {
+    const workspace = renderAccountTransactionsWorkspace(bankHistory, bankCatalog, "EUR");
+    document.querySelector("#dialog-body").innerHTML = workspace
+      ? '<p class="account-transactions-empty">Presupuesto temporalmente no disponible. Se muestran únicamente los registros bancarios verificados; no se presentan saldos ni importes presupuestarios supuestos.</p>' + workspace
+      : '<p class="account-transactions-empty">La fuente bancaria se ha consultado correctamente, pero no contiene cuentas ni movimientos.</p>';
+    initializeAccountTransactionTabs(document.querySelector("#dialog-body"));
+    if (!dialog.open) dialog.showModal();
+    return;
+  }
+  if (!monthly || (!hasAccountRows && !hasLiquidityRows && !hasBudgetRows && !bankCatalog.length)) {
     document.querySelector("#dialog-body").innerHTML =
       '<p class="account-transactions-empty">Datos bancarios pendientes de cargar desde la fuente privada; no se muestran importes supuestos.</p>';
     if (!dialog.open) dialog.showModal();
@@ -10068,8 +10085,7 @@ function openBudgetDetail(options = {}) {
   const currency = monthly.currency || "EUR";
   const categories = Array.isArray(monthly.categories) ? monthly.categories : [];
   const liquidityAccounts = Array.isArray(monthly.liquidityAccounts) ? monthly.liquidityAccounts : [];
-  const accountTransactions = Array.isArray(finance.accountTransactions) ? finance.accountTransactions : [];
-  const bankCatalog = Array.isArray(finance.bankWorkspaceAccounts) ? finance.bankWorkspaceAccounts : [];
+  const accountTransactions = bankHistory;
   const workspaceAccounts = bankCatalog.length ? bankCatalog : liquidityAccounts;
   const groups = ["Común", "Miguel", "Andrea"];
 
@@ -10086,7 +10102,7 @@ function openBudgetDetail(options = {}) {
   const andreaNet = firstFinite(monthly.andreaNet);
   const jointNet = firstFinite(monthly.jointNet);
 
-  document.querySelector("#dialog-body").innerHTML = (categories.length || liquidityAccounts.length || accountTransactions.length)
+  document.querySelector("#dialog-body").innerHTML = (categories.length || liquidityAccounts.length || accountTransactions.length || bankCatalog.length)
     ? `
       <div class="budget-net-strip">
         <div><span>Libre Miguel</span><strong>${miguelNet === null ? "—" : formatMoney(miguelNet, currency)}</strong></div>
