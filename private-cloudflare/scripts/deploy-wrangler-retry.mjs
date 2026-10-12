@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // A narrow retry is justified only for transient errors from Cloudflare's
@@ -50,7 +51,7 @@ async function main() {
     });
     const output = String(execution.stdout || "") + "\n" +
       String(execution.stderr || "") + "\n" + String(execution.error?.code || "");
-    const errorClass = deploymentErrorClass(execution.status, output);
+    const errorClass = deploymentErrorClass(execution.error ? null : execution.status, output);
     if (execution.status === 0 && !execution.error) {
       process.stdout.write("DEPLOY_OK config=" + config + " attempt=" + attempt + "\n");
       return;
@@ -68,7 +69,7 @@ async function main() {
   }
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   main().catch(() => {
     process.stderr.write("DEPLOY_WRAPPER_FAILED\n");
     process.exitCode = 1;
