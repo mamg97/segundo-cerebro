@@ -1253,9 +1253,22 @@ async function auditLookDetail(label) {
         });
         return { headerBeforeRows, thumbnailsInsideRows, nativeRows, alignedColumns, mobileListHidden };
       });
+      const nativeLayoutOk = geometry.headerBeforeRows && geometry.thumbnailsInsideRows &&
+        geometry.nativeRows && geometry.alignedColumns && geometry.mobileListHidden;
+      // Finite, safe diagnostic metadata only. Never emit private URLs, image
+      // paths, object identifiers, account data or underlying DOM HTML.
+      const layoutProfile = ["desktop-wide", "desktop", "tablet"].includes(label) ? label : "other";
+      const layoutBits = [
+        geometry.headerBeforeRows ? "1" : "0",
+        geometry.thumbnailsInsideRows ? "1" : "0",
+        geometry.nativeRows ? "1" : "0",
+        geometry.alignedColumns ? "1" : "0",
+        geometry.mobileListHidden ? "1" : "0"
+      ].join("");
+      console.log("[AUDIT_LOOK_LAYOUT] " + (nativeLayoutOk ? "PASS" : "FAIL") +
+        " profile=" + layoutProfile + " flags=" + layoutBits);
       assertCheck(
-        geometry.headerBeforeRows && geometry.thumbnailsInsideRows &&
-        geometry.nativeRows && geometry.alignedColumns && geometry.mobileListHidden,
+        nativeLayoutOk,
         `Visual ${label} · Historial de Looks miniaturas alineadas por fila`,
         `cabecera=${geometry.headerBeforeRows} filas=${geometry.thumbnailsInsideRows} native=${geometry.nativeRows} columnas=${geometry.alignedColumns} movilOculto=${geometry.mobileListHidden}`
       );
