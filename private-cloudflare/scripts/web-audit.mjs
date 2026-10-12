@@ -16,6 +16,9 @@ import {
 import { evaluateMidasWorkflowRuns } from "../src/midas-health.js";
 
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
+// Keep this number aligned with the curated, variant-specific GIF inventory.
+// CI checks the real frontend inventory against this audit contract.
+const EXPECTED_CURATED_GYM_GIFS = 14;
 const token = process.env.AUDIT_TOKEN;
 const getAuditToken = createAuditOidcTokenProvider({
   initialToken: token,
@@ -2246,17 +2249,17 @@ try {
             .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("src")).filter(Boolean))
             .catch(() => []);
           assertCheck(
-            new Set(localGifUrls).size === 12,
-            "Salud · Gym ofrece doce GIF por ejercicio, sin duplicar variantes",
+            new Set(localGifUrls).size === EXPECTED_CURATED_GYM_GIFS,
+            "Salud · Gym ofrece GIF propios por variante, sin duplicados",
             "n=" + new Set(localGifUrls).size
           );
           const mediaMatrix = panel.locator("#gym-media-inventory");
           assertCheck(
-            await mediaMatrix.locator("tbody tr").count() === 12,
-            "Salud · Gym dispone tabla con doce ejercicios, GIF y vídeo"
+            await mediaMatrix.locator("tbody tr").count() === EXPECTED_CURATED_GYM_GIFS,
+            "Salud · Gym inventario coincide con las variantes GIF vigentes"
           );
           assertCheck(
-            await mediaMatrix.locator(".gym-media-gif-state").count() === 12,
+            await mediaMatrix.locator(".gym-media-gif-state").count() === EXPECTED_CURATED_GYM_GIFS,
             "Salud · Gym distingue GIF realmente publicado de vídeo verificado"
           );
           if (libraryCount > 0) {

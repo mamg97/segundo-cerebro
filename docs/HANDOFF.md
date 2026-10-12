@@ -1,3 +1,9 @@
+## ORGANIZADOR 14 · Contrato auditor Gym: 14 GIF reales · 12/10/2026
+
+- El frontend `GYM_CUSTOM_ANIMATIONS` y la matriz de Biblioteca contienen **14** ilustraciones específicas, pero `private-cloudflare/scripts/web-audit.mjs` seguía exigiendo **12** URLs de GIF, filas y estados. Es un desfase verificable de contrato que genera falsos fallos incluso con las 14 ilustraciones presentes.
+- Rama de corrección aislada: auditor exige 14 en los tres checks, mediante una sola constante `EXPECTED_CURATED_GYM_GIFS`. Nueva prueba compara el inventario real de `app/app.js` con esa constante, impide claves y GIF duplicados y verifica los tres usos. Añadida al CI de la app privada.
+- Esta corrección **no** afirma que los vídeos wger se reproduzcan, ni oculta imágenes rotas o fallos del Worker. Se requiere CI verde, despliegue, auditoría postdespliegue y prueba funcional antes de clasificar Gym como verde. Ninguna modificación de gimnasio canónico, assets, Plan, D1 o Sheets.
+
 ## ORGANIZADOR 14 · Imágenes privadas: retirar DDL de lecturas · 12/10/2026
 
 - Auditoría privada post-PR #388 [run 38244056714](https://github.com/mamg97/segundo-cerebro/actions/runs/38244056714): 928 checks, 30 fallos, con `HEALTH_OVERVIEW_HTTP_502 count=1` y `LOOK_IMAGE_HTTP_502 count=3`. La causa exacta de estos fallos no está demostrada; no equiparar mejoras de infraestructura a reparación verificada.
