@@ -18,13 +18,13 @@ No modifica fuentes privadas ni corrige datos para conseguir un test verde.
 El mismo workflow tiene cuatro vías de entrada:
 
 1. **horaria primaria:** minuto 17 de cada hora;
-2. **respaldo de scheduler:** minuto 42 de cada hora; ejecuta Chromium solo si GitHub no creó la ejecución primaria durante los 40 minutos anteriores;
+2. **respaldo de scheduler:** minuto 42 de cada hora; ejecuta Chromium salvo que una ejecución reciente tenga el step real de navegador en curso o completado correctamente;
 3. **post-deploy:** después de `Deploy private Cloudflare app` cuando ese deploy termina en `success`;
 4. **manual:** `workflow_dispatch`.
 
 El respaldo no es un segundo workflow. Es una segunda oportunidad del mismo `Audit production web` para reducir el riesgo de eventos `schedule` retrasados o descartados por GitHub Actions.
 
-Un run de respaldo puede terminar correctamente sin ejecutar Chromium cuando detecta que la ejecución primaria ya existe. Para saber si hubo una auditoría completa hay que comprobar que el step **Navigate and audit production** terminó en `success`, no basta con mirar solo la conclusión global del workflow.
+Un run de respaldo puede terminar correctamente sin ejecutar Chromium cuando verifica que una auditoría completa ya está cubierta. Un heartbeat, un workflow verde con Chromium omitido o una ejecución fallida no suprimen el respaldo. Para saber si hubo una auditoría completa correcta hay que comprobar que el step **Navigate and audit production** terminó en `success`, no basta con mirar solo la conclusión global del workflow.
 
 ## Umbral de vigilancia
 
@@ -76,7 +76,7 @@ Como mínimo:
 - **MIDAS Competition Health**:
   - `/api/midas` responde y conserva los diarios esperados;
   - las nueve estrategias diarias mantienen sesión registrada;
-  - el genético prospectivo privado está enlazado y fechado;
+  - el genético prospectivo privado está enlazado y fechado; una campaña nueva puede permanecer `programada_sin_diario` solo hasta su `first_session_due_at` explícito, nunca indefinidamente;
   - workflows públicos `paper`, `TFM`, `Capital Cycle`, `Weekly ML` y `TFG` se contrastan contra su cadencia real;
   - cada ventana debida se evalúa como un ciclo primario+respaldo: basta una ejecución `schedule` válida para cubrirla; solo queda roja si no existe intento debido o si ninguno de los intentos del ciclo termina correctamente;
   - tras un ciclo verde, el auditor exige que aparezcan los diarios correspondientes y no acepta “esperando primera sesión” como sustituto de una ventana realmente fallida;

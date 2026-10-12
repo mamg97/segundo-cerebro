@@ -10,4 +10,8 @@ test("the hourly auditor must not cancel an active full browser audit", () => {
   assert.match(workflow, /- cron: "42 \* \* \* \*"/);
   assert.match(workflow, /Primary hourly audit already exists; backup slot stays lightweight/);
   assert.match(workflow, /name: Navigate and audit production/);
+  assert.match(workflow, /actions\/runs\/\$\{run\.id\}\/jobs\?per_page=100/);
+  assert.match(workflow, /step\.name === "Navigate and audit production"/);
+  assert.match(workflow, /reason=\$\{fullAuditCovered \? "full-audit-covered" : "full-audit-missing"\}/);
+  assert.doesNotMatch(workflow, /reason=\$\{primarySeen \? "primary-seen" : "primary-missed"\}/);
 });
