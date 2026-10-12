@@ -390,6 +390,7 @@ Antes del primer deploy automático desde GitHub, configura una sola vez:
    - repositorio `mamg97/segundo-cerebro`;
    - `Settings → Secrets and variables → Actions`;
    - crea `CLOUDFLARE_API_TOKEN`;
+   - crea `CLOUDFLARE_D1_API_TOKEN` con permiso de edición D1 para aplicar migraciones versionadas;
    - crea `CLOUDFLARE_ACCOUNT_ID`.
 
 Nunca escribir estos valores en Git, documentación, issues, logs ni chats.
@@ -399,6 +400,7 @@ La app privada puede desplegarse automáticamente con GitHub Actions mediante:
 
 - `.github/workflows/deploy-private-cloudflare.yml`
 - secret `CLOUDFLARE_API_TOKEN`
+- secret `CLOUDFLARE_D1_API_TOKEN` para migraciones D1
 - secret `CLOUDFLARE_ACCOUNT_ID`
 
 El workflow se activa en cambios relevantes de `main`, valida el JavaScript, ejecuta `npm run build`, verifica que el bundle no incluya `.private` y despliega con:
@@ -408,7 +410,7 @@ npx wrangler deploy --config wrangler.bootstrap.jsonc
 npx wrangler deploy --config wrangler.health-ingest.jsonc
 ```
 
-No guardar nunca el token de Cloudflare en Git. Si faltan los secretos, el workflow valida y construye pero omite el despliegue.
+No guardar nunca los tokens de Cloudflare en Git. El token habitual de Workers no necesita permisos D1. Si falta `CLOUDFLARE_D1_API_TOKEN`, el workflow bloquea la publicación antes de desplegar para no ejecutar código contra un esquema incompleto.
 
 
 ## Despensa
