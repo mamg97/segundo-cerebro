@@ -45,7 +45,7 @@ test("partial optional ranges require explicit verification before treating empt
 
 test("partial budget path schedules one bounded canonical refresh and labels absent data", () => {
   assert.match(app, /const accountWorkspaceIncomplete = financeAccountWorkspaceIncomplete\(finance\)/);
-  assert.match(app, /if \(accountWorkspaceIncomplete && !options\.skipRefresh && privateModeKind === "remote" && !financeBudgetRefreshInFlight\)/);
+  assert.match(app, /if \(accountWorkspaceIncomplete && !options\.skipRefresh && canReadPrivateFinanceBankWorkspace\(\) && !financeBudgetRefreshInFlight\)/);
   assert.match(app, /refreshFinanceAccountWorkspace\(dialog\)/);
   assert.match(app, /await fetchFinanceBankWorkspace\(12000\)/);
   assert.match(app, /openBudgetDetail\(\{ skipRefresh: true \}\)/);
