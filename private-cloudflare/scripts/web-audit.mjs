@@ -1336,6 +1336,9 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
     const backendFailure = sourcePath && networkFailures.some((entry) =>
       entry.includes(`:${sourcePath}`) || entry.includes(`:${sourcePath}:`)
     );
+    if (options.htmlDataName === "account-transactions-tab") {
+      await emitFinanceDomDiagnostic("", 0);
+    }
     if (backendFailure) {
       info(label + " · pestañas no renderizadas", `backend ${sourcePath} ya clasificado como fallo de red`);
     } else {
@@ -1497,6 +1500,22 @@ try {
     deferredApiFailures.set("/api/projects", { name: "API de Proyectos", detail: `HTTP ${projectsProbe.status}` });
     info("API de Proyectos · pendiente de revalidación", `HTTP ${projectsProbe.status}`);
   }
+
+  // Bank account navigation has a separate read source from Delta and the
+  // full Finance summary. Do not infer its health from either of those APIs.
+  const bankSourceProbe = await probeApi("/api/finance/accounts", "Fuente bancaria privada", { attempts: 1 });
+  const bankSourcePayload = bankSourceProbe.body;
+  const bankSourceReadable = bankSourceProbe.ok && bankSourcePayload?.ok === true &&
+    Array.isArray(bankSourcePayload?.accounts) && Array.isArray(bankSourcePayload?.transactions);
+  const bankSourcePopulated = bankSourceReadable &&
+    (bankSourcePayload.accounts.length > 0 || bankSourcePayload.transactions.length > 0);
+  const bankSourceCode = !bankSourceReadable ? "SOURCE_UNAVAILABLE"
+    : bankSourcePopulated ? "SOURCE_WITH_RECORDS" : "SOURCE_EMPTY";
+  assertCheck(
+    bankSourceReadable && bankSourcePopulated,
+    "Finanzas · workspace bancario conectado al Sheet canónico",
+    bankSourceCode
+  );
 
   const deltaProbe = await probeApi("/api/finance/delta?limit=1", "API Delta de Finanzas");
   if (deltaProbe.ok && deltaProbe.body?.ok === true) {
@@ -1884,6 +1903,7 @@ try {
       // A missing workspace still fails after this bounded readiness window.
       const sheetLinkVisible = await sheetLink.waitFor({ state: "visible", timeout: 16000 })
         .then(() => true).catch(() => false);
+      if (!sheetLinkVisible) await emitFinanceDomDiagnostic("", 0);
       assertCheck(sheetLinkVisible, "Finanzas · enlace al Sheet de movimientos visible");
       if (sheetLinkVisible) {
         const href = await sheetLink.getAttribute("href");
