@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mjs";
 import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
@@ -97,10 +98,37 @@ const context = await browser.newContext({
 const page = await context.newPage();
 const auditOrigin = new URL(baseUrl).origin;
 
+const immutableImageCache = createAuditImmutableImageCache();
 await page.route(`${auditOrigin}/**`, async (route) => {
+  const request = route.request();
   const freshToken = await getAuditToken();
-  const headers = { ...route.request().headers(), authorization: `Bearer ${freshToken}` };
-  await route.continue({ headers });
+  const headers = { ...request.headers(), authorization: `Bearer ${freshToken}` };
+  if (!immutableImageCache.canHandle(request.url(), auditOrigin, request.method())) {
+    await route.continue({ headers });
+    return;
+  }
+
+  const cached = immutableImageCache.get(request.url());
+  if (cached) {
+    await route.fulfill({ status: 200, body: cached.body, headers: cached.headers });
+    return;
+  }
+
+  // The first unique, versioned image is fetched from the real authenticated
+  // Worker. Never cache a failure or non-immutable/private response.
+  try {
+    const live = await route.fetch({ headers, timeout: 25000 });
+    if (live.status() === 200) {
+      const body = await live.body();
+      immutableImageCache.put(request.url(), live.status(), live.headers(), body);
+      await route.fulfill({ response: live, body });
+    } else {
+      await route.fulfill({ response: live });
+    }
+  } catch {
+    // Fail closed: a failed first read remains a real audit network failure.
+    await route.abort("failed");
+  }
 });
 
 page.on("pageerror", (error) => browserErrors.push("pageerror:" + String(error?.message || error)));
@@ -2702,6 +2730,8 @@ try {
   if (resourceConsoleErrors.length && networkFailures.length) {
     info("Errores de recurso ya cubiertos por red", `n=${resourceConsoleErrors.length}`);
   }
+  // Operational hint only; do not print URLs, look IDs or image bytes.
+  console.log("[AUDIT_MEDIA_CACHE] " + (immutableImageCache.stats().hits > 0 ? "REUSED" : "NO_REUSE"));
   if (networkFailures.length) {
     const families = new Map();
     for (const entry of networkFailures) {

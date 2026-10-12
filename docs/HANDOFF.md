@@ -1,3 +1,10 @@
+## ORGANIZADOR 14 · Auditoría visual: caché efímera de imágenes inmutables · 12/10/2026
+
+- La auditoría posterior a PR #390, [run 38247014384](https://github.com/mamg97/segundo-cerebro/actions/runs/38247014384), tuvo 927 checks/13 fallos y **27 respuestas HTTP 502** (19 de imágenes de Looks, además de varias rutas de Salud/Gimnasio). Contrasta con run 38246614256 (946 checks/8 fallos y ningún 502): la estabilidad **no está resuelta**.
+- Hallazgo del auditor: toda petición pasa por `page.route` para renovar el OIDC. Playwright desactiva la caché HTTP cuando hay routing; por ello se solicitan repetidamente imágenes privadas que el Worker marca como `private, max-age=31536000, immutable`. Es una carga artificial, especialmente sobre D1/Workers Free, aunque no se ha probado que explique todos los 502.
+- Corrección propuesta: caché **solo en RAM del job**, acotada a 4 MiB por imagen/24 MiB total. Solo considera rutas GET same-origin de imágenes `processed`, `thumbnail` y Looks con versión canónica, respuesta HTTP 200, Content-Type imagen y `Cache-Control: private, immutable`. **Primera lectura siempre real**, fallos HTTP/aborts nunca cacheados. El auditor sigue validando imágenes decodificadas y detectando errores 5xx. No se guardan bytes/URLs/IDs en GitHub, artifacts, disco ni logs.
+- CI prueba aislamiento, control de tamaño y que no se cachean errores ni fuentes externas. El primer éxito no se considera prueba de solución: exigir deploy y varias auditorías consecutivas sin 502 antes de cierre. Sin modificaciones de fotos, D1 ni Google Sheets.
+
 ## ORGANIZADOR 14 · Auditoría: readiness financiera y diagnósticos Salud · 12/10/2026
 
 - Después de la migración D1 #389, [run 38246614256](https://github.com/mamg97/segundo-cerebro/actions/runs/38246614256) completó 946 checks con **8 fallos**, frente a 30 fallos/928 checks anteriormente. **No registró respuestas 502**, ni `HEALTH_OVERVIEW_HTTP_502` ni `LOOK_IMAGE_HTTP_502` en esa ejecución. Es mejora verificable, no garantía de desaparición permanente.
