@@ -1354,6 +1354,10 @@ function healthWeightSummary(body = {}, selectedDate = localDateKey()) {
   };
 }
 
+// Last successfully fetched private Gym snapshot, shared by Home and Salud.
+// Session-local only: it never replaces the canonical /api/gym source.
+let homeGymSnapshot = null;
+
 function renderHomeGymSummary(healthData, gymData) {
   const summary = deriveGymTodaySummary(healthData, gymData);
   setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", summary.main, summary.detail);
@@ -1399,6 +1403,7 @@ async function renderHomeHealthCard() {
     if (!response.ok) throw new Error("HOME_HEALTH_" + response.status);
     const data = await response.json();
     const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
+    if (gymData) homeGymSnapshot = gymData;
 
     const consumed = data.nutritionSummary?.consumed || {};
     const nutritionGoal = data.nutritionObjective || {};
@@ -1453,7 +1458,7 @@ async function renderHomeHealthCard() {
     setHomeHealthUpdated("kcal", nutritionUpdatedAt, nutritionUpdateSource);
     setHomeHealthUpdated("protein", nutritionUpdatedAt, nutritionUpdateSource);
 
-    renderHomeGymSummary(data, gymData || {});
+    renderHomeGymSummary(data, gymData || homeGymSnapshot || {});
 
     const body = data.body || {};
     const weightSummary = healthWeightSummary(body, data.date || localDateKey());
@@ -2611,7 +2616,11 @@ async function loadHealthOverview(dateKey = localDateKey()) {
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
     const payload = await response.json();
     if (requestId !== healthOverviewRequestId || !panel?.isConnected) return;
-    renderHealthOverview(payload, {});
+    // Reuse the last successful private Gym source from Home or Gym panel.
+    // Avoid a second /api/gym request during Summary startup (lazy-load rule).
+    const canonicalGym = gymPanelData || homeGymSnapshot || {};
+    renderHealthOverview(payload, canonicalGym);
+    if (selected === today) renderHomeGymSummary(payload, canonicalGym);
     bindHealthDayNavigation(payload.date || selected);
     await loadHealthAdherenceOverview();
     if (requestId !== healthOverviewRequestId) return;

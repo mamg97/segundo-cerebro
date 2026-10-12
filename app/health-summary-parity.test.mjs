@@ -120,3 +120,16 @@ test("Health adherence lives inside Summary instead of a top-level tab", () => {
   assert.ok(loader.includes('loadHealthHistory(healthOverviewHistoryRange'));
   assert.ok(loader.indexOf("await loadHealthAdherenceOverview()") < loader.indexOf('loadHealthHistory(healthOverviewHistoryRange'));
 });
+
+test("Home and Salud reuse the canonical Gym snapshot without extra startup requests", () => {
+  assert.match(app, /let homeGymSnapshot = null/);
+  assert.match(app, /if \(gymData\) homeGymSnapshot = gymData/);
+  const start = app.indexOf("async function loadHealthOverview(");
+  const end = app.indexOf("function renderHealthCalorieBalance(", start);
+  const loader = app.slice(start, end);
+  assert.match(loader, /const canonicalGym = gymPanelData \|\| homeGymSnapshot \|\| \{\}/);
+  assert.match(loader, /renderHealthOverview\(payload, canonicalGym\)/);
+  assert.match(loader, /if \(selected === today\) renderHomeGymSummary\(payload, canonicalGym\)/);
+  assert.doesNotMatch(loader, /fetch\("\/api\/gym"/);
+  assert.doesNotMatch(loader, /renderHealthOverview\(payload, \{\}\)/);
+});

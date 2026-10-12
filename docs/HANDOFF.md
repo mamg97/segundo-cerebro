@@ -1,3 +1,11 @@
+## ORGANIZADOR 14 · Cierre de los dos fallos Gym tras recuperación de deploy · 12/10/2026
+
+- [Run completo 38256572585](https://github.com/mamg97/segundo-cerebro/actions/runs/38256572585): migración D1 + Worker principal + cinco Workers auxiliares correctos tras PR #397; ya no hay falso verde por skipped.
+- [Auditoría postdeploy 38256740228](https://github.com/mamg97/segundo-cerebro/actions/runs/38256740228): **1022 checks / 2 fail**, `HEALTH_OVERVIEW_PARITY_GYM` y `HEALTH_GYM_DETAIL_MEDIA`; **sin 502 registrados en esta ejecución**. Una auditoría no prueba estabilidad histórica; repetir con flujos completos y no modificar ninguna fuente canónica.
+- Causa 1 confirmada en frontend: Home construía Gym con `/api/gym`, pero `loadHealthOverview` pasaba siempre `{}` a `renderHealthOverview`, forzando discrepancia. Salud ahora reutiliza el último snapshot privado exitoso que Home o el panel Gym ya cargaron y, al mostrar **hoy**, refresca el indicador de Home desde ese mismo snapshot. Fechas históricas no pisan Home. **No añade lecturas de Gym ni quita lazy loading**. Test garantiza la correspondencia.
+- Causa 2 confirmada en auditor: contaba todos los selectores `.gym-exercise-hero-media` de la ficha, incluyendo el vídeo verificado de wger que se muestra deliberadamente como suplemento a un GIF principal. Ahora limita el conteo de **hero principal** a hijos directos del contenedor de medios y conserva la exigencia de exactamente uno; el vídeo wger y la atribución se siguen verificando por separado.
+- Criterio de cierre: CI y despliegue completos + audit Chromium con **0 fallos y 0 errores 5xx**, seguido de una segunda ejecución independiente sin intermitencias. Mantener diagnóstico rojo ante nuevos 502 aunque un deploy haya sido correcto.
+
 ## ORGANIZADOR 14 · Bug de falso verde de despliegue · 12/10/2026
 
 - Detectado en [run 38254317985, attempt 2](https://github.com/mamg97/segundo-cerebro/actions/runs/38254317985): el job aparece `success`, pero todos los pasos de deploy privado fueron `skipped` tras un commit **solo documental** en `main`. Eso no acredita publicación alguna; auditores posteriores pueden suponer un despliegue sano.
