@@ -12,6 +12,15 @@ class FakeStatement {
   bind(...args) { return new FakeStatement(this.db, this.sql, args); }
 
   async first() {
+    if (this.sql.includes("SELECT chunk_index, data FROM objects_media_chunks")) {
+      const rows = this.db.chunks.get(this.args[0]) || [];
+      const result = rows.find((row) => row.chunk_index === this.args[1]) || null;
+      if (result && result.data.byteLength > this.db.maxResultBytes) {
+        throw new Error("D1_QUERY_RESULT_TOO_LARGE");
+      }
+      this.db.singleChunkReads++;
+      return result;
+    }
     if (this.sql.includes("SUM(size_bytes)")) {
       return { total_bytes: [...this.db.assets.values()].reduce((sum, item) => sum + Number(item.size_bytes || 0), 0) };
     }
@@ -29,6 +38,9 @@ class FakeStatement {
   async all() {
     if (this.sql.includes("SELECT chunk_index, data FROM objects_media_chunks")) {
       const items = this.db.chunks.get(this.args[0]) || [];
+      const total = items.reduce((n, row) => n + row.data.byteLength, 0);
+      if (total > this.db.maxResultBytes) throw new Error("D1_QUERY_RESULT_TOO_LARGE");
+      this.db.fullChunkReads++;
       return { results: items.slice().sort((a, b) => a.chunk_index - b.chunk_index) };
     }
     throw new Error("Unexpected all SQL: " + this.sql);
@@ -62,10 +74,13 @@ class FakeStatement {
 }
 
 class FakeD1 {
-  constructor({ maxBatchBlobBytes = Infinity } = {}) {
+  constructor({ maxBatchBlobBytes = Infinity, maxResultBytes = Infinity } = {}) {
     this.assets=new Map();
     this.chunks=new Map();
     this.maxBatchBlobBytes=maxBatchBlobBytes;
+    this.maxResultBytes=maxResultBytes;
+    this.singleChunkReads=0;
+    this.fullChunkReads=0;
   }
   prepare(sql){ return new FakeStatement(this,sql); }
   async batch(statements){
@@ -79,6 +94,24 @@ class FakeD1 {
     return statements.map(()=>({success:true}));
   }
 }
+
+test("D1 media reads stay within per-query BLOB result limits", async () => {
+  const limit = OBJECTS_D1_MEDIA_LIMITS.chunkBytes + 1024;
+  const db = new FakeD1({ maxResultBytes: limit });
+  const store = createObjectsD1MediaStore({ DB: db });
+  const key = "objects/obj-bounded-example-001/processed/12345678-abcd";
+  const bytes = new Uint8Array(OBJECTS_D1_MEDIA_LIMITS.chunkBytes * 3 + 11);
+  for (let i = 0; i < bytes.length; i++) bytes[i] = i % 239;
+  await store.put(key, bytes, { httpMetadata: { contentType: "image/jpeg" } });
+
+  // The previous .all() over all chunks would exceed this simulated
+  // D1 per-query response limit. Each indexed read remains within bounds.
+  const stored = await store.get(key, { stream: true });
+  const received = new Uint8Array(await new Response(stored.body).arrayBuffer());
+  assert.deepEqual(received, bytes);
+  assert.equal(db.fullChunkReads, 0);
+  assert.equal(db.singleChunkReads, 4);
+});
 
 test("D1 object media store chunks, reads and deletes a multi-megabyte asset", async () => {
   const db=new FakeD1();
