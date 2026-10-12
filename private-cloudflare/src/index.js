@@ -43,8 +43,8 @@ let googleTokenCache = { token: null, expiresAt: 0 };
 let financeCache = { value: null, expiresAt: 0 };
 let habitsCache = { value: null, expiresAt: 0 };
 let healthCache = { value: null, expiresAt: 0, date: null };
-let recipePhotoCache = { value: new Map(), expiresAt: 0 };
-let recipePreviewCache = { value: new Map(), expiresAt: 0 };
+let recipePhotoCache = { value: new Map(), expiresAt: 0, inFlight: null };
+let recipePreviewCache = { value: new Map(), expiresAt: 0, inFlight: null };
 let healthRecoveryImportStateReady = false;
 let stateEventMaintenanceNextAt = 0;
 let stateLegacyEventMigrationDone = false;
@@ -251,31 +251,42 @@ async function fetchHealthRecipePhotoMeta(env, recipeId) {
   const cleanRecipeId = String(recipeId || "").trim();
   if (!cleanRecipeId || cleanRecipeId.length > 160) return null;
 
+  // A cold cache is shared by concurrent image requests within this isolate.
+  // Never issue one full Sheets read for every recipe thumbnail in a grid.
   if (recipePhotoCache.expiresAt <= Date.now()) {
-    const token = await getGoogleAccessToken(env);
-    const range = encodeURIComponent("Recetas!A1:O1000");
-    const endpoint =
-      "https://sheets.googleapis.com/v4/spreadsheets/" +
-      encodeURIComponent(env.HEALTH_SHEET_ID) +
-      "/values/" + range +
-      "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
-    const response = await fetch(endpoint, { headers: { Authorization: "Bearer " + token } });
-    if (!response.ok) throw new Error("HEALTH_RECIPE_PHOTOS_" + response.status);
-    const rows = parseTableRows((await response.json())?.values || []);
-    recipePhotoCache = {
-      value: new Map(rows
-        .map((row) => ({
-          recipeId: String(row.recipe_id || "").trim(),
-          fileId: String(row.foto_drive_file_id || "").trim(),
-          mimeType: String(row.foto_mime_type || "").trim(),
-          updatedAt: String(row.foto_updated_at || row.updated_at || "").trim()
-        }))
-        .filter((item) => item.recipeId && item.fileId)
-        .map((item) => [item.recipeId, item])),
-      expiresAt: Date.now() + 60_000
-    };
+    if (!recipePhotoCache.inFlight) {
+      recipePhotoCache.inFlight = (async () => {
+        const token = await getGoogleAccessToken(env);
+        const range = encodeURIComponent("Recetas!A1:O1000");
+        const endpoint =
+          "https://sheets.googleapis.com/v4/spreadsheets/" +
+          encodeURIComponent(env.HEALTH_SHEET_ID) +
+          "/values/" + range +
+          "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
+        const response = await googleReadFetch(
+          endpoint,
+          { headers: { Authorization: "Bearer " + token } },
+          { attempts: 3, baseDelayMs: 180 }
+        );
+        if (!response.ok) throw new Error("HEALTH_RECIPE_PHOTOS_" + response.status);
+        const rows = parseTableRows((await response.json())?.values || []);
+        recipePhotoCache.value = new Map(rows
+          .map((row) => ({
+            recipeId: String(row.recipe_id || "").trim(),
+            fileId: String(row.foto_drive_file_id || "").trim(),
+            mimeType: String(row.foto_mime_type || "").trim(),
+            updatedAt: String(row.foto_updated_at || row.updated_at || "").trim()
+          }))
+          .filter((item) => item.recipeId && item.fileId)
+          .map((item) => [item.recipeId, item]));
+        recipePhotoCache.expiresAt = Date.now() + 60_000;
+      })();
+    }
+    const pending = recipePhotoCache.inFlight;
+    try { await pending; } finally {
+      if (recipePhotoCache.inFlight === pending) recipePhotoCache.inFlight = null;
+    }
   }
-
   return recipePhotoCache.value.get(cleanRecipeId) || null;
 }
 
@@ -285,40 +296,51 @@ async function fetchHealthRecipePreview(env, recipeId) {
   if (!cleanRecipeId || cleanRecipeId.length > 160) return null;
 
   if (recipePreviewCache.expiresAt <= Date.now()) {
-    const token = await getGoogleAccessToken(env);
-    const range = encodeURIComponent("RecipeMedia!A1:H500");
-    const endpoint =
-      "https://sheets.googleapis.com/v4/spreadsheets/" +
-      encodeURIComponent(env.HEALTH_SHEET_ID) +
-      "/values/" + range +
-      "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
-    const response = await googleReadFetch(
-      endpoint,
-      { headers: { Authorization: "Bearer " + token } },
-      { attempts: 3, baseDelayMs: 180 }
-    );
-    if (!response.ok) {
-      if (response.status === 400 || response.status === 404) return null;
-      throw new Error("HEALTH_RECIPE_MEDIA_" + response.status);
+    if (!recipePreviewCache.inFlight) {
+      recipePreviewCache.inFlight = (async () => {
+        const token = await getGoogleAccessToken(env);
+        const range = encodeURIComponent("RecipeMedia!A1:H500");
+        const endpoint =
+          "https://sheets.googleapis.com/v4/spreadsheets/" +
+          encodeURIComponent(env.HEALTH_SHEET_ID) +
+          "/values/" + range +
+          "?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE";
+        const response = await googleReadFetch(
+          endpoint,
+          { headers: { Authorization: "Bearer " + token } },
+          { attempts: 3, baseDelayMs: 180 }
+        );
+        if (!response.ok) {
+          if (response.status !== 400 && response.status !== 404) {
+            throw new Error("HEALTH_RECIPE_MEDIA_" + response.status);
+          }
+          // Missing optional RecipeMedia tab: cache the *known absence* briefly.
+          // Otherwise a grid can retry the same missing tab for every image.
+          recipePreviewCache.value = new Map();
+          recipePreviewCache.expiresAt = Date.now() + 60_000;
+          return;
+        }
+        const rows = parseTableRows((await response.json())?.values || []);
+        recipePreviewCache.value = new Map(rows
+          .map((row) => ({
+            recipeId: String(row.recipe_id || "").trim(),
+            mimeType: String(row.mime_type || "").trim().toLowerCase(),
+            base64: String(row.base64_preview || "").trim(),
+            width: toNumber(row.width),
+            height: toNumber(row.height),
+            sha256: String(row.sha256 || "").trim(),
+            updatedAt: String(row.updated_at || "").trim()
+          }))
+          .filter((item) => item.recipeId && item.base64)
+          .map((item) => [item.recipeId, item]));
+        recipePreviewCache.expiresAt = Date.now() + 60_000;
+      })();
     }
-    const rows = parseTableRows((await response.json())?.values || []);
-    recipePreviewCache = {
-      value: new Map(rows
-        .map((row) => ({
-          recipeId: String(row.recipe_id || "").trim(),
-          mimeType: String(row.mime_type || "").trim().toLowerCase(),
-          base64: String(row.base64_preview || "").trim(),
-          width: toNumber(row.width),
-          height: toNumber(row.height),
-          sha256: String(row.sha256 || "").trim(),
-          updatedAt: String(row.updated_at || "").trim()
-        }))
-        .filter((item) => item.recipeId && item.base64)
-        .map((item) => [item.recipeId, item])),
-      expiresAt: Date.now() + 60_000
-    };
+    const pending = recipePreviewCache.inFlight;
+    try { await pending; } finally {
+      if (recipePreviewCache.inFlight === pending) recipePreviewCache.inFlight = null;
+    }
   }
-
   return recipePreviewCache.value.get(cleanRecipeId) || null;
 }
 
@@ -359,7 +381,7 @@ async function serveHealthRecipePhoto(env, recipeId) {
         }
       }));
     } catch (error) {
-      console.warn("Recipe preview decode failed", recipeId, String(error?.message || error));
+      console.warn("Recipe preview decode failed", String(error?.message || "UNKNOWN"));
     }
   }
 
