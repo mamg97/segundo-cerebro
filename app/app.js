@@ -1,6 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
-import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.19";
+import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady } from "./finance-workspace-readiness.js?v=0.44.20";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.22";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
@@ -10096,6 +10096,7 @@ function openBudgetDetail(options = {}) {
   const liquidityAccounts = Array.isArray(monthly.liquidityAccounts) ? monthly.liquidityAccounts : [];
   const accountTransactions = bankHistory;
   const workspaceAccounts = bankCatalog.length ? bankCatalog : liquidityAccounts;
+  const bankTabsReady = financeBankWorkspaceReady(finance);
   const groups = ["Común", "Miguel", "Andrea"];
 
   const grouped = Object.fromEntries(groups.map((name) => [name, []]));
@@ -10121,7 +10122,7 @@ function openBudgetDetail(options = {}) {
       <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
       ${accountWorkspaceIncomplete ? '<p class="account-transactions-empty" data-finance-workspace-status="unavailable">Datos bancarios pendientes de recuperar desde la fuente privada. No se muestran cuentas ni movimientos supuestos.</p>' : ""}
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
-      ${renderAccountTransactionsWorkspace(accountTransactions, workspaceAccounts, currency)}
+      ${bankTabsReady ? renderAccountTransactionsWorkspace(accountTransactions, workspaceAccounts, currency) : ""}
       ${categories.length ? `<div class="budget-groups">
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>` : ""}
