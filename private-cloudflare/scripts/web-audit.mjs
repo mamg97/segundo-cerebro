@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
+import { settleAuditDiagnostics } from "./audit-bounded-settle.mjs";
 import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
@@ -2807,7 +2808,12 @@ try {
     (mediaStats.hits + mediaStats.shared > 0 ? "REUSED" : "NO_REUSE") +
     " hits=" + mediaStats.hits + " shared=" + mediaStats.shared +
     " entries=" + mediaStats.entries);
-  await Promise.allSettled(private502DiagnosticsPending);
+  const backendDiagnostics = await settleAuditDiagnostics(private502DiagnosticsPending);
+  if (backendDiagnostics.timedOut) {
+    // A response-body read hung or was aborted. Never hold Chromium to the
+    // 15-minute workflow ceiling or silently count incomplete telemetry.
+    console.error("[AUDIT_BACKEND_DIAG] DIAGNOSTICS_INCOMPLETE count=1");
+  }
   for (const [code, count] of [...private502DiagnosticCounts].sort((a, b) => a[0].localeCompare(b[0]))) {
     console.error("[AUDIT_BACKEND_DIAG] " + code + " count=" + count);
   }
