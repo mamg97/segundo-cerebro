@@ -6,6 +6,7 @@ import { habitQuestHasGoogleAuth, resolveHabitQuestSheetId } from "./habitquest-
 import { fetchMercadonaReference } from "./mercadona.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
+import { safePrivateReadDiagnostic } from "./private-read-diagnostics.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
@@ -5199,16 +5200,16 @@ export default {
             progress: gymHistory.progress || {}
           };
         } catch (gymError) {
-          console.warn("Health overview gym read failed", String(gymError?.message || gymError));
+          console.warn("Health overview gym read failed", safePrivateReadDiagnostic(gymError));
         }
         return json(healthOverviewPayload(health.value, health.status, gym));
       } catch (error) {
         const fallback = staleHealthSnapshot(date);
         if (fallback) {
-          console.warn("Health overview live read failed; serving recent snapshot", String(error?.message || error));
+          console.warn("Health overview live read failed; serving recent snapshot", safePrivateReadDiagnostic(error));
           return json(healthOverviewPayload(fallback, "ok-stale"));
         }
-        console.warn("Health overview read failed", String(error?.message || error));
+        console.warn("Health overview read failed", safePrivateReadDiagnostic(error));
         return json({ ok: false, code: "HEALTH_OVERVIEW_READ_FAILED" }, 502);
       }
     }
@@ -5645,13 +5646,10 @@ export default {
         return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       } catch (error) {
         if (error instanceof ObjectsImageError) {
-          console.warn("Objects look image request failed", { lookId, code: error.code });
+          console.warn("Objects look image request failed", safePrivateReadDiagnostic(error));
           return json({ ok: false, code: error.code }, error.status);
         }
-        console.warn("Objects look image request failed", {
-          lookId,
-          code: String(error?.message || "OBJECTS_LOOK_IMAGE_ERROR")
-        });
+        console.warn("Objects look image request failed", safePrivateReadDiagnostic(error));
         return json({ ok: false, code: "OBJECTS_LOOK_IMAGE_FAILED" }, 502);
       }
     }
@@ -5671,18 +5669,10 @@ export default {
         return json(result, 201);
       } catch (error) {
         if (error instanceof ObjectsImageError) {
-          console.warn("Objects image request failed", {
-            objetoId,
-            imageType: imageType || "upload",
-            code: error.code
-          });
+          console.warn("Objects image request failed", safePrivateReadDiagnostic(error));
           return json({ ok: false, code: error.code }, error.status);
         }
-        console.warn("Objects image request failed", {
-          objetoId,
-          imageType: imageType || "upload",
-          code: String(error?.message || "OBJECTS_IMAGE_ERROR")
-        });
+        console.warn("Objects image request failed", safePrivateReadDiagnostic(error));
         return json({ ok: false, code: "OBJECTS_IMAGE_FAILED" }, 502);
       }
     }
