@@ -12,7 +12,7 @@ const responseWith = (ranges) => ({ ok: true, json: async () => ({ valueRanges: 
 test("bank reader requests only two canonical ranges in one read", async () => {
   let requests = 0;
   const fakeAccounts = [["account_id", "name"], ["account-1", "First bank"]];
-  const fakeMovements = [["movement_id", "account_id"], ["movement-1", "account-1"]];
+  const fakeMovements = [["movement_id", "account_id", "operation_date"], ["movement-1", "account-1", "2026-01-01"]];
   const rows = await readFinanceBankSource(fake, async () => "fake-token", async (url, opts) => {
     requests++;
     const parsed = new URL(url);
@@ -32,6 +32,8 @@ test("empty bank history is never confused with missing upstream response", asyn
     responseWith([{ values: [["account_id"], ["account-2"]] }, {}]));
   assert.equal(rows.accountRows.length, 2);
   assert.deepEqual(rows.movementRows, []);
+  await assert.rejects(() => readFinanceBankSource(fake, async () => "fake-token", async () =>
+    responseWith([{ values: [["wrong_header"], ["data"]] }, {}])), { code: "FINANCE_BANK_SOURCE_CONTRACT" });
   await assert.rejects(() => readFinanceBankSource(fake, async () => "fake-token", async () =>
     responseWith([{}])), { code: "FINANCE_BANK_SOURCE_CONTRACT" });
 });
