@@ -158,3 +158,15 @@ export function safeAuditFinanceStructureCode(flags) {
   if (!flags.panelVisible) return "FINANCE_PANEL_HIDDEN";
   return "FINANCE_DOM_STABLE";
 }
+
+export function safeAuditExecutableFailureCode(error) {
+  const message = String(error?.message || "");
+  if (/timeout|timed out/i.test(message)) return "EXEC_TIMEOUT";
+  if (/target page, context or browser has been closed|target closed/i.test(message)) return "EXEC_TARGET_CLOSED";
+  if (/execution context was destroyed/i.test(message)) return "EXEC_NAVIGATION_RACE";
+  if (/strict mode violation/i.test(message)) return "EXEC_DOM_NONUNIQUE";
+  if (/net::ERR_|failed to fetch/i.test(message)) return "EXEC_NETWORK";
+  if (error?.name === "TypeError") return "EXEC_TYPE_ERROR";
+  if (error?.name === "ReferenceError") return "EXEC_REFERENCE_ERROR";
+  return "EXEC_OTHER";
+}
