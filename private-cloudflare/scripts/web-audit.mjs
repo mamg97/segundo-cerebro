@@ -1503,12 +1503,26 @@ try {
 
   // Bank account navigation has a separate read source from Delta and the
   // full Finance summary. Do not infer its health from either of those APIs.
-  const bankSourceProbe = await probeApi("/api/finance/accounts", "Fuente bancaria privada", { attempts: 1 });
-  const bankSourcePayload = bankSourceProbe.body;
-  const bankSourceReadable = bankSourceProbe.ok && bankSourcePayload?.ok === true &&
-    Array.isArray(bankSourcePayload?.accounts) && Array.isArray(bankSourcePayload?.transactions);
-  const bankSourcePopulated = bankSourceReadable &&
-    (bankSourcePayload.accounts.length > 0 || bankSourcePayload.transactions.length > 0);
+  const bankSourceProbe = await page.evaluate(async () => {
+    try {
+      const response = await fetch("/api/finance/accounts", {
+        method: "GET", cache: "no-store", credentials: "same-origin"
+      });
+      if (!response.ok) return { readable: false, populated: false };
+      const body = await response.json();
+      const valid = body?.ok === true &&
+        Array.isArray(body.accounts) && Array.isArray(body.transactions);
+      return {
+        readable: valid,
+        populated: valid && (body.accounts.length > 0 || body.transactions.length > 0)
+      };
+    } catch {
+      return { readable: false, populated: false };
+    }
+  });
+  // Only these booleans cross back to the public Actions runner.
+  const bankSourceReadable = bankSourceProbe.readable;
+  const bankSourcePopulated = bankSourceProbe.populated;
   const bankSourceCode = !bankSourceReadable ? "SOURCE_UNAVAILABLE"
     : bankSourcePopulated ? "SOURCE_WITH_RECORDS" : "SOURCE_EMPTY";
   assertCheck(
