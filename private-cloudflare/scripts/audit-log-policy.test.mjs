@@ -42,6 +42,16 @@ test("diagnostic labels are fixed allowlisted codes with no private identifiers"
   assert.equal(safeAuditDiagnosticCode("Home · Regalos ocupa el hueco bajo Obligaciones sin solape"), "HOME_GIFTS_GAP");
   assert.equal(safeAuditDiagnosticCode("persona@example.com información confidencial"), "CHECK_UNMAPPED");
   assert.equal(safeAuditNetworkFailureCode("http502:/api/health/overview"), "HEALTH_OVERVIEW_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/health/adherence"), "HEALTH_ADHERENCE_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/health/history"), "HEALTH_HISTORY_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/health/vision"), "HEALTH_VISION_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/health/appointments"), "HEALTH_APPOINTMENTS_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/health/recipes/private-recipe-id/image"), "HEALTH_RECIPE_IMAGE_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/health/recipes/private-recipe-id"), "HEALTH_RECIPES_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("http502:/api/health"), "HEALTH_ROOT_HTTP_502");
+  assert.equal(safeAuditNetworkFailureCode("requestfailed:/api/health/recipes/private-recipe-id/image:net::ERR_FAILED"), "HEALTH_RECIPE_IMAGE_ERR_FAILED");
+  assert.doesNotMatch(safeAuditNetworkFailureCode("http502:/api/health/recipes/person@example.com/image"), /person|example\\.com|image\\//);
+
   assert.equal(safeAuditNetworkFailureCode("requestfailed:/api/objects/look/id-privado-123/image:net::ERR_FAILED"), "LOOK_IMAGE_ERR_FAILED");
   assert.equal(safeAuditNetworkFailureCode("http502:/api/source/secret-123"), "UNMAPPED_HTTP_502");
   assert.equal(safeAuditBrowserFailureCode("pageerror:TypeError: patient@example.com https://private.invalid/path"), "PAGEERROR_TYPEERROR");
