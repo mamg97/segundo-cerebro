@@ -544,10 +544,11 @@ Motivo: la carrera profesional necesita continuidad estructurada y comparación 
 - **Excepción:** cualquier gasto requiere una revocación explícita del usuario para ese caso concreto.
 - **Motivo:** el sistema debe ser sostenible como infraestructura personal permanente sin convertir el crecimiento funcional en una factura recurrente.
 
-## D-052 — Las migraciones D1 preceden al despliegue y las lecturas no modifican el esquema
+## D-052 — Las migraciones D1 preceden al despliegue con credencial separada
 
 - **Estado:** aceptada e implementada en workflow.
 - **Fecha:** 2026-10-12.
-- **Decisión:** los cambios de esquema D1 se versionan en `private-cloudflare/migrations/` y se aplican al entorno remoto antes del despliegue del Worker. Ninguna ruta `GET` debe ejecutar DDL como mecanismo ordinario de inicialización.
+- **Decisión:** los cambios de esquema D1 se versionan en `private-cloudflare/migrations/` y se aplican al entorno remoto antes del despliegue del Worker con el secret específico `CLOUDFLARE_D1_API_TOKEN`. Ninguna ruta `GET` debe ejecutar DDL como mecanismo ordinario de inicialización.
+- **Fallo seguro:** el token habitual de Workers conserva mínimo privilegio. Si falta la credencial D1 o Cloudflare la rechaza, la publicación se detiene antes de desplegar código nuevo.
 - **Compatibilidad:** las escrituras de ingesta pueden conservar temporalmente guardas idempotentes mientras se retiran inicializadores históricos; la autoridad del esquema sigue siendo la migración versionada.
 - **Motivo:** evitar coste y mutaciones innecesarias en cada lectura, hacer observable un despliegue incompleto y mantener el ciclo de esquema reproducible.
