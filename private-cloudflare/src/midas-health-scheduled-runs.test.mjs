@@ -65,3 +65,20 @@ test("MIDAS public schema supports TimesFM but requires EUR period metrics to be
   assert.match(api, /"timesfm_daily"/);
   assert.match(api, /"timesfm_weekly"/);
 });
+
+
+test("older 8-stock and IBEX workflows are retired after S&P500 migration", () => {
+  const before = Date.parse("2026-10-09T12:00:00Z");
+  const previous = evaluateMidasWorkflowRuns([], before);
+  assert.notEqual(previous.workflows.find(x => x.name === "MIDAS paper comparison").state, "retired");
+  const after = Date.parse("2026-10-13T09:00:00Z");
+  const state = evaluateMidasWorkflowRuns([], after);
+  for (const name of ["MIDAS paper comparison", "MIDAS TFM shadow forecasts"]) {
+    const row = state.workflows.find(x => x.name === name);
+    assert.equal(row.state, "retired");
+    assert.equal(row.ok, true);
+  }
+  const replacement = state.workflows.find(x => x.name === "MIDAS classic S&P500 503 paper");
+  assert.equal(replacement.state, "missing_due_run");
+  assert.equal(replacement.ok, false);
+});

@@ -1,9 +1,10 @@
 const SPECS = [
+  { name: "MIDAS classic S&P500 503 paper", weekdays: [1,2,3,4,5], hour: 23, minute: 47, graceHours: 7, activeFrom: "2026-10-12T22:00:00Z" },
   { name: "MIDAS TimesFM EUR one-day signal", weekdays: [1,2,3,4,5], hour: 23, minute: 57, graceHours: 7, activeFrom: "2026-10-13T00:00:00Z" },
   { name: "MIDAS TimesFM EUR daily paper", weekdays: [2,3,4,5,6], hour: 0, minute: 37, graceHours: 8, activeFrom: "2026-10-13T00:00:00Z" },
   { name: "MIDAS TimesFM 2.5 EUR weekly signal", weekdays: [6], hour: 4, minute: 17, graceHours: 9, activeFrom: "2026-10-17T00:00:00Z" },
-  { name: "MIDAS paper comparison", weekdays: [1,2,3,4,5], hour: 23, minute: 37, graceHours: 6, activeFrom: "2026-09-28T00:00:00Z" },
-  { name: "MIDAS TFM shadow forecasts", weekdays: [1,2,3,4,5], hour: 19, minute: 23, graceHours: 10, activeFrom: "2026-09-28T00:00:00Z" },
+  { name: "MIDAS paper comparison", retiredAt: "2026-10-12T22:00:00Z", weekdays: [1,2,3,4,5], hour: 23, minute: 37, graceHours: 6, activeFrom: "2026-09-28T00:00:00Z" },
+  { name: "MIDAS TFM shadow forecasts", retiredAt: "2026-10-12T22:00:00Z", weekdays: [1,2,3,4,5], hour: 19, minute: 23, graceHours: 10, activeFrom: "2026-09-28T00:00:00Z" },
   { name: "MIDAS capital cycle paper", weekdays: [1,2,3,4,5], hour: 23, minute: 57, graceHours: 6, activeFrom: "2026-09-30T00:00:00Z" },
   { name: "MIDAS Buy The Dip paper", weekdays: [1,2,3,4,5], hour: 23, minute: 27, graceHours: 6, activeFrom: "2026-10-01T00:00:00Z" },
   { name: "MIDAS Weekly ML daily paper", weekdays: [1,2,3,4,5], hour: 22, minute: 17, graceHours: 8, activeFrom: "2026-10-09T00:00:00Z" },
@@ -26,6 +27,9 @@ function latestDueOccurrence(spec, nowMs) {
 export function evaluateMidasWorkflowRuns(runs, now = Date.now()) {
   const list = Array.isArray(runs) ? runs : [];
   const workflows = SPECS.map((spec) => {
+    const retired = spec.retiredAt && now >= Date.parse(spec.retiredAt);
+    if (retired) return { name: spec.name, ok: true, state: "retired",
+                          latest: null, detail: "Campaña histórica fuera del universo común S&P 500" };
     const due = latestDueOccurrence(spec, now);
     const scheduled = list
       .filter((run) => run?.name === spec.name && run?.event === "schedule")
