@@ -50,7 +50,8 @@ test("diagnostic labels are fixed allowlisted codes with no private identifiers"
   assert.equal(safeAuditNetworkFailureCode("http502:/api/health/recipes/private-recipe-id"), "HEALTH_RECIPES_HTTP_502");
   assert.equal(safeAuditNetworkFailureCode("http502:/api/health"), "HEALTH_ROOT_HTTP_502");
   assert.equal(safeAuditNetworkFailureCode("requestfailed:/api/health/recipes/private-recipe-id/image:net::ERR_FAILED"), "HEALTH_RECIPE_IMAGE_ERR_FAILED");
-  assert.doesNotMatch(safeAuditNetworkFailureCode("http502:/api/health/recipes/person@example.com/image"), /person|example\\.com|image\\//);
+  const safeCode = safeAuditNetworkFailureCode("http502:/api/health/recipes/person@example.com/image");
+  for (const fragment of ["person", "example.com", "image/"]) assert.equal(safeCode.includes(fragment), false);
 
   assert.equal(safeAuditNetworkFailureCode("requestfailed:/api/objects/look/id-privado-123/image:net::ERR_FAILED"), "LOOK_IMAGE_ERR_FAILED");
   assert.equal(safeAuditNetworkFailureCode("http502:/api/source/secret-123"), "UNMAPPED_HTTP_502");
