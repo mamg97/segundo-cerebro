@@ -1827,7 +1827,11 @@ try {
 
     if (areaId === "area-finance") {
       const sheetLink = page.locator(".account-transactions-sheet-link").first();
-      const sheetLinkVisible = await sheetLink.isVisible().catch(() => false);
+      // Finance can load on demand after the dialog opens. Wait for the real
+      // canonical workspace, without accepting the loading/error placeholder.
+      // A missing workspace still fails after this bounded readiness window.
+      const sheetLinkVisible = await sheetLink.waitFor({ state: "visible", timeout: 16000 })
+        .then(() => true).catch(() => false);
       assertCheck(sheetLinkVisible, "Finanzas · enlace al Sheet de movimientos visible");
       if (sheetLinkVisible) {
         const href = await sheetLink.getAttribute("href");
@@ -1849,7 +1853,8 @@ try {
           htmlDataName: "account-transactions-tab",
           attributeName: "account-transactions-tab",
           attr: "account-transactions-tab",
-          settle: 120
+          settle: 120,
+          timeout: 16000
         }
       );
     } else if (areaId === "area-pantry") {
