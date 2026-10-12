@@ -140,6 +140,17 @@ Both may read Apple Health / Zepp context when it is relevant to their own decis
 7. For `GESTOR NUTRI`, read current intake/menu/recipes from the Health Sheet and use activity/body trends only as context, never as a second nutrition source.
 8. Continue the same measurement and decision rules below instead of rebuilding state from conversation memory.
 
+## Peso actual: lectura federada obligatoria
+
+El último peso **nunca** se obtiene leyendo únicamente `MedicionesCorporales`, que es histórico/manual y puede quedar por detrás de Apple Salud.
+
+- Autoridad automática: D1 `health_body_samples` (HealthKit/Zepp Life); su proyección privada para gestores es `MedicionesCorporalesApple` (`metric_type=bodyMass`).
+- Fuente manual e histórico: `MedicionesCorporales`. No copiar una observación automática a esta pestaña ni generar un segundo registro para que un gestor pueda verla.
+- **Para gestores ChatGPT sin sesión Access/D1:** leer primero la pestaña derivada `HistoricoResumen` (fila `all`, campos `latest_weight_kg` y `generated_at`) y comprobar frescura. Reconciliar con las filas de `MedicionesCorporalesApple` y `MedicionesCorporales` según `measured_at` cuando la proyección esté antigua o haya una medición manual posterior. En caso de bloqueo de alguna fuente, identificar la lectura como parcial; no atribuir al usuario el último peso de una sola pestaña.
+- **Para API privada / dashboard:** utilizar la muestra más reciente de la unión D1 + manual, normalizando timestamps UTC y deduplicando por métrica, instante y fuente. `body.weightLatest` ofrece valor, fecha y procedencia; `body.weightToday` solo muestra medición exacta del día seleccionado. Las medias móviles se calculan por medias diarias, no por número de pesajes.
+- `HistoricoResumen` y `MedicionesCorporalesApple` son **proyecciones de lectura**, no fuentes independientes ni lugares para cambios manuales. No afirmar que se sincronizan en tiempo real si solo se regeneran al consultar el histórico privado.
+- Toda recomendación nutricional basada en peso debe mencionar su fecha; si hay divergencia entre las vistas, comprobar primero la procedencia y la fecha de medición, no añadir un duplicado.
+
 ### Measurement conventions
 
 - Scale/body composition: prefer the morning measurement after using the bathroom, before eating/drinking or training, and under comparable clothing/conditions.
