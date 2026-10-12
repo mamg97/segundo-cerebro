@@ -181,10 +181,10 @@ test("D1 object media store rejects non-canonical keys", () => {
 test("D1 image store uses versioned migration instead of request-time DDL", () => {
   const worker = readFileSync(new URL("./objects-media-d1.js", import.meta.url), "utf8");
   const migration = readFileSync(new URL("../migrations/0008_objects_media.sql", import.meta.url), "utf8");
-  assert.doesNotMatch(worker, /\\bCREATE\\s+(?:TABLE|INDEX)\\b/i);
-  assert.doesNotMatch(worker, /ensureSchema\\(/);
+  assert.doesNotMatch(worker, /\bCREATE\s+(?:TABLE|INDEX)\b/i);
+  assert.doesNotMatch(worker, /ensureSchema\(/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS objects_media_assets/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS objects_media_chunks/);
   assert.match(migration, /CREATE INDEX IF NOT EXISTS idx_objects_media_chunks_storage_key/);
-  assert.doesNotMatch(migration, /\\b(?:DROP|DELETE|UPDATE|REPLACE|ALTER)\\b/i);
+  assert.doesNotMatch(migration, /\b(?:DROP|DELETE|UPDATE|REPLACE|ALTER)\b/i);
 });
