@@ -11,7 +11,7 @@ test("a failed monthly budget read must not suppress isolated canonical bank rec
   const end = app.indexOf("function openBudgetDetail(", start);
   const code = app.slice(start, end);
   assert.doesNotMatch(code, /fetchStateScope\("finance", 12000\)/);
-  assert.match(code, /if \(financeAccountWorkspaceIncomplete\(state\.financeSummary\)\)/);
+  assert.match(code, /if \(state\.financeSummary\?\.bankWorkspaceReadVerified !== true\)/);
   assert.match(code, /await fetchFinanceBankWorkspace\(12000\)/);
   assert.match(code, /bankWorkspaceReadVerified: true/);
   assert.equal(financeAccountWorkspaceIncomplete({}), true);
