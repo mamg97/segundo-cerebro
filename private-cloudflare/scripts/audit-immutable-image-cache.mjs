@@ -6,7 +6,9 @@ const MAX_ENTRY_BYTES = 4 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 24 * 1024 * 1024;
 
 function headerValue(headers, key) {
-  const found = Object.entries(headers || {}).find(([name]) => name.toLowerCase() === key);
+  // Last case-insensitive occurrence wins when a test/provider merges header maps.
+  // Real Headers values are unique after normalization.
+  const found = Object.entries(headers || {}).reverse().find(([name]) => name.toLowerCase() === key);
   return found ? String(found[1] || "") : "";
 }
 
