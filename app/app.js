@@ -1354,6 +1354,10 @@ function healthWeightSummary(body = {}, selectedDate = localDateKey()) {
   };
 }
 
+// Last successfully fetched private Gym snapshot, shared by Home and Salud.
+// Session-local only: it never replaces the canonical /api/gym source.
+let homeGymSnapshot = null;
+
 function renderHomeGymSummary(healthData, gymData) {
   const summary = deriveGymTodaySummary(healthData, gymData);
   setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", summary.main, summary.detail);
@@ -1399,6 +1403,7 @@ async function renderHomeHealthCard() {
     if (!response.ok) throw new Error("HOME_HEALTH_" + response.status);
     const data = await response.json();
     const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
+    if (gymData) homeGymSnapshot = gymData;
 
     const consumed = data.nutritionSummary?.consumed || {};
     const nutritionGoal = data.nutritionObjective || {};
@@ -1453,7 +1458,7 @@ async function renderHomeHealthCard() {
     setHomeHealthUpdated("kcal", nutritionUpdatedAt, nutritionUpdateSource);
     setHomeHealthUpdated("protein", nutritionUpdatedAt, nutritionUpdateSource);
 
-    renderHomeGymSummary(data, gymData || {});
+    renderHomeGymSummary(data, gymData || homeGymSnapshot || {});
 
     const body = data.body || {};
     const weightSummary = healthWeightSummary(body, data.date || localDateKey());
@@ -2604,14 +2609,27 @@ async function loadHealthOverview(dateKey = localDateKey()) {
   const panel = document.querySelector("#health-overview-panel");
   if (panel) panel.innerHTML = '<p class="health-empty">Cargando Apple Health…</p>';
   try {
-    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(selected), {
-      headers: { Accept: "application/json" },
-      cache: "no-store"
-    });
+    const [response, gymResponse] = await Promise.all([
+      fetch("/api/health/overview?date=" + encodeURIComponent(selected), {
+        headers: { Accept: "application/json" },
+        cache: "no-store"
+      }),
+      fetch("/api/gym", {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        credentials: "same-origin"
+      }).catch(() => null)
+    ]);
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
     const payload = await response.json();
+    const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
     if (requestId !== healthOverviewRequestId || !panel?.isConnected) return;
-    renderHealthOverview(payload, {});
+    if (gymData) homeGymSnapshot = gymData;
+    const canonicalGym = gymData || homeGymSnapshot || {};
+    renderHealthOverview(payload, canonicalGym);
+    // Keep Home and Salud on the same retrieved Gym snapshot for today's data.
+    // A historical date must never overwrite Home's "Gym hoy" indicator.
+    if (selected === today) renderHomeGymSummary(payload, canonicalGym);
     bindHealthDayNavigation(payload.date || selected);
     await loadHealthAdherenceOverview();
     if (requestId !== healthOverviewRequestId) return;
