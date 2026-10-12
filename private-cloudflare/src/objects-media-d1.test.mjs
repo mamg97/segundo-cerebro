@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import { createObjectsD1MediaStore, OBJECTS_D1_MEDIA_LIMITS } from "./objects-media-d1.js";
 
 class FakeStatement {
@@ -34,7 +35,7 @@ class FakeStatement {
   }
 
   execute() {
-    if (this.sql.startsWith("CREATE TABLE") || this.sql.startsWith("CREATE INDEX")) return;
+    if (this.sql.startsWith("CREATE TABLE") || this.sql.startsWith("CREATE INDEX")) throw new Error("RUNTIME_DDL_FORBIDDEN");
     if (this.sql.startsWith("INSERT INTO objects_media_assets")) {
       const [storage_key,objeto_id,image_type,version,mime_type,size_bytes,chunk_count,etag,created_at] = this.args;
       if (this.db.assets.has(storage_key)) throw new Error("duplicate");
@@ -175,4 +176,15 @@ test("D1 object media store enforces its internal free-tier safety cap", async (
 test("D1 object media store rejects non-canonical keys", () => {
   const store=createObjectsD1MediaStore({DB:new FakeD1()});
   assert.rejects(store.get("../unsafe"),/INVALID_OBJECTS_MEDIA_KEY/);
+});
+
+test("D1 image store uses versioned migration instead of request-time DDL", () => {
+  const worker = readFileSync(new URL("./objects-media-d1.js", import.meta.url), "utf8");
+  const migration = readFileSync(new URL("../migrations/0008_objects_media.sql", import.meta.url), "utf8");
+  assert.doesNotMatch(worker, /\\bCREATE\\s+(?:TABLE|INDEX)\\b/i);
+  assert.doesNotMatch(worker, /ensureSchema\\(/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS objects_media_assets/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS objects_media_chunks/);
+  assert.match(migration, /CREATE INDEX IF NOT EXISTS idx_objects_media_chunks_storage_key/);
+  assert.doesNotMatch(migration, /\\b(?:DROP|DELETE|UPDATE|REPLACE|ALTER)\\b/i);
 });
