@@ -196,6 +196,7 @@ test("interrupted genetic forward is archived and the new cohort has no retroact
   assert.equal(archive.last_session, "2026-10-07");
   assert.equal(archive.return_pct, 1.008028);
   assert.equal(fresh.status, "programada_sin_diario");
+  assert.equal(fresh.first_session_due_at, "2026-10-13T12:00:00Z");
   assert.equal(fresh.return_pct, null);
   assert.match(archive.note, /no se une a la nueva/);
 

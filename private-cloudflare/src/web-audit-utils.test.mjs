@@ -8,6 +8,7 @@ import {
   menuDisplayTotals,
   confirmedMenuTotals,
   qualityStep,
+  scheduledTrackIsWithinFirstSessionWindow,
   visibleMenuRow
 } from "./web-audit-utils.js";
 import { evaluateMidasWorkflowRuns } from "./midas-health.js";
@@ -87,6 +88,18 @@ test("future menu bars keep full planned totals", () => {
   assert.equal(result.useConsumed, false);
   assert.equal(result.kcal, 1500);
   assert.equal(result.protein, 120);
+});
+
+test("MIDAS scheduled track is healthy only until its explicit first-session deadline", () => {
+  const track = {
+    status: "programada_sin_diario",
+    last_session: null,
+    first_session_due_at: "2026-10-13T12:00:00Z"
+  };
+  assert.equal(scheduledTrackIsWithinFirstSessionWindow(track, Date.parse("2026-10-12T22:30:00Z")), true);
+  assert.equal(scheduledTrackIsWithinFirstSessionWindow(track, Date.parse("2026-10-13T12:00:01Z")), false);
+  assert.equal(scheduledTrackIsWithinFirstSessionWindow({ ...track, first_session_due_at: null }, Date.now()), false);
+  assert.equal(scheduledTrackIsWithinFirstSessionWindow({ ...track, status: "demo_con_diario" }, Date.now()), false);
 });
 
 

@@ -10,6 +10,7 @@ on:
       - "core/**"
       - "private-cloudflare/src/**"
       - "private-cloudflare/scripts/**"
+      - "private-cloudflare/migrations/**"
       - "private-cloudflare/package.json"
       - "private-cloudflare/wrangler.bootstrap.jsonc"
       - "private-cloudflare/wrangler.health-ingest.jsonc"
@@ -123,6 +124,10 @@ jobs:
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Cloudflare deploy skipped. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository Actions secrets."
           fi
+
+      - name: Apply D1 migrations
+        if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
+        run: npx wrangler d1 migrations apply segundo-cerebro-private --remote --config wrangler.bootstrap.jsonc
 
       - name: Deploy production Worker
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'

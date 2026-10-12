@@ -2241,7 +2241,6 @@ async function ensureHealthMetricDailyTable(env) {
 }
 
 async function fetchHealthMetricRows(env, startDate, endDate) {
-  await ensureHealthMetricDailyTable(env);
   const result = await env.DB.prepare(`
     SELECT metric_date, metric_key, unit, aggregation,
            sum_value, average_value, minimum_value, maximum_value,

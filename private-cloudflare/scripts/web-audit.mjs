@@ -10,6 +10,7 @@ import {
   confirmedMenuTotals,
   normalizeAuditValue,
   qualityStep,
+  scheduledTrackIsWithinFirstSessionWindow,
   visibleMenuRow
 } from "../src/web-audit-utils.js";
 import { evaluateMidasWorkflowRuns } from "../src/midas-health.js";
@@ -308,10 +309,12 @@ async function auditMidasCompetition() {
     capital?.last_session || "sin sesión");
 
   const genetic = tracks.find((row) => row.id === "genetic_sp500_forward");
+  const geneticPublished = genetic?.status === "demo_con_diario" && Boolean(genetic?.last_session);
+  const geneticWithinPublicationWindow = scheduledTrackIsWithinFirstSessionWindow(genetic);
   assertCheck(
-    genetic?.status === "demo_con_diario" && Boolean(genetic?.last_session),
+    geneticPublished || geneticWithinPublicationWindow,
     "MIDAS · genético prospectivo enlazado",
-    genetic?.last_session || genetic?.status || "ausente"
+    geneticPublished ? genetic.last_session : geneticWithinPublicationWindow ? "primera sesión aún no exigible" : genetic?.status || "ausente"
   );
 
   let actionsRuns = [];

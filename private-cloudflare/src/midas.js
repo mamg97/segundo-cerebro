@@ -529,6 +529,7 @@ export async function addPrivateGeneticDiary(db, dashboard) {
     id: "genetic_sp500_forward", label: "Genético S&P 500 · campaña nueva desde 12/10",
     group: "diario_heredado", provenance: "Agente genético original · campaña prospectiva 2026",
     status: "programada_sin_diario", first_session: null, last_session: null, currency: "USD",
+    first_session_due_at: "2026-10-13T12:00:00Z",
     last_equity: null, return_pct: null, day_return_pct: null,
     note: "Campaña nueva independiente, prevista desde la señal del 12/10/2026: sin heredar posiciones ni resultados del 29/09–07/10. No existen operaciones retrospectivas del 08–09/10."
   };
