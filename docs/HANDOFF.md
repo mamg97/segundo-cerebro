@@ -1,3 +1,19 @@
+## Estado auditoría · 12/10/2026 · Finance, imágenes D1, PR #409–#414
+
+- Cierre integral PENDIENTE. Exige dos auditorías Chromium independientes y completas con 0 fallos y 0 HTTP 5xx, y trazabilidad privada canónica.
+- Auditoría #343: 963 comprobaciones / 9 fallos, 51 errores D1_READ_FAILED y múltiples 502 de imágenes; https://github.com/mamg97/segundo-cerebro/actions/runs/38278986192
+- Auditoría #344: 1020 / 5, dos problemas de Home de financiación/regalos y 56 fallos D1; Finance no falló; https://github.com/mamg97/segundo-cerebro/actions/runs/38279723447
+- Auditoría #346: 963 / 2, cero 5xx; solo FINANCE_SHEET_LINK y FINANCE_ACCOUNT_TABS. Es una recuperación observada de imágenes, NO un cierre estable; https://github.com/mamg97/segundo-cerebro/actions/runs/38280339802
+- PR #409: render de movimientos bancarios verificados aunque no haya presupuesto mensual (CI verde). https://github.com/mamg97/segundo-cerebro/pull/409
+- PR #410: elimina la lectura secuencial del resumen completo antes de recuperar los bancos, evita ventana de espera >12 segundos (CI verde). https://github.com/mamg97/segundo-cerebro/pull/410
+- PR #411: limita a 1,5 s la lectura de diagnóstico 502 de Chromium. La #342 quedó bloqueada tras los controles porque esperaba sin límite esas respuestas. No debilita controles 5xx (CI verde). https://github.com/mamg97/segundo-cerebro/pull/411
+- PR #412: almacén de fotos D1 pasa de una lectura all de BLOBs multimib a lecturas indexadas de fragmentos de máximo 1 MiB, con validación de integridad previa a entrega. CI verde, deploy #472 verde; #346 posterior sin 502. https://github.com/mamg97/segundo-cerebro/pull/412
+- PR #413: 13 lecturas individuales de pestañas financieras opcionales se consolidan en un batchGet con contrato estricto y fallback para pestañas faltantes. Todas las 13 pestañas existen en la fuente derivada conectada. CI y deploy #473 verdes. Auditoría #347 pendiente de resultados. https://github.com/mamg97/segundo-cerebro/pull/413
+- PR #414: si falla el bootstrap remoto /api/state de 9 s, la navegación financiera puede recuperar la ruta bancaria autenticada y NO muestra importes del mock como reales. CI verde; despliegue #474 y auditoría posterior pendientes. https://github.com/mamg97/segundo-cerebro/pull/414
+- El Sheet privado de Finance contiene Cuentas y MovimientosCuenta con registros y cabeceras esperadas, comprobado solo con lecturas de metadatos/muestras en conector privado; nunca volcar importes, cuentas o IDs a GitHub.
+- Pendientes: verificar #347 y auditorías tras #474; comprobar persistencia banco, Home, D1 imágenes, periodicidad schedule y reconciliación Sheets-D1-UI. No relanzar manualmente workflows ni crear tareas/pagos.
+
+---
 ## ESTADO OPERATIVO · 12/10/2026 · Investigación Finance y 502 (#406–#408)
 
 - **Main de código:** `2f6b3237` tras [PR #406](https://github.com/mamg97/segundo-cerebro/pull/406), [PR #407](https://github.com/mamg97/segundo-cerebro/pull/407) y [PR #408](https://github.com/mamg97/segundo-cerebro/pull/408). **CI verde**: [#406](https://github.com/mamg97/segundo-cerebro/actions/runs/38275159327), [#407](https://github.com/mamg97/segundo-cerebro/actions/runs/38275847717), [#408](https://github.com/mamg97/segundo-cerebro/actions/runs/38277095093).
