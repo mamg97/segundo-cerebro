@@ -37,6 +37,8 @@ const failures = [];
 let infoCount = 0;
 const checks = [];
 const networkFailures = [];
+// Privacy-safe request lifecycle counters: never retain URLs or bank payloads.
+const bankReadTransport = { started: 0, responses: [], failed: 0 };
 const ignoredNetworkAborts = [];
 const private502DiagnosticsPending = [];
 const private502DiagnosticCounts = new Map();
@@ -145,7 +147,17 @@ page.on("console", (message) => {
   if (/^Failed to load resource:/i.test(text)) resourceConsoleErrors.push(text);
   else browserErrors.push("console:" + text);
 });
+page.on("request", (request) => {
+  if (request.url().startsWith(auditOrigin) &&
+      new URL(request.url()).pathname === "/api/finance/accounts") {
+    bankReadTransport.started++;
+  }
+});
 page.on("requestfailed", (request) => {
+  if (request.url().startsWith(auditOrigin) &&
+      new URL(request.url()).pathname === "/api/finance/accounts") {
+    bankReadTransport.failed++;
+  }
   const classified = classifyRequestFailure({
     url: request.url(),
     errorText: request.failure()?.errorText || "unknown",
@@ -158,6 +170,12 @@ page.on("requestfailed", (request) => {
   }
 });
 page.on("response", (response) => {
+  if (response.url().startsWith(auditOrigin) &&
+      new URL(response.url()).pathname === "/api/finance/accounts") {
+    const status = response.status();
+    bankReadTransport.responses.push(status === 200 ? "HTTP_200"
+      : status >= 500 ? "HTTP_5XX" : status >= 400 ? "HTTP_4XX" : "HTTP_OTHER");
+  }
   if (!response.url().startsWith(auditOrigin) || response.status() < 500) return;
   const path = new URL(response.url()).pathname;
   networkFailures.push(`http${response.status()}:${path}`);
@@ -1384,6 +1402,11 @@ async function emitFinanceDomDiagnostic(accountId, initialCount) {
     };
   },{id:accountId,initial:initialCount}).catch(()=>null);
   console.error("[AUDIT_FINANCE_DOM] "+safeAuditFinanceStructureCode(flags));
+  // Only bounded counts and a fixed HTTP class reach the public runner.
+  console.error("[AUDIT_FINANCE_TRANSPORT] starts=" + Math.min(9, bankReadTransport.started) +
+    " responses=" + Math.min(9, bankReadTransport.responses.length) +
+    " failed=" + Math.min(9, bankReadTransport.failed) +
+    " last=" + (bankReadTransport.responses.at(-1) || "NONE"));
 }
 
 async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null, options = {}) {
