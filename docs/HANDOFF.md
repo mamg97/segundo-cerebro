@@ -1,3 +1,12 @@
+## ORGANIZADOR 14 · Estado real tras PR #398 — 12/10/2026
+
+- **Código y deploy reales:** PR #397 corrigió `success` falso de trabajos saltados y la tolerancia segura de `main` con solo cambios documentales. Deploy #38256572585 **success**, todos los Workers y D1 publicados. PR #398 corrigió ambos fallos Gym (fuente Home/Salud distinta y hero confundido con vídeo suplementario). CI success; deploy #38258590413 **success**, todos los Workers y D1 publicados. No alterados Sheets ni archivos personales.
+- **Auditoría #38256740228 sobre #397:** 1022 checks / 2 fallos, códigos `HEALTH_OVERVIEW_PARITY_GYM` y `HEALTH_GYM_DETAIL_MEDIA`, sin respuestas 5xx; esos dos defectos fueron corregidos en #398.
+- **Auditoría #38258732048 attempt 1 sobre #398:** 988 checks / 3 fallos: `VISUAL CHECK-00660` y `-00661` (**sin código diagnóstico de categoría**) y una petición a imagen de Look `LOOK_IMAGE_ERR_FAILED count=1`. **Sin HTTP 502 en esa ejecución.** Fallos Gym previos ausentes.
+- **Auditoría #38258732048 attempt 2:** 168 checks / 1 fallo, **excepción temprana** en fase fija `MAIN_CHECKS`; sin conclusión sobre controles que quedaron sin ejecutar. No se reprodujeron códigos anteriores porque no se llegó a esa parte. No considerar esto una mejora de visual ni un verde.
+- **Estado:** producción desplegada, pero **auditoría ROJA e intermitente**. No inventar causa para dos fallos Visual sin categoría ni para el fallo MAIN_CHECKS. Investigar con diagnósticos **allowlisted** y sin URLs/IDs/DOM privado; reproducir en una ejecución completa antes de modificar CSS, imágenes canónicas o protocolo D1. Rechazar como éxito un run incompleto o solo CI.
+- **Siguiente puerta de cierre:** auditoría completa 0 fallos/0 errores 5xx, y segunda ejecución independiente completa y correcta. No aplicar reintentos ilimitados, no deshabilitar controles, no regenerar fotos ni tocar fuentes canónicas.
+
 ## ORGANIZADOR 14 · Cierre de los dos fallos Gym tras recuperación de deploy · 12/10/2026
 
 - [Run completo 38256572585](https://github.com/mamg97/segundo-cerebro/actions/runs/38256572585): migración D1 + Worker principal + cinco Workers auxiliares correctos tras PR #397; ya no hay falso verde por skipped.
