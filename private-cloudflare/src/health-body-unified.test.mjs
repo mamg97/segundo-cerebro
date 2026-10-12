@@ -46,3 +46,14 @@ test("no weight and missing history do not fabricate a reading", () => {
   assert.equal(latestHealthBodyMetric([other], "bodyMass", "2026-10-12"), null);
   assert.deepEqual(healthBodyWeightStats([other], "2026-10-12"), {latest:null,current7d:null,previous7d:null,weeklyChange:null});
 });
+
+test("private Health routes use one merged body source and keep the D1-only projection separate", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("./index.js", import.meta.url), "utf8");
+  assert.match(source, /const bodySamples = mergeHealthBodySources\(d1BodySamples, manualBodySamples\)/);
+  assert.match(source, /weightLatest: latestMetric\("bodyMass"\)/);
+  assert.match(source, /const weightStats = healthBodyWeightStats\(bodySamples, date\)/);
+  assert.match(source, /unifiedBodySamples: mergeHealthBodySources\(bodySamples, recentUnifiedBodySamples\)/);
+  assert.match(source, /const unifiedBodySamples = Array\.isArray\(history\.unifiedBodySamples\)/);
+  assert.match(source, /persistHealthBodyDetail\(env, sheetHistory\)/);
+});
