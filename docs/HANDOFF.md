@@ -1,3 +1,11 @@
+## ORGANIZADOR 14 · Auditoría: readiness financiera y diagnósticos Salud · 12/10/2026
+
+- Después de la migración D1 #389, [run 38246614256](https://github.com/mamg97/segundo-cerebro/actions/runs/38246614256) completó 946 checks con **8 fallos**, frente a 30 fallos/928 checks anteriormente. **No registró respuestas 502**, ni `HEALTH_OVERVIEW_HTTP_502` ni `LOOK_IMAGE_HTTP_502` en esa ejecución. Es mejora verificable, no garantía de desaparición permanente.
+- Siguen fallando dos controles en Finanzas: enlace al Sheet del histórico bancario y disponibilidad de pestañas. El frontend dispone de un cargador privado on-demand de Finanzas de hasta 12 s; el auditor solo esperó 350 ms antes de comprobar el enlace y hasta 6 s para las pestañas. **Hipótesis reproducible de asincronía, no causa cerrada**. Se amplía la espera de presencia del workspace a 16 s para verificar la UI terminada; los fallos reales siguen fallando al agotar el plazo. No crear saldos ni movimientos ficticios.
+- El auditor público solo exponía ordinales en Salud y Visual; se añaden códigos explícitos de un catálogo fijo para fallos de Resumen, histórico energético, Gimnasio y geometría visual. La función recibe nombres internos, devuelve **exclusivamente códigos constantes**; no registra DOM, IDs, nombres personales ni contenido canónico.
+- Persisten otras comprobaciones funcionales/visuales pendientes. La solución requiere CI, despliegue y nueva auditoría con el patrón diagnóstico, no basta el resultado anterior.
+- Comprobación del Sheet de Salud (solo lectura): están presentes pestañas canónicas para Comidas, Registro, Objetivos, EnergiaDiaria, MenuSemanal, Recetas e IngredientesReceta, con filas reales. No se ha realizado modificación de origen.
+
 ## ORGANIZADOR 14 · Contrato auditor Gym: 14 GIF reales · 12/10/2026
 
 - El frontend `GYM_CUSTOM_ANIMATIONS` y la matriz de Biblioteca contienen **14** ilustraciones específicas, pero `private-cloudflare/scripts/web-audit.mjs` seguía exigiendo **12** URLs de GIF, filas y estados. Es un desfase verificable de contrato que genera falsos fallos incluso con las 14 ilustraciones presentes.
