@@ -10010,6 +10010,26 @@ async function fetchFinanceBankWorkspace(timeoutMs = 12000) {
   }
 }
 
+// The budget renderer may replace the bank section while remote Finance
+// sources are settling. Preserve the *verified* canonical bank workspace
+// independently of whether the monthly summary is complete or arrives later.
+// Never restore optional/unverified account rows or fabricate transactions.
+function ensureVerifiedFinanceBankSection(dialog) {
+  if (!dialog.open || !dialog.classList.contains("budget-dialog")) return false;
+  const finance = state.financeSummary;
+  if (finance?.bankWorkspaceReadVerified !== true) return false;
+  const body = dialog.querySelector("#dialog-body");
+  if (!body || body.querySelector(".account-transactions-section")) return false;
+  const accounts = Array.isArray(finance.bankWorkspaceAccounts) ? finance.bankWorkspaceAccounts : [];
+  const transactions = Array.isArray(finance.accountTransactions) ? finance.accountTransactions : [];
+  const html = renderAccountTransactionsWorkspace(transactions, accounts, "EUR");
+  if (!html) return false;
+  body.querySelector('[data-finance-workspace-status="unavailable"]')?.remove();
+  body.insertAdjacentHTML("beforeend", html);
+  initializeAccountTransactionTabs(body);
+  return true;
+}
+
 function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } = {}) {
   if (!canReadPrivateFinanceBankWorkspace() || financeBudgetRefreshInFlight) return;
   financeBudgetRefreshInFlight = true;
@@ -10028,6 +10048,7 @@ function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } =
     }
     if (dialog.open && dialog.classList.contains("budget-dialog")) {
       openBudgetDetail({ skipRefresh: true });
+      ensureVerifiedFinanceBankSection(dialog);
     }
   })().catch(() => {
     // Do not print upstream URLs, bank IDs, financial values or raw errors.
