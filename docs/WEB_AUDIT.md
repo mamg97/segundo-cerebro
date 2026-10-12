@@ -116,6 +116,10 @@ El gateway OIDC mantiene **Cache-Control: no-store** en todas sus respuestas, in
 
 Playwright puede entonces reutilizar durante **este proceso** los bytes descargados correctamente a través de su caché RAM de máximo 4 MiB por imagen y 24 MiB total, aun cuando la respuesta del gateway sigue siendo `no-store`. La respuesta reutilizada hacia Chromium también es `no-store`. El primer acceso a cada URL siempre llega al Worker real; errores, respuestas 5xx, imágenes no versionadas y MIME no imágenes nunca se cachean. No se escriben bytes en GitHub, logs, artefactos o disco. Este cambio reduce carga artificial repetida, pero no permite cerrar incidentes 502 ni suprimir comprobaciones de red.
 
+### Diagnóstico del salto OIDC → Worker en fallos 502
+
+El gateway read-only clasifica fallos excepcionales de su Service Binding con el código público fijo `AUDIT_GATEWAY_UPSTREAM_FAILED` (sin URL, ID, respuesta ni excepción). El agregador de imágenes Chromium lo separa de los errores 502 tipificados por el Worker real. Este código **no demuestra la causa raíz** (CPU, red, tiempo de espera o dependencia); solo identifica en qué límite técnico aparece el fallo. Ninguno de estos 502 se ignora o convierte en PASS.
+
 ## Auditoría visual
 
 La auditoría funcional no sustituye a la visual. Chromium ejecuta además una pasada estructural sobre la interfaz renderizada.
