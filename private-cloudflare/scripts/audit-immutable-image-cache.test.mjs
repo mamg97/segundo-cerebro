@@ -38,14 +38,33 @@ test("the cache is strictly memory bounded per image and across images", () => {
   const cache = createAuditImmutableImageCache({ maxEntryBytes: 8, maxTotalBytes: 10 });
   assert.equal(cache.put(look, 200, headers, Buffer.alloc(8)), true);
   assert.equal(cache.put(thumbnail, 200, { "content-type": "image/webp", "cache-control": headers["Cache-Control"] }, Buffer.alloc(5)), false);
-  assert.deepEqual(cache.stats(), { hits: 0, misses: 0, entries: 1, bytes: 8 });
+  assert.deepEqual(cache.stats(), { hits: 0, misses: 0, shared: 0, entries: 1, bytes: 8 });
+});
+
+test("simultaneous requests share one live fetch without persisting errors", async () => {
+  const cache = createAuditImmutableImageCache();
+  let calls = 0;
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const fetcher = async () => { calls++; await gate; return { status: 502 }; };
+  const first = cache.once(thumbnail, fetcher);
+  const second = cache.once(thumbnail, fetcher);
+  release();
+  assert.deepEqual(await Promise.all([first, second]), [{ status: 502 }, { status: 502 }]);
+  assert.equal(calls, 1);
+  assert.equal(cache.stats().shared, 1);
+  assert.deepEqual(await cache.once(thumbnail, fetcher), { status: 502 });
+  assert.equal(calls, 2, "failed responses must be retried on the next independent request");
+  assert.equal(cache.stats().entries, 0);
 });
 
 test("production audit never caches failures or drops real first-image fetch", () => {
   assert.match(auditCode, /const immutableImageCache = createAuditImmutableImageCache\(\)/);
-  assert.match(auditCode, /const live = await route\.fetch\(\{ headers, timeout: 25000 \}\)/);
-  assert.match(auditCode, /immutableImageCache\.put\(request\.url\(\), live\.status\(\), live\.headers\(\), body\)/);
-  assert.match(auditCode, /await route\.fulfill\(\{ response: live \}\)/);
+  assert.match(auditCode, /immutableImageCache\.once\(request\.url\(\), async \(\) =>/);
+  assert.match(auditCode, /const response = await route\.fetch\(\{ headers, timeout: 25000 \}\)/);
+  assert.match(auditCode, /const body = await response\.body\(\)/);
+  assert.match(auditCode, /immutableImageCache\.put\(request\.url\(\), response\.status\(\), response\.headers\(\), body\)/);
+  assert.match(auditCode, /await route\.fulfill\(live\)/);
   assert.match(auditCode, /await route\.abort\("failed"\)/);
   assert.doesNotMatch(auditCode, /console\.log\([^)]*cached\.body/);
 });
