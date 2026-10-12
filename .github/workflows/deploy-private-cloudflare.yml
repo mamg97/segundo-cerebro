@@ -50,8 +50,27 @@ jobs:
           if [[ "$GITHUB_SHA" == "$latest" ]]; then
             echo "current=true" >> "$GITHUB_OUTPUT"
           else
-            echo "current=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping stale production deploy for $GITHUB_SHA; current main is $latest"
+            # A newer documentation-only commit must not invalidate a verified
+            # application build. Compare all deployment-relevant content, not
+            # commit IDs alone. Fail closed on any actual source/workflow drift.
+            relevant=(
+              app/ core/ private-cloudflare/ objects-chatgpt-bridge/
+              .github/workflows/deploy-private-cloudflare.yml
+              .github/workflows/private-cloudflare-ci.yml
+              .github/workflows/web-audit.yml
+            )
+            if git diff --quiet "$GITHUB_SHA" "$latest" -- "${relevant[@]}"; then
+              echo "current=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::Newer main has no deployment-relevant changes; publishing validated source tree."
+            else
+              result=$?
+              if [[ "$result" -ne 1 ]]; then
+                echo "::error::Unable to verify deployment source against main."
+                exit 1
+              fi
+              echo "current=false" >> "$GITHUB_OUTPUT"
+              echo "::error::Deployment skipped: main contains newer deploy-relevant code; publish from updated HEAD instead."
+            fi
           fi
 
       - uses: actions/setup-node@v4
@@ -166,12 +185,14 @@ jobs:
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current == 'true'
         run: node scripts/deploy-wrangler-retry.mjs wrangler.web-audit.jsonc
 
-      - name: Explain skipped deployment
+      - name: Fail if deployment credentials are absent
         if: steps.cloudflare.outputs.configured != 'true'
         run: |
-          echo "Validation and build passed, but production deploy was skipped because Cloudflare credentials are not configured in GitHub Actions."
+          echo "::error::Private production deploy was not performed: Cloudflare credentials are missing."
+          exit 1
 
-      - name: Explain stale deployment skip
+      - name: Fail on stale deployment source
         if: steps.cloudflare.outputs.configured == 'true' && steps.head.outputs.current != 'true'
         run: |
-          echo "Validation and build passed, but this run is older than the current main HEAD, so production deployment was skipped."
+          echo "::error::Private production deploy was not performed: newer deployment inputs exist on main."
+          exit 1
