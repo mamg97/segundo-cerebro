@@ -146,7 +146,7 @@ export default {
       const response = await env.SEGUNDO_CEREBRO.fetch(upstream);
       return secureProxyResponse(response, url.origin, url.href, request.method);
     } catch {
-      return json({ ok: false, code: "UPSTREAM_FAILED" }, 502);
+      return json({ ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED" }, 502);
     }
   }
 };

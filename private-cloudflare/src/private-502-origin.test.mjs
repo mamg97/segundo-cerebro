@@ -35,3 +35,12 @@ test("Chromium does not log raw 5xx JSON or URL identifiers", () => {
   assert.doesNotMatch(audit, /\[AUDIT_BACKEND_DIAG\].*response\.url/);
   assert.doesNotMatch(audit, /console\.error\("\[AUDIT_BACKEND_DIAG\] " \+ JSON\.stringify/);
 });
+
+test("upstream binding failure is independently recognizable without private context", () => {
+  assert.equal(safePrivate502Origin("application/json; charset=utf-8", {
+    ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED"
+  }), "AUDIT_GATEWAY_UPSTREAM_FAILED");
+  const gateway = readFileSync(new URL("./web-audit-gateway.js", import.meta.url), "utf8");
+  assert.match(gateway, /return json\(\{ ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED" \}, 502\)/);
+  assert.doesNotMatch(gateway, /json\(\{ ok: false, code: String\(error/);
+});
