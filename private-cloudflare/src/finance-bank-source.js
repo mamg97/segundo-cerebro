@@ -15,6 +15,21 @@ function sourceErrorCode(status) {
   return "FINANCE_BANK_SOURCE_READ";
 }
 
+function validateBankHeaders(accountRows, movementRows) {
+  if (accountRows.length) {
+    const names = new Set((accountRows[0] || []).map((cell) => String(cell || "").trim()));
+    if (!names.has("account_id") && !names.has("id")) {
+      throw new FinanceBankSourceError("FINANCE_BANK_SOURCE_CONTRACT");
+    }
+  }
+  if (movementRows.length) {
+    const names = new Set((movementRows[0] || []).map((cell) => String(cell || "").trim()));
+    if (["movement_id", "account_id", "operation_date"].some((name) => !names.has(name))) {
+      throw new FinanceBankSourceError("FINANCE_BANK_SOURCE_CONTRACT");
+    }
+  }
+}
+
 export async function readFinanceBankSource(env, getAccessToken, fetcher = fetch) {
   const token = await getAccessToken(env);
   const params = new URLSearchParams({
@@ -38,21 +53,11 @@ export async function readFinanceBankSource(env, getAccessToken, fetcher = fetch
     throw new FinanceBankSourceError("FINANCE_BANK_SOURCE_CONTRACT");
   }
   if (!Array.isArray(valueRanges) || valueRanges.length !== 2 ||
-      !valueRanges.every((range) => range && Array.isArray(range.values))) {
-    // An empty tab can legitimately have no values; its range entry must still
-    // be present, so an omitted or truncated upstream result cannot masquerade
-    // as a valid zero-row source.
-    if (Array.isArray(valueRanges) && valueRanges.length === 2 &&
-        valueRanges.every((range) => range && (range.values == null || Array.isArray(range.values)))) {
-      return {
-        accountRows: valueRanges[0].values || [],
-        movementRows: valueRanges[1].values || []
-      };
-    }
+      valueRanges.some((range) => !range || (range.values !== undefined && !Array.isArray(range.values)))) {
     throw new FinanceBankSourceError("FINANCE_BANK_SOURCE_CONTRACT");
   }
-  return {
-    accountRows: valueRanges[0].values,
-    movementRows: valueRanges[1].values
-  };
+  const accountRows = valueRanges[0].values || [];
+  const movementRows = valueRanges[1].values || [];
+  validateBankHeaders(accountRows, movementRows);
+  return { accountRows, movementRows };
 }
