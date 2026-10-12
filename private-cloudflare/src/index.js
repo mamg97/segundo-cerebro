@@ -8,6 +8,7 @@ import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
 import { safePrivateReadDiagnostic } from "./private-read-diagnostics.js";
 import { createSingleFlight } from "./single-flight.js";
+import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-source.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
@@ -694,6 +695,53 @@ function allocationPriorityRank(value) {
   return Number.isFinite(numeric) ? numeric : 9;
 }
 
+function financeBankAccountCatalog(rows, currency = "EUR") {
+  // An account remains visible without a known balance. This is a catalogue
+  // of source-backed accounts, not a new source for spendable liquidity.
+  return parseTableRows(rows)
+    .map((row) => ({
+      id: row.account_id || row.id || null,
+      name: row.name || row.account_name || row.account_id || row.id || "Cuenta",
+      bank: row.bank || null,
+      owner: row.owner || null,
+      currency: row.currency || currency
+    }))
+    .filter((row) => row.id);
+}
+
+function financeBankTransactions(rows, currency = "EUR") {
+  return parseTableRows(rows)
+    .map((item) => ({
+      id: item.movement_id || null,
+      accountId: item.account_id || null,
+      operationDate: sheetDateOrNull(item.operation_date),
+      valueDate: sheetDateOrNull(item.value_date),
+      description: item.description_raw || item.description || null,
+      amount: moneyOrNull(item.amount),
+      balanceAfter: moneyOrNull(item.balance_after),
+      currency: item.currency || currency,
+      sourceSystem: item.source_system || null,
+      sourceRow: toNumber(item.source_row),
+      classification: item.classification || null,
+      note: item.note || null
+    }))
+    .filter((item) => item.id && item.accountId && item.operationDate)
+    .sort((a, b) => {
+      const byDate = String(b.operationDate).localeCompare(String(a.operationDate));
+      if (byDate !== 0) return byDate;
+      return (a.sourceRow ?? 999999) - (b.sourceRow ?? 999999);
+    })
+    .slice(0, 320);
+}
+
+async function fetchFinanceBankWorkspace(env) {
+  const rows = await readFinanceBankSource(env, getGoogleAccessToken);
+  return {
+    accounts: financeBankAccountCatalog(rows.accountRows),
+    transactions: financeBankTransactions(rows.movementRows)
+  };
+}
+
 async function fetchFinanceSummary(env) {
   if (!hasFinanceGoogleConfig(env)) {
     return { status: "not-configured", value: null };
@@ -1074,28 +1122,7 @@ async function fetchFinanceSummaryUncached(env) {
     })
     .filter((item) => item.id && String(item.status).toLowerCase() !== "closed");
 
-  const accountTransactions = parseTableRows(movementRows)
-    .map((item) => ({
-      id: item.movement_id || null,
-      accountId: item.account_id || null,
-      operationDate: sheetDateOrNull(item.operation_date),
-      valueDate: sheetDateOrNull(item.value_date),
-      description: item.description_raw || item.description || null,
-      amount: moneyOrNull(item.amount),
-      balanceAfter: moneyOrNull(item.balance_after),
-      currency: item.currency || summary.currency || "EUR",
-      sourceSystem: item.source_system || null,
-      sourceRow: toNumber(item.source_row),
-      classification: item.classification || null,
-      note: item.note || null
-    }))
-    .filter((item) => item.id && item.accountId && item.operationDate)
-    .sort((a, b) => {
-      const byDate = String(b.operationDate).localeCompare(String(a.operationDate));
-      if (byDate !== 0) return byDate;
-      return (a.sourceRow ?? 999999) - (b.sourceRow ?? 999999);
-    })
-    .slice(0, 320);
+  const accountTransactions = financeBankTransactions(movementRows, summary.currency || "EUR");
 
   const wealthAllocation = parseTableRows(wealthAllocationRows)
     .map((item) => ({
@@ -1427,6 +1454,7 @@ async function fetchFinanceSummaryUncached(env) {
     creditMovements,
     creditFuture,
     accountTransactions,
+    bankWorkspaceAccounts: financeBankAccountCatalog(accountRows, summary.currency || "EUR"),
     wealth: wealthSummary,
     gifts: giftSummary,
     importantEventRules,
@@ -5976,6 +6004,21 @@ export default {
       } catch (error) {
         console.warn("Career read failed", String(error?.message || error));
         return json({ ok: false, code: "CAREER_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/finance/accounts") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      if (!hasFinanceGoogleConfig(env)) return json({ ok: false, code: "FINANCE_NOT_CONFIGURED" }, 503);
+      try {
+        const workspace = await fetchFinanceBankWorkspace(env);
+        return json({ ok: true, ...workspace, sourceStatus: "ok" });
+      } catch (error) {
+        const code = error instanceof FinanceBankSourceError
+          ? error.code : "FINANCE_BANK_SOURCE_READ";
+        // Never log account IDs, spreadsheet IDs, token context or raw errors.
+        console.warn("Finance bank workspace read failed", code);
+        return json({ ok: false, code }, 502);
       }
     }
 
