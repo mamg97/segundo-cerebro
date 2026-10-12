@@ -1,3 +1,12 @@
+## ORGANIZADOR 13 · Recuperación de Menú semanal ante lectura completa fallida · 12/10/2026
+
+- Evidencia de captura: Salud → Menú muestra `12 oct – 18 oct 2026`, cinco tomas del día 12 y error «No se ha podido recuperar esa semana». **No indica pérdida de datos**: lectura directa, solo consulta, del Sheet `SEGUNDO CEREBRO - SALUD` → `MenuSemanal` encontró **5 filas con fecha 2026-10-12** y **70 filas en la semana 05–11** (134 filas válidas desde 2026-09-28).
+- Causa operativa probable (no demostrada por traza HTTP de la petición concreta): el navegador de semanas siempre dependía de `GET /api/nutrition?date=`, una lectura Google Sheets de doce rangos, más enriquecimiento de Despensa; el Worker puede devolver `NUTRITION_READ_FAILED` (502) o payload inesperado y no existía fallback. El frontend mantenía la semana anterior en pantalla.
+- Cambio seguro `organizador13/menu-week-fallback-light-20261012`: reutiliza el resumen completo en memoria al volver a la semana vigente; para otras semanas prueba lectura completa y, en caso de error, `GET /api/nutrition/menu?date=...` (endpoint canónico de dos rangos, solo lectura). Exige respuesta `ok`, `weekStart` exacto y filas en `weeklyMenu` antes de aceptarla.
+- Vista recuperada de forma parcial **identificada como tal**. La consulta ligera no incluye enriquecimiento de Despensa ni ingredientes derivados; conserva solo macros realmente presentes y relaciones de receta comprobadas contra el maestro ya cargado, nunca inventa datos ni crea filas. Aviso con «Reintentar vista completa».
+- Si ambas lecturas fallan, retiene la vista previa, comunica **qué semana solicitada falló** y permite reintentar, sin alterar `MenuSemanal`. Respuestas asíncronas viejas se descartan mediante `healthMenuRequestId`.
+- Validar por CI específico, despliegue privado y prueba real; no equiparar CI verde a disponibilidad en producción. Sin coste adicional, cambios de esquema, escritura canónica ni exposición de Sheet IDs.
+
 ## MIDAS genético: pausa irreversible del libro 08/10 y nueva campaña (12/10/2026)
 
 - Fuente `mamg97/personal_mamg`: el original `diario_portfolio_forward.json` se congela definitivamente en 07/10 tras el fallo de publicación `non-fast-forward` del 09/10 (job 37899091787). No se publicaron las órdenes de 08/10 y no hay registros prospectivos auténticos del 08–09/10; jamás reconstruirlos como fills.
