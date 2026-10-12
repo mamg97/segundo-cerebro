@@ -117,7 +117,11 @@ await page.route(`${auditOrigin}/**`, async (route) => {
   // The first unique, versioned image is fetched from the real authenticated
   // Worker. Never cache a failure or non-immutable/private response.
   try {
-    const live = await route.fetch({ headers, timeout: 25000 });
+    // Concurrent requests for the same version must share the first real
+    // fetch. Otherwise a cold browser view bypasses the cache 20+ times.
+    const live = await immutableImageCache.once(request.url(), () =>
+      route.fetch({ headers, timeout: 25000 })
+    );
     if (live.status() === 200) {
       const body = await live.body();
       immutableImageCache.put(request.url(), live.status(), live.headers(), body);
@@ -2744,7 +2748,11 @@ try {
     info("Errores de recurso ya cubiertos por red", `n=${resourceConsoleErrors.length}`);
   }
   // Operational hint only; do not print URLs, look IDs or image bytes.
-  console.log("[AUDIT_MEDIA_CACHE] " + (immutableImageCache.stats().hits > 0 ? "REUSED" : "NO_REUSE"));
+  const mediaStats = immutableImageCache.stats();
+  console.log("[AUDIT_MEDIA_CACHE] " +
+    (mediaStats.hits + mediaStats.shared > 0 ? "REUSED" : "NO_REUSE") +
+    " hits=" + mediaStats.hits + " shared=" + mediaStats.shared +
+    " entries=" + mediaStats.entries);
   if (networkFailures.length) {
     const families = new Map();
     for (const entry of networkFailures) {

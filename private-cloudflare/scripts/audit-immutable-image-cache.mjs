@@ -14,9 +14,11 @@ function headerValue(headers, key) {
 
 export function createAuditImmutableImageCache({ maxEntryBytes = MAX_ENTRY_BYTES, maxTotalBytes = MAX_TOTAL_BYTES } = {}) {
   const entries = new Map();
+  const inFlight = new Map();
   let bytes = 0;
   let hits = 0;
   let misses = 0;
+  let shared = 0;
 
   function canHandle(uri, origin, method = "GET") {
     if (method !== "GET") return false;
@@ -56,8 +58,23 @@ export function createAuditImmutableImageCache({ maxEntryBytes = MAX_ENTRY_BYTES
     return true;
   }
 
+  async function once(uri, fetcher) {
+    const pending = inFlight.get(uri);
+    if (pending) {
+      shared++;
+      return pending;
+    }
+    const current = Promise.resolve().then(fetcher);
+    inFlight.set(uri, current);
+    try {
+      return await current;
+    } finally {
+      if (inFlight.get(uri) === current) inFlight.delete(uri);
+    }
+  }
+
   return {
-    canHandle, get, put,
-    stats() { return { hits, misses, entries: entries.size, bytes }; }
+    canHandle, get, put, once,
+    stats() { return { hits, misses, shared, entries: entries.size, bytes }; }
   };
 }
