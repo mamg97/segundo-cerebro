@@ -344,3 +344,35 @@ test("TimesFM EUR appears in competition without invented return and shows compa
   assert.match(pending, /Esperando primera sesión/);
   assert.match(pending, /5 sesiones · mismo período/);
 });
+
+
+test("single S&P500 cohort excludes restricted legacy models and includes both TimesFM horizons", () => {
+  const dashboard = { tracks: [
+    { id: "legacy_eight", label: "Old EMA", group: "paper_nuevo",
+      comparison_eligible: false, comparison_exclusion_reason: "8 stocks",
+      status: "demo_con_diario", return_pct: 50 },
+    { id: "legacy_ibex", label: "Old IBEX", group: "tfm_demo_adaptado",
+      comparison_eligible: false, status: "demo_con_diario", return_pct: 8 },
+    { id: "timesfm_2p5_eur_paper", label: "TimesFM semanal",
+      group: "timesfm_demo", comparison_eligible: true,
+      comparison_universe_id: "SP500_2026-09-29_503",
+      period_returns_pct: { "5_sessions": null },
+      status: "programada_sin_diario", return_pct: null },
+    { id: "timesfm_2p5_daily_eur_paper", label: "TimesFM diario",
+      group: "timesfm_daily_demo", comparison_eligible: true,
+      comparison_universe_id: "SP500_2026-09-29_503",
+      period_returns_pct: { "5_sessions": null },
+      status: "programada_sin_diario", return_pct: null }
+  ] };
+  const html = renderMidasVisualLab(dashboard);
+  assert.doesNotMatch(html, /Old EMA/);
+  assert.doesNotMatch(html, /Old IBEX/);
+  assert.match(html, /TimesFM semanal/);
+  assert.match(html, /TimesFM diario/);
+  assert.equal((html.match(/class="midas-lab-row/g) || []).length, 2);
+  assert.match(html, /data-midas-lab-sort-return=""/);
+  const daily = renderMidasAlgorithmDetail(dashboard, null, "timesfm_2p5_daily_eur_paper");
+  assert.match(daily, /5 sesiones · mismo período/);
+  assert.match(daily, /Universo canónico: SP500_2026-09-29_503/);
+  assert.doesNotMatch(renderMidasAlgorithmDetail(dashboard, null, "legacy_eight"), /50,00 %/);
+});
