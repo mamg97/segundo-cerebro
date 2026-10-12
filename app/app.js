@@ -1,5 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
+import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.15";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.22";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
@@ -9980,6 +9981,27 @@ function initializeAccountTransactionTabs(root = document) {
 
 let financeBudgetRefreshInFlight = false;
 
+// A bounded read-only recovery shared by the empty and partially loaded
+// budget views. A missing financial source never becomes invented data.
+function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } = {}) {
+  if (privateModeKind !== "remote" || financeBudgetRefreshInFlight) return;
+  financeBudgetRefreshInFlight = true;
+  void fetchStateScope("finance", 12000).then((payload) => {
+    if (!payload?.financeSummary?.monthlyBudget) throw new Error("FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
+    state.financeSummary = payload.financeSummary;
+    if (dialog.open && dialog.classList.contains("budget-dialog")) {
+      openBudgetDetail({ skipRefresh: true });
+    }
+  }).catch(() => {
+    // Never log upstream URLs, financial values, IDs or raw error messages.
+    console.warn("Finance workspace on-demand load failed", "FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
+    if (replaceMissingView && dialog.open && dialog.classList.contains("budget-dialog")) {
+      document.querySelector("#dialog-body").innerHTML =
+        '<p class="account-transactions-empty">No se han podido recuperar los movimientos bancarios. La fuente original no se ha modificado.</p>';
+    }
+  }).finally(() => { financeBudgetRefreshInFlight = false; });
+}
+
 function openBudgetDetail(options = {}) {
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
@@ -9993,25 +10015,13 @@ function openBudgetDetail(options = {}) {
   const hasAccountRows = Array.isArray(finance.accountTransactions) && finance.accountTransactions.length > 0;
   const hasLiquidityRows = Array.isArray(monthly?.liquidityAccounts) && monthly.liquidityAccounts.length > 0;
   const hasBudgetRows = Array.isArray(monthly?.categories) && monthly.categories.length > 0;
+  const accountWorkspaceIncomplete = financeAccountWorkspaceIncomplete(finance);
   if (!monthly || (!hasAccountRows && !hasLiquidityRows && !hasBudgetRows)) {
     document.querySelector("#dialog-body").innerHTML =
       '<p class="account-transactions-empty">Datos bancarios pendientes de cargar desde la fuente privada; no se muestran importes supuestos.</p>';
     if (!dialog.open) dialog.showModal();
     if (!options.skipRefresh && privateModeKind === "remote" && !financeBudgetRefreshInFlight) {
-      financeBudgetRefreshInFlight = true;
-      void fetchStateScope("finance", 12000).then((payload) => {
-        if (!payload?.financeSummary?.monthlyBudget) throw new Error("FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
-        state.financeSummary = payload.financeSummary;
-        if (dialog.open && dialog.classList.contains("budget-dialog")) {
-          openBudgetDetail({ skipRefresh: true });
-        }
-      }).catch((error) => {
-        console.warn("Finance workspace on-demand load failed", String(error?.message || error));
-        if (dialog.open && dialog.classList.contains("budget-dialog")) {
-          document.querySelector("#dialog-body").innerHTML =
-            '<p class="account-transactions-empty">No se han podido recuperar los movimientos bancarios. La fuente original no se ha modificado.</p>';
-        }
-      }).finally(() => { financeBudgetRefreshInFlight = false; });
+      refreshFinanceAccountWorkspace(dialog, { replaceMissingView: true });
     }
     return;
   }
@@ -10043,6 +10053,7 @@ function openBudgetDetail(options = {}) {
         <div><span>Libre conjunto</span><strong>${jointNet === null ? "—" : formatMoney(jointNet, currency)}</strong></div>
       </div>
       <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
+      ${accountWorkspaceIncomplete ? '<p class="account-transactions-empty" data-finance-workspace-status="unavailable">Datos bancarios pendientes de recuperar desde la fuente privada. No se muestran cuentas ni movimientos supuestos.</p>' : ""}
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
       ${renderAccountTransactionsWorkspace(accountTransactions, liquidityAccounts, currency)}
       ${categories.length ? `<div class="budget-groups">
@@ -10055,6 +10066,11 @@ function openBudgetDetail(options = {}) {
   });
   initializeAccountTransactionTabs(document.querySelector("#dialog-body"));
   if (!dialog.open) dialog.showModal();
+  // Budget categories can be available even when optional bank ranges were
+  // missing. Previously this path rendered without ever requesting recovery.
+  if (accountWorkspaceIncomplete && !options.skipRefresh && privateModeKind === "remote" && !financeBudgetRefreshInFlight) {
+    refreshFinanceAccountWorkspace(dialog);
+  }
 }
 
 function renderBudgetGroup(name, items, currency) {
