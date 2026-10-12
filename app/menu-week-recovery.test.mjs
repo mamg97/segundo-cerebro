@@ -74,6 +74,7 @@ test("week-scoped fallback restores canonical rows without invented calories or 
 test("when returning to the current week, reuse the fully loaded data without another API read", async () => {
   const base={...full,weekStart:"2026-10-12"};
   const h=harness(async()=>{throw Error("Should not fetch cached current week");},base);
+  h.ctx.healthMenuSelectedWeek = "2026-10-05"; // returning from the preceding week
   assert.equal(await h.ctx.loadHistoricalMenuWeek("2026-10-12",{force:false}),true);
   assert.equal(h.rendered.payload,base);
   assert.equal(h.rendered.payload.menuReadMode,undefined);
