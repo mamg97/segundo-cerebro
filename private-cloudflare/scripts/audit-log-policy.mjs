@@ -41,11 +41,52 @@ const knownFailureCodes = new Map([
   ["Home · bloques financieros contiguos usan altura equilibrada", "HOME_FINANCE_LAYOUT"],
   ["Home · Patrimonio y columna Obligaciones/Regalos alineados", "HOME_FINANCE_ALIGN"],
   ["Home · Regalos ocupa el hueco bajo Obligaciones sin solape", "HOME_GIFTS_GAP"],
+  ["Salud · Resumen usa los cinco KPIs del Home", "HEALTH_OVERVIEW_KPIS"],
+  ["Salud · Resumen conserva cuatro anillos y Peso estático", "HEALTH_OVERVIEW_RINGS"],
+  ["Salud · composición muestra freshness/cobertura por métrica", "HEALTH_BODY_FRESHNESS"],
+  ["Salud · Resumen integra Adherencia mensual", "HEALTH_ADHERENCE_SUMMARY"],
+  ["Salud · Adherencia compacta muestra métricas clave", "HEALTH_ADHERENCE_METRICS"],
+  ["Salud · Adherencia ofrece detalle mensual desde Resumen", "HEALTH_ADHERENCE_EXPAND"],
+  ["Salud · API expone histórico de balance calórico de 30 días", "HEALTH_CALORIE_HISTORY"],
+  ["Salud · Resumen muestra gráfica de balance calórico", "HEALTH_CALORIE_CHART"],
+  ["Salud · gráfica conserva eje cero", "HEALTH_CALORIE_ZERO_LINE"],
+  ["Salud · gráfica muestra treinta días", "HEALTH_CALORIE_DAY_COUNT"],
+  ["Salud · gráfica de 30 días permite scroll horizontal contenido", "HEALTH_CALORIE_SCROLL"],
+  ["Salud · gráfica explica verde negativo y rojo positivo", "HEALTH_CALORIE_LEGEND"],
+  ["Salud · gráfica representa los treinta registros más recientes", "HEALTH_CALORIE_PARITY"],
+  ["Salud · Resumen expone selector de fecha y balance diario visible", "HEALTH_DATE_SELECTOR"],
+  ["Salud · fecha del balance coincide con la API", "HEALTH_DATE_PARITY"],
+  ["Salud · selector recupera fecha anterior sin cambiar registros", "HEALTH_DATE_PREVIOUS"],
+  ["Salud · volver a Hoy restaura fecha y balance", "HEALTH_DATE_TODAY"],
+  ["Salud · Gym conserva Mi plan", "HEALTH_GYM_PLAN"],
+  ["Salud · Gym ofrece Biblioteca de ejercicios", "HEALTH_GYM_LIBRARY"],
+  ["Salud · Gym biblioteca termina de cargar", "HEALTH_GYM_LIBRARY_LOAD"],
+  ["Salud · Gym biblioteca declara fuente libre y coste cero", "HEALTH_GYM_LIBRARY_SOURCE"],
+  ["Salud · Gym biblioteca devuelve ejercicios", "HEALTH_GYM_LIBRARY_ROWS"],
+  ["Salud · Gym ofrece GIF propios por variante, sin duplicados", "HEALTH_GYM_GIF_COUNT"],
+  ["Salud · Gym inventario coincide con las variantes GIF vigentes", "HEALTH_GYM_GIF_INVENTORY"],
+  ["Salud · Gym distingue GIF realmente publicado de vídeo verificado", "HEALTH_GYM_GIF_STATUS"],
+  ["Salud · Gym ejercicio muestra recurso visual", "HEALTH_GYM_VISUAL"],
+  ["Salud · Gym abre ficha visual de ejercicio", "HEALTH_GYM_DETAIL"],
+  ["Salud · Gym ficha tiene demostración/referencia visual", "HEALTH_GYM_DETAIL_MEDIA"],
+  ["Salud · Gym ficha con GIF incluye instrucciones visibles", "HEALTH_GYM_EXPLANATION"],
+  ["Salud · Gym declara explícitamente disponibilidad de vídeo en la ficha", "HEALTH_GYM_VIDEO_STATUS"],
+  ["Salud · Gym ficha conserva atribución según procedencia", "HEALTH_GYM_ATTRIBUTION"],
+  ["Salud · Gym solo permite añadir desde fichas con ID real wger", "HEALTH_GYM_ADD_SOURCE"],
   ["Sin respuestas 5xx ni fallos de red", "INFRA_NETWORK_FAILURES"]
 ]);
 export function safeAuditDiagnosticCode(name) {
   const value=String(name || "");
   if (knownFailureCodes.has(value)) return knownFailureCodes.get(value);
+  // All returned identifiers are fixed constants, never arbitrary tab names or DOM text.
+  const overviewParity = value.match(/^Salud · Resumen (habits|kcal|protein|gym|weight) coincide con Home$/);
+  if (overviewParity) return "HEALTH_OVERVIEW_PARITY_" + overviewParity[1].toUpperCase();
+  if (/^Visual .* · imágenes cargadas$/.test(value)) return "VISUAL_IMAGES_FAILED";
+  if (/^Visual .* · texto sin clipping$/.test(value)) return "VISUAL_TEXT_CLIPPED";
+  if (/^Visual .* · sin solapes$/.test(value)) return "VISUAL_OVERLAPS";
+  if (/^Visual .* · componentes dentro de su tarjeta$/.test(value)) return "VISUAL_CARD_OVERFLOW";
+  if (/^Visual .* · imágenes sin deformación$/.test(value)) return "VISUAL_IMAGES_DISTORTED";
+  if (/^Visual .* · contenido dentro del viewport$/.test(value)) return "VISUAL_OUT_OF_BOUNDS";
   if (/^Finanzas · movimientos por cuenta · pestaña .* activa$/.test(value)) return "FINANCE_TAB_ACTIVE";
   if (/^Finanzas · movimientos por cuenta · panel .* visible$/.test(value)) return "FINANCE_TAB_PANEL";
   if (/^Finanzas · movimientos por cuenta · pestaña .* · desapareció tras render$/.test(value)) return "FINANCE_TAB_MISSING";
