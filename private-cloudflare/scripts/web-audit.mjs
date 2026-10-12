@@ -1223,6 +1223,22 @@ async function auditLookDetail(label) {
         const firstRowBox = rows[0]?.getBoundingClientRect();
         const headerBeforeRows = Boolean(headerBox && firstRowBox &&
           headerBox.bottom <= firstRowBox.top + 2);
+        const firstCell = rows[0]?.querySelector("td");
+        const nativeRows = getComputedStyle(table).display === "table" &&
+          getComputedStyle(head).display === "table-header-group" &&
+          getComputedStyle(table.querySelector("tbody")).display === "table-row-group" &&
+          rows.every((row) => getComputedStyle(row).display === "table-row") &&
+          Boolean(firstCell && getComputedStyle(firstCell).display === "table-cell");
+        const columns = [...(head?.querySelectorAll("th") || [])];
+        const firstRowCells = [...(rows[0]?.querySelectorAll("td") || [])];
+        const alignedColumns = columns.length === 6 && firstRowCells.length === 6 &&
+          columns.every((th, index) => {
+            const thX = th.getBoundingClientRect().left;
+            const cellX = firstRowCells[index].getBoundingClientRect().left;
+            return Math.abs(thX - cellX) <= 3;
+          });
+        const mobileList = table.closest(".look-history")?.querySelector(".look-history-mobile-list");
+        const mobileListHidden = Boolean(mobileList && getComputedStyle(mobileList).display === "none");
         const thumbnailsInsideRows = rows.every((row) => {
           const rowBox = row.getBoundingClientRect();
           const thumb = row.querySelector(".look-history-thumb");
@@ -1235,12 +1251,13 @@ async function auditLookDetail(label) {
             labelBox.left >= thumbBox.right - 2 &&
             rowBox.height >= 60 && rowBox.height <= 150);
         });
-        return { headerBeforeRows, thumbnailsInsideRows };
+        return { headerBeforeRows, thumbnailsInsideRows, nativeRows, alignedColumns, mobileListHidden };
       });
       assertCheck(
-        geometry.headerBeforeRows && geometry.thumbnailsInsideRows,
+        geometry.headerBeforeRows && geometry.thumbnailsInsideRows &&
+        geometry.nativeRows && geometry.alignedColumns && geometry.mobileListHidden,
         `Visual ${label} · Historial de Looks miniaturas alineadas por fila`,
-        `cabecera=${geometry.headerBeforeRows} filas=${geometry.thumbnailsInsideRows}`
+        `cabecera=${geometry.headerBeforeRows} filas=${geometry.thumbnailsInsideRows} native=${geometry.nativeRows} columnas=${geometry.alignedColumns} movilOculto=${geometry.mobileListHidden}`
       );
     }
     if (await garmentsMode.isVisible().catch(() => false)) {

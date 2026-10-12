@@ -86,17 +86,21 @@ test("look detail cache bust and production audit are wired", () => {
   assert.match(audit, /Tabla desktop oculta en móvil/);
 });
 
-test("desktop Looks and Prendas history keep each thumbnail aligned inside one row", () => {
-  assert.match(css, /v0\.44\.21 — Looks history: aligned desktop\/tablet rows/);
-  assert.match(css, /@media \(min-width: 561px\) \{[\s\S]*?\.objects-dialog \.look-history-table tbody tr \{[\s\S]*?display: grid/);
-  assert.match(css, /grid-template-columns: 70px minmax\(195px, 2fr\)/);
-  assert.match(css, /\.objects-dialog \.look-history-table th:first-child,[\s\S]*?width: auto !important/);
-  assert.match(css, /\.objects-dialog \.look-history-table \.look-history-thumb-cell \{[\s\S]*?display: flex/);
-  assert.match(css, /\.objects-dialog \.look-history-table \.look-history-entity strong \{[\s\S]*?font-size: 12px/);
-  assert.match(audit, /Historial de Looks miniaturas alineadas por fila/);
-  assert.match(audit, /thumbBox\.top >= rowBox\.top - 2/);
-  assert.match(audit, /thumbBox\.bottom <= rowBox\.bottom \+ 2/);
-  assert.match(audit, /headerBox\.bottom <= firstRowBox\.top \+ 2/);
-  // Mobile keeps its Safari-safe cards rather than reusing the desktop grid.
+test("desktop Looks and Prendas history use native table rows, not mixed block/grid layout", () => {
+  assert.match(css, /v0\.44\.22 — Native table layout for desktop Looks/);
+  assert.match(css, /@media \(min-width: 561px\) \{[\s\S]*?\.objects-dialog \.look-history-table \{\s*display: table !important/);
+  assert.match(css, /\.objects-dialog \.look-history-table thead \{\s*display: table-header-group !important/);
+  assert.match(css, /\.objects-dialog \.look-history-table tbody \{\s*display: table-row-group !important/);
+  assert.match(css, /\.objects-dialog \.look-history-table tbody tr \{\s*display: table-row !important/);
+  assert.match(css, /\.objects-dialog \.look-history-table td\.look-history-thumb-cell \{\s*display: table-cell !important/);
+  assert.match(css, /\.objects-dialog \.look-history-mobile-list \{\s*display: none !important/);
+  assert.match(css, /\.objects-dialog \.look-history-table \.look-history-entity strong \{[\s\S]*?white-space: normal/);
+  assert.match(audit, /getComputedStyle\(table\)\.display === "table"/);
+  assert.match(audit, /getComputedStyle\(head\)\.display === "table-header-group"/);
+  assert.match(audit, /getComputedStyle\(row\)\.display === "table-row"/);
+  assert.match(audit, /getComputedStyle\(firstCell\)\.display === "table-cell"/);
+  assert.match(audit, /Math\.abs\(thX - cellX\) <= 3/);
+  assert.match(audit, /geometry\.nativeRows && geometry\.alignedColumns && geometry\.mobileListHidden/);
+  // The independent Safari-safe mobile cards still own phone layouts.
   assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.look-history-table-wrap \{\s*display: none !important/);
 });
