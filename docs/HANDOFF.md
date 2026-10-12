@@ -1,3 +1,11 @@
+## ORGANIZADOR 14 · Imágenes privadas: retirar DDL de lecturas · 12/10/2026
+
+- Auditoría privada post-PR #388 [run 38244056714](https://github.com/mamg97/segundo-cerebro/actions/runs/38244056714): 928 checks, 30 fallos, con `HEALTH_OVERVIEW_HTTP_502 count=1` y `LOOK_IMAGE_HTTP_502 count=3`. La causa exacta de estos fallos no está demostrada; no equiparar mejoras de infraestructura a reparación verificada.
+- Se detectó una violación reproducible de la arquitectura: el adaptador `objects-media-d1.js` ejecutaba `CREATE TABLE IF NOT EXISTS` y `CREATE INDEX IF NOT EXISTS` durante cada inicialización de Worker, incluida la lectura GET de imágenes, por medio de `ensureSchema`. `docs/DECISIONS.md` establece que el esquema se aplica exclusivamente mediante migraciones remotas antes del despliegue.
+- Corrección aislada: `migrations/0008_objects_media.sql` con las dos tablas y el índice **idénticos a la definición vigente**, todos con `IF NOT EXISTS`. Preserva intactos los registros y assets previos. El adaptador deja de ejecutar DDL al leer, subir o borrar medios. Se añade prueba que prohíbe DDL de ejecución y comprueba la migración; las pruebas preexistentes conservan round-trip de los chunks. Sin nueva infraestructura ni coste.
+- La pipeline de despliegue aplica migraciones D1 antes de publicar el Worker. **No fusionar ni declarar solucionadas imágenes** sin CI verde, migración remota confirmada, despliegue y auditoría postdespliegue. Si persiste `LOOK_IMAGE_HTTP_502`, inspeccionar errores no sensibles del acceso a chunks D1 y tamaño de assets sin borrar ni regenerar imágenes canónicas.
+- Fuentes Google Sheets, look IDs, fotos, prendas, movimientos y secretos: sin modificaciones.
+
 ## ORGANIZADOR 14 · Estado contrastado y diagnóstico de Salud · 12/10/2026
 
 - HEAD de partida `ab98024c` (PR #387 ya fusionada). Último audit de producción: [run 38241186542](https://github.com/mamg97/segundo-cerebro/actions/runs/38241186542), 950 checks / 29 fallos. La ejecución completa llega al resumen, pero quedan 20 respuestas HTTP 502 registradas como `HEALTH_OTHER`, junto a fallos de interfaz en Salud y enlace financiero. CI/deploy verdes no prueban salud funcional.
