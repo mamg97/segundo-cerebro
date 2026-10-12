@@ -11,7 +11,9 @@ assert.match(app, /data-account-transactions-panel=/);
 assert.match(app, /function initializeAccountTransactionTabs\(/);
 assert.match(app, /ArrowLeft/);
 assert.match(app, /ArrowRight/);
-assert.match(app, /renderAccountTransactionsWorkspace\(accountTransactions, liquidityAccounts, currency\)/);
+// Bank tabs use the canonical account catalogue even when balances are unknown.
+assert.match(app, /const workspaceAccounts = bankCatalog\.length \? bankCatalog : liquidityAccounts/);
+assert.match(app, /renderAccountTransactionsWorkspace\(accountTransactions, workspaceAccounts, currency\)/);
 assert.doesNotMatch(app, /\.map\(\(account\) => renderAccountTransactions\(/);
 
 assert.match(styles, /\.account-transactions-tabs\s*\{/);

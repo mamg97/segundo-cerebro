@@ -17,18 +17,29 @@ test("bank account recovery is due even when budget categories loaded", () => {
   assert.equal(financeAccountWorkspaceIncomplete(null), true);
 });
 
-test("valid banking content never triggers missing-workspace recovery", () => {
+test("partial optional ranges require explicit verification before treating empty history as genuine", () => {
   assert.equal(financeAccountWorkspaceIncomplete({
     monthlyBudget: { liquidityAccounts: [{ id: "example-bank" }] },
     accountTransactions: []
-  }), false);
+  }), true);
   assert.equal(financeAccountWorkspaceIncomplete({
     monthlyBudget: { liquidityAccounts: [] },
+    accountTransactions: [{ accountId: "example-bank" }]
+  }), true);
+  assert.equal(financeAccountWorkspaceIncomplete({
+    monthlyBudget: { liquidityAccounts: [{ id: "example-bank" }] },
     accountTransactions: [{ accountId: "example-bank" }]
   }), false);
   assert.equal(financeAccountWorkspaceIncomplete({
     monthlyBudget: { liquidityAccounts: [{ id: "example-bank" }] },
-    accountTransactions: [{ accountId: "example-bank" }]
+    accountTransactions: [],
+    bankWorkspaceReadVerified: true
+  }), false);
+  assert.equal(financeAccountWorkspaceIncomplete({
+    monthlyBudget: { liquidityAccounts: [] },
+    accountTransactions: [],
+    bankWorkspaceAccounts: [{ id: "example-bank" }],
+    bankWorkspaceReadVerified: true
   }), false);
 });
 
