@@ -1,8 +1,7 @@
+// Tables and indexes are provisioned by versioned D1 migration 0008, never at request time.
 const CHUNK_BYTES = 1024 * 1024;
 const MAX_MEDIA_BYTES = 200 * 1024 * 1024;
 const KEY_RE = /^objects\/([A-Za-z0-9][A-Za-z0-9._-]{0,127})\/(original|processed|thumbnail)\/([A-Za-z0-9-]{8,80})$/;
-
-let schemaReady = null;
 
 function storageParts(key) {
   const match = String(key || "").match(KEY_RE);
@@ -46,42 +45,6 @@ function requireDb(env) {
   return env.DB;
 }
 
-async function ensureSchema(db) {
-  if (!schemaReady) {
-    schemaReady = Promise.resolve(db.batch([
-      db.prepare(`
-        CREATE TABLE IF NOT EXISTS objects_media_assets (
-          storage_key TEXT PRIMARY KEY,
-          objeto_id TEXT NOT NULL,
-          image_type TEXT NOT NULL,
-          version TEXT NOT NULL,
-          mime_type TEXT NOT NULL,
-          size_bytes INTEGER NOT NULL,
-          chunk_count INTEGER NOT NULL,
-          etag TEXT NOT NULL,
-          created_at TEXT NOT NULL
-        )
-      `),
-      db.prepare(`
-        CREATE TABLE IF NOT EXISTS objects_media_chunks (
-          storage_key TEXT NOT NULL,
-          chunk_index INTEGER NOT NULL,
-          data BLOB NOT NULL,
-          PRIMARY KEY (storage_key, chunk_index)
-        )
-      `),
-      db.prepare(`
-        CREATE INDEX IF NOT EXISTS idx_objects_media_chunks_storage_key
-        ON objects_media_chunks(storage_key, chunk_index)
-      `)
-    ])).catch((error) => {
-      schemaReady = null;
-      throw error;
-    });
-  }
-  await schemaReady;
-}
-
 async function currentUsageBytes(db) {
   const row = await db.prepare(
     "SELECT COALESCE(SUM(size_bytes), 0) AS total_bytes FROM objects_media_assets"
@@ -98,7 +61,7 @@ export function createObjectsD1MediaStore(env) {
       const { objetoId, imageType, version } = storageParts(key);
       const bytes = bytesOf(value);
       if (!bytes.byteLength) throw new Error("OBJECTS_MEDIA_EMPTY");
-      await ensureSchema(db);
+
 
       const existing = await db.prepare(
         "SELECT size_bytes FROM objects_media_assets WHERE storage_key = ? LIMIT 1"
@@ -155,7 +118,7 @@ export function createObjectsD1MediaStore(env) {
 
     async get(key, options = {}) {
       storageParts(key);
-      await ensureSchema(db);
+
       const asset = await db.prepare(`
         SELECT mime_type, size_bytes, chunk_count, etag
         FROM objects_media_assets
@@ -204,7 +167,7 @@ export function createObjectsD1MediaStore(env) {
 
     async delete(key) {
       storageParts(key);
-      await ensureSchema(db);
+
       await db.batch([
         db.prepare("DELETE FROM objects_media_chunks WHERE storage_key = ?").bind(key),
         db.prepare("DELETE FROM objects_media_assets WHERE storage_key = ?").bind(key)
