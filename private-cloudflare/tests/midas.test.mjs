@@ -284,7 +284,7 @@ test("MIDAS workflow health reads persisted runtime artifacts and treats missing
   assert.equal(first.workflows.find((row) => row.name === "MIDAS TimesFM EUR daily paper").state, "not_due_yet");
   assert.equal(first.workflows.find((row) => row.name === "MIDAS TimesFM 2.5 EUR weekly signal").state, "not_due_yet");
   assert.equal("html_url" in first.workflows[0], false);
-  assert.equal(requests, 9);
+  assert.equal(requests, 10);
   await fetchMidasWorkflowHealth(fetcher, now + 60_000);
-  assert.equal(requests, 9);
+  assert.equal(requests, 10);
 });
