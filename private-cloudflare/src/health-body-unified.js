@@ -5,14 +5,14 @@ import { deduplicateHealthBodySamples } from "./health-body-identity.js";
 // one measurement, not two data points in the trend.
 export function mergeHealthBodySources(d1Samples = [], sheetSamples = []) {
   return deduplicateHealthBodySamples([...d1Samples, ...sheetSamples].filter(
-    (sample) => sample && Number.isFinite(Number(sample.value))
+    (sample) => sample && sample.value !== null && sample.value !== undefined && sample.value !== "" && Number.isFinite(Number(sample.value))
   ));
 }
 
 export function latestHealthBodyMetric(samples = [], type, endDate, exactDate = false) {
   const matches = samples.filter((sample) =>
     sample?.type === type &&
-    Number.isFinite(Number(sample.value)) &&
+    sample.value !== null && sample.value !== undefined && sample.value !== "" && Number.isFinite(Number(sample.value)) &&
     (!endDate || (exactDate ? sample.date === endDate : sample.date <= endDate))
   );
   return matches.length
