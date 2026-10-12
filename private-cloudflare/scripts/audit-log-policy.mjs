@@ -53,7 +53,17 @@ export function safeAuditDiagnosticCode(name) {
   return "CHECK_UNMAPPED";
 }
 const failureFamilies = [
+  // Keep route families fixed and non-identifying; never emit recipe, user or record IDs.
+  // This distinguishes intermittent recipe-media errors from core Health API failures.
   [/^\/api\/health\/overview$/, "HEALTH_OVERVIEW"],
+  [/^\/api\/health\/adherence$/, "HEALTH_ADHERENCE"],
+  [/^\/api\/health\/history$/, "HEALTH_HISTORY"],
+  [/^\/api\/health\/appointments(?:\/|$)/, "HEALTH_APPOINTMENTS"],
+  [/^\/api\/health\/vision(?:\/|$)/, "HEALTH_VISION"],
+  [/^\/api\/health\/recipes\/[^/?]+\/image$/, "HEALTH_RECIPE_IMAGE"],
+  [/^\/api\/health\/recipes(?:\/|$)/, "HEALTH_RECIPES"],
+  [/^\/api\/health\/sync$/, "HEALTH_SYNC"],
+  [/^\/api\/health$/, "HEALTH_ROOT"],
   [/^\/api\/health(?:\/|$)/, "HEALTH_OTHER"],
   [/^\/api\/objects\/[^/?]+\/image(?:\/|$)/, "OBJECTS_IMAGE"],
   [/^\/api\/objects\/look\/[^/?]+\/image(?:\/|$)/, "LOOK_IMAGE"],
