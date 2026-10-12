@@ -127,21 +127,30 @@ export function createObjectsD1MediaStore(env) {
       `).bind(key).first();
       if (!asset) return null;
 
-      const rows = await db.prepare(`
-        SELECT chunk_index, data
-        FROM objects_media_chunks
-        WHERE storage_key = ?
-        ORDER BY chunk_index ASC
-      `).bind(key).all();
-      const chunks = Array.isArray(rows?.results) ? rows.results : [];
       const expectedCount = Number(asset.chunk_count || 0);
-      if (expectedCount <= 0 || chunks.length !== expectedCount) throw new Error("OBJECTS_MEDIA_CORRUPT");
-
-      for (let index = 0; index < chunks.length; index += 1) {
-        if (Number(chunks[index]?.chunk_index) !== index) throw new Error("OBJECTS_MEDIA_CORRUPT");
-      }
-      const parts = chunks.map((row) => bytesOf(row.data));
       const sizeBytes = Number(asset.size_bytes || 0);
+      if (!Number.isSafeInteger(sizeBytes) || sizeBytes <= 0 || sizeBytes > MAX_MEDIA_BYTES ||
+          !Number.isSafeInteger(expectedCount) || expectedCount !== Math.ceil(sizeBytes / CHUNK_BYTES)) {
+        throw new Error("OBJECTS_MEDIA_CORRUPT");
+      }
+
+      // A single D1 .all() response containing every BLOB chunk can exceed
+      // per-query response limits even when each stored row is valid. Read
+      // one indexed <=1 MiB chunk at a time and validate before serving.
+      const parts = [];
+      for (let index = 0; index < expectedCount; index += 1) {
+        const row = await db.prepare(`
+          SELECT chunk_index, data
+          FROM objects_media_chunks
+          WHERE storage_key = ? AND chunk_index = ?
+          LIMIT 1
+        `).bind(key, index).first();
+        if (!row || Number(row.chunk_index) !== index) throw new Error("OBJECTS_MEDIA_CORRUPT");
+        const chunk = bytesOf(row.data);
+        const expectedChunkLength = Math.min(CHUNK_BYTES, sizeBytes - index * CHUNK_BYTES);
+        if (chunk.byteLength !== expectedChunkLength) throw new Error("OBJECTS_MEDIA_CORRUPT");
+        parts.push(chunk);
+      }
       const actualSize = parts.reduce((total, bytes) => total + bytes.byteLength, 0);
       if (actualSize !== sizeBytes) throw new Error("OBJECTS_MEDIA_CORRUPT");
       // Large immutable private images can stream from the validated D1 chunks
