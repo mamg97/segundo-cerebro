@@ -10,8 +10,8 @@ test("a failed monthly budget read must not suppress isolated canonical bank rec
   const start = app.indexOf("function refreshFinanceAccountWorkspace(");
   const end = app.indexOf("function openBudgetDetail(", start);
   const code = app.slice(start, end);
-  assert.match(code, /if \(!state\.financeSummary\?\.monthlyBudget\) \{/);
-  assert.match(code, /catch \{[\s\S]*?The banking area may still be usable/);
+  assert.doesNotMatch(code, /fetchStateScope\("finance", 12000\)/);
+  assert.match(code, /if \(financeAccountWorkspaceIncomplete\(state\.financeSummary\)\)/);
   assert.match(code, /await fetchFinanceBankWorkspace\(12000\)/);
   assert.match(code, /bankWorkspaceReadVerified: true/);
   assert.equal(financeAccountWorkspaceIncomplete({}), true);
@@ -33,7 +33,7 @@ test("verified bank ranges display without fabricating a monthly budget", () => 
 test("banking-only recovery is read-only and front end versions stay aligned", () => {
   assert.match(app, /fetch\("\/api\/finance\/accounts", \{/);
   assert.match(app, /method: "GET"/);
-  assert.match(html, /\.\/app\.js\?v=0\.44\.17/);
-  assert.match(html, /\.\/styles\.css\?v=0\.44\.17/);
-  assert.match(app, /finance-workspace-readiness\.js\?v=0\.44\.17/);
+  assert.match(html, /\.\/app\.js\?v=0\.44\.18/);
+  assert.match(html, /\.\/styles\.css\?v=0\.44\.18/);
+  assert.match(app, /finance-workspace-readiness\.js\?v=0\.44\.18/);
 });
