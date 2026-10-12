@@ -70,6 +70,7 @@ jobs:
       - run: node scripts/audit-health-tabs-contract.test.mjs
       - run: node scripts/audit-gym-inventory-contract.test.mjs
       - run: node scripts/audit-immutable-image-cache.test.mjs
+      - run: node scripts/deploy-wrangler-retry.test.mjs
       - run: node scripts/audit-oidc-renewal.test.mjs
 
       - run: node --check src/objects.js
