@@ -65,7 +65,7 @@ test("look detail enlarges the look and shows component garments responsively", 
 });
 
 test("look detail cache bust and production audit are wired", () => {
-  assert.match(app, /objects\.js\?v=0\.41\.8/);
+  assert.match(app, /objects\.js\?v=0\.44\.23/);
   assert.match(index, /styles\.css\?v=\d+\.\d+\.\d+/, "Styles cache bust must be versioned");
   assert.match(index, /app\.js\?v=\d+\.\d+\.\d+/, "App cache bust must be versioned");
   assert.match(audit, /auditLookDetail/);
@@ -115,3 +115,4 @@ test("production layout diagnostics contain only allowlisted profile names and b
   assert.match(audit, /assertCheck\(\s*nativeLayoutOk,/);
   assert.doesNotMatch(audit, /\[AUDIT_LOOK_LAYOUT\].*outerHTML/);
 });
+
