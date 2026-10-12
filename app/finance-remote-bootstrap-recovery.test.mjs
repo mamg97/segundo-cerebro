@@ -20,7 +20,7 @@ test("remote bootstrap failures clear mock finance values before bank-only displ
 });
 
 test("cache versions stay aligned for verified bank recovery", () => {
-  assert.match(html, /\.\/app\.js\?v=0\.44\.19/);
-  assert.match(html, /\.\/styles\.css\?v=0\.44\.19/);
-  assert.match(app, /finance-workspace-readiness\.js\?v=0\.44\.19/);
+  assert.match(html, /\.\/app\.js\?v=0\.44\.20/);
+  assert.match(html, /\.\/styles\.css\?v=0\.44\.20/);
+  assert.match(app, /finance-workspace-readiness\.js\?v=0\.44\.20/);
 });
