@@ -1,3 +1,5 @@
+import { createFinanceBankWorkspaceCache } from "./finance-bank-workspace-cache.js";
+
 // Dedicated, read-only lookup of the two canonical bank workspace ranges.
 // The full finance summary loads many unrelated tabs; a failed optional range
 // must not be represented as a successful, empty transaction history.
@@ -30,7 +32,7 @@ function validateBankHeaders(accountRows, movementRows) {
   }
 }
 
-export async function readFinanceBankSource(env, getAccessToken, fetcher = fetch) {
+async function readFinanceBankSourceUncached(env, getAccessToken, fetcher) {
   const token = await getAccessToken(env);
   const params = new URLSearchParams({
     majorDimension: "ROWS",
@@ -60,4 +62,19 @@ export async function readFinanceBankSource(env, getAccessToken, fetcher = fetch
   const movementRows = valueRanges[1].values || [];
   validateBankHeaders(accountRows, movementRows);
   return { accountRows, movementRows };
+}
+
+// Reuse only successful native-fetch reads from the same private Sheet.
+// This 30-second cache is local to one Worker isolate and never persists data.
+const cachedBankRows = createFinanceBankWorkspaceCache(
+  ({ sourceEnv, tokenProvider }) => readFinanceBankSourceUncached(sourceEnv, tokenProvider, fetch)
+);
+
+export function readFinanceBankSource(env, getAccessToken, fetcher = fetch) {
+  if (fetcher !== fetch) return readFinanceBankSourceUncached(env, getAccessToken, fetcher);
+  return cachedBankRows({
+    FINANCE_SHEET_ID: env?.FINANCE_SHEET_ID,
+    sourceEnv: env,
+    tokenProvider: getAccessToken
+  });
 }
