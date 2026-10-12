@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js";
+import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady } from "./finance-workspace-readiness.js";
 
 const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
 
@@ -51,4 +51,27 @@ test("partial budget path schedules one bounded canonical refresh and labels abs
   assert.match(app, /openBudgetDetail\(\{ skipRefresh: true \}\)/);
   assert.match(app, /data-finance-workspace-status="unavailable"/);
   assert.doesNotMatch(app, /console\.warn\("Finance workspace on-demand load failed", String\(/);
+});
+
+test("interactive bank tabs are unavailable until both ranges are complete or directly verified", () => {
+  assert.equal(financeBankWorkspaceReady({
+    monthlyBudget: { liquidityAccounts: [{ id: "source-account" }] },
+    accountTransactions: []
+  }), false);
+  assert.equal(financeBankWorkspaceReady({
+    monthlyBudget: { liquidityAccounts: [] },
+    accountTransactions: [{ id: "synthetic" }]
+  }), false);
+  assert.equal(financeBankWorkspaceReady({
+    monthlyBudget: { liquidityAccounts: [{ id: "source-account" }] },
+    accountTransactions: [{ id: "synthetic" }]
+  }), true);
+  assert.equal(financeBankWorkspaceReady({
+    monthlyBudget: { liquidityAccounts: [] },
+    accountTransactions: [],
+    bankWorkspaceAccounts: [{ id: "source-account" }],
+    bankWorkspaceReadVerified: true
+  }), true);
+  assert.match(app, /const bankTabsReady = financeBankWorkspaceReady\(finance\)/);
+  assert.match(app, /bankTabsReady \? renderAccountTransactionsWorkspace\(accountTransactions, workspaceAccounts, currency\) : ""/);
 });
