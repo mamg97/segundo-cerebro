@@ -12,7 +12,12 @@ test("health metric schema is migrated before deploy and never initialized by GE
   assert.match(workflow, /private-cloudflare\/migrations\/\*\*/);
   assert.match(workflow, /wrangler d1 migrations apply segundo-cerebro-private --remote/);
   assert.match(workflow, /CLOUDFLARE_D1_API_TOKEN: \$\{\{ secrets\.CLOUDFLARE_D1_API_TOKEN \}\}/);
-  assert.match(workflow, /name: Require D1 migration credentials/);
+  const jobEnv = workflow.match(/jobs:[\s\S]*?\n    env:\n([\s\S]*?)\n\n    steps:/)?.[1] || "";
+  assert.doesNotMatch(jobEnv, /CLOUDFLARE_D1_API_TOKEN/);
+  assert.match(
+    workflow,
+    /name: Require D1 migration credentials[\s\S]*env:\s*\n\s*CLOUDFLARE_D1_API_TOKEN: \$\{\{ secrets\.CLOUDFLARE_D1_API_TOKEN \}\}/,
+  );
   assert.match(
     workflow,
     /name: Apply D1 migrations[\s\S]*env:\s*\n\s*CLOUDFLARE_API_TOKEN: \$\{\{ secrets\.CLOUDFLARE_D1_API_TOKEN \}\}/,
