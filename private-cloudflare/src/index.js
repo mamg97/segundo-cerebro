@@ -5246,7 +5246,7 @@ export default {
           return json(healthOverviewPayload(fallback, "ok-stale"));
         }
         console.warn("Health overview read failed", safePrivateReadDiagnostic(error));
-        return json({ ok: false, code: "HEALTH_OVERVIEW_READ_FAILED" }, 502);
+        return json({ ok: false, code: "HEALTH_OVERVIEW_READ_FAILED", diagnostic: safePrivateReadDiagnostic(error) }, 502);
       }
     }
 
@@ -5686,7 +5686,7 @@ export default {
           return json({ ok: false, code: error.code }, error.status);
         }
         console.warn("Objects look image request failed", safePrivateReadDiagnostic(error));
-        return json({ ok: false, code: "OBJECTS_LOOK_IMAGE_FAILED" }, 502);
+        return json({ ok: false, code: "OBJECTS_LOOK_IMAGE_FAILED", diagnostic: safePrivateReadDiagnostic(error) }, 502);
       }
     }
 
@@ -5709,7 +5709,7 @@ export default {
           return json({ ok: false, code: error.code }, error.status);
         }
         console.warn("Objects image request failed", safePrivateReadDiagnostic(error));
-        return json({ ok: false, code: "OBJECTS_IMAGE_FAILED" }, 502);
+        return json({ ok: false, code: "OBJECTS_IMAGE_FAILED", diagnostic: safePrivateReadDiagnostic(error) }, 502);
       }
     }
 

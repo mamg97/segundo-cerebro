@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mjs";
+import { safePrivate502Origin } from "../src/private-502-origin.js";
 import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
@@ -36,6 +37,8 @@ let infoCount = 0;
 const checks = [];
 const networkFailures = [];
 const ignoredNetworkAborts = [];
+const private502DiagnosticsPending = [];
+const private502DiagnosticCounts = new Map();
 const browserErrors = [];
 const resourceConsoleErrors = [];
 const recoveredSourcePaths = new Set();
@@ -154,9 +157,27 @@ page.on("requestfailed", (request) => {
   }
 });
 page.on("response", (response) => {
-  if (response.url().startsWith(auditOrigin) && response.status() >= 500) {
-    networkFailures.push(`http${response.status()}:${new URL(response.url()).pathname}`);
-  }
+  if (!response.url().startsWith(auditOrigin) || response.status() < 500) return;
+  const path = new URL(response.url()).pathname;
+  networkFailures.push(`http${response.status()}:${path}`);
+
+  // Correlate only 5xx source families and allowlisted diagnostic codes.
+  // Neither response bodies nor private asset paths enter Actions logs.
+  const family = /^\/api\/objects\/(?:look\/[^/]+\/image|[^/]+\/image\/(?:original|processed|thumbnail))$/.test(path)
+    ? "OBJECTS_IMAGE" : path === "/api/health/overview" ? "HEALTH_OVERVIEW" : null;
+  if (!family) return;
+  const pending = (async () => {
+    const contentType = String(response.headers()["content-type"] || "");
+    const payload = /^application\/json(?:;|$)/i.test(contentType)
+      ? await response.json().catch(() => null) : null;
+    const code = safePrivate502Origin(contentType, payload);
+    const key = family + "_" + code;
+    private502DiagnosticCounts.set(key, (private502DiagnosticCounts.get(key) || 0) + 1);
+  })().catch(() => {
+    const key = family + "_UNCLASSIFIED_5XX";
+    private502DiagnosticCounts.set(key, (private502DiagnosticCounts.get(key) || 0) + 1);
+  });
+  private502DiagnosticsPending.push(pending);
 });
 
 async function api(path) {
@@ -2752,6 +2773,10 @@ try {
     (mediaStats.hits + mediaStats.shared > 0 ? "REUSED" : "NO_REUSE") +
     " hits=" + mediaStats.hits + " shared=" + mediaStats.shared +
     " entries=" + mediaStats.entries);
+  await Promise.allSettled(private502DiagnosticsPending);
+  for (const [code, count] of [...private502DiagnosticCounts].sort((a, b) => a[0].localeCompare(b[0]))) {
+    console.error("[AUDIT_BACKEND_DIAG] " + code + " count=" + count);
+  }
   if (networkFailures.length) {
     const families = new Map();
     for (const entry of networkFailures) {
