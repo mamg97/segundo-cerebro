@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -2838,6 +2838,7 @@ try {
   // Static phase names reveal which finalization step failed without exposing
   // private URLs, DOM text, exception messages or response content.
   console.error("[AUDIT_PHASE_DIAG] " + auditPhase);
+  console.error("[AUDIT_EXEC_DIAG] " + safeAuditExecutableFailureCode(error));
   fail("Auditoría ejecutable", String(error?.message || error).slice(0, 300));
 } finally {
   await browser.close();
