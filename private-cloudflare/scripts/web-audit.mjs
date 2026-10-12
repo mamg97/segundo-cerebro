@@ -1987,10 +1987,10 @@ try {
       return Boolean(
         dialog?.open &&
         document.querySelector("#dialog-title")?.textContent?.trim() === "Salud" &&
-        document.querySelectorAll("[data-health-tab]").length === 6
+        document.querySelectorAll("[data-health-tab]").length === 7
       );
     }, null, { timeout: 12000 });
-    const healthTabs = ["overview", "medical", "gym", "nutrition", "recipes", "menu"];
+    const healthTabs = ["overview", "medical", "vision", "gym", "nutrition", "recipes", "menu"];
     const healthNutritionSnapshot = uiNutrition?.ok === true ? uiNutrition : nutrition.body;
     const expectedRecipeCount = Array.isArray(healthNutritionSnapshot?.recipes) ? healthNutritionSnapshot.recipes.length : 0;
 
