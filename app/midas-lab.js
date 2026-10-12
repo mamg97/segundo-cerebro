@@ -14,6 +14,7 @@ const BOOTSTRAP_LABELS = {
 
 const MIDAS_LAB_GROUPS = [
   ["weekly_ml_demo", "Weekly ML"],
+  ["timesfm_demo", "TimesFM · EUR"],
   ["capital_cycle_demo", "Capital Cycle"],
   ["buy_the_dip_demo", "Buy The Dip"],
   ["tfg_demo_adaptado", "TFG"],
@@ -159,6 +160,11 @@ export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
     '<div class="midas-algorithm-detail-metrics">' +
       metric("Rentabilidad acumulada", formatPercent(meta.returnPct)) +
       metric("Rentabilidad día", formatPercent(item.day_return_pct)) +
+       (item.group === "timesfm_demo"
+         ? metric("5 sesiones · mismo período", formatPercent(item.period_returns_pct?.["5_sessions"])) +
+           metric("21 sesiones · mismo período", formatPercent(item.period_returns_pct?.["21_sessions"])) +
+           metric("63 sesiones · mismo período", formatPercent(item.period_returns_pct?.["63_sessions"]))
+         : "") +
       metric("Volatilidad anual.", volatility) +
       metric("Máx. drawdown", meta.drawdown) +
       metric("Sharpe 0rf", sharpe) +
