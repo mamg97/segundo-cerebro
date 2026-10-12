@@ -569,3 +569,7 @@ La UI sirve vídeo/imagen mediante rutas same-origin autenticadas. Esto evita ex
 Para ejercicios curados puede existir una animación ilustrada propia versionada como asset estático de la aplicación. La selección se realiza únicamente por ID/nombre canónico exacto y afecta solo a la presentación: la ficha técnica, músculos/equipo y atribución pública continúan viniendo de wger, mientras que plan, cargas e histórico permanecen en sus fuentes privadas. Si no existe animación propia revisada, se conserva el vídeo/imagen libre de wger como fallback.
 
 La restricción de producto es coste incremental cero: no se introducen APIs premium, R2 ni licencias de pago para esta capacidad. La ausencia de media libre se representa explícitamente; nunca se rellena mediante scraping de proveedores comerciales.
+
+## Evolución del esquema D1
+
+Las tablas e índices nuevos se definen en `private-cloudflare/migrations/` y se aplican de forma idempotente antes de desplegar el Worker de producción. Las rutas de lectura no ejecutan `CREATE TABLE` ni `CREATE INDEX`: consumen el esquema ya migrado y deben fallar de forma observable si el contrato de despliegue no se ha cumplido. Las rutas de ingesta pueden conservar una inicialización defensiva temporal cuando sea necesaria para compatibilidad, pero no convierten los `GET` en migradores implícitos.
