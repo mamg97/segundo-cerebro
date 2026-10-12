@@ -2091,10 +2091,16 @@ try {
           const detailValue = normalizeAuditValue(
             await panel.locator("#health-summary-" + key + "-main").textContent().catch(() => "")
           );
+          // Gym is refreshed from the same canonical /api/gym snapshot when
+          // Salud opens; compare against Home's current display, not the value
+          // captured before the asynchronous Health reload.
+          const homeValue = key === "gym"
+            ? normalizeAuditValue(await page.locator("#home-health-gym-main").textContent().catch(() => ""))
+            : homeHealthMainValues[key];
           assertCheck(
-            detailValue === homeHealthMainValues[key],
+            detailValue === homeValue,
             "Salud · Resumen " + key + " coincide con Home",
-            "Home=" + (homeHealthMainValues[key] || "∅") + " · Salud=" + (detailValue || "∅")
+            "Home=" + (homeValue || "∅") + " · Salud=" + (detailValue || "∅")
           );
         }
         const weightFreshness = await panel.locator(".health-recomp-kpis .health-metric-freshness").count();
@@ -2307,7 +2313,14 @@ try {
               .catch(() => false);
             assertCheck(detailVisible, "Salud · Gym abre ficha visual de ejercicio");
             if (detailVisible) {
-              const detailMediaCount = await panel.locator(".gym-exercise-hero-media,.gym-exercise-hero-empty,.gym-exercise-hero-animation").count();
+              // The hero is exactly one visual. A verified wger video may
+              // additionally appear in the technique section: don't count the
+              // supplemental demonstration as a second hero.
+              const detailMediaCount = await panel.locator(
+                ".gym-exercise-detail-card .gym-exercise-detail-media > .gym-exercise-hero-media," +
+                ".gym-exercise-detail-card .gym-exercise-detail-media > .gym-exercise-hero-empty," +
+                ".gym-exercise-detail-card .gym-exercise-detail-media > .gym-exercise-hero-animation"
+              ).count();
               assertCheck(detailMediaCount === 1, "Salud · Gym ficha tiene demostración/referencia visual");
               const gifInDetail = await panel.locator(".gym-exercise-hero-animation").count();
               if (gifInDetail) {
