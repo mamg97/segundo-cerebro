@@ -33,7 +33,9 @@ test("verified bank ranges display without fabricating a monthly budget", () => 
 test("banking-only recovery is read-only and front end versions stay aligned", () => {
   assert.match(app, /fetch\("\/api\/finance\/accounts", \{/);
   assert.match(app, /method: "GET"/);
-  assert.match(html, /\.\/app\.js\?v=0\.44\.20/);
-  assert.match(html, /\.\/styles\.css\?v=0\.44\.20/);
-  assert.match(app, /finance-workspace-readiness\.js\?v=0\.44\.20/);
+  const appVersion = html.match(/src="\.\/app\.js\?v=(\d+\.\d+\.\d+)"/)?.[1];
+  const cssVersion = html.match(/href="\.\/styles\.css\?v=(\d+\.\d+\.\d+)"/)?.[1];
+  assert.ok(appVersion, "Main app JS must carry a cache-busting version");
+  assert.equal(cssVersion, appVersion, "Styles and app must be deployed with the same version");
+  assert.match(app, /finance-workspace-readiness\.js\?v=\d+\.\d+\.\d+/);
 });
