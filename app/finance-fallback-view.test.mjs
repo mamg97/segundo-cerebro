@@ -33,7 +33,7 @@ test("verified bank ranges display without fabricating a monthly budget", () => 
 test("banking-only recovery is read-only and front end versions stay aligned", () => {
   assert.match(app, /fetch\("\/api\/finance\/accounts", \{/);
   assert.match(app, /method: "GET"/);
-  assert.match(html, /\.\/app\.js\?v=0\.44\.18/);
-  assert.match(html, /\.\/styles\.css\?v=0\.44\.18/);
-  assert.match(app, /finance-workspace-readiness\.js\?v=0\.44\.18/);
+  assert.match(html, /\.\/app\.js\?v=0\.44\.19/);
+  assert.match(html, /\.\/styles\.css\?v=0\.44\.19/);
+  assert.match(app, /finance-workspace-readiness\.js\?v=0\.44\.19/);
 });

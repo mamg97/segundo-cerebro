@@ -1,6 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
-import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.18";
+import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.19";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.22";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
@@ -9981,6 +9981,11 @@ function initializeAccountTransactionTabs(root = document) {
 
 let financeBudgetRefreshInFlight = false;
 
+function canReadPrivateFinanceBankWorkspace() {
+  return privateModeKind === "remote" ||
+    (globalThis.__SECOND_BRAIN_REMOTE__ === true && privateModeKind !== "local");
+}
+
 // Bank history has its own lightweight canonical reader: do not reload all
 // finance tabs just to recover the linked bank workspace. No writes are made.
 async function fetchFinanceBankWorkspace(timeoutMs = 12000) {
@@ -10006,7 +10011,7 @@ async function fetchFinanceBankWorkspace(timeoutMs = 12000) {
 }
 
 function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } = {}) {
-  if (privateModeKind !== "remote" || financeBudgetRefreshInFlight) return;
+  if (!canReadPrivateFinanceBankWorkspace() || financeBudgetRefreshInFlight) return;
   financeBudgetRefreshInFlight = true;
   void (async () => {
     // Restore bank tabs without waiting for a potentially slow full Finance
@@ -10039,6 +10044,19 @@ function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } =
 }
 
 function openBudgetDetail(options = {}) {
+  if (globalThis.__SECOND_BRAIN_REMOTE__ === true &&
+      privateModeKind !== "remote" && privateModeKind !== "local" &&
+      state.financeSummary?.bankWorkspaceReadVerified !== true) {
+    // The private bootstrap failed. Never display demo budget amounts as if
+    // they were the real account balances. The isolated bank source can still
+    // recover authenticated records independently.
+    state.financeSummary = {
+      monthlyBudget: null,
+      bankWorkspaceAccounts: [],
+      accountTransactions: [],
+      bankWorkspaceReadVerified: false
+    };
+  }
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
   const dialog = document.querySelector("#detail-dialog");
@@ -10067,7 +10085,7 @@ function openBudgetDetail(options = {}) {
     document.querySelector("#dialog-body").innerHTML =
       '<p class="account-transactions-empty">Datos bancarios pendientes de cargar desde la fuente privada; no se muestran importes supuestos.</p>';
     if (!dialog.open) dialog.showModal();
-    if (!options.skipRefresh && privateModeKind === "remote" && !financeBudgetRefreshInFlight) {
+    if (!options.skipRefresh && canReadPrivateFinanceBankWorkspace() && !financeBudgetRefreshInFlight) {
       refreshFinanceAccountWorkspace(dialog, { replaceMissingView: true });
     }
     return;
@@ -10116,7 +10134,7 @@ function openBudgetDetail(options = {}) {
   if (!dialog.open) dialog.showModal();
   // Budget categories can be available even when optional bank ranges were
   // missing. Previously this path rendered without ever requesting recovery.
-  if (accountWorkspaceIncomplete && !options.skipRefresh && privateModeKind === "remote" && !financeBudgetRefreshInFlight) {
+  if (accountWorkspaceIncomplete && !options.skipRefresh && canReadPrivateFinanceBankWorkspace() && !financeBudgetRefreshInFlight) {
     refreshFinanceAccountWorkspace(dialog);
   }
 }
