@@ -623,7 +623,10 @@ async function revalidateRecoveredSources() {
 async function closeDialogIfOpen() {
   const dialog = page.locator("#detail-dialog");
   if (await dialog.getAttribute("open") !== null) {
-    await page.locator("#close-dialog").click();
+    // This is audit cleanup, not the user-interaction assertion below. Closing
+    // the native dialog directly avoids a transient overlay blocking the rest
+    // of the audit after a workspace has rerendered its contents.
+    await dialog.evaluate((node) => node.close());
     await page.waitForTimeout(100);
   }
 }
@@ -1943,6 +1946,15 @@ try {
         null,
         { htmlDataName: "events-inline-tab", attributeName: "events-inline-tab", attr: "events-inline-tab", settle: 180 }
       );
+    }
+    if (areaId === "area-career") {
+      const dialog = page.locator("#detail-dialog");
+      try {
+        await page.locator("#close-dialog").click({ timeout: 5000 });
+        assertCheck(await dialog.getAttribute("open") === null, "Carrera · diálogo se cierra con botón");
+      } catch {
+        fail("Carrera · diálogo se cierra con botón", "el botón de cierre no respondió");
+      }
     }
     await closeDialogIfOpen();
   }

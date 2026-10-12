@@ -63,6 +63,14 @@ test("audit emits only diagnostic codes, not raw network or failure details", ()
   assert.match(auditor, /!panel.hidden && panel.classList.contains\("active"\)/);
 });
 
+test("dialog cleanup cannot block traversal and the close button is still checked", () => {
+  const cleanup = auditor.match(/async function closeDialogIfOpen\(\) \{([\s\S]*?)\n\}/)?.[1] || "";
+  assert.match(cleanup, /dialog\.evaluate\(\(node\) => node\.close\(\)\)/);
+  assert.doesNotMatch(cleanup, /#close-dialog/);
+  assert.match(auditor, /page\.locator\("#close-dialog"\)\.click\(\{ timeout: 5000 \}\)/);
+  assert.match(auditor, /Carrera · diálogo se cierra con botón/);
+});
+
 
 test("finance state diagnostics expose only boolean-derived fixed codes",()=>{
   assert.equal(safeAuditFinanceStructureCode(null),"FINANCE_DOM_UNKNOWN");
