@@ -1,3 +1,11 @@
+## ORGANIZADOR 14 · Estado contrastado y diagnóstico de Salud · 12/10/2026
+
+- HEAD de partida `ab98024c` (PR #387 ya fusionada). Último audit de producción: [run 38241186542](https://github.com/mamg97/segundo-cerebro/actions/runs/38241186542), 950 checks / 29 fallos. La ejecución completa llega al resumen, pero quedan 20 respuestas HTTP 502 registradas como `HEALTH_OTHER`, junto a fallos de interfaz en Salud y enlace financiero. CI/deploy verdes no prueban salud funcional.
+- **HabitQuest:** auditoría privada emitió `[HABITQUEST_SMOKE] PASS`; el Sheet canónico existente contiene las pestañas `Habits`, `History`, `Meta`, `SyncState` y el registro `IntegracionesPrivadas` tiene una única referencia concordante. No se crean datos ni se cambian secretos. La vieja pantalla del iPhone no equivale a un fallo reproducible actual; verificar cache y operación de escritura por separado.
+- **Gimnasio:** el [auditor público wger](https://github.com/mamg97/segundo-cerebro/actions/runs/38159736773) confirma 3 vídeos enlazables entre 12 variantes examinadas, no la reproducción de proxy privado. Los nuevos GIF del plan no autorizan a extrapolar este inventario.
+- **Diagnóstico propuesto:** separar los HTTP 502 por familias fijas de rutas Salud (lectura, recetas/imagen, visión, adherencia, citas). Los códigos no contienen IDs, URL, contenido de salud ni datos privados; no se alteran umbrales, fuentes, API ni controles. Al ejecutar el siguiente audit, identificar familia exacta y resolver el backend de esa ruta; no declarar cerrado mientras haya fallos.
+- **Límites de verificación:** desde GitHub no se pueden leer los secretos activos de Cloudflare ni reproducir la sesión móvil; no asumir que su presencia se ha comprobado. No se han escrito datos privados ni migraciones.
+
 ## Estado actual · Auditoría de producción: contrato Salud · 12/10/2026
 
 - **Objetivo:** cerrar la auditoría Chromium sin ocultar errores ni reducir controles. Último run real previo a esta corrección: [#320](https://github.com/mamg97/segundo-cerebro/actions/runs/38239281241), 396 controles correctos y fallo final por espera de Salud; CI/merge/deploy de la PR #386 no resolvieron ese contrato.
