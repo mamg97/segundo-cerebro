@@ -9,6 +9,7 @@ let weeklyBootstrapCache = { value: null, expiresAt: 0 };
 let workflowHealthCache = { value: null, expiresAt: 0 };
 let researchCache = { value: null, expiresAt: 0, spreadsheetId: null, spreadsheetIdExpiresAt: 0 };
 
+// TimesFM is an EUR-denominated cohort; only observed finite 5/21/63-session returns pass through.
 const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "weekly_ml_legacy", "capital_cycle_demo", "buy_the_dip_demo", "timesfm_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
 
 function optionalNumber(value) {
