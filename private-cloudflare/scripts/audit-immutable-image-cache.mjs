@@ -1,3 +1,5 @@
+import { AUDIT_IMMUTABLE_IMAGE_HINT, eligibleAuditImageUrl } from "../src/audit-private-image-policy.js";
+
 // Chromium disables HTTP caching whenever Playwright routes requests.
 // Reuse only successfully fetched immutable private images in the same audit
 // process. The first request to each unique URL always reaches production.
@@ -21,13 +23,7 @@ export function createAuditImmutableImageCache({ maxEntryBytes = MAX_ENTRY_BYTES
   let shared = 0;
 
   function canHandle(uri, origin, method = "GET") {
-    if (method !== "GET") return false;
-    let url;
-    try { url = new URL(uri); } catch { return false; }
-    if (url.origin !== origin || !/^[A-Za-z0-9-]{8,80}$/.test(url.searchParams.get("v") || "")) return false;
-    if ([...url.searchParams.keys()].some((key) => key !== "v")) return false;
-    return /^\/api\/objects\/look\/[^/]+\/image$/.test(url.pathname) ||
-      /^\/api\/objects\/[^/]+\/image\/(processed|thumbnail)$/.test(url.pathname);
+    return eligibleAuditImageUrl(uri, origin, method);
   }
 
   function get(uri) {
@@ -39,10 +35,17 @@ export function createAuditImmutableImageCache({ maxEntryBytes = MAX_ENTRY_BYTES
 
   function put(uri, status, headers, body) {
     if (entries.has(uri) || Number(status) !== 200 || !body) return false;
+    let url;
+    try { url = new URL(uri); } catch { return false; }
+    if (!canHandle(uri, url.origin)) return false;
     const mime = headerValue(headers, "content-type").toLowerCase();
     const cacheControl = headerValue(headers, "cache-control").toLowerCase();
     if (!/^image\/(?:png|jpeg|webp|svg\+xml)(?:;|$)/.test(mime)) return false;
-    if (!/\bprivate\b/.test(cacheControl) || !/\bimmutable\b/.test(cacheControl)) return false;
+    const directPrivateImmutable = /\bprivate\b/.test(cacheControl) &&
+      /\bimmutable\b/.test(cacheControl) && !/\bno-store\b/.test(cacheControl);
+    const gatewayVerified = cacheControl === "no-store" &&
+      headerValue(headers, AUDIT_IMMUTABLE_IMAGE_HINT) === "1";
+    if (!directPrivateImmutable && !gatewayVerified) return false;
     const size = Number(body.byteLength ?? body.length ?? 0);
     if (!Number.isFinite(size) || size <= 0 || size > maxEntryBytes || size + bytes > maxTotalBytes) return false;
     const value = Buffer.from(body);
@@ -50,7 +53,9 @@ export function createAuditImmutableImageCache({ maxEntryBytes = MAX_ENTRY_BYTES
       body: value,
       headers: {
         "content-type": mime,
-        "cache-control": "private, max-age=31536000, immutable",
+        // The response fulfilled back to Chromium must remain no-store.
+        // Reuse exists only inside this bounded process-local Map.
+        "cache-control": "no-store",
         "x-content-type-options": "nosniff"
       }
     });

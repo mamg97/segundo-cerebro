@@ -109,6 +109,13 @@ Como mínimo:
   - paleta canónica light/dark y contraste mínimo de texto/acento.
 
 
+
+### Caché privada del navegador auditor y gateway OIDC
+
+El gateway OIDC mantiene **Cache-Control: no-store** en todas sus respuestas, incluso imágenes. Para imágenes canónicas versionadas que el Worker original entrega como `private, immutable`, el gateway comprueba método GET, ruta y versión exactas, HTTP 200, MIME de imagen y política original, y añade únicamente `X-Segundo-Cerebro-Audit-Private-Immutable: 1`. Este indicador no contiene identificadores ni datos privados; se elimina si viene falsificado del upstream.
+
+Playwright puede entonces reutilizar durante **este proceso** los bytes descargados correctamente a través de su caché RAM de máximo 4 MiB por imagen y 24 MiB total, aun cuando la respuesta del gateway sigue siendo `no-store`. La respuesta reutilizada hacia Chromium también es `no-store`. El primer acceso a cada URL siempre llega al Worker real; errores, respuestas 5xx, imágenes no versionadas y MIME no imágenes nunca se cachean. No se escriben bytes en GitHub, logs, artefactos o disco. Este cambio reduce carga artificial repetida, pero no permite cerrar incidentes 502 ni suprimir comprobaciones de red.
+
 ## Auditoría visual
 
 La auditoría funcional no sustituye a la visual. Chromium ejecuta además una pasada estructural sobre la interfaz renderizada.
