@@ -1,3 +1,11 @@
+## ORGANIZADOR 14 · Recuperación acotada de despliegues Cloudflare · 12/10/2026
+
+- La PR #393 de recetas ya está integrada en `main`. El deploy de dicho commit ([run 38249931219](https://github.com/mamg97/segundo-cerebro/actions/runs/38249931219)) falló también en el Worker **principal**: `POST .../versions -> 504 Gateway Timeout`. Los dos intentos terminaron fallidos y las auditorías siguientes fueron omitidas. No inferir que todo el commit #393 esté desplegado ni que las fotos estén sanadas.
+- La propuesta previa #394 entró en conflicto al moverse `main`. Esta rama recupera **únicamente** el cambio del wrapper y del workflow sobre el nuevo `main`, conservando el single-flight de Recetas y el historial de cambios existente. Evitar merge forzado de la rama antigua.
+- `scripts/deploy-wrangler-retry.mjs` se limita a seis rutas de configuración conocidas y concede **dos intentos como máximo**, con 5 s entre ellos, solo para errores transitorios Cloudflare HTTP 502/503/504/520/522/524, errores temporales de red o respuesta malformada de `deployments` con HTTP 200. Cualquier 401, 403, error de configuración, subproceso fallido por otra razón o segundo fallo devuelve CI rojo. Logs contienen solo códigos fijos; no volcar respuestas crudas.
+- Orden intacto: validaciones → migración D1 remota → Worker principal → Health → Objetos → MIDAS → Shopping → gateway de auditoría. No toca secretos, persistencia, fuentes, fotos, criterios de auditoría ni plataformas de pago.
+- Cierre solo con CI verde, despliegue íntegro y posterior auditoría Chromium de producción realmente ejecutada; no confundir CI o deploy verde con eliminación de los HTTP 502 intermitentes.
+
 ## ORGANIZADOR 14 · Contención de peticiones simultáneas de imágenes de recetas · 12/10/2026
 
 - Estado precedente comprobado: audit #321, 950 checks/29 fallos y 20 HTTP 502 en Salud clasificados `HEALTH_OTHER`; no autoriza a afirmar que los 20 procedían de fotos. Audit #323: 946 checks/8 fallos, 0 HTTP 502. Audit #324: 927 checks/13 fallos, 27 HTTP 502 de varias familias (19 de Looks, 2 de overview Salud, otras de Nutri y Gym). Indica inestabilidad intermitente, no datos borrados ni causalidad Drive demostrada.
