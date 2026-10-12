@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode } from "./audit-log-policy.mjs";
 
 const auditor = fs.readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
 
@@ -107,4 +107,13 @@ test("Health and visual failures expose actionable fixed codes, never private la
   assert.doesNotMatch(safe, /usuario|example/);
   assert.match(auditor, /sheetLink\.waitFor\(\{ state: "visible", timeout: 16000 \}\)/);
   assert.match(auditor, /timeout: 16000/);
+});
+
+test("unexpected Chromium abort reasons are finite codes and never include private exception text", () => {
+  assert.equal(safeAuditExecutableFailureCode({ message: "Timeout 16000ms exceeded while loading secret account" }), "EXEC_TIMEOUT");
+  assert.equal(safeAuditExecutableFailureCode({ name: "TypeError", message: "token=verySecretToken" }), "EXEC_TYPE_ERROR");
+  assert.equal(safeAuditExecutableFailureCode({ message: "execution context was destroyed" }), "EXEC_NAVIGATION_RACE");
+  assert.equal(safeAuditExecutableFailureCode({ message: "https://private.example.com/id=123" }), "EXEC_OTHER");
+  assert.match(auditor, /\[AUDIT_EXEC_DIAG\]/);
+  assert.match(auditor, /safeAuditExecutableFailureCode\(error\)/);
 });

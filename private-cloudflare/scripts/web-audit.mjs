@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -1336,6 +1336,9 @@ async function auditTabSet(label, buttonSelector, dataKey, panelSelector = null,
     const backendFailure = sourcePath && networkFailures.some((entry) =>
       entry.includes(`:${sourcePath}`) || entry.includes(`:${sourcePath}:`)
     );
+    if (options.htmlDataName === "account-transactions-tab") {
+      await emitFinanceDomDiagnostic("", 0);
+    }
     if (backendFailure) {
       info(label + " · pestañas no renderizadas", `backend ${sourcePath} ya clasificado como fallo de red`);
     } else {
@@ -1497,6 +1500,36 @@ try {
     deferredApiFailures.set("/api/projects", { name: "API de Proyectos", detail: `HTTP ${projectsProbe.status}` });
     info("API de Proyectos · pendiente de revalidación", `HTTP ${projectsProbe.status}`);
   }
+
+  // Bank account navigation has a separate read source from Delta and the
+  // full Finance summary. Do not infer its health from either of those APIs.
+  const bankSourceProbe = await page.evaluate(async () => {
+    try {
+      const response = await fetch("/api/finance/accounts", {
+        method: "GET", cache: "no-store", credentials: "same-origin"
+      });
+      if (!response.ok) return { readable: false, populated: false };
+      const body = await response.json();
+      const valid = body?.ok === true &&
+        Array.isArray(body.accounts) && Array.isArray(body.transactions);
+      return {
+        readable: valid,
+        populated: valid && (body.accounts.length > 0 || body.transactions.length > 0)
+      };
+    } catch {
+      return { readable: false, populated: false };
+    }
+  });
+  // Only these booleans cross back to the public Actions runner.
+  const bankSourceReadable = bankSourceProbe.readable;
+  const bankSourcePopulated = bankSourceProbe.populated;
+  const bankSourceCode = !bankSourceReadable ? "SOURCE_UNAVAILABLE"
+    : bankSourcePopulated ? "SOURCE_WITH_RECORDS" : "SOURCE_EMPTY";
+  assertCheck(
+    bankSourceReadable && bankSourcePopulated,
+    "Finanzas · workspace bancario conectado al Sheet canónico",
+    bankSourceCode
+  );
 
   const deltaProbe = await probeApi("/api/finance/delta?limit=1", "API Delta de Finanzas");
   if (deltaProbe.ok && deltaProbe.body?.ok === true) {
@@ -1884,6 +1917,7 @@ try {
       // A missing workspace still fails after this bounded readiness window.
       const sheetLinkVisible = await sheetLink.waitFor({ state: "visible", timeout: 16000 })
         .then(() => true).catch(() => false);
+      if (!sheetLinkVisible) await emitFinanceDomDiagnostic("", 0);
       assertCheck(sheetLinkVisible, "Finanzas · enlace al Sheet de movimientos visible");
       if (sheetLinkVisible) {
         const href = await sheetLink.getAttribute("href");
@@ -2804,6 +2838,7 @@ try {
   // Static phase names reveal which finalization step failed without exposing
   // private URLs, DOM text, exception messages or response content.
   console.error("[AUDIT_PHASE_DIAG] " + auditPhase);
+  console.error("[AUDIT_EXEC_DIAG] " + safeAuditExecutableFailureCode(error));
   fail("Auditoría ejecutable", String(error?.message || error).slice(0, 300));
 } finally {
   await browser.close();
