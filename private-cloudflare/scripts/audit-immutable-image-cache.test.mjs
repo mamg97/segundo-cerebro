@@ -68,3 +68,22 @@ test("production audit never caches failures or drops real first-image fetch", (
   assert.match(auditCode, /await route\.abort\("failed"\)/);
   assert.doesNotMatch(auditCode, /console\.log\([^)]*cached\.body/);
 });
+
+test("gateway-proven private images are reused in RAM without relaxing browser no-store", () => {
+  const cache = createAuditImmutableImageCache();
+  const bytes = Buffer.from([10, 12, 14]);
+  const proxyHeaders = {
+    "content-type": "image/webp",
+    "cache-control": "no-store",
+    "x-segundo-cerebro-audit-private-immutable": "1"
+  };
+  assert.equal(cache.put(look, 200, { ...proxyHeaders, "x-segundo-cerebro-audit-private-immutable": "0" }, bytes), false);
+  assert.equal(cache.put(look, 200, { "content-type": "image/webp", "cache-control": "no-store" }, bytes), false);
+  assert.equal(cache.put(look, 502, proxyHeaders, bytes), false);
+  assert.equal(cache.put(origin + "/api/state?v=12345678", 200, proxyHeaders, bytes), false);
+  assert.equal(cache.put(look + "&secret=example", 200, proxyHeaders, bytes), false);
+  assert.equal(cache.put(look, 200, proxyHeaders, bytes), true);
+  assert.deepEqual(cache.get(look).body, bytes);
+  assert.equal(cache.get(look).headers["cache-control"], "no-store");
+  assert.equal(cache.stats().entries, 1);
+});

@@ -1,3 +1,5 @@
+import { AUDIT_IMMUTABLE_IMAGE_HINT, eligibleAuditImageResponse } from "./audit-private-image-policy.js";
+
 const ISSUER = "https://token.actions.githubusercontent.com";
 const AUDIENCE = "segundo-cerebro-web-audit";
 const REPOSITORY = "mamg97/segundo-cerebro";
@@ -90,9 +92,17 @@ export function cloneProxyHeaders(headers) {
   return next;
 }
 
-function secureProxyResponse(response, publicOrigin) {
+export function secureProxyResponse(response, publicOrigin, requestUrl, method = "GET") {
   const headers = new Headers(response.headers);
+  // Every gateway response stays no-store to callers. A finite positive hint
+  // gives the disposable, bounded Chromium audit cache provenance of upstream
+  // private immutability without relaxing the gateway's HTTP cache policy.
+  const immutable = eligibleAuditImageResponse(
+    requestUrl, publicOrigin, method, response.status, headers
+  );
+  headers.delete(AUDIT_IMMUTABLE_IMAGE_HINT); // discard any upstream spoof
   headers.set("Cache-Control", "no-store");
+  if (immutable) headers.set(AUDIT_IMMUTABLE_IMAGE_HINT, "1");
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "no-referrer");
   headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
@@ -134,7 +144,7 @@ export default {
 
     try {
       const response = await env.SEGUNDO_CEREBRO.fetch(upstream);
-      return secureProxyResponse(response, url.origin);
+      return secureProxyResponse(response, url.origin, url.href, request.method);
     } catch {
       return json({ ok: false, code: "UPSTREAM_FAILED" }, 502);
     }
