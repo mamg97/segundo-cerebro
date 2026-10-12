@@ -1,6 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
-import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.15";
+import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.16";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.22";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
