@@ -3,12 +3,12 @@
 - **Herramienta:** Codex. **Rama:** `codex/audit-corrections-20261012`. **Base:** `origin/main` en `0fa569e`.
 - **Objetivo activo:** recuperar cobertura horaria fiable, eliminar el falso fallo temporal de MIDAS y sacar el DDL de métricas HealthKit de la ruta de lectura.
 - **Trabajo realizado:** el respaldo horario inspecciona el step real `Navigate and audit production` y solo se inhibe ante Chromium cubierto; los heartbeats ya no cuentan como auditoría completa. MIDAS acepta `programada_sin_diario` únicamente hasta el límite explícito de su primera publicación y vuelve a fallar automáticamente después. `GET` de histórico de Salud ya no crea tabla/índice; el deploy aplica primero las migraciones D1 versionadas.
-- **Estado funcional:** correcciones locales completas y aisladas; ninguna fuente privada, dato canónico ni producción se ha modificado. Falta revisión/CI, merge, migración remota y auditoría postdespliegue.
+- **Estado funcional:** correcciones completas y aisladas en PR #383; CI remoto #528 correcto. Ninguna fuente privada, dato canónico ni producción se ha modificado. Faltan merge, migración remota, deploy y auditoría postdespliegue.
 - **Decisiones:** el esquema D1 se gestiona mediante migraciones previas al Worker; las lecturas no ejecutan DDL. Registrado en `docs/DECISIONS.md`.
 - **Problemas conocidos:** la integridad completa Sheets → D1 → interfaz sigue sin estar acreditada por esta intervención. La primera publicación real de la nueva campaña MIDAS sigue pendiente y se exigirá tras `2026-10-13T12:00:00Z`.
-- **Próxima acción recomendada:** abrir PR, esperar CI verde, revisar la migración en el deploy de `main` y comprobar que la siguiente auditoría completa ejecuta Chromium y no conserva los fallos de MIDAS/Infraestructura corregidos.
+- **Próxima acción recomendada:** revisar y fusionar PR #383; después comprobar la migración en el deploy de `main` y que la siguiente auditoría completa ejecuta Chromium y no conserva los fallos de MIDAS/Infraestructura corregidos.
 - **Archivos relevantes:** `.github/workflows/web-audit.yml`, `.github/workflows/deploy-private-cloudflare.yml`, `private-cloudflare/scripts/web-audit.mjs`, `private-cloudflare/src/web-audit-utils.js`, `private-cloudflare/src/index.js`, `private-cloudflare/src/midas.js` y pruebas asociadas.
-- **Pruebas realizadas:** 319/319 pruebas Node correctas; `node --check` de Worker/auditor/MIDAS; build privado correcto; `wrangler deploy --dry-run` correcto; `git diff --check` correcto.
+- **Pruebas realizadas:** 319/319 pruebas Node correctas; `node --check` de Worker/auditor/MIDAS; build privado correcto; `wrangler deploy --dry-run` correcto; `git diff --check` correcto; GitHub Actions `Validate private Cloudflare app` #528 correcto.
 
 ## ORGANIZADOR 13 · Recuperación de Menú semanal ante lectura completa fallida · 12/10/2026
 
