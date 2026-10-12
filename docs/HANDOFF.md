@@ -1,3 +1,10 @@
+## SALUD · Unificación de peso manual + HealthKit (2026-10-12)
+
+- Motivo: el dashboard tenía la medición más reciente desde D1 mientras un gestor consultó solo `MedicionesCorporales` y comunicó un peso obsoleto. No es un problema de falta de importación: `MedicionesCorporalesApple` y `HistoricoResumen` ya ofrecen la proyección D1.
+- Solución propuesta en `fix/health-latest-weight-unified-20261012`: API `body.weightLatest` desde unión normalizada D1 + mediciones manuales, métricas deduplicadas por instante, 7 días por media diaria. `HistoricoResumen` sigue derivado, `MedicionesCorporalesApple` sigue siendo SOLO proyección automática, `MedicionesCorporales` SOLO baseline/manual.
+- Los agentes Nutri, Salud, Gym y Cerebro Global deben consultar `HistoricoResumen` (fila `all`) y comprobar `generated_at`; si es antiguo o existe una medición manual posterior, reconciliar `MedicionesCorporalesApple` y `MedicionesCorporales` por fecha real. Nunca tomar el último dato únicamente del Sheet manual ni duplicar filas.
+- Pendiente hasta CI/merge/deploy: verificar que las pruebas de unión, idempotencia y proyección pasan; la integración de código no implica por sí sola revisión visual del dashboard privado.
+
 ## ORGANIZADOR 14 · Estado real tras PR #398 — 12/10/2026
 
 - **Código y deploy reales:** PR #397 corrigió `success` falso de trabajos saltados y la tolerancia segura de `main` con solo cambios documentales. Deploy #38256572585 **success**, todos los Workers y D1 publicados. PR #398 corrigió ambos fallos Gym (fuente Home/Salud distinta y hero confundido con vídeo suplementario). CI success; deploy #38258590413 **success**, todos los Workers y D1 publicados. No alterados Sheets ni archivos personales.

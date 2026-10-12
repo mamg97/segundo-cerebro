@@ -247,6 +247,10 @@ Las importaciones automáticas de Apple Health se almacenan normalizadas en D1 `
 
 Cada muestra conserva valor, unidad, fecha local, timestamp original, fuente e importación. La clave lógica de idempotencia es `metric_type + measured_at + source`.
 
+Para resolver la **última medición corporal**, combinar D1 `health_body_samples` y el histórico/manual de `MedicionesCorporales`. Normalizar `measured_at` a UTC y eliminar observaciones repetidas con identidad métrica + instante + fuente antes de elegir la más reciente. Una exportación de Zepp Life no puede contarse dos veces por aparecer con offset local en el Sheet y en UTC en D1; una medición manual posterior sí puede convertirse en la última. La API expone `body.weightLatest` (última medición hasta la fecha consultada) separada de `body.weightToday` (solo una medición efectivamente tomada ese día).
+
+**Contrato para gestores sin acceso a D1:** `HistoricoResumen!S` (columna `latest_weight_kg`, fila `all`) es la vista de referencia cuando `generated_at` es reciente; `MedicionesCorporalesApple` permite inspeccionar muestras D1 y `MedicionesCorporales` conserva las manuales. Si el resumen está desactualizado, comparar ambas fuentes por `measured_at` (no `updated_at` ni orden de filas) y declarar cualquier falta de visibilidad. Las proyecciones no son tablas canónicas editables ni requieren duplicación de muestras.
+
 La vista combinada fusiona Sheet + D1. Para peso:
 - se conservan todas las muestras del día;
 - se calcula una media diaria si hay varias;

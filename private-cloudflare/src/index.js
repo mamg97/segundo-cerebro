@@ -21,6 +21,7 @@ import { fetchDeltaHistory, paginateDeltaOperations } from "./delta.js";
 import { googleReadFetch } from "./google-read.js";
 import { healthCoverageQuality, isHealthEnergyComparable, selectHealthEnergyRow } from "./health-energy-quality.js";
 import { canonicalHealthTimestamp, deduplicateHealthBodySamples } from "./health-body-identity.js";
+import { mergeHealthBodySources, latestHealthBodyMetric, healthBodyWeightStats } from "./health-body-unified.js";
 import {
   searchGymExerciseLibrary,
   getGymExerciseLibraryMeta,
@@ -2618,10 +2619,12 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
     : healthAddDays(date, -(days || 365) + 1);
 
   let waistHistory = [];
+  let recentUnifiedBodySamples = [];
   if (hasHealthGoogleConfig(env)) {
     try {
       const health = await fetchHealthNutritionSummary(env, { date });
       waistHistory = health.value?.body?.waistHistory || [];
+      recentUnifiedBodySamples = health.value?.body?.samples || [];
     } catch (error) {
       console.warn("Health history recovery/waist read failed", String(error?.message || error));
     }
@@ -2650,6 +2653,7 @@ async function fetchHealthHistory(env, { endDate, range = "365" } = {}) {
     range: String(range),
     activity,
     bodySamples,
+    unifiedBodySamples: mergeHealthBodySources(bodySamples, recentUnifiedBodySamples),
     recovery,
     metrics,
     waistHistory,
@@ -2794,39 +2798,6 @@ async function persistHealthRecoveryDetail(env, history) {
   }
 }
 
-function healthHistoryWeightStats(bodySamples = [], endDate) {
-  const weightSamples = bodySamples.filter((sample) =>
-    sample?.type === "bodyMass" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(String(sample?.date || "")) &&
-    Number.isFinite(Number(sample?.value))
-  );
-  const dailyWeight = new Map();
-  for (const sample of weightSamples) {
-    if (!dailyWeight.has(sample.date)) dailyWeight.set(sample.date, []);
-    dailyWeight.get(sample.date).push(Number(sample.value));
-  }
-  const dailyMean = (date) => {
-    const values = dailyWeight.get(date) || [];
-    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
-  };
-  const meanForOffsets = (startOffset, endOffset) => {
-    const values = [];
-    for (let offset = startOffset; offset <= endOffset; offset += 1) {
-      const value = dailyMean(healthAddDays(endDate, -offset));
-      if (value !== null) values.push(value);
-    }
-    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
-  };
-  const current = meanForOffsets(0, 6);
-  const previous = meanForOffsets(7, 13);
-  return {
-    latest: weightSamples.length ? Number(weightSamples[weightSamples.length - 1].value) : null,
-    current7d: current,
-    previous7d: previous,
-    weeklyChange: current !== null && previous !== null ? current - previous : null
-  };
-}
-
 async function persistHealthHistorySummary(env, history) {
   if (!hasHealthGoogleConfig(env) || !history) return;
   const rowByRange = { "30": 2, "90": 3, "180": 4, "365": 5, "all": 6 };
@@ -2834,13 +2805,9 @@ async function persistHealthHistorySummary(env, history) {
   if (!targetRow) return;
 
   const bodySamples = Array.isArray(history.bodySamples) ? history.bodySamples : [];
-  const latestMetricValue = (type) => {
-    const matches = bodySamples
-      .filter((sample) => sample?.type === type && Number.isFinite(Number(sample?.value)))
-      .sort((a, b) => String(a.measuredAt || a.date || "").localeCompare(String(b.measuredAt || b.date || "")));
-    return matches.length ? Number(matches[matches.length - 1].value) : null;
-  };
-  const weights = healthHistoryWeightStats(bodySamples, history.endDate);
+  const unifiedBodySamples = Array.isArray(history.unifiedBodySamples) ? history.unifiedBodySamples : bodySamples;
+  const latestMetricValue = (type) => latestHealthBodyMetric(unifiedBodySamples, type, history.endDate)?.value ?? null;
+  const weights = healthBodyWeightStats(unifiedBodySamples, history.endDate);
   const waist = Array.isArray(history.waistHistory) && history.waistHistory.length
     ? Number(history.waistHistory[history.waistHistory.length - 1]?.value)
     : null;
@@ -3312,47 +3279,23 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const objective = objectives.find((item) => item.effectiveDate <= date) || null;
   const activityObjective = activityObjectives.find((item) => item.effectiveDate <= date) || null;
 
-  const mergedBodySamples = [...d1BodySamples];
+  const manualBodySamples = [];
   for (const row of bodySheetRows) {
-    const measuredAt = row.measuredAt || `${row.date}T12:00:00+02:00`;
+    const measuredAt = row.measuredAt || `${row.date}T12:00:00Z`;
     const source = row.source || "health_sheet";
-    if (row.weightKg !== null) mergedBodySamples.push({ type: "bodyMass", value: row.weightKg, unit: "kg", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
-    if (row.bodyFatPct !== null) mergedBodySamples.push({ type: "bodyFatPercentage", value: row.bodyFatPct, unit: "%", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
-    if (row.bodyMassIndex !== null) mergedBodySamples.push({ type: "bodyMassIndex", value: row.bodyMassIndex, unit: "count", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
-    if (row.leanBodyMassKg !== null) mergedBodySamples.push({ type: "leanBodyMass", value: row.leanBodyMassKg, unit: "kg", date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null });
+    const shared = { date: row.date, measuredAt, source, importedAt: row.importedAt || row.updatedAt || null };
+    if (row.weightKg !== null) manualBodySamples.push({ ...shared, type: "bodyMass", value: row.weightKg, unit: "kg" });
+    if (row.bodyFatPct !== null) manualBodySamples.push({ ...shared, type: "bodyFatPercentage", value: row.bodyFatPct, unit: "%" });
+    if (row.bodyMassIndex !== null) manualBodySamples.push({ ...shared, type: "bodyMassIndex", value: row.bodyMassIndex, unit: "count" });
+    if (row.leanBodyMassKg !== null) manualBodySamples.push({ ...shared, type: "leanBodyMass", value: row.leanBodyMassKg, unit: "kg" });
   }
-  const bodySampleMap = new Map();
-  for (const sample of mergedBodySamples) {
-    const key = [sample.type, sample.measuredAt, sample.source].join("|");
-    bodySampleMap.set(key, sample);
-  }
-  const bodySamples = [...bodySampleMap.values()]
-    .sort((a, b) => String(a.measuredAt).localeCompare(String(b.measuredAt)));
-
-  const latestMetric = (type, onlyDate = null) => {
-    const matches = bodySamples.filter((sample) => sample.type === type && (!onlyDate || sample.date === onlyDate));
-    return matches.length ? matches[matches.length - 1] : null;
-  };
-
-  const dailyWeight = new Map();
-  for (const sample of bodySamples.filter((item) => item.type === "bodyMass")) {
-    if (!dailyWeight.has(sample.date)) dailyWeight.set(sample.date, []);
-    dailyWeight.get(sample.date).push(Number(sample.value));
-  }
-  const meanForDates = (startOffset, endOffset) => {
-    const means = [];
-    for (let offset = startOffset; offset <= endOffset; offset += 1) {
-      const key = healthAddDays(date, -offset);
-      const values = dailyWeight.get(key) || [];
-      if (values.length) means.push(values.reduce((sum, value) => sum + value, 0) / values.length);
-    }
-    return means.length ? means.reduce((sum, value) => sum + value, 0) / means.length : null;
-  };
-  const weight7dAverage = meanForDates(0, 6);
-  const previous7dAverage = meanForDates(7, 13);
-  const weightWeeklyChange = weight7dAverage !== null && previous7dAverage !== null
-    ? weight7dAverage - previous7dAverage
-    : null;
+  const bodySamples = mergeHealthBodySources(d1BodySamples, manualBodySamples);
+  const latestMetric = (type, onlyDate = null) =>
+    latestHealthBodyMetric(bodySamples, type, date, Boolean(onlyDate));
+  const weightStats = healthBodyWeightStats(bodySamples, date);
+  const weight7dAverage = weightStats.current7d;
+  const previous7dAverage = weightStats.previous7d;
+  const weightWeeklyChange = weightStats.weeklyChange;
 
   const selectedDate = new Date(`${date}T12:00:00+02:00`);
   const mondayOffset = (selectedDate.getDay() + 6) % 7;
@@ -3435,6 +3378,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     energy: energyForDay ? { ...energyForDay, coverageQuality: healthCoverageQuality(energyForDay) } : null,
     body: {
       weightToday: latestMetric("bodyMass", date),
+      weightLatest: latestMetric("bodyMass"),
       weight7dAverage,
       previous7dAverage,
       weightWeeklyChange,
