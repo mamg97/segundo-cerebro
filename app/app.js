@@ -10020,7 +10020,8 @@ function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } =
       state.financeSummary = {
         ...state.financeSummary,
         bankWorkspaceAccounts: workspace.accounts,
-        accountTransactions: workspace.transactions
+        accountTransactions: workspace.transactions,
+        bankWorkspaceReadVerified: true
       };
     }
     if (dialog.open && dialog.classList.contains("budget-dialog")) {
