@@ -1213,6 +1213,36 @@ async function auditLookDetail(label) {
         `filas=${lookRowCount} miniaturas=${lookThumbCount}`
       );
     }
+    if (!mobileProfile && lookRowCount > 0) {
+      // The prior desktop regression detached every thumbnail into an empty
+      // strip *above* the table header. A count-only assertion missed it.
+      const geometry = await historyTable.evaluate((table) => {
+        const head = table.querySelector("thead");
+        const rows = [...table.querySelectorAll("tbody tr")].slice(0, 12);
+        const headerBox = head?.getBoundingClientRect();
+        const firstRowBox = rows[0]?.getBoundingClientRect();
+        const headerBeforeRows = Boolean(headerBox && firstRowBox &&
+          headerBox.bottom <= firstRowBox.top + 2);
+        const thumbnailsInsideRows = rows.every((row) => {
+          const rowBox = row.getBoundingClientRect();
+          const thumb = row.querySelector(".look-history-thumb");
+          const thumbBox = thumb?.getBoundingClientRect();
+          const labelBox = row.querySelector(".look-history-entity-cell")?.getBoundingClientRect();
+          return Boolean(thumbBox && labelBox &&
+            thumbBox.top >= rowBox.top - 2 &&
+            thumbBox.bottom <= rowBox.bottom + 2 &&
+            thumbBox.left >= rowBox.left - 2 &&
+            labelBox.left >= thumbBox.right - 2 &&
+            rowBox.height >= 60 && rowBox.height <= 150);
+        });
+        return { headerBeforeRows, thumbnailsInsideRows };
+      });
+      assertCheck(
+        geometry.headerBeforeRows && geometry.thumbnailsInsideRows,
+        `Visual ${label} · Historial de Looks miniaturas alineadas por fila`,
+        `cabecera=${geometry.headerBeforeRows} filas=${geometry.thumbnailsInsideRows}`
+      );
+    }
     if (await garmentsMode.isVisible().catch(() => false)) {
       await garmentsMode.click();
       await page.waitForTimeout(120);
