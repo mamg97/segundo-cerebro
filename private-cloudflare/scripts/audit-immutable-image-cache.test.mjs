@@ -60,9 +60,11 @@ test("simultaneous requests share one live fetch without persisting errors", asy
 
 test("production audit never caches failures or drops real first-image fetch", () => {
   assert.match(auditCode, /const immutableImageCache = createAuditImmutableImageCache\(\)/);
-  assert.match(auditCode, /immutableImageCache\.once\(request\.url\(\), \(\) =>\s*route\.fetch\(\{ headers, timeout: 25000 \}\)/);
-  assert.match(auditCode, /immutableImageCache\.put\(request\.url\(\), live\.status\(\), live\.headers\(\), body\)/);
-  assert.match(auditCode, /await route\.fulfill\(\{ response: live \}\)/);
+  assert.match(auditCode, /immutableImageCache\.once\(request\.url\(\), async \(\) =>/);
+  assert.match(auditCode, /const response = await route\.fetch\(\{ headers, timeout: 25000 \}\)/);
+  assert.match(auditCode, /const body = await response\.body\(\)/);
+  assert.match(auditCode, /immutableImageCache\.put\(request\.url\(\), response\.status\(\), response\.headers\(\), body\)/);
+  assert.match(auditCode, /await route\.fulfill\(live\)/);
   assert.match(auditCode, /await route\.abort\("failed"\)/);
   assert.doesNotMatch(auditCode, /console\.log\([^)]*cached\.body/);
 });
