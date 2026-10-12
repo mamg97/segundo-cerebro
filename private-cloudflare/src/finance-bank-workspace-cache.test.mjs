@@ -73,7 +73,8 @@ test("an older concurrent source never overwrites a newer source", async () => {
 
 test("the real Worker uses only the bounded private cache for bank accounts", () => {
   const worker = readFileSync(new URL("./index.js", import.meta.url), "utf8");
-  assert.match(worker, /createFinanceBankWorkspaceCache\(async \(env\) => \{/);
+  const bankReader = readFileSync(new URL("./finance-bank-source.js", import.meta.url), "utf8");
+  assert.ok(bankReader.includes("createFinanceBankWorkspaceCache("));
   assert.match(worker, /const rows = await readFinanceBankSource\(env, getGoogleAccessToken\)/);
   assert.match(worker, /await fetchFinanceBankWorkspace\(env\)/);
   assert.doesNotMatch(worker, /caches\.default\.put.*finance/);
