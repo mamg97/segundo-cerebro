@@ -5245,39 +5245,93 @@ function menuWeekNavigationMarkup(week) {
     </nav>`;
 }
 
-async function loadHistoricalMenuWeek(dayKey) {
+// The light endpoint is an existing canonical, week-scoped fallback. It does
+// not provide recipe ingredient hydration; never silently present it as a full read.
+function recoverLightWeeklyMenu(light, selected, base) {
+  if (!light?.ok || menuWeekMonday(light.weekStart) !== selected ||
+      !Array.isArray(light.weeklyMenu)) return null;
+  const recipes = Array.isArray(base?.recipes) ? base.recipes : [];
+  const byRecipeId = new Map(recipes.filter((item) => item?.id).map((item) => [String(item.id), item]));
+  return {
+    ...light,
+    recipes,
+    weeklyMenu: light.weeklyMenu.map((item) => ({
+      ...item,
+      recipe: item.recipeId ? byRecipeId.get(String(item.recipeId)) || null : null,
+      // The light endpoint has no canonical ingredients or Pantry enrichment.
+      ingredients: [],
+      pantrySyncStatus: item.foodId ? "unavailable" : "not-applicable",
+      pantryProductId: null
+    })),
+    menuReadMode: "light"
+  };
+}
+
+async function loadHistoricalMenuWeek(dayKey, options = {}) {
   const selected = menuWeekMonday(dayKey);
   const current = menuWeekMonday(localDateKey());
   if (!selected || !current || selected > current) return false;
-  if (selected === healthMenuSelectedWeek && healthMenuViewData) return true;
+  if (!options.force && selected === healthMenuSelectedWeek && healthMenuViewData) return true;
   const requestId = ++healthMenuRequestId;
   healthMenuLoading = true;
   const panel = document.querySelector("#menu-panel");
   const status = panel?.querySelector("#menu-week-error");
   if (status) { status.hidden = false; status.textContent = "Consultando menú de la semana…"; }
   try {
-    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(selected), {
-      headers: { Accept: "application/json" },
-      credentials: "same-origin", cache: "no-store"
-    });
-    if (!response.ok) throw new Error("MENU_WEEK_" + response.status);
-    const weekly = await response.json();
-    if (!weekly.ok || menuWeekMonday(weekly.weekStart) !== selected ||
-        !Array.isArray(weekly.weeklyMenu) || !Array.isArray(weekly.recipes)) {
-      throw new Error("MENU_WEEK_INVALID");
+    // Switching back to the current week should reuse the complete canonical
+    // payload already loaded by Nutrición, rather than make a redundant call.
+    const base = healthMenuBaseData;
+    if (!options.force && base &&
+        menuWeekMonday(base.weekStart || base.date) === selected &&
+        Array.isArray(base.weeklyMenu) && Array.isArray(base.recipes)) {
+      if (requestId !== healthMenuRequestId || !panel?.isConnected) return false;
+      healthMenuSelectedWeek = selected;
+      renderMenuPanel(base, { historicalFetch: true });
+      return true;
+    }
+    let weekly;
+    let fullError = null;
+    try {
+      const response = await fetch("/api/nutrition?date=" + encodeURIComponent(selected), {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin", cache: "no-store"
+      });
+      if (!response.ok) throw new Error("MENU_WEEK_" + response.status);
+      weekly = await response.json();
+      if (!weekly.ok || menuWeekMonday(weekly.weekStart) !== selected ||
+          !Array.isArray(weekly.weeklyMenu) || !Array.isArray(weekly.recipes)) {
+        throw new Error("MENU_WEEK_INVALID");
+      }
+    } catch (error) {
+      fullError = error;
+      // A failing twelve-range nutrition read must not hide MenuSemanal.
+      const lightResponse = await fetch("/api/nutrition/menu?date=" + encodeURIComponent(selected), {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin", cache: "no-store"
+      });
+      if (!lightResponse.ok) throw new Error("MENU_WEEK_LIGHT_" + lightResponse.status);
+      weekly = recoverLightWeeklyMenu(await lightResponse.json(), selected, base);
+      if (!weekly) throw new Error("MENU_WEEK_LIGHT_INVALID");
     }
     if (requestId !== healthMenuRequestId || !panel?.isConnected) return false;
-    // The complete read-only nutrition payload preserves recipe/product
-    // cross-references, food and ingredient data for historical weeks.
     healthMenuSelectedWeek = selected;
+    // The full read preserves ingredient/product links; a light fallback
+    // retains only explicitly present macros and the proven recipe IDs.
     renderMenuPanel(weekly, { historicalFetch: true });
+    if (fullError) console.warn("Weekly menu recovered from canonical light endpoint", String(fullError?.message || "FULL_READ_UNAVAILABLE"));
     return true;
   } catch (error) {
     if (requestId === healthMenuRequestId && panel?.isConnected) {
       const message = panel.querySelector("#menu-week-error");
       if (message) {
         message.hidden = false;
-        message.textContent = "No se ha podido recuperar esa semana. El menú anterior sigue visible; vuelve a intentarlo.";
+        message.textContent = "No se pudo consultar la semana " + menuWeekRangeLabel(selected) +
+          ". Se mantiene el menú anterior. ";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "Reintentar";
+        button.addEventListener("click", () => void loadHistoricalMenuWeek(selected, { force: true }));
+        message.append(button);
       }
       console.warn("Historical weekly menu read failed", String(error?.message || error));
     }
@@ -5329,6 +5383,7 @@ function renderMenuPanel(data, options = {}) {
 
   panel.innerHTML = `
     ${menuWeekNavigationMarkup(healthMenuSelectedWeek)}
+    ${data?.menuReadMode === "light" ? `<p class="weekly-menu-degraded" role="status">Menú recuperado directamente de MenuSemanal. La lectura ampliada está temporalmente indisponible: pueden faltar los ingredientes derivados de recetas y los enlaces a Despensa. Las cantidades no se han inventado. <button type="button" data-menu-week-retry-full>Reintentar vista completa</button></p>` : ""}
     <div class="weekly-menu-hero">
       <div>
         <p class="context-label">Plan nutricional · consumo confirmado</p>
@@ -5383,6 +5438,8 @@ function renderMenuPanel(data, options = {}) {
     </div>`;
 
   bindMenuWeekNavigation(panel);
+  panel.querySelector("[data-menu-week-retry-full]")?.addEventListener("click",
+    () => void loadHistoricalMenuWeek(healthMenuSelectedWeek, { force: true }));
   bindMenuEntityLinks(panel, data);
 }
 
