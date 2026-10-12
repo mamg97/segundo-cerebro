@@ -2609,26 +2609,17 @@ async function loadHealthOverview(dateKey = localDateKey()) {
   const panel = document.querySelector("#health-overview-panel");
   if (panel) panel.innerHTML = '<p class="health-empty">Cargando Apple Health…</p>';
   try {
-    const [response, gymResponse] = await Promise.all([
-      fetch("/api/health/overview?date=" + encodeURIComponent(selected), {
-        headers: { Accept: "application/json" },
-        cache: "no-store"
-      }),
-      fetch("/api/gym", {
-        headers: { Accept: "application/json" },
-        cache: "no-store",
-        credentials: "same-origin"
-      }).catch(() => null)
-    ]);
+    const response = await fetch("/api/health/overview?date=" + encodeURIComponent(selected), {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
     if (!response.ok) throw new Error("HEALTH_OVERVIEW_" + response.status);
     const payload = await response.json();
-    const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
     if (requestId !== healthOverviewRequestId || !panel?.isConnected) return;
-    if (gymData) homeGymSnapshot = gymData;
-    const canonicalGym = gymData || homeGymSnapshot || {};
+    // Reuse the last successful private Gym source from Home or Gym panel.
+    // Avoid a second /api/gym request during Summary startup (lazy-load rule).
+    const canonicalGym = gymPanelData || homeGymSnapshot || {};
     renderHealthOverview(payload, canonicalGym);
-    // Keep Home and Salud on the same retrieved Gym snapshot for today's data.
-    // A historical date must never overwrite Home's "Gym hoy" indicator.
     if (selected === today) renderHomeGymSummary(payload, canonicalGym);
     bindHealthDayNavigation(payload.date || selected);
     await loadHealthAdherenceOverview();
