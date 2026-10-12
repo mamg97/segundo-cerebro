@@ -22,3 +22,11 @@ test("a missing bank workspace logs closed DOM state without account identifiers
   assert.match(audit, /options\.htmlDataName === "account-transactions-tab"\) \{/);
   assert.match(audit, /safeAuditFinanceStructureCode\(flags\)/);
 });
+
+test("finance transport evidence emits bounded status classes, never private URLs or payloads", () => {
+  assert.match(audit, /const bankReadTransport = \{ started: 0, responses: \[\], failed: 0 \}/);
+  assert.match(audit, /bankReadTransport\.responses\.push\(status === 200 \? "HTTP_200"/);
+  assert.match(audit, /Math\.min\(9, bankReadTransport\.started\)/);
+  assert.match(audit, /\[AUDIT_FINANCE_TRANSPORT\]/);
+  assert.doesNotMatch(audit, /bankReadTransport\.responses\.push\(response\.url\(/);
+});
