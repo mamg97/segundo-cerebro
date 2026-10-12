@@ -10,7 +10,7 @@ let workflowHealthCache = { value: null, expiresAt: 0 };
 let researchCache = { value: null, expiresAt: 0, spreadsheetId: null, spreadsheetIdExpiresAt: 0 };
 
 // TimesFM is an EUR-denominated cohort; only observed finite 5/21/63-session returns pass through.
-const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "weekly_ml_legacy", "capital_cycle_demo", "buy_the_dip_demo", "timesfm_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
+const GROUPS = new Set(["paper_nuevo", "weekly_ml_demo", "weekly_ml_legacy", "capital_cycle_demo", "buy_the_dip_demo", "timesfm_demo", "timesfm_daily_demo", "tfg_demo_adaptado", "tfm_demo_adaptado", "diario_heredado", "historica_pendiente"]);
 
 function optionalNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -100,6 +100,11 @@ function normalizeDashboard(data) {
         ? Math.min(row.risk_observations, 100000) : 0,
       equity_history: normalizeEquityHistory(row.equity_history),
       daily_mode: row.daily_mode === true,
+      comparison_eligible: row.comparison_eligible !== false,
+      comparison_universe_id: typeof row.comparison_universe_id === "string" ? row.comparison_universe_id.slice(0, 64) : null,
+      comparison_universe_symbols: Number.isInteger(row.comparison_universe_symbols) ? row.comparison_universe_symbols : null,
+      comparison_exclusion_reason: typeof row.comparison_exclusion_reason === "string"
+        ? row.comparison_exclusion_reason.slice(0, 250) : null,
       period_returns_pct: row.group === "timesfm_demo"
         ? Object.fromEntries(["5_sessions", "21_sessions", "63_sessions"].map((key) =>
             [key, optionalNumber(row.period_returns_pct?.[key])]))
@@ -150,6 +155,7 @@ const RUNTIME_HEALTH_FILES = [
   "buy_the_dip_strategy",
   "timesfm_daily",
   "timesfm_weekly",
+  "timesfm_one_day",
   "weekly_ml",
   "tfg_ahp"
 ];

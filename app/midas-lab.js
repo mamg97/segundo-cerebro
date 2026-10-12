@@ -14,7 +14,8 @@ const BOOTSTRAP_LABELS = {
 
 const MIDAS_LAB_GROUPS = [
   ["weekly_ml_demo", "Weekly ML"],
-  ["timesfm_demo", "TimesFM · EUR"],
+  ["timesfm_demo", "TimesFM semanal · EUR"],
+  ["timesfm_daily_demo", "TimesFM diario · EUR"],
   ["capital_cycle_demo", "Capital Cycle"],
   ["buy_the_dip_demo", "Buy The Dip"],
   ["tfg_demo_adaptado", "TFG"],
@@ -160,7 +161,7 @@ export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
     '<div class="midas-algorithm-detail-metrics">' +
       metric("Rentabilidad acumulada", formatPercent(meta.returnPct)) +
       metric("Rentabilidad día", formatPercent(item.day_return_pct)) +
-       (item.group === "timesfm_demo"
+       (["timesfm_demo", "timesfm_daily_demo"].includes(item.group)
          ? metric("5 sesiones · mismo período", formatPercent(item.period_returns_pct?.["5_sessions"])) +
            metric("21 sesiones · mismo período", formatPercent(item.period_returns_pct?.["21_sessions"])) +
            metric("63 sesiones · mismo período", formatPercent(item.period_returns_pct?.["63_sessions"]))
@@ -187,6 +188,9 @@ export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
           ? 'Modo paper diario prospectivo: compras simuladas tras señal semanal, NAV a cada cierre; no es operativa real ni reconstrucción retroactiva.'
           : 'Liquidación semanal diferida: esta versión no registra entradas efectivas ni NAV diarios de lunes a jueves. Las señales no son posiciones abiertas.') +
         '</p>' : '') +
+    (item.comparison_universe_id
+       ? '<p class="midas-algorithm-note">Universo canónico: ' + escapeHtml(item.comparison_universe_id) + '</p>'
+       : '') +
     (note ? '<p class="midas-algorithm-note">' + escapeHtml(note) + '</p>' : '') +
     (item.bootstrap ? '<p class="midas-algorithm-note is-warning">Bootstrap técnico retrospectivo: no cuenta como resultado forward.</p>' : '') +
   '</article>';
@@ -201,6 +205,7 @@ function activeMidasRows(dashboard, lab) {
   return [...bootstrapRows, ...rows.filter((row) =>
     row.group !== "historica_pendiente" &&
     row.group !== "weekly_ml_legacy" &&
+    row.comparison_eligible !== false &&
     row.id !== "genetic_sp500_legacy" &&
     row.id !== "genetic_sp500_forward_archive")];
 }

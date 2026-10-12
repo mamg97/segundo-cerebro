@@ -1,4 +1,5 @@
 const SPECS = [
+  { name: "MIDAS TimesFM EUR one-day signal", weekdays: [1,2,3,4,5], hour: 23, minute: 57, graceHours: 7, activeFrom: "2026-10-13T00:00:00Z" },
   { name: "MIDAS TimesFM EUR daily paper", weekdays: [2,3,4,5,6], hour: 0, minute: 37, graceHours: 8, activeFrom: "2026-10-13T00:00:00Z" },
   { name: "MIDAS TimesFM 2.5 EUR weekly signal", weekdays: [6], hour: 4, minute: 17, graceHours: 9, activeFrom: "2026-10-17T00:00:00Z" },
   { name: "MIDAS paper comparison", weekdays: [1,2,3,4,5], hour: 23, minute: 37, graceHours: 6, activeFrom: "2026-09-28T00:00:00Z" },
