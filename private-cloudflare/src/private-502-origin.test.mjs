@@ -31,7 +31,7 @@ test("Worker sends closed diagnostics for affected 502 routes", () => {
 test("Chromium does not log raw 5xx JSON or URL identifiers", () => {
   assert.match(audit, /safePrivate502Origin\(contentType, payload\)/);
   assert.match(audit, /\[AUDIT_BACKEND_DIAG\]/);
-  assert.match(audit, /await Promise\.allSettled\(private502DiagnosticsPending\)/);
+  assert.match(audit, /await settleAuditDiagnostics\(private502DiagnosticsPending\)/);
   assert.doesNotMatch(audit, /\[AUDIT_BACKEND_DIAG\].*response\.url/);
   assert.doesNotMatch(audit, /console\.error\("\[AUDIT_BACKEND_DIAG\] " \+ JSON\.stringify/);
 });
