@@ -332,7 +332,7 @@ test("TimesFM EUR appears in competition without invented return and shows compa
       equity_history: [{ date: "2026-10-16", nav: 100000 }, { date: "2026-10-23", nav: 100400 }] }
   ] };
   const html = renderMidasVisualLab(dashboard);
-  assert.match(html, /TimesFM · EUR/);
+  assert.match(html, /TimesFM semanal · EUR/);
   assert.match(html, /data-midas-algorithm-id="timesfm_2p5_eur_paper"/);
   assert.match(html, /data-midas-lab-sort-return=""/);
   const details = renderMidasAlgorithmDetail(dashboard, null, "timesfm_spy_eur");
