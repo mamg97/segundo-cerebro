@@ -9981,23 +9981,61 @@ function initializeAccountTransactionTabs(root = document) {
 
 let financeBudgetRefreshInFlight = false;
 
-// A bounded read-only recovery shared by the empty and partially loaded
-// budget views. A missing financial source never becomes invented data.
+// Bank history has its own lightweight canonical reader: do not reload all
+// finance tabs just to recover the linked bank workspace. No writes are made.
+async function fetchFinanceBankWorkspace(timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort("finance-bank-timeout"), timeoutMs);
+  try {
+    const response = await fetch("/api/finance/accounts", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: controller.signal
+    });
+    if (!response.ok) throw new Error("FINANCE_BANK_SOURCE_UNAVAILABLE");
+    const payload = await response.json();
+    if (!payload?.ok || !Array.isArray(payload.accounts) || !Array.isArray(payload.transactions)) {
+      throw new Error("FINANCE_BANK_SOURCE_INVALID");
+    }
+    return payload;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } = {}) {
   if (privateModeKind !== "remote" || financeBudgetRefreshInFlight) return;
   financeBudgetRefreshInFlight = true;
-  void fetchStateScope("finance", 12000).then((payload) => {
-    if (!payload?.financeSummary?.monthlyBudget) throw new Error("FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
-    state.financeSummary = payload.financeSummary;
+  void (async () => {
+    // The full budget fetch remains necessary only when it has never loaded.
+    if (!state.financeSummary?.monthlyBudget) {
+      const payload = await fetchStateScope("finance", 12000);
+      if (!payload?.financeSummary?.monthlyBudget) throw new Error("FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
+      state.financeSummary = payload.financeSummary;
+    }
+    if (financeAccountWorkspaceIncomplete(state.financeSummary)) {
+      const workspace = await fetchFinanceBankWorkspace(12000);
+      state.financeSummary = {
+        ...state.financeSummary,
+        bankWorkspaceAccounts: workspace.accounts,
+        accountTransactions: workspace.transactions
+      };
+    }
     if (dialog.open && dialog.classList.contains("budget-dialog")) {
       openBudgetDetail({ skipRefresh: true });
     }
-  }).catch(() => {
-    // Never log upstream URLs, financial values, IDs or raw error messages.
-    console.warn("Finance workspace on-demand load failed", "FINANCE_WORKSPACE_SOURCE_UNAVAILABLE");
-    if (replaceMissingView && dialog.open && dialog.classList.contains("budget-dialog")) {
-      document.querySelector("#dialog-body").innerHTML =
-        '<p class="account-transactions-empty">No se han podido recuperar los movimientos bancarios. La fuente original no se ha modificado.</p>';
+  })().catch(() => {
+    // Do not print upstream URLs, bank IDs, financial values or raw errors.
+    console.warn("Finance workspace on-demand load failed", "FINANCE_BANK_SOURCE_UNAVAILABLE");
+    if (dialog.open && dialog.classList.contains("budget-dialog")) {
+      if (state.financeSummary?.monthlyBudget) {
+        openBudgetDetail({ skipRefresh: true });
+      } else if (replaceMissingView) {
+        document.querySelector("#dialog-body").innerHTML =
+          '<p class="account-transactions-empty">No se han podido recuperar los movimientos bancarios. La fuente original no se ha modificado.</p>';
+      }
     }
   }).finally(() => { financeBudgetRefreshInFlight = false; });
 }
@@ -10030,6 +10068,8 @@ function openBudgetDetail(options = {}) {
   const categories = Array.isArray(monthly.categories) ? monthly.categories : [];
   const liquidityAccounts = Array.isArray(monthly.liquidityAccounts) ? monthly.liquidityAccounts : [];
   const accountTransactions = Array.isArray(finance.accountTransactions) ? finance.accountTransactions : [];
+  const bankCatalog = Array.isArray(finance.bankWorkspaceAccounts) ? finance.bankWorkspaceAccounts : [];
+  const workspaceAccounts = bankCatalog.length ? bankCatalog : liquidityAccounts;
   const groups = ["Común", "Miguel", "Andrea"];
 
   const grouped = Object.fromEntries(groups.map((name) => [name, []]));
@@ -10055,7 +10095,7 @@ function openBudgetDetail(options = {}) {
       <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
       ${accountWorkspaceIncomplete ? '<p class="account-transactions-empty" data-finance-workspace-status="unavailable">Datos bancarios pendientes de recuperar desde la fuente privada. No se muestran cuentas ni movimientos supuestos.</p>' : ""}
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
-      ${renderAccountTransactionsWorkspace(accountTransactions, liquidityAccounts, currency)}
+      ${renderAccountTransactionsWorkspace(accountTransactions, workspaceAccounts, currency)}
       ${categories.length ? `<div class="budget-groups">
         ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>` : ""}
