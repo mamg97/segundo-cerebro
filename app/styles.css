@@ -24984,6 +24984,119 @@ html[data-theme="dark"] .loan-benchmark-explanation {
 }
 
 
+/* v0.44.21 — Looks history: aligned desktop/tablet rows, no detached thumbnails.
+   Preserve the separate Safari-safe mobile cards under 560px. */
+@media (min-width: 561px) {
+  .objects-dialog .look-history-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .objects-dialog .look-history-table {
+    display: block;
+    width: 100%;
+    min-width: 850px;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+  }
+
+  .objects-dialog .look-history-table thead,
+  .objects-dialog .look-history-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .objects-dialog .look-history-table thead tr,
+  .objects-dialog .look-history-table tbody tr {
+    display: grid;
+    grid-template-columns: 70px minmax(195px, 2fr) minmax(110px, 1fr) minmax(95px, .75fr) minmax(120px, 1fr) minmax(160px, 1.25fr);
+    column-gap: 0;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .objects-dialog .look-history-table thead tr {
+    min-height: 43px;
+    background: color-mix(in srgb, var(--paper) 90%, var(--blue) 10%);
+  }
+
+  .objects-dialog .look-history-table tbody tr {
+    min-height: 74px;
+    border-top: 1px solid var(--line);
+  }
+
+  .objects-dialog .look-history-table th,
+  .objects-dialog .look-history-table td,
+  .objects-dialog .look-history-table th:first-child,
+  .objects-dialog .look-history-table td:first-child {
+    display: block;
+    box-sizing: border-box;
+    width: auto !important;
+    min-width: 0;
+    max-width: 100%;
+    padding: 8px 10px;
+    border-bottom: 0;
+    text-align: left;
+    overflow: hidden;
+  }
+
+  .objects-dialog .look-history-table th {
+    font-size: 11px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .objects-dialog .look-history-table td {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .objects-dialog .look-history-table .look-history-thumb-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px !important;
+  }
+
+  .objects-dialog .look-history-table .look-history-thumb {
+    flex: none;
+    width: 50px;
+    height: 60px;
+  }
+
+  .objects-dialog .look-history-table .look-history-entity-cell {
+    overflow: hidden;
+  }
+
+  .objects-dialog .look-history-table .look-history-entity strong {
+    font-size: 12px;
+  }
+
+  .objects-dialog .look-history-table .look-history-entity small {
+    font-size: 10px;
+  }
+
+  .objects-dialog .look-history-table td > strong {
+    font-size: 11px;
+  }
+
+  .objects-dialog .look-history-table .look-history-dates {
+    max-width: 100%;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .objects-dialog .look-history-table .look-history-dates span,
+  .objects-dialog .look-history-table .look-history-none {
+    font-size: 9px;
+    padding: 4px 6px;
+  }
+}
+
 /* v0.42.24 — weekly menu: planned totals + confirmed-consumption progress */
 .home-weekly-menu-table-day .home-weekly-menu-progress b > small {
   color: var(--ink-soft);

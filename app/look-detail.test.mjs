@@ -85,3 +85,18 @@ test("look detail cache bust and production audit are wired", () => {
   assert.match(audit, /Historial en tarjetas móviles/);
   assert.match(audit, /Tabla desktop oculta en móvil/);
 });
+
+test("desktop Looks and Prendas history keep each thumbnail aligned inside one row", () => {
+  assert.match(css, /v0\.44\.21 — Looks history: aligned desktop\/tablet rows/);
+  assert.match(css, /@media \(min-width: 561px\) \{[\s\S]*?\.objects-dialog \.look-history-table tbody tr \{[\s\S]*?display: grid/);
+  assert.match(css, /grid-template-columns: 70px minmax\(195px, 2fr\)/);
+  assert.match(css, /\.objects-dialog \.look-history-table th:first-child,[\s\S]*?width: auto !important/);
+  assert.match(css, /\.objects-dialog \.look-history-table \.look-history-thumb-cell \{[\s\S]*?display: flex/);
+  assert.match(css, /\.objects-dialog \.look-history-table \.look-history-entity strong \{[\s\S]*?font-size: 12px/);
+  assert.match(audit, /Historial de Looks miniaturas alineadas por fila/);
+  assert.match(audit, /thumbBox\.top >= rowBox\.top - 2/);
+  assert.match(audit, /thumbBox\.bottom <= rowBox\.bottom \+ 2/);
+  assert.match(audit, /headerBox\.bottom <= firstRowBox\.top \+ 2/);
+  // Mobile keeps its Safari-safe cards rather than reusing the desktop grid.
+  assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.look-history-table-wrap \{\s*display: none !important/);
+});
