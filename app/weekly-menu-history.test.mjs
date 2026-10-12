@@ -34,7 +34,10 @@ test("history uses only canonical week-scoped read endpoint, without writes or s
   assert.match(chunk, /Array\.isArray\(weekly\.weeklyMenu\)/);
   assert.match(chunk, /Array\.isArray\(weekly\.recipes\)/);
   assert.match(chunk, /requestId !== healthMenuRequestId/);
-  assert.match(chunk, /El menú anterior sigue visible/);
+  assert.match(chunk, /Se mantiene el menú anterior/);
+  assert.match(chunk, /fetch\("\/api\/nutrition\/menu\?date="/);
+  assert.match(chunk, /recoverLightWeeklyMenu/);
+  assert.match(chunk, /healthMenuBaseData/);
   assert.doesNotMatch(chunk, /method:\s*["'](?:POST|PUT|PATCH|DELETE)/i);
 });
 
