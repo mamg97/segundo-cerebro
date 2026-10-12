@@ -1,15 +1,15 @@
-## ORGANIZADOR CODEX · Correcciones de auditoría autónoma y despliegue · 12/10/2026
+## Estado actual · Correcciones de auditoría autónoma · 12/10/2026
 
-- **Herramienta:** Codex. **Rama activa:** `codex/d1-migration-permission-hotfix`. **Base:** `main` en `3294f4a` tras fusionar PR #383.
-- **Objetivo activo:** completar el despliegue de las correcciones de auditoría con credenciales Cloudflare de mínimo privilegio y sin tocar fuentes privadas.
-- **Trabajo realizado:** PR #383 fusionada. Pages #38232987525 terminó correctamente. El deploy privado #38232987603 validó 319 pruebas y el build, pero Cloudflare rechazó exclusivamente la migración D1 con código `7403`. El hotfix separa `CLOUDFLARE_D1_API_TOKEN` del token de Workers y produce un error accionable antes de publicar si falta.
-- **Estado funcional:** el código corregido está en `main`, pero el Worker de producción aún conserva la versión anterior. Ninguna fuente personal ni dato canónico se ha modificado.
-- **Decisiones:** las lecturas no ejecutan DDL; las migraciones remotas usan un token D1 dedicado y cualquier fallo bloquea el despliegue. Registrado en `docs/DECISIONS.md`.
-- **Problemas conocidos:** el secret `CLOUDFLARE_D1_API_TOKEN` todavía debe configurarse en GitHub. La integridad completa Sheets → D1 → interfaz sigue sin quedar acreditada por esta intervención. La primera publicación real de la nueva campaña MIDAS se exigirá tras `2026-10-13T12:00:00Z`.
-- **Pendientes inmediatos:** validar y fusionar el hotfix; añadir el secret D1 sin exponer su valor; relanzar el deploy privado y observar la auditoría postdespliegue.
-- **Próxima acción recomendada:** configurar en GitHub un token Cloudflare limitado a D1 Edit para la misma cuenta y relanzar el workflow; no ampliar silenciosamente el token general ni omitir migraciones.
-- **Archivos relevantes:** `.github/workflows/deploy-private-cloudflare.yml`, `.github/workflows/web-audit.yml`, `private-cloudflare/src/health-metrics-migration.test.mjs`, `private-cloudflare/scripts/web-audit.mjs`, `private-cloudflare/src/index.js`, `private-cloudflare/src/midas.js` y `docs/DECISIONS.md`.
-- **Pruebas realizadas:** hotfix con 319/319 pruebas Node, build privado, `wrangler deploy --dry-run` y `git diff --check` correctos. PR #383: CI #528 verde. Producción: Pages correcto; deploy privado detenido únicamente en D1 `7403`, antes de publicar Workers.
+- **Última herramienta:** Codex. **Rama activa:** `codex/audit-finalization-diagnostics`, basada en `main` `4897ae9`.
+- **Objetivo activo:** cerrar la última incidencia de la auditoría automática tras publicar las correcciones de cobertura horaria, MIDAS y Health.
+- **Trabajo realizado:** PR #383 y #384 fusionadas. El usuario configuró el secret de repositorio `CLOUDFLARE_D1_API_TOKEN` sin compartir su valor. El deploy privado #448 aplicó correctamente la migración D1 y publicó los seis Workers; Pages #675 también terminó bien. La auditoría postdespliegue #318 ejecutó Chromium: 396 controles, 395 correctos, un fallo final de infraestructura. Todos los controles MIDAS registrados pasaron. La ausencia de códigos de red/navegador junto al último fallo indica una excepción capturada en el cierre del recorrido; su fase exacta aún no está demostrada.
+- **Estado funcional:** el Worker y la migración nuevos están en producción. No se han cambiado fuentes personales ni datos canónicos. La auditoría completa continúa roja por un fallo final, no por MIDAS.
+- **Decisiones:** las lecturas no ejecutan DDL; la migración remota usa un token D1 específico y bloquea el despliegue si falla. El token D1 solo se inyecta en los pasos necesarios. Registrado en `docs/DECISIONS.md`.
+- **Problemas conocidos:** el auditor ocultaba el detalle de una excepción final sin emitir una fase segura; no se debe inferir causa desde el código `INFRA` genérico. La integridad completa Sheets → D1 → interfaz sigue sin quedar acreditada por esta intervención. La primera publicación real de la nueva campaña MIDAS se exigirá tras `2026-10-13T12:00:00Z`.
+- **Pendientes inmediatos:** revisar y fusionar el diagnóstico de fase seguro; observar CI y la siguiente auditoría real. Si el fallo reaparece, usar solo el código de fase y familias de red publicables para reparar la causa.
+- **Próxima acción recomendada:** completar el PR de diagnóstico sin rebajar ningún control; verificar otra auditoría con Chromium y solo entonces declarar verde la cobertura de producción.
+- **Archivos relevantes:** `.github/workflows/web-audit.yml`, `.github/workflows/deploy-private-cloudflare.yml`, `private-cloudflare/scripts/web-audit.mjs`, `private-cloudflare/scripts/audit-log-policy.mjs`, `private-cloudflare/src/web-audit-utils.js` y `docs/DECISIONS.md`.
+- **Pruebas realizadas:** PR #384, CI #531 correcto; deploy privado #448 con migración y seis Workers correctos; Pages #675 correcto. Auditoría #318: 396 controles, un fallo `INFRA` al final. En la rama de diagnóstico: `node --check`, 28 pruebas relacionadas y `git diff --check` correctos.
 
 ## ORGANIZADOR 13 · Recuperación de Menú semanal ante lectura completa fallida · 12/10/2026
 
