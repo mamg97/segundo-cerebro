@@ -36,6 +36,7 @@ const browserErrors = [];
 const resourceConsoleErrors = [];
 const recoveredSourcePaths = new Set();
 const deferredApiFailures = new Map();
+let auditPhase = "MAIN_CHECKS";
 
 function pass(name, detail = "") {
   checks.push({ name, ok: true, detail });
@@ -541,7 +542,14 @@ async function reconcileTransientSourceFailures() {
       .filter((path) => retryTargets.has(path))
   )];
   for (const path of paths) {
-    const result = await probeApi(retryTargets.get(path), `Fuente ${path}`, { attempts: 2, waitMs: 900 });
+    let result = null;
+    try {
+      result = await probeApi(retryTargets.get(path), `Fuente ${path}`, { attempts: 2, waitMs: 900 });
+    } catch {
+      // Keep the original network failure. The final check will report its
+      // fixed route/status family without exposing a URL or response body.
+      continue;
+    }
     if (!result?.ok) continue;
     for (let index = networkFailures.length - 1; index >= 0; index -= 1) {
       if (networkFailures[index].startsWith("http5") && networkFailures[index].includes(`:${path}`)) {
@@ -2653,15 +2661,21 @@ try {
   }
   assertCheck(Boolean(homeGymMain) && homeGymMain !== "—", "Home · estado de Gym hoy visible", homeGymMain);
 
+  auditPhase = "RESPONSIVE_VISUAL";
   await auditResponsiveVisualLayout(navIds);
 
+  auditPhase = "TRANSIENT_RECOVERY";
   await reconcileTransientSourceFailures();
+  auditPhase = "RECOVERED_UI";
   await revalidateRecoveredSources();
   // Revalidation itself can observe another transient 5xx before the UI retry succeeds.
   // Reconcile once more so recovered requests do not leave a stale network failure behind.
+  auditPhase = "FINAL_RECOVERY";
   await reconcileTransientSourceFailures();
+  auditPhase = "DEFERRED_API_CHECKS";
   await resolveDeferredApiChecks();
 
+  auditPhase = "FINAL_BROWSER_CHECKS";
   if (ignoredNetworkAborts.length) {
     info("Abortos de navegación ignorados", ignoredNetworkAborts.slice(0, 5).join(","));
   }
@@ -2692,6 +2706,9 @@ try {
   }
   assertCheck(browserErrors.length === 0, "Sin errores JavaScript/console", browserErrors.length ? browserErrors.slice(0, 3).join(" | ") : "");
 } catch (error) {
+  // Static phase names reveal which finalization step failed without exposing
+  // private URLs, DOM text, exception messages or response content.
+  console.error("[AUDIT_PHASE_DIAG] " + auditPhase);
   fail("Auditoría ejecutable", String(error?.message || error).slice(0, 300));
 } finally {
   await browser.close();
