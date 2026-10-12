@@ -1,6 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
-import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.17";
+import { financeAccountWorkspaceIncomplete } from "./finance-workspace-readiness.js?v=0.44.18";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.22";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.41.8";
@@ -10009,18 +10009,9 @@ function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } =
   if (privateModeKind !== "remote" || financeBudgetRefreshInFlight) return;
   financeBudgetRefreshInFlight = true;
   void (async () => {
-    // A failed budget is independent of the two canonical bank history tabs.
-    // Continue to the smaller bank-only reader if the full scope is unavailable.
-    if (!state.financeSummary?.monthlyBudget) {
-      try {
-        const payload = await fetchStateScope("finance", 12000);
-        if (payload?.financeSummary?.monthlyBudget) {
-          state.financeSummary = payload.financeSummary;
-        }
-      } catch {
-        // The banking area may still be usable; never invent budget values.
-      }
-    }
+    // Restore bank tabs without waiting for a potentially slow full Finance
+    // rebuild. The global state loader owns the budget; this read-only
+    // recovery only fetches the canonical bank ranges.
     if (financeAccountWorkspaceIncomplete(state.financeSummary)) {
       const workspace = await fetchFinanceBankWorkspace(12000);
       state.financeSummary = {
