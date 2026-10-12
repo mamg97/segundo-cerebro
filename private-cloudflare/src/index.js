@@ -9,6 +9,7 @@ import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objec
 import { safePrivateReadDiagnostic } from "./private-read-diagnostics.js";
 import { createSingleFlight } from "./single-flight.js";
 import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-source.js";
+import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
@@ -803,11 +804,26 @@ async function fetchFinanceSummaryUncached(env) {
       }
       return (await optionalResponse.json())?.values || [];
     } catch (error) {
-      console.warn("Optional finance range read failed", range, String(error?.message || error));
+      console.warn("Optional finance range read failed", "FINANCE_OPTIONAL_FALLBACK_UNAVAILABLE");
       return [];
     }
   }
 
+  const optionalFinanceRanges = [
+    "Cuentas!A1:J200",
+    "ReservasCuenta!A1:J500",
+    "PatrimonioDetalle!A1:J500",
+    "PatrimonioDiario!A1:M1000",
+    "CuentasCredito!A1:R200",
+    "ECIProductos!A1:R200",
+    "ECIHistorico!A1:N300",
+    "ECIMovimientos!A1:N300",
+    "ECIFuturo!A1:O300",
+    "EtoroAsignaciones!A1:M200",
+    "PrestamoVsInversion!A1:X200",
+    "MovimientosCuenta!A1:M5000",
+    "Regalos!A1:P300"
+  ];
   const [
     accountRows,
     accountAllocationRows,
@@ -822,21 +838,12 @@ async function fetchFinanceSummaryUncached(env) {
     loanInvestmentBenchmarkRows,
     movementRows,
     giftRows
-  ] = await Promise.all([
-    fetchOptionalFinanceRows("Cuentas!A1:J200"),
-    fetchOptionalFinanceRows("ReservasCuenta!A1:J500"),
-    fetchOptionalFinanceRows("PatrimonioDetalle!A1:J500"),
-    fetchOptionalFinanceRows("PatrimonioDiario!A1:M1000"),
-    fetchOptionalFinanceRows("CuentasCredito!A1:R200"),
-    fetchOptionalFinanceRows("ECIProductos!A1:R200"),
-    fetchOptionalFinanceRows("ECIHistorico!A1:N300"),
-    fetchOptionalFinanceRows("ECIMovimientos!A1:N300"),
-    fetchOptionalFinanceRows("ECIFuturo!A1:O300"),
-    fetchOptionalFinanceRows("EtoroAsignaciones!A1:M200"),
-    fetchOptionalFinanceRows("PrestamoVsInversion!A1:X200"),
-    fetchOptionalFinanceRows("MovimientosCuenta!A1:M5000"),
-    fetchOptionalFinanceRows("Regalos!A1:P300")
-  ]);
+  ] = await readFinanceOptionalRanges({
+    spreadsheetId: env.FINANCE_SHEET_ID,
+    token,
+    ranges: optionalFinanceRanges,
+    missingTabFallback: fetchOptionalFinanceRows
+  });
 
   let electricityRows = [];
   try {

@@ -28,7 +28,8 @@ test("Home exposes the data-driven gifts panel", () => {
 });
 
 test("Finance summary reads gifts from the canonical derived Sheet", () => {
-  assert.match(worker, /fetchOptionalFinanceRows\("Regalos!A1:P300"\)/);
+  assert.match(worker, /"Regalos!A1:P300"/);
+  assert.match(worker, /readFinanceOptionalRanges\(\{/);
   assert.match(worker, /const giftRecords = parseTableRows\(giftRows\)/);
   assert.match(worker, /kind === "fund_month"/);
   assert.match(worker, /kind === "wedding"/);
