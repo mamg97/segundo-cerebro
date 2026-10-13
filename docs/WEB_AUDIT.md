@@ -50,6 +50,10 @@ Esta tarea externa complementa el cron primario/respaldo porque ambos cron sigue
 
 El evento `schedule` de GitHub es de **mejor esfuerzo**: dos expresiones cron no garantizan la emisión puntual, y no deben contarse como ejecuciones inexistentes. El watchdog externo horario ya existente es la defensa independiente; no crear más workflows ni acumular relanzamientos durante una misma incidencia. La fiabilidad se mide por el último paso Chromium completo (`success`/`failure`) y por la ausencia de ventanas de más de 90 minutos sin cobertura; una ejecución completa fallida es señal de alerta funcional, no prueba de scheduler caído.
 
+### Diagnóstico en vivo del ciclo de Finanzas
+
+Si falla un control del histórico bancario con HTTP 200 y registros, Chromium registra exclusivamente categorías del ciclo de vida DOM: `WORKSPACE_NEVER_RENDERED`, `WORKSPACE_REMOVED_AFTER_RENDER`, `DIALOG_NOT_ACTIVE` o `WORKSPACE_PRESENT`; también clasifica si se produjo el catch de la carga on-demand (`YES/NO`). La observación vive dentro del navegador del auditor, nunca incluye IDs, conceptos, cuentas, cuerpos, URLs privadas ni importes, y no modifica el funcionamiento de la aplicación ni los criterios PASS/FAIL. Esto distingue entre render fallido, desmontaje posterior y navegación fuera del diálogo antes de proponer un nuevo cambio.
+
 ## Qué se audita
 
 Como mínimo:
