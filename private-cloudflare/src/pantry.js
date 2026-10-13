@@ -1,3 +1,5 @@
+import { googleReadFetch } from "./google-read.js";
+
 let cache = {
   value: null,
   expiresAt: 0,
@@ -538,15 +540,11 @@ export async function fetchPantrySummary(env, getGoogleAccessToken) {
     encodeURIComponent(spreadsheetId) +
     "/values:batchGet?" +
     params.toString();
-  let response = null;
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    response = await fetch(endpoint, {
-      headers: { Authorization: "Bearer " + token }
-    });
-    if (response.ok) break;
-    if ((response.status !== 429 && response.status < 500) || attempt === 3) break;
-    await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
-  }
+  const response = await googleReadFetch(
+    endpoint,
+    { headers: { Authorization: "Bearer " + token } },
+    { attempts: 3, baseDelayMs: 1500 }
+  );
   if (!response?.ok) throw new Error("GOOGLE_SHEETS_" + (response?.status || "NETWORK"));
 
   const payload = buildPayload((await response.json())?.valueRanges || []);
@@ -603,14 +601,29 @@ export const SHOPPING_LIST_HEADERS = [
 ];
 
 async function sheetsRequest(endpoint, token, options = {}) {
-  const response = await fetch(endpoint, {
+  const requestOptions = {
     ...options,
     headers: {
       Authorization: "Bearer " + token,
       ...(options.body ? { "Content-Type": "application/json; charset=utf-8" } : {}),
       ...(options.headers || {})
     }
-  });
+  };
+  const method = String(options.method || "GET").toUpperCase();
+  // Reads retry transient 429/5xx. PUT overwrites a fixed range and is safe
+  // to retry on a rejected 429; POST append is not retried (duplicate risk).
+  let response;
+  if (method === "GET") {
+    response = await googleReadFetch(endpoint, requestOptions, { attempts: 3, baseDelayMs: 1500 });
+  } else if (method === "PUT") {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      response = await fetch(endpoint, requestOptions);
+      if (response.status !== 429 || attempt === 3) break;
+      await new Promise((resolve) => setTimeout(resolve, 1600 * attempt));
+    }
+  } else {
+    response = await fetch(endpoint, requestOptions);
+  }
   if (!response.ok) throw new Error("GOOGLE_SHEETS_" + response.status);
   if (response.status === 204) return null;
   return response.json();
