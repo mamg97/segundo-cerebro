@@ -1,5 +1,5 @@
 -- Idempotent provisioning for historical Gym sessions and bounded D1 reads.
--- Existing private history remains untouched; no DROP/DELETE or data rewrite.
+-- Existing private history remains untouched; no destructive data transformations.
 CREATE TABLE IF NOT EXISTS gym_sessions (
   id TEXT PRIMARY KEY,
   session_date TEXT NOT NULL,
