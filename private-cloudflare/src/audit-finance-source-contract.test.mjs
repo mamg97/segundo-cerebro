@@ -45,3 +45,15 @@ test("audit derives only finite bank response shapes inside the browser", () => 
   assert.doesNotMatch(probe, /console\.(?:log|error)\([^)]*body\.accounts/);
   assert.doesNotMatch(probe, /return body/);
 });
+
+test("the private browser records finite Finance DOM lifecycle without logging records", () => {
+  assert.match(audit, /globalThis\.__auditFinanceUiLifecycle = tracker/);
+  assert.match(audit, /new MutationObserver\(inspect\)/);
+  assert.match(audit, /body\.querySelector\("\.account-transactions-section"\)/);
+  assert.match(audit, /"WORKSPACE_REMOVED_AFTER_RENDER"/);
+  assert.match(audit, /"WORKSPACE_NEVER_RENDERED"/);
+  assert.match(audit, /"DIALOG_NOT_ACTIVE"/);
+  assert.match(audit, /financeUiCaughtError \? "YES" : "NO"/);
+  assert.match(audit, /\[AUDIT_FINANCE_LIFECYCLE\]/);
+  assert.doesNotMatch(audit, /console\.error\("\[AUDIT_FINANCE_LIFECYCLE\].*\.innerHTML/);
+});

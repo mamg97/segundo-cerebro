@@ -140,8 +140,14 @@ await page.route(`${auditOrigin}/**`, async (route) => {
   }
 });
 
+let financeUiCaughtError = false;
 page.on("pageerror", (error) => browserErrors.push("pageerror:" + String(error?.message || error)));
 page.on("console", (message) => {
+  // Fixed-signature warning only. Never retain the message, error or values.
+  if (message.type() === "warning" &&
+      message.text().startsWith("Finance workspace on-demand load failed")) {
+    financeUiCaughtError = true;
+  }
   if (message.type() !== "error") return;
   const text = message.text().slice(0, 240);
   if (/^Failed to load resource:/i.test(text)) resourceConsoleErrors.push(text);
@@ -1416,6 +1422,19 @@ async function emitFinanceDomDiagnostic(accountId, initialCount) {
     };
   },{id:accountId,initial:initialCount}).catch(()=>null);
   console.error("[AUDIT_FINANCE_DOM] "+safeAuditFinanceStructureCode(flags));
+  const lifecycle = await page.evaluate(() => {
+    const tracker = globalThis.__auditFinanceUiLifecycle;
+    const dialog = document.querySelector("#detail-dialog");
+    if (!tracker) return "NOT_OBSERVED";
+    if (!dialog?.open || !dialog.classList.contains("budget-dialog")) return "DIALOG_NOT_ACTIVE";
+    const visible = Boolean(dialog.querySelector(".account-transactions-section"));
+    if (visible) return "WORKSPACE_PRESENT";
+    if (tracker.lost) return "WORKSPACE_REMOVED_AFTER_RENDER";
+    if (tracker.seen) return "WORKSPACE_RENDERED_EARLIER";
+    return "WORKSPACE_NEVER_RENDERED";
+  }).catch(() => "PROBE_FAILED");
+  console.error("[AUDIT_FINANCE_LIFECYCLE] " + lifecycle +
+    " caught=" + (financeUiCaughtError ? "YES" : "NO"));
   const shapeCodes = await page.evaluate(() =>
     (globalThis.__auditFinanceResponseShapes || []).slice(-4)
   ).catch(() => []);
@@ -1661,6 +1680,25 @@ try {
         return response;
       });
     };
+  });
+
+  // Observe only the existence/removal of a bank section, not its contents.
+  // A disposable in-browser MutationObserver records finite boolean evidence.
+  await page.evaluate(() => {
+    if (globalThis.__auditFinanceUiLifecycle) return;
+    const body = document.querySelector("#dialog-body");
+    if (!body) return;
+    const tracker = { seen: false, lost: false };
+    globalThis.__auditFinanceUiLifecycle = tracker;
+    const inspect = () => {
+      const dialog = document.querySelector("#detail-dialog");
+      if (!dialog?.classList.contains("budget-dialog")) return;
+      if (body.querySelector(".account-transactions-section")) tracker.seen = true;
+      else if (tracker.seen) tracker.lost = true;
+    };
+    const observer = new MutationObserver(inspect);
+    observer.observe(body, { childList: true, subtree: true });
+    inspect();
   });
 
   const bankSourceReadable = bankSourceProbe.readable;
