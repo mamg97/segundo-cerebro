@@ -3,7 +3,7 @@ import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mj
 import { createAuditImageReadGate } from "./audit-image-read-gate.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
 import { settleAuditDiagnostics } from "./audit-bounded-settle.mjs";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -1006,6 +1006,18 @@ async function auditVisualSnapshot(label) {
   assertCheck(report.rootOverflow <= 3, `Visual ${label} · sin overflow global`, `overflow=${report.rootOverflow}px`);
   assertCheck(report.outOfBounds.length === 0, `Visual ${label} · contenido dentro del viewport`, report.outOfBounds.slice(0, 4).join(" | "));
   assertCheck(report.clippedText.length === 0, `Visual ${label} · texto sin clipping`, report.clippedText.slice(0, 4).join(" | "));
+  // A failed visual check must disclose the affected *structural category*,
+  // never rendered text, account labels, selectors from private data or DOM values.
+  if (report.overlaps.length) {
+    const counts = new Map();
+    for (const overlap of report.overlaps) {
+      const code = safeAuditVisualOverlapCode(overlap);
+      counts.set(code, (counts.get(code) || 0) + 1);
+    }
+    for (const [code, count] of counts) {
+      console.error("[AUDIT_VISUAL_OVERLAP_DIAG] " + code + " count=" + Math.min(count, 99));
+    }
+  }
   assertCheck(report.overlaps.length === 0, `Visual ${label} · sin solapes`, report.overlaps.slice(0, 4).join(" | "));
   assertCheck(report.componentOverflows.length === 0, `Visual ${label} · componentes dentro de su tarjeta`, report.componentOverflows.slice(0, 4).join(" | "));
   assertCheck(report.distortedImages.length === 0, `Visual ${label} · imágenes sin deformación`, report.distortedImages.slice(0, 4).join(" | "));
