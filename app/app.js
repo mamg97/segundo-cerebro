@@ -8992,7 +8992,6 @@ function renderMidasReport(dashboard, stale, research = null, lab = null) {
 
     <section class="midas-workspace-panel active" data-midas-panel="competition" role="tabpanel">
       <div data-midas-competition-list>
-        ${originalGenetic ? `<p class="midas-genetic-note"><strong>Genético original S&P 500</strong><span>El historial antiguo se conserva como referencia: anotaba operaciones al mismo cierre que generaba la señal y su rentabilidad no era alcanzable con esa regla. La fila «versión corregida» empieza una campaña nueva: señal al cierre y ejecución simulada en la apertura siguiente, con costes. Sus cifras siguen siendo ficticias, sin órdenes confirmadas por un bróker. El «genético nuevo congelado» de ocho acciones es otra estrategia demo.</span></p>` : ""}
         ${renderMidasExecutionHealth(lab?.competitionHealth, dashboard)}
         <p class="midas-caveat">Capital ficticio y operaciones simuladas. La comparación principal sigue rentabilidad acumulada y riesgo realizado. Cada estrategia conserva sus propios plazos y reglas; pulsa una fila para consultar su detalle completo.</p>
         ${renderMidasVisualLab(dashboard, lab)}
