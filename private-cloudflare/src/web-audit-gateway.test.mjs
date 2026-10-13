@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cloneProxyHeaders, validateAuditClaims } from "./web-audit-gateway.js";
+import { cloneProxyHeaders, proxyAuditUpstream, validateAuditClaims } from "./web-audit-gateway.js";
 
 const now = Date.parse("2026-09-30T21:00:00Z");
 const epoch = Math.floor(now / 1000);
@@ -81,4 +81,37 @@ test("audit proxy hints only successful canonical private immutable images and s
     assert.equal(result.headers.get("cache-control"), "no-store", name);
     assert.equal(result.headers.has(hint), false, name);
   }
+});
+
+test("gateway passes upstream success and real upstream HTTP failures unchanged", async () => {
+  const origin = "https://audit-private.example";
+  const requestUrl = origin + "/api/objects/look/synthetic-look/image?v=12345678";
+  for (const status of [200, 404, 502]) {
+    const env = { SEGUNDO_CEREBRO: { fetch: async () => new Response("synthetic", { status }) } };
+    const result = await proxyAuditUpstream(env, new Request("https://segundo-cerebro.internal/"), origin, requestUrl);
+    assert.equal(result.status, status);
+    assert.equal(await result.text(), "synthetic");
+    assert.equal(result.headers.get("cache-control"), "no-store");
+  }
+});
+
+test("gateway distinguishes Service Binding throw without logging exception or URL", async () => {
+  const env = { SEGUNDO_CEREBRO: { fetch: async () => { throw new Error("private user id / token / path"); } } };
+  const result = await proxyAuditUpstream(env, new Request("https://segundo-cerebro.internal/"), "https://audit-private.example", "https://audit-private.example/api/objects/look/synthetic-look/image?v=12345678");
+  assert.equal(result.status, 502);
+  assert.deepEqual(await result.json(), {
+    ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic: "AUDIT_GATEWAY_BINDING_FETCH_FAILED"
+  });
+  assert.equal(result.headers.get("cache-control"), "no-store");
+});
+
+test("gateway distinguishes proxy response construction throw without exposing error", async () => {
+  const env = { SEGUNDO_CEREBRO: { fetch: async () => ({
+    get headers() { throw new Error("sensitive value or private URL"); }
+  }) } };
+  const result = await proxyAuditUpstream(env, new Request("https://segundo-cerebro.internal/"), "https://audit-private.example", "https://audit-private.example/api/objects/look/synthetic-look/image?v=12345678");
+  assert.equal(result.status, 502);
+  assert.deepEqual(await result.json(), {
+    ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic: "AUDIT_GATEWAY_RESPONSE_FAILED"
+  });
 });
