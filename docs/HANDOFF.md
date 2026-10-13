@@ -1,12 +1,3 @@
-## NUTRI · Enlaces del menú y carga resiliente de recetas (13/10/2026)
-
-- Causa en datos: los platos ya seleccionados sin `recipe_id` no podían enlazarse al recetario. Se corrigió en la fuente privada: 14 nuevas fichas canónicas de planificación, vinculadas desde sus filas; componentes con `food_id` clasificados como acompañantes y dos meriendas compuestas separadas en fruta+yogur. Totales de los cuatro macros por fecha idénticos antes/después; no se inventaron consumos.
-- Causa en interfaz: enlaces de Salud → Menú ocultos si la API ligera no entregaba el objeto `recipe` completo; la acción no permitía recuperación a demanda. Rama `fix/nutri-menu-enlaces-recetas-20261013` conserva el botón por `recipe_id`, hace la lectura completa de la semana seleccionada al pulsar si hace falta y proporciona error/reintento y retorno.
-- Auditoría ampliada: comparar IDs de todos los enlaces del DOM con la fuente API además de recuentos y probar abrir/volver. Las comidas fuera o sin decidir no tienen receta ni link fingido. No registrar valores privados en GitHub.
-- Gate: PR y validación en curso; no cerrar hasta deploy privado y Chromium autenticado satisfactorios.
-
----
-
 ## NUTRI · Enlaces canónicos del menú semanal (13/10/2026)
 
 - **Incidencia:** filas con plato seleccionado pero sin `recipe_id` no podían abrir su ficha. En lectura ligera, filas con ID ocultaban el enlace si el objeto de receta no se había hidratado; el clic sobre una ficha ausente terminaba silenciosamente.
