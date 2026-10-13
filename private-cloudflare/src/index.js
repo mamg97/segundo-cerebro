@@ -5295,12 +5295,15 @@ export default {
     if (url.pathname === "/api/nutrition") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       const date = url.searchParams.get("date") || undefined;
+      const forceRefresh = url.searchParams.get("refresh") === "1";
       try {
-        const nutrition = await fetchHealthNutritionSummary(env, { date });
+        const nutrition = await fetchHealthNutritionSummary(env, { date, force: forceRefresh });
         if (!nutrition.value) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
         return json({ ok: true, status: nutrition.status, ...nutrition.value });
       } catch (error) {
-        const fallback = staleHealthSnapshot(date);
+        // An explicit user refresh must never return a cached snapshot disguised
+        // as a fresh result. The client can fall back to the live menu-only API.
+        const fallback = forceRefresh ? null : staleHealthSnapshot(date);
         if (fallback) {
           console.warn("Nutrition live read failed; serving recent snapshot", String(error?.message || error));
           return json({ ok: true, status: "ok-stale", ...fallback });
