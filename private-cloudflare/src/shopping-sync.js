@@ -47,6 +47,14 @@ export function normalizeShoppingName(value) {
   return normalizePantryProductName(value);
 }
 
+export function supportsShoppingReminderDetails(version) {
+  const match = String(version || "").trim().match(/^(\d+)\.(\d+)(?:\.|$)/);
+  if (!match) return false;
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  return major > 1 || (major === 1 && minor >= 1);
+}
+
 function isoOrNull(value) {
   if (!value) return null;
   const parsed = new Date(String(value));
@@ -314,7 +322,8 @@ function findProduct(products, normalizedName) {
   return findPantryProductExact(products, normalizedName);
 }
 
-export function planAppleActionsForRow(row, link) {
+export function planAppleActionsForRow(row, link, options = {}) {
+  const supportsDetails = options.supportsDetails === true;
   if (row.state === "REVISAR") return [];
   if (row.state === "COMPRAR") {
     if (!link || Boolean(link.apple_missing)) {
@@ -324,7 +333,7 @@ export function planAppleActionsForRow(row, link) {
       return [{ type: "setCompleted", desiredCompleted: false }];
     }
     if (laterThan(row.secondBrainModifiedAt, link.last_synced_at)) {
-      return [{ type: "updateDetails", desiredCompleted: null }];
+      return [{ type: supportsDetails ? "updateDetails" : "updateTitle", desiredCompleted: null }];
     }
     return [];
   }
@@ -591,7 +600,7 @@ async function queueCompletionForMissingSecondBrainRow(env, link, event = null) 
   }
 }
 
-async function reconcilePendingActions(env, getGoogleAccessToken) {
+async function reconcilePendingActions(env, getGoogleAccessToken, supportsDetails = false) {
   await ensureSyncSchema(env);
   const sheet = await ensurePantryShoppingSchema(env, getGoogleAccessToken);
   const links = await allLinks(env);
@@ -625,7 +634,8 @@ async function reconcilePendingActions(env, getGoogleAccessToken) {
       links.find((item) => row.appleReminderId && item.apple_reminder_id === row.appleReminderId);
     const version = row.secondBrainModifiedAt || sourceRow.record.updated_at || `${row.state}:${row.name}`;
 
-    for (const action of planAppleActionsForRow(row, link)) {
+    const plannedActions = planAppleActionsForRow(row, link, { supportsDetails });
+    for (const action of plannedActions) {
       await queueAction(env, {
         type: action.type,
         externalId,
@@ -634,6 +644,27 @@ async function reconcilePendingActions(env, getGoogleAccessToken) {
         desiredCompleted: action.desiredCompleted,
         expectedAppleModifiedAt: action.type === "create" ? null : link?.apple_modified_at || null,
         version
+      });
+    }
+
+    // A 1.1+ agent must enrich every existing active reminder at least once,
+    // even if an older 1.0 agent already acknowledged its title/state.
+    if (
+      supportsDetails &&
+      row.state === "COMPRAR" &&
+      link?.apple_reminder_id &&
+      !Boolean(link.apple_completed) &&
+      !Boolean(link.apple_missing) &&
+      plannedActions.length === 0
+    ) {
+      await queueAction(env, {
+        type: "updateDetails",
+        externalId,
+        appleReminderId: link.apple_reminder_id,
+        title: row.name,
+        desiredCompleted: null,
+        expectedAppleModifiedAt: link.apple_modified_at || null,
+        version: `details-v1:${version}`
       });
     }
   }
@@ -650,13 +681,16 @@ async function reconcilePendingActions(env, getGoogleAccessToken) {
   return { sheet, products };
 }
 
-async function pendingActions(env, getGoogleAccessToken) {
-  const context = await reconcilePendingActions(env, getGoogleAccessToken);
+async function pendingActions(request, env, getGoogleAccessToken) {
+  const agentVersion = new URL(request.url).searchParams.get("agentVersion") || "";
+  const supportsDetails = supportsShoppingReminderDetails(agentVersion);
+  const context = await reconcilePendingActions(env, getGoogleAccessToken, supportsDetails);
+  const detailsFilter = supportsDetails ? "" : " AND action_type <> 'updateDetails'";
   const result = await env.DB.prepare(`
     SELECT id, action_type, external_id, apple_reminder_id, title, desired_completed,
            expected_apple_modified_at, attempts, created_at
     FROM shopping_apple_actions
-    WHERE status = 'pending' AND attempts < 5
+    WHERE status = 'pending' AND attempts < 5${detailsFilter}
     ORDER BY created_at ASC
     LIMIT 200
   `).all();
@@ -797,7 +831,7 @@ export async function handleShoppingSyncRequest(request, env, getGoogleAccessTok
     }
     if (url.pathname === "/v1/shopping-list/pending-apple-actions") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
-      return await pendingActions(env, getGoogleAccessToken);
+      return await pendingActions(request, env, getGoogleAccessToken);
     }
     if (url.pathname.startsWith("/v1/shopping-list/apple-actions/") && url.pathname.endsWith("/ack")) {
       if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
