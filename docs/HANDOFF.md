@@ -1,3 +1,9 @@
+## GESTOR GYM · Prensa de piernas inclinada a 45° · GIF 15/17 (2026-10-13)
+
+- El usuario confirmó la variante inclinada a 45°, no la prensa horizontal. El GIF anatómico blanco con cuádriceps y glúteos resaltados conserva máquina y encuadre fijos: ocho poses originales y ocho intermedias, 16 fotogramas completos de 360×480 a 7 cs. Fuente final, contacto visual y metadatos de construcción están en `design/gym-animations/`; recurso y póster en `app/assets/gym-animations/`.
+- El nombre del plan `Prensa de piernas` se vincula a esta variante confirmada. Una ficha wger genérica no hereda el GIF; solo una ficha explícitamente de 45° puede compartirlo. Mi plan, Biblioteca y los detalles reutilizan el mismo recurso; los vídeos wger verificados permanecen únicamente en el detalle. No se alteran ejercicios, cargas, sesiones, Sheets ni D1.
+- Restan dos ejercicios del plan sin GIF: `Hip thrust 45º` y `Curl de pierna tumbado o sentado`; requieren confirmar el aparato o variante exacta antes de dibujar. No declarar publicado hasta CI, despliegue privado y comprobación real en la web.
+
 ## ORGANIZADOR 16 · Protección del histórico bancario ante redibujos del diálogo (13/10/2026)
 
 - PR #433 fue fusionada y protege la lectura bancaria canónica frente al scope financiero, pero las auditorías completas #370–#372 siguieron detectando eliminación del workspace. La #372 (979 checks/4 fallos, dos Finance y dos MIDAS independientes) comprobó `FINANCE_WORKSPACE_REMOVED`, dos lecturas HTTP 200 con registros y, gracias a #436, `WORKSPACE_REMOVED_AFTER_RENDER caught=NO`. Un render posterior elimina la sección sin fallo del endpoint; por sí solo no determina el autor del redibujo.

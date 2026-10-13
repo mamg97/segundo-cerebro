@@ -2,9 +2,15 @@
 
 These assets are first-party presentation aids for Segundo Cerebro. They do not replace the canonical gym plan or the public technical reference supplied by wger.
 
-## White-background presentation set (2026-10-11)
+## White-background presentation set (2026-10-13)
 
-The fourteen `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The app now uses these white versions; the original transparent versions remain available for future uses.
+The fifteen `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The app now uses these white versions; the original transparent versions remain available for future uses.
+
+## Inclined 45-degree sled leg press
+
+- `prensa-piernas-inclinada-45-v5-white.gif` shows the user-confirmed 45° incline sled, not a horizontal/seated leg press or leg extension. Both feet remain on the platform; quadriceps and glutes are highlighted.
+- The final 4×2 source sheet has eight equal 444×444 cells. A mechanical crop removed only stray pixels leaking from adjacent cells; the machine and athlete retain one fixed scale and framing. The 16-frame review contact and build metadata are in `design/gym-animations/`.
+- The private plan label `Prensa de piernas` maps to this user-confirmed variant. A generic wger record with that label does not inherit it without an explicit 45° variant. This remains an illustrative movement aid, not technique certification.
 
 ## Seated quadriceps extension machine
 
@@ -34,7 +40,7 @@ The fourteen `*-white.gif` variants share a white 360×480 canvas, 16 full-size 
 
 ## Presentation mapping
 
-- The private Gym UI uses the 14 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards. Each matching exercise shows a GIF directly in the active plan row, paused-plan reference, Library card and detail; real wger videos, when verified, remain in the detail only.
+- The private Gym UI uses the 15 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards. Each matching exercise shows a GIF directly in the active plan row, paused-plan reference, Library card and detail; real wger videos, when verified, remain in the detail only.
 - Matching uses exact normalized exercise names. The combined plan labels for row, rear-delt fly and calf raise show only the barbell, rear-delt-machine and standing-calf-machine variants respectively; the detail view names that limitation.
 - Unmapped exercises continue to use licensed wger media or an explicit empty state. These drawings are illustrative, not technique certification.
 
