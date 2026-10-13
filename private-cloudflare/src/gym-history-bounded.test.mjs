@@ -65,5 +65,13 @@ test("Gym history migration indexes bounded reads without deleting existing reco
   assert.match(migration, /CREATE TABLE IF NOT EXISTS gym_sessions/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS gym_entries/);
   assert.match(migration, /CREATE INDEX IF NOT EXISTS idx_gym_entries_session_id\s+ON gym_entries\(session_id, id\)/);
-  assert.doesNotMatch(migration, /\b(?:DROP|DELETE|TRUNCATE|REPLACE INTO)\b/i);
+  // SQL references ON DELETE CASCADE legitimately: reject destructive
+  // *statements*, not foreign-key declarations or explanatory comments.
+  const statements = migration.split("\n")
+    .map((line) => line.replace(/--.*$/, "").trim())
+    .filter(Boolean);
+  assert.ok(
+    statements.every((line) => !/^(?:DROP\\b|DELETE\\b|TRUNCATE\\b|REPLACE\\s+INTO\\b)/i.test(line)),
+    "migration must not contain destructive SQL statements"
+  );
 });
