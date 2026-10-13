@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 
 const auditor = fs.readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
 
@@ -116,4 +116,15 @@ test("unexpected Chromium abort reasons are finite codes and never include priva
   assert.equal(safeAuditExecutableFailureCode({ message: "https://private.example.com/id=123" }), "EXEC_OTHER");
   assert.match(auditor, /\[AUDIT_EXEC_DIAG\]/);
   assert.match(auditor, /safeAuditExecutableFailureCode\(error\)/);
+});
+
+test("visual overlap diagnostics classify structural elements without user data", () => {
+  assert.equal(safeAuditVisualOverlapCode("dialog-close ↔ dialog-title-text"), "DIALOG_CLOSE_TITLE");
+  assert.equal(safeAuditVisualOverlapCode(".account-transactions-tabs: .a ↔ .b"), "FINANCE_ACCOUNT_TABS");
+  assert.equal(safeAuditVisualOverlapCode("liquidity-account-legend: texto fila 1 ↔ fila 2"), "FINANCE_LIQUIDITY_ROWS");
+  assert.equal(safeAuditVisualOverlapCode(".health-tabs: item ↔ item"), "HEALTH_TABS");
+  assert.equal(safeAuditVisualOverlapCode("persona@example.com ↔ token privado"), "OTHER");
+  assert.match(auditor, /\[AUDIT_VISUAL_OVERLAP_DIAG\]/);
+  assert.match(auditor, /safeAuditVisualOverlapCode\(overlap\)/);
+  assert.doesNotMatch(auditor, /\[AUDIT_VISUAL_OVERLAP_DIAG\].*report\.overlaps/);
 });
