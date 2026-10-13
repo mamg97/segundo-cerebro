@@ -21,6 +21,6 @@ test("MIDAS navigation scrolls with dialog instead of floating over table rows",
 test("tabs remain usable on narrow screens and cache-busted bundles stay aligned", () => {
   assert.match(css, /\.midas-workspace-tabs\s*\{\s*overflow-x:\s*auto;/);
   assert.match(app, /\[data-midas-tab\]/);
-  assert.match(html, /\.\/styles\.css\?v=0\.44\.28/);
-  assert.match(html, /\.\/app\.js\?v=0\.44\.28/);
+  assert.match(html, /\.\/styles\.css\?v=0\.44\.29/);
+  assert.match(html, /\.\/app\.js\?v=0\.44\.29/);
 });
