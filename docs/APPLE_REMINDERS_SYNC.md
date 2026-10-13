@@ -157,6 +157,18 @@ La primera ejecución real:
 
 `launchd` inicia el agente con la sesión, lo reinicia si falla, escucha `EKEventStoreChanged` y reconcilia además cada 90 segundos.
 
+### Migración a agente 1.1
+
+La sincronización de cantidad y URL requiere la versión 1.1 o posterior del agente macOS. El Worker detecta la versión del agente: una instalación 1.0 sigue recibiendo únicamente acciones compatibles y no falla por `updateDetails`. Tras reinstalar 1.1, cada recordatorio activo se enriquece una vez aunque ya hubiera sido enlazado por una versión anterior.
+
+Para actualizar una instalación existente:
+
+```sh
+cd private-cloudflare
+npm run reminders:install -- --start
+npm run reminders:sync
+```
+
 ## Diagnóstico
 
 ```sh
