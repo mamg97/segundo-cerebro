@@ -2,7 +2,7 @@
 
 ## Propósito y límite
 
-La lista compartida de Apple Reminders y `SEGUNDO CEREBRO - DESPENSA / ListaCompra` representan una única lista de compra. Apple es la interfaz cotidiana compartida; Segundo Cerebro conserva identidad de producto, formato, procedencia, precio y motivo.
+La lista compartida de Apple Reminders y `SEGUNDO CEREBRO - DESPENSA / ListaCompra` representan una única lista de compra. Apple es la interfaz cotidiana compartida; Segundo Cerebro conserva identidad de producto, formato, procedencia, precio y motivo. La cantidad objetivo se refleja además en `Notas` del recordatorio y el enlace de compra en el campo URL.
 
 La sincronización usa EventKit. No usa AppleScript, automatización de interfaz ni acceso directo del Mac a Google Sheets.
 
@@ -174,7 +174,7 @@ El estado muestra permiso EventKit, lista localizada, Sheet, última sincronizac
 
 ## Precio y tickets
 
-Apple conserva solo el título. Segundo Cerebro enlaza `producto_id` con `Productos` y `Precios`, priorizando observaciones procedentes de ticket, después referencias públicas conocidas y finalmente vacío. Nunca inventa un precio.
+Apple conserva un título limpio. Para recordatorios `COMPRAR`, el agente sincroniza `Cantidad: <cantidad_objetivo> <unidad>` en `Notas` y el enlace HTTPS del producto en el campo URL. Si `Productos.url_producto` no contiene un enlace exacto, usa una búsqueda de Mercadona por el nombre del recordatorio sin inventar un SKU. Segundo Cerebro enlaza `producto_id` con `Productos` y `Precios`, priorizando observaciones procedentes de ticket, después referencias públicas conocidas y finalmente vacío. Nunca inventa un precio.
 
 La portada muestra número de compras confirmadas, primeros cinco nombres, coste conocido y número sin precio. Si faltan precios usa `≥ 24,70 €`, nunca `24,70 € +`. Un ticket posterior puede completar `producto_id` y precio sin modificar el título Apple.
 
@@ -183,7 +183,8 @@ La portada muestra número de compras confirmadas, primeros cinco nombres, coste
 1. Con el agente activo, añadir un artículo nuevo en la lista compartida desde el iPhone de Miguel o Andrea.
 2. Esperar el evento inmediato o, como máximo, el fallback de 90 segundos con el Mac encendido.
 3. Refrescar Segundo Cerebro y comprobar `ListaCompra`.
-4. Cambiar una fila de Segundo Cerebro a `COMPRAR`; comprobar que aparece en esa misma lista de Apple, no en otra.
-5. Completarla en el iPhone; comprobar que pasa a `COMPRADO` sin aumentar inventario.
+4. Cambiar una fila de Segundo Cerebro a `COMPRAR`; comprobar que aparece en esa misma lista de Apple, no en otra, con cantidad en `Notas` y URL de Mercadona cuando exista o pueda construirse una búsqueda segura.
+5. Modificar `cantidad_objetivo` o `unidad` en Segundo Cerebro y comprobar que el mismo recordatorio se actualiza sin duplicarse.
+6. Completarla en el iPhone; comprobar que pasa a `COMPRADO` sin aumentar inventario.
 
 Si el Mac estaba apagado, encenderlo e iniciar sesión: `launchd` ejecutará una reconciliación completa.
