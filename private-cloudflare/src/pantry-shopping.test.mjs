@@ -70,7 +70,9 @@ test("historical price per kilogram is displayed but does not fabricate the bask
   assert.equal(payload.shoppingList[0].estimatedUnitPrice,2.1);
   assert.equal(payload.shoppingList[0].priceBase,"€/kg");
   assert.equal(payload.shoppingList[0].estimatedCost,null);
-  assert.equal(payload.summary.missingPriceCount,1);
+  assert.equal(payload.summary.missingPriceCount,0);
+  assert.equal(payload.summary.missingQuantityCostCount,1);
+  assert.equal(payload.summary.estimatedBasketPartial,true);
 });
 
 test("kilogram quantity permits a transparent computed estimated cost", () => {
