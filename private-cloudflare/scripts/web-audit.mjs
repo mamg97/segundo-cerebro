@@ -1843,9 +1843,9 @@ try {
       sourceByDate.get(item.date).push(item);
     }
     const parseRoundedDisplay = (text) => {
-      const match = String(text || "").match(/^\\s*([\\d.,]+)/);
+      const match = String(text || "").match(/^\s*([\d.,]+)/);
       if (!match) return null;
-      const value = Number(match[1].replace(/\\./g, "").replace(",", "."));
+      const value = Number(match[1].replace(/\./g, "").replace(",", "."));
       return Number.isFinite(value) ? value : null;
     };
     let daysCompared = 0;
