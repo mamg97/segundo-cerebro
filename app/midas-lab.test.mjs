@@ -376,3 +376,28 @@ test("single S&P500 cohort excludes restricted legacy models and includes both T
   assert.match(daily, /Universo canónico: SP500_2026-09-29_503/);
   assert.doesNotMatch(renderMidasAlgorithmDetail(dashboard, null, "legacy_eight"), /50,00 %/);
 });
+
+test("genetic methodology is absent from competition overview but available on demand in detail", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const overview = app.split('data-midas-competition-list>')[1]?.split('data-midas-algorithm-detail-host')[0];
+  assert.ok(overview);
+  assert.doesNotMatch(overview, /midas-genetic-note/);
+  assert.doesNotMatch(overview, /El historial antiguo se conserva como referencia/);
+  const data = { tracks: [{
+    id: "genetic_sp500_forward", label: "Genético S&P 500 prospectivo",
+    group: "diario_heredado", status: "diario_heredado_observado",
+    comparison_eligible: true, last_session: "2026-10-12",
+    equity_history: [{ date: "2026-10-12", nav: 100000 }],
+  }] };
+  const table = renderMidasVisualLab(data);
+  assert.doesNotMatch(table, /Metodología y versiones del genético/);
+  const detail = renderMidasAlgorithmDetail(data, null, "genetic_sp500_forward");
+  assert.match(detail, /<details class="midas-algorithm-genetic-info">/);
+  assert.match(detail, /Metodología y versiones del genético/);
+  assert.match(detail, /operaciones ficticias en la apertura siguiente/);
+  const other = renderMidasAlgorithmDetail({
+    tracks: [{ id: "ema", label: "EMA", group: "paper_nuevo",
+      status: "demo_con_diario", comparison_eligible: true }]
+  }, null, "ema");
+  assert.doesNotMatch(other, /Metodología y versiones del genético/);
+});

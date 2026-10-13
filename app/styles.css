@@ -15700,6 +15700,9 @@ html[data-theme="dark"] .liquidity-svg-base {
 }
 
 .midas-algorithm-note.is-warning { color: var(--amber); }
+.midas-algorithm-genetic-info { border-top: 1px solid var(--line); padding-top: 8px; color: var(--ink-soft); font-size: 11px; }
+.midas-algorithm-genetic-info summary { cursor: pointer; font-weight: 650; color: var(--ink); }
+.midas-algorithm-genetic-info p { margin: 8px 0 0; line-height: 1.5; }
 
 @media (max-width: 760px) {
   .midas-workspace-tabs {
@@ -15731,9 +15734,6 @@ html[data-theme="dark"] .liquidity-svg-base {
 .midas-intro p { display: grid; gap: 3px; margin: 0; }
 .midas-intro strong { font-size: 17px; letter-spacing: -.02em; }
 .midas-intro span, .midas-updated, .midas-source { color: var(--ink-soft); }
-.midas-genetic-note { display: grid; gap: 3px; margin: 0; padding: 12px 15px; border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--blue) 7%, var(--surface)); }
-.midas-genetic-note strong { color: var(--blue); }
-.midas-genetic-note span { color: var(--ink-soft); }
 .midas-caveat { margin: 0; max-width: 75ch; color: var(--ink-soft); }
 .midas-runtime-health { display: grid; gap: 12px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface) 94%, var(--paper) 6%); }
 .midas-runtime-health.is-attention { border-color: color-mix(in srgb, var(--coral) 48%, var(--line)); }

@@ -191,6 +191,12 @@ export function renderMidasAlgorithmDetail(dashboard, lab, algorithmId) {
     (item.comparison_universe_id
        ? '<p class="midas-algorithm-note">Universo canónico: ' + escapeHtml(item.comparison_universe_id) + '</p>'
        : '') +
+    (item.id === "genetic_sp500_forward"
+      ? '<details class="midas-algorithm-genetic-info"><summary>Metodología y versiones del genético</summary>' +
+        '<p>El diario antiguo se conserva solo como histórico: simulaba operaciones al mismo cierre en que generaba las señales. ' +
+        'La campaña prospectiva comienza de cero, utiliza señales al cierre y operaciones ficticias en la apertura siguiente, con costes. ' +
+        'El genético congelado de ocho acciones es otro experimento independiente. No se opera dinero real.</p></details>'
+      : '') +
     (note ? '<p class="midas-algorithm-note">' + escapeHtml(note) + '</p>' : '') +
     (item.bootstrap ? '<p class="midas-algorithm-note is-warning">Bootstrap técnico retrospectivo: no cuenta como resultado forward.</p>' : '') +
   '</article>';
