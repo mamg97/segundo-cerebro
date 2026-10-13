@@ -108,3 +108,33 @@ test("a removed row does not repeat completion for an already terminal Apple rem
     assert.deepEqual(planAppleActionsForMissingSecondBrainRow(link), []);
   }
 });
+
+test("dry run resolves exact household alias to canonical identity", () => {
+  const report = planShoppingDryRun([
+    {reminderId:"apple-alias",title:"Galletas para la oficina",completed:false,modifiedAt:"2026-04-05T12:00:00Z"}
+  ], [], [{id:"prod-aliased",name:"Galletas de trigo",familyNames:["galletas para la oficina"]}]);
+  assert.equal(report.details[0].knownProductId, "prod-aliased");
+});
+
+test("alias matching is accent and case independent but never fuzzy", () => {
+  const products = [{id:"milk-almond",name:"Bebida de almendra",familyNames:["bebida de almendra con azúcar"]}];
+  const exact = planShoppingDryRun([
+    {reminderId:"apple-1",title:"BEBIDA DE ALMENDRA CON AZUCAR",modifiedAt:"2026-04-05T12:00:00Z"}
+  ], [], products);
+  const fuzzy = planShoppingDryRun([
+    {reminderId:"apple-2",title:"bebida",modifiedAt:"2026-04-05T12:00:00Z"}
+  ], [], products);
+  assert.equal(exact.details[0].knownProductId,"milk-almond");
+  assert.equal(fuzzy.details[0].knownProductId,null);
+});
+
+test("ambiguous aliases are not linked to an arbitrary product", () => {
+  const products = [
+    {id:"first",name:"Salsa picante roja",familyNames:["salsa"]},
+    {id:"second",name:"Salsa suave verde",familyNames:["salsa"]}
+  ];
+  const report = planShoppingDryRun([
+    {reminderId:"apple-3",title:"Salsa",modifiedAt:"2026-04-05T12:00:00Z"}
+  ], [], products);
+  assert.equal(report.details[0].knownProductId,null);
+});
