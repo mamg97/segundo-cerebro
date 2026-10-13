@@ -2908,7 +2908,7 @@ async function fetchWeeklyMenuLight(env, options = {}) {
     : localHealthDateKey();
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["MenuSemanal!A1:P2000", "Objetivos!A1:H500"];
+  const ranges = ["MenuSemanal!A1:R2000", "Objetivos!A1:H500"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -2927,6 +2927,8 @@ async function fetchWeeklyMenuLight(env, options = {}) {
     moment: String(item.momento || "Otro").trim(),
     recipeId: item.recipe_id || null,
     foodId: item.food_id || null,
+    itemRole: String(item.tipo_item || "").trim() || null,
+    companionType: String(item.tipo_acompanante || "").trim() || null,
     name: String(item.nombre || "").trim(),
     quantity: toNumber(item.cantidad),
     unit: item.unidad || null,
@@ -2992,7 +2994,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
         return null;
       })
     : Promise.resolve(null);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:P2000", "Recetas!A1:O1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000", "RecuperacionDiariaApple!A1:S2000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:R2000", "Recetas!A1:O1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000", "RecuperacionDiariaApple!A1:S2000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -3148,6 +3150,8 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     moment: String(item.momento || "Otro").trim(),
     recipeId: item.recipe_id || null,
     foodId: item.food_id || null,
+    itemRole: String(item.tipo_item || "").trim() || null,
+    companionType: String(item.tipo_acompanante || "").trim() || null,
     name: String(item.nombre || "").trim(),
     quantity: toNumber(item.cantidad),
     unit: item.unidad || null,
