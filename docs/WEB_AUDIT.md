@@ -1,5 +1,12 @@
 # Auditoría automática de producción
 
+### Enlaces canónicos del menú semanal
+
+Cada fila con tipo `receta` y plato elegido requiere un `recipe_id` existente en `Recetas`. La tabla de Home y el detalle Salud → Menú han de mostrar acceso pulsable aunque la hidratación completa esté pendiente.
+En fallback ligero se solicita el detalle de la semana seleccionada solo al pulsar; mostrar progreso, error recuperable y retorno al mismo menú. Los acompañantes se vinculan por `food_id`; las comidas aún por decidir no llevan un enlace ficticio.
+Auditar equivalencia de los ID de receta en la API y los botones del DOM; probar apertura exacta y retorno. Conservar cantidades, macros y estados. No registrar comida privada en logs.
+
+
 ### Integridad nutricional entre Google Sheets, API y Home (13/10/2026)
 
 El contrato de aceptación es una **conciliación de extremo a extremo**, no solo `HTTP 200`, CI verde o lectura correcta de un Sheet. Para la semana solicitada:
