@@ -1806,7 +1806,7 @@ try {
   // matching only that payload would miss stale Home menu regressions.
   // Only boolean/count diagnostics go to Actions logs; no private food data.
   const liveMenuProbe = await probeApi(
-    "/api/nutrition/menu?date=" + encodeURIComponent(nutrition.body?.date || localDateKey()),
+    "/api/nutrition/menu?date=" + encodeURIComponent(nutrition.body?.date || ""),
     "Fuente directa del menú semanal",
     { attempts: 2, waitMs: 600 }
   );
