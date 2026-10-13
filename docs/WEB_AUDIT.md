@@ -1,3 +1,5 @@
+# Auditoría automática de producción
+
 ### Integridad nutricional entre Google Sheets, API y Home (13/10/2026)
 
 El contrato de aceptación es una **conciliación de extremo a extremo**, no solo `HTTP 200`, CI verde o lectura correcta de un Sheet. Para la semana solicitada:
@@ -7,8 +9,7 @@ El contrato de aceptación es una **conciliación de extremo a extremo**, no sol
 - En Chromium autenticado, comprobar presencia de todas las filas y el total diario redondeado de kcal/proteína del encabezado frente a la API ligera. La verificación de HC/grasas sigue en firmas API, no afirmar que están visibles en el encabezado si la UI no los representa. No imprimir datos privados en Actions: solo recuentos, checks y discrepancias agregadas.
 - Evidencia anterior a la ampliación: [ejecución 1](https://github.com/mamg97/segundo-cerebro/actions/runs/38454988710), 1190/0; [ejecución 2](https://github.com/mamg97/segundo-cerebro/actions/runs/38455601959), 1191/0, 50 filas y diferencia 0 para las firmas iniciales de kcal/proteína. La ampliación a cuatro macros debe pasar una ejecución posterior independiente. Las fechas fuera de la semana analizada no quedan cubiertas implícitamente.
 
-
-# Auditoría automática de producción
+---
 
 ## Propósito
 
