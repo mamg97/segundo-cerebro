@@ -109,3 +109,16 @@ test("MIDAS frontend identifies retired and missing private genetic diary", () =
   assert.match(ui,/genetic\?\.last_session \? "unverified" : "missing_due_run"/);
   assert.match(ui,/row.state === "retired" \? \`<small>/);
 });
+
+
+test("production auditor recognizes both immutable classic cohorts instead of assuming 9 rows total", () => {
+  const audit = readFileSync(new URL("../scripts/web-audit.mjs", import.meta.url), "utf8");
+  const api = readFileSync(new URL("./midas.js", import.meta.url), "utf8");
+  assert.match(audit, /const legacyPaper = paper\.filter\(/);
+  assert.match(audit, /const classicSp500 = paper\.filter\(/);
+  assert.match(audit, /classicSp500\.length === 9/);
+  assert.match(audit, /comparison_universe_symbols === 503/);
+  assert.doesNotMatch(audit, /paper\.length === 9 && paper\.every/);
+  assert.match(api, /classic_sp500_cohort: row\.classic_sp500_cohort === true/);
+  assert.match(api, /\["timesfm_demo", "timesfm_daily_demo"\]\.includes\(row\.group\)/);
+});
