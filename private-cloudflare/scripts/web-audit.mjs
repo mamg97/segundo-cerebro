@@ -2947,7 +2947,7 @@ try {
     }
 
 
-    const recipeLinkedRows = comparisonRows.filter((item) => item?.recipeId && item?.recipe);
+    const recipeLinkedRows = comparisonRows.filter((item) => item?.recipeId);
     const recipeTitleLinks = menuPanel.locator(".weekly-menu-title-link[data-menu-recipe-open]");
     const recipeActionLinks = menuPanel.locator(".weekly-menu-entity-link[data-menu-recipe-open]");
     const recipeTitleLinkCount = await recipeTitleLinks.count();
@@ -2957,6 +2957,14 @@ try {
       "Menú · cada comida con receta tiene título pulsable",
       `UI=${recipeTitleLinkCount} API=${recipeLinkedRows.length}`
     );
+    // Compare identities, not only totals: the menu must point at the
+    // corresponding canonical recipe for every row, including fallback.
+    const expectedRecipeIds = recipeLinkedRows.map((item) => String(item.recipeId)).sort();
+    const domRecipeIds = await recipeTitleLinks.evaluateAll((nodes) =>
+      nodes.map((node) => String(node.dataset.menuRecipeOpen || "")).sort());
+    assertCheck(JSON.stringify(expectedRecipeIds) === JSON.stringify(domRecipeIds),
+      "Menú · enlaces apuntan a cada receta canónica",
+      `filas=${expectedRecipeIds.length} discrepancia=${JSON.stringify(expectedRecipeIds) !== JSON.stringify(domRecipeIds)}`);
     assertCheck(
       recipeActionLinkCount === recipeLinkedRows.length,
       "Menú · cada comida con receta conserva Abrir receta",
