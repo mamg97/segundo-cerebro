@@ -1832,6 +1832,41 @@ try {
     assertCheck(compared > 0 && missing === 0,
       "Menú Home conserva todas las filas leídas directamente de Sheets",
       `filas_comprobadas=${compared} faltantes=${missing}`);
+
+    // Source-to-DOM numeric contract: every visible planned component must
+    // contribute to the Home daily kcal/protein header. In particular, a
+    // newly added yogurt or breakfast may not silently disappear from totals.
+    // Only row counts and equality diagnostics are logged, never food or macros.
+    const sourceByDate = new Map();
+    for (const item of liveVisible) {
+      if (!sourceByDate.has(item.date)) sourceByDate.set(item.date, []);
+      sourceByDate.get(item.date).push(item);
+    }
+    const parseRoundedDisplay = (text) => {
+      const match = String(text || "").match(/^\s*([\d.,]+)/);
+      if (!match) return null;
+      const value = Number(match[1].replace(/\./g, "").replace(",", "."));
+      return Number.isFinite(value) ? value : null;
+    };
+    let daysCompared = 0;
+    let headerMismatches = 0;
+    for (const [day, items] of sourceByDate) {
+      const element = page.locator(`#home-weekly-menu-content .home-weekly-menu-table-day[data-menu-date="${day}"]`);
+      const figures = await element.locator(".home-weekly-menu-progress b").allTextContents().catch(() => []);
+      const expectedKcal = Math.round(items.reduce((sum, item) => sum +
+        (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0));
+      const expectedProtein = Math.round(items.reduce((sum, item) => sum +
+        (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0));
+      const actualKcal = parseRoundedDisplay(figures[0]);
+      const actualProtein = parseRoundedDisplay(figures[1]);
+      daysCompared += 1;
+      if (figures.length !== 2 || actualKcal !== expectedKcal || actualProtein !== expectedProtein) {
+        headerMismatches += 1;
+      }
+    }
+    assertCheck(daysCompared > 0 && headerMismatches === 0,
+      "Home · totales kcal/proteína idénticos a la fuente viva de Sheets",
+      `dias=${daysCompared} discrepancias=${headerMismatches}`);
   }
 
   assertCheck(await page.locator("#ask-form").count() === 0, "Home · barra de consulta rápida retirada");
