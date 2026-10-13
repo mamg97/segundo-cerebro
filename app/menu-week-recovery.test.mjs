@@ -109,3 +109,41 @@ test("recovered week UI identifies missing recipe/pantry hydration; no mutation 
   assert.match(script,/requestId !== healthMenuRequestId/);
   assert.doesNotMatch(script,/method:\s*["'](?:POST|PUT|PATCH|DELETE)/);
 });
+
+test("explicit refresh bypasses in-memory weekly state and appends source-refresh flag", async () => {
+  const urls = [];
+  const live = {
+    ok: true,
+    weekStart: "2026-10-12",
+    recipes: [],
+    weeklyMenu: [
+      { date: "2026-10-13", name: "Recipe A", kcal: 550, protein: 40 },
+      { date: "2026-10-14", name: "Recipe B", kcal: 350, protein: 28 }
+    ]
+  };
+  const h = harness(async (url, options) => {
+    urls.push([url, options]);
+    return { ok: true, json: async () => live };
+  });
+  const ok = await h.ctx.loadHistoricalMenuWeek("2026-10-12", { force: true });
+  assert.equal(ok, true);
+  assert.equal(urls.length, 1);
+  assert.equal(urls[0][0], "/api/nutrition?date=2026-10-12&refresh=1");
+  assert.equal(urls[0][1].cache, "no-store");
+  assert.equal(h.rendered.payload.weeklyMenu.length, 2);
+  assert.equal(h.rendered.payload.weeklyMenu[1].protein, 28);
+});
+
+test("weekly menu offers a visible refresh control wired to source refresh", () => {
+  assert.match(app, /data-menu-week-refresh aria-label="Actualizar menú desde Google Sheets"/);
+  const bind = app.slice(app.indexOf("function bindMenuWeekNavigation("), app.indexOf("function renderMenuPanel(", app.indexOf("function bindMenuWeekNavigation(")));
+  assert.match(bind, /data-menu-week-refresh/);
+  assert.match(bind, /loadHistoricalMenuWeek\(healthMenuSelectedWeek, \{ force: true \}\)/);
+});
+
+test("forced server refresh refuses stale snapshot on read failure", () => {
+  const worker = readFileSync(new URL("../private-cloudflare/src/index.js", import.meta.url), "utf8");
+  assert.match(worker, /forceRefresh = url\.searchParams\.get\("refresh"\) === "1"/);
+  assert.match(worker, /fetchHealthNutritionSummary\(env, \{ date, force: forceRefresh \}\)/);
+  assert.match(worker, /const fallback = forceRefresh \? null : staleHealthSnapshot\(date\)/);
+});
