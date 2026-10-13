@@ -79,6 +79,8 @@ struct AppleAction: Codable {
     let externalId: String
     let appleReminderId: String?
     let title: String?
+    let notes: String?
+    let url: String?
     let desiredCompleted: Bool?
     let expectedAppleModifiedAt: String?
     let attempts: Int

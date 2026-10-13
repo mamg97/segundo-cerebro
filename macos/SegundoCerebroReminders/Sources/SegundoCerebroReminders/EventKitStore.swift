@@ -89,6 +89,7 @@ final class ReminderStore {
             reminder.calendar = calendar
             reminder.title = title
             reminder.isCompleted = action.desiredCompleted ?? false
+            applyShoppingDetails(action, to: reminder, updateTitle: false)
         } else {
             guard let identifier = action.appleReminderId,
                   let existing = store.calendarItem(withIdentifier: identifier) as? EKReminder else {
@@ -100,14 +101,12 @@ final class ReminderStore {
             case "setCompleted":
                 reminder.isCompleted = action.desiredCompleted ?? true
                 if !reminder.isCompleted { reminder.completionDate = nil }
-                if let title = action.title?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty {
-                    reminder.title = title
-                }
-            case "updateTitle":
+                applyShoppingDetails(action, to: reminder)
+            case "updateTitle", "updateDetails":
                 guard let title = action.title?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty else {
-                    throw AgentError.invalidConfiguration("la acción updateTitle no contiene título")
+                    throw AgentError.invalidConfiguration("la acción \(action.type) no contiene título")
                 }
-                reminder.title = title
+                applyShoppingDetails(action, to: reminder)
             default:
                 throw AgentError.invalidConfiguration("tipo de acción Apple no soportado: \(action.type)")
             }
@@ -121,6 +120,22 @@ final class ReminderStore {
             modifiedAt: ISO8601DateFormatter.shoppingSync.string(from: modifiedAt),
             completed: reminder.isCompleted
         )
+    }
+
+    private func applyShoppingDetails(_ action: AppleAction, to reminder: EKReminder, updateTitle: Bool = true) {
+        if updateTitle,
+           let title = action.title?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !title.isEmpty {
+            reminder.title = title
+        }
+        if let notes = action.notes?.trimmingCharacters(in: .whitespacesAndNewlines), !notes.isEmpty {
+            reminder.notes = notes
+        }
+        if let rawURL = action.url?.trimmingCharacters(in: .whitespacesAndNewlines),
+           let url = URL(string: rawURL),
+           url.scheme?.lowercased() == "https" {
+            reminder.url = url
+        }
     }
 
     private func verifyExpectedVersion(_ value: String?, reminder: EKReminder) throws {
