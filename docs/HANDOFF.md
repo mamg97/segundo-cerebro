@@ -1,3 +1,13 @@
+## ORGANIZADOR 17 · Fallos visuales/Salud posteriores a #510 (2026-10-13)
+
+- [Auditoría #390](https://github.com/mamg97/segundo-cerebro/actions/runs/38439160960): Chromium completo, **1187 checks / 7 fallos** `VISUAL_OVERLAPS` reproducidos en la navegación de Finanzas. MIDAS `CHECK-00027` correcto. El ensayo empezó con versión #509 y coincidió con el despliegue posterior #510; no atribuir a ese despliegue el defecto.
+- [Auditoría #391](https://github.com/mamg97/segundo-cerebro/actions/runs/38439621024): Chromium completo sobre código desplegado en [#510](https://github.com/mamg97/segundo-cerebro/actions/runs/38439487758) (D1 migración 0009 aplicada, despliegue completo): **1187 checks / 4 fallos**, uno `VISUAL_OVERLAPS` en Finanzas y tres comprobaciones funcionales de Salud (`HEALTH CHECK-00589/00638/00671`). MIDAS `CHECK-00027` correcto. No hubo evidencia HTTP 5xx en ese recorrido.
+- `VISUAL_OVERLAPS` se repite en dos auditorías; el runner anonimiza correctamente el nombre del elemento que colisiona. [PR #456](https://github.com/mamg97/segundo-cerebro/pull/456) añade diagnóstico **solo por categorías CSS permitidas** y códigos contados, sin revelar nodos, texto, cuentas ni URLs; los solapes seguirán provocando FAIL. No inventar causa ni modificar CSS de Finanzas/Salud hasta reproducir el elemento exacto.
+- La publicación de #453 reduce SQL de lectura Gym: el historial muestra 40 sesiones y ahora limita las entradas devueltas a esas sesiones, sin DDL en GET. El esquema e índice D1 migraron correctamente durante #510. Efecto cuantitativo sobre la cuota diaria **no medido**.
+- **Cierre integral NO autorizado:** #390 y #391 han fallado. Exigir dos auditorías posteriores, completas e independientes sobre los despliegues vigentes con **0 funcionales y 0 HTTP 5xx** y validación de datos/privacidad. Financieros sin `FINANCE_WORKSPACE_REMOVED`, aunque su geometría aún presenta un solape intermitente.
+
+---
+
 ## ORGANIZADOR 17 · Eficiencia D1 de Gym (PR #453, 2026-10-13)
 
 - Defecto confirmado en `private-cloudflare/src/index.js::fetchGymHistory`: el GET utilizaba `LIMIT 40` para sesiones, pero leía **todas** las filas de `gym_entries` mediante `ORDER BY id ASC`, descartando después entradas que no pertenecían a las 40 sesiones recuperadas. También ejecutaba cuatro operaciones de preparación de esquema D1 desde cada GET.
