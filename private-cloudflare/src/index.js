@@ -2337,7 +2337,7 @@ async function fetchHealthMetricRows(env, startDate, endDate) {
 }
 
 async function fetchHealthRecoveryRows(env, startDate, endDate) {
-  await ensureHealthRecoveryTable(env);
+  // Schema is provisioned by migrations before deploy; private GET is read-only.
   const result = await env.DB.prepare(`
     SELECT recovery_date, resting_hr_bpm, walking_hr_bpm, hrv_sdnn_ms,
            respiratory_rate, oxygen_saturation_pct, vo2_max, wrist_temperature_c,
@@ -2372,7 +2372,7 @@ async function fetchHealthRecoveryRows(env, startDate, endDate) {
 }
 
 async function fetchHealthBodySamples(env, startDate, endDate) {
-  await ensureHealthBodyTable(env);
+  // Schema is provisioned by migrations before deploy; private GET is read-only.
   const result = await env.DB.prepare(`
     SELECT metric_type, metric_value, unit, sample_date, measured_at, source, imported_at
     FROM health_body_samples
@@ -2438,7 +2438,7 @@ async function ensureHealthEnergyTable(env) {
 }
 
 async function fetchHealthEnergyRows(env, startDate, endDate) {
-  await ensureHealthEnergyTable(env);
+  // Schema is provisioned by migrations before deploy; private GET is read-only.
   const result = await env.DB.prepare(`
     SELECT energy_date, active_kcal, resting_kcal, total_kcal, source, note, recorded_at,
            steps, exercise_minutes, workout_count, sampled_at, source_details, workouts_json
