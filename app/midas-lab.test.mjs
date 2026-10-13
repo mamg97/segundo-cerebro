@@ -292,8 +292,8 @@ test("the health card never equates a private genetic snapshot with a passed wor
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const fn = app.split("function renderMidasExecutionHealth(health, dashboard) {")[1]?.split("function renderMidasCatalog(")[0];
   assert.ok(fn);
-  assert.match(fn, /genetic\?\.last_session \? "unverified" : "missing_due_run"/);
-  assert.match(fn, /la última ejecución GitHub no se valida aquí/);
+  assert.match(fn, /genetic\?\.last_session \? "snapshot_published" : "missing_due_run"/);
+  assert.match(fn, /esta tarjeta no comprueba el entrenamiento ni las operaciones/);
   assert.match(fn, /Cobertura de auditoría parcial/);
   assert.match(fn, /Weekly ML diario/);
   assert.doesNotMatch(fn, /state: genetic\?\.status === "demo_con_diario"/);
