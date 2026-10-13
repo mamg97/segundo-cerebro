@@ -1,6 +1,6 @@
 const SPECS = [
   { name: "MIDAS classic S&P500 503 paper", weekdays: [1,2,3,4,5], hour: 23, minute: 47, graceHours: 7, activeFrom: "2026-10-12T22:00:00Z" },
-  { name: "MIDAS TimesFM EUR one-day signal", weekdays: [1,2,3,4,5], hour: 23, minute: 57, graceHours: 7, activeFrom: "2026-10-13T00:00:00Z" },
+  { name: "MIDAS TimesFM EUR one-day signal", weekdays: [1,2,3,4,5], hour: 23, minute: 57, graceHours: 7, activeFrom: "2026-10-12T22:00:00Z" },
   { name: "MIDAS TimesFM EUR daily paper", weekdays: [2,3,4,5,6], hour: 0, minute: 37, graceHours: 8, activeFrom: "2026-10-13T00:00:00Z" },
   { name: "MIDAS TimesFM 2.5 EUR weekly signal", weekdays: [6], hour: 4, minute: 17, graceHours: 9, activeFrom: "2026-10-17T00:00:00Z" },
   { name: "MIDAS paper comparison", retiredAt: "2026-10-12T22:00:00Z", weekdays: [1,2,3,4,5], hour: 23, minute: 37, graceHours: 6, activeFrom: "2026-09-28T00:00:00Z" },
@@ -36,7 +36,21 @@ export function evaluateMidasWorkflowRuns(runs, now = Date.now()) {
       .filter((run) => Number.isFinite(Date.parse(run?.created_at || "")))
       .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
     const latest = scheduled[0] || null;
-    if (due === null) return { name: spec.name, ok: true, state: "not_due_yet", latest };
+    if (due === null) {
+      // A scheduled job can finish before its grace period expires. Show that
+      // genuine run instead of misleadingly claiming "not due yet".
+      const earlyWindow = { ...spec, graceHours: 0 };
+      const opening = latestDueOccurrence(earlyWindow, now);
+      const sameWindow = opening === null ? [] :
+        scheduled.filter((run) => Date.parse(run.created_at) >= opening);
+      const success = sameWindow.find((run) => run.status === "completed" && run.conclusion === "success");
+      if (success) return { name: spec.name, ok: true, state: "success", latest: success,
+                            attempts: sameWindow.length };
+      const running = sameWindow.find((run) => run.status !== "completed");
+      if (running) return { name: spec.name, ok: true, state: "running", latest: running,
+                            attempts: sameWindow.length };
+      return { name: spec.name, ok: true, state: "not_due_yet", latest };
+    }
 
     const cycle = scheduled.filter((run) => Date.parse(run.created_at) >= due);
     if (!cycle.length) {
