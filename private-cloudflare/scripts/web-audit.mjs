@@ -372,11 +372,25 @@ async function auditMidasCompetition() {
   if (!(midas.ok && midas.body?.ok === true && Array.isArray(midas.body?.dashboard?.tracks))) return;
 
   const tracks = midas.body.dashboard.tracks;
+  // Since the S&P 500 migration there are two distinct classic cohorts:
+  // nine original 8-stock archives and nine new 503-symbol S&P 500 forward books.
   const paper = tracks.filter((row) => row.group === "paper_nuevo");
+  const legacyPaper = paper.filter((row) => row.classic_sp500_cohort !== true);
+  const classicSp500 = paper.filter((row) => row.classic_sp500_cohort === true);
   assertCheck(
-    paper.length === 9 && paper.every((row) => row.status === "demo_con_diario" && row.last_session),
-    "MIDAS · estrategias diarias con diario",
-    `${paper.filter((row) => row.status === "demo_con_diario" && row.last_session).length}/9`
+    legacyPaper.length === 9 &&
+      legacyPaper.every((row) => row.status === "demo_con_diario" && row.last_session &&
+        row.comparison_eligible === false),
+    "MIDAS · estrategias diarias históricas conservan diario pero no compiten",
+    `${legacyPaper.filter((row) => row.status === "demo_con_diario" && row.last_session).length}/9`
+  );
+  assertCheck(
+    classicSp500.length === 9 &&
+      classicSp500.every((row) => row.comparison_eligible === true &&
+        row.comparison_universe_symbols === 503 &&
+        (row.status !== "demo_con_diario" || Boolean(row.last_session))),
+    "MIDAS · nueve clásicas S&P 500 en campaña prospectiva independiente",
+    `${classicSp500.length}/9`
   );
 
   const capital = tracks.find((row) => row.id === "capital_cycle_inflection_2026");
