@@ -109,8 +109,8 @@ const page = await context.newPage();
 const auditOrigin = new URL(baseUrl).origin;
 
 const immutableImageCache = createAuditImmutableImageCache();
-// Bound distinct cold reads more aggressively after intermittent gateway 502.
-// Leave HTTP failure classification, timeout and immutable cache unchanged.
+// Controlled two-read experiment after #394 (44) and #397 (7) upstream image 502.
+// Keep strict HTTP failure checks, 25-second timeout and immutable cache policy.
 const imageReadGate = createAuditImageReadGate(2);
 await page.route(`${auditOrigin}/**`, async (route) => {
   const request = route.request();
