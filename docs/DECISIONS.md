@@ -552,3 +552,14 @@ Motivo: la carrera profesional necesita continuidad estructurada y comparación 
 - **Fallo seguro:** el token habitual de Workers conserva mínimo privilegio. Si falta la credencial D1 o Cloudflare la rechaza, la publicación se detiene antes de desplegar código nuevo.
 - **Compatibilidad:** las escrituras de ingesta pueden conservar temporalmente guardas idempotentes mientras se retiran inicializadores históricos; la autoridad del esquema sigue siendo la migración versionada.
 - **Motivo:** evitar coste y mutaciones innecesarias en cada lectura, hacer observable un despliegue incompleto y mantener el ciclo de esquema reproducible.
+
+
+## D-053 — Nutrición planificada por recetas principales y acompañantes tipados
+
+- **Estado:** aceptada.
+- **Fecha:** 2026-10-13.
+- **Decisión:** cada toma (`fecha + momento`) contiene como máximo una receta principal, enlazada por `recipe_id` al recetario; los acompañantes permitidos son yogur, fruta y batido. Desayuno/comida/cena requieren receta principal. **Media mañana y merienda admiten cero recetas** y pueden componerse solo de acompañantes; no se crean recetas ficticias para ellas.
+- **Persistencia:** `MenuSemanal` añade columnas `tipo_item` y `tipo_acompanante` para nuevas entradas, reutilizando los ID canónicos; filas antiguas permanecen legibles y no se reescribe `Registro`.
+- **Presentación e integridad:** una receta principal por toma, acompañantes diferenciados, máximo un yogur como postre tras comida/cena; si se toma entre horas se denomina yogur. El Worker señala nuevas composiciones tipadas inválidas y conserva macros/estado reales sin transformación destructiva. Completar macros diarios no autoriza añadir platos o postres incoherentes.
+- **Coste y privacidad:** todo dato real permanece en Sheets privados; Git solo aloja esquema, validadores y pruebas sintéticas, sin nuevas dependencias ni gasto.
+

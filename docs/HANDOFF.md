@@ -1,3 +1,11 @@
+## Nutrición · contrato de receta principal + acompañantes (13/10/2026)
+
+- Cambio **estructural**, no sustitución de platos por código: `MenuSemanal` columnas Q `tipo_item` y R `tipo_acompanante` para todas las nuevas entradas. Cada toma tiene **0–1 receta principal**, referenciada por `recipe_id`; los acompañantes son solo `yogur | fruta | batido` y usan `food_id` (o receta secundaria cuando es batido casero tipado).
+- **Desayuno/comida/cena requieren exactamente una receta**. **Media mañana/merienda pueden contener únicamente acompañantes y ninguna receta**; no fabricar recetas de relleno. Como máximo un yogur de postre después de comida o cena; yogures entre horas se llaman yogures.
+- Validador puro y pruebas en `private-cloudflare/src/menu-selection-contract.*`; Worker lee Q:R y proyecta `mealStructureStatus/Issues`. La web solo advierte de tomas tipadas inválidas; el legado sin Q:R y todo consumo histórico se preservan.
+- El gestor planificador debe validar cada nuevo día completo y la suma de macros desde el Sheet, y mantener incógnitas de restaurantes como pendientes. No publicar en Git nombres reales ni valores privados.
+- Validación pendiente de CI/despliegue durante desarrollo; consultar el último run y la PR antes de considerar cerrada la implantación.
+
 ## ORGANIZADOR 17 · MIDAS, Finanzas y cobertura de auditoría (2026-10-13)
 
 **Estado canónico de relevo:** `main` integró el cambio visual MIDAS de [PR #441](https://github.com/mamg97/segundo-cerebro/pull/441) (`933e4c38`): `.midas-workspace-tabs` ya no es sticky. El CI #616 fue correcto; la corrección llegó a producción. [PR #451](https://github.com/mamg97/segundo-cerebro/pull/451) (`2aab520c`, CI #634, despliegue privado [#508](https://github.com/mamg97/segundo-cerebro/actions/runs/38436433518) correcto) añadió **medición real en Chromium** de desplazamiento del diálogo MIDAS en escritorio 1440×1100 y móvil 390×844; no alteró estrategias ni retornos.

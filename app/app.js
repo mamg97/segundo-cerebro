@@ -5062,6 +5062,25 @@ function renderWeeklyMenuItemTitle(item, interactive = true) {
   return `<strong>${label}</strong>`;
 }
 
+function renderWeeklyMenuStructureWarning(items) {
+  const rows = Array.isArray(items) ? items : [items];
+  const invalid = rows.find((item) => item?.mealStructureStatus === "invalid");
+  if (!invalid) return "";
+  const messages = {
+    "main-recipe-required": "Falta seleccionar una receta principal",
+    "multiple-main-recipes": "Solo se permite una receta principal por toma",
+    "recipe-id-required": "La receta principal no está vinculada al recetario",
+    "item-role-required": "Hay componentes pendientes de clasificar",
+    "invalid-companion-type": "Los acompañantes deben ser yogur, fruta o batido",
+    "companion-reference-required": "Hay un acompañante pendiente de vincular",
+    "multiple-yogurt-desserts": "Solo se permite un yogur de postre por comida o cena",
+    "unsupported-moment": "Esta toma no pertenece a los cinco momentos previstos"
+  };
+  const details = [...new Set(invalid.mealStructureIssues || [])]
+    .map((code) => messages[code] || "Estructura de menú pendiente de revisar");
+  return `<small class="weekly-menu-sync-note is-warning" role="status">Plan sin validar: ${escapeHtml(details.join(". "))}</small>`;
+}
+
 function renderWeeklyMenuMeal(item, compact = false, showMoment = true) {
   const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
   const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
@@ -5081,6 +5100,7 @@ function renderWeeklyMenuMeal(item, compact = false, showMoment = true) {
               item.gymSession ? escapeHtml(item.gymSession) : "",
               item.note ? escapeHtml(item.note) : ""
             ].filter(Boolean).join(" · ")}</p>` : ""}
+          ${!compact ? renderWeeklyMenuStructureWarning(item) : ""}
         </div>
         <div class="weekly-menu-meal-macros">
           <b>${kcal}</b>
@@ -5133,6 +5153,7 @@ function renderWeeklyMenuMealGroup(items) {
         <span class="weekly-menu-moment">${escapeHtml(moment)}</span>
         ${renderWeeklyMenuGroupItems(rows)}
         ${incomplete ? `<small class="weekly-menu-group-subtotal">Subtotal conocido · ${escapeHtml(formatKcal(knownKcal))} · P ${escapeHtml(formatMacro(knownProtein))}</small>` : ""}
+        ${renderWeeklyMenuStructureWarning(rows)}
       </div>
       <details class="weekly-menu-ingredients">
         <summary>Ver componentes y cantidades</summary>

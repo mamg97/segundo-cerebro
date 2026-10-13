@@ -217,6 +217,18 @@ La identidad de productos envasados no pertenece a Salud. Vive en la fuente priv
 
 Los dominios consumidores deben reconciliar por `producto_id` y no crear un catálogo paralelo. La nutrición fiable descubierta para un producto existente enriquece `Productos`.
 
+### Menú semanal: receta principal y acompañantes
+
+El tab privado `MenuSemanal` conserva sus 16 columnas históricas A:P; añade de forma compatible dos columnas opcionales para las nuevas filas: **Q `tipo_item`** (`receta` o `acompanante`) y **R `tipo_acompanante`** (`yogur`, `fruta`, `batido`, o vacío cuando Q=`receta`). El modelo de datos es **una toma = `fecha + momento`**; las distintas filas no son comidas adicionales, sino 0–1 receta principal + acompañantes separados.
+
+- `Desayuno`, `Comida`, `Cena`: una receta principal obligatoria, identificada por `recipe_id` en el recetario canónico; ningún segundo plato principal en la misma toma.
+- `Media mañana`, `Merienda`: receta principal **opcional**. Cero recetas con un yogur, fruta o batido es un menú válido. No generar recetas de relleno.
+- Acompañante: únicamente yogur, fruta o batido. Para producto envasado usar `food_id` de Despensa; para batido casero puede utilizarse un `recipe_id` de elaboración, sin computar una segunda receta principal por su `tipo_item`.
+- Comida y cena: máximo un yogur/postre por toma; si se toma entre horas, mostrarlo como yogur.
+- Separar macros y estado de cada componente, sumarlos por toma/día, y señalar los datos pendientes en lugar de forzar el cuadre. Las filas legadas sin Q/R no se migran ni validan destructivamente y conservan los consumos históricos.
+
+La validación se ejecuta sobre las filas tipadas y es independiente de los datos personales; el Worker la proyecta en `mealStructureStatus`/`mealStructureIssues` para informar de configuraciones inválidas sin borrar datos.
+
 ### Comidas
 Base reutilizable de platos/comidas personales y compatibilidad histórica: `id`, `nombre`, `racion`, `unidad`, `kcal_racion`, `proteinas_g`, `carbohidratos_g`, `grasas_g`, `fuente`, `nota`, `updated_at`. No es el maestro de productos envasados.
 
