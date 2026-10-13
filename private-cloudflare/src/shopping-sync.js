@@ -62,6 +62,32 @@ function cleanState(value) {
   return VALID_STATES.has(state) ? state : "REVISAR";
 }
 
+export function shoppingReminderDetails(record = {}, product = null) {
+  const quantity = [record?.cantidad_objetivo, record?.unidad]
+    .filter((value) => value !== null && value !== undefined && String(value).trim() !== "")
+    .map((value) => String(value).trim())
+    .join(" ");
+  const notes = quantity ? `Cantidad: ${quantity}` : null;
+
+  const exact = String(product?.productUrl || "").trim();
+  let url = null;
+  if (exact) {
+    try {
+      const parsed = new URL(exact);
+      if (parsed.protocol === "https:") url = parsed.href;
+    } catch {
+      url = null;
+    }
+  }
+  if (!url) {
+    const searchName = String(record?.nombre || product?.name || "").trim();
+    if (searchName) {
+      url = "https://tienda.mercadona.es/search-results?query=" + encodeURIComponent(searchName);
+    }
+  }
+  return { notes, url };
+}
+
 function cleanEvent(raw) {
   const reminderId = String(raw?.reminderId || raw?.appleReminderId || "").trim();
   const title = String(raw?.title || "").trim().slice(0, 500);
@@ -297,11 +323,8 @@ export function planAppleActionsForRow(row, link) {
     if (Boolean(link.apple_completed)) {
       return [{ type: "setCompleted", desiredCompleted: false }];
     }
-    if (
-      normalizeShoppingName(link.apple_title) !== row.normalizedName &&
-      laterThan(row.secondBrainModifiedAt, link.last_synced_at)
-    ) {
-      return [{ type: "updateTitle", desiredCompleted: null }];
+    if (laterThan(row.secondBrainModifiedAt, link.last_synced_at)) {
+      return [{ type: "updateDetails", desiredCompleted: null }];
     }
     return [];
   }
@@ -624,10 +647,11 @@ async function reconcilePendingActions(env, getGoogleAccessToken) {
     if (presentExternalIds.has(link.external_id)) continue;
     await queueCompletionForMissingSecondBrainRow(env, link);
   }
+  return { sheet, products };
 }
 
 async function pendingActions(env, getGoogleAccessToken) {
-  await reconcilePendingActions(env, getGoogleAccessToken);
+  const context = await reconcilePendingActions(env, getGoogleAccessToken);
   const result = await env.DB.prepare(`
     SELECT id, action_type, external_id, apple_reminder_id, title, desired_completed,
            expected_apple_modified_at, attempts, created_at
@@ -636,17 +660,25 @@ async function pendingActions(env, getGoogleAccessToken) {
     ORDER BY created_at ASC
     LIMIT 200
   `).all();
-  const actions = (result.results || []).map((item) => ({
-    id: item.id,
-    type: item.action_type,
-    externalId: item.external_id,
-    appleReminderId: item.apple_reminder_id,
-    title: item.title,
-    desiredCompleted: item.desired_completed === null ? null : Boolean(item.desired_completed),
-    expectedAppleModifiedAt: item.expected_apple_modified_at,
-    attempts: Number(item.attempts || 0),
-    createdAt: item.created_at
-  }));
+  const productById = new Map((context.products || []).map((product) => [String(product.id || product.productId || ""), product]));
+  const actions = (result.results || []).map((item) => {
+    const sourceRow = context.sheet.rows.find((row) => String(row.record?.external_id || "") === String(item.external_id || ""));
+    const productId = String(sourceRow?.record?.producto_id || "").trim();
+    const details = shoppingReminderDetails(sourceRow?.record || {}, productById.get(productId) || null);
+    return {
+      id: item.id,
+      type: item.action_type,
+      externalId: item.external_id,
+      appleReminderId: item.apple_reminder_id,
+      title: item.title,
+      notes: details.notes,
+      url: details.url,
+      desiredCompleted: item.desired_completed === null ? null : Boolean(item.desired_completed),
+      expectedAppleModifiedAt: item.expected_apple_modified_at,
+      attempts: Number(item.attempts || 0),
+      createdAt: item.created_at
+    };
+  });
   return json({ ok: true, actions });
 }
 
