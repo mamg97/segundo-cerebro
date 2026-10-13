@@ -119,6 +119,32 @@ const failureFamilies = [
   [/^\/api\/projects(?:\/|$)/, "PROJECTS"],
   [/^\/app(?:\/|$)/, "FRONTEND"]
 ];
+// The browser-local overlap probe contains DOM-derived names; public logs
+// receive only these fixed structural buckets, never the input string.
+export function safeAuditVisualOverlapCode(overlap) {
+  const value = String(overlap || "");
+  if (value === "dialog-close ↔ dialog-title-text") return "DIALOG_CLOSE_TITLE";
+  if (value.startsWith("liquidity-account-legend:") ||
+      value.startsWith(".liquidity-account-legend:")) return "FINANCE_LIQUIDITY_ROWS";
+  const containers = [
+    [".account-transactions-tabs:", "FINANCE_ACCOUNT_TABS"],
+    [".topbar:", "TOPBAR"],
+    [".top-actions:", "TOP_ACTIONS"],
+    [".health-tabs:", "HEALTH_TABS"],
+    [".daily-card-heading:", "DAILY_HEADING"],
+    [".weekly-menu-meal-main:", "WEEKLY_MENU"],
+    [".weekly-menu-day:", "WEEKLY_MENU"],
+    [".recipe-card-body:", "RECIPES"],
+    [".recipe-ingredients:", "RECIPES"],
+    [".pantry-view-nav:", "PANTRY_TABS"],
+    [".objects-tabs:", "OBJECTS_TABS"],
+    [".projects-tabs:", "PROJECTS_TABS"],
+    [".events-tabs:", "EVENTS_TABS"],
+    [".area-nav:", "AREA_NAV"]
+  ];
+  return containers.find(([prefix]) => value.startsWith(prefix))?.[1] || "OTHER";
+}
+
 export function safeAuditNetworkFailureCode(entry) {
   // Entry is process-local and may contain a private URL or id; never emit it.
   const raw=String(entry || "");
