@@ -15,11 +15,11 @@ function animationContext(extra = {}) {
   return vm.createContext({ gymVideoInventory: new Map(), gymVideoChecks: new Map(), gymMediaInventoryRunning: false, ...extra, source });
 }
 
-test("The fourteen reviewed animations match only their named exercise variants", () => {
+test("The fifteen reviewed animations match only their named exercise variants", () => {
   const context = animationContext();
   vm.runInContext(context.source, context);
   const match = (name) => vm.runInContext(`gymCustomAnimationFor(${JSON.stringify({ name })})`, context);
-  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 14);
+  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 15);
   assert.equal(match("Press de Banca Plano (Barra)").key, "press-banca-plano-barra");
   assert.equal(match("Press de Banca").key, "press-banca-plano-barra");
   assert.equal(match("Press de banca con mancuernas"), null);
@@ -47,7 +47,13 @@ test("The fourteen reviewed animations match only their named exercise variants"
   assert.match(match("Aperturas plano").variantNote, /máquina mariposa/);
   assert.equal(match("Aperturas con mancuernas"), null);
   assert.equal(match("Aperturas en polea"), null);
-  assert.equal(match("Prensa de piernas"), null);
+  assert.equal(match("Prensa de piernas").key, "prensa-piernas-inclinada-45");
+  assert.equal(match("Prensa de piernas inclinada a 45°").key, "prensa-piernas-inclinada-45");
+  assert.match(match("Prensa de piernas").variantNote, /no una prensa horizontal/);
+  assert.equal(match("Prensa horizontal"), null);
+  assert.equal(match("Prensa de piernas sentada"), null);
+  assert.equal(vm.runInContext("gymCustomAnimationFor({name:'Prensa de piernas',source:{provider:'wger'}})", context), null);
+  assert.equal(vm.runInContext("gymCustomAnimationFor({name:'45 Degree Leg Press',source:{provider:'wger'}})?.key", context), "prensa-piernas-inclinada-45");
   assert.equal(match("Extensiones de cuádriceps en máquina").key, "extension-cuadriceps-maquina");
   assert.equal(match("Leg Extension").key, "extension-cuadriceps-maquina");
   assert.equal(match("Curl de pierna sentado"), null);
@@ -138,6 +144,9 @@ test("Opening a curated plan GIF does not require the external library", async (
   await vm.runInContext('openGymTechniqueForPlanExercise({ id: "pec-deck", name: "Aperturas plano" })', context);
   assert.match(detail.innerHTML, /aperturas-maquina-mariposa-v2-white\.gif/);
   assert.match(detail.innerHTML, /máquina mariposa/);
+  await vm.runInContext('openGymTechniqueForPlanExercise({ id: "leg-press", name: "Prensa de piernas" })', context);
+  assert.match(detail.innerHTML, /prensa-piernas-inclinada-45-v5-white\.gif/);
+  assert.match(detail.innerHTML, /prensa inclinada a 45/);
 });
 
 test("A medically paused Gym still displays canonical series, reps, loads and technique notes", () => {

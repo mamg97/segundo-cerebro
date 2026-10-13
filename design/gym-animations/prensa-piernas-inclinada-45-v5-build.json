@@ -1,0 +1,23 @@
+{
+  "width": 360,
+  "height": 480,
+  "frames": 16,
+  "delayCentiseconds": 7,
+  "order": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "scale": 0.7126948775055679,
+  "stationaryAnchor": 0.72,
+  "authoring": "ImageGen + RifeMetal HQ",
+  "sourceDimensions": [
+    1776,
+    888
+  ]
+}

@@ -28,14 +28,14 @@ function makeWger(name, id, video = true) {
   };
 }
 
-test("matrix lists exactly all fourteen reviewed GIF files with honest unverified video status", () => {
+test("matrix lists exactly all fifteen reviewed GIF files with honest unverified video status", () => {
   const ctx = setup();
   const table = vm.runInContext("gymMediaInventoryMarkup()",ctx);
   const keys = [...table.matchAll(/data-gym-media-open="([^"]+)"/g)].map((row)=>row[1]);
-  assert.equal(keys.length, 14);
-  assert.equal(new Set(keys).size, 14);
-  assert.equal((table.match(/Sí · subido/g) || []).length, 14);
-  assert.equal((table.match(/Pendiente de comprobación/g) || []).length, 14);
+  assert.equal(keys.length, 15);
+  assert.equal(new Set(keys).size, 15);
+  assert.equal((table.match(/Sí · subido/g) || []).length, 15);
+  assert.equal((table.match(/Pendiente de comprobación/g) || []).length, 15);
   assert.match(table,/Vídeo en Segundo Cerebro/);
   assert.match(table,/Pullover en polea alta/);
   assert.match(table,/Press inclinado \(barra\)/);
