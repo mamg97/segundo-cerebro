@@ -24,3 +24,14 @@ test("tabs remain usable on narrow screens and cache-busted bundles stay aligned
   assert.match(html, /\.\/styles\.css\?v=0\.44\.30/);
   assert.match(html, /\.\/app\.js\?v=0\.44\.30/);
 });
+
+test("production Chromium verifies MIDAS scroll on desktop and mobile without suppressing transport errors", () => {
+  const audit = readFileSync(new URL("../private-cloudflare/scripts/web-audit.mjs", import.meta.url), "utf8");
+  assert.match(audit, /pestañas abandonan el área visible al hacer scroll/);
+  assert.match(audit, /width: 390, height: 844/);
+  assert.match(audit, /layout.position === "static"/);
+  assert.match(audit, /layout.moved >= 40/);
+  assert.match(audit, /AUDIT_IMAGE_ROUTE_DIAG/);
+  assert.match(audit, /imageRouteFailures\.set/);
+  assert.match(audit, /await route\.abort\("failed"\)/);
+});
