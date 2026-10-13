@@ -1,3 +1,13 @@
+## NUTRI · Enlaces canónicos del menú semanal (13/10/2026)
+
+- **Incidencia:** filas con plato seleccionado pero sin `recipe_id` no podían abrir su ficha. En lectura ligera, filas con ID ocultaban el enlace si el objeto de receta no se había hidratado; el clic sobre una ficha ausente terminaba silenciosamente.
+- **Fuente corregida:** normalizar únicamente el Sheet privado de Salud (`MenuSemanal`, `Recetas`, `IngredientesReceta`). Se añadieron 14 recetas documentadas como planificadas/provisionales salvo el consumo ya confirmado; acompañantes legados tipados y dos meriendas fruta+yogur separadas. **Kcal, proteína, HC y grasas idénticas por fecha antes/después**; sin inventar consumos ni comidas externas pendientes.
+- **Frontend:** en Salud→Menú, el ID habilita título y acción de detalle aun en fallback ligero; al pulsar se reutiliza receta en memoria o se carga bajo demanda solo la semana seleccionada. Se ofrece error visible, reintento y vuelta a la misma semana. Home conserva apertura on-demand y restaura control tras completar clic.
+- **Auditoría:** cotejar IDs enlazados con API (no solo contar botones), probar navegación exacta y retorno. No registrar alimentos ni datos privados en CI. Ausencia legítima de receta cuando falta elegir una comida no equivale a enlace roto.
+- **Gate de producción:** fusionar tras CI, desplegar y verificar con Chromium autenticado. No declarar cierre solo por el Sheet.
+
+---
+
 ## GESTOR NUTRI 4 · Conciliación de menú hasta producción (13/10/2026)
 
 - **Fuente y alcance:** lectura en vivo de `SEGUNDO CEREBRO - SALUD / MenuSemanal`, columnas A:R y valores efectivos de celdas. Para la semana vigente se verificó que los macros poblados son números reales, que un día completo tiene todas sus filas tipadas y que las comidas fuera por decidir mantienen los cuatro macros nulos. No se escribió ninguna ingesta ni se modificaron planes para cerrar cifras.
