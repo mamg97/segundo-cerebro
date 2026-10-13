@@ -31,6 +31,21 @@ function money(value, currency = "EUR") {
   }).format(number);
 }
 
+export function shoppingPriceLabel(item, currency = "EUR") {
+  const total = item?.estimatedCost;
+  if (total !== null && total !== undefined && Number.isFinite(Number(total))) {
+    return money(Number(total), currency);
+  }
+  const unitPrice = item?.estimatedUnitPrice;
+  if (unitPrice !== null && unitPrice !== undefined && Number.isFinite(Number(unitPrice))) {
+    const base = String(item?.priceBase || "").trim();
+    if (!base) return money(Number(unitPrice), currency) + " · cantidad por definir";
+    if (base.startsWith("€/")) return money(Number(unitPrice), currency) + base.slice(1);
+    return money(Number(unitPrice), currency) + " · " + base;
+  }
+  return "Sin precio";
+}
+
 function formatDate(value) {
   if (!value) return "Sin fecha";
   const date = new Date(String(value).slice(0, 10) + "T12:00:00");
@@ -293,7 +308,7 @@ function renderWorkspace(payload, initialView = "inventory") {
       canonicalLine +
       '<span>' + escapeHtml(target || "Cantidad por definir") + ' · ' + escapeHtml(item.reason || "Sin motivo") + '</span></div>' +
       '<span class="purchase-state state-' + escapeHtml(stateClass) + '">' + escapeHtml(item.state || "REVISAR") + '</span>' +
-      '<span class="pantry-shopping-price">' + escapeHtml(money(item.estimatedCost, currency)) + '</span>';
+      '<span class="pantry-shopping-price">' + escapeHtml(shoppingPriceLabel(item, currency)) + '</span>';
 
     return '<a class="pantry-shopping-row is-link" href="' + escapeHtml(mercadonaUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="' +
       escapeHtml(exactMercadonaUrl ? ("Abrir " + displayName + " en Mercadona") : ("Buscar " + displayName + " en Mercadona")) +
@@ -375,6 +390,11 @@ function renderWorkspace(payload, initialView = "inventory") {
             : (shopping.length ? "Sin precios todavía" : "—")) +
           (Number(summary.missingPriceCount || 0)
             ? '<small>' + Number(summary.missingPriceCount) + (Number(summary.missingPriceCount) === 1 ? ' artículo sin precio' : ' artículos sin precio') + '</small>'
+            : '') +
+          (Number(summary.missingQuantityCostCount || 0)
+            ? '<small>' + Number(summary.missingQuantityCostCount) + (Number(summary.missingQuantityCostCount) === 1
+              ? ' con precio · cantidad por definir'
+              : ' con precio · cantidad por definir') + '</small>'
             : '') +
         '</strong></div>' +
       '</section>' +
