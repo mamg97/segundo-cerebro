@@ -290,14 +290,22 @@ export function buildPayload(valueRanges = []) {
     const ticketPrices = history.filter((item) => item.ticketId || /ticket/i.test(String(item.source || "")));
     const lastTicketPrice = ticketPrices.length ? ticketPrices[ticketPrices.length - 1] : null;
     const targetQuantity = numberOrNull(row.cantidad_objetivo) ?? (row.cantidad_objetivo || null);
-    // A real ticket is stronger evidence than a manual estimate or a public price.
+    // Observed prices by kg/litre are not a purchase total without weight.
+    const observedPrice = lastTicketPrice || latestPrice;
     const unitPrice = lastTicketPrice?.price ?? numberOrNull(row.precio_estimado) ?? latestPrice?.price ?? null;
+    const priceBase = observedPrice?.priceBase || null;
+    const perMassOrVolume = /\/\s*(kg|l|100\s*g|100\s*ml)(?:\b|$)/i.test(String(priceBase || ""));
+    const targetUnitNormalized = String(row.unidad || "").toLowerCase().trim();
+    const matchingUnit = !perMassOrVolume ||
+      (/\/\s*kg\b/i.test(priceBase) && /^kg\b/.test(targetUnitNormalized)) ||
+      (/\/\s*l\b/i.test(priceBase) && /^(l|litros?)\b/.test(targetUnitNormalized));
     const explicitCost = numberOrNull(row.coste_estimado);
     const targetNumber = numberOrNull(targetQuantity);
     const estimatedCost = explicitCost ?? (
-      unitPrice !== null
-        ? (targetNumber !== null && targetNumber > 0 ? unitPrice * targetNumber : unitPrice)
-        : null
+      unitPrice === null ? null :
+      perMassOrVolume && (!matchingUnit || targetNumber === null || targetNumber <= 0)
+        ? null
+        : targetNumber !== null && targetNumber > 0 ? unitPrice * targetNumber : unitPrice
     );
     return {
       externalId: row.external_id || null,
@@ -314,6 +322,7 @@ export function buildPayload(valueRanges = []) {
       targetUnit: row.unidad || null,
       reason: row.motivo || null,
       estimatedUnitPrice: unitPrice,
+      priceBase,
       estimatedCost,
       source: row.fuente || null,
       updatedAt: row.updated_at || null,
