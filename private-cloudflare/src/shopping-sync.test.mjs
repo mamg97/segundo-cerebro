@@ -5,6 +5,7 @@ import {
   planAppleActionsForMissingSecondBrainRow,
   planAppleActionsForRow,
   planShoppingDryRun,
+  shoppingReminderDetails,
   stateAfterMissingAppleReminder
 } from "./shopping-sync.js";
 
@@ -68,6 +69,50 @@ test("COMPRAR creates exactly one missing Apple reminder", () => {
   assert.deepEqual(
     planAppleActionsForRow({ state: "COMPRAR", normalizedName: "huevos" }, null),
     [{ type: "create", desiredCompleted: false }]
+  );
+});
+
+test("a changed active purchase refreshes title, quantity notes and URL in one Apple action", () => {
+  assert.deepEqual(
+    planAppleActionsForRow(
+      {
+        state: "COMPRAR",
+        normalizedName: "huevos",
+        secondBrainModifiedAt: "2026-10-13T16:06:00Z"
+      },
+      {
+        apple_completed: 0,
+        apple_missing: 0,
+        apple_title: "Huevos",
+        last_synced_at: "2026-10-13T15:00:00Z"
+      }
+    ),
+    [{ type: "updateDetails", desiredCompleted: null }]
+  );
+});
+
+test("shopping reminder details expose purchase quantity and exact Mercadona URL", () => {
+  assert.deepEqual(
+    shoppingReminderDetails(
+      { nombre: "Huevos", cantidad_objetivo: 1, unidad: "pack 12 ud" },
+      { name: "Huevos grandes L", productUrl: "https://tienda.mercadona.es/product/31504/huevos-grandes-l-paquete" }
+    ),
+    {
+      notes: "Cantidad: 1 pack 12 ud",
+      url: "https://tienda.mercadona.es/product/31504/huevos-grandes-l-paquete"
+    }
+  );
+});
+
+test("shopping reminder details fall back to a Mercadona search without inventing a SKU", () => {
+  const details = shoppingReminderDetails(
+    { nombre: "Bacalao lomos", cantidad_objetivo: 1, unidad: "envase ≥400 g" },
+    null
+  );
+  assert.equal(details.notes, "Cantidad: 1 envase ≥400 g");
+  assert.equal(
+    details.url,
+    "https://tienda.mercadona.es/search-results?query=Bacalao%20lomos"
   );
 });
 
