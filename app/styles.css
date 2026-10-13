@@ -15749,6 +15749,7 @@ html[data-theme="dark"] .liquidity-svg-base {
 .midas-runtime-item em { margin-top: 3px; color: var(--coral); font-size: 8.5px; font-style: normal; line-height: 1.3; }
 .midas-runtime-dot { width: 8px; height: 8px; margin-top: 3px; border-radius: 50%; background: var(--line-strong); }
 .midas-runtime-item.is-success .midas-runtime-dot { background: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 12%, transparent); }
+.midas-runtime-item.is-snapshot_published .midas-runtime-dot { background: var(--blue); opacity: .8; }
 .midas-runtime-item.is-running .midas-runtime-dot { background: var(--amber); }
 .midas-runtime-item.is-failed .midas-runtime-dot,
 .midas-runtime-item.is-missing_due_run .midas-runtime-dot { background: var(--coral); box-shadow: 0 0 0 3px color-mix(in srgb, var(--coral) 11%, transparent); }
