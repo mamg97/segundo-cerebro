@@ -33,6 +33,7 @@ test("a failed image read never blocks the next read or masks its 502", async ()
   const second = gate.run(() => ({ status: 502 }));
   await assert.rejects(first, /GATEWAY_UPSTREAM_FAILED/);
   assert.deepEqual(await second, { status: 502 });
+  await new Promise((resolve) => setImmediate(resolve)); // allow finally() to release the slot
   assert.equal(gate.stats().active, 0);
 });
 
