@@ -1,3 +1,12 @@
+## ORGANIZADOR 17 · Eficiencia D1 de Gym (PR #453, 2026-10-13)
+
+- Defecto confirmado en `private-cloudflare/src/index.js::fetchGymHistory`: el GET utilizaba `LIMIT 40` para sesiones, pero leía **todas** las filas de `gym_entries` mediante `ORDER BY id ASC`, descartando después entradas que no pertenecían a las 40 sesiones recuperadas. También ejecutaba cuatro operaciones de preparación de esquema D1 desde cada GET.
+- Corrección técnica en [PR #453](https://github.com/mamg97/segundo-cerebro/pull/453): obtener `sessionIds` de esas 40 sesiones, usar `WHERE session_id IN (...)` con parámetros enlazados, no leer ninguna entrada si no hay sesiones; la progresión seguirá derivándose únicamente de las sesiones devueltas como antes. Migración idempotente `0009_gym_history_read.sql` para las tablas existentes e índice nuevo `gym_entries(session_id,id)`; la lectura ya no crea tablas/índices. Las escrituras conservan la ruta antigua hasta una revisión separada.
+- Tests sintéticos comprueban preservación de orden, progresión, exclusión de filas antiguas, caso vacío y ausencia de DDL en GET. **CI, aplicación efectiva de la migración, despliegue y auditoría posterior son requisitos para declarar el cambio productivo**.
+- La optimización reduce trabajo D1 **por consulta Gym**, pero no demuestra causalidad respecto a la alerta global de 3,75 M/5 M filas diarias ni al transporte `502`. No cambia registros privados, cargas, saldos ni contratos del Gym.
+
+---
+
 ## Nutrición · contrato de receta principal + acompañantes (13/10/2026)
 
 - Cambio **estructural**, no sustitución de platos por código: `MenuSemanal` columnas Q `tipo_item` y R `tipo_acompanante` para todas las nuevas entradas. Cada toma tiene **0–1 receta principal**, referenciada por `recipe_id`; los acompañantes son solo `yogur | fruta | batido` y usan `food_id` (o receta secundaria cuando es batido casero tipado).

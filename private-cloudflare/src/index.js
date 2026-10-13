@@ -4102,19 +4102,26 @@ async function ensureGymTables(env) {
 }
 
 async function fetchGymHistory(env) {
-  await ensureGymTables(env);
+  // Tables and indexes are provisioned by migration 0009 before deployment.
+  // Do not issue schema DDL from a GET: it amplifies D1 consumption.
   const sessionsResult = await env.DB.prepare(`
     SELECT id, session_date, day_id, day_title, notes, created_at
     FROM gym_sessions
     ORDER BY session_date DESC, created_at DESC
     LIMIT 40
   `).all();
+  const sessionIds = (sessionsResult.results || []).map((session) => session.id);
 
-  const entriesResult = await env.DB.prepare(`
-    SELECT id, session_id, exercise_id, exercise_name, sets_done, reps_done, load_value, load_unit, notes
-    FROM gym_entries
-    ORDER BY id ASC
-  `).all();
+  // The response only uses the 40 most recent sessions. Loading entries
+  // for every historical session was an unbounded indexed/table read on GET.
+  const entriesResult = sessionIds.length
+    ? await env.DB.prepare(`
+      SELECT id, session_id, exercise_id, exercise_name, sets_done, reps_done, load_value, load_unit, notes
+      FROM gym_entries
+      WHERE session_id IN (${sessionIds.map(() => "?").join(", ")})
+      ORDER BY id ASC
+    `).bind(...sessionIds).all()
+    : { results: [] };
 
   const entriesBySession = new Map();
   for (const entry of entriesResult.results || []) {
