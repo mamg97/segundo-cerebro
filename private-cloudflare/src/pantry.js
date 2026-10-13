@@ -5,6 +5,34 @@ let cache = {
   spreadsheetIdExpiresAt: 0
 };
 
+// Identidad canónica compartida por el espejo Apple y la vista privada.
+// No se hacen coincidencias aproximadas ni inferencias por categoría:
+export function normalizePantryProductName(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[^\p{L}\p{N}'%+]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+export function findPantryProductExact(products = [], name) {
+  const requested = normalizePantryProductName(name);
+  if (!requested) return null;
+  const matches = products.filter((product) => {
+    const labels = [
+      product?.name, product?.nombre, product?.nombre_canonico,
+      ...(Array.isArray(product?.familyNames) ? product.familyNames : []),
+      ...String(product?.nombres_familiares || "").split("|")
+    ];
+    return labels.some((label) => normalizePantryProductName(label) === requested);
+  });
+  // Aliases shared by multiple products are ambiguous, never an automatic link.
+  return matches.length === 1 ? matches[0] : null;
+}
+
 export function hasPantryGoogleConfig(env) {
   return Boolean(
     env.GOOGLE_CLIENT_ID &&
@@ -251,7 +279,11 @@ export function buildPayload(valueRanges = []) {
   }).filter((item) => item.productId || item.inventoryId);
 
   const shoppingList = shoppingRows.map((row) => {
-    const productId = String(row.producto_id || "").trim();
+    // Resolve legacy/unlinked Apple titles only through a unique canonical name
+    // or a user-defined household alias; the Sheet remains authoritative.
+    const explicitProductId = String(row.producto_id || "").trim();
+    const matched = explicitProductId ? null : findPantryProductExact(products, row.nombre);
+    const productId = explicitProductId || matched?.id || "";
     const product = productsById.get(productId) || {};
     const history = pricesByProduct.get(productId) || [];
     const latestPrice = history.length ? history[history.length - 1] : null;
