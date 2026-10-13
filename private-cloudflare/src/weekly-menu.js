@@ -1,3 +1,4 @@
+import { annotateWeeklyMenuStructure } from "./menu-selection-contract.js";
 const HIDDEN_STATUSES = /^(omitid[oa]|retirad[oa]|cancelad[oa]|cancelled|skipped)$/;
 
 function normalize(value) {
@@ -101,7 +102,7 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
     ? options.pantryProductById
     : null;
 
-  return dedupeWeeklyMenuRows(rows).map((item) => {
+  return annotateWeeklyMenuStructure(dedupeWeeklyMenuRows(rows).map((item) => {
     const recipeId = item?.recipeId ? String(item.recipeId) : "";
     const foodId = item?.foodId ? String(item.foodId) : "";
     const recipe = recipeId ? recipeById.get(recipeId) || null : null;
@@ -208,5 +209,5 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
     hydrated.nutritionDerivedFields = [...derivedFields, ...pantryDerivedFields];
 
     return hydrated;
-  });
+  }));
 }

@@ -82,6 +82,20 @@ The Worker proxies recipe images through an authenticated same-origin endpoint. 
 - A temporary training pause is represented in `ObjetivosActividad` by an effective row with `strength_sessions_week=0`; optional activity floors can be left unset when they must not be judged. Adherence must treat strength as `ignored`, never failed, while that row is effective.
 - The base gym plan remains preserved during a pause. The private UI must suppress session suggestions/entry and show the pause reason from the active objective; reactivation happens by a later objective row after the user confirms the pause can end.
 
+### Contrato de composición de tomas del planificador (vigente para nuevas entradas)
+
+Una **toma** es `fecha + momento` con momento canónico `Desayuno | Media mañana | Comida | Merienda | Cena`. Cada toma se compone de **0–1 recetas principales** y de **0–N acompañantes**, sujetos a estas restricciones:
+
+- **Desayuno, Comida, Cena:** exactamente **1 receta principal**; seleccionar por `recipe_id` existente en `Recetas`. Si no existe, crear primero la ficha verificable, sin inventar ingredientes ni macros. No usar nombres libres ni productos sueltos en lugar de receta.
+- **Media mañana y Merienda:** **0 o 1 receta principal**. Son válidas tomas formadas **solo por acompañantes**, sin receta alguna. Nunca crear una receta artificial para hacer válido un yogur, una fruta o un batido.
+- **Acompañantes permitidos:** `yogur`, `fruta`, `batido`. Son componentes separados de la receta principal y pueden estar asociados a producto canónico de Despensa (`food_id`); el batido preparado en casa también puede referenciar una receta secundaria, siempre con `tipo_item=acompanante` y `tipo_acompanante=batido`. No computa como segunda receta principal.
+- **Postres:** como máximo **un yogur/postre** después de la comida y después de la cena. Los yogures tomados entre horas se llaman «yogur», no «postre». No recomendar barritas proteicas cuando la preferencia vigente las excluya.
+- **Nuevas columnas opcionales del Sheet** `MenuSemanal`: `Q tipo_item` = `receta | acompanante`; `R tipo_acompanante` = `yogur | fruta | batido` (vacía si es receta). Un productor **debe rellenarlas** para toda nueva entrada; el validador normaliza también `acompañante` con tilde. Una sola fila de receta por toma; cada acompañante tiene su propia fila, con `food_id` o referencia explícita de batido.
+- **Macros por toma/día** = suma de receta principal + acompañantes, sin dobles imputaciones; comprobar los cuatro macros y coherencia culinaria frente a `Objetivos` tras cada cambio. Fuera de casa sin receta conocida queda pendiente, con macros desconocidos, nunca se inventa una.
+- **Migración e historia:** filas antiguas sin Q/R conservan su identidad, macros y `consumido` como legado sin modificar. La lectura no les asigna una receta ficticia; una toma nueva parcialmente tipada, duplicada o inválida debe señalarse para corrección. Los acompañantes tampoco pasan a `consumido` hasta confirmación.
+
+El planificador debe **rechazar** una propuesta futura que no cumpla este contrato antes de escribirla. La web informa del fallo de estructura si una fila tipada incorrecta entra por edición directa del Sheet; no modifica retrospectivamente consumos.
+
 ### Weekly menu integrity invariants
 
 - `MenuSemanal` is append-tolerant but the product behaves as an upserted plan. The logical identity of a row is `fecha + momento + recipe_id|food_id|nombre normalizado`; when several versions exist, the latest `updated_at` supersedes the older one.
