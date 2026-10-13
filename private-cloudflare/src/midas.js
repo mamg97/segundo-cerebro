@@ -100,12 +100,13 @@ function normalizeDashboard(data) {
         ? Math.min(row.risk_observations, 100000) : 0,
       equity_history: normalizeEquityHistory(row.equity_history),
       daily_mode: row.daily_mode === true,
+      classic_sp500_cohort: row.classic_sp500_cohort === true,
       comparison_eligible: row.comparison_eligible !== false,
       comparison_universe_id: typeof row.comparison_universe_id === "string" ? row.comparison_universe_id.slice(0, 64) : null,
       comparison_universe_symbols: Number.isInteger(row.comparison_universe_symbols) ? row.comparison_universe_symbols : null,
       comparison_exclusion_reason: typeof row.comparison_exclusion_reason === "string"
         ? row.comparison_exclusion_reason.slice(0, 250) : null,
-      period_returns_pct: row.group === "timesfm_demo"
+      period_returns_pct: ["timesfm_demo", "timesfm_daily_demo"].includes(row.group)
         ? Object.fromEntries(["5_sessions", "21_sessions", "63_sessions"].map((key) =>
             [key, optionalNumber(row.period_returns_pct?.[key])]))
         : null,
