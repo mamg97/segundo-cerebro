@@ -82,3 +82,30 @@ test("older 8-stock and IBEX workflows are retired after S&P500 migration", () =
   assert.equal(replacement.state, "missing_due_run");
   assert.equal(replacement.ok, false);
 });
+
+
+test("successful TimesFM execution is visible within the grace window", () => {
+  const now = Date.parse("2026-10-13T06:45:00Z");
+  const action = {name: "MIDAS TimesFM EUR one-day signal",
+    event: "schedule", created_at: "2026-10-13T04:38:33Z",
+    status: "completed", conclusion: "success", run_number: 4};
+  const done = evaluateMidasWorkflowRuns([action], now);
+  const row = done.workflows.find(x=>x.name === action.name);
+  assert.equal(row.state,"success");
+  assert.equal(row.ok,true);
+  assert.equal(row.latest.run_number,4);
+  const absent = evaluateMidasWorkflowRuns([], now);
+  assert.equal(absent.workflows.find(x=>x.name === action.name).state, "not_due_yet");
+});
+test("archived MIDAS campaigns remain neutral", () => {
+  const status = evaluateMidasWorkflowRuns([], Date.parse("2026-10-13T07:00:00Z"));
+  const archived = status.workflows.filter(x => x.state === "retired");
+  assert.equal(archived.length, 2);
+  assert.ok(archived.every(x=>x.ok === true));
+});
+test("MIDAS frontend identifies retired and missing private genetic diary", () => {
+  const ui = readFileSync(new URL("../../app/app.js", import.meta.url), "utf8");
+  assert.match(ui,/retired: "Archivada · fuera de competición"/);
+  assert.match(ui,/genetic\?\.last_session \? "unverified" : "missing_due_run"/);
+  assert.match(ui,/row.state === "retired" \? \`<small>/);
+});
