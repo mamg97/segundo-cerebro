@@ -162,15 +162,22 @@ const RUNTIME_HEALTH_FILES = [
   "tfg_ahp"
 ];
 
-function normalizeRuntimeHealthRecord(data) {
+export function normalizeRuntimeHealthRecord(data) {
   if (data?.schema_version !== 1 || data?.event !== "schedule" ||
       typeof data.workflow_name !== "string" || typeof data.recorded_at_utc !== "string" ||
       !Number.isFinite(Date.parse(data.recorded_at_utc)) ||
       !["success", "failure", "cancelled", "skipped"].includes(data.outcome)) {
     return null;
   }
+  // The inaugural 2026-10-13 TimesFM one-day run was published with an
+  // obsolete *telemetry* label. GitHub Actions ran successfully under its
+  // canonical name; map only that exact, keyed alias until the next run.
+  const name = data.workflow_key === "timesfm_one_day" &&
+    data.workflow_name === "MIDAS TimesFM EUR one-day signal"
+      ? "MIDAS TimesFM 2.5 EUR daily 1-session signal"
+      : data.workflow_name.slice(0, 120);
   return {
-    name: data.workflow_name.slice(0, 120),
+    name,
     event: "schedule",
     status: "completed",
     conclusion: data.outcome,
