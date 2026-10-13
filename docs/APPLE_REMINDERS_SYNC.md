@@ -49,6 +49,17 @@ Si una fila previamente enlazada se elimina físicamente de `ListaCompra`, Segun
 
 El primer enlace prioriza el ID persistente. Solo cuando todavía no existe usa igualdad exacta del nombre normalizado. Normalizar corrige mayúsculas, espacios y diacríticos; no reduce palabras ni hace matching semántico. Por tanto `café` y `café descafeinado` siguen siendo productos distintos.
 
+En cada sincronización y al proyectar la vista privada, la identidad del producto se
+resuelve exclusivamente mediante una coincidencia exacta, tras normalización, con
+`Productos.nombre_canonico` o cualquiera de los alias privados
+`Productos.nombres_familiares`. Si un alias coincide con varios productos
+distintos, no se asigna `producto_id` automáticamente. La proyección de
+`ListaCompra` puede mostrar el precio observado de `Precios` aun si el
+ID de una fila anterior está vacío; esta asociación derivada no crea nuevas
+compras ni inventa cantidades. El agente EventKit conserva sus identificadores
+externos para evitar duplicados. Los nombres familiares y precios reales solo
+se editan en las fuentes privadas, nunca en Git.
+
 Antes de crear en Apple, el Worker comprueba la instantánea recibida y los enlaces existentes. Las acciones se identifican con una clave derivada de operación + elemento + versión deseada; repetir una petición no crea duplicados.
 
 ## Conflictos
