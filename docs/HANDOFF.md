@@ -1,3 +1,9 @@
+## ORGANIZADOR 16 · Protección del histórico bancario ante redibujos del diálogo (13/10/2026)
+
+- PR #433 fue fusionada y protege la lectura bancaria canónica frente al scope financiero, pero las auditorías completas #370–#372 siguieron detectando eliminación del workspace. La #372 (979 checks/4 fallos, dos Finance y dos MIDAS independientes) comprobó `FINANCE_WORKSPACE_REMOVED`, dos lecturas HTTP 200 con registros y, gracias a #436, `WORKSPACE_REMOVED_AFTER_RENDER caught=NO`. Un render posterior elimina la sección sin fallo del endpoint; por sí solo no determina el autor del redibujo.
+- Esta rama añade un guard DOM **mínimo** sobre reemplazos directos del contenido de `#dialog-body`, únicamente si el diálogo de Finanzas continúa abierto **y** existe un snapshot de banco verificado por el endpoint canónico en la misma pestaña. Restaura idempotentemente el bloque existente, sin recargar Sheets ni persistir registros en cachés, almacenamiento o logs. Evita presentar datos bancarios procedentes de rangos presupuestarios opcionales no verificados. Tests con DOM ficticio cubren remoción tras render, duplicaciones y diálogo cerrado/otra área.
+- Todavía NO cerrar incidencia sin CI, deploy completo y dos auditorías Chromium completas consecutivas con 0 fallos / 0 HTTP 5xx. MIDAS mantiene auditor propio. Scheduler GitHub no ofrece garantía de ejecución; vigilancia externa existente está en modo exacto :45 Madrid, sin nuevos workflows ni reintentos descontrolados. Ninguna escritura canónica ni coste adicional.
+
 ## ORGANIZADOR 16 · Finance scope vs banco verificado + auditor horario (13/10/2026)
 
 - Evidencia: auditoría programada #368 de Chromium `1003 checks / 7 fallos`: 6 `FINANCE_WORKSPACE_REMOVED` y un `MIDAS CHECK-00024` ajeno. Se comprobaron dos respuestas HTTP 200 con registros del lector bancario, sin prueba aún de corrección persistente del DOM. El Worker aporta registros; no inferir pérdida de datos canónicos ni corregir Sheets.

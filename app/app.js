@@ -748,6 +748,7 @@ async function init() {
   renderCreditOverview();
   renderWealthOverview();
   bindInteractions();
+  observeVerifiedFinanceBankSection();
   initDemoMode();
 }
 
@@ -10032,8 +10033,13 @@ async function fetchFinanceBankWorkspace(timeoutMs = 12000) {
 // Never restore optional/unverified account rows or fabricate transactions.
 function ensureVerifiedFinanceBankSection(dialog) {
   if (!dialog.open || !dialog.classList.contains("budget-dialog")) return false;
-  const finance = state.financeSummary;
+  // A later partial Finance scope may have discarded the bank fields.
+  // Recover only from the separate canonical source verified in this tab.
+  const finance = mergeVerifiedFinanceBankWorkspace(
+    state.financeSummary, verifiedFinanceBankWorkspace
+  );
   if (finance?.bankWorkspaceReadVerified !== true) return false;
+  if (finance !== state.financeSummary) state.financeSummary = finance;
   const body = dialog.querySelector("#dialog-body");
   if (!body || body.querySelector(".account-transactions-section")) return false;
   const accounts = Array.isArray(finance.bankWorkspaceAccounts) ? finance.bankWorkspaceAccounts : [];
@@ -10044,6 +10050,25 @@ function ensureVerifiedFinanceBankSection(dialog) {
   body.insertAdjacentHTML("beforeend", html);
   initializeAccountTransactionTabs(body);
   return true;
+}
+
+// The global dialog can be rebuilt asynchronously after the canonical bank
+// response was rendered. Watch only direct child replacements of the dialog
+// body; restore verified records when a *still open* Finance dialog loses its
+// banking section. Never observe/retain bank text, balances or HTML in logs.
+let financeWorkspaceObserver = null;
+function observeVerifiedFinanceBankSection() {
+  if (financeWorkspaceObserver || typeof MutationObserver !== "function") return;
+  const body = document.querySelector("#dialog-body");
+  if (!body) return;
+  financeWorkspaceObserver = new MutationObserver(() => {
+    const dialog = document.querySelector("#detail-dialog");
+    if (!dialog?.open || !dialog.classList.contains("budget-dialog") ||
+        !verifiedFinanceBankWorkspace ||
+        body.querySelector(".account-transactions-section")) return;
+    ensureVerifiedFinanceBankSection(dialog);
+  });
+  financeWorkspaceObserver.observe(body, { childList: true });
 }
 
 function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } = {}) {
