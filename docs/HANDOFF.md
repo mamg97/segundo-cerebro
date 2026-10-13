@@ -1,3 +1,11 @@
+## ORGANIZADOR 17 · Auditoría independiente y eficiencia de OIDC (13/10/2026)
+
+- **Hallazgo directo:** el gateway OIDC de auditoría consultaba `https://token.actions.githubusercontent.com/.well-known/jwks` y hacía `crypto.subtle.importKey` en **cada GET/HEAD**, incluidas imágenes privadas versionadas y lecturas de Finanzas/Salud. Esta repetición existe en el código publicado y es independiente del error del Service Binding. No afirmar que los 502 sean causados específicamente por estas consultas sin telemetría Worker.
+- **Corrección en PR de gateway:** caché efímera por isolate y proveedor de las **claves públicas**, TTL 5 minutos, hasta 16 claves, petición JWKS `single-flight`, actualización ante nuevo `kid` acotada y reintentos limitados tras error. Cada JWT sigue validando issuer/audience/repo/workflow/evento/`iat`/`exp` y ejecutando verificación RSA por petición; no se almacenan JWT, claims ni datos privados. Error de red sin clave válida → rechazo, nunca bypass. Tests cubren firmas reales RSA, manipulación, concurrencia, TTL, rotación y fallo cerrado.
+- **Puerta de validación:** la auditoría Chromium #406 completó 1.190/0 en deploy #523 de código anterior. Se pidió un rerun independiente del mismo trabajo; comprobar su conclusión antes de usarlo como segundo gate. En la nueva PR, solo dar por publicada la optimización tras CI verde, merge, Cloudflare deploy verde y Chromium postdeploy sin 5xx.
+
+---
+
 ## GESTOR NUTRI 4 · Conciliación de menú hasta producción (13/10/2026)
 
 - **Fuente y alcance:** lectura en vivo de `SEGUNDO CEREBRO - SALUD / MenuSemanal`, columnas A:R y valores efectivos de celdas. Para la semana vigente se verificó que los macros poblados son números reales, que un día completo tiene todas sus filas tipadas y que las comidas fuera por decidir mantienen los cuatro macros nulos. No se escribió ninguna ingesta ni se modificaron planes para cerrar cifras.
