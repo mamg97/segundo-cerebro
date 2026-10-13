@@ -63,6 +63,8 @@ try {
   if (lightOnly || fullOnly) process.exitCode = 2;
 } catch (error) {
   console.log("[NUTRITION_PARITY] FULL_READ_UNAVAILABLE " + String(error?.message || error).slice(0, 90));
-  // The lightweight menu is the production home-card source; a failing
-  // 12-range secondary health read must not mask its successful inspection.
+  // Full response unavailable: the light endpoint may still support Home,
+  // but this run cannot certify light/full parity. Fail closed and retry
+  // during a later scheduled audit; never report an unverified success.
+  process.exitCode = 2;
 }
