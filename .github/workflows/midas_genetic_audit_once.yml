@@ -1,0 +1,27 @@
+name: MIDAS one-shot post-ingest private audit
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/.midas_genetic_ingest_audit_20261013'
+permissions:
+  actions: write
+  contents: read
+concurrency:
+  group: midas-genetic-audit-once-20261013
+  cancel-in-progress: false
+jobs:
+  dispatch:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch existing OIDC-authenticated production audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh workflow run web-audit.yml --ref main
+          echo "Requested production audit after genetic private snapshot publication."
