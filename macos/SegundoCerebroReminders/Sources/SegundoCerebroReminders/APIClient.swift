@@ -16,7 +16,7 @@ final class APIClient {
             events: events,
             dryRun: dryRun,
             fullSnapshot: true,
-            agent: AgentMetadata(version: "1.0.0", hostname: Host.current().localizedName ?? "mac")
+            agent: AgentMetadata(version: "1.1.0", hostname: Host.current().localizedName ?? "mac")
         )
         return try await request(
             path: "/v1/shopping-list/apple-events",
