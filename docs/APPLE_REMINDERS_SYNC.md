@@ -169,6 +169,10 @@ npm run reminders:install -- --start
 npm run reminders:sync
 ```
 
+## Protección frente a desapariciones involuntarias del listado
+
+Una petición para enriquecer cantidades, notas o enlaces **no autoriza completar, cancelar ni suprimir productos**. Si una instantánea de Apple omite un recordatorio vinculado a una fila `COMPRAR`, esa fila permanece `COMPRAR` en el Sheet; se señala `APPLE_REMINDER_MISSING_REVIEW` y el agente puede reconciliar su presencia en Apple, pero no se asume compra ni cancelación. Una instantánea antigua de Apple tampoco puede sustituir un estado fijado más recientemente en Segundo Cerebro. Una compra solo se considera finalizada mediante una acción nueva de usuario en Recordatorios o por confirmación real (ticket/compra), nunca por ausencia en una instantánea.
+
 ## Recuperación ante límite de Google Sheets (429)
 
 Si el agente recibe `502: GOOGLE_SHEETS_429`, el servicio Sheets está aplicando una limitación temporal; no significa que se hayan perdido los permisos de Apple ni que deban regenerarse los tokens. Las lecturas y las escrituras `PUT` idempotentes realizan reintentos breves; los `POST` de anexado no se reintentan ciegamente para evitar duplicados. Un evento registrado en D1 como `received` pero no terminado se reprocesa en una instantánea posterior; las ejecuciones iniciadas que fallen después de crear el registro pasan a `failed`, no permanecen ficticiamente en `running`.

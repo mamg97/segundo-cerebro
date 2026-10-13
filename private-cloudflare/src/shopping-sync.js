@@ -355,7 +355,15 @@ export function planAppleActionsForMissingSecondBrainRow(link) {
 }
 
 export function stateAfterMissingAppleReminder(currentState) {
-  return cleanState(currentState) === "COMPRADO" ? "COMPRADO" : "CANCELADO";
+  // Missing Apple reminders are not evidence of a purchase or of permission
+  // to remove a pending need; snapshots can be temporarily incomplete.
+  return cleanState(currentState);
+}
+
+export function stateAfterAppleEvent(currentState, secondBrainModifiedAt, appleModifiedAt, appleState) {
+  // Do not let a stale Apple snapshot overwrite a newer Sheet edit.
+  if (laterThan(secondBrainModifiedAt, appleModifiedAt)) return cleanState(currentState);
+  return cleanState(appleState);
 }
 
 // A transient Sheets failure can happen after the D1 event is registered but
@@ -492,7 +500,14 @@ async function processAppleEvents(request, env, getGoogleAccessToken) {
       normalized_name: event.normalizedName,
       nombre: event.title,
       producto_id: row?.productId || product?.id || product?.productId || "",
-      estado: event.deleted ? "CANCELADO" : event.completed ? "COMPRADO" : "COMPRAR",
+      estado: row
+        ? stateAfterAppleEvent(
+          row.state,
+          row.secondBrainModifiedAt,
+          event.modifiedAt,
+          event.deleted ? "CANCELADO" : event.completed ? "COMPRADO" : "COMPRAR"
+        )
+        : event.deleted ? "CANCELADO" : event.completed ? "COMPRADO" : "COMPRAR",
       fuente: row?.record?.fuente || "apple_reminders",
       updated_at: now,
       apple_completed: event.completed,
@@ -552,11 +567,11 @@ async function processAppleEvents(request, env, getGoogleAccessToken) {
       sourceRow.record.estado = nextState;
       sourceRow.record.apple_completed = false;
       sourceRow.record.last_synced_at = now;
-      sourceRow.record.sync_status = "synced";
+      sourceRow.record.sync_status = nextState === "COMPRAR" ? "pending_apple" : "synced";
       sourceRow.record.sync_error = nextState === "COMPRADO"
         ? "APPLE_REMINDER_REMOVED_AFTER_PURCHASE"
-        : "APPLE_REMINDER_REMOVED";
-      sourceRow.record.updated_at = now;
+        : "APPLE_REMINDER_MISSING_REVIEW";
+      // The snapshot's absence must not alter the canonical updated_at.
       await updatePantryShoppingRow(sheet, sourceRow.rowNumber, sourceRow.record);
     }
     await env.DB.prepare(`

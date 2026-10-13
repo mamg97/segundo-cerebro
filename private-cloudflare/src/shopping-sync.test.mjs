@@ -8,6 +8,7 @@ import {
   shoppingReminderDetails,
   shouldReplayShoppingEvent,
   stateAfterMissingAppleReminder,
+  stateAfterAppleEvent,
   supportsShoppingReminderDetails
 } from "./shopping-sync.js";
 
@@ -170,11 +171,26 @@ test("retry an event still marked received after a transient Sheets error", () =
   assert.equal(shouldReplayShoppingEvent(undefined), false);
 });
 
-test("missing Apple reminders do not downgrade a confirmed purchase", () => {
+test("missing Apple reminders never erase the shopping need", () => {
   assert.equal(stateAfterMissingAppleReminder("COMPRADO"), "COMPRADO");
-  assert.equal(stateAfterMissingAppleReminder("COMPRAR"), "CANCELADO");
-  assert.equal(stateAfterMissingAppleReminder("REVISAR"), "CANCELADO");
+  assert.equal(stateAfterMissingAppleReminder("COMPRAR"), "COMPRAR");
+  assert.equal(stateAfterMissingAppleReminder("REVISAR"), "REVISAR");
   assert.equal(stateAfterMissingAppleReminder("CANCELADO"), "CANCELADO");
+});
+
+test("old completed Apple snapshot cannot overwrite newer restored COMPRAR state", () => {
+  assert.equal(
+    stateAfterAppleEvent("COMPRAR", "2026-10-13T17:15:00Z", "2026-10-13T16:42:00Z", "COMPRADO"),
+    "COMPRAR"
+  );
+  assert.equal(
+    stateAfterAppleEvent("COMPRAR", "2026-10-13T17:15:00Z", "2026-10-13T16:42:00Z", "CANCELADO"),
+    "COMPRAR"
+  );
+  assert.equal(
+    stateAfterAppleEvent("COMPRAR", "2026-10-13T17:15:00Z", "2026-10-13T17:17:00Z", "COMPRADO"),
+    "COMPRADO"
+  );
 });
 
 test("a removed row does not repeat completion for an already terminal Apple reminder", () => {
