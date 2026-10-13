@@ -1,3 +1,11 @@
+## ORGANIZADOR 16 · Finance scope vs banco verificado + auditor horario (13/10/2026)
+
+- Evidencia: auditoría programada #368 de Chromium `1003 checks / 7 fallos`: 6 `FINANCE_WORKSPACE_REMOVED` y un `MIDAS CHECK-00024` ajeno. Se comprobaron dos respuestas HTTP 200 con registros del lector bancario, sin prueba aún de corrección persistente del DOM. El Worker aporta registros; no inferir pérdida de datos canónicos ni corregir Sheets.
+- Causa de software reproducible en código: `applyStateScope("finance")` sobrescribía `state.financeSummary` completo con el snapshot de presupuesto, que no es la autoridad del banco, pudiendo borrar la recuperación `/api/finance/accounts`. Rama `fix/finance-verified-snapshot-scope-20261013`: snapshot bancario **solo en RAM de esta pestaña**, confirmado exclusivamente tras lectura canónica correcta y reconciliado en la recepción del scope y en `openBudgetDetail`. No se persistirá ni copiará a GitHub. Un refresco explícito invalida el snapshot temporal para revalidar origen; el presupuesto actualizado sigue siendo autoridad en categorías e importes.
+- Tests sintéticos: pérdida de cuenta/movimiento por respuesta tardía de presupuesto, orden de llegada, protección de fuentes no verificadas y auténtico vacío verificado. CI y prueba Chromium real obligatorios antes de cerrar Finance; no convertir respuestas API 200 en PASS sin DOM.
+- Scheduler: primario GitHub `:17`, respaldo GitHub `:42`, ambos best-effort. La ausencia entre 05:52–08:30 es degradación de la **emisión de programación**, aunque la #368 sí completó Chrome. Se ajustó la tarea externa EXISTENTE `AUDITOR - SEGUNDO CEREBRO` al minuto **:45 exacto Europe/Madrid**, manteniendo su recuperación controlada de máximo una por incidencia y sin crear cron, tarea ni gasto. Separar emisión del scheduler de éxito funcional de Chromium.
+- Auditoría integral permanece ROJA hasta dos pruebas completas 0 fallos/0 5xx y las verificaciones canónicas de alcance. No tocar MIDAS ajeno salvo integración; no actualizar Sheets, D1, saldos ni secretos.
+
 ## ORGANIZADOR 16 · Auditorías 357–359 y diagnóstico privado de Finanzas · 13/10/2026
 
 - Estado integral **ROJO / NO CERRADO**: el criterio permanece dos auditorías Chromium completas independientes, cada una con 0 fallos y 0 HTTP 5xx. Ningún CI verde ni deploy correcto sustituye esa evidencia.

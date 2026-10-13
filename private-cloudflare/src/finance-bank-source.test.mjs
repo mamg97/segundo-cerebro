@@ -53,8 +53,8 @@ test("Worker and UI read bank workspace separately from full Finance and preserv
   assert.match(worker, /id: row\.account_id \|\| row\.id \|\| null/);
   assert.match(worker, /function financeBankTransactions\(/);
   assert.match(app, /fetch\("\/api\/finance\/accounts",/);
-  assert.match(app, /bankWorkspaceAccounts: workspace\.accounts/);
-  assert.match(app, /accountTransactions: workspace\.transactions/);
+  assert.match(app, /verifiedFinanceBankWorkspace = \{\s+accounts: workspace\.accounts,\s+transactions: workspace\.transactions/);
+  assert.match(app, /state\.financeSummary = mergeVerifiedFinanceBankWorkspace\(/);
   assert.match(app, /renderAccountTransactionsWorkspace\(accountTransactions, workspaceAccounts, currency\)/);
   assert.doesNotMatch(worker, /console\.warn\("Finance bank workspace read failed", String\(/);
 });

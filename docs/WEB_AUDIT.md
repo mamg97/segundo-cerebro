@@ -39,13 +39,16 @@ El watcher externo de ChatGPT debe usar este criterio y no contar como auditorí
 
 Existe además una tarea horaria externa de ChatGPT como defensa frente a una caída del emisor `schedule` de GitHub:
 
-- se ejecuta cada hora al **minuto 45**; si han pasado al menos **75 minutos** sin auditoría completa correcta y no hay otra completa en curso, relanza manualmente el job de auditoría completa más reciente del **mismo** workflow `Audit production web`;
+- su horario está configurado como **exacto** cada hora al **minuto 45** en `Europe/Madrid`; no depende del emisor `schedule` de GitHub; si han pasado al menos **75 minutos** sin auditoría completa correcta y no hay otra completa en curso, relanza manualmente el job de auditoría completa más reciente del **mismo** workflow `Audit production web`;
 - no crea ni mantiene un segundo workflow horario;
 - si la recuperación termina verde antes de los 90 minutos, no notifica;
 - al alcanzar 90 minutos sin auditoría completa correcta, o si el relanzamiento falla, genera alerta con la causa clasificada;
 - nunca modifica datos privados ni producción: solo relanza el control read-only y diagnostica.
 
 Esta tarea externa complementa el cron primario/respaldo porque ambos cron siguen dependiendo del mismo scheduler de GitHub.
+
+
+El evento `schedule` de GitHub es de **mejor esfuerzo**: dos expresiones cron no garantizan la emisión puntual, y no deben contarse como ejecuciones inexistentes. El watchdog externo horario ya existente es la defensa independiente; no crear más workflows ni acumular relanzamientos durante una misma incidencia. La fiabilidad se mide por el último paso Chromium completo (`success`/`failure`) y por la ausencia de ventanas de más de 90 minutos sin cobertura; una ejecución completa fallida es señal de alerta funcional, no prueba de scheduler caído.
 
 ## Qué se audita
 
