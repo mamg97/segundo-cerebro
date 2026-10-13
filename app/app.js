@@ -1546,35 +1546,45 @@ function renderHomeHabitsCard() {
   });
 }
 
-async function loadHomeWeeklyMenu(primaryData = null) {
-  // Nutrition summary can reuse a short-lived worker snapshot. The Home menu
-  // must prefer its own direct Sheets read so recently added companions or
-  // recipes are not silently omitted from the weekly total.
-  const hasPrimaryMenu = Array.isArray(primaryData?.weeklyMenu) && primaryData.weeklyMenu.length > 0;
-  try {
-    const response = await fetch("/api/nutrition/menu?date=" + encodeURIComponent(localDateKey()), {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-      credentials: "same-origin"
-    });
-    if (!response.ok) throw new Error("HOME_WEEKLY_MENU_" + response.status);
-    const data = await response.json();
-    if (!data?.ok || !Array.isArray(data.weeklyMenu)) throw new Error("HOME_WEEKLY_MENU_INVALID");
-    renderHomeWeeklyMenu(data);
-    return data.weeklyMenu.length > 0;
-  } catch (error) {
-    // Preserve the existing graceful fallback when the lighter Google Sheets
-    // read is unavailable; never modify or synthesize nutrition values.
-    console.warn("Home weekly menu live read unavailable", error);
-    if (hasPrimaryMenu) {
-      renderHomeWeeklyMenu(primaryData);
-      return true;
-    }
-    renderHomeWeeklyMenuUnavailable();
-    return false;
-  }
-}
+// Keep the Home card tied to a verified Sheets read. A stale full-nutrition
+// snapshot must not overwrite an updated menu when a concurrent read fails.
+let homeWeeklyMenuRequestSerial = 0;
+let homeWeeklyMenuLastVerifiedSerial = 0;
+let homeWeeklyMenuLastVerifiedDate = null;
 
+async function loadHomeWeeklyMenu(_primaryData = null) {
+  const date = localDateKey();
+  const requestSerial = ++homeWeeklyMenuRequestSerial;
+  let lastError = null;
+  // One bounded retry for an intermittent gateway/Sheets read failure.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch("/api/nutrition/menu?date=" + encodeURIComponent(date), {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      if (!response.ok) throw new Error("HOME_WEEKLY_MENU_" + response.status);
+      const data = await response.json();
+      if (!data?.ok || !Array.isArray(data.weeklyMenu)) throw new Error("HOME_WEEKLY_MENU_INVALID");
+      if (requestSerial >= homeWeeklyMenuLastVerifiedSerial || homeWeeklyMenuLastVerifiedDate !== date) {
+        homeWeeklyMenuLastVerifiedSerial = requestSerial;
+        homeWeeklyMenuLastVerifiedDate = date;
+        renderHomeWeeklyMenu(data);
+      }
+      return data.weeklyMenu.length > 0;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  console.warn("Home weekly menu live read unavailable", lastError);
+  // Another in-flight read may already have rendered a current, verified menu.
+  if (homeWeeklyMenuLastVerifiedDate === date) return true;
+  // Never silently present a potentially old full-nutrition cache as the
+  // current weekly plan: indicate unavailable until Sheets can be read.
+  if (requestSerial === homeWeeklyMenuRequestSerial) renderHomeWeeklyMenuUnavailable();
+  return false;
+}
 async function renderHomeNutritionCard() {
   const consumedNode = document.querySelector("#home-kcal-consumed");
   const burnedNode = document.querySelector("#home-kcal-burned");

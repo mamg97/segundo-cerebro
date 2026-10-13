@@ -1800,6 +1800,40 @@ try {
 
   const homeMenuVisible = await page.locator("#home-weekly-menu-panel").evaluate((node) => !node.hidden).catch(() => false);
   assertCheck(homeMenuVisible, "Menú semanal permanece visible en Home");
+
+  // Compare Home against the lightweight, direct Google Sheets endpoint.
+  // The full nutrition endpoint can legally return a short-lived cache, so
+  // matching only that payload would miss stale Home menu regressions.
+  // Only boolean/count diagnostics go to Actions logs; no private food data.
+  const liveMenuProbe = await probeApi(
+    "/api/nutrition/menu?date=" + encodeURIComponent(nutrition.body?.date || ""),
+    "Fuente directa del menú semanal",
+    { attempts: 2, waitMs: 600 }
+  );
+  const liveMenuReadable = liveMenuProbe.ok &&
+    liveMenuProbe.body?.ok === true &&
+    Array.isArray(liveMenuProbe.body?.weeklyMenu);
+  assertCheck(liveMenuReadable, "Menú Home tiene fuente directa de Sheets disponible",
+    `HTTP ${liveMenuProbe.status}`);
+  if (liveMenuReadable && homeMenuVisible) {
+    const liveVisible = liveMenuProbe.body.weeklyMenu.filter(visibleMenuRow);
+    let compared = 0;
+    let missing = 0;
+    for (const item of liveVisible) {
+      const key = menuMomentKey(item.moment || "Otro");
+      const selector = `#home-weekly-menu-content .home-weekly-menu-table-cell[data-menu-date="${item.date}"][data-menu-moment="${key}"]`;
+      const cell = page.locator(selector);
+      const matched = await cell.count() === 1 &&
+        normalizeAuditValue(await cell.textContent().catch(() => ""))
+          .includes(normalizeAuditValue(item.name || ""));
+      compared += 1;
+      if (!matched) missing += 1;
+    }
+    assertCheck(compared > 0 && missing === 0,
+      "Menú Home conserva todas las filas leídas directamente de Sheets",
+      `filas_comprobadas=${compared} faltantes=${missing}`);
+  }
+
   assertCheck(await page.locator("#ask-form").count() === 0, "Home · barra de consulta rápida retirada");
   assertCheck(await page.locator("#system-orb").count() === 1, "Home · orbe del sistema conservado");
   assertCheck(await page.locator("#home-health-card").count() === 1, "Home · tarjeta única Salud + Hábitos");
