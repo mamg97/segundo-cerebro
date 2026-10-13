@@ -17,6 +17,7 @@ import {
   visibleMenuRow
 } from "../src/web-audit-utils.js";
 import { evaluateMidasWorkflowRuns } from "../src/midas-health.js";
+import { validLegacyMidasCohort } from "../src/midas-legacy-cohort-health.js";
 
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
 // Keep this number aligned with the curated, variant-specific GIF inventory.
@@ -384,9 +385,7 @@ async function auditMidasCompetition() {
   const legacyPaper = paper.filter((row) => row.classic_sp500_cohort !== true);
   const classicSp500 = paper.filter((row) => row.classic_sp500_cohort === true);
   assertCheck(
-    legacyPaper.length === 9 &&
-      legacyPaper.every((row) => row.status === "demo_con_diario" && row.last_session &&
-        row.comparison_eligible === false),
+    validLegacyMidasCohort(legacyPaper),
     "MIDAS · estrategias diarias históricas conservan diario pero no compiten",
     `${legacyPaper.filter((row) => row.status === "demo_con_diario" && row.last_session).length}/9`
   );
