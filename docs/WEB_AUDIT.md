@@ -6,6 +6,8 @@ Cada fila con tipo `receta` y plato elegido requiere un `recipe_id` existente en
 En fallback ligero se solicita el detalle de la semana seleccionada solo al pulsar; mostrar progreso, error recuperable y retorno al mismo menú. Los acompañantes se vinculan por `food_id`; las comidas aún por decidir no llevan un enlace ficticio.
 Auditar equivalencia de los ID de receta en la API y los botones del DOM; probar apertura exacta y retorno. Conservar cantidades, macros y estados. No registrar comida privada en logs.
 
+**Evidencia real 13/10/2026:** [PR #473](https://github.com/mamg97/segundo-cerebro/pull/473) desplegada en [Cloudflare #38467765851](https://github.com/mamg97/segundo-cerebro/actions/runs/38467765851); [auditoría Chromium #38468158824 (segundo intento)](https://github.com/mamg97/segundo-cerebro/actions/runs/38468158824) verifica recuentos e ID de links, clic a ficha exacta y vuelta en Home/Salud→Menú y paridad API ligera/completa 52 filas, cero diferencias. **Resultado global = 1193 checks / 1 fallo ajeno (Objetos, 35 errores de Service Binding)**, no `AUDIT_OK` global. Primera ejecución interrumpida al comenzar Chromium (`EXEC_NETWORK`). No comprobaron individualmente todas las fichas ni el lunes 19 (otra semana).
+
 
 ### Integridad nutricional entre Google Sheets, API y Home (13/10/2026)
 
