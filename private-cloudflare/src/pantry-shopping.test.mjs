@@ -30,3 +30,56 @@ test("shopping payload exposes exact household alias and canonical product URL",
   );
   assert.deepEqual(payload.summary.previewItems, ["huevos"]);
 });
+
+test("unlinked reminder inherits a dated observed price from a unique household alias", () => {
+  const data = buildPayload([
+    {values:[["producto_id","nombre_canonico","nombres_familiares"],["sku-one","Fictitious snack packet","office snack | paper snack"]]},
+    {values:[]},
+    {values:[["producto_id","nombre","precio","base_precio","fecha_precio","fuente","ticket_id"],["sku-one","Fictitious snack packet",2.4,"€/ud","2026-03-12","ticket","receipt-example"]]},
+    {values:[]},
+    {values:[["producto_id","nombre","estado","cantidad_objetivo","unidad","precio_estimado","coste_estimado"],["","OfFiCe SnAcK","COMPRAR",2,"packs","",""]]}
+  ]);
+  assert.equal(data.shoppingList.length,1);
+  assert.equal(data.shoppingList[0].productId,"sku-one");
+  assert.equal(data.shoppingList[0].estimatedUnitPrice,2.4);
+  assert.equal(data.shoppingList[0].estimatedCost,4.8);
+  assert.equal(data.summary.estimatedBasketPartial,false);
+});
+
+test("unknown or ambiguous shopping names never get fabricated product or price", () => {
+  const data = buildPayload([
+    {values:[["producto_id","nombre_canonico","nombres_familiares"],["sku-a","Red sandwich cheese","cheese"],["sku-b","Soft white cheese","cheese"]]},
+    {values:[]},
+    {values:[["producto_id","precio"],["sku-a",2],["sku-b",3]]},
+    {values:[]},
+    {values:[["producto_id","nombre","estado"],["","Cheese","COMPRAR"],["","Completely unknown item","COMPRAR"]]}
+  ]);
+  assert.deepEqual(data.shoppingList.map(x=>x.productId),["",""]);
+  assert.deepEqual(data.shoppingList.map(x=>x.estimatedCost),[null,null]);
+  assert.equal(data.summary.missingPriceCount,2);
+});
+
+test("historical price per kilogram is displayed but does not fabricate the basket total", () => {
+  const payload = buildPayload([
+    {values:[["producto_id","nombre_canonico","nombres_familiares"],["sku-weight","Fictitious seasonal vegetable","vegetable"]]},
+    {values:[]},
+    {values:[["producto_id","precio","base_precio","fecha_precio","fuente","ticket_id"],["sku-weight",2.1,"€/kg","2026-04-08","Ticket","sample-3"]]},
+    {values:[]},
+    {values:[["producto_id","nombre","estado","cantidad_objetivo","unidad"],["","Vegetable","COMPRAR","",""]]}
+  ]);
+  assert.equal(payload.shoppingList[0].estimatedUnitPrice,2.1);
+  assert.equal(payload.shoppingList[0].priceBase,"€/kg");
+  assert.equal(payload.shoppingList[0].estimatedCost,null);
+  assert.equal(payload.summary.missingPriceCount,1);
+});
+
+test("kilogram quantity permits a transparent computed estimated cost", () => {
+  const payload = buildPayload([
+    {values:[["producto_id","nombre_canonico","nombres_familiares"],["sku-weight","Fictitious seasonal vegetable","vegetable"]]},
+    {values:[]},
+    {values:[["producto_id","precio","base_precio","fecha_precio","fuente","ticket_id"],["sku-weight",2.1,"€/kg","2026-04-08","Ticket","sample-3"]]},
+    {values:[]},
+    {values:[["producto_id","nombre","estado","cantidad_objetivo","unidad"],["","Vegetable","COMPRAR",1.5,"kg"]]}
+  ]);
+  assert.equal(payload.shoppingList[0].estimatedCost,3.1500000000000004);
+});

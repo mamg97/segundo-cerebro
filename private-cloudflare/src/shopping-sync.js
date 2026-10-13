@@ -2,6 +2,8 @@ import {
   appendPantryShoppingRow,
   ensurePantryShoppingSchema,
   fetchPantrySummary,
+  findPantryProductExact,
+  normalizePantryProductName,
   readPantryShoppingSheet,
   updatePantryShoppingRow
 } from "./pantry.js";
@@ -42,14 +44,7 @@ async function authorized(request, env) {
 }
 
 export function normalizeShoppingName(value) {
-  return String(value || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLocaleLowerCase("es")
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[^\p{L}\p{N}'%+]+/gu, " ")
-    .trim()
-    .replace(/\s+/g, " ");
+  return normalizePantryProductName(value);
 }
 
 function isoOrNull(value) {
@@ -130,12 +125,12 @@ export function planShoppingDryRun(events, shoppingRows, products = []) {
       details.push({ kind: "conflict", appleReminderId: event.reminderId, name: event.title, candidates: candidates.length });
     } else {
       appleOnly += 1;
-      const productMatches = uniqueExactMatches(products, event.normalizedName, (product) => product.name || product.nombre || "");
+      const product = findPantryProductExact(products, event.normalizedName);
       details.push({
         kind: "apple-only",
         appleReminderId: event.reminderId,
         name: event.title,
-        knownProductId: productMatches.length === 1 ? (productMatches[0].id || productMatches[0].productId || null) : null
+        knownProductId: product?.id || product?.productId || null
       });
     }
   }
@@ -290,8 +285,7 @@ function rowConflict(row, event) {
 }
 
 function findProduct(products, normalizedName) {
-  const matches = uniqueExactMatches(products, normalizedName, (product) => product.name || "");
-  return matches.length === 1 ? matches[0] : null;
+  return findPantryProductExact(products, normalizedName);
 }
 
 export function planAppleActionsForRow(row, link) {
