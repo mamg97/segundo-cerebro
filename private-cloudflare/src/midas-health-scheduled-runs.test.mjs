@@ -106,8 +106,8 @@ test("archived MIDAS campaigns remain neutral", () => {
 test("MIDAS frontend identifies retired and missing private genetic diary", () => {
   const ui = readFileSync(new URL("../../app/app.js", import.meta.url), "utf8");
   assert.match(ui,/retired: "Archivada · fuera de competición"/);
-  assert.match(ui,/genetic\?\.last_session \? "unverified" : "missing_due_run"/);
-  assert.match(ui,/row.state === "retired" \? \`<small>/);
+  assert.match(ui,/genetic\?\.last_session \? "snapshot_published" : "missing_due_run"/);
+  assert.match(ui,/\["retired", "snapshot_published"\]\.includes\(row.state\)/);
 });
 
 

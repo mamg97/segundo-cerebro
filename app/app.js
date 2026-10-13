@@ -8841,7 +8841,8 @@ function renderMidasExecutionHealth(health, dashboard) {
     failed: "Fallo",
     missing_due_run: "Ejecución ausente",
     unverified: "Sin verificación operativa",
-    retired: "Archivada · fuera de competición"
+    retired: "Archivada · fuera de competición",
+    snapshot_published: "Diario privado enlazado"
   };
   const rows = workflowRows.map((row) => ({
     label: row.name
@@ -8868,10 +8869,10 @@ function renderMidasExecutionHealth(health, dashboard) {
   }
   rows.push({
     label: "Genético S&P 500 prospectivo",
-    state: genetic?.last_session ? "unverified" : "missing_due_run",
+    state: genetic?.last_session ? "snapshot_published" : "missing_due_run",
     ok: genetic?.last_session ? null : false,
     detail: genetic?.last_session
-      ? "Snapshot privado hasta " + genetic.last_session + "; la última ejecución GitHub no se valida aquí"
+      ? "Patrimonio privado publicado hasta " + genetic.last_session + "; esta tarjeta no comprueba el entrenamiento ni las operaciones"
       : "Snapshot prospectivo ausente; la ejecución GitHub no se valida aquí",
     timestamp: null, run: null
   });
@@ -8888,7 +8889,7 @@ function renderMidasExecutionHealth(health, dashboard) {
     <div class="midas-runtime-grid">
       ${rows.map((row) => `<article class="midas-runtime-item is-${escapeHtml(row.state || "unknown")}">
         <span class="midas-runtime-dot" aria-hidden="true"></span>
-        <div><strong>${escapeHtml(row.label)}</strong><small>${escapeHtml(stateLabels[row.state] || "Estado desconocido")}${row.run ? " · run #" + escapeHtml(row.run) : ""}${row.timestamp ? " · " + escapeHtml(formatFinanceDate(row.timestamp)) : ""}</small>${row.detail ? (row.state === "retired" ? `<small>${escapeHtml(row.detail)}</small>` : `<em>${escapeHtml(row.detail)}</em>`) : ""}</div>
+        <div><strong>${escapeHtml(row.label)}</strong><small>${escapeHtml(stateLabels[row.state] || "Estado desconocido")}${row.run ? " · run #" + escapeHtml(row.run) : ""}${row.timestamp ? " · " + escapeHtml(formatFinanceDate(row.timestamp)) : ""}</small>${row.detail ? (["retired", "snapshot_published"].includes(row.state) ? `<small>${escapeHtml(row.detail)}</small>` : `<em>${escapeHtml(row.detail)}</em>`) : ""}</div>
       </article>`).join("")}
     </div>
   </section>`;
