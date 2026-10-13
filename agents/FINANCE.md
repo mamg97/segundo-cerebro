@@ -150,6 +150,8 @@ Reglas:
 - los recibos ya ejecutados se marcan terminales y no se vuelven a reservar;
 - la fuente maestra `ASUNTOS v3.xlsx` es estrictamente solo lectura;
 - el histórico bancario se conserva en `MovimientosCuenta`, con `account_id`, fecha, concepto, importe, saldo posterior y trazabilidad de importación;
+- `description_raw` conserva literalmente el concepto técnico de la entidad. `interpreted_description` (columna opcional añadida al final de `MovimientosCuenta`) recoge una interpretación legible contrastada o expresamente marcada como provisional; las interpretaciones ambiguas se dejan vacías. Nunca sustituir el original ni asignar automáticamente un importe no verificado;
+- el workspace bancario muestra en columnas separadas el concepto técnico y la interpretación del Sheet para todas las cuentas. Un valor vacío se visualiza como «Sin identificar», no como una clasificación inventada;
 - la UI presenta `MovimientosCuenta` en un único workspace con pestañas por cuenta. Las pestañas se derivan de las cuentas conectadas y del propio histórico, nunca se hardcodean; una cuenta conectada sin movimientos debe seguir apareciendo con estado vacío explícito.
 - el workspace ofrece un acceso `Abrir Sheet ↗` al spreadsheet financiero privado completo mediante `/api/source-link?target=finance-records`; `FINANCE_SHEET_ID` se resuelve solo en Worker y nunca se hardcodea ni se expone en Git.
 - un histórico bancario puede confirmar la ruta real de pago y corregir asignaciones de cuenta sin modificar el maestro.

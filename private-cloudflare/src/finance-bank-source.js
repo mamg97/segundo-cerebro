@@ -39,7 +39,7 @@ async function readFinanceBankSourceUncached(env, getAccessToken, fetcher) {
     valueRenderOption: "UNFORMATTED_VALUE"
   });
   params.append("ranges", "Cuentas!A1:J200");
-  params.append("ranges", "MovimientosCuenta!A1:M5000");
+  params.append("ranges", "MovimientosCuenta!A1:N5000");
   const endpoint = "https://sheets.googleapis.com/v4/spreadsheets/" +
     encodeURIComponent(env.FINANCE_SHEET_ID) + "/values:batchGet?" + params.toString();
 

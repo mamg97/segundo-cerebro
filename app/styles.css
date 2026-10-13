@@ -2124,7 +2124,7 @@ html[data-theme="dark"] .credit-detail-summary > article {
 
 .account-transactions-table {
   width: 100%;
-  min-width: 760px;
+  min-width: 940px;
   border-collapse: collapse;
   font-size: 10px;
 }
@@ -2144,18 +2144,30 @@ html[data-theme="dark"] .credit-detail-summary > article {
 }
 
 .account-transactions-table td:nth-child(2) {
-  max-width: 420px;
+  max-width: 330px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.account-transactions-table td:nth-child(3),
 .account-transactions-table td:nth-child(4),
-.account-transactions-table th:nth-child(3),
-.account-transactions-table th:nth-child(4) {
+.account-transactions-table td:nth-child(5),
+.account-transactions-table th:nth-child(4),
+.account-transactions-table th:nth-child(5) {
   text-align: right;
   white-space: nowrap;
+}
+
+.account-transactions-table td.account-transaction-interpretation {
+  max-width: 240px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.account-transaction-unidentified {
+  color: var(--ink-soft);
+  font-weight: 400;
 }
 
 .account-transactions-table tbody tr:last-child td { border-bottom: 0; }

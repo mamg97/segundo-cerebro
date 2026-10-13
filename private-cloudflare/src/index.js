@@ -718,6 +718,7 @@ function financeBankTransactions(rows, currency = "EUR") {
       operationDate: sheetDateOrNull(item.operation_date),
       valueDate: sheetDateOrNull(item.value_date),
       description: item.description_raw || item.description || null,
+      descriptionInterpreted: item.interpreted_description || null,
       amount: moneyOrNull(item.amount),
       balanceAfter: moneyOrNull(item.balance_after),
       currency: item.currency || currency,
@@ -821,7 +822,7 @@ async function fetchFinanceSummaryUncached(env) {
     "ECIFuturo!A1:O300",
     "EtoroAsignaciones!A1:M200",
     "PrestamoVsInversion!A1:X200",
-    "MovimientosCuenta!A1:M5000",
+    "MovimientosCuenta!A1:N5000",
     "Regalos!A1:P300"
   ];
   const [
