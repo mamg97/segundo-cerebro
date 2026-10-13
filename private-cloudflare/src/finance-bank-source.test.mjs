@@ -17,7 +17,7 @@ test("bank reader requests only two canonical ranges in one read", async () => {
     requests++;
     const parsed = new URL(url);
     assert.deepEqual(parsed.searchParams.getAll("ranges"), [
-      "Cuentas!A1:J200", "MovimientosCuenta!A1:M5000"
+      "Cuentas!A1:J200", "MovimientosCuenta!A1:N5000"
     ]);
     assert.equal(opts.headers.Authorization, "Bearer fake-token");
     return responseWith([{ values: fakeAccounts }, { values: fakeMovements }]);
@@ -52,6 +52,8 @@ test("Worker and UI read bank workspace separately from full Finance and preserv
   assert.match(worker, /bankWorkspaceAccounts: financeBankAccountCatalog\(accountRows/);
   assert.match(worker, /id: row\.account_id \|\| row\.id \|\| null/);
   assert.match(worker, /function financeBankTransactions\(/);
+  assert.match(worker, /descriptionInterpreted: item\.interpreted_description \|\| null/);
+  assert.match(app, /<th>Interpretación<\/th>/);
   assert.match(app, /fetch\("\/api\/finance\/accounts",/);
   assert.match(app, /verifiedFinanceBankWorkspace = \{\s+accounts: workspace\.accounts,\s+transactions: workspace\.transactions/);
   assert.match(app, /state\.financeSummary = mergeVerifiedFinanceBankWorkspace\(/);
