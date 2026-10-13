@@ -90,3 +90,34 @@ test("older weeks are not silently overwritten by a nutrition-day refresh", () =
   assert.match(ui, /healthMenuViewData = data;/);
   assert.match(app, /healthMenuSelectedWeek = null;/);
 });
+
+test("a recipe ID always yields a clickable title/action even without hydrated recipe data", () => {
+  const start = app.indexOf("function renderWeeklyMenuEntityAction(");
+  const end = app.indexOf("function renderWeeklyMenuIngredients(", start);
+  const titleStart = app.indexOf("function renderWeeklyMenuItemTitle(");
+  const titleEnd = app.indexOf("function renderWeeklyMenuStructureWarning(", titleStart);
+  assert.ok(start >= 0 && end > start && titleStart >= 0 && titleEnd > titleStart);
+  const context = { escapeHtml: (value) => String(value) };
+  vm.createContext(context);
+  vm.runInContext(app.slice(start, end) + app.slice(titleStart, titleEnd) +
+    "\nresult = [renderWeeklyMenuEntityAction({recipeId:'rec-sample',name:'Demo',recipe:null}), renderWeeklyMenuItemTitle({recipeId:'rec-sample',name:'Demo',recipe:null})];", context);
+  assert.match(context.result[0], /data-menu-recipe-open="rec-sample"/);
+  assert.match(context.result[1], /data-menu-recipe-open="rec-sample"/);
+  assert.doesNotMatch(context.result.join(" "), /Receta vinculada pendiente de cargar/);
+});
+
+test("menu recipe fallback fetches only the requested week on click and gives retry feedback", () => {
+  const start = app.indexOf("async function openLinkedMenuRecipe(");
+  const end = app.indexOf("function menuWeekNavigationMarkup(", start);
+  const section = app.slice(start, end);
+  assert.ok(start > 0 && end > start);
+  assert.match(section, /data-menu-recipe-open/);
+  assert.match(section, /healthMenuSelectedWeek/);
+  assert.match(section, /fetch\("\/api\/nutrition\?date="/);
+  assert.match(section, /credentials: "same-origin"/);
+  assert.match(section, /cache: "no-store"/);
+  assert.match(section, /renderRecipeDetail\(recipesPanel, payload, recipe/);
+  assert.match(section, /renderMenuPanel\(data, \{ historicalFetch: true \}\)/);
+  assert.match(section, /No se pudo abrir la receta. Pulsa de nuevo para reintentar/);
+  assert.doesNotMatch(section, /if \(!recipe \|\| !recipesPanel\) return/);
+});
