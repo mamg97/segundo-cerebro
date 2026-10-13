@@ -15485,9 +15485,8 @@ html[data-theme="dark"] .liquidity-svg-base {
 
 /* MIDAS workspace tabs + compact competition/detail */
 .midas-workspace-tabs {
-  position: sticky;
-  top: 0;
-  z-index: 4;
+  /* Scroll naturally with the dialog, never cover strategy rows or headers. */
+  position: static;
   display: flex;
   gap: 6px;
   width: 100%;
