@@ -183,7 +183,7 @@ The shared Apple list is the daily interface for confirmed purchases and `ListaC
 - `COMPRADO` maps to completed.
 - `CANCELADO` is terminal; the implementation completes rather than destructively deletes when writing to Apple.
 - Completion never increments inventory.
-- Apple titles stay clean; product, format, price, store and reason remain in Pantry.
+- Apple titles stay clean. `cantidad_objetivo` + `unidad` may mirror into the reminder notes, and the canonical Mercadona product URL (or a safe Mercadona search URL when the SKU is unknown) may mirror into the reminder URL field. Product identity, price, store and reason remain authoritative in Pantry.
 - Unknown Apple products are valid rows with empty price and optional provisional `producto_id`; never invent a price.
 - Identity uses EventKit IDs after first link. Before fuzzy matching an unlinked reminder, normalize its title and resolve it against `Productos.nombre_canonico` plus every alias in `Productos.nombres_familiares`; a unique exact alias match is authoritative. Fuzzy matching is only a last-resort migration/deduplication aid and must not override an exact household alias.
 
