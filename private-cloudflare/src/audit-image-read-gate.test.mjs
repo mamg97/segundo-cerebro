@@ -3,12 +3,12 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createAuditImageReadGate } from "../scripts/audit-image-read-gate.mjs";
 
-test("private image cold reads are at most three simultaneous", async () => {
-  const gate = createAuditImageReadGate(3);
+test("private image cold reads are at most two simultaneous", async () => {
+  const gate = createAuditImageReadGate(2);
   let live = 0;
   let max = 0;
   const pending = [];
-  const jobs = Array.from({ length: 9 }, (_, i) => gate.run(async () => {
+  const jobs = Array.from({ length: 8 }, (_, i) => gate.run(async () => {
     live++;
     max = Math.max(max, live);
     await new Promise((resolve) => { pending.push(resolve); });
@@ -16,15 +16,15 @@ test("private image cold reads are at most three simultaneous", async () => {
     return i;
   }));
   await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(live, 3);
+  assert.equal(live, 2);
   assert.equal(gate.stats().waiting, 6);
-  for (let i = 0; i < 9; i += 3) {
+  for (let i = 0; i < 8; i += 2) {
     while (pending.length) pending.shift()();
     await new Promise((resolve) => setImmediate(resolve));
   }
-  assert.deepEqual(await Promise.all(jobs), [0,1,2,3,4,5,6,7,8]);
-  assert.equal(max, 3);
-  assert.deepEqual(gate.stats(), { active: 0, peak: 3, waiting: 0, limit: 3 });
+  assert.deepEqual(await Promise.all(jobs), [0,1,2,3,4,5,6,7]);
+  assert.equal(max, 2);
+  assert.deepEqual(gate.stats(), { active: 0, peak: 2, waiting: 0, limit: 2 });
 });
 
 test("a failed image read never blocks the next read or masks its 502", async () => {
@@ -39,7 +39,7 @@ test("a failed image read never blocks the next read or masks its 502", async ()
 
 test("the audit uses capped reads only for eligible immutable private images", () => {
   const code = readFileSync(new URL("../scripts/web-audit.mjs", import.meta.url), "utf8");
-  assert.match(code, /const imageReadGate = createAuditImageReadGate\(3\)/);
+  assert.match(code, /const imageReadGate = createAuditImageReadGate\(2\)/);
   assert.match(code, /immutableImageCache\.once\(request\.url\(\), async \(\) => imageReadGate\.run/);
   assert.match(code, /if \(!immutableImageCache\.canHandle\(request\.url\(\), auditOrigin, request\.method\(\)\)\)/);
   assert.match(code, /const response = await route\.fetch\(\{ headers, timeout: 25000 \}\)/);
