@@ -6,7 +6,8 @@ import {
   planAppleActionsForRow,
   planShoppingDryRun,
   shoppingReminderDetails,
-  stateAfterMissingAppleReminder
+  stateAfterMissingAppleReminder,
+  supportsShoppingReminderDetails
 } from "./shopping-sync.js";
 
 function row(rowNumber, values) {
@@ -85,10 +86,34 @@ test("a changed active purchase refreshes title, quantity notes and URL in one A
         apple_missing: 0,
         apple_title: "Huevos",
         last_synced_at: "2026-10-13T15:00:00Z"
-      }
+      },
+      { supportsDetails: true }
     ),
     [{ type: "updateDetails", desiredCompleted: null }]
   );
+});
+
+test("legacy agents keep the old title-only action while 1.1+ supports details", () => {
+  const row = {
+    state: "COMPRAR",
+    normalizedName: "cafe",
+    secondBrainModifiedAt: "2026-10-13T16:06:00Z"
+  };
+  const link = {
+    apple_completed: 0,
+    apple_missing: 0,
+    apple_title: "Café",
+    last_synced_at: "2026-10-13T15:00:00Z"
+  };
+  assert.deepEqual(planAppleActionsForRow(row, link), [{ type: "updateTitle", desiredCompleted: null }]);
+  assert.deepEqual(
+    planAppleActionsForRow(row, link, { supportsDetails: true }),
+    [{ type: "updateDetails", desiredCompleted: null }]
+  );
+  assert.equal(supportsShoppingReminderDetails("1.0.0"), false);
+  assert.equal(supportsShoppingReminderDetails("1.1.0"), true);
+  assert.equal(supportsShoppingReminderDetails("2.0.0"), true);
+  assert.equal(supportsShoppingReminderDetails(""), false);
 });
 
 test("shopping reminder details expose purchase quantity and exact Mercadona URL", () => {
