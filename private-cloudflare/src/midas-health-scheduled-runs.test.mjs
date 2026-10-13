@@ -86,7 +86,7 @@ test("older 8-stock and IBEX workflows are retired after S&P500 migration", () =
 
 test("successful TimesFM execution is visible within the grace window", () => {
   const now = Date.parse("2026-10-13T06:45:00Z");
-  const action = {name: "MIDAS TimesFM EUR one-day signal",
+  const action = {name: "MIDAS TimesFM 2.5 EUR daily 1-session signal",
     event: "schedule", created_at: "2026-10-13T04:38:33Z",
     status: "completed", conclusion: "success", run_number: 4};
   const done = evaluateMidasWorkflowRuns([action], now);
@@ -121,4 +121,29 @@ test("production auditor recognizes both immutable classic cohorts instead of as
   assert.doesNotMatch(audit, /paper\.length === 9 && paper\.every/);
   assert.match(api, /classic_sp500_cohort: row\.classic_sp500_cohort === true/);
   assert.match(api, /\["timesfm_demo", "timesfm_daily_demo"\]\.includes\(row\.group\)/);
+});
+
+test("the new TimesFM workflow name matches the real upstream GitHub schedule", () => {
+  const upstreamName = "MIDAS TimesFM 2.5 EUR daily 1-session signal";
+  const historicalAlias = "MIDAS TimesFM EUR one-day signal";
+  const now = Date.parse("2026-10-13T12:10:00Z");
+  const scheduled = [{
+    name: upstreamName, event: "schedule",
+    created_at: "2026-10-13T04:38:33Z",
+    status: "completed", conclusion: "success", run_number: 34
+  }];
+  const result = evaluateMidasWorkflowRuns(scheduled, now);
+  const workflow = result.workflows.find(item => item.name === upstreamName);
+  assert.ok(workflow, "canonical upstream workflow must be monitored");
+  assert.equal(workflow.state, "success");
+  assert.equal(workflow.ok, true);
+  assert.equal(workflow.latest.run_number, 34);
+  assert.equal(result.workflows.some(item => item.name === historicalAlias), false,
+    "outdated workflow name must not trigger a synthetic missing-run alert");
+  const absent = evaluateMidasWorkflowRuns([], now).workflows.find(item => item.name === upstreamName);
+  assert.equal(absent.ok, false, "genuinely absent schedule must remain a failure");
+  assert.equal(absent.state, "missing_due_run");
+  const failed = evaluateMidasWorkflowRuns(scheduled.map(x => ({ ...x, conclusion: "failure" })), now)
+    .workflows.find(item => item.name === upstreamName);
+  assert.equal(failed.ok, false, "failed upstream schedule cannot pass");
 });
