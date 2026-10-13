@@ -20,11 +20,14 @@ test("web audit reconciles transient failures again after UI revalidation", () =
 });
 
 
-test("Pantry backend retries transient Google Sheets reads", async () => {
+test("Pantry backend uses retrying reads and safe idempotent PUT on Sheets 429", async () => {
   const backend = await readFile(new URL("../private-cloudflare/src/pantry.js", import.meta.url), "utf8");
-  assert.match(backend, /for \(let attempt = 1; attempt <= 3; attempt \+= 1\)/);
-  assert.match(backend, /response\.status !== 429 && response\.status < 500/);
-  assert.match(backend, /setTimeout\(resolve, 250 \* attempt\)/);
+  assert.match(backend, /import \{ googleReadFetch \} from "\.\/google-read\.js"/);
+  assert.match(backend, /const response = await googleReadFetch\(/);
+  assert.match(backend, /method === "GET"/);
+  assert.match(backend, /method === "PUT"/);
+  assert.match(backend, /response\.status !== 429/);
+  assert.match(backend, /POST append is not retried/);
 });
 
 test("Pantry renders private receipts without inventing home inventory", () => {

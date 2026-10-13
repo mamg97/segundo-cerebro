@@ -358,6 +358,12 @@ export function stateAfterMissingAppleReminder(currentState) {
   return cleanState(currentState) === "COMPRADO" ? "COMPRADO" : "CANCELADO";
 }
 
+// A transient Sheets failure can happen after the D1 event is registered but
+// before it is applied to the canonical Sheet. That same event must be replayed.
+export function shouldReplayShoppingEvent(status) {
+  return status === "received";
+}
+
 async function processAppleEvents(request, env, getGoogleAccessToken) {
   let body;
   try { body = await request.json(); }
@@ -389,26 +395,34 @@ async function processAppleEvents(request, env, getGoogleAccessToken) {
     report.segundoCerebroOnly, report.potentialConflicts
   ).run();
 
+  try {
   let links = await allLinks(env);
   const rows = sheet.rows.map(recordFromRow);
   const result = { created: 0, updated: 0, linked: 0, conflicts: 0, ignored: 0 };
 
   for (const event of events) {
     const idempotencyKey = await sha256(event.eventId);
-    const eventRecordId = "shopping_event_" + crypto.randomUUID();
+    let eventRecordId = "shopping_event_" + crypto.randomUUID();
     const inserted = await env.DB.prepare(`
       INSERT OR IGNORE INTO shopping_sync_events (
         id, idempotency_key, event_type, apple_reminder_id, status, received_at
       ) VALUES (?, ?, ?, ?, 'received', ?)
     `).bind(eventRecordId, idempotencyKey, event.deleted ? "deleted" : "snapshot", event.reminderId, now).run();
     if (!inserted.meta?.changes) {
-      await env.DB.prepare(`
-        UPDATE shopping_sync_links
-        SET last_seen_run_id = ?, apple_missing = 0, updated_at = ?
-        WHERE apple_reminder_id = ? OR (? IS NOT NULL AND apple_external_identifier = ?)
-      `).bind(runId, now, event.reminderId, event.externalIdentifier, event.externalIdentifier).run();
-      result.ignored += 1;
-      continue;
+      const previous = await env.DB.prepare(
+        "SELECT id, status FROM shopping_sync_events WHERE idempotency_key = ?"
+      ).bind(idempotencyKey).first();
+      if (shouldReplayShoppingEvent(previous?.status)) {
+        eventRecordId = previous.id;
+      } else {
+        await env.DB.prepare(`
+          UPDATE shopping_sync_links
+          SET last_seen_run_id = ?, apple_missing = 0, updated_at = ?
+          WHERE apple_reminder_id = ? OR (? IS NOT NULL AND apple_external_identifier = ?)
+        `).bind(runId, now, event.reminderId, event.externalIdentifier, event.externalIdentifier).run();
+        result.ignored += 1;
+        continue;
+      }
     }
 
     const linked = links.find((item) =>
@@ -556,6 +570,20 @@ async function processAppleEvents(request, env, getGoogleAccessToken) {
     UPDATE shopping_sync_runs SET completed_at = ?, conflict_count = ?, status = 'completed' WHERE id = ?
   `).bind(new Date().toISOString(), result.conflicts, runId).run();
   return json({ ok: true, dryRun: false, runId, report, result });
+  } catch (error) {
+    const reason = String(error?.message || "");
+    const errorCode = /^[A-Z0-9_]+$/.test(reason) ? reason : "SHOPPING_SYNC_FAILED";
+    try {
+      await env.DB.prepare(`
+        UPDATE shopping_sync_runs
+        SET status = 'failed', completed_at = ?, error = ?
+        WHERE id = ? AND status = 'running'
+      `).bind(new Date().toISOString(), errorCode, runId).run();
+    } catch {
+      // Preserve the original error for the API caller.
+    }
+    throw error;
+  }
 }
 
 async function queueAction(env, action) {

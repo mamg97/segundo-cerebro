@@ -169,6 +169,12 @@ npm run reminders:install -- --start
 npm run reminders:sync
 ```
 
+## Recuperación ante límite de Google Sheets (429)
+
+Si el agente recibe `502: GOOGLE_SHEETS_429`, el servicio Sheets está aplicando una limitación temporal; no significa que se hayan perdido los permisos de Apple ni que deban regenerarse los tokens. Las lecturas y las escrituras `PUT` idempotentes realizan reintentos breves; los `POST` de anexado no se reintentan ciegamente para evitar duplicados. Un evento registrado en D1 como `received` pero no terminado se reprocesa en una instantánea posterior; las ejecuciones iniciadas que fallen después de crear el registro pasan a `failed`, no permanecen ficticiamente en `running`.
+
+**Operación:** no reinstalar ni reconfigurar por un 429; dejar pasar al menos 2 minutos para la recuperación de cuota, consultar `npm run reminders:status` y ejecutar una sola vez `npm run reminders:sync` si no hay una sincronización `completed` posterior. El agente también reintenta cada 90 segundos cuando el Mac está activo. `Pendientes Apple: 0` no es prueba de que las cantidades y URLs se hayan escrito: comprobar una muestra en Notas y URL en el iPhone.
+
 ## Diagnóstico
 
 ```sh
