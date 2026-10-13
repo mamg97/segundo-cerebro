@@ -4933,9 +4933,8 @@ function renderWeeklyMenuEntityAction(item) {
     ? `<button class="weekly-menu-entity-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}">Ver alimento en Despensa <span aria-hidden="true">→</span></button>`
     : "";
   if (recipeId) {
-    if (!item?.recipe) {
-      return '<span class="weekly-menu-sync-note">Receta vinculada pendiente de cargar</span>' + pantryAction;
-    }
+    // A linked recipe stays actionable during the lightweight API fallback:
+    // the detail is loaded on demand, not hidden because hydration is pending.
     return `
       <button class="weekly-menu-entity-link" type="button" data-menu-recipe-open="${escapeHtml(recipeId)}">
         Abrir receta <span aria-hidden="true">→</span>
@@ -5058,7 +5057,7 @@ function renderWeeklyMenuItemTitle(item, interactive = true) {
   const recipeId = String(item?.recipeId || "").trim();
   const pantryProductId = String(item?.pantryProductId || "").trim();
   const foodId = String(item?.foodId || "").trim();
-  if (recipeId && item?.recipe) {
+  if (recipeId) {
     const pantryLink = foodId && pantryProductId && item?.pantrySyncStatus === "linked"
       ? `<button class="weekly-menu-title-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}" aria-label="Abrir alimento en Despensa: ${label}">Despensa <span aria-hidden="true">↗</span></button>`
       : "";
@@ -5250,25 +5249,68 @@ async function openMenuPantryProduct(panel, data, productId) {
   }
 }
 
-function bindMenuEntityLinks(panel, data) {
-  const recipes = Array.isArray(data?.recipes) ? data.recipes : [];
+async function openLinkedMenuRecipe(panel, data, recipeId, button) {
+  let payload = data;
+  let recipe = (Array.isArray(data?.recipes) ? data.recipes : [])
+    .find((candidate) => String(candidate?.id || "") === String(recipeId));
 
+  if (!recipe) {
+    // A lightweight menu still carries canonical recipe IDs, but not the
+    // ingredients. Fetch the full selected week only when the link is clicked.
+    button.textContent = "Cargando receta…";
+    const selected = healthMenuSelectedWeek ||
+      menuWeekMonday(data?.weekStart || data?.date || localDateKey());
+    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(selected) + "&refresh=1", {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("MENU_RECIPE_READ_" + response.status);
+    payload = await response.json();
+    recipe = (Array.isArray(payload?.recipes) ? payload.recipes : [])
+      .find((candidate) => String(candidate?.id || "") === String(recipeId));
+  }
+  if (!recipe) throw new Error("MENU_RECIPE_NOT_FOUND");
+  if (!button.isConnected || !panel.isConnected) return;
+  const recipesPanel = document.querySelector("#recipes-panel");
+  if (!recipesPanel) throw new Error("MENU_RECIPE_PANEL_MISSING");
+  document.querySelector('[data-health-tab="recipes"]')?.click();
+  renderRecipeDetail(recipesPanel, payload, recipe, {
+    backLabel: "← Volver al menú",
+    onBack: () => {
+      document.querySelector('[data-health-tab="menu"]')?.click();
+      renderMenuPanel(data, { historicalFetch: true });
+    }
+  });
+  recipesPanel.scrollIntoView({ block: "start", behavior: "smooth" });
+}
+
+function bindMenuEntityLinks(panel, data) {
   panel.querySelectorAll("[data-menu-recipe-open]").forEach((button) => {
     button.addEventListener("click", () => {
+      if (button.disabled) return;
+      button.disabled = true;
+      const originalMarkup = button.innerHTML;
+      panel.querySelectorAll("[data-menu-recipe-error]").forEach((node) => node.remove());
       const recipeId = String(button.dataset.menuRecipeOpen || "");
-      const recipe = recipes.find((candidate) => String(candidate.id || "") === recipeId);
-      const recipesPanel = document.querySelector("#recipes-panel");
-      if (!recipe || !recipesPanel) return;
-
-      document.querySelector('[data-health-tab="recipes"]')?.click();
-      renderRecipeDetail(recipesPanel, data, recipe, {
-        backLabel: "← Volver al menú",
-        onBack: () => {
-          document.querySelector('[data-health-tab="menu"]')?.click();
-          renderMenuPanel(data);
-        }
-      });
-      recipesPanel.scrollIntoView({ block: "start", behavior: "smooth" });
+      void openLinkedMenuRecipe(panel, data, recipeId, button)
+        .catch((error) => {
+          console.warn("Weekly menu recipe detail temporarily unavailable", String(error?.message || "UNAVAILABLE"));
+          if (button.isConnected) {
+            const notice = document.createElement("span");
+            notice.dataset.menuRecipeError = "";
+            notice.className = "weekly-menu-sync-note is-warning";
+            notice.setAttribute("role", "status");
+            notice.textContent = "No se pudo abrir la receta. Pulsa de nuevo para reintentar.";
+            button.after(notice);
+          }
+        })
+        .finally(() => {
+          if (button.isConnected) {
+            button.innerHTML = originalMarkup;
+            button.disabled = false;
+          }
+        });
     });
   });
 
@@ -5686,12 +5728,14 @@ async function openHomeWeeklyMenuRecipe(data, recipeId) {
 function bindHomeWeeklyMenuRecipeLinks(content, data) {
   content.querySelectorAll("[data-home-menu-recipe-open]").forEach((button) => {
     button.addEventListener("click", () => {
+      if (button.disabled) return;
       button.disabled = true;
       void openHomeWeeklyMenuRecipe(data, button.dataset.homeMenuRecipeOpen)
         .catch((error) => {
-          console.warn("Home weekly menu recipe open failed", error);
-          button.disabled = false;
-        });
+          console.warn("Home weekly menu recipe open failed", String(error?.message || "UNAVAILABLE"));
+          if (button.isConnected) button.title = "No se pudo abrir. Pulsa para reintentar";
+        })
+        .finally(() => { if (button.isConnected) button.disabled = false; });
     });
   });
 }
