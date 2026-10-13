@@ -162,6 +162,11 @@ jobs:
           echo "::add-mask::$TOKEN"
           echo "AUDIT_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
+      - name: Check live weekly nutrition source parity
+        if: ${{ steps.cadence.outputs.run_audit == 'true' }}
+        working-directory: private-cloudflare
+        run: node scripts/audit-nutrition-live-parity.mjs
+
       - name: Navigate and audit production
         if: ${{ steps.cadence.outputs.run_audit == 'true' }}
         working-directory: private-cloudflare
