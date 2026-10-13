@@ -121,6 +121,11 @@ test("unexpected Chromium abort reasons are finite codes and never include priva
 test("visual overlap diagnostics classify structural elements without user data", () => {
   assert.equal(safeAuditVisualOverlapCode("dialog-close ↔ dialog-title-text"), "DIALOG_CLOSE_TITLE");
   assert.equal(safeAuditVisualOverlapCode(".account-transactions-tabs: .a ↔ .b"), "FINANCE_ACCOUNT_TABS");
+  assert.equal(safeAuditVisualOverlapCode("div.account-transactions-tabs: button.a ↔ button.b"), "FINANCE_ACCOUNT_TABS");
+  assert.equal(safeAuditVisualOverlapCode("div.liquidity-account-legend.leader-count-8: em ↔ small"), "FINANCE_LIQUIDITY_ROWS");
+  assert.equal(safeAuditVisualOverlapCode("header.topbar.is-sticky: div.a ↔ div.b"), "TOPBAR");
+  assert.equal(safeAuditVisualOverlapCode("section.account-transactions-tabs-mobile: A ↔ B"), "OTHER");
+  assert.equal(safeAuditVisualOverlapCode("div.sensitive-account-name: private-user@example.com"), "OTHER");
   assert.equal(safeAuditVisualOverlapCode("liquidity-account-legend: texto fila 1 ↔ fila 2"), "FINANCE_LIQUIDITY_ROWS");
   assert.equal(safeAuditVisualOverlapCode(".health-tabs: item ↔ item"), "HEALTH_TABS");
   assert.equal(safeAuditVisualOverlapCode("persona@example.com ↔ token privado"), "OTHER");

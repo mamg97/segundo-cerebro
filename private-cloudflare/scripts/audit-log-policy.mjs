@@ -124,25 +124,30 @@ const failureFamilies = [
 export function safeAuditVisualOverlapCode(overlap) {
   const value = String(overlap || "");
   if (value === "dialog-close ↔ dialog-title-text") return "DIALOG_CLOSE_TITLE";
-  if (value.startsWith("liquidity-account-legend:") ||
-      value.startsWith(".liquidity-account-legend:")) return "FINANCE_LIQUIDITY_ROWS";
-  const containers = [
-    [".account-transactions-tabs:", "FINANCE_ACCOUNT_TABS"],
-    [".topbar:", "TOPBAR"],
-    [".top-actions:", "TOP_ACTIONS"],
-    [".health-tabs:", "HEALTH_TABS"],
-    [".daily-card-heading:", "DAILY_HEADING"],
-    [".weekly-menu-meal-main:", "WEEKLY_MENU"],
-    [".weekly-menu-day:", "WEEKLY_MENU"],
-    [".recipe-card-body:", "RECIPES"],
-    [".recipe-ingredients:", "RECIPES"],
-    [".pantry-view-nav:", "PANTRY_TABS"],
-    [".objects-tabs:", "OBJECTS_TABS"],
-    [".projects-tabs:", "PROJECTS_TABS"],
-    [".events-tabs:", "EVENTS_TABS"],
-    [".area-nav:", "AREA_NAV"]
+  // The live Chromium probe's shortName() emits e.g. "div.account-transactions-tabs"
+  // (not just ".account-transactions-tabs"), possibly with a second CSS class.
+  // Parse only the container before ':', never inspect or log private child text.
+  const container = value.split(":", 1)[0];
+  const dot = container.indexOf(".");
+  const classes = dot >= 0 ? container.slice(dot + 1).split(".") : [container];
+  const categories = [
+    ["liquidity-account-legend", "FINANCE_LIQUIDITY_ROWS"],
+    ["account-transactions-tabs", "FINANCE_ACCOUNT_TABS"],
+    ["topbar", "TOPBAR"],
+    ["top-actions", "TOP_ACTIONS"],
+    ["health-tabs", "HEALTH_TABS"],
+    ["daily-card-heading", "DAILY_HEADING"],
+    ["weekly-menu-meal-main", "WEEKLY_MENU"],
+    ["weekly-menu-day", "WEEKLY_MENU"],
+    ["recipe-card-body", "RECIPES"],
+    ["recipe-ingredients", "RECIPES"],
+    ["pantry-view-nav", "PANTRY_TABS"],
+    ["objects-tabs", "OBJECTS_TABS"],
+    ["projects-tabs", "PROJECTS_TABS"],
+    ["events-tabs", "EVENTS_TABS"],
+    ["area-nav", "AREA_NAV"]
   ];
-  return containers.find(([prefix]) => value.startsWith(prefix))?.[1] || "OTHER";
+  return categories.find(([className]) => classes.includes(className))?.[1] || "OTHER";
 }
 
 export function safeAuditNetworkFailureCode(entry) {
