@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mjs";
+import { createAuditImageReadGate } from "./audit-image-read-gate.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
 import { settleAuditDiagnostics } from "./audit-bounded-settle.mjs";
 import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode } from "./audit-log-policy.mjs";
@@ -106,6 +107,7 @@ const page = await context.newPage();
 const auditOrigin = new URL(baseUrl).origin;
 
 const immutableImageCache = createAuditImmutableImageCache();
+const imageReadGate = createAuditImageReadGate(3);
 await page.route(`${auditOrigin}/**`, async (route) => {
   const request = route.request();
   const freshToken = await getAuditToken();
@@ -126,14 +128,17 @@ await page.route(`${auditOrigin}/**`, async (route) => {
   try {
     // Concurrent requests for the same version must share the first real
     // fetch. Otherwise a cold browser view bypasses the cache 20+ times.
-    const live = await immutableImageCache.once(request.url(), async () => {
+    const live = await immutableImageCache.once(request.url(), async () => imageReadGate.run(async () => {
+      // Reading large D1-backed private look images in dozens of overlapping
+      // requests can exhaust the audit gateway's Service Binding capacity.
+      // Cap simultaneous distinct cold reads; still fail closed on real 5xx.
       const response = await route.fetch({ headers, timeout: 25000 });
       const body = await response.body();
       if (response.status() === 200) {
         immutableImageCache.put(request.url(), response.status(), response.headers(), body);
       }
       return { response, body };
-    });
+    }));
     await route.fulfill(live);
   } catch {
     // Fail closed: a failed first read remains a real audit network failure.
@@ -2985,7 +2990,8 @@ try {
   console.log("[AUDIT_MEDIA_CACHE] " +
     (mediaStats.hits + mediaStats.shared > 0 ? "REUSED" : "NO_REUSE") +
     " hits=" + mediaStats.hits + " shared=" + mediaStats.shared +
-    " entries=" + mediaStats.entries);
+    " entries=" + mediaStats.entries +
+    " peak_image_reads=" + imageReadGate.stats().peak);
   const backendDiagnostics = await settleAuditDiagnostics(private502DiagnosticsPending);
   if (backendDiagnostics.timedOut) {
     // A response-body read hung or was aborted. Never hold Chromium to the
