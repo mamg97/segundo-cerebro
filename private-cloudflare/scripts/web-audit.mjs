@@ -109,7 +109,9 @@ const page = await context.newPage();
 const auditOrigin = new URL(baseUrl).origin;
 
 const immutableImageCache = createAuditImmutableImageCache();
-const imageReadGate = createAuditImageReadGate(3);
+// Bound distinct cold reads more aggressively after intermittent gateway 502.
+// Leave HTTP failure classification, timeout and immutable cache unchanged.
+const imageReadGate = createAuditImageReadGate(2);
 await page.route(`${auditOrigin}/**`, async (route) => {
   const request = route.request();
   const freshToken = await getAuditToken();
