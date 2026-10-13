@@ -22,10 +22,15 @@ function signature(row) {
   const who = row.recipeId ? "recipe:" + normalize(row.recipeId) :
     row.foodId ? "food:" + normalize(row.foodId) :
     "label:" + normalize(row.name);
+  // Compare the four macros, state and typed recipe/companion roles.
+  // The signature stays in memory; never print per-row private values.
+  const macro = (value) => value == null || value === ""
+    ? "null"
+    : Number.isFinite(Number(value)) ? Number(value).toFixed(3) : "invalid";
   return [
     row.date, normalize(row.moment), who,
-    row.kcal === null ? "null" : Number(row.kcal).toFixed(3),
-    row.protein === null ? "null" : Number(row.protein).toFixed(3)
+    normalize(row.status), normalize(row.itemRole), normalize(row.companionType),
+    macro(row.kcal), macro(row.protein), macro(row.carbs), macro(row.fat)
   ].join("|");
 }
 async function fetchApi(route) {
