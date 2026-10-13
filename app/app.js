@@ -5281,6 +5281,7 @@ function menuWeekNavigationMarkup(week) {
         <button type="button" data-menu-week-step="1" aria-label="Ver semana siguiente"
           title="Semana siguiente" ${nextAllowed ? "" : "disabled"}>›</button>
         <button type="button" data-menu-week-current ${selected === current ? "disabled" : ""}>Esta semana</button>
+        <button type="button" data-menu-week-refresh aria-label="Actualizar menú desde Google Sheets" title="Actualizar menú">Actualizar</button>
       </div>
       <p id="menu-week-error" class="weekly-menu-week-error" role="status" hidden></p>
     </nav>`;
@@ -5333,7 +5334,8 @@ async function loadHistoricalMenuWeek(dayKey, options = {}) {
     let weekly;
     let fullError = null;
     try {
-      const response = await fetch("/api/nutrition?date=" + encodeURIComponent(selected), {
+      const response = await fetch("/api/nutrition?date=" + encodeURIComponent(selected) +
+        (options.force ? "&refresh=1" : ""), {
         headers: { Accept: "application/json" },
         credentials: "same-origin", cache: "no-store"
       });
@@ -5395,6 +5397,10 @@ function bindMenuWeekNavigation(panel) {
     go(event.target.value));
   panel.querySelector("[data-menu-week-current]")?.addEventListener("click", () =>
     go(menuWeekMonday(localDateKey())));
+  panel.querySelector("[data-menu-week-refresh]")?.addEventListener("click", () => {
+    if (healthMenuLoading) return;
+    void loadHistoricalMenuWeek(healthMenuSelectedWeek, { force: true });
+  });
 }
 
 function renderMenuPanel(data, options = {}) {
