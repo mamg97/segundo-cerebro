@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cloneProxyHeaders, proxyAuditUpstream, validateAuditClaims } from "./web-audit-gateway.js";
+import { cloneProxyHeaders, createAuditJwksKeyResolver, proxyAuditUpstream, validateAuditClaims, verifyAuditOidc } from "./web-audit-gateway.js";
 
 const now = Date.parse("2026-09-30T21:00:00Z");
 const epoch = Math.floor(now / 1000);
@@ -114,4 +114,86 @@ test("gateway distinguishes proxy response construction throw without exposing e
   assert.deepEqual(await result.json(), {
     ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic: "AUDIT_GATEWAY_RESPONSE_FAILED"
   });
+});
+
+async function syntheticAuditJwt(kid, claims, signingKey) {
+  const enc = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  const unsigned = enc({ alg: "RS256", kid }) + "." + enc(claims);
+  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", signingKey, new TextEncoder().encode(unsigned));
+  return unsigned + "." + Buffer.from(signature).toString("base64url");
+}
+
+async function syntheticJwksKey(kid) {
+  const pair = await crypto.subtle.generateKey(
+    { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+    true, ["sign", "verify"]
+  );
+  return { privateKey: pair.privateKey, publicJwk: { ...(await crypto.subtle.exportKey("jwk", pair.publicKey)), kid, use: "sig" } };
+}
+
+test("OIDC verifies each signed request but fetches public JWKS only once for repeated tokens", async () => {
+  const key = await syntheticJwksKey("synthetic-key-1");
+  const jwt = await syntheticAuditJwt("synthetic-key-1", valid, key.privateKey);
+  let fetched = 0;
+  const fetcher = async () => {
+    fetched++;
+    return Response.json({ keys: [key.publicJwk] });
+  };
+  assert.ok(await verifyAuditOidc(jwt, fetcher, now));
+  assert.ok(await verifyAuditOidc(jwt, fetcher, now));
+  assert.equal(fetched, 1, "same public key must be reused across independently verified requests");
+
+  const tamperedClaims = { ...valid, repository: "unauthorized/other" };
+  assert.equal(await verifyAuditOidc(await syntheticAuditJwt("synthetic-key-1", tamperedClaims, key.privateKey), fetcher, now), null);
+  assert.equal(fetched, 1, "invalid claims must be rejected before JWKS access");
+
+  const parts = jwt.split(".");
+  const forgedJwt = parts[0] + "." + parts[1] + "." + Buffer.from(new Uint8Array(256).fill(1)).toString("base64url");
+  assert.equal(await verifyAuditOidc(forgedJwt, fetcher, now), null);
+  assert.equal(fetched, 1, "failed signature is never accepted or re-fetched to turn green");
+});
+
+test("simultaneous first-time JWKS key resolutions share one remote fetch", async () => {
+  const key = await syntheticJwksKey("synthetic-key-2");
+  let requested = 0;
+  const resolver = createAuditJwksKeyResolver(async () => {
+    requested++;
+    await Promise.resolve();
+    return Response.json({ keys: [key.publicJwk] });
+  });
+  const results = await Promise.all(Array.from({ length: 24 }, () => resolver("synthetic-key-2", now)));
+  assert.equal(requested, 1);
+  assert.ok(results.every(Boolean));
+});
+
+test("public JWKS cache expires and supports key rotation without caching tokens", async () => {
+  const oldKey = await syntheticJwksKey("synthetic-key-old");
+  const newKey = await syntheticJwksKey("synthetic-key-new");
+  let requested = 0;
+  let version = 0;
+  const resolver = createAuditJwksKeyResolver(async () => {
+    requested++;
+    return Response.json({ keys: [version === 0 ? oldKey.publicJwk : newKey.publicJwk] });
+  });
+  assert.ok(await resolver("synthetic-key-old", now));
+  version = 1;
+  assert.ok(await resolver("synthetic-key-new", now + 6000), "a new kid triggers a bounded refresh");
+  assert.equal(await resolver("synthetic-key-old", now + 6001), null, "replaced keys must not remain authorized");
+  assert.equal(requested, 2, "unknown kid misses should be bounded");
+
+  assert.ok(await resolver("synthetic-key-new", now + 301000));
+  assert.equal(requested, 3, "refresh after the five-minute public-key TTL");
+});
+
+test("JWKS lookup fails closed for untrusted responses and throttles missing keys", async () => {
+  let requested = 0;
+  const resolver = createAuditJwksKeyResolver(async () => {
+    requested++;
+    return Response.json({ keys: [{ kid: "synthetic-invalid", kty: "oct", use: "sig" }] });
+  });
+  assert.equal(await resolver("synthetic-invalid", now), null);
+  assert.equal(await resolver("synthetic-invalid", now + 1000), null);
+  assert.equal(requested, 1, "network failures/invalid JWKS do not cause one lookup per asset");
+  assert.equal(await resolver("synthetic-invalid", now + 6000), null);
+  assert.equal(requested, 2, "recovery can retry without accepting invalid keys");
 });
