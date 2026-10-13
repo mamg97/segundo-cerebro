@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js";
 
 const source = readFileSync(new URL("./app.js", import.meta.url), "utf8");
 const from = source.indexOf("function ensureVerifiedFinanceBankSection(");
@@ -44,8 +45,9 @@ function harness(finance) {
     initializations++;
   };
   const restore = new Function("state", "renderAccountTransactionsWorkspace",
-    "initializeAccountTransactionTabs", fn + "return ensureVerifiedFinanceBankSection;")(
-      state, render, initialize
+    "initializeAccountTransactionTabs", "mergeVerifiedFinanceBankWorkspace",
+    "verifiedFinanceBankWorkspace", fn + "return ensureVerifiedFinanceBankSection;")(
+      state, render, initialize, mergeVerifiedFinanceBankWorkspace, null
     );
   return { state, body, dialog, restore, counts: () => ({ renders, initializations, removed }) };
 }
