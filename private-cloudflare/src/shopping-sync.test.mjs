@@ -6,6 +6,7 @@ import {
   planAppleActionsForRow,
   planShoppingDryRun,
   shoppingReminderDetails,
+  shouldReplayShoppingEvent,
   stateAfterMissingAppleReminder,
   supportsShoppingReminderDetails
 } from "./shopping-sync.js";
@@ -160,6 +161,13 @@ test("a physically removed Segundo Cerebro row completes its linked Apple remind
     }),
     [{ type: "setCompleted", desiredCompleted: true }]
   );
+});
+
+test("retry an event still marked received after a transient Sheets error", () => {
+  assert.equal(shouldReplayShoppingEvent("received"), true);
+  assert.equal(shouldReplayShoppingEvent("applied"), false);
+  assert.equal(shouldReplayShoppingEvent("conflict"), false);
+  assert.equal(shouldReplayShoppingEvent(undefined), false);
 });
 
 test("missing Apple reminders do not downgrade a confirmed purchase", () => {
