@@ -181,7 +181,7 @@ test("public JWKS cache expires and supports key rotation without caching tokens
   assert.equal(await resolver("synthetic-key-old", now + 6001), null, "replaced keys must not remain authorized");
   assert.equal(requested, 2, "unknown kid misses should be bounded");
 
-  assert.ok(await resolver("synthetic-key-new", now + 301000));
+  assert.ok(await resolver("synthetic-key-new", now + 307000));
   assert.equal(requested, 3, "refresh after the five-minute public-key TTL");
 });
 
