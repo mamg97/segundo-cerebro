@@ -39,6 +39,8 @@ const failures = [];
 let infoCount = 0;
 const checks = [];
 const networkFailures = [];
+// Fixed-code diagnostic only; never include private image paths, tokens or exception text.
+const imageRouteFailures = new Map();
 // Privacy-safe request lifecycle counters: never retain URLs or bank payloads.
 const bankReadTransport = { started: 0, responses: [], failed: 0 };
 const ignoredNetworkAborts = [];
@@ -125,6 +127,7 @@ await page.route(`${auditOrigin}/**`, async (route) => {
 
   // The first unique, versioned image is fetched from the real authenticated
   // Worker. Never cache a failure or non-immutable/private response.
+  let imageRoutePhase = "QUEUE";
   try {
     // Concurrent requests for the same version must share the first real
     // fetch. Otherwise a cold browser view bypasses the cache 20+ times.
@@ -132,16 +135,24 @@ await page.route(`${auditOrigin}/**`, async (route) => {
       // Reading large D1-backed private look images in dozens of overlapping
       // requests can exhaust the audit gateway's Service Binding capacity.
       // Cap simultaneous distinct cold reads; still fail closed on real 5xx.
+      imageRoutePhase = "FETCH";
       const response = await route.fetch({ headers, timeout: 25000 });
+      imageRoutePhase = "BODY";
       const body = await response.body();
       if (response.status() === 200) {
         immutableImageCache.put(request.url(), response.status(), response.headers(), body);
       }
       return { response, body };
     }));
+    imageRoutePhase = "FULFILL";
     await route.fulfill(live);
-  } catch {
-    // Fail closed: a failed first read remains a real audit network failure.
+  } catch (error) {
+    const signature = `${error?.name || ""} ${error?.message || ""}`;
+    const kind = /timeout|timed out/i.test(signature) ? "TIMEOUT"
+      : /target closed|page closed|context closed/i.test(signature) ? "CLOSED" : "OTHER";
+    const safeCode = `${imageRoutePhase}_${kind}`;
+    imageRouteFailures.set(safeCode, (imageRouteFailures.get(safeCode) || 0) + 1);
+    // Do not downgrade transport failure to success or cache it.
     await route.abort("failed");
   }
 });
@@ -463,6 +474,45 @@ async function auditMidasCompetition() {
       "MIDAS · pestañas separan competición, tesis y catálogo",
       midasTabText
     );
+
+    // Chromium regression for PR #441: the tabs must leave the viewport with
+    // the scrollable dialog; a sticky bar would remain over table rows.
+    const initialMidasViewport = page.viewportSize();
+    try {
+      for (const [profile, viewport] of [
+        ["desktop", { width: 1440, height: 1100 }],
+        ["mobile", { width: 390, height: 844 }]
+      ]) {
+        await page.setViewportSize(viewport);
+        const layout = await page.locator("#midas-dialog").evaluate((dialog) => {
+          const tabs = dialog.querySelector(".midas-workspace-tabs");
+          if (!tabs) return null;
+          dialog.scrollTop = 0;
+          const before = tabs.getBoundingClientRect().top;
+          const scrollDistance = Math.min(200, Math.max(0, dialog.scrollHeight - dialog.clientHeight));
+          dialog.scrollTop = scrollDistance;
+          const moved = before - tabs.getBoundingClientRect().top;
+          const style = getComputedStyle(tabs);
+          dialog.scrollTop = 0;
+          return {
+            scrollDistance,
+            moved,
+            position: style.position,
+            mobileOverflow: style.overflowX === "auto"
+          };
+        }).catch(() => null);
+        assertCheck(
+          Boolean(layout && layout.position === "static" &&
+            layout.scrollDistance >= 50 && layout.moved >= 40 &&
+            (profile !== "mobile" || layout.mobileOverflow)),
+          `MIDAS · pestañas abandonan el área visible al hacer scroll (${profile})`,
+          layout ? `scroll=${Math.round(layout.scrollDistance)} moved=${Math.round(layout.moved)}` : "sin medición"
+        );
+      }
+    } finally {
+      await page.setViewportSize(initialMidasViewport || { width: 1440, height: 1100 });
+      await page.locator("#midas-dialog").evaluate((dialog) => { dialog.scrollTop = 0; }).catch(() => {});
+    }
 
     const competitionTable = page.locator('[data-midas-panel="competition"] .midas-lab-table').first();
     const competitionHeaders = normalizeAuditValue(await competitionTable.locator("thead").textContent().catch(() => ""));
@@ -2992,6 +3042,9 @@ try {
     " hits=" + mediaStats.hits + " shared=" + mediaStats.shared +
     " entries=" + mediaStats.entries +
     " peak_image_reads=" + imageReadGate.stats().peak);
+  for (const [code, count] of [...imageRouteFailures].sort((a, b) => a[0].localeCompare(b[0]))) {
+    console.error("[AUDIT_IMAGE_ROUTE_DIAG] " + code + " count=" + count);
+  }
   const backendDiagnostics = await settleAuditDiagnostics(private502DiagnosticsPending);
   if (backendDiagnostics.timedOut) {
     // A response-body read hung or was aborted. Never hold Chromium to the
