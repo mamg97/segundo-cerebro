@@ -9848,7 +9848,7 @@ function renderAccountTransactionTable(rows, accountLabel, currency = "EUR") {
   return `
     <div class="account-transactions-scroll" role="region" aria-label="Últimos movimientos de ${escapeHtml(accountLabel || "la cuenta")}" tabindex="0">
       <table class="account-transactions-table">
-        <thead><tr><th>Fecha</th><th>Concepto</th><th>Importe</th><th>Saldo</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Concepto bancario</th><th>Interpretación</th><th>Importe</th><th>Saldo</th></tr></thead>
         <tbody>${visibleRows.map((item) => {
           const amount = firstFinite(item.amount);
           const balance = firstFinite(item.balanceAfter);
@@ -9857,6 +9857,7 @@ function renderAccountTransactionTable(rows, accountLabel, currency = "EUR") {
             <tr>
               <td>${escapeHtml(formatFinanceDate(item.operationDate, item.operationDate || "—"))}</td>
               <td title="${escapeHtml(item.description || "")}">${escapeHtml(item.description || "—")}</td>
+              <td class="account-transaction-interpretation">${item.descriptionInterpreted ? escapeHtml(item.descriptionInterpreted) : '<span class="account-transaction-unidentified">Sin identificar</span>'}</td>
               <td class="account-transaction-amount is-${tone}">${amount === null ? "—" : formatMoney(amount, item.currency || currency)}</td>
               <td>${balance === null ? "—" : formatMoney(balance, item.currency || currency)}</td>
             </tr>`;
