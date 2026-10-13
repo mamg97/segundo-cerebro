@@ -1,6 +1,7 @@
 import Foundation
 
 final class APIClient {
+    private static let agentVersion = "1.1.0"
     private let config: AgentConfig
     private let token: String
     private let session: URLSession
@@ -16,7 +17,7 @@ final class APIClient {
             events: events,
             dryRun: dryRun,
             fullSnapshot: true,
-            agent: AgentMetadata(version: "1.1.0", hostname: Host.current().localizedName ?? "mac")
+            agent: AgentMetadata(version: Self.agentVersion, hostname: Host.current().localizedName ?? "mac")
         )
         return try await request(
             path: "/v1/shopping-list/apple-events",
@@ -28,7 +29,7 @@ final class APIClient {
 
     func pendingActions() async throws -> [AppleAction] {
         let response: PendingActionsResponse = try await request(
-            path: "/v1/shopping-list/pending-apple-actions",
+            path: "/v1/shopping-list/pending-apple-actions?agentVersion=\(Self.agentVersion)",
             method: "GET",
             response: PendingActionsResponse.self
         )
