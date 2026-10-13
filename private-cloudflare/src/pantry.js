@@ -57,6 +57,30 @@ function numberOrNull(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+export function summarizeShoppingCostCoverage(items = []) {
+  const knownCosts = items
+    .map((item) => item?.estimatedCost)
+    .filter((value) => value !== null && value !== undefined && Number.isFinite(Number(value)))
+    .map(Number);
+  const estimatedBasketTotal = knownCosts.length
+    ? knownCosts.reduce((sum, value) => sum + value, 0)
+    : null;
+  const missingPriceCount = items.filter((item) =>
+    item?.estimatedUnitPrice === null || item?.estimatedUnitPrice === undefined
+  ).length;
+  const missingCostCount = items.filter((item) =>
+    item?.estimatedCost === null || item?.estimatedCost === undefined
+  ).length;
+  const missingQuantityCostCount = Math.max(0, missingCostCount - missingPriceCount);
+  return {
+    knownCosts,
+    estimatedBasketTotal,
+    missingPriceCount,
+    missingCostCount,
+    missingQuantityCostCount
+  };
+}
+
 function dateOrNull(value) {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -386,9 +410,13 @@ export function buildPayload(valueRanges = []) {
   // must never inflate the shopping count or estimated purchase total.
   const confirmedShopping = shoppingList.filter((item) => item.state === "COMPRAR");
   const reviewShopping = shoppingList.filter((item) => item.state === "REVISAR");
-  const knownBasket = confirmedShopping.map((item) => item.estimatedCost).filter((value) => value !== null);
-  const estimatedBasketTotal = knownBasket.length ? knownBasket.reduce((sum, value) => sum + value, 0) : null;
-  const missingPriceCount = confirmedShopping.length - knownBasket.length;
+  const {
+    knownCosts: knownBasket,
+    estimatedBasketTotal,
+    missingPriceCount,
+    missingCostCount,
+    missingQuantityCostCount
+  } = summarizeShoppingCostCoverage(confirmedShopping);
 
   const availableProductCount = new Set(
     inventory
@@ -427,11 +455,18 @@ export function buildPayload(valueRanges = []) {
   });
   const purchasePhrase = confirmedShopping.length
     ? estimatedBasketTotal !== null
-      ? "coste conocido " + (missingPriceCount ? "≥ " : "") + euro.format(estimatedBasketTotal) +
+      ? "coste conocido " + (missingCostCount ? "≥ " : "") + euro.format(estimatedBasketTotal) +
         (missingPriceCount
           ? " · " + missingPriceCount + (missingPriceCount === 1 ? " artículo sin precio" : " artículos sin precio")
+          : "") +
+        (missingQuantityCostCount
+          ? " · " + missingQuantityCostCount + (missingQuantityCostCount === 1
+            ? " con precio pero cantidad por definir"
+            : " con precio pero cantidad por definir")
           : "")
-      : confirmedShopping.length + (confirmedShopping.length === 1 ? " compra sin precio todavía" : " compras sin precio todavía")
+      : missingPriceCount === confirmedShopping.length
+        ? confirmedShopping.length + (confirmedShopping.length === 1 ? " compra sin precio todavía" : " compras sin precio todavía")
+        : confirmedShopping.length + (confirmedShopping.length === 1 ? " compra sin coste total todavía" : " compras sin coste total todavía")
     : "sin compra confirmada";
   const reviewPhrase = reviewShopping.length
     ? reviewShopping.length + (reviewShopping.length === 1 ? " cosa por revisar" : " cosas por revisar")
@@ -451,8 +486,10 @@ export function buildPayload(valueRanges = []) {
       reviewCount: reviewShopping.length,
       knownPriceCount: knownBasket.length,
       estimatedBasketTotal,
-      estimatedBasketPartial: missingPriceCount > 0,
+      estimatedBasketPartial: missingCostCount > 0,
       missingPriceCount,
+      missingCostCount,
+      missingQuantityCostCount,
       previewItems: confirmedShopping.slice(0, 5).map((item) => item.familyName || item.name),
       lastInventoryReview,
       currency: "EUR",
