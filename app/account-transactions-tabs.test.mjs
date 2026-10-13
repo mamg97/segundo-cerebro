@@ -6,6 +6,8 @@ const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 const audit = readFileSync(new URL("../private-cloudflare/scripts/web-audit.mjs", import.meta.url), "utf8");
 
 assert.match(app, /function renderAccountTransactionsWorkspace\(/);
+assert.match(app, /<th>Concepto bancario<\/th><th>Interpretación<\/th>/);
+assert.match(app, /account-transaction-interpretation/);
 assert.match(app, /data-account-transactions-tab=/);
 assert.match(app, /data-account-transactions-panel=/);
 assert.match(app, /function initializeAccountTransactionTabs\(/);
