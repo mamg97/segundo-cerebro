@@ -1,6 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
-import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady } from "./finance-workspace-readiness.js?v=0.44.20";
+import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.42.22";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.44.23";
@@ -511,7 +511,14 @@ function applyStateScope(scope, payload) {
   if (!payload?.ok) return false;
 
   if (scope === "finance") {
-    if (payload.financeSummary) state.financeSummary = payload.financeSummary;
+    if (payload.financeSummary) {
+      state.financeSummary = mergeVerifiedFinanceBankWorkspace(
+        payload.financeSummary, verifiedFinanceBankWorkspace
+      );
+      // A scoped budget refresh cannot erase verified banking history.
+      const financeDialog = document.querySelector("#detail-dialog.budget-dialog[open]");
+      if (financeDialog) openBudgetDetail();
+    }
     if (Array.isArray(payload.importantEventRules)) state.importantEventRules = payload.importantEventRules;
     if (payload.healthSummary) state.healthSummary = payload.healthSummary;
     renderBudgetOverview();
@@ -579,6 +586,8 @@ async function refreshApp() {
     // Keep each domain in an independent request so one expensive source cannot
     // consume the CPU budget of the whole dashboard. Detail workspaces remain
     // lazy and refresh themselves when opened.
+    // Explicit refresh invalidates only the ephemeral bank snapshot.
+    verifiedFinanceBankWorkspace = null;
     await Promise.allSettled([
       refreshStateScope("finance"),
       refreshStateScope("habits"),
@@ -9980,6 +9989,9 @@ function initializeAccountTransactionTabs(root = document) {
 }
 
 let financeBudgetRefreshInFlight = false;
+// Browser-memory only: never storage, logs, Cache API or GitHub.
+// Preserves a successful canonical bank read across partial budget refreshes.
+let verifiedFinanceBankWorkspace = null;
 
 function canReadPrivateFinanceBankWorkspace() {
   return privateModeKind === "remote" ||
@@ -10039,12 +10051,13 @@ function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } =
     // recovery only fetches the canonical bank ranges.
     if (state.financeSummary?.bankWorkspaceReadVerified !== true) {
       const workspace = await fetchFinanceBankWorkspace(12000);
-      state.financeSummary = {
-        ...state.financeSummary,
-        bankWorkspaceAccounts: workspace.accounts,
-        accountTransactions: workspace.transactions,
-        bankWorkspaceReadVerified: true
+      verifiedFinanceBankWorkspace = {
+        accounts: workspace.accounts,
+        transactions: workspace.transactions
       };
+      state.financeSummary = mergeVerifiedFinanceBankWorkspace(
+        state.financeSummary, verifiedFinanceBankWorkspace
+      );
     }
     if (dialog.open && dialog.classList.contains("budget-dialog")) {
       openBudgetDetail({ skipRefresh: true });
@@ -10078,6 +10091,10 @@ function openBudgetDetail(options = {}) {
       bankWorkspaceReadVerified: false
     };
   }
+  // A late budget response must not erase the verified canonical bank reader.
+  state.financeSummary = mergeVerifiedFinanceBankWorkspace(
+    state.financeSummary, verifiedFinanceBankWorkspace
+  );
   const finance = state.financeSummary || {};
   const monthly = finance.monthlyBudget || null;
   const dialog = document.querySelector("#detail-dialog");

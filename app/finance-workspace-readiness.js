@@ -20,3 +20,17 @@ export function financeBankWorkspaceReady(financeSummary) {
   return financeSummary?.bankWorkspaceReadVerified === true ||
     !financeAccountWorkspaceIncomplete(financeSummary);
 }
+
+// The bank endpoint is the only authority for a verified bank workspace.
+// Optional budget/finance scopes may arrive later and replace unrelated
+// summary fields, but cannot invalidate this same-session verified read.
+export function mergeVerifiedFinanceBankWorkspace(summary, verified) {
+  if (!verified || !Array.isArray(verified.accounts) ||
+      !Array.isArray(verified.transactions)) return summary;
+  return {
+    ...(summary || {}),
+    bankWorkspaceAccounts: verified.accounts,
+    accountTransactions: verified.transactions,
+    bankWorkspaceReadVerified: true
+  };
+}
