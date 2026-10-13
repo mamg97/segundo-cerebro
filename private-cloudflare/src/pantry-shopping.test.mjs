@@ -58,3 +58,28 @@ test("unknown or ambiguous shopping names never get fabricated product or price"
   assert.deepEqual(data.shoppingList.map(x=>x.estimatedCost),[null,null]);
   assert.equal(data.summary.missingPriceCount,2);
 });
+
+test("historical price per kilogram is displayed but does not fabricate the basket total", () => {
+  const payload = buildPayload([
+    {values:[["producto_id","nombre_canonico","nombres_familiares"],["sku-weight","Fictitious seasonal vegetable","vegetable"]]},
+    {values:[]},
+    {values:[["producto_id","precio","base_precio","fecha_precio","fuente","ticket_id"],["sku-weight",2.1,"€/kg","2026-04-08","Ticket","sample-3"]]},
+    {values:[]},
+    {values:[["producto_id","nombre","estado","cantidad_objetivo","unidad"],["","Vegetable","COMPRAR","",""]]}
+  ]);
+  assert.equal(payload.shoppingList[0].estimatedUnitPrice,2.1);
+  assert.equal(payload.shoppingList[0].priceBase,"€/kg");
+  assert.equal(payload.shoppingList[0].estimatedCost,null);
+  assert.equal(payload.summary.missingPriceCount,1);
+});
+
+test("kilogram quantity permits a transparent computed estimated cost", () => {
+  const payload = buildPayload([
+    {values:[["producto_id","nombre_canonico","nombres_familiares"],["sku-weight","Fictitious seasonal vegetable","vegetable"]]},
+    {values:[]},
+    {values:[["producto_id","precio","base_precio","fecha_precio","fuente","ticket_id"],["sku-weight",2.1,"€/kg","2026-04-08","Ticket","sample-3"]]},
+    {values:[]},
+    {values:[["producto_id","nombre","estado","cantidad_objetivo","unidad"],["","Vegetable","COMPRAR",1.5,"kg"]]}
+  ]);
+  assert.equal(payload.shoppingList[0].estimatedCost,3.1500000000000004);
+});
