@@ -119,6 +119,28 @@ export function secureProxyResponse(response, publicOrigin, requestUrl, method =
   });
 }
 
+// Only fixed, allowlisted diagnostic phases leave this read-only OIDC gateway.
+// Do not expose thrown error text, exception type, URLs, asset IDs or payloads.
+export async function proxyAuditUpstream(env, upstream, publicOrigin, requestUrl, method = "GET") {
+  let response;
+  try {
+    response = await env.SEGUNDO_CEREBRO.fetch(upstream);
+  } catch {
+    return json({
+      ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED",
+      diagnostic: "AUDIT_GATEWAY_BINDING_FETCH_FAILED"
+    }, 502);
+  }
+  try {
+    return secureProxyResponse(response, publicOrigin, requestUrl, method);
+  } catch {
+    return json({
+      ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED",
+      diagnostic: "AUDIT_GATEWAY_RESPONSE_FAILED"
+    }, 502);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -142,11 +164,6 @@ export default {
       redirect: "manual"
     });
 
-    try {
-      const response = await env.SEGUNDO_CEREBRO.fetch(upstream);
-      return secureProxyResponse(response, url.origin, url.href, request.method);
-    } catch {
-      return json({ ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED" }, 502);
-    }
+    return proxyAuditUpstream(env, upstream, url.origin, url.href, request.method);
   }
 };

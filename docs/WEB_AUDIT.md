@@ -125,7 +125,7 @@ Playwright puede entonces reutilizar durante **este proceso** los bytes descarga
 
 ### Diagnóstico del salto OIDC → Worker en fallos 502
 
-El gateway read-only clasifica fallos excepcionales de su Service Binding con el código público fijo `AUDIT_GATEWAY_UPSTREAM_FAILED` (sin URL, ID, respuesta ni excepción). El agregador de imágenes Chromium lo separa de los errores 502 tipificados por el Worker real. Este código **no demuestra la causa raíz** (CPU, red, tiempo de espera o dependencia); solo identifica en qué límite técnico aparece el fallo. Ninguno de estos 502 se ignora o convierte en PASS.
+El gateway read-only conserva el código de compatibilidad `AUDIT_GATEWAY_UPSTREAM_FAILED` en HTTP 502 excepcionales y adjunta exclusivamente un `diagnostic` de vocabulario cerrado: `AUDIT_GATEWAY_BINDING_FETCH_FAILED` cuando **lanza** `env.SEGUNDO_CEREBRO.fetch`, o `AUDIT_GATEWAY_RESPONSE_FAILED` cuando falla el encapsulado de la respuesta ya recibida. El agregador Chromium prioriza ese código cerrado en `AUDIT_BACKEND_DIAG` y separa ambos de los fallos HTTP 502 realmente devueltos por el Worker. No incluye URL, ID, respuesta privada, excepción ni texto de error. La distinción identifica la fase pero **no demuestra la causa raíz** (CPU, red, tiempo de espera, D1 o dependencia). Ningún 502 se ignora o convierte en PASS.
 
 ## Auditoría visual
 
