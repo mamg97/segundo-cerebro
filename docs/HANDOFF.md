@@ -1,3 +1,12 @@
+## ORGANIZADOR 17 · Eficiencia D1 de Gym (PR #453, 2026-10-13)
+
+- Defecto confirmado en `private-cloudflare/src/index.js::fetchGymHistory`: el GET utilizaba `LIMIT 40` para sesiones, pero leía **todas** las filas de `gym_entries` mediante `ORDER BY id ASC`, descartando después entradas que no pertenecían a las 40 sesiones recuperadas. También ejecutaba cuatro operaciones de preparación de esquema D1 desde cada GET.
+- Corrección técnica en [PR #453](https://github.com/mamg97/segundo-cerebro/pull/453): obtener `sessionIds` de esas 40 sesiones, usar `WHERE session_id IN (...)` con parámetros enlazados, no leer ninguna entrada si no hay sesiones; la progresión seguirá derivándose únicamente de las sesiones devueltas como antes. Migración idempotente `0009_gym_history_read.sql` para las tablas existentes e índice nuevo `gym_entries(session_id,id)`; la lectura ya no crea tablas/índices. Las escrituras conservan la ruta antigua hasta una revisión separada.
+- Tests sintéticos comprueban preservación de orden, progresión, exclusión de filas antiguas, caso vacío y ausencia de DDL en GET. **CI, aplicación efectiva de la migración, despliegue y auditoría posterior son requisitos para declarar el cambio productivo**.
+- La optimización reduce trabajo D1 **por consulta Gym**, pero no demuestra causalidad respecto a la alerta global de 3,75 M/5 M filas diarias ni al transporte `502`. No cambia registros privados, cargas, saldos ni contratos del Gym.
+
+---
+
 ## ORGANIZADOR 17 · MIDAS, Finanzas y cobertura de auditoría (2026-10-13)
 
 **Estado canónico de relevo:** `main` integró el cambio visual MIDAS de [PR #441](https://github.com/mamg97/segundo-cerebro/pull/441) (`933e4c38`): `.midas-workspace-tabs` ya no es sticky. El CI #616 fue correcto; la corrección llegó a producción. [PR #451](https://github.com/mamg97/segundo-cerebro/pull/451) (`2aab520c`, CI #634, despliegue privado [#508](https://github.com/mamg97/segundo-cerebro/actions/runs/38436433518) correcto) añadió **medición real en Chromium** de desplazamiento del diálogo MIDAS en escritorio 1440×1100 y móvil 390×844; no alteró estrategias ni retornos.
