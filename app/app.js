@@ -1547,11 +1547,10 @@ function renderHomeHabitsCard() {
 }
 
 async function loadHomeWeeklyMenu(primaryData = null) {
-  if (Array.isArray(primaryData?.weeklyMenu) && primaryData.weeklyMenu.length) {
-    renderHomeWeeklyMenu(primaryData);
-    return true;
-  }
-
+  // Nutrition summary can reuse a short-lived worker snapshot. The Home menu
+  // must prefer its own direct Sheets read so recently added companions or
+  // recipes are not silently omitted from the weekly total.
+  const hasPrimaryMenu = Array.isArray(primaryData?.weeklyMenu) && primaryData.weeklyMenu.length > 0;
   try {
     const response = await fetch("/api/nutrition/menu?date=" + encodeURIComponent(localDateKey()), {
       headers: { Accept: "application/json" },
@@ -1560,11 +1559,18 @@ async function loadHomeWeeklyMenu(primaryData = null) {
     });
     if (!response.ok) throw new Error("HOME_WEEKLY_MENU_" + response.status);
     const data = await response.json();
+    if (!data?.ok || !Array.isArray(data.weeklyMenu)) throw new Error("HOME_WEEKLY_MENU_INVALID");
     renderHomeWeeklyMenu(data);
-    return Array.isArray(data.weeklyMenu) && data.weeklyMenu.length > 0;
+    return data.weeklyMenu.length > 0;
   } catch (error) {
+    // Preserve the existing graceful fallback when the lighter Google Sheets
+    // read is unavailable; never modify or synthesize nutrition values.
+    console.warn("Home weekly menu live read unavailable", error);
+    if (hasPrimaryMenu) {
+      renderHomeWeeklyMenu(primaryData);
+      return true;
+    }
     renderHomeWeeklyMenuUnavailable();
-    console.warn("Home weekly menu fallback failed", error);
     return false;
   }
 }
