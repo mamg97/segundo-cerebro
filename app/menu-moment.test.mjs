@@ -40,7 +40,7 @@ test("daily nutrition grouping also folds legacy components", () => {
 test("incomplete grouped meals and day totals are labeled as known subtotals", () => {
   assert.match(app, /weekly-menu-group-subtotal/);
   assert.match(app, /Subtotal conocido/);
-  const headerStart = app.indexOf("function renderHomeWeeklyMenuDayHeader");
+  const headerStart = app.indexOf("function renderHomeWeeklyMenuPlanBar");
   const headerEnd = app.indexOf("function renderHomeWeeklyMenu(data)", headerStart);
   const header = app.slice(headerStart, headerEnd);
   assert.ok(header.includes('plannedIncomplete ? "≥" : ""'), "missing planned macros must stay visibly partial");
