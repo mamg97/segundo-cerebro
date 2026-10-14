@@ -1,3 +1,4 @@
+import { NUTRITION_RECIPE_RANGES, resolveNutritionRecipeFromRanges, validNutritionRecipeId } from "./nutrition-recipe-detail.js";
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
 import { fetchGoogleCalendarSummary, hasGoogleCalendarConfig, safeGoogleCalendarErrorCode } from "./google-calendar.js";
 import { mergeCalendarSources } from "./calendar-federation.js";
@@ -2975,6 +2976,23 @@ async function fetchWeeklyMenuLight(env, options = {}) {
   };
 }
 
+async function fetchHealthNutritionRecipe(env, recipeId) {
+  const token = await getGoogleAccessToken(env);
+  const params = new URLSearchParams();
+  for (const range of NUTRITION_RECIPE_RANGES) params.append("ranges", range);
+  params.set("majorDimension", "ROWS");
+  params.set("valueRenderOption", "UNFORMATTED_VALUE");
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}/values:batchGet?${params.toString()}`;
+  const response = await googleReadFetch(
+    endpoint,
+    { headers: { Authorization: `Bearer ${token}` } },
+    { attempts: 2, baseDelayMs: 220 }
+  );
+  if (!response.ok) throw new Error("HEALTH_RECIPE_SHEETS_READ_FAILED");
+  const payload = await response.json();
+  return resolveNutritionRecipeFromRanges(recipeId, payload.valueRanges || []);
+}
+
 async function fetchHealthNutritionSummary(env, options = {}) {
   if (!hasHealthGoogleConfig(env)) {
     return { status: "not-configured", value: null };
@@ -5277,6 +5295,21 @@ export default {
       } catch (error) {
         console.warn("Recipe photo read failed", String(error?.message || error));
         return json({ ok: false, code: "RECIPE_PHOTO_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition/recipe") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const recipeId = url.searchParams.get("recipe_id");
+      if (!validNutritionRecipeId(recipeId)) return json({ ok: false, code: "RECIPE_ID_INVALID" }, 400);
+      if (!hasHealthGoogleConfig(env)) return json({ ok: false, code: "HEALTH_NOT_CONFIGURED" }, 503);
+      try {
+        const recipe = await fetchHealthNutritionRecipe(env, recipeId);
+        if (!recipe) return json({ ok: false, code: "RECIPE_NOT_FOUND" }, 404);
+        return json({ ok: true, recipe }, 200);
+      } catch {
+        // Neither upstream responses, recipe IDs nor exception strings appear in logs.
+        return json({ ok: false, code: "RECIPE_READ_FAILED" }, 502);
       }
     }
 
