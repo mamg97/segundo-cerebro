@@ -44,6 +44,68 @@ export function validateAuditClaims(claims, now = Date.now()) {
   );
 }
 
+// Cache ONLY GitHub's public verification keys, never JWTs or signed claims.
+// Browser audits generate many requests in parallel: fetching GitHub JWKS on
+// every one adds needless network subrequests and isolate work on Workers Free.
+// A bounded TTL, single-flight refresh and miss throttle support safe rotation.
+const jwksResolvers = new WeakMap();
+
+export function createAuditJwksKeyResolver(fetcher) {
+  const TTL_MS = 5 * 60 * 1000;
+  const RETRY_MS = 5 * 1000;
+  const MISS_REFRESH_MS = 30 * 1000;
+  let publicJwks = [];
+  let expiresAt = 0;
+  let lastAttemptAt = -Infinity;
+  let lastMissingKeyRefreshAt = -Infinity;
+  let pending = null;
+  const importedKeys = new Map();
+
+  async function refresh(now) {
+    if (pending) return pending;
+    if (now - lastAttemptAt < RETRY_MS) return false;
+    lastAttemptAt = now;
+    pending = (async () => {
+      const response = await fetcher(JWKS_URL, { headers: { Accept: "application/json" } });
+      if (!response.ok) return false;
+      const body = await response.json();
+      if (!Array.isArray(body?.keys)) return false;
+      const candidates = body.keys.filter((key) =>
+        typeof key?.kid === "string" && key.kid.length > 0 && key.kid.length <= 256 &&
+        key.kty === "RSA" && key.use === "sig"
+      ).slice(0, 16);
+      if (!candidates.length) return false;
+      publicJwks = candidates;
+      importedKeys.clear();
+      expiresAt = now + TTL_MS;
+      return true;
+    })().catch(() => false).finally(() => { pending = null; });
+    return pending;
+  }
+
+  return async function resolveAuditJwksKey(kid, now = Date.now()) {
+    if (typeof kid !== "string" || !kid || kid.length > 256) return null;
+    if (pending) await pending;
+    if (expiresAt <= now) {
+      await refresh(now);
+    } else if (!publicJwks.some((key) => key.kid === kid) &&
+        now - lastMissingKeyRefreshAt >= MISS_REFRESH_MS) {
+      lastMissingKeyRefreshAt = now;
+      await refresh(now);
+    }
+    if (expiresAt <= now) return null;
+    const jwk = publicJwks.find((key) => key.kid === kid);
+    if (!jwk) return null;
+    if (!importedKeys.has(kid)) {
+      importedKeys.set(kid, crypto.subtle.importKey(
+        "jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+        false, ["verify"]
+      ).catch(() => null));
+    }
+    return importedKeys.get(kid);
+  };
+}
+
 export async function verifyAuditOidc(token, fetcher = fetch, now = Date.now()) {
   try {
     const parts = String(token || "").split(".");
@@ -52,19 +114,13 @@ export async function verifyAuditOidc(token, fetcher = fetch, now = Date.now()) 
     const claims = JSON.parse(new TextDecoder().decode(decodePart(parts[1])));
     if (header.alg !== "RS256" || typeof header.kid !== "string" || !validateAuditClaims(claims, now)) return null;
 
-    const response = await fetcher(JWKS_URL, { headers: { Accept: "application/json" } });
-    if (!response.ok) return null;
-    const jwks = await response.json();
-    const jwk = jwks.keys?.find((key) => key.kid === header.kid && key.kty === "RSA" && key.use === "sig");
-    if (!jwk) return null;
-
-    const key = await crypto.subtle.importKey(
-      "jwk",
-      jwk,
-      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-      false,
-      ["verify"]
-    );
+    let resolveKey = jwksResolvers.get(fetcher);
+    if (!resolveKey) {
+      resolveKey = createAuditJwksKeyResolver(fetcher);
+      jwksResolvers.set(fetcher, resolveKey);
+    }
+    const key = await resolveKey(header.kid, now);
+    if (!key) return null;
     const signed = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
     const verified = await crypto.subtle.verify(
       "RSASSA-PKCS1-v1_5",
