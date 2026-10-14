@@ -197,6 +197,18 @@ function safeHttpsUrl(value) {
   catch { return null; }
 }
 
+// Each image belongs to the canonical producto_id already resolved by Pantry.
+// Never infer photos by name or send stock/household metadata to an image search.
+export function pantryProductThumbnailMarkup(item) {
+  const imageUrl = safeHttpsUrl(item?.imageUrl);
+  return '<span class="pantry-product-thumb" data-photo="' + (imageUrl ? 'available' : 'pending') + '">' +
+    (imageUrl
+      ? '<img src="' + escapeHtml(imageUrl) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
+      : '') +
+    '<span class="pantry-product-thumb-placeholder">Sin foto</span>' +
+    '</span>';
+}
+
 function priceObservation(price, currency) {
   if (!price) return "Sin precio registrado";
   return escapeHtml(money(price.price, currency)) + '<small>' + escapeHtml([price.priceBase, price.date ? formatDate(price.date) : "Sin fecha", price.source].filter(Boolean).join(" · ")) + '</small>';
@@ -282,8 +294,13 @@ function renderWorkspace(payload, initialView = "inventory") {
       'data-stock="' + escapeHtml(item.stockStatus || "unknown") + '">' +
         '<span class="pantry-product-top"><span class="pantry-product-category">' + escapeHtml(item.categoryLabel || "Otros") + '</span>' +
         '<span class="stock-chip stock-' + escapeHtml(item.stockStatus || "unknown") + '">' + escapeHtml(stockLabel(item.stockStatus)) + '</span></span>' +
-        '<strong class="pantry-product-name">' + escapeHtml(item.name || "Producto") + '</strong>' +
-        '<span class="pantry-product-brand">' + escapeHtml([item.brand, item.format].filter(Boolean).join(" · ") || "Sin marca/formato") + '</span>' +
+        '<span class="pantry-product-identity">' +
+          pantryProductThumbnailMarkup(item) +
+          '<span class="pantry-product-copy">' +
+            '<strong class="pantry-product-name">' + escapeHtml(item.name || "Producto") + '</strong>' +
+            '<span class="pantry-product-brand">' + escapeHtml([item.brand, item.format].filter(Boolean).join(" · ") || "Sin marca/formato") + '</span>' +
+          '</span>' +
+        '</span>' +
         '<span class="pantry-product-meta"><span>' + escapeHtml(item.location || "Otros") + ' · ' + escapeHtml(quantityLabel(item)) + '</span>' +
         '<strong>' + escapeHtml(money(item.latestPrice?.price, currency)) + '</strong></span>' +
         '<progress class="pantry-stock-track" max="100" value="' + stockProgress(item.stockStatus) + '" aria-label="Nivel aproximado de stock"></progress>' +
@@ -451,6 +468,15 @@ function renderWorkspace(payload, initialView = "inventory") {
   body.querySelector("#pantry-search")?.addEventListener("input", (event) => {
     searchText = String(event.target.value || "").trim().toLocaleLowerCase("es");
     applyFilters();
+  });
+
+  // A broken external product image must not break the card or its detail action.
+  body.querySelectorAll(".pantry-product-thumb img").forEach((image) => {
+    image.addEventListener("error", () => {
+      const thumb = image.closest(".pantry-product-thumb");
+      if (thumb) thumb.dataset.photo = "pending";
+      image.remove();
+    });
   });
 
   body.querySelectorAll("[data-pantry-ticket-product]").forEach((button) => button.addEventListener("click", () => {
