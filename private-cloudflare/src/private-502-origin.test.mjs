@@ -42,7 +42,7 @@ test("upstream binding failure is independently recognizable without private con
   }), "AUDIT_GATEWAY_UPSTREAM_FAILED");
   const gateway = readFileSync(new URL("./web-audit-gateway.js", import.meta.url), "utf8");
   assert.match(gateway, /code: "AUDIT_GATEWAY_UPSTREAM_FAILED"/);
-  assert.match(gateway, /diagnostic: "AUDIT_GATEWAY_BINDING_FETCH_FAILED"/);
+  assert.match(gateway, /diagnostic: classifyAuditBindingFailure\\(error\\)/);
   assert.match(gateway, /diagnostic: "AUDIT_GATEWAY_RESPONSE_FAILED"/);
   for (const diagnostic of ["AUDIT_GATEWAY_BINDING_FETCH_FAILED", "AUDIT_GATEWAY_RESPONSE_FAILED"]) {
     assert.equal(safePrivate502Origin("application/json", { code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic }), diagnostic);
