@@ -271,6 +271,31 @@ export function renderProductDetail(item, payload, options = {}) {
   });
 }
 
+export function pantryShoppingRowMarkup(item, currency = "EUR") {
+    const stateClass = String(item.state || "REVISAR").toLowerCase();
+    const target = [item.targetQuantity, item.targetUnit].filter((value) => value !== null && value !== undefined && value !== "").join(" ");
+    const familyName = String(item.familyName || "").trim();
+    const canonicalName = String(item.name || "Producto").trim();
+    const displayName = familyName || canonicalName;
+    const productUrl = String(item.productUrl || "").trim();
+    const exactMercadonaUrl = /^https:\/\/tienda\.mercadona\.es\/product\//.test(productUrl) ? productUrl : "";
+    const mercadonaUrl = exactMercadonaUrl || ("https://tienda.mercadona.es/search-results?query=" + encodeURIComponent(displayName));
+    const canonicalLine = familyName && familyName.toLocaleLowerCase("es") !== canonicalName.toLocaleLowerCase("es")
+      ? '<small class="pantry-shopping-canonical">' + escapeHtml(canonicalName) + '</small>'
+      : "";
+    const content =
+      pantryProductThumbnailMarkup(item) +
+      '<div class="pantry-shopping-info"><strong>' + escapeHtml(displayName) + '</strong>' +
+      canonicalLine +
+      '<span>' + escapeHtml(target || "Cantidad por definir") + ' · ' + escapeHtml(item.reason || "Sin motivo") + '</span></div>' +
+      '<span class="purchase-state state-' + escapeHtml(stateClass) + '">' + escapeHtml(item.state || "REVISAR") + '</span>' +
+      '<span class="pantry-shopping-price">' + escapeHtml(shoppingPriceLabel(item, currency)) + '</span>';
+
+    return '<a class="pantry-shopping-row is-link" href="' + escapeHtml(mercadonaUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="' +
+      escapeHtml(exactMercadonaUrl ? ("Abrir " + displayName + " en Mercadona") : ("Buscar " + displayName + " en Mercadona")) +
+      '">' + content + '</a>';
+  }
+
 function renderWorkspace(payload, initialView = "inventory") {
   const body = document.querySelector("#dialog-body");
   const summary = payload.summary || {};
@@ -308,29 +333,7 @@ function renderWorkspace(payload, initialView = "inventory") {
       '</button>';
   }).join("");
 
-  const shoppingRows = shopping.map((item) => {
-    const stateClass = String(item.state || "REVISAR").toLowerCase();
-    const target = [item.targetQuantity, item.targetUnit].filter((value) => value !== null && value !== undefined && value !== "").join(" ");
-    const familyName = String(item.familyName || "").trim();
-    const canonicalName = String(item.name || "Producto").trim();
-    const displayName = familyName || canonicalName;
-    const productUrl = String(item.productUrl || "").trim();
-    const exactMercadonaUrl = /^https:\/\/tienda\.mercadona\.es\/product\//.test(productUrl) ? productUrl : "";
-    const mercadonaUrl = exactMercadonaUrl || ("https://tienda.mercadona.es/search-results?query=" + encodeURIComponent(displayName));
-    const canonicalLine = familyName && familyName.toLocaleLowerCase("es") !== canonicalName.toLocaleLowerCase("es")
-      ? '<small class="pantry-shopping-canonical">' + escapeHtml(canonicalName) + '</small>'
-      : "";
-    const content =
-      '<div><strong>' + escapeHtml(displayName) + '</strong>' +
-      canonicalLine +
-      '<span>' + escapeHtml(target || "Cantidad por definir") + ' · ' + escapeHtml(item.reason || "Sin motivo") + '</span></div>' +
-      '<span class="purchase-state state-' + escapeHtml(stateClass) + '">' + escapeHtml(item.state || "REVISAR") + '</span>' +
-      '<span class="pantry-shopping-price">' + escapeHtml(shoppingPriceLabel(item, currency)) + '</span>';
-
-    return '<a class="pantry-shopping-row is-link" href="' + escapeHtml(mercadonaUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="' +
-      escapeHtml(exactMercadonaUrl ? ("Abrir " + displayName + " en Mercadona") : ("Buscar " + displayName + " en Mercadona")) +
-      '">' + content + '</a>';
-  }).join("");
+  const shoppingRows = shopping.map((item) => pantryShoppingRowMarkup(item, currency)).join("");
 
   const recentTickets = Array.isArray(payload.recentTickets) ? payload.recentTickets : [];
   const ticketCards = recentTickets.map((ticket) => {

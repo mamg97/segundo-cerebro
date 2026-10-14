@@ -341,6 +341,7 @@ export function buildPayload(valueRanges = []) {
       familyNames: Array.isArray(product.familyNames) ? product.familyNames : [],
       familyName: Array.isArray(product.familyNames) && product.familyNames.length ? product.familyNames[0] : null,
       productUrl: product.productUrl || latestPrice?.productUrl || null,
+      imageUrl: product.imageUrl || null,
       normalizedName: row.normalized_name || null,
       state: purchaseState(row.estado),
       priority: row.prioridad || null,
