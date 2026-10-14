@@ -26907,3 +26907,89 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
+
+/* Wealth modal: mobile intrinsic-width containment.
+   Nested one-column grids must not use their children's min-content width:
+   long reconciliation notes and versioned charts previously pushed cards out
+   of the iPhone viewport. Keep the chart as the only intentional scroller. */
+.detail-dialog.wealth-dialog #dialog-body,
+.detail-dialog.wealth-dialog .wealth-detail,
+.detail-dialog.wealth-dialog .wealth-allocation-section,
+.detail-dialog.wealth-dialog .wealth-primary-summary,
+.detail-dialog.wealth-dialog .wealth-stack-wrap,
+.detail-dialog.wealth-dialog .wealth-platform-grid,
+.detail-dialog.wealth-dialog .wealth-platform-card,
+.detail-dialog.wealth-dialog .wealth-reconciliation-block,
+.detail-dialog.wealth-dialog .wealth-reconciliation-grid,
+.detail-dialog.wealth-dialog .wealth-reconciliation-grid article,
+.detail-dialog.wealth-dialog .wealth-chart-block,
+.detail-dialog.wealth-dialog .wealth-chart-scroll {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.detail-dialog.wealth-dialog .wealth-detail,
+.detail-dialog.wealth-dialog .wealth-allocation-section {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.detail-dialog.wealth-dialog .wealth-platform-card :is(p, small),
+.detail-dialog.wealth-dialog .wealth-reconciliation-grid :is(small, em),
+.detail-dialog.wealth-dialog .wealth-reconciliation-heading span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .detail-dialog.wealth-dialog {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    min-width: 0;
+    box-sizing: border-box;
+    /* Prevent Safari's automatic text inflation from expanding cards. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .detail-dialog.wealth-dialog .wealth-primary-summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .detail-dialog.wealth-dialog .wealth-platform-grid,
+  .detail-dialog.wealth-dialog .wealth-reconciliation-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detail-dialog.wealth-dialog .wealth-platform-card > b {
+    font-size: 17px;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-dialog.wealth-dialog .wealth-platform-head strong {
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  .detail-dialog.wealth-dialog .wealth-platform-card > span,
+  .detail-dialog.wealth-dialog .wealth-platform-card > small,
+  .detail-dialog.wealth-dialog .wealth-platform-card > p {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .detail-dialog.wealth-dialog .wealth-primary-summary > div {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .detail-dialog.wealth-dialog .wealth-primary-summary > div strong {
+    font-size: clamp(21px, 6vw, 26px);
+    overflow-wrap: anywhere;
+  }
+
+  .detail-dialog.wealth-dialog .wealth-chart-scroll {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+}
