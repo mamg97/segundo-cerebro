@@ -134,11 +134,10 @@ export function createObjectsD1MediaStore(env) {
         throw new Error("OBJECTS_MEDIA_CORRUPT");
       }
 
-      // A single D1 .all() response containing every BLOB chunk can exceed
-      // per-query response limits even when each stored row is valid. Read
-      // one indexed <=1 MiB chunk at a time and validate before serving.
-      const parts = [];
-      for (let index = 0; index < expectedCount; index += 1) {
+      // Only small BLOB metadata is fetched eagerly for streamed image GETs.
+      // This preserves the strict corrupt-chunk check before responding while
+      // bounding live image bytes to one D1 chunk rather than the whole asset.
+      const readChunk = async (index) => {
         const row = await db.prepare(`
           SELECT chunk_index, data
           FROM objects_media_chunks
@@ -147,25 +146,52 @@ export function createObjectsD1MediaStore(env) {
         `).bind(key, index).first();
         if (!row || Number(row.chunk_index) !== index) throw new Error("OBJECTS_MEDIA_CORRUPT");
         const chunk = bytesOf(row.data);
-        const expectedChunkLength = Math.min(CHUNK_BYTES, sizeBytes - index * CHUNK_BYTES);
-        if (chunk.byteLength !== expectedChunkLength) throw new Error("OBJECTS_MEDIA_CORRUPT");
-        parts.push(chunk);
+        const expectedLength = Math.min(CHUNK_BYTES, sizeBytes - index * CHUNK_BYTES);
+        if (chunk.byteLength !== expectedLength) throw new Error("OBJECTS_MEDIA_CORRUPT");
+        return chunk;
+      };
+
+      let body;
+      if (options.stream === true && expectedCount > 1) {
+        // Check every stored length/index via a small indexed metadata query:
+        // a corrupt asset must fail closed before any image bytes are sent.
+        // Never fetch all BLOB payloads merely to construct a ReadableStream.
+        const metadata = await db.prepare(`
+          SELECT chunk_index, LENGTH(data) AS chunk_bytes
+          FROM objects_media_chunks
+          WHERE storage_key = ?
+          ORDER BY chunk_index ASC
+        `).bind(key).all();
+        const chunks = metadata?.results || [];
+        if (chunks.length !== expectedCount || chunks.some((row, index) =>
+          Number(row.chunk_index) !== index ||
+          Number(row.chunk_bytes) !== Math.min(CHUNK_BYTES, sizeBytes - index * CHUNK_BYTES)
+        )) throw new Error("OBJECTS_MEDIA_CORRUPT");
+
+        let nextIndex = 0;
+        body = new ReadableStream({
+          async pull(controller) {
+            if (nextIndex >= expectedCount) return controller.close();
+            try {
+              const chunk = await readChunk(nextIndex);
+              nextIndex += 1;
+              controller.enqueue(chunk);
+              if (nextIndex === expectedCount) controller.close();
+            } catch (error) {
+              controller.error(error); // Never serve a truncated asset as valid.
+            }
+          },
+          cancel() { nextIndex = expectedCount; }
+        }, { highWaterMark: 0 });
+      } else {
+        // Non-streaming consumers (e.g. look processing) retain the exact
+        // existing byte-array contract and full corruption checks.
+        const parts = [];
+        for (let index = 0; index < expectedCount; index += 1) {
+          parts.push(await readChunk(index));
+        }
+        body = expectedCount === 1 ? parts[0] : concatChunks(parts, sizeBytes);
       }
-      const actualSize = parts.reduce((total, bytes) => total + bytes.byteLength, 0);
-      if (actualSize !== sizeBytes) throw new Error("OBJECTS_MEDIA_CORRUPT");
-      // Large immutable private images can stream from the validated D1 chunks
-      // without concatenating another full-size Uint8Array on every GET.
-      // Other callers keep the existing byte-array contract for image processing.
-      const body = expectedCount === 1
-        ? parts[0]
-        : options.stream === true
-          ? new ReadableStream({
-              start(controller) {
-                for (const part of parts) controller.enqueue(part);
-                controller.close();
-              }
-            })
-          : concatChunks(parts, sizeBytes);
 
       return {
         body,
