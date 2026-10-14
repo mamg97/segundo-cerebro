@@ -1922,9 +1922,9 @@ try {
       sourceByDate.get(item.date).push(item);
     }
     const parseBarComparison = (text) => {
-      const match = String(text || "").match(/^\\s*≥?([\\d.,]+)\\s*\\/\\s*(?:≥?([\\d.,]+)|—)\\s*(?:kcal|g)\\s*$/u);
+      const match = String(text || "").match(/^\s*≥?([\d.,]+)\s*\/\s*(?:≥?([\d.,]+)|—)\s*(?:kcal|g)\s*$/u);
       if (!match) return null;
-      const number = (part) => part == null ? null : Number(part.replace(/\\./g, "").replace(",", "."));
+      const number = (part) => part == null ? null : Number(part.replace(/\./g, "").replace(",", "."));
       return { consumed: number(match[1]), planned: number(match[2]) };
     };
     // A single, source-backed goal summary precedes the scrolling week matrix.
@@ -1938,9 +1938,9 @@ try {
     const goalValid = expectedGoals.every((value, index) => {
       const numeric = Number(value);
       const shown = goalLabels[index] || "";
-      const first = shown.match(/([\\d.,]+)/);
+      const first = shown.match(/([\d.,]+)/);
       if (value == null || !Number.isFinite(numeric)) return /pendiente/i.test(shown);
-      return first && Number(first[1].replace(/\\./g, "").replace(",", ".")) === Math.round(numeric);
+      return first && Number(first[1].replace(/\./g, "").replace(",", ".")) === Math.round(numeric);
     });
     assertCheck(goalValid, "Home · objetivos coinciden con la fuente canónica");
     let daysCompared = 0;
