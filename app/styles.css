@@ -9413,6 +9413,51 @@ html[data-theme="dark"] .electricity-chart-card {
 .stock-out, .state-comprar { color: var(--coral); }
 .state-comprado { color: var(--mint); }
 
+.pantry-product-identity {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pantry-product-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pantry-product-thumb {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink-soft);
+}
+
+.pantry-product-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+}
+
+.pantry-product-thumb-placeholder { display: none; }
+
+.pantry-product-thumb[data-photo="pending"] .pantry-product-thumb-placeholder {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+}
+
 .pantry-product-name {
   overflow: hidden;
   font-size: 12px;
@@ -9660,6 +9705,8 @@ html[data-theme="dark"] .purchase-state {
   }
   .pantry-location-strip { grid-template-columns: 1fr; }
   .pantry-product-grid { grid-template-columns: 1fr; }
+  .pantry-product-identity { grid-template-columns: 64px minmax(0, 1fr); }
+  .pantry-product-thumb { width: 64px; height: 64px; }
   .pantry-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pantry-nutrition > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pantry-shopping-row { grid-template-columns: 1fr auto; }
