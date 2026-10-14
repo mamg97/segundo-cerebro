@@ -1482,6 +1482,17 @@ async function auditMobileWealthDialog() {
           })
         };
       });
+      // Fixed-shape diagnostic only: no rendered financial values, card text
+      // or identifiers are allowed in public GitHub Action logs.
+      if (!layout.open || !layout.dialogFits || !layout.bodyFits ||
+          !layout.cardsFit || !layout.sectionsFit) {
+        console.error("[AUDIT_WEALTH_GEOMETRY] " +
+          "viewport=" + width +
+          " modal=" + (layout.dialogFits ? "FIT" : "OVERFLOW") +
+          " body=" + (layout.bodyFits ? "FIT" : "OVERFLOW") +
+          " cards=" + (layout.cardsFit ? "FIT" : "OVERFLOW") +
+          " sections=" + (layout.sectionsFit ? "FIT" : "OVERFLOW"));
+      }
       assertCheck(layout.open && layout.cards > 0,
         `Patrimonio móvil ${width}px · detalle y plataformas renderizados`,
         `cards=${layout.cards || 0}`);
