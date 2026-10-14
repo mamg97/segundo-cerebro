@@ -1,3 +1,13 @@
+## ORGANIZADOR · Postdeploy #527, auditoría #416 (14/10/2026)
+
+- **Publicado:** PR #478 fusionada como `192ec2f72de08bbe7c0931af9d7d114c19786beb`; CI [#674](https://github.com/mamg97/segundo-cerebro/actions/runs/38549366342) `success`; despliegue privado [#527](https://github.com/mamg97/segundo-cerebro/actions/runs/38549491665) `success`.
+- **Auditoría real [#416](https://github.com/mamg97/segundo-cerebro/actions/runs/38549609000):** 1.217 controles, **1 fallo** (`MIDAS CHECK-00029`). `[AUDIT_MEDIA_CACHE] ... peak_image_reads=1`, **sin** `[AUDIT_NETWORK_DIAG]` ni `[AUDIT_BACKEND_DIAG]` ni 502 en esta ejecución. Comparación #415: 1.217/2, 2 imágenes 502 y MIDAS. El 502 intermitente **NO** se declara resuelto con un único cero; mantener el gate 5xx estricto.
+- **MIDAS pendiente:** `MIDAS classic S&P500 503 paper` schedule #7 (14/10 07:45 UTC) terminó en error de barras obligatorias ausentes. PR `mamg97/midas-paper-lab#49` fusionada y CI Classic #8 verde con test de reintento por ticker, pero el workflow todavía no tiene una ejecución **schedule posterior** con corrección. No alteramos su calendario, diario, cifras ni la política de verificación; mantener rojo hasta ejecución real verde.
+- **Siguientes pruebas exigidas:** siguiente cron MIDAS exitoso y dos auditorías Chromium completas independientes con cero fallos/cero 502 sobre Worker vigente. Si regresan errores de Service Binding, consultar el nuevo código seguro clasificado `AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT`, `AUDIT_GATEWAY_SUBREQUEST_LIMIT`, `AUDIT_GATEWAY_BINDING_TIMEOUT` o `AUDIT_GATEWAY_BINDING_FETCH_FAILED` y métricas reales Cloudflare antes de modificar D1.
+- Sin escrituras en Sheets, D1, imágenes, secretos ni posiciones; coste recurrente cero.
+
+---
+
 ## ORGANIZADOR · Auditorías 412–415: contención experimental de carga y diagnóstico 502 (14/10/2026)
 
 - Auditorías Chromium #412 (1216/1), #413 (1216/2), #414 (1217/2) y #415 (1217/2) siguen rojas. El overflow móvil de Patrimonio dejó de fallar en #415 tras PR #476 y despliegue #526; no editar más CSS sin nueva prueba.
