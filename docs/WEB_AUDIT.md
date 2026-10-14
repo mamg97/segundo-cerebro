@@ -414,3 +414,10 @@ El auditor debe comprobar la capacidad de biblioteca de Gimnasio sin ejecutar ni
 ### Patrimonio financiero · modal responsive móvil
 
 El recorrido Chromium autenticado abre **«Ver evolución»** desde Home en `#detail-dialog.wealth-dialog`. Comprueba en `320px`, `390px` y `440px` que el modal, `#dialog-body`, tarjetas de plataforma y notas, distribución y conciliación no se desbordan ni recortan. También ejecuta la batería visual ordinaria a 390px. La gráfica de evolución puede desplazarse horizontalmente **dentro de `.wealth-chart-scroll`**, sin ampliar el modal. Se comprueban geometrías, no se imprimen nombres, notas ni saldos en los logs; no se reescriben cifras.
+
+
+### Protección del gateway OIDC y diagnóstico del modal de Patrimonio (14/10/2026)
+
+El gateway de auditoría deja de descargar el JWKS público de GitHub por cada solicitud GET y utiliza una caché efímera **solo de claves públicas**, con caducidad de 5 minutos, comprobación de firma y claims JWT **en cada solicitud**, rotación controlada, concurrencia agrupada y rechazo estricto de credenciales inválidas. No se guardan tokens, respuestas, datos financieros, imágenes ni cookies. Esto reduce consumo y llamadas externas, pero **no demuestra** por sí mismo la causa de las excepciones intermitentes Service Binding.
+
+En `Ver evolución` del iPhone, se aplica contención `min-width: 0` y cuadrícula `minmax(0,1fr)` a las secciones anidadas del diario patrimonial y el historial Delta. Únicamente las tablas anchas tienen scroll horizontal propio. El Chromium emite `[AUDIT_WEALTH_GEOMETRY]` con anchuras de viewport y cuatro resultados `FIT/OVERFLOW` fijos cuando un control falla: no se publican valores, notas, nombres ni IDs privados. Los controles de seguridad y errores HTTP 5xx no se relajan.

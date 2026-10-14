@@ -1,3 +1,13 @@
+## ORGANIZADOR · Auditorías 412–414 + MIDAS Classic (14/10/2026)
+
+- Producción `d8eaf299`: audit #412 `1216/1` por control de Patrimonio móvil; audit #413 `1216/2`, de los que 16 imágenes devuelven HTTP 502 con `AUDIT_GATEWAY_BINDING_FETCH_FAILED`; audit #414 `1217/2`, con control de MIDAS fallido y otro de la geometría financiera. El auditor sigue estricto, no se marcan verdes los 5xx ni las ausencias de precio.
+- MIDAS `mamg97/midas-paper-lab`: schedule Classic #6 y #7 falla al faltar OHLC del mismo día en posiciones/órdenes; PR #49 del laboratorio recupera mediante una lectura individual solo esos tickers, manteniendo la obligación de barra exacta. Weekly ML #18 tuvo fallo puntual en precio ADI; #19 verde. La política del gate MIDAS refleja la última ventana realmente ejecutada; no falsificar su estado por una PR aprobada.
+- En esta rama Segundo Cerebro se recupera el refactor OIDC que permanecía sin fusionar en PR #472: claves **públicas** JWKS en caché corta por isolate, sin cachear JWT, claims ni respuestas privadas. Verificación de firma RSA por cada petición, refresh al rotar claves, fail-closed. La reducción de subrequests no prueba la causa de Service Binding 502: para ello siguen siendo necesarias las métricas del Worker.
+- Patrimonio móvil: se contienen grids internos y scrollers de Delta/diario. Audit Chromium agrega diagnóstico de geometría `FIT/OVERFLOW` por 320/390/440 px solo si falla, sin imprimir datos privados.
+- Validación pendiente al abrir PR: CI, merge, deploy Cloudflare y 2 auditorías Chromium completas sobre el commit desplegado. El fallo original de 502 se considera intermitente y **abierto** si vuelve a aparecer; no relajar el control infra.
+
+---
+
 ## ORGANIZADOR · Patrimonio móvil, «Ver evolución» (14/10/2026)
 
 - Captura iPhone: el modal de `Patrimonio financiero` crece fuera del viewport y corta las tarjetas, notas y conciliación. Los datos de Finanzas permanecen en sus fuentes privadas; no modificar importes.
