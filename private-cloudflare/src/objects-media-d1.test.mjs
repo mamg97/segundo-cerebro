@@ -36,6 +36,12 @@ class FakeStatement {
   }
 
   async all() {
+    if (this.sql.includes("SELECT chunk_index, LENGTH(data) AS chunk_bytes FROM objects_media_chunks")) {
+      this.db.metadataReads++;
+      return { results: (this.db.chunks.get(this.args[0]) || [])
+        .map((row) => ({ chunk_index: row.chunk_index, chunk_bytes: row.data.byteLength }))
+        .sort((a, b) => a.chunk_index - b.chunk_index) };
+    }
     if (this.sql.includes("SELECT chunk_index, data FROM objects_media_chunks")) {
       const items = this.db.chunks.get(this.args[0]) || [];
       const total = items.reduce((n, row) => n + row.data.byteLength, 0);
@@ -80,6 +86,7 @@ class FakeD1 {
     this.maxBatchBlobBytes=maxBatchBlobBytes;
     this.maxResultBytes=maxResultBytes;
     this.singleChunkReads=0;
+    this.metadataReads=0;
     this.fullChunkReads=0;
   }
   prepare(sql){ return new FakeStatement(this,sql); }
@@ -152,6 +159,47 @@ test("D1 streams multi-chunk image reads without rewriting the stored asset", as
   assert.deepEqual(new Uint8Array(original.body), input);
   assert.equal(db.assets.get(key).chunk_count, 3);
   assert.equal(db.chunks.get(key).length, 3);
+});
+
+test("streamed D1 media never buffers all BLOB chunks before a browser reads them", async () => {
+  const db = new FakeD1();
+  const store = createObjectsD1MediaStore({ DB: db });
+  const key = "objects/obj-stream-example-001/processed/12345678-abcd";
+  const source = new Uint8Array(OBJECTS_D1_MEDIA_LIMITS.chunkBytes * 3 + 17);
+  for (let i = 0; i < source.length; i += 1) source[i] = i % 199;
+  await store.put(key, source, { httpMetadata: { contentType: "image/png" } });
+  const media = await store.get(key, { stream: true });
+  assert.ok(media.body instanceof ReadableStream);
+  assert.equal(db.metadataReads, 1, "metadata validated without reading BLOB payloads");
+  assert.equal(db.singleChunkReads, 0, "no eager full-asset BLOB reads");
+  const reader = media.body.getReader();
+  const first = await reader.read();
+  assert.equal(first.done, false);
+  assert.equal(first.value.byteLength, OBJECTS_D1_MEDIA_LIMITS.chunkBytes);
+  assert.equal(db.singleChunkReads, 1, "only one chunk is needed for first output");
+  const parts = [first.value];
+  for (;;) {
+    const item = await reader.read();
+    if (item.done) break;
+    parts.push(item.value);
+  }
+  const bytes = new Uint8Array(parts.reduce((sum, x) => sum + x.byteLength, 0));
+  let offset = 0;
+  for (const part of parts) { bytes.set(part, offset); offset += part.byteLength; }
+  assert.deepEqual(bytes, source);
+  assert.equal(db.singleChunkReads, 4);
+});
+
+test("cancelling a private image stream does not load the remaining D1 payloads", async () => {
+  const db = new FakeD1();
+  const store = createObjectsD1MediaStore({ DB: db });
+  const key = "objects/obj-cancel-example-001/processed/12345678-abcd";
+  await store.put(key, new Uint8Array(OBJECTS_D1_MEDIA_LIMITS.chunkBytes * 4));
+  const stream = (await store.get(key, { stream: true })).body;
+  const reader = stream.getReader();
+  await reader.read();
+  await reader.cancel();
+  assert.equal(db.singleChunkReads, 1, "remaining private bytes are never read");
 });
 
 test("D1 detects corrupted streamed chunk lengths before delivering any bytes", async () => {

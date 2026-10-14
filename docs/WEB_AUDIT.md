@@ -446,3 +446,8 @@ Nota 14/10/2026 · Paridad de redondeo: el porcentaje visual de las barras debe 
 ### Frontend sin versiones obsoletas (14/10/2026)
 
 La auditoría Chromium exige que los entrypoints privados `app.js` y `styles.css` lleven versiones basadas en la huella SHA-256 de 16 caracteres del contenido; el build las inserta automáticamente, sin intervención humana ni cambios en los datos privados. El Worker privado devuelve `Cache-Control: no-store` para HTML estático, evitando que el navegador conserve un manifiesto de JS/CSS viejo. Las sesiones ya abiertas requieren recarga del documento para reconstruir el DOM. El gate del navegador valida únicamente la presencia y formato de ambas revisiones, no emite URLs ni datos privados.
+
+
+### Lectura de imágenes D1 con memoria acotada (14/10/2026)
+
+Mitigación: en `objects-media-d1` el acceso GET `stream:true` valida metadatos `chunk_index, LENGTH(data)` en vez de cargar todas las cargas binarias antes de enviar una respuesta; la transferencia binaria se hace bajo demanda, un chunk indexado cada vez. Ante un fragmento posterior anómalo, el stream aborta (no se devuelve una imagen íntegra fabricada). Las imágenes y claves privadas no salen a logs ni a una caché pública. Mantener diagnósticos de Service Binding sin presuponer el límite Cloudflare específico. La auditoría sigue fallando ante 5xx o imágenes incompletas, sin aceptarlas como recuperadas.

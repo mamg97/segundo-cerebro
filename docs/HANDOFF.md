@@ -1,3 +1,11 @@
+## ORGANIZADOR 19 · Mitigación BLOB de Objetos y límite de recursos (14/10/2026)
+
+- Incidente #426: Chromium 1227 controles / 8 fallos. Seis fallos visuales y uno infra derivan de 37 HTTP 502 de imágenes de Objetos; diagnósticos 31 `AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT` y 6 respuestas 5xx sin clasificar. MIDAS `CHECK-00029` independiente. Los logs permiten afirmar límite de recursos al atravesar el Service Binding, pero no identificar CPU frente a memoria/otras cuotas sin telemetría adicional.
+- En `private-cloudflare/src/objects-media-d1.js` el antiguo `get(stream:true)` leía **todos** los BLOBs D1 secuencialmente y los encolaba antes de devolver una respuesta. Ahora precalcula y verifica **solo longitudes/índices** con una consulta ligera y devuelve un ReadableStream que solicita cada BLOB exclusivamente cuando el consumidor lo lee (máximo un fragmento de 1 MiB retenido por la capa D1), con cancelación real y propagación de errores; los consumidores que requieren bytes completos no cambian de contrato. Imágenes existentes, SHA/ETag, URL, permisos, D1 y Sheets **sin mutaciones**.
+- Evidencia pendiente: CI, deploy y Chromium de producción. No cerrar la raíz del resource limit por una auditoría verde aislada; observar 2 ejecuciones completas consecutivas sin 502 ni `AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT`, incluyendo una programada si GitHub emite el cron. No rebajar los tests ni abrir servicios de pago.
+
+---
+
 ## ORGANIZADOR 18 · Frontend antiguo retenido tras cambios de Home (14/10/2026)
 
 - Nueva captura del usuario aún muestra subtítulo y barras antiguos, pese a que Chromium fresco #425 comprobó el nuevo menú en el Worker privado. Causa de entrega que se evita: `app/index.html` mantenía la misma query `?v=0.44.32` para `app.js` y `styles.css` entre commits y el HTML podía revalidarse con caché; también una pestaña SPA abierta antes del despliegue mantiene su DOM antiguo hasta recarga.
