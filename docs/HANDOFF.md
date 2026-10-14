@@ -1,3 +1,13 @@
+## ORGANIZADOR · Patrimonio móvil, «Ver evolución» (14/10/2026)
+
+- Captura iPhone: el modal de `Patrimonio financiero` crece fuera del viewport y corta las tarjetas, notas y conciliación. Los datos de Finanzas permanecen en sus fuentes privadas; no modificar importes.
+- Causa de maquetación: `.wealth-detail` y la sección de distribución usan CSS Grid con ancho mínimo implícito; textos de notas y gráficos pueden imponer el min-content de escritorio. La media query de una columna a 720px no limita esos tamaños intrínsecos.
+- Cambio en `app/styles.css`: `min-width:0`/ `max-width:100%` en la cadena de contenedores y tarjetas, columnas `minmax(0,1fr)`, notas con `overflow-wrap:anywhere`, modal `100vw - 16px`, tipografía legible, con scroll horizontal interno exclusivo de gráficas.
+- Auditoría preventiva añadida en `private-cloudflare/scripts/web-audit.mjs`: abre el modal real desde Home y comprueba anchuras, rectángulos de texto, barra y conciliación a 320/390/440px; snapshot completo a 390px. Los logs solo publican booleanos y contadores, nunca saldos ni contenido privado.
+- Pendiente de certificar: CI verde, merge, deploy privado Cloudflare y Chromium postdeploy `AUDIT_OK`. Evitar afirmar reparación publicada hasta comprobarlo.
+
+---
+
 ## NUTRI · Enlaces canónicos del menú semanal (13/10/2026)
 
 - **Incidencia:** filas con plato seleccionado pero sin `recipe_id` no podían abrir su ficha. En lectura ligera, filas con ID ocultaban el enlace si el objeto de receta no se había hidratado; el clic sobre una ficha ausente terminaba silenciosamente.
