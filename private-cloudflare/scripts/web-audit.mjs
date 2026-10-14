@@ -1880,6 +1880,18 @@ try {
   const homeMenuVisible = await page.locator("#home-weekly-menu-panel").evaluate((node) => !node.hidden).catch(() => false);
   assertCheck(homeMenuVisible, "Menú semanal permanece visible en Home");
 
+  // A brand-new Chromium session must receive content-fingerprinted JS/CSS,
+  // rather than a hand-maintained version reused by multiple deployments.
+  // Log booleans only (no URLs or private response content).
+  const freshEntrypoints = await page.evaluate(() => {
+    const js = document.querySelector('script[type="module"][src*="app.js"]')?.getAttribute("src") || "";
+    const css = document.querySelector('link[rel="stylesheet"][href*="styles.css"]')?.getAttribute("href") || "";
+    return /(?:\?|&)v=[a-f0-9]{16}(?:&|$)/.test(js) &&
+      /(?:\?|&)v=[a-f0-9]{16}(?:&|$)/.test(css);
+  });
+  assertCheck(freshEntrypoints, "Home · frontend nuevo usa versiones JS/CSS por contenido");
+
+
   // Compare Home against the lightweight, direct Google Sheets endpoint.
   // The full nutrition endpoint can legally return a short-lived cache, so
   // matching only that payload would miss stale Home menu regressions.
