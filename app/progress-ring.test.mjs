@@ -166,14 +166,16 @@ assert.match(app, /function weeklyMenuModel/);
 assert.match(app, /function weeklyMenuItemIsConsumed/);
 assert.match(app, /const kcal = Number\(day\?\.consumedKcal \|\| 0\)/);
 assert.match(app, /const protein = Number\(day\?\.consumedProtein \|\| 0\)/);
-assert.match(app, /0% consumido/);
-assert.match(app, /formatKcal\(day\.kcal\)/);
-assert.match(app, /formatMacro\(day\.protein\)/);
-assert.match(app, /home-weekly-menu-consumed-line/);
-assert.match(app, /renderNutritionQualityMeter\("kcal", display\.kcal/);
-assert.match(app, /renderNutritionQualityMeter\("protein", display\.protein/);
-assert.match(app, /kcalPlanQualifier/);
-assert.match(app, /proteinPlanQualifier/);
+// Home now displays a single source-backed goal summary and each day's
+// confirmed intake / known plan inside the bar; no repeated target percentage.
+assert.match(app, /class="home-weekly-menu-objectives"/);
+assert.match(app, /renderHomeWeeklyMenuPlanBar\\("kcal", day\\.consumedKcal, day\\.kcal/);
+assert.match(app, /renderHomeWeeklyMenuPlanBar\\("protein", day\\.consumedProtein, day\\.protein/);
+assert.match(app, /const fill = hasPlan \\? Math\\.max\\(0, Math\\.min\\(100/);
+assert.match(app, /consumedIncomplete \\? "≥" : ""/);
+assert.match(app, /plannedIncomplete \\? "≥" : ""/);
+assert.match(app, /home-weekly-menu-plan-value/);
+assert.doesNotMatch(app.slice(app.indexOf("function renderHomeWeeklyMenuDayHeader("), app.indexOf("function renderHomeWeeklyMenu(data)")), /0% consumido|obj\\./);
 assert.doesNotMatch(app, /useConsumed \? Number\(day\.consumedKcal/);
 assert.match(pantry, /item\.familyName/);
 assert.match(pantry, /tienda\\\.mercadona\\\.es\\\/product\\\//);
