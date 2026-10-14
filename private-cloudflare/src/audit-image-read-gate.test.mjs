@@ -39,7 +39,7 @@ test("a failed image read never blocks the next read or masks its 502", async ()
 
 test("the audit uses capped reads only for eligible immutable private images", () => {
   const code = readFileSync(new URL("../scripts/web-audit.mjs", import.meta.url), "utf8");
-  assert.match(code, /const imageReadGate = createAuditImageReadGate\(2\)/);
+  assert.match(code, /const imageReadGate = createAuditImageReadGate\(1\)/);
   assert.match(code, /immutableImageCache\.once\(request\.url\(\), async \(\) => imageReadGate\.run/);
   assert.match(code, /if \(!immutableImageCache\.canHandle\(request\.url\(\), auditOrigin, request\.method\(\)\)\)/);
   assert.match(code, /const response = await route\.fetch\(\{ headers, timeout: 25000 \}\)/);
