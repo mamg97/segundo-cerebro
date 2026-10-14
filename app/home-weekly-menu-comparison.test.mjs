@@ -39,6 +39,17 @@ test("zero consumption, excess consumption and unplanned days are not falsified"
   assert.match(withoutPlan, /value="0" max="100"/);
 });
 
+test("visible bar fill always matches the rounded numbers shown to the user", () => {
+  // 1.49 / 2.49 would round to 60% using hidden fractions, even though
+  // the UI prints 1 / 2 (50%). Progress must use the same displayed values.
+  const rounded = context.renderHomeWeeklyMenuPlanBar("kcal", 1.49, 2.49);
+  assert.match(rounded, /1 \/ 2 kcal/);
+  assert.match(rounded, /value="50" max="100"/);
+  const tiny = context.renderHomeWeeklyMenuPlanBar("protein", 0.25, 0.4);
+  assert.match(tiny, /0 \/ — g/);
+  assert.match(tiny, /value="0" max="100"/);
+});
+
 test("missing macros preserve a partial indication instead of inventing full totals", () => {
   const partial = context.renderHomeWeeklyMenuPlanBar("kcal", 120, 200, true, true);
   assert.match(partial, /≥120 \/ ≥200 kcal/);
