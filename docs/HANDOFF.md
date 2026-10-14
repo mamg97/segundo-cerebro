@@ -1,3 +1,13 @@
+## ORGANIZADOR · Postdeploy #526 / Chromium #415 (14/10/2026)
+
+- Fixes productivos sobre `d13be57e2286fcd7aa8872ffe89dc753407c7c49`: PR #476 CI #671 `success`, Cloudflare #526 `success`. Cache JWKS públicas con verificación criptográfica JWT por petición, más contención de tablas Delta y diario dentro de modal Patrimonio en iPhone.
+- Auditoría #415 (run 38543015918) real Chromium `1217` controles / `2` fallos, **roja**: `MIDAS CHECK-00029` y `INFRA CHECK-01216`. La prueba móvil que falló en #412–414 ya no falla en #415 (sin `[AUDIT_WEALTH_GEOMETRY]`, con comprobaciones visuales en verde).
+- Infraestructura: 2 imágenes privadas siguieron devolviendo 502 `OBJECTS_IMAGE_AUDIT_GATEWAY_BINDING_FETCH_FAILED`, comparado con 16 en #413. El origen aguas arriba del Service Binding sigue **abierto**, y una bajada de frecuencia no demuestra solución. No es correcto desactivar el gate ni reintentar para pintar verde; se requieren métricas de Worker/D1 para causa raíz.
+- MIDAS: `mamg97/midas-paper-lab` PR #49 fusionada a `14a187996897dea9157c464e5303d15ebdcda04c`, y la CI de Classic #8 pasó. Solo reintenta cotización exacta de posiciones/órdenes pendientes tras descarga masiva parcial sin ffill ni operaciones ficticias. El último cron Classic #7 todavía fue rojo; el control MIDAS del auditor debe permanecer rojo hasta ejecución real de la siguiente ventana correctamente resuelta.
+- PR #472 cerrada por quedar superada por #476. No hay otras modificaciones pendientes de código relacionadas con este incidente en esa rama.
+
+---
+
 ## ORGANIZADOR · Auditorías 412–414 + MIDAS Classic (14/10/2026)
 
 - Producción `d8eaf299`: audit #412 `1216/1` por control de Patrimonio móvil; audit #413 `1216/2`, de los que 16 imágenes devuelven HTTP 502 con `AUDIT_GATEWAY_BINDING_FETCH_FAILED`; audit #414 `1217/2`, con control de MIDAS fallido y otro de la geometría financiera. El auditor sigue estricto, no se marcan verdes los 5xx ni las ausencias de precio.
