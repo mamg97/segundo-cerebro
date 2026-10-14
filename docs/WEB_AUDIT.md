@@ -410,3 +410,7 @@ El auditor debe comprobar la capacidad de biblioteca de Gimnasio sin ejecutar ni
 - La disponibilidad de la biblioteca no puede ocultar ni sustituir el plan/histórico canónico.
 - Los perfiles responsive siguen siendo desktop-wide, desktop, tablet, mobile-wide y mobile; la parrilla de biblioteca debe mantener 4/3/2 columnas según espacio y la ficha debe colapsar a una columna en móvil.
 - Un 5xx persistente de las rutas de biblioteca se clasifica como fallo de fuente externa/integración. Una degradación visual explícita no debe eliminar ni corromper el plan existente.
+
+### Patrimonio financiero · modal responsive móvil
+
+El recorrido Chromium autenticado abre **«Ver evolución»** desde Home en `#detail-dialog.wealth-dialog`. Comprueba en `320px`, `390px` y `440px` que el modal, `#dialog-body`, tarjetas de plataforma y notas, distribución y conciliación no se desbordan ni recortan. También ejecuta la batería visual ordinaria a 390px. La gráfica de evolución puede desplazarse horizontalmente **dentro de `.wealth-chart-scroll`**, sin ampliar el modal. Se comprueban geometrías, no se imprimen nombres, notas ni saldos en los logs; no se reescriben cifras.
