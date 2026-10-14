@@ -6243,6 +6243,13 @@ const GYM_CUSTOM_ANIMATIONS = [
     posterUrl: "./assets/gym-animations/prensa-piernas-inclinada-45-v5-white-poster.png",
     labels: ["prensa de piernas", "prensa de piernas inclinada a 45", "prensa inclinada a 45", "45 degree leg press", "45-degree leg press"],
     variantNote: "Esta animación muestra la prensa inclinada a 45° confirmada para el plan, no una prensa horizontal o sentada."
+  },
+  {
+    key: "hiperextensiones-banco-45",
+    animationUrl: "./assets/gym-animations/hiperextensiones-banco-45-v2-white.gif",
+    posterUrl: "./assets/gym-animations/hiperextensiones-banco-45-v2-white-poster.png",
+    labels: ["hip thrust 45", "hip thrust 45o", "hiperextensiones en banco a 45", "hiperextensiones en banco inclinado a 45", "45 degree back extension", "45-degree back extension"],
+    variantNote: "El nombre del plan «Hip thrust 45°» corresponde al banco de hiperextensiones inclinado: bajar y levantar el tronco. No muestra un hip thrust con barra ni en máquina."
   }
 ];
 let gymLibraryState = {
@@ -6281,7 +6288,8 @@ const GYM_ILLUSTRATED_EXERCISES = {
   "curl-martillo-polea": { name: "Curl martillo en polea baja", technique: "Usa un agarre neutro en la cuerda, conserva los codos cerca del cuerpo y flexiona sin balancear el tronco.", muscles: ["Biceps", "Brachialis"], equipment: ["Cable", "Cable machine"] },
   "gemelos-maquina-pie": { name: "Gemelos de pie en máquina", technique: "Apoya la parte delantera de los pies en la máquina, eleva los talones de forma controlada y desciende hasta un recorrido cómodo.", muscles: ["Calves", "Gastrocnemius"], equipment: ["Machine"] },
   "extension-cuadriceps-maquina": { name: "Extensiones de cuádriceps en máquina", technique: "Ajusta el respaldo y el rodillo por encima de los tobillos. Extiende las rodillas de forma controlada, sin bloquearlas, y baja despacio sin separar la espalda del apoyo.", muscles: ["Quadriceps", "Quadriceps femoris"], equipment: ["Machine"] },
-  "prensa-piernas-inclinada-45": { name: "Prensa de piernas inclinada a 45°", technique: "Mantén la espalda y la pelvis apoyadas, los pies estables en la plataforma y empuja el trineo por los raíles inclinados sin bloquear las rodillas. Regresa de forma controlada hasta un recorrido cómodo.", muscles: ["Quadriceps", "Quadriceps femoris", "Glutes"], equipment: ["Machine"] }
+  "prensa-piernas-inclinada-45": { name: "Prensa de piernas inclinada a 45°", technique: "Mantén la espalda y la pelvis apoyadas, los pies estables en la plataforma y empuja el trineo por los raíles inclinados sin bloquear las rodillas. Regresa de forma controlada hasta un recorrido cómodo.", muscles: ["Quadriceps", "Quadriceps femoris", "Glutes"], equipment: ["Machine"] },
+  "hiperextensiones-banco-45": { name: "Hiperextensiones en banco a 45°", technique: "Con los pies sujetos y los muslos apoyados en el banco inclinado, baja y eleva el tronco mediante la flexión de cadera. Mantén la espalda estable y termina al alinear el tronco con las piernas, sin arquear hacia atrás.", muscles: ["Glutes", "Hamstrings", "Back", "Erector spinae"], equipment: ["Bench", "Hyperextension bench"] }
 };
 
 function gymOwnIllustration(exercise) {
@@ -6296,6 +6304,9 @@ function gymCustomAnimationFor(exercise) {
   // The private plan's generic label has a user-confirmed 45-degree meaning.
   // A generic wger catalogue record does not: never assign it this variant.
   if (exercise.source?.provider === "wger" && normalizedName === "prensa de piernas") return null;
+  // This legacy plan label was confirmed as a Roman-chair extension, not a hip thrust.
+  // Never reinterpret a public provider's hip-thrust record as this different movement.
+  if (exercise.source?.provider === "wger" && ["hip thrust 45", "hip thrust 45o"].includes(normalizedName)) return null;
   // wger sometimes calls the barbell exercise simply "Incline Bench Press".
   // This abbreviated name is ambiguous without the equipment information.
   if (exercise.source?.provider === "wger" &&
@@ -7000,7 +7011,7 @@ async function openGymTechniqueForPlanExercise(exercise) {
         </div>
         <div class="gym-exercise-detail-copy">
           <h3 id="gym-animation-heading" tabindex="-1">${escapeHtml(exercise.name)}</h3>
-          <small class="gym-media-build-caption">Ficha multimedia · v0.44.30</small>
+          <small class="gym-media-build-caption">Ficha multimedia · v0.44.31</small>
           ${gymVideoStateMarkup(animation.key)}
           <div id="gym-plan-video-supplement" class="gym-technique-media-supplement"></div>
           ${gymTechniqueInstructionsMarkup(animation)}
@@ -7292,7 +7303,7 @@ function renderGymLibraryDetail(exercise, contextPlanExerciseId = null) {
       <div class="gym-exercise-detail-copy">
         <p class="context-label">${escapeHtml(exercise.category?.name || "Ejercicio")}</p>
         <h3>${escapeHtml(exercise.name)}</h3>
-        <small class="gym-media-build-caption">Ficha multimedia · v0.44.30</small>
+        <small class="gym-media-build-caption">Ficha multimedia · v0.44.31</small>
         <div class="gym-exercise-tags">
           ${muscleNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
           ${equipmentNames.map((name) => `<span class="is-equipment">${escapeHtml(name)}</span>`).join("")}

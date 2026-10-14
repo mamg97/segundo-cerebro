@@ -1,3 +1,9 @@
+## GESTOR GYM · Hiperextensiones en banco a 45° · GIF 16/17 (2026-10-14)
+
+- Nueva ilustración `hiperextensiones-banco-45-v2-white.gif`: 360×480, 16 fotogramas completos a 7 cs, fondo blanco y póster reducido-movimiento. Fuente, prompt, contacto de revisión y parámetros en `design/gym-animations/`. La interpolación directa sobre blanco evita el borde oscuro de alpha observado en la prueba inicial.
+- La etiqueta existente `Hip thrust 45°` se confirmó como bajar/levantar el tronco en banco de hiperextensiones inclinado. Se conserva el nombre canónico y se aclara la variante en el detalle; no se asigna a fichas públicas wger de hip thrust. El mismo GIF sirve a Mi plan, referencia de plan pausado, Biblioteca y detalles. Sin cambios en cargas, sesiones, Sheets o D1.
+- Queda **curl femoral sentado**, variante ya confirmada: no volver a preguntar ni generar curl tumbado. Los 16 GIF solo se consideran publicados tras CI, despliegue y comprobación de la versión servida; el estado global de auditoría mantiene sus incidencias independientes.
+
 ## ORGANIZADOR · Seguimiento #417–#418 y cierre visual de Patrimonio móvil (14/10/2026)
 
 - **Estado comprobado:** código productivo de Cloudflare en [deploy #527](https://github.com/mamg97/segundo-cerebro/actions/runs/38549491665) `success`, SHA `192ec2f72de08bbe7c0931af9d7d114c19786beb`. El `main` posterior solo añadió documentación en #479; no confundir su SHA con un nuevo deploy privado.
@@ -152,7 +158,7 @@
 
 - El usuario confirmó la variante inclinada a 45°, no la prensa horizontal. El GIF anatómico blanco con cuádriceps y glúteos resaltados conserva máquina y encuadre fijos: ocho poses originales y ocho intermedias, 16 fotogramas completos de 360×480 a 7 cs. Fuente final, contacto visual y metadatos de construcción están en `design/gym-animations/`; recurso y póster en `app/assets/gym-animations/`.
 - El nombre del plan `Prensa de piernas` se vincula a esta variante confirmada. Una ficha wger genérica no hereda el GIF; solo una ficha explícitamente de 45° puede compartirlo. Mi plan, Biblioteca y los detalles reutilizan el mismo recurso; los vídeos wger verificados permanecen únicamente en el detalle. No se alteran ejercicios, cargas, sesiones, Sheets ni D1.
-- Restan dos ejercicios del plan sin GIF: `Hip thrust 45º` y `Curl de pierna tumbado o sentado`; requieren confirmar el aparato o variante exacta antes de dibujar. No declarar publicado hasta CI, despliegue privado y comprobación real en la web.
+- Estado superado por la entrada de hiperextensiones 16/17: ambas variantes ya confirmadas (banco de hiperextensiones a 45° y curl femoral sentado). No declarar un recurso publicado hasta CI, despliegue privado y comprobación real en la web.
 
 ## ORGANIZADOR 16 · Protección del histórico bancario ante redibujos del diálogo (13/10/2026)
 
