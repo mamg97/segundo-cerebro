@@ -9550,6 +9550,50 @@ html[data-theme="dark"] .electricity-chart-card {
 }
 .pantry-shopping-price { text-align: right; font-size: 11px; font-weight: 750; }
 
+/* Shopping rows use the same exact Productos.imagen_url as inventory cards.
+   An unknown or broken image remains visibly marked, never silently substituted. */
+.pantry-shopping-row.is-link {
+  grid-template-columns: 52px minmax(0, 1fr) auto minmax(72px, auto);
+}
+.pantry-shopping-row.is-link > .pantry-product-thumb {
+  width: 52px;
+  height: 52px;
+  min-width: 0;
+  border-radius: 9px;
+}
+.pantry-shopping-row.is-link > .pantry-shopping-info {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pantry-shopping-row.is-link .pantry-product-thumb-placeholder {
+  font-size: 9px;
+}
+@media (max-width: 560px) {
+  .pantry-shopping-row.is-link {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    column-gap: 8px;
+    row-gap: 3px;
+  }
+  .pantry-shopping-row.is-link > .pantry-product-thumb {
+    width: 44px;
+    height: 44px;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .pantry-shopping-row.is-link > .pantry-shopping-info {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .pantry-shopping-row.is-link > .purchase-state {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .pantry-shopping-row.is-link > .pantry-shopping-price {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
 .pantry-shopping-total {
   display: flex;
   gap: 12px;
