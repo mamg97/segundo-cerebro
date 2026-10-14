@@ -1,3 +1,12 @@
+## ORGANIZADOR 18 · Cierre verificable del menú semanal de Home (14/10/2026)
+
+- **PR [#486](https://github.com/mamg97/segundo-cerebro/pull/486)** fusionada; objetivos diarios de kcal/proteína una sola vez antes de la matriz, sin repetición en las columnas. Cada día muestra valores `consumido / previsto` dentro de las dos barras; consumido incluye solo registros confirmados y el plan mantiene las filas de `MenuSemanal`, incluso si el consumo es cero. No se alteró la fuente privada.
+- Auditoría postdeploy [#424](https://github.com/mamg97/segundo-cerebro/actions/runs/38626553859) identificó un fallo reproducible `OTHER CHECK-00081`: el ancho se calculaba a partir de fracciones internas, aunque se mostraban enteros redondeados. **PR [#487](https://github.com/mamg97/segundo-cerebro/pull/487)** corrige el denominador y numerador visuales sin modificar cifras fuente; test específico de `1.49/2.49 → 1/2 → 50%`.
+- **Validación final:** CI [#684](https://github.com/mamg97/segundo-cerebro/actions/runs/38627564790) `success`; despliegue privado Cloudflare [#532](https://github.com/mamg97/segundo-cerebro/actions/runs/38627694775) `success`; demo Pages [#781](https://github.com/mamg97/segundo-cerebro/actions/runs/38627694650) `success`. Commit productivo `a3097d3e00447007e9534ee5dc1cfb24a8631f11`. Auditoría Chromium [#425](https://github.com/mamg97/segundo-cerebro/actions/runs/38627849881): **1.226 controles / 1 fallo**, `OTHER CHECK-00081 PASS`, controles nuevos de objetivos y datos de barras PASS, `NUTRITION_PARITY lightOnly=0 fullOnly=0`. Único fallo `MIDAS CHECK-00029`, independiente. No declarar verde global mientras persista MIDAS.
+- Coste operativo añadido cero; ninguna modificación de Sheets, D1, saldos, objetivos reales, registros de consumo ni credenciales.
+
+---
+
 ## ORGANIZADOR 18 · Ajuste de paridad exacta de las barras de Home (14/10/2026)
 
 - Auditoría Chromium productiva [#424](https://github.com/mamg97/segundo-cerebro/actions/runs/38626553859): 1226 checks / 2 fallos; MIDAS conocido y `OTHER CHECK-00081` de relleno de barras. Objetivos únicos y textos consumo/plan pasan sus controles. Diagnóstico: el progreso calculaba proporción desde fracciones internas, pero los números visibles estaban redondeados; podía surgir una diferencia porcentual. Se corrige en UI comparando **los enteros visibles** y se añade test sintético de redondeo; no se modifica fuente nutricional ni se relaja el gate de auditoría. Cierre condicionado a CI, Cloudflare y nueva auditoría completa.
