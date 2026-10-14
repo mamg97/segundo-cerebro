@@ -2,7 +2,7 @@ import "./vendor/thinking-orbs/register.js";
 import { mockState } from "../core/mock-state.js";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.44.29";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.44.32";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.44.23";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
@@ -5229,7 +5229,7 @@ async function openMenuPantryProduct(panel, data, productId) {
     ]);
     if (!pantryResponse.ok || !detailResponse.ok) throw new Error("PANTRY_PRODUCT_" + detailResponse.status);
     const [pantry, detail] = await Promise.all([pantryResponse.json(), detailResponse.json()]);
-    const { renderProductDetail } = await import("./pantry.js?v=0.42.22");
+    const { renderProductDetail } = await import("./pantry.js?v=0.44.32");
     renderProductDetail(detail.item, pantry, {
       container: panel,
       onBack,
