@@ -5784,10 +5784,14 @@ function renderHomeWeeklyMenuPlanBar(metric, consumedValue, plannedValue, planne
   const label = protein ? "Proteína" : "Kcal";
   const consumed = Math.max(0, Number(consumedValue) || 0);
   const planned = Math.max(0, Number(plannedValue) || 0);
-  const hasPlan = Number.isFinite(planned) && planned > 0;
-  const fill = hasPlan ? Math.max(0, Math.min(100, Math.round(consumed / planned * 100))) : 0;
-  const actualText = `${consumedIncomplete ? "≥" : ""}${Math.round(consumed).toLocaleString("es-ES")}`;
-  const plannedText = hasPlan ? `${plannedIncomplete ? "≥" : ""}${Math.round(planned).toLocaleString("es-ES")}` : "—";
+  // The fill must represent exactly the integers printed inside the bar,
+  // not a different ratio rounded only after using hidden fractions.
+  const shownConsumed = Math.round(consumed);
+  const shownPlanned = Math.round(planned);
+  const hasPlan = Number.isFinite(planned) && shownPlanned > 0;
+  const fill = hasPlan ? Math.max(0, Math.min(100, Math.round(shownConsumed / shownPlanned * 100))) : 0;
+  const actualText = `${consumedIncomplete ? "≥" : ""}${shownConsumed.toLocaleString("es-ES")}`;
+  const plannedText = hasPlan ? `${plannedIncomplete ? "≥" : ""}${shownPlanned.toLocaleString("es-ES")}` : "—";
   const comparison = `${actualText} / ${plannedText} ${unit}`;
   const partial = plannedIncomplete || consumedIncomplete;
   const accessible = `${label}: ${actualText} ${unit} consumidos frente a ${plannedText} ${unit} previstos${partial ? "; subtotal incompleto" : ""}`;
