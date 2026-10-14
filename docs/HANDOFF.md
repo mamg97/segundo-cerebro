@@ -1,3 +1,12 @@
+## ORGANIZADOR 18 · Despensa con miniaturas canónicas (14/10/2026)
+
+- Incidencia: las tarjetas del inventario omitían imágenes aunque `/api/pantry.items[].imageUrl` ya contiene `Productos.imagen_url`. Verificado el Sheet privado canónico: **160 filas de inventario y 104 con imagen HTTPS asociada**, 56 sin imagen a esta revisión; estas cifras son una instantánea, no deben hardcodearse.
+- Solución en `app/pantry.js` y `app/styles.css`: miniatura por ID canónico junto al nombre, lazy + no-referrer + `object-fit:contain`, marcador `Sin foto` cuando no exista URL o falle la carga, contención responsive; se mantienen intactos precio, stock, filtros, navegación y detalle.
+- Nuevo test unitario `app/pantry-thumbnails.test.mjs` y gate de Chromium en `private-cloudflare/scripts/web-audit.mjs` con recuentos entre API y DOM y comprobación de carga de una foto visible. No exponer datos privados ni meter fotografía de usuario en Git; completar las 56 imágenes restantes exclusivamente en `Productos.imagen_url` tras verificar correspondencia exacta, nunca por fuzzy match.
+- Antes de cerrar comprobar CI, merge, deploy Cloudflare y auditoría Chromium completa sobre producción. La incidencia MIDAS y el histórico 502 son independientes; mantener gates globales estrictos.
+
+---
+
 ## ORGANIZADOR 18 · Auditoría #412 y estado productivo #419 (14/10/2026)
 
 - **Verificado en GitHub:** `main=ec21566dfc5d01b8e5b5dc3fbf12dc3afff58b9d` tras PR #481, desplegado en Cloudflare [#528](https://github.com/mamg97/segundo-cerebro/actions/runs/38602161758) (`success`). La #472 está cerrada sin merge porque fue sustituida por #476; **no reabrir ni duplicar** la caché JWKS.
