@@ -1921,31 +1921,65 @@ try {
       if (!sourceByDate.has(item.date)) sourceByDate.set(item.date, []);
       sourceByDate.get(item.date).push(item);
     }
-    const parseRoundedDisplay = (text) => {
-      const match = String(text || "").match(/^\s*([\d.,]+)/);
+    const parseBarComparison = (text) => {
+      const match = String(text || "").match(/^\s*≥?([\d.,]+)\s*\/\s*(?:≥?([\d.,]+)|—)\s*(?:kcal|g)\s*$/u);
       if (!match) return null;
-      const value = Number(match[1].replace(/\./g, "").replace(",", "."));
-      return Number.isFinite(value) ? value : null;
+      const number = (part) => part == null ? null : Number(part.replace(/\./g, "").replace(",", "."));
+      return { consumed: number(match[1]), planned: number(match[2]) };
     };
+    // A single, source-backed goal summary precedes the scrolling week matrix.
+    const goal = page.locator("#home-weekly-menu-content .home-weekly-menu-objectives");
+    assertCheck(await goal.count() === 1 &&
+      await goal.locator("strong").count() === 2,
+      "Home · objetivos diarios aparecen una sola vez fuera de los días");
+    const objective = liveMenuProbe.body.objective || {};
+    const goalLabels = await goal.locator("strong").allTextContents().catch(() => []);
+    const expectedGoals = [objective.kcal, objective.protein];
+    const goalValid = expectedGoals.every((value, index) => {
+      const numeric = Number(value);
+      const shown = goalLabels[index] || "";
+      const first = shown.match(/([\d.,]+)/);
+      if (value == null || !Number.isFinite(numeric)) return /pendiente/i.test(shown);
+      return first && Number(first[1].replace(/\./g, "").replace(",", ".")) === Math.round(numeric);
+    });
+    assertCheck(goalValid, "Home · objetivos coinciden con la fuente canónica");
     let daysCompared = 0;
     let headerMismatches = 0;
+    let progressMismatches = 0;
     for (const [day, items] of sourceByDate) {
       const element = page.locator(`#home-weekly-menu-content .home-weekly-menu-table-day[data-menu-date="${day}"]`);
-      const figures = await element.locator(".home-weekly-menu-progress b").allTextContents().catch(() => []);
-      const expectedKcal = Math.round(items.reduce((sum, item) => sum +
-        (Number.isFinite(Number(item.kcal)) ? Number(item.kcal) : 0), 0));
-      const expectedProtein = Math.round(items.reduce((sum, item) => sum +
-        (Number.isFinite(Number(item.protein)) ? Number(item.protein) : 0), 0));
-      const actualKcal = parseRoundedDisplay(figures[0]);
-      const actualProtein = parseRoundedDisplay(figures[1]);
+      const figures = await element.locator(".home-weekly-menu-plan-value").allTextContents().catch(() => []);
+      const meters = await element.locator(".home-weekly-menu-plan-bar progress").evaluateAll((els) =>
+        els.map((el) => Number(el.value))).catch(() => []);
+      const plannedKcal = Math.round(items.reduce((sum, item) => sum +
+        (item.kcal == null ? 0 : Number(item.kcal) || 0), 0));
+      const plannedProtein = Math.round(items.reduce((sum, item) => sum +
+        (item.protein == null ? 0 : Number(item.protein) || 0), 0));
+      const confirmed = confirmedMenuTotals(items);
+      const expected = [
+        { planned: plannedKcal, consumed: Math.round(confirmed.kcal) },
+        { planned: plannedProtein, consumed: Math.round(confirmed.protein) }
+      ];
+      const actual = figures.map(parseBarComparison);
       daysCompared += 1;
-      if (figures.length !== 2 || actualKcal !== expectedKcal || actualProtein !== expectedProtein) {
+      if (actual.length !== 2 || actual.some((value, i) =>
+        !value || value.planned !== (expected[i].planned > 0 ? expected[i].planned : null) ||
+        value.consumed !== expected[i].consumed)) {
         headerMismatches += 1;
       }
+      if (meters.length !== 2 || meters.some((value, i) => {
+        const { consumed, planned } = expected[i];
+        const ratio = planned > 0 ? Math.max(0, Math.min(100, Math.round(consumed / planned * 100))) : 0;
+        return value !== ratio;
+      })) progressMismatches += 1;
+      if (await element.locator("header > span").count()) headerMismatches += 1;
     }
     assertCheck(daysCompared > 0 && headerMismatches === 0,
-      "Home · totales kcal/proteína idénticos a la fuente viva de Sheets",
+      "Home · barras muestran consumido / previsto igual que Sheets",
       `dias=${daysCompared} discrepancias=${headerMismatches}`);
+    assertCheck(daysCompared > 0 && progressMismatches === 0,
+      "Home · avance de barra usa consumo / plan (no objetivo)",
+      `dias=${daysCompared} discrepancias=${progressMismatches}`);
   }
 
   assertCheck(await page.locator("#ask-form").count() === 0, "Home · barra de consulta rápida retirada");

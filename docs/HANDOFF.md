@@ -1,3 +1,11 @@
+## ORGANIZADOR 18 · Home, cabecera compacta del menú semanal (14/10/2026)
+
+- Petición: objetivos kcal/proteína una sola vez a la izquierda antes de la tabla y barras con `consumido / previsto` dentro de cada día, sin repetir objetivos ni porcentajes en las cabeceras.
+- Fuente canónica intacta: `MenuSemanal` contiene plan y estados de consumo; `Objetivos` fija metas diarias. `app/app.js` pinta los objetivos solo arriba, calcula el progreso frente al plan conocido, y conserva estados parciales y la navegación de recetas; `app/styles.css` contiene el diseño responsive, `app/index.html` simplifica la introducción. No confundir progreso respecto del plan con calidad nutricional frente al objetivo; Salud → Nutrición conserva su lógica de objetivos existente.
+- QA: `app/home-weekly-menu-comparison.test.mjs` prueba progreso normal, cero, exceso, planificación no existente, macros parciales y objetivos únicos; `private-cloudflare/scripts/web-audit.mjs` valida en Chromium la paridad real consumo/plan y objetivos frente a la API privada en vivo sin datos privados en logs. Requiere CI verde, despliegue Cloudflare y auditoría completa; fallos históricos MIDAS y 502 se mantienen independientes.
+
+---
+
 ## ORGANIZADOR 18 · Despensa con miniaturas canónicas (14/10/2026)
 
 - Incidencia: las tarjetas del inventario omitían imágenes aunque `/api/pantry.items[].imageUrl` ya contiene `Productos.imagen_url`. Verificado el Sheet privado canónico: **160 filas de inventario y 104 con imagen HTTPS asociada**, 56 sin imagen a esta revisión; estas cifras son una instantánea, no deben hardcodearse.

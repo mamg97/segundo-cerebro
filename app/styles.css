@@ -27143,3 +27143,133 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
     overflow-wrap: anywhere;
   }
 }
+
+
+/* Home weekly menu — one objective line and consumption vs planned in each bar.
+   Keep progress readable even at 0% and >100%; partial totals are explicit. */
+.home-weekly-menu-objectives {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 0 0 12px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.home-weekly-menu-objectives > span {
+  color: var(--ink-soft);
+  font-weight: 650;
+}
+
+.home-weekly-menu-objectives > strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home-weekly-menu-table-day > header {
+  justify-content: flex-start;
+}
+
+.home-weekly-menu-table-day .home-weekly-menu-progress {
+  gap: 10px;
+}
+
+.home-weekly-menu-plan-metric {
+  min-width: 0;
+}
+
+.home-weekly-menu-plan-metric .home-weekly-menu-plan-label {
+  display: block;
+  margin: 0 0 4px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.home-weekly-menu-plan-bar {
+  position: relative;
+  width: 100%;
+  height: 23px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #14243b;
+}
+
+.home-weekly-menu-plan-bar progress {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #14243b;
+}
+
+.home-weekly-menu-plan-bar progress::-webkit-progress-bar {
+  background: #14243b;
+  border-radius: 7px;
+}
+
+.home-weekly-menu-plan-bar progress::-webkit-progress-value {
+  background: #ab541e;
+  border-radius: 7px;
+}
+
+.home-weekly-menu-plan-bar progress::-moz-progress-bar {
+  background: #ab541e;
+  border-radius: 7px;
+}
+
+.home-weekly-menu-plan-metric.protein progress::-webkit-progress-value {
+  background: #19754d;
+}
+
+.home-weekly-menu-plan-metric.protein progress::-moz-progress-bar {
+  background: #19754d;
+}
+
+.home-weekly-menu-plan-metric.is-partial progress::-webkit-progress-value {
+  background: #64748b;
+}
+
+.home-weekly-menu-plan-metric.is-partial progress::-moz-progress-bar {
+  background: #64748b;
+}
+
+.home-weekly-menu-plan-bar .home-weekly-menu-plan-value {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 5px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 850;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+}
+
+.home-weekly-menu-plan-metric .home-weekly-menu-plan-partial {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+@media (max-width: 560px) {
+  .home-weekly-menu-objectives { gap: 6px 12px; font-size: 11px; }
+  .home-weekly-menu-objectives > strong { font-size: 11px; }
+  .home-weekly-menu-plan-bar .home-weekly-menu-plan-value { font-size: 9.5px; }
+}

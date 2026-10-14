@@ -5775,19 +5775,35 @@ function weeklyMenuDayDisplayTotals(day, model) {
   };
 }
 
+// Home progress measures actual confirmed consumption against this day's known
+// planned menu. Daily goals are displayed once above the matrix, not reused as
+// the denominator. Missing macros are explicitly partial, never invented.
+function renderHomeWeeklyMenuPlanBar(metric, consumedValue, plannedValue, plannedIncomplete = false, consumedIncomplete = false) {
+  const protein = metric === "protein";
+  const unit = protein ? "g" : "kcal";
+  const label = protein ? "Proteína" : "Kcal";
+  const consumed = Math.max(0, Number(consumedValue) || 0);
+  const planned = Math.max(0, Number(plannedValue) || 0);
+  const hasPlan = Number.isFinite(planned) && planned > 0;
+  const fill = hasPlan ? Math.max(0, Math.min(100, Math.round(consumed / planned * 100))) : 0;
+  const actualText = `${consumedIncomplete ? "≥" : ""}${Math.round(consumed).toLocaleString("es-ES")}`;
+  const plannedText = hasPlan ? `${plannedIncomplete ? "≥" : ""}${Math.round(planned).toLocaleString("es-ES")}` : "—";
+  const comparison = `${actualText} / ${plannedText} ${unit}`;
+  const partial = plannedIncomplete || consumedIncomplete;
+  const accessible = `${label}: ${actualText} ${unit} consumidos frente a ${plannedText} ${unit} previstos${partial ? "; subtotal incompleto" : ""}`;
+  return `
+    <div class="home-weekly-menu-plan-metric ${metric} ${partial ? "is-partial" : ""}">
+      <span class="home-weekly-menu-plan-label">${label}</span>
+      <div class="home-weekly-menu-plan-bar">
+        <progress value="${fill}" max="100" aria-label="${escapeHtml(accessible)}" aria-valuetext="${escapeHtml(accessible)}"></progress>
+        <b class="home-weekly-menu-plan-value" aria-hidden="true">${escapeHtml(comparison)}</b>
+      </div>
+      ${partial ? '<small class="home-weekly-menu-plan-partial">Subtotal conocido · datos pendientes</small>' : ""}
+    </div>`;
+}
+
 function renderHomeWeeklyMenuDayHeader(day, model) {
   const isToday = day.date === localDateKey();
-  const display = weeklyMenuDayDisplayTotals(day, model);
-  const plannedIncomplete = !day.nutritionComplete;
-  const consumedIncomplete = !day.consumedNutritionComplete;
-  const stateLabel = display.hasConsumed
-    ? (display.kcalPct == null ? "Consumo confirmado" : display.kcalPct + "% kcal consumidas")
-    : "0% consumido";
-  const kcalPlanQualifier = plannedIncomplete ? "subtotal previsto" : "previsto";
-  const proteinPlanQualifier = plannedIncomplete ? "subtotal previsto" : "previsto";
-  const kcalConsumedLabel = consumedIncomplete ? "Subtotal consumido conocido" : "Consumido";
-  const proteinConsumedLabel = consumedIncomplete ? "Subtotal consumido conocido" : "Consumido";
-
   return `
     <div data-menu-date="${escapeHtml(day.date)}" class="home-weekly-menu-table-day ${isToday ? "is-today" : ""}">
       <header>
@@ -5795,25 +5811,10 @@ function renderHomeWeeklyMenuDayHeader(day, model) {
           <small>${isToday ? "Hoy" : "Día"}</small>
           <strong>${escapeHtml(weeklyMenuDayLabel(day.date))}</strong>
         </div>
-        <span>${escapeHtml(stateLabel)}</span>
       </header>
       <div class="home-weekly-menu-progress">
-        <div>
-          <span><i class="kcal"></i>Kcal</span>
-          <b>${formatKcal(day.kcal)} <small>${escapeHtml(kcalPlanQualifier)}${model.kcalTarget !== null ? ` · obj. ${formatKcal(model.kcalTarget)}` : ""}</small></b>
-          ${model.kcalTarget !== null
-            ? renderNutritionQualityMeter("kcal", display.kcal, model.kcalTarget, "Kcal consumidas", consumedIncomplete)
-            : ""}
-          <small class="home-weekly-menu-consumed-line">${escapeHtml(kcalConsumedLabel)}: ${escapeHtml(formatKcal(display.kcal))}${display.kcalPct == null ? "" : ` · ${display.kcalPct}%`}</small>
-        </div>
-        <div>
-          <span><i class="protein"></i>Proteína</span>
-          <b>${formatMacro(day.protein)} <small>${escapeHtml(proteinPlanQualifier)}${model.proteinTarget !== null ? ` · obj. ${formatMacro(model.proteinTarget)}` : ""}</small></b>
-          ${model.proteinTarget !== null
-            ? renderNutritionQualityMeter("protein", display.protein, model.proteinTarget, "Proteína consumida", consumedIncomplete)
-            : ""}
-          <small class="home-weekly-menu-consumed-line">${escapeHtml(proteinConsumedLabel)}: ${escapeHtml(formatMacro(display.protein))}${display.proteinPct == null ? "" : ` · ${display.proteinPct}%`}</small>
-        </div>
+        ${renderHomeWeeklyMenuPlanBar("kcal", day.consumedKcal, day.kcal, !day.nutritionComplete, !day.consumedNutritionComplete)}
+        ${renderHomeWeeklyMenuPlanBar("protein", day.consumedProtein, day.protein, !day.nutritionComplete, !day.consumedNutritionComplete)}
       </div>
     </div>`;
 }
@@ -5838,6 +5839,11 @@ function renderHomeWeeklyMenu(data) {
   const moments = weeklyMenuMatrixMoments(model.days);
 
   content.innerHTML = `
+    <div class="home-weekly-menu-objectives" aria-label="Objetivos nutricionales diarios">
+      <span>Objetivos diarios</span>
+      <strong>Kcal: ${model.kcalTarget === null ? "Pendiente" : escapeHtml(formatKcal(model.kcalTarget))}</strong>
+      <strong>Proteína: ${model.proteinTarget === null ? "Pendiente" : escapeHtml(formatMacro(model.proteinTarget))}</strong>
+    </div>
     <div class="home-weekly-menu-table-scroll" role="region" aria-label="Menú semanal por momento y día" tabindex="0">
       <div class="home-weekly-menu-table">
         <div class="home-weekly-menu-corner">
