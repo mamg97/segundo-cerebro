@@ -1434,6 +1434,71 @@ async function auditLookDetail(label) {
   if (layoutVisible) await auditVisualSnapshot(`${label} · Look ampliado`);
 }
 
+// Regresses the iPhone screenshot: every private-platform card and each line
+// of its notes must stay within the wealth dialog. Only charts may scroll
+// horizontally. Measure geometry, never print balances, names or note text.
+async function auditMobileWealthDialog() {
+  await page.locator("#show-wealth-detail").click();
+  try {
+    for (const width of [320, 390, 440]) {
+      await page.setViewportSize({ width, height: 844 });
+      const layout = await page.evaluate(() => {
+        const dialog = document.querySelector("#detail-dialog.wealth-dialog[open]");
+        const body = dialog?.querySelector("#dialog-body");
+        const cards = [...(dialog?.querySelectorAll(".wealth-platform-card") || [])];
+        if (!dialog || !body) return { open: false, cards: 0 };
+        const dialogRect = dialog.getBoundingClientRect();
+        const bodyRect = body.getBoundingClientRect();
+        const cardFits = (card) => {
+          const box = card.getBoundingClientRect();
+          if (box.left < bodyRect.left - 2 || box.right > bodyRect.right + 2) return false;
+          if (card.scrollWidth > card.clientWidth + 2) return false;
+          for (const label of card.querySelectorAll("p,small")) {
+            const range = document.createRange();
+            range.selectNodeContents(label);
+            if ([...range.getClientRects()].some((rect) =>
+              rect.left < box.left - 2 || rect.right > box.right - 2
+            )) return false;
+          }
+          return true;
+        };
+        const tracked = [
+          dialog.querySelector(".wealth-allocation-section"),
+          dialog.querySelector(".wealth-stack-wrap"),
+          dialog.querySelector(".wealth-reconciliation-block")
+        ].filter(Boolean);
+        return {
+          open: true,
+          cards: cards.length,
+          dialogFits: dialogRect.left >= -2 && dialogRect.right <= innerWidth + 2 &&
+            dialogRect.width <= innerWidth - 8,
+          bodyFits: body.scrollWidth <= body.clientWidth + 2,
+          cardsFit: cards.every(cardFits),
+          sectionsFit: tracked.every((el) => {
+            const rect = el.getBoundingClientRect();
+            return rect.left >= bodyRect.left - 2 &&
+              rect.right <= bodyRect.right + 2 &&
+              el.scrollWidth <= el.clientWidth + 2;
+          })
+        };
+      });
+      assertCheck(layout.open && layout.cards > 0,
+        `Patrimonio móvil ${width}px · detalle y plataformas renderizados`,
+        `cards=${layout.cards || 0}`);
+      assertCheck(layout.dialogFits && layout.bodyFits,
+        `Patrimonio móvil ${width}px · modal sin desplazamiento horizontal`);
+      assertCheck(layout.cardsFit,
+        `Patrimonio móvil ${width}px · tarjetas y notas dentro de pantalla`);
+      assertCheck(layout.sectionsFit,
+        `Patrimonio móvil ${width}px · distribución y conciliación sin overflow`);
+      if (width === 390) await auditVisualSnapshot("mobile · Patrimonio financiero");
+    }
+  } finally {
+    await closeDialogIfOpen();
+    await page.setViewportSize({ width: 390, height: 844 });
+  }
+}
+
 async function auditResponsiveVisualLayout(navIds) {
   const originalViewport = page.viewportSize() || { width: 1440, height: 1100 };
 
@@ -1441,6 +1506,9 @@ async function auditResponsiveVisualLayout(navIds) {
     await page.setViewportSize({ width: profile.width, height: profile.height });
     await openAreaForVisualAudit("area-general");
     await auditVisualSnapshot(`${profile.name} · Home`);
+    if (profile.name === "mobile") {
+      await auditMobileWealthDialog();
+    }
 
     const areas = profile.name === "tablet"
       ? ["area-finance", "area-health", "area-objects", "area-pantry", "area-projects"]
