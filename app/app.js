@@ -5696,33 +5696,36 @@ function renderHomeWeeklyMenuMatrixCell(items) {
 }
 
 async function openHomeWeeklyMenuRecipe(data, recipeId) {
-  let payload = data;
-  let recipe = (Array.isArray(payload?.recipes) ? payload.recipes : [])
+  let recipe = (Array.isArray(data?.recipes) ? data.recipes : [])
     .find((candidate) => String(candidate?.id || "") === String(recipeId || ""));
 
   if (!recipe) {
-    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(localDateKey()), {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-      credentials: "same-origin"
-    });
-    if (!response.ok) throw new Error("HOME_RECIPE_" + response.status);
-    payload = await response.json();
-    recipe = (Array.isArray(payload?.recipes) ? payload.recipes : [])
-      .find((candidate) => String(candidate?.id || "") === String(recipeId || ""));
+    // Home reads MenuSemanal alone. Loading the entire nutrition dashboard for
+    // one tap may time out (Google Sheets + D1 + Pantry). Resolve only this
+    // canonical recipe from the read-only, three-range Health endpoint instead.
+    const response = await fetch(
+      "/api/nutrition/recipe?recipe_id=" + encodeURIComponent(String(recipeId || "")),
+      { headers: { Accept: "application/json" }, cache: "no-store", credentials: "same-origin" }
+    );
+    if (!response.ok) {
+      const error = new Error(response.status === 404 ? "HOME_RECIPE_NOT_FOUND" : "HOME_RECIPE_UNAVAILABLE");
+      throw error;
+    }
+    const result = await response.json();
+    recipe = result?.recipe?.id === recipeId ? result.recipe : null;
   }
-
   if (!recipe) throw new Error("HOME_RECIPE_NOT_FOUND");
 
   openHealthDetail({ skipNutritionLoad: true });
-  document.querySelector('[data-health-tab="recipes"]')?.click();
+  const tab = document.querySelector('[data-health-tab="recipes"]');
   const recipesPanel = document.querySelector("#recipes-panel");
-  if (!recipesPanel) return;
-
-  renderRecipeDetail(recipesPanel, payload, recipe, {
+  if (!tab || !recipesPanel) throw new Error("HOME_RECIPE_PANEL_MISSING");
+  tab.click();
+  renderRecipeDetail(recipesPanel, { recipes: [recipe] }, recipe, {
     backLabel: "← Volver al resumen",
     onBack: () => document.querySelector("#detail-dialog")?.close()
   });
+  recipesPanel.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
 function bindHomeWeeklyMenuRecipeLinks(content, data) {
@@ -5730,12 +5733,31 @@ function bindHomeWeeklyMenuRecipeLinks(content, data) {
     button.addEventListener("click", () => {
       if (button.disabled) return;
       button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      button.querySelector('span[aria-hidden="true"]')?.replaceChildren("…");
+      button.parentElement?.querySelector("[data-home-menu-recipe-error]")?.remove();
       void openHomeWeeklyMenuRecipe(data, button.dataset.homeMenuRecipeOpen)
         .catch((error) => {
-          console.warn("Home weekly menu recipe open failed", String(error?.message || "UNAVAILABLE"));
-          if (button.isConnected) button.title = "No se pudo abrir. Pulsa para reintentar";
+          // A title tooltip cannot be seen on iPhone. Show an accessible inline
+          // failure beside the exact link; allow retry without losing the menu.
+          console.warn("Home weekly menu recipe open failed",
+            String(error?.message || "UNAVAILABLE"));
+          if (!button.isConnected) return;
+          const notice = document.createElement("span");
+          notice.dataset.homeMenuRecipeError = "";
+          notice.className = "weekly-menu-sync-note is-warning";
+          notice.setAttribute("role", "alert");
+          notice.textContent = error?.message === "HOME_RECIPE_NOT_FOUND"
+            ? "No se encontró la ficha vinculada en Recetas. Revisa la asociación."
+            : "No se pudo cargar la receta. Pulsa de nuevo para reintentar.";
+          button.after(notice);
         })
-        .finally(() => { if (button.isConnected) button.disabled = false; });
+        .finally(() => {
+          if (!button.isConnected) return;
+          button.querySelector('span[aria-hidden="true"]')?.replaceChildren("↗");
+          button.removeAttribute("aria-busy");
+          button.disabled = false;
+        });
     });
   });
 }
