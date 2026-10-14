@@ -1,3 +1,9 @@
+## ORGANIZADOR 18 · Ajuste de paridad exacta de las barras de Home (14/10/2026)
+
+- Auditoría Chromium productiva [#424](https://github.com/mamg97/segundo-cerebro/actions/runs/38626553859): 1226 checks / 2 fallos; MIDAS conocido y `OTHER CHECK-00081` de relleno de barras. Objetivos únicos y textos consumo/plan pasan sus controles. Diagnóstico: el progreso calculaba proporción desde fracciones internas, pero los números visibles estaban redondeados; podía surgir una diferencia porcentual. Se corrige en UI comparando **los enteros visibles** y se añade test sintético de redondeo; no se modifica fuente nutricional ni se relaja el gate de auditoría. Cierre condicionado a CI, Cloudflare y nueva auditoría completa.
+
+---
+
 ## ORGANIZADOR 18 · Home, cabecera compacta del menú semanal (14/10/2026)
 
 - Petición: objetivos kcal/proteína una sola vez a la izquierda antes de la tabla y barras con `consumido / previsto` dentro de cada día, sin repetir objetivos ni porcentajes en las cabeceras.
