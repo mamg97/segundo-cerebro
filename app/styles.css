@@ -26993,3 +26993,62 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
     overscroll-behavior-inline: contain;
   }
 }
+
+/* Wealth mobile: intrinsic widths of nested Delta/diary tables must be kept
+   inside their own horizontal scrollers. A table min-width must not enlarge
+   the complete modal or cut off bank/platform notes. */
+.detail-dialog.wealth-dialog :is(
+  .wealth-daily-section,
+  .wealth-daily-history,
+  .wealth-daily-recent,
+  .wealth-daily-table-scroll,
+  .delta-history-section,
+  .delta-history-operations,
+  .delta-history-table-scroll,
+  .delta-history-insights,
+  .delta-history-kpis,
+  .delta-turnover,
+  .etoro-allocation,
+  .etoro-allocation-legend,
+  .etoro-allocation-row,
+  .etoro-allocation-label,
+  .etoro-allocation-values,
+  .loan-benchmark-list,
+  .loan-benchmark-card
+) {
+  min-width: 0;
+  max-width: 100%;
+}
+.detail-dialog.wealth-dialog :is(
+  .wealth-daily-section,
+  .wealth-daily-recent,
+  .delta-history-section
+) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.detail-dialog.wealth-dialog :is(
+  .wealth-daily-table-scroll,
+  .delta-history-table-scroll
+) {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+@media (max-width: 760px) {
+  .detail-dialog.wealth-dialog :is(
+    .etoro-allocation-row,
+    .delta-history-heading,
+    .delta-history-subhead
+  ) {
+    min-width: 0;
+  }
+  .detail-dialog.wealth-dialog :is(
+    .etoro-allocation-label small,
+    .etoro-allocation-note,
+    .wealth-daily-note,
+    .delta-history-note,
+    .delta-history-error
+  ) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
