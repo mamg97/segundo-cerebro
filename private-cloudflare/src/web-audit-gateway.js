@@ -179,13 +179,13 @@ export function secureProxyResponse(response, publicOrigin, requestUrl, method =
 // URLs, asset IDs, exception stacks, or request-specific data to Actions.
 export function classifyAuditBindingFailure(error) {
   const signature = String(error?.message || "").toLowerCase();
-  if (/\\b(?:1102|exceeded (?:cpu|resource)|cpu time limit|resource limits?|out of memory|memory limit)\\b/.test(signature)) {
+  if (/\b(?:1102|exceeded (?:cpu|resource)|cpu time limit|resource limits?|out of memory|memory limit)\b/.test(signature)) {
     return "AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT";
   }
   if (/(?:too many|exceeded|limit reached).{0,32}subrequests?|subrequests?.{0,24}limit/.test(signature)) {
     return "AUDIT_GATEWAY_SUBREQUEST_LIMIT";
   }
-  if (/\\b(?:timeout|timed out|deadline exceeded)\\b/.test(signature)) {
+  if (/\b(?:timeout|timed out|deadline exceeded)\b/.test(signature)) {
     return "AUDIT_GATEWAY_BINDING_TIMEOUT";
   }
   return "AUDIT_GATEWAY_BINDING_FETCH_FAILED";
