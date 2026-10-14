@@ -2350,6 +2350,37 @@ try {
           (value) => `[data-pantry-panel="${value}"]`,
           { htmlDataName: "pantry-view", attributeName: "pantry-view", attr: "pantry-view", settle: 180, sourcePath: "/api/pantry", timeout: 12000 }
         );
+        // Read-only image contract: every valid canonical product photo gets
+        // exactly one lazy thumbnail; unknown images keep a visible placeholder.
+        // Log counts only, never product names, identifiers or private URLs.
+        await page.locator('[data-pantry-view="inventory"]').click();
+        const pantryItems = Array.isArray(pantryProbe.body.items) ? pantryProbe.body.items : [];
+        const expectedPhotos = pantryItems.filter((item) => {
+          try {
+            const url = new URL(item?.imageUrl);
+            return url.protocol === "https:" && !url.username && !url.password;
+          } catch { return false; }
+        }).length;
+        const pantryCards = page.locator(".pantry-product-card");
+        const pantryImages = page.locator(".pantry-product-card .pantry-product-thumb img");
+        assertCheck(await pantryCards.count() === pantryItems.length,
+          "Despensa · una tarjeta por producto inventariado",
+          "tarjetas " + (await pantryCards.count()) + " / inventario " + pantryItems.length);
+        assertCheck(await pantryImages.count() === expectedPhotos,
+          "Despensa · miniaturas vinculadas únicamente a fotos canónicas",
+          "miniaturas " + (await pantryImages.count()) + " / URLs válidas " + expectedPhotos);
+        assertCheck(await page.locator('.pantry-product-thumb[data-photo="pending"]').count() === pantryItems.length - expectedPhotos,
+          "Despensa · productos sin imagen muestran marcador",
+          "sin foto " + (pantryItems.length - expectedPhotos));
+        if (expectedPhotos) {
+          const firstImage = pantryImages.first();
+          await firstImage.scrollIntoViewIfNeeded();
+          const loaded = await page.waitForFunction(() => {
+            const image = document.querySelector(".pantry-product-card .pantry-product-thumb img");
+            return Boolean(image?.complete && image.naturalWidth > 0);
+          }, null, { timeout: 8000 }).then(() => true).catch(() => false);
+          assertCheck(loaded, "Despensa · primera miniatura canónica carga realmente");
+        }
         const tickets = Array.isArray(pantryProbe.body.recentTickets) ? pantryProbe.body.recentTickets : [];
         const latest = tickets[0] || null;
         const integrity = pantryProbe.body.latestTicketIntegrity;
