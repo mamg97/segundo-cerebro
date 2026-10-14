@@ -175,16 +175,32 @@ export function secureProxyResponse(response, publicOrigin, requestUrl, method =
   });
 }
 
+// Interpret only known runtime error signatures. Never publish raw errors,
+// URLs, asset IDs, exception stacks, or request-specific data to Actions.
+export function classifyAuditBindingFailure(error) {
+  const signature = String(error?.message || "").toLowerCase();
+  if (/\b(?:1102|exceeded (?:cpu|resource)|cpu time limit|resource limits?|out of memory|memory limit)\b/.test(signature)) {
+    return "AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT";
+  }
+  if (/(?:too many|exceeded|limit reached).{0,32}subrequests?|subrequests?.{0,24}limit/.test(signature)) {
+    return "AUDIT_GATEWAY_SUBREQUEST_LIMIT";
+  }
+  if (/\b(?:timeout|timed out|deadline exceeded)\b/.test(signature)) {
+    return "AUDIT_GATEWAY_BINDING_TIMEOUT";
+  }
+  return "AUDIT_GATEWAY_BINDING_FETCH_FAILED";
+}
+
 // Only fixed, allowlisted diagnostic phases leave this read-only OIDC gateway.
 // Do not expose thrown error text, exception type, URLs, asset IDs or payloads.
 export async function proxyAuditUpstream(env, upstream, publicOrigin, requestUrl, method = "GET") {
   let response;
   try {
     response = await env.SEGUNDO_CEREBRO.fetch(upstream);
-  } catch {
+  } catch (error) {
     return json({
       ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED",
-      diagnostic: "AUDIT_GATEWAY_BINDING_FETCH_FAILED"
+      diagnostic: classifyAuditBindingFailure(error)
     }, 502);
   }
   try {

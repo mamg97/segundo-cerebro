@@ -1,3 +1,14 @@
+## ORGANIZADOR · Auditorías 412–415: contención experimental de carga y diagnóstico 502 (14/10/2026)
+
+- Auditorías Chromium #412 (1216/1), #413 (1216/2), #414 (1217/2) y #415 (1217/2) siguen rojas. El overflow móvil de Patrimonio dejó de fallar en #415 tras PR #476 y despliegue #526; no editar más CSS sin nueva prueba.
+- MIDAS CHECK-00029 en #414/#415: corresponde al workflow **MIDAS classic S&P500 503 paper** cuyo schedule #7 (38530462089, 14/10 07:45 UTC) terminó en error de barras fechadas obligatorias. En `mamg97/midas-paper-lab` PR #49 (commit `14a1879`) reparó la lectura individual de barras faltantes; la CI de PR #8 fue verde, pero aún **no** hay ejecución real de schedule con el nuevo código. Conservar FAIL hasta que el próximo ciclo programado sea realmente correcto; no sustituirlo por pruebas.
+- Imágenes: en #413 16 HTTP 502 y en #415 2 HTTP 502, todos `AUDIT_GATEWAY_BINDING_FETCH_FAILED`, producidos al lanzar `env.SEGUNDO_CEREBRO.fetch` y no al encapsular el Response. No se demuestra la causa interna del Worker ni D1 sin métricas Cloudflare.
+- Experimento en PR de auditoría: pasar a **una única lectura fría simultánea** de imagen inmutable durante Chromium, manteniendo la lectura de cada URL distinta, el límite individual de 25 s, el fail estricto de cualquier HTTP 5xx y el cache inmutable solo tras HTTP 200. Esto reduce carga artificial del auditor, pero no altera navegador real ni prueba resuelta la avería productiva.
+- Gateway: clasificación allowlist de excepciones Service Binding por error compatible con límites de recursos, subrequests o timeout; en los demás casos conservar `AUDIT_GATEWAY_BINDING_FETCH_FAILED`. Ningún error bruto ni identificador sale al log. Si vuelve a fallar sin pista adicional, consultar Worker/D1 Analytics antes de tocar ruta privada o integridad de fotos.
+- Cierre: requieren CI, deploy y **dos auditorías independientes completas sin fallo ni 5xx**; si MIDAS mantiene ventana programada roja, mantener estado global rojo.
+
+---
+
 ## ORGANIZADOR · Postdeploy #526 / Chromium #415 (14/10/2026)
 
 - Fixes productivos sobre `d13be57e2286fcd7aa8872ffe89dc753407c7c49`: PR #476 CI #671 `success`, Cloudflare #526 `success`. Cache JWKS públicas con verificación criptográfica JWT por petición, más contención de tablas Delta y diario dentro de modal Patrimonio en iPhone.

@@ -111,7 +111,7 @@ const auditOrigin = new URL(baseUrl).origin;
 const immutableImageCache = createAuditImmutableImageCache();
 // Controlled two-read experiment after #394 (44) and #397 (7) upstream image 502.
 // Keep strict HTTP failure checks, 25-second timeout and immutable cache policy.
-const imageReadGate = createAuditImageReadGate(2);
+const imageReadGate = createAuditImageReadGate(1);
 await page.route(`${auditOrigin}/**`, async (route) => {
   const request = route.request();
   const freshToken = await getAuditToken();

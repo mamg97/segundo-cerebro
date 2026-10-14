@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cloneProxyHeaders, createAuditJwksKeyResolver, proxyAuditUpstream, validateAuditClaims, verifyAuditOidc } from "./web-audit-gateway.js";
+import { classifyAuditBindingFailure, cloneProxyHeaders, createAuditJwksKeyResolver, proxyAuditUpstream, validateAuditClaims, verifyAuditOidc } from "./web-audit-gateway.js";
 
 const now = Date.parse("2026-09-30T21:00:00Z");
 const epoch = Math.floor(now / 1000);
@@ -196,4 +196,30 @@ test("JWKS lookup fails closed for untrusted responses and throttles missing key
   assert.equal(requested, 1, "network failures/invalid JWKS do not cause one lookup per asset");
   assert.equal(await resolver("synthetic-invalid", now + 6000), null);
   assert.equal(requested, 2, "recovery can retry without accepting invalid keys");
+});
+
+test("only a small closed class of Service Binding exception signatures is public", async () => {
+  for (const [signature, expected] of [
+    ["Worker exceeded resource limits: 1102", "AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT"],
+    ["CPU time limit exceeded", "AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT"],
+    ["out of memory", "AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT"],
+    ["Too many subrequests for worker", "AUDIT_GATEWAY_SUBREQUEST_LIMIT"],
+    ["Worker request timed out", "AUDIT_GATEWAY_BINDING_TIMEOUT"],
+    ["private token X, customer /api/objects/look/ABC/image", "AUDIT_GATEWAY_BINDING_FETCH_FAILED"]
+  ]) {
+    const classified = classifyAuditBindingFailure(new Error(signature));
+    assert.equal(classified, expected, signature);
+    const env = { SEGUNDO_CEREBRO: { fetch: async () => { throw new Error(signature); } } };
+    const result = await proxyAuditUpstream(env,
+      new Request("https://segundo-cerebro.internal/"),
+      "https://audit-private.example",
+      "https://audit-private.example/api/objects/look/private/image?v=12345678");
+    assert.equal(result.status, 502);
+    assert.equal(result.headers.get("cache-control"), "no-store");
+    const payload = await result.json();
+    assert.deepEqual(payload, {
+      ok: false, code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic: expected
+    });
+    assert.doesNotMatch(JSON.stringify(payload), /customer|token|ABC|\/api\/objects\/look\/private/);
+  }
 });

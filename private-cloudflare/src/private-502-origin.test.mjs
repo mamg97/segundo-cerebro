@@ -42,11 +42,26 @@ test("upstream binding failure is independently recognizable without private con
   }), "AUDIT_GATEWAY_UPSTREAM_FAILED");
   const gateway = readFileSync(new URL("./web-audit-gateway.js", import.meta.url), "utf8");
   assert.match(gateway, /code: "AUDIT_GATEWAY_UPSTREAM_FAILED"/);
-  assert.match(gateway, /diagnostic: "AUDIT_GATEWAY_BINDING_FETCH_FAILED"/);
+  assert.match(gateway, /diagnostic: classifyAuditBindingFailure\(error\)/);
   assert.match(gateway, /diagnostic: "AUDIT_GATEWAY_RESPONSE_FAILED"/);
   for (const diagnostic of ["AUDIT_GATEWAY_BINDING_FETCH_FAILED", "AUDIT_GATEWAY_RESPONSE_FAILED"]) {
     assert.equal(safePrivate502Origin("application/json", { code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic }), diagnostic);
   }
   assert.equal(safePrivate502Origin("application/json", { diagnostic: "private token or URL" }), "JSON_UNCLASSIFIED_5XX");
   assert.doesNotMatch(gateway, /json\(\{ ok: false, code: String\(error/);
+});
+
+test("new Service Binding runtime signature categories are safely allowlisted", () => {
+  for (const diagnostic of [
+    "AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT",
+    "AUDIT_GATEWAY_SUBREQUEST_LIMIT",
+    "AUDIT_GATEWAY_BINDING_TIMEOUT"
+  ]) {
+    assert.equal(safePrivate502Origin("application/json", {
+      code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic
+    }), diagnostic);
+  }
+  assert.equal(safePrivate502Origin("application/json", {
+    code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic: "TOKEN_PRIVATE_IDENTIFIER"
+  }), "AUDIT_GATEWAY_UPSTREAM_FAILED");
 });
