@@ -23,7 +23,7 @@ import { validLegacyMidasCohort } from "../src/midas-legacy-cohort-health.js";
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
 // Keep this number aligned with the curated, variant-specific GIF inventory.
 // CI checks the real frontend inventory against this audit contract.
-const EXPECTED_CURATED_GYM_GIFS = 15;
+const EXPECTED_CURATED_GYM_GIFS = 16;
 const token = process.env.AUDIT_TOKEN;
 const getAuditToken = createAuditOidcTokenProvider({
   initialToken: token,

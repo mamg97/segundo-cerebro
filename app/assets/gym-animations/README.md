@@ -2,9 +2,15 @@
 
 These assets are first-party presentation aids for Segundo Cerebro. They do not replace the canonical gym plan or the public technical reference supplied by wger.
 
-## White-background presentation set (2026-10-13)
+## White-background presentation set (2026-10-14)
 
-The fifteen `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The app now uses these white versions; the original transparent versions remain available for future uses.
+The sixteen mapped `*-white.gif` variants share a white 360×480 canvas, 16 full-size frames at 7 cs, one loop and an identically sized white poster. This avoids visible matte/alpha specks on dark cards and matches the requested white exercise-encyclopedia presentation. The app uses these white versions; transparent sources remain in the authoring assets.
+
+## Inclined 45-degree hyperextension bench
+
+- `hiperextensiones-banco-45-v2-white.gif` illustrates lowering and raising the torso on a 45° Roman-chair bench, not a barbell or machine hip thrust. The confirmed legacy plan label `Hip thrust 45°` is preserved; the detail explains its meaning. Public wger hip-thrust records do not inherit this alias.
+- Built-in image generation produced the transparent 4×2 source sheet. The reviewed symmetric phase order is `0,2,3,4,4,3,2,0`, with brief endpoint holds. A single scale and stationary lower-support translation normalize every phase. RifeMetal HQ interpolates the white-composited originals directly, avoiding the head-edge artifacts of separately interpolated alpha. The final review contact, prompt and build metadata are in `design/gym-animations/`.
+- Only the final white GIF and matching reduced-motion poster are runtime assets. This is an illustrative movement aid, not professional technique certification.
 
 ## Inclined 45-degree sled leg press
 
@@ -40,7 +46,7 @@ The fifteen `*-white.gif` variants share a white 360×480 canvas, 16 full-size f
 
 ## Presentation mapping
 
-- The private Gym UI uses the 15 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards. Each matching exercise shows a GIF directly in the active plan row, paused-plan reference, Library card and detail; real wger videos, when verified, remain in the detail only.
+- The private Gym UI uses the 16 reviewed `-white.gif` and matching `-white-poster.png` files so every preview has a consistent white canvas on dark cards. Each matching exercise shows a GIF directly in the active plan row, paused-plan reference, Library card and detail; real wger videos, when verified, remain in the detail only.
 - Matching uses exact normalized exercise names. The combined plan labels for row, rear-delt fly and calf raise show only the barbell, rear-delt-machine and standing-calf-machine variants respectively; the detail view names that limitation.
 - Unmapped exercises continue to use licensed wger media or an explicit empty state. These drawings are illustrative, not technique certification.
 

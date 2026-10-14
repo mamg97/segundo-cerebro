@@ -15,11 +15,11 @@ function animationContext(extra = {}) {
   return vm.createContext({ gymVideoInventory: new Map(), gymVideoChecks: new Map(), gymMediaInventoryRunning: false, ...extra, source });
 }
 
-test("The fifteen reviewed animations match only their named exercise variants", () => {
+test("The sixteen reviewed animations match only their named exercise variants", () => {
   const context = animationContext();
   vm.runInContext(context.source, context);
   const match = (name) => vm.runInContext(`gymCustomAnimationFor(${JSON.stringify({ name })})`, context);
-  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 15);
+  assert.equal(vm.runInContext("GYM_CUSTOM_ANIMATIONS.length", context), 16);
   assert.equal(match("Press de Banca Plano (Barra)").key, "press-banca-plano-barra");
   assert.equal(match("Press de Banca").key, "press-banca-plano-barra");
   assert.equal(match("Press de banca con mancuernas"), null);
@@ -57,6 +57,14 @@ test("The fifteen reviewed animations match only their named exercise variants",
   assert.equal(match("Extensiones de cuádriceps en máquina").key, "extension-cuadriceps-maquina");
   assert.equal(match("Leg Extension").key, "extension-cuadriceps-maquina");
   assert.equal(match("Curl de pierna sentado"), null);
+  assert.equal(match("Hip thrust 45°").key, "hiperextensiones-banco-45");
+  assert.equal(match("Hip thrust 45º").key, "hiperextensiones-banco-45");
+  assert.equal(match("Hiperextensiones en banco a 45°").key, "hiperextensiones-banco-45");
+  assert.equal(match("Hip thrust con barra"), null);
+  assert.equal(match("Hip thrust en máquina"), null);
+  assert.equal(match("Hiperextensiones en banco horizontal"), null);
+  assert.equal(vm.runInContext("gymCustomAnimationFor({name:'Hip thrust 45°',source:{provider:'wger'}})", context), null);
+  assert.equal(vm.runInContext("gymCustomAnimationFor({name:'45 Degree Back Extension',source:{provider:'wger'}})?.key", context), "hiperextensiones-banco-45");
   assert.equal(match("Extensiones de cuádriceps con banda"), null);
   assert.equal(match(""), null);
 });
@@ -147,6 +155,9 @@ test("Opening a curated plan GIF does not require the external library", async (
   await vm.runInContext('openGymTechniqueForPlanExercise({ id: "leg-press", name: "Prensa de piernas" })', context);
   assert.match(detail.innerHTML, /prensa-piernas-inclinada-45-v5-white\.gif/);
   assert.match(detail.innerHTML, /prensa inclinada a 45/);
+  await vm.runInContext('openGymTechniqueForPlanExercise({ id: "extension-example", name: "Hip thrust 45°" })', context);
+  assert.match(detail.innerHTML, /hiperextensiones-banco-45-v2-white\.gif/);
+  assert.match(detail.innerHTML, /banco de hiperextensiones/);
 });
 
 test("A medically paused Gym still displays canonical series, reps, loads and technique notes", () => {
