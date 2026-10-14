@@ -1,6 +1,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fingerprintStaticAsset, stampStaticEntrypoints } from "./static-revisions.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const workerRoot = resolve(here, "..");
@@ -27,6 +28,13 @@ html = html
     /<script type="module" src="\.\/app\.js(?:\?v=[^"]+)?"><\/script>/,
     (scriptTag) => `<script src="../private-config.js"></script>\n    ${scriptTag}`
   );
+
+// Revisions track actual JS/CSS contents; stale browser caches cannot reuse
+// the previous release just because an editor forgot to bump ?v= in index.html.
+html = stampStaticEntrypoints(html, {
+  "app.js": fingerprintStaticAsset(await readFile(resolve(dist, "app", "app.js"))),
+  "styles.css": fingerprintStaticAsset(await readFile(resolve(dist, "app", "styles.css")))
+});
 
 await writeFile(indexPath, html, "utf8");
 await writeFile(

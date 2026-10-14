@@ -441,3 +441,8 @@ La cabecera muestra una sola fila de objetivos diarios kcal y proteína, alinead
 
 
 Nota 14/10/2026 · Paridad de redondeo: el porcentaje visual de las barras debe derivarse de los **valores enteros efectivamente mostrados** como consumido / previsto, no de fracciones internas ocultas. El auditor sigue comparando importes redondeados y relleno con la fuente; un fallo produce rojo. Caso sintético obligatorio: valores 1,49 / 2,49 muestran 1 / 2 y barra al 50 %, no 60 %.
+
+
+### Frontend sin versiones obsoletas (14/10/2026)
+
+La auditoría Chromium exige que los entrypoints privados `app.js` y `styles.css` lleven versiones basadas en la huella SHA-256 de 16 caracteres del contenido; el build las inserta automáticamente, sin intervención humana ni cambios en los datos privados. El Worker privado devuelve `Cache-Control: no-store` para HTML estático, evitando que el navegador conserve un manifiesto de JS/CSS viejo. Las sesiones ya abiertas requieren recarga del documento para reconstruir el DOM. El gate del navegador valida únicamente la presencia y formato de ambas revisiones, no emite URLs ni datos privados.

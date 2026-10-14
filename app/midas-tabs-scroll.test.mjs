@@ -21,8 +21,11 @@ test("MIDAS navigation scrolls with dialog instead of floating over table rows",
 test("tabs remain usable on narrow screens and cache-busted bundles stay aligned", () => {
   assert.match(css, /\.midas-workspace-tabs\s*\{\s*overflow-x:\s*auto;/);
   assert.match(app, /\[data-midas-tab\]/);
-  assert.match(html, /\.\/styles\.css\?v=0\.44\.32/);
-  assert.match(html, /\.\/app\.js\?v=0\.44\.32/);
+  const cssRevision = html.match(/href="\.\/styles\.css\?v=([\d.]+)"/)?.[1];
+  const jsRevision = html.match(/src="\.\/app\.js\?v=([\d.]+)"/)?.[1];
+  assert.ok(cssRevision && jsRevision, "public demo entrypoints remain versioned");
+  assert.equal(cssRevision, jsRevision, "source demo JS and CSS revisions stay aligned");
+
 });
 
 test("production Chromium verifies MIDAS scroll on desktop and mobile without suppressing transport errors", () => {

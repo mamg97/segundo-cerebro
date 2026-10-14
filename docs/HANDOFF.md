@@ -1,3 +1,11 @@
+## ORGANIZADOR 18 · Frontend antiguo retenido tras cambios de Home (14/10/2026)
+
+- Nueva captura del usuario aún muestra subtítulo y barras antiguos, pese a que Chromium fresco #425 comprobó el nuevo menú en el Worker privado. Causa de entrega que se evita: `app/index.html` mantenía la misma query `?v=0.44.32` para `app.js` y `styles.css` entre commits y el HTML podía revalidarse con caché; también una pestaña SPA abierta antes del despliegue mantiene su DOM antiguo hasta recarga.
+- Corrección: `private-cloudflare/scripts/build.mjs` genera queries SHA-256 truncadas a 16 hex según bytes actuales del frontend para el HTML privado; `private-cloudflare/src/index.js` entrega HTML estático con `Cache-Control: no-store`, preservando la política de datos/API y el cache-control del resto de assets; `app/index.html` incrementa `v` para la demo pública. Sin limpiar autenticación, ni servicios de pago, ni tráfico periódico adicional.
+- Pruebas: `scripts/static-revisions.test.mjs` ejecutado mediante `npm test`, aserción Chromium de fingerprint por contenido y controles previos del menú. Tras CI, despliegue y auditoría de producción, pedir **una recarga de pestaña** al usuario; ninguna actualización del servidor sustituye automáticamente el DOM ya cargado en una pestaña abierta. Mantener MIDAS y otras incidencias globales como independientes.
+
+---
+
 ## ORGANIZADOR 18 · Cierre verificable del menú semanal de Home (14/10/2026)
 
 - **PR [#486](https://github.com/mamg97/segundo-cerebro/pull/486)** fusionada; objetivos diarios de kcal/proteína una sola vez antes de la matriz, sin repetición en las columnas. Cada día muestra valores `consumido / previsto` dentro de las dos barras; consumido incluye solo registros confirmados y el plan mantiene las filas de `MenuSemanal`, incluso si el consumo es cero. No se alteró la fuente privada.

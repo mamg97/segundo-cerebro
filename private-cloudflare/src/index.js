@@ -6282,8 +6282,12 @@ export default {
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
+    // The entrypoint is a deployment manifest: never cache HTML across releases.
+    // JavaScript and CSS use content-hashed URLs emitted by the private build,
+    // so a reload fetches the new assets without a costly global cache purge.
+    const isHtml = /\btext\/html\b/i.test(assetResponse.headers.get("Content-Type") || "");
     return withSecurityHeaders(assetResponse, {
-      "Cache-Control": "private, max-age=0, must-revalidate"
+      "Cache-Control": isHtml ? "no-store" : "private, max-age=0, must-revalidate"
     });
   }
 };
