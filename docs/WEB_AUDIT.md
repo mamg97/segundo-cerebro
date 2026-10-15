@@ -451,3 +451,8 @@ La auditoría Chromium exige que los entrypoints privados `app.js` y `styles.css
 ### Lectura de imágenes D1 con memoria acotada (14/10/2026)
 
 Mitigación: en `objects-media-d1` el acceso GET `stream:true` valida metadatos `chunk_index, LENGTH(data)` en vez de cargar todas las cargas binarias antes de enviar una respuesta; la transferencia binaria se hace bajo demanda, un chunk indexado cada vez. Ante un fragmento posterior anómalo, el stream aborta (no se devuelve una imagen íntegra fabricada). Las imágenes y claves privadas no salen a logs ni a una caché pública. Mantener diagnósticos de Service Binding sin presuponer el límite Cloudflare específico. La auditoría sigue fallando ante 5xx o imágenes incompletas, sin aceptarlas como recuperadas.
+
+
+### Menú Home interactivo · registro y alternativa (15/10/2026)
+
+La UI distingue «Abrir receta», «✓ Consumida» y «Cambiar». Chromium comprueba que cada receta de plan con `sourceRow` verificable ofrece ambas acciones y que el selector de alternativas se abre, ofrece búsqueda y macros, y se cierra sin modificar la fuente. **El auditor jamás pulsa «Consumida» ni «Aplicar cambio» sobre datos reales**. Tests sintéticos ejercitan ambas escrituras, incluyen fila obsoleta, receta pendiente, ración desconocida, duplicados y acompañantes sin mutar el Sheet. La aceptación requiere refresco de `MenuSemanal` y conciliación de consumo real sin duplicarlo.
