@@ -1,3 +1,12 @@
+## ORGANIZADOR 21 — Sesiones antiguas tras despliegues (15/10/2026)
+
+- Captura posterior al despliegue #538 muestra Home sin miniaturas ni controles de consumir/cambiar; el código visible es anterior a #493/#497. Chromium fresco #437 comprobó la UI moderna y las fotos (1.238 checks, fallo conocido solo MIDAS CHECK-00029). Diagnóstico: pestaña SPA ya abierta conserva sus módulos/DOM en memoria; ni HTML `no-store` ni hashes fuerzan una recarga activa.
+- Corrección: el frontend privado incorpora un guard **sin polling**: al volver a una pestaña o restaurarla desde back-forward cache, a lo sumo una lectura de HTML autenticado por cada 120 s compara el hash real de `app.js`. Si ha cambiado, recarga automáticamente cuando no hay edición; si hay diálogo, foco de formulario o entrada modificada, avisa con botón explícito y conserva la sesión. Respuestas de SSO, sin red o inválidas nunca fuerzan recargas. Coste recurrente cero.
+- La pestaña ya abierta **antes de este fix** no tiene instalado el guard: para ella es imprescindible una única recarga manual (`⌘+Mayús+R`). Tests Node y Chromium read-only verifican guard, activación y formato de versión. No se muta la fuente nutricional.
+- Cierre requiere CI, despliegue y auditoría posterior; persistencia de MIDAS independiente.
+
+---
+
 ## ORGANIZADOR 20 — Home · miniaturas privadas de recetas (15/10/2026)
 
 - El menú ligero añade `Recetas!A1:O1000` al batchGet **existente** y enlaza por `recipe_id` solo referencias `photoUrl` del endpoint autenticado `/api/health/recipes/{id}/image?v={version}`. No se transfieren a Home ni a GitHub IDs privados de Drive o bytes de imágenes.

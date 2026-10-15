@@ -27458,3 +27458,41 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   font-size: 11px;
   flex: none;
 }
+
+
+/* Release notice is only shown while a dialog/form is being edited.
+   Otherwise returning to a stale remote SPA tab automatically reloads once. */
+.private-app-update-notice {
+  position: fixed;
+  z-index: 99999;
+  bottom: max(15px, env(safe-area-inset-bottom));
+  right: 15px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  max-width: min(420px, calc(100vw - 30px));
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 22%);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.private-app-update-notice button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  background: var(--blue);
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.private-app-update-notice button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

@@ -466,3 +466,8 @@ Cuando la cantidad de una receta planificada falta, está vacía o no es positiv
 ### Home · miniaturas de recetas (15/10/2026)
 
 Home usa `photoUrl` de `Recetas` incorporado al mismo `batchGet` del menú ligero, sin introducir nuevos endpoints de escritura ni fuentes paralelas. Para cada `recipe_id` con referencia de foto renderiza un `img` perezoso y `object-fit: contain` de 42×42 dentro del botón para abrir la ficha; si falta foto aparece marcador, no enlace inventado. El auditor verifica paridad de filas con foto y sin foto, más decodificación de una miniatura disponible, exclusivamente en lectura; los logs no contienen fotos, URL de imagen ni identificadores personales.
+
+
+### Pestañas SPA antiguas entre despliegues (15/10/2026)
+
+El hash de `app.js` en el HTML garantiza una recarga fresca, pero una pestaña SPA abierta no vuelve a solicitar HTML. El nuevo guard privado comprueba de forma pasiva al recuperar foco/visibilidad o volver de back-forward cache y limita peticiones a una cada 120 s por pestaña activa. Solo consulta el HTML ya protegido por Cloudflare Access (sin consulta de contenido personal, sin temporizador recurrente). Una versión diferente recarga la página si no hay edición en curso; cuando hay entrada modificada, un diálogo o foco de formulario muestra aviso con botón de recarga y respeta el trabajo. HTML de login/SSO no válido, estado offline y errores no deben causar bucles. La primera recarga de una pestaña que preceda al guard sigue siendo manual. Chromium comprueba que el guard está instalado y la versión DOM coincide con el entrypoint.
