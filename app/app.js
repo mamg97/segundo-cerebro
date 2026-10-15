@@ -3349,7 +3349,11 @@ async function loadNutritionPanel(dateKey) {
     if (!response.ok) throw new Error(`NUTRITION_${response.status}`);
     const payload = await response.json();
     renderNutritionPanel(payload);
-    renderRecipesPanel(payload);
+    // A nutrition refresh must not discard a recipe/ingredient the user
+    // opened while its background request was still in flight.
+    const recipeView = document.querySelector("#recipes-panel");
+    if (!recipeView?.querySelector(".recipe-detail-card, [data-ingredient-back], [data-ingredient-detail]"))
+      renderRecipesPanel(payload);
     renderMenuPanel(payload);
     return true;
   } catch (error) {
@@ -6208,6 +6212,7 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
         });
       } catch {
         if (button.isConnected) {
+          panel.dataset.ingredientPantryState = "module-error";
           button.disabled = false;
           button.textContent = "No se pudo abrir. Pulsa para reintentar";
         }

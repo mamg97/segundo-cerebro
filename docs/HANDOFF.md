@@ -1,3 +1,11 @@
+## ORGANIZADOR 20 — Vista de ingredientes: prevenir re-render durante fetch y clasificar errores (15/10/2026)
+
+- Auditorías Chromium #446 y #447 siguen en rojo (1.255 controles / 5 fallos): un fallo MIDAS previo y cuatro del itinerario ficha ingrediente. El ajuste del módulo y su versión de caché no bastaron; las imágenes visuales ya no fallaron en esas ejecuciones, pero no hay garantía de ausencia de recurrencia.
+- `loadNutritionPanel` respeta una vista de detalle de receta o ingrediente abierta por el usuario ante una respuesta de nutrición en segundo plano; el catálogo se reconstruye cuando no hay detalle activo. Además se señaliza una posible excepción de carga del módulo con código interno y la auditoría Chromium emite categorías cerradas sobre la pantalla fallida, sin nombres/IDs/fotos privadas.
+- Incrementa versión conjunta del CSS/JS a `0.44.40`. Requiere CI, despliegue y auditoría; no declarar corregida la navegación sin evidencia posterior.
+
+---
+
 ## ORGANIZADOR 20 — Integridad 0–1 receta principal por toma (15/10/2026)
 
 - Validación adicional del editor de acompañantes: sustituir un `food_id` por una receta no puede crear una segunda receta principal en la misma fecha + momento, aunque la receta anterior tenga distinto ID. Se conserva la posibilidad de reemplazar si solo existen recetas secundarias `tipo_item=acompanante` o históricos `retirado`. La API responde `PRIMARY_RECIPE_ALREADY_IN_MEAL` (409), sin escritura parcial. No cambia macros, registros ni front; prueba sintética de colisión, consumo ya confirmado y excepciones legítimas.
