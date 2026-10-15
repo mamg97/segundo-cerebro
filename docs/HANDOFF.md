@@ -1,3 +1,12 @@
+## ORGANIZADOR 18 — Home · consumo y sustitución de recetas (15/10/2026)
+
+- Capacidad nueva en Home: cada receta **planificada** tiene acciones independientes «✓ Consumida», «Cambiar» y su enlace anterior para ver la ficha. El estado consumido proviene exclusivamente de `MenuSemanal.estado`; las barras consumido/previsto se recalculan al instante y se verifican después de guardar. Los acompañantes conservan su identidad y el flujo de recetas no marca consumos por navegación.
+- Editor: modal responsive con búsqueda diferida de `Recetas`, vista previa de kcal/proteínas/HC/grasas y nuevos totales previstos del día; no se puede guardar sin macros y ración interpretables. Conserva fecha, momento, cantidad, unidad y componentes del plan. No modifica recetas canónicas ni usa sustituciones aproximadas.
+- API privada: GET `/api/nutrition/menu/recipes` (lista reducida) y POST `/api/nutrition/menu/edit` (escritura validada por identidad, fila original, timestamp y estado; rechazo `409` de datos obsoletos). `MenuSemanal` es la fuente única del plan; `Registro` permanece independiente, y la conciliación de consumo no considera un simple `planificado` como consumo ya registrado. Una sustitución retira versiones antiguas de la misma receta para evitar reapariciones.
+- Pruebas: `weekly-menu-actions.test.mjs`, `home-weekly-menu-actions.test.mjs`, auditoría Chromium de selector **sin efectuar escrituras**; preservar las puertas existentes de Salud, Objetos y Finanzas. No copiar recetas ni macros personales al repositorio. CI/merge/deploy/auditoría de producción obligatorios antes de cerrar.
+
+---
+
 ## ORGANIZADOR 19 · Mitigación BLOB de Objetos y límite de recursos (14/10/2026)
 
 - Incidente #426: Chromium 1227 controles / 8 fallos. Seis fallos visuales y uno infra derivan de 37 HTTP 502 de imágenes de Objetos; diagnósticos 31 `AUDIT_GATEWAY_WORKER_RESOURCE_LIMIT` y 6 respuestas 5xx sin clasificar. MIDAS `CHECK-00029` independiente. Los logs permiten afirmar límite de recursos al atravesar el Service Binding, pero no identificar CPU frente a memoria/otras cuotas sin telemetría adicional.
