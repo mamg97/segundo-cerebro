@@ -1,3 +1,11 @@
+## ORGANIZADOR 20 — Cierre comprobado de recetario y edición de acompañantes; regresiones de auditoría (15/10/2026)
+
+- Estado real verificado: PR #501, #502 y #503 fusionadas en `main` (`79c80c4d61169f5c657cb24d00f8545c7abda1e8`); CI #698, #699, #701 correctas; despliegue privado #544 correcto. La ordenación por fotografía y el filtro real por ingrediente ya están en producción. Las filas planificadas de producto/acompañante ya ofrecen Cambiar y Consumida; el selector sustituye por **receta** con nuevas raciones expresas. La edición producto→producto y la rectificación de consumos confirmados siguen fuera de este contrato y requieren trabajo independiente con Registro.
+- Auditorías Chromium #444 (1248/6) y #445 (1248/11) en rojo: MIDAS CHECK-00029 conocido; cuatro fallos consecutivos de ficha de ingrediente en Salud; seis controles visuales de imágenes en #445. La auditoría prueba correctamente el nuevo filtro y los botones de Home, pero el conjunto NO está verde.
+- Corrección de resiliencia en rama `fix/recipe-ingredient-fallback-20261015`: consulta de Despensa y ficha comercial con espera acotada; si falla el detalle, muestra datos canónicos básicos; si falla la fuente, conserva contexto de ingrediente con precio y nutrición desconocidos, aviso explícito y reintento manual. Auditoría distingue tarjeta degradada mediante código cerrado, sin revelar datos. No toca Registro, MenuSemanal ni infraestructura. Validar CI y comprobar Chromium postdeploy; no dar por cerrados los errores de imágenes o MIDAS.
+ 
+---
+
 ## ORGANIZADOR 19 — Home · Cambiar alimentos planificados de media mañana y merienda (15/10/2026)
 
 - Diagnóstico confirmado en `MenuSemanal`: varios alimentos de media mañana/merienda son filas `food_id` con `tipo_item=acompanante` y estado `planificado`; el botón «Cambiar» y el backend antiguo exigían `recipe_id` y `tipo_item=receta`. También ocultaban la edición de recetas acompañantes. No depende del momento.
