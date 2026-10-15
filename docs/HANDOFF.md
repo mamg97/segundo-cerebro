@@ -1,3 +1,11 @@
+## ORGANIZADOR 19 — Conciliación Registro por momento de consumo (15/10/2026)
+
+- Corrección genérica posterior a #495: al obtener consumos desde MenuSemanal para completar Registro, comparar por fecha + momento canónico + ID de receta/producto, no solamente por ID diario. Un alimento repetido en otra toma no debe quedar omitido del total de consumo por compartir ID con un registro anterior. Se mantiene exclusión de coincidencias exactas para evitar doble cómputo.
+- Tests sintéticos de comidas distintas, otras recetas, cambios de fecha y normalización de momentos legados (postre/snack). Sin escrituras en Sheets, D1 o Registro real. Ningún dato privado en Git.
+- Limitación: si un registro antiguo carece de ID canónico, no es posible inferir identidad exacta sin crear coincidencias espurias; se conserva el fallback explícito.
+
+---
+
 ## ORGANIZADOR 19 — Validación de raciones desconocidas en Home (15/10/2026)
 
 - PR #493/#494 ya estaban fusionadas en main; CI #688 y despliegue privado #535 correctos. Auditoría cron #434: 1232 controles, único fallo conocido MIDAS CHECK-00029; Home/Nutrición sin fallo y paridad ligero/completo 0/0.
