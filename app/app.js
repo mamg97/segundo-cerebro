@@ -6200,7 +6200,7 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
     button.addEventListener("click", async () => {
       button.disabled = true;
       try {
-        const { openRecipeIngredient } = await import("./recipe-products.js?v=0.42.1");
+        const { openRecipeIngredient } = await import("./recipe-products.js?v=0.42.2");
         if (!button.isConnected) return;
         await openRecipeIngredient(panel, ingredients[Number(button.dataset.recipeIngredient)], recipe, () => {
           renderRecipeDetail(panel, data, recipe, options);
