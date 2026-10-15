@@ -3167,12 +3167,13 @@ try {
             }
             assertCheck(ingredientDetailVisible, "Salud · Recetas abre ficha del alimento");
             const pantryState = await panel.getAttribute("data-ingredient-pantry-state");
-            if (pantryState === "fallback" || pantryState === "loading") {
+            if (["fallback", "loading", "module-error"].includes(pantryState)) {
               // Closed diagnostic vocabulary; never log ingredient names, IDs or URLs.
               console.error("[RECIPE_INGREDIENT_DIAG] " +
-                (pantryState === "fallback" ? "PANTRY_FALLBACK" : "PANTRY_PENDING"));
+                (pantryState === "fallback" ? "PANTRY_FALLBACK" :
+                  pantryState === "module-error" ? "MODULE_ERROR" : "PANTRY_PENDING"));
             }
-            assertCheck(pantryState !== "fallback" && pantryState !== "loading",
+            assertCheck(!["fallback", "loading", "module-error"].includes(pantryState),
               "Salud · Recetas indica disponibilidad de Despensa en ficha de ingrediente");
             assertCheck(await panel.locator(".recipe-ingredient-context").count() === 1, "Salud · Recetas ficha conserva cantidad y contexto");
             assertCheck(await panel.locator(".pantry-nutrition").count() === 1, "Salud · Recetas ficha separa macros por 100 g");
