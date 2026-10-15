@@ -1,3 +1,10 @@
+## ORGANIZADOR 20 — Integridad 0–1 receta principal por toma (15/10/2026)
+
+- Validación adicional del editor de acompañantes: sustituir un `food_id` por una receta no puede crear una segunda receta principal en la misma fecha + momento, aunque la receta anterior tenga distinto ID. Se conserva la posibilidad de reemplazar si solo existen recetas secundarias `tipo_item=acompanante` o históricos `retirado`. La API responde `PRIMARY_RECIPE_ALREADY_IN_MEAL` (409), sin escritura parcial. No cambia macros, registros ni front; prueba sintética de colisión, consumo ya confirmado y excepciones legítimas.
+- Auditar tras CI/merge/deploy; los consumos confirmados siguen requiriendo una futura reconciliación explícita con `Registro`, nunca edición ciega de plan.
+
+---
+
 ## ORGANIZADOR 20 — Invalidez de caché del módulo lazy de ingredientes (15/10/2026)
 
 - Tras #504 se invalida explícitamente el import dinámico de `recipe-products.js` (`v0.42.2`) y la entrada privada `app.js` (`v0.44.39`): así Chromium fresco y sesiones que recargan no conservan el JS previo en cachés estáticas. No cambia CSS ni datos privados. Verificar CI/despliegue y auditoría tras esta entrega; no confundir deploy con auditoría superada.

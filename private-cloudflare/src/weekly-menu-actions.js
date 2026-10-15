@@ -135,6 +135,21 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       String(row.data.recipe_id || "") === payload.newRecipeId &&
       !/^(retirad[oa]|omitid[oa]|cancelad[oa])$/.test(normalize(row.data.estado)));
     if (conflict) throw new MenuEditError("RECIPE_ALREADY_IN_MEAL",409);
+    // A food-to-recipe conversion creates a primary recipe. The canonical
+    // meal contract allows at most one primary recipe per date + moment,
+    // even when a pre-existing primary has a *different* recipe_id.
+    // Recipe-based companions (e.g. prepared shakes) are not primaries.
+    if (originalIsFood) {
+      const sameMeal = all.filter(row => row.sourceRow !== original.sourceRow &&
+        String(row.data.fecha) === payload.date &&
+        normalize(canonicalWeeklyMenuMoment({moment:row.data.momento,name:row.data.nombre})) ===
+          normalize(canonicalWeeklyMenuMoment({moment:original.data.momento,name:original.data.nombre})) &&
+        !/^(retirad[oa]|omitid[oa]|cancelad[oa])$/.test(normalize(row.data.estado)));
+      if (sameMeal.some(row => Boolean(row.data.recipe_id) &&
+          (!row.data.tipo_item || normalize(row.data.tipo_item) === "receta"))) {
+        throw new MenuEditError("PRIMARY_RECIPE_ALREADY_IN_MEAL",409);
+      }
+    }
     // Retire older versions of the former recipe to prevent a ghost entry
     // from reappearing once its latest row changes identity.
     for (const row of duplicates) {
