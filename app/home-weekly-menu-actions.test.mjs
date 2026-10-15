@@ -27,7 +27,7 @@ test("Home uses separate consume and replace actions, keeping recipe detail inde
   assert.match(html,/data-home-menu-recipe-open="rec-a"/);
   assert.match(html,/310 kcal/);
   assert.doesNotMatch(sandbox.renderHomeWeeklyMenuMatrixCell([{...item,status:"consumido"}]),/data-home-menu-consume=/);
-  assert.doesNotMatch(sandbox.renderHomeWeeklyMenuMatrixCell([{...item,itemRole:"acompanante"}]),/data-home-menu-change=/);
+  assert.match(sandbox.renderHomeWeeklyMenuMatrixCell([{...item,itemRole:"acompanante"}]),/data-home-menu-change=/);
 });
 
 test("projected replacement counts all macros and the day's remaining planned totals",()=>{
@@ -56,7 +56,7 @@ test("new editor is accessible on mobile without requiring hovering over cells",
  assert.match(app,/dialog\.showModal\(\)/);
  assert.match(app,/data-menu-editor-search/);
  assert.match(app,/data-menu-editor-preview/);
- assert.match(app,/submitHomeMenuEdit\(item,"replace",selectedRecipe\.id\)/);
+ assert.match(app,/submitHomeMenuEdit\(item,"replace",selectedRecipe\.id,servingsInput/);
 });
 
 
@@ -108,4 +108,33 @@ test("Weekly menu is the second full-width Home card below nutrition overview",(
   assert.ok(summaryOpen<menu && menu<summaryClose,"menu is within summary grid");
   assert.match(css,/\.daily-overview-grid > #home-weekly-menu-panel\s*\{\s*grid-column: 1 \/ -1;/);
   assert.match(html,/id="home-weekly-menu-panel"[^>]*\bhidden>/);
+});
+
+
+test("Home allows replacement and consumption for planned Pantry food at any meal moment",()=>{
+  for(const moment of ["Media mañana","Merienda","Cena"]) {
+    const food={...item,moment,recipeId:null,foodId:"food-b",name:"Yogur",quantity:120,unit:"g",itemRole:"acompanante"};
+    const html=sandbox.renderHomeWeeklyMenuMatrixCell([food]);
+    assert.match(html,/data-home-menu-consume="8"/);
+    assert.match(html,/data-home-menu-change="8"/);
+    const payload=sandbox.homeMenuEditPayload(food,"replace","rec-b",1);
+    assert.equal(payload.foodId,"food-b");
+    assert.equal(payload.newServings,1);
+    assert.equal(payload.recipeId,undefined);
+    assert.equal(payload.newRecipeId,"rec-b");
+    assert.equal(sandbox.homeMenuRecipeProjection(food,{id:"rec-b",servings:2,kcalPerServing:250,proteinPerServing:25,carbsPerServing:20,fatPerServing:8,precision:"estimada"},{kcal:1000,protein:100}),null);
+    assert.equal(sandbox.homeMenuRecipeProjection(food,{id:"rec-b",servings:2,kcalPerServing:250,proteinPerServing:25,carbsPerServing:20,fatPerServing:8,precision:"estimada"},{kcal:1000,protein:100},1).kcal,250);
+  }
+});
+
+test("consumed food/recipes remain protected from plan-only edits",()=>{
+  for(const food of [null,"food-b"]) {
+    const recipe={...item,recipeId:food?null:item.recipeId,foodId:food,status:"consumido",itemRole:food?"acompanante":"receta"};
+    const html=sandbox.renderHomeWeeklyMenuMatrixCell([recipe]);
+    assert.doesNotMatch(html,/data-home-menu-change=/);
+    assert.doesNotMatch(html,/data-home-menu-consume=/);
+    assert.match(html,/home-menu-consumed-label/);
+  }
+  assert.match(app,/data-menu-editor-servings/);
+  assert.match(css,/\.home-menu-editor-food-hint/);
 });

@@ -5689,8 +5689,12 @@ function renderHomeWeeklyMenuMatrixCell(items) {
           : `<strong>${escapeHtml(item.name || "Comida")}</strong>`;
         // A sourceRow is the exact row in the private canonical Sheet, not a
         // guessed position in a deduplicated list. Mutation revalidates it.
-        const canEdit = recipeId && Number.isSafeInteger(item.sourceRow) && item.sourceRow > 1 &&
-          !consumed && (!item.itemRole || normalizeWeeklyMenuMoment(item.itemRole) === "receta") && !item.foodId;
+        // All *planned* canonical items can be replaced, irrespective of
+        // moment or whether the row is a recipe or a Pantry food companion.
+        const sourceId = Boolean(recipeId) !== Boolean(item.foodId);
+        const planned = ["planificado","pendiente"].includes(normalizeWeeklyMenuMoment(item.status));
+        const canEdit = sourceId && planned && Number.isSafeInteger(item.sourceRow) && item.sourceRow > 1 &&
+          (!item.itemRole || ["receta","acompanante"].includes(normalizeWeeklyMenuMoment(item.itemRole)));
         return `
           <div class="weekly-menu-group-item ${consumed ? "is-consumed" : ""}" data-menu-source-row="${Number(item.sourceRow) || 0}">
             <div class="weekly-menu-group-item-copy">
@@ -5702,7 +5706,7 @@ function renderHomeWeeklyMenuMatrixCell(items) {
             </div>
             ${canEdit ? `<div class="home-menu-item-actions">
               <button type="button" data-home-menu-consume="${item.sourceRow}" aria-label="Marcar ${escapeHtml(item.name)} como consumida">✓ Consumida</button>
-              <button type="button" data-home-menu-change="${item.sourceRow}" aria-label="Cambiar receta ${escapeHtml(item.name)}">Cambiar</button>
+              <button type="button" data-home-menu-change="${item.sourceRow}" aria-label="Cambiar alimento o receta ${escapeHtml(item.name)}">Cambiar</button>
             </div>` : consumed ? '<small class="home-menu-consumed-label">✓ Consumida</small>' : ""}
           </div>`;
       }).join("")}
@@ -5757,14 +5761,16 @@ async function homeMenuRecipeOptions() {
   }).catch(error => { homeMenuRecipeOptionsPromise = null; throw error; });
   return homeMenuRecipeOptionsPromise;
 }
-function homeMenuEditPayload(item, action, newRecipeId = null) {
+function homeMenuEditPayload(item, action, newRecipeId = null, newServings = null) {
   return {
     action, sourceRow: item.sourceRow, date: item.date, moment: item.moment,
-    recipeId: item.recipeId, name: item.name, updatedAt: item.updatedAt || "",
-    ...(newRecipeId ? {newRecipeId} : {})
+    ...(item.recipeId ? {recipeId:item.recipeId} : {foodId:item.foodId}),
+    name: item.name, updatedAt: item.updatedAt || "",
+    ...(newRecipeId ? {newRecipeId} : {}),
+    ...(newServings !== null ? {newServings} : {})
   };
 }
-async function submitHomeMenuEdit(item, action, recipeId) {
+async function submitHomeMenuEdit(item, action, recipeId, newServings = null) {
   if (homeMenuEditPending) return false;
   homeMenuEditPending = true;
   homeWeeklyMenuLastVerifiedSerial = ++homeWeeklyMenuRequestSerial;
@@ -5772,7 +5778,7 @@ async function submitHomeMenuEdit(item, action, recipeId) {
     const response = await fetch("/api/nutrition/menu/edit", {
       method: "POST", credentials: "same-origin",
       headers: {"Content-Type": "application/json", Accept:"application/json"},
-      body: JSON.stringify(homeMenuEditPayload(item,action,recipeId))
+      body: JSON.stringify(homeMenuEditPayload(item,action,recipeId,newServings))
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.ok !== true) throw new Error(result.code || "MENU_EDIT_FAILED");
@@ -5794,12 +5800,15 @@ function homeMenuInlineNotice(content, text, isError = false) {
   notice.classList.toggle("is-error", isError);
   notice.textContent = text;
 }
-function homeMenuRecipeProjection(item, recipe, day) {
+function homeMenuRecipeProjection(item, recipe, day, newServings = null) {
   // Mirror server-side portion validation: missing is never one serving.
   const quantity = item.quantity == null || String(item.quantity).trim() === "" ? NaN : Number(item.quantity);
   const unit = normalizeWeeklyMenuMoment(item.unit);
-  const factor = /racion/.test(unit) ? quantity
-    : /compartid/.test(unit) && Number(recipe.servings) > 0 ? quantity * recipe.servings : NaN;
+  const sourceIsFood = Boolean(item.foodId) && !item.recipeId;
+  const servings = newServings == null || String(newServings).trim() === "" ? NaN : Number(newServings);
+  const factor = sourceIsFood ? (Number.isFinite(servings) && servings > 0 && servings <= 20 ? servings : NaN)
+    : /racion/.test(unit) ? quantity
+      : /compartid/.test(unit) && Number(recipe.servings) > 0 ? quantity * recipe.servings : NaN;
   const fields = ["kcalPerServing","proteinPerServing","carbsPerServing","fatPerServing"];
   const valid = Number.isFinite(factor) && factor > 0 &&
     fields.every(key => recipe[key] !== null && Number.isFinite(Number(recipe[key]))) &&
@@ -5833,6 +5842,7 @@ async function openHomeMenuRecipeEditor(item, day) {
       <header><div><small>Menú semanal · modificar</small><h3>Cambiar receta</h3></div>
         <button type="button" data-menu-editor-cancel aria-label="Cerrar selector">✕</button></header>
       <p class="home-menu-editor-current">Actual: <strong>${escapeHtml(item.name || "Receta")}</strong> · ${item.kcal == null ? "—" : escapeHtml(formatKcal(item.kcal))} · P ${item.protein == null ? "—" : escapeHtml(formatMacro(item.protein))}</p>
+      ${item.foodId && !item.recipeId ? '<p class="home-menu-editor-food-hint">Este alimento se sustituirá por una receta. Indica el número de raciones de la nueva receta; no se convertirán automáticamente los gramos del alimento en raciones.</p><label class="home-menu-editor-servings">Raciones de la nueva receta <input type="number" data-menu-editor-servings min="0.25" max="20" step="0.25" placeholder="Ej.: 1" inputmode="decimal"></label>' : ""}
       <label>Buscar recetas <input type="search" data-menu-editor-search placeholder="Nombre de receta…" autocomplete="off"></label>
       <label>Receta alternativa <select data-menu-editor-select size="6" aria-label="Seleccionar receta alternativa"></select></label>
       <div class="home-menu-editor-projection" data-menu-editor-preview role="status">Elige una receta para ver cómo cambiarían sus macros.</div>
@@ -5846,6 +5856,7 @@ async function openHomeMenuRecipeEditor(item, day) {
   const input = dialog.querySelector("[data-menu-editor-search]");
   const select = dialog.querySelector("[data-menu-editor-select]");
   const preview = dialog.querySelector("[data-menu-editor-preview]");
+  const servingsInput = dialog.querySelector("[data-menu-editor-servings]");
   const save = dialog.querySelector("[data-menu-editor-save]");
   dialog.showModal();
   const options = await homeMenuRecipeOptions();
@@ -5854,7 +5865,8 @@ async function openHomeMenuRecipeEditor(item, day) {
   let selectedRecipe = null;
   const updatePreview = () => {
     selectedRecipe = options.find(recipe => recipe.id === select.value) || null;
-    const macro = selectedRecipe && homeMenuRecipeProjection(item,selectedRecipe,day);
+    const requestedServings = servingsInput ? servingsInput.value : null;
+    const macro = selectedRecipe && homeMenuRecipeProjection(item,selectedRecipe,day,requestedServings);
     save.disabled = !macro || homeMenuEditPending;
     preview.innerHTML = !macro
       ? '<span>Esta receta no tiene macros o ración verificables; no se puede aplicar.</span>'
@@ -5874,12 +5886,13 @@ async function openHomeMenuRecipeEditor(item, day) {
   };
   input.addEventListener("input",updateChoices);
   select.addEventListener("change",updatePreview);
+  servingsInput?.addEventListener("input",updatePreview);
   save.addEventListener("click",async () => {
     if (!selectedRecipe || save.disabled) return;
     save.disabled = true;
     save.textContent = "Guardando…";
     try {
-      await submitHomeMenuEdit(item,"replace",selectedRecipe.id);
+      await submitHomeMenuEdit(item,"replace",selectedRecipe.id,servingsInput ? Number(servingsInput.value) : null);
       dialog.close();
     } catch(error) {
       preview.textContent = "No se pudo guardar (" + String(error.message || "error") + "). Revisa el menú y vuelve a intentarlo.";
@@ -5891,7 +5904,7 @@ async function openHomeMenuRecipeEditor(item, day) {
   updateChoices();
 }
 function bindHomeWeeklyMenuEdits(content, data, model) {
-  const items = new Map(model.rows.filter(row => row?.sourceRow && row?.recipeId)
+  const items = new Map(model.rows.filter(row => row?.sourceRow && (row?.recipeId || row?.foodId))
     .map(row => [String(row.sourceRow),row]));
   content.querySelectorAll("[data-home-menu-consume]").forEach(button =>
     button.addEventListener("click",async () => {
