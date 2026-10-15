@@ -3147,7 +3147,14 @@ try {
           );
           const ingredientButtons = panel.locator("[data-recipe-ingredient]");
           const ingredientCount = await ingredientButtons.count();
-          assertCheck(ingredientCount === await panel.locator(".recipe-ingredients li").count(), "Salud · Recetas todos los ingredientes abren ficha");
+          const listCount = await panel.locator(".recipe-ingredients li").count();
+          if (ingredientCount !== listCount) {
+            console.error("[RECIPE_INGREDIENT_DIAG] BUTTON_ROW_COUNT_DIFFERENT buttons=" +
+              Math.min(9999, ingredientCount) + " rows=" + Math.min(9999, listCount));
+          }
+          assertCheck(ingredientCount === listCount, "Salud · Recetas todos los ingredientes abren ficha");
+          const handlerMode = await panel.locator("#recipes-panel").getAttribute("data-recipe-ingredient-handler");
+          assertCheck(handlerMode === "delegated", "Salud · Recetas usa control de ingredientes delegado");
           if (ingredientCount > 0) {
             // Read-only event/DOM trace: fixed booleans and counts exclusively.
             // Helps distinguish a missing click handler from a later re-render.
