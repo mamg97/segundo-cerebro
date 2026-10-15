@@ -116,3 +116,22 @@ test("duplicate earlier food versions are retired, and existing recipe elsewhere
   assert.throws(()=>planMenuSheetEdits([header,food,otherRecipe],
     {...action,sourceRow:2},recipes),e=>e.code==="RECIPE_ALREADY_IN_MEAL");
 });
+
+test("food replacement cannot create two distinct primary recipes in one moment",()=>{
+  const food=[...original];
+  food[2]="Merienda";food[3]="";food[4]="food-x";food[5]="Fruit";
+  food[6]=100;food[7]="g";food[16]="acompanante";
+  const main=[...original];
+  main[2]="Merienda";main[3]="r-other";main[5]="Other primary";
+  const action={...payload,recipeId:undefined,foodId:"food-x",name:"Fruit",moment:"Merienda",
+    action:"replace",newRecipeId:"r-b",newServings:1};
+  assert.throws(()=>planMenuSheetEdits([header,food,main],action,recipes),
+    e=>e.code==="PRIMARY_RECIPE_ALREADY_IN_MEAL");
+  const consumed=[...main]; consumed[8]="consumido";
+  assert.throws(()=>planMenuSheetEdits([header,food,consumed],action,recipes),
+    e=>e.code==="PRIMARY_RECIPE_ALREADY_IN_MEAL");
+  const retired=[...main];retired[8]="retirado";
+  assert.ok(planMenuSheetEdits([header,food,retired],action,recipes).updates.length>0);
+  const shake=[...main];shake[16]="acompanante";
+  assert.ok(planMenuSheetEdits([header,food,shake],action,recipes).updates.length>0);
+});
