@@ -6,9 +6,8 @@ const MENU_RANGE = "MenuSemanal!A1:R2000";
 const RECIPES_RANGE = "Recetas!A1:O1000";
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/;
-const FIELDS = ["fecha", "momento", "recipe_id", "nombre", "estado", "updated_at", "tipo_item"];
+const FIELDS = ["fecha", "momento", "recipe_id", "nombre", "estado", "updated_at"];
 const NUTRI_FIELDS = ["kcal", "proteinas_g", "carbohidratos_g", "grasas_g"];
-const RECIPE_FIELDS = ["kcal_racion", "proteinas_racion_g", "carbohidratos_racion_g", "grasas_racion_g"];
 
 export class MenuEditError extends Error {
   constructor(code, status = 400) { super(code); this.code = code; this.status = status; }
