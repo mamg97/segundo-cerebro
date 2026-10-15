@@ -2090,7 +2090,7 @@ try {
       Number.isInteger(item.sourceRow) && item.sourceRow > 1 &&
       (item.status === "planificado" || item.status === "pendiente") &&
       (!item.itemRole || ["receta","acompanante"].includes(
-        String(item.itemRole).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase())));
+        String(item.itemRole).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase())));
     const availableActionRows = await page.locator("#home-weekly-menu-content [data-home-menu-consume]").count();
     assertCheck(availableActionRows === editableMenuItems.length,
       "Home · recetas y alimentos planificados ofrecen confirmar consumo",

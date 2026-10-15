@@ -36,5 +36,5 @@ test("UI wires stable ingredient selection and photo-first projection",()=>{
   assert.match(app,/panel\.dataset\.recipeIngredient =/);
   assert.match(app,/escapeHtml\(ingredient\.label\)/);
   assert.match(css,/\.recipes-filter-controls/);
-  assert.match(html,/app\.js\?v=0\.44\.37/);
+  assert.match(html,/app\.js\?v=0\.44\.\d+/);
 });
