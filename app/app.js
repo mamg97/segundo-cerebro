@@ -807,6 +807,7 @@ async function loadRemotePrivateState() {
   }
 }
 
+
 function renderMode() {
   const generalHealth = state.areas.find((area) => area.id === "area-general")?.health ?? 0;
   const openDecisions = (Array.isArray(state.decisions) ? state.decisions : []).filter((decision) => decision.status === "open").length;
