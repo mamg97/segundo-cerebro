@@ -1,3 +1,11 @@
+## ORGANIZADOR 20 — Diagnóstico concluyente de clic y refuerzo por delegación (15/10/2026)
+
+- Auditoría #451 del despliegue #550: `1255 checks / 5 fallos`. Traza de solo lectura: `clicked=1 disabled=0 changes=0 loading=0 detail=0 catalogue=0`; el botón recibe el clic pero el DOM no cambia. Por tanto, no se trata de esperar a Despensa ni de una ficha que se cierra después: hay que corregir enlace/evento/índice de la acción.
+- Rama `fix/recipe-ingredient-delegated-handler-20261015`: se elimina la dependencia de manejadores individuales de botones y se usa un único listener delegado en el panel estable, con fase capture y AbortController por render. Se aborta al volver al recetario para evitar handlers acumulados. Un índice inválido produce mensaje recuperable, no fallo silencioso. Se preservan la transición inmediata, el límite del módulo y los datos canónicos.
+- La auditoría verifica el atributo técnico `recipeIngredientHandler=delegated`, cuenta de botones vs filas y clic real; logs solo métricas anónimas. CSS/JS ambos `0.44.42`. Requiere CI, merge, deploy, Chromium completo. MIDAS #00029 sigue fuera de este cambio.
+
+---
+
 ## ORGANIZADOR 20 — Auditoría #450 y trazado del clic de ingredientes (15/10/2026)
 
 - Producción #549 auditada en Chromium #450: `1255 checks / 5 fallos`; siguen cuatro de apertura/contexto de ingredientes y `MIDAS CHECK-00029`, con código `RECIPE_DETAIL_STILL_OPEN`, incluso tras el cambio de vista inmediato en #508. Las imágenes visuales superaron sus checks.
