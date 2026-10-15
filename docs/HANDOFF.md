@@ -1,3 +1,11 @@
+## ORGANIZADOR 20 — Home · miniaturas privadas de recetas (15/10/2026)
+
+- El menú ligero añade `Recetas!A1:O1000` al batchGet **existente** y enlaza por `recipe_id` solo referencias `photoUrl` del endpoint autenticado `/api/health/recipes/{id}/image?v={version}`. No se transfieren a Home ni a GitHub IDs privados de Drive o bytes de imágenes.
+- Home muestra miniatura 42×42 px, `object-fit: contain`, `loading=lazy`, mismo botón de acceso a la ficha, marcador sin foto, fallback de error, y CSS adaptado a columnas compactas. No modifica estados, barras, macros ni acciones de consumo/sustitución.
+- Tests sintéticos de identidad, versión, ausencia y seguridad; Chromium read-only comprueba DOM frente al menú vivo y decodifica una foto existente sin escribir consumos. PR/CI/despliegue/auditoría postdeploy necesarios para cierre. Riesgo MIDAS CHECK-00029 ajeno.
+
+---
+
 ## ORGANIZADOR 19 — Conciliación Registro por momento de consumo (15/10/2026)
 
 - Corrección genérica posterior a #495: al obtener consumos desde MenuSemanal para completar Registro, comparar por fecha + momento canónico + ID de receta/producto, no solamente por ID diario. Un alimento repetido en otra toma no debe quedar omitido del total de consumo por compartir ID con un registro anterior. Se mantiene exclusión de coincidencias exactas para evitar doble cómputo.

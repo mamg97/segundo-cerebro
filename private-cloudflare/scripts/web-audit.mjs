@@ -1993,6 +1993,35 @@ try {
       "Home · avance de barra usa consumo / plan (no objetivo)",
       `dias=${daysCompared} discrepancias=${progressMismatches}`);
 
+    // READ-ONLY comparison between the canonical lightweight menu and Home images.
+    // Only numeric counts are logged: no IDs, photo URLs or private bytes.
+    const thumbRows = liveVisible.filter(item => item.recipeId);
+    const thumbs = await page.evaluate((rows) => {
+      const root = document.querySelector("#home-weekly-menu-content");
+      let matches = 0;
+      for (const row of rows) {
+        const tile = root?.querySelector('[data-menu-source-row="' + Number(row.sourceRow) + '"]');
+        const link = tile?.querySelector("[data-home-menu-recipe-open]");
+        const img = link?.querySelector(".home-menu-recipe-thumb img");
+        const missing = link?.querySelector(".home-menu-recipe-thumb-missing");
+        if (row.photoUrl ? img?.getAttribute("src") === row.photoUrl : Boolean(missing && !img)) matches += 1;
+      }
+      return {matches};
+    }, thumbRows.map(item => ({sourceRow:item.sourceRow,photoUrl:item.photoUrl || null})));
+    assertCheck(thumbRows.length === thumbs.matches,
+      "Home · fotos o marcadores corresponden a la receta canónica",
+      "recetas=" + thumbRows.length + " coincidencias=" + thumbs.matches);
+    const firstThumb = page.locator("#home-weekly-menu-content .home-menu-recipe-thumb img").first();
+    if (await firstThumb.count()) {
+      await firstThumb.scrollIntoViewIfNeeded();
+      const decoded = await firstThumb.evaluate(async (img) => {
+        try { await img.decode(); return img.naturalWidth > 0 && img.naturalHeight > 0 &&
+          getComputedStyle(img).objectFit === "contain"; }
+        catch { return false; }
+      });
+      assertCheck(decoded, "Home · la primera foto miniatura privada se decodifica completa");
+    }
+
     // Home editor audit is READ ONLY: inspect canonical action affordances and
     // open/close the selector. Never click save or consume in production tests.
     const plannedRecipes = [...sourceByDate.values()].flat().filter(item =>

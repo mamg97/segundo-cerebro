@@ -58,3 +58,26 @@ test("new editor is accessible on mobile without requiring hovering over cells",
  assert.match(app,/data-menu-editor-preview/);
  assert.match(app,/submitHomeMenuEdit\(item,"replace",selectedRecipe\.id\)/);
 });
+
+
+test("Home shows the private photo inside the existing recipe-detail button",()=>{
+  const photoUrl="/api/health/recipes/rec-a/image?v=2026-10-15T10%3A30Z";
+  const html=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,photoUrl}]);
+  assert.match(html,/class="home-menu-recipe-thumb"/);
+  assert.match(html,/src="\/api\/health\/recipes\/rec-a\/image\?v=2026-10-15T10%3A30Z"/);
+  assert.match(html,/loading="lazy" decoding="async"/);
+  assert.match(html,/data-home-menu-recipe-open="rec-a"/);
+  assert.match(css,/\.home-weekly-menu-recipe-link\s*\{/);
+  assert.match(css,/object-fit: contain/);
+});
+
+test("Home safely shows missing-photo marker without breaking recipe navigation",()=>{
+  for(const photoUrl of [null,"https://drive.google.com/secret","javascript:alert(1)"]){
+    const html=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,photoUrl}]);
+    assert.match(html,/home-menu-recipe-thumb-missing/);
+    assert.doesNotMatch(html,/<img/);
+    assert.match(html,/data-home-menu-recipe-open="rec-a"/);
+  }
+  const pantry=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,recipeId:null,foodId:"food-x",photoUrl:null}]);
+  assert.doesNotMatch(pantry,/home-menu-recipe-thumb/);
+});

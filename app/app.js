@@ -5673,9 +5673,15 @@ function renderHomeWeeklyMenuMatrixCell(items) {
         const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
         const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
         const recipeId = String(item?.recipeId || "").trim();
+        // Only same-origin authenticated recipe photos can appear in Home.
+        const photoUrl = String(item.photoUrl || "");
+        const photo = /^\/api\/health\/recipes\/[^?#]+\/image\?v=/.test(photoUrl)
+          ? `<img src="${escapeHtml(photoUrl)}" width="42" height="42" alt="" loading="lazy" decoding="async">`
+          : '<span class="home-menu-recipe-thumb-missing" aria-hidden="true">▧</span>';
         const title = recipeId
           ? `<button class="weekly-menu-title-link home-weekly-menu-recipe-link" type="button" data-home-menu-recipe-open="${escapeHtml(recipeId)}" aria-label="Ver receta: ${escapeHtml(item.name || "Comida")}">
-               <strong>${escapeHtml(item.name || "Comida")}</strong><span aria-hidden="true">↗</span>
+               <span class="home-menu-recipe-thumb" aria-hidden="true">${photo}</span>
+               <strong>${escapeHtml(item.name || "Comida")}</strong><span class="home-menu-recipe-open-arrow" aria-hidden="true">↗</span>
              </button>`
           : `<strong>${escapeHtml(item.name || "Comida")}</strong>`;
         // A sourceRow is the exact row in the private canonical Sheet, not a
@@ -5924,6 +5930,13 @@ function bindHomeWeeklyMenuEdits(content, data, model) {
     }));
 }
 function bindHomeWeeklyMenuRecipeLinks(content, data) {
+  // Image errors must not break the recipe link or expose external fallbacks.
+  content.querySelectorAll(".home-menu-recipe-thumb img").forEach((img) => {
+    img.addEventListener("error", () => {
+      const holder = img.closest(".home-menu-recipe-thumb");
+      if (holder) { holder.classList.add("is-missing"); holder.textContent = "▧"; }
+    });
+  });
   content.querySelectorAll("[data-home-menu-recipe-open]").forEach((button) => {
     button.addEventListener("click", () => {
       if (button.disabled) return;

@@ -461,3 +461,8 @@ La UI distingue «Abrir receta», «✓ Consumida» y «Cambiar». Chromium comp
 ### Home · raciones no verificadas (15/10/2026)
 
 Cuando la cantidad de una receta planificada falta, está vacía o no es positiva, el selector de sustitución no debe asumir 1 ración: bloquea la vista previa y el guardado. Los tests del frontend y del Worker deben rechazar el mismo caso. Ninguna prueba de producción escribirá consumos ni recetas reales.
+
+
+### Home · miniaturas de recetas (15/10/2026)
+
+Home usa `photoUrl` de `Recetas` incorporado al mismo `batchGet` del menú ligero, sin introducir nuevos endpoints de escritura ni fuentes paralelas. Para cada `recipe_id` con referencia de foto renderiza un `img` perezoso y `object-fit: contain` de 42×42 dentro del botón para abrir la ficha; si falta foto aparece marcador, no enlace inventado. El auditor verifica paridad de filas con foto y sin foto, más decodificación de una miniatura disponible, exclusivamente en lectura; los logs no contienen fotos, URL de imagen ni identificadores personales.
