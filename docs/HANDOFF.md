@@ -1,3 +1,11 @@
+## ORGANIZADOR 20 — Auditoría #450 y trazado del clic de ingredientes (15/10/2026)
+
+- Producción #549 auditada en Chromium #450: `1255 checks / 5 fallos`; siguen cuatro de apertura/contexto de ingredientes y `MIDAS CHECK-00029`, con código `RECIPE_DETAIL_STILL_OPEN`, incluso tras el cambio de vista inmediato en #508. Las imágenes visuales superaron sus checks.
+- Hipótesis no confirmadas: el evento `click` no llega al controlador o la vista se sustituye después. Antes de modificar de nuevo el flujo funcional, la auditoría read-only registra **exclusivamente** clic capturado (booleano), estado disabled, recuento limitado de mutaciones y si apareció alguna vez una pantalla de carga, ficha de ingrediente o catálogo. Solo se imprime la traza cuando falla, sin receta, usuario, identificador ni URL.
+- PR de diagnóstico `fix/recipe-navigation-observability-20261015`: requiere CI, despliegue y lectura de la siguiente auditoría antes de formular una causa raíz. No toca nutrición, registros ni endpoints.
+
+---
+
 ## ORGANIZADOR 20 — Navegación inmediata del ingrediente (15/10/2026)
 
 - Auditoría #449 sobre #548: 1.255 controles, cinco fallos; cuatro de ingredientes y uno MIDAS. Nuevo diagnóstico anónimo `RECIPE_DETAIL_STILL_OPEN`: tras pulsar el alimento seguía visible el detalle de receta, sin entrar a la ficha. Esto demuestra un problema anterior a la representación de macros; la mera invalidez de caché y preservación de vistas no bastaron.
