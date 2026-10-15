@@ -483,3 +483,8 @@ El menú semanal se presenta como segundo hijo de `daily-overview-grid` tras `#h
 La barra de acciones de Home se mantiene sticky justo bajo la navegación global en escritorio y móvil. La variable CSS `--sc-fixed-navigation-height` usa las alturas de la navegación en escritorio y móvil sin estilos inline, compatible con `style-src 'self'`. En teléfonos se desactiva el botón flotante individual para situarlo en el mismo bloque que Demo y Tema. Chromium verifica geometría después del desplazamiento, con restauración de scroll, sin efectuar escrituras.
 
 Para tres fotografías originales verticales de recetas identificadas por el usuario se prepararon derivados JPEG 480×270 con lienzo horizontal y contenido original completo. La hoja privada `RecipeMedia` almacena los JPEG y la pestaña `Recetas` sus `foto_updated_at` revisados; no se exponen a Git ni se crean recetas duplicadas. El origen Drive permanece inalterado. Validar endpoint, decode y muestra completa mediante la auditoría y el runbook de ingesta.
+
+
+### Salud · Recetario con imágenes primero y filtro por ingrediente (15/10/2026)
+
+Recetas ordena primero las fichas con `photoUrl` canónica y mantiene orden estable en los grupos restantes. El selector arriba permite filtrar por `IngredientesReceta`, disponible en el mismo payload nutricional privado; distingue ingredientes reales de coincidencias textuales en títulos. Filtro local sin solicitudes extra, sin datos reales en Git y con opción «Todos los ingredientes». Chromium read-only comprueba orden de tarjetas con foto, filtra por una opción real, compara recuentos anónimos con los ingredientes de API y restablece el catálogo antes de navegar a detalle.
