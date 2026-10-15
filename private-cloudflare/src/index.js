@@ -13,6 +13,7 @@ import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
+import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
@@ -2922,7 +2923,11 @@ async function fetchWeeklyMenuLight(env, options = {}) {
   const payload = await response.json();
   const valueRanges = payload.valueRanges || [];
 
-  const weeklyMenuRows = parseTableRows(valueRanges[0]?.values || []).map((item) => ({
+  const weeklyMenuRows = (valueRanges[0]?.values || []).slice(1).map((cells, i) => ({
+    ...Object.fromEntries((valueRanges[0]?.values?.[0] || []).map((name,j) => [String(name || "").trim(), cells[j] ?? null])),
+    __sourceRow: i + 2
+  })).map((item) => ({
+    sourceRow: item.__sourceRow,
     weekStart: String(item.semana_inicio || "").trim() || null,
     date: String(item.fecha || "").trim(),
     moment: String(item.momento || "Otro").trim(),
@@ -3145,7 +3150,11 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     updatedAt: item.updated_at || null
   })).filter((item) => item.metric && item.status !== "inactivo");
 
-  const weeklyMenuRows = parseTableRows(valueRanges[7]?.values || []).map((item) => ({
+  const weeklyMenuRows = (valueRanges[7]?.values || []).slice(1).map((cells, i) => ({
+    ...Object.fromEntries((valueRanges[7]?.values?.[0] || []).map((name,j) => [String(name || "").trim(), cells[j] ?? null])),
+    __sourceRow: i + 2
+  })).map((item) => ({
+    sourceRow: item.__sourceRow,
     weekStart: String(item.semana_inicio || "").trim() || null,
     date: String(item.fecha || "").trim(),
     moment: String(item.momento || "Otro").trim(),
@@ -5277,6 +5286,25 @@ export default {
       } catch (error) {
         console.warn("Recipe photo read failed", String(error?.message || error));
         return json({ ok: false, code: "RECIPE_PHOTO_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition/menu/recipes") {
+      if (request.method !== "GET") return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
+      try { return json(await listWeeklyMenuRecipes(env,getGoogleAccessToken)); }
+      catch (error) {
+        return json({ok:false,code:error instanceof MenuEditError ? error.code : "MENU_RECIPES_FAILED"},error instanceof MenuEditError ? error.status : 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition/menu/edit") {
+      if (request.method !== "POST") return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
+      try {
+        const result = await editWeeklyMenu(request,env,getGoogleAccessToken);
+        healthCache = {value:null,expiresAt:0,date:null};
+        return json(result);
+      } catch (error) {
+        return json({ok:false,code:error instanceof MenuEditError ? error.code : "MENU_EDIT_FAILED"},error instanceof MenuEditError ? error.status : 502);
       }
     }
 
