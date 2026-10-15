@@ -47,3 +47,15 @@ test("nutrition refresh preserves active recipe/ingredient navigation without mu
   assert.match(app, /recipeView\?\.querySelector\("\.recipe-detail-card, \[data-ingredient-back\], \[data-ingredient-detail\]"\)/);
   assert.match(app, /panel\.dataset\.ingredientPantryState = "module-error"/);
 });
+
+test("ingredient opens a cancelable loading view before any asynchronous lazy import", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const view = app.indexOf('panel.dataset.ingredientPantryState = "loading";');
+  const lazy = app.indexOf('import("./recipe-products.js?v=0.42.2")');
+  assert.ok(view > 0 && lazy > view);
+  assert.match(app, /data-recipe-ingredient-pending/);
+  assert.match(app, /INGREDIENT_MODULE_TIMEOUT/);
+  assert.match(app, /if \(!pending\?\.isConnected\) return/);
+  assert.match(app, /clearTimeout\(timer\)/);
+  assert.match(app, /data-ingredient-retry/);
+});
