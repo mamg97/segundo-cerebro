@@ -1,3 +1,11 @@
+## ORGANIZADOR 20 — Navegación inmediata del ingrediente (15/10/2026)
+
+- Auditoría #449 sobre #548: 1.255 controles, cinco fallos; cuatro de ingredientes y uno MIDAS. Nuevo diagnóstico anónimo `RECIPE_DETAIL_STILL_OPEN`: tras pulsar el alimento seguía visible el detalle de receta, sin entrar a la ficha. Esto demuestra un problema anterior a la representación de macros; la mera invalidez de caché y preservación de vistas no bastaron.
+- `renderRecipeDetail` ahora cambia inmediatamente a una vista de carga cancelable **antes de importar el módulo**. El import dinámico tiene plazo máximo de 8,5 segundos y, si falla, muestra una ficha mínima con solo nombre y cantidad confirmados, los demás valores pendientes, botón Volver y reintento. Si el usuario vuelve mientras carga, la respuesta tardía no modifica la vista.
+- Auditoría Chromium distingue `module-error` como degradación real, no falso positivo. Versión conjunta CSS/JS `0.44.41`. CI, despliegue y auditoría tras PR obligatorios; no dar por cerrado sin evidencia. Sin cambios de Sheets ni de `Registro`.
+
+---
+
 ## ORGANIZADOR 20 — Vista de ingredientes: prevenir re-render durante fetch y clasificar errores (15/10/2026)
 
 - Auditorías Chromium #446 y #447 siguen en rojo (1.255 controles / 5 fallos): un fallo MIDAS previo y cuatro del itinerario ficha ingrediente. El ajuste del módulo y su versión de caché no bastaron; las imágenes visuales ya no fallaron en esas ejecuciones, pero no hay garantía de ausencia de recurrencia.
