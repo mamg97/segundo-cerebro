@@ -13,6 +13,7 @@ import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows, weeklyMenuConsumptionMatchKey } from "./weekly-menu.js";
+import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
@@ -2910,7 +2911,8 @@ async function fetchWeeklyMenuLight(env, options = {}) {
     : localHealthDateKey();
 
   const token = await getGoogleAccessToken(env);
-  const ranges = ["MenuSemanal!A1:R2000", "Objetivos!A1:H500"];
+  // Photo metadata joins by recipe_id within the existing batchGet; no extra request.
+  const ranges = ["MenuSemanal!A1:R2000", "Objetivos!A1:H500", "Recetas!A1:O1000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -2964,7 +2966,13 @@ async function fetchWeeklyMenuLight(env, options = {}) {
   const mondayOffset = (selectedDate.getDay() + 6) % 7;
   const weekStart = healthAddDays(date, -mondayOffset);
   const weekEnd = healthAddDays(weekStart, 6);
-  const weeklyMenu = prepareWeeklyMenuRows(weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd));
+  const photoUrls = menuRecipePhotoUrls(parseTableRows(valueRanges[2]?.values || []));
+  const weeklyMenu = prepareWeeklyMenuRows(weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd))
+    .map((item) => ({
+      ...item,
+      // Same-origin image route only; never expose raw Drive file identifiers.
+      photoUrl: item.recipeId ? photoUrls.get(String(item.recipeId).trim()) || null : null
+    }));
   const objective = objectives.find((item) => item.effectiveDate <= date) || null;
 
   return {
