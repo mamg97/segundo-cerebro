@@ -81,3 +81,31 @@ test("Home safely shows missing-photo marker without breaking recipe navigation"
   const pantry=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,recipeId:null,foodId:"food-x",photoUrl:null}]);
   assert.doesNotMatch(pantry,/home-menu-recipe-thumb/);
 });
+
+
+test("Home uses a vertical image-first card with a full-width recipe title and macros below",()=>{
+  const result=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,photoUrl:"/api/health/recipes/rec-a/image?v=v1"}]);
+  const image=result.indexOf('class="home-menu-recipe-thumb"');
+  const name=result.indexOf('class="home-menu-recipe-title"');
+  const macros=result.indexOf('class="weekly-menu-group-item-macros"');
+  const actions=result.indexOf('class="home-menu-item-actions"');
+  assert.ok(image>=0 && image<name && name<macros && macros<actions);
+  assert.match(result,/width="156" height="88"/);
+  assert.match(css,/\.home-weekly-menu-table-cell \.home-weekly-menu-recipe-link\s*\{\s*display: flex;\s*flex-direction: column;/);
+  assert.match(css,/\.home-weekly-menu-table-cell \.weekly-menu-group-item\s*\{\s*grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(css,/\.home-weekly-menu-table-cell \.home-menu-recipe-title strong[\s\S]*?overflow-wrap: break-word;/);
+});
+
+test("Weekly menu is the second full-width Home card below nutrition overview",()=>{
+  const html=readFileSync(new URL("./index.html",import.meta.url),"utf8");
+  const health=html.indexOf('id="home-health-card"');
+  const menu=html.indexOf('id="home-weekly-menu-panel"');
+  const pantry=html.indexOf('id="home-pantry-card"');
+  const finance=html.indexOf('class="money-horizon"');
+  assert.ok(health>0 && health<menu && menu<pantry && pantry<finance);
+  const summaryOpen=html.indexOf('<section class="daily-overview-grid"');
+  const summaryClose=html.indexOf("</section>",summaryOpen);
+  assert.ok(summaryOpen<menu && menu<summaryClose,"menu is within summary grid");
+  assert.match(css,/\.daily-overview-grid > #home-weekly-menu-panel\s*\{\s*grid-column: 1 \/ -1;/);
+  assert.match(html,/id="home-weekly-menu-panel"[^>]*\bhidden>/);
+});

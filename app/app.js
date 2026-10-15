@@ -5677,12 +5677,12 @@ function renderHomeWeeklyMenuMatrixCell(items) {
         // Only same-origin authenticated recipe photos can appear in Home.
         const photoUrl = String(item.photoUrl || "");
         const photo = /^\/api\/health\/recipes\/[^?#]+\/image\?v=/.test(photoUrl)
-          ? `<img src="${escapeHtml(photoUrl)}" width="42" height="42" alt="" loading="lazy" decoding="async">`
+          ? `<img src="${escapeHtml(photoUrl)}" width="156" height="88" alt="" loading="lazy" decoding="async">`
           : '<span class="home-menu-recipe-thumb-missing" aria-hidden="true">▧</span>';
         const title = recipeId
           ? `<button class="weekly-menu-title-link home-weekly-menu-recipe-link" type="button" data-home-menu-recipe-open="${escapeHtml(recipeId)}" aria-label="Ver receta: ${escapeHtml(item.name || "Comida")}">
                <span class="home-menu-recipe-thumb" aria-hidden="true">${photo}</span>
-               <strong>${escapeHtml(item.name || "Comida")}</strong><span class="home-menu-recipe-open-arrow" aria-hidden="true">↗</span>
+               <span class="home-menu-recipe-title"><strong>${escapeHtml(item.name || "Comida")}</strong><span class="home-menu-recipe-open-arrow" aria-hidden="true">↗</span></span>
              </button>`
           : `<strong>${escapeHtml(item.name || "Comida")}</strong>`;
         // A sourceRow is the exact row in the private canonical Sheet, not a

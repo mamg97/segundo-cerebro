@@ -9,9 +9,9 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.44.34">
+    <link rel="stylesheet" href="./styles.css?v=0.44.35">
     <link rel="stylesheet" href="./vision.css?v=0.44.0">
-    <script type="module" src="./app.js?v=0.44.34"></script>
+    <script type="module" src="./app.js?v=0.44.35"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -137,6 +137,18 @@
               <button id="home-health-menu" type="button">Menú</button>
             </nav>
           </article>
+
+          <section id="home-weekly-menu-panel" class="home-weekly-menu-panel" aria-labelledby="home-weekly-menu-title" hidden>
+            <div class="section-heading">
+              <div>
+                <p class="context-label">Nutrición · plan semanal</p>
+                <h2 id="home-weekly-menu-title">Menú de la semana</h2>
+                <p class="home-weekly-menu-subtitle">Plan previsto y consumo confirmado.</p>
+              </div>
+              <button id="show-home-weekly-menu" class="text-action" type="button">Ver menú completo</button>
+            </div>
+            <div id="home-weekly-menu-content"></div>
+          </section>
 
           <article id="home-pantry-card" class="daily-overview-card pantry-home-card home-summary-card" hidden>
             <button id="home-pantry-open" class="pantry-home-primary" type="button" aria-label="Abrir Despensa">
@@ -287,17 +299,7 @@
           </article>
         </section>
 
-        <section id="home-weekly-menu-panel" class="home-weekly-menu-panel" aria-labelledby="home-weekly-menu-title" hidden>
-          <div class="section-heading">
-            <div>
-              <p class="context-label">Nutrición · plan semanal</p>
-              <h2 id="home-weekly-menu-title">Menú de la semana</h2>
-              <p class="home-weekly-menu-subtitle">Plan previsto y consumo confirmado.</p>
-            </div>
-            <button id="show-home-weekly-menu" class="text-action" type="button">Ver menú completo</button>
-          </div>
-          <div id="home-weekly-menu-content"></div>
-        </section>
+
 
         <footer>
           <p>Segundo Cerebro</p>
