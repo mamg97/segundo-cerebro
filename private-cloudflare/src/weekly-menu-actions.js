@@ -75,14 +75,17 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
   const headers = (values?.[0] || []).map(x => String(x || "").trim());
   const required = payload.action === "replace" ? [...FIELDS, ...NUTRI_FIELDS, "cantidad", "unidad"] : FIELDS;
   if (!required.every(k => headers.includes(k))) throw new MenuEditError("MENU_SCHEMA_UNSUPPORTED", 409);
-  if (!DATE_RE.test(payload.date || "") || !SAFE_ID_RE.test(payload.recipeId || "") ||
+  const byRecipe = Boolean(payload.recipeId) && SAFE_ID_RE.test(payload.recipeId);
+  const byFood = Boolean(payload.foodId) && SAFE_ID_RE.test(payload.foodId);
+  if (!DATE_RE.test(payload.date || "") || byRecipe === byFood ||
       !Number.isSafeInteger(payload.sourceRow) || payload.sourceRow < 2 ||
       payload.sourceRow > 2000 || !["consume", "replace"].includes(payload.action))
     throw new MenuEditError("INVALID_MENU_EDIT");
   const all = table(values);
   const original = all.find(row => row.sourceRow === payload.sourceRow);
   if (!original || String(original.data.fecha || "").trim() !== payload.date ||
-      String(original.data.recipe_id || "").trim() !== payload.recipeId ||
+      String(original.data.recipe_id || "").trim() !== String(payload.recipeId || "") ||
+      String(original.data.food_id || "").trim() !== String(payload.foodId || "") ||
       String(original.data.updated_at || "") !== String(payload.updatedAt || "") ||
       String(original.data.nombre || "").trim() !== String(payload.name || "").trim() ||
       String(original.data.momento || "").trim() !== String(payload.moment || "").trim())
@@ -93,9 +96,13 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
   const currentStatus = normalize(original.data.estado);
   if (currentStatus !== "planificado" && currentStatus !== "pendiente")
     throw new MenuEditError("MENU_EDIT_NOT_PLANNED", 409);
-  if (original.data.food_id || !original.data.recipe_id ||
-    (original.data.tipo_item && normalize(original.data.tipo_item) !== "receta"))
-    throw new MenuEditError("MENU_EDIT_NOT_RECIPE",409);
+  // A planned food or companion is a canonical menu row too. Do not confuse
+  // quantities in grams with the number of servings in the new recipe.
+  const originalIsFood = Boolean(original.data.food_id) && !original.data.recipe_id;
+  const originalIsRecipe = Boolean(original.data.recipe_id) && !original.data.food_id;
+  if (!originalIsFood && !originalIsRecipe ||
+      (original.data.tipo_item && !["receta","acompanante"].includes(normalize(original.data.tipo_item))))
+    throw new MenuEditError("MENU_EDIT_NOT_SUPPORTED_ITEM",409);
   const updates = [];
   function put(row, column, value) {
     const idx = headers.indexOf(column);
@@ -108,11 +115,18 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
     put(original,"estado","consumido");
     put(original,"updated_at",now);
   } else {
-    if (!SAFE_ID_RE.test(payload.newRecipeId || "") || payload.newRecipeId === payload.recipeId)
+    if (!SAFE_ID_RE.test(payload.newRecipeId || "") ||
+        (originalIsRecipe && payload.newRecipeId === payload.recipeId))
       throw new MenuEditError("INVALID_RECIPE_SELECTION");
     const candidate = recipes.find(x => x.id === payload.newRecipeId);
     if (!candidate) throw new MenuEditError("RECIPE_NOT_FOUND",404);
-    const macros = previewMenuRecipe(original.data,candidate);
+    // Replacing a food requires a *user-selected* serving count. Never convert
+    // 100 g of fruit into 100 raciones of the target recipe.
+    const newServings = originalIsFood ? numberOrNull(payload.newServings) : null;
+    if (originalIsFood && (newServings === null || newServings <= 0 || newServings > 20))
+      throw new MenuEditError("RECIPE_SERVINGS_REQUIRED",409);
+    const macros = previewMenuRecipe(
+      originalIsFood ? {cantidad:newServings,unidad:"ración"} : original.data, candidate);
     if (!macros.supported) throw new MenuEditError("RECIPE_MACROS_OR_PORTION_PENDING",409);
     const conflict = all.find(row => row.sourceRow !== original.sourceRow &&
       String(row.data.fecha) === payload.date &&
@@ -128,6 +142,17 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       put(row,"estado","retirado"); put(row,"updated_at",now);
     }
     put(original,"recipe_id", candidate.id);
+    if (originalIsFood) {
+      // Convert one source row to one recipe, keeping date/moment and row
+      // identity, with no duplicate plan and no accidental pantry reference.
+      if (!["food_id","cantidad","unidad","tipo_item"].every(k => headers.includes(k)))
+        throw new MenuEditError("MENU_SCHEMA_UNSUPPORTED",409);
+      put(original,"food_id","");
+      put(original,"cantidad",newServings);
+      put(original,"unidad","ración");
+      put(original,"tipo_item","receta");
+      if (headers.includes("tipo_acompanante")) put(original,"tipo_acompanante","");
+    }
     put(original,"nombre", candidate.name);
     put(original,"kcal",macros.kcal);
     put(original,"proteinas_g",macros.protein);

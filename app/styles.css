@@ -27691,3 +27691,37 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .recipes-filter-select { width: 100%; max-width: none; flex: none; }
   .recipes-filter-count { margin-left: 0; }
 }
+
+
+/* Planned Pantry companions: explicit portion selection before replacing a
+   food row with a recipe; never imply that grams are recipe servings. */
+.home-menu-editor-food-hint {
+  margin: 8px 0;
+  padding: 9px 12px;
+  border-left: 3px solid var(--blue);
+  border-radius: 6px;
+  background: var(--blue-soft);
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.home-menu-editor-servings {
+  display: grid;
+  align-items: start;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.home-menu-editor-servings input {
+  width: min(100%, 190px);
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.home-menu-editor-servings input:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
