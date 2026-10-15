@@ -1992,6 +1992,36 @@ try {
     assertCheck(daysCompared > 0 && progressMismatches === 0,
       "Home · avance de barra usa consumo / plan (no objetivo)",
       `dias=${daysCompared} discrepancias=${progressMismatches}`);
+
+    // Home editor audit is READ ONLY: inspect canonical action affordances and
+    // open/close the selector. Never click save or consume in production tests.
+    const plannedRecipes = [...sourceByDate.values()].flat().filter(item =>
+      item?.recipeId && Number.isInteger(item.sourceRow) && item.sourceRow > 1 &&
+      (item.status === "planificado" || item.status === "pendiente") &&
+      (!item.itemRole || String(item.itemRole).toLowerCase() === "receta") && !item.foodId);
+    const availableActionRows = await page.locator("#home-weekly-menu-content [data-home-menu-consume]").count();
+    assertCheck(availableActionRows === plannedRecipes.length,
+      "Home · una confirmación de consumo por cada receta planificada",
+      `previstas=${plannedRecipes.length} acciones=${availableActionRows}`);
+    assertCheck(await page.locator("#home-weekly-menu-content [data-home-menu-change]").count() === plannedRecipes.length,
+      "Home · cada receta planificada ofrece selector de alternativas");
+    if (plannedRecipes.length > 0) {
+      const change = page.locator("#home-weekly-menu-content [data-home-menu-change]").first();
+      await change.click();
+      const editor = page.locator("#home-menu-edit-dialog");
+      await editor.waitFor({state:"visible",timeout:12000});
+      const search = editor.locator("[data-menu-editor-search]");
+      const select = editor.locator("[data-menu-editor-select]");
+      await select.locator("option").first().waitFor({timeout:12000});
+      assertCheck(await search.isVisible() && await select.isVisible() &&
+        await editor.locator("[data-menu-editor-preview]").isVisible(),
+        "Home · editor de recetas abre búsqueda y previsualización sin abandonar Home");
+      assertCheck(await editor.locator("[data-menu-editor-save]").isDisabled(),
+        "Home · no permite guardar antes de seleccionar alternativa");
+      await editor.locator("[data-menu-editor-cancel]").first().click();
+      assertCheck(!(await editor.isVisible()),"Home · editor se cierra sin modificar datos");
+    }
+
   }
 
   assertCheck(await page.locator("#ask-form").count() === 0, "Home · barra de consulta rápida retirada");
