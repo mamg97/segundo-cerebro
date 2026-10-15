@@ -6202,20 +6202,48 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
   panel.querySelector("[data-recipes-back]")?.addEventListener("click", onBack);
   panel.querySelectorAll("[data-recipe-ingredient]").forEach((button) => {
     button.addEventListener("click", async () => {
-      button.disabled = true;
+      const index = Number(button.dataset.recipeIngredient);
+      const ingredient = ingredients[index];
+      if (!ingredient) return;
+      const restore = () => {
+        renderRecipeDetail(panel, data, recipe, options);
+        panel.querySelector(`[data-recipe-ingredient="${index}"]`)?.focus({ preventScroll: true });
+      };
+      // Switch synchronously before the lazy module resolves. This prevents
+      // the old recipe screen remaining visible during an indefinitely slow
+      // import, and makes Back safe even if the user cancels while loading.
+      panel.dataset.ingredientPantryState = "loading";
+      panel.innerHTML = '<button type="button" class="recipe-back" data-ingredient-back>← Volver a la receta</button>' +
+        '<p class="recipe-pending" role="status" data-recipe-ingredient-pending>Cargando ficha del alimento…</p>';
+      panel.querySelector("[data-ingredient-back]")?.addEventListener("click", restore);
+      const pending = panel.querySelector("[data-recipe-ingredient-pending]");
+      let timer = null;
       try {
-        const { openRecipeIngredient } = await import("./recipe-products.js?v=0.42.2");
-        if (!button.isConnected) return;
-        await openRecipeIngredient(panel, ingredients[Number(button.dataset.recipeIngredient)], recipe, () => {
-          renderRecipeDetail(panel, data, recipe, options);
-          panel.querySelector(`[data-recipe-ingredient="${button.dataset.recipeIngredient}"]`)?.focus({ preventScroll: true });
-        });
+        const module = await Promise.race([
+          import("./recipe-products.js?v=0.42.2"),
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error("INGREDIENT_MODULE_TIMEOUT")), 8500);
+          })
+        ]);
+        if (!pending?.isConnected) return;
+        await module.openRecipeIngredient(panel, ingredient, recipe, restore);
       } catch {
-        if (button.isConnected) {
-          panel.dataset.ingredientPantryState = "module-error";
-          button.disabled = false;
-          button.textContent = "No se pudo abrir. Pulsa para reintentar";
-        }
+        if (!pending?.isConnected) return;
+        panel.dataset.ingredientPantryState = "module-error";
+        panel.innerHTML = `<button type="button" class="recipe-back" data-ingredient-back>← Volver a la receta</button>
+          <section class="recipe-ingredient-context" data-ingredient-detail="true">
+            <h4>${escapeHtml(ingredient.name || "Ingrediente")}</h4>
+            <p>Cantidad registrada: <strong>${escapeHtml(formatRecipeAmount(ingredient) || "Pendiente")}</strong></p>
+            <p>Ficha de producto temporalmente no disponible. Los datos nutricionales por 100 g y el precio quedan pendientes.</p>
+            <button type="button" data-ingredient-retry>Reintentar carga</button>
+          </section>`;
+        panel.querySelector("[data-ingredient-back]")?.addEventListener("click", restore);
+        panel.querySelector("[data-ingredient-retry]")?.addEventListener("click", () => {
+          restore();
+          panel.querySelector(`[data-recipe-ingredient="${index}"]`)?.click();
+        });
+      } finally {
+        if (timer !== null) clearTimeout(timer);
       }
     });
   });
