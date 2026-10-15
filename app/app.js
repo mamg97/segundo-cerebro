@@ -1,6 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { mockState } from "../core/mock-state.js";
+import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.44.32";
@@ -6207,6 +6208,11 @@ function renderRecipesPanel(data) {
   if (!panel) return;
 
   const recipes = Array.isArray(data?.recipes) ? data.recipes : [];
+  const ingredients = recipeIngredientChoices(recipes);
+  const previous = String(panel.dataset.recipeIngredient || "");
+  const selectedIngredient = ingredients.some(ingredient => ingredient.key === previous) ? previous : "";
+  panel.dataset.recipeIngredient = selectedIngredient;
+  const sortedRecipes = recipeCatalogItems(recipes, selectedIngredient);
   panel.innerHTML = `
     <div class="recipes-toolbar">
       <div>
@@ -6218,24 +6224,40 @@ function renderRecipesPanel(data) {
     </div>
 
     ${recipes.length ? `
-      <div class="recipes-grid">
-        ${recipes.map((recipe) => `
-          <button
-            class="recipe-card recipe-catalog-card"
-            type="button"
-            data-recipe-open="${escapeHtml(recipe.id || "")}"
-            aria-label="Abrir receta ${escapeHtml(recipe.name || "Receta")}"
-          >
-            <span class="recipe-photo recipe-catalog-photo">
-              ${recipePhotoMarkup(recipe)}
-            </span>
-            <strong>${escapeHtml(recipe.name || "Receta")}</strong>
-          </button>
-        `).join("")}
-      </div>`
+      <div class="recipes-filter-controls">
+        <label for="recipe-ingredient-select">Filtrar recetas por ingrediente</label>
+        <select id="recipe-ingredient-select" class="recipes-filter-select" data-recipe-ingredient-select>
+          <option value="">Todos los ingredientes</option>
+          ${ingredients.map((ingredient) => `<option value="${escapeHtml(ingredient.key)}" ${ingredient.key === selectedIngredient ? "selected" : ""}>${escapeHtml(ingredient.label)} (${ingredient.count})</option>`).join("")}
+        </select>
+        <span class="recipes-filter-count" aria-live="polite">${sortedRecipes.length} ${sortedRecipes.length === 1 ? "receta" : "recetas"}</span>
+      </div>
+      ${sortedRecipes.length ? `
+        <div class="recipes-grid">
+          ${sortedRecipes.map((recipe) => `
+            <button
+              class="recipe-card recipe-catalog-card"
+              type="button"
+              data-recipe-open="${escapeHtml(recipe.id || "")}"
+              aria-label="Abrir receta ${escapeHtml(recipe.name || "Receta")}"
+            >
+              <span class="recipe-photo recipe-catalog-photo">
+                ${recipePhotoMarkup(recipe)}
+              </span>
+              <strong>${escapeHtml(recipe.name || "Receta")}</strong>
+            </button>
+          `).join("")}
+        </div>`
+        : '<div class="health-empty health-empty-card"><strong>Sin coincidencias</strong><p>Prueba con otro ingrediente o selecciona «Todos los ingredientes».</p></div>'}
+    `
       : '<div class="health-empty health-empty-card"><strong>Recetario preparado</strong><p>Cuando se añada la primera receta a la fuente privada, aparecerá aquí automáticamente.</p></div>'}
   `;
 
+  panel.querySelector("[data-recipe-ingredient-select]")?.addEventListener("change", (event) => {
+    panel.dataset.recipeIngredient = String(event.currentTarget.value || "");
+    renderRecipesPanel(data);
+    panel.querySelector("[data-recipe-ingredient-select]")?.focus({preventScroll: true});
+  });
   panel.querySelectorAll("[data-recipe-open]").forEach((button) => {
     button.addEventListener("click", () => {
       const recipe = recipes.find((candidate) => String(candidate.id || "") === String(button.dataset.recipeOpen || ""));

@@ -1,3 +1,12 @@
+## ORGANIZADOR 19 — Recetas: fotos primero y selector de ingrediente (15/10/2026)
+
+- Salud → Nutrición → Recetas: ordenar fotos existentes primero, conservando el orden de origen dentro de los grupos con/sin imagen.
+- Selector nativo y accesible encima del catálogo: opciones derivadas únicamente de los `ingredients[].name` recibidos del maestro `IngredientesReceta` en la API privada ya existente, sin nueva consulta, polling ni tablas. Agrupa variantes de mayúsculas/acentos para evitar duplicados y muestra cuántas recetas tienen cada ingrediente; elegir uno filtra por ingrediente real, no por parecido con el título de receta. La opción «Todos los ingredientes» restaura el catálogo completo.
+- El filtro se conserva al entrar a una ficha y regresar, y se limpia si desaparece del catálogo en una carga posterior. Compatible con pantallas móviles, cambio de tema, CSP y demo; tests Node cubren orden estable, filtrado estricto y normalización. Auditoría de Chromium, solo lectura, valida el orden y selecciona/restaura un ingrediente auténtico sin registrar su nombre. Sin cambios de fotos, macros, ingredientes o datos privados.
+- Cierre condicionado a CI, despliegue Cloudflare y auditoría postdeploy. Fallo MIDAS CHECK-00029 conocido y ajeno.
+
+---
+
 ## ORGANIZADOR 19 — Botones de Home fijos y fotos privadas completas (15/10/2026)
 
 - El bloque superior `topbar` pasa a `position: sticky` inmediatamente bajo la barra de navegación principal. El desplazamiento se fija **solo mediante CSS** (55px escritorio, 83px móvil), sin estilos inline ni JavaScript, en cumplimiento de la CSP. En móvil el antiguo botón flotante independiente se desactiva; Actualizar permanece junto a Demo y Tema, sin solaparse con el menú fijo.

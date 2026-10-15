@@ -56,3 +56,14 @@ test("production audit validates catalog density, image loading and detail navig
   assert.match(audit, /Salud · Recetas abre ficha completa/);
   assert.match(audit, /Salud · Recetas vuelve al catálogo completo/);
 });
+
+
+test("recetario filtra por ingrediente y mantiene las fotos primero",()=>{
+  assert.match(app,/recipeCatalogItems\(recipes, selectedIngredient\)/);
+  assert.match(app,/recipeIngredientChoices\(recipes\)/);
+  assert.match(app,/data-recipe-ingredient-select/);
+  assert.match(css,/\.recipes-filter-controls/);
+  assert.match(audit,/Salud · Recetas ordena primero las que tienen imagen/);
+  assert.match(audit,/Salud · Recetas selector de ingredientes filtra por filas canónicas/);
+  assert.match(audit,/Salud · Recetas restaura filtro Todos/);
+});

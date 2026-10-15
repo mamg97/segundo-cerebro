@@ -3066,6 +3066,39 @@ try {
           );
         }
 
+        // Compare only counts and photo presence; never log private recipe names.
+        const photoOrder = await panel.locator("[data-recipe-open]").evaluateAll(nodes => {
+          const photos = nodes.map(node => Boolean(node.querySelector(".recipe-catalog-photo img")));
+          const firstMissing = photos.indexOf(false);
+          return {
+            valid: firstMissing < 0 || photos.slice(firstMissing).every(present => !present),
+            photoCount: photos.filter(Boolean).length
+          };
+        });
+        assertCheck(photoOrder.valid && photoOrder.photoCount === recipesWithPhotos.length,
+          "Salud · Recetas ordena primero las que tienen imagen");
+        const picker = panel.locator("[data-recipe-ingredient-select]");
+        const hasPicker = await picker.count() === (expectedRecipeCount ? 1 : 0);
+        assertCheck(hasPicker, "Salud · Recetas muestra selector de ingredientes del Sheet");
+        if (hasPicker && await picker.locator("option").count() > 1) {
+          const ingredientKey = await picker.locator("option").nth(1).getAttribute("value");
+          const expectedMatches = (healthNutritionSnapshot.recipes || []).filter(recipe =>
+            (recipe.ingredients || []).some(item =>
+              String(item.name || "").trim().replace(/\s+/g, " ")
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .toLocaleLowerCase("es") === ingredientKey
+            )
+          ).length;
+          await picker.selectOption(ingredientKey);
+          const actualMatches = await panel.locator("[data-recipe-open]").count();
+          assertCheck(actualMatches > 0 && actualMatches === expectedMatches,
+            "Salud · Recetas selector de ingredientes filtra por filas canónicas",
+            "UI=" + actualMatches + " API=" + expectedMatches);
+          await panel.locator("[data-recipe-ingredient-select]").selectOption("");
+          assertCheck(await panel.locator("[data-recipe-open]").count() === expectedRecipeCount,
+            "Salud · Recetas restaura filtro Todos");
+        }
+
         const catalogCards = panel.locator("[data-recipe-open]");
         const catalogCount = await catalogCards.count();
         assertCheck(
