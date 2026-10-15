@@ -493,3 +493,10 @@ Recetas ordena primero las fichas con `photoUrl` canónica y mantiene orden esta
 ### Home · Cambiar alimentos planificados, no solo recetas (15/10/2026)
 
 El editor de Home permite editar cualquier elemento canónico planificado con `recipeId` o `foodId`, incluyendo acompañantes y alimentos de media mañana o merienda. Un `foodId` se puede sustituir por una receta verificable indicando las raciones de la nueva receta; los gramos del alimento antiguo nunca se interpretan como raciones. El backend comprueba fila, fecha, momento, ID, estado, `updated_at`, colisiones y macros; convierte la fila a `recipe_id`, limpia `food_id`, guarda porciones explícitas y no modifica `Registro`. La auditoría cuenta acciones para recetas y acompañantes y prueba abrir/cerrar un selector de alimento sin guardar. Los consumos ya registrados permanecen fuera del editor de planes.
+
+
+### Salud · Ingredientes de receta: degradación auditable sin inventar datos (15/10/2026)
+
+Las fichas de ingrediente conservan cantidad y contexto de la receta si falla Despensa; no muestran macros por 100 g ni precio inventados. Las consultas existentes a `/api/pantry` y al detalle comercial cuentan con plazo máximo y no añaden llamadas periódicas. Si falla solo el detalle, muestran los datos base canónicos disponibles y un aviso. Si falla la fuente de Despensa, el usuario ve un aviso y un botón de reintento, sin necesidad de modificar consumos. El estado de la ficha se etiqueta `ready | partial | fallback` para la auditoría de solo lectura, que sigue fallando si Despensa es inaccesible y únicamente emite códigos diagnósticos anónimos.
+
+Auditoría #445 (15/10): 1.248 checks, 11 fallos: MIDAS #00029; cuatro checks consecutivos de ficha de ingrediente; seis checks visuales por imágenes. **No es una auditoría verde**. CI y auditoría tras la corrección son condiciones de cierre.

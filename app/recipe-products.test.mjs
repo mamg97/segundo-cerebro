@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveIngredientProduct } from "./recipe-products.js";
+import { resolveIngredientProduct, unresolvedIngredientProduct } from "./recipe-products.js";
+import {readFileSync} from "node:fs";
 import { renderProductDetail } from "./pantry.js";
 
 test("ingredient identity uses a stable ID and never fuzzy-matches a different product", () => {
@@ -26,4 +27,17 @@ test("product card preserves ingredient context, unknown values, dates and a saf
   assert.doesNotMatch(container.innerHTML, /href="javascript:|<script>/);
   assert.match(container.innerHTML, /Imagen pendiente/);
   assert.match(container.innerHTML, /Enlace comercial pendiente/);
+});
+
+test("Pantry outage fallback never invents a commercial match, price or nutrition facts", () => {
+  const item = unresolvedIngredientProduct({
+    name: "Example fruit", note: "Synthetic example", kcal: 250, protein: 20
+  });
+  assert.deepEqual(item, {name: "Example fruit", notes: "Synthetic example", nutrition: {}});
+  const src = readFileSync(new URL("./recipe-products.js", import.meta.url), "utf8");
+  assert.match(src, /new AbortController\(\)/);
+  assert.match(src, /REQUEST_TIMEOUT_MS = 9000/);
+  assert.match(src, /ingredientPantryState = "fallback"/);
+  assert.match(src, /if \(!loading\.isConnected\) return/);
+  assert.match(src, /Ficha comercial detallada temporalmente no disponible/);
 });
