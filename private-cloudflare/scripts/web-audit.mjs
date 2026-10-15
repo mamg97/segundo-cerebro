@@ -3075,7 +3075,9 @@ try {
             photoCount: photos.filter(Boolean).length
           };
         });
-        assertCheck(photoOrder.valid && photoOrder.photoCount === recipesWithPhotos.length,
+        const photoOrderValid = photoOrder.valid && photoOrder.photoCount === recipesWithPhotos.length;
+        if (!photoOrderValid) console.error("[RECIPE_CATALOG_DIAG] PHOTO_ORDER_MISMATCH");
+        assertCheck(photoOrderValid,
           "Salud · Recetas ordena primero las que tienen imagen");
         const picker = panel.locator("[data-recipe-ingredient-select]");
         const hasPicker = await picker.count() === (expectedRecipeCount ? 1 : 0);
@@ -3091,6 +3093,9 @@ try {
           ).length;
           await picker.selectOption(ingredientKey);
           const actualMatches = await panel.locator("[data-recipe-open]").count();
+          if (!(actualMatches > 0 && actualMatches === expectedMatches)) {
+            console.error("[RECIPE_CATALOG_DIAG] FILTER_COUNT_MISMATCH");
+          }
           assertCheck(actualMatches > 0 && actualMatches === expectedMatches,
             "Salud · Recetas selector de ingredientes filtra por filas canónicas",
             "UI=" + actualMatches + " API=" + expectedMatches);
@@ -3108,7 +3113,15 @@ try {
         );
 
         if (catalogCount > 0) {
-          await catalogCards.first().click();
+          // Photo-first UI ordering differs from the source row order. Product
+          // drill-down regression tests must use the same canonical recipe as
+          // before sorting, rather than relying on the first visible card.
+          const firstCanonicalRecipe = healthNutritionSnapshot?.recipes?.[0]?.id;
+          const canonicalIndex = await catalogCards.evaluateAll((nodes, id) =>
+            nodes.findIndex(node => node.getAttribute("data-recipe-open") === String(id || "")),
+            firstCanonicalRecipe);
+          assertCheck(canonicalIndex >= 0, "Salud · Recetas conserva la primera identidad canónica");
+          await catalogCards.nth(Math.max(0, canonicalIndex)).click();
           await page.waitForTimeout(120);
           const detailVisible = await panel.locator(".recipe-detail-card").isVisible().catch(() => false);
           assertCheck(detailVisible, "Salud · Recetas abre ficha completa");

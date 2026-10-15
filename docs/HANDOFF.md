@@ -1,3 +1,10 @@
+## ORGANIZADOR 19 — Auditoría de Recetas: no asumir primera tarjeta igual a primera fila (15/10/2026)
+
+- PR #501 publicó orden por foto y filtro canónico. La auditoría #441 y la programada #442 reproducen 4 fallos en la navegación/carga de ficha de ingrediente, además de MIDAS CHECK-00029. El test de apertura de detalle heredado hacía `catalogCards.first().click()`, supuesto obsoleto ahora que las imágenes aparecen primero: debe resolver `recipes[0].id` desde la API y buscar esa misma tarjeta después del orden visual. Verificar además el orden foto y filtro por separado.
+- Se corrige la auditoría read-only para abrir la identidad canónica original (sin hardcodear IDs), y se añaden códigos limitados de diagnóstico de foto/filtro sin nombres ni referencias privadas. No se altera ningún dato ni interfaz de producción. CI y nueva auditoría deberán demostrar reducción a incidencias preexistentes.
+
+---
+
 ## ORGANIZADOR 19 — Recetas: fotos primero y selector de ingrediente (15/10/2026)
 
 - Salud → Nutrición → Recetas: ordenar fotos existentes primero, conservando el orden de origen dentro de los grupos con/sin imagen.
