@@ -71,3 +71,10 @@ test("recipe ingredient handling is delegated to a stable panel with cancellable
   assert.match(app, /ingredientPantryState = "invalid-reference"/);
   assert.doesNotMatch(app, /panel\.querySelectorAll\("\[data-recipe-ingredient\]"\)\.forEach/);
 });
+
+test("production audit selects buttons inside real recipe ingredient rows", () => {
+  const audit = readFileSync(new URL("../private-cloudflare/scripts/web-audit.mjs", import.meta.url), "utf8");
+  assert.match(audit, /\.recipe-detail-card \.recipe-ingredients li \[data-recipe-ingredient\]/);
+  assert.match(audit, /OUTSIDE_RECIPE_ROWS/);
+  assert.match(audit, /INVALID_INGREDIENT_INDEX/);
+});
