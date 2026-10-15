@@ -488,3 +488,8 @@ Para tres fotografías originales verticales de recetas identificadas por el usu
 ### Salud · Recetario con imágenes primero y filtro por ingrediente (15/10/2026)
 
 Recetas ordena primero las fichas con `photoUrl` canónica y mantiene orden estable en los grupos restantes. El selector arriba permite filtrar por `IngredientesReceta`, disponible en el mismo payload nutricional privado; distingue ingredientes reales de coincidencias textuales en títulos. Filtro local sin solicitudes extra, sin datos reales en Git y con opción «Todos los ingredientes». Chromium read-only comprueba orden de tarjetas con foto, filtra por una opción real, compara recuentos anónimos con los ingredientes de API y restablece el catálogo antes de navegar a detalle.
+
+
+### Home · Cambiar alimentos planificados, no solo recetas (15/10/2026)
+
+El editor de Home permite editar cualquier elemento canónico planificado con `recipeId` o `foodId`, incluyendo acompañantes y alimentos de media mañana o merienda. Un `foodId` se puede sustituir por una receta verificable indicando las raciones de la nueva receta; los gramos del alimento antiguo nunca se interpretan como raciones. El backend comprueba fila, fecha, momento, ID, estado, `updated_at`, colisiones y macros; convierte la fila a `recipe_id`, limpia `food_id`, guarda porciones explícitas y no modifica `Registro`. La auditoría cuenta acciones para recetas y acompañantes y prueba abrir/cerrar un selector de alimento sin guardar. Los consumos ya registrados permanecen fuera del editor de planes.

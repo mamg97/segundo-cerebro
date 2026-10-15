@@ -1,3 +1,12 @@
+## ORGANIZADOR 19 — Home · Cambiar alimentos planificados de media mañana y merienda (15/10/2026)
+
+- Diagnóstico confirmado en `MenuSemanal`: varios alimentos de media mañana/merienda son filas `food_id` con `tipo_item=acompanante` y estado `planificado`; el botón «Cambiar» y el backend antiguo exigían `recipe_id` y `tipo_item=receta`. También ocultaban la edición de recetas acompañantes. No depende del momento.
+- Se habilitan «Consumida» y «Cambiar» para cualquier fila canónica planificada/pendiente de tipo receta o acompañante que tenga un único `recipe_id` o `food_id`, conservando fecha, momento, identidad de fila y control de obsolescencia. El selector permite sustituir un alimento individual por una receta con raciones **explícitas**, nunca convertir automáticamente gramos/unidades del producto a raciones; recalcula cuatro macros antes de guardar, transforma la fila a `recipe_id` sin duplicar plan y retira duplicados históricos. La alternativa del editor sigue siendo una receta del maestro `Recetas` (no se afirma que sustituya alimento por otro producto).
+- Consumos ya confirmados siguen bloqueados a la mutación del plan: corregir lo comido requiere conciliación independiente con `Registro`, no sobrescribir el histórico. Tests de IDs, cantidad explícita, caso consumido, duplicados, colisiones y macros; auditoría Chromium es exclusivamente read-only.
+- Mantener coste cero, privacidad y resultados anteriores del catálogo Recetas. Validar CI/despliegue/auditoría posterior.
+
+---
+
 ## ORGANIZADOR 19 — Auditoría de Recetas: no asumir primera tarjeta igual a primera fila (15/10/2026)
 
 - PR #501 publicó orden por foto y filtro canónico. La auditoría #441 y la programada #442 reproducen 4 fallos en la navegación/carga de ficha de ingrediente, además de MIDAS CHECK-00029. El test de apertura de detalle heredado hacía `catalogCards.first().click()`, supuesto obsoleto ahora que las imágenes aparecen primero: debe resolver `recipes[0].id` desde la API y buscar esa misma tarjeta después del orden visual. Verificar además el orden foto y filtro por separado.

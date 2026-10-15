@@ -2085,17 +2085,19 @@ try {
 
     // Home editor audit is READ ONLY: inspect canonical action affordances and
     // open/close the selector. Never click save or consume in production tests.
-    const plannedRecipes = [...sourceByDate.values()].flat().filter(item =>
-      item?.recipeId && Number.isInteger(item.sourceRow) && item.sourceRow > 1 &&
+    const editableMenuItems = [...sourceByDate.values()].flat().filter(item =>
+      Boolean(item?.recipeId) !== Boolean(item?.foodId) &&
+      Number.isInteger(item.sourceRow) && item.sourceRow > 1 &&
       (item.status === "planificado" || item.status === "pendiente") &&
-      (!item.itemRole || String(item.itemRole).toLowerCase() === "receta") && !item.foodId);
+      (!item.itemRole || ["receta","acompanante"].includes(
+        String(item.itemRole).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase())));
     const availableActionRows = await page.locator("#home-weekly-menu-content [data-home-menu-consume]").count();
-    assertCheck(availableActionRows === plannedRecipes.length,
-      "Home · una confirmación de consumo por cada receta planificada",
-      `previstas=${plannedRecipes.length} acciones=${availableActionRows}`);
-    assertCheck(await page.locator("#home-weekly-menu-content [data-home-menu-change]").count() === plannedRecipes.length,
-      "Home · cada receta planificada ofrece selector de alternativas");
-    if (plannedRecipes.length > 0) {
+    assertCheck(availableActionRows === editableMenuItems.length,
+      "Home · recetas y alimentos planificados ofrecen confirmar consumo",
+      `previstos=${editableMenuItems.length} acciones=${availableActionRows}`);
+    assertCheck(await page.locator("#home-weekly-menu-content [data-home-menu-change]").count() === editableMenuItems.length,
+      "Home · todo alimento o receta planificada ofrece selector para cambiar");
+    if (editableMenuItems.length > 0) {
       const change = page.locator("#home-weekly-menu-content [data-home-menu-change]").first();
       await change.click();
       const editor = page.locator("#home-menu-edit-dialog");
@@ -2110,6 +2112,19 @@ try {
         "Home · no permite guardar antes de seleccionar alternativa");
       await editor.locator("[data-menu-editor-cancel]").first().click();
       assertCheck(!(await editor.isVisible()),"Home · editor se cierra sin modificar datos");
+      const firstFood = editableMenuItems.find(item => item.foodId && !item.recipeId);
+      if (firstFood) {
+        const foodChange = page.locator('#home-weekly-menu-content [data-home-menu-change="' + Number(firstFood.sourceRow) + '"]');
+        if (await foodChange.count()) {
+          await foodChange.click();
+          await editor.waitFor({state:"visible",timeout:12000});
+          const servings = editor.locator("[data-menu-editor-servings]");
+          assertCheck(await servings.count() === 1 && await servings.isVisible() &&
+            await editor.locator("[data-menu-editor-save]").isDisabled(),
+            "Home · acompañante muestra raciones explícitas y evita conversión de gramos");
+          await editor.locator("[data-menu-editor-cancel]").first().click();
+        }
+      }
     }
 
   }

@@ -70,3 +70,49 @@ test("mutation performs one authenticated, read-checked Sheets batchUpdate (no r
   assert.equal(requests[0].headers.Authorization,"Bearer SYNTHETIC_TOKEN");
   assert.ok(!requests.some(x=>x.url.includes("Registro")));
 });
+
+
+test("planned Pantry companions can be replaced with recipe only after explicit serving selection",()=>{
+  const fruit=[...original];fruit[3]="";fruit[4]="food-b";fruit[5]="Fruit";fruit[6]=100;fruit[7]="g";fruit[16]="acompanante";
+  const foodPayload={...payload,recipeId:undefined,foodId:"food-b",name:"Fruit",action:"replace",newRecipeId:"r-b",newServings:1.25};
+  const plan=planMenuSheetEdits([header,fruit],foodPayload,recipes,"2026-10-15T10:00:00Z");
+  assert.deepEqual(plan.updates.map(x=>[x.range,x.values[0][0]]),[
+    ["MenuSemanal!D2","r-b"],["MenuSemanal!E2",""],
+    ["MenuSemanal!G2",1.25],["MenuSemanal!H2","ración"],
+    ["MenuSemanal!Q2","receta"],["MenuSemanal!R2",""],
+    ["MenuSemanal!F2","Receta B"],
+    ["MenuSemanal!J2",637.5],["MenuSemanal!K2",52.5],["MenuSemanal!L2",65],
+    ["MenuSemanal!M2",15],["MenuSemanal!P2","2026-10-15T10:00:00Z"]
+  ]);
+  const companionStatus=[...fruit];companionStatus[8]="consumido";
+  assert.throws(()=>planMenuSheetEdits([header,companionStatus],foodPayload,recipes),e=>e.code==="MENU_EDIT_NOT_PLANNED");
+  for(const val of [undefined,null,"",0,-1,21]) {
+    assert.throws(()=>planMenuSheetEdits([header,fruit],{...foodPayload,newServings:val},recipes),
+      e=>e.code==="RECIPE_SERVINGS_REQUIRED");
+  }
+  assert.throws(()=>planMenuSheetEdits([header,fruit],{...foodPayload,foodId:"food-other"},recipes),
+    e=>e.code==="MENU_EDIT_CONFLICT");
+});
+
+test("confirming one planned Pantry item updates only its status, not a different food",()=>{
+  const food=[...original];food[3]="";food[4]="food-x";food[5]="Food X";food[16]="acompanante";
+  const action={...payload,recipeId:undefined,foodId:"food-x",name:"Food X"};
+  const unchanged=[...food];unchanged[4]="food-y";unchanged[5]="Other food";
+  const plan=planMenuSheetEdits([header,food,unchanged],action,[],"2026-10-15T10:00:00Z");
+  assert.deepEqual(plan.updates.map(x=>[x.range,x.values[0][0]]),[
+    ["MenuSemanal!I2","consumido"],["MenuSemanal!P2","2026-10-15T10:00:00Z"]
+  ]);
+});
+
+test("duplicate earlier food versions are retired, and existing recipe elsewhere in meal blocks collision",()=>{
+  const food=[...original];food[3]="";food[4]="food-x";food[5]="Food X";food[16]="acompanante";
+  const old=[...food];old[15]="2026-10-12T08:00:00Z";
+  const recent=[...food];
+  const action={...payload,recipeId:undefined,foodId:"food-x",name:"Food X",
+    action:"replace",newRecipeId:"r-b",newServings:1,sourceRow:3};
+  const plan=planMenuSheetEdits([header,old,recent],action,recipes);
+  assert.ok(plan.updates.some(x=>x.range==="MenuSemanal!I2"&&x.values[0][0]==="retirado"));
+  const otherRecipe=[...original];otherRecipe[3]="r-b";otherRecipe[5]="Receta B";
+  assert.throws(()=>planMenuSheetEdits([header,food,otherRecipe],
+    {...action,sourceRow:2},recipes),e=>e.code==="RECIPE_ALREADY_IN_MEAL");
+});
