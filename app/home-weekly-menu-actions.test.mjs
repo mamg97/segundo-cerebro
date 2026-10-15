@@ -35,6 +35,9 @@ test("projected replacement counts all macros and the day's remaining planned to
   const p=sandbox.homeMenuRecipeProjection(item,recipe,{kcal:1180,protein:110});
   assert.deepEqual(JSON.parse(JSON.stringify(p)),{kcal:450,protein:46,carbs:30,fat:11,dayKcal:1320,dayProtein:131});
   assert.equal(sandbox.homeMenuRecipeProjection({...item,unit:"plato"},recipe,{kcal:1180,protein:110}),null);
+  assert.equal(sandbox.homeMenuRecipeProjection({...item,quantity:null},recipe,{kcal:1180,protein:110}),null);
+  assert.equal(sandbox.homeMenuRecipeProjection({...item,quantity:""},recipe,{kcal:1180,protein:110}),null);
+  assert.equal(sandbox.homeMenuRecipeProjection({...item,quantity:0},recipe,{kcal:1180,protein:110}),null);
   assert.equal(sandbox.homeMenuRecipeProjection(item,{...recipe,proteinPerServing:null},{kcal:1180,protein:110}),null);
   assert.equal(sandbox.homeMenuRecipeProjection(item,{...recipe,precision:"pendiente"},{kcal:1180,protein:110}),null);
 });

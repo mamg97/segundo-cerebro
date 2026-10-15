@@ -5786,7 +5786,8 @@ function homeMenuInlineNotice(content, text, isError = false) {
   notice.textContent = text;
 }
 function homeMenuRecipeProjection(item, recipe, day) {
-  const quantity = item.quantity == null ? 1 : Number(item.quantity);
+  // Mirror server-side portion validation: missing is never one serving.
+  const quantity = item.quantity == null || String(item.quantity).trim() === "" ? NaN : Number(item.quantity);
   const unit = normalizeWeeklyMenuMoment(item.unit);
   const factor = /racion/.test(unit) ? quantity
     : /compartid/.test(unit) && Number(recipe.servings) > 0 ? quantity * recipe.servings : NaN;

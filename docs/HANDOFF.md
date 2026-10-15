@@ -1,3 +1,11 @@
+## ORGANIZADOR 19 — Validación de raciones desconocidas en Home (15/10/2026)
+
+- PR #493/#494 ya estaban fusionadas en main; CI #688 y despliegue privado #535 correctos. Auditoría cron #434: 1232 controles, único fallo conocido MIDAS CHECK-00029; Home/Nutrición sin fallo y paridad ligero/completo 0/0.
+- Corrección posterior: la vista previa de sustitución y su endpoint no pueden interpretar una cantidad vacía como 1 ración. Ambas capas bloquean esa sustitución; pruebas unitarias con porción ausente, vacía y cero. No se modifica MenuSemanal ni Registro de producción.
+- La serialización distribuida entre gestores de Google Sheets no equivale a una transacción CAS: el control de versión evita escrituras obsoletas secuenciales, pero no demuestra aislamiento bajo carreras simultáneas. Mantener este límite explícito.
+
+---
+
 ## ORGANIZADOR 18 — Home · consumo y sustitución de recetas (15/10/2026)
 
 - Capacidad nueva en Home: cada receta **planificada** tiene acciones independientes «✓ Consumida», «Cambiar» y su enlace anterior para ver la ficha. El estado consumido proviene exclusivamente de `MenuSemanal.estado`; las barras consumido/previsto se recalculan al instante y se verifican después de guardar. Los acompañantes conservan su identidad y el flujo de recetas no marca consumos por navegación.
