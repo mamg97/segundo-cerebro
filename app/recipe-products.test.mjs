@@ -41,3 +41,9 @@ test("Pantry outage fallback never invents a commercial match, price or nutritio
   assert.match(src, /if \(!loading\.isConnected\) return/);
   assert.match(src, /Ficha comercial detallada temporalmente no disponible/);
 });
+
+test("nutrition refresh preserves active recipe/ingredient navigation without mutating the canonical model", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /recipeView\?\.querySelector\("\.recipe-detail-card, \[data-ingredient-back\], \[data-ingredient-detail\]"\)/);
+  assert.match(app, /panel\.dataset\.ingredientPantryState = "module-error"/);
+});
