@@ -59,3 +59,15 @@ test("ingredient opens a cancelable loading view before any asynchronous lazy im
   assert.match(app, /clearTimeout\(timer\)/);
   assert.match(app, /data-ingredient-retry/);
 });
+
+test("recipe ingredient handling is delegated to a stable panel with cancellable listeners", () => {
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /const recipeIngredientClickControllers = new WeakMap\(\)/);
+  assert.match(app, /recipeIngredientClickControllers\.get\(panel\)\?\.abort\(\)/);
+  assert.match(app, /panel\.dataset\.recipeIngredientHandler = "delegated"/);
+  assert.match(app, /panel\.addEventListener\("click", async \(event\) =>/);
+  assert.match(app, /event\.target\?\.closest\?\.\("\[data-recipe-ingredient\]"\)/);
+  assert.match(app, /capture: true, signal: clickController\.signal/);
+  assert.match(app, /ingredientPantryState = "invalid-reference"/);
+  assert.doesNotMatch(app, /panel\.querySelectorAll\("\[data-recipe-ingredient\]"\)\.forEach/);
+});
