@@ -1,5 +1,7 @@
 import { renderProductDetail } from "./pantry.js?v=0.42.1";
 
+const REQUEST_TIMEOUT_MS = 9000;
+
 function normalizedName(value) {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("es").replace(/\s+/g, " ");
 }
@@ -11,12 +13,28 @@ export function resolveIngredientProduct(ingredient, products = []) {
   return matches.length === 1 ? matches[0] : null;
 }
 
+export function unresolvedIngredientProduct(ingredient) {
+  // Do not invent a nutrition label or bind an unrelated packaged product.
+  return { name: String(ingredient?.name || "Ingrediente"), notes: ingredient?.note || "", nutrition: {} };
+}
+
+async function readJson(path) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(path, { credentials: "same-origin", cache: "no-store",
+      headers: { Accept: "application/json" }, signal: controller.signal });
+    if (!response.ok) throw new Error("PANTRY_UNAVAILABLE");
+    return await response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 let pantryCache = null;
 async function readProducts() {
   if (pantryCache && pantryCache.expiresAt > Date.now()) return pantryCache.value;
-  const response = await fetch("/api/pantry", { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } });
-  if (!response.ok) throw new Error("No se pudo consultar Despensa");
-  const payload = await response.json();
+  const payload = await readJson("/api/pantry");
   pantryCache = { value: payload, expiresAt: Date.now() + 30_000 };
   return payload;
 }
@@ -32,33 +50,58 @@ function ingredientContext(ingredient, recipe) {
   };
 }
 
+function renderAvailableIngredient(panel, product, payload, context, onBack, pendingMessage = "") {
+  renderProductDetail(product, payload, {
+    container: panel, onBack, backLabel: "← Volver a la receta", ingredient: context,
+    ...(pendingMessage ? { pendingMessage } : {})
+  });
+  panel.dataset.ingredientPantryState = pendingMessage ? "partial" : "ready";
+}
+
+function renderUnavailableIngredient(panel, ingredient, context, onBack, retry) {
+  // Context remains usable even when Pantry is down; unknown per-100g values
+  // stay pending, and the browser audit can distinguish this from a complete card.
+  renderAvailableIngredient(panel, unresolvedIngredientProduct(ingredient),
+    { summary: { currency: "EUR" } }, context, onBack,
+    "Despensa no está disponible. Se muestran solo los datos confirmados de la receta; precio y macros por 100 g pendientes.");
+  panel.dataset.ingredientPantryState = "fallback";
+  const retryButton = document.createElement("button");
+  retryButton.type = "button";
+  retryButton.className = "recipe-ingredient-retry";
+  retryButton.dataset.ingredientRetry = "";
+  retryButton.textContent = "Reintentar Despensa";
+  retryButton.addEventListener("click", retry);
+  panel.querySelector(".recipe-ingredient-context")?.append(retryButton);
+}
+
 export async function openRecipeIngredient(panel, ingredient, recipe, onBack) {
   const context = ingredientContext(ingredient, recipe);
   panel.innerHTML = '<button type="button" class="recipe-back" data-ingredient-back>← Volver a la receta</button><p class="recipe-pending" role="status">Cargando ficha del alimento…</p>';
+  panel.dataset.ingredientPantryState = "loading";
   panel.querySelector("[data-ingredient-back]").addEventListener("click", onBack);
   const loading = panel.querySelector('[role="status"]');
-  let product = null;
+  const retry = () => openRecipeIngredient(panel, ingredient, recipe, onBack);
   try {
     const payload = await readProducts();
-    product = resolveIngredientProduct(ingredient, payload.products);
+    const product = resolveIngredientProduct(ingredient, Array.isArray(payload.products) ? payload.products : []);
     if (product) {
-      const response = await fetch(`/api/pantry/products/${encodeURIComponent(product.id)}`, { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } });
-      if (!response.ok) throw new Error("No se pudo actualizar la ficha");
-      const detail = await response.json();
-      // Ignore a slow result after the user returned or switched Health tabs.
-      if (!loading.isConnected) return;
-      renderProductDetail(detail.item, payload, { container: panel, onBack, backLabel: "← Volver a la receta", ingredient: context });
+      try {
+        const detail = await readJson(`/api/pantry/products/${encodeURIComponent(product.id)}`);
+        if (!loading.isConnected) return;
+        renderAvailableIngredient(panel, detail.item || product, payload, context, onBack);
+      } catch {
+        if (!loading.isConnected) return;
+        renderAvailableIngredient(panel, product, payload, context, onBack,
+          "Ficha comercial detallada temporalmente no disponible. Información básica de Despensa.");
+      }
       return;
     }
     if (!loading.isConnected) return;
-    renderProductDetail({ name: ingredient.name, notes: ingredient.note }, payload, {
-      container: panel, onBack, backLabel: "← Volver a la receta", ingredient: context,
-      pendingMessage: ingredient.productId ? "La referencia guardada no existe en el catálogo. Pendiente de revisar." : "Producto exacto pendiente de vincular. No hay una ficha comercial confirmada para este ingrediente."
-    });
+    renderAvailableIngredient(panel, unresolvedIngredientProduct(ingredient), payload, context, onBack,
+      ingredient.productId ? "Referencia de producto pendiente de revisar." :
+        "Producto exacto pendiente de vincular. No se ha inferido ninguna referencia comercial.");
   } catch {
     if (!loading.isConnected) return;
-    panel.innerHTML = '<button type="button" class="recipe-back" data-ingredient-back>← Volver a la receta</button><div class="pantry-source-error"><strong>No se ha podido cargar la ficha</strong><p>Despensa no responde ahora. Los ingredientes de la receta se conservan.</p><button type="button" data-ingredient-retry>Reintentar</button></div>';
-    panel.querySelector("[data-ingredient-back]").addEventListener("click", onBack);
-    panel.querySelector("[data-ingredient-retry]").addEventListener("click", () => openRecipeIngredient(panel, ingredient, recipe, onBack));
+    renderUnavailableIngredient(panel, ingredient, context, onBack, retry);
   }
 }
