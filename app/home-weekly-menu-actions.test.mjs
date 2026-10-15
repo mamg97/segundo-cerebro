@@ -64,7 +64,7 @@ test("Home shows the private photo inside the existing recipe-detail button",()=
   const photoUrl="/api/health/recipes/rec-a/image?v=2026-10-15T10%3A30Z";
   const html=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,photoUrl}]);
   assert.match(html,/class="home-menu-recipe-thumb"/);
-  assert.match(html,/src="\/api\/health\/recipes\/rec-a\/image\\?v=2026-10-15T10%3A30Z"/);
+  assert.match(html,/src="\/api\/health\/recipes\/rec-a\/image\?v=2026-10-15T10%3A30Z"/);
   assert.match(html,/loading="lazy" decoding="async"/);
   assert.match(html,/data-home-menu-recipe-open="rec-a"/);
   assert.match(css,/\.home-weekly-menu-recipe-link\s*\{/);
