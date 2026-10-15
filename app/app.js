@@ -6137,6 +6137,8 @@ function recipeMacrosLabel(recipe) {
   ].filter(Boolean).join(" · ");
 }
 
+const recipeIngredientClickControllers = new WeakMap();
+
 function renderRecipeDetail(panel, data, recipe, options = {}) {
   const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
   const onBack = typeof options.onBack === "function" ? options.onBack : () => renderRecipesPanel(data);
@@ -6200,15 +6202,29 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
   `;
 
   panel.querySelector("[data-recipes-back]")?.addEventListener("click", onBack);
-  panel.querySelectorAll("[data-recipe-ingredient]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const index = Number(button.dataset.recipeIngredient);
-      const ingredient = ingredients[index];
-      if (!ingredient) return;
+  recipeIngredientClickControllers.get(panel)?.abort();
+  const clickController = new AbortController();
+  recipeIngredientClickControllers.set(panel, clickController);
+  panel.dataset.recipeIngredientHandler = "delegated";
+  // Capture on a stable ancestor: button DOM can change during async rendering.
+  panel.addEventListener("click", async (event) => {
+    const button = event.target?.closest?.("[data-recipe-ingredient]");
+    if (!button || !panel.contains(button)) return;
+    const rawIndex = button.getAttribute("data-recipe-ingredient");
+    const index = rawIndex !== null && String(rawIndex).trim() !== "" ? Number(rawIndex) : NaN;
+    const ingredient = Number.isSafeInteger(index) && index >= 0 && index < ingredients.length
+      ? ingredients[index] : null;
       const restore = () => {
         renderRecipeDetail(panel, data, recipe, options);
         panel.querySelector(`[data-recipe-ingredient="${index}"]`)?.focus({ preventScroll: true });
       };
+    if (!ingredient || typeof ingredient !== "object") {
+      panel.dataset.ingredientPantryState = "invalid-reference";
+      panel.innerHTML = '<button type="button" class="recipe-back" data-ingredient-back>← Volver a la receta</button>' +
+        '<p class="recipe-pending" role="alert">Ingrediente no encontrado en esta receta. Vuelve a la ficha para reintentar.</p>';
+      panel.querySelector("[data-ingredient-back]")?.addEventListener("click", restore);
+      return;
+    }
       // Switch synchronously before the lazy module resolves. This prevents
       // the old recipe screen remaining visible during an indefinitely slow
       // import, and makes Back safe even if the user cancels while loading.
@@ -6245,13 +6261,14 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
       } finally {
         if (timer !== null) clearTimeout(timer);
       }
-    });
-  });
+  }, {capture: true, signal: clickController.signal});
 }
 
 function renderRecipesPanel(data) {
   const panel = document.querySelector("#recipes-panel");
   if (!panel) return;
+  recipeIngredientClickControllers.get(panel)?.abort();
+  recipeIngredientClickControllers.delete(panel);
 
   const recipes = Array.isArray(data?.recipes) ? data.recipes : [];
   const ingredients = recipeIngredientChoices(recipes);
