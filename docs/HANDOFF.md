@@ -1,3 +1,13 @@
+## ORGANIZADOR 20 — Cierre verificable Salud: Chromium #453 (15/10/2026)
+
+- **Estado confirmado:** PR #501 (fotos primero/filtro de ingrediente), #502 (auditoría), #503 (Cambiar en acompañantes planificados), #504/#505 (ficha de ingrediente con degradación segura y caché), #506 (bloquear segunda receta principal), #507/#508 (resiliencia de navegación), #509 (trazado anónimo), #510 (controlador delegado), #511 (auditoría limitada a filas reales), todas fusionadas con CI satisfactoria final.
+- Último `main` auditado: `e51c9d5c0252556fb0d0b729eac31d8e45097451` (PR #511), CI #710 `success`, Cloudflare privado #552 `success`, auditoría Chromium [#453](https://github.com/mamg97/segundo-cerebro/actions/runs/38767566985) completa con **1.257 checks, 1.256 correctos y un fallo conocido de MIDAS `CHECK-00029`**. Ningún fallo funcional de Salud/Recetas/Home en esa ejecución. No declarar `AUDIT_OK` global.
+- Diagnóstico histórico de selección: en la ficha examinada se contaron ocho filas canónicas y nueve coincidencias del selector genérico `[data-recipe-ingredient]`; el auditor anterior podía pulsar un control fuera de la lista. Al acotar el selector a botones de filas reales, Chromium verifica apertura de ingrediente, contexto/producto, navegación de vuelta, orden foto y filtro. Sigue registrándose **un control adicional fuera de filas**, sin fallo funcional en #453; no inferir que haya una receta o dato duplicado.
+- **Alcance pendiente declarado:** el selector de Home sustituye una fila planificada `food_id` por **receta** con raciones explícitas, pero todavía no soporta sustitución directa **producto→producto** ni rectificación de una fila ya `consumido` reconciliando `MenuSemanal` y `Registro`. No equiparar ambas operaciones ni editar histórico sin contrato y confirmación expresa. También permanece MIDAS CHECK-00029.
+- Sin costes nuevos, datos sensibles en Git, nuevos endpoints o escrituras reales durante auditorías. Para nuevas modificaciones seguir rama/CI/deploy/auditoría y actualizar handoff.
+
+---
+
 ## ORGANIZADOR 20 — Auditoría de ingredientes: selector de filas exacto (15/10/2026)
 
 - Auditoría Chromium #452 tras PR #510 / deploy #551: `1255 checks / 6 fallos` (MIDAS + recetario + vuelta). En Recetas, la búsqueda demasiado amplia `[data-recipe-ingredient]` devuelve **9 controles**, mientras las filas `.recipe-ingredients li` son **8**. La traza del clic muestra `clicked=1 changes=1 loading=0 detail=0`, y el navegador queda en vista incompleta `INGREDIENT_VIEW_INCOMPLETE`. El dato privado de Salud muestra ocho ingredientes en la primera receta canónica consultada. No registrar nombres ni IDs en Git/logs.
