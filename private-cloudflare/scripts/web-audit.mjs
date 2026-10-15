@@ -3149,11 +3149,56 @@ try {
           const ingredientCount = await ingredientButtons.count();
           assertCheck(ingredientCount === await panel.locator(".recipe-ingredients li").count(), "Salud · Recetas todos los ingredientes abren ficha");
           if (ingredientCount > 0) {
+            // Read-only event/DOM trace: fixed booleans and counts exclusively.
+            // Helps distinguish a missing click handler from a later re-render.
+            await panel.evaluate(node => {
+              const target = node.querySelector("[data-recipe-ingredient]");
+              const state = {
+                clickCaptured: false,
+                initiallyDisabled: Boolean(target?.disabled),
+                mutationCount: 0,
+                loadingEver: false,
+                ingredientEver: false,
+                catalogueEver: false
+              };
+              node.__auditIngredientTrace = state;
+              node.addEventListener("click", event => {
+                if (event.target?.closest?.("[data-recipe-ingredient]")) state.clickCaptured = true;
+              }, {capture: true, once: true});
+              const observer = new MutationObserver(() => {
+                state.mutationCount = Math.min(9999, state.mutationCount + 1);
+                state.loadingEver ||= Boolean(node.querySelector("[data-recipe-ingredient-pending]"));
+                state.ingredientEver ||= Boolean(node.querySelector('[data-ingredient-detail="true"]'));
+                state.catalogueEver ||= Boolean(node.querySelector("[data-recipe-open]"));
+              });
+              observer.observe(node, {subtree: true, childList: true});
+              state.disconnect = () => observer.disconnect();
+            });
             await ingredientButtons.first().click();
             const ingredientDetail = panel.locator('[data-ingredient-detail="true"]');
             await ingredientDetail.waitFor({ state: "visible", timeout: 25000 }).catch(() => {});
             const ingredientDetailVisible = await ingredientDetail.isVisible().catch(() => false);
             if (!ingredientDetailVisible) {
+              const trace = await panel.evaluate(node => {
+                const state = node.__auditIngredientTrace;
+                state?.disconnect?.();
+                delete node.__auditIngredientTrace;
+                return state ? {
+                  clickCaptured: state.clickCaptured,
+                  initiallyDisabled: state.initiallyDisabled,
+                  mutationCount: state.mutationCount,
+                  loadingEver: state.loadingEver,
+                  ingredientEver: state.ingredientEver,
+                  catalogueEver: state.catalogueEver
+                } : null;
+              }).catch(() => null);
+              if (trace) console.error("[RECIPE_NAV_TRACE] " +
+                "clicked=" + Number(trace.clickCaptured) +
+                " disabled=" + Number(trace.initiallyDisabled) +
+                " changes=" + Math.min(9999, trace.mutationCount) +
+                " loading=" + Number(trace.loadingEver) +
+                " detail=" + Number(trace.ingredientEver) +
+                " catalogue=" + Number(trace.catalogueEver));
               const category = await panel.evaluate((node) => {
                 if (node?.dataset?.ingredientPantryState === "module-error") return "MODULE_ERROR";
                 if (node?.querySelector('[data-ingredient-back] [role="status"]')) return "PANTRY_PENDING";
@@ -3164,6 +3209,12 @@ try {
               }).catch(() => "DOM_READ_FAILED");
               // Fixed diagnostic categories only: no names, IDs or URLs.
               console.error("[RECIPE_INGREDIENT_DIAG] " + category);
+            }
+            if (ingredientDetailVisible) {
+              await panel.evaluate(node => {
+                node.__auditIngredientTrace?.disconnect?.();
+                delete node.__auditIngredientTrace;
+              }).catch(() => {});
             }
             assertCheck(ingredientDetailVisible, "Salud · Recetas abre ficha del alimento");
             const pantryState = await panel.getAttribute("data-ingredient-pantry-state");
