@@ -741,7 +741,6 @@ async function init() {
   renderMode();
   renderDate();
   renderNavigation();
-  installStickyTopbar();
   renderDailyOverview();
   renderEvents();
   renderBudgetOverview();
