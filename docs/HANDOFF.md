@@ -1,3 +1,11 @@
+## ORGANIZADOR 22 — Menú Home segundo cuadro y fotos sobre título (15/10/2026)
+
+- Solicitud tras captura real: miniaturas 42×42 colocadas a la izquierda y macros en columna lateral estrechaban nombres hasta dividir palabras o letras. Corrección semántica y responsive: cada receta muestra imagen privada 16:9 de hasta 156×88 arriba, debajo nombre legible a ancho de columna y macros en una fila propia, seguidos por Consume/Cambiar. Los acompañantes sin receta mantienen su renderizado; no se toca lógica de dieta, fotos ni APIs.
+- El menú semanal pasa a ser el **segundo bloque completo** dentro de `daily-overview-grid`, inmediatamente después del resumen Salud/consumos y antes de Despensa, Objetos y Finanzas. Conserva el mismo `id`, estados, carga desde Sheets, scroll horizontal y enlaces.
+- Tests sintéticos de orden DOM, foto/título/macros/acciones y CSS; auditoría read-only Chromium verifica orden de bloques y geometría en escritorio/móvil. Sin mutación de datos privados ni costes añadidos. PR, CI, despliegue y auditoría postdeploy para cierre.
+
+---
+
 ## ORGANIZADOR 21 — Sesiones antiguas tras despliegues (15/10/2026)
 
 - Captura posterior al despliegue #538 muestra Home sin miniaturas ni controles de consumir/cambiar; el código visible es anterior a #493/#497. Chromium fresco #437 comprobó la UI moderna y las fotos (1.238 checks, fallo conocido solo MIDAS CHECK-00029). Diagnóstico: pestaña SPA ya abierta conserva sus módulos/DOM en memoria; ni HTML `no-store` ni hashes fuerzan una recarga activa.

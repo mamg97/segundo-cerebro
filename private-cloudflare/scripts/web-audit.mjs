@@ -1517,6 +1517,22 @@ async function auditResponsiveVisualLayout(navIds) {
     await page.setViewportSize({ width: profile.width, height: profile.height });
     await openAreaForVisualAudit("area-general");
     await auditVisualSnapshot(`${profile.name} · Home`);
+    if (profile.name === "desktop" || profile.name === "mobile") {
+      const recipeLayout = await page.locator("#home-weekly-menu-content .home-weekly-menu-recipe-link")
+        .first().evaluate((button) => {
+          const image = button.querySelector(".home-menu-recipe-thumb")?.getBoundingClientRect();
+          const name = button.querySelector(".home-menu-recipe-title")?.getBoundingClientRect();
+          const tile = button.closest(".weekly-menu-group-item");
+          const macros = tile?.querySelector(".weekly-menu-group-item-macros")?.getBoundingClientRect();
+          const copy = tile?.querySelector(".weekly-menu-group-item-copy")?.getBoundingClientRect();
+          return Boolean(image && name && macros && copy &&
+            image.bottom <= name.top + 2 &&
+            name.bottom <= macros.top + 4 &&
+            copy.width > image.width * .75 &&
+            getComputedStyle(button).flexDirection === "column");
+        }).catch(() => false);
+      assertCheck(recipeLayout, profile.name + " · menú muestra foto sobre nombre y macros sin estrechar texto");
+    }
     if (profile.name === "mobile") {
       await auditMobileWealthDialog();
     }
@@ -1879,6 +1895,17 @@ try {
 
   const homeMenuVisible = await page.locator("#home-weekly-menu-panel").evaluate((node) => !node.hidden).catch(() => false);
   assertCheck(homeMenuVisible, "Menú semanal permanece visible en Home");
+  const menuSecondCard = await page.evaluate(() => {
+    const summary = document.querySelector(".daily-overview-grid");
+    const first = summary?.querySelector(":scope > #home-health-card");
+    const second = summary?.querySelector(":scope > #home-weekly-menu-panel");
+    const pantry = summary?.querySelector(":scope > #home-pantry-card");
+    return Boolean(first && second && pantry && first.nextElementSibling === second &&
+      second.nextElementSibling === pantry &&
+      getComputedStyle(second).gridColumnStart === "1");
+  });
+  assertCheck(menuSecondCard, "Home · menú ocupa el segundo cuadro tras resumen de consumos");
+
 
   // A brand-new Chromium session must receive content-fingerprinted JS/CSS,
   // rather than a hand-maintained version reused by multiple deployments.
