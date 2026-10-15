@@ -45,6 +45,15 @@ test("stale identity, stale timestamp, consumed rows and unsupported portions re
   assert.throws(()=>planMenuSheetEdits([header,original],{...payload,action:"replace",newRecipeId:"r-b"},badRecipe),e=>e.code==="RECIPE_MACROS_OR_PORTION_PENDING");
 });
 
+test("unknown portions never become one serving or pass recipe replacement",()=>{
+  assert.equal(previewMenuRecipe({unidad:"ración"},recipes[0]).supported,false);
+  assert.equal(previewMenuRecipe({cantidad:"",unidad:"ración"},recipes[0]).supported,false);
+  assert.equal(previewMenuRecipe({cantidad:0,unidad:"ración"},recipes[0]).supported,false);
+  const missing=[...original]; missing[6]="";
+  assert.throws(()=>planMenuSheetEdits([header,missing],{...payload,action:"replace",newRecipeId:"r-b"},recipes),
+    e=>e.code==="RECIPE_MACROS_OR_PORTION_PENDING");
+});
+
 test("mutation performs one authenticated, read-checked Sheets batchUpdate (no record duplication)",async()=>{
   const requests=[];
   const fetcher=async(url,opts={})=>{

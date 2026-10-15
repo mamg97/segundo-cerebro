@@ -39,7 +39,8 @@ export function recipeAlternatives(rows) {
     })).sort((a,b) => a.name.localeCompare(b.name,"es"));
 }
 export function previewMenuRecipe(item, recipe) {
-  const qty = numberOrNull(item.cantidad) ?? 1;
+  // Missing portion is unknown, not one serving. Never fabricate macros.
+  const qty = numberOrNull(item.cantidad);
   const unit = normalize(item.unidad);
   const multiplier = /raci[oó]n/i.test(unit)
     ? qty : /compartid[oa]/i.test(unit) && recipe.servings > 0

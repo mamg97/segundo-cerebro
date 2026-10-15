@@ -456,3 +456,8 @@ Mitigación: en `objects-media-d1` el acceso GET `stream:true` valida metadatos 
 ### Menú Home interactivo · registro y alternativa (15/10/2026)
 
 La UI distingue «Abrir receta», «✓ Consumida» y «Cambiar». Chromium comprueba que cada receta de plan con `sourceRow` verificable ofrece ambas acciones y que el selector de alternativas se abre, ofrece búsqueda y macros, y se cierra sin modificar la fuente. **El auditor jamás pulsa «Consumida» ni «Aplicar cambio» sobre datos reales**. Tests sintéticos ejercitan ambas escrituras, incluyen fila obsoleta, receta pendiente, ración desconocida, duplicados y acompañantes sin mutar el Sheet. La aceptación requiere refresco de `MenuSemanal` y conciliación de consumo real sin duplicarlo.
+
+
+### Home · raciones no verificadas (15/10/2026)
+
+Cuando la cantidad de una receta planificada falta, está vacía o no es positiva, el selector de sustitución no debe asumir 1 ración: bloquea la vista previa y el guardado. Los tests del frontend y del Worker deben rechazar el mismo caso. Ninguna prueba de producción escribirá consumos ni recetas reales.
