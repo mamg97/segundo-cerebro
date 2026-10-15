@@ -3145,21 +3145,28 @@ try {
               && await panel.locator(".recipe-detail-card .recipe-steps").count() === 1,
             "Salud · Recetas detalle muestra ingredientes y preparación"
           );
-          const ingredientButtons = panel.locator("[data-recipe-ingredient]");
+          // Scope action buttons to actual ingredient rows, not every
+          // attribute of this name elsewhere in the recipes tab.
+          const ingredientButtons = panel.locator(".recipe-detail-card .recipe-ingredients li [data-recipe-ingredient]");
           const ingredientCount = await ingredientButtons.count();
-          const listCount = await panel.locator(".recipe-ingredients li").count();
+          const listCount = await panel.locator(".recipe-detail-card .recipe-ingredients li").count();
+          const allAttributeMatches = await panel.locator("[data-recipe-ingredient]").count();
+          if (allAttributeMatches !== ingredientCount) {
+            console.error("[RECIPE_INGREDIENT_DIAG] OUTSIDE_RECIPE_ROWS count=" +
+              Math.min(9999, Math.max(0, allAttributeMatches - ingredientCount)));
+          }
           if (ingredientCount !== listCount) {
             console.error("[RECIPE_INGREDIENT_DIAG] BUTTON_ROW_COUNT_DIFFERENT buttons=" +
               Math.min(9999, ingredientCount) + " rows=" + Math.min(9999, listCount));
           }
-          assertCheck(ingredientCount === listCount, "Salud · Recetas todos los ingredientes abren ficha");
+          assertCheck(ingredientCount === listCount, "Salud · Recetas cada fila de ingrediente tiene su botón");
           const handlerMode = await panel.locator("#recipes-panel").getAttribute("data-recipe-ingredient-handler");
           assertCheck(handlerMode === "delegated", "Salud · Recetas usa control de ingredientes delegado");
           if (ingredientCount > 0) {
             // Read-only event/DOM trace: fixed booleans and counts exclusively.
             // Helps distinguish a missing click handler from a later re-render.
             await panel.evaluate(node => {
-              const target = node.querySelector("[data-recipe-ingredient]");
+              const target = node.querySelector(".recipe-detail-card .recipe-ingredients li [data-recipe-ingredient]");
               const state = {
                 clickCaptured: false,
                 initiallyDisabled: Boolean(target?.disabled),
@@ -3207,6 +3214,7 @@ try {
                 " detail=" + Number(trace.ingredientEver) +
                 " catalogue=" + Number(trace.catalogueEver));
               const category = await panel.evaluate((node) => {
+                if (node?.dataset?.ingredientPantryState === "invalid-reference") return "INVALID_INGREDIENT_INDEX";
                 if (node?.dataset?.ingredientPantryState === "module-error") return "MODULE_ERROR";
                 if (node?.querySelector('[data-ingredient-back] [role="status"]')) return "PANTRY_PENDING";
                 if (node?.querySelector('[data-ingredient-back]')) return "INGREDIENT_VIEW_INCOMPLETE";
@@ -3225,13 +3233,14 @@ try {
             }
             assertCheck(ingredientDetailVisible, "Salud · Recetas abre ficha del alimento");
             const pantryState = await panel.getAttribute("data-ingredient-pantry-state");
-            if (["fallback", "loading", "module-error"].includes(pantryState)) {
+            if (["fallback", "loading", "module-error", "invalid-reference"].includes(pantryState)) {
               // Closed diagnostic vocabulary; never log ingredient names, IDs or URLs.
               console.error("[RECIPE_INGREDIENT_DIAG] " +
                 (pantryState === "fallback" ? "PANTRY_FALLBACK" :
-                  pantryState === "module-error" ? "MODULE_ERROR" : "PANTRY_PENDING"));
+                  pantryState === "module-error" ? "MODULE_ERROR" :
+                  pantryState === "invalid-reference" ? "INVALID_INGREDIENT_INDEX" : "PANTRY_PENDING"));
             }
-            assertCheck(!["fallback", "loading", "module-error"].includes(pantryState),
+            assertCheck(!["fallback", "loading", "module-error", "invalid-reference"].includes(pantryState),
               "Salud · Recetas indica disponibilidad de Despensa en ficha de ingrediente");
             assertCheck(await panel.locator(".recipe-ingredient-context").count() === 1, "Salud · Recetas ficha conserva cantidad y contexto");
             assertCheck(await panel.locator(".pantry-nutrition").count() === 1, "Salud · Recetas ficha separa macros por 100 g");

@@ -1,3 +1,11 @@
+## ORGANIZADOR 20 — Auditoría de ingredientes: selector de filas exacto (15/10/2026)
+
+- Auditoría Chromium #452 tras PR #510 / deploy #551: `1255 checks / 6 fallos` (MIDAS + recetario + vuelta). En Recetas, la búsqueda demasiado amplia `[data-recipe-ingredient]` devuelve **9 controles**, mientras las filas `.recipe-ingredients li` son **8**. La traza del clic muestra `clicked=1 changes=1 loading=0 detail=0`, y el navegador queda en vista incompleta `INGREDIENT_VIEW_INCOMPLETE`. El dato privado de Salud muestra ocho ingredientes en la primera receta canónica consultada. No registrar nombres ni IDs en Git/logs.
+- Se corrige el selector de auditoría para elegir solo `.recipe-detail-card .recipe-ingredients li [data-recipe-ingredient]` y contrastar exclusivamente filas de ingredientes; reporta por separado el recuento anónimo de controles que estén fuera de esas filas. Clasifica `invalid-reference` como fallo, nunca como éxito. Así prueba una acción real de la UI en lugar de un control de otra zona.
+- La anomalía de un control adicional sigue en investigación: no borrar ni modificar el dato canónico para hacer verde un test. Requiere CI y auditoría de producción con el selector correcto. Sin mutaciones nutricionales.
+
+---
+
 ## ORGANIZADOR 20 — Diagnóstico concluyente de clic y refuerzo por delegación (15/10/2026)
 
 - Auditoría #451 del despliegue #550: `1255 checks / 5 fallos`. Traza de solo lectura: `clicked=1 disabled=0 changes=0 loading=0 detail=0 catalogue=0`; el botón recibe el clic pero el DOM no cambia. Por tanto, no se trata de esperar a Despensa ni de una ficha que se cierra después: hay que corregir enlace/evento/índice de la acción.
