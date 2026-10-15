@@ -3295,6 +3295,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const registeredDayEntries = entries.filter((item) => item.date === date);
   const registeredDayIds = new Set(
     registeredDayEntries
+      .filter((item) => item.status === "consumido")
       .map((item) => String(item.itemId || "").trim())
       .filter(Boolean)
   );
