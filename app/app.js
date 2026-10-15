@@ -809,23 +809,6 @@ async function loadRemotePrivateState() {
 }
 
 
-function installStickyTopbar() {
-  // The top navigation may change height with responsive wrapping and font
-  // loading. Use its measured height instead of a brittle pixel breakpoint.
-  const navigation = document.querySelector(".app-shell > .sidebar");
-  if (!navigation) return;
-  const updateOffset = () => {
-    const height = Math.max(0, Math.ceil(navigation.getBoundingClientRect().height));
-    document.documentElement.style.setProperty("--sc-fixed-navigation-height", height + "px");
-  };
-  updateOffset();
-  if (typeof ResizeObserver === "function") {
-    new ResizeObserver(updateOffset).observe(navigation);
-  } else {
-    window.addEventListener("resize", updateOffset, { passive: true });
-  }
-}
-
 function renderMode() {
   const generalHealth = state.areas.find((area) => area.id === "area-general")?.health ?? 0;
   const openDecisions = (Array.isArray(state.decisions) ? state.decisions : []).filter((decision) => decision.status === "open").length;

@@ -27593,7 +27593,7 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 .topbar {
   position: -webkit-sticky;
   position: sticky;
-  top: var(--sc-fixed-navigation-height, 58px);
+  top: var(--sc-fixed-navigation-height, 55px);
   z-index: 39;
   background: var(--surface);
   backdrop-filter: blur(12px);
@@ -27634,4 +27634,12 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .topbar .top-actions { gap: 7px; }
   .topbar .topbar-context { overflow: hidden; }
   .topbar .day-context { min-width: 0; }
+}
+
+
+/* Match fixed top navigation's stable single-row and two-row layouts.
+   A CSS-only layout respects style-src 'self' and avoids inline style updates. */
+:root { --sc-fixed-navigation-height: 55px; }
+@media screen and (max-width: 760px) {
+  :root { --sc-fixed-navigation-height: 83px; }
 }
