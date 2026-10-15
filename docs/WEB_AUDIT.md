@@ -476,3 +476,10 @@ El hash de `app.js` en el HTML garantiza una recarga fresca, pero una pestaña S
 ### Home · menú segundo cuadro y tarjetas verticales (15/10/2026)
 
 El menú semanal se presenta como segundo hijo de `daily-overview-grid` tras `#home-health-card` y antes de Despensa/Objetos; ocupa todas las columnas del grid sin alterar la fuente de datos. En cada fila de receta el orden geométrico es foto 16:9 completa → nombre legible a ancho de columna → macros → acciones. La auditoría read-only verifica orden DOM y disposición real en desktop y móvil, además de conservar las comprobaciones de identidad/decodificación de fotos y controles de edición sin escrituras.
+
+
+### Home · Actualizar fijo y reparación de derivadas de receta (15/10/2026)
+
+La barra de acciones de Home se mantiene sticky justo bajo la navegación global en escritorio y móvil. `ResizeObserver` ajusta la variable CSS `--sc-fixed-navigation-height` ante modificaciones reales de altura. En teléfonos se desactiva el botón flotante individual para situarlo en el mismo bloque que Demo y Tema. Chromium verifica geometría después del desplazamiento, con restauración de scroll, sin efectuar escrituras.
+
+Para tres fotografías originales verticales de recetas identificadas por el usuario se prepararon derivados JPEG 480×270 con lienzo horizontal y contenido original completo. La hoja privada `RecipeMedia` almacena los JPEG y la pestaña `Recetas` sus `foto_updated_at` revisados; no se exponen a Git ni se crean recetas duplicadas. El origen Drive permanece inalterado. Validar endpoint, decode y muestra completa mediante la auditoría y el runbook de ingesta.

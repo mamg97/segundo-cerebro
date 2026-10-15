@@ -741,6 +741,7 @@ async function init() {
   renderMode();
   renderDate();
   renderNavigation();
+  installStickyTopbar();
   renderDailyOverview();
   renderEvents();
   renderBudgetOverview();
@@ -804,6 +805,24 @@ async function loadRemotePrivateState() {
     console.warn("No se pudo cargar el estado privado remoto; la interfaz continuará sin bloquearse.", error);
   } finally {
     window.clearTimeout(timeoutId);
+  }
+}
+
+
+function installStickyTopbar() {
+  // The top navigation may change height with responsive wrapping and font
+  // loading. Use its measured height instead of a brittle pixel breakpoint.
+  const navigation = document.querySelector(".app-shell > .sidebar");
+  if (!navigation) return;
+  const updateOffset = () => {
+    const height = Math.max(0, Math.ceil(navigation.getBoundingClientRect().height));
+    document.documentElement.style.setProperty("--sc-fixed-navigation-height", height + "px");
+  };
+  updateOffset();
+  if (typeof ResizeObserver === "function") {
+    new ResizeObserver(updateOffset).observe(navigation);
+  } else {
+    window.addEventListener("resize", updateOffset, { passive: true });
   }
 }
 

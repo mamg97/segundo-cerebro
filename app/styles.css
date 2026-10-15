@@ -27585,3 +27585,53 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .home-weekly-menu-table-cell .home-menu-recipe-title strong { font-size: 11px; }
   .home-weekly-menu-table-cell .home-menu-recipe-thumb { max-height: 88px; }
 }
+
+
+/* ORGANIZADOR 19 · The action bar remains in view just beneath the permanent
+   navigation. No fixed-position duplicates, and no content can scroll over it.
+   The offset follows the real navigation height (desktop/tablet/iOS). */
+.topbar {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--sc-fixed-navigation-height, 58px);
+  z-index: 39;
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  isolation: isolate;
+}
+.topbar .top-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  min-width: max-content;
+}
+.topbar .topbar-context {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.topbar #refresh-app {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+/* The previous standalone floating refresh button on phones obstructed the
+   fixed navigation. Keep it next to Demo and Theme in the sticky action bar. */
+@media screen and (max-width: 760px) {
+  #refresh-app.refresh-app {
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    z-index: auto !important;
+    margin: 0;
+  }
+  .topbar {
+    width: 100%;
+    min-width: 0;
+  }
+  .topbar .top-actions { gap: 7px; }
+  .topbar .topbar-context { overflow: hidden; }
+  .topbar .day-context { min-width: 0; }
+}

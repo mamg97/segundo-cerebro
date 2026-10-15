@@ -1895,6 +1895,33 @@ try {
 
   const homeMenuVisible = await page.locator("#home-weekly-menu-panel").evaluate((node) => !node.hidden).catch(() => false);
   assertCheck(homeMenuVisible, "Menú semanal permanece visible en Home");
+  // Sticky top actions: verify real geometry after scrolling, not just CSS.
+  // Restore the scroll position to keep all subsequent audits read-only.
+  const pinnedActions = await page.evaluate(() => {
+    const bar = document.querySelector(".topbar");
+    const nav = document.querySelector(".app-shell > .sidebar");
+    const refresh = document.querySelector("#refresh-app");
+    const actions = document.querySelector(".topbar .top-actions");
+    if (!bar || !nav || !refresh || !actions) return false;
+    const previousScroll = window.scrollY;
+    try {
+      window.scrollTo(0, Math.min(Math.max(0, document.documentElement.scrollHeight - innerHeight), 540));
+      const rect = bar.getBoundingClientRect();
+      const navRect = nav.getBoundingClientRect();
+      const refreshRect = refresh.getBoundingClientRect();
+      const actionsRect = actions.getBoundingClientRect();
+      return getComputedStyle(bar).position === "sticky" &&
+        Math.abs(rect.top - navRect.bottom) <= 3 &&
+        refreshRect.left >= actionsRect.left - 2 &&
+        refreshRect.right <= actionsRect.right + 2 &&
+        refreshRect.top >= rect.top - 2 &&
+        refreshRect.bottom <= rect.bottom + 2;
+    } finally {
+      window.scrollTo(0, previousScroll);
+    }
+  });
+  assertCheck(pinnedActions, "Home · Actualizar permanece fijo junto a los demás botones al desplazarse");
+
   const menuSecondCard = await page.evaluate(() => {
     const summary = document.querySelector(".daily-overview-grid");
     const first = summary?.querySelector(":scope > #home-health-card");

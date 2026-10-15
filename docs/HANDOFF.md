@@ -1,3 +1,11 @@
+## ORGANIZADOR 19 — Botones de Home fijos y fotos privadas completas (15/10/2026)
+
+- El bloque superior `topbar` pasa a `position: sticky` inmediatamente bajo la barra de navegación principal; la separación se mide mediante `ResizeObserver`, sin intervalos, y se actualiza ante redimensionamiento. En móvil el antiguo botón flotante independiente se desactiva; Actualizar permanece junto a Demo y Tema, sin solaparse con el menú fijo.
+- Tres fotografías verticales originales revisadas en Drive: pan de cristal con guacamole/pavo/huevos; vaso fresa-plátano +Proteínas 343 g; fajitas de lomo de pavo. `RecipeMedia` no contenía derivadas para estas tres identidades. Se prepararon tres derivados JPEG 480×270 completos con relleno lateral desenfocado (sin recorte del original), se conservaron las referencias originales en `Recetas` y se actualizaron únicamente `RecipeMedia` y las tres versiones `foto_updated_at`; no se cambian ingredientes, macros ni consumos. Los originales siguen en Drive y los bytes reales no entran en Git.
+- Tests JS/CSS de colocación, adaptación, posición estable y auditoría Chromium de posición tras scroll. Mantener el runbook `docs/RECIPES_IMAGE_INGEST.md`, privacidad y coste cero; validar CI, deploy, audit; MIDAS CHECK-00029 sigue independiente.
+
+---
+
 ## ORGANIZADOR 22 — Menú Home segundo cuadro y fotos sobre título (15/10/2026)
 
 - Solicitud tras captura real: miniaturas 42×42 colocadas a la izquierda y macros en columna lateral estrechaban nombres hasta dividir palabras o letras. Corrección semántica y responsive: cada receta muestra imagen privada 16:9 de hasta 156×88 arriba, debajo nombre legible a ancho de columna y macros en una fila propia, seguidos por Consume/Cambiar. Los acompañantes sin receta mantienen su renderizado; no se toca lógica de dieta, fotos ni APIs.
