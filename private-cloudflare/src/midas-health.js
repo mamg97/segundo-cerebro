@@ -72,7 +72,12 @@ export function evaluateMidasWorkflowRuns(runs, now = Date.now()) {
     }
 
     const running = cycle.find((run) => run.status !== "completed");
-    if (running) return { name: spec.name, ok: true, state: "running", latest: running, attempts: cycle.length };
+    // The latest required schedule is already past its grace deadline.
+    // A queued/in-progress backup is not proof of a completed economic cycle.
+    // Keep it visible as pending but fail the audit until a run succeeds.
+    if (running) return { name: spec.name, ok: false, state: "overdue_running",
+      latest: running, attempts: cycle.length,
+      detail: "ventana exigible vencida; ningún intento ha terminado correctamente" };
 
     return { name: spec.name, ok: false, state: "failed", latest,
       attempts: cycle.length,
