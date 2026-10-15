@@ -1890,6 +1890,13 @@ try {
       /(?:\?|&)v=[a-f0-9]{16}(?:&|$)/.test(css);
   });
   assertCheck(freshEntrypoints, "Home · frontend nuevo usa versiones JS/CSS por contenido");
+  const freshnessGuardReady = await page.evaluate(() => {
+    const src = document.querySelector('script[type="module"][src*="app.js"]')?.getAttribute("src") || "";
+    const match = src.match(/[?&]v=([0-9a-f]{16})(?:&|$)/);
+    return Boolean(match && document.documentElement.dataset.privateFrontendRevision === match[1]);
+  });
+  assertCheck(freshnessGuardReady,
+    "Home · pestaña remota vigila revisiones del frontend para evitar sesiones obsoletas");
 
 
   // Compare Home against the lightweight, direct Google Sheets endpoint.

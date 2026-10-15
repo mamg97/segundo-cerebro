@@ -1,4 +1,5 @@
 import "./vendor/thinking-orbs/register.js";
+import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { mockState } from "../core/mock-state.js";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
@@ -11239,4 +11240,5 @@ function escapeHtml(value) {
 }
 
 init();
+installPrivateAppFreshnessGuard();
 
