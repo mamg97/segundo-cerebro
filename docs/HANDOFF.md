@@ -1,3 +1,9 @@
+## ORGANIZADOR 20 — Invalidez de caché del módulo lazy de ingredientes (15/10/2026)
+
+- Tras #504 se invalida explícitamente el import dinámico de `recipe-products.js` (`v0.42.2`) y la entrada privada `app.js` (`v0.44.39`): así Chromium fresco y sesiones que recargan no conservan el JS previo en cachés estáticas. No cambia CSS ni datos privados. Verificar CI/despliegue y auditoría tras esta entrega; no confundir deploy con auditoría superada.
+
+---
+
 ## ORGANIZADOR 20 — Cierre comprobado de recetario y edición de acompañantes; regresiones de auditoría (15/10/2026)
 
 - Estado real verificado: PR #501, #502 y #503 fusionadas en `main` (`79c80c4d61169f5c657cb24d00f8545c7abda1e8`); CI #698, #699, #701 correctas; despliegue privado #544 correcto. La ordenación por fotografía y el filtro real por ingrediente ya están en producción. Las filas planificadas de producto/acompañante ya ofrecen Cambiar y Consumida; el selector sustituye por **receta** con nuevas raciones expresas. La edición producto→producto y la rectificación de consumos confirmados siguen fuera de este contrato y requieren trabajo independiente con Registro.
