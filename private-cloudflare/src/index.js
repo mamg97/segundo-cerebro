@@ -12,7 +12,7 @@ import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-so
 import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
-import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
+import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows, weeklyMenuConsumptionMatchKey } from "./weekly-menu.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
 import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
@@ -3293,10 +3293,10 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   );
 
   const registeredDayEntries = entries.filter((item) => item.date === date);
-  const registeredDayIds = new Set(
+  const registeredConsumptionKeys = new Set(
     registeredDayEntries
       .filter((item) => item.status === "consumido")
-      .map((item) => String(item.itemId || "").trim())
+      .map(weeklyMenuConsumptionMatchKey)
       .filter(Boolean)
   );
   const consumedMenuFallback = prepareWeeklyMenuRows(
@@ -3309,10 +3309,8 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   )
     .filter((item) => item.status === "consumido")
     .filter((item) => {
-      const identities = [item.recipeId, item.foodId]
-        .map((value) => String(value || "").trim())
-        .filter(Boolean);
-      return identities.length && !identities.some((identity) => registeredDayIds.has(identity));
+      const key = weeklyMenuConsumptionMatchKey(item);
+      return key && !registeredConsumptionKeys.has(key);
     })
     .map((item, index) => ({
       id: `menu-fallback-${index + 1}`,

@@ -50,6 +50,20 @@ export function canonicalWeeklyMenuMoment(item) {
   return raw;
 }
 
+// A matching consumption in Registro must be the same recipe/product at the
+// same eating occasion, not merely somewhere on the same date. Different meals
+// can legitimately consume the same recipe. Do not match on mutable display name.
+export function weeklyMenuConsumptionMatchKey(item) {
+  const id = normalize(item?.recipeId || item?.foodId || item?.itemId || item?.productId);
+  if (!id) return null;
+  const moment = canonicalWeeklyMenuMoment({
+    moment: item?.moment,
+    name: item?.name || item?.itemName,
+    note: item?.note
+  });
+  return [normalize(item?.date), normalize(moment), id].join("|");
+}
+
 export function weeklyMenuItemIsVisibleServer(item) {
   return !HIDDEN_STATUSES.test(normalize(item?.status));
 }

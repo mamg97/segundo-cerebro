@@ -52,13 +52,15 @@ test("health Sheet reads retry transient Google failures", () => {
 });
 
 
-test("nutrition summary can fall back to exact consumed menu identities missing from Registro", () => {
-  assert.match(source, /const registeredDayIds = new Set/);
+test("nutrition summary reconciles consumed menu identities by date, meal and ID", () => {
+  assert.match(source, /const registeredConsumptionKeys = new Set/);
   assert.match(source, /const consumedMenuFallback = prepareWeeklyMenuRows/);
   assert.match(source, /item\.status === "consumido"/);
-  assert.match(source, /\[item\.recipeId, item\.foodId\]/);
+  assert.match(source, /const key = weeklyMenuConsumptionMatchKey\(item\)/);
+  assert.match(source, /!registeredConsumptionKeys\.has\(key\)/);
   assert.match(source, /source: "menu_consumed_fallback"/);
   assert.match(source, /const dayEntries = \[\.\.\.registeredDayEntries, \.\.\.consumedMenuFallback\]/);
+  assert.doesNotMatch(source, /registeredDayIds/);
 });
 
 test("ZIP backfill never overwrites an existing HealthKit daily D1 snapshot", () => {

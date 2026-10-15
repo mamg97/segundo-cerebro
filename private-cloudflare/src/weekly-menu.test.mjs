@@ -4,7 +4,8 @@ import {
   canonicalWeeklyMenuMoment,
   dedupeWeeklyMenuRows,
   prepareWeeklyMenuRows,
-  weeklyMenuItemIsVisibleServer
+  weeklyMenuItemIsVisibleServer,
+  weeklyMenuConsumptionMatchKey
 } from "./weekly-menu.js";
 
 test("hidden menu rows never reach the UI model", () => {
@@ -274,4 +275,29 @@ test("a menu food with no Pantry match is explicit about the broken synchronizat
 
   assert.equal(row.pantryProductId, null);
   assert.equal(row.pantrySyncStatus, "missing");
+});
+
+test("Registro suppresses only the same consumed recipe at the same meal, not elsewhere that day",()=>{
+  const day="2026-10-15";
+  const registrada={date:day,moment:"Comida",itemId:"rec-a",itemName:"Receta A",status:"consumido"};
+  const same={date:day,moment:"Comida",recipeId:"rec-a",name:"Receta A",status:"consumido"};
+  const anotherMeal={date:day,moment:"Cena",recipeId:"rec-a",name:"Receta A",status:"consumido"};
+  const anotherRecipe={date:day,moment:"Comida",recipeId:"rec-b",name:"Receta B",status:"consumido"};
+  const registeredKeys=new Set([weeklyMenuConsumptionMatchKey(registrada)]);
+  const unregistered=[same,anotherMeal,anotherRecipe].filter(row=>!registeredKeys.has(weeklyMenuConsumptionMatchKey(row)));
+  assert.deepEqual(unregistered,[anotherMeal,anotherRecipe]);
+  assert.notEqual(weeklyMenuConsumptionMatchKey({...same,date:"2026-10-16"}),weeklyMenuConsumptionMatchKey(registrada));
+  assert.equal(weeklyMenuConsumptionMatchKey({date:day,moment:"Cena",name:"Sin ID"}),null);
+});
+
+test("legacy dessert and snack moments align with their canonical Registro meal",()=>{
+  const day="2026-10-15";
+  assert.equal(
+    weeklyMenuConsumptionMatchKey({date:day,moment:"Postre",note:"Con la cena",foodId:"food-x"}),
+    weeklyMenuConsumptionMatchKey({date:day,moment:"Cena",itemId:"food-x"})
+  );
+  assert.equal(
+    weeklyMenuConsumptionMatchKey({date:day,moment:"Snack",note:"Media mañana",foodId:"food-y"}),
+    weeklyMenuConsumptionMatchKey({date:day,moment:"Media mañana",itemId:"food-y"})
+  );
 });
