@@ -3152,7 +3152,20 @@ try {
             await ingredientButtons.first().click();
             const ingredientDetail = panel.locator('[data-ingredient-detail="true"]');
             await ingredientDetail.waitFor({ state: "visible", timeout: 25000 }).catch(() => {});
-            assertCheck(await ingredientDetail.isVisible().catch(() => false), "Salud · Recetas abre ficha del alimento");
+            const ingredientDetailVisible = await ingredientDetail.isVisible().catch(() => false);
+            if (!ingredientDetailVisible) {
+              const category = await panel.evaluate((node) => {
+                if (node?.dataset?.ingredientPantryState === "module-error") return "MODULE_ERROR";
+                if (node?.querySelector('[data-ingredient-back] [role="status"]')) return "PANTRY_PENDING";
+                if (node?.querySelector('[data-ingredient-back]')) return "INGREDIENT_VIEW_INCOMPLETE";
+                if (node?.querySelector('[data-recipe-open]')) return "CATALOG_REPLACED";
+                if (node?.querySelector('.recipe-detail-card')) return "RECIPE_DETAIL_STILL_OPEN";
+                return "UNKNOWN_VIEW";
+              }).catch(() => "DOM_READ_FAILED");
+              // Fixed diagnostic categories only: no names, IDs or URLs.
+              console.error("[RECIPE_INGREDIENT_DIAG] " + category);
+            }
+            assertCheck(ingredientDetailVisible, "Salud · Recetas abre ficha del alimento");
             const pantryState = await panel.getAttribute("data-ingredient-pantry-state");
             if (pantryState === "fallback" || pantryState === "loading") {
               // Closed diagnostic vocabulary; never log ingredient names, IDs or URLs.
