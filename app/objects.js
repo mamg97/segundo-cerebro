@@ -1,6 +1,10 @@
 const TABS = [["summary","Resumen"],["inventory","Inventario"],["wardrobe","Armario visual"],["builder","Combinador"],["looks","Looks"],["kits","Kits"],["lists","Listas"]];
 let activeTab = "summary";
 let objectsFlash = "";
+let objectsViewMemory = null;
+let objectsOpenRevision = 0;
+// Dependency supplied by the SPA so pure view/unit tests remain import-free.
+export function configureObjectsViewMemory(memory) { objectsViewMemory = memory; }
 
 function e(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;" }[c]));
@@ -575,7 +579,9 @@ function bind(payload) {
       if(!fresh.ok)throw new Error("OBJECTS_REFRESH_"+fresh.status);
       objectsFlash="Look guardado en la fuente canónica.";
       activeTab="looks";
-      renderWorkspace(await fresh.json());
+      const updated = await fresh.json();
+      objectsViewMemory?.remember(updated); // The canonical mutation invalidates older reads.
+      renderWorkspace(updated);
     }catch(error){
       console.warn("Look save failed",error);
       if(message)message.textContent="No se ha podido guardar el look. Revisa la combinación y reintenta.";
@@ -594,23 +600,49 @@ function renderWorkspace(payload) {
 export async function openObjectsDetail(initialTab = "summary") {
   const dialog=document.querySelector("#detail-dialog");
   if(!dialog)return;
+  const revision=++objectsOpenRevision;
+  const validTabs=new Set(TABS.map(([id])=>id));
+  activeTab=validTabs.has(initialTab)?initialTab:"summary";
+  objectsFlash="";
   dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog","budget-dialog","parents-dialog","electricity-dialog","pantry-dialog");
   dialog.classList.add("objects-dialog", "projects-dialog");
   document.querySelector("#dialog-context").textContent="Objetos · estado privado";
   document.querySelector("#dialog-title").textContent="Objetos";
-  document.querySelector("#dialog-body").innerHTML='<p class="objects-loading">Cargando inventario…</p>';
+  const cached=objectsViewMemory?.peek() || null;
+  if(cached) renderWorkspace(cached);
+  else document.querySelector("#dialog-body").innerHTML='<p class="objects-loading">Cargando inventario…</p>';
   if(!dialog.open)dialog.showModal();
+  const stillHere=()=>revision===objectsOpenRevision && dialog.open &&
+    dialog.classList.contains("objects-dialog") && document.querySelector("#dialog-title")?.textContent==="Objetos";
   try {
-    const response=await fetch("/api/objects",{headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"});
-    if(!response.ok)throw new Error("OBJECTS_"+response.status);
-    const validTabs = new Set(TABS.map(([id]) => id));
-    activeTab = validTabs.has(initialTab) ? initialTab : "summary";
-    objectsFlash="";
-    renderWorkspace(await response.json());
+    const read=async()=>{
+      const response=await fetch("/api/objects",{headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"});
+      if(!response.ok)throw new Error("OBJECTS_"+response.status);
+      return response.json();
+    };
+    const result=objectsViewMemory ? await objectsViewMemory.refresh(read)
+      : {status:"updated",value:await read(),changed:true};
+    if(!stillHere())return;
+    if(result.value){
+      // Do not erase a detail card, ongoing builder edit or scroll for a
+      // background refresh. New data will be used at the next workspace entry.
+      const workspace=document.querySelector("#dialog-body .objects-shell");
+      if(!cached || result.changed && workspace && activeTab!=="builder" &&
+          !workspace.contains(document.activeElement)) {
+        renderWorkspace(result.value);
+      }
+      if(result.status==="stale") {
+        const badge=document.querySelector("#dialog-body .objects-source-state");
+        if(badge) { badge.textContent="Última vista disponible · sincronización pendiente"; badge.classList.add("pending"); }
+      }
+      return;
+    }
+    throw new Error("OBJECTS_READ_UNAVAILABLE");
   } catch(error) {
+    if(!stillHere())return;
     console.warn("Objects load failed",error);
+    if(cached)return; // Never replace the last valid workspace with a blank card.
     document.querySelector("#dialog-body").innerHTML='<div class="objects-empty"><strong>Objetos no disponible</strong><p>No se ha podido leer la capa privada. El resto del dashboard sigue operativo.</p><button id="objects-retry" type="button">Reintentar</button></div>';
-    document.querySelector("#objects-retry")?.addEventListener("click",openObjectsDetail);
+    document.querySelector("#objects-retry")?.addEventListener("click",()=>openObjectsDetail(initialTab));
   }
 }
-
