@@ -574,3 +574,13 @@ Motivo: la carrera profesional necesita continuidad estructurada y comparación 
 - **Pipeline de medios:** conservar original canónico en Drive y preparar, por `recipe_id`, una derivada 16:9 completa en `RecipeMedia`. Las vistas previas ausentes o con datos técnicos incompletos se auditan y normalizan sin eliminar originales ni modificar macros/consumos.
 - **Verificación:** pruebas de geometría desktop/móvil con fotografías de relaciones de aspecto distintas y control de la correspondencia privada de referencias; HTTP 200 y `object-fit: contain` no demuestran por sí solos que no haya recorte.
 - **Privacidad y coste:** no exponer imágenes ni datos reales en Git, no introducir servicios de pago, mantener el Worker privado existente.
+
+
+## D-055 — Progreso fotográfico de Gimnasio: archivo privado y comparativas
+
+- **Estado:** aceptada.
+- **Fecha:** 2026-10-16.
+- **Decisión:** usar la pestaña privada oculta `GymFotos` de `SEGUNDO CEREBRO - SALUD` para indexar fecha, ángulo y versión visual comprimida en chunks; conservar los originales existentes en Drive privado, sin depender de OAuth Drive media (actualmente susceptible de responder HTTP 403). No usar Git, páginas demo, URL pública, localStorage, D1 adicional ni R2.
+- **UI:** tercera vista de Salud → Gimnasio llamada `Progreso físico`, cargada bajo demanda. Para cada fecha visualizar `frente`, `diagonal` y `perfil`, permitir comparar dos series y subir/eliminar series completas. Sin inferir progreso muscular ni medidas corporales a partir de fotografías.
+- **Seguridad:** `muy_confidencial`; solo API same-origin del Worker bajo Access, chunks/Drive IDs ocultos, `Cache-Control: no-store`, codificación HTML y vista completa `object-fit: contain`.
+- **Integridad/coste:** se rechazan fechas duplicadas y vistas inválidas; los archivos nuevos se optimizan en el iPhone/Mac sin EXIF y se comprueban de nuevo en servidor. Reutiliza Sheet y OAuth existentes, coste incremental cero.
