@@ -105,3 +105,34 @@ test("every Home day receives both goals without duplicating the visible goal su
   assert.match(css, /progress\.home-weekly-menu-plan-goal::-moz-progress-bar/);
   assert.match(css, /border-right:\s*3px solid #fff/);
 });
+
+test("goal marker renders as an explicit SVG line, not an unreliable native progress border", () => {
+  const markup = context.renderHomeWeeklyMenuPlanBar("kcal", 2196, 2759, 1950);
+  assert.match(markup, /<svg class="home-weekly-menu-plan-visual"/);
+  assert.match(markup, /class="home-weekly-menu-plan-visual-expected"[^>]*width="1000"/);
+  assert.match(markup, /class="home-weekly-menu-plan-visual-actual"[^>]*width="796"/);
+  assert.match(markup, /class="home-weekly-menu-plan-visual-goal" x1="707" y1="1" x2="707" y2="99"/);
+  assert.match(markup, /vector-effect="non-scaling-stroke"/);
+  assert.match(css, /home-weekly-menu-plan-visual-goal\s*\{[^}]*stroke:\s*#fff/);
+  assert.match(css, /home-weekly-menu-plan-visual\s*\{[^}]*z-index:\s*3/);
+  assert.match(css, /home-weekly-menu-plan-value\s*\{\s*z-index:\s*4/);
+});
+
+test("a goal above plan remains visible at the right edge; a goal below plan stays inside", () => {
+  const above = context.renderHomeWeeklyMenuPlanBar("protein", 127, 164, 175);
+  assert.match(above, /home-weekly-menu-plan-visual-expected"[^>]*width="937"/);
+  assert.match(above, /class="home-weekly-menu-plan-visual-goal" x1="993"/);
+  const below = context.renderHomeWeeklyMenuPlanBar("protein", 165, 229, 175);
+  assert.match(below, /class="home-weekly-menu-plan-visual-goal" x1="764"/);
+});
+
+test("no goal means no SVG marker; incomplete days keep their partial styling", () => {
+  const absent = context.renderHomeWeeklyMenuPlanBar("kcal", 0, 100, null);
+  assert.doesNotMatch(absent, /home-weekly-menu-plan-visual-goal"/);
+  assert.match(absent, /<svg class="home-weekly-menu-plan-visual"/);
+  const incomplete = context.renderHomeWeeklyMenuPlanBar("kcal", 304, 1170, 1950, true, true);
+  assert.match(incomplete, /is-partial/);
+  assert.match(incomplete, /≥304 \/ ≥1?\.?170 kcal/);
+  assert.match(incomplete, /class="home-weekly-menu-plan-visual-goal" x1="993"/);
+  assert.match(css, /is-partial \.home-weekly-menu-plan-visual-expected/);
+});

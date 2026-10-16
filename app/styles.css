@@ -27809,3 +27809,31 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   border-radius: 0;
   box-sizing: border-box;
 }
+
+/* 2026-10-16 · Reliable Home menu targets: SVG renders the actual pixels.
+   The previous border on ::-webkit-progress-value could be present in the
+   DOM but invisible. Keep native <progress> for semantic accessibility. */
+.home-weekly-menu-plan-bar .home-weekly-menu-plan-visual {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.home-weekly-menu-plan-bar .home-weekly-menu-plan-value { z-index: 4; }
+.home-weekly-menu-plan-visual .home-weekly-menu-plan-visual-expected { fill: #85502c; }
+.home-weekly-menu-plan-visual .home-weekly-menu-plan-visual-actual { fill: #c26825; }
+.home-weekly-menu-plan-metric.protein .home-weekly-menu-plan-visual-expected { fill: #245c48; }
+.home-weekly-menu-plan-metric.protein .home-weekly-menu-plan-visual-actual { fill: #1c9466; }
+.home-weekly-menu-plan-metric.is-partial .home-weekly-menu-plan-visual-expected { fill: #475569; }
+.home-weekly-menu-plan-metric.is-partial .home-weekly-menu-plan-visual-actual { fill: #8192a9; }
+.home-weekly-menu-plan-visual .home-weekly-menu-plan-visual-goal-shadow {
+  stroke: #081525;
+  stroke-width: 7;
+}
+.home-weekly-menu-plan-visual .home-weekly-menu-plan-visual-goal {
+  stroke: #fff;
+  stroke-width: 3.5;
+}

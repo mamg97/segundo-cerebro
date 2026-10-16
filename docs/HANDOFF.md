@@ -1,3 +1,12 @@
+## ORGANIZADOR — Corrección visible de las metas en Home · 16/10/2026
+
+- Una captura posterior a PR #513 mostró que **las marcas de objetivos no eran visibles**, aunque la auditoría #464 pasó las comprobaciones de atributos `progress.value`; eso no verificaba los píxeles pintados. No declarar resuelto solo por la auditoría antigua.
+- Fix UI: cada barra del menú en Home representa sus dos rellenos con rectángulos SVG (previsto y confirmado) y su objetivo diario con **línea SVG blanca de 3,5 px con contorno oscuro**, en coordenadas proporcionadas respecto al mismo máximo absoluto. La raya del 100 % se desplaza dentro del borde recortado para que nunca desaparezca. SVG sin scripts, estilos inline, datos privados ni fuentes nuevas. HTML `progress` conserva semántica accesible y los valores previos.
+- Se añade test de geometría de SVG sobre ejemplos sintéticos, y auditoría Chromium read-only comprueba SVG visible, anchuras, x de la marca, trazo blanco y CSS computado, además del contrato de datos existente. Versiones coordinadas `app.js/styles.css 0.44.44`.
+- Validar CI, fusionar y verificar nuevo deploy y auditoría postdeploy. No cambiar estado de `Registro`, `MenuSemanal`, `Objetivos` o fotos ni introducir coste operativo.
+
+---
+
 ## GESTOR NUTRI 4 — Estado vigente de imágenes semanales (16/10/2026)
 
 - Tras corregir las cinco previews históricas recortadas, se completaron tres derivadas ausentes que sí tenían original privado. **Cobertura actual: 24 recetas con foto original, 24 entradas RecipeMedia con binario, dimensiones, SHA-256, origen y versión comprobados; 0 ausentes y 0 incompletas.** Las cifras antiguas 19/5, que aparecen más abajo, son la fotografía temporal ANTERIOR a esta reparación.

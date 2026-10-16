@@ -6027,6 +6027,13 @@ function renderHomeWeeklyMenuPlanBar(metric, consumedValue, plannedValue, goalVa
   // A single absolute axis keeps the goal visible both above and below the plan.
   // Round first, so the bar geometry and labels use the exact same amounts.
   const axisMax = Math.max(1, shownPlanned, shownConsumed, shownGoal);
+  // Native progress pseudo-element borders are unreliable as visual markers.
+  // SVG geometry is explicit, CSP-safe and uses the *same* axis as the values.
+  const xOnAxis = (amount) => Math.max(0, Math.min(1000, Math.round(amount / axisMax * 1000)));
+  const planX = xOnAxis(shownPlanned);
+  const actualX = xOnAxis(shownConsumed);
+  // Keep a target at 100% inside the clipped track so the end-cap is visible.
+  const goalX = hasGoal ? Math.max(7, Math.min(993, xOnAxis(shownGoal))) : null;
   const actualText = `${consumedIncomplete ? "≥" : ""}${shownConsumed.toLocaleString("es-ES")}`;
   const plannedText = hasPlan ? `${plannedIncomplete ? "≥" : ""}${shownPlanned.toLocaleString("es-ES")}` : "—";
   const comparison = `${actualText} / ${plannedText} ${unit}`;
@@ -6039,6 +6046,11 @@ function renderHomeWeeklyMenuPlanBar(metric, consumedValue, plannedValue, goalVa
         <progress class="home-weekly-menu-plan-expected" value="${shownPlanned}" max="${axisMax}" aria-hidden="true"></progress>
         <progress class="home-weekly-menu-plan-actual" value="${shownConsumed}" max="${axisMax}" aria-label="${escapeHtml(accessible)}" aria-valuetext="${escapeHtml(accessible)}"></progress>
         ${hasGoal ? `<progress class="home-weekly-menu-plan-goal" value="${shownGoal}" max="${axisMax}" aria-hidden="true" title="Objetivo de ${escapeHtml(label.toLowerCase())}: ${shownGoal.toLocaleString("es-ES")} ${unit}"></progress>` : ""}
+        <svg class="home-weekly-menu-plan-visual" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <rect class="home-weekly-menu-plan-visual-expected" x="0" y="0" width="${planX}" height="100"></rect>
+          <rect class="home-weekly-menu-plan-visual-actual" x="0" y="0" width="${actualX}" height="100"></rect>
+          ${hasGoal ? `<line class="home-weekly-menu-plan-visual-goal-shadow" x1="${goalX}" y1="1" x2="${goalX}" y2="99" vector-effect="non-scaling-stroke"></line><line class="home-weekly-menu-plan-visual-goal" x1="${goalX}" y1="1" x2="${goalX}" y2="99" vector-effect="non-scaling-stroke"></line>` : ""}
+        </svg>
         <b class="home-weekly-menu-plan-value" aria-hidden="true">${escapeHtml(comparison)}</b>
       </div>
       ${partial ? '<small class="home-weekly-menu-plan-partial">Subtotal conocido · datos pendientes</small>' : ""}
