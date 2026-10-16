@@ -27,34 +27,124 @@ h2{font-family:Georgia,serif;font-weight:500;font-size:clamp(37px,5vw,64px);line
 .feedback{min-height:50px;font-size:18px;line-height:1.4;font-weight:700;color:#a4f6d3}.feedback.err{color:#ffb1bd}
 .wave{display:flex;height:50px;align-items:center;gap:5px;margin:8px 0 24px}.wave span{width:7px;border-radius:9px;height:30px;background:#a4caff;animation:wave 1.5s ease-in-out infinite}.wave span:nth-child(even){height:48px;animation-delay:-.7s}.wave span:nth-child(3n){height:15px;animation-delay:-1.2s}@keyframes wave{50%{transform:scaleY(.5);opacity:.35}}
 .digits{display:flex;gap:10px;margin:18px 0 24px}.digits span{width:clamp(52px,8vw,74px);height:76px;border:1px solid #ffffff44;border-radius:14px;display:grid;place-items:center;color:var(--gold);font-size:30px;font-weight:900;background:#ffffff0a}.pad{display:grid;grid-template-columns:repeat(5,minmax(0,70px));gap:9px}.pad button{min-height:64px;background:#ffffff12;color:#fff;border:1px solid var(--line);border-radius:13px;font-size:24px;font-weight:800}.pad button:hover{background:#ffffff23}
-.ticket{padding:25px;border:1px dashed #ffcb8566;border-radius:18px;display:flex;justify-content:space-between;gap:25px;max-width:650px;margin:0 0 25px}.ticket small{display:block;color:#9ba4c1;letter-spacing:.2em;font-weight:800;margin-bottom:8px}.ticket strong{font-size:clamp(23px,3vw,34px)}.ticket .hidden{letter-spacing:.14em;color:var(--gold)}.final{font-family:Georgia,serif;font-size:clamp(55px,12vw,146px);font-weight:500;letter-spacing:-.065em;color:#ffe0a4;line-height:.98;margin:15px 0 12px;overflow-wrap:anywhere}.country{font-weight:900;letter-spacing:.16em;font-size:clamp(17px,2.5vw,28px);margin:0 0 10px}.caption{font-size:clamp(20px,2.6vw,28px);color:#e7e8f4;margin:15px 0 25px}.caption b{color:var(--gold)}.buttons{display:flex;gap:14px;flex-wrap:wrap}.city-svg{width:100%;height:clamp(115px,19vw,210px);margin:4px 0}.confetti{position:fixed;z-index:50;top:-20px;animation:fall var(--duration) linear forwards;pointer-events:none}@keyframes fall{to{transform:translate(var(--drift),110vh) rotate(900deg);opacity:0}}.reveal{font-size:23px;min-height:85px;animation:pulse 2s ease-in-out infinite}@keyframes pulse{50%{box-shadow:0 0 0 10px #ffd39312,0 20px 60px #ffc77a55}}
+.ticket{padding:25px;border:1px dashed #ffcb8566;border-radius:18px;display:flex;justify-content:space-between;gap:25px;max-width:650px;margin:0 0 25px}.ticket small{display:block;color:#9ba4c1;letter-spacing:.2em;font-weight:800;margin-bottom:8px}.ticket strong{font-size:clamp(23px,3vw,34px)}.ticket .hidden{letter-spacing:.14em;color:var(--gold)}.final{font-family:Georgia,serif;font-size:clamp(55px,12vw,146px);font-weight:500;letter-spacing:-.065em;color:#ffe0a4;line-height:.98;margin:15px 0 12px;overflow-wrap:anywhere}.country{font-weight:900;letter-spacing:.16em;font-size:clamp(17px,2.5vw,28px);margin:0 0 10px}.caption{font-size:clamp(20px,2.6vw,28px);color:#e7e8f4;margin:15px 0 25px}.caption b{color:var(--gold)}.buttons{display:flex;gap:14px;flex-wrap:wrap}.city-svg{width:100%;height:clamp(115px,19vw,210px);margin:4px 0}.confetti{position:fixed;z-index:50;top:-20px;animation:fall var(--duration) linear forwards;pointer-events:none}@keyframes fall{to{transform:translate(var(--drift),110vh) rotate(900deg);opacity:0}}.sound-help{font-size:14px;color:#ffdca5;line-height:1.55;margin:15px 0 0;max-width:690px}.hint-button{font-size:14px;padding:11px 16px;min-height:44px;margin:0 0 14px}.hint-reveal{color:#ffe3ac;line-height:1.4;margin:0 0 12px}.reveal{font-size:23px;min-height:85px;animation:pulse 2s ease-in-out infinite}@keyframes pulse{50%{box-shadow:0 0 0 10px #ffd39312,0 20px 60px #ffc77a55}}
 @media(max-width:680px){.wrap{padding:0 12px}header{padding:14px 0}.brand{font-size:10px}.top-actions .small{font-size:11px;padding:10px}.card{padding:28px 20px;border-radius:21px;min-height:calc(100svh - 132px)}main{padding:13px 0 20px}.options{grid-template-columns:1fr;gap:10px}.option{min-height:72px;flex-direction:row;align-items:center;justify-content:flex-start}.option .emoji{font-size:31px}.option .label{font-size:19px}.eyebrow{font-size:11px}.pad{grid-template-columns:repeat(5,1fr)}.pad button{min-height:55px}.ticket{padding:17px;gap:10px}footer{font-size:9px}}
 @media(max-height:740px) and (min-width:681px){.card{padding:29px 55px;min-height:calc(100svh - 126px)}.options .option{min-height:125px}h1{font-size:clamp(60px,6vw,83px)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
-</style></head><body><div class="wrap"><header><div class="brand">✦ &nbsp; ARCHIVO CONFIDENCIAL</div><div class="top-actions"><button type="button" class="small" id="audio">♫ Sonido: OFF</button><button type="button" class="small" id="fs">⛶ Ampliar</button></div></header><div class="bar"><i id="progress"></i></div><main><div class="card" id="screen" aria-live="polite"></div></main><footer><span>OPERACIÓN SECRETA · SOLO PARA VOSOTROS</span><span id="step">SIN REVELAR</span></footer></div>
+</style></head><body><div class="wrap"><header><div class="brand">✦ &nbsp; ARCHIVO CONFIDENCIAL</div><div class="top-actions"><button type="button" class="small" id="audio">🔊 ACTIVAR SONIDO</button><button type="button" class="small" id="test-audio" hidden>▶ Probar sonido</button><button type="button" class="small" id="fs">⛶ Ampliar</button></div></header><div class="bar"><i id="progress"></i></div><main><div class="card" id="screen" aria-live="polite"></div></main><footer><span>OPERACIÓN SECRETA · SOLO PARA VOSOTROS</span><span id="step">SIN REVELAR</span></footer></div>
 <script>
 (function(){
 "use strict";
 var cfg={city:"CIUDAD SECRETA",country:"DESTINO DESCONOCIDO",date:"PRÓXIMAMENTE",code:"0000"};
 try{var encoded=location.hash.match(/(?:^#|&)s=([^&]+)/);if(encoded){var obj=JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(decodeURIComponent(encoded[1])),function(c){return "%"+("0"+c.charCodeAt(0).toString(16)).slice(-2)}).join("")));["city","country","date","code"].forEach(function(k){if(typeof obj[k]==="string"&&obj[k].length<=90)cfg[k]=obj[k]})}}catch(e){}
 var screen=document.getElementById("screen"),progress=document.getElementById("progress"),step=document.getElementById("step");
-var n=0,locked=false,code="",soundOn=false,audio;
-function beep(type){if(!soundOn)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==="suspended")audio.resume();var tones=type==="final"?[392,494,587,784,988]:type==="bad"?[220,170]:[523,659];tones.forEach(function(freq,i){var o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime+i*.15;o.frequency.value=freq;o.type="sine";g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.05,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.24);o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+.25)})}catch(e){}}
+var n=0,locked=false,code="",soundOn=false,audio,musicTimer=null,musicStep=0;
+function tone(freq,offset,length,volume,kind){
+ if(!audio||audio.state!=="running"||!freq)return;
+ var t=audio.currentTime+offset,o=audio.createOscillator(),g=audio.createGain();
+ o.type=kind||"sine";o.frequency.setValueAtTime(freq,t);
+ g.gain.setValueAtTime(.00001,t);g.gain.exponentialRampToValueAtTime(Math.max(volume,.00002),t+.035);
+ g.gain.exponentialRampToValueAtTime(.00001,t+length);
+ o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+length+.04);
+}
+function beep(type){
+ if(!soundOn||!audio||audio.state!=="running")return;
+ var notes=type==="test"?[392,494,587,784,988,1175]:type==="final"?[392,494,587,784,988,1175,1568]:type==="bad"?[220,185]:type==="click"?[440]:[523,659,784];
+ notes.forEach(function(v,i){tone(v,.02+i*(type==="final"?.21:.145),type==="final"?.52:.24,type==="final"?.105:.12,type==="bad"?"triangle":"sine")});
+ if(type==="final"){tone(196,.03,2.4,.07,"triangle");tone(294,.08,2.2,.055,"sine");tone(392,.11,2.1,.04,"sine")}
+}
+function stopMusic(){if(musicTimer!==null){clearInterval(musicTimer);musicTimer=null}}
+function ambientNote(){
+ if(!soundOn||!audio||audio.state!=="running")return;
+ var notes=[196,246.94,293.66,392,329.63,293.66,246.94,164.81];
+ tone(notes[musicStep%notes.length],.02,.75,.018,"sine");
+ if(musicStep%4===0)tone(98,.02,1.2,.012,"sine");
+ musicStep++;
+}
+function startMusic(){stopMusic();musicStep=0;musicTimer=setInterval(ambientNote,1400)}
+function audioStatus(message){var e=document.getElementById("audio-status");if(e)e.textContent=message}
+
 function draw(content){screen.innerHTML='<div class="fx">'+content+'</div>'}
 function btn(id,label,cls){return '<button type="button" class="'+(cls||"btn")+'" data-action="'+id+'">'+label+'</button>'}
-function choices(title,question,hint,items,good,extra){draw('<p class="eyebrow">'+title+'</p><h2>'+question+'</h2><p class="lede">'+hint+'</p>'+(extra||"")+'<div class="options" id="options"></div><div id="feedback" class="feedback"></div><div id="continue"></div>');var el=document.getElementById("options");items.forEach(function(x,i){var b=document.createElement("button");b.type="button";b.className="option";b.innerHTML='<span class="emoji">'+x[0]+'</span><span class="label">'+x[1]+'</span>';b.addEventListener("click",function(){if(locked)return;if(i===good){locked=true;b.classList.add("ok");el.querySelectorAll("button").forEach(function(q){q.disabled=true});document.getElementById("feedback").textContent="✓ "+x[2];document.getElementById("continue").innerHTML=btn("next","CONTINUAR →");beep("ok")}else{b.classList.add("wrong");var f=document.getElementById("feedback");f.textContent="✗ Casi. Prueba otra opción.";f.classList.add("err");beep("bad")}});el.appendChild(b)})}
+function choices(title,question,hint,items,good,extra,help){
+ draw('<p class="eyebrow">'+title+'</p><h2>'+question+'</h2><p class="lede">'+hint+'</p>'+(extra||"")+'<div class="options" id="options"></div><div id="feedback" class="feedback"></div><div id="continue"></div>'+(help?'<button type="button" class="small hint-button" id="hint-button">¿Necesitas una pista?</button><p class="hint-reveal" id="hint-text" hidden></p>':""));
+ var el=document.getElementById("options");
+ items.forEach(function(x,i){
+  var b=document.createElement("button");b.type="button";b.className="option";b.innerHTML='<span class="emoji">'+x[0]+'</span><span class="label">'+x[1]+'</span>';
+  b.addEventListener("click",function(){
+   if(locked)return;
+   var f=document.getElementById("feedback");
+   if(i===good){locked=true;b.classList.add("ok");el.querySelectorAll("button").forEach(function(q){q.disabled=true});
+     f.classList.remove("err");f.textContent="✓ "+x[2];document.getElementById("continue").innerHTML=btn("next","CONTINUAR →");beep("ok")}
+   else{b.classList.add("wrong");f.textContent="✗ Esa no es la respuesta. Puedes intentar otra opción o pedir una pista.";f.classList.add("err");beep("bad")}
+  });el.appendChild(b)
+ });
+ var h=document.getElementById("hint-button");if(h)h.onclick=function(){document.getElementById("hint-text").textContent=help;document.getElementById("hint-text").hidden=false;h.hidden=true;beep("click")};
+}
+
 function skyline(){return '<svg class="city-svg" viewBox="0 0 1000 220" role="img" aria-label="Silueta ilustrada de una gran ciudad"><g stroke="#c8b18c" stroke-width="2.3" fill="none" opacity=".78"><path d="M0 207H1000M30 207V158H73V140H93V158H126V207M147 207V108H178V87H199V108H228V207M250 207V150H289V123H319V150H349V207M370 207V102H395V74H420V45H447V74H474V102H500V207M392 131H480M392 162H480M392 187H480M434 45V17M410 29H457M523 207V135H552V108H583V135H613V207M628 207V90H660V58H682V31H706V58H727V90H758V207M648 119H742M648 155H742M648 188H742M692 31V11M779 207V145H809V126H841V145H866V207M883 207V132H908V108H941V132H967V207"/></g><circle cx="220" cy="33" r="2" fill="#c7d9f7"/><circle cx="825" cy="37" r="2" fill="#c7d9f7"/></svg>'}
 function confetti(){var colors=["#ffe3a9","#ff9aac","#a6d9ff","#b5f9d9","#e0ccff"];for(var i=0;i<110;i++){var e=document.createElement("i");e.className="confetti";e.style.left=Math.random()*100+"vw";e.style.width=5+Math.random()*8+"px";e.style.height=6+Math.random()*11+"px";e.style.background=colors[i%5];e.style.setProperty("--duration",3+Math.random()*4+"s");e.style.setProperty("--drift",((Math.random()-.5)*240)+"px");e.style.animationDelay=Math.random()+"s";document.body.appendChild(e);setTimeout((function(node){return function(){node.remove()}})(e),8500)}}
-function render(){locked=false;progress.style.width=(n===6?100:Math.max(0,(n-1)*25))+"%";step.textContent=n===6?"MISIÓN CUMPLIDA":n===0?"0 / 5 · SIN REVELAR":Math.min(n,5)+" / 5 · SIN REVELAR";
-if(n===0){draw('<div class="badge">✦ ACCESO RESTRINGIDO · UNA SOLA PERSONA</div><h1>Hay regalos que<br><em>no caben</em><br>en una caja.</h1><p class="lede">Una aventura está escondida tras este expediente. Supera cuatro pruebas para descubrir el destino de vuestro próximo recuerdo.</p>'+btn("next","ACEPTAR LA MISIÓN →")+'<p class="note">Sin prisas. El destino solo se revelará al final.</p>')}
-if(n===1){choices("PRUEBA 01 · EQUIPAJE","¿Qué meterías en la maleta?","Vamos a descubrir un lugar al que conviene viajar bien abrigado.",[["🧥","Un buen abrigo","La primera pista está a salvo. Haremos una escapada de clima frío."],["🩴","Chanclas"],["🩳","Bañador"]],0)}
-if(n===2){choices("PRUEBA 02 · RADIO INTERCEPTADA","¿Qué significa «Dzień dobry»?","El expediente contiene una frase que tendremos que aprender.",[["👋","Buenos días","Muy bien. Ya sabes saludar en el idioma del lugar."],["🍰","Feliz cumpleaños"],["🌙","Buenas noches"]],0,'<div class="wave" aria-hidden="true">'+Array(24).fill("<span></span>").join("")+"</div>")}
-if(n===3){choices("PRUEBA 03 · DIVISA","¿Qué moneda usan allí?","Te doy tres opciones. Una te llevará al país correcto.",[["€","Euro"],["zł","Złoty","Correcto. ¡El país es "+cfg.country+"! Pero falta la ciudad."],["kr","Corona"]],1)}
-if(n===4){code="";draw('<p class="eyebrow">PRUEBA 04 · CANDADO FINAL</p><h2>La fecha abre la puerta.</h2><p class="lede">La salida está marcada para el <strong style="color:var(--gold)"><span id="datehint"></span></strong>. Introduce el día y el mes: <strong>DDMM</strong>.</p><div class="digits" id="digits"><span>—</span><span>—</span><span>—</span><span>—</span></div><div class="pad" id="pad"></div><p class="feedback" id="feedback"></p><div id="continue"></div>');document.getElementById("datehint").textContent=cfg.code.slice(0,2)+"/"+cfg.code.slice(2,4);var pad=document.getElementById("pad");[1,2,3,4,5,6,7,8,9,0].forEach(function(k){var b=document.createElement("button");b.textContent=k;b.addEventListener("click",function(){if(locked||code.length===4)return;code+=String(k);document.querySelectorAll("#digits span").forEach(function(a,i){a.textContent=code[i]||"—"});if(code.length===4){var f=document.getElementById("feedback");if(code===cfg.code){locked=true;f.textContent="✓ ACCESO AUTORIZADO";document.getElementById("continue").innerHTML=btn("next","ABRIR EL EXPEDIENTE →");beep("ok")}else{f.textContent="✗ Código incorrecto, prueba de nuevo.";f.classList.add("err");beep("bad");setTimeout(function(){if(n===4&&!locked){code="";document.querySelectorAll("#digits span").forEach(function(a){a.textContent="—"})}},700)}}});pad.appendChild(b)})}
-if(n===5){draw('<p class="eyebrow">EXPEDIENTE RECUPERADO · ÚLTIMA FASE</p><h1>Ya sabemos<br><em>el país.</em><br>Falta la ciudad.</h1><div class="ticket"><div><small>PASAJEROS</small><strong>DOS ♡</strong></div><div><small>DESTINO</small><strong class="hidden">●●●●●●●</strong></div></div><p class="lede">El secreto está listo para abrirse. La siguiente pulsación lo cambiará todo.</p>'+btn("reveal","✦ REVELAR DESTINO ✦","btn reveal")+'<p class="note">La ciudad permanece oculta hasta que decidas revelar la sorpresa.</p>')}
-if(n===6){draw('<div class="eyebrow">✦ MISIÓN CUMPLIDA ✦</div><div class="final" id="city"></div><div class="country" id="country"></div>'+skyline()+'<p class="caption">Dos billetes. <b>Una historia nueva juntos.</b></p><div class="buttons">'+btn("celebrate","🎉 ¡A CELEBRAR!")+btn("restart","↻ Volver a jugar","btn secondary")+"</div>");document.getElementById("city").textContent=cfg.city;document.getElementById("country").textContent=cfg.country+" · "+cfg.date;beep("final");confetti()}}
-screen.addEventListener("click",function(e){var b=e.target.closest("[data-action]");if(!b)return;var a=b.getAttribute("data-action");if(a==="next"||a==="reveal"){n=Math.min(6,n+1);render()}else if(a==="restart"){n=0;render()}else if(a==="celebrate"){beep("final");confetti()}});
-document.getElementById("audio").onclick=function(){soundOn=!soundOn;this.textContent="♫ Sonido: "+(soundOn?"ON":"OFF");if(soundOn)beep("ok")};
+function render(){
+ locked=false;
+ progress.style.width=(n===7?100:Math.max(0,(n-1)*20))+"%";
+ step.textContent=n===7?"MISIÓN CUMPLIDA":n===0?"0 / 5 · SIN REVELAR":Math.min(n,5)+" / 5 · SIN REVELAR";
+ if(n===0)draw('<div class="badge">✦ ACCESO RESTRINGIDO · UNA SOLA PERSONA</div><h1>Hay regalos que<br><em>no caben</em><br>en una caja.</h1><p class="lede">Cinco desafíos, un expediente secreto y un destino que aún no conoces. La misión comienza ahora.</p>'+btn("next","ACEPTAR LA MISIÓN →")+'<p class="sound-help" id="audio-status">🔊 El sonido no arranca automáticamente en iPad. Pulsa «ACTIVAR SONIDO» arriba: oirás seis notas de prueba.</p>');
+ if(n===1)choices("PRUEBA 01 · COORDENADAS CIFRADAS","52°13′ N · 21°00′ E","El transmisor ha captado estas coordenadas. ¿Qué afirmación puede deducirse con certeza de los números y las letras?",[
+   ["🌍","Hemisferios norte y oriental","Exacto. Estamos en el hemisferio norte y al este de Greenwich."],
+   ["🧭","Hemisferios norte y occidental"],
+   ["☀️","Hemisferios sur y oriental"]
+ ],0,"","N indica latitud norte; E es «East», es decir, longitud este.");
+ if(n===2)choices("PRUEBA 02 · MENSAJE EN CLAVE","«Dziękuję»","Un extraño te entrega un regalo y pronuncia esta palabra del país secreto. ¿Qué acaba de decir?",[
+   ["🤝","Por favor"],
+   ["💛","Gracias","Has descifrado la palabra polaca para dar las gracias."],
+   ["👋","Hasta mañana"]
+ ],1,'<div class="wave" aria-hidden="true">'+Array(24).fill("<span></span>").join("")+"</div>","No es una despedida ni una petición. Es algo que se responde a un regalo.");
+ if(n===3)choices("PRUEBA 03 · EL JUSTIFICANTE","¿Qué moneda es «PLN»?","Un recibo anónimo indica 120 PLN. Necesitamos identificar la divisa para continuar.",[
+   ["₣","Forinto"],
+   ["Kč","Corona checa"],
+   ["zł","Złoty","Correcto: es el złoty. Eso sitúa nuestra investigación en "+cfg.country+"."]
+ ],2,"","El país del destino limita con Alemania, Lituania y Ucrania.");
+ if(n===4)choices("PRUEBA 04 · EL ARCHIVO HISTÓRICO","Dos Nobel, dos ciencias.","Una científica nacida en el país del destino recibió los Nobel de Física (1903) y Química (1911). ¿De quién hablamos?",[
+   ["🔬","Marie Curie","Exacto. La científica nació en el territorio de la actual "+cfg.country+"."],
+   ["⚡","Albert Einstein"],
+   ["🧬","Rosalind Franklin"]
+ ],0,"","Su apellido de soltera era Skłodowska. Trabajó con el radio y el polonio.");
+ if(n===5){
+  code="";
+  draw('<p class="eyebrow">PRUEBA 05 · CANDADO FINAL</p><h2>La fecha abre la puerta.</h2><p class="lede">En el expediente aparece <strong style="color:var(--gold)" id="datehint"></strong>. El sistema exige cuatro cifras en el orden <strong>MES → DÍA (MMDD)</strong>. ¿Cuál es la combinación?</p><div class="digits" id="digits"><span>—</span><span>—</span><span>—</span><span>—</span></div><div class="pad" id="pad"></div><p class="feedback" id="feedback"></p><div id="continue"></div>');
+  document.getElementById("datehint").textContent=cfg.code.slice(0,2)+"/"+cfg.code.slice(2,4);
+  var expected=cfg.code.slice(2,4)+cfg.code.slice(0,2),pad=document.getElementById("pad");
+  [1,2,3,4,5,6,7,8,9,0].forEach(function(k){
+   var b=document.createElement("button");b.type="button";b.textContent=k;
+   b.addEventListener("click",function(){
+    if(locked||code.length===4)return;code+=String(k);beep("click");
+    document.querySelectorAll("#digits span").forEach(function(a,i){a.textContent=code[i]||"—"});
+    if(code.length===4){var f=document.getElementById("feedback");if(code===expected){locked=true;f.classList.remove("err");f.textContent="✓ ACCESO AUTORIZADO";document.getElementById("continue").innerHTML=btn("next","ABRIR EL EXPEDIENTE →");beep("ok")}
+     else{f.textContent="✗ Código incorrecto. Fíjate en el orden MMDD.";f.classList.add("err");beep("bad");
+      setTimeout(function(){if(n===5&&!locked){code="";document.querySelectorAll("#digits span").forEach(function(a){a.textContent="—"})}},750)}}});
+   pad.appendChild(b);
+  });
+ }
+ if(n===6)draw('<p class="eyebrow">EXPEDIENTE RECUPERADO · ÚLTIMA FASE</p><h1>Ya sabemos<br><em>el país.</em><br>Falta la ciudad.</h1><div class="ticket"><div><small>PASAJEROS</small><strong>DOS ♡</strong></div><div><small>DESTINO</small><strong class="hidden">●●●●●●●</strong></div></div><p class="lede">Cinco pruebas superadas. La misión está completa; ahora solo falta abrir el sobre.</p>'+btn("reveal","✦ REVELAR DESTINO ✦","btn reveal")+'<p class="note">Esta es la última pantalla antes de revelar la ciudad.</p>');
+ if(n===7){stopMusic();draw('<div class="eyebrow">✦ MISIÓN CUMPLIDA ✦</div><div class="final" id="city"></div><div class="country" id="country"></div>'+skyline()+'<p class="caption">Dos billetes. <b>Una historia nueva juntos.</b></p><div class="buttons">'+btn("celebrate","🎉 ¡A CELEBRAR!")+btn("restart","↻ Volver a jugar","btn secondary")+"</div>");document.getElementById("city").textContent=cfg.city;document.getElementById("country").textContent=cfg.country+" · "+cfg.date;beep("final");confetti()}
+}
+
+screen.addEventListener("click",function(e){var b=e.target.closest("[data-action]");if(!b)return;var a=b.getAttribute("data-action");if(a==="next"||a==="reveal"){n=Math.min(7,n+1);beep("click");render()}else if(a==="restart"){n=0;render()}else if(a==="celebrate"){beep("final");confetti()}});
+document.getElementById("audio").onclick=async function(){
+ var control=this,test=document.getElementById("test-audio");
+ if(soundOn){soundOn=false;stopMusic();control.textContent="🔊 ACTIVAR SONIDO";test.hidden=true;audioStatus("🔇 Sonido desactivado. Pulsa ACTIVAR SONIDO para escucharlo.");return}
+ try{
+  var AudioClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioClass)throw new Error("Web Audio no disponible");
+  audio=audio||new AudioClass();await audio.resume();
+  if(audio.state!=="running")throw new Error("Audio bloqueado por Safari");
+  soundOn=true;control.textContent="🔊 SONIDO ON";test.hidden=false;
+  audioStatus("✅ ¡Audio activado! Deberías haber escuchado seis notas. Si no se oyen en la TV, revisa su volumen y la salida AirPlay.");
+  beep("test");startMusic();
+ }catch(error){soundOn=false;control.textContent="🔊 REINTENTAR SONIDO";test.hidden=true;audioStatus("⚠️ Safari ha bloqueado el sonido. Toca de nuevo ACTIVAR SONIDO y comprueba volumen y salida de audio del iPad.");}
+};
+document.getElementById("test-audio").onclick=function(){beep("test");audioStatus("🎵 Reproduciendo seis notas de prueba. Si no las oyes, sube el volumen de la TV y revisa AirPlay.")};
+
 document.getElementById("fs").onclick=function(){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(function(){});else this.textContent="Usa Safari a pantalla completa"};
 render()})();
 </script></body></html>
