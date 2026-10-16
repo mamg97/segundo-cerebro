@@ -41,16 +41,17 @@ export function gymMonthCalendarModel(sessions = [], plan = [], today = new Date
   const offset = (new Date(year, monthIndex, 1).getDay() + 6) % 7; // Monday first.
   const planById = new Map((Array.isArray(plan) ? plan : []).map((day) => [String(day.id), day]));
   const byDate = new Map();
+  const todayKey = year + "-" + pad(monthIndex + 1) + "-" + pad(current.getDate());
 
   for (const session of Array.isArray(sessions) ? sessions : []) {
-    if (!actualGymSession(session) || !session.sessionDate.startsWith(prefix + "-")) continue;
+    if (!actualGymSession(session) || !session.sessionDate.startsWith(prefix + "-") ||
+        session.sessionDate > todayKey) continue;
     const labels = byDate.get(session.sessionDate) || [];
     const label = gymMuscleLabel(session, planById);
     if (!labels.includes(label)) labels.push(label);
     byDate.set(session.sessionDate, labels);
   }
 
-  const todayKey = current.getFullYear() + "-" + pad(current.getMonth() + 1) + "-" + pad(current.getDate());
   const days = Array.from({ length: monthDays }, (_, index) => {
     const day = index + 1;
     const key = prefix + "-" + pad(day);
@@ -62,7 +63,8 @@ export function gymMonthCalendarModel(sessions = [], plan = [], today = new Date
     days,
     trainedDays: byDate.size,
     sessionCount: (Array.isArray(sessions) ? sessions : []).filter((session) =>
-      actualGymSession(session) && session.sessionDate.startsWith(prefix + "-")).length
+      actualGymSession(session) && session.sessionDate.startsWith(prefix + "-") &&
+      session.sessionDate <= todayKey).length
   };
 }
 
