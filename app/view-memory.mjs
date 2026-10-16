@@ -68,7 +68,7 @@ export function createPayloadViewMemory({ freshForMs = 5 * 60_000, clock = () =>
   function isFresh() { return value !== null && loadedAt !== null && clock() - loadedAt < freshForMs; }
   function invalidate() { loadedAt = null; generation++; }
   function remember(next) {
-    if (!next || typeof next !== "object" || next.ok === false) throw new Error("INVALID_VIEW_RESPONSE");
+    if (!next || typeof next !== "object" || next.ok === false || next.status === "error" || next.source?.available === false) throw new Error("INVALID_VIEW_RESPONSE");
     const text = JSON.stringify(next);
     const changed = text !== signature;
     value = next;
