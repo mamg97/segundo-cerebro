@@ -1,3 +1,12 @@
+## PSICOHISTORIA — laboratorio de investigación v0.1 (16/10/2026)
+
+- Fuente canónica privada `SEGUNDO CEREBRO - PROYECTOS`: ficha padre + cuatro hijas, documentación y relaciones; nuevas pestañas `PsicoHitos`, `PsicoKPIs`, `PsicoExperimentos`, `PsicoPredicciones`, con 21 hitos de inicio, KPIs científicos nulos (sin evidencia) y cero pronósticos/experimentos.
+- Código propuesto en PR #531: `/app/research-lab.html`, `GET /api/research-lab`, lectura bajo demanda desde el mismo Sheet, anillos por hitos, filtro de vertiente, KPIs, evaluación prospectiva con Brier pareado, calibración y registros. No añade cron, D1 ni gasto. Existe test sintético de scoring.
+- Documento canónico `docs/PSYCHOHISTORY.md`: hipótesis falsable, 4 vertientes, umbral de evidencia y roadmap. Las tasas de precisión científica y resultados predictivos deben mostrarse `SIN DATOS` hasta ejecución real; la madurez 0–5 no indica skill.
+- **Pendiente antes de afirmar publicación:** CI de PR #531, fusión, deploy privado, vincular `web_url` y `docs_url` en el Sheet padre, verificar redirección/login y carga real de `/api/research-lab` desde navegador autenticado. El registro de predicciones es editable: bloquear afirmaciones de validación prospectiva hasta sellado auditable.
+
+---
+
 ## ORGANIZADOR 21 — Gimnasio · Progreso físico fotográfico privado (16/10/2026)
 
 - Nueva pestaña **Progreso físico** dentro de `Salud → Gimnasio`. Galería de series por fecha, tres vistas (frente / diagonal / perfil), comparador de dos fechas, subida multipart de tres fotos y eliminación confirmada. Carga solo bajo demanda, `object-fit: contain` en móvil y escritorio.

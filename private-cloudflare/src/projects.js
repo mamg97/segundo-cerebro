@@ -120,3 +120,68 @@ export async function fetchProjectsSummary(env,getGoogleAccessToken){
   cache.value=value; cache.expiresAt=Date.now()+CACHE_MS;
   return {status:"ok-live",value};
 }
+
+
+// Laboratorio de investigación: lectura privada bajo demanda de tablas canónicas.
+// No se generan scores inexistentes ni se copian registros reales al repositorio.
+let labCache = { value:null, expiresAt:0 };
+export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
+  if (!hasProjectsGoogleConfig(env)) {
+    return { status:"not-configured", milestones:[], kpis:[], experiments:[], predictions:[] };
+  }
+  if (labCache.value && labCache.expiresAt > Date.now()) {
+    return { ...labCache.value, status:"ok-cache" };
+  }
+  const token = await getGoogleAccessToken(env);
+  const id = await resolveId(env, token);
+  if (!id) return { status:"source-pending", milestones:[], kpis:[], experiments:[], predictions:[] };
+  const ranges = [
+    "PsicoHitos!A1:J300",
+    "PsicoKPIs!A1:K300",
+    "PsicoExperimentos!A1:L300",
+    "PsicoPredicciones!A1:M300"
+  ];
+  const sets = await sheetsBatchGet(id, ranges, token);
+  const [milestones, kpis, experiments, predictions] = sets.map((s) => table(s?.values || []));
+  const safeNumber = (v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const result = {
+    status:"ok-live",
+    milestones:milestones.filter(x=>x.hito_id && /^V[1-4]$/.test(x.vertiente)).map(x=>({
+      id:String(x.hito_id), track:String(x.vertiente), title:String(x.titulo||""),
+      phase:String(x.fase||""), status:String(x.estado||"PENDIENTE"),
+      criteria:String(x.criterio_aceptacion||""), evidence:cleanUrl(x.evidencia_url),
+      priority:String(x.prioridad||""), order:safeNumber(x.orden),
+      updatedAt:x.updated_at||null
+    })),
+    kpis:kpis.filter(x=>x.kpi_id && /^V[1-4]$/.test(x.vertiente)).map(x=>({
+      id:String(x.kpi_id),track:String(x.vertiente),name:String(x.nombre||""),
+      category:String(x.categoria||""),unit:String(x.unidad||""),
+      direction:String(x.direccion||""), value:safeNumber(x.valor),
+      reference:safeNumber(x.referencia),status:String(x.estado||"SIN_DATOS"),
+      asOf:x.fecha||null, definition:String(x.definicion||"")
+    })),
+    experiments:experiments.filter(x=>x.experimento_id && /^V[1-4]$/.test(x.vertiente)).map(x=>({
+      id:String(x.experimento_id),track:String(x.vertiente),hypothesis:String(x.hipotesis||""),
+      datasetVersion:String(x.dataset_version||""), modelVersion:String(x.modelo_version||""),
+      metric:String(x.metrica||""),value:safeNumber(x.valor),
+      baseline:safeNumber(x.baseline), date:x.fecha||null,
+      status:String(x.estado||"PENDIENTE"),evidence:cleanUrl(x.evidencia_url),
+      notes:String(x.notas||"")
+    })),
+    predictions:predictions.filter(x=>x.prediccion_id && /^V[1-4]$/.test(x.vertiente)).map(x=>({
+      id:String(x.prediccion_id),track:String(x.vertiente),
+      phenomenon:String(x.fenomeno||""),region:String(x.region||""),
+      horizon:String(x.horizonte||""),issuedAt:x.fecha_emision||null,
+      resolutionAt:x.fecha_resolucion||null,
+      probability:safeNumber(x.probabilidad), outcome:safeNumber(x.resultado),
+      status:String(x.estado||"PENDIENTE"),modelVersion:String(x.modelo_version||""),
+      asOf:x.as_of||null,baselineProbability:safeNumber(x.baseline_prob)
+    }))
+  };
+  labCache = { value:result, expiresAt:Date.now()+30_000 };
+  return result;
+}

@@ -584,3 +584,11 @@ La galería `Salud → Gimnasio → Progreso físico` usa **únicamente** la pes
 - `GET /api/gym/photos/:fecha/:vista/image` busca la fila y lee sus veinte chunks H:AA del Sheet; nunca envía al navegador el ID de Drive ni los chunks base64. Las imágenes se entregan con `Cache-Control: no-store` y cabeceras de seguridad.
 - `POST /api/gym/photos` acepta exclusivamente un trío de archivos WebP sin metadatos EXIF, XMP ni ICC, comprimidos por canvas en el dispositivo a máximo 450 KB cada uno. Rechaza duplicar una fecha y escribe las tres filas en una llamada Sheets append. `DELETE /api/gym/photos/:fecha` vacía únicamente las filas de esa serie. No borra los originales archivados en Drive.
 - La pestaña carga al seleccionarse y no interviene en `/api/state` ni en `/api/gym`; no hay cron, D1/R2 adicional ni pagos. Las imágenes se muestran sin recortes mediante `object-fit: contain`.
+
+
+## Psicohistoria — laboratorio científico privado
+
+El proyecto es un hijo operativo de Proyectos, no un área lateral independiente. El Sheet canónico `SEGUNDO CEREBRO - PROYECTOS` incluye las pestañas `PsicoHitos`, `PsicoKPIs`, `PsicoExperimentos` y `PsicoPredicciones`; la API privada `GET /api/research-lab` devuelve sus filas filtradas y los scores prospectivos derivados, sin persistir resultados paralelos. La vista `/app/research-lab.html` se sirve con la misma Cloudflare Access y lee además `/api/projects` para títulos, estados y resumen. No añade polling, D1, credenciales, costes ni assets privados a Git.
+
+El scoring prospectivo excluye predicciones sin fecha de emisión anterior al resultado, sin `as_of` válido cuando existe, con probabilidades fuera de rango, con etiqueta no binaria o no marcadas `RESUELTA`. Brier Skill se calcula únicamente con predicciones que también contienen probabilidad de baseline válida: comparar poblaciones distintas invalida la métrica. Se exige registrar futuras emisiones de forma inmutable y verificable antes de declarar que existe forecasting prospectivo real. Hitos terminados y madurez son métricas de proyecto, **no** de eficacia científica. Fuente metodológica: `docs/PSYCHOHISTORY.md`.
+

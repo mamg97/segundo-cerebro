@@ -15,7 +15,8 @@ import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows, weeklyMenuConsumptionMatchKey } from "./weekly-menu.js";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
-import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
+import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
+import { prospectiveSummary } from "./research-evaluation.js";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { readVision, saveVision, recordVisionReplacement } from "./vision.js";
@@ -5827,6 +5828,17 @@ export default {
         if (code === "OBJECTS_NOT_CONFIGURED" || code === "OBJECTS_SOURCE_PENDING") return json({ ok: false, code }, 503);
         console.warn("Objects look write failed", code);
         return json({ ok: false, code: "OBJECTS_LOOK_WRITE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/research-lab") {
+      if (request.method !== "GET") return json({ ok:false, code:"METHOD_NOT_ALLOWED" },405);
+      try {
+        const snapshot = await fetchPsychohistoryLab(env,getGoogleAccessToken);
+        return json({ ok:true,...snapshot, evaluation:prospectiveSummary(snapshot.predictions) });
+      } catch(error) {
+        console.warn("Research lab read failed",String(error?.message||"LAB_READ_ERROR").replace(/[A-Za-z0-9_-]{30,}/g,"[redacted]"));
+        return json({ok:false,code:"LAB_READ_FAILED"},502);
       }
     }
 
