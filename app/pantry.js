@@ -1,3 +1,8 @@
+let pantryViewMemory = null;
+let pantryOpenRevision = 0;
+let pantryActiveView = "inventory";
+export function configurePantryViewMemory(memory) { pantryViewMemory = memory; }
+
 const moneyFormatter = new Intl.NumberFormat("es-ES", {
   style: "currency",
   currency: "EUR",
@@ -181,6 +186,7 @@ function locationTiles(payload) {
 }
 
 function setPantryView(body, view) {
+  pantryActiveView = view;
   const nextView = ["inventory", "shopping", "tickets"].includes(view) ? view : "inventory";
   body.querySelectorAll("[data-pantry-view]").forEach((button) => {
     const active = button.dataset.pantryView === nextView;
@@ -517,26 +523,48 @@ async function fetchPantryPayload({ attempts = 3, waitMs = 450 } = {}) {
 export async function openPantryDetail(initialView = "inventory") {
   const dialog = document.querySelector("#detail-dialog");
   if (!dialog) return;
+  const revision = ++pantryOpenRevision;
   dialog.classList.remove(
-    "wealth-dialog",
-    "health-dialog",
-    "habits-dialog",
-    "important-events-dialog",
-    "budget-dialog",
-    "parents-dialog",
-    "electricity-dialog",
-    "objects-dialog", "projects-dialog"
+    "wealth-dialog","health-dialog","habits-dialog","important-events-dialog",
+    "budget-dialog","parents-dialog","electricity-dialog","objects-dialog","projects-dialog"
   );
   dialog.classList.add("pantry-dialog");
   document.querySelector("#dialog-context").textContent = "Despensa · Fuente privada";
   document.querySelector("#dialog-title").textContent = "Despensa";
-  document.querySelector("#dialog-body").innerHTML = '<p class="pantry-empty">Cargando inventario…</p>';
+  const cached = pantryViewMemory?.peek() || null;
+  if(cached) renderWorkspace(cached, initialView);
+  else document.querySelector("#dialog-body").innerHTML = '<p class="pantry-empty">Cargando inventario…</p>';
   if (!dialog.open) dialog.showModal();
+  const stillHere = () => revision === pantryOpenRevision && dialog.open &&
+    dialog.classList.contains("pantry-dialog") && document.querySelector("#dialog-title")?.textContent === "Despensa";
 
   try {
-    renderWorkspace(await fetchPantryPayload(), initialView);
+    const result = pantryViewMemory ? await pantryViewMemory.refresh(() => fetchPantryPayload())
+      : {status:"updated",value:await fetchPantryPayload(),changed:true};
+    if(!stillHere())return;
+    if(result.value) {
+      const shell=document.querySelector("#dialog-body .pantry-shell");
+      // Do not erase a focused search/filter or product detail. The refreshed
+      // payload is already retained and will render at the next navigation.
+      if(!cached || result.changed && shell && !shell.contains(document.activeElement)) {
+        renderWorkspace(result.value, pantryActiveView);
+      }
+      if(result.status==="stale") {
+        const top=document.querySelector("#dialog-body .pantry-topbar");
+        if(top && !top.querySelector("[data-pantry-cached-warning]")) {
+          const badge=document.createElement("small");
+          badge.dataset.pantryCachedWarning="true";
+          badge.textContent="Última vista disponible · sincronización pendiente";
+          top.append(badge);
+        }
+      }
+      return;
+    }
+    throw new Error("PANTRY_READ_UNAVAILABLE");
   } catch (error) {
+    if(!stillHere())return;
     console.warn("Pantry load failed", error);
+    if(cached)return;
     document.querySelector("#dialog-body").innerHTML =
       '<div class="pantry-source-error"><strong>Despensa disponible, datos pendientes de conexión</strong><p>No se ha podido leer ahora mismo la fuente privada después de varios intentos. Puedes reintentar sin recargar toda la web.</p><button id="pantry-retry" type="button">Reintentar</button></div>';
     document.querySelector("#pantry-retry")?.addEventListener("click", () => openPantryDetail(initialView));

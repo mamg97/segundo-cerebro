@@ -57,3 +57,40 @@ export function createOnDemandViewRefresh({
   }
   return { markVerified, shouldRefresh, activate };
 }
+
+
+// Lazily loaded detail workspaces cache JSON in this tab only. Errors retain
+// the last successful response; in-flight reads are shared and mutations may
+// invalidate older requests to prevent stale async responses from winning.
+export function createPayloadViewMemory({ freshForMs = 5 * 60_000, clock = () => Date.now() } = {}) {
+  let value = null, signature = null, loadedAt = null, generation = 0, pending = null;
+  function peek() { return value; }
+  function isFresh() { return value !== null && loadedAt !== null && clock() - loadedAt < freshForMs; }
+  function invalidate() { loadedAt = null; generation++; }
+  function remember(next) {
+    if (!next || typeof next !== "object" || next.ok === false || next.status === "error" || next.source?.available === false) throw new Error("INVALID_VIEW_RESPONSE");
+    const text = JSON.stringify(next);
+    const changed = text !== signature;
+    value = next;
+    signature = text;
+    loadedAt = clock();
+    generation++;
+    return { status: changed ? "updated" : "unchanged", value, changed };
+  }
+  function refresh(read) {
+    if (pending) return pending;
+    if (isFresh()) return Promise.resolve({ status: "cached", value, changed: false });
+    const revision = generation;
+    pending = (async () => {
+      try {
+        const next = await read();
+        if (revision !== generation) return { status: "superseded", value, changed: false };
+        return remember(next);
+      } catch {
+        return { status: value ? "stale" : "failed", value, changed: false };
+      } finally { pending = null; }
+    })();
+    return pending;
+  }
+  return { peek, isFresh, remember, invalidate, refresh };
+}

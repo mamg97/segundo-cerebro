@@ -8,7 +8,7 @@ const audit = await readFile(new URL("../private-cloudflare/scripts/web-audit.mj
 test("Pantry UI retries transient server failures before showing an error", () => {
   assert.match(pantry, /fetchPantryPayload\(\{ attempts = 3, waitMs = 450 \} = \{\}\)/);
   assert.match(pantry, /response\.status < 500 \|\| attempt === attempts/);
-  assert.match(pantry, /renderWorkspace\(await fetchPantryPayload\(\), initialView\)/);
+  assert.match(pantry, /pantryViewMemory \? await pantryViewMemory\.refresh\(\(\) => fetchPantryPayload\(\)\)/);
 });
 
 test("web audit reconciles transient failures again after UI revalidation", () => {

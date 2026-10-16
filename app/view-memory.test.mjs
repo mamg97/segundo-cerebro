@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { calendarSnapshotComplete, createOnDemandViewRefresh } from "./view-memory.mjs";
+import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs";
 
 const healthy = {
   source: { freshness: "live", providers: {
@@ -88,4 +88,66 @@ test("calendar wiring keeps DOM unchanged for identical weeks and revalidates on
   assert.match(app,/refreshCalendarView\(\{ force: true \}\)/);
   assert.match(app,/!healthy && existingEvents\.length > 0/);
   assert.doesNotMatch(app,/setInterval\([^)]*refreshCalendarView/);
+});
+
+test("private detail cache is RAM-only and does not reread a fresh view",async()=>{
+  let now=100,reads=0;
+  const cache=createPayloadViewMemory({clock:()=>now,freshForMs:300_000});
+  const loader=async()=>{reads++;return {ok:true,rows:[{id:"synthetic"}]};};
+  assert.equal((await cache.refresh(loader)).status,"updated");
+  assert.equal((await cache.refresh(loader)).status,"cached");
+  assert.equal(reads,1);
+  now+=300_000;
+  assert.equal((await cache.refresh(loader)).status,"unchanged");
+  assert.equal(reads,2);
+});
+
+test("detail cache retains the last good payload on transient failures and explicit invalidation",async()=>{
+  const cache=createPayloadViewMemory();
+  cache.remember({ok:true,rows:[1]});
+  cache.invalidate();
+  const failure=await cache.refresh(async()=>{throw Error("source unavailable");});
+  assert.equal(failure.status,"stale");
+  assert.deepEqual(cache.peek().rows,[1]);
+  assert.equal((await cache.refresh(async()=>({ok:true,rows:[2]}))).status,"updated");
+  assert.deepEqual(cache.peek().rows,[2]);
+});
+
+test("mutations supersede an unfinished detail revalidation without losing the newer source",async()=>{
+  const cache=createPayloadViewMemory();
+  cache.remember({ok:true,rows:[1]});
+  cache.invalidate();
+  let release;
+  const gate=new Promise(done=>{release=done;});
+  const slow=cache.refresh(async()=>{await gate;return {ok:true,rows:[0]};});
+  cache.remember({ok:true,rows:[2]});
+  release();
+  assert.equal((await slow).status,"superseded");
+  assert.deepEqual(cache.peek().rows,[2]);
+});
+
+test("reopening detail modals uses payload memory and never blanks a previously loaded view",()=>{
+  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+  const objects=readFileSync(new URL("./objects.js",import.meta.url),"utf8");
+  const pantry=readFileSync(new URL("./pantry.js",import.meta.url),"utf8");
+  assert.match(app,/configureObjectsViewMemory\(objectsDetailMemory\)/);
+  assert.match(app,/configurePantryViewMemory\(pantryDetailMemory\)/);
+  assert.match(app,/pantryDetailMemory\.invalidate\(\)/);
+  assert.match(app,/objectsDetailMemory\.invalidate\(\)/);
+  assert.match(objects,/if\(cached\) renderWorkspace\(cached\)/);
+  assert.match(pantry,/if\(cached\) renderWorkspace\(cached, initialView\)/);
+  assert.match(objects,/objectsViewMemory\?\.remember\(updated\)/);
+});
+
+test("a degraded but HTTP-successful upstream cannot poison the retained workspace",async()=>{
+  const cache=createPayloadViewMemory();
+  cache.remember({ok:true,status:"ok",rows:[1]});
+  cache.invalidate();
+  const result=await cache.refresh(async()=>({ok:true,status:"error",rows:[]}));
+  assert.equal(result.status,"stale");
+  assert.deepEqual(cache.peek().rows,[1]);
+  cache.invalidate();
+  const second=await cache.refresh(async()=>({ok:true,source:{available:false},rows:[]}));
+  assert.equal(second.status,"stale");
+  assert.deepEqual(cache.peek().rows,[1]);
 });
