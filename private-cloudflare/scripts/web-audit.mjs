@@ -2020,6 +2020,7 @@ try {
     let headerMismatches = 0;
     let progressMismatches = 0;
     let goalMarkerMismatches = 0;
+    let goalRenderedMismatches = 0;
     for (const [day, items] of sourceByDate) {
       const element = page.locator(`#home-weekly-menu-content .home-weekly-menu-table-day[data-menu-date="${day}"]`);
       const figures = await element.locator(".home-weekly-menu-plan-value").allTextContents().catch(() => []);
@@ -2035,6 +2036,30 @@ try {
             axis: actual ? Number(actual.max) : null,
             plannedAxis: planned ? Number(planned.max) : null,
             goalAxis: goal ? Number(goal.max) : null
+          };
+        })).catch(() => []);
+      // Inspect rendered SVG/CSS, not only native progress.value (the previous
+      // implementation passed value assertions while the line was invisible).
+      const painted = await element.locator(".home-weekly-menu-plan-bar").evaluateAll((els) =>
+        els.map((el) => {
+          const svg = el.querySelector("svg.home-weekly-menu-plan-visual");
+          const line = svg?.querySelector(".home-weekly-menu-plan-visual-goal");
+          const plan = svg?.querySelector(".home-weekly-menu-plan-visual-expected");
+          const actual = svg?.querySelector(".home-weekly-menu-plan-visual-actual");
+          const bounds = svg?.getBoundingClientRect();
+          const svgStyle = svg ? getComputedStyle(svg) : null;
+          const stroke = line ? getComputedStyle(line) : null;
+          return {
+            visible: Boolean(bounds && bounds.width > 10 && bounds.height > 10 &&
+              svgStyle?.display !== "none" && svgStyle?.visibility !== "hidden" &&
+              svgStyle?.opacity !== "0"),
+            planX: plan ? Number(plan.getAttribute("width")) : null,
+            consumedX: actual ? Number(actual.getAttribute("width")) : null,
+            goalX: line ? Number(line.getAttribute("x1")) : null,
+            goalY: line ? Number(line.getAttribute("y2")) - Number(line.getAttribute("y1")) : null,
+            stroke: stroke?.stroke || null,
+            strokeWidth: stroke ? Number.parseFloat(stroke.strokeWidth) : null,
+            graphicZ: svgStyle ? Number(svgStyle.zIndex) : null
           };
         })).catch(() => []);
       const plannedKcal = Math.round(items.reduce((sum, item) => sum +
@@ -2071,6 +2096,20 @@ try {
           ? bar.goal !== goal || bar.goalAxis !== axis
           : bar.goal !== null;
       })) goalMarkerMismatches += 1;
+      if (painted.length !== 2 || painted.some((visual, i) => {
+        const rawGoal = [objective.kcal, objective.protein][i];
+        const numeric = rawGoal == null || rawGoal === "" ? NaN : Number(rawGoal);
+        const goalValue = Number.isFinite(numeric) && numeric > 0 ? Math.round(numeric) : 0;
+        const { consumed, planned } = expected[i];
+        const axis = Math.max(1, consumed, planned, goalValue);
+        const x = (value) => Math.max(0, Math.min(1000, Math.round(value / axis * 1000)));
+        const expectedX = goalValue > 0 ? Math.max(7, Math.min(993, x(goalValue))) : null;
+        const isWhite = visual.stroke === "rgb(255, 255, 255)" || visual.stroke === "#fff" || visual.stroke === "white";
+        return !visual.visible || visual.graphicZ < 3 ||
+          visual.planX !== x(planned) || visual.consumedX !== x(consumed) ||
+          visual.goalX !== expectedX ||
+          (goalValue > 0 && (!isWhite || visual.strokeWidth < 3 || visual.goalY < 90));
+      })) goalRenderedMismatches += 1;
       if (await element.locator("header > span").count()) headerMismatches += 1;
     }
     assertCheck(daysCompared > 0 && headerMismatches === 0,
@@ -2082,6 +2121,9 @@ try {
     assertCheck(daysCompared > 0 && goalMarkerMismatches === 0,
       "Home · raya del objetivo kcal/proteína está a escala y no se inventa",
       `dias=${daysCompared} discrepancias=${goalMarkerMismatches}`);
+    assertCheck(daysCompared > 0 && goalRenderedMismatches === 0,
+      "Home · marca blanca SVG visible y proporcionada en los dos indicadores",
+      `dias=${daysCompared} discrepancias=${goalRenderedMismatches}`);
 
     // READ-ONLY comparison between the canonical lightweight menu and Home images.
     // Only numeric counts are logged: no IDs, photo URLs or private bytes.
