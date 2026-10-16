@@ -20,6 +20,6 @@ test('lab static imports are present and cache revision is updated',()=>{
   const js=readFileSync(new URL('./research-lab.js',import.meta.url),'utf8');
   const html=readFileSync(new URL('./research-lab.html',import.meta.url),'utf8');
   assert.match(js,/parseRecoverySimulations/);
-  assert.match(js,/research-results\\.mjs\\?v=0\\.4\\.1/);
-  assert.match(html,/research-lab\\.js\\?v=0\\.4\\.1/);
+  assert.ok(js.includes('research-results.mjs?v=0.4.1'));
+  assert.ok(html.includes('research-lab.js?v=0.4.1'));
 });
