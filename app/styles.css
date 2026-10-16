@@ -27837,3 +27837,50 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   stroke: #fff;
   stroke-width: 3.5;
 }
+
+/* 2026-10-16 · Unavailable private look media: bounded fallback to the
+   already-known garment assets, without the broken image's long alt text. */
+.look-visual .look-mosaic,
+.look-detail-main > .look-mosaic,
+.look-history-thumb .look-mosaic,
+.look-history-mobile-thumb .look-mosaic {
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+.look-mosaic .look-mosaic-slot {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  place-items: center;
+}
+.look-mosaic-slot > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.look-mosaic-item-unavailable {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  color: var(--ink-soft);
+  font-size: 17px;
+}
+.look-image-unavailable {
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  place-items: center;
+  padding: 8px;
+  color: var(--ink-soft);
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
