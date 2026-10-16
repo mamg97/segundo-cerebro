@@ -1,4 +1,4 @@
-"""Psychhohistory v0.1: transparent experimental engines (Python stdlib only).
+"""Psychohistory v0.1: transparent experimental engines (Python stdlib only).
 
 Retrospective backtests must NEVER be marketed as prospective forecasts.
 No external data, payments, credentials or user records are included here.
@@ -93,7 +93,7 @@ def scored(rows: list[dict], key: str, baseline: str = "baseline") -> dict:
 
 
 def rolling_backtest(rows: list[dict], start: dt.date, weights: list[float] | None = None, minimum=20):
-    """At each issuance, train only on labels resolved before that issuance."""
+    """At each issuance, train only on labels resolved strictly before that issuance."""
     if not rows:
         raise ValueError("Empty panel")
     dims = len(rows[0]["x"])
@@ -104,7 +104,7 @@ def rolling_backtest(rows: list[dict], start: dt.date, weights: list[float] | No
     report=[]
     # Pool rows by issue date; train each test date from the same info set.
     for issue in sorted({r["issued_at"] for r in rows if r["issued_at"] >= start}):
-        train=[r for r in rows if r["issued_at"] < issue and r["resolved_at"] <= issue]
+        train=[r for r in rows if r["issued_at"] < issue and r["resolved_at"] < issue]
         group=[r for r in rows if r["issued_at"] == issue]
         if len(train) < minimum:
             continue
