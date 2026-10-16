@@ -8861,18 +8861,29 @@ function wealthDailyTone(value) {
 function renderWealthDailyRows(rows, fallbackCurrency) {
   return `<div class="wealth-daily-table-scroll" role="region" aria-label="Histórico diario de patrimonio" tabindex="0">
     <table class="wealth-daily-table">
-      <thead><tr><th>Fecha</th><th>Patrimonio</th><th>Día</th><th>P/L día</th><th>Movimiento</th></tr></thead>
+      <thead><tr><th>Fecha</th><th>Patrimonio</th><th>Día</th><th>P/L día</th><th>Movimiento</th><th>Comentario</th></tr></thead>
       <tbody>${rows.map((item) => {
         const currency = item.currency || fallbackCurrency;
         const patrimony = firstFinite(item.patrimony);
         const pnl = firstFinite(item.pnlDay);
         const tone = wealthDailyTone(item.changePct);
+        const comment = String(item.comment || "").trim();
+        const events = String(item.events || "").trim();
+        const context = Boolean(comment || events);
+        const preview = comment.length > 115 ? `${comment.slice(0, 115)}…` : (comment || "Contexto de la jornada");
         return `<tr>
           <td>${escapeHtml(formatFinanceDate(item.date, item.date || "—"))}</td>
           <td>${patrimony === null ? "—" : escapeHtml(formatMoney(patrimony, currency))}</td>
           <td class="wealth-daily-number is-${tone}">${escapeHtml(formatWealthDailyPercent(item.changePct))}</td>
           <td class="wealth-daily-number is-${tone}">${pnl === null ? "—" : escapeHtml(formatMoney(pnl, currency))}</td>
           <td><span class="wealth-daily-movement is-${tone}">${escapeHtml(item.movement || "—")}</span></td>
+          <td class="wealth-daily-comment-cell">
+            ${context ? `<details class="wealth-daily-comment">
+              <summary>${escapeHtml(preview)}</summary>
+              ${comment ? `<p>${escapeHtml(comment)}</p>` : ""}
+              ${events ? `<p>${escapeHtml(events)}</p>` : ""}
+            </details>` : "—"}
+          </td>
         </tr>`;
       }).join("")}</tbody>
     </table>
@@ -8913,7 +8924,7 @@ function renderWealthDailyDiary(diary, fallbackCurrency = "EUR") {
 
     <div class="wealth-daily-kpis">
       <article>
-        <span>Patrimonio</span>
+        <span>Patrimonio${latestWithPatrimony.date !== latest.date ? " · último confirmado" : ""}</span>
         <strong>${patrimony === null ? "—" : escapeHtml(formatMoney(patrimony, currency))}</strong>
         <small>${escapeHtml(latestWithPatrimony.source || "Fuente privada")}</small>
       </article>
