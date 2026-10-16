@@ -1,3 +1,21 @@
+## EVENTOS — Reconciliación de citas iCloud retiradas · 16/10/2026
+
+- La Agenda semanal obtiene los eventos iCloud/Google en cada carga/refresco, con caché iCloud de 60 s cuando la lectura fue sana (fallback 15 s); no hay polling continuo mientras la pestaña queda abierta.
+- Incidencia: una instancia futura de una serie iCloud dejó de actualizarse en el Sheet canónico aunque otras instancias seguían vigentes. El persistidor `syncCalendarEventsToEventsSheet` solo hacía UPSERT, dejando `CONFIRMADO` indefinidamente tras una eliminación en el proveedor.
+- Fix genérico: el mantenimiento de `/api/state` comprueba ausencias solo con `icloudSource.status=ok|ok-cache`, `freshness=live`, todos los calendarios coincidentes y timestamp reciente (máx. 3 min). Marca `CANCELADO` solo las instancias futuras originalmente derivadas de iCloud que estén ausentes; nunca toca eventos manuales, históricos ni reservas externas.
+- La baja es operativa del registro de Agenda, NO prueba cancelación de reserva/entrada. Conservar histórico y referencia a última actualización de fuente. Instancias auto-retiradas se reactivan si el evento vuelve a aparecer; no reactivar cancelaciones manuales.
+- Comprobar CI, deploy y auditor de producción; el acceso directo autenticado a CalDAV no está disponible desde este gestor, por lo que no proclamar comprobación real de baja en el proveedor sin datos nuevos.
+
+## ORGANIZADOR 20 — Looks: imágenes privadas que fallan y recuperación visual (16/10/2026)
+
+- Captura real muestra dos looks con imagen compuesta no renderizada; el navegador expande el texto alternativo en la columna visual. La verificación de lectura del Sheet privado `SEGUNDO CEREBRO - OBJETOS`, pestaña `Looks`, confirmó **50/50 URL `foto_url` versionadas, válidas y con `look_id` coincidente**: no hay pruebas de error de sintaxis o asociación en esas referencias. El estado del BLOB D1 y el HTTP concreto de las dos fotos no pudo determinarse con la lectura del Sheet: no afirmar 404 o 502 de esas dos.
+- Defecto frontend confirmado: `app/objects.js` insertaba `<img>` sin controlador `error`; la ausencia de `Looks.foto_url` activaba mosaico de prendas, pero el error HTTP/decodificación de una `foto_url` **existente** no activaba nada. Ahora se recupera el error de foto compuesta usando solo miniaturas/imágenes canónicas de `LookItems` resueltas en `Armario` (sin IA ni prendas inventadas); si también falla un componente se muestra un símbolo acotado, y si no hay imágenes fuente, texto breve dentro del marco. Se evita alt largo en tarjeta y se aplica lo mismo en detalle/historial.
+- Contrato de privacidad: ninguna foto, nombre de look, ID privado o URL real en Git o logs; no modificar Sheet, relaciones ni D1 para "arreglar" una captura. `objects.js?v=0.44.24` y HTML/CSS `0.44.45`; pruebas sintéticas del controlador error y auditoría Chromium read-only fuerza un evento `error` sin mutaciones de datos.
+- **Pendiente de verificar:** CI verde, PR fusionada, Cloudflare desplegado y auditoría read-only. Si un look sigue recuperándose siempre como mosaico, diagnosticar la petición HTTP y la integridad de D1 antes de regenerar o sobrescribir el original de esa identidad. Evitar reintentos automáticos masivos que agoten Workers Free.
+
+
+---
+
 ## OBJETOS — Recuperar fotos compuestas y reducir CPU de D1 (16/10/2026)
 
 - Reproducido en Chrome autenticado: dos fotos compuestas no decodificaban y la recuperación de PR #519 las convertía en mosaicos. Sus BLOB canónicos conservan todos los fragmentos y tamaños esperados; no se han regenerado, sobrescrito ni cambiado relaciones/URLs en Sheets. Las métricas reales del Worker muestran agotamiento de CPU, aunque no permiten atribuir cada evento a una URL concreta.

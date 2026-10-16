@@ -481,7 +481,35 @@ async function appendRows(spreadsheetId, token, tab, values, endColumn) {
   });
 }
 
-export async function syncCalendarEventsToEventsSheet(env, getGoogleAccessToken, calendarEvents, rules, financeSummary) {
+const AUTO_ICLOUD_ABSENCE_MARKER = "AUTO_ICLOUD_ABSENT_V1:";
+
+export function findAbsentIcloudEventRows(existingEvents, calendarEvents, icloudSource, now = Date.now()) {
+  // Never infer deletions from a last-known-good, a partial provider read or an old live snapshot.
+  const status = String(icloudSource?.status || "");
+  const freshness = String(icloudSource?.freshness || "");
+  const selected = Number(icloudSource?.selectedCalendarCount || 0);
+  const matched = Number(icloudSource?.matchedCalendarCount || 0);
+  const checkedAt = Date.parse(String(icloudSource?.updatedAt || ""));
+  if (!["ok", "ok-cache"].includes(status) || freshness !== "live" ||
+      selected < 1 || matched !== selected || !Number.isFinite(checkedAt) ||
+      checkedAt > now + 60_000 || now - checkedAt > 180_000) return [];
+
+  const liveIds = new Set((Array.isArray(calendarEvents) ? calendarEvents : [])
+    .filter((event) => String(event?.id || "").startsWith("icloud-"))
+    .map((event) => String(event.id)));
+
+  return (Array.isArray(existingEvents) ? existingEvents : []).filter((event) => {
+    if (event?.sourceProvider !== "calendar" ||
+        !String(event?.calendarRef || "").startsWith("icloud-") ||
+        !event?._rowNumber ||
+        ["CANCELADO", "CERRADO"].includes(String(event?.status || "").toUpperCase())) return false;
+    const start = Date.parse(String(event.startsAt || ""));
+    if (!Number.isFinite(start) || start < now || start > now + 540 * 86400000) return false;
+    return !liveIds.has(String(event.calendarRef));
+  });
+}
+
+export async function syncCalendarEventsToEventsSheet(env, getGoogleAccessToken, calendarEvents, rules, financeSummary, options = {}) {
   if (!hasEventsGoogleConfig(env)) return 0;
   const source = await fetchEventsSheetSource(env, getGoogleAccessToken);
   if (!source.value?.source?.available) return 0;
@@ -489,13 +517,29 @@ export async function syncCalendarEventsToEventsSheet(env, getGoogleAccessToken,
   const token = await getGoogleAccessToken(env);
   const spreadsheetId = source.value.spreadsheetId || await resolveSpreadsheetId(env, token);
   const existing = source.value.events || [];
+  const absent = findAbsentIcloudEventRows(existing, calendarEvents, options.icloudSource);
+  const now = new Date().toISOString();
+  for (const row of absent) {
+    const next = {
+      ...row,
+      status: "CANCELADO",
+      finalSummary: AUTO_ICLOUD_ABSENCE_MARKER + now +
+        " · Esta instancia ya no aparece en una lectura iCloud completa y reciente. " +
+        "Se retira del calendario activo; no se afirma que una reserva externa esté cancelada.",
+      updatedAt: now
+    };
+    await updateRow(spreadsheetId, token, "Eventos", row._rowNumber, eventToRow(next), "Q");
+    Object.assign(row, next);
+  }
+
   const matched = (Array.isArray(calendarEvents) ? calendarEvents : [])
     .map((event) => ({ event, rule: matchRule(event, rules), inferredKind: inferCalendarEventKind(event) }))
     .filter((item) => (item.rule || item.inferredKind) && item.event?.id && item.event?.startsAt);
 
-  if (!matched.length) return 0;
-
-  const now = new Date().toISOString();
+  if (!matched.length) {
+    if (absent.length) invalidateEventsSheetCache();
+    return absent.length;
+  }
   const appends = [];
   let changed = 0;
 
@@ -513,7 +557,11 @@ export async function syncCalendarEventsToEventsSheet(env, getGoogleAccessToken,
 
     const financeRef = findFinanceRef(targetTitle, event.title, financeSummary);
     const baseStatus = String(row?.status || "CONFIRMADO").toUpperCase();
-    const preservedStatus = ["PROPUESTO", "PENDIENTE", "CANCELADO"].includes(baseStatus) ? baseStatus : "CONFIRMADO";
+    const restoredAfterAutomaticAbsence = baseStatus === "CANCELADO" &&
+      String(row?.finalSummary || "").startsWith(AUTO_ICLOUD_ABSENCE_MARKER);
+    const preservedStatus = restoredAfterAutomaticAbsence
+      ? "CONFIRMADO"
+      : ["PROPUESTO", "PENDIENTE", "CANCELADO"].includes(baseStatus) ? baseStatus : "CONFIRMADO";
     const next = {
       id: row?.id || candidateId,
       title: row?.title || targetTitle,
@@ -527,7 +575,7 @@ export async function syncCalendarEventsToEventsSheet(env, getGoogleAccessToken,
       financeRef: financeRef || row?.financeRef || null,
       objectsListRef: row?.objectsListRef || null,
       summary: row?.summary || nullable(rule?.note, 4000),
-      finalSummary: row?.finalSummary || null,
+      finalSummary: restoredAfterAutomaticAbsence ? null : row?.finalSummary || null,
       sensitivity: row?.sensitivity || nullable(event.sensitivity, 40) || "confidencial",
       sourceProvider: "calendar",
       sourceUpdatedAt: now,
@@ -546,7 +594,7 @@ export async function syncCalendarEventsToEventsSheet(env, getGoogleAccessToken,
 
   if (appends.length) await appendRows(spreadsheetId, token, "Eventos", appends, "Q");
   invalidateEventsSheetCache();
-  return changed;
+  return changed + absent.length;
 }
 
 export async function migrateLegacyEventLedgerToSheet(env, getGoogleAccessToken, legacySnapshot) {
