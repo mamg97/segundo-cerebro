@@ -7,7 +7,10 @@ export function eligibleAuditImageUrl(uri, origin, method = "GET") {
   let url;
   try { url = new URL(uri); } catch { return false; }
   if (url.origin !== origin || !/^[A-Za-z0-9-]{8,80}$/.test(url.searchParams.get("v") || "")) return false;
-  if ([...url.searchParams.keys()].some((key) => key !== "v")) return false;
+  const lookImage = /^\/api\/objects\/look\/[^/]+\/image$/.test(url.pathname);
+  if ([...url.searchParams.keys()].some((key) => key !== "v" &&
+    !(lookImage && key === "delivery" && url.searchParams.getAll(key).length === 1 &&
+      url.searchParams.get(key) === "hex1"))) return false;
   return /^\/api\/objects\/look\/[^/]+\/image$/.test(url.pathname) ||
     /^\/api\/objects\/[^/]+\/image\/(processed|thumbnail)$/.test(url.pathname);
 }

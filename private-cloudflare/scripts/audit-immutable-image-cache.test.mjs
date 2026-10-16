@@ -13,6 +13,11 @@ test("only same-origin, GET, versioned object media may use audit memory cache",
   const cache = createAuditImmutableImageCache();
   assert.equal(cache.canHandle(look, origin), true);
   assert.equal(cache.canHandle(thumbnail, origin), true);
+  assert.equal(cache.canHandle(look + "&delivery=hex1", origin), true);
+  assert.equal(cache.canHandle(look + "&delivery=other", origin), false);
+  assert.equal(cache.canHandle(look + "&delivery=hex1&delivery=hex1", origin), false);
+  assert.equal(cache.canHandle(thumbnail + "&delivery=hex1", origin), false);
+  assert.equal(cache.canHandle(look + "&delivery=hex1&token=private", origin), false);
   assert.equal(cache.canHandle(look, origin, "POST"), false);
   assert.equal(cache.canHandle(origin + "/api/health/overview", origin), false);
   assert.equal(cache.canHandle(origin + "/api/objects/look/private-look/image", origin), false);
