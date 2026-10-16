@@ -279,6 +279,10 @@ Reglas:
 - el histórico heredado de `DIARIO MERCADOS` de la fuente financiera se importa preservando sus anotaciones, pero un patrimonio total inexistente permanece `null`;
 - `PatrimonioDiario` sirve para evolución diaria y no reemplaza `PatrimonioDetalle` como distribución actual por custodio ni `Patrimonio` como referencia histórica mensual;
 - el antiguo hábito **Diario mercados** queda archivado: el registro pasa a Finanzas → Patrimonio y deja de formar parte de la adherencia de hábitos.
+- Cada nuevo cierre diario incorpora en `comment` un resumen corto del contexto de mercado y la explicación probable del movimiento; registrar en `events` las fuentes y fechas verificables. Distinguir hechos comprobados, hipótesis y atribución por activo: la coincidencia de un movimiento bursátil general con el P/L de la cartera no prueba causalidad individual. No inventar eventos, variaciones ni contribuciones por valor.
+- Un día sin captura fiable conserva `patrimony`, `change_pct` y `pnl_day` sin dato, con `source_status` explícito. Si existe un hueco en la serie, no encadenar el patrimonio de una fecha posterior sin recuperar el P/L de la fecha ausente o conciliar una fuente primaria. Registrar por separado los P/L de fechas observadas y el total bruto mostrado por Delta como referencia sin reconstrucciones espurias.
+- El frontend privado presenta `comment` y `events` dentro del diario mediante un detalle desplegable accesible; evita presentar interpretaciones como hechos. Nunca transportar datos patrimoniales reales al repositorio.
+
 
 
 
