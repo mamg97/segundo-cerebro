@@ -167,6 +167,32 @@ function uncertainty(catalog, country, model, steps, replicates = 128) {
   return samples.map(level => level.map(values => [quantile(values, .025), quantile(values, .975)]));
 }
 
+// Outcome labels only enter the scoring stage, never the fitted transition kernel.
+// A single historical case is an illustration, NOT a statistical skill estimate.
+export function scoreHistoricalCases(catalog, country) {
+  const observed = country.observedStates;
+  if (!Array.isArray(observed) || observed.length !== catalog.maxHorizon + 2) return [];
+  const predictions = Object.fromEntries(Object.keys(FUTURE_MODELS).map(model =>
+    [model, forward(country.initial, transitionMatrix(catalog, country, model), catalog.maxHorizon + 1)]));
+  return Array.from({length: catalog.maxHorizon}, (_, index) => {
+    const horizon = index + 1, endYear = catalog.origin + index;
+    const actual = observed[index + 2];
+    // Complete-case denominator matches the retrospective research protocol.
+    if (!observed.slice(1, index + 3).every(s => Number.isInteger(s) && s >= 0 && s < 4)) {
+      return {horizon, endYear, available: false, reason: 'INCOMPLETE_OBSERVED_SEQUENCE'};
+    }
+    const models = Object.fromEntries(Object.entries(predictions).map(([model, levels]) => {
+      const distribution = levels[index + 2].distribution;
+      const probabilityActual = distribution[actual];
+      return [model, {label: FUTURE_MODELS[model], probabilityActual,
+        brier: distribution.reduce((total, p, state) => total + (p - Number(state === actual)) ** 2, 0),
+        logLoss: -Math.log(Math.max(1e-12, probabilityActual))}];
+    }));
+    return {horizon, endYear, available: true, actualState: actual, actualLabel: FUTURE_STATES[actual],
+      models, evaluation: 'retrospective_revised_release_single_observation'};
+  });
+}
+
 export function buildFutures(catalog, countryId, model) {
   const country = catalog.countries.find(c => String(c.id) === String(countryId));
   if (!country) throw new Error('UNKNOWN_COUNTRY');
@@ -183,7 +209,7 @@ export function buildFutures(catalog, countryId, model) {
     country: {id: country.id, name: country.name}, model, modelLabel: FUTURE_MODELS[model],
     origin: catalog.origin, cutoff: catalog.cutoff, observedThrough: catalog.observedThrough,
     initial: country.initial, maxHorizon, states: FUTURE_STATES, matrix,
-    observedStates: country.observedStates || [],
+    observedStates: country.observedStates || [], caseEvaluations: scoreHistoricalCases(catalog, country),
     trainingCounts: model === 'persistence' ? null : model === 'frequency' ? catalog.global.frequency :
       model === 'country_shrinkage' ? country.counts : model === 'memory2' ? catalog.global.memory : catalog.global.transitions,
     levels: levels.map((level, i) => ({...level, year: catalog.cutoff + i, bridge: i === 1})), snapshots,
