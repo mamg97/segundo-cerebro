@@ -221,3 +221,9 @@ El dominio Carrera es `confidencial`.
 - Finanzas conserva la autoridad de ingresos y movimientos reales; Carrera no replica extractos, nóminas ni contabilidad.
 - URLs de procesos profesionales pueden conservarse en la fuente privada. No versionar referencias privadas, correos de recruiters, documentos de candidatura ni notas personales.
 - El portfolio público puede enseñar la arquitectura del módulo usando datos sintéticos, nunca el estado profesional real del usuario o de terceros.
+
+## Progreso físico fotográfico — muy confidencial
+
+Las fotografías corporales identificables se clasifican `muy_confidencial`. Se archivan originales solo en una carpeta privada de Drive, con permisos de propietario comprobados, y se sirve una copia visual desde la pestaña oculta `GymFotos` de la fuente canónica `SEGUNDO CEREBRO - SALUD`. En el frontend no se exponen identificadores Drive, fotos base64, URLs externas, ni se escribe `localStorage`/IndexedDB para esta galería. Los endpoints de foto solo existen en el Worker privado protegido por Cloudflare Access y usan `Cache-Control: no-store`.
+
+La subida futura optimiza fotos dentro del navegador mediante canvas, elimina metadatos y escribe únicamente la versión visual de seguimiento; no autoriza copiar a servicios externos ni publicar en la demo. La API valida MIME/firma, tamaño y chunks WebP sin EXIF/XMP/ICC, exige tres ángulos y rechaza sobrescritura accidental. La eliminación de una serie afecta la copia del Sheet; no elimina automáticamente originales históricos privados de Drive. No incluir muestras reales ni IDs privados en fixtures/Git/logs.

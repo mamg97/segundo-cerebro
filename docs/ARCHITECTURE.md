@@ -575,3 +575,12 @@ La restricción de producto es coste incremental cero: no se introducen APIs pre
 ## Evolución del esquema D1
 
 Las tablas e índices nuevos se definen en `private-cloudflare/migrations/` y se aplican de forma idempotente antes de desplegar el Worker de producción. Las rutas de lectura no ejecutan `CREATE TABLE` ni `CREATE INDEX`: consumen el esquema ya migrado y deben fallar de forma observable si el contrato de despliegue no se ha cumplido. Las rutas de ingesta pueden conservar una inicialización defensiva temporal cuando sea necesaria para compatibilidad, pero no convierten los `GET` en migradores implícitos.
+
+## Gym — seguimiento fotográfico privado
+
+La galería `Salud → Gimnasio → Progreso físico` usa **únicamente** la pestaña técnica oculta `GymFotos` del Sheet de Salud como índice y almacén de vistas optimizadas. Los originales que el usuario decida conservar permanecen en su carpeta Drive privada, no en Git ni en el bundle. Cada fecha contiene las vistas `frente`, `diagonal` y `perfil`.
+
+- `GET /api/gym/photos` consulta exclusivamente A:G (fecha, vista, referencia archivada privada y metadatos); devuelve solo fecha, ángulo y URL same-origin.
+- `GET /api/gym/photos/:fecha/:vista/image` busca la fila y lee sus veinte chunks H:AA del Sheet; nunca envía al navegador el ID de Drive ni los chunks base64. Las imágenes se entregan con `Cache-Control: no-store` y cabeceras de seguridad.
+- `POST /api/gym/photos` acepta exclusivamente un trío de archivos WebP sin metadatos EXIF, XMP ni ICC, comprimidos por canvas en el dispositivo a máximo 450 KB cada uno. Rechaza duplicar una fecha y escribe las tres filas en una llamada Sheets append. `DELETE /api/gym/photos/:fecha` vacía únicamente las filas de esa serie. No borra los originales archivados en Drive.
+- La pestaña carga al seleccionarse y no interviene en `/api/state` ni en `/api/gym`; no hay cron, D1/R2 adicional ni pagos. Las imágenes se muestran sin recortes mediante `object-fit: contain`.

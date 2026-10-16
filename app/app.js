@@ -1,6 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
+import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
 import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";
 import { mockState } from "../core/mock-state.js";
 import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
@@ -7300,6 +7301,7 @@ function renderGymPanel(data) {
     <div class="gym-view-switch" role="tablist" aria-label="Vista de gimnasio">
       <button type="button" class="active" data-gym-view="plan">Mi plan</button>
       <button type="button" data-gym-view="library">Biblioteca de ejercicios</button>
+      <button type="button" data-gym-view="photos">Progreso físico</button>
     </div>
     <section class="gym-view-panel active" data-gym-view-panel="plan">
       <section id="gym-plan-animation-detail" aria-label="Demostración del ejercicio" hidden></section>
@@ -7307,6 +7309,9 @@ function renderGymPanel(data) {
     </section>
     <section class="gym-view-panel" data-gym-view-panel="library" hidden>
       ${renderGymLibraryShell()}
+    </section>
+    <section class="gym-view-panel" data-gym-view-panel="photos" hidden>
+      <div id="gym-photos-panel"><p class="health-empty">Abre esta pestaña para cargar tus fotos privadas.</p></div>
     </section>`;
 
   panel.querySelectorAll("[data-gym-view]").forEach((button) => {
@@ -7354,7 +7359,7 @@ function renderGymPanel(data) {
 function setGymPanelView(view) {
   const panel = document.querySelector("#gym-panel");
   if (!panel) return;
-  const target = view === "library" ? "library" : "plan";
+  const target = view === "library" ? "library" : view === "photos" ? "photos" : "plan";
   panel.querySelectorAll("[data-gym-view]").forEach((button) => {
     button.classList.toggle("active", button.dataset.gymView === target);
   });
@@ -7364,6 +7369,7 @@ function setGymPanelView(view) {
     section.classList.toggle("active", active);
   });
   if (target === "library") void loadGymExerciseLibrary();
+  if (target === "photos") void loadGymProgressPhotos(privateMode);
 }
 
 function bindGymTechniqueButtons(root = document) {

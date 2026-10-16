@@ -473,3 +473,10 @@ The visual exercise library is an external **read-only reference layer**, not a 
 - The library must introduce **no paid dependency**. Do not scrape Lyfta, RepDB Premium, ExerciseDB paid assets, or ambiguous third-party mirrors merely to improve coverage.
 - If wger has no licensed media for an exercise, the UI must show that limitation rather than fabricate or copy a paid animation.
 - Search/filter requests may send generic exercise names/categories to wger. Never send private loads, session history, health data, plan notes, or user identity to the external provider.
+
+## Gym body-photo progression contract
+
+- `GymFotos` in the private Health spreadsheet owns photographic timeline metadata and its bounded image rendition, as an explicitly `muy_confidencial` store. Original archives may remain in private Drive. Neither photo bytes nor file IDs may enter Git or the public demo.
+- Each series consists of three real views for one explicit `YYYY-MM-DD` date: `frente`, `diagonal`, `perfil`. This is distinct from completed gym sessions (`gym_sessions` in D1); do not infer workout attendance from a photo or fabricate missing dates/angles.
+- Gallery, comparison and multipart upload are loaded only on the private Gym `Progreso físico` tab. Image bytes go through authenticated same-origin URLs with no-store; `GET /api/state` and the overview never transport photos.
+- Browser photo processing must strip location/camera metadata before upload. Originals are archived by explicit workflow, not silently deleted; deleting a gallery series does not destroy archived originals. Do not diagnose physical health or infer body-fat percentage solely from progress photos.
