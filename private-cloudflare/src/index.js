@@ -164,6 +164,7 @@ function scheduleStateEventMaintenance(ctx, env, currentState) {
   const events = Array.isArray(currentState?.events) ? currentState.events : [];
   const rules = Array.isArray(currentState?.importantEventRules) ? currentState.importantEventRules : [];
   const finance = currentState?.financeSummary || {};
+  const icloudSource = currentState?.calendarSummary?.source?.providers?.icloud || null;
 
   ctx.waitUntil((async () => {
     if (!stateLegacyEventMigrationDone) {
@@ -182,7 +183,7 @@ function scheduleStateEventMaintenance(ctx, env, currentState) {
 
     try {
       await withStateTimeout(
-        syncCalendarEventsToEventsSheet(env, getGoogleAccessToken, events, rules, finance),
+        syncCalendarEventsToEventsSheet(env, getGoogleAccessToken, events, rules, finance, { icloudSource }),
         3000,
         "EventsSheetPersist"
       );
