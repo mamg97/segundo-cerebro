@@ -1251,6 +1251,26 @@ async function auditLookDetail(label) {
   await tab.click();
   await page.waitForTimeout(250);
 
+  // Browser-rendered recovery regression: a valid src attribute alone is NOT
+  // evidence that the image loads. Inject one synthetic image error in the DOM;
+  // no real media, canonical record or request is mutated by this test.
+  const recoveryProbe = await page.locator(".looks-grid .look-card").first().evaluate((card) => {
+    const original=card.querySelector("[data-look-composed-image]");
+    if(original) original.dispatchEvent(new Event("error"));
+    const fallback=card.querySelector('[data-image-state="fallback"]');
+    const source=card.querySelector(".look-visual");
+    const bounds=source?.getBoundingClientRect();
+    const visual=fallback?.getBoundingClientRect();
+    return {
+      hadImage:Boolean(original),
+      recovered:Boolean(fallback?.matches(".look-mosaic, .look-image-unavailable")),
+      noBrokenAlt:!card.querySelector("[data-look-composed-image]"),
+      bounded:Boolean(bounds && visual && visual.width <= bounds.width + 2 && visual.height <= bounds.height + 2)
+    };
+  }).catch(() => ({hadImage:false,recovered:false,noBrokenAlt:false,bounded:false}));
+  assertCheck(recoveryProbe.recovered && recoveryProbe.noBrokenAlt && recoveryProbe.bounded,
+    `Visual ${label} · foto de look fallida muestra mosaico sin texto desbordado`);
+
   const historyButton = page.locator("[data-look-history]").first();
   const historyVisible = await historyButton.isVisible().catch(() => false);
   assertCheck(historyVisible, `Visual ${label} · Historial de looks disponible`);
