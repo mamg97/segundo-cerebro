@@ -31,3 +31,5 @@
   .gym-photo-figure figcaption { font-size: 9px; }
   .gym-photos-upload-grid { grid-template-columns: 1fr; }
 }
+
+.gym-view-switch { max-width: 100%; flex-wrap: wrap; }
