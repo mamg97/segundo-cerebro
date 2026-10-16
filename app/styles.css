@@ -27884,3 +27884,61 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
+
+
+/* 2026-10-16 · Recipe detail ingredients: prevent the quantity's explanatory
+   text from becoming an unbounded intrinsic grid column on iPhone.
+   All recipe detail entry points use the same shared recipe-detail-card. */
+.recipe-detail-card .recipe-card-body > header > div {
+  min-width: 0;
+  flex: 1 1 0;
+}
+.recipe-detail-card .recipe-card-body h4 {
+  overflow-wrap: break-word;
+}
+.recipe-detail-card .recipe-ingredients li {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 44%);
+  align-items: start;
+}
+.recipe-detail-card .recipe-ingredients li > .recipe-ingredient-link,
+.recipe-detail-card .recipe-ingredients li > strong {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.recipe-detail-card .recipe-ingredients li > strong {
+  white-space: normal;
+  justify-self: end;
+  text-align: right;
+  line-height: 1.45;
+}
+@media (max-width: 760px) {
+  .recipe-detail-card .recipe-card-body > header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .recipe-detail-card .recipe-precision {
+    align-self: flex-start;
+    flex: none;
+    max-width: 100%;
+    border-radius: 12px;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .recipe-detail-card .recipe-ingredients li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+    padding: 11px 0;
+  }
+  .recipe-detail-card .recipe-ingredients li > strong {
+    justify-self: stretch;
+    text-align: left;
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+}
