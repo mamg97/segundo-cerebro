@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
 
 function cssDeclarations(selector) {
   const needle = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -30,4 +31,14 @@ test("weekly menu thumbnails also show complete photos without destructive crop"
   assert.ok(frames.some((declarations) => /aspect-ratio:\s*16\s*\/\s*9/.test(declarations)));
   const thumbs = cssDeclarations(".home-weekly-menu-table-cell .home-menu-recipe-thumb img");
   assert.ok(thumbs.every((declarations) => /object-fit:\s*contain/.test(declarations)));
+});
+
+
+test("unphotographed recipes and failed image requests have distinguishable placeholders", () => {
+  assert.match(app, /home-menu-recipe-thumb-missing[^\n]+Sin foto/);
+  assert.match(app, /is-missing", "is-error"/);
+  assert.match(app, /home-menu-recipe-thumb-missing[^\n]+No disponible/);
+  const labels = cssDeclarations(".home-weekly-menu-table-cell .home-menu-recipe-thumb-missing")[0];
+  assert.match(labels, /font-size:\s*12px/);
+  assert.match(labels, /text-align:\s*center/);
 });

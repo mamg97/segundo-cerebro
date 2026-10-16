@@ -27455,7 +27455,13 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   place-items: center;
   width: 100%;
   height: 100%;
-  font-size: 18px;
+  padding: 6px;
+  box-sizing: border-box;
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  color: var(--ink-soft);
 }
 .home-weekly-menu-table-cell .home-weekly-menu-recipe-link strong {
   min-width: 0;

@@ -38,3 +38,15 @@ Hash SHA-256 de las nuevas previews (prefijo, no datos privados):
 5. Falta de foto visible, thumbnail roto y fotografía recortada son incidentes distintos: registrar y probar por separado.
 
 **Cierre**: datos técnicos de las cinco vistas previas reparados y verificados en Sheets. Confirmación visual final de esos nuevos bytes **en producción autenticada** pendiente; no declararla por hecho.
+
+
+## Seguimiento de cobertura · menú semanal (16/10/2026)
+
+- Segunda auditoría de las recetas visibles del 12 al 18/10: **10 recetas con recipe_id pero sin foto original enlazada**; no se deben inventar fotos ni interpretar su ausencia como un recorte. Otras entradas del menú (yogur, comida por elegir) carecen legítimamente de `recipe_id`.
+- **Tres recetas sí tenían original pero no derivada técnica:** el batido de 330 g, los filetes de lomo con arroz y el desayuno de huevos con pavo. Se crearon tres previews 480×270 que muestran el original íntegro (`contain`, padding lateral) en `RecipeMedia`. Nuevas entradas verificadas en Sheets: SHA-256, archivo de origen y timestamp de versión coincidentes con `Recetas`. La ingesta histórica y todos los macros se han conservado.
+- Cobertura final: **24 recetas con original; 24 filas con vista previa binaria real y metadatos completos en `RecipeMedia`; 0 derivadas ausentes y 0 metadatos incompletos**. Las cinco filas antiguas sin base64 se rellenaron con imágenes 16:9 generadas desde el original; se regeneró otra preview cuya SHA-256 tenía longitud incorrecta. Segunda conciliación exhaustiva: 24/24 con MIME, imagen binaria, dimensiones, hash de 64 caracteres, fuente y versión coincidentes.
+- UX: las miniaturas sin original muestran explícitamente `Sin foto`, y las peticiones de imagen fallidas `No disponible`; el enlace de receta permanece operativo y no se genera una fotografía ficticia.
+- La corrección de datos se ha verificado por lectura posterior de ambas pestañas; **validación visual autenticada tras recargar sigue pendiente**. No declarar el catálogo reparado al 100 % hasta comprobar esas tarjetas y resolver las fotos legítimamente ausentes.
+
+
+- Se completaron, también desde sus archivos originales y sin recortes, las dos previews pendientes de una receta de pasta con pollo y de una ensalada con pollo. Las referencias, hashes y dimensiones 480×270 quedaron verificadas tras la escritura. No se modificaron recetas, macros ni ingestas.
