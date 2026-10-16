@@ -8877,11 +8877,11 @@ function renderWealthDailyRows(rows, fallbackCurrency) {
           <td class="wealth-daily-number is-${tone}">${escapeHtml(formatWealthDailyPercent(item.changePct))}</td>
           <td class="wealth-daily-number is-${tone}">${pnl === null ? "—" : escapeHtml(formatMoney(pnl, currency))}</td>
           <td><span class="wealth-daily-movement is-${tone}">${escapeHtml(item.movement || "—")}</span></td>
-          <td style="min-width:220px;max-width:380px;white-space:normal;vertical-align:top;line-height:1.4">
+          <td class="wealth-daily-comment-cell">
             ${context ? `<details class="wealth-daily-comment">
-              <summary style="cursor:pointer;white-space:normal;overflow-wrap:anywhere">${escapeHtml(preview)}</summary>
-              ${comment ? `<p style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(comment)}</p>` : ""}
-              ${events ? `<p style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(events)}</p>` : ""}
+              <summary>${escapeHtml(preview)}</summary>
+              ${comment ? `<p>${escapeHtml(comment)}</p>` : ""}
+              ${events ? `<p>${escapeHtml(events)}</p>` : ""}
             </details>` : "—"}
           </td>
         </tr>`;
