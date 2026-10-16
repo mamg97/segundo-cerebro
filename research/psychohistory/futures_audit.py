@@ -192,7 +192,7 @@ def parameter_intervals(
     independent redraws at each future step would understate uncertainty.
     """
     validate_distribution(initial)
-    transition_matrix(counts, prior)  # validates counts and hyperparameters
+    propagate(initial, transition_matrix(counts, prior), steps)  # validate horizon and parameters
     if not isinstance(draws, int) or isinstance(draws, bool) or draws < 100 or draws > 10000:
         raise ValueError("Need 100..10000 Monte Carlo draws")
     rng = random.Random(seed)
