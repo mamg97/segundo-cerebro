@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {futureGraph} from './research-futures.mjs';
+import {futureGraph, historicalCasePanel} from './research-futures.mjs';
 import {forward,retainedPaths} from '../private-cloudflare/src/research-futures-engine.mjs';
 
 const matrix = [[.8,.2,0,0],[0,0,.3,.7],[.8,.2,0,0],[0,0,.3,.7]];
@@ -28,4 +28,20 @@ test('interactive explorer honors CSP and reads probabilities from the private e
   assert.match(js,/abort\?\.abort/);
   assert.match(js,/observer\.disconnect/);
   assert.match(js,/prefers-reduced-motion/);
+});
+
+test('historical case is hidden by default, escaped, and scores only verified labels',()=>{
+  const result={country:{name:'SYNTHETIC'},cutoff:2008,model:'markov',
+    caseEvaluations:[{available:true,endYear:2010,actualLabel:'SYNTHETIC <EVENT>',
+      models:{markov:{label:'Markov global',probabilityActual:.3,brier:.72,logLoss:1.204},
+        frequency:{label:'Frecuencia',probabilityActual:.2,brier:.9,logLoss:1.609}}}]};
+  const hidden=historicalCasePanel(result,1,false);
+  assert.match(hidden,/Revelar desenlace y evaluar modelos/);
+  assert.doesNotMatch(hidden,/SYNTHETIC &lt;EVENT&gt;/);
+  const revealed=historicalCasePanel(result,1,true);
+  assert.match(revealed,/SYNTHETIC &lt;EVENT&gt;/);
+  assert.match(revealed,/Brier individual/);
+  assert.match(revealed,/Markov global/);
+  assert.doesNotMatch(revealed,/<EVENT>/);
+  assert.match(historicalCasePanel({...result,caseEvaluations:[{available:false,endYear:2010}]},1),/no tienen una secuencia observada completa/);
 });

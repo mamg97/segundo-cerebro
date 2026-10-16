@@ -104,3 +104,15 @@ La API privada `GET /api/research-futures?catalog=...&country=...&model=...` ace
 SVG sin librerías ni activos externos: hasta 45 nodos visibles y 88 aristas (incluidas las de masa nula) (en la configuración de cuatro estados y diez años), ancho local desplazable. Grosor `0.5 + 14 × flujo`, radio `max(4,20√masa)`. Pulsos decorativos, pausa, reproducción de años con velocidad, teclado, movimiento reducido y suspensión fuera de viewport/segundo plano. Animación temporal local, sin solicitudes nuevas; consulta del modelo únicamente al entrar o pulsar Calcular. Sin cron, nueva infraestructura, D1, servicios pagos ni coste incremental.
 
 Siguiente experimento prioritario: reconstruir releases realmente disponibles en cada origen y un crosswalk socioeconómico con vintages, congelar un periodo nuevo y comparar candidatos contra **todas** las referencias, incluida persistencia. No declarar el MVP científicamente validado mientras no se cierre esa puerta.
+
+
+## 9. Evaluación individual de casos históricos (v0.4.2)
+
+El explorador permite elegir países de los catálogos reales y pulsar **Revelar desenlace y evaluar modelos**. El backend entrega un score descriptivo por caso para los cinco modelos, sin ajustar modelos ni usar los resultados observados como predictores.
+
+- El estado terminal observado para horizonte H es el elemento H+1 de la serie observedStates; el índice 0 es el corte conocido o−2 y el índice 1 corresponde al puente o−1 no conocido al emitir.
+- Solo se puntúa una secuencia observada completa entre 1 y H+1. Un hueco no se rellena como resultado negativo ni se transforma en observación.
+- El motor calcula con cada modelo la distribución del horizonte usando únicamente el kernel ajustado hasta el corte. Después, y solo después, mide la probabilidad del estado observado, el Brier categórico de cuatro estados (0–2) y el log-loss del estado terminal.
+- Las cinco filas del caso comparten país, origen, horizonte y etiqueta. Un único Brier no demuestra mayor capacidad predictiva, calibración, eficacia causal ni ventaja estadística.
+- Es un cálculo **post-hoc** sobre release retrospectivamente revisada, no un experimento ciego ni una predicción sellada; revelar en UI no equivale a una evaluación as-of correcta.
+- Los resultados agregados con denominadores siguen en la vista Investigador. Para confirmar habilidad prospectiva, reconstruir primero los archivos/versiones realmente disponibles antes de cada origen, fijar el protocolo y verificar pronósticos posteriores mediante sellado independiente.

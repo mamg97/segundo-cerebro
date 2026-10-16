@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-import {parseFutureCatalogs, parseFutureMetrics, transitionMatrix, forward, retainedPaths, buildFutures} from './research-futures-engine.mjs';
+import {parseFutureCatalogs, parseFutureMetrics, transitionMatrix, forward, retainedPaths, scoreHistoricalCases, buildFutures} from './research-futures-engine.mjs';
 import {researchFuturesResponse} from './research-futures.js';
 
 function fixture() {return {schema: 'psychohistory.futures.catalog.v1', version: 'ucdp-futures-v1',
@@ -75,4 +75,40 @@ test('request only accepts a canonical catalog and country, never user supplied 
     assert.equal(researchFuturesResponse([row], new URLSearchParams(query)).status, 422);
   assert.equal(researchFuturesResponse([row], new URLSearchParams('country=nan')).status, 400);
   assert.equal(parseFutureMetrics([{notes: '{"schema":"psychohistory.futures.metrics.v1","vintageVerified":true}'}]).rejected.length, 1);
+});
+
+test('post-hoc historical scores are mathematically exact and never alter fitted kernels', () => {
+  const d=fixture(), country=d.countries[0];
+  country.observedStates=[0,1,3,2,0,0,1,3,3,3,2,0];
+  const first=buildFutures(d,1,'markov');
+  assert.equal(first.caseEvaluations.length,10);
+  assert.equal(first.caseEvaluations[0].actualState,3);
+  assert.equal(first.caseEvaluations[0].endYear,2010);
+  for(const [index,row] of first.caseEvaluations.entries()) {
+    assert.equal(row.available,true);
+    for(const [model,scores] of Object.entries(row.models)) {
+      const distribution=forward(0,transitionMatrix(d,country,model),index+2).at(-1).distribution;
+      assert.ok(Math.abs(scores.probabilityActual-distribution[row.actualState])<1e-12);
+      const brier=distribution.reduce((sum,p,state)=>sum+(p-Number(state===row.actualState))**2,0);
+      assert.ok(Math.abs(scores.brier-brier)<1e-12);
+      assert.ok(Math.abs(scores.logLoss+Math.log(Math.max(1e-12,distribution[row.actualState])))<1e-12);
+    }
+  }
+  country.observedStates=Array(12).fill(0);
+  const second=buildFutures(d,1,'markov');
+  assert.deepEqual(first.matrix,second.matrix,'future labels cannot alter fitted transition');
+  assert.deepEqual(first.snapshots,second.snapshots,'future labels cannot alter forecast');
+  assert.notEqual(first.caseEvaluations[0].actualState,second.caseEvaluations[0].actualState);
+  assert.notEqual(first.caseEvaluations[0].models.markov.brier,second.caseEvaluations[0].models.markov.brier);
+});
+
+test('incomplete observed trajectory is explicitly not evaluable',()=>{
+  const d=fixture();
+  d.countries[0].observedStates=[0,null,3,2,0,0,1,3,3,3,2,0];
+  const parsed=parseFutureCatalogs([rowFor(d)]);
+  assert.equal(parsed.accepted.length,1);
+  const actual=buildFutures(parsed.accepted[0],1,'markov');
+  assert.equal(actual.caseEvaluations.length,10);
+  assert.ok(actual.caseEvaluations.every(row=>row.available===false && row.reason==='INCOMPLETE_OBSERVED_SEQUENCE'));
+  assert.deepEqual(scoreHistoricalCases(fixture(),fixture().countries[0]),[]);
 });
