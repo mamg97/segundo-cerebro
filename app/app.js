@@ -7151,7 +7151,8 @@ function renderGymPlanView(data) {
     : { paused: false };
 
   if (!plan.length) {
-    return '<p class="health-empty">Todavía no hay un plan de entrenamiento conectado.</p>';
+    return '<p class="health-empty">Todavía no hay un plan de entrenamiento conectado.</p>' +
+      renderGymMonthCalendar(sessions, plan);
   }
 
   if (trainingStatus.paused) {
@@ -7164,6 +7165,7 @@ function renderGymPlanView(data) {
       </section>
 
       ${renderGymPlanReference(plan)}
+      ${renderGymMonthCalendar(sessions, plan)}
 
       <section class="gym-progress-section">
         <div class="health-section-heading">
@@ -7232,6 +7234,8 @@ function renderGymPlanView(data) {
       </div>
       <p id="gym-save-status" class="gym-save-status" role="status"></p>
     </form>
+
+    ${renderGymMonthCalendar(sessions, plan)}
 
     <section class="gym-progress-section">
       <div class="health-section-heading">
@@ -7303,8 +7307,7 @@ function renderGymPanel(data) {
     </section>
     <section class="gym-view-panel" data-gym-view-panel="library" hidden>
       ${renderGymLibraryShell()}
-    </section>
-    ${renderGymMonthCalendar(data?.sessions, plan)}`;
+    </section>`;
 
   panel.querySelectorAll("[data-gym-view]").forEach((button) => {
     button.addEventListener("click", () => setGymPanelView(button.dataset.gymView));
