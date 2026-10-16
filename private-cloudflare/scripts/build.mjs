@@ -14,6 +14,9 @@ await mkdir(resolve(dist, "core"), { recursive: true });
 
 await cp(resolve(repoRoot, "app"), resolve(dist, "app"), { recursive: true });
 await cp(resolve(repoRoot, "core"), resolve(dist, "core"), { recursive: true });
+// Private-only WebRTC lab. Never copied to GitHub Pages / public app.
+await mkdir(resolve(dist, "app", "tapo-lab"), { recursive: true });
+await cp(resolve(workerRoot, "tapo-lab"), resolve(dist, "app", "tapo-lab"), { recursive: true });
 
 const indexPath = resolve(dist, "app", "index.html");
 let html = await readFile(indexPath, "utf8");
