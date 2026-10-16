@@ -138,6 +138,15 @@ No se acepta una derivada que elimine parte relevante del plato para llenar el m
 
 Está prohibido usar como estrategia de adaptación un recorte destructivo equivalente a `object-fit: cover`.
 
+### Norma permanente para TODAS las fotografías de recetas
+
+- La presentación es **siempre horizontal 16:9** en la ficha grande, catálogo y miniaturas del menú.
+- Mostrar **el 100 % de la fotografía original**, incluso si es vertical o cuadrada. Centrarla y conservar proporción; rellenar bandas neutras laterales o arriba/abajo cuando proceda. No ampliar la fotografía para llenar la caja, no estirar, no usar `object-fit: cover`.
+- El contenedor CSS debe usar pistas de cuadrícula de mínimo cero (`minmax(0, 1fr)`) y la imagen `min-width: 0; min-height: 0; object-fit: contain`. `contain` aislado NO evita el recorte si el ítem de CSS Grid mantiene su mínimo intrínseco.
+- Esta regla se aplica a fotos antiguas y futuras, también cuando falta `RecipeMedia` y se sirve el original privado directamente.
+- Una foto en `Recetas` sin derivada válida en `RecipeMedia` queda pendiente de normalización técnica; revisar MIME, SHA-256, dimensiones 16:9, correspondencia con el ID original, tamaño y decodificación. No borrar fotos ni crear nuevas recetas para corregirlas.
+- Criterio visual de aceptación en escritorio y móvil: el rectángulo renderizado del `img` no excede el contenedor ni un píxel; contenido original íntegro y centrado sin deformación. Probar explícitamente fotos altas, cuadradas y panorámicas.
+
 ### Derivada 16:9
 
 La UI de Recetas usa un hero 16:9. La derivada debe prepararse para ese marco:

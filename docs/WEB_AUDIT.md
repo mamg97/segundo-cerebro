@@ -20,6 +20,12 @@ El contrato de aceptación es una **conciliación de extremo a extremo**, no sol
 
 ---
 
+### Regla transversal · fotos de recetas horizontales sin recorte (16/10/2026)
+
+En Home → Menú, Salud → Recetas (galería) y ficha individual: el marco es 16:9, pero ninguna fuente vertical o cuadrada debe recortarse. Exigir en el DOM `object-fit: contain`, centrado, un tamaño concreto del `img` que no sobrepase el marco y el grid con mínimos cero. Un `HTTP 200` y un `object-fit: contain` aparente no bastan: comprobar `img.getBoundingClientRect()` frente al marco, proporción/naturalWidth/naturalHeight y esquinas del contenido dentro de la caja. Repetir en escritorio y móvil con fotos de distintos formatos; detectar también fallback desde original Drive cuando falte preview.
+
+Auditoría de datos separada y sin publicar identidad privada: conciliar todas las filas de `Recetas` con foto contra `RecipeMedia` por `recipe_id` y `source_drive_file_id`; revisar duplicados, tamaño binario, hash y dimensiones. El número de vistas previas ausentes o incompletas debe exponerse como deuda pendiente, nunca contarse como éxito. No reescribir consumos ni publicar fotografías privadas para repararlas.
+
 ## Propósito
 
 `Audit production web` es el control read-only que valida que la aplicación privada de Segundo Cerebro sigue funcionando después de cambios en cualquier dominio.

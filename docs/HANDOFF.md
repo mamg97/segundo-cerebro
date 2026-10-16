@@ -1,3 +1,12 @@
+## GESTOR NUTRI 4 — Encuadre horizontal completo de fotos de recetas (16/10/2026)
+
+- Causa raíz reproducida localmente en Chromium: con `display:grid` y tracks automáticos, una foto vertical fuerza altura intrínseca del `img` (1470 px con marco de 553 px en desktop, 555 px con marco de 210 px móvil), y el `overflow:hidden` recorta el plato aun con `object-fit:contain`. Las pistas de mínimo cero y `img { min-width:0; min-height:0; max-width:100%; max-height:100%; }` evitan el problema sin tocar ni publicar originales.
+- Norma permanente en `docs/RECIPES_IMAGE_INGEST.md`; test en `app/recipe-image-frame.test.mjs`. Todas las fichas y miniaturas son horizontales 16:9 mostrando el original completo, con márgenes según orientación, tanto si hay preview como si el Worker hace fallback al original.
+- Auditoría privada de catálogo: 24 recetas con foto; 19 entradas en `RecipeMedia`; 5 sin preview y 5 con dimensiones/hash incompletos o no normalizados. Ninguna discrepancia entre `source_drive_file_id` de previews presentes y foto canónica. Reparación de derivados técnicos sigue pendiente; no sustituir los originales ni afirmar cobertura total del pipeline.
+- PR/CI/despliegue/auditoría final: revisar después de integrar esta rama. No proclamar producción verificada únicamente por la simulación local.
+
+---
+
 ## ORGANIZADOR 20 — Referencias de objetivos en barras del menú Home (16/10/2026)
 
 - Petición: mostrar dentro de cada barra del menú semanal una raya vertical en el objetivo diario canónico de kcal/proteínas, conservando la distinción entre plan previsto y consumo confirmado.
