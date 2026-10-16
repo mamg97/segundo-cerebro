@@ -76,12 +76,14 @@ test("future dates within this month are not marked as completed workouts", () =
 });
 
 test("February leap year and locale day rollover work without UTC shifts", () => {
-  const february = gymMonthCalendarModel([
-    session("2028-02-29", "Pierna")
-  ], [], new Date(2028, 1, 1, 0, 5));
-  assert.equal(february.days.length, 29);
-  assert.equal(february.trainedDays, 1);
-  assert.equal(february.days[0].isToday, true);
+  const rows = [session("2028-02-29", "Pierna")];
+  const firstDay = gymMonthCalendarModel(rows, [], new Date(2028, 1, 1, 0, 5));
+  assert.equal(firstDay.days.length, 29);
+  assert.equal(firstDay.trainedDays, 0, "future-day record cannot be completed yet");
+  assert.equal(firstDay.days[0].isToday, true);
+  const lastDay = gymMonthCalendarModel(rows, [], new Date(2028, 1, 29, 0, 5));
+  assert.equal(lastDay.trainedDays, 1);
+  assert.equal(lastDay.days[28].isToday, true);
 });
 
 test("month cells are accessible, real records highlighted and untrusted labels escaped", () => {
