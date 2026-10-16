@@ -74,6 +74,8 @@ La pestaña privada `CalendariosAgenda` de `SEGUNDO CEREBRO - EVENTOS` contiene 
 
 La disponibilidad de un proveedor no condiciona la continuidad visual de la agenda. iCloud y Google Calendar mantienen copias derivadas `last-known-good` en D1; una lectura vacía sospechosa, timeout o descubrimiento parcial no sustituye una copia sana. La UI expone por separado el estado de iCloud y Google y marca la agenda como parcial cuando una fuente está degradada.
 
+La sincronización de `Eventos` con iCloud también es bidireccional en cuanto al **estado derivado**, aunque nunca escribe en iCloud: añade/actualiza instancias presentes y marca `CANCELADO` una instancia futura que ya no figura en una lectura iCloud **completa, reciente y sana**. No infiere bajas desde caché antigua, fallback ni lecturas parciales. Se conserva la fila histórica y la marca de reconciliación, sin afirmar que una reserva externa haya sido anulada. Una instancia auto-retirada que reaparece recupera el estado confirmado; las cancelaciones manuales siguen respetándose.
+
 La **resolución conversacional de agenda/eventos es federada** y está separada de la autoridad de cada proveedor. Cualquier agente que responda preguntas como «qué eventos tengo», «cuál es el próximo» o «qué tengo este fin de semana» debe partir del Sheet canónico `SEGUNDO CEREBRO - EVENTOS` y contrastarlo con todos los calendarios y fuentes autorizadas disponibles (todos los calendarios iCloud/CalDAV, todos los calendarios Google accesibles y, para confirmación, email/reservas/documentos). Un resultado parcial de un proveedor no puede presentarse como agenda global completa.
 
 ### Habits / HabitQuest
