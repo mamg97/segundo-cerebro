@@ -1,4 +1,5 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
+import {mountNeural} from './research-neural.mjs?v=0.3.0';
 import {parseBacktests, comparableGroups, parseSimulations} from './research-results.mjs?v=0.2.0';
 const TRACKS=[
   {id:"V1",color:"#ff8a28",subtitle:"Hipótesis históricas y regularidades"},
@@ -19,6 +20,8 @@ let milestoneFilter="TODOS";
 let generation=0;
 let selectedTask='';
 let selectedModel='';
+let disposeNeural=()=>{};
+let motionPaused=false;
 
 function scientificPlot(points,{title,xLabel,yLabel,lines=[],diagonal=false}={}){
   if(!points.length)return empty('Sin datos', 'Pendiente de validación');
@@ -119,24 +122,25 @@ function trackCard(id){
     '<progress class="track-bar" value="'+done+'" max="'+(total||1)+'" aria-label="'+esc(id)+' hitos completados"></progress>'+
     '<div class="track-foot"><span>'+done+'/'+total+' hitos cerrados</span><span>'+pct+'% de hitos</span></div></button>';
 }
-function orbit(){
-  const coords=[[95,80],[305,80],[95,302],[305,302]];
-  let out='<svg viewBox="0 0 400 380" role="img" aria-label="Cuatro vertientes alrededor del núcleo; radios proporcionales a sus hitos verificados">';
-  out+='<defs><radialGradient id="glow"><stop stop-color="#22517d"/><stop offset="1" stop-color="#10263f"/></radialGradient></defs>';
-  out+='<circle cx="200" cy="190" r="135" fill="none" stroke="#345678" stroke-dasharray="3 9"/>';
-  out+='<circle cx="200" cy="190" r="93" fill="none" stroke="#254969"/>';
-  coords.forEach(([x,y],i)=>{out+='<path d="M200 190 L'+x+' '+y+'" stroke="#315273" stroke-width="1.5"/>';});
-  out+='<circle cx="200" cy="190" r="55" fill="url(#glow)" stroke="#4d86ae"/>';
-  out+='<circle cx="200" cy="190" r="41" fill="none" stroke="#ff8a28" stroke-dasharray="2 5"/>';
-  out+='<text x="200" y="182" class="orbit-center">NÚCLEO</text><text x="200" y="202" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800">PSICOHISTORIA</text>';
-  coords.forEach(([x,y],i)=>{
-    const id=TRACKS[i].id,c=TRACKS[i].color,n=milestones(id).length,d=completed(id),percent=n?d/n:0;
-    const radius=38,circ=2*Math.PI*radius;
-    out+='<circle cx="'+x+'" cy="'+y+'" r="'+radius+'" fill="#102740" stroke="#274967" stroke-width="6"/>';
-    out+='<circle cx="'+x+'" cy="'+y+'" r="'+radius+'" fill="none" stroke="'+c+'" stroke-width="6" stroke-linecap="round" transform="rotate(-90 '+x+' '+y+')" stroke-dasharray="'+(circ*percent).toFixed(2)+' '+circ.toFixed(2)+'"/>';
-    out+='<text x="'+x+'" y="'+(y-2)+'" text-anchor="middle" class="orbit-label">'+id+'</text><text x="'+x+'" y="'+(y+15)+'" text-anchor="middle" class="orbit-num">'+d+'/'+n+'</text>';
-  });
-  return out+'</svg>';
+function neuralObservatory(){
+  const p=projectFor(activeTrack),total=milestones(activeTrack).length,done=completed(activeTrack);
+  const names={V1:'Cliodinámica',V2:'Forecasting',V3:'Simulación',V4:'Meta-Lab'};
+  return '<section class="neural-observatory" aria-label="Núcleo neuronal del laboratorio">'+
+    '<div class="neural-top"><div><span class="eyebrow">NEURAL OBSERVATORY / 01</span><h3>La forma de una idea</h3></div><span class="neural-mode">RED CONCEPTUAL</span></div>'+
+    '<div class="neural-layout"><div class="neural-stage" data-motion="paused">'+
+      '<div class="neural-grid" aria-hidden="true"></div><canvas class="neural-canvas" aria-hidden="true">Red conceptual de las cuatro vertientes.</canvas>'+
+      '<div class="neural-crosshair" aria-hidden="true">+</div>'+
+      TRACKS.map(t=>'<button type="button" class="neural-orb" data-track="'+t.id+'" aria-pressed="'+String(activeTrack===t.id)+'" aria-label="Seleccionar '+names[t.id]+' ('+t.id+')"><span class="orb-sphere" aria-hidden="true"><span>'+t.id+'</span></span><strong>'+names[t.id]+'</strong></button>').join('')+
+      '<div class="neural-signature" aria-hidden="true"><span>PSICOHISTORIA</span><small>CUATRO MÉTODOS · UNA PREGUNTA</small></div>'+
+      '<button type="button" class="motion-toggle" data-motion-toggle aria-pressed="false">Ⅱ Pausar movimiento</button>'+
+    '</div><aside class="neural-context" data-track="'+activeTrack+'">'+
+      '<span class="neural-selection">'+activeTrack+' / FOCO DE INVESTIGACIÓN</span><h4>'+esc(p?.name||names[activeTrack])+'</h4><p>'+esc(track(activeTrack).subtitle)+'</p>'+
+      '<div class="neural-fact"><strong>'+done+'<span> / '+total+'</span></strong><small>hitos cerrados en el registro</small></div>'+
+      '<progress class="track-bar" value="'+done+'" max="'+(total||1)+'" aria-label="Hitos de '+activeTrack+'"></progress>'+
+      '<span class="status-chip">'+esc(p?.status||'Sin estado')+'</span>'+
+      '<button type="button" class="neural-evidence" data-open-science>Explorar evidencia <span aria-hidden="true">↗</span></button>'+
+      '<p class="neural-disclaimer">Visualización conceptual. Los pulsos no representan cálculos en ejecución. El avance mide hitos, no precisión predictiva.</p>'+
+    '</aside></div></section>';
 }
 function milestoneRow(m){
   const isDone=m.status==="HECHO",isBlocked=m.status==="BLOQUEADO";
@@ -151,11 +155,9 @@ function kpiRow(k){
 function overview(){
   const t=track(activeTrack),p=projectFor(activeTrack),ms=milestones(activeTrack),ks=state.lab.kpis.filter(k=>k.track===activeTrack);
   const stage=maturity(activeTrack);
-  return heading("ARQUITECTURA ACTIVA","Cuatro líneas, un único laboratorio","Selecciona una vertiente para inspeccionar evidencias")+
-    '<div class="overview-layout">'+
-      '<section class="panel"><div class="panel-head"><h3>Constelación de investigación</h3><span>Avance real de hitos</span></div><div class="orbit-wrap">'+orbit()+'</div><p class="legend-note">Cada anillo representa hitos cerrados, no precisión predictiva. El tamaño del progreso jamás implica validez científica.</p></section>'+
-      '<section class="panel"><div class="panel-head"><h3>Vertientes de trabajo</h3><span>4 módulos interrelacionados</span></div><div class="track-stack">'+TRACKS.map(t=>trackCard(t.id)).join("")+'</div></section>'+
-    '</div>'+
+  return heading("INTELIGENCIA COLECTIVA","Cuatro líneas, un único laboratorio","Toca un orbe para explorar su vertiente")+
+    neuralObservatory()+
+    '<section class="track-deck" aria-label="Vertientes de investigación">'+TRACKS.map(t=>trackCard(t.id)).join("")+'</section>'+
     '<div class="detail-panels">'+
       '<section class="panel"><div class="panel-head"><h3>'+esc(p?.name||activeTrack)+'</h3><span class="status-chip">'+esc(p?.status||"Sin estado")+'</span></div>'+
         '<p class="subtext">'+esc(p?.summary||"Sin descripción")+'</p>'+
@@ -231,10 +233,19 @@ function roadmap(){
 }
 function render(){
   if(!state)return;
+  disposeNeural();
   header();metrics();
   root.innerHTML=activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
-  root.querySelectorAll("[data-track]").forEach(x=>x.addEventListener("click",()=>{activeTrack=x.dataset.track;render();}));
+  if(activeView==="overview")disposeNeural=mountNeural(root.querySelector('.neural-stage'),{activeTrack,paused:motionPaused,onPause:value=>{motionPaused=value;}});
+  root.querySelectorAll("button[data-track]").forEach(x=>x.addEventListener("click",()=>{
+    const source=x.classList.contains('neural-orb')?'neural-orb':'track-card';
+    activeTrack=x.dataset.track;render();
+    root.querySelector('.'+source+'[data-track="'+activeTrack+'"]').focus({preventScroll:true});
+  }));
+  root.querySelector('[data-open-science]')?.addEventListener('click',()=>{
+    activeView='science';render();document.querySelector('[data-view="science"]').focus({preventScroll:true});
+  });
   root.querySelectorAll("[data-filter]").forEach(x=>x.addEventListener("click",()=>{milestoneFilter=x.dataset.filter;render();}));
   root.querySelectorAll('[data-task]').forEach(x=>x.addEventListener('click',()=>{selectedTask=x.dataset.task;selectedModel='';render();}));
   root.querySelectorAll('[data-model]').forEach(x=>x.addEventListener('click',()=>{selectedModel=x.dataset.model;render();}));
