@@ -138,3 +138,16 @@ test("reopening detail modals uses payload memory and never blanks a previously 
   assert.match(pantry,/if\(cached\) renderWorkspace\(cached, initialView\)/);
   assert.match(objects,/objectsViewMemory\?\.remember\(updated\)/);
 });
+
+test("a degraded but HTTP-successful upstream cannot poison the retained workspace",async()=>{
+  const cache=createPayloadViewMemory();
+  cache.remember({ok:true,status:"ok",rows:[1]});
+  cache.invalidate();
+  const result=await cache.refresh(async()=>({ok:true,status:"error",rows:[]}));
+  assert.equal(result.status,"stale");
+  assert.deepEqual(cache.peek().rows,[1]);
+  cache.invalidate();
+  const second=await cache.refresh(async()=>({ok:true,source:{available:false},rows:[]}));
+  assert.equal(second.status,"stale");
+  assert.deepEqual(cache.peek().rows,[1]);
+});
