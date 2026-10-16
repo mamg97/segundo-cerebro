@@ -1,3 +1,12 @@
+## ORGANIZADOR 21 — Gimnasio · Progreso físico fotográfico privado (16/10/2026)
+
+- Nueva pestaña **Progreso físico** dentro de `Salud → Gimnasio`. Galería de series por fecha, tres vistas (frente / diagonal / perfil), comparador de dos fechas, subida multipart de tres fotos y eliminación confirmada. Carga solo bajo demanda, `object-fit: contain` en móvil y escritorio.
+- Fuente canónica `SEGUNDO CEREBRO - SALUD / GymFotos` **oculta y privada**, índice A:G y vista visual fragmentada H:AA (20 × 30k caracteres para no superar 50k/celda). Los originales de archivo permanecen en Drive privado. Las primeras tres vistas fechadas constan **solo en fuentes privadas**, sin valores personales en repositorio ni API de resumen. URLs por Worker same-origin con no-store y MIME validado; uploads WebP canvas limpian metadatos. En escritura del mismo día, fallo seguro de duplicado; eliminación vacía la serie en Sheet sin destruir los originales Drive. No D1 ni R2 nuevos.
+- Código `private-cloudflare/src/gym-photos.js`, `app/gym-progress-photos.mjs`, CSS aislado, API `/api/gym/photos` y pruebas sintéticas. Verificar CI verde, despliegue privado, auditoría visual y acceso real a las tres imágenes antes de cerrar.
+- NOTA: el archivo de originales en Drive no se borra cuando se elimina la serie de la galería (acción explícita diferente).
+
+---
+
 ## ORGANIZADOR 21 — Mini calendario mensual de Gimnasio (16/10/2026)
 
 - Petición visual: pequeño calendario del **mes local presente justo después de «Guardar entrenamiento»**, antes de «Progreso por ejercicio», con días de entrenamiento coloreados y grupo muscular pequeño dentro de cada celda. En pausa aparece después del plan de referencia, porque no hay formulario de guardado; no se muestra en la biblioteca.  las sesiones proceden exclusivamente del histórico real privado `gym_sessions` + `gym_entries` ya incluido en `GET /api/gym`, **no** del plan previsto.
