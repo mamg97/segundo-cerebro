@@ -71,6 +71,32 @@ function detail(result, horizon, selection) {
   return '<span class="eyebrow">INSPECCIÓN CIENTÍFICA</span><h4>Cada bifurcación tiene un significado</h4><p>Toca un nodo para ver su probabilidad marginal o una conexión para separar probabilidad condicional y flujo agregado.</p><p>Debajo puedes seleccionar historias completas. Varias historias pueden terminar en el mismo nodo.</p>';
 }
 
+// Revealing an outcome is a UI choice, not an independently sealed prospective trial.
+export function historicalCasePanel(result, horizon, revealed = false) {
+  const caseResult = result.caseEvaluations?.[horizon - 1];
+  if (!caseResult) return '';
+  let html = '<section class="panel top-gap future-case-evaluation"><div class="panel-head"><h3>¿Qué ocurrió realmente?</h3><span>' +
+    esc(result.country.name) + ' · ' + caseResult.endYear + '</span></div>' +
+    '<p class="legend-note">Caso histórico sobre una fuente revisada. Probabilidades calculadas con el corte ' + result.cutoff +
+    '; solo después se consulta el desenlace. No es predicción prospectiva ni acredita disponibilidad histórica as-of.</p>';
+  if (!caseResult.available) return html +
+    '<p class="subtext">Este país y horizonte no tienen una secuencia observada completa y no se puntúan. No se transforman los datos ausentes en ausencia de conflicto.</p></section>';
+  html += '<button type="button" class="future-calculate" data-case-reveal aria-pressed="' + revealed + '">' +
+    (revealed ? 'Ocultar desenlace histórico' : 'Revelar desenlace y evaluar modelos') + '</button>';
+  if (!revealed) return html + '<p class="chart-note">Puedes explorar primero las trayectorias sin revelar el resultado histórico. El dataset retrospectivo ya incluye el desenlace; no es un ensayo ciego sellado.</p></section>';
+  const selected = caseResult.models[result.model];
+  html += '<p class="subtext">Estado registrado al final: <strong>' + esc(caseResult.actualLabel) +
+    '</strong>. Probabilidad que asignaba el modelo elegido: <strong>' + pct(selected.probabilityActual) +
+    '</strong>. Brier individual: <strong>' + fmt(selected.brier, 5) +
+    '</strong> (escala 0–2).</p><div class="scroll-x"><table><thead><tr><th>Modelo</th><th>P(estado real)</th><th>Brier individual ↓</th><th>Log-loss individual ↓</th></tr></thead><tbody>' +
+    Object.entries(caseResult.models).map(([model, scores]) =>
+      '<tr' + (model === result.model ? ' class="future-current-model"' : '') + '><td>' + esc(scores.label) +
+      '</td><td>' + pct(scores.probabilityActual) + '</td><td>' + fmt(scores.brier, 5) +
+      '</td><td>' + fmt(scores.logLoss, 5) + '</td></tr>').join('') + '</tbody></table></div>' +
+    '<p class="chart-note">Los cinco modelos comparten el mismo país, origen, horizonte y resultado. Un Brier menor en un caso no demuestra superioridad ni calibración: compara las muestras agregadas en Investigador.</p>';
+  return html + '</section>';
+}
+
 function research(result, metrics, horizon) {
   const group = metrics.filter(m => m.horizon === horizon);
   const first = group[0], comparable = first ? group.filter(m => m.sampleSha256 === first.sampleSha256 && m.n === first.n) : [];
@@ -102,7 +128,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
   }
   container.setAttribute('aria-live','off');
   let catalog = catalogs[0], country = catalog.countries[0].id, model = 'markov', horizon = Math.min(3, catalog.maxHorizon);
-  let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, speed = 1;
+  let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, caseRevealed = false, speed = 1;
   let error = '', loading = false, disposed = false, request = 0, abort = null, timer = null, inView = true;
   const media = window.matchMedia('(prefers-reduced-motion: reduce)');
   const clearTimer = () => { if (timer !== null) window.clearTimeout(timer); timer = null; };
@@ -131,6 +157,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
         '<div class="future-timeline"><label>Horizonte <strong>' + horizon + ' ' + (horizon === 1 ? 'año' : 'años') + ' → ' + snapshot.endYear + '</strong><input name="horizon" type="range" min="1" max="' + result.maxHorizon + '" step="1" value="' + horizon + '" aria-label="Horizonte en años"></label>' +
         '<button type="button" data-play aria-pressed="' + playing + '"' + (media.matches ? ' disabled' : '') + '>' + (playing ? 'Ⅱ Pausar tiempo' : '▶ Recorrer años') + '</button><label>Velocidad<select name="speed">' + [0.5,1,2].map(n => option(n,n+'×',speed)).join('') + '</select></label><button type="button" data-fpause aria-pressed="' + (paused || media.matches) + '"' + (media.matches ? ' disabled' : '') + '>' + (media.matches ? 'Movimiento reducido' : paused ? 'Reanudar pulsos' : 'Pausar pulsos') + '</button></div>' +
         distribution(result, snapshot) + '<p class="chart-note">IP = intervalo paramétrico condicionado al modelo; no es un intervalo de precisión real ni tiene cobertura empírica acreditada. Distribución puntual suma ' + pct(snapshot.distribution.reduce((a,b) => a+b,0)) + '.</p>' +
+         historicalCasePanel(result, horizon, caseRevealed) +
         '<div class="future-legend">' + SHORT.map((name,i) => '<span data-state="' + i + '"><i></i>' + esc(name) + '</span>').join('') + '</div>' +
         (mode === 'explorer' ? '<div class="future-explorer"><section class="panel future-network"><div class="panel-head"><h3>Red de transiciones</h3><label class="future-observed-toggle"><input type="checkbox" name="observed"' + (observed ? ' checked' : '') + '> Ver recorrido observado después</label></div><div class="future-graph-scroll">' + futureGraph(result, horizon, selection, observed) + '</div><p class="chart-note">Desliza horizontalmente para recorrer los años. Grosor = 0,5 + 14 × flujo agregado; área de nodos proporcional a masa con radio mínimo de 4 px. Los pulsos son decorativos; su velocidad no tiene unidad social.</p></section><aside class="panel future-detail" aria-live="polite">' + detail(result, horizon, selection) + '</aside></div>' +
         '<section class="panel top-gap"><div class="panel-head"><h3>Historias individuales retenidas</h3><span>Sin renormalizar</span></div><div class="future-paths">' + snapshot.paths.map((path,i) => '<button type="button" data-fpath="' + i + '" aria-pressed="' + (selection?.kind === 'path' && selection.index === i) + '"><span>Camino ' + (i+1) + '</span><span>' + path.states.slice(1).map(s => ['00','01','10','11'][s]).join(' → ') + '</span><strong>' + pct(path.probability) + '</strong></button>').join('') + '</div><p class="future-mass">Masa representada: <strong>' + pct(snapshot.representedMass) + '</strong> · Otras historias: <strong>' + pct(snapshot.residualMass) + '</strong></p><p class="chart-note">Beam de ' + snapshot.beam + ' prefijos; hasta 12 historias mostradas. La masa residual incluye todas las historias omitidas. El grafo agregado superior conserva el 100 % de la masa y no depende de esta poda. Códigos: dos años consecutivos, 0 bajo el umbral y 1 por encima.</p></section>' : research(result, payload.metrics, horizon)) +
@@ -142,11 +169,12 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
         if (!catalog.countries.some(c => String(c.id) === String(country))) country = catalog.countries[0].id;
         horizon = Math.min(horizon, catalog.maxHorizon);
       } else if (select.name === 'country') country = Number(select.value); else model = select.value;
-      abort?.abort(); request++; loading = false; payload = null; playing = false; error = ''; render('[name="'+select.name+'"]');
+      abort?.abort(); request++; loading = false; payload = null; playing = false; caseRevealed = false; error = ''; render('[name="'+select.name+'"]');
     }));
     container.querySelector('[name="horizon"]')?.addEventListener('change', e => {horizon = Number(e.target.value); selection = null; playing = false; render('[name="horizon"]');});
     container.querySelector('[name="speed"]')?.addEventListener('change', e => {speed = Number(e.target.value); schedule();});
     container.querySelector('[name="observed"]')?.addEventListener('change', e => {observed = e.target.checked; render('[name="observed"]');});
+    container.querySelector('[data-case-reveal]')?.addEventListener('click', () => {caseRevealed = !caseRevealed; render('[data-case-reveal]');});
     container.querySelector('[data-play]')?.addEventListener('click', () => {playing = !playing; render('[data-play]');});
     container.querySelector('[data-fpause]')?.addEventListener('click', () => {paused = !paused; render('[data-fpause]');});
     container.querySelectorAll('[data-fmode]').forEach(b => b.addEventListener('click', () => {mode = b.dataset.fmode; playing = false; render('[data-fmode="'+mode+'"]');}));
