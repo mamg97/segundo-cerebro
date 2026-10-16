@@ -27891,7 +27891,7 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
    All recipe detail entry points use the same shared recipe-detail-card. */
 .recipe-detail-card .recipe-card-body > header > div {
   min-width: 0;
-  flex: 1 1 0;
+  flex: 1 1 auto;
 }
 .recipe-detail-card .recipe-card-body h4 {
   overflow-wrap: break-word;
