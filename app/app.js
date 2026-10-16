@@ -1,5 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
+import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
 import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";
 import { mockState } from "../core/mock-state.js";
 import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
@@ -7302,7 +7303,8 @@ function renderGymPanel(data) {
     </section>
     <section class="gym-view-panel" data-gym-view-panel="library" hidden>
       ${renderGymLibraryShell()}
-    </section>`;
+    </section>
+    ${renderGymMonthCalendar(data?.sessions, plan)}`;
 
   panel.querySelectorAll("[data-gym-view]").forEach((button) => {
     button.addEventListener("click", () => setGymPanelView(button.dataset.gymView));
