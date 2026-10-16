@@ -9,7 +9,16 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.24;ba
 header,footer{display:flex;justify-content:space-between;align-items:center;gap:10px}header{padding:20px 0 16px}footer{color:#8e9cbb;font-size:11px;letter-spacing:.12em;padding:10px 0 18px}
 .brand{font-weight:900;letter-spacing:.2em;text-transform:uppercase;font-size:12px;color:var(--gold)}
 button.small{background:#ffffff0b;color:var(--white);border:1px solid var(--line);border-radius:30px;padding:13px 16px;font-size:12px;font-weight:800;min-height:44px}
-.top-actions{display:flex;gap:9px}.bar{height:3px;background:#ffffff17;overflow:hidden;border-radius:2px}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd78a,#ff8a9e);transition:width .4s}
+.top-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}.music-strip{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:0 0 15px;padding:12px 16px;border:1px solid #ffffff1e;border-radius:14px;background:#111b31ba}
+.music-strip .music-title{font-size:13px;font-weight:900;color:#ffdd9a;letter-spacing:.06em}
+.music-strip .small{padding:10px 13px;font-size:12px}
+.music-strip label{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800;white-space:nowrap}
+.music-strip input[type="range"]{width:100px;accent-color:#ffc884}
+.music-strip output{min-width:36px;font-variant-numeric:tabular-nums}
+.music-strip .music-status{font-size:12px;color:#bfc9de;flex-basis:100%;line-height:1.35}
+.music-strip .music-status.ready{color:#a7e9d4}
+@media(max-width:680px){.music-strip{gap:9px;padding:10px 12px}.music-strip .music-title{width:100%}.music-strip .small{font-size:11px}.music-strip label{font-size:12px}}
+.bar{height:3px;background:#ffffff17;overflow:hidden;border-radius:2px}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd78a,#ff8a9e);transition:width .4s}
 main{flex:1;display:flex;align-items:center;padding:20px 0 32px}.card{width:100%;min-height:min(650px,calc(100svh - 150px));position:relative;overflow:hidden;border:1px solid var(--line);border-radius:30px;background:linear-gradient(120deg,#1b203cd9,#0c1630e5);box-shadow:0 30px 90px #0006;padding:clamp(25px,5vw,66px);display:flex;flex-direction:column;justify-content:center;isolation:isolate}
 .card:before{content:"";z-index:-1;position:absolute;right:-170px;top:-170px;width:430px;height:430px;border:1px solid #ffffff13;box-shadow:0 0 0 110px #ffffff05,0 0 0 220px #ffffff03;border-radius:50%}
 .fx{animation:up .55s cubic-bezier(.2,.9,.2,1) both}@keyframes up{from{opacity:0;transform:translateY(19px)}to{opacity:1;transform:translateY(0)}}
@@ -31,7 +40,14 @@ h2{font-family:Georgia,serif;font-weight:500;font-size:clamp(37px,5vw,64px);line
 @media(max-width:680px){.wrap{padding:0 12px}header{padding:14px 0}.brand{font-size:10px}.top-actions .small{font-size:11px;padding:10px}.card{padding:28px 20px;border-radius:21px;min-height:calc(100svh - 132px)}main{padding:13px 0 20px}.options{grid-template-columns:1fr;gap:10px}.option{min-height:72px;flex-direction:row;align-items:center;justify-content:flex-start}.option .emoji{font-size:31px}.option .label{font-size:19px}.eyebrow{font-size:11px}.pad{grid-template-columns:repeat(5,1fr)}.pad button{min-height:55px}.ticket{padding:17px;gap:10px}footer{font-size:9px}}
 @media(max-height:740px) and (min-width:681px){.card{padding:29px 55px;min-height:calc(100svh - 126px)}.options .option{min-height:125px}h1{font-size:clamp(60px,6vw,83px)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
-</style></head><body><div class="wrap"><header><div class="brand">✦ &nbsp; ARCHIVO CONFIDENCIAL</div><div class="top-actions"><button type="button" class="small" id="audio">🔊 ACTIVAR SONIDO</button><button type="button" class="small" id="test-audio" hidden>▶ Probar sonido</button><button type="button" class="small" id="fs">⛶ Ampliar</button></div></header><div class="bar"><i id="progress"></i></div><main><div class="card" id="screen" aria-live="polite"></div></main><footer><span>OPERACIÓN SECRETA · SOLO PARA VOSOTROS</span><span id="step">SIN REVELAR</span></footer></div>
+</style></head><body><div class="wrap"><header><div class="brand">✦ &nbsp; ARCHIVO CONFIDENCIAL</div><div class="top-actions"><button type="button" class="small" id="audio">🔊 ACTIVAR SONIDO</button><button type="button" class="small" id="test-audio" hidden>▶ Probar sonido</button><button type="button" class="small" id="fs">⛶ Ampliar</button></div></header><div class="music-strip" role="group" aria-label="Música de fondo">
+<span class="music-title">🎄 MÚSICA NAVIDEÑA</span>
+<button type="button" class="small" id="choose-track">♫ Elegir «Let It Snow»</button>
+<input id="track-file" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg" hidden aria-label="Selecciona un archivo de audio desde este dispositivo">
+<button type="button" class="small" id="play-track" hidden>▶ Reproducir</button>
+<label for="music-volume">Volumen <input id="music-volume" type="range" min="0" max="30" value="12"><output id="music-volume-value">12%</output></label>
+<span id="track-status" class="music-status" aria-live="polite">De momento suena una melodía instrumental suave. Para escuchar «Let It Snow», selecciónala desde Archivos; no se subirá a Internet.</span>
+</div><div class="bar"><i id="progress"></i></div><main><div class="card" id="screen" aria-live="polite"></div></main><footer><span>OPERACIÓN SECRETA · SOLO PARA VOSOTROS</span><span id="step">SIN REVELAR</span></footer></div>
 <script>
 (function(){
 "use strict";
@@ -39,6 +55,23 @@ var cfg={city:"CIUDAD SECRETA",country:"DESTINO DESCONOCIDO",date:"PRÓXIMAMENTE
 try{var encoded=location.hash.match(/(?:^#|&)s=([^&]+)/);if(encoded){var obj=JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(decodeURIComponent(encoded[1])),function(c){return "%"+("0"+c.charCodeAt(0).toString(16)).slice(-2)}).join("")));["city","country","date","code"].forEach(function(k){if(typeof obj[k]==="string"&&obj[k].length<=90)cfg[k]=obj[k]})}}catch(e){}
 var screen=document.getElementById("screen"),progress=document.getElementById("progress"),step=document.getElementById("step");
 var n=0,locked=false,code="",soundOn=false,audio,musicTimer=null,musicStep=0;
+var backgroundTrack=null,trackUrl=null,trackPlaying=false,trackStatusEl=document.getElementById("track-status");
+var trackButton=document.getElementById("play-track");
+function setTrackStatus(message,ready){trackStatusEl.textContent=message;trackStatusEl.classList.toggle("ready",!!ready)}
+function pauseLocalTrack(){if(backgroundTrack){backgroundTrack.pause();trackPlaying=false;trackButton.textContent="▶ Reproducir"}}
+function playLocalTrack(){if(!backgroundTrack)return Promise.resolve(false);stopMusic();return backgroundTrack.play().then(function(){trackPlaying=true;trackButton.textContent="⏸ Pausar";setTrackStatus("♫ Let It Snow · Reproduciéndose en bucle, volumen "+Math.round(backgroundTrack.volume*100)+" %",true);return true}).catch(function(){trackPlaying=false;trackButton.textContent="▶ Reproducir";setTrackStatus("Pulsa «Reproducir» para autorizar la música en Safari.",false);return false})}
+function loadLocalTrack(file){
+ if(!file)return;
+ var extension=/\.(mp3|m4a|aac|wav|ogg|mp4|flac)$/i.test(file.name||"");
+ if(file.type&&!file.type.startsWith("audio/")&&!extension){setTrackStatus("Elige un archivo de audio (MP3, M4A, AAC, WAV…).",false);return}
+ pauseLocalTrack();if(backgroundTrack){backgroundTrack.src="";backgroundTrack.load()}if(trackUrl)URL.revokeObjectURL(trackUrl);
+ trackUrl=URL.createObjectURL(file);backgroundTrack=new Audio();backgroundTrack.src=trackUrl;backgroundTrack.loop=true;
+ backgroundTrack.volume=Number(document.getElementById("music-volume").value)/100;
+ backgroundTrack.addEventListener("error",function(){setTrackStatus("No se puede reproducir este formato en Safari. Prueba un MP3 o M4A.",false)});
+ trackButton.hidden=false;stopMusic();setTrackStatus("Canción seleccionada. Reproducción privada desde este dispositivo. Pulsa «Reproducir» si no empieza sola.",true);
+ if(!soundOn){soundOn=true;document.getElementById("audio").textContent="🔊 SONIDO ON";document.getElementById("test-audio").hidden=false}
+ playLocalTrack();
+}
 function tone(freq,offset,length,volume,kind){
  if(!audio||audio.state!=="running"||!freq)return;
  var t=audio.currentTime+offset,o=audio.createOscillator(),g=audio.createGain();
@@ -55,13 +88,13 @@ function beep(type){
 }
 function stopMusic(){if(musicTimer!==null){clearInterval(musicTimer);musicTimer=null}}
 function ambientNote(){
- if(!soundOn||!audio||audio.state!=="running")return;
+ if(backgroundTrack||!soundOn||!audio||audio.state!=="running")return;
  var notes=[196,246.94,293.66,392,329.63,293.66,246.94,164.81];
  tone(notes[musicStep%notes.length],.02,.75,.018,"sine");
  if(musicStep%4===0)tone(98,.02,1.2,.012,"sine");
  musicStep++;
 }
-function startMusic(){stopMusic();musicStep=0;musicTimer=setInterval(ambientNote,1400)}
+function startMusic(){stopMusic();if(backgroundTrack)return;musicStep=0;musicTimer=setInterval(ambientNote,1400)}
 function audioStatus(message){var e=document.getElementById("audio-status");if(e)e.textContent=message}
 
 function draw(content){screen.innerHTML='<div class="fx">'+content+'</div>'}
@@ -132,7 +165,7 @@ function render(){
 screen.addEventListener("click",function(e){var b=e.target.closest("[data-action]");if(!b)return;var a=b.getAttribute("data-action");if(a==="next"||a==="reveal"){n=Math.min(7,n+1);beep("click");render()}else if(a==="restart"){n=0;render()}else if(a==="celebrate"){beep("final");confetti()}});
 document.getElementById("audio").onclick=async function(){
  var control=this,test=document.getElementById("test-audio");
- if(soundOn){soundOn=false;stopMusic();control.textContent="🔊 ACTIVAR SONIDO";test.hidden=true;audioStatus("🔇 Sonido desactivado. Pulsa ACTIVAR SONIDO para escucharlo.");return}
+ if(soundOn){soundOn=false;stopMusic();pauseLocalTrack();control.textContent="🔊 ACTIVAR SONIDO";test.hidden=true;audioStatus("🔇 Sonido desactivado. Pulsa ACTIVAR SONIDO para escucharlo.");return}
  try{
   var AudioClass=window.AudioContext||window.webkitAudioContext;
   if(!AudioClass)throw new Error("Web Audio no disponible");
@@ -140,10 +173,15 @@ document.getElementById("audio").onclick=async function(){
   if(audio.state!=="running")throw new Error("Audio bloqueado por Safari");
   soundOn=true;control.textContent="🔊 SONIDO ON";test.hidden=false;
   audioStatus("✅ ¡Audio activado! Deberías haber escuchado seis notas. Si no se oyen en la TV, revisa su volumen y la salida AirPlay.");
-  beep("test");startMusic();
+  beep("test");if(backgroundTrack){playLocalTrack()}else{startMusic()}
  }catch(error){soundOn=false;control.textContent="🔊 REINTENTAR SONIDO";test.hidden=true;audioStatus("⚠️ Safari ha bloqueado el sonido. Toca de nuevo ACTIVAR SONIDO y comprueba volumen y salida de audio del iPad.");}
 };
 document.getElementById("test-audio").onclick=function(){beep("test");audioStatus("🎵 Reproduciendo seis notas de prueba. Si no las oyes, sube el volumen de la TV y revisa AirPlay.")};
+document.getElementById("choose-track").onclick=function(){document.getElementById("track-file").click()};
+document.getElementById("track-file").addEventListener("change",function(){var file=this.files&&this.files[0];if(file)loadLocalTrack(file);this.value=""});
+trackButton.onclick=function(){if(!backgroundTrack)return;if(trackPlaying){pauseLocalTrack();setTrackStatus("Música en pausa.",true)}else{playLocalTrack()}};
+document.getElementById("music-volume").addEventListener("input",function(){var v=Number(this.value);document.getElementById("music-volume-value").textContent=v+"%";if(backgroundTrack){backgroundTrack.volume=v/100;if(trackPlaying)setTrackStatus("♫ Let It Snow · Reproduciéndose en bucle, volumen "+v+" %",true)}});
+
 
 document.getElementById("fs").onclick=function(){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(function(){});else this.textContent="Usa Safari a pantalla completa"};
 render()})();
