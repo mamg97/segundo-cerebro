@@ -1,3 +1,11 @@
+## ORGANIZADOR · Recetas · desbordamiento de ingredientes en iPhone (16/10/2026)
+
+- **Causa raíz:** la ficha compartida `renderRecipeDetail()` mostraba cada ingrediente en una rejilla `minmax(0,1fr) auto`; al combinar una cantidad estimada con explicación extensa y `white-space:nowrap`, la cantidad recibía ancho intrínseco casi ilimitado. El nombre quedaba reducido a uno o dos caracteres por línea (y el texto de cantidades podía sobresalir de la tarjeta).
+- **Solución global:** sin cambiar fichas, ingredientes, raciones ni notas en Sheets, `app/styles.css` limita ambas columnas en escritorio y en ≤760px coloca nombre y cantidad completas una debajo de otra (sin recortes), con encabezado vertical para que la etiqueta de estimación no reduzca el título. Selector `.recipe-detail-card` común a fichas abiertas desde menú y recetario; fotos conservan `object-fit: contain`. Bump CSS/JS sincronizado para invalidar Safari. Pruebas de contrato `app/recipe-ingredients-responsive.test.mjs`.
+- **Cierre:** verificar CI, despliegue privado y geometría móvil; auditoría global puede mantenerse roja por MIDAS preexistente, no confundir con error de recetas.
+
+---
+
 ## PSICOHISTORIA — benchmark real y laboratorio v0.2.1 (16/10/2026)
 
 - Fuente canónica: mismo Sheet privado de Proyectos. Registro de evaluaciones modelo–objetivo en `PsicoExperimentos`; sobres históricos en `notas`, escenarios ABM separados explícitamente de datos reales. Resultados y archivo íntegro de reproducción se enlazan solo desde fuentes privadas. No copiar scores ni IDs privados a Git.
