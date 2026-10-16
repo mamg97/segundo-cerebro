@@ -191,6 +191,8 @@ La vista `Eventos importantes` combina:
 - citas médicas detectadas por clasificación genérica;
 - compromisos financieros próximos.
 
+La persistencia de eventos iCloud conserva el histórico de una instancia eliminada: se marca `CANCELADO` **solo si** el estado federado confirma iCloud completo y fresco y la instancia futura ya no está presente; `source_updated_at` mantiene la última observación positiva. En modo fallback/parcial no se asume ninguna eliminación. Una baja automática contiene una marca técnica privada en `final_summary` para permitir la restitución si reaparece sin revocar cancelaciones manuales.
+
 El área `Salud` es derivada y no crea una segunda fuente de verdad. Clasifica eventos del calendario federado en `medical`, `gym` y `nutrition` a partir de título/ubicación. Cada proveedor conserva autoridad sobre sus eventos y D1 solo mantiene caché de resiliencia.
 
 
