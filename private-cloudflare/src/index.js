@@ -19,6 +19,7 @@ import { fetchProjectsSummary, hasProjectsGoogleConfig } from "./projects.js";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { readVision, saveVision, recordVisionReplacement } from "./vision.js";
+import { listGymPhotos, readGymPhoto, saveGymPhotoSeries, deleteGymPhotoSeries, GymPhotoError } from "./gym-photos.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
 import { syncImportantEventRecords, fetchEventRecords, fetchEventHomeSummary, fetchEventDetail, fetchEventLedgerSnapshot, createEventRecord, updateEventRecord, appendEventFact, appendEventReference } from "./events.js";
 import { hasEventsGoogleConfig, fetchEventsSheetSource, fetchEventSheetRecords, fetchEventSheetHomeSummary, fetchEventSheetDetail, syncCalendarEventsToEventsSheet, migrateLegacyEventLedgerToSheet, createEventSheetRecord, updateEventSheetRecord, appendEventSheetFact, appendEventSheetReference } from "./events-sheet.js";
@@ -5560,6 +5561,47 @@ export default {
         getGymExerciseLinks(env).catch(() => [])
       ]);
       return json({ ok: true, plan: gymPlan, trainingStatus, exerciseLinks, ...history });
+    }
+
+    // Photos are strictly lazy-loaded and excluded from /api/state and /api/gym.
+    if (url.pathname === "/api/gym/photos") {
+      if (!hasHealthGoogleConfig(env)) return json({ ok: false, code: "GYM_PHOTO_NOT_CONFIGURED" }, 503);
+      if (request.method !== "GET" && request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        return json(request.method === "GET"
+          ? await listGymPhotos(env, getGoogleAccessToken)
+          : await saveGymPhotoSeries(request, env, getGoogleAccessToken));
+      } catch (error) {
+        return json({ ok: false, code: error instanceof GymPhotoError ? error.code : "GYM_PHOTO_FAILED" },
+          error instanceof GymPhotoError ? error.status : 502);
+      }
+    }
+
+    const gymPhotoImage = url.pathname.match(/^\/api\/gym\/photos\/(\d{4}-\d{2}-\d{2})\/(frente|diagonal|perfil)\/image$/);
+    if (gymPhotoImage) {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      if (!hasHealthGoogleConfig(env)) return json({ ok: false, code: "GYM_PHOTO_NOT_CONFIGURED" }, 503);
+      try {
+        const result = await readGymPhoto(env, getGoogleAccessToken, gymPhotoImage[1], gymPhotoImage[2]);
+        return withSecurityHeaders(new Response(result.bytes, {
+          headers: { "Content-Type": result.mime, "Content-Disposition": "inline",
+            "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" }
+        }));
+      } catch (error) {
+        return json({ ok: false, code: error instanceof GymPhotoError ? error.code : "GYM_PHOTO_IMAGE_FAILED" },
+          error instanceof GymPhotoError ? error.status : 502);
+      }
+    }
+
+    const gymPhotoDelete = url.pathname.match(/^\/api\/gym\/photos\/(\d{4}-\d{2}-\d{2})$/);
+    if (gymPhotoDelete) {
+      if (request.method !== "DELETE") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      if (!hasHealthGoogleConfig(env)) return json({ ok: false, code: "GYM_PHOTO_NOT_CONFIGURED" }, 503);
+      try { return json(await deleteGymPhotoSeries(env, getGoogleAccessToken, gymPhotoDelete[1])); }
+      catch (error) {
+        return json({ ok: false, code: error instanceof GymPhotoError ? error.code : "GYM_PHOTO_DELETE_FAILED" },
+          error instanceof GymPhotoError ? error.status : 502);
+      }
     }
 
     if (url.pathname === "/api/gym/session") {
