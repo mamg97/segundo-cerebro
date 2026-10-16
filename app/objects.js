@@ -145,8 +145,8 @@ function wardrobeView(payload) {
 }
 
 // The canonical composed look is the primary asset. When its authenticated
-// versioned image fails, preserve the real look identity and show the *existing*
-// canonical garment photos instead of the browser's unbounded broken-image alt.
+// versioned image fails, keep that failure distinct from a look without a photo.
+// A garment mosaic is only appropriate when no composed photo exists.
 function lookGarmentMosaic(look,payload) {
   const wardrobe=new Map((payload.wardrobe||[]).map(x=>[String(x.objectId),x]));
   const images=(look.items||[]).map(i=>visualUrl(wardrobe.get(String(i.objectId)))).filter(Boolean).slice(0,4);
@@ -157,7 +157,11 @@ function lookGarmentMosaic(look,payload) {
 }
 function lookMosaic(look,payload) {
   const direct=imageUrl(look.photoUrl);
-  if(direct) return '<img data-look-composed-image="'+e(look.id)+'" loading="lazy" src="'+e(direct)+'" alt="">';
+  // A previous interrupted 200 response may still be in the browser's immutable
+  // cache. Refresh delivery once after the D1 decoder fix, preserving canonical
+  // identity/version and without retry loops or rewriting the source photo.
+  const src=direct.startsWith('/api/objects/look/') ? direct+(direct.includes('?')?'&':'?')+'delivery=hex1' : direct;
+  if(direct) return '<img data-look-composed-image="'+e(look.id)+'" loading="lazy" decoding="async" src="'+e(src)+'" alt="">';
   return lookGarmentMosaic(look,payload);
 }
 function bindLookImageRecovery(root,payload) {
@@ -180,9 +184,7 @@ function bindLookImageRecovery(root,payload) {
   root.querySelectorAll("[data-look-composed-image]").forEach((img)=>{
     const failed=()=>{
       if(!img.isConnected) return;
-      const look=(payload.looks||[]).find(x=>String(x.id)===String(img.dataset.lookComposedImage));
-      const markup=look ? lookGarmentMosaic(look,payload) :
-        '<span class="look-image-unavailable">Imagen temporalmente no disponible</span>';
+      const markup='<span class="look-image-unavailable" data-look-failed-src="'+e(img.getAttribute('src'))+'">Foto temporalmente no disponible</span>';
       img.insertAdjacentHTML("afterend",markup);
       const replacement=img.nextElementSibling;
       img.remove();

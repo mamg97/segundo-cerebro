@@ -965,6 +965,13 @@ async function auditVisualSnapshot(label) {
       }
     }
 
+    // A placeholder must not hide an actual composed-photo failure from QA.
+    document.querySelectorAll("[data-look-failed-src]").forEach((placeholder) => {
+      if (visible(placeholder)) brokenImages.push({
+        name: "look-composed-photo", src: placeholder.dataset.lookFailedSrc,
+        loading: "", complete: true
+      });
+    });
     document.querySelectorAll("img").forEach((image) => {
       if (!visible(image)) return;
       if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
@@ -1258,6 +1265,9 @@ async function auditLookDetail(label) {
     const original=card.querySelector("[data-look-composed-image]");
     if(original) original.dispatchEvent(new Event("error"));
     const fallback=card.querySelector('[data-image-state="fallback"]');
+    // This one DOM failure is synthetic. Real failures retain their source and
+    // are fetched/decoded by auditVisualSnapshot, never accepted as healthy.
+    fallback?.removeAttribute("data-look-failed-src");
     const source=card.querySelector(".look-visual");
     const bounds=source?.getBoundingClientRect();
     const visual=fallback?.getBoundingClientRect();
@@ -1269,7 +1279,7 @@ async function auditLookDetail(label) {
     };
   }).catch(() => ({hadImage:false,recovered:false,noBrokenAlt:false,bounded:false}));
   assertCheck(recoveryProbe.recovered && recoveryProbe.noBrokenAlt && recoveryProbe.bounded,
-    `Visual ${label} · foto de look fallida muestra mosaico sin texto desbordado`);
+    `Visual ${label} · foto de look fallida muestra estado acotado sin prendas separadas`);
 
   const historyButton = page.locator("[data-look-history]").first();
   const historyVisible = await historyButton.isVisible().catch(() => false);
