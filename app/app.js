@@ -15,7 +15,7 @@ import { renderHealthDayBalance } from "./health-daily-balance.js?v=0.44.1";
 import { menuWeekMonday, menuShiftWeek, menuWeekRangeLabel } from "./menu-week-history.js?v=0.44.12";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.24";
-import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.11";
+import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.12";
 
 let state = mockState;
 let areaById = new Map();
@@ -9256,7 +9256,7 @@ function renderMidasResearch(research) {
         <small>${complete} con seguimiento completo · ${Math.max(0, rows.length - complete)} por actualizar</small>
       </div>
     </div>
-    <p class="midas-research-rule">Los objetivos y CAGR proceden de la tesis vigente de cada empresa. Las referencias pueden utilizar media histórica, régimen económico o múltiplo operativo; las revisiones abiertas no equivalen a compras aprobadas. El precio observado y el precio de referencia de cada estudio pueden ser distintos. “Precio 15%” = objetivo central / 1,15⁵.</p>
+    <p class="midas-research-rule">Los objetivos y CAGR proceden de la tesis vigente de cada empresa. Las referencias pueden utilizar media histórica, régimen económico o múltiplo operativo; las estimaciones SOTP provisionales se muestran separadas y no equivalen a compras ni a precios objetivo aprobados. Las revisiones abiertas no equivalen a compras aprobadas. El precio observado y el precio de referencia de cada estudio pueden ser distintos. “Precio 15%” = objetivo central / 1,15⁵.</p>
     <div class="midas-research-toolbar"><label for="midas-thesis-search">Buscar ticker o empresa</label><input id="midas-thesis-search" type="search" autocomplete="off" placeholder="Ej.: MSFT o Microsoft" data-midas-thesis-search /><span data-midas-visible-count aria-live="polite"></span><small>Orden inicial: CAGR Base ↓ · Pulsa las cabeceras para ordenar.</small></div>
     <div class="midas-research-table-scroll" role="region" aria-label="Seguimiento de empresas y tesis de inversión" tabindex="0">
       <table class="midas-research-table">
@@ -9294,8 +9294,8 @@ function renderMidasResearch(research) {
             <td>${renderMidasCase(display.bullPrice5y, display.bull, tracking.currency)}</td>
             <td>${renderMidasCase(display.bearPrice5y, display.bear, tracking.currency)}</td>
             <td>${renderMidasCase(display.basePrice5y, display.base, tracking.currency, true)}${display.v6Reference && display.historical ? '<small class="midas-valuation-legacy">V5: ' + escapeHtml(display.historical?.base || "—") + ' · ' + escapeHtml(formatMidasTrackingPrice(display.historical?.basePrice5y, tracking.currency)) + '</small>' : ""}</td>
-            <td class="midas-price-cell is-entry"><strong>${escapeHtml(formatMidasTrackingPrice(display.priceFor15, tracking.currency))}</strong><small>${display.v6Reference ? "Referencia V6" : "para 15% CAGR"}</small></td>
-            <td class="midas-price-cell is-target"><strong>${escapeHtml(formatMidasTrackingPrice(display.basePrice5y, tracking.currency))}</strong><small>${display.v6Reference ? "V6 · media histórica" : "caso central"}</small></td>
+            <td class="midas-price-cell is-entry"><strong>${escapeHtml(formatMidasTrackingPrice(display.priceFor15, tracking.currency))}</strong><small>${display.provisionalSotp ? "SOTP provisional" : display.v6Reference ? "Referencia V6" : "para 15% CAGR"}</small></td>
+            <td class="midas-price-cell is-target"><strong>${escapeHtml(formatMidasTrackingPrice(display.basePrice5y, tracking.currency))}</strong><small>${display.provisionalSotp ? "Estimación provisional" : display.v6Reference ? "V6 · media histórica" : "caso central"}</small></td>
             <td class="midas-earnings-cell">${tracking.nextEarnings ? escapeHtml(formatFinanceDate(tracking.nextEarnings, tracking.nextEarnings)) : "—"}</td>
             <td class="midas-thesis-cell">${thesisUrl ? `<a class="midas-thesis-link" href="${escapeHtml(thesisUrl)}" target="_blank" rel="noopener noreferrer">Abrir tesis ↗</a>` : '<span class="midas-thesis-missing">Pendiente</span>'}</td>
           </tr>`;
