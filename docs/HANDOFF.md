@@ -1,3 +1,13 @@
+## PSICOHISTORIA — v0.4.2 · primeros casos históricos evaluables (17/10/2026)
+
+- **Disponibilidad:** los catálogos retrospectivos UCDP 26.1 privados ofrecen orígenes **2016** (195 países) y **2020** (196 países), con secuencias observadas y parámetros de cinco modelos. Casos concretos como Ucrania, Siria, Etiopía, Colombia y Myanmar están en la fuente; los valores no se hardcodean ni publican.
+- **PR [#546](https://github.com/mamg97/segundo-cerebro/pull/546) fusionada:** `scoreHistoricalCases` calcula puntuaciones individuales por país/horizonte (P de estado real, Brier multicategoría y log-loss), comparando cinco modelos con el mismo desenlace, sin usar el desenlace en el ajuste. Exige secuencia anual completa, puente incluido; nunca imputa ausencias. UI permite revelar después el resultado histórico y muestra advertencias epistemológicas. Documentación: `docs/PSYCHOHISTORY_FUTURES.md` sección 9. Tests de invariancia y XSS en la suite Node.
+- CI app [38982258006](https://github.com/mamg97/segundo-cerebro/actions/runs/38982258006): **success**; deploy privado [38982338952](https://github.com/mamg97/segundo-cerebro/actions/runs/38982338952): **success**. Repositorio main comprobado con HTML v0.4.2, parser y calculador presentes. **QA autenticada visual tras recarga no realizada**; no declarar cerrada hasta comprobar Safari/iPhone y Chrome.
+- **Casos de diagnóstico, NO skill:** modelo Markov global, país/horizonte 2020/1 año, retrospectivo: Siria (persistencia observada, P=68,09 %, Brier=0,15136), Etiopía (persistencia observada, P=2,62 %, Brier=1,82808). Cifras calculadas a partir de los conteos privados existentes; fuente revisada, no pronósticos emitidos en 2020. No extrapolar del Brier de un caso.
+- **Próximo hito científico:** reconstruir vintages disponibles as-of en cada origen y congelar la siguiente cohorte de evaluación temporal; establecer un procedimiento de emisión, sellado externo y evaluación prospectiva de 2027, **sin adjudicar éxito predictivo hasta observar resultados futuros**. En ningún caso mezclar episodios UCDP con categorías sociales inventadas.
+
+---
+
 ## PSICOHISTORIA — Futures Engine v0.4.1 · relevo técnico (17/10/2026)
 
 - **Código recuperado y fusionado** desde los ZIP locales de Work/Codex: PR [#543](https://github.com/mamg97/segundo-cerebro/pull/543), con 14 archivos de v0.4.0, integración incremental de API y oráculo matemático independiente. Se compararon SHA de Git de los archivos clave con los originales; exactos. Las 2 suites de CI de la PR fueron satisfactorias. El código de las fuentes permanece en Git; **no es necesario reconstruirlo de la preview local**.
