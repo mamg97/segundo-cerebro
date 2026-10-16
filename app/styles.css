@@ -18046,6 +18046,28 @@ html[data-theme="dark"] .pantry-view-nav button.active {
 
 .wealth-daily-table tbody tr:last-child td { border-bottom: 0; }
 
+/* Comentario de mercado privado, accesible y ampliable en el diario patrimonial. */
+.wealth-daily-table td.wealth-daily-comment-cell {
+  min-width: 220px;
+  max-width: 380px;
+  white-space: normal;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.wealth-daily-comment summary {
+  cursor: pointer;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.wealth-daily-comment p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+
+
 .wealth-daily-number {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
