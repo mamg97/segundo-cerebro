@@ -55,18 +55,30 @@ var cfg={city:"CIUDAD SECRETA",country:"DESTINO DESCONOCIDO",date:"PRÓXIMAMENTE
 try{var encoded=location.hash.match(/(?:^#|&)s=([^&]+)/);if(encoded){var obj=JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(decodeURIComponent(encoded[1])),function(c){return "%"+("0"+c.charCodeAt(0).toString(16)).slice(-2)}).join("")));["city","country","date","code"].forEach(function(k){if(typeof obj[k]==="string"&&obj[k].length<=90)cfg[k]=obj[k]})}}catch(e){}
 var screen=document.getElementById("screen"),progress=document.getElementById("progress"),step=document.getElementById("step");
 var n=0,locked=false,code="",soundOn=false,audio,musicTimer=null,musicStep=0;
-var backgroundTrack=null,trackUrl=null,trackPlaying=false,trackStatusEl=document.getElementById("track-status");
+var backgroundTrack=null,trackUrl=null,trackPlaying=false,backgroundSource=null,backgroundGain=null,trackStatusEl=document.getElementById("track-status");
 var trackButton=document.getElementById("play-track");
 function setTrackStatus(message,ready){trackStatusEl.textContent=message;trackStatusEl.classList.toggle("ready",!!ready)}
 function pauseLocalTrack(){if(backgroundTrack){backgroundTrack.pause();trackPlaying=false;trackButton.textContent="▶ Reproducir"}}
-function playLocalTrack(){if(!backgroundTrack)return Promise.resolve(false);stopMusic();return backgroundTrack.play().then(function(){trackPlaying=true;trackButton.textContent="⏸ Pausar";setTrackStatus("♫ Let It Snow · Reproduciéndose en bucle, volumen "+Math.round(backgroundTrack.volume*100)+" %",true);return true}).catch(function(){trackPlaying=false;trackButton.textContent="▶ Reproducir";setTrackStatus("Pulsa «Reproducir» para autorizar la música en Safari.",false);return false})}
+function playLocalTrack(){if(!backgroundTrack)return Promise.resolve(false);stopMusic();var ready=audio&&audio.state==="suspended"?audio.resume():Promise.resolve();return ready.then(function(){return backgroundTrack.play()}).then(function(){trackPlaying=true;trackButton.textContent="⏸ Pausar";setTrackStatus("♫ Let It Snow · Reproduciéndose en bucle, volumen "+Number(document.getElementById("music-volume").value)+" %",true);return true}).catch(function(){trackPlaying=false;trackButton.textContent="▶ Reproducir";setTrackStatus("Pulsa «Reproducir» para autorizar la música en Safari.",false);return false})}
 function loadLocalTrack(file){
  if(!file)return;
  var extension=/\.(mp3|m4a|aac|wav|ogg|mp4|flac)$/i.test(file.name||"");
  if(file.type&&!file.type.startsWith("audio/")&&!extension){setTrackStatus("Elige un archivo de audio (MP3, M4A, AAC, WAV…).",false);return}
- pauseLocalTrack();if(backgroundTrack){backgroundTrack.src="";backgroundTrack.load()}if(trackUrl)URL.revokeObjectURL(trackUrl);
+ pauseLocalTrack();if(backgroundSource)backgroundSource.disconnect();if(backgroundGain)backgroundGain.disconnect();backgroundSource=null;backgroundGain=null;if(backgroundTrack){backgroundTrack.src="";backgroundTrack.load()}if(trackUrl)URL.revokeObjectURL(trackUrl);
  trackUrl=URL.createObjectURL(file);backgroundTrack=new Audio();backgroundTrack.src=trackUrl;backgroundTrack.loop=true;
- backgroundTrack.volume=Number(document.getElementById("music-volume").value)/100;
+ // Safari en iPhone puede ignorar HTMLMediaElement.volume; mezclar mediante Web Audio.
+ try{
+  var C=window.AudioContext||window.webkitAudioContext;
+  audio=audio||new C();
+  backgroundSource=audio.createMediaElementSource(backgroundTrack);
+  backgroundGain=audio.createGain();
+  backgroundGain.gain.value=Number(document.getElementById("music-volume").value)/100;
+  backgroundSource.connect(backgroundGain);backgroundGain.connect(audio.destination);
+  backgroundTrack.volume=1;
+ }catch(error){
+  backgroundSource=null;backgroundGain=null;backgroundTrack.volume=Number(document.getElementById("music-volume").value)/100;
+  setTrackStatus("Si Safari no permite ajustar el volumen, bájalo desde el dispositivo o la TV.",false);
+ }
  backgroundTrack.addEventListener("error",function(){setTrackStatus("No se puede reproducir este formato en Safari. Prueba un MP3 o M4A.",false)});
  trackButton.hidden=false;stopMusic();setTrackStatus("Canción seleccionada. Reproducción privada desde este dispositivo. Pulsa «Reproducir» si no empieza sola.",true);
  if(!soundOn){soundOn=true;document.getElementById("audio").textContent="🔊 SONIDO ON";document.getElementById("test-audio").hidden=false}
@@ -180,7 +192,7 @@ document.getElementById("test-audio").onclick=function(){beep("test");audioStatu
 document.getElementById("choose-track").onclick=function(){document.getElementById("track-file").click()};
 document.getElementById("track-file").addEventListener("change",function(){var file=this.files&&this.files[0];if(file)loadLocalTrack(file);this.value=""});
 trackButton.onclick=function(){if(!backgroundTrack)return;if(trackPlaying){pauseLocalTrack();setTrackStatus("Música en pausa.",true)}else{playLocalTrack()}};
-document.getElementById("music-volume").addEventListener("input",function(){var v=Number(this.value);document.getElementById("music-volume-value").textContent=v+"%";if(backgroundTrack){backgroundTrack.volume=v/100;if(trackPlaying)setTrackStatus("♫ Let It Snow · Reproduciéndose en bucle, volumen "+v+" %",true)}});
+document.getElementById("music-volume").addEventListener("input",function(){var v=Number(this.value);document.getElementById("music-volume-value").textContent=v+"%";if(backgroundTrack){if(backgroundGain){backgroundGain.gain.value=v/100}else{backgroundTrack.volume=v/100}if(trackPlaying)setTrackStatus("♫ Let It Snow · Reproduciéndose en bucle, volumen "+v+" %",true)}});
 
 
 document.getElementById("fs").onclick=function(){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(function(){});else this.textContent="Usa Safari a pantalla completa"};
