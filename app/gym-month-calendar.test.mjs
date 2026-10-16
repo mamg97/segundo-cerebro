@@ -101,14 +101,21 @@ test("month cells are accessible, real records highlighted and untrusted labels 
   assert.equal((markup.match(/role="gridcell"/g) || []).length, 31);
 });
 
-test("calendar is always below both Gym views, including paused and library", () => {
+test("calendar is immediately after save and before progress, not below Gym library", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const page = readFileSync(new URL("./index.html", import.meta.url), "utf8");
-  assert.match(app, /renderGymMonthCalendar\(data\?\.sessions, plan\)/);
+  const style = readFileSync(new URL("./gym-month-calendar.css", import.meta.url), "utf8");
   assert.match(app, /gym-month-calendar\.mjs\?v=0\.44\.48/);
   assert.match(page, /gym-month-calendar\.css\?v=0\.44\.48/);
-  assert.ok(app.indexOf("renderGymMonthCalendar(data?.sessions, plan)") >
-    app.indexOf("renderGymLibraryShell()}\n    </section>"));
-  assert.match(app, /if \(trainingStatus\.paused \|\| !plan\.length\) return/);
+  assert.match(style, /grid-template-columns:\s*repeat\(7, minmax\(0, 1fr\)\)/);
+  const planView = app.slice(app.indexOf("function renderGymPlanView(data)"), app.indexOf("function renderGymLibraryShell()"));
+  const saveIndex = planView.indexOf('id="gym-save-status"');
+  const calendarIndex = planView.indexOf('renderGymMonthCalendar(sessions, plan)', saveIndex);
+  const progressIndex = planView.indexOf('<section class="gym-progress-section">', saveIndex);
+  assert.ok(saveIndex >= 0 && calendarIndex > saveIndex);
+  assert.ok(progressIndex > calendarIndex, "calendar must be between save form and progress");
+  assert.match(planView, /renderGymPlanReference\(plan\)[\s\S]*?renderGymMonthCalendar\(sessions, plan\)/);
+  const outerPanel = app.slice(app.indexOf("function renderGymPanel(data)"), app.indexOf("function setGymPanelView(view)"));
+  assert.doesNotMatch(outerPanel, /renderGymMonthCalendar/, "calendar must not live after the library panel");
   assert.match(app, /renderGymPanel\(await refresh\.json\(\)\)/);
 });
