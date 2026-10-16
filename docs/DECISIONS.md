@@ -584,3 +584,13 @@ Motivo: la carrera profesional necesita continuidad estructurada y comparación 
 - **UI:** tercera vista de Salud → Gimnasio llamada `Progreso físico`, cargada bajo demanda. Para cada fecha visualizar `frente`, `diagonal` y `perfil`, permitir comparar dos series y subir/eliminar series completas. Sin inferir progreso muscular ni medidas corporales a partir de fotografías.
 - **Seguridad:** `muy_confidencial`; solo API same-origin del Worker bajo Access, chunks/Drive IDs ocultos, `Cache-Control: no-store`, codificación HTML y vista completa `object-fit: contain`.
 - **Integridad/coste:** se rechazan fechas duplicadas y vistas inválidas; los archivos nuevos se optimizan en el iPhone/Mac sin EXIF y se comprueban de nuevo en servidor. Reutiliza Sheet y OAuth existentes, coste incremental cero.
+
+
+## D-056 — Psicohistoria como laboratorio de investigación del dominio Proyectos
+
+- **Estado:** aceptada para implementación v0.1; validación de despliegue pendiente.
+- **Fecha:** 2026-10-16.
+- **Decisión:** registrar Psicohistoria como proyecto padre con cuatro vertientes (cliodinámica, forecasting ML, agentes y meta-lab) en el Sheet privado de Proyectos y mantener hitos, KPIs, experimentos y predicciones en cuatro pestañas propietarias del mismo registro. La UI especial es privada, se sirve bajo demanda y obtiene estado real de la fuente canónica.
+- **Evaluación:** distinguir explícitamente progreso operativo de evidencia científica. No publicar puntuaciones falsas, no mezclar previsiones retrospectivas y prospectivas y no comparar Brier Skill en muestras distintas. Una predicción futura solo se tratará como sellada cuando exista una evidencia inmutable con fecha verificable; el Sheet actual por sí solo no la ofrece.
+- **Motivo:** desarrollar las cuatro líneas sin infraestructura redundante, con hipótesis falsables, indicadores útiles, coste incremental cero y privacidad.
+
