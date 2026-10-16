@@ -1,3 +1,11 @@
+## ORGANIZADOR 21 — Corrección iPhone en detalles de recetas (16/10/2026)
+
+- Incidencia: en Salud → Recetas y al abrir una receta desde el menú semanal, descripciones largas en la cantidad del ingrediente (con observaciones) expandían la columna CSS `auto`. En iPhone el nombre del ingrediente quedaba reducido a una letra por línea y la cantidad se salía de la tarjeta. Es **un defecto compartido de presentación, no un fallo de los ingredientes canónicos**.
+- Solución en `app/styles.css`: columna de cantidades limitada a 44 % en escritorio; en anchos `<=760px` cada ingrediente usa **una sola columna**, botón/nombre completo seguido debajo de cantidad con ajuste normal. `recipe-precision` largo deja de estrechar el título de receta; sin cortes ni truncado, sin editar Sheets ni macros.
+- Cobertura: `app/recipe-ingredients-responsive.test.mjs` inspecciona render común, semántica de CSS y versión de assets; `private-cloudflare/scripts/web-audit.mjs` verifica en Chromium sobre ficha real + fila sintética extrema a 320, 390 y 440 CSS px, sin registrar datos privados. Verificar PR CI/deploy/auditoría de producción; no afirmar prueba Safari real en iPhone.
+
+---
+
 ## ORGANIZADOR · Recetas · desbordamiento de ingredientes en iPhone (16/10/2026)
 
 - **Causa raíz:** la ficha compartida `renderRecipeDetail()` mostraba cada ingrediente en una rejilla `minmax(0,1fr) auto`; al combinar una cantidad estimada con explicación extensa y `white-space:nowrap`, la cantidad recibía ancho intrínseco casi ilimitado. El nombre quedaba reducido a uno o dos caracteres por línea (y el texto de cantidades podía sobresalir de la tarjeta).

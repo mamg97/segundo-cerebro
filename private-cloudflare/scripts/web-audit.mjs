@@ -3241,6 +3241,54 @@ try {
           await page.waitForTimeout(120);
           const detailVisible = await panel.locator(".recipe-detail-card").isVisible().catch(() => false);
           assertCheck(detailVisible, "Salud · Recetas abre ficha completa");
+          if (detailVisible) {
+            // Mobile regression: the amount's explanatory copy must never squeeze
+            // the ingredient into one character per line (iPhone 2026-10-16).
+            // A detached synthetic row tests the worst case; no real recipe
+            // content is copied into logs or modified at the source.
+            const originalRecipeViewport = page.viewportSize();
+            try {
+              for (const width of [320, 390, 440]) {
+                await page.setViewportSize({ width, height: 844 });
+                const geometry = await panel.locator(".recipe-detail-card .recipe-ingredients").evaluate((node) => {
+                  const list = node.querySelector("ul");
+                  const first = list?.querySelector("li");
+                  if (!first) return { skipped: true };
+                  const testRow = first.cloneNode(true);
+                  const button = testRow.querySelector(".recipe-ingredient-link");
+                  const amount = testRow.querySelector("strong");
+                  if (!button || !amount) return { valid: false };
+                  button.textContent = "Ingrediente sintético con nombre largo para una prueba responsive";
+                  amount.textContent = "125 g · cantidad de ejemplo con observaciones adicionales extensas";
+                  list.append(testRow);
+                  try {
+                    const box = testRow.getBoundingClientRect();
+                    const labelBox = button.getBoundingClientRect();
+                    const amountBox = amount.getBoundingClientRect();
+                    const amountStyle = getComputedStyle(amount);
+                    const rows = [...list.querySelectorAll("li")];
+                    return {
+                      valid: box.width >= 170 &&
+                        labelBox.width >= Math.min(160, box.width * 0.75) &&
+                        amountBox.width >= Math.min(160, box.width * 0.75) &&
+                        labelBox.bottom <= amountBox.top + 1 &&
+                        amountStyle.whiteSpace === "normal" &&
+                        rows.every((row) => row.scrollWidth <= row.clientWidth + 3),
+                      skipped: false
+                    };
+                  } finally {
+                    testRow.remove();
+                  }
+                });
+                assertCheck(geometry.skipped || geometry.valid,
+                  "Salud · Recetas ingrediente con nota larga legible en móvil",
+                  "viewport=" + width + "px");
+              }
+            } finally {
+              if (originalRecipeViewport) await page.setViewportSize(originalRecipeViewport);
+            }
+          }
+
           assertCheck(
             await panel.locator(".recipe-detail-card .recipe-ingredients").count() === 1
               && await panel.locator(".recipe-detail-card .recipe-steps").count() === 1,
