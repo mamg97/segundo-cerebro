@@ -31,10 +31,12 @@ export function midasDisplayValuation(cagr = {}, tracking = {}) {
     )
   );
   const useStats = statsAvailable && !activeV6;
+  const provisionalSotp = useStats && /PROVISIONAL_SOTP_ACADEMIA_IDC/i.test(String(stats.status || ""));
   const main = useStats ? stats : cagr;
   const price = useStats ? stats : tracking;
   return {
-    v6Reference: activeV6 || useStats,
+    v6Reference: activeV6 || (useStats && !provisionalSotp),
+    provisionalSotp,
     historical: cagr.historical || null,
     bear: main.bear,
     base: main.base,
@@ -44,7 +46,8 @@ export function midasDisplayValuation(cagr = {}, tracking = {}) {
     bullPrice5y: price.bullPrice5y,
     priceFor15: price.priceFor15,
     multiple: activeV6 ? (stats?.baseMultiple ?? null) : useStats ? stats.baseMultiple : null,
-    status: activeV6 ? cagr.status : useStats ? stats.status : cagr.status
+    status: activeV6 ? cagr.status : useStats ? stats.status : cagr.status,
+    methodology: provisionalSotp ? stats.methodology : null
   };
 }
 
@@ -52,7 +55,8 @@ export function midasDisplayValuation(cagr = {}, tracking = {}) {
 // Never imply that a statistical reference passed the fundamental publication gate.
 export function midasThesisMethodLabel(cagr = {}, thesis = {}, display = {}) {
   const state = String(cagr.status || thesis.status || "").toUpperCase();
-  if (!state) return "";
+  if (!state && !display.provisionalSotp) return "";
+  if (display.provisionalSotp) return "SOTP provisional · hipótesis academia IDC · confianza baja · Gate 05 pendiente";
   if (/IA_REGIME|R.GIMEN IA|v1\.2-IA/i.test(state)) return "v1.2 · régimen IA · compra en revisión";
   if (/OPERATIVE_BASE_ACTIVE|FCF OPERATIVO|OPERATIVE_FCF/i.test(state)) return "v1.2 · FCF operativo · múltiplo en revisión";
   if (/V6.*(REFERENCIA|ESTAD.STICA)|ESTAD.STICA.*V6/i.test(state) || display.v6Reference) {

@@ -122,3 +122,33 @@ test("MIDAS: public UI clarifies that valuations have distinct methodologies", (
   assert.match(app, /Las referencias pueden utilizar media histórica, régimen económico o múltiplo operativo/);
   assert.doesNotMatch(app, /La referencia V6 utiliza por defecto la media histórica homogénea EV\/FCF IDC/);
 });
+
+
+test("MIDAS SOTP provisional uses separate statistical fields without mislabelling V6 or approving Gate05", () => {
+  const cagr = {
+    status: "PENDIENTE_RATIFICACION",
+    bear: null, base: null, bull: null,
+    statistical: {
+      bear: "-15,02%", base: "+7,56%", bull: "+20,74%",
+      bearPrice5y: 109.13, basePrice5y: 372.43, bullPrice5y: 680.05,
+      priceFor15: 179.8, baseMultiple: null,
+      status: "PROVISIONAL_SOTP_ACADEMIA_IDC · 4/5 · GATE05 NO AUTORIZADO",
+      methodology: "SOTP hipotético de negocio · baja confianza"
+    }
+  };
+  const tracking = {currentPrice: 254.76, bearPrice5y: null, basePrice5y: null, bullPrice5y: null};
+  const display = midasDisplayValuation(cagr, tracking);
+  assert.equal(display.provisionalSotp, true);
+  assert.equal(display.v6Reference, false);
+  assert.equal(display.base, "+7,56%");
+  assert.equal(display.bearPrice5y, 109.13);
+  assert.equal(display.basePrice5y, 372.43);
+  assert.equal(display.bullPrice5y, 680.05);
+  assert.equal(display.priceFor15, 179.8);
+  assert.match(midasThesisMethodLabel(cagr, {}, display), /SOTP provisional.*confianza baja.*Gate 05 pendiente/);
+  const other = midasDisplayValuation({status:"PENDIENTE", statistical:{status:"PROVISIONAL_SOTP_ACADEMIA_IDC",bear:"",base:"+7,56%",bull:"+20,74%",bearPrice5y:109.13,basePrice5y:372.43,bullPrice5y:680.05,priceFor15:179.8}}, {});
+  assert.equal(other.provisionalSotp, false, "partial scenarios must not appear complete");
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(app, /display\.provisionalSotp \? "SOTP provisional"/);
+  assert.match(app, /display\.provisionalSotp \? "Estimación provisional"/);
+});
