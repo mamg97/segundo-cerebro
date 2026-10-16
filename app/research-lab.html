@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#07101d">
+  <meta name="description" content="Laboratorio de investigación privado de Segundo Cerebro">
+  <title>Laboratorio de investigación · Segundo Cerebro</title>
+  <link rel="stylesheet" href="./research-lab.css?v=0.1.0">
+  <script type="module" src="./research-lab.js?v=0.1.0"></script>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <div class="app-frame">
+    <header class="topbar">
+      <a class="back" href="./index.html" aria-label="Volver a Segundo Cerebro">← <span>SEGUNDO CEREBRO</span></a>
+      <span class="top-brand">RESEARCH / LAB <span class="vtag">v0.1</span></span>
+      <button type="button" id="refresh" class="refresh">↻ <span>Actualizar</span></button>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="overline">PROGRAMA DE INVESTIGACIÓN <span class="orange-dot"></span> CUATRO VERTIENTES</p>
+          <h1 id="project-title">Laboratorio de investigación</h1>
+          <p class="lead" id="project-summary">Conectando las cuatro vertientes a sus fuentes canónicas privadas…</p>
+          <div class="pills"><span class="pill"><span class="signal"></span> DATOS CANÓNICOS</span><span class="pill subtle" id="as-of">Sincronizando…</span></div>
+        </div>
+        <div class="hero-mark" aria-hidden="true">
+          <svg viewBox="0 0 174 174" width="174" height="174">
+            <defs><radialGradient id="core"><stop stop-color="#ffbb75"/><stop offset="0.45" stop-color="#ff7a1a"/><stop offset="1" stop-color="#132f50"/></radialGradient></defs>
+            <circle cx="87" cy="87" r="72" fill="none" stroke="#26486b" stroke-width="1.5" stroke-dasharray="3 9"/>
+            <circle cx="87" cy="87" r="55" fill="none" stroke="#2c72b3" stroke-width="1" stroke-dasharray="7 7"/>
+            <ellipse cx="87" cy="87" rx="69" ry="29" transform="rotate(-31 87 87)" fill="none" stroke="#86b9e1" opacity=".38"/>
+            <circle cx="87" cy="87" r="21" fill="url(#core)"/>
+            <circle cx="87" cy="87" r="8" fill="#ffefdd"/>
+            <circle cx="25" cy="59" r="4" fill="#ff8a28"/><circle cx="143" cy="124" r="4" fill="#64b8f9"/>
+            <circle cx="130" cy="27" r="4" fill="#8bdcca"/><circle cx="62" cy="153" r="4" fill="#c7a4ff"/>
+          </svg>
+        </div>
+      </section>
+      <section id="status" class="status" role="status" aria-live="polite">Leyendo registros privados…</section>
+      <section class="metric-row" id="headline-metrics" aria-label="Indicadores principales"></section>
+      <nav class="tabs" id="tabs" aria-label="Vistas del laboratorio">
+        <button type="button" data-view="overview" class="active">Visión general</button>
+        <button type="button" data-view="science">Validación científica</button>
+        <button type="button" data-view="operations">Operaciones</button>
+        <button type="button" data-view="roadmap">Roadmap</button>
+      </nav>
+      <section id="view" aria-live="polite"></section>
+    </main>
+    <footer><span>PSYCHOHISTORY LAB · RESEARCH IN PROGRESS</span><span>Sin predicciones verificadas no se declara capacidad predictiva</span></footer>
+  </div>
+</body>
+</html>
