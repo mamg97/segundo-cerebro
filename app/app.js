@@ -1,5 +1,6 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
+import { calendarSnapshotComplete, createOnDemandViewRefresh } from "./view-memory.mjs?v=0.44.46";
 import { mockState } from "../core/mock-state.js";
 import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
@@ -23,6 +24,8 @@ let privateModeKind = null;
 let remoteStateLoadError = null;
 let eventsWorkspacePayload = null;
 let eventsWorkspaceTab = "active";
+const calendarViewRefresh = createOnDemandViewRefresh();
+let lastRenderedCalendarMarkup = null;
 
 function eventsAreaFromStateFallback(currentState, mode) {
   if (mode !== "remote") return null;
@@ -551,17 +554,41 @@ function applyStateScope(scope, payload) {
   }
 
   if (scope === "calendar") {
+    const healthy = calendarSnapshotComplete(payload.calendarSummary);
+    const existingEvents = Array.isArray(state.events) ? state.events : [];
+    const preserveLastView = !healthy && existingEvents.length > 0;
+    // A degraded multi-provider response is not evidence that existing events
+    // were deleted. Keep the last view until all configured sources reconcile.
     if (Array.isArray(payload.importantEventRules) && payload.importantEventRules.length) {
       state.importantEventRules = payload.importantEventRules;
     }
     if (payload.eventsSummary) state.eventsSummary = payload.eventsSummary;
     if (payload.calendarSummary) state.calendarSummary = payload.calendarSummary;
-    if (Array.isArray(payload.events)) state.events = payload.events;
+    if (Array.isArray(payload.events) && !preserveLastView) state.events = payload.events;
     renderEvents();
-    return true;
+    return healthy;
   }
 
   return false;
+}
+
+async function refreshCalendarView({ force = false } = {}) {
+  if (privateModeKind !== "remote") return { status: "local" };
+  const available = calendarSnapshotComplete(state.calendarSummary) && Array.isArray(state.events);
+  const result = await calendarViewRefresh.activate({
+    hasData: available,
+    force,
+    load: () => fetchStateScope("calendar"),
+    apply: (payload) => payload?.ok === true && applyStateScope("calendar", payload)
+  });
+  if ((result.status === "failed" || result.status === "partial") && !state.events?.length) {
+    const badge = document.querySelector("#calendar-source-status");
+    if (badge) {
+      badge.textContent = "Agenda no sincronizada · se volverá a comprobar al abrirla";
+      badge.hidden = false;
+    }
+  }
+  return result;
 }
 
 async function refreshStateScope(scope) {
@@ -597,7 +624,7 @@ async function refreshApp() {
     ]);
     await Promise.allSettled([
       refreshStateScope("objects"),
-      refreshStateScope("calendar")
+      refreshCalendarView({ force: true })
     ]);
     await Promise.allSettled([
       renderHomeHealthCard(),
@@ -744,12 +771,19 @@ async function init() {
   renderNavigation();
   renderDailyOverview();
   renderEvents();
+  if (privateModeKind === "remote" && calendarSnapshotComplete(state.calendarSummary)) {
+    calendarViewRefresh.markVerified();
+  }
   renderBudgetOverview();
   renderDebtOverview();
   renderGiftsOverview();
   renderCreditOverview();
   renderWealthOverview();
   bindInteractions();
+  // Initial degraded state recovers without requiring an explicit user reload.
+  if (privateModeKind === "remote" && !calendarSnapshotComplete(state.calendarSummary)) {
+    void refreshCalendarView();
+  }
   observeVerifiedFinanceBankSection();
   initDemoMode();
 }
@@ -1014,7 +1048,7 @@ function renderEvents() {
     return date;
   });
 
-  list.innerHTML = days.map((day) => {
+  const weeklyMarkup = days.map((day) => {
     const nextDay = new Date(day);
     nextDay.setDate(nextDay.getDate() + 1);
     const dayEvents = events.filter((event) => {
@@ -1042,6 +1076,12 @@ function renderEvents() {
         </div>
       </section>`;
   }).join("");
+  // Preserve DOM/image/layout state when only a source check occurred.
+  // Also restore the calendar if another operation unexpectedly cleared it.
+  if (weeklyMarkup !== lastRenderedCalendarMarkup || list.childElementCount !== 7) {
+    list.innerHTML = weeklyMarkup;
+    lastRenderedCalendarMarkup = weeklyMarkup;
+  }
 }
 
 function renderWeekEvent(event) {
@@ -11084,7 +11124,9 @@ function openArea(areaId) {
     return;
   }
   if (areaId === "area-calendar") {
+    renderEvents(); // Instant paint from retained state; also handles week rollover.
     document.querySelector("#agenda-overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    void refreshCalendarView(); // Revalidate on demand, never block the navigation.
     return;
   }
   if (areaId === "area-wealth") {
@@ -11299,6 +11341,7 @@ async function handleQuickCommand(query, result) {
 
   if (/\b(agenda|calendario|semana)\b/.test(normalized)) {
     document.querySelector("#agenda-overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    void refreshCalendarView();
     openResult("<strong>Agenda localizada.</strong> Te he llevado al calendario de la semana.");
     return true;
   }
