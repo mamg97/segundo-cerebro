@@ -59,10 +59,10 @@ function metrics(){
 }
 function trackCard(id){
   const t=track(id),p=projectFor(id),total=milestones(id).length,done=completed(id),pct=total?Math.round(done/total*100):0;
-  return '<button type="button" class="track-card" data-track="'+id+'" aria-pressed="'+String(activeTrack===id)+'" style="--color:'+t.color+'">'+
+  return '<button type="button" class="track-card" data-track="'+id+'" aria-pressed="'+String(activeTrack===id)+'">'+
     '<span class="track-num">'+id+' / MADUREZ '+maturity(id)+'/5</span>'+
     '<strong>'+esc(p?.name||id)+'</strong><p>'+esc(t.subtitle)+'</p>'+
-    '<div class="track-bar"><span style="width:'+pct+'%"></span></div>'+
+    '<progress class="track-bar" value="'+done+'" max="'+(total||1)+'" aria-label="'+esc(id)+' hitos completados"></progress>'+
     '<div class="track-foot"><span>'+done+'/'+total+' hitos cerrados</span><span>'+pct+'% de hitos</span></div></button>';
 }
 function orbit(){
@@ -87,7 +87,7 @@ function orbit(){
 function milestoneRow(m){
   const isDone=m.status==="HECHO",isBlocked=m.status==="BLOQUEADO";
   const evidence=url(m.evidence);
-  return '<article class="milestone"><span class="bullet'+(isDone?' complete':isBlocked?' block':'')+'"></span><div><small>'+esc(m.phase)+' · '+esc(m.status)+'</small><h4>'+esc(m.title)+'</h4><p>'+esc(m.criteria)+'</p>'+(evidence?'<a href="'+esc(evidence)+'" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#7ecaff">Ver evidencia ↗</a>':'')+'</div></article>';
+  return '<article class="milestone"><span class="bullet'+(isDone?' complete':isBlocked?' block':'')+'"></span><div><small>'+esc(m.phase)+' · '+esc(m.status)+'</small><h4>'+esc(m.title)+'</h4><p>'+esc(m.criteria)+'</p>'+(evidence?'<a href="'+esc(evidence)+'" target="_blank" rel="noopener noreferrer" class="evidence-link">Ver evidencia ↗</a>':'')+'</div></article>';
 }
 function kpiRow(k){
   const suffix=k.unit==="%"?" %":k.unit==="N"?"":"";
@@ -143,7 +143,7 @@ function science(){
         ["Resueltas excluidas",fmt(e.rejectedResolved,0),"Incumplen fechas, estado o rango"]
       ].map(a=>'<div class="kpi"><div><strong>'+esc(a[0])+'</strong><small>'+esc(a[2])+'</small></div><b>'+esc(a[1])+'</b></div>').join("")+'</div>'+
       '<p class="legend-note">Estos indicadores no prueban causalidad. Un score aislado tampoco acredita capacidad predictiva: exigen tamaño muestral, incertidumbre y baseline adecuado.</p></section></div>'+
-      '<section class="panel" style="margin-top:17px"><div class="panel-head"><h3>Resultados de experimentos</h3><span>'+rows.length+' registros</span></div>'+
+      '<section class="panel top-gap"><div class="panel-head"><h3>Resultados de experimentos</h3><span>'+rows.length+' registros</span></div>'+
       (rows.length?'<div class="scroll-x"><table><thead><tr><th>Vertiente</th><th>Hipótesis</th><th>Modelo</th><th>Resultado</th><th>Comparador</th><th>Estado</th></tr></thead><tbody>'+
       rows.map(r=>'<tr><td>'+esc(r.track)+'</td><td>'+esc(r.hypothesis)+'</td><td>'+esc(r.modelVersion)+'</td><td>'+esc(fmt(r.value))+'</td><td>'+esc(fmt(r.baseline))+'</td><td>'+esc(r.status)+'</td></tr>').join("")+'</tbody></table></div>':
       empty("No se ha ejecutado todavía ningún experimento registrado","Los prototipos y modelos no deben aparecer como evaluados antes de tener evidencia versionada."))+'</section>';
