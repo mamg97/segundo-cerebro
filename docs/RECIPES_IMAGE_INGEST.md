@@ -147,6 +147,10 @@ Está prohibido usar como estrategia de adaptación un recorte destructivo equiv
 - Una foto en `Recetas` sin derivada válida en `RecipeMedia` queda pendiente de normalización técnica; revisar MIME, SHA-256, dimensiones 16:9, correspondencia con el ID original, tamaño y decodificación. No borrar fotos ni crear nuevas recetas para corregirlas.
 - Criterio visual de aceptación en escritorio y móvil: el rectángulo renderizado del `img` no excede el contenedor ni un píxel; contenido original íntegro y centrado sin deformación. Probar explícitamente fotos altas, cuadradas y panorámicas.
 
+### Evitar errores ya horneados en las vistas previas
+
+No basta con verificar `object-fit: contain` en la web. Si una `RecipeMedia.base64_preview` se creó con zoom/crop, los píxeles perdidos ya no están en la imagen entregada por la API. Comparar visualmente el original privado con la preview **decodificada** antes de aprobarla. La capa frontal debe obtenerse mediante `ImageOps.contain` (o equivalente que nunca corte la fuente); solo el fondo secundario desenfocado puede rellenarse mediante `fit` recortado. Si falla, regenerar desde el original, sobrescribir **la misma** fila técnica y actualizar `Recetas.foto_updated_at` para invalidar caché. Véase auditoría concreta en `docs/RECIPE_IMAGE_AUDIT_20261016.md`.
+
 ### Derivada 16:9
 
 La UI de Recetas usa un hero 16:9. La derivada debe prepararse para ese marco:
