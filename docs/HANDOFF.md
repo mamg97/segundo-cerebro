@@ -1,3 +1,12 @@
+## GESTOR NUTRI 4 — Root cause adicional de fotos ya recortadas (16/10/2026)
+
+- La PR #514 corrigió clipping del CSS y su despliegue privado terminó correctamente, pero **no recuperaba los píxeles ya recortados dentro de algunas previews de RecipeMedia**.
+- Se compararon originales privados y vistas previas: 5 JPEG antiguas con zoom/crop destructivo; regeneradas conservadoramente a 480×270 con original completo y márgenes. Escritura y reread 5/5 con SHA-256, origen y versión de caché correctos. No se cambian recetas ni consumos.
+- Auditoría de medios: 24 originales enlazados, 19 registros técnicos, cinco ausentes y cinco con metadatos incompletos. La auditoría posterior a la PR (1.260 checks, 1 fallo MIDAS) fue anterior a la reparación de bytes y **no acredita QA visual posterior**.
+- Evidencias, hashes y criterio reproducible: `docs/RECIPE_IMAGE_AUDIT_20261016.md`.
+
+---
+
 ## GESTOR NUTRI 4 — Encuadre horizontal completo de fotos de recetas (16/10/2026)
 
 - Causa raíz reproducida localmente en Chromium: con `display:grid` y tracks automáticos, una foto vertical fuerza altura intrínseca del `img` (1470 px con marco de 553 px en desktop, 555 px con marco de 210 px móvil), y el `overflow:hidden` recorta el plato aun con `object-fit:contain`. Las pistas de mínimo cero y `img { min-width:0; min-height:0; max-width:100%; max-height:100%; }` evitan el problema sin tocar ni publicar originales.
