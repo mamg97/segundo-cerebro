@@ -50,3 +50,34 @@ export function parseSimulations(experiments=[]) {
     return [{...d,id:row.id}];
   });
 }
+
+// ABM with reversible activation is synthetic only; never a country risk forecast.
+export function parseRecoverySimulations(experiments = []) {
+  const accepted = [];
+  for (const row of experiments) {
+    let d;
+    try { d = JSON.parse(row.notes); } catch { continue; }
+    if (d?.schema !== 'psychohistory.abm.recovery.v1') continue;
+    if (d.evidenceType !== 'synthetic_simulation_only' || d.empiricalFit !== null ||
+        d.calendarMapping !== null || !/^[a-f0-9]{64}$/.test(d.codeSha256 || '') ||
+        !/^[a-f0-9]{64}$/.test(d.protocolSha256 || '') ||
+        !integer(d.nRuns) || d.nRuns < 1 || d.nRuns > 50000 ||
+        !Array.isArray(d.seeds) || d.seeds.length < 1 ||
+        !d.seeds.every(integer) || new Set(d.seeds).size !== d.seeds.length ||
+        !d.seeds.includes(0) || !Array.isArray(d.groups) || !d.groups.length || d.groups.length > 1200 ||
+        d.groups.length * d.seeds.length !== d.nRuns ||
+        !d.groups.every(g => probability(g.initialShare) && probability(g.threshold) &&
+          probability(g.recovery) && probability(g.mean) && probability(g.q05) &&
+          probability(g.q95) && probability(g.min) && probability(g.max) &&
+          number(g.sd) && g.sd >= 0 && g.min <= g.q05 && g.q05 <= g.q95 &&
+          g.q95 <= g.max && g.min <= g.mean && g.mean <= g.max &&
+          g.reproducedSeed0 === true && g.seeds === d.seeds.length)) continue;
+    const combos = d.groups.map(g => [g.initialShare,g.threshold,g.recovery].join('|'));
+    if (new Set(combos).size !== combos.length) continue;
+    accepted.push({id:row.id,nRuns:d.nRuns,seeds:d.seeds.length,groups:d.groups.map(g=>({
+      initialShare:g.initialShare,threshold:g.threshold,recovery:g.recovery,
+      mean:g.mean,q05:g.q05,q95:g.q95,min:g.min,max:g.max,sd:g.sd,seeds:g.seeds
+    }))});
+  }
+  return accepted;
+}
