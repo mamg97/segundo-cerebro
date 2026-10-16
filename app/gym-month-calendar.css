@@ -1,0 +1,107 @@
+/* Gym current-month attendance; isolated from Health adherence and Agenda. */
+.gym-month-calendar {
+  width: min(100%, 650px);
+  margin: 22px auto 4px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.gym-month-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.gym-month-header > div { display: grid; gap: 4px; }
+.gym-month-header strong { font-size: 14px; font-weight: 800; }
+.gym-month-header span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+.gym-month-header > small {
+  flex-shrink: 0;
+  padding: 5px 8px;
+  border-radius: 20px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 750;
+}
+.gym-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+.gym-month-weekday {
+  padding: 0 0 5px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+.gym-month-cell {
+  min-width: 0;
+  min-height: 63px;
+  padding: 6px 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 2%, var(--surface));
+  text-align: center;
+}
+.gym-month-cell.gym-month-outside {
+  border: 0;
+  background: transparent;
+}
+.gym-month-cell.is-trained {
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--line));
+  background: color-mix(in srgb, var(--mint) 12%, var(--surface));
+}
+.gym-month-cell.is-today {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.gym-month-day {
+  display: block;
+  margin: 0 auto;
+  width: fit-content;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+.gym-month-groups {
+  display: grid;
+  gap: 2px;
+  margin-top: 3px;
+}
+.gym-month-groups small {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.18;
+}
+.gym-month-note {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+  text-align: center;
+}
+@media (max-width: 560px) {
+  .gym-month-calendar { padding: 12px 8px; border-radius: 14px; }
+  .gym-month-header { align-items: start; }
+  .gym-month-header strong { font-size: 12px; }
+  .gym-month-header > small { font-size: 9px; }
+  .gym-month-grid { gap: 3px; }
+  .gym-month-cell { min-height: 60px; padding: 5px 2px; border-radius: 7px; }
+  .gym-month-day { font-size: 10px; }
+  .gym-month-groups small { font-size: 8px; }
+}
