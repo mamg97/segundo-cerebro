@@ -1,3 +1,11 @@
+## ORGANIZADOR 21 — Mini calendario mensual de Gimnasio (16/10/2026)
+
+- Petición visual: pequeño calendario del **mes local presente al pie de la pestaña Salud → Gimnasio**, con días de entrenamiento coloreados y grupo muscular pequeño dentro de la celda. Visible tanto en plan activo como durante pausa y en la vista de biblioteca; las sesiones proceden exclusivamente del histórico real privado `gym_sessions` + `gym_entries` ya incluido en `GET /api/gym`, **no** del plan previsto.
+- Implementación: módulo puro `app/gym-month-calendar.mjs`, estilo responsive acotado `app/gym-month-calendar.css`, plantilla `app/app.js` y stylesheet cargado desde `app/index.html`. Semana empieza en lunes, fecha en hora local, varias sesiones en mismo día comparten celda con etiquetas únicas, contador de días entrenados; `session.dayTitle` registrado prima sobre `GimnasioPlan.focus` (solo fallback si el título es genérico). Historial no disponible se ve sin días marcados: no crear eventos ni interpolar actividad. Re-render desde `renderGymPanel` tras altas/bajas canónicas. Sin llamadas, tablas ni coste adicionales.
+- Tests sintéticos `app/gym-month-calendar.test.mjs`: inicio de semana, mes/bisiesto, exclusión de sesiones no realizadas, grupos múltiples, XSS, DOM y responsive. Esperar CI, despliegue privado y auditoría Chromium antes de considerar cerrada la publicación.
+
+---
+
 ## ORGANIZADOR 21 — Reutilización inmediata de paneles Objetos/Despensa (16/10/2026)
 
 - Reabrir los modales `Objetos` y `Despensa` reutiliza la última respuesta privada **solo en RAM de la pestaña** y pinta sin spinner. Caducidad de 5 minutos; al caducar, GET bajo demanda y compartido; si la respuesta no cambia, no reconstruir el modal, y si falla, mantener contenido anterior con aviso. No se guarda contenido personal en GitHub, disco, almacenamiento web o logs.
