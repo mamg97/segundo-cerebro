@@ -1,5 +1,15 @@
 # Auditoría · fotografías de recetas recortadas (16/10/2026)
 
+## Verificación independiente posterior · GESTOR NUTRI 5 (16/10/2026)
+
+- Relectura de la fuente canónica privada: **24 recetas con original vinculado y 24 filas únicas de `RecipeMedia`**, sin faltantes, huérfanos, orígenes discrepantes ni desfases en `foto_updated_at`.
+- Se leyó el `base64_preview` completo de las 24 filas y se decodificaron los bytes JPEG. En **24/24** casos el SHA-256 **recalculado sobre los bytes** coincide exactamente con `RecipeMedia.sha256`; los 24 JPEG tienen marcadores coherentes y dimensiones internas **480 × 270**. Tamaño máximo base64: **46.220 caracteres** (límite 50.000). Esto valida el binario, no la fidelidad visual frente al original.
+- Las cinco vistas previas que figuraban como pendientes en el relevo antiguo ya estaban escritas, versionadas y completas. No se repitió ninguna subida ni se crearon duplicados.
+- Lectura del DOM de la aplicación autenticada: la vista semanal muestra **13 tarjetas distintas «Sin foto»**, sin fotografía original asociada en la fuente canónica; **ningún texto «No disponible»** en la vista inspeccionada. La cifra histórica de 10 no describe el estado actual del menú. La lista nominal solo debe mantenerse en el entorno privado, no en Git.
+- [PR #516](https://github.com/mamg97/segundo-cerebro/pull/516) fusionada el 16/10/2026; workflow de validación [#38883070574](https://github.com/mamg97/segundo-cerebro/actions/runs/38883070574) terminado correctamente. En producción autenticada se ven los nuevos estados de ausencia de foto.
+- **Pendiente de verificación:** comparación visual píxel a píxel (original frente a derivada), comprobación visual responsive/escritorio de todas las tarjetas y lectura HTTP autenticada individual de los endpoints. El conector de navegador empleado permite leer DOM, no controlar Chromium ni inspeccionar capturas. No presentar esa comprobación como aprobada.
+- Operación de este gestor **solo de lectura sobre Sheets**: no se modificaron valores nutricionales, `Registro`, `MenuSemanal`, `Recetas`, inventario, fotos ni metadatos de imagen.
+
 ## Causa raíz: dos fallos diferentes
 
 1. **Presentación**: CSS Grid de la ficha de receta conservaba altura mínima intrínseca de fotografías verticales y el contenedor ocultaba el sobrante. Reparado en PR #514 con tracks de mínimos cero y `object-fit:contain`. Despliegue privado [#38877156658](https://github.com/mamg97/segundo-cerebro/actions/runs/38877156658) correcto.

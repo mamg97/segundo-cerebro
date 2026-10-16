@@ -1,3 +1,12 @@
+## GESTOR NUTRI 5 — Auditoría binaria y continuidad de fotos (16/10/2026)
+
+- Reconciliación independiente: **24 originales enlazados/24 filas únicas en `RecipeMedia`**; **24/24 SHA-256 recalculados sobre JPEG decodificados y coincidentes**, dimensiones internas 480×270, máximo 46.220 caracteres por celda, origen y versión de caché alineados. Las cinco previews antes pendientes ya estaban completas: no duplicarlas.
+- PR #516 **fusionada**, CI #38883070574 **success**; el DOM de la web autenticada presenta **13 recetas distintas «Sin foto»** y ningún «No disponible» en la vista semanal inspeccionada. Los anteriores recuentos de 10 no reflejan el menú actual.
+- **QA visual de píxeles/recortes y respuesta HTTP individual de imágenes siguen pendientes**: el acceso disponible fue lectura del DOM, sin control visual de Chromium. No atribuir verificación visual completa al recuento de imágenes, hash o DOM.
+- Sin escrituras en Sheets, sin cambios de macros/consumos/ingredientes/estados/inventario y sin originales privados en Git. Véase `docs/RECIPE_IMAGE_AUDIT_20261016.md`.
+
+---
+
 ## ORGANIZADOR — Corrección visible de las metas en Home · 16/10/2026
 
 - Una captura posterior a PR #513 mostró que **las marcas de objetivos no eran visibles**, aunque la auditoría #464 pasó las comprobaciones de atributos `progress.value`; eso no verificaba los píxeles pintados. No declarar resuelto solo por la auditoría antigua.
@@ -10,7 +19,7 @@
 ## GESTOR NUTRI 4 — Estado vigente de imágenes semanales (16/10/2026)
 
 - Tras corregir las cinco previews históricas recortadas, se completaron tres derivadas ausentes que sí tenían original privado. **Cobertura actual: 24 recetas con foto original, 24 entradas RecipeMedia con binario, dimensiones, SHA-256, origen y versión comprobados; 0 ausentes y 0 incompletas.** Las cifras antiguas 19/5, que aparecen más abajo, son la fotografía temporal ANTERIOR a esta reparación.
-- Las recetas sin fotografía original no pueden resolverse recreando una preview; la semana del 12–18/10 tiene 10 recetas con enlace pero sin original asociado. Distinguirlas de las imágenes que fallan al cargar. No inventar fotografías ni asociar fotos de otros platos.
+- Las recetas sin fotografía original no pueden resolverse recreando una preview; la vista del menú semanal autenticado presenta 13 recetas distintas con «Sin foto» y sin original asociado. Distinguirlas de las imágenes que fallan al cargar. No inventar fotografías ni asociar fotos de otros platos.
 - Cambio UX: texto "Sin foto" si falta original frente a "No disponible" si el recurso vinculado falla; prueba de regresión en `app/recipe-image-frame.test.mjs`. La fotografía existente sigue en horizontal 16:9 con contain.
 - La reconciliación de las tres nuevas filas técnicas está verificada en Sheets (original, SHA, dimensiones, versión); **pendiente verificación visual autenticada posterior**. Detalles y excepciones: `docs/RECIPE_IMAGE_AUDIT_20261016.md`.
 
