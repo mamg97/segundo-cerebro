@@ -106,7 +106,7 @@ function metrics(){
   const data=[
     ["VERTIENTES",String(TRACKS.length),"líneas de investigación"],
     ["HITOS VERIFICADOS",completed()+"/"+m.length,"sin ponderación artificial"],
-    ["EXPERIMENTOS",String(state?.lab.experiments.length||0),"registrados y versionados"],
+    ["EVALUACIONES",String(state?.lab.experiments.length||0),"registros modelo / objetivo"],
     ["BRIER PROSPECTIVO",fmt(e.brier,4),String(e.resolved||0)+" predicciones evaluables"]
   ];
   document.getElementById("headline-metrics").innerHTML=data.map(x=>'<article class="metric"><small>'+esc(x[0])+'</small><strong>'+esc(x[1])+'</strong><em>'+esc(x[2])+'</em></article>').join("");
