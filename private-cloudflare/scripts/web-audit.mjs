@@ -2019,11 +2019,24 @@ try {
     let daysCompared = 0;
     let headerMismatches = 0;
     let progressMismatches = 0;
+    let goalMarkerMismatches = 0;
     for (const [day, items] of sourceByDate) {
       const element = page.locator(`#home-weekly-menu-content .home-weekly-menu-table-day[data-menu-date="${day}"]`);
       const figures = await element.locator(".home-weekly-menu-plan-value").allTextContents().catch(() => []);
-      const meters = await element.locator(".home-weekly-menu-plan-bar progress").evaluateAll((els) =>
-        els.map((el) => Number(el.value))).catch(() => []);
+      const bars = await element.locator(".home-weekly-menu-plan-bar").evaluateAll((els) =>
+        els.map((el) => {
+          const actual = el.querySelector("progress.home-weekly-menu-plan-actual");
+          const planned = el.querySelector("progress.home-weekly-menu-plan-expected");
+          const goal = el.querySelector("progress.home-weekly-menu-plan-goal");
+          return {
+            actual: actual ? Number(actual.value) : null,
+            planned: planned ? Number(planned.value) : null,
+            goal: goal ? Number(goal.value) : null,
+            axis: actual ? Number(actual.max) : null,
+            plannedAxis: planned ? Number(planned.max) : null,
+            goalAxis: goal ? Number(goal.max) : null
+          };
+        })).catch(() => []);
       const plannedKcal = Math.round(items.reduce((sum, item) => sum +
         (item.kcal == null ? 0 : Number(item.kcal) || 0), 0));
       const plannedProtein = Math.round(items.reduce((sum, item) => sum +
@@ -2040,19 +2053,35 @@ try {
         value.consumed !== expected[i].consumed)) {
         headerMismatches += 1;
       }
-      if (meters.length !== 2 || meters.some((value, i) => {
+      if (bars.length !== 2 || bars.some((bar, i) => {
         const { consumed, planned } = expected[i];
-        const ratio = planned > 0 ? Math.max(0, Math.min(100, Math.round(consumed / planned * 100))) : 0;
-        return value !== ratio;
+        const rawGoal = [objective.kcal, objective.protein][i];
+        const numeric = rawGoal == null || rawGoal === "" ? NaN : Number(rawGoal);
+        const goal = Number.isFinite(numeric) && numeric > 0 ? Math.round(numeric) : 0;
+        const axis = Math.max(1, consumed, planned, goal);
+        return bar.actual !== consumed || bar.planned !== planned ||
+          bar.axis !== axis || bar.plannedAxis !== axis;
       })) progressMismatches += 1;
+      if (bars.length !== 2 || bars.some((bar, i) => {
+        const rawGoal = [objective.kcal, objective.protein][i];
+        const numeric = rawGoal == null || rawGoal === "" ? NaN : Number(rawGoal);
+        const goal = Number.isFinite(numeric) && numeric > 0 ? Math.round(numeric) : 0;
+        const axis = Math.max(1, expected[i].consumed, expected[i].planned, goal);
+        return goal > 0
+          ? bar.goal !== goal || bar.goalAxis !== axis
+          : bar.goal !== null;
+      })) goalMarkerMismatches += 1;
       if (await element.locator("header > span").count()) headerMismatches += 1;
     }
     assertCheck(daysCompared > 0 && headerMismatches === 0,
       "Home · barras muestran consumido / previsto igual que Sheets",
       `dias=${daysCompared} discrepancias=${headerMismatches}`);
     assertCheck(daysCompared > 0 && progressMismatches === 0,
-      "Home · avance de barra usa consumo / plan (no objetivo)",
+      "Home · barras previsto y consumido comparten escala absoluta",
       `dias=${daysCompared} discrepancias=${progressMismatches}`);
+    assertCheck(daysCompared > 0 && goalMarkerMismatches === 0,
+      "Home · raya del objetivo kcal/proteína está a escala y no se inventa",
+      `dias=${daysCompared} discrepancias=${goalMarkerMismatches}`);
 
     // READ-ONLY comparison between the canonical lightweight menu and Home images.
     // Only numeric counts are logged: no IDs, photo URLs or private bytes.

@@ -6006,10 +6006,10 @@ function weeklyMenuDayDisplayTotals(day, model) {
   };
 }
 
-// Home progress measures actual confirmed consumption against this day's known
-// planned menu. Daily goals are displayed once above the matrix, not reused as
-// the denominator. Missing macros are explicitly partial, never invented.
-function renderHomeWeeklyMenuPlanBar(metric, consumedValue, plannedValue, plannedIncomplete = false, consumedIncomplete = false) {
+// Home compares confirmed consumption with its daily plan, while a distinct
+// reference mark plots the effective objective on one shared absolute scale.
+// The plan, confirmed amount and goal must never be assigned different axes.
+function renderHomeWeeklyMenuPlanBar(metric, consumedValue, plannedValue, goalValue = null, plannedIncomplete = false, consumedIncomplete = false) {
   const protein = metric === "protein";
   const unit = protein ? "g" : "kcal";
   const label = protein ? "Proteína" : "Kcal";
@@ -6019,18 +6019,26 @@ function renderHomeWeeklyMenuPlanBar(metric, consumedValue, plannedValue, planne
   // not a different ratio rounded only after using hidden fractions.
   const shownConsumed = Math.round(consumed);
   const shownPlanned = Math.round(planned);
-  const hasPlan = Number.isFinite(planned) && shownPlanned > 0;
-  const fill = hasPlan ? Math.max(0, Math.min(100, Math.round(shownConsumed / shownPlanned * 100))) : 0;
+  const hasPlan = shownPlanned > 0;
+  // Zero, missing and non-numeric objectives must not produce a false mark.
+  const rawGoal = goalValue === null || goalValue === undefined || goalValue === "" ? NaN : Number(goalValue);
+  const shownGoal = Number.isFinite(rawGoal) && rawGoal > 0 ? Math.round(rawGoal) : 0;
+  const hasGoal = shownGoal > 0;
+  // A single absolute axis keeps the goal visible both above and below the plan.
+  // Round first, so the bar geometry and labels use the exact same amounts.
+  const axisMax = Math.max(1, shownPlanned, shownConsumed, shownGoal);
   const actualText = `${consumedIncomplete ? "≥" : ""}${shownConsumed.toLocaleString("es-ES")}`;
   const plannedText = hasPlan ? `${plannedIncomplete ? "≥" : ""}${shownPlanned.toLocaleString("es-ES")}` : "—";
   const comparison = `${actualText} / ${plannedText} ${unit}`;
   const partial = plannedIncomplete || consumedIncomplete;
-  const accessible = `${label}: ${actualText} ${unit} consumidos frente a ${plannedText} ${unit} previstos${partial ? "; subtotal incompleto" : ""}`;
+  const accessible = `${label}: ${actualText} ${unit} consumidos frente a ${plannedText} ${unit} previstos${hasGoal ? `; objetivo diario ${shownGoal.toLocaleString("es-ES")} ${unit}` : "; objetivo no disponible"}${partial ? "; subtotal incompleto" : ""}`;
   return `
     <div class="home-weekly-menu-plan-metric ${metric} ${partial ? "is-partial" : ""}">
       <span class="home-weekly-menu-plan-label">${label}</span>
       <div class="home-weekly-menu-plan-bar">
-        <progress value="${fill}" max="100" aria-label="${escapeHtml(accessible)}" aria-valuetext="${escapeHtml(accessible)}"></progress>
+        <progress class="home-weekly-menu-plan-expected" value="${shownPlanned}" max="${axisMax}" aria-hidden="true"></progress>
+        <progress class="home-weekly-menu-plan-actual" value="${shownConsumed}" max="${axisMax}" aria-label="${escapeHtml(accessible)}" aria-valuetext="${escapeHtml(accessible)}"></progress>
+        ${hasGoal ? `<progress class="home-weekly-menu-plan-goal" value="${shownGoal}" max="${axisMax}" aria-hidden="true" title="Objetivo de ${escapeHtml(label.toLowerCase())}: ${shownGoal.toLocaleString("es-ES")} ${unit}"></progress>` : ""}
         <b class="home-weekly-menu-plan-value" aria-hidden="true">${escapeHtml(comparison)}</b>
       </div>
       ${partial ? '<small class="home-weekly-menu-plan-partial">Subtotal conocido · datos pendientes</small>' : ""}
@@ -6048,8 +6056,8 @@ function renderHomeWeeklyMenuDayHeader(day, model) {
         </div>
       </header>
       <div class="home-weekly-menu-progress">
-        ${renderHomeWeeklyMenuPlanBar("kcal", day.consumedKcal, day.kcal, !day.nutritionComplete, !day.consumedNutritionComplete)}
-        ${renderHomeWeeklyMenuPlanBar("protein", day.consumedProtein, day.protein, !day.nutritionComplete, !day.consumedNutritionComplete)}
+        ${renderHomeWeeklyMenuPlanBar("kcal", day.consumedKcal, day.kcal, model.kcalTarget, !day.nutritionComplete, !day.consumedNutritionComplete)}
+        ${renderHomeWeeklyMenuPlanBar("protein", day.consumedProtein, day.protein, model.proteinTarget, !day.nutritionComplete, !day.consumedNutritionComplete)}
       </div>
     </div>`;
 }
@@ -6078,6 +6086,7 @@ function renderHomeWeeklyMenu(data) {
       <span>Objetivos diarios</span>
       <strong>Kcal: ${model.kcalTarget === null ? "Pendiente" : escapeHtml(formatKcal(model.kcalTarget))}</strong>
       <strong>Proteína: ${model.proteinTarget === null ? "Pendiente" : escapeHtml(formatMacro(model.proteinTarget))}</strong>
+      <small class="home-weekly-menu-scale-legend"><i aria-hidden="true"></i> Raya blanca: objetivo · barra tenue: previsto · barra intensa: consumido</small>
     </div>
     <div class="home-weekly-menu-table-scroll" role="region" aria-label="Menú semanal por momento y día" tabindex="0">
       <div class="home-weekly-menu-table">

@@ -1,3 +1,12 @@
+## ORGANIZADOR 20 — Referencias de objetivos en barras del menú Home (16/10/2026)
+
+- Petición: mostrar dentro de cada barra del menú semanal una raya vertical en el objetivo diario canónico de kcal/proteínas, conservando la distinción entre plan previsto y consumo confirmado.
+- UI en Home: tres elementos superpuestos sobre una **escala absoluta común** `max(1, previsto, consumido, objetivo)`: fondo tenue para el total previsto, relleno intenso para el confirmado y línea blanca en el objetivo. El objetivo no se convierte en denominador oculto de otra barra; puede quedar antes, al final o después de la previsión sin falsificar geometría. Leyenda única en cabecera; los valores «consumido / previsto» siguen dentro de cada barra. Objetivo ausente/inválido → ninguna línea inventada. Subtotales incompletos conservan «≥».
+- Implementación sin estilos inline ni librerías: HTML `progress` con `value` y `max` compartidos y borde del valor del objetivo mediante CSS; versión coordinada `app.js` / `styles.css` `0.44.43`. PR con tests Node de extremos, objetivo nulo, redondeos, incompletos, cabecera y auditoría Chromium read-only de las tres escalas.
+- **Pendiente de confirmar:** CI, fusión, Cloudflare privado y auditoría automática. La última auditoría confirmada sin este cambio seguía con fallo ajeno de MIDAS `CHECK-00029`; no atribuirle una resolución. No se han escrito `MenuSemanal`, `Registro` ni `Objetivos`.
+
+---
+
 ## ORGANIZADOR 20 — Cierre verificable Salud: Chromium #453 (15/10/2026)
 
 - **Estado confirmado:** PR #501 (fotos primero/filtro de ingrediente), #502 (auditoría), #503 (Cambiar en acompañantes planificados), #504/#505 (ficha de ingrediente con degradación segura y caché), #506 (bloquear segunda receta principal), #507/#508 (resiliencia de navegación), #509 (trazado anónimo), #510 (controlador delegado), #511 (auditoría limitada a filas reales), todas fusionadas con CI satisfactoria final.

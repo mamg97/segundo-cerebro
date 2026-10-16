@@ -27725,3 +27725,70 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
+
+/* Home weekly menu: plan, confirmed consumption and daily goal on one shared scale.
+   The goal is an accessible native progress edge (rather than an inline left %),
+   so the target remains truthful when plan < goal, plan > goal or consumption > plan. */
+.home-weekly-menu-objectives .home-weekly-menu-scale-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.home-weekly-menu-scale-legend i {
+  display: inline-block;
+  flex: 0 0 3px;
+  height: 13px;
+  background: #fff;
+  border: 1px solid #14243b;
+  border-radius: 1px;
+}
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-expected { z-index: 0; }
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual { z-index: 1; }
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-goal {
+  z-index: 2;
+  pointer-events: none;
+}
+.home-weekly-menu-plan-bar .home-weekly-menu-plan-value { z-index: 3; }
+/* A transparent track prevents higher overlays from hiding the forecast. */
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual,
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-goal {
+  background: transparent;
+}
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual::-webkit-progress-bar,
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-goal::-webkit-progress-bar {
+  background: transparent;
+}
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-expected::-webkit-progress-value,
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-expected::-moz-progress-bar {
+  background: #75502b;
+}
+.home-weekly-menu-plan-metric.protein .home-weekly-menu-plan-bar progress.home-weekly-menu-plan-expected::-webkit-progress-value,
+.home-weekly-menu-plan-metric.protein .home-weekly-menu-plan-bar progress.home-weekly-menu-plan-expected::-moz-progress-bar {
+  background: #23634c;
+}
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual::-webkit-progress-value,
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual::-moz-progress-bar {
+  background: #c66c23;
+}
+.home-weekly-menu-plan-metric.protein .home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual::-webkit-progress-value,
+.home-weekly-menu-plan-metric.protein .home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual::-moz-progress-bar {
+  background: #20805b;
+}
+.home-weekly-menu-plan-metric.is-partial .home-weekly-menu-plan-bar progress.home-weekly-menu-plan-expected::-webkit-progress-value,
+.home-weekly-menu-plan-metric.is-partial .home-weekly-menu-plan-bar progress.home-weekly-menu-plan-expected::-moz-progress-bar { background: #475569; }
+.home-weekly-menu-plan-metric.is-partial .home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual::-webkit-progress-value,
+.home-weekly-menu-plan-metric.is-partial .home-weekly-menu-plan-bar progress.home-weekly-menu-plan-actual::-moz-progress-bar { background: #718096; }
+/* Only the leading edge of the goal's transparent value is drawn: a vertical
+   white line at goal / max(plan, confirmed, goal), including at the right edge. */
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-goal::-webkit-progress-value,
+.home-weekly-menu-plan-bar progress.home-weekly-menu-plan-goal::-moz-progress-bar {
+  background: transparent;
+  border-right: 3px solid #fff;
+  border-radius: 0;
+  box-sizing: border-box;
+}
