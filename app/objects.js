@@ -144,13 +144,56 @@ function wardrobeView(payload) {
     '</div>';
 }
 
-function lookMosaic(look,payload) {
+// The canonical composed look is the primary asset. When its authenticated
+// versioned image fails, preserve the real look identity and show the *existing*
+// canonical garment photos instead of the browser's unbounded broken-image alt.
+function lookGarmentMosaic(look,payload) {
   const wardrobe=new Map((payload.wardrobe||[]).map(x=>[String(x.objectId),x]));
-  const direct=imageUrl(look.photoUrl);
-  if(direct) return '<img loading="lazy" src="'+e(direct)+'" alt="'+e(look.name||"Look")+'">';
   const images=(look.items||[]).map(i=>visualUrl(wardrobe.get(String(i.objectId)))).filter(Boolean).slice(0,4);
-  if(!images.length) return '<span>◇</span>';
-  return '<span class="look-mosaic">'+images.map(src=>'<img loading="lazy" src="'+e(src)+'" alt="">').join("")+'</span>';
+  if(!images.length) return '<span class="look-image-unavailable">Imagen temporalmente no disponible</span>';
+  return '<span class="look-mosaic">'+images.map(src=>
+    '<span class="look-mosaic-slot"><img loading="lazy" data-look-fallback-garment src="'+e(src)+'" alt=""></span>'
+  ).join("")+'</span>';
+}
+function lookMosaic(look,payload) {
+  const direct=imageUrl(look.photoUrl);
+  if(direct) return '<img data-look-composed-image="'+e(look.id)+'" loading="lazy" src="'+e(direct)+'" alt="">';
+  return lookGarmentMosaic(look,payload);
+}
+function bindLookImageRecovery(root,payload) {
+  if(!root) return;
+  const bindGarmentImage = (img) => {
+    const failed=()=>{
+      if(!img.isConnected) return;
+      const slot=img.parentElement;
+      const placeholder=document.createElement("span");
+      placeholder.className="look-mosaic-item-unavailable";
+      placeholder.textContent="◫";
+      placeholder.setAttribute("aria-hidden","true");
+      img.replaceWith(placeholder);
+      if(slot) slot.dataset.imageState="unavailable";
+    };
+    img.addEventListener("error",failed,{once:true});
+    if(img.complete && img.naturalWidth===0) failed();
+  };
+  root.querySelectorAll("[data-look-fallback-garment]").forEach(bindGarmentImage);
+  root.querySelectorAll("[data-look-composed-image]").forEach((img)=>{
+    const failed=()=>{
+      if(!img.isConnected) return;
+      const look=(payload.looks||[]).find(x=>String(x.id)===String(img.dataset.lookComposedImage));
+      const markup=look ? lookGarmentMosaic(look,payload) :
+        '<span class="look-image-unavailable">Imagen temporalmente no disponible</span>';
+      img.insertAdjacentHTML("afterend",markup);
+      const replacement=img.nextElementSibling;
+      img.remove();
+      if(replacement) {
+        replacement.dataset.imageState="fallback";
+        replacement.querySelectorAll("[data-look-fallback-garment]").forEach(bindGarmentImage);
+      }
+    };
+    img.addEventListener("error",failed,{once:true});
+    if(img.complete && img.naturalWidth===0) failed();
+  });
 }
 
 function usageDateKey(value) {
@@ -332,6 +375,7 @@ function lookUsageHistoryView(payload,mode="looks",sort="recent") {
       '</div>'+
       (isGarments?'<p class="look-history-note">En Prendas, las fechas se derivan de los usos registrados de los looks que contienen cada prenda y de su último uso canónico. El total usa Armario.veces_usado cuando existe. El cómputo de 30 días solo cuenta fechas disponibles.</p>':'<p class="look-history-note">En Looks, el total usa Looks.veces_usado cuando existe; las fechas proceden de historico_usos y ultimo_uso. El cómputo de 30 días solo cuenta fechas disponibles.</p>')+
     '</section>';
+  bindLookImageRecovery(body,payload);
   body.querySelector("[data-look-history-back]")?.addEventListener("click",()=>{activeTab="looks";renderWorkspace(payload);});
   body.querySelectorAll("[data-look-history-mode]").forEach(button=>button.addEventListener("click",()=>lookUsageHistoryView(payload,button.dataset.lookHistoryMode||"looks",sort)));
   body.querySelector("[data-look-history-sort]")?.addEventListener("change",event=>lookUsageHistoryView(payload,mode,event.target.value||"recent"));
@@ -405,7 +449,6 @@ function detailLook(look,payload) {
   const body=document.querySelector("#dialog-body");
   const wardrobe=new Map((payload.wardrobe||[]).map(x=>[String(x.objectId),x]));
   const objects=new Map((payload.objects||[]).map(x=>[String(x.id),x]));
-  const direct=imageUrl(look.photoUrl);
   const itemCards=(look.items||[]).map(item=>{
     const garment=wardrobe.get(String(item.objectId));
     const object=objects.get(String(item.objectId));
@@ -420,7 +463,7 @@ function detailLook(look,payload) {
   body.innerHTML='<button class="objects-back" data-look-back type="button">← Volver a Looks</button>'+
     '<section class="look-detail">'+
       '<div class="look-detail-layout">'+
-        '<div class="look-detail-main">'+(direct?'<img src="'+e(direct)+'" alt="'+e(look.name||"Look")+'">':lookMosaic(look,payload))+'</div>'+
+        '<div class="look-detail-main">'+lookMosaic(look,payload)+'</div>'+
         '<div class="look-detail-copy">'+
           '<span class="look-tags">'+(look.office===true?'<b>Oficina</b>':'')+(look.season?'<b>'+e(look.season)+'</b>':'')+(look.formality?'<b>'+e(look.formality)+'</b>':'')+'</span>'+
           '<div class="look-detail-heading"><small>Look completo</small><h3>'+e(look.name||"Look")+'</h3><p>'+e(look.context||"Contexto sin indicar")+'</p></div>'+
@@ -429,6 +472,7 @@ function detailLook(look,payload) {
         '</div>'+
       '</div>'+
     '</section>';
+  bindLookImageRecovery(body,payload);
   body.querySelector("[data-look-back]")?.addEventListener("click",()=>{activeTab="looks";renderWorkspace(payload);});
   body.querySelectorAll("[data-object-open]").forEach(button=>button.addEventListener("click",()=>{
     const item=(payload.objects||[]).find(x=>String(x.id)===String(button.dataset.objectOpen));
@@ -445,6 +489,7 @@ function detailList(list,payload) {
 
 function bind(payload) {
   const body=document.querySelector("#dialog-body");
+  bindLookImageRecovery(body,payload);
   body.querySelectorAll("[data-objects-tab]").forEach(b=>b.addEventListener("click",()=>{activeTab=b.dataset.objectsTab||"summary";objectsFlash="";renderWorkspace(payload);}));
   body.querySelectorAll("[data-look-builder]").forEach(b=>b.addEventListener("click",()=>{activeTab="builder";objectsFlash="";renderWorkspace(payload);}));
   body.querySelectorAll("[data-look-history]").forEach(b=>b.addEventListener("click",()=>lookUsageHistoryView(payload)));
