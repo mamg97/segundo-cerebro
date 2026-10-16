@@ -1,3 +1,11 @@
+## EVENTOS — Reconciliación de citas iCloud retiradas · 16/10/2026
+
+- La Agenda semanal obtiene los eventos iCloud/Google en cada carga/refresco, con caché iCloud de 60 s cuando la lectura fue sana (fallback 15 s); no hay polling continuo mientras la pestaña queda abierta.
+- Incidencia: una instancia futura de una serie iCloud dejó de actualizarse en el Sheet canónico aunque otras instancias seguían vigentes. El persistidor `syncCalendarEventsToEventsSheet` solo hacía UPSERT, dejando `CONFIRMADO` indefinidamente tras una eliminación en el proveedor.
+- Fix genérico: el mantenimiento de `/api/state` comprueba ausencias solo con `icloudSource.status=ok|ok-cache`, `freshness=live`, todos los calendarios coincidentes y timestamp reciente (máx. 3 min). Marca `CANCELADO` solo las instancias futuras originalmente derivadas de iCloud que estén ausentes; nunca toca eventos manuales, históricos ni reservas externas.
+- La baja es operativa del registro de Agenda, NO prueba cancelación de reserva/entrada. Conservar histórico y referencia a última actualización de fuente. Instancias auto-retiradas se reactivan si el evento vuelve a aparecer; no reactivar cancelaciones manuales.
+- Comprobar CI, deploy y auditor de producción; el acceso directo autenticado a CalDAV no está disponible desde este gestor, por lo que no proclamar comprobación real de baja en el proveedor sin datos nuevos.
+
 ## ORGANIZADOR 20 — Looks: imágenes privadas que fallan y recuperación visual (16/10/2026)
 
 - Captura real muestra dos looks con imagen compuesta no renderizada; el navegador expande el texto alternativo en la columna visual. La verificación de lectura del Sheet privado `SEGUNDO CEREBRO - OBJETOS`, pestaña `Looks`, confirmó **50/50 URL `foto_url` versionadas, válidas y con `look_id` coincidente**: no hay pruebas de error de sintaxis o asociación en esas referencias. El estado del BLOB D1 y el HTTP concreto de las dos fotos no pudo determinarse con la lectura del Sheet: no afirmar 404 o 502 de esas dos.
