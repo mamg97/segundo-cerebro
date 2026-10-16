@@ -1,3 +1,11 @@
+## ORGANIZADOR 21 — Vistas conservadas en memoria y Agenda bajo demanda (16/10/2026)
+
+- Causa: el enlace Agenda hacía solo scroll; si la lectura inicial iCloud/Google quedaba incompleta, no se consultaba de nuevo hasta pulsar Actualizar. Además el calendario semanal se reconstruía aunque eventos y semana fuesen idénticos.
+- Fix acotado en `app/app.js` + `app/view-memory.mjs`: conservar instantánea/DOM de Agenda **solo en RAM** durante la pestaña, revalidación no bloqueante únicamente al entrar si faltan datos fiables o transcurren 5 min, una llamada concurrente, contención 45 s ante error, refresco explícito forzado y reintento inicial si la fuente es parcial. **Nunca** borrar eventos existentes por respuesta parcial; mostrar el estado degradado, y no repintar DOM si semana y contenido no cambian. No polling, localStorage, cambios D1/Sheets ni nueva API.
+- Pruebas sintéticas de frescura, fallo, fuente parcial, concurrencia y wiring; la auditoría existente sigue exigiendo cobertura real iCloud/Google. Comprobar CI, despliegue y Chromium antes de dar cierre final. Extender este patrón a fichas modales de otros dominios en tareas independientes, protegiendo invalidación tras escrituras canónicas.
+
+---
+
 ## EVENTOS — Reconciliación de citas iCloud retiradas · 16/10/2026
 
 - La Agenda semanal obtiene los eventos iCloud/Google en cada carga/refresco, con caché iCloud de 60 s cuando la lectura fue sana (fallback 15 s); no hay polling continuo mientras la pestaña queda abierta.
