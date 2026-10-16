@@ -1,12 +1,12 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
-import { calendarSnapshotComplete, createOnDemandViewRefresh } from "./view-memory.mjs?v=0.44.46";
+import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";
 import { mockState } from "../core/mock-state.js";
 import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard } from "./pantry.js?v=0.44.32";
-import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard } from "./objects.js?v=0.44.25";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.33";
+import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
@@ -25,6 +25,10 @@ let remoteStateLoadError = null;
 let eventsWorkspacePayload = null;
 let eventsWorkspaceTab = "active";
 const calendarViewRefresh = createOnDemandViewRefresh();
+const pantryDetailMemory = createPayloadViewMemory();
+const objectsDetailMemory = createPayloadViewMemory();
+configurePantryViewMemory(pantryDetailMemory);
+configureObjectsViewMemory(objectsDetailMemory);
 let lastRenderedCalendarMarkup = null;
 
 function eventsAreaFromStateFallback(currentState, mode) {
@@ -615,7 +619,10 @@ async function refreshApp() {
     // Keep each domain in an independent request so one expensive source cannot
     // consume the CPU budget of the whole dashboard. Detail workspaces remain
     // lazy and refresh themselves when opened.
-    // Explicit refresh invalidates only the ephemeral bank snapshot.
+    // An explicit user refresh invalidates detail payload freshness too;
+    // retained views remain visible until their next successful read.
+    pantryDetailMemory.invalidate();
+    objectsDetailMemory.invalidate();
     verifiedFinanceBankWorkspace = null;
     await Promise.allSettled([
       refreshStateScope("finance"),
