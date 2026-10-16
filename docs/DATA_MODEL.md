@@ -1,5 +1,11 @@
 # Modelo de datos
 
+## Sobres de evidencia de investigación v0.2
+
+Sin ampliar columnas canónicas: `PsicoExperimentos.notas` admite `psychohistory.backtest.v1` (runId, taskId, horizonte, partición, tipo retrospectivo, vintageVerified=false, prospectiveEligible=false, hashes de protocolo/código/muestra, N, eventos, Brier, log loss, AP, ECE, skills pareados, IC, calibración y agregados anuales). `valor` coincide con Brier; las curvas y sumas deben coincidir con N/eventos y Brier ponderado. Agrupar solo run, objetivo, horizonte, protocolo y hash de observaciones idénticos. Cada fila es evaluación modelo–objetivo; no cuenta como réplica independiente.
+
+`psychohistory.abm.v1` conserva rejilla de parámetros y semillas con `evidenceType=synthetic_simulation_only` y `empiricalFit=null`. No alimenta scores empíricos. Los registros anteriores con notas libres siguen siendo visibles. El formato completo está en `docs/PSYCHOHISTORY_BENCHMARK.md`.
+
 ## Principios
 
 - Una identidad estable por entidad.

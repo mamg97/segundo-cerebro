@@ -2,6 +2,15 @@
 
 Este documento registra decisiones duraderas. El detalle histórico adicional permanece en Git.
 
+## D-057 — Benchmark de conflictividad anual y puerta de evidencia prospectiva
+
+- **Fecha:** 2026-10-16.
+- **Decisión:** reutilizar UCDP OrganizedViolenceCY 26.1, su universo oficial país-año y sus descargas gratuitas con hashes fijados. Evaluar presencia y aparición de episodio como objetivos diferentes, con entrenamiento cronológico y dos años de desfase. Mantener las limitaciones de revisión histórica explícitas.
+- **Alcance:** experimento exploratorio, no validación confirmatoria/as-of ni causal. Comparar frecuencia, persistencia, Markov, índice de memoria, logística L2 y tabla de interacciones. No crear ensemble sin nueva evidencia.
+- **Datos operativos:** mantener evaluaciones y curvas en sobres versionados de `PsicoExperimentos.notas` y evidencia completa en Drive privado. No publicar scores, muestras ni archivos de ejecución en Git o demo; no ampliar tablas/API por cada experimento.
+- **Sellado:** las fechas editables no bastan para puntuación prospectiva. Producción debe fallar cerrado hasta integrar un verificador independiente de recibos vinculados al payload. Preparación/verificación local RFC3161 no equivale a una TSA elegida, validada y conectada al Worker.
+- **Motivo:** distinguir persistencia de anticipación de crisis, resultado retrospectivo de prospectivo, y progreso técnico de eficacia científica, con coste cero. Detalle en `PSYCHOHISTORY_BENCHMARK.md`.
+
 ## D-001 — Estado global compartido
 
 - **Estado:** aceptada

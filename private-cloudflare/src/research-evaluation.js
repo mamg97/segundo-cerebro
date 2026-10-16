@@ -1,17 +1,26 @@
-// Scoring of strictly prospective binary forecasts. No retrospective in-sample
-// estimate may be reported as prospective evidence.
-export function validatedProspectiveRows(rows) {
+// Date ordering alone is NOT proof of issuance. Verification must be injected
+// by a trusted server-side receipt verifier, NEVER read from editable Sheets.
+// Until that verifier is installed, production intentionally scores zero rows.
+export function hasVerifiedSeal(row, verifiedReceipts = new Map()) {
+  const receipt = verifiedReceipts.get(row.id);
+  return receipt?.verified === true && receipt?.payloadMatched === true &&
+    receipt?.independentTimestamp === true &&
+    Number.isFinite(Date.parse(receipt.timestamp)) &&
+    Date.parse(receipt.timestamp) <= Date.parse(row.issuedAt) &&
+    Date.parse(receipt.timestamp) < Date.parse(row.resolutionAt);
+}
+export function validatedProspectiveRows(rows, verifiedReceipts = new Map()) {
   if (!Array.isArray(rows)) return [];
   return rows.filter((r) => {
     const p = r.probability;
     const y = r.outcome;
     const issued = Date.parse(String(r.issuedAt || ""));
     const resolution = Date.parse(String(r.resolutionAt || ""));
-    return r.status === "RESUELTA" && typeof p === "number" &&
+    return hasVerifiedSeal(r, verifiedReceipts) && r.status === "RESUELTA" && typeof p === "number" &&
       Number.isFinite(p) && p >= 0 && p <= 1 &&
       (y === 0 || y === 1) &&
-      Number.isFinite(issued) && Number.isFinite(resolution) && issued < resolution &&
-      (!r.asOf || (Number.isFinite(Date.parse(String(r.asOf))) && Date.parse(String(r.asOf)) <= issued));
+      Number.isFinite(issued) && Number.isFinite(resolution) && issued < resolution && resolution <= Date.now() &&
+      r.asOf && Number.isFinite(Date.parse(String(r.asOf))) && Date.parse(String(r.asOf)) <= issued;
   });
 }
 export function brierScore(rows, valueKey="probability") {
@@ -37,8 +46,8 @@ export function calibrationBins(rows, n=5) {
     index,count,meanProbability:count?totalP/count:null,eventRate:count?totalY/count:null
   }));
 }
-export function prospectiveSummary(predictions) {
-  const scored=validatedProspectiveRows(predictions);
+export function prospectiveSummary(predictions, verifiedReceipts = new Map()) {
+  const scored=validatedProspectiveRows(predictions, verifiedReceipts);
   const withBaseline=scored.filter(r=>typeof r.baselineProbability==="number" &&
     Number.isFinite(r.baselineProbability) && r.baselineProbability>=0 && r.baselineProbability<=1);
   // Fair paired comparison: both Brier scores use the exact same observations.
@@ -46,6 +55,8 @@ export function prospectiveSummary(predictions) {
   const basePaired=brierScore(withBaseline,"baselineProbability");
   return {
     registered:Array.isArray(predictions)?predictions.length:0,
+    sealStatus: "independent-verifier-required",
+    unsealed:Array.isArray(predictions)?predictions.filter(r=>!hasVerifiedSeal(r,verifiedReceipts)).length:0,
     resolved:scored.length,
     rejectedResolved:Array.isArray(predictions)?
       predictions.filter(r=>r.status==="RESUELTA").length-scored.length:0,

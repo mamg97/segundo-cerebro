@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate model code
-        run: python3 -m py_compile research/psychohistory/engines.py research/psychohistory/test_engines.py
+        run: python3 -m compileall -q research/psychohistory
       - name: Run synthetic tests
         run: python3 -m unittest discover -s research/psychohistory -p 'test_*.py' -v
       - name: Verify deterministic demo pipeline

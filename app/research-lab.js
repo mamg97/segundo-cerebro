@@ -1,4 +1,5 @@
-// Private, data-driven research dashboard. No synthetic research results in production.
+// Private, data-driven research dashboard. Simulations are explicitly separated.
+import {parseBacktests, comparableGroups, parseSimulations} from './research-results.mjs?v=0.2.0';
 const TRACKS=[
   {id:"V1",color:"#ff8a28",subtitle:"Hipótesis históricas y regularidades"},
   {id:"V2",color:"#62baf5",subtitle:"Probabilidades y validación temporal"},
@@ -16,6 +17,59 @@ let activeView="overview";
 let activeTrack=TRACKS.some(t=>t.id===new URLSearchParams(window.location.search).get("track")) ? new URLSearchParams(window.location.search).get("track") : "V2";
 let milestoneFilter="TODOS";
 let generation=0;
+let selectedTask='';
+let selectedModel='';
+
+function scientificPlot(points,{title,xLabel,yLabel,lines=[],diagonal=false}={}){
+  if(!points.length)return empty('Sin datos', 'Pendiente de validación');
+  const years=points.map(p=>p.x),lo=Math.min(...years),hi=Math.max(...years);
+  const x=v=>50+(v-lo)/(hi-lo||1)*450,y=v=>230-Math.max(0,Math.min(1,v))*190;
+  let out='<svg viewBox="0 0 540 280" role="img" aria-label="'+esc(title)+'"><title>'+esc(title)+'</title>';
+  for(let i=0;i<=4;i++){const v=i/4;out+='<line x1="50" y1="'+y(v)+'" x2="500" y2="'+y(v)+'" stroke="#25415e"/><text x="42" y="'+(y(v)+4)+'" text-anchor="end" fill="#a5b8ce" font-size="11">'+v+'</text>';}
+  for(const v of [...new Set([lo,Math.round((lo+hi)/2),hi])])out+='<text x="'+x(v)+'" y="250" text-anchor="middle" fill="#a5b8ce" font-size="11">'+v+'</text>';
+  if(diagonal)out+='<path d="M50 230 L500 40" stroke="#a5b8ce" stroke-dasharray="5 5" fill="none"/>';
+  for(const line of lines){
+    const pairs=points.filter(p=>finite(p[line.key]));
+    if(!pairs.length)continue;
+    out+='<polyline points="'+pairs.map(p=>x(p.x)+','+y(p[line.key])).join(' ')+'" fill="none" stroke="'+line.color+'" stroke-width="2.5"/>';
+    for(const p of pairs)out+='<circle cx="'+x(p.x)+'" cy="'+y(p[line.key])+'" r="4" fill="'+line.color+'"><title>'+esc(line.label)+' · '+p.x+': '+fmt(p[line.key],4)+' · N='+p.n+'</title></circle>';
+  }
+  out+='<text x="270" y="276" text-anchor="middle" fill="#a5b8ce" font-size="11">'+esc(xLabel)+'</text><text x="50" y="20" fill="#a5b8ce" font-size="11">'+esc(yLabel)+'</text></svg>';
+  return out+'<p class="chart-note">'+lines.map(l=>'<span>'+esc(l.label)+'</span>').join(' · ')+'</p>';
+}
+function retrospective(){
+  const parsed=parseBacktests(state.lab.experiments),groups=comparableGroups(parsed.accepted);
+  if(!groups.length)return '<section class="panel top-gap">'+empty('Backtests: sin datos auditados','El registro espera un informe histórico reproducible con muestra, protocolo y métricas coherentes.')+'</section>';
+  const keyFor=g=>[g[0].runId,g[0].taskId,g[0].horizon,g[0].protocolSha256,g[0].sampleSha256].join('|');
+  let group=groups.find(g=>keyFor(g)===selectedTask)||groups[0];
+  selectedTask=keyFor(group);
+  const selected=group.find(r=>r.model===selectedModel)||group[0];selectedModel=selected.model;
+  const first=group[0];
+  const cohort=first.n+' país-año · '+first.events+' eventos · '+esc(first.horizon);
+  const timeline=selected.yearly.map(r=>({x:r.year,observed:r.events/r.n,predicted:r.meanProbability,n:r.n}));
+  const bins=selected.calibration.filter(b=>b.count>0).map(b=>({x:b.meanProbability,observed:b.eventRate,n:b.count}));
+  // Fixed axes 0..1 for calibration; anchors do not become observations.
+  const calibration=scientificPlot([{x:0,n:0},...bins,{x:1,n:0}],{title:'Calibración histórica',xLabel:'Probabilidad estimada',yLabel:'Frecuencia observada',diagonal:true,lines:[{key:'observed',label:'Observado',color:'#ff8a28'}]});
+  const ci=(r)=>Array.isArray(r.skillMarkov95)&&r.skillMarkov95.length===2?r.skillMarkov95.map(x=>fmt(x,3)).join(' / '):'Sin datos';
+  return heading('EVIDENCIA RETROSPECTIVA','Comparadores sobre la misma muestra',cohort)+
+    '<p class="legend-note">Versión revisada '+esc(first.datasetVersion)+'. Disponibilidad histórica sin verificar. Experimento exploratorio: estos resultados no acreditan forecasting prospectivo. '+esc(first.caveat||'')+'</p>'+
+    '<div class="filter-row">'+groups.map(g=>'<button data-task="'+esc(keyFor(g))+'" class="'+(selectedTask===keyFor(g)?'active':'')+'">'+esc(g[0].taskLabel)+' · '+esc(g[0].runId.slice(0,8))+'</button>').join('')+'</div>'+
+    '<section class="panel"><div class="panel-head"><h3>Leaderboard histórico</h3><span>'+cohort+'</span></div><div class="scroll-x"><table><thead><tr><th>Modelo</th><th>Brier ↓</th><th>Skill / frecuencia</th><th>Skill / Markov</th><th>IC 95% / Markov</th><th>Log loss ↓</th><th>PR-AUC (AP) ↑</th><th>ECE ↓</th></tr></thead><tbody>'+
+    group.map(r=>'<tr><td><button class="model-select" data-model="'+esc(r.model)+'" aria-pressed="'+(selected.model===r.model)+'">'+esc(r.model)+'</button></td><td>'+fmt(r.brier,5)+'</td><td>'+fmt(r.skillFrequency,3)+'</td><td>'+fmt(r.skillMarkov,3)+'</td><td>'+ci(r)+'</td><td>'+fmt(r.logLoss,4)+'</td><td>'+fmt(r.averagePrecision,4)+'</td><td>'+fmt(r.ece,4)+'</td></tr>').join('')+'</tbody></table></div><p class="legend-note">Selecciona un modelo para inspeccionar sus gráficos. Skill = 1 − Brier(modelo)/Brier(referencia). Intervalos: bloques temporales pareados, condicionados a modelos ya ajustados; no cubren revisiones ni búsqueda de especificaciones.</p></section>'+
+    '<div class="two-col top-gap"><section class="panel"><div class="panel-head"><h3>Observado frente a estimado</h3><span>'+esc(selected.model)+'</span></div>'+scientificPlot(timeline,{title:'Tasa anual de eventos y probabilidad media',xLabel:'Año objetivo',yLabel:'Fracción de países',lines:[{key:'observed',label:'Observado (naranja)',color:'#ff8a28'},{key:'predicted',label:'Probabilidad media (azul)',color:'#65b9f7'}]})+'<p class="chart-note">Son medias agregadas del backtest; no predicciones individuales ni un pronóstico de la fecha actual.</p></section><section class="panel"><div class="panel-head"><h3>Calibración histórica</h3><span>'+esc(selected.model)+'</span></div>'+calibration+'<p class="chart-note">Cinco intervalos de probabilidad fijos. Pasa el cursor por los puntos para ver N. ECE depende de estos intervalos.</p></section></div>'+
+    '<p class="chart-note">Protocolo: '+esc(first.protocolSha256)+' · Muestra: '+esc(first.sampleSha256)+' · '+parsed.rejected.length+' informes inconsistentes excluidos.</p>';
+}
+function simulation(){
+  const run=parseSimulations(state.lab.experiments).at(-1);
+  if(!run)return '';
+  const ts=[...new Set(run.groups.map(g=>g.threshold))].sort((a,b)=>a-b),ss=[...new Set(run.groups.map(g=>g.initial_share))].sort((a,b)=>a-b);
+  let svg='<svg viewBox="0 0 530 300" role="img" aria-label="Sensibilidad sintética a umbral e inicialización">';
+  for(const g of run.groups){const x=110+ts.indexOf(g.threshold)*100,y=50+ss.indexOf(g.initial_share)*65;svg+='<rect x="'+x+'" y="'+y+'" width="84" height="50" rx="8" fill="#ff8a28" fill-opacity="'+(.1+.9*g.mean_final)+'" stroke="#355575"><title>Media '+fmt(g.mean_final,3)+'; rango '+fmt(g.min_final,3)+' a '+fmt(g.max_final,3)+'; '+g.seeds+' semillas</title></rect><text x="'+(x+42)+'" y="'+(y+31)+'" text-anchor="middle" fill="#fff" font-size="13">'+fmt(g.mean_final*100,1)+' %</text>';}
+  ts.forEach((v,i)=>{svg+='<text x="'+(152+i*100)+'" y="265" text-anchor="middle" fill="#a5b8ce" font-size="12">'+v+'</text>';});
+  ss.forEach((v,i)=>{svg+='<text x="95" y="'+(81+i*65)+'" text-anchor="end" fill="#a5b8ce" font-size="12">'+v+'</text>';});
+  svg+='<text x="310" y="295" text-anchor="middle" fill="#a5b8ce" font-size="12">Umbral de activación</text><text x="15" y="25" fill="#a5b8ce" font-size="12">Fracción inicial</text></svg>';
+  return '<section class="panel top-gap"><div class="panel-head"><h3>V3 · Sensibilidad de mecanismos</h3><span>SIMULACIÓN SINTÉTICA</span></div>'+svg+'<p class="legend-note">'+esc(run.nRuns)+' escenarios · '+esc(run.seeds)+' semillas por celda. La red irreversible estudia contagio, no cese de conflictos. Ajuste empírico: pendiente. No mide riesgo de países.</p></section>';
+}
 
 function track(id){return TRACKS.find(t=>t.id===id)||TRACKS[0];}
 function projectFor(id){
@@ -128,7 +182,7 @@ function chart(){
 function science(){
   const e=state.lab.evaluation||{};
   const rows=state.lab.experiments||[];
-  return heading("AUDITORÍA EPISTÉMICA","¿Funciona realmente?","Primero predicción fuera de muestra, después presentación")+
+  return retrospective()+simulation()+heading("REGISTRO PROSPECTIVO","Evidencia emitida antes del desenlace","Sellado independiente obligatorio")+
     '<div class="two-col">'+
       '<section class="panel"><div class="panel-head"><h3>Calibración prospectiva</h3><span>'+Number(e.resolved||0)+' resueltas válidas</span></div>'+
       '<div class="chart">'+chart()+'</div>'+
@@ -142,10 +196,10 @@ function science(){
         ["Observaciones pareadas",fmt(e.pairedCount,0),"Con referencia probabilística completa"],
         ["Resueltas excluidas",fmt(e.rejectedResolved,0),"Incumplen fechas, estado o rango"]
       ].map(a=>'<div class="kpi"><div><strong>'+esc(a[0])+'</strong><small>'+esc(a[2])+'</small></div><b>'+esc(a[1])+'</b></div>').join("")+'</div>'+
-      '<p class="legend-note">Estos indicadores no prueban causalidad. Un score aislado tampoco acredita capacidad predictiva: exigen tamaño muestral, incertidumbre y baseline adecuado.</p></section></div>'+
+      '<p class="legend-note">El Sheet es editable. Sin comprobación independiente del sello y del contenido original no se evalúa ninguna fila como prospectiva. '+Number(e.unsealed||0)+' emisiones sin sello verificado.</p></section></div>'+
       '<section class="panel top-gap"><div class="panel-head"><h3>Resultados de experimentos</h3><span>'+rows.length+' registros</span></div>'+
       (rows.length?'<div class="scroll-x"><table><thead><tr><th>Vertiente</th><th>Hipótesis</th><th>Modelo</th><th>Resultado</th><th>Comparador</th><th>Estado</th></tr></thead><tbody>'+
-      rows.map(r=>'<tr><td>'+esc(r.track)+'</td><td>'+esc(r.hypothesis)+'</td><td>'+esc(r.modelVersion)+'</td><td>'+esc(fmt(r.value))+'</td><td>'+esc(fmt(r.baseline))+'</td><td>'+esc(r.status)+'</td></tr>').join("")+'</tbody></table></div>':
+      rows.map(r=>'<tr><td>'+esc(r.track)+'</td><td>'+esc(r.hypothesis)+'</td><td>'+esc(r.modelVersion)+'</td><td>'+esc(r.metric)+': '+esc(fmt(r.value,5))+'</td><td>'+esc(fmt(r.baseline,5))+'</td><td>'+esc(r.status)+(url(r.evidence)?'<br><a href="'+esc(url(r.evidence))+'" target="_blank" rel="noopener noreferrer">Evidencia ↗</a>':'')+'</td></tr>').join("")+'</tbody></table></div>':
       empty("No se ha ejecutado todavía ningún experimento registrado","Los prototipos y modelos no deben aparecer como evaluados antes de tener evidencia versionada."))+'</section>';
 }
 function operations(){
@@ -182,6 +236,8 @@ function render(){
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
   root.querySelectorAll("[data-track]").forEach(x=>x.addEventListener("click",()=>{activeTrack=x.dataset.track;render();}));
   root.querySelectorAll("[data-filter]").forEach(x=>x.addEventListener("click",()=>{milestoneFilter=x.dataset.filter;render();}));
+  root.querySelectorAll('[data-task]').forEach(x=>x.addEventListener('click',()=>{selectedTask=x.dataset.task;selectedModel='';render();}));
+  root.querySelectorAll('[data-model]').forEach(x=>x.addEventListener('click',()=>{selectedModel=x.dataset.model;render();}));
 }
 async function load(){
   const mine=++generation;

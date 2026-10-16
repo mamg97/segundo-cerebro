@@ -6,7 +6,7 @@ Fecha: 2026-10-16. Inspiración: Fundación, de Isaac Asimov. Objetivo: evaluar 
 
 H0: el modelo de interés NO mejora un baseline preespecificado, en el universo y horizonte seleccionados, fuera de muestra. H1: existe una mejora de calidad probabilística replicable, con calibración y robustez temporal. Una mejora no demuestra causalidad ni una teoría general de la historia.
 
-Primer fenómeno candidato: episodio agregado de conflictividad en un panel país-mes a doce meses. Su definición precisa (umbral, inicio, población, etiquetas y censura) continúa pendiente de auditoría.
+Primer benchmark implementado: dos objetivos país-año en UCDP OrganizedViolenceCY 26.1: presencia de 25+ muertes estatales registradas y aparición de episodio agregado tras un año bajo ese umbral. La resolución anual usa el universo oficial de países. Es retrospectivo exploratorio con una release revisada; no demuestra disponibilidad histórica ni skill prospectivo. Protocolo, código y limitaciones: [PSYCHOHISTORY_BENCHMARK.md](PSYCHOHISTORY_BENCHMARK.md). Resultados operativos únicamente en el registro privado.
 
 ## Cuatro vertientes
 
@@ -52,9 +52,9 @@ Fuente: SEGUNDO CEREBRO - PROYECTOS. Pestañas:
 - PsicoExperimentos: experimento_id, vertiente, hipotesis, dataset_version, modelo_version, metrica, valor, baseline, fecha, estado, evidencia_url, notas.
 - PsicoPredicciones: prediccion_id, vertiente, fenomeno, region, horizonte, fecha_emision, fecha_resolucion, probabilidad, resultado, estado, modelo_version, as_of, baseline_prob.
 
-El registro de predicciones resueltas se considera puntuable solo si probabilidad en [0,1], resultado binario, fecha_emision anterior a fecha_resolucion, y as_of no posterior a emisión.
+El registro de predicciones resueltas solo será puntuable si, además de probabilidades/etiquetas/fechas válidas, un verificador de servidor comprueba un sello temporal independiente vinculado al contenido original. La integración del verificador sigue pendiente: producción excluye todas las filas sin ese recibo. Las fechas de Sheets y un hash local no prueban prospectividad.
 
-Atención: un Google Sheet editable no es evidencia de inmutabilidad. Antes de hacer pronósticos externos debe existir un registro prospectivo sellado y auditable. El filtro de fechas por sí solo NO impide alteraciones humanas.
+Atención: un Google Sheet editable no es evidencia de inmutabilidad. `sealing.py` implementa preparación privada y verificación local RFC3161 contra raíz de confianza; falta seleccionar/verificar una autoridad independiente e integrar esa comprobación con el Worker. No se declara sellado ni producción prospectiva.
 
 ## Laboratorio visual
 
