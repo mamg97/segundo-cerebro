@@ -27884,3 +27884,154 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
+
+
+/* v0.44.48 — Compact current-month Gym attendance, from saved D1 sessions. */
+.gym-month-calendar {
+  width: min(100%, 640px);
+  min-width: 0;
+  margin-top: 18px;
+  padding: 15px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.gym-month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.gym-month-header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.gym-month-header strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gym-month-header span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  text-transform: capitalize;
+}
+
+.gym-month-header > small {
+  color: var(--blue);
+  background: var(--blue-soft);
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.gym-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.gym-month-weekday {
+  padding-bottom: 5px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.gym-month-cell {
+  min-width: 0;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 6px 5px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--line));
+}
+
+.gym-month-cell.gym-month-outside {
+  border-color: transparent;
+  background: transparent;
+}
+
+.gym-month-cell.is-trained {
+  border-color: color-mix(in srgb, var(--blue) 45%, var(--line));
+  background: var(--blue-soft);
+}
+
+.gym-month-cell.is-today {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.gym-month-day {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.gym-month-cell.is-trained .gym-month-day {
+  color: var(--blue);
+  font-weight: 850;
+}
+
+.gym-month-groups {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gym-month-groups small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 8px;
+  line-height: 1.2;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.gym-month-note {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+@media (max-width: 620px) {
+  .gym-month-calendar {
+    width: 100%;
+    padding: 12px 8px;
+    border-radius: 13px;
+  }
+
+  .gym-month-grid { gap: 3px; }
+
+  .gym-month-cell {
+    min-height: 54px;
+    padding: 5px 3px;
+    gap: 4px;
+    border-radius: 7px;
+  }
+
+  .gym-month-groups small {
+    font-size: 7.5px;
+    line-height: 1.15;
+  }
+
+  .gym-month-header strong { font-size: 12px; }
+  .gym-month-header > small { font-size: 9px; padding: 5px 7px; }
+}
