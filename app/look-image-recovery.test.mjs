@@ -28,9 +28,11 @@ test("look cards use a controlled composed image with no long broken-image alt",
   assert.match(markup,/alt=""/);
   assert.doesNotMatch(markup,/very long descriptive name/);
   assert.match(markup,/\/api\/objects\/look\/look-fixture-01\/image/);
+  assert.match(markup,/v=abcd1234-5678&amp;delivery=hex1/);
+  assert.equal(example.looks[0].photoUrl.includes('delivery='),false);
 });
 
-test("when a composed look image fails the real member photos replace it, not invented images",()=>{
+test("a look without a composed photo can use its canonical member photos",()=>{
   const env=runtime();
   const markup=env.lookGarmentMosaic(example.looks[0],example);
   assert.match(markup,/class="look-mosaic"/);
@@ -43,7 +45,7 @@ test("when a composed look image fails the real member photos replace it, not in
   assert.doesNotMatch(noImage,/<img/);
 });
 
-test("image error handler switches to garment mosaic without changing canonical data",()=>{
+test("a failed composed photo stays distinct from a garment mosaic and retains its source for audit",()=>{
   const env=runtime();
   const before=JSON.stringify(example);
   let rendered="",gone=false,perItemHandler=null;
@@ -52,6 +54,7 @@ test("image error handler switches to garment mosaic without changing canonical 
   const replacement={dataset:{},querySelectorAll(selector){assert.equal(selector,"[data-look-fallback-garment]");return [child];}};
   let composedError=null;
   const img={isConnected:true,complete:false,naturalWidth:0,dataset:{lookComposedImage:"look-fixture-01"},
+    getAttribute(){return example.looks[0].photoUrl;},
     addEventListener(name,cb){if(name==="error")composedError=cb;},
     insertAdjacentHTML(where,html){assert.equal(where,"afterend");rendered=html;},
     nextElementSibling:replacement,
@@ -66,8 +69,9 @@ test("image error handler switches to garment mosaic without changing canonical 
   assert.equal(typeof composedError,"function");
   composedError();
   assert.ok(gone);
-  assert.match(rendered,/look-mosaic/);
-  assert.match(rendered,/garment-fixture-01/);
+  assert.match(rendered,/Foto temporalmente no disponible/);
+  assert.match(rendered,/data-look-failed-src=/);
+  assert.doesNotMatch(rendered,/class="look-mosaic"/);
   assert.equal(replacement.dataset.imageState,"fallback");
   assert.equal(typeof perItemHandler,"function");
   perItemHandler();

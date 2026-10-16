@@ -1,5 +1,8 @@
 // Tables and indexes are provisioned by versioned D1 migration 0008, never at request time.
 const CHUNK_BYTES = 1024 * 1024;
+// HEX doubles a BLOB's size. Keep each result well below D1's 2,000,000-byte
+// string/row limit while leaving the existing 1 MiB storage chunks untouched.
+const READ_SLICE_BYTES = 512 * 1024;
 const MAX_MEDIA_BYTES = 200 * 1024 * 1024;
 const KEY_RE = /^objects\/([A-Za-z0-9][A-Za-z0-9._-]{0,127})\/(original|processed|thumbnail)\/([A-Za-z0-9-]{8,80})$/;
 
@@ -20,6 +23,28 @@ function bytesOf(value) {
 function exactArrayBuffer(bytes) {
   const value = bytesOf(bytes);
   return value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength);
+}
+
+function chunkFromHex(value, expectedLength) {
+  if (typeof value !== "string" || value.length !== expectedLength * 2) {
+    throw new Error("OBJECTS_MEDIA_CORRUPT");
+  }
+  try {
+    if (typeof Uint8Array.fromHex === "function") return Uint8Array.fromHex(value);
+    // Older test runtimes lack the native decoder. D1 HEX() always emits A-F.
+    const bytes = new Uint8Array(expectedLength);
+    for (let i = 0; i < expectedLength; i += 1) {
+      const hi = value.charCodeAt(i * 2);
+      const lo = value.charCodeAt(i * 2 + 1);
+      const high = hi >= 48 && hi <= 57 ? hi - 48 : hi >= 65 && hi <= 70 ? hi - 55 : -1;
+      const low = lo >= 48 && lo <= 57 ? lo - 48 : lo >= 65 && lo <= 70 ? lo - 55 : -1;
+      if (high < 0 || low < 0) throw new Error("INVALID_HEX");
+      bytes[i] = (high << 4) | low;
+    }
+    return bytes;
+  } catch {
+    throw new Error("OBJECTS_MEDIA_CORRUPT");
+  }
 }
 
 function concatChunks(chunks, expectedSize) {
@@ -138,17 +163,24 @@ export function createObjectsD1MediaStore(env) {
       // This preserves the strict corrupt-chunk check before responding while
       // bounding live image bytes to one D1 chunk rather than the whole asset.
       const readChunk = async (index) => {
-        const row = await db.prepare(`
-          SELECT chunk_index, data
-          FROM objects_media_chunks
-          WHERE storage_key = ? AND chunk_index = ?
-          LIMIT 1
-        `).bind(key, index).first();
-        if (!row || Number(row.chunk_index) !== index) throw new Error("OBJECTS_MEDIA_CORRUPT");
-        const chunk = bytesOf(row.data);
         const expectedLength = Math.min(CHUNK_BYTES, sizeBytes - index * CHUNK_BYTES);
-        if (chunk.byteLength !== expectedLength) throw new Error("OBJECTS_MEDIA_CORRUPT");
-        return chunk;
+        // The D1 binding serializes BLOBs as JSON arrays of numbers. Parsing a
+        // million numbers per chunk can exhaust Workers Free CPU even though
+        // the stored image is intact. HEX keeps the result a compact string;
+        // native decoding recovers the exact bytes without changing storage.
+        const parts = [];
+        for (let offset = 0; offset < expectedLength; offset += READ_SLICE_BYTES) {
+          const length = Math.min(READ_SLICE_BYTES, expectedLength - offset);
+          const row = await db.prepare(`
+            SELECT chunk_index, HEX(SUBSTR(data, ?, ?)) AS data_hex
+            FROM objects_media_chunks
+            WHERE storage_key = ? AND chunk_index = ?
+            LIMIT 1
+          `).bind(offset + 1, length, key, index).first();
+          if (!row || Number(row.chunk_index) !== index) throw new Error("OBJECTS_MEDIA_CORRUPT");
+          parts.push(chunkFromHex(row.data_hex, length));
+        }
+        return parts.length === 1 ? parts[0] : concatChunks(parts, expectedLength);
       };
 
       let body;
@@ -213,5 +245,6 @@ export function createObjectsD1MediaStore(env) {
 
 export const OBJECTS_D1_MEDIA_LIMITS = {
   chunkBytes: CHUNK_BYTES,
+  readSliceBytes: READ_SLICE_BYTES,
   maxMediaBytes: MAX_MEDIA_BYTES
 };

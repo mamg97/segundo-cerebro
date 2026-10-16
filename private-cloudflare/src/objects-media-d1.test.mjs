@@ -12,14 +12,16 @@ class FakeStatement {
   bind(...args) { return new FakeStatement(this.db, this.sql, args); }
 
   async first() {
-    if (this.sql.includes("SELECT chunk_index, data FROM objects_media_chunks")) {
-      const rows = this.db.chunks.get(this.args[0]) || [];
-      const result = rows.find((row) => row.chunk_index === this.args[1]) || null;
-      if (result && result.data.byteLength > this.db.maxResultBytes) {
+    if (this.sql.includes("SELECT chunk_index, HEX(SUBSTR(data, ?, ?)) AS data_hex FROM objects_media_chunks")) {
+      const [start,length,key,index] = this.args;
+      const rows = this.db.chunks.get(key) || [];
+      const result = rows.find((row) => row.chunk_index === index) || null;
+      const hex = result ? Buffer.from(result.data).subarray(start-1,start-1+length).toString("hex").toUpperCase() : null;
+      if (hex && hex.length > this.db.maxResultBytes) {
         throw new Error("D1_QUERY_RESULT_TOO_LARGE");
       }
       this.db.singleChunkReads++;
-      return result;
+      return result ? { chunk_index: result.chunk_index, data_hex: hex } : null;
     }
     if (this.sql.includes("SUM(size_bytes)")) {
       return { total_bytes: [...this.db.assets.values()].reduce((sum, item) => sum + Number(item.size_bytes || 0), 0) };
@@ -117,7 +119,7 @@ test("D1 media reads stay within per-query BLOB result limits", async () => {
   const received = new Uint8Array(await new Response(stored.body).arrayBuffer());
   assert.deepEqual(received, bytes);
   assert.equal(db.fullChunkReads, 0);
-  assert.equal(db.singleChunkReads, 4);
+  assert.equal(db.singleChunkReads, 7);
 });
 
 test("D1 object media store chunks, reads and deletes a multi-megabyte asset", async () => {
@@ -176,7 +178,7 @@ test("streamed D1 media never buffers all BLOB chunks before a browser reads the
   const first = await reader.read();
   assert.equal(first.done, false);
   assert.equal(first.value.byteLength, OBJECTS_D1_MEDIA_LIMITS.chunkBytes);
-  assert.equal(db.singleChunkReads, 1, "only one chunk is needed for first output");
+  assert.equal(db.singleChunkReads, 2, "only the first stored chunk's two bounded slices are read");
   const parts = [first.value];
   for (;;) {
     const item = await reader.read();
@@ -187,7 +189,7 @@ test("streamed D1 media never buffers all BLOB chunks before a browser reads the
   let offset = 0;
   for (const part of parts) { bytes.set(part, offset); offset += part.byteLength; }
   assert.deepEqual(bytes, source);
-  assert.equal(db.singleChunkReads, 4);
+  assert.equal(db.singleChunkReads, 7);
 });
 
 test("cancelling a private image stream does not load the remaining D1 payloads", async () => {
@@ -199,7 +201,7 @@ test("cancelling a private image stream does not load the remaining D1 payloads"
   const reader = stream.getReader();
   await reader.read();
   await reader.cancel();
-  assert.equal(db.singleChunkReads, 1, "remaining private bytes are never read");
+  assert.equal(db.singleChunkReads, 2, "remaining stored chunks are never read");
 });
 
 test("D1 detects corrupted streamed chunk lengths before delivering any bytes", async () => {
@@ -211,7 +213,32 @@ test("D1 detects corrupted streamed chunk lengths before delivering any bytes", 
   await assert.rejects(store.get(key, { stream: true }), /OBJECTS_MEDIA_CORRUPT/);
 });
 
-test("D1 object media store returns a single chunk without rebuilding the asset", async () => {
+test("D1 hex decoding rejects a damaged result and supports runtimes without native fromHex", async () => {
+  const db = new FakeD1();
+  const key = "objects/obj-hex-example-001/processed/12345678-abcd";
+  const store = createObjectsD1MediaStore({ DB: db });
+  const bytes = Uint8Array.from({ length: 256 }, (_, i) => i);
+  await store.put(key, bytes);
+  const native = Uint8Array.fromHex;
+  try {
+    Uint8Array.fromHex = undefined;
+    assert.deepEqual((await store.get(key)).body, bytes);
+    const prepare = db.prepare.bind(db);
+    db.prepare = (sql) => {
+      const statement = prepare(sql);
+      if (!sql.includes("HEX(SUBSTR(data")) return statement;
+      statement.bind = () => ({ first: async () => ({ chunk_index: 0, data_hex: "Z".repeat(512) }) });
+      return statement;
+    };
+    await assert.rejects(store.get(key), /OBJECTS_MEDIA_CORRUPT/);
+    Uint8Array.fromHex = native;
+    await assert.rejects(store.get(key), /OBJECTS_MEDIA_CORRUPT/);
+  } finally {
+    Uint8Array.fromHex = native;
+  }
+});
+
+test("D1 object media store decodes a single compact hex chunk byte-for-byte", async () => {
   const db=new FakeD1();
   const store=createObjectsD1MediaStore({DB:db});
   const key="objects/obj-thumbnail-example-001/thumbnail/12345678-abcd";
@@ -219,11 +246,9 @@ test("D1 object media store returns a single chunk without rebuilding the asset"
   for(let i=0;i<input.length;i+=1) input[i]=i%251;
 
   await store.put(key,input,{httpMetadata:{contentType:"image/webp"}});
-  const rawChunk=db.chunks.get(key)[0].data;
   const stored=await store.get(key);
 
   assert.equal(db.assets.get(key).chunk_count,1);
-  assert.equal(stored.body.buffer,rawChunk);
   assert.deepEqual(new Uint8Array(stored.body),input);
 });
 
