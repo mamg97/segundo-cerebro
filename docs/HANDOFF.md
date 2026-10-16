@@ -1,3 +1,12 @@
+## ORGANIZADOR 20 — Looks: imágenes privadas que fallan y recuperación visual (16/10/2026)
+
+- Captura real muestra dos looks con imagen compuesta no renderizada; el navegador expande el texto alternativo en la columna visual. La verificación de lectura del Sheet privado `SEGUNDO CEREBRO - OBJETOS`, pestaña `Looks`, confirmó **50/50 URL `foto_url` versionadas, válidas y con `look_id` coincidente**: no hay pruebas de error de sintaxis o asociación en esas referencias. El estado del BLOB D1 y el HTTP concreto de las dos fotos no pudo determinarse con la lectura del Sheet: no afirmar 404 o 502 de esas dos.
+- Defecto frontend confirmado: `app/objects.js` insertaba `<img>` sin controlador `error`; la ausencia de `Looks.foto_url` activaba mosaico de prendas, pero el error HTTP/decodificación de una `foto_url` **existente** no activaba nada. Ahora se recupera el error de foto compuesta usando solo miniaturas/imágenes canónicas de `LookItems` resueltas en `Armario` (sin IA ni prendas inventadas); si también falla un componente se muestra un símbolo acotado, y si no hay imágenes fuente, texto breve dentro del marco. Se evita alt largo en tarjeta y se aplica lo mismo en detalle/historial.
+- Contrato de privacidad: ninguna foto, nombre de look, ID privado o URL real en Git o logs; no modificar Sheet, relaciones ni D1 para "arreglar" una captura. `objects.js?v=0.44.24` y HTML/CSS `0.44.45`; pruebas sintéticas del controlador error y auditoría Chromium read-only fuerza un evento `error` sin mutaciones de datos.
+- **Pendiente de verificar:** CI verde, PR fusionada, Cloudflare desplegado y auditoría read-only. Si un look sigue recuperándose siempre como mosaico, diagnosticar la petición HTTP y la integridad de D1 antes de regenerar o sobrescribir el original de esa identidad. Evitar reintentos automáticos masivos que agoten Workers Free.
+
+---
+
 ## GESTOR NUTRI 5 — Auditoría binaria y continuidad de fotos (16/10/2026)
 
 - Reconciliación independiente: **24 originales enlazados/24 filas únicas en `RecipeMedia`**; **24/24 SHA-256 recalculados sobre JPEG decodificados y coincidentes**, dimensiones internas 480×270, máximo 46.220 caracteres por celda, origen y versión de caché alineados. Las cinco previews antes pendientes ya estaban completas: no duplicarlas.
