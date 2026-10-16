@@ -13,7 +13,7 @@ const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d})
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
 let activeView="overview";
-let activeTrack="V2";
+let activeTrack=TRACKS.some(t=>t.id===new URLSearchParams(window.location.search).get("track")) ? new URLSearchParams(window.location.search).get("track") : "V2";
 let milestoneFilter="TODOS";
 let generation=0;
 
