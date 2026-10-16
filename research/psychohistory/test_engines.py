@@ -7,10 +7,11 @@ class EngineTests(unittest.TestCase):
         rows = synthetic_fixture()
         predictions = rolling_backtest(rows, dt.date(2025,1,1), [0.5,0.5])
         self.assertGreater(len(predictions),0)
+        # A label resolved on the issue day cannot be assumed available at issuance.
         # Six-month label delay => most recent unresolved labels never enter fit.
         for p in predictions:
             issue=dt.date.fromisoformat(p["issued_at"])
-            expected=sum(1 for r in rows if r["issued_at"]<issue and r["resolved_at"]<=issue)
+            expected=sum(1 for r in rows if r["issued_at"]<issue and r["resolved_at"]<issue)
             self.assertEqual(p["training_n"],expected)
     def test_probability_bounds(self):
         pred=rolling_backtest(synthetic_fixture(),dt.date(2025,1,1))
