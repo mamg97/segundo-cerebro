@@ -1,6 +1,7 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
+import {mountFutureExplorer} from './research-futures.mjs?v=0.4.0';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
-import {parseBacktests, comparableGroups, parseSimulations} from './research-results.mjs?v=0.2.0';
+import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.0';
 const TRACKS=[
   {id:"V1",color:"#ff8a28",subtitle:"Hipótesis históricas y regularidades"},
   {id:"V2",color:"#62baf5",subtitle:"Probabilidades y validación temporal"},
@@ -14,7 +15,7 @@ const finite=(n)=>typeof n==="number"&&Number.isFinite(n);
 const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d}):"Sin datos";
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
-let activeView="overview";
+let activeView="futures";
 let activeTrack=TRACKS.some(t=>t.id===new URLSearchParams(window.location.search).get("track")) ? new URLSearchParams(window.location.search).get("track") : "V2";
 let milestoneFilter="TODOS";
 let generation=0;
@@ -22,6 +23,7 @@ let selectedTask='';
 let selectedModel='';
 let disposeNeural=()=>{};
 let motionPaused=false;
+let disposeFutures=()=>{};
 
 function scientificPlot(points,{title,xLabel,yLabel,lines=[],diagonal=false}={}){
   if(!points.length)return empty('Sin datos', 'Pendiente de validación');
@@ -73,6 +75,11 @@ function simulation(){
   svg+='<text x="310" y="295" text-anchor="middle" fill="#a5b8ce" font-size="12">Umbral de activación</text><text x="15" y="25" fill="#a5b8ce" font-size="12">Fracción inicial</text></svg>';
   return '<section class="panel top-gap"><div class="panel-head"><h3>V3 · Sensibilidad de mecanismos</h3><span>SIMULACIÓN SINTÉTICA</span></div>'+svg+'<p class="legend-note">'+esc(run.nRuns)+' escenarios · '+esc(run.seeds)+' semillas por celda. La red irreversible estudia contagio, no cese de conflictos. Ajuste empírico: pendiente. No mide riesgo de países.</p></section>';
 }
+function recoverySimulation(){
+  const run=parseRecoverySimulations(state.lab.experiments).at(-1);
+  if(!run)return '';
+  return '<section class="panel top-gap"><div class="panel-head"><h3>V3 · Contagio con recuperación</h3><span>SIMULACIÓN SINTÉTICA · '+run.nRuns+' ejecuciones</span></div><p class="subtext">La recuperación permite desactivaciones y reactivaciones. Son pasos artificiales, sin equivalencia a años ni probabilidades de países.</p><div class="scroll-x"><table><thead><tr><th>Fracción inicial</th><th>Umbral</th><th>Recuperación / paso</th><th>Media final</th><th>Dispersión p5–p95</th><th>Semillas</th></tr></thead><tbody>'+run.groups.map(g=>'<tr><td>'+fmt(g.initialShare,2)+'</td><td>'+fmt(g.threshold,2)+'</td><td>'+fmt(g.recovery,2)+'</td><td>'+fmt(g.mean,4)+'</td><td>'+fmt(g.q05,4)+' / '+fmt(g.q95,4)+'</td><td>'+g.seeds+'</td></tr>').join('')+'</tbody></table></div><p class="legend-note">Cuantiles entre semillas, no intervalos de una probabilidad real. Reproducción de semilla 0 verificada por celda. Calibración empírica y correspondencia con episodios históricos: pendientes.</p></section>';
+}
 
 function track(id){return TRACKS.find(t=>t.id===id)||TRACKS[0];}
 function projectFor(id){
@@ -109,7 +116,7 @@ function metrics(){
   const data=[
     ["VERTIENTES",String(TRACKS.length),"líneas de investigación"],
     ["HITOS VERIFICADOS",completed()+"/"+m.length,"sin ponderación artificial"],
-    ["EVALUACIONES",String(state?.lab.experiments.length||0),"registros modelo / objetivo"],
+    ["EVALUACIONES",String((state?.lab.experiments||[]).filter(e=>e.status!=="CATALOGO_RETROSPECTIVO").length),"registros modelo / objetivo"],
     ["BRIER PROSPECTIVO",fmt(e.brier,4),String(e.resolved||0)+" predicciones evaluables"]
   ];
   document.getElementById("headline-metrics").innerHTML=data.map(x=>'<article class="metric"><small>'+esc(x[0])+'</small><strong>'+esc(x[1])+'</strong><em>'+esc(x[2])+'</em></article>').join("");
@@ -183,8 +190,8 @@ function chart(){
 }
 function science(){
   const e=state.lab.evaluation||{};
-  const rows=state.lab.experiments||[];
-  return retrospective()+simulation()+heading("REGISTRO PROSPECTIVO","Evidencia emitida antes del desenlace","Sellado independiente obligatorio")+
+  const rows=(state.lab.experiments||[]).filter(r=>r.status!=="CATALOGO_RETROSPECTIVO");
+  return retrospective()+simulation()+recoverySimulation()+heading("REGISTRO PROSPECTIVO","Evidencia emitida antes del desenlace","Sellado independiente obligatorio")+
     '<div class="two-col">'+
       '<section class="panel"><div class="panel-head"><h3>Calibración prospectiva</h3><span>'+Number(e.resolved||0)+' resueltas válidas</span></div>'+
       '<div class="chart">'+chart()+'</div>'+
@@ -234,9 +241,11 @@ function roadmap(){
 function render(){
   if(!state)return;
   disposeNeural();
+  disposeFutures();
   header();metrics();
-  root.innerHTML=activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="futures"?'<div id="future-explorer"></div>':activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
+  if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;activeView='overview';render();}});
   if(activeView==="overview")disposeNeural=mountNeural(root.querySelector('.neural-stage'),{activeTrack,paused:motionPaused,onPause:value=>{motionPaused=value;}});
   root.querySelectorAll("button[data-track]").forEach(x=>x.addEventListener("click",()=>{
     const source=x.classList.contains('neural-orb')?'neural-orb':'track-card';

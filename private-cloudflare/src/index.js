@@ -17,6 +17,8 @@ import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
 import { prospectiveSummary } from "./research-evaluation.js";
+import { researchFuturesResponse } from "./research-futures.js";
+import { parseFutureCatalogs, FUTURE_MODELS } from "./research-futures-engine.mjs";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { readVision, saveVision, recordVisionReplacement } from "./vision.js";
@@ -5831,11 +5833,27 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/research-futures") {
+      if (request.method !== "GET") return json({ ok:false, code:"METHOD_NOT_ALLOWED" },405);
+      try {
+        const snapshot = await fetchPsychohistoryLab(env,getGoogleAccessToken);
+        const response = researchFuturesResponse(snapshot.experiments,url.searchParams);
+        return json(response.body,response.status);
+      } catch {
+        return json({ok:false,code:"FUTURES_READ_FAILED"},502);
+      }
+    }
+
     if (url.pathname === "/api/research-lab") {
       if (request.method !== "GET") return json({ ok:false, code:"METHOD_NOT_ALLOWED" },405);
       try {
         const snapshot = await fetchPsychohistoryLab(env,getGoogleAccessToken);
-        return json({ ok:true,...snapshot, evaluation:prospectiveSummary(snapshot.predictions) });
+        const futures = parseFutureCatalogs(snapshot.experiments);
+        const futuresCatalogs = futures.accepted.map(c=>({id:c.id,origin:c.origin,cutoff:c.cutoff,
+          maxHorizon:c.maxHorizon,runId:c.runId,version:c.version,
+          countries:c.countries.map(({id,name})=>({id,name})),models:FUTURE_MODELS}));
+        return json({ ok:true,...snapshot, futuresCatalogs, rejectedFutureCatalogs:futures.rejected.length,
+          evaluation:prospectiveSummary(snapshot.predictions) });
       } catch(error) {
         console.warn("Research lab read failed",String(error?.message||"LAB_READ_ERROR").replace(/[A-Za-z0-9_-]{30,}/g,"[redacted]"));
         return json({ok:false,code:"LAB_READ_FAILED"},502);
