@@ -563,3 +563,14 @@ Motivo: la carrera profesional necesita continuidad estructurada y comparación 
 - **Presentación e integridad:** una receta principal por toma, acompañantes diferenciados, máximo un yogur como postre tras comida/cena; si se toma entre horas se denomina yogur. El Worker señala nuevas composiciones tipadas inválidas y conserva macros/estado reales sin transformación destructiva. Completar macros diarios no autoriza añadir platos o postres incoherentes.
 - **Coste y privacidad:** todo dato real permanece en Sheets privados; Git solo aloja esquema, validadores y pruebas sintéticas, sin nuevas dependencias ni gasto.
 
+
+
+## D-054 — Recetas: marco horizontal íntegro sin recortes
+
+- **Estado:** aceptada.
+- **Fecha:** 2026-10-16.
+- **Decisión:** todas las fotografías originales de recetas, sean verticales, horizontales o cuadradas, deben visualizarse enteras dentro de un marco horizontal 16:9, tanto en detalle como en catálogo y miniaturas del menú. Se respeta la relación de aspecto y se permiten bandas de relleno; se prohíben recortes destructivos y deformación.
+- **Contrato de frontend:** cuadrícula de pistas con mínimos cero y cajas de `img` restringidas al marco, centradas y con `object-fit: contain`. Esta salvaguarda también se aplica si la API debe recurrir al original privado porque no existe vista previa.
+- **Pipeline de medios:** conservar original canónico en Drive y preparar, por `recipe_id`, una derivada 16:9 completa en `RecipeMedia`. Las vistas previas ausentes o con datos técnicos incompletos se auditan y normalizan sin eliminar originales ni modificar macros/consumos.
+- **Verificación:** pruebas de geometría desktop/móvil con fotografías de relaciones de aspecto distintas y control de la correspondencia privada de referencias; HTTP 200 y `object-fit: contain` no demuestran por sí solos que no haya recorte.
+- **Privacidad y coste:** no exponer imágenes ni datos reales en Git, no introducir servicios de pago, mantener el Worker privado existente.
