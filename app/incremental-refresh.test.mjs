@@ -7,9 +7,12 @@ const workerSource=fs.readFileSync(new URL("../private-cloudflare/src/index.js",
 
 test("manual refresh is incremental and does not reload the page",()=>{
   assert.equal(appSource.includes("window.location.reload()"),false);
-  for(const scope of ["finance","habits","pantry","objects","calendar"]){
+  for(const scope of ["finance","habits","pantry","objects"]){
     assert.equal(appSource.includes('refreshStateScope("'+scope+'")'),true);
   }
+  // Agenda uses the same scoped endpoint via the on-demand, force-refresh path.
+  assert.match(appSource,/refreshCalendarView\(\{ force: true \}\)/);
+  assert.match(appSource,/fetchStateScope\("calendar"\)/);
 });
 
 test("worker exposes scoped state reads used by incremental Home refresh",()=>{
