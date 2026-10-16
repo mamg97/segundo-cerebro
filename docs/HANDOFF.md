@@ -1,3 +1,11 @@
+## ORGANIZADOR 21 — Reutilización inmediata de paneles Objetos/Despensa (16/10/2026)
+
+- Reabrir los modales `Objetos` y `Despensa` reutiliza la última respuesta privada **solo en RAM de la pestaña** y pinta sin spinner. Caducidad de 5 minutos; al caducar, GET bajo demanda y compartido; si la respuesta no cambia, no reconstruir el modal, y si falla, mantener contenido anterior con aviso. No se guarda contenido personal en GitHub, disco, almacenamiento web o logs.
+- La revalidación comprueba que el usuario sigue en el mismo diálogo y no edita la ficha o combinador; evitar una actualización asíncrona que deshaga entradas sin guardar. La creación de un look actualiza el snapshot tras releer el backend; generaciones evitan que una respuesta anterior pise la escritura nueva. Actualizar desde Home invalida la frescura de cada modal sin eliminar su última vista.
+- Código en `app/view-memory.mjs`, `app/objects.js`, `app/pantry.js`, `app/app.js`; pruebas sintéticas en `app/view-memory.test.mjs`. Validar CI, desplegar y leer el informe Chromium posterior. Otros módulos conservan sus políticas independientes; no afirmar que toda la SPA está cacheada.
+
+---
+
 ## ORGANIZADOR 21 — Vistas conservadas en memoria y Agenda bajo demanda (16/10/2026)
 
 - Causa: el enlace Agenda hacía solo scroll; si la lectura inicial iCloud/Google quedaba incompleta, no se consultaba de nuevo hasta pulsar Actualizar. Además el calendario semanal se reconstruía aunque eventos y semana fuesen idénticos.
