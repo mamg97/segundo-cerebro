@@ -1,7 +1,7 @@
 /* Gym current-month attendance; isolated from Health adherence and Agenda. */
 .gym-month-calendar {
   width: min(100%, 650px);
-  margin: 22px auto 4px;
+  margin: 12px auto 16px;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 18px;
