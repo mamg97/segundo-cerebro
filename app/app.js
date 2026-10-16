@@ -5684,7 +5684,7 @@ function renderHomeWeeklyMenuMatrixCell(items) {
         const photoUrl = String(item.photoUrl || "");
         const photo = /^\/api\/health\/recipes\/[^?#]+\/image\?v=/.test(photoUrl)
           ? `<img src="${escapeHtml(photoUrl)}" width="156" height="88" alt="" loading="lazy" decoding="async">`
-          : '<span class="home-menu-recipe-thumb-missing" aria-hidden="true">▧</span>';
+          : '<span class="home-menu-recipe-thumb-missing" aria-hidden="true">Sin foto</span>';
         const title = recipeId
           ? `<button class="weekly-menu-title-link home-weekly-menu-recipe-link" type="button" data-home-menu-recipe-open="${escapeHtml(recipeId)}" aria-label="Ver receta: ${escapeHtml(item.name || "Comida")}">
                <span class="home-menu-recipe-thumb" aria-hidden="true">${photo}</span>
@@ -5954,7 +5954,7 @@ function bindHomeWeeklyMenuRecipeLinks(content, data) {
   content.querySelectorAll(".home-menu-recipe-thumb img").forEach((img) => {
     img.addEventListener("error", () => {
       const holder = img.closest(".home-menu-recipe-thumb");
-      if (holder) { holder.classList.add("is-missing"); holder.textContent = "▧"; }
+      if (holder) { holder.classList.add("is-missing", "is-error"); holder.innerHTML = '<span class="home-menu-recipe-thumb-missing" aria-hidden="true">No disponible</span>'; }
     });
   });
   content.querySelectorAll("[data-home-menu-recipe-open]").forEach((button) => {
