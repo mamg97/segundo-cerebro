@@ -1,0 +1,28 @@
+name: Validate psychohistory engines
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/**'
+      - '.github/workflows/validate-psychohistory.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'research/psychohistory/**'
+      - '.github/workflows/validate-psychohistory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate model code
+        run: python3 -m py_compile research/psychohistory/engines.py research/psychohistory/test_engines.py
+      - name: Run synthetic tests
+        run: python3 -m unittest discover -s research/psychohistory -p 'test_*.py' -v
+      - name: Verify deterministic demo pipeline
+        run: |
+          python3 research/psychohistory/engines.py --synthetic-demo --test-from 2025-01-01 --output /tmp/psychohistory-demo.json
+          python3 -c 'import json; d=json.load(open("/tmp/psychohistory-demo.json")); assert d["run_type"]=="retrospective_backtest" and d["n_predictions"]>0 and "SYNTHETIC" in d["data_kind"]'
