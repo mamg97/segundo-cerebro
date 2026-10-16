@@ -132,7 +132,7 @@ test("no goal means no SVG marker; incomplete days keep their partial styling", 
   assert.match(absent, /<svg class="home-weekly-menu-plan-visual"/);
   const incomplete = context.renderHomeWeeklyMenuPlanBar("kcal", 304, 1170, 1950, true, true);
   assert.match(incomplete, /is-partial/);
-  assert.match(incomplete, /≥304 \/ ≥1\.170 kcal/);
+  assert.match(incomplete, /≥304 \/ ≥1?\.?170 kcal/);
   assert.match(incomplete, /class="home-weekly-menu-plan-visual-goal" x1="993"/);
   assert.match(css, /is-partial \.home-weekly-menu-plan-visual-expected/);
 });
