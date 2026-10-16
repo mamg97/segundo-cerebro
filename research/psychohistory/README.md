@@ -2,6 +2,12 @@
 
 Código público genérico; los datos reales NO se versionan aquí.
 
+## Benchmark real v0.2
+
+`download.mjs` verifica dos descargas oficiales UCDP por SHA-256; `benchmark.py` audita el panel país-año y ejecuta seis comparadores con walk-forward, dos objetivos, métricas completas, incertidumbre temporal, sensibilidad low/high y una rejilla ABM sintética. `registry.py` prepara filas para el registro privado, sin publicar ni escribir automáticamente. Python estándar; Node para descargas; coste incremental cero.
+
+Contrato y ejecución: [PSYCHOHISTORY_BENCHMARK.md](../../docs/PSYCHOHISTORY_BENCHMARK.md). **Release histórica revisada, no disponibilidad as-of demostrada.** Los resultados numéricos permanecen en las fuentes privadas. `sealing.py` prepara compromisos y verifica recibos RFC3161; no contacta ninguna autoridad ni habilita el scoring prospectivo en producción.
+
 - V1: índice estructural explícito de indicadores normalizados con pesos prefijados, transformado a probabilidad mediante logística calibrada en entrenamiento.
 - V2: regresión logística regularizada y baseline Laplace.
 - V3: simulación simple de contagio por umbrales en red con semillas reproducibles.
