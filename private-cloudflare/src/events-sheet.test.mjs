@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildEventsSheetPayload, parseCalendarVisibilityRows } from "./events-sheet.js";
+import { buildEventsSheetPayload, parseCalendarVisibilityRows, findAbsentIcloudEventRows } from "./events-sheet.js";
 
 test("buildEventsSheetPayload parses canonical event rows and rules", () => {
   const payload = buildEventsSheetPayload([
@@ -47,4 +47,34 @@ test("visibility rows from private Sheet preserve false and default untouched ca
     { calendarId: "private-cmu-id", visible: false },
     { calendarId: "private-personal-id", visible: true }
   ]);
+});
+
+test("removes only vanished future instances after a complete fresh iCloud read", () => {
+  const now = Date.parse("2099-01-01T10:00:00Z");
+  const existing = [
+    { id: "old", calendarRef: "icloud-series-2099-01-02", sourceProvider: "calendar", status: "CONFIRMADO", startsAt: "2099-01-02T11:00:00Z", _rowNumber: 4 },
+    { id: "current", calendarRef: "icloud-series-2099-01-03", sourceProvider: "calendar", status: "CONFIRMADO", startsAt: "2099-01-03T11:00:00Z", _rowNumber: 5 },
+    { id: "manual", calendarRef: "icloud-series-manual", sourceProvider: "user", status: "CONFIRMADO", startsAt: "2099-01-03T10:00:00Z", _rowNumber: 6 },
+    { id: "past", calendarRef: "icloud-series-past", sourceProvider: "calendar", status: "CERRADO", startsAt: "2098-12-01T10:00:00Z", _rowNumber: 7 }
+  ];
+  const source = { status: "ok", freshness: "live", selectedCalendarCount: 4, matchedCalendarCount: 4, updatedAt: "2099-01-01T09:59:30Z" };
+  const live = [{ id: "icloud-series-2099-01-03", startsAt: "2099-01-03T11:00:00Z" }];
+  assert.deepEqual(findAbsentIcloudEventRows(existing, live, source, now).map(e=>e.id), ["old"]);
+});
+
+test("never infers a cancellation from fallback, partial, stale or failed iCloud", () => {
+  const now = Date.parse("2099-01-01T10:00:00Z");
+  const event = { id: "old", calendarRef: "icloud-series-2099-01-02", sourceProvider: "calendar", status: "CONFIRMADO", startsAt: "2099-01-02T11:00:00Z", _rowNumber: 4 };
+  const healthy = { status: "ok", freshness: "live", selectedCalendarCount: 4, matchedCalendarCount: 4, updatedAt: "2099-01-01T09:59:30Z" };
+  for (const overridden of [
+    { freshness: "fallback" },
+    { freshness: "mixed" },
+    { matchedCalendarCount: 3 },
+    { status: "timeout" },
+    { status: "error" },
+    { updatedAt: "2098-12-31T23:59:00Z" },
+    { status: "not-configured" }
+  ]) {
+    assert.deepEqual(findAbsentIcloudEventRows([event], [], { ...healthy, ...overridden }, now), []);
+  }
 });
