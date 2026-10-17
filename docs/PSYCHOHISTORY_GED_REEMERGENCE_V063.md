@@ -61,3 +61,13 @@ Se ejecutó la comparación con el informe privado GED 25.1, revalidado por SHA,
 **Límite estadístico estricto:** dos bloques de calendario para validación y tres para test **no bastan para estimar intervalos de confianza fiables ni significación estadística**. El resultado marca explícitamente `confidence_interval_95=null` y `significance_test=null`. Las observaciones de distintos países dentro de una misma ventana siguen correlacionadas por shocks globales y regionales; no representan 458 experimentos independientes. Las bandas anuales tradicionales resultarían artificialmente estrechas para este target si ignorasen solapamiento de 24 meses.
 
 La comparación debe leerse como un **análisis de sensibilidad**, no una segunda prueba confirmatoria independiente ni una predicción emitida antes del desenlace. La siguiente fase necesita más años o vintages y controles externos para evaluar la estabilidad de la señal.
+
+## Sensibilidad por fecha de emisión sin solapamiento (análisis posterior v0.6.4)
+
+El módulo `ged_reemergence_sensitivity.py`, integrado en [PR #578](https://github.com/mamg97/segundo-cerebro/pull/578), evalúa exclusivamente las emisiones del **1 de enero de 2016 y 2018** (validación) y **2020, 2022 y 2024** (test), separadas por ventanas completas de 24 meses.
+
+El complemento `ged_reemergence_anchor_stability.py` conserva exactamente esas fechas y la misma población. Para cada fecha calcula N evaluables, reapariciones observadas y Brier/Skill por cada uno de los tres baselines preestablecidos. Después repite el Brier Skill suprimiendo **una fecha entera por vez**, nunca países escogidos por su etiqueta, y guarda todas las comparaciones sin cambiar el target ni reentrenar el modelo. Los informes reales se archivan exclusivamente en Drive privado.
+
+**Prohibición inferencial explícita:** validación dispone de solo **dos** fechas y test solo **tres**. No se crean intervalos de confianza ni pruebas de significación basadas en una falsa independencia de los países, y tampoco se interpreta como prueba prospectiva de eficacia. Si la ventaja de un modelo depende desproporcionadamente de una sola fecha, documentar esa inestabilidad y posponer toda atribución de utilidad operativa hasta disponer de cohortes de horizonte completo adicionales. Estas fechas corresponden a experimentos retrospectivos reconstruidos con UCDP GED 25.1 revisado.
+
+El objetivo sigue siendo **reaparición de al menos un incidente letal estatal GED de fecha exacta en los 24 meses posteriores al corte informativo** en un país con doce meses sin incidentes elegibles al corte; **no** «inicio oficial de guerra» ni pronóstico de incidentes con fecha exacta de ocurrencia.
