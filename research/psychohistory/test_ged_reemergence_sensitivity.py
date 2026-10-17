@@ -41,7 +41,7 @@ class IndependentWindowTests(unittest.TestCase):
         self.assertFalse(x["prospective_eligible"])
         self.assertIsNone(x["partitions"]["test"]["confidence_interval_95"])
         self.assertIsNone(x["partitions"]["test"]["significance_test"])
-        self.assertIn("Only 3 independent",x["partitions"]["test"]["limitations"])
+        self.assertIn("Only 3 disjoint target windows",x["partitions"]["test"]["limitations"])
 
     def test_cannot_select_best_month_after_examining_labels(self):
         x=fixture()
