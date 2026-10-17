@@ -1,6 +1,6 @@
 # PSICOHISTORIA — GED v0.6.3 · reaparición de violencia letal tras silencio documentado
 
-**Estado:** target y baselines congelados en código y pruebas sintéticas; no afirmar resultados de este nuevo target hasta ejecutar fuentes oficiales privadas. La versión UCDP GED 25.1 disponible está retrospectivamente revisada, no `as-of` correcta. La simulación histórica nunca se convierte retroactivamente en pronóstico emitido.
+**Estado:** target y baselines congelados en código y pruebas sintéticas; ejecución retrospectiva con fuentes oficiales archivadas y comprobación de integridad completadas. El informe íntegro, sus agregados, hashes de reproducción y casos están exclusivamente en Google Drive privado (carpeta PSICOHISTORIA - EXPERIMENTOS); no publicar las puntuaciones reales en Git.  La versión UCDP GED 25.1 disponible está retrospectivamente revisada, no `as-of` correcta. La simulación histórica nunca se convierte retroactivamente en pronóstico emitido.
 
 ## Pregunta científica preregistrada
 
@@ -45,3 +45,9 @@ La salida detallada es **privada, create-only**, no debe volcarse a Git. No se m
 ### Criterio de salida
 
 CI sintética verde, ejecución auditada con originales privados, recuentos de positivos/muestra por año, comparación de modelos contra global y local fuerte, análisis de sensibilidad sobre eventos GED de fecha imprecisa y una evaluación histórica sin fugas. Si el target tiene pocos positivos o nulas mejoras frente al baseline, documentar el resultado tal cual y no atribuirle evidencia de «psicohistoria» predictiva.
+
+## Reproducción oficial retrospectiva en entorno privado
+
+Se reprodujo el módulo `ged_reemergence.py` desde los **archivos fuente exactos** del branch, transferidos temporalmente mediante GitHub Actions y posteriormente eliminada la automatización de transporte de la rama. La ejecución usó dos entradas originales del Drive privado (ZIP UCDP GED 25.1 y CSV country-year UCDP Onset 25.1) y verificó antes de computar que sus SHA-256 coincidían con los del manifiesto de origen. La salida real `ged_reemergence_report.json`, su resumen y manifiesto con checksums se archivaron en un ZIP **no compartido, solo propietario** bajo el registro privado de experimentos. No se cambió ningún dato canónico ni se publicó resultado país-mes en Git.
+
+El informe privado incluye ambas particiones, N emitidos hipotéticamente vs evaluables, casos positivos, AP con empates, Brier, log-loss y comparación pareada de los tres baselines. Se verificó que no se imputaban silenciosamente ausencias del roster. **Una tasa base baja y periodos solapados de 24 meses requieren validación por bloques temporales y baselines adicionales antes de atribuir habilidad generalizable.** Esta reproducción no es vintage-correct y no está sellada prospectivamente. 
