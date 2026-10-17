@@ -220,14 +220,14 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
         '<div class="future-toolbar"><div class="filter-row"><button type="button" data-fmode="explorer" aria-pressed="' + (mode === 'explorer') + '">Explorador</button><button type="button" data-fmode="research" aria-pressed="' + (mode === 'research') + '">Investigador</button></div><span>' + esc(result.country.name) + ' · ' + esc(result.modelLabel) + '</span></div>' +
         '<div class="future-timeline"><label>Horizonte <strong>' + horizon + ' ' + (horizon === 1 ? 'año' : 'años') + ' → ' + snapshot.endYear + '</strong><input name="horizon" type="range" min="1" max="' + result.maxHorizon + '" step="1" value="' + horizon + '" aria-label="Horizonte en años"></label>' +
         '<button type="button" data-play aria-pressed="' + playing + '"' + (media.matches ? ' disabled' : '') + '>' + (playing ? 'Ⅱ Pausar tiempo' : '▶ Recorrer años') + '</button><label>Velocidad<select name="speed">' + [0.5,1,2].map(n => option(n,n+'×',speed)).join('') + '</select></label><button type="button" data-fpause aria-pressed="' + (paused || media.matches) + '"' + (media.matches ? ' disabled' : '') + '>' + (media.matches ? 'Movimiento reducido' : paused ? 'Reanudar pulsos' : 'Pausar pulsos') + '</button></div>' +
-        historicalCaseSummary(result, horizon) + historicalObservedTimeline(result, horizon) +
+        historicalCaseSummary(result, horizon) +
         '<div class="future-legend">' + SHORT.map((name,i) => '<span data-state="' + i +
           '"><i></i><b>' + CODES[i] + '</b> ' + esc(name) + '</span>').join('') + '</div>' +
         (mode === 'explorer' ? '<div class="future-explorer"><section class="panel future-network"><div class="panel-head"><h3>Red de futuros frente al recorrido real</h3><label class="future-observed-toggle"><input type="checkbox" name="observed"' +
           (observed ? ' checked' : '') + (!observedCaseAvailable(result,horizon) ? ' disabled' : '') +
           '> Mostrar trayectoria observada después</label></div><p class="future-network-key"><span>━━ <b>Ámbar: recorrido real observado después</b></span><span>● Colores: masa probabilística de cada estado</span></p>' +
           '<div class="future-graph-scroll">' + futureGraph(result, horizon, selection, observed) + '</div><p class="chart-note">Desliza horizontalmente para recorrer los años. El grosor de las aristas refleja el flujo de probabilidad; la línea ámbar marca el resultado histórico, no una predicción. Los pulsos son decorativos.</p></section><aside class="panel future-detail" aria-live="polite">' + detail(result, horizon, selection) + '</aside></div>' +
-        historicalCaseComparison(result,horizon) +
+        historicalObservedTimeline(result, horizon) + historicalCaseComparison(result,horizon) +
         '<section class="panel top-gap future-state-distribution"><div class="panel-head"><h3>Futuros posibles · probabilidades calculadas</h3><span>Sin condicionar al resultado real</span></div>' +
         distribution(result, snapshot) + '<p class="chart-note">IP = intervalo paramétrico condicionado al modelo, no cobertura empírica acreditada. Masa total: ' +
         pct(snapshot.distribution.reduce((a,b)=>a+b,0)) + '.</p></section>' +
