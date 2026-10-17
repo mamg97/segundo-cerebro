@@ -58,8 +58,10 @@ test('missing or tampered batches suppress ALL case context rather than presenti
 test('multiple distinct chunks join only with all canonical case identities present',()=>{
  const success=parseGedContextBatches([row([cases[1]],1,2),row([cases[0]],0,2)],book);
  assert.equal(success.ready,true);
- const spoof=parseGedContextBatches([row([cases[1]],1,2),row([cases[0]],0,2).constructor===Object?
-   {...row([cases[0]],0,2),notes:JSON.stringify({...JSON.parse(row([cases[0]],0,2).notes),gedZipSha256:'0'.repeat(64)})}:row([cases[0]],0,2)],book);
+ const badRow=row([cases[0]],0,2);
+ const corrupted={...JSON.parse(badRow.notes),gedZipSha256:'0'.repeat(64)};
+ const spoof=parseGedContextBatches([row([cases[1]],1,2),
+   {...badRow,notes:JSON.stringify(corrupted)}],book);
  assert.equal(spoof.ready,false);
 });
 test('ged labels reject incident dates with false year, and no access outside verified books',()=>{
