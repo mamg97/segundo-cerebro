@@ -1,4 +1,4 @@
-import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.8';
+import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.9';
 import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.9';
 import {explainableReplayPanel} from './research-explainable.mjs?v=0.5.9';
 // The browser renders server-calculated probabilities. It never fits a model.
