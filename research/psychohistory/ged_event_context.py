@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime as dt
 import hashlib
 import io
 import json
@@ -105,7 +106,11 @@ def _event(row):
         not re.fullmatch(r"\d{4}-\d{2}-\d{2}",d1 or "") or
         d0>d1):
         raise ValueError("Invalid GED event")
-    if d1[:4] != str(year):
+    try:
+        from_date, to_date = dt.date.fromisoformat(d0), dt.date.fromisoformat(d1)
+    except ValueError as error:
+        raise ValueError("Invalid GED calendar date") from error
+    if from_date > to_date or to_date.year != year:
         raise ValueError("GED year and event period differ")
     return {
         "gedEventId":eid, "countryId":cid, "year":year, "violenceType":violence,
