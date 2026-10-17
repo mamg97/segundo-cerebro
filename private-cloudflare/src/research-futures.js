@@ -1,4 +1,5 @@
 import {parseFutureCatalogs, parseFutureMetrics, buildFutures} from './research-futures-engine.mjs';
+import {buildComputationTrace} from './research-futures-trace.mjs';
 
 export function researchFuturesResponse(experiments, searchParams) {
   const id = searchParams.get('catalog'), country = searchParams.get('country'), model = searchParams.get('model');
@@ -8,7 +9,7 @@ export function researchFuturesResponse(experiments, searchParams) {
   try {
     const result = buildFutures(catalog, country, model);
     const metrics = parseFutureMetrics(experiments).accepted.filter(m => m.runId === catalog.runId && m.protocolSha256 === catalog.protocolSha256);
-    return {status: 200, body: {ok: true, result, metrics}};
+    return {status: 200, body: {ok: true, result, metrics, trace: buildComputationTrace(catalog, result)}};
   } catch {
     return {status: 422, body: {ok: false, code: 'FUTURES_CALCULATION_REJECTED'}};
   }

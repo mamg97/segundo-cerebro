@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Ejecución explicable · v0.5.9 (17/10/2026)
+
+- **Protocolo continuo:** PR #596 fusionada; `docs/psicohistoria/INVESTIGACION_CONTINUA.md` fija dominios abiertos, versiones independientes y predicciones congeladas, sin atribuir implementación del ledger a un documento.
+- **Capacidad preparada:** `private-cloudflare/src/research-futures-trace.mjs` genera una traza matemática determinista de las mismas operaciones que devuelve Futures Engine. `app/research-explainable.mjs` valida y reproduce corte histórico, conteos, matriz 4×4, puente no observado, sumas producto por año y baseline de frecuencia. La red sigue siendo primera vista; UI **v0.5.9**, sin cambiar versión científica, probabilidades ni registros privados. Es REPRODUCCIÓN retrospectiva, NO progreso de ejecución en vivo, y NO emisión real. Tests y documento `docs/psicohistoria/EJECUCION_EXPLICABLE.md`.
+- **Puertas pendientes:** cerrar CI, fusionar y verificar despliegue de esta revisión; no declarar producción antes de verificar el workflow. Siguiente experimento: ledger privado append-only con receipt externo verificado, versionado y resolución, sin reutilizar resultados retrospectivos.
+
+---
+
 ## PSICOHISTORIA — GED v0.6.9 · fechas de disponibilidad y bloqueo as-of (17/10/2026)
 
 - **Nueva puerta temporal:** `research/psychohistory/ged_asof_provenance.py` con tests sintéticos y documento `docs/PSYCHOHISTORY_GED_ASOF_V069.md`. Distingue fechas del suceso, fuentes periodísticas, disponibilidad de registro UCDP, fecha hipotética de emisión y publicación verificable de **vintages** Candidate. No recalcula probabilidades ni reinterpreta incidentes como guerras/invasiones.

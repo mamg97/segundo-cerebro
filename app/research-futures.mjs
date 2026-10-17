@@ -1,5 +1,6 @@
-import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.8';
-import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.8';
+import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.9';
+import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.9';
+import {explainableReplayPanel} from './research-explainable.mjs?v=0.5.9';
 // The browser renders server-calculated probabilities. It never fits a model.
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = (value, digits = 3) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('es-ES', {maximumFractionDigits: digits}) : 'Sin datos';
@@ -281,6 +282,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
   let catalog = catalogs[0], country = catalog.countries.some(c => c.id === catalog.suggestedCountryId) ? catalog.suggestedCountryId : catalog.countries[0].id, model = 'markov', horizon = Math.min(3, catalog.maxHorizon);
   let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, speed = 1;
   let error = '', loading = false, disposed = false, request = 0, abort = null, timer = null, inView = true;
+  let traceStep = -1;
   const media = window.matchMedia('(prefers-reduced-motion: reduce)');
   const clearTimer = () => { if (timer !== null) window.clearTimeout(timer); timer = null; };
   function schedule() {
@@ -311,11 +313,11 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
       (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
-    container.innerHTML = graphFirst + phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) + gedIncidentPreviewPanel(onsetExperiments) + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
+    container.innerHTML = graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) + phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) + gedIncidentPreviewPanel(onsetExperiments) + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
       '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
       '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
-      '<button type="submit" class="future-calculate"' + (loading ? ' disabled' : '') + '>' + (loading ? 'Calculando…' : 'Calcular trayectorias') + '</button></form>' +
+      '<button type="submit" class="future-calculate"' + (loading ? ' disabled' : '') + '>' + (loading ? 'Calculando…' : 'Calcular predicción retrospectiva') + '</button></form>' +
       '<p class="future-warning">BACKTEST EXPLORATORIO · Fuente histórica revisada. No es un pronóstico actual ni acredita información disponible en el origen.</p>' +
       (error ? '<p class="error" role="alert">' + esc(error) + '</p>' : '') +
       (!result ? '<section class="panel empty"><strong>' + (loading ? 'Calculando con los parámetros canónicos…' : 'Selección pendiente de calcular') + '</strong><p>Las probabilidades procederán del motor privado. No se muestran resultados inventados.</p></section>' :
@@ -366,6 +368,9 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       gedCountry.addEventListener('change',filterGed);
       gedYear.addEventListener('change',filterGed);
     }
+    container.querySelector('[data-trace-next]')?.addEventListener('click',()=>{traceStep++;render('[data-trace-next]');});
+    container.querySelector('[data-trace-prev]')?.addEventListener('click',()=>{traceStep=Math.max(0,traceStep-1);render('[data-trace-prev]');});
+    container.querySelector('[data-trace-reset]')?.addEventListener('click',()=>{traceStep=-1;render('[data-trace-next]');});
     container.querySelector('form').addEventListener('submit', e => {e.preventDefault(); load();});
     container.querySelectorAll('.future-controls select').forEach(select => select.addEventListener('change', () => {
       if (select.name === 'catalog') {
@@ -373,7 +378,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
         if (!catalog.countries.some(c => String(c.id) === String(country))) country = catalog.countries[0].id;
         horizon = Math.min(horizon, catalog.maxHorizon);
       } else if (select.name === 'country') country = Number(select.value); else model = select.value;
-      abort?.abort(); request++; loading = false; payload = null; playing = false; observed = false; error = ''; render('[name="'+select.name+'"]');
+      abort?.abort(); request++; loading = false; payload = null; playing = false; observed = false; error = ''; traceStep=-1; render('[name="'+select.name+'"]');
     }));
     container.querySelector('[name="horizon"]')?.addEventListener('change', e => {horizon = Number(e.target.value); selection = null; playing = false; observed = observedCaseAvailable(payload?.result,horizon); render('[name="horizon"]');});
     container.querySelector('[name="speed"]')?.addEventListener('change', e => {speed = Number(e.target.value); schedule();});
@@ -420,7 +425,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
   }
   async function load() {
     abort?.abort(); abort = new AbortController(); const mine = ++request;
-    loading = true; error = ''; payload = null; selection = null; playing = false; render();
+    loading = true; error = ''; payload = null; selection = null; playing = false; traceStep=-1; render();
     const params = new URLSearchParams({catalog:catalog.id,country:String(country),model});
     try {
       const response = await fetch('/api/research-futures?' + params, {credentials:'same-origin',cache:'no-store',signal:abort.signal,headers:{Accept:'application/json'}});
