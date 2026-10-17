@@ -184,3 +184,21 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
 .future-phenomenon p{margin:0;font-size:11px;line-height:1.55;color:#9db8c9}
 .future-phenomena .chart-note{margin-bottom:0}
 @media(max-width:800px){.future-phenomena-grid{grid-template-columns:1fr}.future-phenomena{padding:13px}}
+
+/* v0.5.1: explicit private/onset metric transparency after the network. */
+.future-onset-science{margin:0 0 17px;padding:17px 19px;border-color:#31556e}
+.future-onset-science .panel-head h3{font-size:15px}
+.future-onset-reports{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+.future-onset-report{background:#0a2033;border:1px solid #3a5770;border-radius:12px;padding:14px;min-width:0}
+.future-onset-report-title{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.future-onset-report-title strong{font-size:13px;color:#f3f8ff}
+.future-onset-report-title span{font-size:10px;color:#9bb8ca}
+.future-onset-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.future-onset-metrics>div{padding:9px;border:1px solid #294a63;background:#0f2a40;border-radius:8px}
+.future-onset-metrics small{display:block;font-size:9px;color:#a2bdce;min-height:28px;line-height:1.4}
+.future-onset-metrics b{display:block;margin-top:4px;color:#f0f8ff;font-size:19px;font-variant-numeric:tabular-nums}
+.future-onset-metrics b.future-skill-pos{color:#a4dcce}.future-onset-metrics b.future-skill-neg{color:#ffd1a4}
+.future-onset-report p{font-size:11px;line-height:1.65;color:#a6c4d6}
+.future-onset-report a{font-size:11px;color:#85c9f5;text-decoration:underline;text-underline-offset:3px}
+.future-onset-science .future-epistemic{font-size:11px;line-height:1.65;color:#92afc2}
+@media(max-width:760px){.future-onset-reports{grid-template-columns:1fr}.future-onset-science{padding:13px}}
