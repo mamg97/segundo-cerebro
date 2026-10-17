@@ -1,5 +1,5 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
-import {mountFutureExplorer} from './research-futures.mjs?v=0.4.2';
+import {mountFutureExplorer} from './research-futures.mjs?v=0.4.3';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
 import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.1';
 const TRACKS=[
@@ -240,6 +240,7 @@ function roadmap(){
 }
 function render(){
   if(!state)return;
+  document.body.dataset.labView = activeView;
   disposeNeural();
   disposeFutures();
   header();metrics();
