@@ -170,3 +170,17 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
 .future-after-network .future-controls-intro{display:none}
 .future-after-network .future-legend{margin:8px 0}
 @media(max-width:760px){.future-network-first{padding:13px}.future-network-first .future-graph{min-width:680px}.future-event-card{flex-basis:230px}.future-after-network .future-controls{margin-top:12px}}
+
+/* v0.5 research objective status; keep the SVG as the very first block. */
+.future-phenomena{padding:15px 18px;margin:0 0 16px;border-color:#26485c}
+.future-phenomena .panel-head h3{font-size:15px;margin:0}
+.future-phenomena-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:14px 0}
+.future-phenomenon{background:#0b1e30;border:1px solid #304e67;border-radius:10px;padding:14px 15px;min-width:0}
+.future-phenomenon.active{border-color:#5388a3}
+.future-phenomenon.pending{border-style:dashed;opacity:.93}
+.future-phenomenon small{font-size:9px;letter-spacing:.4px;color:#9fd8fa}
+.future-phenomenon.pending small{color:#f6b979}
+.future-phenomenon h4{margin:8px 0 6px;font-size:13px;color:#e9f4ff}
+.future-phenomenon p{margin:0;font-size:11px;line-height:1.55;color:#9db8c9}
+.future-phenomena .chart-note{margin-bottom:0}
+@media(max-width:800px){.future-phenomena-grid{grid-template-columns:1fr}.future-phenomena{padding:13px}}

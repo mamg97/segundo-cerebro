@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {futureGraph, historicalCasePanel, historicalCaseSummary, historicalObservedTimeline, historicalCaseComparison, observedCaseAvailable, historicalEventCards} from './research-futures.mjs';
+import {futureGraph, historicalCasePanel, historicalCaseSummary, historicalObservedTimeline, historicalCaseComparison, observedCaseAvailable, historicalEventCards, phenomenaScopePanel} from './research-futures.mjs';
 import {forward,retainedPaths} from '../private-cloudflare/src/research-futures-engine.mjs';
 
 const matrix = [[.8,.2,0,0],[0,0,.3,.7],[.8,.2,0,0],[0,0,.3,.7]];
@@ -138,4 +138,16 @@ test('verified official source evidence is escaped, specific, and not a fabricat
   assert.match(html,/Government of SYNTHETIC - &lt;ENEMY&gt;/);
   assert.doesNotMatch(html,/<ENEMY>/);
   assert.equal((html.match(/37 muertes estatales/g)||[]).length,1);
+});
+
+test('target scope separates current retrospective scores from not-yet-evaluated onsets',()=>{
+  const html=phenomenaScopePanel();
+  assert.match(html,/DISPONIBLE · RETROSPECTIVO/);
+  assert.match(html,/Episodio agregado de violencia estatal/);
+  assert.match(html,/Inicio de conflicto armado interno/);
+  assert.match(html,/Inicio de conflicto entre Estados/);
+  assert.equal((html.match(/SIN PROBABILIDADES REALES TODAVÍA/g)||[]).length,2);
+  assert.doesNotMatch(html,/100 % de acierto|predicción prospectiva validada/);
+  const source=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
+  assert.ok(source.includes('container.innerHTML = graphFirst + phenomenaScopePanel()'));
 });
