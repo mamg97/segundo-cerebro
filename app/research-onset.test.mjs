@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import {phenomenaScopePanel} from './research-futures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -149,3 +150,21 @@ test('casebook rejects a tampered source, missing year, forged odds or invented 
  assert.equal(onsetCasebookPanel(caseRows().slice(0,2)),'');
  assert.equal(onsetCasebookPanel([]),'');
 });
+
+test('versioned source of the Onset chart and historical casebook cannot be stale',()=>{
+  const fs=requireForTest();
+  const view=fs('research-lab.html');
+  const loader=fs('research-lab.js');
+  const futures=fs('research-futures.mjs');
+  const v='0.5.5';
+  assert.ok(view.includes('v'+v),'html must expose current version');
+  assert.ok(loader.includes('research-futures.mjs?v='+v),'lab loader must bust futures cache');
+  assert.ok(futures.includes('research-onset.mjs?v='+v),'futures must bust onset cache');
+});
+function requireForTest(){
+  return file=>requireFileText(file);
+}
+function requireFileText(file){
+  const url=new URL('./'+file,import.meta.url);
+  return readFileSync(url,'utf8');
+}

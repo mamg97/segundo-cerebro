@@ -1,5 +1,5 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
-import {mountFutureExplorer} from './research-futures.mjs?v=0.5.4';
+import {mountFutureExplorer} from './research-futures.mjs?v=0.5.5';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
 import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.1';
 const TRACKS=[
