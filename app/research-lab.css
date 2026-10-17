@@ -271,3 +271,33 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
 .ged-preview-probs dt{color:#acc7db;font-size:10px}
 .ged-preview-probs dd{color:#fbd29b;font-weight:700;margin:5px 0 0}
 @media(max-width:650px){.ged-preview-panel{padding:11px}.ged-preview-probs{grid-template-columns:repeat(2,minmax(0,1fr))}.ged-preview-filters [role=status]{margin-left:0;width:100%}}
+
+/* v0.5.9: authentic computation trace — replay, not fake CPU progress */
+.explainable-panel{margin:0 0 17px;padding:18px;background:linear-gradient(120deg,#092339,#0d1a31);border:1px solid #426889}
+.explainable-panel .panel-head h3{font-size:18px;color:#eff9ff}
+.explainable-panel .eyebrow{letter-spacing:.12em;color:#ffbd84}
+.explainable-panel .chart-note{font-size:11px;color:#a7c4d9;line-height:1.7}
+.explainable-panel button{background:#18354b;color:#f5faff;border:1px solid #52748e;border-radius:9px;padding:9px 13px;cursor:pointer}
+.explainable-panel button:hover:not(:disabled){background:#244864;border-color:#ffa35f}
+.explainable-panel button:disabled{opacity:.4;cursor:default}
+.explain-progress{display:flex;align-items:center;gap:16px;color:#ffd5a1;font-size:11px}
+.explain-progress progress{flex:1;accent-color:#ff982f;height:12px}
+.explain-stage{border:1px solid #33516b;border-radius:12px;padding:16px;margin:13px 0;background:#0b2134;animation:explain-appear .18s ease-out}
+.explain-stage h4{font-size:14px;color:#ffca91;margin:0 0 12px}
+.explain-stage p{font-size:12px;line-height:1.65}
+.explain-stage pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:#071724;padding:11px;border-radius:8px}
+.explain-stage small{font-size:11px;color:#9ebcd1}
+.explain-matrix{display:grid;gap:6px;overflow-x:auto}
+.explain-matrix>div{display:grid;grid-template-columns:50px repeat(4,minmax(72px,1fr));gap:4px;align-items:center;text-align:center;font-variant-numeric:tabular-nums}
+.explain-matrix>div>*{padding:8px 3px;background:#17354b;border-radius:6px}
+.explain-matrix b{color:#ffbd7e}
+.explain-equation{display:grid;gap:8px;font:11px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}
+.explain-equation>div{border-left:2px solid #ff9338;padding-left:10px}
+.explain-vector{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:13px 0}
+.explain-vector>div{display:flex;flex-direction:column;gap:6px;background:#132d44;border:1px solid #3c5e78;border-radius:10px;padding:9px}
+.explain-vector strong{font-size:13px;color:#f3d1a1}
+.explain-vector meter{width:100%;height:10px;accent-color:#ff9a43}
+.explain-controls{display:flex;flex-wrap:wrap;gap:8px}
+@keyframes explain-appear{from{opacity:.7;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(max-width:650px){.explainable-panel{padding:11px}.explain-vector{grid-template-columns:repeat(2,minmax(0,1fr))}.explain-matrix>div{min-width:380px}}
+@media(prefers-reduced-motion:reduce){.explain-stage{animation:none}}
