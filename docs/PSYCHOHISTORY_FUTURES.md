@@ -116,3 +116,16 @@ El explorador permite elegir países de los catálogos reales y pulsar **Revelar
 - Las cinco filas del caso comparten país, origen, horizonte y etiqueta. Un único Brier no demuestra mayor capacidad predictiva, calibración, eficacia causal ni ventaja estadística.
 - Es un cálculo **post-hoc** sobre release retrospectivamente revisada, no un experimento ciego ni una predicción sellada; revelar en UI no equivale a una evaluación as-of correcta.
 - Los resultados agregados con denominadores siguen en la vista Investigador. Para confirmar habilidad prospectiva, reconstruir primero los archivos/versiones realmente disponibles antes de cada origen, fijar el protocolo y verificar pronósticos posteriores mediante sellado independiente.
+
+
+## 10. Primera vista de casos observados y red probabilística (v0.4.3)
+
+La pestaña Futuros pasa a ser la **primera pantalla del laboratorio privado**, antes de la portada ilustrativa y los indicadores generales. El análisis comienza con **país, origen, horizonte, estado real y probabilidad asignada a ese estado**. No se inventan nombres ni descripciones específicas de acontecimientos históricos: los únicos eventos observables en este panel son las transiciones del umbral anual UCDP definido arriba. Los eventos nominales o sus causas requieren una fuente diferente verificada y una taxonomía más rica.
+
+- Para un caso retrospectivo completo, el resultado real, Brier y log-loss individuales son visibles por defecto, sin botón de revelación. Las cinco probabilidades del estado registrado proceden de la API calculada con los parámetros del corte histórico.
+- La red conserva las probabilidades, masas de nodos y flujos de aristas **sin condicionar al recorrido real**. Sobre ella se superpone, activada por defecto, la secuencia observada posteriormente en **ámbar**, con anillos y una marca del estado final. Un control explícito permite ocultarla para examinar predicciones aisladas.
+- La cronología distingue **último dato conocido**, **puente no observado cuando se emitía**, y **años objetivo observados ex post**. Cada año identifica estado 00/01/10/11, su semántica operacional y ausencias sin imputación.
+- Se coloca después del grafo una comparación de cinco modelos en exactamente el mismo caso y una distribución de los futuros posibles; la evaluación científica agregada permanece en la vista Investigador.
+- Si el resultado es inexistente o la secuencia incompleta, el panel indica no evaluable y no atribuye al modelo probabilidades de un desenlace desconocido, Brier ni log-loss. El gráfico no muestra un recorrido real completo inexistente.
+- Todo lo anterior es **retrospectivo exploratorio sobre la release revisada 26.1**, con `vintageVerified=false` y `prospectiveEligible=false`. La apariencia visual no es una predicción sellada ni establece causalidad o precisión científica.
+- Diseño responsive sin dependencias adicionales, sin endpoints de escritura ni alteraciones de `PsicoExperimentos`. Pruebas sintéticas de resaltado, ausencia de etiquetas, escape HTML, orden inicial y masa probabilística original.
