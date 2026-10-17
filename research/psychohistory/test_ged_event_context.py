@@ -74,6 +74,22 @@ class GEDContextTests(unittest.TestCase):
             self.assertEqual(second["examples"],[])
             self.assertEqual(second["matchingRelation"],"same_country_id_and_calendar_year_only")
 
+    def test_official_ged_timestamp_format_is_normalized_without_false_day_precision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            zip_path=Path(tmp)/"GED_SYNTHETIC.zip"
+            zip_fixture(zip_path)
+            with zipfile.ZipFile(zip_path) as z:
+                reader=csv.DictReader(io.StringIO(z.read(z.namelist()[0]).decode()))
+                rows=list(reader)
+            rows[0]["date_start"]="2022-04-01 00:00:00.000"
+            rows[0]["date_end"]="2022-04-02 00:00:00.000"
+            rows[0]["date_prec"]="2"
+            digest=zip_fixture(zip_path,rows)
+            result=build_event_context(zip_path,digest,casebook())
+            target=next(e for e in result["cases"][0]["examples"] if e["gedEventId"]==10)
+            self.assertEqual((target["dateStart"],target["dateEnd"]),("2022-04-01","2022-04-02"))
+            self.assertEqual(target["datePrecision"],2)
+
     def test_wrong_checksums_missing_archive_headers_and_duplicate_case_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             zip_path=Path(tmp)/"GED_SYNTHETIC.zip"
