@@ -119,3 +119,20 @@ El módulo `app/research-onset.mjs` incorpora un **casebook retrospectivo oficia
 El panel aparece **después de la red de futuros**, dentro de Onset, bajo la cronología de conteos, con filtros de año y tipo que no consultan ni modifican el backend. La tabla presenta por separado P del modelo de frecuencia global y P del modelo país. El link de evidencia apunta al mismo informe protegido de Drive. Las entradas son **etiquetas país-año UCDP**, no guerras o invasiones identificadas individualmente ni fechas exactas de inicio; los países pueden tener implicación estatal externa. No atribuir a una etiqueta de Ucrania 2022 una predicción exacta de la invasión rusa.
 
 Se mantienen los flags `sourceAsOfVerified=false`, `sourceIndependentShaPinning=false` y `prospectiveEligible=false`. No contiene skill prospectivo, ni registros nuevos en `PsicoPredicciones`.
+
+
+## Inspector GED de incidentes fechados (v0.5.6)
+
+El laboratorio incorpora un inspector en el casebook UCDP Onset. En cada país-año positivo se pueden desplegar hasta tres incidentes estatales de UCDP GED 25.1 situados en el mismo país y año, incluyendo GED ID, fecha/intervalo, precisión, localidad, díada, conflicto y estimaciones best/low/high.
+
+- **No inferir causalidad:** Onset registra país participante; GED registra localización física. La coincidencia territorial/temporal no identifica necesariamente el suceso que inició la guerra y puede faltar para Estados involucrados en operaciones en otro territorio.
+- **No confundir top-3 con primeros incidentes:** los ejemplos están elegidos por bestDeaths, no por fecha de inicio.
+- Las filas privadas de PsicoExperimentos usarán el sobre psychohistory.onset.ged_context_batch.v1, en grupos de hasta doce casos (recomendación: diez), con batchIndex, batchCount, origen GED 25.1, SHA256 oficial del ZIP, casos, flags asOfVerified/prospectiveEligible false y evidencia_url del informe íntegro privado.
+- **Fail-closed:** el inspector solo mostrará casos cuando estén todos los lotes, su checksum sea el esperado, sus fechas sean válidas y coincidan exactamente con las 50 identidades país-año del casebook ya validado. Si falta evidencia, no mostrará sucesos inventados.
+- No se introducirán incidentes reales en Git ni se cambiarán resultados de forecasting; se consume exclusivamente el registro privado.
+
+### Resultado reproducido (17/10/2026)
+
+El cruce se ha ejecutado sobre 385.918 incidentes del GED oficial, 50 positivos de Onset y 45 casos con al menos un incidente estatal del mismo país-año. SHA del archivo fuente GED ZIP: e256f1fb20a579d8b2f910e5bae212f486d3002adaa2e4359ace740c737da05d. SHA del informe derivado local: 76b544aeeef5f874fe68622d88af525883f64d77275be77411125a7c832e51f1.
+
+**Transferencia a Drive aún no verificada:** el gestor de ficheros informó container_session_expired. Hasta archivar el informe privado y contrastarlo con el casebook canónico del Sheet, los lotes no deben publicarse allí; la UI mostrará evidencia pendiente. No confundir este contexto histórico con un pronóstico de incidentes futuros.

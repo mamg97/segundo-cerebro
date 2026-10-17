@@ -1,4 +1,4 @@
-import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.5';
+import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.6';
 // The browser renders server-calculated probabilities. It never fits a model.
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = (value, digits = 3) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('es-ES', {maximumFractionDigits: digits}) : 'Sin datos';
