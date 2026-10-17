@@ -56,6 +56,16 @@ class OnsetPipelineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             load(erased,hashlib.sha256(erased).hexdigest())
 
+    def test_conflict_level_file_is_never_relabelled_as_country_panel(self):
+        data,_=source(n=1)
+        source_lines=data.decode().splitlines()
+        # Even a conflict-level excerpt with one conflict per country-year fails closed.
+        source_lines[0]+=",conflict_id"
+        source_lines=[source_lines[0]] + [line+",19" for line in source_lines[1:]]
+        rows=chr(10).join(source_lines).encode()+bytes([10])
+        with self.assertRaisesRegex(ValueError,"country-onset schema|Conflict-level"):
+            load(rows,hashlib.sha256(rows).hexdigest())
+
     def test_temporal_training_only_ends_at_t_minus_two(self):
         original=load()
         before=forecast_origin(original,year=2016)

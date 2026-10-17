@@ -149,6 +149,30 @@ function detail(result, horizon, selection) {
 }
 
 // An observed historical outcome is available to the retrospective reader by default.
+// Capability labels are not model scores; new objectives stay inert until
+// official sources have been ingested and retrospectively evaluated.
+export function phenomenaScopePanel() {
+  return '<section class="panel future-phenomena" aria-label="Qué fenómenos se pueden predecir">' +
+    '<div class="panel-head"><h3>¿Qué acontecimiento intentamos anticipar?</h3>' +
+    '<span>Objetivos definidos por fuentes oficiales</span></div>' +
+    '<div class="future-phenomena-grid">' +
+      '<article class="future-phenomenon active"><small>DISPONIBLE · RETROSPECTIVO</small>' +
+      '<h4>Episodio agregado de violencia estatal</h4>' +
+      '<p>Probabilidad anual de entrar, salir o permanecer por encima de 25 muertes estatales dentro de un país. ' +
+      'Es lo que representa la red anterior, no una guerra nueva.</p></article>' +
+      '<article class="future-phenomenon pending"><small>PROTOCOLO Y TESTS · SIN PROBABILIDADES REALES TODAVÍA</small>' +
+      '<h4>Inicio de conflicto armado interno</h4>' +
+      '<p>Nuevo inicio o reanudación según el objetivo oficial UCDP Onset 25.1, definido por país y año. ' +
+      'El código del benchmark existe; la fuente y sus métricas reales aún deben validarse.</p></article>' +
+      '<article class="future-phenomenon pending"><small>PROTOCOLO Y TESTS · SIN PROBABILIDADES REALES TODAVÍA</small>' +
+      '<h4>Inicio de conflicto entre Estados</h4>' +
+      '<p>Objetivo UCDP Onset interestatal por país-año, separado del interno. No equivale a predecir una invasión concreta ' +
+      'ni permite atribuir probabilidades a guerras conocidas.</p></article>' +
+    '</div><p class="chart-note">Datos: UCDP OrganizedViolenceCY 26.1 (red actual), ' +
+    '<a href="https://ucdp.uu.se/downloads/" target="_blank" rel="noopener noreferrer">UCDP Onset 25.1</a> (objetivos nuevos). ' +
+    'Todas las evaluaciones son retrospectivas sobre versiones revisadas, no predicciones prospectivas verificadas.</p></section>';
+}
+
 export function historicalCaseSummary(result, horizon) {
   const observed = result.caseEvaluations?.[horizon - 1];
   const year = result.origin + horizon - 1;
@@ -280,7 +304,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
       (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
-    container.innerHTML = graphFirst + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
+    container.innerHTML = graphFirst + phenomenaScopePanel() + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
       '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
       '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
