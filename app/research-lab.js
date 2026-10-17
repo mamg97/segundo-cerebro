@@ -1,5 +1,6 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.7';
+import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
 import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.1';
 const TRACKS=[
@@ -15,7 +16,6 @@ const finite=(n)=>typeof n==="number"&&Number.isFinite(n);
 const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d}):"Sin datos";
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
-const isResearchScore=e=>e.status!=="CATALOGO_RETROSPECTIVO"&&e.metric!=="contexto"&&e.modelVersion!=="ged-context-v1";
 let activeView="futures";
 let activeTrack=TRACKS.some(t=>t.id===new URLSearchParams(window.location.search).get("track")) ? new URLSearchParams(window.location.search).get("track") : "V2";
 let milestoneFilter="TODOS";
