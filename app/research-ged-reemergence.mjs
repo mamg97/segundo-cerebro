@@ -52,7 +52,7 @@ export function parseGedIncidentPreview(experiments=[]){
   }
   if(!batches.length)return {ready:false,cases:[],rejected};
   const ref=batches[0],ids=new Set(),slots=new Set(),cases=[];
-  let valid=batches.length===ref.batchCount;
+  let valid=batches.length===ref.batchCount && rejected.length===0;
   for(const b of batches){
     if(b.batchCount!==ref.batchCount||b.totalEvents!==ref.totalEvents||
        b.totalWindowLinks!==ref.totalWindowLinks||
