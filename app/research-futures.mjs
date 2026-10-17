@@ -331,6 +331,25 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
         pct(snapshot.distribution.reduce((a,b)=>a+b,0)) + '.</p></section>' +
         '<section class="panel top-gap"><div class="panel-head"><h3>Historias individuales retenidas</h3><span>Sin renormalizar</span></div><div class="future-paths">' + snapshot.paths.map((path,i) => '<button type="button" data-fpath="' + i + '" aria-pressed="' + (selection?.kind === 'path' && selection.index === i) + '"><span>Camino ' + (i+1) + '</span><span>' + path.states.slice(1).map(s => ['00','01','10','11'][s]).join(' → ') + '</span><strong>' + pct(path.probability) + '</strong></button>').join('') + '</div><p class="future-mass">Masa representada: <strong>' + pct(snapshot.representedMass) + '</strong> · Otras historias: <strong>' + pct(snapshot.residualMass) + '</strong></p><p class="chart-note">Beam de ' + snapshot.beam + ' prefijos; hasta 12 historias mostradas. La masa residual incluye todas las historias omitidas. El grafo agregado superior conserva el 100 % de la masa y no depende de esta poda. Códigos: dos años consecutivos, 0 bajo el umbral y 1 por encima.</p></section>' : research(result, payload.metrics, horizon)) +
         '<div class="future-methods" aria-label="Vertientes conectadas al núcleo">' + ['V1','V2','V3','V4'].map(id => '<button type="button" data-ftrack="' + id + '"><span class="orb-sphere"><span>' + id + '</span></span><strong>' + ({V1:'Memoria e hipótesis',V2:'Probabilidades',V3:'Mecanismos sintéticos',V4:'Evidencia y versiones'}[id]) + '</strong></button>').join('') + '</div></div>');
+    // Filtering changes only the visible historical country-year rows, never source data.
+    const caseYear=container.querySelector('[data-onset-case-year]');
+    const caseKind=container.querySelector('[data-onset-case-kind]');
+    if(caseYear && caseKind){
+      const filter=()=>{
+        const year=caseYear.value,kind=caseKind.value;
+        let count=0;
+        container.querySelectorAll('[data-onset-case]').forEach(row=>{
+          const visible=(year==='all'||row.dataset.year===year) &&
+            (kind==='all'||row.dataset.kind===kind);
+          row.hidden=!visible;
+          if(visible)count++;
+        });
+        const state=container.querySelector('[data-onset-case-visible]');
+        if(state)state.textContent=count+' casos';
+      };
+      caseYear.addEventListener('change',filter);
+      caseKind.addEventListener('change',filter);
+    }
     container.querySelector('form').addEventListener('submit', e => {e.preventDefault(); load();});
     container.querySelectorAll('.future-controls select').forEach(select => select.addEventListener('change', () => {
       if (select.name === 'catalog') {
