@@ -58,3 +58,12 @@ python3 research/psychohistory/ged_reemergence_recency.py \
 La comparación con el informe anterior debe usar idénticos hashes de fuente, horizonte, universo y desenlaces. Si no mejora contra el comparador fuerte, comunicar el resultado sin seleccionar después parámetros más favorables.
 
 **Hitos pendientes:** ejecutar con originales privados, revisar por año y por bloque los resultados sin considerar las cohortes independientes, y contrastar con un baseline externo de riesgo/conflicto cuyo target y disponibilidad temporal sean comparables. UCDP GED 25.1 es retrospectivo revisado: la disponibilidad `as-of` y la emisión real continúan sin probar. El paquete 2027 previo sigue sin sello TSA externo.
+
+
+## Auditoría de una reproducción real (sin publicar sus valores)
+
+La reproducción con originales privados descubrió que `save_private` serializa JSON con claves alfabéticamente ordenadas. El adaptador debe validar el **conjunto exacto** de nombres de modelos, no el orden de las claves del diccionario. Esta corrección no modifica ninguna probabilidad ni etiqueta. El test reproduce explícitamente el JSON `sort_keys=True` del informe privado.
+
+La evaluación descriptiva ya incluye **Brier Skill por fecha final de horizonte** y **leave-one-anchor-out** de ventanas completas. Todas las comparaciones conservan exactamente la población, el desenlace y los tres modelos previos. Esos diagnósticos pueden revelar que una aparente mejora proviene de una única fecha; no producen IC ni significación estadística al disponer de solo 2/3 bloques de calendario.
+
+Los valores empíricos, país-mes y ficheros originales están restringidos a Drive privado, con manifiesto de integridad; nunca deben copiarse a Git ni confundirse con pronósticos sellados.
