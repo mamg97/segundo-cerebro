@@ -34,3 +34,11 @@ test('duplicates, altered outcome windows and as-of claims are rejected',()=>{
  const fake={...a,notes:a.notes.replace('"asOfVerified":false','"asOfVerified":true')};
  for(const batch of [[a,b,fake],wrong,duplicate])assert.equal(parseGedIncidentPreview(batch).ready,false);
 });
+
+test('HTML entities in external fields are escaped before rendering',()=>{
+ const fake={...item,place:'MOCK & SAFE',issueMonth:'2020-04',targetEndMonth:'2022-03'};
+ const other={...item,id:102,positiveWindowCount:1,date:'2021-03-17'};
+ const html=gedIncidentPreviewPanel([row([fake],0,2),row([other],1,2)]);
+ assert.match(html,/MOCK &amp; SAFE/);
+ assert.doesNotMatch(html,/MOCK & SAFE/);
+});
