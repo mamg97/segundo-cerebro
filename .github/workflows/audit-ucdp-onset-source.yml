@@ -1,0 +1,27 @@
+name: Audit public UCDP Onset source for private import
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/stage_onset_sources.py'
+      - 'research/psychohistory/ucdp_onset.py'
+      - '.github/workflows/audit-ucdp-onset-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-source-download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and validate exact public UCDP files
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/stage_onset_sources.py --out-dir "$RUNNER_TEMP/ucdp-onset-staging"
+      - name: Temporarily export PUBLIC official UCDP source files for private archival
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-ucdp-onset-251-for-private-archival
+          path: ${{ runner.temp }}/ucdp-onset-staging/
+          retention-days: 1
+          if-no-files-found: error
