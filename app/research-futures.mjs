@@ -1,3 +1,4 @@
+import {onsetSummaryPanel} from './research-onset.mjs';
 // The browser renders server-calculated probabilities. It never fits a model.
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = (value, digits = 3) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('es-ES', {maximumFractionDigits: digits}) : 'Sin datos';
@@ -265,7 +266,7 @@ function research(result, metrics, horizon) {
   return html + '<details class="panel top-gap future-provenance"><summary>Supuestos, procedencia y reproducción</summary><p>Origen: 1 de enero de ' + result.origin + '. Información admitida hasta ' + result.cutoff + '. Se integra el año ' + (result.origin - 1) + ' sin observar su desenlace. Matriz estacionaria durante toda la trayectoria.</p><p>Modelo: ' + esc(result.modelLabel) + ' · versión ' + esc(result.version) + ' · fuente ' + esc(result.datasetVersion) + '.</p><p>' + esc(result.uncertainty.caveat || 'Persistencia determinista: no hay distribución paramétrica estimada.') + '</p>' + result.caveats.map(c => '<p>' + esc(c) + '</p>').join('') + '<p>Protocolo: ' + esc(result.protocolSha256) + '<br>Código de ajuste: ' + esc(result.codeSha256) + '<br>Run: ' + esc(result.runId) + '</p>' + (result.evidence ? '<a href="' + esc(result.evidence) + '" target="_blank" rel="noopener noreferrer">Archivo privado de reproducción ↗</a>' : '') + '</details>';
 }
 
-export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = {}) {
+export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, onsetExperiments = []} = {}) {
   if (!catalogs?.length) {
     container.innerHTML = '<section class="panel empty"><strong>Futures Engine · Sin datos auditados</strong><p>El registro privado aún no contiene un catálogo de transiciones válido. No se dibujan probabilidades de ejemplo.</p></section>';
     return () => {};
@@ -304,7 +305,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
       (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
-    container.innerHTML = graphFirst + phenomenaScopePanel() + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
+    container.innerHTML = graphFirst + phenomenaScopePanel() + onsetSummaryPanel(onsetExperiments) + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
       '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
       '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
