@@ -1,7 +1,7 @@
 import {phenomenaScopePanel} from './research-futures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseOnsetSummaries,onsetSummaryPanel} from './research-onset.mjs';
+import {parseOnsetSummaries,onsetSummaryPanel,onsetObservedAnnualChart} from './research-onset.mjs';
 
 const makeCase=(name,range,nYears)=>{
   const n=nYears*10, events=nYears;
@@ -72,4 +72,24 @@ test('capability labels reflect validated private experiments and distinguish un
   assert.equal((both.match(/RESULTADOS RETROSPECTIVOS · NO PROSPECTIVOS/g)||[]).length,2);
   assert.doesNotMatch(both,/SIN PROBABILIDADES REALES TODAVÍA/);
   assert.equal((phenomenaScopePanel().match(/SIN PROBABILIDADES REALES TODAVÍA/g)||[]).length,2);
+});
+
+test('year-by-year observed onset counts come from accepted retrospective rows only',()=>{
+  const intra=parseOnsetSummaries([row()]).accepted[0];
+  const inter=parseOnsetSummaries([row({...report,kind:'interstate_country'},{id:'SYNTHETIC-2'})]).accepted[0];
+  const svg=onsetObservedAnnualChart([intra,inter]);
+  assert.match(svg,/2016/);
+  assert.match(svg,/2024/);
+  assert.match(svg,/Inicios o reanudaciones de conflicto observados/);
+  assert.match(svg,/2016 · Inicio o reanudación de conflicto interno: 1 de 10 países observados/);
+  assert.match(svg,/2016 · Inicio o reanudación de conflicto interestatal: 1 de 10 países observados/);
+  assert.match(svg,/No representan guerras independientes/);
+  assert.equal((svg.match(/<rect /g)||[]).length,18);
+  const panel=onsetSummaryPanel([row()]);
+  assert.ok(panel.indexOf('Acontecimientos observados por año')<panel.indexOf('future-onset-reports'));
+});
+test('annual plot hides absent or inconsistent scores without inventing an event',()=>{
+  assert.equal(onsetObservedAnnualChart([]),'');
+  assert.equal(onsetObservedAnnualChart([{...report,test:{...report.test,events:999}}]),'');
+  assert.doesNotMatch(onsetSummaryPanel([]),/Acontecimientos observados por año/);
 });

@@ -101,3 +101,10 @@ Contrato de un resumen: `datasetVersion=25.1`, `target=onset1`, `kind` inequívo
 El frontend `app/research-onset.mjs` valida el esquema, consistencia de denominadores, suma anual y Brier Skill antes de mostrar resultados, sin cifras hardcodeadas. Si falta el registro canónico no muestra métricas ficticias. Solo consume la API de lectura privada y **no añade endpoints ni modifica el grafo probabilístico anterior**.
 
 La incertidumbre usa *bootstrap pareado por bloques de año* para reflejar sensibilidad a la elección de 6/9 años; no son periodos temporalmente independientes, intervalos de eficacia prospectiva ni una prueba de validez `as-of`. Distinguir siempre capacidad de ranking retrospectivo de pronóstico operativo.
+
+
+## Cronología real anual de inicios (v0.5.3)
+
+El observatorio muestra una gráfica 2016–2024 de **conteos observados de países con onset1** a partir de `PsicoExperimentos.notas`, sin cargar ni incluir datos operativos en el Git público. Presenta por separado interno e interestatal, con etiquetas anuales, denominadores auditados y nota de que cada barra cuenta **países-año**, no «guerras independientes». Es exclusivamente post-hoc sobre UCDP Onset 25.1; no muestra probabilidades prospectivas ni cambios en la red de cuatro estados.
+
+Los datos pasan el parser `psychohistory.onset.summary.v1`; filas erróneas se descartan. No se introduce una integración nueva ni polling, se reutiliza la respuesta de `/api/research-lab` y los estilos son responsive con desplazamiento horizontal.
