@@ -10,7 +10,7 @@ La definición del evento GED elegible es exactamente la del benchmark mensual y
 
 ### Calendario temporal sin fuga futura
 
-Para el mes final objetivo `T`, la fecha hipotética de emisión es su primer día; el corte informativo es `C=T−24 meses`, por la latencia conservadora del experimento mensual. La población de riesgo se decide **exclusivamente con observaciones hasta C**, no con la etiqueta de los meses posteriores.
+Para el **mes final del horizonte `T`**, el corte informativo es `C=T−24 meses`. La **fecha hipotética de emisión** sería el **día 1 del mes siguiente a `C`**, cuando acaba el último mes conocido; la predicción cubre los 24 meses `C+1..T`. Por ejemplo: etiqueta final **enero de 2024**, corte conocido **enero de 2022**, emisión hipotética **1 de febrero de 2022** y ventana objetivo febrero de 2022–enero de 2024. **T no es la fecha de emisión.** Esta emisión no se realizó realmente ni hay evidencia as-of; es un análisis retrospectivo.
 
 - Son elegibles únicamente países presentes de forma explícita en el roster anual GW de Onset 25.1 durante los **24 meses de historia anteriores al corte, inclusive**.
 - La condición de riesgo es que los **12 meses `C−11..C` estén libres de incidentes elegibles**; esa condición se verifica en el corte y **nunca** con datos de `C+1..T`.
@@ -64,10 +64,17 @@ La comparación debe leerse como un **análisis de sensibilidad**, no una segund
 
 ## Sensibilidad por fecha de emisión sin solapamiento (análisis posterior v0.6.4)
 
-El módulo `ged_reemergence_sensitivity.py`, integrado en [PR #578](https://github.com/mamg97/segundo-cerebro/pull/578), evalúa exclusivamente las emisiones del **1 de enero de 2016 y 2018** (validación) y **2020, 2022 y 2024** (test), separadas por ventanas completas de 24 meses.
+El módulo `ged_reemergence_sensitivity.py`, integrado en [PR #578](https://github.com/mamg97/segundo-cerebro/pull/578), evalúa exclusivamente las **ventanas que terminan en enero de 2016 y 2018** (validación) y **enero de 2020, 2022 y 2024** (test), separadas por ventanas completas de 24 meses. Las fechas hipotéticas de emisión serían febrero de 2014, 2016, 2018, 2020 y 2022, respectivamente.
 
 El complemento `ged_reemergence_anchor_stability.py` conserva exactamente esas fechas y la misma población. Para cada fecha calcula N evaluables, reapariciones observadas y Brier/Skill por cada uno de los tres baselines preestablecidos. Después repite el Brier Skill suprimiendo **una fecha entera por vez**, nunca países escogidos por su etiqueta, y guarda todas las comparaciones sin cambiar el target ni reentrenar el modelo. Los informes reales se archivan exclusivamente en Drive privado.
 
 **Prohibición inferencial explícita:** validación dispone de solo **dos** fechas y test solo **tres**. No se crean intervalos de confianza ni pruebas de significación basadas en una falsa independencia de los países, y tampoco se interpreta como prueba prospectiva de eficacia. Si la ventaja de un modelo depende desproporcionadamente de una sola fecha, documentar esa inestabilidad y posponer toda atribución de utilidad operativa hasta disponer de cohortes de horizonte completo adicionales. Estas fechas corresponden a experimentos retrospectivos reconstruidos con UCDP GED 25.1 revisado.
 
 El objetivo sigue siendo **reaparición de al menos un incidente letal estatal GED de fecha exacta en los 24 meses posteriores al corte informativo** en un país con doce meses sin incidentes elegibles al corte; **no** «inicio oficial de guerra» ni pronóstico de incidentes con fecha exacta de ocurrencia.
+
+
+### Corrección del calendario nominal (17/10/2026)
+
+Los campos legados `origin_year/origin_month` del primer informe representan el **año/mes terminal objetivo T**, a pesar de su nombre histórico. No representan la fecha de emisión. La versión de código actual incorpora `target_end_month` y `hypothetical_issue_month`, además de corregir `issue_date` y la unidad del reporte, **sin cambiar las probabilidades ni los casos evaluados**. Los ZIP de reproducción anteriores mantienen sus bytes originales y deben interpretarse con esta correspondencia; no cambiar retroactivamente sus manifiestos o checksums.
+
+Para las cinco ventanas no solapadas predefinidas, la equivalencia es: objetivos **enero 2016, 2018, 2020, 2022 y 2024**; primeras fechas hipotéticas de emisión **1 febrero 2014, 2016, 2018, 2020 y 2022**, respectivamente. Ninguna constituye una emisión prospectiva independiente verificada.
