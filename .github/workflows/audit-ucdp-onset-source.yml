@@ -18,6 +18,37 @@ jobs:
         run: |
           set -euo pipefail
           python3 research/psychohistory/stage_onset_sources.py --out-dir "$RUNNER_TEMP/ucdp-onset-staging"
+      - name: Exercise official-source retrospective engine without publishing scores
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          sys.path.insert(0, 'research/psychohistory')
+          from ucdp_onset import load_onsets, retrospective_report, ONSET_COLUMNS
+          folder = Path(__import__('os').environ['RUNNER_TEMP']) / 'ucdp-onset-staging'
+          manifest = json.loads((folder / 'manifest.json').read_text())
+          assert manifest['as_of_availability_independently_verified'] is False
+          assert manifest['retrospective_scoring_authorized'] is False
+          assert len(manifest['sources']) == 2
+          for entry in manifest['sources']:
+              content = (folder / entry['filename']).read_bytes()
+              src = load_onsets(content, kind=entry['kind'],
+                                expected_sha256=entry['observed_sha256'])
+              assert src['n_rows'] == entry['n_rows']
+              report = retrospective_report(src, label='onset1')
+              assert report['vintage_verified'] is False
+              assert report['prospective_eligible'] is False
+              for part in ('validation', 'test'):
+                  cohort = report['partitions'][part]
+                  assert cohort['n_scored'] > 0
+                  assert cohort['n_event'] == sum(c['outcome'] for c in cohort['cases'])
+                  for name, scores in cohort['models'].items():
+                      assert scores['n'] == cohort['n_scored']
+                      assert scores['events'] == cohort['n_event']
+              print('Passed private-only onset-model computation for public official', entry['kind'],
+                    '(without logging predictions or scores)')
+          PY
       - name: Temporarily export PUBLIC official UCDP source files for private archival
         uses: actions/upload-artifact@v4
         with:
