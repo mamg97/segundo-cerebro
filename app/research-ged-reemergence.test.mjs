@@ -42,3 +42,18 @@ test('HTML entities in external fields are escaped before rendering',()=>{
  assert.match(html,/MOCK &amp; SAFE/);
  assert.doesNotMatch(html,/MOCK & SAFE/);
 });
+
+test('complete casebook coverage is labeled as complete without redefining prediction target',()=>{
+ const a=row([item],0,2);
+ const b=row([{...item,id:102,date:'2021-03-17',positiveWindowCount:1}],1,2);
+ const complete=[a,b].map(entry=>{
+   const d=JSON.parse(entry.notes);
+   d.archiveTotalEvents=2;
+   d.archiveTotalWindowLinks=3;
+   return {...entry,notes:JSON.stringify(d)};
+ });
+ const html=gedIncidentPreviewPanel(complete);
+ assert.match(html,/Archivo documental completo: 2 de 2 sucesos únicos/);
+ assert.doesNotMatch(html,/Vista documental parcial/);
+ assert.match(html,/no del suceso concreto/);
+});
