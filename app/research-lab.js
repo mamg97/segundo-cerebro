@@ -1,5 +1,5 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
-import {mountFutureExplorer} from './research-futures.mjs?v=0.5.0';
+import {mountFutureExplorer} from './research-futures.mjs?v=0.5.1';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
 import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.1';
 const TRACKS=[
@@ -246,7 +246,7 @@ function render(){
   header();metrics();
   root.innerHTML=activeView==="futures"?'<div id="future-explorer"></div>':activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
-  if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;activeView='overview';render();}});
+  if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;activeView='overview';render();},onsetExperiments:state.lab.experiments||[]});
   if(activeView==="overview")disposeNeural=mountNeural(root.querySelector('.neural-stage'),{activeTrack,paused:motionPaused,onPause:value=>{motionPaused=value;}});
   root.querySelectorAll("button[data-track]").forEach(x=>x.addEventListener("click",()=>{
     const source=x.classList.contains('neural-orb')?'neural-orb':'track-card';
