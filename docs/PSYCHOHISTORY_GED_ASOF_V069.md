@@ -1,6 +1,6 @@
 # PSICOHISTORIA — GED v0.6.9 · puerta de procedencia `as-of` y vintages históricos
 
-**Estado inicial:** código de auditoría y tests exclusivamente sintéticos. Los datos y diagnósticos empíricos están restringidos a Drive; nunca se generan scores públicos ni se modifica la interfaz v0.5.8. No hay nuevos pronósticos.
+**Estado 17/10/2026:** código de auditoría y tests exclusivamente sintéticos implementados. Se ha realizado una **comprobación privada independiente** contra el ZIP GED casebook v0.6.8, archivada en un ZIP nuevo en Drive. La comprobación privada no sustituye la ejecución byte a byte del módulo público ni constituye un backtest vintage-correct. Ningún score empírico ni dato real entra en Git; no se modifica la interfaz v0.5.8. No hay pronósticos nuevos.
 
 ## Hallazgo documental externo y límite decisivo
 
