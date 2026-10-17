@@ -1,6 +1,6 @@
 # PSICOHISTORIA — contraste GED v0.6.5: tiempo desde último incidente elegible
 
-**Estado:** nuevo comparador experimental implementado. **No se han ejecutado ni publicado resultados de este modelo con los archivos UCDP reales.** Solo pruebas sintéticas. Nada de aquí constituye habilidad predictiva prospectiva ni una predicción emitida realmente durante 2016–2024.
+**Estado a 17/10/2026:** comparador implementado, probado sintéticamente y **reproducido retrospectivamente con originales privados**, con informes y manifiestos custodiados en Drive. La cabecera anterior reflejaba el estado previo a esa reproducción; no debe seguir presentarse como pendiente. No se publicaron scores reales en Git ni se certificó ningún pronóstico prospectivo.
 
 ## Pregunta
 
@@ -57,7 +57,7 @@ python3 research/psychohistory/ged_reemergence_recency.py \
 
 La comparación con el informe anterior debe usar idénticos hashes de fuente, horizonte, universo y desenlaces. Si no mejora contra el comparador fuerte, comunicar el resultado sin seleccionar después parámetros más favorables.
 
-**Hitos pendientes:** ejecutar con originales privados, revisar por año y por bloque los resultados sin considerar las cohortes independientes, y contrastar con un baseline externo de riesgo/conflicto cuyo target y disponibilidad temporal sean comparables. UCDP GED 25.1 es retrospectivo revisado: la disponibilidad `as-of` y la emisión real continúan sin probar. El paquete 2027 previo sigue sin sello TSA externo.
+**Hitos pendientes tras reproducción:** auditoría completa de integridad ZIP→manifiesto→informe; sensibilidad de composición y calendarios adicionales si existen datos suficientes; contraste externo solo si el target, universo, horizonte y emisión son comparables. UCDP GED 25.1 es retrospectivo revisado: la disponibilidad `as-of` y la emisión real continúan sin probar. El paquete 2027 previo sigue sin sello TSA externo.
 
 
 ## Auditoría de una reproducción real (sin publicar sus valores)
