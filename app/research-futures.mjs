@@ -19,6 +19,37 @@ const option = (value, label, selected) => '<option value="' + esc(value) + '"' 
 const point = (level, state) => ({x: 76 + level * 126, y: level ? 90 + state * 83 : 215});
 const curve = (from, to) => 'M' + from.x + ' ' + from.y + ' C' + (from.x + 60) + ' ' + from.y + ' ' + (to.x - 60) + ' ' + to.y + ' ' + to.x + ' ' + to.y;
 
+
+function observedFact(result, level) {
+  const state = result.observedStates?.[level];
+  if (!validObservedState(state)) return null;
+  const year = result.cutoff + level;
+  const evidence = result.observedEvidence?.find(e => e?.year === year && Number.isInteger(e?.sbDeathsBest) && e.sbDeathsBest >= 0);
+  const names = Array.isArray(evidence?.dyadNames) ? evidence.dyadNames.filter(n => typeof n === 'string' && n.length <= 320).slice(0,2) : [];
+  return {year,state,title:SHORT[state],description:REAL_EVENTS[state],
+    deaths:evidence?.sbDeathsBest,dyadCount:evidence?.sbDyadCount,names,
+    source:evidence?.sourceUrl || 'https://ucdp.uu.se/downloads/'};
+}
+export function historicalEventCards(result,horizon) {
+  if(!Array.isArray(result.observedStates))return '';
+  const cards=[];
+  for(let i=1;i<=horizon+1;i++) {
+    const year=result.cutoff+i,fact=observedFact(result,i);
+    if(!fact){cards.push('<article class="future-event-card"><small>'+year+' · NO EVALUABLE</small><strong>Sin observación válida para este año</strong></article>');continue;}
+    const mortality=fact.deaths===undefined?'Conteo oficial por incorporar':
+      fmt(fact.deaths,0)+' muertes estatales · mejor estimación UCDP';
+    const dyad=fact.names.length ? '<span class="future-dyad">Díadas: '+fact.names.map(esc).join(' · ')+
+      (fact.dyadCount>fact.names.length?' · y otras '+(fact.dyadCount-fact.names.length):'')+'</span>':
+      '<span class="future-dyad">Sin díada estatal reportada en esta observación</span>';
+    cards.push('<button type="button" class="future-event-card" data-fevent="'+i+'" aria-label="Inspeccionar acontecimiento UCDP '+
+      fact.year+'"><small>'+fact.year+(i===1?' · PUENTE EX POST':' · AÑO OBJETIVO')+
+      '</small><strong>'+CODES[fact.state]+' · '+esc(fact.title)+'</strong><span>'+
+      esc(fact.description)+'</span><em>'+esc(mortality)+'</em>'+dyad+'</button>');
+  }
+  return '<div class="future-event-heading"><strong>Acontecimientos documentados en el recorrido real</strong><span>Datos conocidos después · Pulsa un año para inspeccionar</span></div>'+
+    '<div class="future-event-cards">'+cards.join('')+'</div>'+
+    '<p class="chart-note">Las díadas indican partes enfrentadas reportadas por UCDP; no son incidentes puntuales ni demuestran causalidad. El estado 00 no implica paz ni ausencia de otras violencias. Fuente: OrganizedViolenceCY 26.1, CC BY 4.0.</p>';
+}
 export function futureGraph(result, horizon, selection = null, observed = false) {
   const levels = result.levels.slice(0, horizon + 2), width = 152 + (levels.length - 1) * 126;
   let svg = '<svg class="future-graph" viewBox="0 0 ' + width + ' 420" width="' + width + '" height="420" aria-label="Grafo temporal agregado de probabilidades. Las historias individuales se detallan debajo.">' +
@@ -60,6 +91,14 @@ export function futureGraph(result, horizon, selection = null, observed = false)
       (!i ? '<text x="' + p.x + '" y="' + (p.y + 50) + '" text-anchor="middle" class="future-year-note">' + esc(SHORT[state]) + '</text>' :
         realHere ? '<text x="' + p.x + '" y="' + (p.y - 33) + '" text-anchor="middle" class="future-real-label">' +
           (i === horizon + 1 ? 'REAL · FINAL' : 'REAL') + '</text>' : '') + '</g>';
+    if (realHere && i > 0) {
+      const fact = observedFact(result,i);
+      svg += '<g class="future-event-marker" tabindex="0" role="button" data-fevent="'+i+
+        '" aria-label="Evento real UCDP '+fact.year+': '+esc(fact.title)+'"><title>'+
+        esc(fact.year+' · '+fact.description+(fact.deaths===undefined?'':'; '+fact.deaths+' muertes estatales estimadas'))+
+        '</title><circle cx="'+(p.x+28)+'" cy="'+(p.y-20)+'" r="10" fill="#ffc182" stroke="#fff0d1" stroke-width="1"/>'+
+        '<text x="'+(p.x+28)+'" y="'+(p.y-16)+'" text-anchor="middle" fill="#102439" font-size="12" font-weight="700">i</text></g>';
+    }
   }));
   return svg + '</svg>';
 }
@@ -73,6 +112,18 @@ function distribution(result, snapshot) {
 
 function detail(result, horizon, selection) {
   const snapshot = result.snapshots[horizon - 1];
+  if (selection?.kind === 'event') {
+    const fact=observedFact(result,selection.level);
+    if (!fact) return '<h4>Sin evento verificable</h4><p>No consta una observación completa para este año.</p>';
+    return '<span class="eyebrow">EVIDENCIA HISTÓRICA · UCDP 26.1</span><h4>'+fact.year+' · '+esc(fact.title)+'</h4>'+
+      '<p>'+esc(fact.description)+'</p>'+
+      (fact.deaths===undefined ? '<p>Falta adjuntar el conteo oficial de muertes para este año.</p>' :
+        '<div class="kpi"><span>Muertes estatales (estimación UCDP)</span><b>'+fmt(fact.deaths,0)+'</b></div>')+
+      (fact.names.length ? '<p>Díadas registradas: '+fact.names.map(esc).join('; ')+'</p>':
+         '<p>Sin díada estatal registrada en la fuente aportada.</p>')+
+      '<p class="chart-note">Una díada de conflicto no es un incidente individual; fuente retrospectiva revisada. '+
+      'El desenlace no interviene en las probabilidades.</p><a href="'+esc(fact.source)+'" rel="noopener noreferrer" target="_blank">Consultar UCDP ↗</a>';
+  }
   if (selection?.kind === 'edge') {
     const edge = result.levels[selection.level].flows[selection.index];
     return '<span class="eyebrow">TRANSICIÓN / ' + result.levels[selection.level].year + '</span><h4>' + esc(SHORT[edge.from]) + ' → ' + esc(SHORT[edge.to]) + '</h4>' +
