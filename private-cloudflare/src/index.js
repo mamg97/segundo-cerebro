@@ -19,7 +19,7 @@ import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } 
 import { prospectiveSummary } from "./research-evaluation.js";
 import { researchFuturesResponse } from "./research-futures.js";
 import { researchUcdpEvidenceResponse } from "./research-ucdp-evidence.mjs";
-import { parseFutureCatalogs, FUTURE_MODELS } from "./research-futures-engine.mjs";
+import { parseFutureCatalogs, FUTURE_MODELS, suggestedIllustrativeCountry } from "./research-futures-engine.mjs";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
 import { readVision, saveVision, recordVisionReplacement } from "./vision.js";
@@ -5863,6 +5863,7 @@ export default {
         const futures = parseFutureCatalogs(snapshot.experiments);
         const futuresCatalogs = futures.accepted.map(c=>({id:c.id,origin:c.origin,cutoff:c.cutoff,
           maxHorizon:c.maxHorizon,runId:c.runId,version:c.version,
+          suggestedCountryId:suggestedIllustrativeCountry(c),suggestionBasis:'observed_transition_diversity_not_model_performance',
           countries:c.countries.map(({id,name})=>({id,name})),models:FUTURE_MODELS}));
         return json({ ok:true,...snapshot, futuresCatalogs, rejectedFutureCatalogs:futures.rejected.length,
           evaluation:prospectiveSummary(snapshot.predictions) });
