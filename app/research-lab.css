@@ -217,3 +217,20 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
 .future-onset-chart-scroll svg{width:100%;min-width:630px;height:auto;display:block}
 .future-onset-timeline .chart-note{margin:4px 0 0;font-size:10px;line-height:1.65;color:#a2bcd0}
 @media(max-width:760px){.future-onset-timeline{padding:11px}.future-onset-chart-scroll svg{min-width:760px}}
+
+/* v0.5.4: private outcome casebook, kept visually subordinate to the graph. */
+.future-onset-casebook{margin:15px 0;padding:13px;border:1px solid #355773;border-radius:10px;background:#0a1d30}
+.future-onset-case-filters{display:flex;gap:9px 14px;align-items:flex-end;flex-wrap:wrap;margin:13px 0}
+.future-onset-case-filters label{display:flex;flex-direction:column;gap:5px;font-size:10px;color:#9dbbd0}
+.future-onset-case-filters select{background:#132e44;border:1px solid #365c79;border-radius:8px;color:#eaf5ff;padding:8px 12px;max-width:200px}
+.future-onset-case-filters [role=status]{margin-left:auto;color:#edc38e;font-size:11px}
+.future-onset-case-scroll{max-height:390px;overflow:auto;border-radius:9px;border:1px solid #284963;scrollbar-color:#456b86 #092135}
+.future-onset-case-scroll table{border-collapse:collapse;width:100%;min-width:620px;font-size:11px;font-variant-numeric:tabular-nums}
+.future-onset-case-scroll th{position:sticky;top:0;background:#17364b;color:#d9efff;text-align:left;padding:11px 12px;white-space:nowrap}
+.future-onset-case-scroll td{padding:9px 12px;border-top:1px solid #27455c;color:#afcadb}
+.future-onset-case-scroll td strong{color:#f3f7ff}
+.future-onset-case-scroll tbody tr:hover{background:#1a3b50}
+.future-onset-case-scroll tbody tr[hidden]{display:none}
+.future-onset-casebook .chart-note{font-size:10px;line-height:1.7}
+.future-onset-casebook>a{font-size:11px;color:#88ccf0;text-decoration:underline}
+@media(max-width:600px){.future-onset-casebook{padding:9px}.future-onset-case-filters [role=status]{width:100%;margin-left:0}}
