@@ -1,3 +1,4 @@
+import {parseGedContextBatches,gedCaseCell,gedContextSummary} from './research-ged-events.mjs?v=0.5.6';
 // Private, strictly exploratory UCDP Onset country-year report summaries.
 // No data constants, no external I/O, no claims of prospective skill.
 export const ONSET_SCHEMA = 'psychohistory.onset.summary.v1';
@@ -145,12 +146,12 @@ export function parseOnsetCasebook(experiments=[]) {
 export function onsetCasebookPanel(experiments=[]){
   const parsed=parseOnsetCasebook(experiments);
   if(!parsed.accepted.length)return '';
-  const data=parsed.accepted[0],events=[...data.cases].sort((a,b)=>
+  const data=parsed.accepted[0], context=parseGedContextBatches(experiments,data), events=[...data.cases].sort((a,b)=>
     b.year-a.year||a.kind.localeCompare(b.kind)||a.country.localeCompare(b.country));
   const html=events.map(c=>'<tr data-onset-case data-kind="'+esc(c.kind)+'" data-year="'+c.year+'">'+
     '<td>'+c.year+'</td><td><strong>'+esc(c.country)+'</strong></td>'+
     '<td>'+esc(c.kind==='intrastate_country'?'Interno':'Interestatal')+'</td>'+
-    '<td>'+pct(c.pCountry,2)+'</td><td>'+pct(c.pGlobal,2)+'</td>'+
+    '<td>'+pct(c.pCountry,2)+'</td><td>'+pct(c.pGlobal,2)+'</td><td>'+gedCaseCell(c,context)+'</td>'+
     '</tr>').join('');
   return '<section class="future-onset-casebook" aria-label="Casos históricos de inicio de conflictos">'+
     '<div class="future-onset-chart-head"><strong>Países y años en los que UCDP registró un inicio o reanudación</strong>'+
@@ -164,8 +165,8 @@ export function onsetCasebookPanel(experiments=[]){
     '<option value="interstate_country">Interestatal</option></select></label>'+
     '<span data-onset-case-visible role="status">'+events.length+' casos</span></div>'+
     '<div class="future-onset-case-scroll" tabindex="0"><table><thead><tr>'+
-    '<th>Año</th><th>País registrado</th><th>Inicio</th><th>P. modelo país</th><th>P. frecuencia global</th>'+
-    '</tr></thead><tbody>'+html+'</tbody></table></div>'+
+    '<th>Año</th><th>País registrado</th><th>Inicio</th><th>P. modelo país</th><th>P. frecuencia global</th><th>Hechos GED documentados</th>'+
+    '</tr></thead><tbody>'+html+'</tbody></table></div>'+gedContextSummary(context)+
     '<p class="chart-note">Cada registro es la etiqueta oficial <code>onset1 = 1</code> para el país-año, no una '+
     'predicción de una guerra individual, una invasión con fecha precisa ni necesariamente violencia dentro del territorio del país. '+
     'Las probabilidades se estimaron retrospectivamente usando solo variables anteriores al corte Y−2, pero sobre '+
