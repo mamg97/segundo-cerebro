@@ -62,3 +62,16 @@ La cohorte del motor anterior para 2027 sigue siendo sobre los **cuatro estados 
 ## Criterio de salida de la fase
 
 Esta fase acaba cuando las versiones/columnas reales hayan sido confirmadas, ambos backtests tengan cobertura y métricas guardadas de forma privada, y la UI identifique por separado **estado de conflicto agregado (actual)**, **inicio de conflicto armado interno (nuevo)** e **inicio de conflicto interestatal (nuevo)**, mostrando métricas únicamente para experimentos realmente ejecutados. No usar valores sintéticos en producción.
+
+
+## Diagnóstico de sucesos raros (v0.5.1, métricas disponibles cuando se ejecute el CSV oficial)
+
+Los conflictos que empiezan son relativamente infrecuentes, por lo que un Brier bajo puede reflejar que el modelo casi siempre predice «no ocurre». Además de Brier y log-loss, `ucdp_onset.py` calcula:
+
+- **Precisión media en el ranking (Average Precision / AP):** ranking binario con agrupación de probabilidades idénticas para no privilegiar arbitrariamente el orden de los países. Indefinida si no hubo ningún inicio en la muestra. No confundir con ROC-AUC ni con una tasa de acierto.
+- **Cobertura de eventos en el 10 % de mayor riesgo:** qué porcentaje de los inicios observados cae en el decil superior según el ranking del modelo. En caso de empate exacto en el límite, cada país recibe peso fraccionario y se publica `tie_handling=fractional_expected`. El enriquecimiento (`risk_lift`) compara la tasa de eventos del decil superior con la prevalencia de la muestra.
+- **Brier Skill frente al baseline registrado:** `1 - Brier(country_shrinkage)/Brier(global_frequency)` sobre **los mismos países-año**, sin seleccionar un ganador por el test. Es posible un resultado negativo; cero indica mismo error.
+- **Calibración por cinco intervalos iguales** con denominadores, frecuencias reales y probabilidades medias. Intervalos vacíos permanecen sin estadísticas.
+- **Diagnóstico anual** (2010–2015, 2016–2024): muestra anual, número de inicios, Brier y AP. Una muestra anual sin inicios devuelve AP nulo, no cero ni 100 %. La AP combinada sobre todos los países-año puede no representar la calidad de cada año si varía la prevalencia o si hay cambios de escala.
+
+Estas métricas son **diagnósticos estadísticos retrospectivos** con la versión revisada 25.1. No demuestran capacidad prospectiva, anticipación de una invasión identificada ni significación estadística. Se exige evaluación posterior por bloques temporales, comparación contra modelos fuertes y pruebas vintage-correct antes de proclamar utilidad operativa. Los umbrales de alerta o intervención siguen sin definirse; no se elegirán utilizando el test.
