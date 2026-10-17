@@ -102,7 +102,7 @@ export function gedIncidentPreviewPanel(experiments=[]){
   return '<section class="panel ged-preview-panel" aria-label="Inspector histórico GED">'+
     '<div class="panel-head"><h3>Incidentes GED documentados · Archivo histórico</h3>'+
     '<span>Retrospectivo, no prospectivo</span></div>'+
-    '<p class="chart-note">Vista documental parcial: '+cases.length+' de '+data.archiveTotalEvents+' sucesos únicos del archivo; '+
+    '<p class="chart-note">'+(cases.length===data.archiveTotalEvents&&data.totalWindowLinks===data.archiveTotalWindowLinks?'Archivo documental completo: ':'Vista documental parcial: ')+cases.length+' de '+data.archiveTotalEvents+' sucesos únicos del archivo; '+
     data.totalWindowLinks+' de '+data.archiveTotalWindowLinks+' vínculos país-horizonte (solapados); no son predicciones '+
     'independientes ni guerras o invasiones identificadas.</p>'+
     '<div class="ged-preview-filters"><label>País<select data-ged-preview-country>'+
