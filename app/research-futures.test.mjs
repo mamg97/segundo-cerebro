@@ -124,7 +124,7 @@ test('annotated real-line markers and evidence cards expose historical outcomes 
   assert.match(annotated,/2002 · AÑO OBJETIVO/);
   assert.match(annotated,/Entrada en episodio agregado/);
   assert.match(annotated,/Persistencia del episodio agregado/);
-  assert.match(annotated,/Conteo oficial por incorporar/);
+  assert.match(annotated,/Consultando datos oficiales UCDP/);
   assert.doesNotMatch(historicalEventCards({...sample,observedStates:[0,null,null]},1),/data-fevent/);
 });
 
@@ -137,5 +137,5 @@ test('verified official source evidence is escaped, specific, and not a fabricat
   assert.match(html,/37 muertes estatales/);
   assert.match(html,/Government of SYNTHETIC - &lt;ENEMY&gt;/);
   assert.doesNotMatch(html,/<ENEMY>/);
-  assert.doesNotMatch(html,/2001 · PUENTE EX POST.+37 muertes estatales/);
+  assert.equal((html.match(/37 muertes estatales/g)||[]).length,1);
 });
