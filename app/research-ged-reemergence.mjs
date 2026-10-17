@@ -44,6 +44,8 @@ export function parseGedIncidentPreview(experiments=[]){
        !unsigned(d.batchIndex)||d.batchIndex>=d.batchCount||
        !unsigned(d.totalEvents)||d.totalEvents<1||d.totalEvents>500||
        !unsigned(d.totalWindowLinks)||d.totalWindowLinks<d.totalEvents||
+       !unsigned(d.archiveTotalEvents)||d.archiveTotalEvents<d.totalEvents||
+       !unsigned(d.archiveTotalWindowLinks)||d.archiveTotalWindowLinks<d.totalWindowLinks||
        !Array.isArray(d.events)||d.events.length<1||d.events.length>30||
        !evidence(row.evidence)){rejected.push(row.id);continue;}
     batches.push({...d,evidence:row.evidence,rowId:row.id});
@@ -54,6 +56,7 @@ export function parseGedIncidentPreview(experiments=[]){
   for(const b of batches){
     if(b.batchCount!==ref.batchCount||b.totalEvents!==ref.totalEvents||
        b.totalWindowLinks!==ref.totalWindowLinks||
+       b.archiveTotalEvents!==ref.archiveTotalEvents||b.archiveTotalWindowLinks!==ref.archiveTotalWindowLinks||
        b.gedZipSha256!==ref.gedZipSha256||b.casebookSha256!==ref.casebookSha256||
        b.evidence!==ref.evidence||slots.has(b.batchIndex))valid=false;
     slots.add(b.batchIndex);
@@ -65,7 +68,8 @@ export function parseGedIncidentPreview(experiments=[]){
   if(slots.size!==ref.batchCount||cases.length!==ref.totalEvents||
      cases.reduce((s,e)=>s+(unsigned(e.positiveWindowCount)?e.positiveWindowCount:0),0)!==ref.totalWindowLinks)valid=false;
   return valid?{ready:true,cases:cases.sort((a,b)=>b.date.localeCompare(a.date)||a.id-b.id),
-    totalWindowLinks:ref.totalWindowLinks,evidence:ref.evidence,rejected}:
+    totalWindowLinks:ref.totalWindowLinks,archiveTotalEvents:ref.archiveTotalEvents,
+    archiveTotalWindowLinks:ref.archiveTotalWindowLinks,evidence:ref.evidence,rejected}:
     {ready:false,cases:[],rejected:[...rejected,...batches.map(b=>b.rowId)]};
 }
 
@@ -98,8 +102,8 @@ export function gedIncidentPreviewPanel(experiments=[]){
   return '<section class="panel ged-preview-panel" aria-label="Inspector histórico GED">'+
     '<div class="panel-head"><h3>Incidentes GED documentados · Archivo histórico</h3>'+
     '<span>Retrospectivo, no prospectivo</span></div>'+
-    '<p class="chart-note">'+cases.length+' sucesos únicos asociados a '+
-    data.totalWindowLinks+' ventanas positivas solapadas; no son predicciones '+
+    '<p class="chart-note">Vista documental parcial: '+cases.length+' de '+data.archiveTotalEvents+' sucesos únicos del archivo; '+
+    data.totalWindowLinks+' de '+data.archiveTotalWindowLinks+' vínculos país-horizonte (solapados); no son predicciones '+
     'independientes ni guerras o invasiones identificadas.</p>'+
     '<div class="ged-preview-filters"><label>País<select data-ged-preview-country>'+
     '<option value="all">Todos</option>'+options(countries)+'</select></label>'+
