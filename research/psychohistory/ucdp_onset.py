@@ -50,7 +50,7 @@ def load_onsets(content: bytes, *, kind: str, expected_sha256: str):
     required = {"name", "year", "gwno_a", *ONSET_COLUMNS}
     if reader.fieldnames is None or not required.issubset(reader.fieldnames):
         raise ValueError("Incorrect UCDP country-onset schema")
-    if "conflict_id" in reader.fieldnames and "gwno_a" not in reader.fieldnames:
+    if "conflict_id" in reader.fieldnames:
         raise ValueError("Conflict-level file cannot be treated as country-year")
     lookup = {}
     for raw in reader:
