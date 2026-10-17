@@ -1,7 +1,8 @@
 """UCDP GED: *re-emergence* of state-based lethal incidents after a quiet year.
 
-A retrospectively reconstructed issue at target month T can use GED through
-T-24 months only. An eligible country must have 12 consecutive months without
+A retrospectively reconstructed 24-month *target ends* in month T and uses
+GED through C=T-24 only. Hypothetical issuance is on day 1 of C+1,
+not day 1 of T. Original release availability at C remains unverified. An eligible country must have 12 consecutive months without
 an eligible incident ending at the information cutoff C=T-24. Outcome Y=1
 means >=1 eligible incident during the NEXT 24 months (C+1..T). This is NOT a
 prediction of a specific battle, an invasion or official UCDP conflict onset.
@@ -97,8 +98,9 @@ def training_at(anchor,training):
 
 
 def issue_cohort(ged,roster,calendar,training,year,month):
-    origin=month_index(year,month)
+    origin=month_index(year,month)  # Legacy name: TARGET END month, NOT issue date.
     cutoff=origin-OBSERVATION_LAG_MONTHS
+    hypothetical_issue=cutoff+1
     earliest=month_index(ged["first_year"],1)
     last=month_index(ged["last_year"],12)
     if not (earliest+HISTORY_MONTHS+HORIZON_MONTHS <= cutoff
@@ -127,9 +129,13 @@ def issue_cohort(ged,roster,calendar,training,year,month):
             continue
         result=int(event_count(calendar,cid,cutoff+1,origin)>0)
         rows.append({"country_id":cid,"origin_year":year,"origin_month":month,
+                     "hypothetical_issue_month":f"{hypothetical_issue//12}-{hypothetical_issue%12+1:02d}",
+                     "target_end_month":f"{origin//12}-{origin%12+1:02d}",
                      "cutoff":f"{cutoff//12}-{cutoff%12+1:02d}",
                      "outcome":result,"probabilities":rates})
     return {"year":year,"month":month,"cutoff":f"{cutoff//12}-{cutoff%12+1:02d}",
+            "hypothetical_issue_month":f"{hypothetical_issue//12}-{hypothetical_issue%12+1:02d}",
+            "target_end_month":f"{origin//12}-{origin%12+1:02d}",
             "n_issued":len(rows)+sum(unresolved.values()),"n_evaluated":len(rows),
             "n_unresolved":sum(unresolved.values()),"unresolved_reasons":dict(unresolved),
             "training_mature_country_anchors":n,"cases":rows}
@@ -156,9 +162,11 @@ def reemergence_report(ged,onset):
     earliest,last=month_index(ged["first_year"],1),month_index(ged["last_year"],12)
     training=mature_training_cases(roster,calendar,earliest,last)
     report={
-        "schema":SCHEMA,"target":TARGET,"unit":"country and issue month",
+        "schema":SCHEMA,"target":TARGET,"unit":"country and target-end month",
         "outcome_horizon_months":HORIZON_MONTHS,
-        "issue_date":"first day of target month",
+        "issue_date":"hypothetical first day of month immediately after last known cutoff month",
+        "target_end_date":"last day of month T; binary event window is C+1 through T",
+        "legacy_origin_year_month_semantics":"target-end year/month, NOT issuance year/month",
         "input_data_cutoff_lag_months":OBSERVATION_LAG_MONTHS,
         "quiet_months_known_at_cutoff":QUIET_MONTHS,
         "history_months":HISTORY_MONTHS,
