@@ -248,3 +248,26 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
 .future-ged-status{color:#9fc3d9;font-size:11px;line-height:1.6}
 .future-ged-status a{color:#8dccf1;text-decoration:underline}
 @media(max-width:600px){.future-ged-event{min-width:200px}.future-ged-details[open]{min-width:230px}}
+
+/* v0.5.7 GED retrospective inspector, subordinate to Futures graph */
+.ged-preview-panel{margin:0 0 17px;padding:16px;background:#0a1e30;border:1px solid #395b73}
+.ged-preview-panel h3{font-size:15px}
+.ged-preview-panel .chart-note{font-size:11px;line-height:1.65;color:#9dbacd}
+.ged-preview-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:12px 0}
+.ged-preview-filters label{display:grid;gap:5px;color:#acd1e8;font-size:11px}
+.ged-preview-filters select{padding:8px;border-radius:8px;background:#102f45;color:#fff;border:1px solid #385e7a}
+.ged-preview-filters [role=status]{margin-left:auto;color:#ffcc99;font-size:11px}
+.ged-preview-list{max-height:470px;overflow:auto;display:grid;gap:8px}
+.ged-preview-event[hidden]{display:none}
+.ged-preview-event{background:#0c283b;border:1px solid #3b566e;border-radius:10px}
+.ged-preview-event summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:8px 15px;padding:12px;color:#ecf6ff}
+.ged-preview-event summary time{font:600 11px ui-monospace,monospace;color:#ffb67b}
+.ged-preview-event summary strong{font-size:12px;flex:1;min-width:165px}
+.ged-preview-event summary small{font-size:10px;color:#9abbd0}
+.ged-preview-event[open]{border-color:#c18d5c}
+.ged-preview-details{padding:0 14px 12px;font-size:11px;line-height:1.6;color:#bbd6e4}
+.ged-preview-probs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.ged-preview-probs div{background:#173248;padding:8px;border:1px solid #3b5b70;border-radius:8px}
+.ged-preview-probs dt{color:#acc7db;font-size:10px}
+.ged-preview-probs dd{color:#fbd29b;font-weight:700;margin:5px 0 0}
+@media(max-width:650px){.ged-preview-panel{padding:11px}.ged-preview-probs{grid-template-columns:repeat(2,minmax(0,1fr))}.ged-preview-filters [role=status]{margin-left:0;width:100%}}
