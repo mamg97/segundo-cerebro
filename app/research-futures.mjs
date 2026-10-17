@@ -1,4 +1,4 @@
-import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.6';
+import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.7';
 import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.7';
 // The browser renders server-calculated probabilities. It never fits a model.
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
