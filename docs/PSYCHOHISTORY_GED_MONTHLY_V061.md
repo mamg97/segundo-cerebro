@@ -35,3 +35,14 @@ python3 research/psychohistory/ged_monthly_incidence.py \
 Los resultados serán **exploratorios** y no implican que podamos predecir un incidente concreto con fecha, perpetrador o ubicación. El siguiente gate es ejecutar una muestra real sobre ambas fuentes oficiales archivadas en Drive, auditar la cobertura y comparar el resultado con un baseline fuerte. Es fundamental revisar el efecto de la exclusión de `date_prec>1` y evitar promesas predictivas sobre episodios futuros basadas solo en fit retrospectivo.
 
 La vista principal de Futuros debe conservar **primero el grafo de probabilidades**; si se añade una nueva vista mensual, se hará únicamente después de resultados oficiales auditados y por fuente canónica privada, no con valores incrustados.
+
+
+## Ampliación del benchmark: baseline fuerte de incidencia local (v0.6.2)
+
+Antes de atribuir habilidad a la contracción hacia la prevalencia global, se añade **`country_history_24m`**: tasa suavizada Beta(1,1) de presencia de incidentes GED con fecha exacta entre los **24 últimos meses disponibles del propio país**, terminando en `t−24`. La fórmula es `(1 + meses_con_evento) / (24 + 2)`. Comparte exactamente país-mes y etiquetas con `global_frequency` y `country_shrinkage`; el target sigue siendo **incidencia**, no comienzo de conflicto.
+
+La evaluación comparativa incluye Brier y log-loss, AP con empates, concentración top 10 %, calibración y Brier Skill tanto frente al baseline global como frente a la contracción por país. Si el baseline local sencillo obtiene menor error que el modelo más elaborado, debe reflejarse explícitamente; **no seleccionar el ganador con posterioridad para proclamar skill científica**. Este benchmark se añade después de la primera reproducción exploratoria, por lo que cualquier nueva comparación sigue siendo exploratoria: no constituye protocolo preinscrito antes del experimento original.
+
+En una reproducción exploratoria privada con GED 25.1 y GW roster de Onset 25.1 se observó un patrón que exige prudencia: el historial local es un comparador exigente porque el objetivo de «algún incidente» está muy influido por la persistencia en países que ya registraban violencia estatal. No prueba capacidad para anticipar nuevas guerras. Los resultados numéricos, casos país-mes y archivos originales **no** se publican en Git: están en el informe privado del experimento archivado en Drive.
+
+Próximo diseño científico independiente: «primera aparición de un incidente estatal letal tras un periodo explícito sin incidentes elegibles», con un target y población de evaluación preregistrados que no dependan de información futura al seleccionar la muestra. Nunca mostrar ese nuevo target como si fuera la probabilidad GED mensual actual.

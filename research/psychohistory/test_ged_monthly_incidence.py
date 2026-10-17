@@ -80,6 +80,38 @@ class MonthlyIncidenceTests(unittest.TestCase):
             self.assertNotEqual([c["outcome"] for c in a["cases"]],
                                 [c["outcome"] for c in b["cases"]])
 
+    def test_strong_local_history_baseline_never_uses_future_ged_months(self):
+        with tempfile.TemporaryDirectory() as t:
+            ged,roster=fixture(Path(t)/"g.zip")
+            before=forecast_month(ged,roster,2016,1)
+            for case in before["cases"]:
+                p=case["probabilities"]
+                self.assertTrue(0<p["country_history_24m"]<1)
+                # 24 months with a Beta(1,1) prior and no target-month information.
+                expected=(1+sum(ged["events_by_month"][(case["country_id"],idx)]>0
+                                for idx in range(month_index(2014,1)-23,
+                                                 month_index(2014,1)+1)))/26
+                self.assertAlmostEqual(p["country_history_24m"],expected)
+            later={**ged,"events_by_month":ged["events_by_month"].copy()}
+            later["events_by_month"][(3,month_index(2015,2))]=99
+            after=forecast_month(later,roster,2016,1)
+            self.assertEqual([x["probabilities"] for x in before["cases"]],
+                             [x["probabilities"] for x in after["cases"]])
+
+    def test_all_models_share_country_month_sample_for_skill_comparisons(self):
+        with tempfile.TemporaryDirectory() as t:
+            ged,roster=fixture(Path(t)/"g.zip")
+            report=monthly_report(ged,roster)
+            for part in report["partitions"].values():
+                d=part["rare_event_diagnostics"]
+                self.assertEqual(set(part["models"]),{"global_frequency","country_shrinkage","country_history_24m"})
+                self.assertEqual(set(d["models"]),{"global_frequency","country_shrinkage","country_history_24m"})
+                for name,m in part["models"].items():
+                    self.assertEqual(m["n"],part["n_scored"])
+                    self.assertGreaterEqual(m["brier"],0)
+                expected=1-part["models"]["country_history_24m"]["brier"]/part["models"]["global_frequency"]["brier"]
+                self.assertAlmostEqual(d["country_history_brier_skill_vs_global_frequency"],expected)
+
     def test_missing_roster_year_excludes_not_negative_imputed(self):
         with tempfile.TemporaryDirectory() as t:
             ged,roster=fixture(Path(t)/"g.zip")
@@ -111,7 +143,7 @@ class MonthlyIncidenceTests(unittest.TestCase):
             self.assertEqual(report["partitions"]["test"]["n_scored"],5*12*5)
             for p in report["partitions"].values():
                 self.assertEqual(p["n_scored"]+p["n_excluded"],p["n_country_months"])
-                for model in ("global_frequency","country_shrinkage"):
+                for model in ("global_frequency","country_shrinkage","country_history_24m"):
                     self.assertEqual(p["models"][model]["n"],p["n_scored"])
                     self.assertGreaterEqual(p["models"][model]["brier"],0)
                     self.assertTrue(p["rare_event_diagnostics"]["models"][model]["calibration_bins"])
