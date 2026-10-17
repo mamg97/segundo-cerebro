@@ -1,3 +1,12 @@
+## PSICOHISTORIA — laboratorio v0.4.3: resultados históricos primero (17/10/2026)
+
+- **Publicado en aplicación privada:** PR [#551](https://github.com/mamg97/segundo-cerebro/pull/551) fusionada, Actions de validación y despliegue privado [39007820256](https://github.com/mamg97/segundo-cerebro/actions/runs/39007820256) con resultado **success**. Confirmados en `main` HTML v0.4.3, panel de resultados y grafo de recorrido real. Queda pendiente inspección visual autenticada posterior a recarga.
+- **UX inicial:** la pestaña predeterminada es Futuros; cuando está activa se oculta la portada decorativa (solo esa pestaña). Debajo de los selectores se muestra primero el caso país–año–horizonte, estado UCDP observado después, probabilidad que asignó el modelo, Brier/log-loss individuales; a continuación el grafo con recorrido ámbar y nodo final destacado (activado por defecto cuando el caso es evaluable), cronología de último año conocido, puente no observado al emitir y años objetivo, comparación de modelos y probabilidades alternativas. Layout responsive; las demás vistas conservan hero y métricas.
+- **Semántica:** cada «evento real» de esta capa es el estado de umbral 25+ muertes estatales UCDP y sus transiciones 00/01/10/11, no un nombre o causa de guerra individual. No inventar eventos geopolíticos sin otro conjunto de datos trazable. Ausencias quedan no evaluables; los históricos son revisados retrospectivamente, **sin validación prospectiva**. Mantener apartados de vintages, sellado RFC3161 y cohortes 2027 no selladas intactos.
+- **Próximo paso visual:** cargar [research-lab.html?v=0.4.3](https://segundo-cerebro.mamg97.workers.dev/app/research-lab.html?v=0.4.3) bajo Access y verificar estado completo/no evaluable, móvil y sobreimpresión del recorrido. **Próximo paso científico:** enriquecer narrativas de eventos exclusivamente con fuentes UCDP adicionales con fecha, país, identificador y taxonomía auditables; mantener separada esa capa de evidencia del cálculo probabilístico.
+
+---
+
 ## PSICOHISTORIA — preparación de cohorte 2027 y vintages (17/10/2026)
 
 - **PR #548 fusionada y CI satisfactoria:** auditor de ediciones archivadas UCDP OrganizedViolenceCY 24.1/25.1/26.1, comparador de revisiones país-año sin imputaciones y gate conservadora as-of; preparador privado reproducible de cohortes anuales futuras con origen posterior a los datos y puente temporal desconocido. Protocolo en [PSYCHOHISTORY_VINTAGES_AND_PROSPECTIVE.md](PSYCHOHISTORY_VINTAGES_AND_PROSPECTIVE.md).
