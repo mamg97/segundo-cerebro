@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import datetime as dt
 import hashlib
 import io
 import json
@@ -102,19 +103,19 @@ def _event(row):
     if (eid<1 or cid<1 or not 1989<=year<=2024 or violence not in (1,2,3)
         or best<0 or low<0 or high<0 or dp<1 or wp<1 or
         not -90<=lat<=90 or not -180<=lon<=180 or
-        not re.fullmatch(r"\d{4}-\d{2}-\d{2}",d0 or "") or
-        not re.fullmatch(r"\d{4}-\d{2}-\d{2}",d1 or "") or
-        d0>d1):
+        not isinstance(d0,str) or not isinstance(d1,str) or
+        len(d0)>32 or len(d1)>32):
         raise ValueError("Invalid GED event")
     try:
-        from_date, to_date = dt.date.fromisoformat(d0), dt.date.fromisoformat(d1)
+        from_date = dt.datetime.fromisoformat(d0).date()
+        to_date = dt.datetime.fromisoformat(d1).date()
     except ValueError as error:
         raise ValueError("Invalid GED calendar date") from error
     if from_date > to_date or to_date.year != year:
         raise ValueError("GED year and event period differ")
     return {
         "gedEventId":eid, "countryId":cid, "year":year, "violenceType":violence,
-        "dateStart":d0, "dateEnd":d1, "datePrecision":dp,
+        "dateStart":from_date.isoformat(), "dateEnd":to_date.isoformat(), "datePrecision":dp,
         "locationPrecision":wp,
         "location":str(row["where_coordinates"])[:180],
         "dyad":str(row["dyad_name"])[:260],
