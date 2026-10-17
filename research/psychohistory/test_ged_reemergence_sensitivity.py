@@ -33,6 +33,8 @@ class IndependentWindowTests(unittest.TestCase):
         x=independent_sensitivity(fixture())
         self.assertEqual(x["partitions"]["validation"]["anchors"],[2016,2018])
         self.assertEqual(x["partitions"]["test"]["anchors"],[2020,2022,2024])
+        self.assertEqual(x["partitions"]["test"]["hypothetical_issue_months"],["2018-02","2020-02","2022-02"])
+        self.assertEqual(x["anchor_semantics"],"target_end_not_issue_date")
         self.assertEqual(x["partitions"]["test"]["n_evaluated"],6)
         self.assertEqual(x["partitions"]["test"]["positive_outcomes"],1)
         self.assertEqual(x["partitions"]["validation"]["n_evaluated"],4)
