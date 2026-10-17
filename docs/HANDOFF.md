@@ -1,3 +1,13 @@
+## PSICOHISTORIA — GED v0.6.8 · casebook factual sin atribución predictiva (17/10/2026)
+
+- **Código nuevo:** `research/psychohistory/ged_incident_casebook.py`, tests sintéticos y protocolo `docs/PSYCHOHISTORY_GED_CASEBOOK_V068.md`; extrae del GED 25.1 original el **primer incidente elegible** de cada país-horizonte positivo de recencia v0.6.5 y comprueba estrictamente que los negativos no tengan ninguno. Nunca interpreta un evento GED como «guerra predicha».
+- **Normalización:** catálogo único por `ged_id` y tabla separada de vínculos país/fin de horizonte/fecha hipotética de emisión. Las numerosas ventanas de 24 meses **solapadas** pueden señalar repetidamente un mismo incidente; no sumar enlaces como sucesos o predicciones independientes.
+- **Auditoría privada:** fuentes originales y reporte de recencia archivados con SHA verificado; paquete nuevo ZIP con informe, manifiesto, código y tests sintéticos guardado en Drive PSICOHISTORIA - EXPERIMENTOS, exclusivo de propietario. Los datos de actores, lugares, incidentes y probabilidades permanecen fuera de Git y Sheets/UI hasta nueva validación de lectura.
+- **Frontera temporal:** campos source_date son fechas de prensa, no disponibilidad UCDP as-of. `ucdp_record_release_date_verified=null` y `information_available_at_historical_issue_verified=false`; solo observaciones GED `type_of_violence=1, best>=1, date_prec=1, date_start=date_end`. No pruebas vintage-correct, no probabilidad de eventos individuales, ni promesa de predecir guerras/coups.
+- **Estado de integración:** PR/CI pendiente de verificar antes del merge. La UI privada conserva v0.5.6 y primera vista del grafo.
+
+---
+
 ## PSICOHISTORIA — GED v0.6.7 · sensibilidad por fase de calendario (17/10/2026)
 
 - **Módulo:** `research/psychohistory/ged_calendar_robustness.py`, tests sintéticos, documento `docs/PSYCHOHISTORY_GED_CALENDAR_V067.md`. Analiza 24 posibles fases no solapadas *dentro de cada fase* a partir de los informes privados GED reemergencia + recencia v0.6.5. No refit, no elección de modelo ni de fecha tras observar test, no números reales en Git.
