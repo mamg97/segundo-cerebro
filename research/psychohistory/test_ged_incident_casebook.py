@@ -7,7 +7,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
-from ged_incident_casebook import read_events,join_cases,SCHEMA
+from ged_incident_casebook import read_events,join_cases,SCHEMA,TARGET
 
 PROBS={'global_reemergence':.05,'country_history':.1,'country_shrinkage':.08,'time_since_last_event':.12}
 
@@ -22,7 +22,7 @@ def report():
     v=[case(7,2016,1,1),case(8,2016,1,0)]
     t=[case(7,2020,1,1),case(7,2020,2,1)]
     return {'schema':SCHEMA,'prospective_eligible':False,'source_as_of_verified':False,
-            'added_model':'time_since_last_event','target':'synthetic_event_within_24m',
+            'added_model':'time_since_last_event','target':TARGET,
             'partitions':{'validation':{'years':[2016,2019],'n':2,'events':1,'cases':v},
                           'test':{'years':[2020,2024],'n':2,'events':2,'cases':t}}}
 
