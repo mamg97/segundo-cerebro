@@ -782,3 +782,8 @@ The Worker derives an ephemeral exercise object containing:
 - source and per-asset license/attribution metadata.
 
 This external object is reference data only and is not persisted as a second exercise catalogue inside the user's private canonical stores.
+
+
+### PsicoExperimentos.notas: resúmenes nuevos de inicio de conflictos
+
+El sobre privado opcional `psychohistory.onset.summary.v1` guarda únicamente agregados revisados de UCDP Onset 25.1, separados por `intrastate_country` y `interstate_country`. Incluye `validation` y `test` con N/eventos/años, modelos comparados, Brier/log-loss/AP, Brier Skill relativo, 95 % bootstrap anual descriptivo y recuentos anuales. La columna evidencia apunta a Drive **privado**. Fuente as-of no verificada y `prospectiveEligible=false` obligatorios; no infiere episodios geopolíticos concretos ni crea pronósticos reales. El frontend debe rechazar datos inconsistentes o ausentes en vez de enseñar ejemplos.
