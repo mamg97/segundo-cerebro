@@ -1,3 +1,12 @@
+## PSICOHISTORIA — GED v0.6.7 · sensibilidad por fase de calendario (17/10/2026)
+
+- **Módulo:** `research/psychohistory/ged_calendar_robustness.py`, tests sintéticos, documento `docs/PSYCHOHISTORY_GED_CALENDAR_V067.md`. Analiza 24 posibles fases no solapadas *dentro de cada fase* a partir de los informes privados GED reemergencia + recencia v0.6.5. No refit, no elección de modelo ni de fecha tras observar test, no números reales en Git.
+- **Fuentes archivadas:** la auditoría privada comprobó integridad de ZIP GED 25.1, roster Onset 25.1, informe v0.6.3 e informe v0.6.5 contra manifiestos SHA. ZIP nuevo v0.6.7 en la carpeta privada PSICOHISTORIA - EXPERIMENTOS, con reporte, manifiesto y scripts; acceso solo propietario. No se sobreescribieron artefactos.
+- **Interpretación:** 24 fases muy correlacionadas entre sí, 2 fechas de fin de horizonte en validación y 2/3 en test. Mayor robustez descriptiva del Brier no equivale a mejora de AP/AUC, prueba de significación ni skill prospectivo. El calendario T representa **fin** de horizonte; emisión hipotética T−23 meses. Resultados retrospectivos revisados, no vintage-correct.
+- **Pendiente:** integración factual de acontecimientos históricos GED con fuente y disponibilidad temporal; reproducción independiente de todo el motor bajo nuevo commit y comparación externa sólo ante target común. UI v0.5.6 y PsicoPredicciones inalterados. Actualizar aquí el cierre de PR/CI una vez confirmado.
+
+---
+
 ## PSICOHISTORIA — GED v0.6.6 · revisión de integridad de recencia (17/10/2026)
 
 - **Desviación corregida en código:** el comparador v0.6.5 podía aprender una probabilidad propia para `history_incomplete`, contradiciendo su fallback preregistrado a frecuencia global. La revisión fuerza el fallback y añade pruebas sintéticas más diagnóstico de composición en las **mismas fechas objetivo no solapadas**; no cambia los tres modelos congelados, los desenlaces ni el corte T−24.
