@@ -18,6 +18,7 @@ import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-m
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
 import { prospectiveSummary } from "./research-evaluation.js";
 import { researchFuturesResponse } from "./research-futures.js";
+import { researchUcdpEvidenceResponse } from "./research-ucdp-evidence.mjs";
 import { parseFutureCatalogs, FUTURE_MODELS } from "./research-futures-engine.mjs";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
@@ -5830,6 +5831,17 @@ export default {
         if (code === "OBJECTS_NOT_CONFIGURED" || code === "OBJECTS_SOURCE_PENDING") return json({ ok: false, code }, 503);
         console.warn("Objects look write failed", code);
         return json({ ok: false, code: "OBJECTS_LOOK_WRITE_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/research-futures-evidence") {
+      if (request.method !== "GET") return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
+      try {
+        const snapshot = await fetchPsychohistoryLab(env,getGoogleAccessToken);
+        const response = await researchUcdpEvidenceResponse(snapshot.experiments,url.searchParams);
+        return json(response.body,response.status);
+      } catch {
+        return json({ok:false,code:"UCDP_EVIDENCE_UNAVAILABLE"},503);
       }
     }
 
