@@ -91,3 +91,57 @@
 @media(max-width:440px){.future-controls{grid-template-columns:minmax(0,1fr);padding:14px}.future-toolbar>span{margin-bottom:12px}.future-distribution{gap:9px}.future-distribution article{padding:13px}.future-distribution strong{font-size:25px}.future-paths button{grid-template-columns:minmax(0,1fr) auto}.future-paths button>span:nth-child(2){grid-row:2;grid-column:1/-1}.future-paths button strong{grid-row:1;grid-column:2}.future-timeline{padding:14px}.future-detail h4{font-size:19px}}
 @media(prefers-reduced-motion:reduce){.future-pulse,.future-core-glow{animation:none!important}}
 .future-edge{cursor:pointer}.future-edge:focus-visible{outline:none}.future-edge:focus-visible .future-flow{stroke:#fff;stroke-opacity:1}
+
+/* v0.4.3 — historical outcome first. On the default Futures tab the analysis,
+   not a decorative laboratory hero, occupies the first viewport. */
+body[data-lab-view="futures"] .hero,
+body[data-lab-view="futures"] #headline-metrics{display:none}
+body[data-lab-view="futures"] #status{margin:7px 0 10px;font-size:11px}
+body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
+.future-case-primary{border-color:#3f5f76;background:linear-gradient(125deg,#122e49,#0a1b2e 68%);padding:23px 26px}
+.future-case-title{display:flex;gap:6px 20px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.future-case-title .eyebrow{width:100%;font-size:10px;letter-spacing:1.2px;color:#f9b972}
+.future-case-title h3{margin:0;color:#f0f7ff;font-size:clamp(21px,2.3vw,30px);font-weight:600}
+.future-case-title p{margin:0;color:#aac6db;font-size:12px}
+.future-real-outcome{margin:15px 0;padding:15px 20px;border:1px solid #bd854b7d;border-radius:12px;background:linear-gradient(100deg,#ad66271a,transparent)}
+.future-real-marker{font:700 10px ui-monospace,monospace;letter-spacing:1px;color:#f8bf81}
+.future-real-outcome h4{margin:8px 0;color:#ffdfad;font-size:clamp(17px,2.1vw,24px)}
+.future-real-outcome p{margin:0;font-size:12px;line-height:1.65;color:#bcd2e2}
+.future-case-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.future-case-kpis>div{padding:14px 15px;background:#10283d;border:1px solid #34516b;border-radius:10px;min-width:0}
+.future-case-kpis small{display:block;min-height:30px;color:#a5bfd2;font-size:10px;line-height:1.5}
+.future-case-kpis strong{display:block;color:#e7f4ff;font-size:clamp(19px,2.1vw,26px);font-variant-numeric:tabular-nums;margin-top:5px}
+.future-case-kpis>div:first-child strong{color:#ffc184}
+.future-epistemic{font-size:11px;line-height:1.7;color:#8eabc0;margin:13px 0 0}
+.future-real-empty{padding:20px 0}.future-real-empty strong{color:#ffbd8a;font-size:17px}.future-real-empty p{font-size:12px;color:#a7c2d8}
+.future-observed-timeline{margin-top:18px}
+.future-real-years{display:flex;gap:9px;overflow-x:auto;scrollbar-color:#456885 #091624;padding:9px 0 13px;scroll-snap-type:x proximity}
+.future-real-year{flex:0 0 180px;scroll-snap-align:start;min-width:0;padding:13px;border:1px solid #29455c;background:#0a1a2b;border-radius:11px}
+.future-real-year.has-outcome{border-color:#69654d}
+.future-real-year.final{border-color:#ebae69;box-shadow:0 0 16px #d27d2e19}
+.future-real-year small{display:block;color:#8aa9c0;font-size:9px;letter-spacing:.7px}
+.future-real-year strong{display:block;font-size:20px;color:#eaf6ff;margin:6px 0}
+.future-real-year>span{display:block;font-size:10px;line-height:1.6;color:#92aec5;min-height:28px}
+.future-real-year b{display:block;color:#f0c598;font-size:11px;margin:7px 0}
+.future-real-year p{font-size:10px;line-height:1.55;color:#9fbed2;margin:0}
+.future-network-key{display:flex;flex-wrap:wrap;gap:8px 19px;font-size:11px;color:#a5c4d8;margin:9px 0 5px}
+.future-network-key b{color:#f5cf94;font-weight:600}
+.future-real-ring{pointer-events:none;filter:drop-shadow(0 0 7px #ffc78388)}
+.future-real-label{font:700 10px ui-monospace,monospace;fill:#ffe3b1;letter-spacing:.4px}
+.future-observed-halo{pointer-events:none;filter:drop-shadow(0 0 5px #ffd1a777)}
+.future-observed{pointer-events:none;stroke-linecap:round;stroke-linejoin:round}
+.future-state-distribution{overflow:hidden}
+.future-case-comparison .scroll-x{margin-top:14px}
+.future-case-comparison .future-current-model{box-shadow:inset 3px 0 #ffb167}
+.future-legend b{font-family:ui-monospace,monospace;font-size:11px}
+@media(max-width:680px){
+ .future-case-primary{padding:16px}
+ .future-case-title p{width:100%}
+ .future-case-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .future-case-kpis>div{padding:11px 9px}
+ .future-case-kpis small{font-size:9px;min-height:52px}
+ .future-case-kpis strong{font-size:18px}
+ .future-real-outcome{padding:13px 12px}
+ .future-real-year{flex-basis:160px}
+}
+@media(max-width:390px){.future-case-kpis{grid-template-columns:1fr}.future-case-kpis small{min-height:auto}}

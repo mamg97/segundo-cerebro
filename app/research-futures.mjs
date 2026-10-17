@@ -4,6 +4,17 @@ const fmt = (value, digits = 3) => typeof value === 'number' && Number.isFinite(
 const pct = value => fmt(value * 100, 2) + ' %';
 const COLORS = ['#69c5f6', '#ff9b45', '#84d9bd', '#bdabff'];
 const SHORT = ['Bajo → bajo', 'Entrada', 'Salida', 'Persistencia'];
+const CODES = ['00','01','10','11'];
+const REAL_EVENTS = [
+  'Actividad estatal registrada por debajo del umbral de 25 muertes en ambos años; no implica paz ni ausencia de violencia.',
+  'Entrada en episodio agregado: el año actual alcanza al menos 25 muertes estatales registradas tras un año bajo el umbral.',
+  'Salida del episodio agregado: el año actual desciende por debajo del umbral tras un año que lo superó.',
+  'Persistencia del episodio agregado: ambos años alcanzan al menos 25 muertes estatales registradas.'
+];
+const validObservedState = s => Number.isInteger(s) && s >= 0 && s <= 3;
+export const observedCaseAvailable = (result, horizon) =>
+  result?.caseEvaluations?.[horizon - 1]?.available === true;
+
 const option = (value, label, selected) => '<option value="' + esc(value) + '"' + (String(value) === String(selected) ? ' selected' : '') + '>' + esc(label) + '</option>';
 const point = (level, state) => ({x: 76 + level * 126, y: level ? 90 + state * 83 : 215});
 const curve = (from, to) => 'M' + from.x + ' ' + from.y + ' C' + (from.x + 60) + ' ' + from.y + ' ' + (to.x - 60) + ' ' + to.y + ' ' + to.x + ' ' + to.y;
@@ -28,7 +39,11 @@ export function futureGraph(result, horizon, selection = null, observed = false)
   });
   if (observed && result.observedStates?.length) {
     const states = result.observedStates.slice(0, levels.length);
-    for (let i = 1; i < states.length; i++) if (states[i] !== null && states[i - 1] !== null) svg += '<path class="future-observed" d="' + curve(point(i - 1, states[i - 1]), point(i, states[i])) + '" fill="none" stroke="#fff5df" stroke-width="2.5" stroke-dasharray="7 5"><title>Recorrido observado posteriormente en la release revisada</title></path>';
+    for (let i = 1; i < states.length; i++) if (validObservedState(states[i]) && validObservedState(states[i - 1])) {
+      const d = curve(point(i - 1, states[i - 1]), point(i, states[i]));
+      svg += '<path class="future-observed-halo" d="' + d + '" fill="none" stroke="#ffb35d" stroke-width="9" stroke-opacity=".23" aria-hidden="true"/>' +
+        '<path class="future-observed" d="' + d + '" fill="none" stroke="#ffe4a8" stroke-width="3.7" stroke-dasharray="9 5"><title>Recorrido realmente observado después en la edición revisada UCDP</title></path>';
+    }
   }
   levels.forEach((level, i) => level.distribution.forEach((mass, state) => {
     if (!i && state !== result.initial) return;
@@ -36,9 +51,15 @@ export function futureGraph(result, horizon, selection = null, observed = false)
     svg += '<g class="future-node' + (selected ? ' selected' : '') + '" tabindex="0" role="button" data-fnode="' + i + ':' + state + '" aria-label="' + level.year + ', ' + esc(SHORT[state]) + ', probabilidad marginal ' + pct(mass) + '">';
     svg += '<rect x="' + (p.x-42) + '" y="' + (p.y-25) + '" width="84" height="80" fill="transparent"/>';
     if (!i) svg += '<circle class="future-core-glow" cx="' + p.x + '" cy="' + p.y + '" r="44" fill="url(#future-core)"/>';
+    const realHere = observed && validObservedState(result.observedStates?.[i]) && result.observedStates[i] === state;
+    if (realHere && i > 0) svg += '<circle class="future-real-ring" cx="' + p.x + '" cy="' + p.y +
+      '" r="' + Math.max(15, Math.max(4, 20 * Math.sqrt(mass)) + 8) + '" fill="none" stroke="#ffdb9b" stroke-width="3" stroke-dasharray="4 3"><title>Estado observado después: ' +
+      esc(SHORT[state]) + '</title></circle>';
     svg += '<circle cx="' + p.x + '" cy="' + p.y + '" r="' + (i ? Math.max(4, 20 * Math.sqrt(mass)) : 15) + '" fill="' + (i ? COLORS[state] : '#ffba78') + '" fill-opacity="' + (mass ? '.85' : '.12') + '" stroke="' + (selected ? '#fff' : COLORS[state]) + '" stroke-width="' + (selected ? 3 : 1) + '"/>' +
       '<text x="' + p.x + '" y="' + (p.y + 33) + '" text-anchor="middle" class="future-node-label">' + (i ? pct(mass) : 'ESTADO CONOCIDO') + '</text>' +
-      (!i ? '<text x="' + p.x + '" y="' + (p.y + 50) + '" text-anchor="middle" class="future-year-note">' + esc(SHORT[state]) + '</text>' : '') + '</g>';
+      (!i ? '<text x="' + p.x + '" y="' + (p.y + 50) + '" text-anchor="middle" class="future-year-note">' + esc(SHORT[state]) + '</text>' :
+        realHere ? '<text x="' + p.x + '" y="' + (p.y - 33) + '" text-anchor="middle" class="future-real-label">' +
+          (i === horizon + 1 ? 'REAL · FINAL' : 'REAL') + '</text>' : '') + '</g>';
   }));
   return svg + '</svg>';
 }
@@ -71,30 +92,73 @@ function detail(result, horizon, selection) {
   return '<span class="eyebrow">INSPECCIÓN CIENTÍFICA</span><h4>Cada bifurcación tiene un significado</h4><p>Toca un nodo para ver su probabilidad marginal o una conexión para separar probabilidad condicional y flujo agregado.</p><p>Debajo puedes seleccionar historias completas. Varias historias pueden terminar en el mismo nodo.</p>';
 }
 
-// Revealing an outcome is a UI choice, not an independently sealed prospective trial.
-export function historicalCasePanel(result, horizon, revealed = false) {
-  const caseResult = result.caseEvaluations?.[horizon - 1];
-  if (!caseResult) return '';
-  let html = '<section class="panel top-gap future-case-evaluation"><div class="panel-head"><h3>¿Qué ocurrió realmente?</h3><span>' +
-    esc(result.country.name) + ' · ' + caseResult.endYear + '</span></div>' +
-    '<p class="legend-note">Caso histórico sobre una fuente revisada. Probabilidades calculadas con el corte ' + result.cutoff +
-    '; solo después se consulta el desenlace. No es predicción prospectiva ni acredita disponibilidad histórica as-of.</p>';
-  if (!caseResult.available) return html +
-    '<p class="subtext">Este país y horizonte no tienen una secuencia observada completa y no se puntúan. No se transforman los datos ausentes en ausencia de conflicto.</p></section>';
-  html += '<button type="button" class="future-calculate" data-case-reveal aria-pressed="' + revealed + '">' +
-    (revealed ? 'Ocultar desenlace histórico' : 'Revelar desenlace y evaluar modelos') + '</button>';
-  if (!revealed) return html + '<p class="chart-note">Puedes explorar primero las trayectorias sin revelar el resultado histórico. El dataset retrospectivo ya incluye el desenlace; no es un ensayo ciego sellado.</p></section>';
-  const selected = caseResult.models[result.model];
-  html += '<p class="subtext">Estado registrado al final: <strong>' + esc(caseResult.actualLabel) +
-    '</strong>. Probabilidad que asignaba el modelo elegido: <strong>' + pct(selected.probabilityActual) +
-    '</strong>. Brier individual: <strong>' + fmt(selected.brier, 5) +
-    '</strong> (escala 0–2).</p><div class="scroll-x"><table><thead><tr><th>Modelo</th><th>P(estado real)</th><th>Brier individual ↓</th><th>Log-loss individual ↓</th></tr></thead><tbody>' +
-    Object.entries(caseResult.models).map(([model, scores]) =>
-      '<tr' + (model === result.model ? ' class="future-current-model"' : '') + '><td>' + esc(scores.label) +
-      '</td><td>' + pct(scores.probabilityActual) + '</td><td>' + fmt(scores.brier, 5) +
-      '</td><td>' + fmt(scores.logLoss, 5) + '</td></tr>').join('') + '</tbody></table></div>' +
-    '<p class="chart-note">Los cinco modelos comparten el mismo país, origen, horizonte y resultado. Un Brier menor en un caso no demuestra superioridad ni calibración: compara las muestras agregadas en Investigador.</p>';
-  return html + '</section>';
+// An observed historical outcome is available to the retrospective reader by default.
+export function historicalCaseSummary(result, horizon) {
+  const observed = result.caseEvaluations?.[horizon - 1];
+  const year = result.origin + horizon - 1;
+  let html = '<section class="panel future-case-primary" aria-label="Resultado del caso histórico">' +
+    '<div class="future-case-title"><span class="eyebrow">CASO HISTÓRICO · FUENTE REVISADA</span><h3>' + esc(result.country?.name) +
+    ' · ' + year + '</h3><p>Origen ' + result.origin + ' · Horizonte ' + horizon +
+    ' ' + (horizon === 1 ? 'año' : 'años') + ' · ' + esc(result.modelLabel || result.model) + '</p></div>';
+  if (!observed?.available) {
+    return html + '<div class="future-real-empty"><strong>' + (observed ? 'Sin secuencia observada completa' : 'Pronóstico sin desenlace verificable') +
+      '</strong><p>No se puede puntuar este horizonte. No se atribuyen probabilidades al desenlace ni se interpretan datos ausentes como ausencia de violencia.</p></div>' +
+      '<p class="future-epistemic">Se conservan las probabilidades del modelo, pero sin evidencia observada completa no hay evaluación individual.</p></section>';
+  }
+  const scores = observed.models?.[result.model];
+  if (!scores) return html + '<p>Evaluación no disponible para el modelo elegido.</p></section>';
+  return html + '<div class="future-real-outcome"><span class="future-real-marker">● ESTADO REAL REGISTRADO</span><h4>' +
+    esc(CODES[observed.actualState]) + ' · ' + esc(observed.actualLabel) +
+    '</h4><p>' + esc(REAL_EVENTS[observed.actualState]) + '</p></div>' +
+    '<div class="future-case-kpis"><div><small>Probabilidad asignada al estado real</small><strong>' +
+    pct(scores.probabilityActual) + '</strong></div><div><small>Error Brier individual (0–2) ↓</small><strong>' +
+    fmt(scores.brier,5) + '</strong></div><div><small>Log-loss individual ↓</small><strong>' +
+    fmt(scores.logLoss,5) + '</strong></div></div>' +
+    '<p class="future-epistemic">Evaluación retrospectiva exploratoria: el desenlace se obtuvo después del origen usando una publicación UCDP revisada. ' +
+    'No acredita disponibilidad histórica as-of, habilidad predictiva prospectiva ni victoria estadística de un modelo.</p></section>';
+}
+
+// The per-year history reports observable UCDP threshold events, NOT named political events.
+export function historicalObservedTimeline(result, horizon) {
+  const states = result.observedStates || [], complete = observedCaseAvailable(result,horizon);
+  let html = '<section class="panel future-observed-timeline"><div class="panel-head"><h3>Cronología: predicción frente a realidad</h3>' +
+    '<span>' + (complete ? 'Estados observados a posteriori' : 'Observaciones parciales o ausentes') + '</span></div>' +
+    '<div class="future-real-years">';
+  for (let i=0; i<=horizon+1; i++) {
+    const year = result.cutoff+i;
+    const state = states[i];
+    const known = validObservedState(state);
+    const stage = i===0 ? 'CORTE INFORMATIVO' : i===1 ? 'AÑO PUENTE' : 'AÑO OBJETIVO';
+    const label = !known ? 'No consta observación' : i===0 ?
+      'Último estado conocido en el corte' : i===1 ?
+      'No conocido al emitir; observado después' : 'Estado observado posteriormente';
+    html += '<article class="future-real-year' + (i===horizon+1 ? ' final' : '') +
+      (known ? ' has-outcome' : '') + '"><small>' + stage + '</small><strong>' + year +
+      '</strong><span>' + esc(label) + '</span><b>' +
+      (known ? esc(CODES[state] + ' · ' + SHORT[state]) : 'Sin datos') + '</b>' +
+      (known ? '<p>' + esc(REAL_EVENTS[state]) + '</p>' : '') + '</article>';
+  }
+  return html + '</div><p class="chart-note">El puente se integra sin observarlo al emitir; sus etiquetas se muestran aquí solo porque estamos revisando el caso después. ' +
+    'Cada estado es un par de años y no identifica por sí solo una guerra o un evento político concreto.</p></section>';
+}
+
+export function historicalCaseComparison(result, horizon) {
+  const item = result.caseEvaluations?.[horizon-1];
+  if (!item?.available) return '<section class="panel top-gap future-case-comparison"><h3>Comparación de modelos</h3>' +
+    '<p>No evaluable: faltan observaciones para uno o más años del recorrido.</p></section>';
+  return '<section class="panel top-gap future-case-comparison"><div class="panel-head"><h3>Los cinco modelos ante el mismo desenlace real</h3>' +
+    '<span>' + esc(result.country.name) + ' · ' + item.endYear + '</span></div>' +
+    '<div class="scroll-x"><table><thead><tr><th>Modelo</th><th>P(estado registrado)</th><th>Brier ↓</th><th>Log-loss ↓</th></tr></thead><tbody>' +
+    Object.entries(item.models).map(([model,score])=>'<tr' + (model===result.model ? ' class="future-current-model"' : '') +
+      '><td>' + esc(score.label) + '</td><td>' + pct(score.probabilityActual) + '</td><td>' +
+      fmt(score.brier,5) + '</td><td>' + fmt(score.logLoss,5) + '</td></tr>').join('') + '</tbody></table></div>' +
+    '<p class="chart-note">Todos los modelos comparten país, origen, horizonte y desenlace. Un error individual no demuestra calibración ni superioridad estadística. ' +
+    'La comparación agregada permanece en Investigador.</p></section>';
+}
+
+// Kept as a public helper for standalone embedded consumers; the outcome is visible by default.
+export function historicalCasePanel(result, horizon, revealed = true) {
+  return historicalCaseSummary(result,horizon) + (revealed ? historicalCaseComparison(result,horizon) : '');
 }
 
 function research(result, metrics, horizon) {
@@ -128,14 +192,14 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
   }
   container.setAttribute('aria-live','off');
   let catalog = catalogs[0], country = catalog.countries[0].id, model = 'markov', horizon = Math.min(3, catalog.maxHorizon);
-  let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, caseRevealed = false, speed = 1;
+  let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, speed = 1;
   let error = '', loading = false, disposed = false, request = 0, abort = null, timer = null, inView = true;
   const media = window.matchMedia('(prefers-reduced-motion: reduce)');
   const clearTimer = () => { if (timer !== null) window.clearTimeout(timer); timer = null; };
   function schedule() {
     clearTimer();
     if (!playing || disposed || document.hidden || !inView || media.matches || !payload) return;
-    timer = window.setTimeout(() => {timer = null; horizon = horizon >= catalog.maxHorizon ? 1 : horizon + 1; selection = null; const focus = document.activeElement?.hasAttribute('data-play') ? '[data-play]' : null; render(focus);}, 1600 / speed);
+    timer = window.setTimeout(() => {timer = null; horizon = horizon >= catalog.maxHorizon ? 1 : horizon + 1; observed = observedCaseAvailable(payload?.result,horizon); selection = null; const focus = document.activeElement?.hasAttribute('data-play') ? '[data-play]' : null; render(focus);}, 1600 / speed);
   }
   function syncMotion() {
     container.dataset.motion = paused || media.matches || document.hidden || !inView ? 'paused' : 'running';
@@ -156,10 +220,17 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
         '<div class="future-toolbar"><div class="filter-row"><button type="button" data-fmode="explorer" aria-pressed="' + (mode === 'explorer') + '">Explorador</button><button type="button" data-fmode="research" aria-pressed="' + (mode === 'research') + '">Investigador</button></div><span>' + esc(result.country.name) + ' · ' + esc(result.modelLabel) + '</span></div>' +
         '<div class="future-timeline"><label>Horizonte <strong>' + horizon + ' ' + (horizon === 1 ? 'año' : 'años') + ' → ' + snapshot.endYear + '</strong><input name="horizon" type="range" min="1" max="' + result.maxHorizon + '" step="1" value="' + horizon + '" aria-label="Horizonte en años"></label>' +
         '<button type="button" data-play aria-pressed="' + playing + '"' + (media.matches ? ' disabled' : '') + '>' + (playing ? 'Ⅱ Pausar tiempo' : '▶ Recorrer años') + '</button><label>Velocidad<select name="speed">' + [0.5,1,2].map(n => option(n,n+'×',speed)).join('') + '</select></label><button type="button" data-fpause aria-pressed="' + (paused || media.matches) + '"' + (media.matches ? ' disabled' : '') + '>' + (media.matches ? 'Movimiento reducido' : paused ? 'Reanudar pulsos' : 'Pausar pulsos') + '</button></div>' +
-        distribution(result, snapshot) + '<p class="chart-note">IP = intervalo paramétrico condicionado al modelo; no es un intervalo de precisión real ni tiene cobertura empírica acreditada. Distribución puntual suma ' + pct(snapshot.distribution.reduce((a,b) => a+b,0)) + '.</p>' +
-         historicalCasePanel(result, horizon, caseRevealed) +
-        '<div class="future-legend">' + SHORT.map((name,i) => '<span data-state="' + i + '"><i></i>' + esc(name) + '</span>').join('') + '</div>' +
-        (mode === 'explorer' ? '<div class="future-explorer"><section class="panel future-network"><div class="panel-head"><h3>Red de transiciones</h3><label class="future-observed-toggle"><input type="checkbox" name="observed"' + (observed ? ' checked' : '') + '> Ver recorrido observado después</label></div><div class="future-graph-scroll">' + futureGraph(result, horizon, selection, observed) + '</div><p class="chart-note">Desliza horizontalmente para recorrer los años. Grosor = 0,5 + 14 × flujo agregado; área de nodos proporcional a masa con radio mínimo de 4 px. Los pulsos son decorativos; su velocidad no tiene unidad social.</p></section><aside class="panel future-detail" aria-live="polite">' + detail(result, horizon, selection) + '</aside></div>' +
+        historicalCaseSummary(result, horizon) +
+        '<div class="future-legend">' + SHORT.map((name,i) => '<span data-state="' + i +
+          '"><i></i><b>' + CODES[i] + '</b> ' + esc(name) + '</span>').join('') + '</div>' +
+        (mode === 'explorer' ? '<div class="future-explorer"><section class="panel future-network"><div class="panel-head"><h3>Red de futuros frente al recorrido real</h3><label class="future-observed-toggle"><input type="checkbox" name="observed"' +
+          (observed ? ' checked' : '') + (!observedCaseAvailable(result,horizon) ? ' disabled' : '') +
+          '> Mostrar trayectoria observada después</label></div><p class="future-network-key"><span>━━ <b>Ámbar: recorrido real observado después</b></span><span>● Colores: masa probabilística de cada estado</span></p>' +
+          '<div class="future-graph-scroll">' + futureGraph(result, horizon, selection, observed) + '</div><p class="chart-note">Desliza horizontalmente para recorrer los años. El grosor de las aristas refleja el flujo de probabilidad; la línea ámbar marca el resultado histórico, no una predicción. Los pulsos son decorativos.</p></section><aside class="panel future-detail" aria-live="polite">' + detail(result, horizon, selection) + '</aside></div>' +
+        historicalObservedTimeline(result, horizon) + historicalCaseComparison(result,horizon) +
+        '<section class="panel top-gap future-state-distribution"><div class="panel-head"><h3>Futuros posibles · probabilidades calculadas</h3><span>Sin condicionar al resultado real</span></div>' +
+        distribution(result, snapshot) + '<p class="chart-note">IP = intervalo paramétrico condicionado al modelo, no cobertura empírica acreditada. Masa total: ' +
+        pct(snapshot.distribution.reduce((a,b)=>a+b,0)) + '.</p></section>' +
         '<section class="panel top-gap"><div class="panel-head"><h3>Historias individuales retenidas</h3><span>Sin renormalizar</span></div><div class="future-paths">' + snapshot.paths.map((path,i) => '<button type="button" data-fpath="' + i + '" aria-pressed="' + (selection?.kind === 'path' && selection.index === i) + '"><span>Camino ' + (i+1) + '</span><span>' + path.states.slice(1).map(s => ['00','01','10','11'][s]).join(' → ') + '</span><strong>' + pct(path.probability) + '</strong></button>').join('') + '</div><p class="future-mass">Masa representada: <strong>' + pct(snapshot.representedMass) + '</strong> · Otras historias: <strong>' + pct(snapshot.residualMass) + '</strong></p><p class="chart-note">Beam de ' + snapshot.beam + ' prefijos; hasta 12 historias mostradas. La masa residual incluye todas las historias omitidas. El grafo agregado superior conserva el 100 % de la masa y no depende de esta poda. Códigos: dos años consecutivos, 0 bajo el umbral y 1 por encima.</p></section>' : research(result, payload.metrics, horizon)) +
         '<div class="future-methods" aria-label="Vertientes conectadas al núcleo">' + ['V1','V2','V3','V4'].map(id => '<button type="button" data-ftrack="' + id + '"><span class="orb-sphere"><span>' + id + '</span></span><strong>' + ({V1:'Memoria e hipótesis',V2:'Probabilidades',V3:'Mecanismos sintéticos',V4:'Evidencia y versiones'}[id]) + '</strong></button>').join('') + '</div>');
     container.querySelector('form').addEventListener('submit', e => {e.preventDefault(); load();});
@@ -169,12 +240,11 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
         if (!catalog.countries.some(c => String(c.id) === String(country))) country = catalog.countries[0].id;
         horizon = Math.min(horizon, catalog.maxHorizon);
       } else if (select.name === 'country') country = Number(select.value); else model = select.value;
-      abort?.abort(); request++; loading = false; payload = null; playing = false; caseRevealed = false; error = ''; render('[name="'+select.name+'"]');
+      abort?.abort(); request++; loading = false; payload = null; playing = false; observed = false; error = ''; render('[name="'+select.name+'"]');
     }));
-    container.querySelector('[name="horizon"]')?.addEventListener('change', e => {horizon = Number(e.target.value); selection = null; playing = false; render('[name="horizon"]');});
+    container.querySelector('[name="horizon"]')?.addEventListener('change', e => {horizon = Number(e.target.value); selection = null; playing = false; observed = observedCaseAvailable(payload?.result,horizon); render('[name="horizon"]');});
     container.querySelector('[name="speed"]')?.addEventListener('change', e => {speed = Number(e.target.value); schedule();});
     container.querySelector('[name="observed"]')?.addEventListener('change', e => {observed = e.target.checked; render('[name="observed"]');});
-    container.querySelector('[data-case-reveal]')?.addEventListener('click', () => {caseRevealed = !caseRevealed; render('[data-case-reveal]');});
     container.querySelector('[data-play]')?.addEventListener('click', () => {playing = !playing; render('[data-play]');});
     container.querySelector('[data-fpause]')?.addEventListener('click', () => {paused = !paused; render('[data-fpause]');});
     container.querySelectorAll('[data-fmode]').forEach(b => b.addEventListener('click', () => {mode = b.dataset.fmode; playing = false; render('[data-fmode="'+mode+'"]');}));
@@ -207,6 +277,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
       if (mine !== request || disposed) return;
       if (!response.ok || !data.ok) throw new Error('El motor no dispone de un catálogo válido para esta selección.');
       payload = data;
+      observed = observedCaseAvailable(data.result,horizon);
     } catch (e) {if (mine === request && !disposed && e.name !== 'AbortError') error = 'No se ha podido calcular. Vuelve a intentarlo con el botón; no se muestran valores de sustitución.';}
     finally {if (mine === request && !disposed) {loading = false; render();}}
   }
