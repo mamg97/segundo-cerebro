@@ -202,3 +202,5 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
 .future-onset-report a{font-size:11px;color:#85c9f5;text-decoration:underline;text-underline-offset:3px}
 .future-onset-science .future-epistemic{font-size:11px;line-height:1.65;color:#92afc2}
 @media(max-width:760px){.future-onset-reports{grid-template-columns:1fr}.future-onset-science{padding:13px}}
+
+/* v0.5.2: research capability status reflects validated private experimental records. */
