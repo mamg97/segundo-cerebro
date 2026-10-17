@@ -787,3 +787,8 @@ This external object is reference data only and is not persisted as a second exe
 ### PsicoExperimentos.notas: resúmenes nuevos de inicio de conflictos
 
 El sobre privado opcional `psychohistory.onset.summary.v1` guarda únicamente agregados revisados de UCDP Onset 25.1, separados por `intrastate_country` y `interstate_country`. Incluye `validation` y `test` con N/eventos/años, modelos comparados, Brier/log-loss/AP, Brier Skill relativo, 95 % bootstrap anual descriptivo y recuentos anuales. La columna evidencia apunta a Drive **privado**. Fuente as-of no verificada y `prospectiveEligible=false` obligatorios; no infiere episodios geopolíticos concretos ni crea pronósticos reales. El frontend debe rechazar datos inconsistentes o ausentes en vez de enseñar ejemplos.
+
+
+### PsicoExperimentos.notas: casebook de positivos UCDP Onset v0.5.4
+
+`psychohistory.onset.casebook.v1` es un sobre opcional y **privado** con los país-año observados con `onset1=1` en el test 2016–2024. Se añade como una sola fila con `estado=RETROSPECTIVO_EXPLORATORIO`, referencia a Drive y JSON `notas`. Campos: edición 25.1, objetivo `onset1`, tipos `intrastate_country/interstate_country`, `sourceSha256` por tipo, flags de as-of y sellado siempre false, lag=2, modelos `global_frequency/country_shrinkage`, corte Y−2, y array de `cases` con país, año, etiqueta observada y ambas probabilidades retrospectivas. La UI cruza cada año y total con los dos sobres `psychohistory.onset.summary.v1`; si no coinciden, no se muestra. El report completo continúa en el Drive privado; el público recibe solamente código genérico.

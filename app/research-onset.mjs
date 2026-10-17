@@ -88,6 +88,90 @@ export function onsetObservedAnnualChart(summaries=[]){
     '<div class="future-onset-chart-scroll">'+svg+'</div>'+
     '<p class="chart-note">Conteos retrospectivos reales del objetivo <code>onset1</code> en las cohortes elegibles del test; cada país-año se cuenta como máximo una vez. No representan guerras independientes, fechas exactas ni predicciones emitidas entonces. Los denominadores varían por año.</p></div>';
 }
+/** Private casebook: positive historical country-year labels, not independent wars.
+ * All 50 rows are cross-validated against both existing private model summaries.
+ * No source-linked private country data, probabilities, or rankings in Git.
+ */
+export function parseOnsetCasebook(experiments=[]) {
+  const summaries=parseOnsetSummaries(experiments).accepted;
+  if(summaries.length!==2)return {accepted:[],rejected:[]};
+  const sources=Object.fromEntries(summaries.map(x=>[x.kind,x]));
+  const accepted=[],rejected=[];
+  for(const row of experiments){
+    let d;try{d=JSON.parse(row.notes);}catch{continue;}
+    if(d?.schema!=='psychohistory.onset.casebook.v1')continue;
+    const validBasics=row.status==='RETROSPECTIVO_EXPLORATORIO' &&
+      d.datasetVersion==='25.1' && d.target==='onset1' &&
+      d.runType==='retrospective_revised_release_exploratory' &&
+      d.sourceAsOfVerified===false && d.prospectiveEligible===false &&
+      d.sourceIndependentShaPinning===false &&
+      d.informationLagYears===2 &&
+      Array.isArray(d.models) && d.models.length===2 &&
+      d.models[0]==='global_frequency' && d.models[1]==='country_shrinkage' &&
+      Array.isArray(d.yearRange) && d.yearRange[0]===2016 && d.yearRange[1]===2024 &&
+      ['intrastate_country','interstate_country'].every(kind=>d.sourceSha256?.[kind]===sources[kind]?.sourceSha256) &&
+      Array.isArray(d.cases) && d.cases.length>0 && d.cases.length<=200 &&
+      typeof row.evidence==='string' &&
+      /^https:\/\/drive\.google\.com\/file\/d\/[a-zA-Z0-9_-]+\/view$/.test(row.evidence);
+    if(!validBasics){rejected.push(row.id);continue;}
+    const seen=new Set(), annual=new Map(), count=new Map();
+    let valid=true;
+    for(const c of d.cases){
+      const key=c.kind+':'+c.year+':'+c.countryId;
+      if(!KINDS.has(c.kind) || !Number.isInteger(c.year) || c.year<2016 || c.year>2024 ||
+         !Number.isInteger(c.countryId) || c.countryId<1 ||
+         typeof c.country!=='string' || c.country.length<2 || c.country.length>120 ||
+         c.cutoffYear!==c.year-2 || c.onset!==1 ||
+         !probability(c.pGlobal) || !probability(c.pCountry) ||
+         c.pGlobal===0 || c.pGlobal===1 || c.pCountry===0 || c.pCountry===1 ||
+         seen.has(key)){valid=false;break;}
+      seen.add(key);
+      count.set(c.kind,(count.get(c.kind)||0)+1);
+      const annualKey=c.kind+':'+c.year;
+      annual.set(annualKey,(annual.get(annualKey)||0)+1);
+    }
+    if(valid)for(const kind of KINDS){
+      const reference=sources[kind].test;
+      if(count.get(kind)!==reference.events){valid=false;break;}
+      for(const entry of reference.annual)if((annual.get(kind+':'+entry.year)||0)!==entry.events){
+        valid=false;break;
+      }
+    }
+    if(!valid){rejected.push(row.id);continue;}
+    accepted.push({...d,rowId:row.id,evidence:row.evidence});
+  }
+  return {accepted:accepted.slice(0,1),rejected};
+}
+export function onsetCasebookPanel(experiments=[]){
+  const parsed=parseOnsetCasebook(experiments);
+  if(!parsed.accepted.length)return '';
+  const data=parsed.accepted[0],events=[...data.cases].sort((a,b)=>
+    b.year-a.year||a.kind.localeCompare(b.kind)||a.country.localeCompare(b.country));
+  const html=events.map(c=>'<tr data-onset-case data-kind="'+esc(c.kind)+'" data-year="'+c.year+'">'+
+    '<td>'+c.year+'</td><td><strong>'+esc(c.country)+'</strong></td>'+
+    '<td>'+esc(c.kind==='intrastate_country'?'Interno':'Interestatal')+'</td>'+
+    '<td>'+pct(c.pCountry,2)+'</td><td>'+pct(c.pGlobal,2)+'</td>'+
+    '</tr>').join('');
+  return '<section class="future-onset-casebook" aria-label="Casos históricos de inicio de conflictos">'+
+    '<div class="future-onset-chart-head"><strong>Países y años en los que UCDP registró un inicio o reanudación</strong>'+
+    '<span>'+events.length+' etiquetas país-año observadas · No son guerras independientes</span></div>'+
+    '<div class="future-onset-case-filters"><label>Año<select data-onset-case-year>'+
+    '<option value="all">Todos los años</option>'+
+    Array.from({length:9},(_,i)=>2024-i).map(y=>'<option value="'+y+'">'+y+'</option>').join('')+
+    '</select></label><label>Tipo<select data-onset-case-kind>'+
+    '<option value="all">Ambos tipos</option>'+
+    '<option value="intrastate_country">Interno</option>'+
+    '<option value="interstate_country">Interestatal</option></select></label>'+
+    '<span data-onset-case-visible role="status">'+events.length+' casos</span></div>'+
+    '<div class="future-onset-case-scroll" tabindex="0"><table><thead><tr>'+
+    '<th>Año</th><th>País registrado</th><th>Inicio</th><th>P. modelo país</th><th>P. frecuencia global</th>'+
+    '</tr></thead><tbody>'+html+'</tbody></table></div>'+
+    '<p class="chart-note">Cada registro es la etiqueta oficial <code>onset1 = 1</code> para el país-año, no una '+
+    'predicción de una guerra individual, una invasión con fecha precisa ni necesariamente violencia dentro del territorio del país. '+
+    'Las probabilidades se estimaron retrospectivamente usando solo variables anteriores al corte Y−2, pero sobre '+
+    'una versión UCDP 25.1 revisada; no fueron emitidas en esos años.</p>'+
+    '<a href="'+esc(data.evidence)+'" target="_blank" rel="noopener noreferrer">Consultar todos los casos y el informe original privado ↗</a></section>';
+}
 export function onsetSummaryPanel(experiments=[]){
   const parsed=parseOnsetSummaries(experiments);
   if(!parsed.accepted.length)return '';
@@ -108,7 +192,7 @@ export function onsetSummaryPanel(experiments=[]){
   return '<section class="panel future-onset-science" aria-label="Resultados de inicio de conflictos UCDP">'+
     '<div class="panel-head"><h3>Inicios de conflictos · primer contraste con hechos históricos</h3>'+
     '<span>2016–2024 · Retrospectivo revisado</span></div>'+
-    onsetObservedAnnualChart(parsed.accepted)+'<div class="future-onset-reports">'+rows.join('')+'</div>'+
+    onsetObservedAnnualChart(parsed.accepted)+onsetCasebookPanel(experiments)+'<div class="future-onset-reports">'+rows.join('')+'</div>'+
     '<p class="future-epistemic">Se muestran resultados de los dos baselines registrados, no probabilidades de una invasión, '+
     'un conflicto concreto o el año actual. La fuente 25.1 es retrospectivamente revisada y su disponibilidad original '+
     'as-of no está acreditada; el intervalo representa variación por bloques de años, no un test de eficacia prospectiva.</p>'+
