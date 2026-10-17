@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {futureGraph, historicalCasePanel} from './research-futures.mjs';
+import {futureGraph, historicalCasePanel, historicalCaseSummary, historicalObservedTimeline, historicalCaseComparison, observedCaseAvailable} from './research-futures.mjs';
 import {forward,retainedPaths} from '../private-cloudflare/src/research-futures-engine.mjs';
 
 const matrix = [[.8,.2,0,0],[0,0,.3,.7],[.8,.2,0,0],[0,0,.3,.7]];
@@ -30,18 +30,82 @@ test('interactive explorer honors CSP and reads probabilities from the private e
   assert.match(js,/prefers-reduced-motion/);
 });
 
-test('historical case is hidden by default, escaped, and scores only verified labels',()=>{
-  const result={country:{name:'SYNTHETIC'},cutoff:2008,model:'markov',
-    caseEvaluations:[{available:true,endYear:2010,actualLabel:'SYNTHETIC <EVENT>',
+
+function historicalFixture() {
+  return {country:{name:'SYNTHETIC <PLACE>'},origin:2002,cutoff:2000,model:'markov',modelLabel:'Markov global',
+    caseEvaluations:[{available:true,endYear:2002,actualState:3,actualLabel:'SYNTHETIC <EVENT>',
       models:{markov:{label:'Markov global',probabilityActual:.3,brier:.72,logLoss:1.204},
-        frequency:{label:'Frecuencia',probabilityActual:.2,brier:.9,logLoss:1.609}}}]};
-  const hidden=historicalCasePanel(result,1,false);
-  assert.match(hidden,/Revelar desenlace y evaluar modelos/);
-  assert.doesNotMatch(hidden,/SYNTHETIC &lt;EVENT&gt;/);
-  const revealed=historicalCasePanel(result,1,true);
-  assert.match(revealed,/SYNTHETIC &lt;EVENT&gt;/);
-  assert.match(revealed,/Brier individual/);
-  assert.match(revealed,/Markov global/);
-  assert.doesNotMatch(revealed,/<EVENT>/);
-  assert.match(historicalCasePanel({...result,caseEvaluations:[{available:false,endYear:2010}]},1),/no tienen una secuencia observada completa/);
+        frequency:{label:'Frecuencia',probabilityActual:.2,brier:.9,logLoss:1.609}}}],
+    observedStates:[0,1,3,2,0],levels:result.levels,snapshots:result.snapshots,initial:0};
+}
+
+test('historical outcome is the first scientific panel and visible by default',()=>{
+  const sample=historicalFixture();
+  assert.equal(observedCaseAvailable(sample,1),true);
+  assert.equal(observedCaseAvailable(sample,3),false);
+  const summary=historicalCaseSummary(sample,1);
+  assert.match(summary,/CASO HISTÓRICO/);
+  assert.match(summary,/ESTADO REAL REGISTRADO/);
+  assert.match(summary,/SYNTHETIC &lt;EVENT&gt;/);
+  assert.match(summary,/30 %/);
+  assert.match(summary,/Brier individual/);
+  assert.match(summary,/as-of/);
+  assert.doesNotMatch(summary,/<EVENT>|<PLACE>/);
+  const full=historicalCasePanel(sample,1);
+  assert.ok(full.indexOf('ESTADO REAL REGISTRADO')<full.indexOf('Los cinco modelos'));
+});
+
+test('actual historical trajectory is shown on the graph, without conditioning predicted flows',()=>{
+  const caseResult=historicalFixture();
+  const hidden=futureGraph(caseResult,3,null,false);
+  const actual=futureGraph(caseResult,3,null,true);
+  assert.doesNotMatch(hidden,/future-observed-halo|REAL · FINAL/);
+  assert.match(actual,/future-observed-halo/);
+  assert.match(actual,/future-real-ring/);
+  assert.match(actual,/REAL · FINAL/);
+  assert.match(actual,/Recorrido realmente observado después/);
+  assert.ok(actual.includes('stroke-width="'+(.5+.8*14)+'"'), 'probabilistic edge width is unchanged by real overlay');
+});
+
+test('per-year chronicle labels cutoff, latent bridge and observed threshold events',()=>{
+  const sample=historicalFixture();
+  const rendered=historicalObservedTimeline(sample,3);
+  assert.match(rendered,/2000/);
+  assert.match(rendered,/2001/);
+  assert.match(rendered,/2002/);
+  assert.match(rendered,/AÑO PUENTE/);
+  assert.match(rendered,/No conocido al emitir/);
+  assert.match(rendered,/Entrada/);
+  assert.match(rendered,/Persistencia/);
+  assert.match(rendered,/Salida/);
+  assert.match(rendered,/No implica|no implica|por debajo/);
+});
+
+test('all models compare on same observed event; unknown outcomes never receive false scores',()=>{
+  const sample=historicalFixture();
+  const compare=historicalCaseComparison(sample,1);
+  assert.match(compare,/Markov global/);
+  assert.match(compare,/Frecuencia/);
+  assert.match(compare,/30 %/);
+  const missing={...sample,caseEvaluations:[{available:false,endYear:2002,reason:'INCOMPLETE_OBSERVED_SEQUENCE'}]};
+  assert.equal(observedCaseAvailable(missing,1),false);
+  assert.doesNotMatch(historicalCaseSummary(missing,1),/30 %|Log-loss individual/);
+  assert.doesNotMatch(historicalCaseComparison(missing,1),/30 %|Markov global/);
+  assert.match(historicalCaseSummary(missing,1),/No se puede puntuar/);
+  const unresolved={...sample,caseEvaluations:[]};
+  assert.match(historicalCaseSummary(unresolved,1),/Pronóstico sin desenlace verificable/);
+  assert.doesNotMatch(historicalCaseSummary(unresolved,1),/30 %/);
+});
+
+test('app launches directly into research cases without covering initial viewport',()=>{
+  const labJs=readFileSync(new URL('./research-lab.js',import.meta.url),'utf8');
+  const css=readFileSync(new URL('./research-lab.css',import.meta.url),'utf8');
+  const js=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
+  assert.ok(labJs.includes('activeView="futures"'));
+  assert.ok(labJs.includes('document.body.dataset.labView = activeView'));
+  assert.ok(css.includes('body[data-lab-view="futures"] .hero'));
+  assert.ok(js.includes('observed = observedCaseAvailable(data.result,horizon)'));
+  assert.ok(js.includes('historicalCaseSummary(result, horizon)'));
+  assert.ok(js.includes('historicalObservedTimeline(result, horizon)'));
+  assert.ok(js.indexOf('historicalCaseSummary(result, horizon) +') < js.indexOf('futureGraph(result, horizon, selection, observed)'));
 });
