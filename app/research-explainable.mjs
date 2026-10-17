@@ -8,7 +8,7 @@ const close=(a,b)=>num(a)&&num(b)&&Math.abs(a-b)<EPS;
 const probabilities=a=>Array.isArray(a)&&a.length===4&&a.every(n=>num(n)&&n>=0&&n<=1)&&close(a.reduce((x,y)=>x+y,0),1);
 const vectorClose=(a,b)=>probabilities(a)&&probabilities(b)&&a.every((x,i)=>close(x,b[i]));
 const percentage=n=>(100*n).toLocaleString('es-ES',{maximumFractionDigits:2})+' %';
-const vector=a=>'<div class="explain-vector">'+a.map((n,i)=>'<div><small>Estado '+['00','01','10','11'][i]+'</small><strong>'+percentage(n)+'</strong><i class="explain-bar"><span style="--mass:'+Math.round(n*100)+'%"></span></i></div>').join('')+'</div>';
+const vector=a=>'<div class="explain-vector">'+a.map((n,i)=>'<div><small>Estado '+['00','01','10','11'][i]+'</small><strong>'+percentage(n)+'</strong><meter min="0" max="1" value="'+n+'" aria-label="Probabilidad del estado '+['00','01','10','11'][i]+'"></meter></div>').join('')+'</div>';
 export function parseComputationReplay(trace,result){
   if(!trace||!result||trace.schema!==EXPLAINABLE_TRACE_SCHEMA||
      trace.kind!=='RETROSPECTIVE_COMPUTATION_REPLAY'||trace.isLiveProgress!==false||
