@@ -68,6 +68,58 @@ def fit_recency_at(cutoff, training, roster, calendar, earliest):
     return pooled, by_bucket, n
 
 
+def probability_for_bucket(bucket, by_bucket, pooled):
+    """Unknown duration is NOT evidence of long-term peace: use global prior.
+
+    The history_incomplete cohort may be empirically correlated with risk, but
+    fitting a distinct risk to it would use roster truncation as a predictor.
+    This benchmark predeclared the global-frequency fallback.
+    """
+    if bucket not in BUCKETS or not (0 < pooled < 1):
+        raise ValueError("Invalid recency bucket or pooled probability")
+    if bucket == "history_incomplete":
+        return pooled
+    n, events = by_bucket.get(bucket, (0, 0))
+    if not (isinstance(n, int) and isinstance(events, int)
+            and 0 <= events <= n):
+        raise ValueError("Invalid matured recency training counts")
+    return ((events + SHRINKAGE_STRENGTH * pooled) /
+            (n + SHRINKAGE_STRENGTH)) if n else pooled
+
+
+def recency_composition(rows):
+    """Post-hoc, fixed-population diagnostics, not a classifier or model search.
+
+    Each nonoverlapping target-end window remains a *single* calendar block,
+    regardless of country count. Reports must remain in PRIVATE storage.
+    """
+    grouped = collections.defaultdict(list)
+    for row in rows:
+        bucket = row["recency_bucket"]
+        if bucket not in BUCKETS:
+            raise ValueError("Unapproved recency bucket")
+        grouped[bucket].append(row)
+    result = {}
+    for bucket in BUCKETS:
+        subset = grouped[bucket]
+        result[bucket] = {
+            "n": len(subset),
+            "events": sum(row["outcome"] for row in subset),
+            "event_rate": (sum(row["outcome"] for row in subset) / len(subset)
+                           if subset else None),
+            "mean_predicted_risk": {
+                name: (math.fsum(row["probabilities"][name] for row in subset)
+                       / len(subset) if subset else None)
+                for name in (*MODELS, NEW_MODEL)
+            },
+            "scores": {name: scores(subset, name) if subset else None
+                       for name in (*MODELS, NEW_MODEL)},
+        }
+    if sum(v["n"] for v in result.values()) != len(rows):
+        raise ValueError("Recency composition lost cases")
+    return result
+
+
 def relative_brier_skill(rows):
     """Descriptive same-cohort Brier skill against the frozen global baseline."""
     if not rows:
@@ -101,6 +153,8 @@ def comparator_report(original, ged, onset):
             "source_as_of_verified":False,"prospective_eligible":False,
             "evaluation":"Same country-horizon outcomes as original, not an emitted forecast",
             "added_model":NEW_MODEL,"original_models":list(MODELS),
+            "source":{"ged_sha256":ged["source_sha256"],
+                      "roster_sha256":onset["sha256"]},
             "recency_buckets":list(BUCKETS),
             "shrinkage_equivalent_cases":SHRINKAGE_STRENGTH,
             "partitions":{}}
@@ -149,8 +203,7 @@ def comparator_report(original, ged, onset):
                     raise ValueError("Original global baseline not reproducible from matured training")
                 bucket=recency_bucket(roster,calendar,cid,cutoff,earliest)
                 bucket_counts[bucket]+=1
-                count,events=bins[bucket]
-                p=(events+SHRINKAGE_STRENGTH*pooled)/(count+SHRINKAGE_STRENGTH) if count else pooled
+                p=probability_for_bucket(bucket,bins,pooled)
                 enriched.append({**row,"recency_bucket":bucket,
                                  "probabilities":{**rates,NEW_MODEL:p}})
         if len(enriched)!=raw.get("n_evaluated") or sum(x["outcome"] for x in enriched)!=raw.get("positive_outcomes"):
@@ -173,6 +226,7 @@ def comparator_report(original, ged, onset):
                 "target_end_months":[f"{year}-01" for year in anchors],
                 "hypothetical_issue_months":[f"{year-2}-02" for year in anchors],
                 "calendar_blocks":len(anchors),
+                "by_recency_bucket":recency_composition(fixed),
                 "n":len(fixed),
                 "events":sum(r["outcome"] for r in fixed),
                 "models":{m:scores(fixed,m) for m in (*MODELS,NEW_MODEL)},
