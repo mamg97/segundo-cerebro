@@ -75,3 +75,18 @@ Los conflictos que empiezan son relativamente infrecuentes, por lo que un Brier 
 - **Diagnóstico anual** (2010–2015, 2016–2024): muestra anual, número de inicios, Brier y AP. Una muestra anual sin inicios devuelve AP nulo, no cero ni 100 %. La AP combinada sobre todos los países-año puede no representar la calidad de cada año si varía la prevalencia o si hay cambios de escala.
 
 Estas métricas son **diagnósticos estadísticos retrospectivos** con la versión revisada 25.1. No demuestran capacidad prospectiva, anticipación de una invasión identificada ni significación estadística. Se exige evaluación posterior por bloques temporales, comparación contra modelos fuertes y pruebas vintage-correct antes de proclamar utilidad operativa. Los umbrales de alerta o intervención siguen sin definirse; no se elegirán utilizando el test.
+
+ 
+## Ingesta oficial privada reproducible
+
+`research/psychohistory/stage_onset_sources.py` permite descargar **ambos** CSV UCDP Onset 25.1 del dominio oficial, verificar encabezados y coherencia estructural, y guardarlos con permisos limitados en una carpeta **nueva, fuera del repositorio**. No modifica el motor ni almacena resultados en Git. La operación es todo-o-nada: si una fuente no pasa la validación, no se guarda ninguna.
+
+```bash
+python3 research/psychohistory/stage_onset_sources.py \
+  --out-dir /ruta/privada/ucdp-onset-251-20261017
+```
+
+El manifiesto incorpora hashes SHA-256 de los bytes descargados y el universo de cada archivo. **Esos hashes son observados al descargar, no una firma independiente preexistente**. La existencia de los CSV no autoriza por sí sola un backtest como vintage-correct. Su disponibilidad histórica en 2016/2020 permanece sin verificar.
+
+Para permitir la ingesta sin Codex ni comandos locales, la automatización de GitHub Actions puede descargar una **copia pública de las fuentes UCDP** en un runner temporal y transferirla después, como archivo, al almacenamiento privado del proyecto. La acción no debe incluir datasets privados, credenciales, puntuaciones por país ni artefactos con pronósticos reales; conservar como máximo un día el archivo de transferencia. El registro y los scores se calculan exclusivamente tras la ingesta privada, su revisión independiente y la comprobación del esquema oficial.
+
