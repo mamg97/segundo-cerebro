@@ -16,6 +16,7 @@ from pathlib import Path
 import zipfile
 
 SCHEMA='psychohistory.ged.reemergence_recency_comparator.v1'
+TARGET='at_least_one_exact_dated_state_based_lethal_GED_incident_within_24m_after_12m_quiet_at_cutoff'
 RESULT='psychohistory.ged.incident_casebook.v1'
 GED_SOURCE='https://ucdp.uu.se/downloads/ged/ged251-csv.zip'
 GED_CODEBOOK='https://ucdp.uu.se/downloads/ged/ged251.pdf'
@@ -70,7 +71,8 @@ def read_events(ged_zip:Path,sha256:str,interested_countries:set):
 
 def join_cases(report:dict,events:dict,source_sha:str,report_sha:str):
     if (report.get('schema')!=SCHEMA or report.get('prospective_eligible') is not False
-        or report.get('source_as_of_verified') is not False or report.get('added_model')!='time_since_last_event'):
+        or report.get('source_as_of_verified') is not False
+        or report.get('target')!=TARGET or report.get('added_model')!='time_since_last_event'):
         raise ValueError('Untrusted or prospective report')
     event_catalog={}
     out={'schema':RESULT,'status':'RETROSPECTIVE_REVISED_EVENT_CONTEXT_ONLY',
@@ -136,6 +138,9 @@ def main():
     cli.add_argument('--recency-report',required=True,type=Path)
     cli.add_argument('--out',required=True,type=Path)
     args=cli.parse_args()
+    repo=Path(__file__).resolve().parents[2]
+    if args.out.resolve().is_relative_to(repo):
+        raise ValueError('Cannot save private GED event casebook inside public Git repository')
     raw=args.recency_report.read_bytes();r=json.loads(raw)
     countries={row['country_id'] for p in r['partitions'].values() for row in p['cases']}
     events,n=read_events(args.ged_zip,args.ged_sha256,countries)
