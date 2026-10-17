@@ -53,6 +53,41 @@ export function parseOnsetSummaries(experiments=[]){
 const format=(v,n=3)=>v.toLocaleString('es-ES',{minimumFractionDigits:n,maximumFractionDigits:n});
 const pct=(v,n=1)=>format(v*100,n)+' %';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/**
+ * Observed country-year onsets by calendar year. These bars are POST-HOC labels
+ * from UCDP 25.1; no prospective forecasts, no event names, no model fitting.
+ * Only accepted private summaries reach this function in the normal UI.
+ */
+export function onsetObservedAnnualChart(summaries=[]){
+  const variants=['intrastate_country','interstate_country'];
+  const available=variants.map(kind=>summaries.find(x=>x.kind===kind)).filter(Boolean);
+  if (!available.length || available.some(x=>!validPartition(x.test,'test')))return '';
+  const colors=['#66c6ea','#f0a264'];
+  const maxCount=Math.max(1,...available.flatMap(v=>v.test.annual.map(y=>y.events)));
+  const W=900,H=245,baseY=195,topY=45,yearWidth=88,yearStart=76,barWidth=15;
+  let svg='<svg role="img" aria-label="Inicios o reanudaciones de conflicto observados cada año de 2016 a 2024" viewBox="0 0 '+W+' '+H+'">';
+  svg+='<line x1="48" y1="'+baseY+'" x2="878" y2="'+baseY+'" stroke="#49647a" stroke-width="1"/>';
+  for(let i=0;i<9;i++){
+    const year=2016+i,center=yearStart+yearWidth*i;
+    svg+='<text x="'+center+'" y="222" text-anchor="middle" fill="#a1c4da" font-size="12">'+year+'</text>';
+    available.forEach((dataset,index)=>{
+      const events=dataset.test.annual[i].events,n=dataset.test.annual[i].n;
+      const h=Math.max(events>0?3:0,Math.round(events/maxCount*(baseY-topY)));
+      const offset=available.length===1?-barWidth/2:(index===0?-barWidth-3:3);
+      const x=center+offset,y=baseY-h;
+      svg+='<rect x="'+x+'" y="'+y+'" width="'+barWidth+'" height="'+h+'" rx="3" fill="'+colors[variants.indexOf(dataset.kind)]+'">'+
+        '<title>'+esc(year+' · '+LABELS[dataset.kind]+': '+events+' de '+n+' países observados ('+pct(events/n,2)+')')+'</title></rect>';
+      svg+='<text x="'+(x+barWidth/2)+'" y="'+Math.max(28,y-8)+'" text-anchor="middle" fill="'+colors[variants.indexOf(dataset.kind)]+'" font-size="12" font-weight="600">'+events+'</text>';
+    });
+  }
+  svg+='</svg>';
+  const legend=available.map(d=>'<span class="future-onset-legend"><i style="background:'+colors[variants.indexOf(d.kind)]+'"></i>'+esc(LABELS[d.kind])+'</span>').join('');
+  return '<div class="future-onset-timeline"><div class="future-onset-chart-head"><strong>Acontecimientos observados por año</strong>'+
+    '<span>Cada caso es un país con al menos un inicio o reanudación durante ese año</span></div>'+
+    '<div class="future-onset-legend-row">'+legend+'</div>'+
+    '<div class="future-onset-chart-scroll">'+svg+'</div>'+
+    '<p class="chart-note">Conteos retrospectivos reales del objetivo <code>onset1</code> en las cohortes elegibles del test; cada país-año se cuenta como máximo una vez. No representan guerras independientes, fechas exactas ni predicciones emitidas entonces. Los denominadores varían por año.</p></div>';
+}
 export function onsetSummaryPanel(experiments=[]){
   const parsed=parseOnsetSummaries(experiments);
   if(!parsed.accepted.length)return '';
@@ -73,7 +108,7 @@ export function onsetSummaryPanel(experiments=[]){
   return '<section class="panel future-onset-science" aria-label="Resultados de inicio de conflictos UCDP">'+
     '<div class="panel-head"><h3>Inicios de conflictos · primer contraste con hechos históricos</h3>'+
     '<span>2016–2024 · Retrospectivo revisado</span></div>'+
-    '<div class="future-onset-reports">'+rows.join('')+'</div>'+
+    onsetObservedAnnualChart(parsed.accepted)+'<div class="future-onset-reports">'+rows.join('')+'</div>'+
     '<p class="future-epistemic">Se muestran resultados de los dos baselines registrados, no probabilidades de una invasión, '+
     'un conflicto concreto o el año actual. La fuente 25.1 es retrospectivamente revisada y su disponibilidad original '+
     'as-of no está acreditada; el intervalo representa variación por bloques de años, no un test de eficacia prospectiva.</p>'+
