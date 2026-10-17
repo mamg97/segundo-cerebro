@@ -247,7 +247,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
     return () => {};
   }
   container.setAttribute('aria-live','off');
-  let catalog = catalogs[0], country = catalog.countries[0].id, model = 'markov', horizon = Math.min(3, catalog.maxHorizon);
+  let catalog = catalogs[0], country = catalog.countries.some(c => c.id === catalog.suggestedCountryId) ? catalog.suggestedCountryId : catalog.countries[0].id, model = 'markov', horizon = Math.min(3, catalog.maxHorizon);
   let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, speed = 1;
   let error = '', loading = false, disposed = false, request = 0, abort = null, timer = null, inView = true;
   const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -275,7 +275,8 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
       '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
       '<div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed)+'</div>'+
       (observed?historicalEventCards(result,horizon):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
-      '<p class="chart-note">Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
+      '<p class="chart-note">Caso inicial ilustrativo elegido por variedad de transiciones observadas, NO por aciertos de un modelo. Puedes cambiarlo debajo.'+
+      ' Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
       (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
