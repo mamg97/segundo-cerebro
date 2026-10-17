@@ -260,7 +260,21 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
     if (disposed) return;
     const previousScroll = container.querySelector('.future-graph-scroll')?.scrollLeft || 0;
     const result = payload?.result, snapshot = result?.snapshots[horizon - 1];
-    container.innerHTML = '<div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
+    // MAIN SCREEN: begin with the real-versus-probabilistic network, not controls.
+    const graphFirst = result ?
+      '<section class="panel future-network future-network-first"><div class="panel-head"><div><span class="eyebrow">PSICOHISTORIA / OBSERVATORIO</span>'+
+      '<h2>Futuros posibles frente a hechos reales</h2><p>'+esc(result.country.name)+' · '+snapshot.endYear+' · '+esc(result.modelLabel)+'</p></div>'+
+      '<label class="future-observed-toggle"><input type="checkbox" name="observed"'+(observed?' checked':'')+
+      (!observedCaseAvailable(result,horizon)?' disabled':'')+'> Mostrar lo que ocurrió</label></div>'+
+      '<p class="future-network-key"><span><b>━━ Ámbar:</b> evolución registrada posteriormente</span><span>● Otros colores: probabilidad de cada estado</span>'+
+      '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
+      '<div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed)+'</div>'+
+      (observed?historicalEventCards(result,horizon):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
+      '<p class="chart-note">Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
+      ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
+      '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
+      (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
+    container.innerHTML = graphFirst + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
       '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
       '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
@@ -274,16 +288,13 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
         historicalCaseSummary(result, horizon) +
         '<div class="future-legend">' + SHORT.map((name,i) => '<span data-state="' + i +
           '"><i></i><b>' + CODES[i] + '</b> ' + esc(name) + '</span>').join('') + '</div>' +
-        (mode === 'explorer' ? '<div class="future-explorer"><section class="panel future-network"><div class="panel-head"><h3>Red de futuros frente al recorrido real</h3><label class="future-observed-toggle"><input type="checkbox" name="observed"' +
-          (observed ? ' checked' : '') + (!observedCaseAvailable(result,horizon) ? ' disabled' : '') +
-          '> Mostrar trayectoria observada después</label></div><p class="future-network-key"><span>━━ <b>Ámbar: recorrido real observado después</b></span><span>● Colores: masa probabilística de cada estado</span></p>' +
-          '<div class="future-graph-scroll">' + futureGraph(result, horizon, selection, observed) + '</div><p class="chart-note">Desliza horizontalmente para recorrer los años. El grosor de las aristas refleja el flujo de probabilidad; la línea ámbar marca el resultado histórico, no una predicción. Los pulsos son decorativos.</p></section><aside class="panel future-detail" aria-live="polite">' + detail(result, horizon, selection) + '</aside></div>' +
+        (mode === 'explorer' ? '<section class="panel top-gap future-event-inspector" aria-live="polite">' + detail(result,horizon,selection) + '</section>' +
         historicalObservedTimeline(result, horizon) + historicalCaseComparison(result,horizon) +
         '<section class="panel top-gap future-state-distribution"><div class="panel-head"><h3>Futuros posibles · probabilidades calculadas</h3><span>Sin condicionar al resultado real</span></div>' +
         distribution(result, snapshot) + '<p class="chart-note">IP = intervalo paramétrico condicionado al modelo, no cobertura empírica acreditada. Masa total: ' +
         pct(snapshot.distribution.reduce((a,b)=>a+b,0)) + '.</p></section>' +
         '<section class="panel top-gap"><div class="panel-head"><h3>Historias individuales retenidas</h3><span>Sin renormalizar</span></div><div class="future-paths">' + snapshot.paths.map((path,i) => '<button type="button" data-fpath="' + i + '" aria-pressed="' + (selection?.kind === 'path' && selection.index === i) + '"><span>Camino ' + (i+1) + '</span><span>' + path.states.slice(1).map(s => ['00','01','10','11'][s]).join(' → ') + '</span><strong>' + pct(path.probability) + '</strong></button>').join('') + '</div><p class="future-mass">Masa representada: <strong>' + pct(snapshot.representedMass) + '</strong> · Otras historias: <strong>' + pct(snapshot.residualMass) + '</strong></p><p class="chart-note">Beam de ' + snapshot.beam + ' prefijos; hasta 12 historias mostradas. La masa residual incluye todas las historias omitidas. El grafo agregado superior conserva el 100 % de la masa y no depende de esta poda. Códigos: dos años consecutivos, 0 bajo el umbral y 1 por encima.</p></section>' : research(result, payload.metrics, horizon)) +
-        '<div class="future-methods" aria-label="Vertientes conectadas al núcleo">' + ['V1','V2','V3','V4'].map(id => '<button type="button" data-ftrack="' + id + '"><span class="orb-sphere"><span>' + id + '</span></span><strong>' + ({V1:'Memoria e hipótesis',V2:'Probabilidades',V3:'Mecanismos sintéticos',V4:'Evidencia y versiones'}[id]) + '</strong></button>').join('') + '</div>');
+        '<div class="future-methods" aria-label="Vertientes conectadas al núcleo">' + ['V1','V2','V3','V4'].map(id => '<button type="button" data-ftrack="' + id + '"><span class="orb-sphere"><span>' + id + '</span></span><strong>' + ({V1:'Memoria e hipótesis',V2:'Probabilidades',V3:'Mecanismos sintéticos',V4:'Evidencia y versiones'}[id]) + '</strong></button>').join('') + '</div></div>');
     container.querySelector('form').addEventListener('submit', e => {e.preventDefault(); load();});
     container.querySelectorAll('.future-controls select').forEach(select => select.addEventListener('change', () => {
       if (select.name === 'catalog') {
@@ -300,13 +311,14 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
     container.querySelector('[data-fpause]')?.addEventListener('click', () => {paused = !paused; render('[data-fpause]');});
     container.querySelectorAll('[data-fmode]').forEach(b => b.addEventListener('click', () => {mode = b.dataset.fmode; playing = false; render('[data-fmode="'+mode+'"]');}));
     container.querySelectorAll('[data-ftrack]').forEach(b => b.addEventListener('click', () => onTrack(b.dataset.ftrack)));
-    container.querySelectorAll('[data-fnode],[data-fedge],[data-fpath]').forEach(element => {
+    container.querySelectorAll('[data-fnode],[data-fedge],[data-fpath],[data-fevent]').forEach(element => {
       const select = () => {
         playing = false;
         if (element.dataset.fnode) {const [level,state] = element.dataset.fnode.split(':').map(Number); selection = {kind:'node',level,state};}
         else if (element.dataset.fedge) {const [level,index] = element.dataset.fedge.split(':').map(Number); selection = {kind:'edge',level,index};}
+        else if (element.dataset.fevent) selection = {kind:'event',level:Number(element.dataset.fevent)};
         else selection = {kind:'path',index:Number(element.dataset.fpath)};
-        const name = element.hasAttribute('data-fnode') ? 'data-fnode' : element.hasAttribute('data-fedge') ? 'data-fedge' : 'data-fpath';
+        const name = element.hasAttribute('data-fnode') ? 'data-fnode' : element.hasAttribute('data-fedge') ? 'data-fedge' : element.hasAttribute('data-fevent') ? 'data-fevent' : 'data-fpath';
         render('['+name+'="'+element.getAttribute(name)+'"]');
       };
       element.addEventListener('click', select);
