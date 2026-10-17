@@ -68,6 +68,17 @@ def fit_recency_at(cutoff, training, roster, calendar, earliest):
     return pooled, by_bucket, n
 
 
+def relative_brier_skill(rows):
+    """Descriptive same-cohort Brier skill against the frozen global baseline."""
+    if not rows:
+        raise ValueError("Cannot compare models on an empty anchor")
+    base=scores(rows,"global_reemergence")["brier"]
+    if base <= 0:
+        return {model:None for model in (*MODELS,NEW_MODEL)}
+    return {model:1-scores(rows,model)["brier"]/base
+            for model in (*MODELS,NEW_MODEL)}
+
+
 def comparator_report(original, ged, onset):
     """Refuse source, target, population and original model mismatches."""
     if (original.get("schema")!=SCHEMA or original.get("target")!=TARGET or
@@ -129,7 +140,7 @@ def comparator_report(original, ged, onset):
                 if y!=row["outcome"]:
                     raise ValueError("Historical target labels differ from pinned source")
                 rates=row.get("probabilities",{})
-                if tuple(rates.keys())!=MODELS or any(
+                if set(rates)!=set(MODELS) or any(
                     not isinstance(p,(float,int)) or not math.isfinite(p) or not 0<p<1
                     for p in rates.values()
                 ):
@@ -171,8 +182,17 @@ def comparator_report(original, ged, onset):
                 "by_anchor":[{"target_end_month":f"{year}-01",
                               "hypothetical_issue_month":f"{year-2}-02",
                               "n":sum(r["origin_year"]==year for r in fixed),
-                              "events":sum(r["outcome"] for r in fixed if r["origin_year"]==year)}
+                              "events":sum(r["outcome"] for r in fixed if r["origin_year"]==year),
+                              "brier_skill_vs_global":relative_brier_skill(
+                                  [r for r in fixed if r["origin_year"]==year])}
                              for year in anchors],
+                "leave_one_anchor_out":[{
+                    "omitted_target_end_month":f"{year}-01",
+                    "n":sum(r["origin_year"]!=year for r in fixed),
+                    "events":sum(r["outcome"] for r in fixed if r["origin_year"]!=year),
+                    "brier_skill_vs_global":relative_brier_skill(
+                        [r for r in fixed if r["origin_year"]!=year])}
+                    for year in anchors],
             },
             # Country-level cases are kept PRIVATE and are intentionally never Git assets.
             "cases":enriched,
