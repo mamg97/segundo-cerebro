@@ -1,3 +1,12 @@
+## PSICOHISTORIA — UI v0.5.7 · Inspector GED retrospectivo (17/10/2026)
+
+- **Capacidad nueva:** `app/research-ged-reemergence.mjs` muestra fichas GED privadas debajo de la primera red de Futuros; parser fail-closed, filtro país/año, detalle factual y cuatro probabilidades de una **ventana binaria** de 24 meses, no de un suceso identificado. Versiones científicas GED v0.6.8 y visual v0.5.7 permanecen independientes.
+- **Sheet canónico:** en `SEGUNDO CEREBRO - PROYECTOS / PsicoExperimentos` se añadieron tres lotes de resumen privado v1 con 12 incidentes únicos y 205 vínculos positivos. Son una **selección editorial parcial** de un archivo completo con 74 incidentes y 944 vínculos, cuyo ZIP original y hashes siguen exclusivamente en Drive privado. Relectura de A46:L48 comprobó tres lotes, IDs únicos, hashes declarados, muestra y recuentos. No tocar `PsicoPredicciones`.
+- **Seguridad científica:** UCDP GED 25.1 revisado, `asOfVerified=false`, `prospectiveEligible=false`, sin sello temporal ni correlación causal con onset; incidentes GED no equivalen a guerras/invasiones. Fuente de datos bajo Access; Git solo código, documentación y pruebas sintéticas. Ver `docs/PSYCHOHISTORY_GED_INSPECTOR_UI_V057.md`.
+- **Cierre pendiente:** CI y despliegue Worker tras fusionar; verificar publicación autenticada antes de anunciarla. Completar 74 casos sin reclasificar el objetivo y preservar la red como primera vista.
+
+---
+
 ## PSICOHISTORIA — GED v0.6.8 · casebook factual sin atribución predictiva (17/10/2026)
 
 - **Código nuevo:** `research/psychohistory/ged_incident_casebook.py`, tests sintéticos y protocolo `docs/PSYCHOHISTORY_GED_CASEBOOK_V068.md`; extrae del GED 25.1 original el **primer incidente elegible** de cada país-horizonte positivo de recencia v0.6.5 y comprueba estrictamente que los negativos no tengan ninguno. Nunca interpreta un evento GED como «guerra predicha».
