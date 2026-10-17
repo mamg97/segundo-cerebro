@@ -36,7 +36,9 @@ export function historicalEventCards(result,horizon) {
   for(let i=1;i<=horizon+1;i++) {
     const year=result.cutoff+i,fact=observedFact(result,i);
     if(!fact){cards.push('<article class="future-event-card"><small>'+year+' · NO EVALUABLE</small><strong>Sin observación válida para este año</strong></article>');continue;}
-    const mortality=fact.deaths===undefined?'Conteo oficial por incorporar':
+    const mortality=fact.deaths===undefined?
+      (result.observedEvidenceStatus==='source_temporarily_unavailable'?'Detalle numérico de UCDP no disponible temporalmente':
+      'Consultando datos oficiales UCDP…') :
       fmt(fact.deaths,0)+' muertes estatales · mejor estimación UCDP';
     const dyad=fact.names.length ? '<span class="future-dyad">Díadas: '+fact.names.map(esc).join(' · ')+
       (fact.dyadCount>fact.names.length?' · y otras '+(fact.dyadCount-fact.names.length):'')+'</span>':
@@ -330,6 +332,23 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
     observer.disconnect(); observer.observe(container.querySelector('.future-network') || container);
     syncMotion();
   }
+  async function loadObservedEvidence(mine, catalogId, countryId, signal) {
+    const params=new URLSearchParams({catalog:catalogId,country:String(countryId)});
+    try {
+      const response=await fetch('/api/research-futures-evidence?'+params,{
+        credentials:'same-origin',cache:'no-store',signal,headers:{Accept:'application/json'}});
+      const data=await response.json();
+      if(mine!==request||disposed||!payload)return;
+      if(!response.ok||!data.ok||data.datasetVersion!=='26.1'||!Array.isArray(data.observedEvidence))
+        throw new Error('EVIDENCE_UNAVAILABLE');
+      payload.result.observedEvidence=data.observedEvidence;
+      payload.result.observedEvidenceStatus='verified_public_archive_checksum';
+    }catch(e){
+      if(mine!==request||disposed||e.name==='AbortError'||!payload)return;
+      payload.result.observedEvidenceStatus='source_temporarily_unavailable';
+    }
+    if(mine===request&&!disposed)render();
+  }
   async function load() {
     abort?.abort(); abort = new AbortController(); const mine = ++request;
     loading = true; error = ''; payload = null; selection = null; playing = false; render();
@@ -342,7 +361,13 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
       payload = data;
       observed = observedCaseAvailable(data.result,horizon);
     } catch (e) {if (mine === request && !disposed && e.name !== 'AbortError') error = 'No se ha podido calcular. Vuelve a intentarlo con el botón; no se muestran valores de sustitución.';}
-    finally {if (mine === request && !disposed) {loading = false; render();}}
+    finally {
+      if (mine === request && !disposed) {
+        loading = false; render();
+        if(payload?.result?.observedStates?.length)
+          void loadObservedEvidence(mine,catalog.id,country,abort.signal);
+      }
+    }
   }
   function lifecycle() {syncMotion();}
   function motionChange(){if(media.matches)playing=false;render();}
