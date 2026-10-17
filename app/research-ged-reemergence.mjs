@@ -68,3 +68,45 @@ export function parseGedIncidentPreview(experiments=[]){
     totalWindowLinks:ref.totalWindowLinks,evidence:ref.evidence,rejected}:
     {ready:false,cases:[],rejected:[...rejected,...batches.map(b=>b.rowId)]};
 }
+
+const pct=p=>(p*100).toFixed(2)+' %';
+const names={global_reemergence:'Frecuencia global',country_shrinkage:'País regularizado',
+  country_history:'Historial país',time_since_last_event:'Recencia'};
+export function gedIncidentPreviewPanel(experiments=[]){
+  const data=parseGedIncidentPreview(experiments);
+  if(!data.ready)return '';
+  const cases=data.cases;
+  const countries=[...new Set(cases.map(c=>c.country))].sort();
+  const years=[...new Set(cases.map(c=>c.date.slice(0,4)))].sort().reverse();
+  const options=xs=>xs.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+  const cards=cases.map(c=>
+    '<article class="ged-preview-event" data-ged-preview-event data-country="'+esc(c.country)+
+    '" data-year="'+esc(c.date.slice(0,4))+'"><details><summary><time>'+esc(c.date)+'</time> '+
+    '<strong>'+esc(c.country)+' · '+esc(c.place)+'</strong>'+
+    '<small>'+c.positiveWindowCount+' ventanas vinculadas</small></summary>'+
+    '<div class="ged-preview-details"><p><b>Hecho UCDP:</b> '+esc(c.conflict)+
+    ' · '+esc(c.dyad)+'</p><p>Actores: '+esc(c.sideA)+' / '+esc(c.sideB)+'</p>'+
+    '<p>Muertes estimadas: '+c.best+' (low '+c.low+', high '+c.high+') · GED #'+c.id+
+    ' · precisión de localización '+c.wherePrecision+'</p>'+
+    '<p><b>Una ventana retrospectiva ilustrativa:</b> emisión hipotética '+
+    esc(c.issueMonth)+' → final '+esc(c.targetEndMonth)+'. Son probabilidades de '+
+    '<b>≥1 incidente durante los 24 meses</b>, no del suceso concreto.</p>'+
+    '<dl class="ged-preview-probs">'+MODELS.map(k=>'<div><dt>'+names[k]+
+    '</dt><dd>'+pct(c.probabilities[k])+'</dd></div>').join('')+'</dl>'+
+    '<small>Fuentes publicadas: '+esc(c.sourceDatesRaw)+'; estas fechas no verifican '+
+    'la disponibilidad histórica de la versión UCDP.</small></div></details></article>').join('');
+  return '<section class="panel ged-preview-panel" aria-label="Inspector histórico GED">'+
+    '<div class="panel-head"><h3>Incidentes GED documentados · Archivo histórico</h3>'+
+    '<span>Retrospectivo, no prospectivo</span></div>'+
+    '<p class="chart-note">'+cases.length+' sucesos únicos asociados a '+
+    data.totalWindowLinks+' ventanas positivas solapadas; no son predicciones '+
+    'independientes ni guerras o invasiones identificadas.</p>'+
+    '<div class="ged-preview-filters"><label>País<select data-ged-preview-country>'+
+    '<option value="all">Todos</option>'+options(countries)+'</select></label>'+
+    '<label>Año<select data-ged-preview-year><option value="all">Todos</option>'+
+    options(years)+'</select></label><span role="status" data-ged-preview-visible>'+
+    cases.length+' incidentes</span></div><div class="ged-preview-list">'+cards+'</div>'+
+    '<p class="chart-note">UCDP GED 25.1 revisada; as-of y emisión independiente no verificados. '+
+    '<a href="'+CODEBOOK+'" target="_blank" rel="noopener noreferrer">Codebook ↗</a> · '+
+    '<a href="'+esc(data.evidence)+'" target="_blank" rel="noopener noreferrer">Informe privado ↗</a>.</p></section>';
+}
