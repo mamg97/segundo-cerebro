@@ -145,6 +145,115 @@ def evaluate_cases(rows, model):
     }
 
 
+def average_precision_ties(rows, model):
+    """Tie-aware AP for rare binary events. Undefined when no positives exist.
+
+    Grouping exact equal probability scores avoids rank/order artefacts from
+    arbitrarily sorting countries that all receive the global baseline rate.
+    """
+    if not rows:
+        return None
+    positive = sum(r["outcome"] for r in rows)
+    if not positive:
+        return None
+    groups = collections.defaultdict(lambda: [0, 0])
+    for row in rows:
+        p = row["probabilities"][model]
+        if not math.isfinite(p) or not 0 < p < 1 or row["outcome"] not in (0, 1):
+            raise ValueError("Invalid scores or target values")
+        groups[p][0] += 1
+        groups[p][1] += row["outcome"]
+    seen = hits = 0
+    area = 0.0
+    for score in sorted(groups, reverse=True):
+        count, events = groups[score]
+        seen += count
+        hits += events
+        area += events / positive * hits / seen
+    return area
+
+
+def top_decile_coverage(rows, model):
+    """Risk concentration at the highest 10%, fractionally allocating ties.
+
+    This *diagnostic* never thresholds/calibrates a model and should not be
+    confused with causal prediction or a prospective warning system.
+    """
+    if not rows:
+        return None
+    positive = sum(r["outcome"] for r in rows)
+    if not positive:
+        return {"n":len(rows),"events":0,"recall":None,"risk_lift":None,"selected_expected":len(rows)/10}
+    selected = len(rows)/10
+    groups = collections.defaultdict(lambda: [0, 0])
+    for row in rows:
+        groups[row["probabilities"][model]][0] += 1
+        groups[row["probabilities"][model]][1] += row["outcome"]
+    expected_events = 0.0
+    remaining = selected
+    for score in sorted(groups, reverse=True):
+        if remaining <= 0:
+            break
+        count, events = groups[score]
+        fraction = min(1.0, remaining/count)
+        expected_events += fraction * events
+        remaining -= fraction*count
+    share = expected_events/positive
+    return {"n":len(rows),"events":positive,"recall":share,
+            "risk_lift": (expected_events/selected)/(positive/len(rows)),
+            "selected_expected": selected, "tie_handling":"fractional_expected"}
+
+
+def calibration_five_bins(rows, model):
+    """Equal-width reliability; denominators reported, no invented coverage."""
+    buckets = [[0,0,0.0] for _ in range(5)]
+    for row in rows:
+        p = row["probabilities"][model]
+        if not math.isfinite(p) or p < 0 or p > 1 or row["outcome"] not in (0,1):
+            raise ValueError("Invalid calibration observation")
+        group = min(4,int(p*5))
+        buckets[group][0] += 1
+        buckets[group][1] += row["outcome"]
+        buckets[group][2] += p
+    return [{"from":k/5,"to":(k+1)/5,
+             "count":n,"observed_events":events,
+             "mean_predicted":prob_sum/n if n else None,
+             "actual_frequency":events/n if n else None}
+            for k,(n,events,prob_sum) in enumerate(buckets)]
+
+
+def diagnostic_summary(rows):
+    """Common-cohort scores, ranking checks and annual rare-event diagnostics.
+
+    Baselines stay fixed in advance. Ties and zero-event years remain explicit.
+    """
+    if not rows:
+        return None
+    comparator = ("global_frequency","country_shrinkage")
+    loss = {m:evaluate_cases(rows,m) for m in comparator}
+    base = loss["global_frequency"]["brier"]
+    by_year = collections.defaultdict(list)
+    for row in rows:
+        by_year[row["origin_year"]].append(row)
+    return {
+      "n":len(rows),"events":sum(r["outcome"] for r in rows),
+      "positive_base_rate": sum(r["outcome"] for r in rows)/len(rows),
+      "comparison":"country_shrinkage_vs_predeclared_global_frequency_same_cohort",
+      "country_shrinkage_brier_skill":(1-loss["country_shrinkage"]["brier"]/base) if base>0 else None,
+      "models":{model:{
+         "average_precision":average_precision_ties(rows,model),
+         "top_10_percent":top_decile_coverage(rows,model),
+         "calibration_bins":calibration_five_bins(rows,model),
+         "yearly":[{"year":year,"n":len(group),
+                    "events":sum(r["outcome"] for r in group),
+                    "brier":evaluate_cases(group,model)["brier"],
+                    "average_precision":average_precision_ties(group,model)}
+              for year,group in sorted(by_year.items())],
+      } for model in comparator},
+      "caveat":"Retrospective revised 25.1; global AP pools country-years and cannot establish prospective skill. Zero-event years have undefined AP."
+    }
+
+
 def retrospective_report(source, *, label="onset1"):
     """Common denominators; no tuning, test-selected champion or as-of claim."""
     out={"schema":"psychohistory.conflict_onset_backtest.v1",
@@ -168,6 +277,7 @@ def retrospective_report(source, *, label="onset1"):
             "n_event":sum(r["outcome"] for r in cases),
             "cohort_sha256":hashlib.sha256(canonical([[c["country_id"],c["origin_year"]] for c in cases])).hexdigest(),
             "models":{"global_frequency":global_m,"country_shrinkage":country_m},
+            "rare_event_diagnostics":diagnostic_summary(cases),
             "cases":cases,
         }
     return out
