@@ -8,7 +8,8 @@ from pathlib import Path
 
 from ucdp_onset import (ONSET_COLUMNS, load_onsets, forecast_origin,
                         retrospective_report, smoothed_rate, evaluate_cases,
-                        save_private)
+                        average_precision_ties, top_decile_coverage,
+                        calibration_five_bins, diagnostic_summary, save_private)
 
 
 def source(start=2000,end=2024,n=5):
@@ -118,6 +119,43 @@ class OnsetPipelineTests(unittest.TestCase):
             forecast_origin(d,year=2020,label="coups")
         with self.assertRaises(ValueError):
             smoothed_rate([0,2,1])
+
+    def test_ties_are_invariant_to_order_and_do_not_invent_skill(self):
+        # Two events, two non-events, identical probability scores for everyone.
+        rows=[{"origin_year":2020,"outcome":y,
+               "probabilities":{"global_frequency":.5,"country_shrinkage":.5}}
+              for y in (1,0,1,0)]
+        self.assertAlmostEqual(average_precision_ties(rows,"global_frequency"),.5)
+        self.assertAlmostEqual(average_precision_ties(rows[::-1],"country_shrinkage"),.5)
+        top=top_decile_coverage(rows,"country_shrinkage")
+        self.assertAlmostEqual(top["recall"],.1)
+        self.assertAlmostEqual(top["risk_lift"],1)
+        self.assertEqual(sum(b["count"] for b in calibration_five_bins(rows,"country_shrinkage")),4)
+        self.assertAlmostEqual(diagnostic_summary(rows)["country_shrinkage_brier_skill"],0)
+
+    def test_perfect_ranking_and_zero_event_years_are_explicit(self):
+        rows=[{"origin_year":2021,"outcome":y,
+               "probabilities":{"global_frequency":.2,"country_shrinkage":p}}
+              for y,p in ((1,.9),(0,.2),(1,.8),(0,.1),(0,.05))]
+        self.assertAlmostEqual(average_precision_ties(rows,"country_shrinkage"),1.0)
+        self.assertGreater(top_decile_coverage(rows,"country_shrinkage")["risk_lift"],1)
+        clean=[dict(r,outcome=0) for r in rows]
+        self.assertIsNone(average_precision_ties(clean,"country_shrinkage"))
+        self.assertIsNone(top_decile_coverage(clean,"country_shrinkage")["recall"])
+        self.assertIsNone(diagnostic_summary(clean)["models"]["global_frequency"]["yearly"][0]["average_precision"])
+
+    def test_pooling_preserves_both_models_denominators_and_labels(self):
+        report=retrospective_report(load())
+        for section in report["partitions"].values():
+            d=section["rare_event_diagnostics"]
+            self.assertEqual(d["n"],section["n_scored"])
+            self.assertEqual(d["events"],section["n_event"])
+            for model in ("global_frequency","country_shrinkage"):
+                self.assertEqual(sum(b["count"] for b in d["models"][model]["calibration_bins"]),d["n"])
+                self.assertEqual(sum(y["events"] for y in d["models"][model]["yearly"]),d["events"])
+                for y in d["models"][model]["yearly"]:
+                    if y["events"] == 0: self.assertIsNone(y["average_precision"])
+                    else: self.assertGreaterEqual(y["average_precision"],0)
 
     def test_private_report_is_create_only(self):
         with tempfile.TemporaryDirectory() as tmp:
