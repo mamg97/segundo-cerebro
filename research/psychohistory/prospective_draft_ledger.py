@@ -13,7 +13,7 @@ import json
 import os
 from pathlib import Path
 import re
-from sealing import validate_payload
+from sealing import validate_payload, utc
 
 HERE = Path(__file__).resolve().parents[2]
 SCHEMA = "psychohistory.prospective_draft_ledger.v1"
@@ -55,9 +55,16 @@ def valid_draft(draft):
     validate_payload(payload)  # Reuse existing date/probability and outcome exclusion checks.
     if not isinstance(payload.get("id"),str) or not IDENTIFIER.fullmatch(payload["id"]):
         raise ValueError("Forecast identifier invalid")
-    if not all(isinstance(payload.get(k),str) and payload[k] for k in (
-        "phenomenon","region","horizon","modelVersion","datasetVersion")):
-        raise ValueError("Forecast scope incomplete")
+    if not all(isinstance(payload.get(k),str) and 0<len(payload[k])<=4000 for k in (
+        "phenomenon","region","horizon","modelVersion","datasetVersion",
+        "domain","targetDefinition","population","benchmarkId",
+        "verificationSource","verificationMethod","sourceEditionReleaseDate")):
+        raise ValueError("Forecast domain, target, universe or resolution contract missing")
+    if any(not isinstance(payload.get(k),str) or not HEX.fullmatch(payload[k])
+           for k in ("codeSha256","dataSha256","modelProtocolSha256")):
+        raise ValueError("Code, dataset and model protocol must have SHA256 identity")
+    if utc(payload["issuedAt"])<=dt.datetime.now(dt.timezone.utc):
+        raise ValueError("Cannot prepare a would-be prospective issuance after its declared issue time")
     if set(draft).intersection({"outcome","brier","score"}):
         raise ValueError("Draft cannot be scored")
 
