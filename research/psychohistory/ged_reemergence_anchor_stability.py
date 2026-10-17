@@ -1,4 +1,4 @@
-"""Diagnose whether non-overlapping GED 24m skill survives removing one issue date.
+"""Diagnose whether non-overlapping GED 24m skill survives dropping one target-end date.
 
 This is a *descriptive* retrospective sensitivity. Two validation and three
 test dates DO NOT give enough independent blocks for an inferential CI.
@@ -26,7 +26,7 @@ def _brier_skill(rows, baseline, challenger):
 
 
 def anchor_stability(original):
-    """Compare every fixed Jan/24m issue anchor and leave-one-anchor-out tests.
+    """Compare fixed January target-end months and leave-one-block-out tests.
 
     All issued target intervals (C+1..T) are disjoint within a partition.
     Countries still share shocks within each anchor, so no p-values, no CI.
@@ -37,7 +37,8 @@ def anchor_stability(original):
         "status": "RETROSPECTIVE_REVISED_DESCRIPTIVE_ONLY",
         "source_as_of_verified": False,
         "prospective_eligible": False,
-        "calendar_independence": "24m issue anchors do not overlap; countries are cross-correlated",
+        "calendar_independence": "24m target windows do not overlap; countries remain cross-correlated",
+        "anchor_semantics": "target_end_not_issue_date",
         "confidence_interval_95": None,
         "significance_test": None,
         "partitions": {},
@@ -55,7 +56,9 @@ def anchor_stability(original):
         per_anchor = []
         for year, rows in cohorts.items():
             per_anchor.append({
-                "year": year,
+                "year": year,  # Legacy alias for target-end year, NOT actual issuance
+                "target_end_month": f"{year}-01",
+                "hypothetical_issue_month": f"{year-2}-02",
                 "n": len(rows),
                 "events": sum(r["outcome"] for r in rows),
                 "base_rate": sum(r["outcome"] for r in rows) / len(rows),
@@ -71,7 +74,8 @@ def anchor_stability(original):
         for dropped in anchors:
             remaining = [row for year, rows in cohorts.items() if year != dropped for row in rows]
             drop_one.append({
-                "omitted_year": dropped,
+                "omitted_year": dropped,  # Target-end year
+                "hypothetical_issue_month": f"{dropped-2}-02",
                 "n": len(remaining),
                 "events": sum(r["outcome"] for r in remaining),
                 "brier_skill_vs_global": {
@@ -84,7 +88,8 @@ def anchor_stability(original):
         if sum(x["events"] for x in per_anchor) != verified["partitions"][part]["positive_outcomes"]:
             raise ValueError("Changes to originally counted positives")
         output["partitions"][part] = {
-            "anchors": anchors,
+            "anchors": anchors,  # January target-end years, not issue dates
+            "hypothetical_issue_months": [f"{y-2}-02" for y in anchors],
             "n": len(grouped),
             "events": sum(x["outcome"] for x in grouped),
             "calendar_blocks": len(anchors),

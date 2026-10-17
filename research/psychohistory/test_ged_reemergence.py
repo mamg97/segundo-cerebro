@@ -106,6 +106,9 @@ class GEDReemergenceTests(unittest.TestCase):
             result=issue_cohort(ged,roster,calendar,training,2024,1)
             self.assertTrue(all(0<p<1 for x in result["cases"] for p in x["probabilities"].values()))
             self.assertTrue(all(x["cutoff"]=="2022-01" for x in result["cases"]))
+            self.assertEqual(result["hypothetical_issue_month"],"2022-02")
+            self.assertEqual(result["target_end_month"],"2024-01")
+            self.assertTrue(all(x["hypothetical_issue_month"]=="2022-02" for x in result["cases"]))
         finally:folder.cleanup()
 
 

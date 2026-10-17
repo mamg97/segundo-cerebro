@@ -1,9 +1,9 @@
 """Predeclared non-overlapping-forecast-window sensitivity for GED re-emergence.
 
-Each selected issue is on January 1, separated by exactly 24 months: validation
-2016/2018 and test 2020/2022/2024. Outcomes use GED windows from the unknown
-information cutoff C=T-24 up to T, so these 24-month target windows never
-overlap across *issue dates*. Countries remain correlated cross-sectionally,
+Each selected TARGET WINDOW ENDS in January, 24 months apart: validation
+2016/2018 and test 2020/2022/2024. The hypothetical issue date is February
+1 two years before each listed target-end year (first day after cutoff C=T-24).
+Outcomes cover C+1..T, so the 24-month windows do not overlap. Countries remain correlated cross-sectionally,
 and 2/3 calendar anchors are insufficient for a robust confidence interval.
 No cherry-picked months, post-test thresholds or prospective-skill claims.
 """
@@ -31,7 +31,8 @@ def independent_sensitivity(report):
     output={"schema":"psychohistory.ged.reemergence_nonoverlap_sensitivity.v1",
             "status":"POSTHOC_SENSITIVITY_RETROSPECTIVE_REVISED",
             "source_as_of_verified":False,"prospective_eligible":False,
-            "selection":"Jan issues every 24 months, fixed at first year of each partition",
+            "selection":"January target-end months every 24 months, fixed by partition; hypothetical issue is February two years earlier",
+            "anchor_semantics":"target_end_not_issue_date",
             "anchor_month":1,"step_months":24,
             "no_independent_prospective_skill_claim":True,"partitions":{}}
     for part,start,end in (("validation",2016,2019),("test",2020,2024)):
@@ -58,14 +59,15 @@ def independent_sensitivity(report):
         computed={m:scores(selected,m) for m in MODELS}
         base=computed["global_reemergence"]["brier"]
         output["partitions"][part]={
-            "anchors":anchors,"n_calendar_blocks":len(anchors),
+            "anchors":anchors,"hypothetical_issue_months":[f"{y-2}-02" for y in anchors],
+            "n_calendar_blocks":len(anchors),
             "n_evaluated":len(selected),"positive_outcomes":sum(c["outcome"] for c in selected),
             "brier_skill_vs_global":{m:(1-v["brier"]/base if base>0 else None)
                                     for m,v in computed.items()},
             "models":computed,
             "confidence_interval_95":None,
             "significance_test":None,
-            "limitations":"Only %d independent 24-month calendar anchor dates; countries within a block are correlated. No valid CI or significance estimate."%len(anchors),
+            "limitations":"Only %d disjoint target windows; countries within an outcome block are correlated. No valid CI or significance estimate; issuance is hypothetical at C+1, not at T."%len(anchors),
         }
     return output
 
