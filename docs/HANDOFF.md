@@ -1,3 +1,12 @@
+## PSICOHISTORIA — GED v0.6.6 · revisión de integridad de recencia (17/10/2026)
+
+- **Desviación corregida en código:** el comparador v0.6.5 podía aprender una probabilidad propia para `history_incomplete`, contradiciendo su fallback preregistrado a frecuencia global. La revisión fuerza el fallback y añade pruebas sintéticas más diagnóstico de composición en las **mismas fechas objetivo no solapadas**; no cambia los tres modelos congelados, los desenlaces ni el corte T−24.
+- **No reutilizar métricas del ZIP v0.6.5 como prueba de esta revisión:** la corrección puede cambiar las probabilidades derivadas de recencia para casos con historial incompleto; exige reproducción nueva con originales, SHA-256 y archivo create-only en Drive antes de actualizar Sheets/UI. El ZIP anterior no se sobrescribe.
+- **Comparador externo:** VIEWS `fatalities003` pronostica otras etiquetas (p. ej. ≥25 muertes por país-mes), mientras GED reemergencia predice ≥1 incidente exacto en 24m condicionado a 12 meses tranquilos: sin test conjunto hasta preregistrar un target verdaderamente comparable. Véase `docs/PSYCHOHISTORY_GED_COMPOSITION_V066.md`.
+- **UI sin cambio:** red de futuros conserva primer plano; sin scores nuevos. La línea permanece retrospectiva revisada, no vintage-correct, con solo 2/3 bloques no solapados; la PR de esta revisión y su CI deben registrarse después de su comprobación.
+
+---
+
 ## PSICOHISTORIA — GED v0.6.5 · contraste real de recencia (17/10/2026)
 
 - **Código validado y fusionado:** [PR #583](https://github.com/mamg97/segundo-cerebro/pull/583), cuarto baseline simple `time_since_last_event` sobre GED reaparición 24m tras 12 meses sin incidentes elegibles al corte, con tres tramos explícitos y fallback para historial del roster insuficiente; no cambia modelos ni resultados del informe original. Pruebas sintéticas [39045374850](https://github.com/mamg97/segundo-cerebro/actions/runs/39045374850) y main [39045441806](https://github.com/mamg97/segundo-cerebro/actions/runs/39045441806) correctas.

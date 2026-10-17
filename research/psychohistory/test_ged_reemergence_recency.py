@@ -8,12 +8,36 @@ from pathlib import Path
 from ged_reemergence import (
     reemergence_report, event_calendar, mature_training_cases, month_index,
 )
-from ged_reemergence_recency import recency_bucket, fit_recency_at, comparator_report
+from ged_reemergence_recency import (
+    recency_bucket, fit_recency_at, comparator_report, probability_for_bucket,
+    recency_composition,
+)
 from ged_monthly_incidence import build_roster, save_private
 from test_ged_reemergence import prepared
 
 
 class RecencyTests(unittest.TestCase):
+    def test_unknown_recency_uses_global_rate_even_when_missingness_correlates(self):
+        pooled = 0.125
+        buckets = {"history_incomplete": [100, 95],
+                   "12_23m": [20, 11], "24_59m": [8, 1]}
+        self.assertEqual(probability_for_bucket(
+            "history_incomplete", buckets, pooled), pooled)
+        self.assertEqual(probability_for_bucket(
+            "60plus_documented", buckets, pooled), pooled)
+        self.assertAlmostEqual(probability_for_bucket(
+            "12_23m", buckets, pooled), (11 + 20 * pooled) / 40)
+        with self.assertRaises(ValueError):
+            probability_for_bucket("future_known", buckets, pooled)
+
+    def test_empty_composition_is_null_not_an_invented_zero_rate(self):
+        output = recency_composition([])
+        self.assertEqual(sum(part["n"] for part in output.values()), 0)
+        self.assertTrue(all(part["event_rate"] is None for part in output.values()))
+        self.assertTrue(all(part["scores"]["country_history"] is None
+                            for part in output.values()))
+
+
     def test_recency_categories_are_known_at_cutoff_and_unknown_is_not_assumed_quiet(self):
         folder, ged, onset, roster, calendar, training = prepared()
         try:
@@ -49,6 +73,15 @@ class RecencyTests(unittest.TestCase):
                     self.assertEqual(original["outcome"],added["outcome"])
                     self.assertTrue(0<added["probabilities"]["time_since_last_event"]<1)
                 fixed=part["nonoverlap"]
+                comp=fixed["by_recency_bucket"]
+                self.assertEqual(sum(x["n"] for x in comp.values()),fixed["n"])
+                self.assertEqual(sum(x["events"] for x in comp.values()),fixed["events"])
+                self.assertEqual(new["source"]["ged_sha256"],ged["source_sha256"])
+                for case in part["cases"]:
+                    if case["recency_bucket"] == "history_incomplete":
+                        self.assertEqual(
+                            case["probabilities"]["time_since_last_event"],
+                            case["probabilities"]["global_reemergence"])
                 self.assertIsNone(fixed["confidence_interval_95"])
                 self.assertIsNone(fixed["significance_test"])
                 self.assertEqual(fixed["calendar_blocks"],2 if name=="validation" else 3)
