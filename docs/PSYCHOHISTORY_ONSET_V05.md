@@ -90,3 +90,14 @@ El manifiesto incorpora hashes SHA-256 de los bytes descargados y el universo de
 
 Para permitir la ingesta sin Codex ni comandos locales, la automatización de GitHub Actions puede descargar una **copia pública de las fuentes UCDP** en un runner temporal y transferirla después, como archivo, al almacenamiento privado del proyecto. La acción no debe incluir datasets privados, credenciales, puntuaciones por país ni artefactos con pronósticos reales; conservar como máximo un día el archivo de transferencia. El registro y los scores se calculan exclusivamente tras la ingesta privada, su revisión independiente y la comprobación del esquema oficial.
 
+
+
+## Resúmenes de Onset en el laboratorio privado (v0.5.1)
+
+Los primeros resultados oficiales **revisados retrospectivamente** se registran como un resumen por fenómeno (interno/interestatal) en `PsicoExperimentos.notas`, esquema `psychohistory.onset.summary.v1`. El análisis completo, predicciones por país, datos fuente y auditoría de incertidumbre permanecen exclusivamente en Google Drive privado.
+
+Contrato de un resumen: `datasetVersion=25.1`, `target=onset1`, `kind` inequívoco, `runType=retrospective_revised_release_exploratory`, `sourceAsOfVerified=false`, `prospectiveEligible=false`, `sourceIndependentShaPinning=false`, hash de la fuente, `models=[global_frequency,country_shrinkage]`, lag=2 años, memoria de 5 años y dos particiones `validation` (2010–2015) y `test` (2016–2024). Cada partición guarda N, inicios, exclusiones, Brier de ambos modelos, skill, AP, log-loss, captura en el 10 % de mayor riesgo, intervalo por bootstrap de años y conteos agregados anuales.
+
+El frontend `app/research-onset.mjs` valida el esquema, consistencia de denominadores, suma anual y Brier Skill antes de mostrar resultados, sin cifras hardcodeadas. Si falta el registro canónico no muestra métricas ficticias. Solo consume la API de lectura privada y **no añade endpoints ni modifica el grafo probabilístico anterior**.
+
+La incertidumbre usa *bootstrap pareado por bloques de año* para reflejar sensibilidad a la elección de 6/9 años; no son periodos temporalmente independientes, intervalos de eficacia prospectiva ni una prueba de validez `as-of`. Distinguir siempre capacidad de ranking retrospectivo de pronóstico operativo.
