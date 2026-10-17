@@ -149,5 +149,5 @@ test('target scope separates current retrospective scores from not-yet-evaluated
   assert.equal((html.match(/SIN PROBABILIDADES REALES TODAVÍA/g)||[]).length,2);
   assert.doesNotMatch(html,/100 % de acierto|predicción prospectiva validada/);
   const source=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
-  assert.ok(source.includes('container.innerHTML = graphFirst + phenomenaScopePanel(onsetExperiments)'));
+  assert.ok(source.includes('container.innerHTML = graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) + phenomenaScopePanel(onsetExperiments)'));
 });
