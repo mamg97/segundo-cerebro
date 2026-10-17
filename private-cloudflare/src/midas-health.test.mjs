@@ -32,7 +32,7 @@ test("completed success covers a cycle even when a backup is still running", () 
 });
 
 test("before a scheduled run is due, absence is not a failure", () => {
-  const result = classicStatus([], "2026-10-16T22:00:00Z");
+  const result = classicStatus([], "2026-10-12T22:30:00Z");
   assert.equal(result.state, "not_due_yet");
   assert.equal(result.ok, true);
 });
