@@ -19,6 +19,41 @@ const option = (value, label, selected) => '<option value="' + esc(value) + '"' 
 const point = (level, state) => ({x: 76 + level * 126, y: level ? 90 + state * 83 : 215});
 const curve = (from, to) => 'M' + from.x + ' ' + from.y + ' C' + (from.x + 60) + ' ' + from.y + ' ' + (to.x - 60) + ' ' + to.y + ' ' + to.x + ' ' + to.y;
 
+
+function observedFact(result, level) {
+  const state = result.observedStates?.[level];
+  if (!validObservedState(state)) return null;
+  const year = result.cutoff + level;
+  const evidence = result.observedEvidence?.find(e => e?.year === year && Number.isInteger(e?.sbDeathsBest) && e.sbDeathsBest >= 0);
+  const names = Array.isArray(evidence?.dyadNames) ? evidence.dyadNames.filter(n => typeof n === 'string' && n.length <= 320).slice(0,2) : [];
+  return {year,state,title:SHORT[state],description:REAL_EVENTS[state],
+    deaths:evidence?.sbDeathsBest,dyadCount:evidence?.sbDyadCount,names,
+    source:evidence?.sourceUrl || 'https://ucdp.uu.se/downloads/'};
+}
+export function historicalEventCards(result,horizon) {
+  if(!Array.isArray(result.observedStates))return '';
+  const cards=[];
+  for(let i=1;i<=horizon+1;i++) {
+    const year=result.cutoff+i,fact=observedFact(result,i);
+    if(!fact){cards.push('<article class="future-event-card"><small>'+year+' · NO EVALUABLE</small><strong>Sin observación válida para este año</strong></article>');continue;}
+    const mortality=fact.deaths===undefined?
+      (result.observedEvidenceStatus==='source_temporarily_unavailable'?'Detalle numérico de UCDP no disponible temporalmente':
+      'Consultando datos oficiales UCDP…') :
+      fmt(fact.deaths,0)+' muertes estatales · mejor estimación UCDP';
+    const dyad=fact.deaths===undefined ?
+      '<span class="future-dyad">Detalle de actores pendientes de verificar con UCDP</span>' :
+      fact.names.length ? '<span class="future-dyad">Díadas registradas: '+fact.names.map(esc).join(' · ')+
+      (fact.dyadCount>fact.names.length?' · y otras '+(fact.dyadCount-fact.names.length):'')+'</span>':
+      '<span class="future-dyad">Ninguna díada estatal registrada en este país-año</span>';
+    cards.push('<button type="button" class="future-event-card" data-fevent="'+i+'" aria-label="Inspeccionar acontecimiento UCDP '+
+      fact.year+'"><small>'+fact.year+(i===1?' · PUENTE EX POST':' · AÑO OBJETIVO')+
+      '</small><strong>'+CODES[fact.state]+' · '+esc(fact.title)+'</strong><span>'+
+      esc(fact.description)+'</span><em>'+esc(mortality)+'</em>'+dyad+'</button>');
+  }
+  return '<div class="future-event-heading"><strong>Acontecimientos documentados en el recorrido real</strong><span>Datos conocidos después · Pulsa un año para inspeccionar</span></div>'+
+    '<div class="future-event-cards">'+cards.join('')+'</div>'+
+    '<p class="chart-note">Las díadas indican partes enfrentadas reportadas por UCDP; no son incidentes puntuales ni demuestran causalidad. El estado 00 no implica paz ni ausencia de otras violencias. Fuente: OrganizedViolenceCY 26.1, CC BY 4.0.</p>';
+}
 export function futureGraph(result, horizon, selection = null, observed = false) {
   const levels = result.levels.slice(0, horizon + 2), width = 152 + (levels.length - 1) * 126;
   let svg = '<svg class="future-graph" viewBox="0 0 ' + width + ' 420" width="' + width + '" height="420" aria-label="Grafo temporal agregado de probabilidades. Las historias individuales se detallan debajo.">' +
@@ -60,6 +95,14 @@ export function futureGraph(result, horizon, selection = null, observed = false)
       (!i ? '<text x="' + p.x + '" y="' + (p.y + 50) + '" text-anchor="middle" class="future-year-note">' + esc(SHORT[state]) + '</text>' :
         realHere ? '<text x="' + p.x + '" y="' + (p.y - 33) + '" text-anchor="middle" class="future-real-label">' +
           (i === horizon + 1 ? 'REAL · FINAL' : 'REAL') + '</text>' : '') + '</g>';
+    if (realHere && i > 0) {
+      const fact = observedFact(result,i);
+      svg += '<g class="future-event-marker" tabindex="0" role="button" data-fevent="'+i+
+        '" aria-label="Evento real UCDP '+fact.year+': '+esc(fact.title)+'"><title>'+
+        esc(fact.year+' · '+fact.description+(fact.deaths===undefined?'':'; '+fact.deaths+' muertes estatales estimadas'))+
+        '</title><circle cx="'+(p.x+28)+'" cy="'+(p.y-20)+'" r="10" fill="#ffc182" stroke="#fff0d1" stroke-width="1"/>'+
+        '<text x="'+(p.x+28)+'" y="'+(p.y-16)+'" text-anchor="middle" fill="#102439" font-size="12" font-weight="700">i</text></g>';
+    }
   }));
   return svg + '</svg>';
 }
@@ -73,6 +116,19 @@ function distribution(result, snapshot) {
 
 function detail(result, horizon, selection) {
   const snapshot = result.snapshots[horizon - 1];
+  if (selection?.kind === 'event') {
+    const fact=observedFact(result,selection.level);
+    if (!fact) return '<h4>Sin evento verificable</h4><p>No consta una observación completa para este año.</p>';
+    return '<span class="eyebrow">EVIDENCIA HISTÓRICA · UCDP 26.1</span><h4>'+fact.year+' · '+esc(fact.title)+'</h4>'+
+      '<p>'+esc(fact.description)+'</p>'+
+      (fact.deaths===undefined ? '<p>Falta adjuntar el conteo oficial de muertes para este año.</p>' :
+        '<div class="kpi"><span>Muertes estatales (estimación UCDP)</span><b>'+fmt(fact.deaths,0)+'</b></div>')+
+      (fact.deaths===undefined ? '<p>Los nombres de las díadas aún no están verificados en este registro.</p>' :
+       fact.names.length ? '<p>Díadas registradas: '+fact.names.map(esc).join('; ')+'</p>':
+         '<p>El conjunto oficial no registra díadas estatales para este país-año.</p>')+
+      '<p class="chart-note">Una díada de conflicto no es un incidente individual; fuente retrospectiva revisada. '+
+      'El desenlace no interviene en las probabilidades.</p><a href="'+esc(fact.source)+'" rel="noopener noreferrer" target="_blank">Consultar UCDP ↗</a>';
+  }
   if (selection?.kind === 'edge') {
     const edge = result.levels[selection.level].flows[selection.index];
     return '<span class="eyebrow">TRANSICIÓN / ' + result.levels[selection.level].year + '</span><h4>' + esc(SHORT[edge.from]) + ' → ' + esc(SHORT[edge.to]) + '</h4>' +
@@ -209,7 +265,21 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
     if (disposed) return;
     const previousScroll = container.querySelector('.future-graph-scroll')?.scrollLeft || 0;
     const result = payload?.result, snapshot = result?.snapshots[horizon - 1];
-    container.innerHTML = '<div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
+    // MAIN SCREEN: begin with the real-versus-probabilistic network, not controls.
+    const graphFirst = result ?
+      '<section class="panel future-network future-network-first"><div class="panel-head"><div><span class="eyebrow">PSICOHISTORIA / OBSERVATORIO</span>'+
+      '<h2>Futuros posibles frente a hechos reales</h2><p>'+esc(result.country.name)+' · '+snapshot.endYear+' · '+esc(result.modelLabel)+'</p></div>'+
+      '<label class="future-observed-toggle"><input type="checkbox" name="observed"'+(observed?' checked':'')+
+      (!observedCaseAvailable(result,horizon)?' disabled':'')+'> Mostrar lo que ocurrió</label></div>'+
+      '<p class="future-network-key"><span><b>━━ Ámbar:</b> evolución registrada posteriormente</span><span>● Otros colores: probabilidad de cada estado</span>'+
+      '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
+      '<div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed)+'</div>'+
+      (observed?historicalEventCards(result,horizon):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
+      '<p class="chart-note">Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
+      ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
+      '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
+      (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
+    container.innerHTML = graphFirst + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
       '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
       '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
@@ -223,16 +293,13 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
         historicalCaseSummary(result, horizon) +
         '<div class="future-legend">' + SHORT.map((name,i) => '<span data-state="' + i +
           '"><i></i><b>' + CODES[i] + '</b> ' + esc(name) + '</span>').join('') + '</div>' +
-        (mode === 'explorer' ? '<div class="future-explorer"><section class="panel future-network"><div class="panel-head"><h3>Red de futuros frente al recorrido real</h3><label class="future-observed-toggle"><input type="checkbox" name="observed"' +
-          (observed ? ' checked' : '') + (!observedCaseAvailable(result,horizon) ? ' disabled' : '') +
-          '> Mostrar trayectoria observada después</label></div><p class="future-network-key"><span>━━ <b>Ámbar: recorrido real observado después</b></span><span>● Colores: masa probabilística de cada estado</span></p>' +
-          '<div class="future-graph-scroll">' + futureGraph(result, horizon, selection, observed) + '</div><p class="chart-note">Desliza horizontalmente para recorrer los años. El grosor de las aristas refleja el flujo de probabilidad; la línea ámbar marca el resultado histórico, no una predicción. Los pulsos son decorativos.</p></section><aside class="panel future-detail" aria-live="polite">' + detail(result, horizon, selection) + '</aside></div>' +
+        (mode === 'explorer' ? '<section class="panel top-gap future-event-inspector" aria-live="polite">' + detail(result,horizon,selection) + '</section>' +
         historicalObservedTimeline(result, horizon) + historicalCaseComparison(result,horizon) +
         '<section class="panel top-gap future-state-distribution"><div class="panel-head"><h3>Futuros posibles · probabilidades calculadas</h3><span>Sin condicionar al resultado real</span></div>' +
         distribution(result, snapshot) + '<p class="chart-note">IP = intervalo paramétrico condicionado al modelo, no cobertura empírica acreditada. Masa total: ' +
         pct(snapshot.distribution.reduce((a,b)=>a+b,0)) + '.</p></section>' +
         '<section class="panel top-gap"><div class="panel-head"><h3>Historias individuales retenidas</h3><span>Sin renormalizar</span></div><div class="future-paths">' + snapshot.paths.map((path,i) => '<button type="button" data-fpath="' + i + '" aria-pressed="' + (selection?.kind === 'path' && selection.index === i) + '"><span>Camino ' + (i+1) + '</span><span>' + path.states.slice(1).map(s => ['00','01','10','11'][s]).join(' → ') + '</span><strong>' + pct(path.probability) + '</strong></button>').join('') + '</div><p class="future-mass">Masa representada: <strong>' + pct(snapshot.representedMass) + '</strong> · Otras historias: <strong>' + pct(snapshot.residualMass) + '</strong></p><p class="chart-note">Beam de ' + snapshot.beam + ' prefijos; hasta 12 historias mostradas. La masa residual incluye todas las historias omitidas. El grafo agregado superior conserva el 100 % de la masa y no depende de esta poda. Códigos: dos años consecutivos, 0 bajo el umbral y 1 por encima.</p></section>' : research(result, payload.metrics, horizon)) +
-        '<div class="future-methods" aria-label="Vertientes conectadas al núcleo">' + ['V1','V2','V3','V4'].map(id => '<button type="button" data-ftrack="' + id + '"><span class="orb-sphere"><span>' + id + '</span></span><strong>' + ({V1:'Memoria e hipótesis',V2:'Probabilidades',V3:'Mecanismos sintéticos',V4:'Evidencia y versiones'}[id]) + '</strong></button>').join('') + '</div>');
+        '<div class="future-methods" aria-label="Vertientes conectadas al núcleo">' + ['V1','V2','V3','V4'].map(id => '<button type="button" data-ftrack="' + id + '"><span class="orb-sphere"><span>' + id + '</span></span><strong>' + ({V1:'Memoria e hipótesis',V2:'Probabilidades',V3:'Mecanismos sintéticos',V4:'Evidencia y versiones'}[id]) + '</strong></button>').join('') + '</div></div>');
     container.querySelector('form').addEventListener('submit', e => {e.preventDefault(); load();});
     container.querySelectorAll('.future-controls select').forEach(select => select.addEventListener('change', () => {
       if (select.name === 'catalog') {
@@ -249,13 +316,14 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
     container.querySelector('[data-fpause]')?.addEventListener('click', () => {paused = !paused; render('[data-fpause]');});
     container.querySelectorAll('[data-fmode]').forEach(b => b.addEventListener('click', () => {mode = b.dataset.fmode; playing = false; render('[data-fmode="'+mode+'"]');}));
     container.querySelectorAll('[data-ftrack]').forEach(b => b.addEventListener('click', () => onTrack(b.dataset.ftrack)));
-    container.querySelectorAll('[data-fnode],[data-fedge],[data-fpath]').forEach(element => {
+    container.querySelectorAll('[data-fnode],[data-fedge],[data-fpath],[data-fevent]').forEach(element => {
       const select = () => {
         playing = false;
         if (element.dataset.fnode) {const [level,state] = element.dataset.fnode.split(':').map(Number); selection = {kind:'node',level,state};}
         else if (element.dataset.fedge) {const [level,index] = element.dataset.fedge.split(':').map(Number); selection = {kind:'edge',level,index};}
+        else if (element.dataset.fevent) selection = {kind:'event',level:Number(element.dataset.fevent)};
         else selection = {kind:'path',index:Number(element.dataset.fpath)};
-        const name = element.hasAttribute('data-fnode') ? 'data-fnode' : element.hasAttribute('data-fedge') ? 'data-fedge' : 'data-fpath';
+        const name = element.hasAttribute('data-fnode') ? 'data-fnode' : element.hasAttribute('data-fedge') ? 'data-fedge' : element.hasAttribute('data-fevent') ? 'data-fevent' : 'data-fpath';
         render('['+name+'="'+element.getAttribute(name)+'"]');
       };
       element.addEventListener('click', select);
@@ -266,6 +334,23 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
     if (focus) container.querySelector(focus)?.focus({preventScroll:true});
     observer.disconnect(); observer.observe(container.querySelector('.future-network') || container);
     syncMotion();
+  }
+  async function loadObservedEvidence(mine, catalogId, countryId, signal) {
+    const params=new URLSearchParams({catalog:catalogId,country:String(countryId)});
+    try {
+      const response=await fetch('/api/research-futures-evidence?'+params,{
+        credentials:'same-origin',cache:'no-store',signal,headers:{Accept:'application/json'}});
+      const data=await response.json();
+      if(mine!==request||disposed||!payload)return;
+      if(!response.ok||!data.ok||data.datasetVersion!=='26.1'||!Array.isArray(data.observedEvidence))
+        throw new Error('EVIDENCE_UNAVAILABLE');
+      payload.result.observedEvidence=data.observedEvidence;
+      payload.result.observedEvidenceStatus='verified_public_archive_checksum';
+    }catch(e){
+      if(mine!==request||disposed||e.name==='AbortError'||!payload)return;
+      payload.result.observedEvidenceStatus='source_temporarily_unavailable';
+    }
+    if(mine===request&&!disposed)render();
   }
   async function load() {
     abort?.abort(); abort = new AbortController(); const mine = ++request;
@@ -279,7 +364,13 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}} = 
       payload = data;
       observed = observedCaseAvailable(data.result,horizon);
     } catch (e) {if (mine === request && !disposed && e.name !== 'AbortError') error = 'No se ha podido calcular. Vuelve a intentarlo con el botón; no se muestran valores de sustitución.';}
-    finally {if (mine === request && !disposed) {loading = false; render();}}
+    finally {
+      if (mine === request && !disposed) {
+        loading = false; render();
+        if(payload?.result?.observedStates?.length)
+          void loadObservedEvidence(mine,catalog.id,country,abort.signal);
+      }
+    }
   }
   function lifecycle() {syncMotion();}
   function motionChange(){if(media.matches)playing=false;render();}

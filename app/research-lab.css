@@ -145,3 +145,28 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
  .future-real-year{flex-basis:160px}
 }
 @media(max-width:390px){.future-case-kpis{grid-template-columns:1fr}.future-case-kpis small{min-height:auto}}
+
+/* v0.4.4 — The graph is the literal first element of Futures, above every filter. */
+.future-network-first{margin:0 0 16px;padding:19px 23px 14px;min-height:350px;background:radial-gradient(ellipse at 28% 36%,#17426877,transparent 72%),#07192a}
+.future-network-first .panel-head h2{font-size:clamp(18px,2vw,25px);margin:3px 0 4px}
+.future-network-first .panel-head p{font-size:11px;color:#a2c4e0;margin:0}
+.future-network-first .future-graph-scroll{border-top:1px solid #213b52;margin:13px 0}
+.future-network-first .future-graph{width:min(100%,1100px);height:auto;min-width:680px;max-width:none}
+.future-network-first .future-event-cards{display:flex;gap:10px;overflow-x:auto;padding:8px 0 12px;scroll-snap-type:x mandatory;scrollbar-color:#466d88 #081b2d}
+.future-event-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 5px}
+.future-event-heading strong{font-size:13px;color:#f1d3aa}
+.future-event-heading span{font-size:10px;color:#92acbf}
+.future-event-card{flex:0 0 min(275px,88vw);background:linear-gradient(135deg,#142e43,#0b1b2c);border:1px solid #41627a;border-radius:12px;color:#e9f4ff;text-align:left;padding:12px 14px;display:flex;flex-direction:column;gap:6px;scroll-snap-align:start;cursor:pointer;min-height:145px}
+.future-event-card:hover,.future-event-card:focus-visible{border-color:#ffbe80;box-shadow:0 0 0 1px #ffbe8030}
+.future-event-card small{font-size:10px;letter-spacing:.55px;color:#ffba79}
+.future-event-card strong{font-size:13px;color:#ecf8ff}
+.future-event-card>span{font-size:11px;color:#b4cde0;line-height:1.45}
+.future-event-card em{font-size:11px;color:#ffce99;font-style:normal;font-weight:600}
+.future-event-card .future-dyad{font-size:10px;color:#a9becf}
+.future-event-marker{cursor:pointer;filter:drop-shadow(0 0 5px #ffc17e77)}
+.future-event-marker:focus-visible circle{stroke-width:3}
+.future-event-inspector{margin-bottom:12px}
+.future-after-network .future-controls{margin:10px 0}
+.future-after-network .future-controls-intro{display:none}
+.future-after-network .future-legend{margin:8px 0}
+@media(max-width:760px){.future-network-first{padding:13px}.future-network-first .future-graph{min-width:680px}.future-event-card{flex-basis:230px}.future-after-network .future-controls{margin-top:12px}}

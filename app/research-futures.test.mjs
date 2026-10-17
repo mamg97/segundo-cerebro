@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {futureGraph, historicalCasePanel, historicalCaseSummary, historicalObservedTimeline, historicalCaseComparison, observedCaseAvailable} from './research-futures.mjs';
+import {futureGraph, historicalCasePanel, historicalCaseSummary, historicalObservedTimeline, historicalCaseComparison, observedCaseAvailable, historicalEventCards} from './research-futures.mjs';
 import {forward,retainedPaths} from '../private-cloudflare/src/research-futures-engine.mjs';
 
 const matrix = [[.8,.2,0,0],[0,0,.3,.7],[.8,.2,0,0],[0,0,.3,.7]];
@@ -107,5 +107,35 @@ test('app launches directly into research cases without covering initial viewpor
   assert.ok(js.includes('observed = observedCaseAvailable(data.result,horizon)'));
   assert.ok(js.includes('historicalCaseSummary(result, horizon)'));
   assert.ok(js.includes('historicalObservedTimeline(result, horizon)'));
-  assert.ok(js.indexOf('historicalCaseSummary(result, horizon) +') < js.indexOf('futureGraph(result, horizon, selection, observed)'));
+  assert.ok(js.includes('container.innerHTML = graphFirst +'), 'network is the literal first element in the DOM');
+  assert.ok(js.indexOf('const graphFirst = result ?') < js.indexOf('container.innerHTML = graphFirst +'));
+  assert.ok(js.includes('historicalEventCards(result,horizon)'));
+  assert.ok(js.includes('data-fevent'));
+  assert.ok(js.includes('observed = observedCaseAvailable(data.result,horizon)'));
+});
+
+test('annotated real-line markers and evidence cards expose historical outcomes on graph',()=>{
+  const sample=historicalFixture();
+  const svg=futureGraph(sample,3,null,true);
+  assert.match(svg,/future-event-marker/);
+  assert.match(svg,/data-fevent="4"/);
+  const annotated=historicalEventCards(sample,3);
+  assert.match(annotated,/2001 · PUENTE EX POST/);
+  assert.match(annotated,/2002 · AÑO OBJETIVO/);
+  assert.match(annotated,/Entrada en episodio agregado/);
+  assert.match(annotated,/Persistencia del episodio agregado/);
+  assert.match(annotated,/Consultando datos oficiales UCDP/);
+  assert.doesNotMatch(historicalEventCards({...sample,observedStates:[0,null,null]},1),/data-fevent/);
+});
+
+test('verified official source evidence is escaped, specific, and not a fabricated event',()=>{
+  const sample=historicalFixture();
+  sample.observedEvidence=[{year:2002,sbDeathsBest:37,sbDyadCount:1,
+    dyadNames:['Government of SYNTHETIC - <ENEMY>'],
+    sourceUrl:'https://ucdp.uu.se/downloads/'}];
+  const html=historicalEventCards(sample,1);
+  assert.match(html,/37 muertes estatales/);
+  assert.match(html,/Government of SYNTHETIC - &lt;ENEMY&gt;/);
+  assert.doesNotMatch(html,/<ENEMY>/);
+  assert.equal((html.match(/37 muertes estatales/g)||[]).length,1);
 });
