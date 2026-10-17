@@ -1,3 +1,13 @@
+## PSICOHISTORIA — preparación de cohorte 2027 y vintages (17/10/2026)
+
+- **PR #548 fusionada y CI satisfactoria:** auditor de ediciones archivadas UCDP OrganizedViolenceCY 24.1/25.1/26.1, comparador de revisiones país-año sin imputaciones y gate conservadora as-of; preparador privado reproducible de cohortes anuales futuras con origen posterior a los datos y puente temporal desconocido. Protocolo en [PSYCHOHISTORY_VINTAGES_AND_PROSPECTIVE.md](PSYCHOHISTORY_VINTAGES_AND_PROSPECTIVE.md).
+- **PR #549 fusionada y CI satisfactoria:** solicitud opaca RFC3161 de lote completo con SHA-256 salado; verificación contra respuesta externa, raíz de confianza administrativamente fijada y sello anterior al objetivo. No hay TSA seleccionada ni contactada ni sello firmado recibido. El verificador mantiene el estado prospectivo no elegible hasta validar también el origen temporal del dataset y el registro de evaluación.
+- **Ensayo privado efectuado:** se reconstruyó el archivo oficial UCDP 26.1 desde una copia de reproducción privada, se verificaron los checksums oficiales del ZIP y codebook y la auditoría de cobertura. Se generó una cohorte *no sellada* de candidatos para 2027 con los cinco modelos y horizontes 1/3/5/10, con datos hasta 2025 y 2026 integrado como puente desconocido. El bundle de probabilidades y la solicitud RFC3161 están archivados únicamente en la carpeta privada de experimentos, propiedad exclusiva del usuario; ni datos ni hashes de pronósticos se subieron a Git.
+- **Siguiente bloqueo:** obtener comprobación independiente de disponibilidad as-of del archivo original y revisar una TSA sin coste nuevo. Transmitir solo la petición opaca, verificar respuesta y dejar evidencia privada e inmutable. Los pronósticos aún NO están emitidos/verificados. No escribir 'RESUELTA' en el registro prospectivo ni cambiar sus reglas de validación.
+- **Operativa:** no hubo cambios de frontend ni nuevas APIs/cron; la versión de laboratorio privado v0.4.2 sigue siendo la vigente. Los nuevos scripts operan offline y no despliegan resultados reales en producción. La evaluación prospectiva de objetivos anuales 2027 solo será posible cuando exista el desenlace oficial íntegro, previsiblemente durante 2028.
+
+---
+
 ## PSICOHISTORIA — v0.4.2 · primeros casos históricos evaluables (17/10/2026)
 
 - **Disponibilidad:** los catálogos retrospectivos UCDP 26.1 privados ofrecen orígenes **2016** (195 países) y **2020** (196 países), con secuencias observadas y parámetros de cinco modelos. Casos concretos como Ucrania, Siria, Etiopía, Colombia y Myanmar están en la fuente; los valores no se hardcodean ni publican.
