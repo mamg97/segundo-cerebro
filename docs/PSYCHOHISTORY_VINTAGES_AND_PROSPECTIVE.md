@@ -50,3 +50,30 @@ El resultado es **UNSEALED_DRY_RUN_DO_NOT_SCORE_AS_PROSPECTIVE**. Crea manifest 
 4. Tras disponer de observaciones oficiales completas de 2027 (previsiblemente en 2028, no garantizado), puntuar TODO lo congelado, con cobertura, exclusiones y revisiones. Los horizontes 3, 5 y 10 se resolverán mucho más adelante.
 
 **No se ha demostrado forecasting prospectivo.** La arquitectura sigue sin costes incrementales, sin nuevos cron y sin datos operativos reales publicados en GitHub.
+
+
+## Preparación y verificación RFC3161 de la cohorte entera
+
+Archivo: research/psychohistory/cohort_timestamp.py. Acepta exclusivamente candidatos privados creados mediante el procedimiento de ensayo anterior, cuyo SHA-256 debe coincidir con su manifest original.
+
+**Prepare** genera una sal criptográfica de 256 bits, un compromiso con separación de dominio de toda la cohorte (en lugar de publicar identidades o probabilidades) y una petición RFC3161 local. Ninguna autoridad es contactada automáticamente. Ejemplo:
+
+    python3 research/psychohistory/cohort_timestamp.py prepare \
+      --cohort-dir /privado/candidato-2027 \
+      --seal-dir /privado/sello-2027
+
+El archivo request.tsq no es un recibo, ni prueba por sí mismo que el pronóstico existiera antes del desenlace.
+
+Después de elegir y auditar una TSA independiente, transmitir únicamente request.tsq por un canal autorizado y custodiar la respuesta original. La revisión y selección del proveedor de la TSA y su coste permitido no se automatizan. El comando de verificación exige una raíz de confianza administrativamente fijada, el SHA-256 de esa raíz obtenido por vía independiente y la cadena de certificados:
+
+    python3 research/psychohistory/cohort_timestamp.py verify \
+      --cohort-dir /privado/candidato-2027 \
+      --seal-dir /privado/sello-2027 \
+      --receipt /privado/sello-2027/recibo.tsr \
+      --trust-root /privado/autoridad-ca.pem \
+      --chain /privado/autoridad-cadena.pem \
+      --pinned-root-sha256 HASH_RAIZ_PREVIAMENTE_COMPROBADO
+
+Verifica íntegramente el candidato original y la firma RFC3161 sobre el compromiso utilizando OpenSSL, además de exigir sello anterior al inicio del año objetivo. La cadena y raíz NO pueden seleccionarse a partir del mismo Sheet que registra una predicción.
+
+**Puerta restante:** aun verificando un recibo externo, el resultado sigue teniendo prospective_scoring_authorized=false hasta acreditarse la disponibilidad de los datos exactos antes de emitir y un registro inmutable de evaluación. No escribir ni etiquetar registros como prospectivamente evaluables automáticamente. No se ha elegido ni contactado una TSA, no existe recibo real verificado y no se ha emitido pronóstico auténtico.
