@@ -40,9 +40,11 @@ export function historicalEventCards(result,horizon) {
       (result.observedEvidenceStatus==='source_temporarily_unavailable'?'Detalle numérico de UCDP no disponible temporalmente':
       'Consultando datos oficiales UCDP…') :
       fmt(fact.deaths,0)+' muertes estatales · mejor estimación UCDP';
-    const dyad=fact.names.length ? '<span class="future-dyad">Díadas: '+fact.names.map(esc).join(' · ')+
+    const dyad=fact.deaths===undefined ?
+      '<span class="future-dyad">Detalle de actores pendientes de verificar con UCDP</span>' :
+      fact.names.length ? '<span class="future-dyad">Díadas registradas: '+fact.names.map(esc).join(' · ')+
       (fact.dyadCount>fact.names.length?' · y otras '+(fact.dyadCount-fact.names.length):'')+'</span>':
-      '<span class="future-dyad">Sin díada estatal reportada en esta observación</span>';
+      '<span class="future-dyad">Ninguna díada estatal registrada en este país-año</span>';
     cards.push('<button type="button" class="future-event-card" data-fevent="'+i+'" aria-label="Inspeccionar acontecimiento UCDP '+
       fact.year+'"><small>'+fact.year+(i===1?' · PUENTE EX POST':' · AÑO OBJETIVO')+
       '</small><strong>'+CODES[fact.state]+' · '+esc(fact.title)+'</strong><span>'+
@@ -121,8 +123,9 @@ function detail(result, horizon, selection) {
       '<p>'+esc(fact.description)+'</p>'+
       (fact.deaths===undefined ? '<p>Falta adjuntar el conteo oficial de muertes para este año.</p>' :
         '<div class="kpi"><span>Muertes estatales (estimación UCDP)</span><b>'+fmt(fact.deaths,0)+'</b></div>')+
-      (fact.names.length ? '<p>Díadas registradas: '+fact.names.map(esc).join('; ')+'</p>':
-         '<p>Sin díada estatal registrada en la fuente aportada.</p>')+
+      (fact.deaths===undefined ? '<p>Los nombres de las díadas aún no están verificados en este registro.</p>' :
+       fact.names.length ? '<p>Díadas registradas: '+fact.names.map(esc).join('; ')+'</p>':
+         '<p>El conjunto oficial no registra díadas estatales para este país-año.</p>')+
       '<p class="chart-note">Una díada de conflicto no es un incidente individual; fuente retrospectiva revisada. '+
       'El desenlace no interviene en las probabilidades.</p><a href="'+esc(fact.source)+'" rel="noopener noreferrer" target="_blank">Consultar UCDP ↗</a>';
   }
