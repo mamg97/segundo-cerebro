@@ -108,3 +108,14 @@ La incertidumbre usa *bootstrap pareado por bloques de año* para reflejar sensi
 El observatorio muestra una gráfica 2016–2024 de **conteos observados de países con onset1** a partir de `PsicoExperimentos.notas`, sin cargar ni incluir datos operativos en el Git público. Presenta por separado interno e interestatal, con etiquetas anuales, denominadores auditados y nota de que cada barra cuenta **países-año**, no «guerras independientes». Es exclusivamente post-hoc sobre UCDP Onset 25.1; no muestra probabilidades prospectivas ni cambios en la red de cuatro estados.
 
 Los datos pasan el parser `psychohistory.onset.summary.v1`; filas erróneas se descartan. No se introduce una integración nueva ni polling, se reutiliza la respuesta de `/api/research-lab` y los estilos son responsive con desplazamiento horizontal.
+
+
+## Casos país-año observados e inspeccionables (v0.5.4)
+
+El módulo `app/research-onset.mjs` incorpora un **casebook retrospectivo oficial**, alimentado únicamente por el nuevo sobre privado `psychohistory.onset.casebook.v1` en `PsicoExperimentos.notas`. Enumera los país-año que tienen `onset1 = 1` durante 2016–2024, con país, año, `tipo` intrastatal/interestatal, probabilidades calculadas previamente en backtest para la etiqueta registrada y fecha de corte Y−2. Los resultados y nombres provienen de los informes originales UCDP Onset 25.1 almacenados **solo en Drive privado**, nunca del frontend público ni de pruebas sintéticas.
+
+**Aseguramiento:** el parser comprueba dos resúmenes experimentales aceptados, su coherencia de hashes de fuente por tipo, estado retrospectivo sin etiqueta prospectiva, unicidad país-año-tipo, probabilidades finitas y estrictamente entre 0 y 1, `cutoffYear = year−2`, y concordancia de **todos los conteos anuales** y los totales de eventos con los resúmenes anteriores. Cualquier desviación excluye el casebook completo; no inventa registros de sustitución.
+
+El panel aparece **después de la red de futuros**, dentro de Onset, bajo la cronología de conteos, con filtros de año y tipo que no consultan ni modifican el backend. La tabla presenta por separado P del modelo de frecuencia global y P del modelo país. El link de evidencia apunta al mismo informe protegido de Drive. Las entradas son **etiquetas país-año UCDP**, no guerras o invasiones identificadas individualmente ni fechas exactas de inicio; los países pueden tener implicación estatal externa. No atribuir a una etiqueta de Ucrania 2022 una predicción exacta de la invasión rusa.
+
+Se mantienen los flags `sourceAsOfVerified=false`, `sourceIndependentShaPinning=false` y `prospectiveEligible=false`. No contiene skill prospectivo, ni registros nuevos en `PsicoPredicciones`.
