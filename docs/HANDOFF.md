@@ -4,7 +4,7 @@
 - **Normalización:** catálogo único por `ged_id` y tabla separada de vínculos país/fin de horizonte/fecha hipotética de emisión. Las numerosas ventanas de 24 meses **solapadas** pueden señalar repetidamente un mismo incidente; no sumar enlaces como sucesos o predicciones independientes.
 - **Auditoría privada:** fuentes originales y reporte de recencia archivados con SHA verificado; paquete nuevo ZIP con informe, manifiesto, código y tests sintéticos guardado en Drive PSICOHISTORIA - EXPERIMENTOS, exclusivo de propietario. Los datos de actores, lugares, incidentes y probabilidades permanecen fuera de Git y Sheets/UI hasta nueva validación de lectura.
 - **Frontera temporal:** campos source_date son fechas de prensa, no disponibilidad UCDP as-of. `ucdp_record_release_date_verified=null` y `information_available_at_historical_issue_verified=false`; solo observaciones GED `type_of_violence=1, best>=1, date_prec=1, date_start=date_end`. No pruebas vintage-correct, no probabilidad de eventos individuales, ni promesa de predecir guerras/coups.
-- **Estado de integración:** PR/CI pendiente de verificar antes del merge. La UI privada conserva v0.5.6 y primera vista del grafo.
+- **Cierre comprobado:** PR [#588](https://github.com/mamg97/segundo-cerebro/pull/588) fusionada mediante squash; CI sintética [39050758368](https://github.com/mamg97/segundo-cerebro/actions/runs/39050758368) **success**. La UI privada conserva v0.5.6 y primera vista del grafo.
 
 ---
 
@@ -13,7 +13,7 @@
 - **Módulo:** `research/psychohistory/ged_calendar_robustness.py`, tests sintéticos, documento `docs/PSYCHOHISTORY_GED_CALENDAR_V067.md`. Analiza 24 posibles fases no solapadas *dentro de cada fase* a partir de los informes privados GED reemergencia + recencia v0.6.5. No refit, no elección de modelo ni de fecha tras observar test, no números reales en Git.
 - **Fuentes archivadas:** la auditoría privada comprobó integridad de ZIP GED 25.1, roster Onset 25.1, informe v0.6.3 e informe v0.6.5 contra manifiestos SHA. ZIP nuevo v0.6.7 en la carpeta privada PSICOHISTORIA - EXPERIMENTOS, con reporte, manifiesto y scripts; acceso solo propietario. No se sobreescribieron artefactos.
 - **Interpretación:** 24 fases muy correlacionadas entre sí, 2 fechas de fin de horizonte en validación y 2/3 en test. Mayor robustez descriptiva del Brier no equivale a mejora de AP/AUC, prueba de significación ni skill prospectivo. El calendario T representa **fin** de horizonte; emisión hipotética T−23 meses. Resultados retrospectivos revisados, no vintage-correct.
-- **Pendiente:** integración factual de acontecimientos históricos GED con fuente y disponibilidad temporal; reproducción independiente de todo el motor bajo nuevo commit y comparación externa sólo ante target común. UI v0.5.6 y PsicoPredicciones inalterados. Actualizar aquí el cierre de PR/CI una vez confirmado.
+- **Cierre comprobado:** PR [#587](https://github.com/mamg97/segundo-cerebro/pull/587) fusionada mediante squash; CI sintética [39050112625](https://github.com/mamg97/segundo-cerebro/actions/runs/39050112625) **success**. El casebook factual GED se implementó después en PR #588 y quedó en Drive privado. Pendientes comparación externa de target común, vintage-correct y sellado TSA. UI v0.5.6 y PsicoPredicciones inalterados.
 
 ---
 
