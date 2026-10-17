@@ -1,8 +1,15 @@
+## PSICOHISTORIA — Ledger privado de borradores v0.1 (17/10/2026)
+
+- **Implementado en rama de investigación:** `research/psychohistory/prospective_draft_ledger.py` registra sólo eventos `UNSEALED_DRAFT` con SHA-256, cadena de integridad, directorio fuera de Git, archivos create-only, control de escrituras concurrentes y correcciones mediante nueva entrada que cita el hash anterior. Requiere dominio, target, geografía, horizonte, datos y código versionados, benchmark y protocolo de resolución. Tests exclusivamente sintéticos y contrato `docs/psicohistoria/REGISTRO_PROSPECTIVO.md`.
+- **No confundir** integridad local con inmutabilidad probatoria: un operador con control del directorio puede reescribir toda la cadena. No hay emisión certificada, sello externo validado, recibo TSA conectado, integración as-of, publicación de probabilidades ni evaluación prospectiva. No modifica `PsicoPredicciones`, Worker ni fuentes privadas. Siguiente: CI/merge, comprobación con fixture y diseño de la puerta TSA externa con procedencia de datos.
+
+---
+
 ## PSICOHISTORIA — Ejecución explicable · v0.5.9 (17/10/2026)
 
 - **Protocolo continuo:** PR #596 fusionada; `docs/psicohistoria/INVESTIGACION_CONTINUA.md` fija dominios abiertos, versiones independientes y predicciones congeladas, sin atribuir implementación del ledger a un documento.
 - **Capacidad preparada:** `private-cloudflare/src/research-futures-trace.mjs` genera una traza matemática determinista de las mismas operaciones que devuelve Futures Engine. `app/research-explainable.mjs` valida y reproduce corte histórico, conteos, matriz 4×4, puente no observado, sumas producto por año y baseline de frecuencia. La red sigue siendo primera vista; UI **v0.5.9**, sin cambiar versión científica, probabilidades ni registros privados. Es REPRODUCCIÓN retrospectiva, NO progreso de ejecución en vivo, y NO emisión real. Tests y documento `docs/psicohistoria/EJECUCION_EXPLICABLE.md`.
-- **Puertas pendientes:** cerrar CI, fusionar y verificar despliegue de esta revisión; no declarar producción antes de verificar el workflow. Siguiente experimento: ledger privado append-only con receipt externo verificado, versionado y resolución, sin reutilizar resultados retrospectivos.
+- **Cierre técnico verificado:** PR [#598](https://github.com/mamg97/segundo-cerebro/pull/598) fusionada, CI de frontend/Worker [39072971684](https://github.com/mamg97/segundo-cerebro/actions/runs/39072971684) `success` y despliegue Cloudflare [39073026691](https://github.com/mamg97/segundo-cerebro/actions/runs/39073026691) `success`; inspección visual autenticada aún pendiente. El ledger de borradores se desarrolla como capability separada, sin emisión externa certificada.
 
 ---
 
