@@ -13,7 +13,7 @@ const row=(events,index=0,count=1)=>({id:'MOCK-'+index,status:'RETROSPECTIVO_EXP
     asOfVerified:false,prospectiveEligible:false,eventSpecificForecast:false,
     sourceAvailabilityVerified:false,horizonMonths:24,gedZipSha256:'a'.repeat(64),
     casebookSha256:'b'.repeat(64),batchCount:count,batchIndex:index,
-    totalEvents:2,totalWindowLinks:3,events})});
+    totalEvents:2,totalWindowLinks:3,archiveTotalEvents:7,archiveTotalWindowLinks:10,events})});
 test('fail closed without every canonical batch',()=>{
  assert.equal(parseGedIncidentPreview([row([item],0,2)]).ready,false);
  assert.equal(gedIncidentPreviewPanel([row([item],0,2)]),'');
@@ -23,8 +23,8 @@ test('valid private chunks show two unique incidents with contextual horizons',(
  const result=parseGedIncidentPreview(events);
  assert.equal(result.ready,true);
  assert.equal(result.cases.length,2);
- assert.match(gedIncidentPreviewPanel(events),/2 sucesos únicos/);
- assert.match(gedIncidentPreviewPanel(events),/3 ventanas positivas/);
+ assert.match(gedIncidentPreviewPanel(events),/2 de 7 sucesos únicos/);
+ assert.match(gedIncidentPreviewPanel(events),/3 de 10 vínculos/);
  assert.match(gedIncidentPreviewPanel(events),/no del suceso concreto/);
 });
 test('duplicates, altered outcome windows and as-of claims are rejected',()=>{
