@@ -175,6 +175,19 @@ def forecast_month(ged, onset_source, year, month, *, prepared=None):
             "n_scored":len(cases),"excluded":dict(rejected),"cases":cases}
 
 
+def evaluate_monthly_model(rows, model):
+    """Adapt the additional local baseline to the independent binary scorer.
+
+    Do not modify Onset's allowed comparators or validation protocol.
+    """
+    if model != "country_history_24m":
+        return evaluate_cases(rows, model)
+    adapted = [{"outcome":r["outcome"],
+                "probabilities":{"country_shrinkage":r["probabilities"][model]}}
+               for r in rows]
+    return evaluate_cases(adapted, "country_shrinkage")
+
+
 def comparative_diagnostics(cases):
     """Exactly the same country-months for all three models, no score tuning."""
     base=diagnostic_summary(cases)
@@ -190,14 +203,14 @@ def comparative_diagnostics(cases):
         "calibration_bins":calibration_five_bins(cases,name),
         "yearly":[{"year":year,"n":len(group),
                    "events":sum(r["outcome"] for r in group),
-                   "brier":evaluate_cases(group,name)["brier"],
+                   "brier":evaluate_monthly_model(group,name)["brier"],
                    "average_precision":average_precision_ties(group,name)}
                   for year,group in sorted(yearly.items())],
     }
     base["country_history_brier_skill_vs_global_frequency"] = (
-        1-evaluate_cases(cases,name)["brier"]/evaluate_cases(cases,"global_frequency")["brier"])
+        1-evaluate_monthly_model(cases,name)["brier"]/evaluate_cases(cases,"global_frequency")["brier"])
     base["country_history_brier_skill_vs_country_shrinkage"] = (
-        1-evaluate_cases(cases,name)["brier"]/evaluate_cases(cases,"country_shrinkage")["brier"])
+        1-evaluate_monthly_model(cases,name)["brier"]/evaluate_cases(cases,"country_shrinkage")["brier"])
     return base
 
 
@@ -230,7 +243,7 @@ def monthly_report(ged, onset_source):
             "n_scored":len(cases),
             "n_excluded":sum(run["n_roster"]-run["n_scored"] for run in runs),
             "positive_months":sum(case["outcome"] for case in cases),
-            "models":{model:evaluate_cases(cases,model) for model in MODELS},
+            "models":{model:evaluate_monthly_model(cases,model) for model in MODELS},
             "rare_event_diagnostics":comparative_diagnostics(cases),
             "cases":cases,
         }
