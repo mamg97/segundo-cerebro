@@ -1,3 +1,4 @@
+import {phenomenaScopePanel} from './research-futures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseOnsetSummaries,onsetSummaryPanel} from './research-onset.mjs';
@@ -61,4 +62,14 @@ test('escape rich text and link safety while keeping two independent objectives'
  assert.match(body,/conflicto interno/);
  assert.match(body,/conflicto interestatal/);
  assert.doesNotMatch(body,/vintage-correct validated|prospective skill proven/);
+});
+
+test('capability labels reflect validated private experiments and distinguish unissued forecasts',()=>{
+  const html=phenomenaScopePanel([row(report)]);
+  assert.equal((html.match(/RESULTADOS RETROSPECTIVOS · NO PROSPECTIVOS/g)||[]).length,1);
+  assert.equal((html.match(/SIN PROBABILIDADES REALES TODAVÍA/g)||[]).length,1);
+  const both=phenomenaScopePanel([row(report),row({...report,kind:'interstate_country'},{id:'SYNTHETIC-2'})]);
+  assert.equal((both.match(/RESULTADOS RETROSPECTIVOS · NO PROSPECTIVOS/g)||[]).length,2);
+  assert.doesNotMatch(both,/SIN PROBABILIDADES REALES TODAVÍA/);
+  assert.equal((phenomenaScopePanel().match(/SIN PROBABILIDADES REALES TODAVÍA/g)||[]).length,2);
 });
