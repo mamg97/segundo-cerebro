@@ -1,4 +1,5 @@
 import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.6';
+import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.7';
 // The browser renders server-calculated probabilities. It never fits a model.
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = (value, digits = 3) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('es-ES', {maximumFractionDigits: digits}) : 'Sin datos';
@@ -310,7 +311,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
       (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
-    container.innerHTML = graphFirst + phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
+    container.innerHTML = graphFirst + phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) + gedIncidentPreviewPanel(onsetExperiments) + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
       '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
       '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
@@ -349,6 +350,21 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       };
       caseYear.addEventListener('change',filter);
       caseKind.addEventListener('change',filter);
+    }
+    const gedCountry=container.querySelector('[data-ged-preview-country]');
+    const gedYear=container.querySelector('[data-ged-preview-year]');
+    if(gedCountry&&gedYear){
+      const filterGed=()=>{
+        let shown=0;
+        container.querySelectorAll('[data-ged-preview-event]').forEach(card=>{
+          card.hidden=!( (gedCountry.value==='all'||card.dataset.country===gedCountry.value) &&
+            (gedYear.value==='all'||card.dataset.year===gedYear.value));
+          if(!card.hidden)shown++;
+        });
+        container.querySelector('[data-ged-preview-visible]').textContent=shown+' incidentes';
+      };
+      gedCountry.addEventListener('change',filterGed);
+      gedYear.addEventListener('change',filterGed);
     }
     container.querySelector('form').addEventListener('submit', e => {e.preventDefault(); load();});
     container.querySelectorAll('.future-controls select').forEach(select => select.addEventListener('change', () => {
