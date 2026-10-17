@@ -28,7 +28,9 @@ import re
 from pathlib import Path
 
 from ged_event_context import _read_source, FIELDS, SOURCE_URL as GED_URL
-from ucdp_onset import load_onsets, canonical, evaluate_cases, diagnostic_summary, REPOSITORY
+from ucdp_onset import (load_onsets, canonical, evaluate_cases, diagnostic_summary,
+                        average_precision_ties, top_decile_coverage,
+                        calibration_five_bins, REPOSITORY)
 
 HISTORY_MONTHS = 24
 OBSERVATION_LAG_MONTHS = 24
@@ -37,7 +39,7 @@ VALIDATION_YEARS = (2016, 2019)
 TEST_YEARS = (2020, 2024)
 GED_EDITION = "25.1"
 TARGET = "at_least_one_exact_dated_lethal_state_based_ged_event"
-MODELS = ("global_frequency", "country_shrinkage")
+MODELS = ("global_frequency", "country_shrinkage", "country_history_24m")
 
 
 def month_index(year: int, month: int) -> int:
@@ -161,13 +163,42 @@ def forecast_month(ged, onset_source, year, month, *, prepared=None):
             rejected["incomplete_country_roster_in_history"] += 1
             continue
         own=(sum(past)+COUNTRY_PRIOR_WEIGHT*global_probability)/(HISTORY_MONTHS+COUNTRY_PRIOR_WEIGHT)
+        # Stronger, preregistered benchmark from the same strictly lagged 24 months.
+        country_history=(sum(past)+1)/(HISTORY_MONTHS+2)
         y=int(ged["events_by_month"][(cid,origin)]>0)
         cases.append({"country_id":cid,"country":name,"origin_year":year,"origin_month":month,
                       "target":TARGET,"cutoff_month":f"{cutoff//12}-{cutoff%12+1:02d}",
                       "outcome":y,"documented_events":ged["events_by_month"][(cid,origin)],
-                      "probabilities":{"global_frequency":global_probability,"country_shrinkage":own}})
+                      "probabilities":{"global_frequency":global_probability,"country_shrinkage":own,
+                                       "country_history_24m":country_history}})
     return {"year":year,"month":month,"n_roster":sum(yy==year for _,yy in roster),
             "n_scored":len(cases),"excluded":dict(rejected),"cases":cases}
+
+
+def comparative_diagnostics(cases):
+    """Exactly the same country-months for all three models, no score tuning."""
+    base=diagnostic_summary(cases)
+    if base is None:
+        return None
+    name="country_history_24m"
+    yearly=collections.defaultdict(list)
+    for case in cases:
+        yearly[case["origin_year"]].append(case)
+    base["models"][name]={
+        "average_precision":average_precision_ties(cases,name),
+        "top_10_percent":top_decile_coverage(cases,name),
+        "calibration_bins":calibration_five_bins(cases,name),
+        "yearly":[{"year":year,"n":len(group),
+                   "events":sum(r["outcome"] for r in group),
+                   "brier":evaluate_cases(group,name)["brier"],
+                   "average_precision":average_precision_ties(group,name)}
+                  for year,group in sorted(yearly.items())],
+    }
+    base["country_history_brier_skill_vs_global_frequency"] = (
+        1-evaluate_cases(cases,name)["brier"]/evaluate_cases(cases,"global_frequency")["brier"])
+    base["country_history_brier_skill_vs_country_shrinkage"] = (
+        1-evaluate_cases(cases,name)["brier"]/evaluate_cases(cases,"country_shrinkage")["brier"])
+    return base
 
 
 def monthly_report(ged, onset_source):
@@ -200,7 +231,7 @@ def monthly_report(ged, onset_source):
             "n_excluded":sum(run["n_roster"]-run["n_scored"] for run in runs),
             "positive_months":sum(case["outcome"] for case in cases),
             "models":{model:evaluate_cases(cases,model) for model in MODELS},
-            "rare_event_diagnostics":diagnostic_summary(cases),
+            "rare_event_diagnostics":comparative_diagnostics(cases),
             "cases":cases,
         }
     return result
