@@ -18,6 +18,9 @@ class AnchorStabilityTests(unittest.TestCase):
         self.assertIsNone(out["significance_test"])
         test = out["partitions"]["test"]
         self.assertEqual(test["anchors"], [2020, 2022, 2024])
+        self.assertEqual(test["hypothetical_issue_months"],["2018-02","2020-02","2022-02"])
+        self.assertEqual([r["target_end_month"] for r in test["by_anchor"]],["2020-01","2022-01","2024-01"])
+        self.assertEqual([r["hypothetical_issue_month"] for r in test["by_anchor"]],["2018-02","2020-02","2022-02"])
         self.assertEqual(test["n"], 6)
         self.assertEqual(test["events"], 1)
         self.assertEqual([x["year"] for x in test["by_anchor"]], [2020, 2022, 2024])
