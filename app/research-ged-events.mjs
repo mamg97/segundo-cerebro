@@ -3,6 +3,8 @@
 // Operational cases/actors remain exclusively in the private canonical Sheet.
 export const GED_BATCH_SCHEMA = 'psychohistory.onset.ged_context_batch.v1';
 const SOURCE_URL = 'https://ucdp.uu.se/downloads/ged/ged251-csv.zip';
+// Published source archive hash recorded during verified official GED 25.1 retrieval.
+const OFFICIAL_GED_SHA256 = 'e256f1fb20a579d8b2f910e5bae212f486d3002adaa2e4359ace740c737da05d';
 const KINDS = new Set(['intrastate_country','interstate_country']);
 const esc = x => String(x ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -63,7 +65,7 @@ export function parseGedContextBatches(experiments=[],verifiedCasebook=null) {
     if(d?.schema!==GED_BATCH_SCHEMA)continue;
     const valid = row.status==='RETROSPECTIVO_EXPLORATORIO' &&
       d.datasetVersion==='25.1' && d.gedEdition==='25.1' &&
-      d.onsetEdition==='25.1' && sha(d.gedZipSha256) && d.gedSource===SOURCE_URL &&
+      d.onsetEdition==='25.1' && sha(d.gedZipSha256) && d.gedZipSha256===OFFICIAL_GED_SHA256 && d.gedSource===SOURCE_URL &&
       d.asOfVerified===false && d.prospectiveEligible===false &&
       d.notAnOnsetEventLink===true &&
       d.batchCount>=1 && uint(d.batchCount,40) && d.batchCount<=40 &&
