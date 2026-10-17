@@ -12,6 +12,23 @@ const sum = x => x.reduce((a, b) => a + b, 0);
 const finite = x => typeof x === 'number' && Number.isFinite(x);
 const interval = x => x === null || (Array.isArray(x) && x.length === 2 && x.every(finite) && x[0] <= x[1]);
 
+// Select a *demonstration* with observable historical changes, never by model score.
+// This must NEVER be called prospective sampling or scientific model evaluation.
+export function suggestedIllustrativeCountry(catalog) {
+  const ranked=(catalog?.countries || []).map(country => {
+    const series=country.observedStates?.slice(2) || [];
+    if(!series.length || series.some(s=>!Number.isInteger(s)||s<0||s>3))return null;
+    const entries=series.filter(s=>s===1).length;
+    const exits=series.filter(s=>s===2).length;
+    const persists=series.filter(s=>s===3).length;
+    const changes=series.slice(1).filter((s,i)=>s!==series[i]).length;
+    const score=20*Number(entries>0&&exits>0) + 8*(entries+exits) +
+      3*changes + Math.min(5,persists);
+    return {id:country.id,score};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.id-b.id);
+  return ranked[0]?.id ?? catalog?.countries?.[0]?.id ?? null;
+}
+
 export function parseFutureCatalogs(experiments = []) {
   const accepted = [], rejected = [];
   for (const row of experiments) {
