@@ -22,6 +22,11 @@ def draft(id="SYNTHETIC-FORECAST-001", entry="SYNTHETIC-ENTRY-001", supersedes=N
             "asOf":"2028-11-30T00:00:00+00:00",
             "probability":0.25,"baselineProbability":0.2,
             "modelVersion":"SYNTHETIC-MODEL-v1","datasetVersion":"SYNTHETIC-DATA-v1",
+            "domain":"SYNTHETIC_GEOPOLITICS","targetDefinition":"At least one synthetic event in target year",
+            "population":"SYNTHETIC_COHORT","benchmarkId":"SYNTHETIC_FREQUENCY",
+            "verificationSource":"SYNTHETIC_SOURCE","verificationMethod":"SYNTHETIC_OFFLINE_RESOLUTION",
+            "sourceEditionReleaseDate":"2028-11-01",
+            "codeSha256":"b"*64,"dataSha256":"c"*64,"modelProtocolSha256":"d"*64,
         }
     }
 
