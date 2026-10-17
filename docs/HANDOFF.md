@@ -1,3 +1,12 @@
+## PSICOHISTORIA — GED v0.6.9 · fechas de disponibilidad y bloqueo as-of (17/10/2026)
+
+- **Nueva puerta temporal:** `research/psychohistory/ged_asof_provenance.py` con tests sintéticos y documento `docs/PSYCHOHISTORY_GED_ASOF_V069.md`. Distingue fechas del suceso, fuentes periodísticas, disponibilidad de registro UCDP, fecha hipotética de emisión y publicación verificable de **vintages** Candidate. No recalcula probabilidades ni reinterpreta incidentes como guerras/invasiones.
+- **Motivación contrastada:** UCDP conserva GED Candidate por ediciones mensuales desde 2018 y GED definitivo anual; Candidate inicial tenía cobertura parcial (África) y las versiones pueden cambiar eventos/codificación. No atribuir cobertura global retroactiva, no suponer que un artículo publicado antes del corte significó un registro GED ya disponible.
+- **Regla fail-closed:** sin archivos Candidate pinneados por SHA256 y fecha de publicación sustentada, ninguna cohorte alcanza condición `as-of`. Incluso con snapshot previa al corte falta reconstruir por completo target, denominadores, muestras y modelos; no hay forecasts vintage-correct ni emisión histórica certificada. Salidas reales exclusivamente Drive privado, sin nuevos scores en la UI ni en `PsicoPredicciones`.
+- **Estado pendiente de cierre:** pruebas sintéticas/CI, PR y auditoría privada de fuente v0.6.8; registrar sus hashes y resultados sin filtrar casos reales en Git. La UI permanece **v0.5.8** y el casebook GED completo (74/944) en Sheets.
+
+---
+
 ## PSICOHISTORIA — UI v0.5.8 · Inspector GED completo (17/10/2026)
 
 - **Capacidad nueva:** `app/research-ged-reemergence.mjs` muestra fichas GED privadas debajo de la primera red de Futuros; parser fail-closed, filtro país/año, detalle factual y cuatro probabilidades de una **ventana binaria** de 24 meses, no de un suceso identificado. Versiones científicas GED v0.6.8 y visual v0.5.8 permanecen independientes.
