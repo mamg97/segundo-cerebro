@@ -1,5 +1,6 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.7';
+import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
 import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.1';
 const TRACKS=[
@@ -116,7 +117,7 @@ function metrics(){
   const data=[
     ["VERTIENTES",String(TRACKS.length),"líneas de investigación"],
     ["HITOS VERIFICADOS",completed()+"/"+m.length,"sin ponderación artificial"],
-    ["EVALUACIONES",String((state?.lab.experiments||[]).filter(e=>e.status!=="CATALOGO_RETROSPECTIVO").length),"registros modelo / objetivo"],
+    ["EVALUACIONES",String((state?.lab.experiments||[]).filter(isResearchScore).length),"registros modelo / objetivo"],
     ["BRIER PROSPECTIVO",fmt(e.brier,4),String(e.resolved||0)+" predicciones evaluables"]
   ];
   document.getElementById("headline-metrics").innerHTML=data.map(x=>'<article class="metric"><small>'+esc(x[0])+'</small><strong>'+esc(x[1])+'</strong><em>'+esc(x[2])+'</em></article>').join("");
@@ -190,7 +191,7 @@ function chart(){
 }
 function science(){
   const e=state.lab.evaluation||{};
-  const rows=(state.lab.experiments||[]).filter(r=>r.status!=="CATALOGO_RETROSPECTIVO");
+  const rows=(state.lab.experiments||[]).filter(isResearchScore);
   return retrospective()+simulation()+recoverySimulation()+heading("REGISTRO PROSPECTIVO","Evidencia emitida antes del desenlace","Sellado independiente obligatorio")+
     '<div class="two-col">'+
       '<section class="panel"><div class="panel-head"><h3>Calibración prospectiva</h3><span>'+Number(e.resolved||0)+' resueltas válidas</span></div>'+
@@ -222,7 +223,7 @@ function operations(){
     '</section>'+
     '<section class="panel"><div class="panel-head"><h3>Control de calidad</h3><span>Laboratorio v0.1</span></div>'+
       '<div class="kpi-list">'+[
-        ["Experimentos documentados",String(exps.length),"Versionado requerido"],
+        ["Experimentos documentados",String(exps.filter(isResearchScore).length),"Versionado requerido"],
         ["Predicciones registradas",String(ps.length),"Sin retrospectivos camuflados"],
         ["Predicciones evaluadas",String(e.resolved||0),"Solo RESUELTA válida"],
         ["Resultados rechazados",String(e.rejectedResolved||0),"Control automático de fechas"],
