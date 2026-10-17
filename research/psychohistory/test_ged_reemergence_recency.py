@@ -1,5 +1,6 @@
 """No actual country names, real UCDP observations or historical scores."""
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -31,7 +32,8 @@ class RecencyTests(unittest.TestCase):
     def test_source_verified_comparison_keeps_original_three_models_exact(self):
         folder,ged,onset,roster,calendar,training=prepared()
         try:
-            old=reemergence_report(ged,onset)
+            # Reproduce the actual private JSON format: canonical sort_keys=True.
+            old=json.loads(json.dumps(reemergence_report(ged,onset),sort_keys=True))
             new=comparator_report(old,ged,onset)
             self.assertFalse(new["prospective_eligible"])
             self.assertEqual(new["schema"],"psychohistory.ged.reemergence_recency_comparator.v1")
@@ -52,6 +54,16 @@ class RecencyTests(unittest.TestCase):
                 self.assertEqual(fixed["calendar_blocks"],2 if name=="validation" else 3)
                 self.assertEqual(len(fixed["by_anchor"]),fixed["calendar_blocks"])
                 self.assertEqual(sum(x["events"] for x in fixed["by_anchor"]),fixed["events"])
+                self.assertEqual(len(fixed["leave_one_anchor_out"]),fixed["calendar_blocks"])
+                for entry in fixed["by_anchor"]:
+                    self.assertIn("time_since_last_event",entry["brier_skill_vs_global"])
+                    self.assertEqual(entry["brier_skill_vs_global"]["global_reemergence"],0)
+                for entry in fixed["leave_one_anchor_out"]:
+                    dropped=int(entry["omitted_target_end_month"][:4])
+                    removed=next(x for x in fixed["by_anchor"] if int(x["target_end_month"][:4])==dropped)
+                    self.assertEqual(entry["n"],fixed["n"]-removed["n"])
+                    self.assertEqual(entry["events"],fixed["events"]-removed["events"])
+                    self.assertIn("time_since_last_event",entry["brier_skill_vs_global"])
                 self.assertEqual(
                     fixed["hypothetical_issue_months"],
                     ["2014-02","2016-02"] if name=="validation"
