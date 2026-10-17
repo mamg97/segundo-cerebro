@@ -1,3 +1,12 @@
+## PSICOHISTORIA — GED v0.6.4 · estabilidad interanual de reapariciones (17/10/2026)
+
+- **Integración científica:** PR [#580](https://github.com/mamg97/segundo-cerebro/pull/580) fusionada; `ged_reemergence_anchor_stability.py` y tests generan diagnóstico de N, eventos y Brier Skill por emisión no solapada enero-2016/2018 (validación) y enero-2020/2022/2024 (test), y al eliminar una fecha completa por vez. Se conservaron los tres modelos predeclarados y la población original. [CI 39044127492](https://github.com/mamg97/segundo-cerebro/actions/runs/39044127492) **success**.
+- **Reproducción auditada privada:** se abrió el archivo original de reaparición y el informe de no solapamiento desde Drive, se cruzaron los SHA-256 del informe de origen, el número de observaciones y eventos, y se reprodujo independientemente el desglose de cada fecha. Un nuevo ZIP con informe, manifiesto SHA-256 y banderas de no prospección se archivó en la carpeta privada PSICOHISTORIA - EXPERIMENTOS, propietario exclusivo. No incluir cifras reales de scores ni datos de países en Git.
+- **Interpretación científica:** los modelos de país mejoran en algunas fechas y empeoran en otras. En particular, la ventaja global de `country_history` en test disminuye notablemente si se retira un único bloque de calendario. Con **dos fechas de validación y tres fechas de test**, no estimar significación estadística ni intervalos de confianza; ningún modelo puede declararse ganador predictivo. Fuente GED 25.1 retrospectiva revisada, no vintage-correct ni sellada.
+- **Siguiente objetivo operativo:** contraste con baseline externo fuerte y fuentes con vintages de época; estudiar un calendario más largo con ventanas no solapadas y suficientes episodios, manteniendo la definición de evento exacta. Solo después decidir si publicar agregados en la UI privada. Laboratorio v0.5.6 y los datos canónicos no se modificaron en este desarrollo offline; la cohorte 2027 sigue sin sello TSA.
+
+---
+
 ## PSICOHISTORIA — GED reaparición de incidentes letales v0.6.3 (17/10/2026)
 
 - **Nueva línea científica:** PR [#577](https://github.com/mamg97/segundo-cerebro/pull/577), `research/psychohistory/ged_reemergence.py`, tests sintéticos y metodología `docs/PSYCHOHISTORY_GED_REEMERGENCE_V063.md`. Target predeclarado: probabilidad de que haya al menos un incidente estatal letal GED de fecha exacta en un horizonte de 24 meses para países que, a fecha de corte T−24, llevaban 12 meses sin incidentes elegibles. **No equivale a nueva guerra ni a evento con fecha exacta futura**.
