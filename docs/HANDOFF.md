@@ -1,3 +1,11 @@
+## PSICOHISTORIA — v0.5.3: cronología anual real del inicio de conflictos (17/10/2026)
+
+- **Nueva capacidad visual:** PR #566 (en proceso de validación/despliegue en el momento de redactar) añade al observatorio una cronología anual de `onset1` 2016–2024 por separado para conflictos internos e interestatales. No se copian puntuaciones ni conteos operativos a Git: se dibuja **únicamente a partir de las dos filas existentes del Sheet privado `PsicoExperimentos`**, tras verificar el esquema `psychohistory.onset.summary.v1` y los denominadores anuales. El grafo probabilístico anterior sigue siendo el primer bloque, como solicitó el usuario.
+- **Semántica:** cada barra es el número de países con `onset1=1` observado en el año; **no cuenta guerras independientes ni incidentes GED individuales**. La edición UCDP Onset 25.1 es retrospectiva revisada; barras observadas nunca se introducen en el motor de pronóstico ni constituyen skill prospectivo.
+- **QA pendiente:** validar resultado Actions, fusión y deploy; comprobar visualmente bajo Cloudflare Access con sesión conectada y probar scroll móvil/hover. El conector Browser actual no dispone del contexto de navegador de origen. No marcar QA visual como efectuada sin evidencia. Próximo objetivo científico: identificar casos concretos con fuente GED y fecha sin cambiar la definición del target Onset ni usar etiquetas futuras como entrada del modelo.
+
+---
+
 ## PSICOHISTORIA — Onset v0.5.2 · primeros resultados históricos en fuente privada (17/10/2026)
 
 - **Dos fuentes UCDP Onset 25.1 originales:** CSV país-año interno e interestatal archivados en Drive privado con manifiesto de descargas y hashes observados, sin prueba de vintage as-of. El primer backtest retrospectivo con objetivos oficiales `onset1` se reprodujo de forma independiente y el motor Python superó un ensayo real en CI sin exponer scores. Validez científica: `retrospective_revised_release_exploratory`; no hay predicción prospectiva verificada.
