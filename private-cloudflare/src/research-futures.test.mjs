@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-import {parseFutureCatalogs, parseFutureMetrics, transitionMatrix, forward, retainedPaths, scoreHistoricalCases, buildFutures} from './research-futures-engine.mjs';
+import {parseFutureCatalogs, parseFutureMetrics, transitionMatrix, forward, retainedPaths, scoreHistoricalCases, suggestedIllustrativeCountry, buildFutures} from './research-futures-engine.mjs';
 import {researchFuturesResponse} from './research-futures.js';
 
 function fixture() {return {schema: 'psychohistory.futures.catalog.v1', version: 'ucdp-futures-v1',
@@ -111,4 +111,15 @@ test('incomplete observed trajectory is explicitly not evaluable',()=>{
   assert.equal(actual.caseEvaluations.length,10);
   assert.ok(actual.caseEvaluations.every(row=>row.available===false && row.reason==='INCOMPLETE_OBSERVED_SEQUENCE'));
   assert.deepEqual(scoreHistoricalCases(fixture(),fixture().countries[0]),[]);
+});
+
+test('illustrative country is selected by verified historical transitions, not performance',()=>{
+  const d=fixture();const original=d.countries[0];
+  const entering={...original,id:91,name:'SYNTHETIC ENTER/EXIT',
+    observedStates:[0,0,1,3,2,0,1,3,2,0,0,0]};
+  const alwaysLow={...original,id:4,name:'SYNTHETIC NO EPISODE',observedStates:Array(12).fill(0)};
+  d.countries=[alwaysLow,entering];
+  assert.equal(suggestedIllustrativeCountry(d),91);
+  assert.equal(suggestedIllustrativeCountry({...d,countries:[alwaysLow]}),4);
+  assert.equal(suggestedIllustrativeCountry({countries:[{...entering,observedStates:[null,null]}]}),91);
 });
