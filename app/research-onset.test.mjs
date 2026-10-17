@@ -1,7 +1,7 @@
 import {phenomenaScopePanel} from './research-futures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseOnsetSummaries,onsetSummaryPanel,onsetObservedAnnualChart} from './research-onset.mjs';
+import {parseOnsetSummaries,onsetSummaryPanel,onsetObservedAnnualChart,parseOnsetCasebook,onsetCasebookPanel} from './research-onset.mjs';
 
 const makeCase=(name,range,nYears)=>{
   const n=nYears*10, events=nYears;
@@ -92,4 +92,60 @@ test('annual plot hides absent or inconsistent scores without inventing an event
   assert.equal(onsetObservedAnnualChart([]),'');
   assert.equal(onsetObservedAnnualChart([{...report,test:{...report.test,events:999}}]),'');
   assert.doesNotMatch(onsetSummaryPanel([]),/Acontecimientos observados por año/);
+});
+
+function syntheticCasebook(){
+ const sources={intrastate_country:'b'.repeat(64),interstate_country:'b'.repeat(64)};
+ return {
+  schema:'psychohistory.onset.casebook.v1',datasetVersion:'25.1',target:'onset1',
+  runType:'retrospective_revised_release_exploratory',sourceAsOfVerified:false,
+  prospectiveEligible:false,sourceIndependentShaPinning:false,informationLagYears:2,
+  models:['global_frequency','country_shrinkage'],yearRange:[2016,2024],
+  sourceSha256:sources,
+  cases:['intrastate_country','interstate_country'].flatMap(kind=>
+    Array.from({length:9},(_,i)=>({
+      kind,year:2016+i,countryId:kind==='intrastate_country'?100+i:200+i,
+      country:i===0?'SYNTHETIC <EVENT>':'SYNTHETIC COUNTRY '+i,
+      cutoffYear:2014+i,onset:1,pCountry:.02,pGlobal:.03
+    })))
+ };
+}
+function caseRows(data=syntheticCasebook()){
+ return [row(),row({...report,kind:'interstate_country'},{id:'SYNTHETIC-2'}),
+   row(data,{id:'SYNTHETIC-BOOK'})];
+}
+test('strictly grounded casebook matches independent official summary event counts for each year',()=>{
+ const result=parseOnsetCasebook(caseRows());
+ assert.equal(result.accepted.length,1);
+ assert.equal(result.accepted[0].cases.length,18);
+ const html=onsetCasebookPanel(caseRows());
+ assert.match(html,/2016/);
+ assert.match(html,/2024/);
+ assert.match(html,/Países y años/);
+ assert.match(html,/SYNTHETIC &lt;EVENT&gt;/);
+ assert.doesNotMatch(html,/<EVENT>/);
+ assert.equal((html.match(/data-onset-case /g)||[]).length,18);
+ assert.match(html,/P. modelo país/);
+ assert.match(html,/P. frecuencia global/);
+ assert.match(html,/No son guerras independientes/);
+ assert.ok(onsetSummaryPanel(caseRows()).indexOf('Países y años')<
+           onsetSummaryPanel(caseRows()).indexOf('future-onset-reports'));
+});
+test('casebook rejects a tampered source, missing year, forged odds or invented onset count',()=>{
+ const variants=[
+  {...syntheticCasebook(),sourceAsOfVerified:true},
+  {...syntheticCasebook(),sourceSha256:{...syntheticCasebook().sourceSha256,interstate_country:'0'.repeat(64)}},
+  {...syntheticCasebook(),cases:syntheticCasebook().cases.slice(1)},
+  {...syntheticCasebook(),cases:[...syntheticCasebook().cases,syntheticCasebook().cases[0]]},
+  {...syntheticCasebook(),cases:syntheticCasebook().cases.map((c,i)=>i===0?{...c,cutoffYear:c.year-1}:c)},
+  {...syntheticCasebook(),cases:syntheticCasebook().cases.map((c,i)=>i===0?{...c,pCountry:1.1}:c)},
+  {...syntheticCasebook(),cases:syntheticCasebook().cases.map((c,i)=>i===0?{...c,onset:0}:c)}
+ ];
+ for(const data of variants){
+  const checked=parseOnsetCasebook(caseRows(data));
+  assert.equal(checked.accepted.length,0);
+  assert.equal(checked.rejected.length,1);
+ }
+ assert.equal(onsetCasebookPanel(caseRows().slice(0,2)),'');
+ assert.equal(onsetCasebookPanel([]),'');
 });
