@@ -62,7 +62,7 @@ class OnsetPipelineTests(unittest.TestCase):
         # Even a conflict-level excerpt with one conflict per country-year fails closed.
         source_lines[0]+=",conflict_id"
         source_lines=[source_lines[0]] + [line+",19" for line in source_lines[1:]]
-        rows=("\\n".join(source_lines)+"\\n").encode().replace(b"\\\\n",b"\\n")
+        rows=chr(10).join(source_lines).encode()+bytes([10])
         with self.assertRaisesRegex(ValueError,"country-onset schema|Conflict-level"):
             load(rows,hashlib.sha256(rows).hexdigest())
 
