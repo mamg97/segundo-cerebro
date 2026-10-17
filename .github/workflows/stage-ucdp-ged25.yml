@@ -1,0 +1,57 @@
+name: Stage public UCDP GED 25.1 archive for private research
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/ged_event_context.py'
+      - '.github/workflows/stage-ucdp-ged25.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage-public-dataset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact public GED 25.1 official archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/public-ged25"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 135 \
+            -o "$RUNNER_TEMP/public-ged25/ged251-csv.zip" \
+            'https://ucdp.uu.se/downloads/ged/ged251-csv.zip'
+          python3 - <<'PY'
+          import hashlib, json, os, zipfile
+          from pathlib import Path
+          path=Path(os.environ['RUNNER_TEMP'])/'public-ged25'/'ged251-csv.zip'
+          raw_size=path.stat().st_size
+          if not 5_000_000<raw_size<80_000_000: raise SystemExit('Unexpected official archive size')
+          sha=hashlib.sha256(path.read_bytes()).hexdigest()
+          with zipfile.ZipFile(path) as z:
+              entries=[x for x in z.infolist() if x.filename.lower().endswith('.csv') and not x.is_dir()]
+              if len(entries)!=1 or entries[0].file_size>400_000_000: raise SystemExit('Unexpected GED member')
+              with z.open(entries[0]) as source:
+                  header=source.readline().decode('utf-8-sig').strip()
+              wanted=('id','year','country_id','date_start','date_end','type_of_violence','best','dyad_name')
+              if any(w not in header.split(',') for w in wanted): raise SystemExit('Invalid GED CSV header')
+              report={'source':'https://ucdp.uu.se/downloads/ged/ged251-csv.zip',
+                  'edition':'25.1','sha256_observed':sha,
+                  'archive_bytes':raw_size,'csv_member_bytes':entries[0].file_size,
+                  'member_path':entries[0].filename,
+                  'checksum_independently_verified':False,
+                  'source_available_as_of_earlier_origins':False,
+                  'prospective_skill_verified':False}
+          target=path.parent/'manifest.json'
+          target.write_text(json.dumps(report,sort_keys=True,indent=2)+'\n')
+          print('Official public UCDP GED 25.1 downloaded and structurally checked.')
+          print('Source SHA256 observed in runner:',sha)
+          print('Not a vintage-correct or independent trust receipt.')
+          PY
+      - name: Temporary transfer of PUBLIC official ZIP only
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-ucdp-ged251-private-archival
+          path: ${{ runner.temp }}/public-ged25/
+          retention-days: 1
+          if-no-files-found: error
