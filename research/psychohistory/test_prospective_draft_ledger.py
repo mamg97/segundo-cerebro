@@ -62,7 +62,7 @@ class LedgerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 append_draft(root,draft(entry="SYNTHETIC-ENTRY-002"))
 
-    def test_no_unsealed_payload_can_claim real issuance_or_outcome(self):
+    def test_no_unsealed_payload_can_claim_real_issuance_or_outcome(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)/"private-ledger"
             for change in ["asof","seal","prospective","outcome","date","duplicate","prob"]:
