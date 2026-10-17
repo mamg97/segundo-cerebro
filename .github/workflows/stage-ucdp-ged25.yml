@@ -48,6 +48,8 @@ jobs:
           print('Source SHA256 observed in runner:',sha)
           print('Not a vintage-correct or independent trust receipt.')
           PY
+      - name: Include audited, public code for offline private processing
+        run: cp research/psychohistory/ged_event_context.py "$RUNNER_TEMP/public-ged25/ged_event_context.py"
       - name: Temporary transfer of PUBLIC official ZIP only
         uses: actions/upload-artifact@v4
         with:
