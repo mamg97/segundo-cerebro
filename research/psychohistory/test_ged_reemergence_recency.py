@@ -23,7 +23,8 @@ class RecencyTests(unittest.TestCase):
             truncated={k:v for k,v in roster.items() if k!=(2,2009)}
             self.assertEqual(recency_bucket(truncated,calendar,2,cutoff,earliest),
                              'history_incomplete')
-            self.assertFalse(any(calendar.get(2,[])))
+            # Historical events can exist before the 60-month verification window.
+            # A roster gap still cannot be interpreted as 60 documented quiet months.
         finally:
             folder.cleanup()
 
