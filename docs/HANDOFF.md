@@ -1,3 +1,11 @@
+## PSICOHISTORIA — TSA RFC3161 real probada con contenido ficticio · 18/10/2026
+
+- **Nueva prueba de firma externa:** [GitHub Actions 39133887629](https://github.com/mamg97/segundo-cerebro/actions/runs/39133887629) `success`: `.github/workflows/psychohistory-external-tsa-probe.yml` envió **solo bytes sintéticos** a `https://freetsa.org/tsr`; recibió un token temporal firmado, verificó `openssl ts -verify -data` con la cadena publicada por la TSA (`Verification: OK`) y obtuvo timestamp **2026-10-18 13:58:26 UTC**. Se borraron solicitud/respuesta/certificados efímeros; no se conservaron artifacts ni hashes reales.
+- **Limite de confianza:** identidad/endorso independiente de la CA todavía **no demostrados** (raíz entregada por el propio proveedor). La ejecución no sella el pronóstico real ni acredita el `as-of` UCDP o la emisión; `PsicoPredicciones` sigue sin emisiones. Contrato: [TSA_EXTERNAL_SYNTHETIC_PROBE_20261018.md](docs/psicohistoria/TSA_EXTERNAL_SYNTHETIC_PROBE_20261018.md).
+- **Siguiente:** anclar autoridad TSA externa con política de confianza verificable, emitir compromiso desde infraestructura privada (nunca transmitir probabilidades/forecast hash real por un run público), archivar recibo y comprobar `prospective_receipt_gate.py`; `ISSUED` bloqueado hasta entonces.
+
+---
+
 ## PSICOHISTORIA — Cohorte 2027 archivada y runner directo desde ZIP privado · 18/10/2026
 
 - **Artefacto privado ya durable:** la cohorte shadow 2027 de **196 países × seis modelos (1.176 probabilidades)** fue contrastada reejecutando el motor exacto archivado (desviación máxima 0), empaquetada con manifiesto verificado y subida a la carpeta privada `PSICOHISTORIA - EXPERIMENTOS` de Drive. La lectura posterior, 6.086 bytes y permisos `shared=false`/solo propietario fueron comprobados. El pack NO es `ISSUED`, no tiene TSA externa ni scores. `PsicoExperimentos` registra `ucdp261-2027-6model-shadow-20261018`, métrica `paises_candidatos_no_emitidos=196` y estado `SHADOW_NO_EMITIDO`. `PsicoPredicciones` conserva solo cabeceras, 0 emisiones.
