@@ -120,10 +120,6 @@ def grade(report, policy):
                 _num(interval[0]) > _num(interval[1]) or
                 _num(delta[0]) > _num(delta[1])):
             raise ValueError("Invalid paired bootstrap interval")
-        if not (delta[0] <= challenger["brier"] - baseline["brier"] <= delta[1]):
-            # Short block bootstrap intervals are not assured to contain
-            # the observed estimate; this is not required for correctness.
-            pass
         ranges = ((2016, 2020), (2021, 2025))
         halves = []
         for lo, hi in ranges:
