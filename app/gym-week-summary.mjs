@@ -167,7 +167,7 @@ export function renderHomeGymWeek(payload, now = new Date(), options = {}) {
           "; pulsar para ver ejercicios") + '">' + top +
         '<strong class="home-gym-day-group">' + escapeHtml(day.groups.join(" · ")) + '</strong>' +
         '<span class="home-gym-day-count">' + day.exerciseCount + ' ejercicios <span aria-hidden="true">⌄</span></span>' +
-        dayNutritionMarkup(day) +
-        '</summary><div class="home-gym-day-details">' + detailsForDay(day) + '</div></details>';
+        '</summary>' + dayNutritionMarkup(day) +
+        '<div class="home-gym-day-details">' + detailsForDay(day) + '</div></details>';
     }).join("") + '</div>';
 }
