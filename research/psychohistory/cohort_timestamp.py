@@ -117,9 +117,15 @@ def verify_receipt(cohort_dir: Path, seal_dir: Path, receipt: Path,
         raise ValueError("Cohort changed since request preparation")
     if (seal_dir / "candidate-sha256.txt").read_text().strip() != expected_sha:
         raise ValueError("Candidate digest does not match prepared request")
-    # First verify RFC3161 cryptography and the data imprint via OpenSSL;
-    # the CA is reviewed/pinned by an operator outside the forecast inputs.
+    # BOTH original content and original request nonce are required.
+    # Trust root is supplied/pinned by the operator, not independently accredited.
+    request = seal_dir / "request.tsq"
+    if not request.is_file() or request.is_symlink():
+        raise ValueError("Original RFC3161 request with nonce is required")
     subprocess.run(["openssl", "ts", "-verify", "-data", str(seal_dir / "commitment.bin"),
+                    "-in", str(receipt), "-CAfile", str(trust_root),
+                    "-untrusted", str(chain)], check=True, capture_output=True)
+    subprocess.run(["openssl", "ts", "-verify", "-queryfile", str(request),
                     "-in", str(receipt), "-CAfile", str(trust_root),
                     "-untrusted", str(chain)], check=True, capture_output=True)
     response = subprocess.run(["openssl", "ts", "-reply", "-in", str(receipt), "-text"],
@@ -129,8 +135,10 @@ def verify_receipt(cohort_dir: Path, seal_dir: Path, receipt: Path,
         raise ValueError("Independent seal was issued on/after first target-year day")
     return {
         "signature_verified_against_operator_pinned_ca": True,
+        "original_rfc3161_request_nonce_matched": True,
         "candidate_bytes_match_receipt": True,
-        "independently_signed_utc": signed.isoformat(),
+        "signed_timestamp_utc_against_supplied_ca": signed.isoformat(),
+        "tsa_independence_verified": False,
         "candidate_sha256": expected_sha, "commitment_sha256": digest.hex(),
         "receipt_sha256": hashlib.sha256(receipt.read_bytes()).hexdigest(),
         "trust_root_sha256": pinned_root_sha256,
