@@ -1952,16 +1952,20 @@ try {
   });
   assertCheck(pinnedActions, "Home · Actualizar permanece fijo junto a los demás botones al desplazarse");
 
-  const menuSecondCard = await page.evaluate(() => {
+  // The weekly menu was deliberately moved after Agenda on 2026-10-18.
+  // Check its real DOM position without reading or logging private menu content.
+  const menuLastHomeBlock = await page.evaluate(() => {
     const summary = document.querySelector(".daily-overview-grid");
-    const first = summary?.querySelector(":scope > #home-health-card");
-    const second = summary?.querySelector(":scope > #home-weekly-menu-panel");
-    const pantry = summary?.querySelector(":scope > #home-pantry-card");
-    return Boolean(first && second && pantry && first.nextElementSibling === second &&
-      second.nextElementSibling === pantry &&
-      getComputedStyle(second).gridColumnStart === "1");
+    const menu = document.querySelector("#home-weekly-menu-panel");
+    const agenda = document.querySelector("#agenda-overview");
+    const footer = document.querySelector("main > footer");
+    return Boolean(summary && menu && agenda && footer &&
+      !summary.contains(menu) &&
+      menu.parentElement === footer.parentElement &&
+      menu.previousElementSibling?.contains(agenda) &&
+      menu.nextElementSibling === footer);
   });
-  assertCheck(menuSecondCard, "Home · menú ocupa el segundo cuadro tras resumen de consumos");
+  assertCheck(menuLastHomeBlock, "Home · menú al final tras Agenda y antes del footer");
 
 
   // A brand-new Chromium session must receive content-fingerprinted JS/CSS,
