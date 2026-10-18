@@ -43,6 +43,23 @@ export function renderMidasVisualLab(dashboard, lab = null) {
   const active = activeMidasRows(dashboard, lab);
   if (!active.length) return "";
   const weekly = active.filter((row) => row.group === "weekly_ml_demo");
+  // The classic cohort is already part of this ranking. Make that visible:
+  // an unfilled paper order is NOT an excluded strategy or a losing trade.
+  const classics = active.filter((row) => row.classic_sp500_cohort === true &&
+    row.comparison_universe_symbols === 503);
+  const classicSettled = classics.filter((row) => row.status === "demo_con_diario" &&
+    Boolean(row.last_session));
+  const equalWeight = classics.find((row) => row.id === "classic_sp500_buy_hold_equal_weight");
+  const classicNote = classics.length
+    ? '<p class="midas-lab-group-note" data-midas-classic-competition-summary>' +
+      '<strong>Clásicas S&P 500:</strong> ' + classicSettled.length + '/' + classics.length +
+      ' carteras con diario demo en la competición (ocho estrategias y referencia SPY). ' +
+      'La equiponderada mantiene ' + (Number(equalWeight?.open_positions_count) || 0) +
+      ' posiciones abiertas y ' + (Number(equalWeight?.pending_orders_count) || 0) +
+      ' compras pendientes por falta de cotización verificada. ' +
+      'Las órdenes pendientes no se cuentan como compras ejecutadas ni excluyen la cartera.' +
+      '</p>'
+    : '';
   const hasLiveWeeklyDaily = weekly.some((row) => row.daily_mode === true);
   const weeklyNote = !weekly.length ? "" :
     '<p class="midas-lab-group-note"><strong>Weekly ML:</strong> ' +
@@ -56,7 +73,7 @@ export function renderMidasVisualLab(dashboard, lab = null) {
       '<div><span class="eyebrow">COMPETICIÓN</span><h3>Comportamiento de los algoritmos</h3>' +
       '<p>Campañas prospectivas con fechas de inicio diferentes: clasificación acumulada provisional, no rentabilidad normalizada al mismo período. Ordena por columna y pulsa un algoritmo para su ficha.</p></div>' +
       '<div class="midas-lab-legend"><span><i class="is-positive"></i>positivo</span><span><i class="is-negative"></i>negativo</span><span><i class="is-neutral"></i>esperando</span></div>' +
-    '</div>' +
+    '</div>' + classicNote +
     '<div class="midas-lab-mobile-sort"><label for="midas-lab-sort-select">Ordenar por</label>' +
       '<select id="midas-lab-sort-select" data-midas-lab-mobile-sort aria-label="Columna de ordenación">' +
         MIDAS_LAB_COLUMNS.map(([key, title]) =>
@@ -349,7 +366,8 @@ function renderTickerChips(tickers, limit = 6) {
 
 function renderMidasLabRow(item) {
   const meta = algorithmMeta(item);
-  const group = midasLabGroupTitle(item.group);
+  const group = item.classic_sp500_cohort === true
+    ? "Clásicas S&P 500" : midasLabGroupTitle(item.group);
   const ddValue = typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)
     ? item.max_drawdown_pct : null;
   const attrs = {
