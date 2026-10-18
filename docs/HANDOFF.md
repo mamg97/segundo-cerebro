@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Observación empírica Candidate archivado 24.0.12 · 18/10/2026
+
+- **Nueva prueba pública efímera:** `.github/workflows/psychohistory-candidate-source-probe.yml` descarga del proveedor el CSV histórico 24.0.12 en un runner temporal y `candidate_source_probe.py` verifica cabecera/eventos/fechas y calcula hash observado, filas y número de países con eventos, sin publicar datos individuales ni artifacts.
+- **Límites:** la edición 24.0.12 figura en el archivo oficial UCDP, pero el fetch de hoy no acredita que esos bytes estuvieran disponibles en 2024. El número de países con eventos no es cobertura de países sin incidentes: no se puede derivar un denominador mundial solo del CSV. Sin `as_of_verified`, `backtest_authorized` ni emisiones. No cambian Worker, web, 2027 ni `PsicoPredicciones`.
+- **Verificación pendiente:** ejecutar CI con descarga auténtica (no solo fixtures); cerrar PR con resultado exacto y registrar un nuevo `PsicoAvances` append-only. [Alcance y limitaciones](docs/psicohistoria/CANDIDATE_OBSERVATION_2024.md). Siguiente paso: construir roster histórico independiente y contrastar metadatos de fecha para admitir un replay real.
+
+---
+
 ## PSICOHISTORIA — Cobertura completa de Candidate país-origen · 18/10/2026
 
 - **Nuevo audit offline:** `research/psychohistory/asof_cohort_coverage.py` clasifica TODOS los países-origen planificados (no solo positivos) según existencia de Candidate de bytes pinneados SHA, ámbito declarado y release declarado anterior al mes de emisión. Falta de vintage ≠ ausencia de violencia. Orígenes sin cobertura son `NO_EVALUABLE`; los denominadores quedan explícitos.
