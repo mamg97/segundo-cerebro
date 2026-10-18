@@ -1,9 +1,9 @@
 ## PSICOHISTORIA — Puerta de admisión UCDP CY 26.1 (18/10/2026)
 
-- **Código recuperado e integrado en rama:** `research/psychohistory/source_release_intake.py` y `test_source_release_intake.py`, con dossiers `docs/psicohistoria/UCDP_261_SOURCE_ADMISSION.md` y `UCDP_261_RELEASE_EVIDENCE_20261018.md`. Las 5 pruebas sintéticas pasan localmente; verificar CI de PR antes de fusionar.
+- **Código recuperado e integrado en rama:** `research/psychohistory/source_release_intake.py` y `test_source_release_intake.py`, con dossiers `docs/psicohistoria/UCDP_261_SOURCE_ADMISSION.md` y `UCDP_261_RELEASE_EVIDENCE_20261018.md`. Las 5 pruebas sintéticas pasaron localmente y en [CI 39127511119](https://github.com/mamg97/segundo-cerebro/actions/runs/39127511119); la guarda de privacidad [39127511070](https://github.com/mamg97/segundo-cerebro/actions/runs/39127511070) también pasó. [PR #613](https://github.com/mamg97/segundo-cerebro/pull/613) fusionada en `f75effa20e54`.
 - **Ficheros anclados preexistentes:** `research/psychohistory/protocol.json` conserva los SHA-256 preregistrados del ZIP y PDF de UCDP OrganizedViolenceCY 26.1, sin alterar valores. El gate rechaza cualquier diferencia de bytes, versión, estructura ZIP, filas, países, rango 1989–2025 o identidad país-año. No entrena modelos ni emite pronósticos.
 - **Bloqueo científico comprobado:** hay referencia oficial pública a UCDP 26.1, pero en esta sesión no se han recuperado ambos archivos originales para ejecutar el gate empírico; ni la fecha exacta del ZIP de esos hashes está independientemente acreditada. La puerta NO cambia `historicalAsOfVerified=false`, `prospectiveEligible=false` o las 0 emisiones en `PsicoPredicciones`. Conservar los originales exclusivamente en Drive privado cuando estén disponibles, no en Git ni en artifacts de CI.
-- **Siguiente:** ejecutar CI, merge y verificar estado de main; conseguir ZIP+PDF exactos en entorno privado, inspeccionar su SHA y cobertura, congelar un modelo para un horizonte estrictamente futuro y obtener TSA externa verificable antes de emitir.
+- **Siguiente:** conseguir ZIP+PDF exactos en entorno privado, inspeccionar su SHA y cobertura, congelar un modelo para un horizonte estrictamente futuro y obtener TSA externa verificable antes de emitir. PR/CI verificados, pero la validación **empírica** y el sello temporal siguen pendientes.
 
 ---
 
