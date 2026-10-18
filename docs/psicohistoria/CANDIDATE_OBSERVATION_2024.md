@@ -1,3 +1,12 @@
+> **Corrección metodológica posterior:** el codebook Candidate v1.3 permite
+> que un incidente abarque varios meses y que se incluya en una edición
+> cuando su fecha de inicio **o** de fin cae en el mes exportado. Las seis
+> fechas finales de 2025 detectadas no demuestran por sí solas un archivo
+> modificado o una fuga. Consultar
+> [reconciliación temporal](CANDIDATE_DATE_WINDOW_RECONCILIATION.md).
+> El registro de 2026 se conserva por trazabilidad, pero el diagnóstico
+> inicial no debe interpretarse como prueba de contaminación.
+
 # PSICOHISTORIA — Primera inspección de UCDP Candidate histórico
 
 ## Prueba empírica acotada

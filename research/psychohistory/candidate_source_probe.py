@@ -7,6 +7,7 @@ point-in-time coverage. No event-level data, IDs or forecasts are logged.
 from __future__ import annotations
 import argparse
 import csv
+from collections import Counter
 from datetime import date, datetime, time
 import hashlib
 import io
@@ -62,6 +63,13 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         years = set()
         types = set()
         bound_errors = {"before_1989": 0, "after_2024": 0, "reversed": 0}
+        # According to UCDP Candidate v1.3, an event is included when
+        # date_start OR date_end falls in the exported month. A late end can
+        # be a temporal-precision interval, not a future event observation.
+        dec_first, dec_last = date(2024, 12, 1), date(2024, 12, 31)
+        boundaries = Counter()
+        late_precision = Counter()
+        all_precision = Counter()
         for row in reader:
             count += 1
             if count > MAX_ROWS:
@@ -73,6 +81,28 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
             bound_errors["before_1989"] += int(start.year < 1989)
             bound_errors["after_2024"] += int(end.year > 2024)
             bound_errors["reversed"] += int(start > end)
+            if start <= dec_last and end >= dec_first:
+                boundaries["span_intersects_december"] += 1
+            if dec_first <= start <= dec_last or dec_first <= end <= dec_last:
+                boundaries["endpoint_in_export_month"] += 1
+            else:
+                boundaries["neither_endpoint_in_export_month"] += 1
+            if start > dec_last:
+                boundaries["begins_after_export_month"] += 1
+            if "date_prec" in fields:
+                precision = str(row.get("date_prec") or "").strip()
+                all_precision[precision if precision else "MISSING"] += 1
+            if end.year > 2024:
+                boundaries["late_end_total"] += 1
+                if start.year == 2024:
+                    boundaries["late_end_started_in_2024"] += 1
+                if dec_first <= start <= dec_last and end.year == 2025:
+                    boundaries["late_end_december_to_2025"] += 1
+                if start.year > 2024:
+                    boundaries["late_end_started_after_2024"] += 1
+                if "date_prec" in fields:
+                    precision = row.get("date_prec", "").strip()
+                    late_precision[precision if precision else "MISSING"] += 1
             typ = int(row["type_of_violence"])
             if typ not in (1, 2, 3):
                 raise ValueError("Unknown type of organized violence")
@@ -84,6 +114,23 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
     if not count:
         raise ValueError("No events in Candidate source")
     date_scope_valid = not any(bound_errors.values())
+    undocumented_precisions = sorted(p for p in all_precision if p not in ("1","2","3","4","5"))
+    # An undocumented codebook category is not grounds to infer a future
+    # event, but it is grounds to withhold the scientific interpretation.
+    precision_requires_review = bool(undocumented_precisions) or "date_prec" not in fields
+    unexpected_scope = any((
+        bound_errors["before_1989"], bound_errors["reversed"],
+        boundaries["begins_after_export_month"],
+        boundaries["neither_endpoint_in_export_month"],
+    ))
+    if unexpected_scope:
+        temporal_status = "SOURCE_MONTH_SCOPE_MISMATCH_REVIEW_REQUIRED"
+    elif precision_requires_review:
+        temporal_status = "SOURCE_PRECISION_CODEBOOK_MISMATCH_REVIEW_REQUIRED"
+    elif bound_errors["after_2024"]:
+        temporal_status = "CROSS_YEAR_ENDS_COMPATIBLE_WITH_CODEBOOK_NOT_ASOF"
+    else:
+        temporal_status = "NOMINAL_EVENT_MONTH_ENDPOINTS_INTACT_NOT_ASOF"
     return {
         "schema": "psychohistory.ucdp_candidate_observation.v1",
         "source": "UCDP_CANDIDATE", "edition": edition,
@@ -94,10 +141,27 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         "first_event_year": min(years),
         "last_event_year": max(years),
         "n_violence_types_observed": len(types),
-        "status": ("OBSERVED_EVENT_SCHEMA_NO_DATE_SCOPE_ANOMALIES" if date_scope_valid
-                   else "OBSERVED_BUT_REPLAY_BLOCKED_DATE_SCOPE_ANOMALY"),
+        "status": temporal_status,
         "source_date_scope_valid_for_nominal_2024": date_scope_valid,
         "date_scope_violation_counts": bound_errors,
+        "month_window_audit": {
+            "nominal_month": "2024-12",
+            "endpoint_in_export_month": boundaries["endpoint_in_export_month"],
+            "neither_endpoint_in_export_month": boundaries["neither_endpoint_in_export_month"],
+            "span_intersects_december": boundaries["span_intersects_december"],
+            "begins_after_export_month": boundaries["begins_after_export_month"],
+            "late_end_started_in_2024": boundaries["late_end_started_in_2024"],
+            "late_end_december_to_2025": boundaries["late_end_december_to_2025"],
+            "late_end_started_after_2024": boundaries["late_end_started_after_2024"],
+            "late_end_date_precision_counts": dict(sorted(late_precision.items())),
+        },
+        "event_month_window_compatible_with_codebook": not unexpected_scope,
+        "date_precision_audit": {
+            "field_present": "date_prec" in fields,
+            "counts": dict(sorted(all_precision.items())),
+            "values_outside_codebook_1_to_5": undocumented_precisions,
+            "requires_review": precision_requires_review or "date_prec" not in fields,
+        },
         "full_country_coverage_known_from_events": False,
         "absent_country_is_conflict_free": False,
         "historical_release_time_independently_verified": False,
@@ -105,10 +169,12 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         "candidate_equals_final_ged": False,
         "backtest_authorized": False,
         "forecast_issued": False,
-        "warning": ("Nominally out-of-period dates block temporal admission, even if the "
-                    "original source is downloadable now. Current bytes and event-country "
-                    "counts do not establish historical release date, zero-event country "
-                    "roster or final GED target equivalence."),
+        "warning": ("UCDP Candidate codebook v1.3 permits date_start/date_end intervals "
+                    "and repeated events across monthly files. A cross-year date_end "
+                    "is not automatically a post-release fact. Date precision values outside "
+                    "documented 1-5 require separate review; neither situation certifies "
+                    "a historical issue timestamp. Historical availability, zero-event "
+                    "roster, target comparability and vintage-correct replay remain unproven."),
     }
 
 
