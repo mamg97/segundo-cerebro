@@ -135,3 +135,47 @@ test("food replacement cannot create two distinct primary recipes in one moment"
   const shake=[...main];shake[16]="acompanante";
   assert.ok(planMenuSheetEdits([header,food,shake],action,recipes).updates.length>0);
 });
+
+
+test("planned yogurt can become one explicitly typed shake companion without a second main",()=>{
+  const yogurt=[...original];yogurt[3]="";yogurt[4]="food-yog";yogurt[5]="Dessert yogurt";yogurt[6]=250;yogurt[7]="g";yogurt[16]="acompanante";yogurt[17]="yogur";
+  const main=[...original];main[3]="r-main";main[5]="Main dish";main[16]="receta";main[17]="";
+  const action={...payload,recipeId:undefined,foodId:"food-yog",name:"Dessert yogurt",
+    action:"replace",newRecipeId:"r-b",newServings:1,newCompanionType:"batido"};
+  const plan=planMenuSheetEdits([header,yogurt,main],action,recipes,"2026-10-15T12:00:00Z");
+  const changes=Object.fromEntries(plan.updates.map(x=>[x.range,x.values[0][0]]));
+  assert.equal(changes["MenuSemanal!D2"],"r-b");
+  assert.equal(changes["MenuSemanal!E2"],"");
+  assert.equal(changes["MenuSemanal!G2"],1);
+  assert.equal(changes["MenuSemanal!H2"],"ración");
+  assert.equal(changes["MenuSemanal!Q2"],"acompanante");
+  assert.equal(changes["MenuSemanal!R2"],"batido");
+  assert.equal(changes["MenuSemanal!J2"],510);
+  assert.equal(changes["MenuSemanal!K2"],42);
+  assert.equal(changes["MenuSemanal!L2"],52);
+  assert.equal(changes["MenuSemanal!M2"],12);
+  assert.match(changes["MenuSemanal!O2"],/Consumo no confirmado/);
+  assert.equal(changes["MenuSemanal!I2"],undefined, "status remains planned");
+  assert.ok(plan.updates.every(x=>!x.range.endsWith("3")), "existing main is untouched");
+});
+
+test("shake classification must be explicit and authorized only for a planned companion food",()=>{
+  const yogurt=[...original];yogurt[3]="";yogurt[4]="food-yog";yogurt[5]="Dessert yogurt";yogurt[16]="acompanante";yogurt[17]="yogur";
+  const base={...payload,recipeId:undefined,foodId:"food-yog",name:"Dessert yogurt",
+    action:"replace",newRecipeId:"r-b",newServings:1};
+  assert.throws(()=>planMenuSheetEdits([header,yogurt],{...base,newCompanionType:"fruta"},recipes),
+    e=>e.code==="INVALID_COMPANION_REPLACEMENT");
+  const nonCompanion=[...yogurt];nonCompanion[16]="receta";
+  assert.throws(()=>planMenuSheetEdits([header,nonCompanion],{...base,newCompanionType:"batido"},recipes),
+    e=>e.code==="INVALID_COMPANION_REPLACEMENT");
+  assert.throws(()=>planMenuSheetEdits([header,original],{...payload,action:"replace",newRecipeId:"r-b",newCompanionType:"batido"},recipes),
+    e=>e.code==="INVALID_COMPANION_REPLACEMENT");
+  const consumed=[...yogurt];consumed[8]="consumido";
+  assert.throws(()=>planMenuSheetEdits([header,consumed],{...base,newCompanionType:"batido"},recipes),
+    e=>e.code==="MENU_EDIT_NOT_PLANNED");
+});
+
+test("historical one-time recipe portions are never silently reused in a new plan",()=>{
+  const historic={...recipes[0],precision:"histórico; porción medida en otra fecha, no usar para nuevas tomas"};
+  assert.equal(previewMenuRecipe({cantidad:1,unidad:"ración"},historic).supported,false);
+});
