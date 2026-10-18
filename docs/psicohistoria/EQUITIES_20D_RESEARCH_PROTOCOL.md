@@ -1,3 +1,17 @@
+## Estado de prioridad revisado · 18/10/2026
+
+**APLAZADO POR DECISIÓN DE INVESTIGACIÓN.** Esta línea es una aplicación
+eventual del método PSICOHISTORIA, no una prioridad del laboratorio.
+La PR #639 permanece en `main` como código genérico probado únicamente
+con precios **sintéticos**, sin ejecución con precios reales, sin
+operaciones y sin signals. No dedicar nuevos sprints bursátiles hasta
+acreditar un modelo central de fenómenos colectivos con validación
+real `as-of`, comparación fuerte y alguna evaluación prospectiva
+adecuadamente resuelta. Véase
+[PUERTA_EVIDENCIA_CIENTIFICA_V1.md](PUERTA_EVIDENCIA_CIENTIFICA_V1.md).
+
+---
+
 # PSICOHISTORIA — F1B · Investigación bursátil (primer experimento)
 
 **18/10/2026 · Modelo de riesgo de renta variable · sin emisiones, ni operaciones.**
