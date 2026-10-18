@@ -19,8 +19,6 @@ import re
 import stat
 import zipfile
 
-from source_schema import normalized_source_rows
-
 REPOSITORY = Path(__file__).resolve().parents[2]
 SCHEMA = 'psychohistory.ucdp_cy261_official_source_intake.v1'
 ALLOWED_VERSION = '26.1'
@@ -96,7 +94,9 @@ def inspect(source_dir, protocol):
     years = collections.Counter()
     spans = collections.defaultdict(list)
     reader = csv.DictReader(io.StringIO(content.decode('utf-8-sig'), newline=''))
-    for row in normalized_source_rows(reader, pinned_version=ALLOWED_VERSION):
+    if not reader.fieldnames or not REQUIRED.issubset(reader.fieldnames) or len(reader.fieldnames) != len(set(reader.fieldnames)):
+        raise ValueError('CSV schema does not match the official benchmark contract')
+    for row in reader:
         if None in row:
             raise ValueError('Malformed CSV row')
         if row['Version'] != ALLOWED_VERSION:
