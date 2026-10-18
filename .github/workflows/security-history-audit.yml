@@ -1,0 +1,23 @@
+name: Read-only public Git history privacy audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/security-history-audit.yml"
+      - "scripts/security-history-audit.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-all-reachable-git-history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Inspect branches and reachable historical changes without printing values
+        run: python3 scripts/security-history-audit.py
