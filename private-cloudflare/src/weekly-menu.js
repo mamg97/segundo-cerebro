@@ -107,6 +107,43 @@ export function dedupeWeeklyMenuRows(rows) {
     .filter(weeklyMenuItemIsVisibleServer);
 }
 
+
+/**
+ * Presentation-only label for a pantry-backed yogurt. Product identity and short
+ * name live in the private Pantry catalogue, while portion quantity and meal
+ * position remain authoritative in MenuSemanal. Never modify nutrition or status.
+ */
+export function companionMenuDisplayName(item, product) {
+  const canonical = String(product?.menuDisplayName || "").trim();
+  if (!canonical || normalize(item?.companionType) !== "yogur") {
+    return String(item?.name || "");
+  }
+  const quantity = finite(item?.quantity);
+  const unit = normalize(item?.unit);
+  const format = normalize(product?.format);
+  const portion = format.match(/[×x]\s*(\d+(?:[.,]\d+)?)\s*g/);
+  const portionGrams = portion ? Number(portion[1].replace(",", ".")) : null;
+  const isVasito = /vasit/.test(format) || /(?:pack|paquete)\s*\d+\s*[×x]\s*\d+\s*g/.test(format);
+  const hasUnits = /vasit|^ud(?:\b|\s|$)|^unidad|^envase/.test(unit);
+  const grams = /^(g|gr|gramos?)(?:\b|\s|$)/.test(unit);
+  let serving = "";
+  let count = null;
+  if (isVasito && portionGrams > 0 && quantity !== null && quantity > 0) {
+    count = hasUnits ? quantity : grams && quantity % portionGrams === 0 ? quantity / portionGrams : null;
+  }
+  if (Number.isSafeInteger(count) && count > 0) {
+    serving = count + " " + (count === 1 ? "vasito" : "vasitos") + " (" + (count * portionGrams) + " g)";
+  } else if (grams && quantity > 0) {
+    const jar = format.match(/(?:bote|tarro)\s*(?:de\s*)?(\d+)\s*g/);
+    const half = jar && Number(jar[1]) === quantity * 2;
+    serving = quantity + " g" + (jar ? (half ? " (½ tarro)" : " (tarro grande)") : "");
+  } else if (quantity > 0) {
+    serving = quantity + (unit ? " " + String(item.unit).trim() : "");
+  }
+  const dessert = /^postre\s*:/i.test(String(item?.name || "").trim());
+  return (dessert ? "Postre: " : "") + canonical + (serving ? " · " + serving : "");
+}
+
 export function prepareWeeklyMenuRows(rows, options = {}) {
   const recipeById = options.recipeById instanceof Map ? options.recipeById : new Map();
   const ingredientsByRecipeId = options.ingredientsByRecipeId instanceof Map
@@ -147,6 +184,7 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
     const hydrated = {
       ...item,
       moment: canonicalWeeklyMenuMoment(item),
+      name: companionMenuDisplayName(item, pantryProduct),
       pantryProductId: pantryProduct?.id || null,
       // Product photos are sourced from the private Pantry catalog, never guessed from menu names.
       productImageUrl: typeof pantryProduct?.imageUrl === "string" && /^https:\/\//i.test(pantryProduct.imageUrl)
