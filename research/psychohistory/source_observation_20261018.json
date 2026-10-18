@@ -1,0 +1,39 @@
+{
+  "schema": "psychohistory.public_source_byte_observation.v1",
+  "source": "UCDP OrganizedViolenceCY",
+  "version": "26.1",
+  "archiveUrl": "https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-261-csv.zip",
+  "codebookUrl": "https://ucdp.uu.se/downloads/organizedviolencecy/UCDP_OrganizedViolenceCY_Codebook_261.pdf",
+  "archiveSha256": "66910888f5653af42776d2debc1d72fe527559e7f7fc82e69b7c8771467f2d34",
+  "codebookSha256": "88ba683426c2596fab908fcd68ae184025d0804ca9a099dea513898214b92b3c",
+  "ciRun": {
+    "provider": "GitHub Actions",
+    "repository": "mamg97/segundo-cerebro",
+    "id": 39130567553,
+    "url": "https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553",
+    "sourceCommit": "5a6767096acf277ff0a4f86569b96eeed2f1f6f8",
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "startedAtUtc": "2026-10-18T13:13:01Z",
+    "endedNoLaterThanUtc": "2026-10-18T13:13:19Z",
+    "steps": {
+      "downloadedOfficialZipAndCodebook": "success",
+      "hashesMatchedPinsAndSourcePanelValidated": "success",
+      "benchmarkAuditStrictPassed": "success"
+    }
+  },
+  "sourceRows": 7132,
+  "countries": 199,
+  "firstYear": 1989,
+  "lastYear": 2025,
+  "pressAnnouncement": {
+    "date": "2026-06-09",
+    "url": "https://www.uu.se/en/press/press-releases/2026/2026-06-09-ucdp-record-number-of-conflicts-between-states",
+    "exactArchiveBytesDatedByAnnouncement": false
+  },
+  "externalCryptographicTimestampOfSourceVerified": false,
+  "sourceByteAvailabilityAtHistoricalBacktestOriginsVerified": false,
+  "sourceAvailableOnJune9ForTheseExactBytesVerified": false,
+  "forecastIssued": false
+}
