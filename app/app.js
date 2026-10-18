@@ -1723,7 +1723,8 @@ async function loadHomeWeeklyMenu(_primaryData = null, options = {}) {
   } else if (homeWeeklyMenuRenderedWeek === null) {
     renderHomeWeeklyMenuUnavailable();
   }
-  return false;
+  // A refresh failure does not invalidate an already verified view of this week.
+  return homeWeeklyMenuRenderedWeek === selected;
 }
 async function renderHomeNutritionCard() {
   const consumedNode = document.querySelector("#home-kcal-consumed");
