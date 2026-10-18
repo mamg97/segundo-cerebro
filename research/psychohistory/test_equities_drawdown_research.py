@@ -10,7 +10,7 @@ import unittest
 from equities_drawdown_research import (
     DRAWDOWN, HORIZON, MIN_TRAIN, LOOKBACK, TEST_STRIDE,
     read_prices, features, label, training_window, predict_at, evaluate,
-    write_private_csv,
+    write_private_csv, latest_shadow, write_private_json,
 )
 
 
@@ -124,6 +124,19 @@ class EquityDrawdownResearchTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     read_prices(self.path, hashlib.sha256(self.path.read_bytes()).hexdigest(),
                                 self.rows[-1][0].isoformat())
+
+    def test_latest_shadow_is_unissued_and_does_not_claim_known_outcome(self):
+        result = latest_shadow(self.rows, "SYNTHETIC_INDEX", "f" * 64)
+        self.assertEqual(result["status"], "SHADOW_NOT_ISSUED")
+        self.assertIsNone(result["outcome"])
+        self.assertIsNone(result["realized_pnl"])
+        self.assertFalse(result["forecast_issue_timestamp_verified"])
+        self.assertFalse(result["trade_signal_validated"])
+        self.assertLessEqual(result["last_resolved_training_label_date"], result["origin_close_date"])
+        target = Path(self.tmp.name) / "latest.json"
+        write_private_json(result, target)
+        with self.assertRaisesRegex(ValueError, "create-only"):
+            write_private_json(result, target)
 
     def test_create_only_no_public_git_output(self):
         path = Path(self.tmp.name) / "oos.csv"
