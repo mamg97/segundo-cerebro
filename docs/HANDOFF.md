@@ -1,3 +1,12 @@
+## ORGANIZADOR · Menú semanal: sustituir postre por batido (18/10/2026)
+
+- Causa raíz: el editor `Cambiar receta` convertía **cualquier** `food_id` en `tipo_item=receta`, incluso un `acompanante/yogur`. Si la comida ya tenía receta principal, el Worker respondía `PRIMARY_RECIPE_ALREADY_IN_MEAL`; el menú permanecía correctamente sin cambios.
+- Solución genérica (sin editar ningún menú real automáticamente): al cambiar un acompañante de producto por una **receta de batido** existe una clasificación visible `Batido como acompañante` en el editor. Solo una selección explícita envía `newCompanionType=batido`; el Worker mantiene `tipo_item=acompanante`, `tipo_acompanante=batido`, exige raciones reales, actualiza macros de la receta y conserva `estado=planificado`, fecha y momento. Se descarta la nota antigua del producto para no atribuirle descripciones incorrectas al batido. La receta principal coexistente permanece intacta.
+- Seguridad/integridad: la conversión a `receta` principal sigue rechazándose cuando ya hay otra; recetas y porciones históricas marcadas `no usar para nuevas` no se pueden reutilizar; no se alteran consumos ni `Registro`. Tests sintéticos de 1→1, clasificación inválida, receta principal, receta histórica y navegación.
+- Verificar CI, despliegue Cloudflare y sesión autenticada antes de marcar UI como probada. Si se quiere ejecutar el cambio concreto del usuario, **confirmar primero si es el postre de Comida o de Cena**: ambos se encuentran planificados hoy y no deben cambiarse por conjetura.
+
+---
+
 ## PSICOHISTORIA — Repriorización metodológica: núcleo predictivo primero · 18/10/2026
 
 - **Decisión de alcance:** congelar F1B bolsa como piloto técnico sintético tras PR #639, SIN importar cotizaciones ni desplegar señales bursátiles. Continuar estudio de fenómenos colectivos —sobre todo **nuevas apariciones/reapariciones** y no solo presencia persistente—, hasta contar con evidencia `as-of`, métricas robustas frente a baseline fuerte y al menos cohortes prospectivas resueltas. El método científico es el producto; las finanzas serán una aplicación eventual. No tocar MIDAS ni patrimonio.
