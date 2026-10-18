@@ -28100,3 +28100,11 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 }
 
 
+
+/* Menu companion replacement: compact classification selector above the recipe list. */
+.home-menu-editor-main select[data-menu-editor-role] {
+  min-height: 42px;
+  max-height: none;
+  height: auto;
+  white-space: normal;
+}
