@@ -12,7 +12,8 @@ import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-so
 import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
-import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows, weeklyMenuConsumptionMatchKey } from "./weekly-menu.js";
+import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
+import { menuConsumedFallbackForDate } from "./nutrition-history-fallback.js";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
@@ -3358,44 +3359,20 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     sheetEnergyByDate.get(dateKey) || null
   );
 
-  const registeredDayEntries = entries.filter((item) => item.date === date);
-  const registeredConsumptionKeys = new Set(
-    registeredDayEntries
-      .filter((item) => item.status === "consumido")
-      .map(weeklyMenuConsumptionMatchKey)
-      .filter(Boolean)
-  );
-  const consumedMenuFallback = prepareWeeklyMenuRows(
-    weeklyMenuRows.filter((item) => item.date === date),
+  // One prepared 30-day source powers both the selected day and historical
+  // summaries; consumers in MenuSemanal must not disappear from Home/Gym.
+  const preparedHistoryMenuRows = prepareWeeklyMenuRows(
+    weeklyMenuRows.filter((item) => item.date >= historyStart && item.date <= date),
     {
       recipeById,
       ingredientsByRecipeId,
       ...(pantryProductById ? { pantryProductById } : {})
     }
-  )
-    .filter((item) => item.status === "consumido")
-    .filter((item) => {
-      const key = weeklyMenuConsumptionMatchKey(item);
-      return key && !registeredConsumptionKeys.has(key);
-    })
-    .map((item, index) => ({
-      id: `menu-fallback-${index + 1}`,
-      date: item.date,
-      moment: item.moment,
-      itemId: item.recipeId || item.foodId || null,
-      productId: item.foodId || null,
-      itemName: item.name,
-      quantity: item.quantity,
-      unit: item.unit,
-      kcal: Number(item.kcal || 0),
-      protein: Number(item.protein || 0),
-      carbs: Number(item.carbs || 0),
-      fat: Number(item.fat || 0),
-      status: "consumido",
-      source: "menu_consumed_fallback",
-      note: item.note || "Consumido en MenuSemanal; pendiente de reconciliar con Registro.",
-      updatedAt: item.updatedAt || null
-    }));
+  );
+  const registeredDayEntries = entries.filter((item) => item.date === date);
+  const consumedMenuFallback = menuConsumedFallbackForDate(
+    registeredDayEntries, preparedHistoryMenuRows, date
+  );
   const dayEntries = [...registeredDayEntries, ...consumedMenuFallback];
   const consumed = sumNutrition(dayEntries, "consumido");
   const planned = sumNutrition(dayEntries, "planificado");
@@ -3456,7 +3433,11 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const history = [];
   for (let offset = 29; offset >= 0; offset -= 1) {
     const historyDate = healthAddDays(date, -offset);
-    const dayRows = entries.filter((item) => item.date === historyDate);
+    const registeredHistoryRows = entries.filter((item) => item.date === historyDate);
+    const dayRows = [
+      ...registeredHistoryRows,
+      ...menuConsumedFallbackForDate(registeredHistoryRows, preparedHistoryMenuRows, historyDate)
+    ];
     const dayConsumed = sumNutrition(dayRows, "consumido");
     const dayEnergy = energyForDate(historyDate);
     const burn = dayEnergy
