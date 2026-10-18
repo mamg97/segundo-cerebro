@@ -81,7 +81,7 @@ def main():
                 print(json.dumps({"scan_complete": False, "reason": "AUDIT_TIMEOUT"}))
                 return 2
             if line.startswith(b"+++ b/"):
-                current_path = line[6:].decode("utf-8", "replace")
+                current_path = line[6:].decode("utf-8", "replace").rstrip("\r\n")
                 continue
             if not line.startswith(b"+") or line.startswith(b"+++"):
                 continue
