@@ -95,8 +95,16 @@ def main():
                         safe_root = root if root in {"app", "design", "docs", "research", "private-cloudflare", "scripts"} else "other"
                         ext = PurePosixPath(current_path).suffix.lower()
                         safe_ext = ext if re.fullmatch(r"\.[a-z0-9]{1,10}", ext) else "none_or_unusual"
+                        if current_path.startswith(PUBLIC_ART_PREFIXES):
+                            path_category = "generic_gym_illustrations"
+                        elif current_path.startswith("app/assets/"):
+                            path_category = "other_app_assets"
+                        elif current_path.startswith("app/vendor/"):
+                            path_category = "third_party_vendor"
+                        else:
+                            path_category = "other_app_or_project_code"
                         size_class = "under_10_kb" if len(match.group()) < 14000 else ("under_100_kb" if len(match.group()) < 140000 else "over_100_kb")
-                        inline_images[(safe_root, safe_ext, size_class)] += 1
+                        inline_images[(safe_root, safe_ext, size_class, path_category)] += 1
         status = p.wait()
     finally:
         if p.poll() is None:
@@ -108,8 +116,9 @@ def main():
     result["added_lines_examined"] = added_lines
     result["potential_sensitive_line_counts"] = dict(patterns)
     result["embedded_media_classification"] = [
-        {"directory_category": root, "extension": ext, "encoded_size": size, "count": count}
-        for (root, ext, size), count in sorted(inline_images.items())
+        {"directory_category": root, "extension": ext, "encoded_size": size,
+         "source_classification": category, "count": count}
+        for (root, ext, size, category), count in sorted(inline_images.items())
     ]
     result["scan_complete"] = True
     result["review_required"] = bool(patterns or image["outside_known_generic_art"] or doc)
