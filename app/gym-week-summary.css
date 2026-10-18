@@ -115,7 +115,7 @@
   border-top: 1px solid var(--line);
   font-variant-numeric: tabular-nums;
 }
-.home-gym-day-nutrition > div {
+.home-gym-day-nutrition > .home-gym-nutrition-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -124,20 +124,19 @@
   font-size: 9px;
   line-height: 1.35;
 }
-.home-gym-day-nutrition dt {
+.home-gym-day-nutrition .home-gym-nutrition-label {
   color: var(--ink-soft);
   min-width: 0;
 }
-.home-gym-day-nutrition dd {
-  margin: 0;
+.home-gym-day-nutrition strong {
   font-size: 9px;
   font-weight: 800;
   text-align: right;
   overflow-wrap: anywhere;
 }
-.home-gym-day-nutrition .is-deficit dd { color: var(--mint); }
-.home-gym-day-nutrition .is-surplus dd { color: var(--coral); }
-.home-gym-day-nutrition .is-unknown dd { color: var(--ink-soft); }
+.home-gym-day-nutrition .is-deficit strong { color: var(--mint); }
+.home-gym-day-nutrition .is-surplus strong { color: var(--coral); }
+.home-gym-day-nutrition .is-unknown strong { color: var(--ink-soft); }
 .home-gym-nutrition-note { color: var(--ink-soft); font-size: 8px; }
 
 @media (max-width: 960px) {
