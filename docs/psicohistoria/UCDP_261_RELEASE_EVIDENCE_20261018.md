@@ -1,5 +1,18 @@
 # PSICOHISTORIA — Evidence dossier: UCDP OrganizedViolenceCY 26.1
 
+> **Actualización empírica posterior — 18/10/2026, 13:13 UTC:** el workflow
+> [39130567553](https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553)
+> descargó el ZIP/PDF originales UCDP 26.1 y ambos hashes **coincidieron**
+> con el protocolo; `source_release_intake.inspect()` y
+> `benchmark.audit(strict=True)` pasaron para **7.132 filas, 199 países,
+> 1989–2025**. El CSV original utiliza cabeceras sin `_cy`, pese al codebook.
+> Se borraron los originales del runner, sin artifact ni permanencia en Drive.
+> La tabla inferior es la auditoría documental anterior a ese run y **queda
+> superada solo en las filas de checksum, descarga y cobertura**, NO en las
+> de disponibilidad histórica, sellado independiente o emisión. Los hashes
+> observados no demuestran que estos mismos bytes estuvieran disponibles
+> exactamente en junio de 2026.
+
 **Review date:** 2026-10-18 · **Type:** documentary release evidence only; no downloaded official source bytes have been validated in this session.
 
 ## Evidence with explicit, limited scope
