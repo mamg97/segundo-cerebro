@@ -54,6 +54,17 @@ class FrozenPreflightTests(unittest.TestCase):
         self.assertEqual((out["primaryChallenger"], out["baselineModel"]),
                          ("v2_logistic", "frequency"))
 
+    def test_sorted_json_dictionary_keys_do_not_change_model_identity(self):
+        # Actual archived JSON was written with sort_keys=True; probabilities
+        # are alphabetical even though the canonical model-list order is not.
+        original = imaginary_report()
+        rewritten = json.loads(json.dumps(original, sort_keys=True))
+        self.assertNotEqual(list(rewritten["candidates"][0]["probabilities"]), POLICY["models"])
+        evidence = inspect_report(rewritten, POLICY, PROTOCOL)
+        self.assertEqual(evidence["probabilitiesChecked"], 1176)
+        self.assertFalse(evidence["modelProtocolAndCodeMatched"])
+        self.assertFalse(evidence["issuanceEligible"])
+
     def test_canonical_shadow_still_is_not_issued_without_external_evidence(self):
         out = inspect_report(imaginary_report(canonical=True), POLICY, PROTOCOL)
         self.assertTrue(out["modelProtocolAndCodeMatched"])
