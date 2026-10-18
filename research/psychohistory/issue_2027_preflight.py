@@ -92,7 +92,11 @@ def inspect_report(report, policy, protocol):
             row["outcome"] is not None):
             raise ValueError("Observed outcome, look-ahead or missing training evidence")
         probabilities = row["probabilities"]
-        if not isinstance(probabilities, dict) or list(probabilities) != policy["models"]:
+        # JSON canonical serialization may sort object keys alphabetically.
+        # Model identity (not dictionary iteration order) is the scientific gate.
+        if (not isinstance(probabilities, dict) or
+                len(probabilities) != len(policy["models"]) or
+                set(probabilities) != set(policy["models"])):
             raise ValueError("All frozen models must have a probability for each country")
         if any(type(p) not in (float, int) or not math.isfinite(p) or p < 0 or p > 1
                for p in probabilities.values()):
