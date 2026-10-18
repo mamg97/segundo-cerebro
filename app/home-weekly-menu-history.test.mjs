@@ -65,3 +65,25 @@ test("Home Safari static bundle CSS and JS revisions match", () => {
   assert.equal(page.match(/styles\.css\?v=([\d.]+)/)?.[1], "0.44.52");
   assert.equal(page.match(/app\.js\?v=([\d.]+)/)?.[1], "0.44.52");
 });
+
+
+test("the complete weekly-menu panel is the final Home module, after Agenda and before footer", () => {
+  const dailyStart = page.indexOf('<section class="daily-overview-grid"');
+  const dailyEnd = page.indexOf('<section class="money-horizon"', dailyStart);
+  const agendaStart = page.indexOf('<section class="workbench"', dailyEnd);
+  const menuStart = page.indexOf('<section id="home-weekly-menu-panel"');
+  const footerStart = page.indexOf('<footer>', agendaStart);
+  assert.ok(dailyStart >= 0 && dailyEnd > dailyStart && agendaStart > dailyEnd);
+  assert.ok(menuStart > agendaStart && menuStart < footerStart,
+    "large weekly-menu section must be at the bottom of Home, immediately before footer");
+  assert.equal(page.match(/id="home-weekly-menu-panel"/g)?.length, 1);
+  assert.equal(page.match(/id="home-weekly-menu-navigation"/g)?.length, 1);
+  assert.equal(page.match(/id="home-weekly-menu-content"/g)?.length, 1);
+  assert.ok(menuStart > dailyEnd, "weekly menu must not occupy the first Home cards grid");
+  const menuSection = page.slice(menuStart, footerStart);
+  assert.match(menuSection, /id="home-weekly-menu-title"/);
+  assert.match(menuSection, /id="show-home-weekly-menu"/);
+  assert.ok(menuSection.indexOf('id="home-weekly-menu-navigation"') <
+    menuSection.indexOf('id="home-weekly-menu-content"'));
+  assert.ok(menuSection.trimEnd().endsWith("</section>"), "nothing should follow menu except footer");
+});
