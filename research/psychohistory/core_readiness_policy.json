@@ -1,0 +1,41 @@
+{
+  "schema": "psychohistory.core_model_readiness.v1",
+  "registered_on": "2026-10-18",
+  "status": "POST_HOC_HISTORICAL_SCREEN_NOT_CONFIRMATORY",
+  "primary_domain": "conflict_forecasting",
+  "models": [
+    "frequency",
+    "v2_logistic"
+  ],
+  "targets": [
+    "presence",
+    "onset"
+  ],
+  "test_years": [
+    2016,
+    2025
+  ],
+  "fixed_halves": [
+    [
+      2016,
+      2020
+    ],
+    [
+      2021,
+      2025
+    ]
+  ],
+  "minimum_distinct_test_years": 8,
+  "minimum_positive_events": 20,
+  "require_positive_brier_skill_ci_lower": true,
+  "require_positive_skill_each_fixed_half": true,
+  "required_prospective_gates": [
+    "vintage_correct_source_inputs",
+    "original_frozen_model",
+    "prospective_issue_timestamp",
+    "fully_resolved_future_outcomes",
+    "baseline_matched_prospective_skill_and_calibration"
+  ],
+  "operational_forecast_use_approved": false,
+  "equities_feature_scope": "PARKED_UNTIL_CORE_FORECAST_VALIDATED"
+}
