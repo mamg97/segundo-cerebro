@@ -9,7 +9,8 @@ https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_0_12.csv
 La tarea CI **psychohistory-candidate-source-probe.yml** descarga el CSV
 público al runner temporal y aplica **candidate_source_probe.py**:
 
-- verifica estructura mínima de eventos, fechas no futuras ni invertidas,
+- verifica estructura mínima de eventos y contabiliza fechas fuera del rango
+  nominal o invertidas como bloqueos de replay, sin ignorar esos registros,
   valores válidos de país y categoría de violencia;
 - calcula SHA-256 de los **bytes efectivamente observados hoy** y número
   agregado de filas/eventos, años y países CON EVENTOS, sin mostrar
@@ -48,3 +49,19 @@ Fuente de alcance geográfico:
 https://ucdp.uu.se/downloads/olddw.html
 (versiones 2018/19 limitadas a África; 2020 con expansión; desde
 2021 histórico global).
+
+## Primera anomalía empírica, sin admisión as-of
+
+La [ejecución CI inicial](https://github.com/mamg97/segundo-cerebro/actions/runs/39161126467)
+descargó correctamente los bytes públicos el 18/10/2026, pero encontró
+**6 filas con `date_end` posterior a 2024**, 0 anteriores a 1989 y
+0 con el intervalo de fechas invertido. Un nombre de edición 24.0.12
+**no** convierte automáticamente todas sus filas en observaciones disponibles
+en 2024. No sabemos aún si la causa es una revisión retroactiva, el alcance
+real de la edición o una interpretación que exige el codebook.
+
+El auditor devuelve `OBSERVED_BUT_REPLAY_BLOCKED_DATE_SCOPE_ANOMALY`
+con los tres contadores agregados, y mantiene prohibido puntuar, afirmar
+procedencia histórica o tratar como negativos a países ausentes. **No** se
+filtran silenciosamente las seis filas ni se atribuye retrospectivamente
+una disponibilidad temporal demostrada.
