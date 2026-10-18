@@ -52,5 +52,21 @@ La prueba FreeTSA previa con muestra ficticia certificó
 interoperabilidad y firma bajo la raíz del operador,
 no que FreeTSA estuviese en una trustlist ni que fuese una TSA cualificada.
 
+## Cobertura retrospectiva del verificador de cohortes legado — 18/10/2026
+
+Además de `sealing.py`, la ruta histórica `cohort_timestamp.py` utilizada
+por el antiguo ensayo de cinco modelos conservaba la misma debilidad:
+verificaba RFC3161 con `-data` sin comparar `request.tsq`.
+Se añadió comprobación obligatoria adicional con `-queryfile` de la
+**solicitud original**, fail-closed si falta o es symlink, y prueba de
+integración que firma un TSR auténtico con CA/TSA **locales ficticias**
+y demuestra el rechazo de un TSQ con otro nonce para el mismo compromiso.
+
+La evidencia de salida deja de llamar `independently_signed_utc` a un
+sello validado solo con un CA suministrado por el operador; ahora se
+denomina `signed_timestamp_utc_against_supplied_ca` y declara
+`tsa_independence_verified=false`. Ningún resultado de esa ruta
+es un pronóstico prospectivo emitido ni habilita puntuación futura.
+
 **No se ha transmitido un solo compromiso de predicción real a una
 TSA ni insertado emisiones en `PsicoPredicciones`.**
