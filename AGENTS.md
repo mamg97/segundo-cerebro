@@ -75,6 +75,25 @@ Si un gestor necesita objetos, ropa, equipaje, kits o listas contextuales, debe 
 - `docs/WEB_AUDIT.md` define la auditoría read-only de producción, su periodicidad, umbral de 90 minutos, clasificación de fallos y diagnóstico. ORGANIZADOR debe conservarla cuando cambie navegación, fuentes o estilos compartidos.
 - Si el código contradice la documentación, resolver la inconsistencia antes de terminar.
 
+## PSICOHISTORIA — Actualización de progreso por cada avance
+
+- El estado de investigación y el histórico de avances tienen una **fuente
+  canónica privada** en PROYECTOS: `PsicoFases` (madurez por fase) y
+  `PsicoAvances` (bitácora append-only), conservando `PsicoHitos` (tareas
+  V1–V4). Leer `docs/psicohistoria/SEGUIMIENTO_PROGRESO.md` antes de cada
+  cambio en PSICOHISTORIA.
+- **En cada avance verificable:** añadir un evento nuevo con fecha y evidencia,
+  actualizar solo las fases/hitos afectados, releer los cambios y dejar en
+  HANDOFF la situación actual. No reescribir avances anteriores: emitir
+  un nuevo evento correctivo. No declarar `COMPLETADA` la fase prospectiva
+  solo por tener TSQ, PR aprobada o modelos reproducibles.
+- No hacer públicas las filas ni datos del Sheet, ni simular que GitHub Actions
+  actualiza Google Sheets automáticamente. Si no hay conector privado con
+  permisos autorizados, documentar el evento **pendiente de sincronización**
+  y no declararlo ya persistido.
+- `PsicoPredicciones` es un registro diferente: solo emisiones reales,
+  nunca avances de desarrollo, ensayos sintéticos ni forecasts no emitidos.
+
 ## Convenciones de trabajo
 
 - Hacer commits pequeños y descriptivos.
