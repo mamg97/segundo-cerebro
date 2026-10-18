@@ -298,7 +298,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
     if (disposed) return;
     const previousScroll = container.querySelector('.future-graph-scroll')?.scrollLeft || 0;
     const result = payload?.result, snapshot = result?.snapshots[horizon - 1];
-    // MAIN SCREEN: begin with the real-versus-probabilistic network, not controls.
+    // Configuration is first; the network remains the first analytical result, followed by explainable replay.
     const graphFirst = result ?
       '<section class="panel future-network future-network-first"><div class="panel-head"><div><span class="eyebrow">PSICOHISTORIA / OBSERVATORIO</span>'+
       '<h2>Futuros posibles frente a hechos reales</h2><p>'+esc(result.country.name)+' · '+snapshot.endYear+' · '+esc(result.modelLabel)+'</p></div>'+
@@ -313,13 +313,16 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
       (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
-    container.innerHTML = graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) + phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) + gedIncidentPreviewPanel(onsetExperiments) + '<div class="future-after-network"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
+    const controlsAboveGraph = '<div class="future-selection"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
       '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
       '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
       '<button type="submit" class="future-calculate"' + (loading ? ' disabled' : '') + '>' + (loading ? 'Calculando…' : 'Calcular predicción retrospectiva') + '</button></form>' +
       '<p class="future-warning">BACKTEST EXPLORATORIO · Fuente histórica revisada. No es un pronóstico actual ni acredita información disponible en el origen.</p>' +
-      (error ? '<p class="error" role="alert">' + esc(error) + '</p>' : '') +
+      (error ? '<p class="error" role="alert">' + esc(error) + '</p>' : '') + '</div>';
+    container.innerHTML = controlsAboveGraph + graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) +
+      phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) +
+      gedIncidentPreviewPanel(onsetExperiments) + '<div class="future-after-network">' +
       (!result ? '<section class="panel empty"><strong>' + (loading ? 'Calculando con los parámetros canónicos…' : 'Selección pendiente de calcular') + '</strong><p>Las probabilidades procederán del motor privado. No se muestran resultados inventados.</p></section>' :
         '<div class="future-toolbar"><div class="filter-row"><button type="button" data-fmode="explorer" aria-pressed="' + (mode === 'explorer') + '">Explorador</button><button type="button" data-fmode="research" aria-pressed="' + (mode === 'research') + '">Investigador</button></div><span>' + esc(result.country.name) + ' · ' + esc(result.modelLabel) + '</span></div>' +
         '<div class="future-timeline"><label>Horizonte <strong>' + horizon + ' ' + (horizon === 1 ? 'año' : 'años') + ' → ' + snapshot.endYear + '</strong><input name="horizon" type="range" min="1" max="' + result.maxHorizon + '" step="1" value="' + horizon + '" aria-label="Horizonte en años"></label>' +
