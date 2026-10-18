@@ -94,6 +94,38 @@ class SourceReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'exactly one'):
             inspect(self.folder, self.protocol)
 
+    def test_native_codebook_headers_ingest_without_changing_pinned_hashes(self):
+        # 26.1 codebook documents *_cy fields and no mandatory Version column.
+        from benchmark import load_official, audit
+        self.rows = [{k + '_cy': value for k, value in row.items() if k != 'Version'}
+                     for row in fixture_rows()]
+        self.generate()
+        audited_source = inspect(self.folder, self.protocol)
+        canonical, hashes = load_official(self.folder, self.protocol)
+        self.assertEqual(audited_source['sourceRows'], 37)
+        self.assertEqual(audit(canonical, self.protocol, strict=True)['rows'], 37)
+        self.assertEqual(canonical[0]['year'], '1989')
+        self.assertEqual(canonical[0]['country_id'], '123')
+        self.assertEqual(canonical[0]['Version'], '26.1')
+        self.assertEqual(hashes['archive_sha256'], self.protocol['archive_sha256'])
+        self.assertEqual(audited_source['archiveSha256'], self.protocol['archive_sha256'])
+        self.assertFalse(audited_source['prospectiveEligible'])
+
+    def test_native_codebook_mixed_fields_and_wrong_edition_fail_closed(self):
+        native = [{k + '_cy': value for k, value in row.items() if k != 'Version'}
+                  for row in fixture_rows()]
+        for scenario in ('mixed', 'bad_version', 'missing_required'):
+            self.rows = [dict(row) for row in native]
+            if scenario == 'mixed':
+                for row in self.rows: row['country_id'] = row['country_id_cy']
+            elif scenario == 'bad_version':
+                for row in self.rows: row['Version'] = '25.1'
+            else:
+                for row in self.rows: del row['year_cy']
+            self.generate()
+            with self.subTest(scenario=scenario), self.assertRaises(ValueError):
+                inspect(self.folder, self.protocol)
+
     def test_non_official_or_unpinned_protocol_fails(self):
         for k, val in [('archive_url', 'https://example.invalid/fake.zip'),
                        ('dataset_version', '25.1'), ('archive_sha256', ''),
