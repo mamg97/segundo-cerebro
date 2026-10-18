@@ -14,9 +14,12 @@ import json
 import math
 from pathlib import Path
 import statistics
+import tempfile
+import zipfile
 
 from benchmark import audit, load_official, panel, predict_origin
 from source_release_intake import inspect, digest_file
+from private_archive_intake import verify_private_archive, verified_input
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
@@ -153,16 +156,51 @@ def generate_private_candidates(source_dir, protocol):
     }
 
 
+def generate_private_candidates_from_archive(archive_path, protocol):
+    """Compute unissued candidates directly from an EXISTING private source bundle.
+
+    No permanent duplicate of official bytes; strict full-MANIFEST validation
+    precedes source extraction and the existing checked candidate pipeline.
+    """
+    archive_path = verified_input(archive_path)
+    archived = verify_private_archive(archive_path, protocol)
+    if (not archived['sourceChecksumMatchesPinnedProtocol'] or
+            archived['sourceRows'] != protocol['expected_raw_rows'] or
+            archived['sourceCountries'] != protocol['expected_countries'] or
+            archived['prospectiveEligible'] or archived['prospectiveForecastIssued']):
+        raise ValueError('Private source archive did not pass strict integrity gate')
+    with tempfile.TemporaryDirectory(prefix='psychohistory-cy261-private-') as temp:
+        source = Path(temp)
+        with zipfile.ZipFile(archive_path) as zipped:
+            for name, target in (('sources/ucdp.zip', 'ucdp.zip'),
+                                 ('sources/codebook.pdf', 'codebook.pdf')):
+                (source / target).write_bytes(zipped.read(name))
+        result = generate_private_candidates(source, protocol)
+    if (result['inputZipSha256'] != archived['archiveOfficialZipSha256'] or
+            result['inputCodebookSha256'] != archived['archiveOfficialCodebookSha256']):
+        raise ValueError('Source changed between archive verification and calculation')
+    result['sourcePrivateArchiveSha256'] = archived['archiveSha256']
+    result['sourcePrivateArchiveManifestEntriesVerified'] = archived['manifestEntriesVerified']
+    # A privately archived source does not certify the actual forecast's issuance.
+    result['forecastIssued'] = False
+    result['prospectiveEligible'] = False
+    return result
+
+
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument('--source-dir', type=Path, required=True)
+    inputs = cli.add_mutually_exclusive_group(required=True)
+    inputs.add_argument('--source-dir', type=Path)
+    inputs.add_argument('--private-archive', type=Path)
     cli.add_argument('--out', type=Path, required=True)
     args = cli.parse_args()
     output = args.out.absolute()
     if output.resolve().is_relative_to(REPO) or output.is_symlink() or not output.parent.is_dir():
         raise ValueError('Output must be a new file in an existing private directory')
     protocol = json.loads((HERE / 'protocol.json').read_text(encoding='utf-8'))
-    report = generate_private_candidates(args.source_dir, protocol)
+    report = (generate_private_candidates_from_archive(args.private_archive, protocol)
+              if args.private_archive is not None else
+              generate_private_candidates(args.source_dir, protocol))
     report['computedLocallyAtUtc'] = dt.datetime.now(dt.timezone.utc).isoformat()
     with output.open('x', encoding='utf-8') as f:
         json.dump(report, f, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)
