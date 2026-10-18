@@ -4,6 +4,9 @@ import vm from "node:vm";
 import {readFileSync} from "node:fs";
 const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
 const css=readFileSync(new URL("./styles.css",import.meta.url),"utf8");
+const thumbFrom=app.indexOf("function weeklyMenuProductThumbnail(item, home = false) {");
+const thumbTo=app.indexOf("function renderWeeklyMenuItemTitle(",thumbFrom);
+assert.ok(thumbFrom>=0 && thumbTo>thumbFrom);
 const from=app.indexOf("function renderHomeWeeklyMenuMatrixCell(items, readOnly = false) {");
 const to=app.indexOf("async function openHomeWeeklyMenuRecipe(",from);
 const projectionStart=app.indexOf("function homeMenuEditPayload(");
@@ -17,7 +20,7 @@ const sandbox={
   Number
 };
 vm.createContext(sandbox);
-vm.runInContext(app.slice(from,to)+app.slice(projectionStart,projectionEnd),sandbox);
+vm.runInContext(app.slice(thumbFrom,thumbTo)+app.slice(from,to)+app.slice(projectionStart,projectionEnd),sandbox);
 const item={sourceRow:8,date:"2026-10-15",moment:"Comida",recipeId:"rec-a",name:"Plato A",quantity:1,unit:"ración",kcal:310,protein:25,status:"planificado",updatedAt:"T1",itemRole:"receta"};
 
 test("Home uses separate consume and replace actions, keeping recipe detail independently clickable",()=>{
@@ -139,4 +142,18 @@ test("consumed food/recipes remain protected from plan-only edits",()=>{
   }
   assert.match(app,/data-menu-editor-servings/);
   assert.match(css,/\.home-menu-editor-food-hint/);
+});
+
+
+test("Home shows official product photo for a Pantry companion without inventing a recipe",()=>{
+  const pantry={...item,recipeId:null,foodId:"food-yogurt",itemRole:"acompanante",
+    name:"Yogur proteico · 1 vasito",productImageUrl:"https://images.example.org/product.jpg"};
+  const html=sandbox.renderHomeWeeklyMenuMatrixCell([pantry]);
+  assert.match(html,/home-menu-recipe-thumb is-product/);
+  assert.match(html,/src="https:\/\/images\.example\.org\/product\.jpg"/);
+  assert.match(html,/referrerpolicy="no-referrer"/);
+  assert.doesNotMatch(html,/data-home-menu-recipe-open/);
+  assert.match(html,/data-home-menu-consume=/);
+  const bad=sandbox.renderHomeWeeklyMenuMatrixCell([{...pantry,productImageUrl:"javascript:alert(1)"}]);
+  assert.doesNotMatch(bad,/<img/);
 });
