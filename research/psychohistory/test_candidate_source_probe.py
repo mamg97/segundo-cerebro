@@ -25,7 +25,7 @@ def row(cid=123, start="2024-03-02", end="2024-03-02", typ=1):
 
 class CandidateSourceProbeTests(unittest.TestCase):
     def test_aggregate_only_and_no_inferred_zero_case_roster(self):
-        raw = fake([row(123), row(456, "2024-08-01", "2024-08-03", 2)])
+        raw = fake([row(123, "2024-03-02 00:00:00.000", "2024-03-02 00:00:00.000"), row(456, "2024-08-01", "2024-08-03", 2)])
         out = summarize(raw)
         self.assertEqual(out["n_event_rows"], 2)
         self.assertEqual(out["n_countries_with_recorded_events"], 2)
@@ -47,6 +47,8 @@ class CandidateSourceProbeTests(unittest.TestCase):
             row(start="2024-03-04", end="2024-03-03"),
             row(cid=0), row(typ=4),
             row(start="1980-01-01"),
+            row(start="2024-08-01 12:30:00.000"),
+            row(start="2024-08-01 00:00:00.001"),
         ]:
             with self.subTest(testrow=testrow), self.assertRaises(ValueError):
                 summarize(fake([testrow]))
