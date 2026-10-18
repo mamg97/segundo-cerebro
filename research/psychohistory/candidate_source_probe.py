@@ -69,6 +69,7 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         dec_first, dec_last = date(2024, 12, 1), date(2024, 12, 31)
         boundaries = Counter()
         late_precision = Counter()
+        all_precision = Counter()
         for row in reader:
             count += 1
             if count > MAX_ROWS:
@@ -88,6 +89,9 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
                 boundaries["neither_endpoint_in_export_month"] += 1
             if start > dec_last:
                 boundaries["begins_after_export_month"] += 1
+            if "date_prec" in fields:
+                precision = str(row.get("date_prec") or "").strip()
+                all_precision[precision if precision else "MISSING"] += 1
             if end.year > 2024:
                 boundaries["late_end_total"] += 1
                 if start.year == 2024:
@@ -110,6 +114,10 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
     if not count:
         raise ValueError("No events in Candidate source")
     date_scope_valid = not any(bound_errors.values())
+    undocumented_precisions = sorted(p for p in all_precision if p not in ("1","2","3","4","5"))
+    # An undocumented codebook category is not grounds to infer a future
+    # event, but it is grounds to withhold the scientific interpretation.
+    precision_requires_review = bool(undocumented_precisions)
     unexpected_scope = any((
         bound_errors["before_1989"], bound_errors["reversed"],
         boundaries["begins_after_export_month"],
@@ -117,6 +125,8 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
     ))
     if unexpected_scope:
         temporal_status = "SOURCE_MONTH_SCOPE_MISMATCH_REVIEW_REQUIRED"
+    elif precision_requires_review:
+        temporal_status = "SOURCE_PRECISION_CODEBOOK_MISMATCH_REVIEW_REQUIRED"
     elif bound_errors["after_2024"]:
         temporal_status = "CROSS_YEAR_ENDS_COMPATIBLE_WITH_CODEBOOK_NOT_ASOF"
     else:
@@ -146,6 +156,12 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
             "late_end_date_precision_counts": dict(sorted(late_precision.items())),
         },
         "event_month_window_compatible_with_codebook": not unexpected_scope,
+        "date_precision_audit": {
+            "field_present": "date_prec" in fields,
+            "counts": dict(sorted(all_precision.items())),
+            "values_outside_codebook_1_to_5": undocumented_precisions,
+            "requires_review": precision_requires_review or "date_prec" not in fields,
+        },
         "full_country_coverage_known_from_events": False,
         "absent_country_is_conflict_free": False,
         "historical_release_time_independently_verified": False,
@@ -155,7 +171,8 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         "forecast_issued": False,
         "warning": ("UCDP Candidate codebook v1.3 permits date_start/date_end intervals "
                     "and repeated events across monthly files. A cross-year date_end "
-                    "is not automatically a post-release fact; it also does not certify "
+                    "is not automatically a post-release fact. Date precision values outside "
+                    "documented 1-5 require separate review; neither situation certifies "
                     "a historical issue timestamp. Historical availability, zero-event "
                     "roster, target comparability and vintage-correct replay remain unproven."),
     }
