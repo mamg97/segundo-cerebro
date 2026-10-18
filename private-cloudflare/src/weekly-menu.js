@@ -123,7 +123,7 @@ export function companionMenuDisplayName(item, product) {
   const format = normalize(product?.format);
   const portion = format.match(/[×x]\s*(\d+(?:[.,]\d+)?)\s*g/);
   const portionGrams = portion ? Number(portion[1].replace(",", ".")) : null;
-  const isVasito = /vasit/.test(format);
+  const isVasito = /vasit/.test(format) || /(?:pack|paquete)\s*\d+\s*[×x]\s*\d+\s*g/.test(format);
   const hasUnits = /vasit|^ud(?:\b|\s|$)|^unidad|^envase/.test(unit);
   const grams = /^(g|gr|gramos?)(?:\b|\s|$)/.test(unit);
   let serving = "";
