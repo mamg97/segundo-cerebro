@@ -87,3 +87,12 @@ test("the complete weekly-menu panel is the final Home module, after Agenda and 
     menuSection.indexOf('id="home-weekly-menu-content"'));
   assert.ok(menuSection.trimEnd().endsWith("</section>"), "nothing should follow menu except footer");
 });
+
+test("production Chromium audit enforces the relocated Home weekly-menu contract", () => {
+  const audit = readFileSync(new URL("../private-cloudflare/scripts/web-audit.mjs", import.meta.url), "utf8");
+  assert.match(audit, /const menuLastHomeBlock = await page\.evaluate/);
+  assert.match(audit, /!summary\.contains\(menu\)/);
+  assert.match(audit, /menu\.previousElementSibling\?\.contains\(agenda\)/);
+  assert.match(audit, /menu\.nextElementSibling === footer/);
+  assert.doesNotMatch(audit, /Home · menú ocupa el segundo cuadro tras resumen de consumos/);
+});
