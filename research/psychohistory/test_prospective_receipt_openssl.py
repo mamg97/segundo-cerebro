@@ -108,6 +108,28 @@ class SyntheticOpenSSLReceiptTests(unittest.TestCase):
             self.assertFalse(report["evaluationEligible"])
             self.assertEqual(report["entrySha256"], entry["sha256"])
 
+            self.assertTrue(report["rfc3161RequestNonceMatched"])
+
+            # Replay defense: preserve the SAME content imprint, but generate
+            # a new request with a different random nonce. A response bound to
+            # the old nonce MUST NOT verify against the new request.
+            original_query = (bundle / "request.tsq").read_bytes()
+            run("ts", "-query", "-data", bundle / "commitment.bin",
+                "-sha256", "-cert", "-out", base / "replacement.tsq")
+            changed_query = (base / "replacement.tsq").read_bytes()
+            self.assertNotEqual(changed_query, original_query)
+            (bundle / "request.tsq").write_bytes(changed_query)
+            with self.assertRaises((ValueError, subprocess.CalledProcessError)):
+                verify_precommitment(**args)
+            (bundle / "request.tsq").write_bytes(original_query)
+            self.assertTrue(verify_precommitment(**args)["rfc3161RequestNonceMatched"])
+
+            # Missing original query is not equivalent to a valid receipt.
+            (bundle / "request.tsq").unlink()
+            with self.assertRaises((ValueError, subprocess.CalledProcessError)):
+                verify_precommitment(**args)
+            (bundle / "request.tsq").write_bytes(original_query)
+
             # Altering the binary response must fail actual OpenSSL verification.
             response.write_bytes(response.read_bytes()[:30] + b"CORRUPT")
             with self.assertRaises((ValueError, subprocess.CalledProcessError)):

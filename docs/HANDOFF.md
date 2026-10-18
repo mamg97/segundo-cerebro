@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Puerta RFC3161: nonce y semántica de confianza corregidos · 18/10/2026
+
+- **Vulnerabilidad lógica corregida:** `sealing.verify()` verificaba la firma y la impronta del compromiso, pero no el nonce de la **solicitud original**; además devolvía `independentTimestamp=true` cuando la raíz de confianza se la pasaba el propio llamador. Ahora son obligatorias las comprobaciones OpenSSL `-data` **y** `-queryfile request.tsq`. Una solicitud ausente/sustituida o un TSR con nonce distinto falla; la comprobación de firma se declara `rfc3161SignatureVerifiedWithSuppliedTrustRoot=true` y la independencia externa queda `false`.
+- **Protección científica:** `prospective_receipt_gate` exige ambos controles y no promueve a `ISSUED`. Tests sintéticos de nonce/TSR y tests OpenSSL con CA efímera; sin publicar datos privados. Detalles: [RFC3161_NONCE_AND_TRUST_BOUNDARY.md](docs/psicohistoria/RFC3161_NONCE_AND_TRUST_BOUNDARY.md).
+- **Pendiente:** validar de forma independiente la autoridad TSA y la disponibilidad `as-of` de la fuente para la emisión concreta; verificar el momento real de emisión y la versión del protocolo antes del registro prospectivo. `PsicoPredicciones` sigue en **0** emisiones y la cohorte 2027 es exclusivamente shadow.
+
+---
+
 ## PSICOHISTORIA — TSA RFC3161 real probada con contenido ficticio · 18/10/2026
 
 - **Nueva prueba de firma externa:** [GitHub Actions 39133887629](https://github.com/mamg97/segundo-cerebro/actions/runs/39133887629) `success`: `.github/workflows/psychohistory-external-tsa-probe.yml` envió **solo bytes sintéticos** a `https://freetsa.org/tsr`; recibió un token temporal firmado, verificó `openssl ts -verify -data` con la cadena publicada por la TSA (`Verification: OK`) y obtuvo timestamp **2026-10-18 13:58:26 UTC**. Se borraron solicitud/respuesta/certificados efímeros; no se conservaron artifacts ni hashes reales.
