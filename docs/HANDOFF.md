@@ -1,3 +1,11 @@
+## PSICOHISTORIA — OpenTimestamps como vía adicional para la evidencia temporal · 18/10/2026
+
+- **Experimento en curso:** `.github/workflows/psychohistory-ots-synthetic-probe.yml` prueba `opentimestamps-client==0.7.2` contra calendarios públicos utilizando **solo un archivo ficticio**, sin enviar la cohorte real, hashes privados, TSQ, salt ni probabilidades. La prueba verifica solo devolución de `.ots` parseable, **NO** confirmación ni verificación frente a un bloque Bitcoin. Sin artifacts, suscripciones ni cron.
+- **Diferencia científica:** OTS puede aportar prueba independiente de anterioridad una vez anclado y verificado contra Bitcoin; el cliente oficial indica que la verificación completa necesita un nodo Bitcoin Core. Documento: [OPEN_TIMESTAMPS_GATE.md](docs/psicohistoria/OPEN_TIMESTAMPS_GATE.md). Seguir con `PsicoPredicciones=0` y `PsicoFases.MAD-05=PREPARADO_NO_EMITIDO`.
+- **Seguimiento obligatorio:** una vez CI terminada, añadir un evento NUEVO `AV-YYYYMMDD-NNN` en `PsicoAvances` con resultado real (éxito/fallo), actualizar `PsicoFases` sin falsear madurez y registrar la PR. No convertir pending OTS en sello completado.
+
+---
+
 ## PSICOHISTORIA — Registro de progreso científico vivo · 18/10/2026
 
 - **Fuente privada existente ampliada:** `SEGUNDO CEREBRO - PROYECTOS` conserva `PsicoHitos`, `PsicoKPIs`, `PsicoExperimentos` y `PsicoPredicciones`. Se han incorporado `PsicoFases` (7 etapas de madurez para conflictos y geopolítica, con criterio verificable, bloqueo y próxima acción) y `PsicoAvances` (bitácora con eventos `AV-YYYYMMDD-NNN`, PR/evidencia y resultado). Registro inicial auditado: 12 eventos a 18/10/2026, incluidos source release 26.1, seis modelos canónicos, prerregistro, TSQ sin enviar y nonce anti-replay; `PsicoPredicciones` conserva cero emisiones.
