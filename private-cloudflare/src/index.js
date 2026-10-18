@@ -2915,7 +2915,8 @@ async function fetchMenuCompanionProductImages(env, token) {
   if (menuCompanionPhotoCache.products && menuCompanionPhotoCache.expiresAt > Date.now()) {
     return menuCompanionPhotoCache.products;
   }
-  const sheetId = await resolvePantrySpreadsheetId(env, token);
+  // The Pantry resolver accepts the Google token provider, not a token string.
+  const sheetId = await resolvePantrySpreadsheetId(env, async () => token);
   if (!sheetId) return null;
   const params = new URLSearchParams({ majorDimension: "ROWS", valueRenderOption: "UNFORMATTED_VALUE" });
   params.append("ranges", "Productos!A1:A2000");
