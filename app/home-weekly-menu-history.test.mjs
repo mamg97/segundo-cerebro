@@ -62,8 +62,10 @@ test("historical weeks are read-only and current-week edits revalidate private c
 });
 
 test("Home Safari static bundle CSS and JS revisions match", () => {
-  assert.equal(page.match(/styles\.css\?v=([\d.]+)/)?.[1], "0.44.52");
-  assert.equal(page.match(/app\.js\?v=([\d.]+)/)?.[1], "0.44.52");
+  const styles = page.match(/styles\.css\?v=([\d.]+)/)?.[1];
+  const script = page.match(/app\.js\?v=([\d.]+)/)?.[1];
+  assert.ok(styles, "versioned CSS required for Safari");
+  assert.equal(script, styles, "the main CSS and JS must share their bundle revision");
 });
 
 

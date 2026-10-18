@@ -123,7 +123,7 @@ test("Health adherence lives inside Summary instead of a top-level tab", () => {
 
 test("Home and Salud reuse the canonical Gym snapshot without extra startup requests", () => {
   assert.match(app, /let homeGymSnapshot = null/);
-  assert.match(app, /if \(gymData\) homeGymSnapshot = gymData/);
+  assert.match(app, /if \(gymData\?\.ok === true && Array\.isArray\(gymData\.sessions\)\) \{\s*homeGymSnapshot = gymData/);
   const start = app.indexOf("async function loadHealthOverview(");
   const end = app.indexOf("function renderHealthCalorieBalance(", start);
   const loader = app.slice(start, end);
