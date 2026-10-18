@@ -69,7 +69,7 @@ def main():
     added_lines = 0
     p = subprocess.Popen(
         ["git", "log", "--all", "--no-ext-diff", "--no-color",
-         "--no-renames", "--unified=0", "--format=commit", "-p"],
+         "--no-renames", "--unified=0", "--format=%H", "-p"],
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
     )
     try:
