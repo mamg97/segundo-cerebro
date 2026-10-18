@@ -46,7 +46,7 @@ Si falta cualquiera de estos artefactos, el comando falla sin crear el informe. 
 
 ## Validación
 
-Tests sintéticos `test_prospective_receipt_gate.py`: identidad de borrador, cadena, cambios de bytes, edición tardía, sello tardío, errores de firma y ausencia permanente de elegibilidad prospectiva. El doble de TSA de las pruebas **simula** el verificador solo para controlar las puertas; **no** equivale a haber conseguido ni comprobado un recibo RFC 3161 real. La producción llama directamente al verificador OpenSSL existente.
+Tests sintéticos `test_prospective_receipt_gate.py`: identidad de borrador, cadena, cambios de bytes, edición tardía, sello tardío, errores de firma y ausencia permanente de elegibilidad prospectiva. El doble de TSA **simula** el verificador solo para controlar esas puertas. Además, `test_prospective_receipt_openssl.py` genera en tiempo de test una CA y una TSA **ficticias efímeras**, firma un recibo RFC 3161 auténtico a nivel de formato criptográfico con OpenSSL, verifica el circuito completo contra artefactos sintéticos y rechaza su alteración. Es una prueba criptográfica REAL con autoridad AUTOFIRMADA LOCAL, **no** una certificación independiente ni un recibo de TSA externa.
 
 ## Próximas fases
 
