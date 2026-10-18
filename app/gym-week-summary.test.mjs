@@ -120,16 +120,16 @@ test("all seven days show four nutrition metrics, even without a gym session", (
     { nutritionHistory: history });
   assert.equal((html.match(/class="home-gym-day-nutrition"/g) || []).length, 7);
   assert.match(html, /-420 kcal/);
-  assert.match(html, /2\\.520 kcal/);
-  assert.match(html, /2\\.100 kcal/);
+  assert.match(html, /2\.520 kcal/);
+  assert.match(html, /2\.100 kcal/);
   assert.match(html, /157 g/);
-  assert.match(html, /\\+350 kcal/);
+  assert.match(html, /\+350 kcal/);
   assert.match(html, /Proteína/);
   assert.match(html, /Gasto total/);
   assert.match(html, /Ingeridas/);
   assert.equal((html.match(/class="is-deficit"/g) || []).length, 1);
   assert.equal((html.match(/class="is-surplus"/g) || []).length, 1);
-  assert.match(html, /<summary[^>]*>[^]*?<\\/summary><dl class="home-gym-day-nutrition"/);
+  assert.match(html, /<summary[^>]*>[^]*?<\/summary><dl class="home-gym-day-nutrition"/);
 });
 
 test("missing intake, incomplete expenditure and missing Health do not manufacture zero balance", () => {
@@ -142,8 +142,8 @@ test("missing intake, incomplete expenditure and missing Health do not manufactu
   assert.equal(nutritionForGymDay(null).balance, null);
   const html = renderHomeGymWeek(input([]), today, { nutritionHistory: [] });
   assert.equal((html.match(/class="home-gym-day-nutrition"/g) || []).length, 7);
-  assert.doesNotMatch(html, /(?:\\+0|-0) kcal/);
-  assert.match(html, /<dt>Balance<\\/dt><dd>—<\\/dd>/);
+  assert.doesNotMatch(html, /(?:\+0|-0) kcal/);
+  assert.match(html, /<dt>Balance<\/dt><dd>—<\/dd>/);
   const gymFailure = renderHomeGymWeek(null, today, { nutritionHistory: [] });
   assert.match(gymFailure, /Entrenamientos no disponibles/);
   assert.doesNotMatch(gymFailure, /0 días · 0 sesiones/);
@@ -158,11 +158,11 @@ test("missing intake, incomplete expenditure and missing Health do not manufactu
 test("Home reuses the existing private health overview history, no seven new requests", () => {
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const worker = readFileSync(new URL("../private-cloudflare/src/index.js", import.meta.url), "utf8");
-  assert.match(app, /homeHealthWeekNutritionHistory = Array\\.isArray\\(data\\.nutritionHistory\\)/);
+  assert.match(app, /homeHealthWeekNutritionHistory = Array\.isArray\(data\.nutritionHistory\)/);
   assert.match(app, /nutritionHistory: homeHealthWeekNutritionHistory/);
-  assert.match(worker, /consumedProtein: consumedEntryCount > 0 \\? dayConsumed\\.protein : null/);
-  assert.match(worker, /nutritionHistory: value\\.history \\|\\| \\[\\]/);
+  assert.match(worker, /consumedProtein: consumedEntryCount > 0 \? dayConsumed\.protein : null/);
+  assert.match(worker, /nutritionHistory: value\.history \|\| \[\]/);
   const source = readFileSync(new URL("./gym-week-summary.mjs", import.meta.url), "utf8");
-  assert.doesNotMatch(source, /fetch\\(/);
+  assert.doesNotMatch(source, /fetch\(/);
 });
 
