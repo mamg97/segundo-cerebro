@@ -1,3 +1,11 @@
+## PSICOHISTORIA — UX v0.5.11 · recálculo al cambiar parámetros (18/10/2026)
+
+- **Hallazgo real:** España existe como país UCDP `230` en el catálogo privado de Futuros; la captura mostraba el árbol vacío después de elegir otro país/modelo porque el handler de `<select>` borraba el resultado y **no llamaba** al endpoint hasta pulsar manualmente «Calcular predicción retrospectiva». El inicio de la vista sí invocaba `load()`.
+- **Corrección frontend:** cualquier cambio en `Sociedad`, `Origen retrospectivo` o `Modelo` llama ahora a `load(focus)` y consulta automáticamente `/api/research-futures`, abortando la consulta obsoleta, conservando el foco y ocultando datos de la selección anterior mientras llega la respuesta. El botón sigue disponible para recalcular. Sin cambios en motor, datasets, probabilidades ni fuentes canónicas. Vistas/HTML/CSS con cache bust `v0.5.11`.
+- **Puertas:** PR, suites de CI y despliegue Cloudflare se verificarán antes de dar la reparación por publicada. Tests estáticos de llamada automática, cancelación, versión y jerarquía visual; falta confirmar la renderización con sesión de navegador autenticado. Si la API privada devuelve un error genuino, el frontend conserva el error y nunca inventa probabilidades.
+
+---
+
 ## PSICOHISTORIA — UI v0.5.10 · configuración antes del árbol (18/10/2026)
 
 - **Cambio UX solicitado:** el bloque `Sociedad · Origen retrospectivo · Modelo · Calcular predicción retrospectiva` junto con el aviso de backtest ahora se monta **por encima** de la red de futuros. El grafo continúa siendo el **primer resultado visual**, y la reproducción matemática, casos históricos y paneles secundarios siguen debajo.

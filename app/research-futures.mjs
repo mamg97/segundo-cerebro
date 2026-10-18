@@ -1,6 +1,6 @@
-import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.10';
-import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.10';
-import {explainableReplayPanel} from './research-explainable.mjs?v=0.5.10';
+import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.11';
+import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.11';
+import {explainableReplayPanel} from './research-explainable.mjs?v=0.5.11';
 // The browser renders server-calculated probabilities. It never fits a model.
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = (value, digits = 3) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('es-ES', {maximumFractionDigits: digits}) : 'Sin datos';
@@ -312,7 +312,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       ' Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
-      (loading?'Cargando las trayectorias calculadas…':'Esperando selección de datos reales…')+'</p></section>';
+      (loading?'Cargando las trayectorias calculadas…':'Preparando la consulta de datos reales…')+'</p></section>';
     const controlsAboveGraph = '<div class="future-selection"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
       '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
@@ -381,7 +381,10 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
         if (!catalog.countries.some(c => String(c.id) === String(country))) country = catalog.countries[0].id;
         horizon = Math.min(horizon, catalog.maxHorizon);
       } else if (select.name === 'country') country = Number(select.value); else model = select.value;
-      abort?.abort(); request++; loading = false; payload = null; playing = false; observed = false; error = ''; traceStep=-1; render('[name="'+select.name+'"]');
+      // A selector change invalidates the previous result and immediately asks the
+      // private engine for the newly selected country/origin/model. load() aborts
+      // the previous request and restores focus to the changed control.
+      void load('[name="'+select.name+'"]');
     }));
     container.querySelector('[name="horizon"]')?.addEventListener('change', e => {horizon = Number(e.target.value); selection = null; playing = false; observed = observedCaseAvailable(payload?.result,horizon); render('[name="horizon"]');});
     container.querySelector('[name="speed"]')?.addEventListener('change', e => {speed = Number(e.target.value); schedule();});
@@ -426,9 +429,9 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
     }
     if(mine===request&&!disposed)render();
   }
-  async function load() {
+  async function load(focus = null) {
     abort?.abort(); abort = new AbortController(); const mine = ++request;
-    loading = true; error = ''; payload = null; selection = null; playing = false; traceStep=-1; render();
+    loading = true; error = ''; payload = null; selection = null; playing = false; observed = false; traceStep=-1; render(focus);
     const params = new URLSearchParams({catalog:catalog.id,country:String(country),model});
     try {
       const response = await fetch('/api/research-futures?' + params, {credentials:'same-origin',cache:'no-store',signal:abort.signal,headers:{Accept:'application/json'}});
@@ -440,7 +443,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
     } catch (e) {if (mine === request && !disposed && e.name !== 'AbortError') error = 'No se ha podido calcular. Vuelve a intentarlo con el botón; no se muestran valores de sustitución.';}
     finally {
       if (mine === request && !disposed) {
-        loading = false; render();
+        loading = false; render(focus);
         if(payload?.result?.observedStates?.length)
           void loadObservedEvidence(mine,catalog.id,country,abort.signal);
       }

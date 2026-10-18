@@ -157,3 +157,20 @@ test('target scope separates current retrospective scores from not-yet-evaluated
   assert.ok(source.includes('container.innerHTML = controlsAboveGraph + graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) +'));
   assert.ok(source.includes("phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) +"));
 });
+
+test('country, catalog and model changes immediately calculate rather than leaving the tree blank',()=>{
+  const source=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
+  const selectorStart=source.indexOf("container.querySelectorAll('.future-controls select').forEach");
+  const selectorEnd=source.indexOf("container.querySelector('[name=\"horizon\"]')?.addEventListener",selectorStart);
+  assert.ok(selectorStart>=0 && selectorEnd>selectorStart);
+  const handler=source.slice(selectorStart,selectorEnd);
+  assert.match(handler,/select\.name === 'catalog'/);
+  assert.match(handler,/select\.name === 'country'/);
+  assert.match(handler,/void load\('\[name="/);
+  assert.doesNotMatch(handler,/payload = null; playing = false; observed = false; error = ''/);
+  assert.match(source,/async function load\(focus = null\)/);
+  assert.match(source,/render\(focus\)/);
+  assert.match(source,/render\(\); load\(\);/);
+  assert.match(source,/abort\?\.abort\(\); abort = new AbortController\(\)/);
+  assert.match(source,/if \(mine !== request \|\| disposed\) return/);
+});
