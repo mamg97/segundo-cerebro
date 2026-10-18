@@ -17,6 +17,7 @@ import statistics
 import zipfile
 from pathlib import Path
 from engines import estimate, sigmoid, agent_simulation
+from source_schema import normalized_source_rows
 
 HERE = Path(__file__).resolve().parent
 MODELS = ('frequency', 'persistence', 'markov', 'v1_memory_index', 'v2_logistic', 'interaction_table')
@@ -81,7 +82,8 @@ def load_official(data_dir, protocol):
         if len(names) != 1:
             raise ValueError('Expected exactly one CSV')
         csv_bytes = archive.read(names[0])
-    rows = list(csv.DictReader(io.StringIO(csv_bytes.decode('utf-8-sig'))))
+    rows = list(normalized_source_rows(csv.DictReader(io.StringIO(csv_bytes.decode('utf-8-sig'))),
+                                       pinned_version=protocol['dataset_version']))
     return rows, {'archive_sha256': digest(raw), 'csv_sha256': digest(csv_bytes),
                   'member': names[0], 'codebook_sha256': protocol['codebook_sha256']}
 
