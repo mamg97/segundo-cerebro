@@ -9,10 +9,16 @@ trap 'rm -f "$headers"' EXIT
 failed=0
 
 check() {
-  local label="$1" path="$2" status location
+  local label="$1" path="$2" mode="${3:-plain}" status location
+  local -a extra_headers=()
+  if [ "$mode" = "forged" ]; then
+    extra_headers=(--header "cf-access-authenticated-user-email: privacy-probe@example.invalid" \
+      --header "cf-access-jwt-assertion: invalid-forged-access-token")
+  fi
   : > "$headers"
   status="$(curl --silent --show-error --max-time 25 \
     --retry 1 --retry-delay 1 --retry-all-errors \
+    "${extra_headers[@]}" \
     --output /dev/null --dump-header "$headers" \
     --write-out '%{http_code}' "${base}${path}")" || {
       echo "${label}: REQUEST_FAILED"
@@ -45,6 +51,9 @@ check "Gym image (synthetic nonexistent record)" "/api/gym/photos/2000-01-01/fre
 check "Wardrobe source" "/api/objects"
 check "Wardrobe image (synthetic nonexistent record)" "/api/objects/privacy-synthetic/image/processed?v=00000000-0000-4000-8000-000000000000"
 check "Health vision" "/api/health/vision"
+check "Private state (forged Access headers)" "/api/state" "forged"
+check "Gym photo index (forged Access headers)" "/api/gym/photos" "forged"
+check "Wardrobe image (forged Access headers)" "/api/objects/privacy-synthetic/image/processed?v=00000000-0000-4000-8000-000000000000" "forged"
 
 if [ "$failed" -ne 0 ]; then
   echo "Security verification failed: no anonymous origin content or non-Access fallthrough is permitted."
