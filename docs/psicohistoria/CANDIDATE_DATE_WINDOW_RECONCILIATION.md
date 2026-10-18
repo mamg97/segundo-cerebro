@@ -86,3 +86,28 @@ distribución total de esta columna y emite
 valores no documentados. No interpreta 0 como una precisión numérica ni
 imputa fechas exactas. Sigue pendiente determinar si el 0 refleja un
 valor interno particular, una diferencia de versión o un problema del dato.
+
+## Confirmación de la frecuencia de `date_prec` en fuente real
+
+La [repetición CI 39168091726](https://github.com/mamg97/segundo-cerebro/actions/runs/39168091726)
+del 18/10/2026 verificó, sin exponer filas ni países, esta frecuencia
+agregada de `date_prec` en los **2.110 eventos** observados:
+
+| Valor | Filas |
+|---|---:|
+| 0 (no documentado en v1.3) | 6 |
+| 1 | 1.888 |
+| 2 | 162 |
+| 3 | 13 |
+| 4 | 32 |
+| 5 | 9 |
+
+Los seis `date_prec=0` coinciden con el grupo cuya fecha final cruza
+al año 2025. Los 2.104 registros restantes usan valores 1–5.
+
+El estado admitido del archivo pasa a
+`SOURCE_PRECISION_CODEBOOK_MISMATCH_REVIEW_REQUIRED` (diagnóstico,
+**NO** aprobación) hasta que una fuente normativa permita interpretar
+ese 0. En ningún caso se reconcilia un 0 forzándolo a 1–5; una columna
+ausente produce asimismo revisión obligatoria. Los controles de
+disponibilidad histórica y de ausencia de roster completo siguen cerrados.
