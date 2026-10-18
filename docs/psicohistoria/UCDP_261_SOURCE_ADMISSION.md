@@ -10,28 +10,30 @@ Esta puerta nueva (`source_release_intake.py`) permite una revisión de admisibi
 
 **Qué NO demuestra:** los hashes garantizan identidad de contenido respecto al protocolo ya fijado, no la fecha original de publicación ni que un fichero concreto fuese accesible en cada corte histórico. Un reloj local o una URL actual no son por sí solos sellos temporales independientes. El resultado siempre declara `historicalAsOfVerified=false`, `independentPublicationEvidenceVerified=false`, `prospectiveEligible=false` y `modelTrained=false`. Tampoco prueba que se haya emitido ningún pronóstico.
 
-## Compatibilidad con las columnas documentadas en el codebook 26.1 (18/10/2026)
+## Auditoría de bytes oficiales — 18/10/2026
 
-El PDF oficial 26.1 especifica `country_cy`, `country_id_cy`, `year_cy`,
-`region_cy`, `sb_total_deaths_best_cy`, `sb_total_deaths_low_cy`,
-`sb_total_deaths_high_cy`, `ns_total_deaths_best_cy` y
-`os_total_deaths_best_cy`. El benchmark interno consume los nombres equivalentes
-sin `_cy`. Los tests anteriores solo utilizaban el esquema interno ficticio:
-**no comprobaban la compatibilidad con las cabeceras especificadas oficialmente**.
+**Evidencia empírica positiva:** [GitHub Actions run 39130567553](https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553),
+job `official-source-probe`, `success`. Un runner efímero descargó **el ZIP y el
+codebook oficiales originales** de las dos URL registradas; `download.mjs`
+verificó que **ambos SHA-256 coinciden exactamente** con `protocol.json`;
+`source_release_intake.py` validó **7.132 filas, 199 países, 1989–2025**;
+y `benchmark.audit(strict=True)` pasó sobre el CSV real.
 
-`source_schema.py` define una conversión explícita de estos nueve nombres que
-comparten el validador y el lector del benchmark. Los valores no se transforman.
-El campo `Version` es obligatorio en el formato interno; para las cabeceras
-nativas, si falta se vincula a la versión del protocolo **solo después de
-verificar los hashes exactos de ambos originales**. Si consta una versión
-contradictoria se rechaza. Columnas ambiguas, mezcladas o incompletas también
-se rechazan, en lugar de seleccionar columnas por heurísticas.
+**Hallazgo de esquema:** el codebook 26.1 **documenta** columnas `*_cy`,
+pero las cabeceras del ZIP real descargado con el checksum fijado utilizan
+`country_id` y `year` sin ese sufijo (`INTERNAL_ALIASES` en los logs).
+Por tanto el código previo ya era compatible con el CSV original. Se
+descartó el adaptador de cabeceras propuesto inicialmente: habría agregado
+complejidad no necesaria para los bytes fijados. Se conservan el validador,
+benchmark, tests y hashes originales sin cambios.
 
-Fuentes: [codebook oficial 26.1](https://ucdp.uu.se/downloads/organizedviolencecy/UCDP_OrganizedViolenceCY_Codebook_261.pdf).
-**Limitación:** aún falta descargar el ZIP/PDF originales y observar las
-cabeceras del CSV real: compatibilidad documental y tests ficticios NO
-constituyen validación empírica ni prueba de fecha de publicación. No se han
-modificado los hashes, las predicciones ni el protocolo científico.
+**Límite operativo:** los originales y el manifiesto se procesaron en
+`RUNNER_TEMP` y se borraron al finalizar el job, **sin subir archivos a
+GitHub/artifacts**. Aún falta archivar permanentemente ambos originales y el
+manifiesto en Drive privado. El hecho de descargarlos durante este workflow
+acredita acceso a los bytes en la fecha de ejecución, **no acredita su
+disponibilidad histórica exacta en junio de 2026, ni una TSA independiente,
+ni una emisión prospectiva**. `PsicoPredicciones` sigue con cero filas.
 
 ## Uso privado
 
