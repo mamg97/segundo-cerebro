@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Ejecución canónica real 2027 cerrada, sin emisión · 18/10/2026
+
+- **CLI literal ejecutado fuera del repo público:** los ocho archivos actuales del motor y generador `future_2027_candidates.py`, modelo, validadores, protocolo y preflight se trasladaron por un canal temporal y verificaron con SHA de blob Git idénticos a `main`; el documento de transferencia fue eliminado. Desde el ZIP UCDP original de Drive privado (24/24 hashes intactos), `--private-archive` produjo **196 países × seis modelos = 1.176 probabilidades** `outcome=null`; todas coinciden exactamente con el wrapper anterior (máxima desviación 0).
+- **Preflight de fuente y código:** `issue_2027_preflight.py --require-canonical` produjo `CANONICAL_SHADOW_PREFLIGHT_PASSED_NOT_ISSUED`. El wrapper previo permaneció clasificado `LEGACY_SHADOW_STRUCTURALLY_VALID_NOT_CANONICAL`. Ambos cumplen `forecastIssued=false`; no se publicaron hashes de pronósticos, probabilidades ni filas reales en Git.
+- **Persistencia privada verificable:** paquete canónico con 5/5 miembros íntegros, 7.184 bytes, en Drive privado con `shared=false` y solo propietario, sin duplicar originales UCDP. Nuevo registro `ucdp261-2027-6model-canonical-shadow-20261018` en `PsicoExperimentos`, sin sobrescribir ensayo previo. `PsicoPredicciones` mantiene **0** emisiones. Evidencia técnica: [COHORTE_2027_NO_EMITIDA.md](docs/psicohistoria/COHORTE_2027_NO_EMITIDA.md).
+- **Próxima puerta genuina:** informe `as-of` de fuente previo a emisión, independencia/cadena/nonce de TSA para un compromiso **real en entorno privado**, registro append-only de `ISSUED` antes de resolución y posterior scoring (solo tras primera edición UCDP que cubra 2027). La mera coincidencia del CLI o un timestamp sintético no prueban skill prospectivo.
+
+---
+
 ## PSICOHISTORIA — Preflight 2027: serialización JSON verificada · 18/10/2026
 
 - **Bug real corregido:** el paquete privado de 2027 usa `json.dumps(sort_keys=True)`, que ordena alfabéticamente las claves `probabilities` de cada país, aunque el contrato `models` usa el orden científico preregistrado. `issue_2027_preflight.py` comparaba erróneamente el orden de claves de cada dict, rechazando una cohorte cuyos **seis modelos eran correctos**. Ahora exige cardinalidad y conjunto exacto de nombres, independiente del orden de serialización; se mantiene estricta la lista `models` principal.
