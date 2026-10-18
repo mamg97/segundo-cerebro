@@ -2,7 +2,7 @@
 
 - **Nuevo audit offline:** `research/psychohistory/asof_cohort_coverage.py` clasifica TODOS los países-origen planificados (no solo positivos) según existencia de Candidate de bytes pinneados SHA, ámbito declarado y release declarado anterior al mes de emisión. Falta de vintage ≠ ausencia de violencia. Orígenes sin cobertura son `NO_EVALUABLE`; los denominadores quedan explícitos.
 - **Puerta de seguridad epistemológica:** la fecha de publicación/ámbito del manifiesto no están independientemente autenticados y los bytes Candidate no se han reconstruido en targets/features; `source_as_of_verified=false`, `scores_computed=false`, `forecast_issued=false`. No actualiza la cohorte 2027, Worker, UI ni `PsicoPredicciones`. Solo CI sintética y reportes privados create-only.
-- **Evidencia:** [Protocolo de cobertura](docs/psicohistoria/CANDIDATE_ASOF_COVERAGE.md); PR y CI por confirmar. Tras CI verde/fusión, registrar append-only en `PsicoAvances` y actualizar `MAD-02` si procede, sin declarar `MAD-04` completado. Siguiente hito: pinnear un Candidate verdadero, verificar alcance en sus bytes y fechar release de forma independiente antes de medir modelos.
+- **Verificación y seguimiento:** [PR #652](https://github.com/mamg97/segundo-cerebro/pull/652) fusionada en `main` (squash `97850b14c95b`); tests científicos, privacidad y demo Pages de la rama principal en `success`. Bitácora privada `PsicoAvances` AV-20261018-025 añadida y reconsultada; `MAD-02=PARCIAL`, `PsicoPredicciones=0`. [Protocolo](docs/psicohistoria/CANDIDATE_ASOF_COVERAGE.md). Siguiente hito: capturar un Candidate auténtico, verificar cobertura en bytes y datar el release independientemente antes de puntuar modelos.
 
 ---
 
