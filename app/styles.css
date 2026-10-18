@@ -27908,6 +27908,31 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 }
 
 
+/* Canonical Pantry companion images in Home + nutrition detail.
+   Keep product packaging fully visible, unlike meal photography. */
+.weekly-menu-product-thumb {
+  display: inline-flex;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.weekly-menu-product-thumb img,
+.home-weekly-menu-table-cell .home-menu-recipe-thumb.is-product img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
 /* 2026-10-16 · Recipe detail ingredients: prevent the quantity's explanatory
    text from becoming an unbounded intrinsic grid column on iPhone.
    All recipe detail entry points use the same shared recipe-detail-card. */
@@ -28073,3 +28098,5 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
     flex: 1 1 auto;
   }
 }
+
+

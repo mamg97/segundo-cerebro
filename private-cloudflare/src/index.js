@@ -2907,6 +2907,41 @@ async function persistHealthHistorySummary(env, history) {
   );
 }
 
+// Minimal Pantry read for Home's week-scoped menu: only IDs and public product-image
+// links. Avoid the expensive 5-table Pantry summary in this lightweight endpoint.
+let menuCompanionPhotoCache = { expiresAt: 0, products: null };
+async function fetchMenuCompanionProductImages(env, token) {
+  if (!hasPantryGoogleConfig(env)) return null;
+  if (menuCompanionPhotoCache.products && menuCompanionPhotoCache.expiresAt > Date.now()) {
+    return menuCompanionPhotoCache.products;
+  }
+  const sheetId = await resolvePantrySpreadsheetId(env, token);
+  if (!sheetId) return null;
+  const params = new URLSearchParams({ majorDimension: "ROWS", valueRenderOption: "UNFORMATTED_VALUE" });
+  params.append("ranges", "Productos!A1:A2000");
+  params.append("ranges", "Productos!R1:R2000");
+  const response = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(sheetId) + "/values:batchGet?" + params,
+    { headers: { Authorization: "Bearer " + token } }
+  );
+  if (!response.ok) throw new Error("MENU_PRODUCT_IMAGES_" + response.status);
+  const ranges = (await response.json())?.valueRanges || [];
+  const ids = ranges[0]?.values || [];
+  const images = ranges[1]?.values || [];
+  const products = new Map();
+  for (let index = 1; index < ids.length; index++) {
+    const id = String(ids[index]?.[0] || "").trim();
+    if (!id) continue;
+    const candidate = String(images[index]?.[0] || "").trim();
+    products.set(id, {
+      id,
+      imageUrl: /^https:\/\//i.test(candidate) ? candidate : null
+    });
+  }
+  menuCompanionPhotoCache = { products, expiresAt: Date.now() + 120_000 };
+  return products;
+}
+
 async function fetchWeeklyMenuLight(env, options = {}) {
   if (!hasHealthGoogleConfig(env)) {
     return { status: "not-configured", value: null };
@@ -2917,7 +2952,13 @@ async function fetchWeeklyMenuLight(env, options = {}) {
     : localHealthDateKey();
 
   const token = await getGoogleAccessToken(env);
-  // Photo metadata joins by recipe_id within the existing batchGet; no extra request.
+  // Start the narrow Pantry lookup alongside the Health Sheet read.
+  // Fail closed (text-only companions) if that optional source is unavailable.
+  const companionProductsPromise = fetchMenuCompanionProductImages(env, token).catch((error) => {
+    console.warn("Menu product image lookup unavailable", String(error?.message || error));
+    return null;
+  });
+  // Recipe photos still resolve through the authenticated same-origin route.
   const ranges = ["MenuSemanal!A1:R2000", "Objetivos!A1:H500", "Recetas!A1:O1000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
@@ -2973,7 +3014,11 @@ async function fetchWeeklyMenuLight(env, options = {}) {
   const weekStart = healthAddDays(date, -mondayOffset);
   const weekEnd = healthAddDays(weekStart, 6);
   const photoUrls = menuRecipePhotoUrls(parseTableRows(valueRanges[2]?.values || []));
-  const weeklyMenu = prepareWeeklyMenuRows(weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd))
+  const companionProducts = await companionProductsPromise;
+  const weeklyMenu = prepareWeeklyMenuRows(
+    weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd),
+    companionProducts ? { pantryProductById: companionProducts } : {}
+  )
     .map((item) => ({
       ...item,
       // Same-origin image route only; never expose raw Drive file identifiers.
