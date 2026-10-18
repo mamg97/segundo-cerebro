@@ -56,8 +56,15 @@ def verify(directory, receipt, trust_root, chain):
     validate_payload(payload)
     expected=commitment(payload,(directory/'nonce.txt').read_text().strip())
     if expected!=(directory/'commitment.bin').read_bytes(): raise ValueError('Payload changed')
-    # Verify against DATA, not only a saved query that could have been replaced.
+    # First bind the signed imprint to the exact commitment bytes.
     subprocess.run(['openssl','ts','-verify','-data',str(directory/'commitment.bin'),'-in',str(receipt),
+                    '-CAfile',str(trust_root),'-untrusted',str(chain)],check=True,capture_output=True)
+    # RFC3161 also requires the ORIGINAL client nonce to match the response.
+    # -data alone checks the imprint but cannot prevent a replayed token.
+    request=directory/'request.tsq'
+    if request.is_symlink() or not request.is_file():
+        raise ValueError('Original RFC3161 request including nonce is required')
+    subprocess.run(['openssl','ts','-verify','-queryfile',str(request),'-in',str(receipt),
                     '-CAfile',str(trust_root),'-untrusted',str(chain)],check=True,capture_output=True)
     response=subprocess.run(['openssl','ts','-reply','-in',str(receipt),'-text'],check=True,
                             capture_output=True,text=True).stdout
@@ -69,7 +76,11 @@ def verify(directory, receipt, trust_root, chain):
     instant=dt.datetime.strptime(raw,pattern).replace(tzinfo=dt.timezone.utc)
     if not instant<=utc(payload['issuedAt']) or not instant<utc(payload['resolutionAt']):
         raise ValueError('Seal was issued too late')
-    return {'id':payload['id'],'verified':True,'payloadMatched':True,'independentTimestamp':True,
+    # Signature validity under a CALLER-SUPPLIED root does not prove that
+    # authority's independence or its inclusion in an external trust list.
+    return {'id':payload['id'],'verified':True,'payloadMatched':True,
+            'rfc3161SignatureVerifiedWithSuppliedTrustRoot':True,
+            'rfc3161RequestNonceMatched':True,'independentTimestamp':False,
             'timestamp':instant.isoformat(),'commitmentSha256':expected.hex(),
             'payloadSha256':hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
             'receiptSha256':hashlib.sha256(receipt.read_bytes()).hexdigest(),
