@@ -1,5 +1,6 @@
 # Public reference data are downloaded ONLY to the ephemeral runner.
 # No UCDP files, manifests or model probabilities are uploaded as artifacts.
+# The actual pinned 26.1 CSV uses unsuffixed columns even though its PDF documents *_cy.
 name: Probe official UCDP CY 26.1 bytes without artifacts
 on:
   pull_request:
