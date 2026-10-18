@@ -127,8 +127,8 @@ test("all seven days show four nutrition metrics, even without a gym session", (
   assert.match(html, /Proteína/);
   assert.match(html, /Gasto total/);
   assert.match(html, /Ingeridas/);
-  assert.equal((html.match(/class="is-deficit"/g) || []).length, 1);
-  assert.equal((html.match(/class="is-surplus"/g) || []).length, 1);
+  assert.equal((html.match(/home-gym-nutrition-row is-deficit/g) || []).length, 1);
+  assert.equal((html.match(/home-gym-nutrition-row is-surplus/g) || []).length, 1);
   assert.match(html, /<summary[^>]*>[^]*?<span class="home-gym-day-nutrition"[^]*?<\/summary>/);
 });
 
