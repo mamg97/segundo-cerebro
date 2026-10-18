@@ -301,3 +301,22 @@ test("legacy dessert and snack moments align with their canonical Registro meal"
     weeklyMenuConsumptionMatchKey({date:day,moment:"Media mañana",itemId:"food-y"})
   );
 });
+
+
+test("Pantry companion photos remain linked to the canonical food ID without altering amounts or status", () => {
+  const entry = { date: "2026-10-18", moment: "Media mañana", foodId: "food-yogurt", name: "Yogur",
+    quantity: 2, unit: "vasitos de 120 g", status: "consumido", kcal: 120, protein: 24 };
+  const products = new Map([["food-yogurt", { id: "food-yogurt", imageUrl: "https://images.example.org/product.jpg",
+    nutrition: { kcal100g: 50, protein100g: 10 } }]]);
+  const [result] = prepareWeeklyMenuRows([entry], { pantryProductById: products });
+  assert.equal(result.productImageUrl, "https://images.example.org/product.jpg");
+  assert.equal(result.pantryProductId, "food-yogurt");
+  assert.equal(result.name, "Yogur");
+  assert.equal(result.quantity, 2);
+  assert.equal(result.status, "consumido");
+  assert.equal(result.kcal, 120);
+  assert.equal(result.protein, 24);
+  const [offline] = prepareWeeklyMenuRows([entry]);
+  assert.equal(offline.productImageUrl, null);
+  assert.equal(offline.status, "consumido");
+});
