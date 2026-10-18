@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Registro de progreso científico vivo · 18/10/2026
+
+- **Fuente privada existente ampliada:** `SEGUNDO CEREBRO - PROYECTOS` conserva `PsicoHitos`, `PsicoKPIs`, `PsicoExperimentos` y `PsicoPredicciones`. Se han incorporado `PsicoFases` (7 etapas de madurez para conflictos y geopolítica, con criterio verificable, bloqueo y próxima acción) y `PsicoAvances` (bitácora con eventos `AV-YYYYMMDD-NNN`, PR/evidencia y resultado). Registro inicial auditado: 12 eventos a 18/10/2026, incluidos source release 26.1, seis modelos canónicos, prerregistro, TSQ sin enviar y nonce anti-replay; `PsicoPredicciones` conserva cero emisiones.
+- **Hitos ya reconciliados:** V2-04 (modelos avanzados y calibración) y V2-05 (pronósticos prospectivos sellados) se cambiaron de `PENDIENTE` a `EN_CURSO` **sin** marcarlos concluidos; V4-04 mantiene `EN_CURSO` y actualiza evidencia del pipeline. Un informe precommit `NO_EMITIDO` nunca satisface una fase prospectiva completada.
+- **Gobierno permanente:** `docs/psicohistoria/SEGUIMIENTO_PROGRESO.md` y `AGENTS.md` obligan a añadir nuevo evento append-only y actualizar únicamente las filas de fase/hito afectadas tras **cada** cambio verificado, releyendo las hojas; prohibido reescribir eventos o publicar datos. `research/psychohistory/progress_audit.py` audita exports privados con tests sintéticos e historial prefix-preserving cuando se aporta snapshot anterior; no requiere credenciales, coste ni cron.
+- **Pendiente operativo:** mantener el tracker sincronizado después de la fusión de esta PR, documentando su evento de cierre adicional (no sobrescribir la fila EN_CURSO), y estudiar la lectura del progreso en la app privada mediante un único endpoint protegido, sin copiar datos a Git. Puertas científicas siguen sin abrir: TSA confiable/TSR real, disponibilidad as-of y emisión de 2027.
+
+---
+
 ## PSICOHISTORIA — Cierre de reproducción nonce en ruta histórica · 18/10/2026
 
 - **Bug residual:** `research/psychohistory/cohort_timestamp.py` (ensayo antiguo de cinco modelos) verificaba la impronta RFC3161, pero **no** el nonce de la solicitud original, a diferencia de `sealing.py` endurecido en PR #624. Ahora exige `openssl ts -verify -data` **y** `-queryfile request.tsq`, rechaza consulta faltante/symlink, y aclara `tsa_independence_verified=false` para CA pinneada por el propio operador.
