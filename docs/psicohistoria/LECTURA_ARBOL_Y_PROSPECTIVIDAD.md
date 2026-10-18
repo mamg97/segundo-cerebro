@@ -1,3 +1,19 @@
+## Árbol multifenómeno v0.5.13 · 18/10/2026
+
+Futuros incorpora seis ramas seleccionables para objetivos científicos que NO comparten una distribución conjunta:
+
+- Violencia estatal agregada: grafo original de cuatro estados país-año UCDP 26.1, retrospectivo.
+- Inicio/reanudación de conflicto interno: resúmenes y casebook privados UCDP Onset 25.1, objetivo intrastate_country.
+- Inicio/reanudación interestatal: objetivo interstate_country, no equivale a predecir una invasión.
+- Reaparición GED: ventanas de 24 meses; incidentes históricos como contexto, no probabilidades de los incidentes.
+- Cohorte 2027: enlace al observatorio de Drive solo si hay un sobre privado autorizado con 196 países, seis modelos y estado SHADOW_NO_EMITIDO; no se emite un pronóstico nuevo.
+- Otros fenómenos colectivos: rama de investigación sin probabilidades; bolsa aplazada.
+
+El frontend solo utiliza los sobres ya normalizados de PsicoExperimentos por el endpoint protegido, sin añadir APIs, costes, datos reales a Git ni reentrenamientos. Los lectores Onset y GED conservan puertas propias de admisión por target y fuente. Si un dato falta o es incoherente, la rama queda expresamente sin datos; no se fabrica una red equivalente.
+
+Los estados RETROSPECTIVO, EXPLORATORIO y NO EMITIDO no son habilidades prospectivas demostradas. El árbol original de estados anuales continúa separado de los otros objetivos. El usuario alterna ramas sin recargar la página ni recalcular los modelos.
+
+---
 # Psicohistoria — Estado predictivo y lectura del árbol (UI v0.5.12)
 
 ## Objeto del árbol Futures
