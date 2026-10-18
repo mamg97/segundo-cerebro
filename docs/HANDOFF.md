@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Auditoría precisa de las features y horizonte de predicciones útiles · 18/10/2026
+
+- **Nuevo catálogo privado `PsicoVariables`:** 13 variables/indicadores clasificados en la fuente canónica PROYECTOS: exactamente cinco features efectivas de la logística anual, una señal derivada utilizada por otros modelos y siete futuras candidatas expresamente `NO_USADA`. El catálogo guarda fórmula, periodo 2027, procedencia, modelo aplicable y limitación. Se corrigió la relación exacta: el índice V1 excluye `x[0]`, la tabla de interacción omite `x[2]` como llave. Contrato público genérico [MODEL_INPUTS_AUDIT_2027.md](docs/psicohistoria/MODEL_INPUTS_AUDIT_2027.md).
+- **Nueva salida de utilidad mensual externa, no propia:** PR [#637](https://github.com/mamg97/segundo-cerebro/pull/637) fusionada en `7c9fd8040011`. `views_external_monthly.py` incorpora un lector de CSV country-month VIEWS verificado por SHA y release para tres meses completos siguientes, sumas de media de fallecidos y probabilidad de conflicto **solo por cada mes**. CI científica, guard de privacidad y demo Pages `success`. **El CSV oficial real aún NO se ha importado**; las pruebas fueron sintéticas y ninguna nueva probabilidad es propia.
+- **Bitácora al día:** `AV-20261018-018` para importador VIEWS, registrado con `MAD-04=PARCIAL`; `AV-20261018-019` para inventario privado de inputs ligado a `MAD-03=COMPLETADA`. Son avances de software/explicabilidad, NO de skill prospectivo. `PsicoPredicciones` sigue en cero y `MAD-05=PREPARADO_NO_EMITIDO`.
+- **Prioridad siguiente:** capturar un CSV VIEWS oficial con su SHA en almacenamiento privado, probar ingesta real, comenzar panel prequential UCDP Candidate y después contrastar alertas de 1–3 meses con VIEWS. El cálculo anual **no estima número de fallecidos**; únicamente presencia >=25 muertes/año en 2027. No insertar PIB, clima, migración ni noticias en la explicación hasta implementarlos y verificar origen temporal.
+
+---
+
 ## PSICOHISTORIA — Nueva línea de utilidad: VIEWS mensual externo y variables reales del anual · 18/10/2026
 
 - **Auditoría de las features propias:** `benchmark.py.panel` usa exactamente cinco variables: actividad `sb_total_deaths_best>=25` en t-2, proporción activa de últimos cinco años, `log1p` de muertes estatales (`sb`), no estatales (`ns`) y violencia unilateral (`os`) del último año disponible. No se estima número de fallecidos 2027, sino `P(sb_best>=25 país-año)`. PIB, clima, migración y eventos políticos NO son features de la cohorte actual.
