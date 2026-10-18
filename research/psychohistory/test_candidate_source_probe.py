@@ -69,6 +69,15 @@ class CandidateSourceProbeTests(unittest.TestCase):
         self.assertFalse(result["as_of_verified"])
         self.assertFalse(result["backtest_authorized"])
 
+    def test_missing_date_precision_is_not_treated_as_admitted(self):
+        bare = ("country_id,date_start,date_end,type_of_violence\n"
+                "123,2024-12-18,2024-12-18,1\n").encode()
+        report = summarize(bare)
+        self.assertEqual(report["status"], "SOURCE_PRECISION_CODEBOOK_MISMATCH_REVIEW_REQUIRED")
+        self.assertFalse(report["date_precision_audit"]["field_present"])
+        self.assertTrue(report["date_precision_audit"]["requires_review"])
+        self.assertFalse(report["as_of_verified"])
+
     def test_temporal_scope_and_schema_fail_closed(self):
         for anomaly, testrow in [
             ("reversed", row(start="2024-12-07", end="2024-12-06")),
