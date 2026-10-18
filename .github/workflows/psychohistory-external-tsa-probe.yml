@@ -1,0 +1,55 @@
+# One-shot verification of a REAL external RFC3161 TSA using invented bytes.
+# NEVER include forecast probabilities, country IDs, private hashes, Drive URLs,
+# tokens, or source datasets in workflow dispatch inputs or artifacts.
+name: PSICOHISTORIA external RFC3161 synthetic probe
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/psychohistory-external-tsa-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-external-tsa-with-fake-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create SYNTHETIC TSP request
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$RUNNER_TEMP/psychohistory-rfc3161-probe"
+          cd "$RUNNER_TEMP/psychohistory-rfc3161-probe"
+          printf '%s\n' 'SYNTHETIC TEST - NOT A FORECAST - NO REAL DATA' > fake-commitment.bin
+          openssl ts -query -data fake-commitment.bin -sha256 -cert -out fake-request.tsq
+      - name: Obtain a live independent-provider response
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/psychohistory-rfc3161-probe"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 1 \
+            --max-time 70 -H 'Content-Type: application/timestamp-query' \
+            --data-binary @fake-request.tsq -o fake-response.tsr \
+            'https://freetsa.org/tsr'
+          curl --proto '=https' --tlsv1.2 --fail --location --max-time 35 \
+            -o provider-root.pem 'https://freetsa.org/files/cacert.pem'
+          curl --proto '=https' --tlsv1.2 --fail --location --max-time 35 \
+            -o provider-tsa.crt 'https://freetsa.org/files/tsa.crt'
+          test -s fake-response.tsr
+          test -s provider-root.pem
+          test -s provider-tsa.crt
+      - name: Verify RFC3161 imprint and supplied-provider trust chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/psychohistory-rfc3161-probe"
+          openssl ts -verify -data fake-commitment.bin -in fake-response.tsr \
+            -CAfile provider-root.pem -untrusted provider-tsa.crt
+          openssl x509 -in provider-root.pem -noout -fingerprint -sha256
+          openssl ts -reply -in fake-response.tsr -text | grep -E '^Time stamp:'
+          printf '%s\n' 'SYNTHETIC external TSA protocol validated; provider-root independent endorsement NOT validated'
+          printf '%s\n' 'NO REAL FORECAST WAS SUBMITTED, SEALED, ISSUED, OR SCORED'
+      - name: Clean temporary synthetic timestamp request and certs
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/psychohistory-rfc3161-probe"
