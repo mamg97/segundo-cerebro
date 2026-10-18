@@ -1,3 +1,12 @@
+## PSICOHISTORIA — UI v0.5.12 · España inicial y lectura inmediata del árbol (18/10/2026)
+
+- **Selección:** `app/research-futures.mjs` preselecciona Spain (UCDP ID 230) si consta en el catálogo privado; en ausencia de España conserva el fallback válido. Respeta cualquier elección posterior y el recálculo automático v0.5.11.
+- **Explicación:** `futureGraphGuide(result,horizon)` precede a cada árbol con la pregunta concreta («¿al menos 25 muertes estatales en el año final?»), probabilidades derivadas **sin reentrenamiento** `P(01)+P(11)` frente a `P(00)+P(10)`, cuatro estados (00/01/10/11), años de corte/puente/origen, significado de nodos, flujos y observaciones ámbar a posteriori. El target sigue siendo violencia estatal agregada país-año, **NO** una guerra específica. La antigua leyenda distante se integra junto al gráfico.
+- **Científico:** solo experimentos retrospectivos con UCDP 26.1 revisada; no se han emitido predicciones prospectivas selladas. `docs/psicohistoria/LECTURA_ARBOL_Y_PROSPECTIVIDAD.md` fija puertas de emisión/verificación y distingue el primer pronóstico futuro de la posterior demostración de utilidad, sin inventar fechas. No cambia modelos, hashes, datos canónicos, Worker, ledger ni scores.
+- **QA:** PR/CI y deploy pendientes de comprobar; tests sintéticos de selección, matemática agregada, leyenda y orden visual. La verificación visual bajo Access debe diferenciarse de CI.
+
+---
+
 ## PSICOHISTORIA — UX v0.5.11 · recálculo al cambiar parámetros (18/10/2026)
 
 - **Hallazgo real:** España existe como país UCDP `230` en el catálogo privado de Futuros; la captura mostraba el árbol vacío después de elegir otro país/modelo porque el handler de `<select>` borraba el resultado y **no llamaba** al endpoint hasta pulsar manualmente «Calcular predicción retrospectiva». El inicio de la vista sí invocaba `load()`.
