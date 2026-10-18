@@ -11,11 +11,19 @@ const classicStatus = (runs, at) =>
   evaluateMidasWorkflowRuns(runs, Date.parse(at)).workflows.find((entry) => entry.name === classic);
 
 test("running MIDAS is pending, never a verified success before grace expires", () => {
-  const result = classicStatus([run("in_progress")], "2026-10-17T02:00:00Z");
+  const result = classicStatus([run("in_progress", null, "2026-10-12T23:48:00Z")], "2026-10-13T02:00:00Z");
   assert.equal(result.state, "running");
   assert.equal(result.ok, false);
   assert.equal(result.pending, true);
   assert.equal(midasAuditVerdict(result), "pending");
+});
+
+test("new pending run cannot hide an earlier overdue cycle", () => {
+  const result = classicStatus([run("in_progress")], "2026-10-17T02:00:00Z");
+  assert.equal(result.state, "running");
+  assert.equal(result.ok, false);
+  assert.equal(result.pending, false);
+  assert.equal(midasAuditVerdict(result), "fail");
 });
 
 test("running MIDAS remains unverified after grace expires", () => {
