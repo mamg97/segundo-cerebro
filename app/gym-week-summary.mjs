@@ -49,7 +49,7 @@ export function nutritionForGymDay(row) {
 function dayNutritionMarkup(day) {
   const metrics = day.nutrition;
   const amount = (value, unit) => value === null ? "—" :
-    Math.round(value).toLocaleString("es-ES") + " " + unit;
+    String(Math.round(value)).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ".") + " " + unit;
   const balance = metrics.balance;
   const balanceLabel = balance === null ? "—" :
     (balance > 0 ? "+" : "") + amount(balance, "kcal");
