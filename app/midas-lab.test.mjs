@@ -346,6 +346,46 @@ test("TimesFM EUR appears in competition without invented return and shows compa
 });
 
 
+test("all nine prospective classic S&P500 paper carteras compete, including pending buys", () => {
+  const variants = [
+    "buy_hold_equal_weight", "ema_rsi_fixed", "genetic_frozen",
+    "macd_12_26_9", "rsi_reversion_14", "bollinger_breakout_20",
+    "turtle_20_10_long", "turtle_55_20_long", "benchmark_spy"
+  ];
+  const rows = variants.map((name) => ({
+    id: "classic_sp500_" + name, label: "Classic " + name,
+    group: "paper_nuevo", classic_sp500_cohort: true,
+    comparison_eligible: true, comparison_universe_symbols: 503,
+    status: "demo_con_diario", first_session: "2026-10-12",
+    last_session: "2026-10-16", currency: "USD",
+    return_pct: name === "buy_hold_equal_weight" ? 0.390268 : 0.755693,
+    equity_history: [
+      { date: "2026-10-12", nav: 100000 },
+      { date: "2026-10-16", nav: 100390 }
+    ],
+    open_positions_count: name === "buy_hold_equal_weight" ? 490 : 8,
+    pending_orders_count: name === "buy_hold_equal_weight" ? 13 : 0,
+    activity_label: name === "buy_hold_equal_weight"
+      ? "490 posiciones · 13 compras paper para próxima apertura" : "8 posiciones abiertas"
+  }));
+  const html = renderMidasVisualLab({ tracks: [
+    ...rows,
+    { id: "legacy_8_stocks", label: "Old legacy", group: "paper_nuevo",
+      comparison_eligible: false, return_pct: 90 }
+  ] });
+  assert.match(html, /Clásicas S&P 500:<\/strong> 9\/9 carteras con diario demo en la competición/);
+  assert.match(html, /490 posiciones abiertas y 13 compras pendientes/);
+  assert.match(html, /Las órdenes pendientes no se cuentan como compras ejecutadas/);
+  assert.equal((html.match(/class="midas-lab-row/g) || []).length, 9);
+  assert.equal((html.match(/data-midas-lab-sort-group="Clásicas S&amp;P 500"/g) || []).length, 9);
+  for (const variant of variants) {
+    assert.match(html, new RegExp('data-midas-algorithm-id="classic_sp500_' + variant + '"'));
+  }
+  assert.doesNotMatch(html, /Old legacy/);
+  assert.match(html, /\+0,39 %/);
+  assert.doesNotMatch(html, /90,00 %/);
+});
+
 test("single S&P500 cohort excludes restricted legacy models and includes both TimesFM horizons", () => {
   const dashboard = { tracks: [
     { id: "legacy_eight", label: "Old EMA", group: "paper_nuevo",
