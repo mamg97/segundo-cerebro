@@ -22,12 +22,61 @@ function groupName(session, planById) {
     .replace(/^(?:d[ií]a|day)\s*\d+\s*[-:·]\s*/i, "").slice(0, 100);
 }
 
-export function gymWeekSummaryModel(payload, now = new Date()) {
+// Nutrition is sourced from the already loaded private Health overview (30 days).
+// Missing intake and incomplete Apple Health coverage must remain unknown, not zero.
+function numberOrNull(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+export function nutritionForGymDay(row) {
+  if (!row || typeof row !== "object") return {
+    consumed: null, burned: null, protein: null, balance: null, isComparable: false
+  };
+  const hasConsumption = (numberOrNull(row.consumedEntryCount) ?? 0) > 0;
+  const consumed = hasConsumption ? numberOrNull(row.consumedKcal) : null;
+  const protein = hasConsumption ? numberOrNull(row.consumedProtein) : null;
+  const comparable = ["full", "live"].includes(String(row.coverageQuality || "").toLowerCase());
+  const burned = comparable ? numberOrNull(row.burnedKcal) : null;
+  return {
+    consumed, burned, protein,
+    balance: consumed === null || burned === null ? null : consumed - burned,
+    isComparable: comparable
+  };
+}
+
+function dayNutritionMarkup(day) {
+  const metrics = day.nutrition;
+  const amount = (value, unit) => value === null ? "—" :
+    Math.round(value).toLocaleString("es-ES") + " " + unit;
+  const balance = metrics.balance;
+  const balanceLabel = balance === null ? "—" :
+    (balance > 0 ? "+" : "") + amount(balance, "kcal");
+  const tone = balance === null ? "is-unknown" : balance < 0 ? "is-deficit" :
+    balance > 0 ? "is-surplus" : "is-neutral";
+  const provisional = day.isToday && balance !== null ? " · provisional" : "";
+  return '<dl class="home-gym-day-nutrition" aria-label="Nutrición y gasto del día">' +
+    '<div class="' + tone + '"><dt>Balance</dt><dd>' + balanceLabel + '</dd></div>' +
+    '<div><dt>Gasto total</dt><dd>' + amount(metrics.burned, "kcal") + '</dd></div>' +
+    '<div><dt>Ingeridas</dt><dd>' + amount(metrics.consumed, "kcal") + '</dd></div>' +
+    '<div><dt>Proteína</dt><dd>' + amount(metrics.protein, "g") + '</dd></div>' +
+    (provisional ? '<small class="home-gym-nutrition-note">' + provisional.slice(3) + '</small>' : '') +
+    '</dl>';
+}
+
+export function gymWeekSummaryModel(payload, now = new Date(), nutritionHistory = []) {
   const current = new Date(now);
   if (!Number.isFinite(current.getTime())) throw new TypeError("INVALID_GYM_WEEK_DATE");
   const start = new Date(current.getFullYear(), current.getMonth(), current.getDate(), 12);
   start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
   const today = dateKey(current);
+  const nutritionByDate = new Map();
+  for (const entry of Array.isArray(nutritionHistory) ? nutritionHistory : []) {
+    if (validDateKey(entry?.date) && entry.date <= today && !nutritionByDate.has(entry.date)) {
+      nutritionByDate.set(entry.date, nutritionForGymDay(entry));
+    }
+  }
   const planById = new Map((Array.isArray(payload?.plan) ? payload.plan : []).map(day => [String(day.id), day]));
   const validPayload = payload?.ok === true && Array.isArray(payload?.sessions);
   const days = Array.from({ length: 7 }, (_, index) => {
@@ -35,7 +84,8 @@ export function gymWeekSummaryModel(payload, now = new Date()) {
     d.setDate(d.getDate() + index);
     const key = dateKey(d);
     return { key, label: WEEKDAYS[index], day: d.getDate(), isToday: key === today,
-      isFuture: key > today, sessions: [], groups: [], exerciseCount: 0 };
+      isFuture: key > today, sessions: [], groups: [], exerciseCount: 0,
+      nutrition: nutritionByDate.get(key) || nutritionForGymDay(null) };
   });
   const byDate = new Map(days.map(day => [day.key, day]));
   if (validPayload) {
@@ -83,16 +133,21 @@ function detailsForDay(day) {
 }
 
 export function renderHomeGymWeek(payload, now = new Date(), options = {}) {
-  if (!payload || payload.ok !== true || !Array.isArray(payload.sessions)) {
+  const gymAvailable = payload?.ok === true && Array.isArray(payload.sessions);
+  const hasNutrition = Array.isArray(options.nutritionHistory);
+  if (!gymAvailable && !hasNutrition) {
     return '<p class="home-gym-week-state" role="status">' +
       (options.privateMode === false ? "Disponible solo en tu espacio privado." :
         options.loading ? "Cargando entrenamientos guardados…" : "No se pudo consultar el histórico de gimnasio.") +
       '</p>';
   }
-  const model = gymWeekSummaryModel(payload, now);
-  return '<div class="home-gym-week-meta"><span>Semana ' + escapeHtml(model.weekLabel) +
-    '</span><strong>' + model.trainedDays + (model.trainedDays === 1 ? " día" : " días") +
-    ' · ' + model.sessionCount + (model.sessionCount === 1 ? " sesión" : " sesiones") +
+  const model = gymWeekSummaryModel(payload, now, options.nutritionHistory);
+  const gymMessage = !gymAvailable ? '<p class="home-gym-week-state" role="status">Entrenamientos no disponibles; se muestra la nutrición registrada.</p>' : '';
+  return gymMessage + '<div class="home-gym-week-meta"><span>Semana ' + escapeHtml(model.weekLabel) +
+    '</span><strong>' + (gymAvailable
+      ? model.trainedDays + (model.trainedDays === 1 ? " día" : " días") +
+        ' · ' + model.sessionCount + (model.sessionCount === 1 ? " sesión" : " sesiones")
+      : "Entrenos sin consultar") +
     '</strong>' + (options.stale ? '<small>Última consulta disponible</small>' : '') + '</div>' +
     '<div class="home-gym-week-days" aria-label="Días de entrenamiento de la semana actual">' +
     model.days.map(day => {
@@ -101,15 +156,18 @@ export function renderHomeGymWeek(payload, now = new Date(), options = {}) {
       const label = day.label + " " + day.day;
       const top = '<span class="home-gym-day-heading"><span>' + day.label + '</span><b>' + day.day + '</b></span>';
       if (!trained) {
+        const status = day.isFuture ? "Próximo" : gymAvailable ? "—" : "Gym sin datos";
         return '<div class="' + classes + '" data-gym-week-date="' + day.key + '" aria-label="' +
-          escapeHtml(label + (day.isFuture ? ": pendiente" : ": sin sesión registrada")) + '">' +
-          top + '<span class="home-gym-day-empty">' + (day.isFuture ? "Próximo" : "—") + '</span></div>';
+          escapeHtml(label + (day.isFuture ? ": pendiente" : gymAvailable ? ": sin sesión registrada" : ": entrenamiento sin consultar")) + '">' +
+          top + '<span class="home-gym-day-empty">' + status + '</span>' +
+          dayNutritionMarkup(day) + '</div>';
       }
       return '<details class="' + classes + '" data-gym-week-date="' + day.key + '">' +
         '<summary aria-label="' + escapeHtml(label + ": " + day.groups.join(", ") +
           "; pulsar para ver ejercicios") + '">' + top +
         '<strong class="home-gym-day-group">' + escapeHtml(day.groups.join(" · ")) + '</strong>' +
         '<span class="home-gym-day-count">' + day.exerciseCount + ' ejercicios <span aria-hidden="true">⌄</span></span>' +
+        dayNutritionMarkup(day) +
         '</summary><div class="home-gym-day-details">' + detailsForDay(day) + '</div></details>';
     }).join("") + '</div>';
 }
