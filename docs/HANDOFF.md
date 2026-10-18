@@ -1,3 +1,12 @@
+## ORGANIZADOR — Home: seguimiento semanal de Gimnasio bajo macros (18/10/2026)
+
+- Franja compacta `Esta semana en el gimnasio` **después** de `daily-overview-grid` (hábitos, kcal, proteína, Gym, peso) y **antes** de Finanzas. El selector histórico y la tabla de `Menú de la semana` siguen al pie del Home.
+- Solo muestra lunes–domingo de la semana local vigente, con grupos musculares de sesiones guardadas, número de ejercicios, y desglose por clic con ejercicios, series, repeticiones y pesos realmente anotados. Días sin sesión/futuros en estado neutral. Una foto de progreso o un plan no equivalen a un entreno.
+- Fuente `GET /api/gym` existente (mismo snapshot que la tarjeta principal); actualización al recuperar estado Home y en `renderGymPanel` tras altas/bajas. Si falla la fuente sin snapshot, se ve `No se pudo consultar`, no un falso 0; si existe último estado RAM, se marca como tal. Nada privado en Git ni caché persistente; sin endpoints/consultas ni costes nuevos.
+- Módulos `app/gym-week-summary.mjs/.css`, pruebas `app/gym-week-summary.test.mjs` sobre semana/año, sesiones reales, XSS, estado no disponible y posición del DOM; auditoría Playwright verifica 7 días/ajuste responsive sin overflow en todos los perfiles. Verificar CI y despliegue.
+
+---
+
 ## PSICOHISTORIA — Línea bursátil F1B (20 sesiones), sin datos reales ni trading · 18/10/2026
 
 - **Nueva hipótesis no geopolítica:** estudiar `P(caída de al menos 5 % de algún cierre ajustado respecto al cierre de origen durante próximas 20 sesiones)`. Es **un evento de riesgo** y no una previsión del precio exacto, de muertes, ni una rentabilidad operativa. Factores exclusivos de versión piloto: momentum logarítmico 5/20 sesiones, volatilidad realizada 20 y drawdown 60 sesiones; logistic L2 vs frecuencia histórica Laplace.
