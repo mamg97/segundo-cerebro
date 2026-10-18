@@ -96,17 +96,19 @@ test("Home uses a vertical image-first card with a full-width recipe title and m
   assert.match(css,/\.home-weekly-menu-table-cell \.home-menu-recipe-title strong[\s\S]*?overflow-wrap: break-word;/);
 });
 
-test("Weekly menu is the second full-width Home card below nutrition overview",()=>{
+test("Weekly menu is full width at the bottom of Home, after Agenda and before footer",()=>{
   const html=readFileSync(new URL("./index.html",import.meta.url),"utf8");
   const health=html.indexOf('id="home-health-card"');
-  const menu=html.indexOf('id="home-weekly-menu-panel"');
   const pantry=html.indexOf('id="home-pantry-card"');
   const finance=html.indexOf('class="money-horizon"');
-  assert.ok(health>0 && health<menu && menu<pantry && pantry<finance);
+  const agenda=html.indexOf('id="agenda-overview"');
+  const menu=html.indexOf('id="home-weekly-menu-panel"');
+  const footer=html.indexOf("<footer>",menu);
+  assert.ok(health>0 && health<pantry && pantry<finance && finance<agenda && agenda<menu && menu<footer);
   const summaryOpen=html.indexOf('<section class="daily-overview-grid"');
   const summaryClose=html.indexOf("</section>",summaryOpen);
-  assert.ok(summaryOpen<menu && menu<summaryClose,"menu is within summary grid");
-  assert.match(css,/\.daily-overview-grid > #home-weekly-menu-panel\s*\{\s*grid-column: 1 \/ -1;/);
+  assert.ok(summaryOpen<summaryClose && summaryClose<menu,"menu no longer dominates the summary grid");
+  assert.match(css,/\.home-weekly-menu-panel\s*\{[^}]*width: 100%/);
   assert.match(html,/id="home-weekly-menu-panel"[^>]*\bhidden>/);
 });
 
