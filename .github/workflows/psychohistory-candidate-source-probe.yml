@@ -1,0 +1,41 @@
+# Archived public UCDP Candidate source, fetched ephemerally.
+# No archive, country IDs, events, predictions, private manifests or artifacts uploaded.
+# Successful download in 2026 is NOT evidence of byte availability in 2024.
+name: Observe archived UCDP Candidate 24.0.12 (no as-of claim)
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/candidate_source_probe.py'
+      - '.github/workflows/psychohistory-candidate-source-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archived-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve official public Candidate CSV into ephemeral runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+            --max-time 110 --max-filesize 80000000 \
+            --output "$RUNNER_TEMP/ucdp-candidate-24-0-12.csv" \
+            'https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_0_12.csv'
+          test -s "$RUNNER_TEMP/ucdp-candidate-24-0-12.csv"
+      - name: Inspect real original bytes without logging events or country identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/candidate_source_probe.py \
+            --csv "$RUNNER_TEMP/ucdp-candidate-24-0-12.csv"
+          echo 'Observed now only: original 2024 publication time and zero-event coverage NOT authenticated.'
+          echo 'No vintage-correct backtest or prospective emission.'
+      - name: Remove ephemeral source
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/ucdp-candidate-24-0-12.csv"
