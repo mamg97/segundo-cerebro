@@ -1,6 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
+import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.53";
 import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
 import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";
 import { mockState } from "../core/mock-state.js";
@@ -1182,6 +1183,7 @@ function calendarClassForEvent(event) {
 
 
 function renderDailyOverview() {
+  renderHomeGymWeekSummary(homeGymSnapshot, { loading: privateModeKind === "remote" && !homeGymSnapshot });
   void renderHomeHealthCard();
   if (privateModeKind === "remote") void loadHomeWeeklyMenu();
   else hideHomeWeeklyMenu();
@@ -1422,7 +1424,15 @@ function healthWeightSummary(body = {}, selectedDate = localDateKey()) {
 // Last successfully fetched private Gym snapshot, shared by Home and Salud.
 // Session-local only: it never replaces the canonical /api/gym source.
 let homeGymSnapshot = null;
-
+function renderHomeGymWeekSummary(gymData = homeGymSnapshot, options = {}) {
+  const node = document.querySelector("#home-gym-week-content");
+  if (!node) return;
+  if (privateModeKind !== "remote") {
+    node.innerHTML = renderHomeGymWeek(null, new Date(), { privateMode: false });
+    return;
+  }
+  node.innerHTML = renderHomeGymWeek(gymData, new Date(), options);
+}
 function renderHomeGymSummary(healthData, gymData) {
   const summary = deriveGymTodaySummary(healthData, gymData);
   setHomeHealthMetric("home-health-gym-main", "home-health-gym-detail", summary.main, summary.detail);
@@ -1468,7 +1478,12 @@ async function renderHomeHealthCard() {
     if (!response.ok) throw new Error("HOME_HEALTH_" + response.status);
     const data = await response.json();
     const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
-    if (gymData) homeGymSnapshot = gymData;
+    if (gymData?.ok === true && Array.isArray(gymData.sessions)) {
+      homeGymSnapshot = gymData;
+      renderHomeGymWeekSummary(gymData);
+    } else {
+      renderHomeGymWeekSummary(homeGymSnapshot, { stale: Boolean(homeGymSnapshot) });
+    }
 
     const consumed = data.nutritionSummary?.consumed || {};
     const nutritionGoal = data.nutritionObjective || {};
@@ -1561,6 +1576,7 @@ async function renderHomeHealthCard() {
         });
       }
     }
+    renderHomeGymWeekSummary(homeGymSnapshot, { stale: Boolean(homeGymSnapshot) });
     console.warn("Home health load failed", error);
   }
 }
@@ -7403,6 +7419,10 @@ function renderGymPanel(data) {
   const panel = document.querySelector("#gym-panel");
   if (!panel) return;
   gymPanelData = data || {};
+  if (data?.ok === true && Array.isArray(data?.sessions)) {
+    homeGymSnapshot = data;
+    if (privateModeKind === "remote") renderHomeGymWeekSummary(data);
+  }
   const plan = Array.isArray(data?.plan) ? data.plan : [];
 
   panel.innerHTML = `
@@ -11194,6 +11214,7 @@ function bindInteractions() {
   document.querySelector("#home-health-habits")?.addEventListener("click", () => openHabitsDetail(localDateKey()));
   document.querySelector("#home-health-medical")?.addEventListener("click", () => openHealthTabFromHome("medical"));
   document.querySelector("#home-health-gym")?.addEventListener("click", () => openHealthTabFromHome("gym"));
+  document.querySelector("#home-gym-week-open")?.addEventListener("click", () => openHealthTabFromHome("gym"));
   document.querySelector("#home-health-nutrition")?.addEventListener("click", () => openHealthTabFromHome("nutrition"));
   document.querySelector("#home-health-recipes")?.addEventListener("click", () => openHealthTabFromHome("recipes"));
   document.querySelector("#home-health-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
