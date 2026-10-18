@@ -1,3 +1,12 @@
+## Menú semanal · Cambiar postre por batido sin duplicar plato principal (18/10/2026)
+
+- Error `PRIMARY_RECIPE_ALREADY_IN_MEAL` al sustituir un yogur planificado por una receta de bebida: el editor convertía cualquier alimento a segunda `receta` principal, aunque la fila de origen fuese `acompanante/yogur`.
+- Editor nuevo: clasificación explícita `Batido como acompañante` / `Receta principal`, con raciones indicadas por el usuario, aviso previo de principal ya existente, y exclusión de recetas históricas marcadas como no reutilizables.
+- Worker: `newCompanionType=batido` solo permitido para origen alimento tipado `acompanante`; conserva `tipo_item=acompanante`, `tipo_acompanante=batido`, fecha/momento y `planificado`. Actualiza referencia canónica a receta, raciones y cuatro macros; no modifica principal ni entradas consumidas, y evita que notas del antiguo yogur se atribuyan al batido. Rutas que añadirían otra receta principal siguen rechazadas.
+- Pruebas sintéticas de conversión válida, estado, conflictos, clasificación inválida, porciones históricas y frontend. Fuente Salud/Sheets no se muta al desplegar. Para completar el cambio concreto de hoy, identificar si era el postre de `Comida` o `Cena`: ambos están planificados y no corresponde inferirlo.
+
+---
+
 ## ORGANIZADOR · HOME semanal: balance energético y proteínas por día (18/10/2026)
 
 - **Nueva capacidad:** la franja `Esta semana en el gimnasio` presenta en **los siete días** (incluso sin entrenamiento) cuatro métricas procedentes del histórico privado de Salud: `Balance = ingeridas − gasto total`, gasto total, ingesta kcal y proteínas ingeridas. Los datos acompañan a las sesiones y son visibles incluso cuando el detalle de ejercicios está plegado.
