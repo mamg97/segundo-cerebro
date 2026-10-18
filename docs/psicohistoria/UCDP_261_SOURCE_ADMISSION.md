@@ -1,6 +1,6 @@
 # PSICOHISTORIA — Admisión de la fuente OrganizedViolenceCY 26.1
 
-Estado: **capacidad desarrollada y probada localmente, aún NO fusionada**. Esta entrega no introduce nuevos pronósticos.
+Estado: **integrada en `main` mediante PR #613**, tras superar pruebas y control de privacidad. **El ZIP y el PDF oficiales todavía no se han validado contra sus hashes en un entorno con acceso a los archivos.** Esta entrega no introduce nuevos pronósticos.
 
 ## Problema científico
 
@@ -15,7 +15,7 @@ Esta puerta nueva (`source_release_intake.py`) permite una revisión de admisibi
 Mantener las fuentes y resultados fuera del repositorio público:
 
 ```bash
-# Ejecutar desde el repositorio (cuando esta rama esté integrada)
+# Ejecutar desde el repositorio (PR #613 ya integrada)
 node research/psychohistory/download.mjs "$HOME/Private/PSICOHISTORIA/UCDP_CY_26_1"
 mkdir -p "$HOME/Private/PSICOHISTORIA/AUDITS"
 python3 research/psychohistory/source_release_intake.py \
@@ -34,4 +34,4 @@ El comando lee **exclusivamente el protocolo del repositorio** y crea el manifie
 
 ## Pruebas
 
-Las cinco pruebas de `test_source_release_intake.py` utilizan solo filas, países y ZIPs inequívocamente **sintéticos**. No incorporan microdatos UCDP, credenciales, datasets reales ni informes experimentales en Git. La ejecución local de esta entrega pasa 5/5 pruebas. No sustituye CI de la PR ni una validación con los bytes UCDP oficiales.
+Las cinco pruebas de `test_source_release_intake.py` utilizan solo filas, países y ZIPs inequívocamente **sintéticos**. No incorporan microdatos UCDP, credenciales, datasets reales ni informes experimentales en Git. La ejecución local de esta entrega pasa 5/5 pruebas. La CI de PR #613 y el control de privacidad pasaron. No sustituye una validación con los bytes UCDP oficiales.
