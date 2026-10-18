@@ -103,8 +103,17 @@ def main():
                             path_category = "third_party_vendor"
                         else:
                             path_category = "other_app_or_project_code"
+                        filename = PurePosixPath(current_path).stem.lower()
+                        if re.search(r"brain|logo|orb|icon|decor|background|hero|splash", filename):
+                            intended_use = "generic_ui_graphic"
+                        elif re.search(r"gym|exercise|training|workout", filename):
+                            intended_use = "exercise_graphic"
+                        elif re.search(r"look|armario|ropa|body|progress|personal|photo|portrait|face|profile", filename):
+                            intended_use = "possible_private_photo"
+                        else:
+                            intended_use = "unclassified_graphic"
                         size_class = "under_10_kb" if len(match.group()) < 14000 else ("under_100_kb" if len(match.group()) < 140000 else "over_100_kb")
-                        inline_images[(safe_root, safe_ext, size_class, path_category)] += 1
+                        inline_images[(safe_root, safe_ext, size_class, path_category, intended_use)] += 1
         status = p.wait()
     finally:
         if p.poll() is None:
@@ -117,8 +126,8 @@ def main():
     result["potential_sensitive_line_counts"] = dict(patterns)
     result["embedded_media_classification"] = [
         {"directory_category": root, "extension": ext, "encoded_size": size,
-         "source_classification": category, "count": count}
-        for (root, ext, size, category), count in sorted(inline_images.items())
+         "source_classification": category, "filename_classification": intent, "count": count}
+        for (root, ext, size, category, intent), count in sorted(inline_images.items())
     ]
     result["scan_complete"] = True
     result["review_required"] = bool(patterns or image["outside_known_generic_art"] or doc)
