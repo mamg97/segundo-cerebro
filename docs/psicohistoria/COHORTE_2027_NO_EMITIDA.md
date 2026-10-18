@@ -7,7 +7,7 @@
 
 Se prepara un conjunto de **candidatos no emitidos** para el año calendario completo **2027**, con la definición preregistrada en \`research/psychohistory/protocol.json\`: si \`sb_total_deaths_best >= 25\` en territorio del país durante 2027. No son predicciones de una guerra individual, invasión o atentado.
 
-- **Datos fuente:** UCDP OrganizedViolenceCY **26.1**, 1989–2025, ZIP+PDF exactos fijados en el protocolo. Los bytes deben pasar la admisión \`source_release_intake.inspect()\` y \`benchmark.audit(strict=True)\` antes de calcular.
+- **Datos fuente:** UCDP OrganizedViolenceCY **26.1**, 1989–2025, ZIP+PDF exactos fijados en el protocolo. Los bytes deben pasar la admisión \`source_release_intake.inspect()\` y \`benchmark.audit(strict=True)\` antes de calcular. Además, el runner no acepta protocolos alterados por otra llamada: el objeto recibido debe coincidir íntegramente con \`protocol.json\` de la revisión ejecutada, y se prohíbe conservar los originales dentro del árbol público de Git.
 - **Países:** únicamente roster observado en 2025 con al menos cinco años contiguos 2021–2025. No se inventan países ni historiales.
 - **Features:** se construyen con las mismas cinco variables que \`benchmark.panel()\`, a partir del historial observado hasta **2025**; 2026 no se observa ni se utiliza.
 - **Entrenamiento:** se reutiliza \`benchmark.predict_origin()\` sobre su panel histórico etiquetado únicamente hasta 2025 y filas futuras con \`target=None\`. Se conservan exactamente los seis modelos preregistrados, incluidos el baseline \`frequency\`, la regularización y las transformaciones. No hay nuevo ajuste de hiperparámetros o selección basada en test.
