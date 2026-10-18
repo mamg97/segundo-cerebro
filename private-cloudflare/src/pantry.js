@@ -218,6 +218,7 @@ export function buildPayload(valueRanges = []) {
     ean: row.ean || null,
     productUrl: row.url_producto || null,
     imageUrl: row.imagen_url || null,
+    menuDisplayName: row.nombre_menu || null,
     familyNames: String(row.nombres_familiares || "")
       .split("|")
       .map((value) => value.trim())
@@ -525,7 +526,7 @@ export async function fetchPantrySummary(env, getGoogleAccessToken) {
   const token = await getGoogleAccessToken(env);
   const spreadsheetId = await resolveSpreadsheetId(env, token);
   const ranges = [
-    "Productos!A1:S2000",
+    "Productos!A1:T2000",
     "Inventario!A1:M2000",
     "Precios!A1:J4000",
     "Tickets!A1:G2000",
