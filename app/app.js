@@ -5213,9 +5213,23 @@ function renderWeeklyMenuIngredients(item) {
     </details>`;
 }
 
+// Product thumbnails come solely from the canonical Pantry image URL.
+// The image is decorative; identity, links, statuses and macros stay unchanged.
+function weeklyMenuProductThumbnail(item, home = false) {
+  const candidate = String(item?.productImageUrl || item?.product?.imageUrl || "").trim();
+  if (!/^https:\/\//i.test(candidate)) return "";
+  const className = home ? "home-menu-recipe-thumb is-product" : "weekly-menu-product-thumb";
+  return `<span class="${className}" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+    <img src="${escapeHtml(candidate)}" width="${home ? 156 : 60}" height="${home ? 88 : 60}"
+      alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+      style="width:100%;height:100%;object-fit:contain;background:#f8fafc;border-radius:8px;">
+  </span>`;
+}
+
 function renderWeeklyMenuItemTitle(item, interactive = true) {
   const label = escapeHtml(item?.name || "Comida");
-  if (!interactive) return `<strong>${label}</strong>`;
+  const productThumb = !item?.recipeId ? weeklyMenuProductThumbnail(item) : "";
+  if (!interactive) return `${productThumb}<strong>${label}</strong>`;
 
   const recipeId = String(item?.recipeId || "").trim();
   const pantryProductId = String(item?.pantryProductId || "").trim();
@@ -5233,7 +5247,7 @@ function renderWeeklyMenuItemTitle(item, interactive = true) {
   if (pantryProductId && item?.pantrySyncStatus === "linked") {
     return `
       <button class="weekly-menu-title-link" type="button" data-menu-product-open="${escapeHtml(pantryProductId)}" aria-label="Abrir alimento en Despensa: ${label}">
-        <strong>${label}</strong><span aria-hidden="true">↗</span>
+        ${productThumb}<strong>${label}</strong><span aria-hidden="true">↗</span>
       </button>`;
   }
 
@@ -5849,7 +5863,7 @@ function renderHomeWeeklyMenuMatrixCell(items, readOnly = false) {
                <span class="home-menu-recipe-thumb" aria-hidden="true">${photo}</span>
                <span class="home-menu-recipe-title"><strong>${escapeHtml(item.name || "Comida")}</strong><span class="home-menu-recipe-open-arrow" aria-hidden="true">↗</span></span>
              </button>`
-          : `<strong>${escapeHtml(item.name || "Comida")}</strong>`;
+          : `${weeklyMenuProductThumbnail(item, true)}<strong>${escapeHtml(item.name || "Comida")}</strong>`;
         // A sourceRow is the exact row in the private canonical Sheet, not a
         // guessed position in a deduplicated list. Mutation revalidates it.
         // All *planned* canonical items can be replaced, irrespective of
@@ -6114,7 +6128,10 @@ function bindHomeWeeklyMenuRecipeLinks(content, data) {
   content.querySelectorAll(".home-menu-recipe-thumb img").forEach((img) => {
     img.addEventListener("error", () => {
       const holder = img.closest(".home-menu-recipe-thumb");
-      if (holder) { holder.classList.add("is-missing", "is-error"); holder.innerHTML = '<span class="home-menu-recipe-thumb-missing" aria-hidden="true">No disponible</span>'; }
+      if (!holder) return;
+      if (holder.classList.contains("is-product")) { holder.remove(); return; }
+      holder.classList.add("is-missing", "is-error");
+      holder.innerHTML = '<span class="home-menu-recipe-thumb-missing" aria-hidden="true">No disponible</span>';
     });
   });
   content.querySelectorAll("[data-home-menu-recipe-open]").forEach((button) => {
