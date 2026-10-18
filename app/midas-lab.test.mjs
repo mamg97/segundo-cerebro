@@ -377,7 +377,7 @@ test("all nine prospective classic S&P500 paper carteras compete, including pend
   assert.match(html, /490 posiciones abiertas y 13 compras pendientes/);
   assert.match(html, /Las órdenes pendientes no se cuentan como compras ejecutadas/);
   assert.equal((html.match(/class="midas-lab-row/g) || []).length, 9);
-  assert.equal((html.match(/data-midas-lab-sort-group="Clásicas S&P 500"/g) || []).length, 9);
+  assert.equal((html.match(/data-midas-lab-sort-group="Clásicas S&amp;P 500"/g) || []).length, 9);
   for (const variant of variants) {
     assert.match(html, new RegExp('data-midas-algorithm-id="classic_sp500_' + variant + '"'));
   }
