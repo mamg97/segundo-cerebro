@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Auditor de intervalos Candidate frente a saltos de año · 18/10/2026
+
+- **Cambio en revisión:** el codebook UCDP Candidate 1.3 permite eventos cuyos intervalos `date_start/date_end` cruzan meses. Los seis finales posteriores a 2024 en la edición mensual 24.0.12 no constituyen prueba suficiente de fuga; se añaden diagnósticos sintéticos que distinguen intervalo diciembre–enero de inicio futuro o extremos sin anclaje en diciembre. [Protocolo](docs/psicohistoria/CANDIDATE_DATE_WINDOW_RECONCILIATION.md).
+- **Puerta cerrada:** el diagnóstico aún requiere observación real y CI tras el cambio; no se dispone de evidencia criptográfica de disponibilidad de los bytes en enero de 2025, ni roster de países sin incidentes, ni target/score `as-of`. Mantener `MAD-02=PARCIAL`, `PsicoPredicciones=0`; evitar deshacer la bitácora AV-026, crear otro evento correctivo solo cuando exista prueba.
+- **Siguiente acción:** ejecutar el probe real en runner efímero, investigar los rangos y precisión temporal de las seis filas y registrar corrección append-only al pasar CI y fusionar la PR.
+
+---
+
 ## PSICOHISTORIA — Observación empírica Candidate archivado 24.0.12 · 18/10/2026
 
 - **Nueva prueba pública efímera:** `.github/workflows/psychohistory-candidate-source-probe.yml` descarga del proveedor el CSV histórico 24.0.12 en un runner temporal y `candidate_source_probe.py` verifica cabecera/eventos/fechas y calcula hash observado, filas y número de países con eventos, sin publicar datos individuales ni artifacts.
