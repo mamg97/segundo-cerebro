@@ -33,6 +33,7 @@ class CandidateSourceProbeTests(unittest.TestCase):
         self.assertFalse(out["full_country_coverage_known_from_events"])
         self.assertFalse(out["absent_country_is_conflict_free"])
         self.assertFalse(out["as_of_verified"])
+        self.assertTrue(out["source_date_scope_valid_for_nominal_2024"])
         self.assertFalse(out["backtest_authorized"])
         self.assertFalse(out["forecast_issued"])
         self.assertNotIn("FICTIONAL", str(out))
@@ -42,11 +43,20 @@ class CandidateSourceProbeTests(unittest.TestCase):
             summarize(raw, expected_sha256="f"*64)
 
     def test_temporal_and_type_guard(self):
+        for anomaly, testrow in [
+            ("after_2024", row(start="2024-12-31", end="2025-01-01")),
+            ("reversed", row(start="2024-03-04", end="2024-03-03")),
+            ("before_1989", row(start="1980-01-01")),
+        ]:
+            with self.subTest(anomaly=anomaly):
+                result = summarize(fake([testrow]))
+                self.assertEqual(result["status"], "OBSERVED_BUT_REPLAY_BLOCKED_DATE_SCOPE_ANOMALY")
+                self.assertFalse(result["source_date_scope_valid_for_nominal_2024"])
+                self.assertEqual(result["date_scope_violation_counts"][anomaly], 1)
+                self.assertFalse(result["as_of_verified"])
+                self.assertFalse(result["backtest_authorized"])
         for testrow in [
-            row(start="2024-12-31", end="2025-01-01"),
-            row(start="2024-03-04", end="2024-03-03"),
             row(cid=0), row(typ=4),
-            row(start="1980-01-01"),
             row(start="2024-08-01 12:30:00.000"),
             row(start="2024-08-01 00:00:00.001"),
         ]:
