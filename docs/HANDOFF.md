@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Compatibilidad de schema UCDP 26.1 documentado (18/10/2026)
+
+- **Hallazgo:** el codebook UCDP OrganizedViolenceCY 26.1 publica nombres `*_cy` (ej. `country_id_cy`, `year_cy`, `sb_total_deaths_best_cy`), mientras `source_release_intake.py` y `benchmark.py` solo aceptaban alias sin sufijo; las cinco pruebas ficticias anteriores no cubrían las cabeceras del codebook.
+- **Corrección acotada:** `research/psychohistory/source_schema.py` convierte explícitamente nueve campos con nombres oficiales al contrato canónico únicamente **después** de verificar ZIP/PDF contra los dos SHA-256 preregistrados. Validador y benchmark consumen el mismo adaptador. Se rechazan campos incompletos/ambiguos/mezclados y versiones contradictorias; no se alteran valores, SHA, modelos, fechas ni pronósticos.
+- **Limitación crítica:** la compatibilidad documental no sustituye la lectura del CSV oficial. Descarga binaria a ZIP/PDF bloqueada en este entorno; Drive privado solo conserva paquetes de preparación, no los bytes exactos de OrganizedViolenceCY 26.1. `PsicoPredicciones` sigue con solo cabeceras, 0 emisiones; ninguna emisión o evidencia `as-of` ha sido certificada. Revisar PR/CI antes de marcar integración.
+- **Siguiente:** recuperar originales en entorno privado, comparar los hashes estrictamente, observar cabeceras reales, ejecutar intake y audit, preservar manifiesto privado y solo entonces pasar a candidaturas 2027 y sellado de TSA independiente.
+
+---
+
 ## PSICOHISTORIA — Cohorte prospectiva 2027 sin etiquetas ni emisión (18/10/2026)
 
 - **Nueva capacidad científica:** `research/psychohistory/future_2027_candidates.py` reutiliza los seis modelos preregistrados de `benchmark.predict_origin` con outcomes **NULOS** para 2027, features limitadas a 2025 y entrenamiento con etiquetas solo hasta 2025. La cohorte incluye exclusivamente países presentes en 2025 y con un historial 2021–2025 continuo; no imputación, selección por acierto futuro ni uso de violencia observada durante 2026. Baseline `frequency` preservado. Tests sintéticos y contrato en `docs/psicohistoria/COHORTE_2027_NO_EMITIDA.md`.
