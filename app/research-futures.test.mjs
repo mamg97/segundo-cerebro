@@ -107,9 +107,9 @@ test('app launches directly into research cases without covering initial viewpor
   assert.ok(js.includes('observed = observedCaseAvailable(data.result,horizon)'));
   assert.ok(js.includes('historicalCaseSummary(result, horizon)'));
   assert.ok(js.includes('historicalObservedTimeline(result, horizon)'));
-  assert.ok(js.includes("container.innerHTML = phenomenaTree(onsetExperiments,selectedPhenomenon,true) + (selectedPhenomenon === 'aggregate' ?"), 'phenomenon tree precedes the selected scientific network');
+  assert.ok(js.includes("container.innerHTML = phenomenaTree(onsetExperiments,selectedPhenomenon,true) +"), 'phenomenon tree precedes the selected scientific network');
   assert.ok(js.indexOf('const controlsAboveGraph =') < js.indexOf('container.innerHTML = phenomenaTree(onsetExperiments,selectedPhenomenon,true) +'));
-  assert.ok(js.indexOf('const graphFirst = result ?') < js.indexOf('container.innerHTML = controlsAboveGraph + graphFirst +'));
+  assert.ok(js.indexOf('const graphFirst = result ?') < js.indexOf('const annualHTML = controlsAboveGraph + graphFirst'));
   assert.ok(js.includes('<div class="future-selection"><div class="section-heading">'));
   assert.ok(js.includes('<form class="future-controls">'));
   assert.ok(js.includes('Calcular predicción retrospectiva'));
