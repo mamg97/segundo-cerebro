@@ -171,8 +171,18 @@ def verify_bundle(source_path, bundle_path):
         "openssl", "ts", "-query", "-in", str(bundle / "request.tsq"), "-text"],
         capture_output=True, text=True, check=True).stdout
     if ("Hash Algorithm: sha256" not in text or
-            "Nonce: " not in text or "Certificate required: yes" not in text):
+            "Nonce: " not in text or "Certificate required: yes" not in text or
+            "Message data:" not in text or "Policy OID:" not in text):
         raise ValueError("RFC3161 query must use SHA256, nonce and certReq")
+    imprint_dump = text.split("Message data:", 1)[1].split("Policy OID:", 1)[0]
+    values = []
+    for line in imprint_dump.splitlines():
+        if " - " not in line:
+            continue
+        hex_part = line.split(" - ", 1)[1].split("   ", 1)[0]
+        values.extend(re.findall(r"(?i)\\b[0-9a-f]{2}\\b", hex_part))
+    if bytes.fromhex("".join(values)) != hashlib.sha256(signed).digest():
+        raise ValueError("RFC3161 query imprint does not bind the actual commitment")
     return {
         "schema": SCHEMA,
         "status": "PRIVATE_COHORT_PRECOMMITMENT_REVERIFIED_NOT_ISSUED",
