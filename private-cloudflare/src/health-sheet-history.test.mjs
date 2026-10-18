@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("./index.js", import.meta.url), "utf8");
+const fallbackSource = await readFile(new URL("./nutrition-history-fallback.js", import.meta.url), "utf8");
 
 test("health Sheet exposes recipe steps", () => {
   assert.match(source, /PasosReceta!A1:J2000/);
@@ -52,13 +53,15 @@ test("health Sheet reads retry transient Google failures", () => {
 });
 
 
-test("nutrition summary reconciles consumed menu identities by date, meal and ID", () => {
-  assert.match(source, /const registeredConsumptionKeys = new Set/);
-  assert.match(source, /const consumedMenuFallback = prepareWeeklyMenuRows/);
-  assert.match(source, /item\.status === "consumido"/);
-  assert.match(source, /const key = weeklyMenuConsumptionMatchKey\(item\)/);
-  assert.match(source, /!registeredConsumptionKeys\.has\(key\)/);
-  assert.match(source, /source: "menu_consumed_fallback"/);
+test("nutrition summary reconciles consumed menu identities on selected date and all history days", () => {
+  assert.match(source, /const preparedHistoryMenuRows = prepareWeeklyMenuRows/);
+  assert.match(source, /const consumedMenuFallback = menuConsumedFallbackForDate/);
+  assert.match(source, /menuConsumedFallbackForDate\(registeredHistoryRows, preparedHistoryMenuRows, historyDate\)/);
+  assert.match(fallbackSource, /const existingKeys = new Set/);
+  assert.match(fallbackSource, /row\.status === "consumido"/);
+  assert.match(fallbackSource, /weeklyMenuConsumptionMatchKey\(row\)/);
+  assert.match(fallbackSource, /!existingKeys\.has\(key\)/);
+  assert.match(fallbackSource, /source: "menu_consumed_fallback"/);
   assert.match(source, /const dayEntries = \[\.\.\.registeredDayEntries, \.\.\.consumedMenuFallback\]/);
   assert.doesNotMatch(source, /registeredDayIds/);
 });
