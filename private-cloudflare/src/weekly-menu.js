@@ -124,7 +124,7 @@ export function companionMenuDisplayName(item, product) {
   const portion = format.match(/[×x]\s*(\d+(?:[.,]\d+)?)\s*g/);
   const portionGrams = portion ? Number(portion[1].replace(",", ".")) : null;
   const isVasito = /vasit/.test(format);
-  const hasUnits = /vasit/.test(unit);
+  const hasUnits = /vasit|^ud(?:\b|\s|$)|^unidad|^envase/.test(unit);
   const grams = /^(g|gr|gramos?)(?:\b|\s|$)/.test(unit);
   let serving = "";
   let count = null;
@@ -136,7 +136,7 @@ export function companionMenuDisplayName(item, product) {
   } else if (grams && quantity > 0) {
     const jar = format.match(/(?:bote|tarro)\s*(?:de\s*)?(\d+)\s*g/);
     const half = jar && Number(jar[1]) === quantity * 2;
-    serving = quantity + " g" + (half ? " (½ tarro)" : "");
+    serving = quantity + " g" + (jar ? (half ? " (½ tarro)" : " (tarro grande)") : "");
   } else if (quantity > 0) {
     serving = quantity + (unit ? " " + String(item.unit).trim() : "");
   }
