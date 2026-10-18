@@ -1361,16 +1361,18 @@ function deriveGymTodaySummary(healthData, gymData = {}) {
   const suggested = plan[suggestedIndex] || plan[0];
   const suggestedTitle = suggested?.title || suggested?.focus || "Siguiente sesión";
 
+  // The weekly strength target is a minimum, never a cap or a prescribed rest day.
   if (strengthTarget !== null && strengthTarget > 0 && sessionsThisWeek >= strengthTarget) {
+    const weeklyMinimumText = sessionsThisWeek + "/" + Math.round(strengthTarget) + " mínimo semanal";
     return {
-      main: "Descanso",
-      detail: "Objetivo semanal cubierto · siguiente " + suggestedTitle,
+      main: "Siguiente",
+      detail: suggestedTitle + " · " + weeklyMinimumText + " cubierto",
       updatedAt: sessions[0]?.createdAt || gymData?.trainingStatus?.updatedAt || activityGoal.updatedAt || null,
       progress: 100,
       tone: "mint",
       centerValue: "✓",
-      centerLabel: "sem",
-      ariaLabel: "Objetivo semanal de gimnasio cubierto. Siguiente sesión: " + suggestedTitle
+      centerLabel: "mín",
+      ariaLabel: "Mínimo semanal alcanzado (" + weeklyMinimumText + "). Próxima sesión del plan: " + suggestedTitle + ". Entrenar según recuperación."
     };
   }
 
@@ -1378,7 +1380,7 @@ function deriveGymTodaySummary(healthData, gymData = {}) {
     ? Math.max(0, Math.round((sessionsThisWeek / strengthTarget) * 100))
     : 0;
   const weekText = strengthTarget !== null && strengthTarget > 0
-    ? " · " + sessionsThisWeek + "/" + Math.round(strengthTarget) + " esta semana"
+    ? " · " + sessionsThisWeek + "/" + Math.round(strengthTarget) + " mínimo semanal"
     : "";
   return {
     main: "Sugerido",
