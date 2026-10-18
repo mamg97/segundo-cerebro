@@ -173,5 +173,64 @@ class FutureOriginCandidatesTests(unittest.TestCase):
             self.assertEqual(actual['inputCodebookSha256'], dummy['codebook_sha256'])
 
 
+    def test_pinned_private_reproduction_archive_to_six_model_candidates(self):
+        # Synthetic-only archive with the exact shape of the user's private
+        # reproduction bundle. No historical or prospective real data in Git.
+        import csv
+        import hashlib
+        import io
+        import tempfile
+        import zipfile
+        import future_2027_candidates as engine
+        with tempfile.TemporaryDirectory() as location:
+            private = Path(location)
+            rows = synthetic_country_years()
+            buf = io.StringIO()
+            writer = csv.DictWriter(buf, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+            packed = io.BytesIO()
+            with zipfile.ZipFile(packed, 'w', zipfile.ZIP_DEFLATED) as z:
+                z.writestr('SYNTHETIC_COUNTRY_YEAR.csv', buf.getvalue())
+            data = packed.getvalue()
+            pdf = b'%PDF-1.4 SYNTHETIC CODEBOOK - NOT REAL'
+            digest = lambda x: hashlib.sha256(x).hexdigest()
+            protocol = {**PROTOCOL,
+                'archive_sha256': digest(data), 'codebook_sha256': digest(pdf),
+                'expected_raw_rows': len(rows), 'expected_countries': 6}
+            directory = private/'runner'
+            directory.mkdir()
+            (directory/'protocol.json').write_text(json.dumps(protocol))
+            (directory/'benchmark.py').write_bytes(
+                (Path(__file__).parent/'benchmark.py').read_bytes())
+            sources = {'datasetVersion': '26.1', 'inputs': [
+                {'name': 'ucdp.zip', 'url': protocol['archive_url'],
+                 'sha256': protocol['archive_sha256'], 'bytes': len(data)},
+                {'name': 'codebook.pdf', 'url': protocol['codebook_url'],
+                 'sha256': protocol['codebook_sha256'], 'bytes': len(pdf)}]}
+            members = {
+                'sources/ucdp.zip': data, 'sources/codebook.pdf': pdf,
+                'sources/sources.json': json.dumps(sources).encode(),
+                'code/protocol.json': json.dumps(protocol).encode(),
+            }
+            archived = private/'SYNTHETIC_PRIVATE_PACKAGE.zip'
+            with zipfile.ZipFile(archived, 'w', zipfile.ZIP_DEFLATED) as z:
+                for name, content in members.items():
+                    z.writestr(name, content)
+                z.writestr('MANIFEST.json', json.dumps({
+                    name: digest(content) for name, content in members.items()}))
+            with patch.object(engine, 'HERE', directory):
+                output = engine.generate_private_candidates_from_archive(archived, protocol)
+            self.assertEqual(len(output['candidates']), 6)
+            self.assertEqual(len(output['models']), 6)
+            self.assertEqual(output['sourcePrivateArchiveManifestEntriesVerified'], 4)
+            self.assertEqual(output['sourcePrivateArchiveSha256'], digest(archived.read_bytes()))
+            self.assertFalse(output['forecastIssued'])
+            self.assertFalse(output['prospectiveEligible'])
+            self.assertFalse(output['independentTimestampVerified'])
+            self.assertTrue(all(r['outcome'] is None for r in output['candidates']))
+
+
+
 if __name__ == '__main__':
     unittest.main()

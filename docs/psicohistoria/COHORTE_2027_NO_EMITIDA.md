@@ -31,6 +31,41 @@ python3 research/psychohistory/future_2027_candidates.py \
 
 No editar ni sustituir los SHA preregistrados si la descarga no coincide. El generador también calcula probabilidades del baseline, lo que **no demuestra** utilidad, calibración ni skill prospectivo de los modelos.
 
+## Ejecución canónica desde el ZIP privado ya archivado (18/10/2026)
+
+Se ha añadido una segunda entrada segura a `future_2027_candidates.py`: `--private-archive`.
+Permite calcular la misma cohorte de seis modelos a partir del paquete existente
+`PSICOHISTORIA_UCDP_261_REPRODUCCION.zip` almacenado **fuera de Git**.
+No exige volver a descargar originales ni crear carpetas permanentes duplicadas.
+
+La entrada ejecuta primero `private_archive_intake.verify_private_archive()`,
+que verifica `MANIFEST.json`, los dos hashes UCDP preregistrados, el protocolo
+interno y la estructura país-año. Extrae ZIP y codebook solo a una carpeta
+temporal privada, ejecuta `generate_private_candidates()` con los mismos seis
+modelos y elimina el staging automáticamente. El JSON destino sigue siendo
+create-only; la consola no imprime probabilidades.
+
+Ejemplo de ejecución **en un entorno privado con el paquete original accesible**:
+
+```bash
+python3 research/psychohistory/future_2027_candidates.py \
+  --private-archive "/PRIVATE/PSICOHISTORIA_UCDP_261_REPRODUCCION.zip" \
+  --out "/PRIVATE/2027_SIX_MODEL_UNISSUED_NEW.json"
+```
+
+El ensayo calculado antes mediante wrapper byte-equivalente (**196 países,
+1.176 probabilidades comparadas con máxima desviación 0**) se guarda
+separadamente en la carpeta privada de Drive; se identifica como
+`SHADOW_NO_EMITIDO` en `PsicoExperimentos` y **NO** se introduce en
+`PsicoPredicciones`. El nuevo CLI se añade para ejecuciones futuras directamente
+sobre el mismo archivo original; su prueba sintética de extremo a extremo
+no constituye evidencia de que se haya ejecutado aquí el CLI canónico real.
+
+La disponibilidad de fuentes al momento de una emisión futura, la independencia
+de la autoridad de sello temporal y la preinscripción del registro prospectivo
+siguen siendo puertas separadas. Nunca convertir estos candidatos en `ISSUED`
+por el mero hecho de existir un JSON verificable o un ZIP privado.
+
 ## Control temporal y bloqueo pendiente
 
 Una edición UCDP 2025 publicada antes de emitir en octubre-diciembre 2026 puede servir como entrada de un futuro *shadow forecast*, pero deben fijarse de forma independiente la disponibilidad de sus bytes y de sus variables. La nota oficial del 9/6/2026 acredita estadísticas públicas de 2025, pero **no** prueba la fecha de publicación del ZIP concreto.
