@@ -308,7 +308,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
       '<div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed)+'</div>'+
       (observed?historicalEventCards(result,horizon):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
-      '<p class="chart-note">Caso inicial ilustrativo elegido por variedad de transiciones observadas, NO por aciertos de un modelo. Puedes cambiarlo debajo.'+
+      '<p class="chart-note">Caso inicial ilustrativo elegido por variedad de transiciones observadas, NO por aciertos de un modelo. Puedes cambiarlo en el selector superior.'+
       ' Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
