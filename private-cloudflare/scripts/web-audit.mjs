@@ -1547,6 +1547,23 @@ async function auditResponsiveVisualLayout(navIds) {
     await page.setViewportSize({ width: profile.width, height: profile.height });
     await openAreaForVisualAudit("area-general");
     await auditVisualSnapshot(`${profile.name} · Home`);
+    // Compact Gym week: seven real dates must fit under Home macros on every device.
+    await page.locator("#home-gym-week-content .home-gym-week-days")
+      .waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
+    const gymWeekLayout = await page.locator("#home-gym-week").evaluate(node => {
+      const rect = node.getBoundingClientRect();
+      const previous = document.querySelector(".daily-overview-grid")?.getBoundingClientRect();
+      const next = document.querySelector(".money-horizon")?.getBoundingClientRect();
+      const days = [...node.querySelectorAll("[data-gym-week-date]")];
+      return Boolean(previous && next && previous.bottom <= rect.top + 4 && rect.bottom <= next.top + 4 &&
+        days.length === 7 && node.scrollWidth <= node.clientWidth + 3 &&
+        days.every(day => {
+          const cell = day.getBoundingClientRect();
+          return cell.width >= 85 && cell.left >= rect.left - 2 && cell.right <= rect.right + 2;
+        }));
+    }).catch(() => false);
+    assertCheck(gymWeekLayout, profile.name + " · Home presenta semana real de Gym sin overflow");
+
     if (profile.name === "desktop" || profile.name === "mobile") {
       const recipeLayout = await page.locator("#home-weekly-menu-content .home-weekly-menu-recipe-link")
         .first().evaluate((button) => {
