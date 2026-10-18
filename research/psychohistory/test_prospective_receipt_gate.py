@@ -83,7 +83,9 @@ class ReceiptGateTests(unittest.TestCase):
 
     def mock_verified(self, timestamp="2028-11-30T15:00:00Z"):
         return {
-            "verified": True, "payloadMatched": True, "independentTimestamp": True,
+            "verified": True, "payloadMatched": True, "independentTimestamp": False,
+            "rfc3161SignatureVerifiedWithSuppliedTrustRoot": True,
+            "rfc3161RequestNonceMatched": True,
             "timestamp": timestamp, "id": self.draft["payload"]["id"],
             "commitmentSha256": self.commit.hex(),
             "receiptSha256": sha(self.paths["receipt"].read_bytes()),
@@ -98,6 +100,7 @@ class ReceiptGateTests(unittest.TestCase):
         self.assertEqual(report["status"], "RFC3161_SIGNATURE_VALIDATED_PENDING_INDEPENDENT_ASOF_AND_ISSUANCE")
         self.assertTrue(report["artifactHashesVerified"])
         self.assertTrue(report["rfc3161SignatureVerifiedWithSuppliedTrustRoot"])
+        self.assertTrue(report["rfc3161RequestNonceMatched"])
         for key in ("prospectiveEligible", "evaluationEligible", "sourceAvailabilityAsOfVerified",
                     "externalAuthorityIndependenceVerified", "forecastActuallyIssuedAtClaimedTimeVerified"):
             self.assertFalse(report[key], key)
@@ -142,7 +145,9 @@ class ReceiptGateTests(unittest.TestCase):
         invalid = self.mock_verified()
         invalid["receiptSha256"] = "a" * 64
         for fake in (invalid, self.mock_verified("2029-01-01T00:00:00Z"),
-                     {**self.mock_verified(), "verified": False}):
+                     {**self.mock_verified(), "verified": False},
+                     {**self.mock_verified(), "rfc3161RequestNonceMatched": False},
+                     {**self.mock_verified(), "independentTimestamp": True}):
             with self.subTest(fake=fake):
                 with patch("prospective_receipt_gate.verify_rfc3161", return_value=fake):
                     with self.assertRaises(ValueError):
