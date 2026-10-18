@@ -94,7 +94,7 @@ def main():
                         root = current_path.split("/", 1)[0]
                         safe_root = root if root in {"app", "design", "docs", "research", "private-cloudflare", "scripts"} else "other"
                         ext = PurePosixPath(current_path).suffix.lower()
-                        safe_ext = ext if ext in {".js", ".mjs", ".html", ".json", ".md", ".py", ".svg", ".css"} else "other"
+                        safe_ext = ext if re.fullmatch(r"\.[a-z0-9]{1,10}", ext) else "none_or_unusual"
                         size_class = "under_10_kb" if len(match.group()) < 14000 else ("under_100_kb" if len(match.group()) < 140000 else "over_100_kb")
                         inline_images[(safe_root, safe_ext, size_class)] += 1
         status = p.wait()
