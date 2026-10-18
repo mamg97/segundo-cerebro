@@ -23,6 +23,7 @@ RULES = (
     ("IBAN", re.compile(r"\bES\d{22}\b")),
     ("DNI", re.compile(r"(?<!\w)\d{8}[A-Z](?!\w)")),
     ("PRIVATE_EMAIL", re.compile(r"\b[A-Za-z0-9._%+-]+@(?:gmail|hotmail|outlook|yahoo|icloud|protonmail)\.[A-Za-z.]{2,}\b", re.I)),
+    ("INLINE_IMAGE_BYTES", re.compile(r"data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]{500,}", re.I)),
 )
 
 def path_findings(path):
