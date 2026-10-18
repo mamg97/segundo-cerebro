@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Línea bursátil F1B (20 sesiones), sin datos reales ni trading · 18/10/2026
+
+- **Nueva hipótesis no geopolítica:** estudiar `P(caída de al menos 5 % de algún cierre ajustado respecto al cierre de origen durante próximas 20 sesiones)`. Es **un evento de riesgo** y no una previsión del precio exacto, de muertes, ni una rentabilidad operativa. Factores exclusivos de versión piloto: momentum logarítmico 5/20 sesiones, volatilidad realizada 20 y drawdown 60 sesiones; logistic L2 vs frecuencia histórica Laplace.
+- **Motor de investigación:** `research/psychohistory/equities_drawdown_research.py` y test sintético. Etiquetas train únicamente si resolución `t+20 <= origen`, normalización exclusivamente histórica, walk-forward de tests no superpuestos separados 20 sesiones, Brier en muestra pareada, uso de CSV privado ajustado pinneado por SHA y salida create-only. JSON opcional de último riesgo en `SHADOW_NOT_ISSUED` con `outcome=null`; nunca ejecutar compras. Ver [EQUITIES_20D_RESEARCH_PROTOCOL.md](docs/psicohistoria/EQUITIES_20D_RESEARCH_PROTOCOL.md).
+- **Evidencia y límites:** solo tests con precios ficticios; a esta fecha NO se ha importado historial de mercado real, acreditado as-of/ajustes del proveedor, demostrado Brier skill, ni simulado estrategias con costes. Independiente de `mamg97/midas-paper-lab` y de finanzas personales, no modificar MIDAS ni la cartera. No convertir un acierto retrospectivo en predicción bursátil validada.
+- **Seguimiento:** después de fusionar PR y comprobar CI, crear filas bursátiles de madurez por dominio separadas de `MAD-01…07` (reservadas a conflictos), registrar evento append-only en `PsicoAvances`, enlazar evidencia y mantener `PsicoPredicciones` sin emisiones. La siguiente dependencia es una fuente histórica real gratuita con licencias y ajustes verificables.
+
+---
+
 ## PSICOHISTORIA — Auditoría precisa de las features y horizonte de predicciones útiles · 18/10/2026
 
 - **Nuevo catálogo privado `PsicoVariables`:** 13 variables/indicadores clasificados en la fuente canónica PROYECTOS: exactamente cinco features efectivas de la logística anual, una señal derivada utilizada por otros modelos y siete futuras candidatas expresamente `NO_USADA`. El catálogo guarda fórmula, periodo 2027, procedencia, modelo aplicable y limitación. Se corrigió la relación exacta: el índice V1 excluye `x[0]`, la tabla de interacción omite `x[2]` como llave. Contrato público genérico [MODEL_INPUTS_AUDIT_2027.md](docs/psicohistoria/MODEL_INPUTS_AUDIT_2027.md).
