@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Cobertura completa de Candidate país-origen · 18/10/2026
+
+- **Nuevo audit offline:** `research/psychohistory/asof_cohort_coverage.py` clasifica TODOS los países-origen planificados (no solo positivos) según existencia de Candidate de bytes pinneados SHA, ámbito declarado y release declarado anterior al mes de emisión. Falta de vintage ≠ ausencia de violencia. Orígenes sin cobertura son `NO_EVALUABLE`; los denominadores quedan explícitos.
+- **Puerta de seguridad epistemológica:** la fecha de publicación/ámbito del manifiesto no están independientemente autenticados y los bytes Candidate no se han reconstruido en targets/features; `source_as_of_verified=false`, `scores_computed=false`, `forecast_issued=false`. No actualiza la cohorte 2027, Worker, UI ni `PsicoPredicciones`. Solo CI sintética y reportes privados create-only.
+- **Evidencia:** [Protocolo de cobertura](docs/psicohistoria/CANDIDATE_ASOF_COVERAGE.md); PR y CI por confirmar. Tras CI verde/fusión, registrar append-only en `PsicoAvances` y actualizar `MAD-02` si procede, sin declarar `MAD-04` completado. Siguiente hito: pinnear un Candidate verdadero, verificar alcance en sus bytes y fechar release de forma independiente antes de medir modelos.
+
+---
+
 ## PSICOHISTORIA — Árbol navegable por seis fenómenos · 18/10/2026
 
 - **Entrega UI propuesta:** Futuros tiene árbol de ramas seleccionables: violencia estatal anual (grafo original sin alteraciones), inicio/reanudación interno, inicio/reanudación interestatal, reaparición GED (ventana 24 meses), cohorte 2027 no emitida (enlace privado validado) y otros fenómenos futuros sin datos. Las ramas no comparten espacio de estados ni muestran probabilidades de otro modelo como sustituto.
