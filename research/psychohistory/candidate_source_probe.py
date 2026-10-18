@@ -83,9 +83,7 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         raise ValueError("Unparseable Candidate event CSV") from exc
     if not count:
         raise ValueError("No events in Candidate source")
-    if any(bound_errors.values()):
-        # Aggregate counts only: identify structural issue without printing events.
-        raise ValueError("Candidate event date bounds mismatch: " + json.dumps(bound_errors, sort_keys=True))
+    date_scope_valid = not any(bound_errors.values())
     return {
         "schema": "psychohistory.ucdp_candidate_observation.v1",
         "source": "UCDP_CANDIDATE", "edition": edition,
@@ -96,6 +94,10 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         "first_event_year": min(years),
         "last_event_year": max(years),
         "n_violence_types_observed": len(types),
+        "status": ("OBSERVED_EVENT_SCHEMA_NO_DATE_SCOPE_ANOMALIES" if date_scope_valid
+                   else "OBSERVED_BUT_REPLAY_BLOCKED_DATE_SCOPE_ANOMALY"),
+        "source_date_scope_valid_for_nominal_2024": date_scope_valid,
+        "date_scope_violation_counts": bound_errors,
         "full_country_coverage_known_from_events": False,
         "absent_country_is_conflict_free": False,
         "historical_release_time_independently_verified": False,
@@ -103,8 +105,10 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         "candidate_equals_final_ged": False,
         "backtest_authorized": False,
         "forecast_issued": False,
-        "warning": ("Current bytes and event-country counts do not establish historical "
-                    "release date, zero-event country roster or final GED target equivalence."),
+        "warning": ("Nominally out-of-period dates block temporal admission, even if the "
+                    "original source is downloadable now. Current bytes and event-country "
+                    "counts do not establish historical release date, zero-event country "
+                    "roster or final GED target equivalence."),
     }
 
 
