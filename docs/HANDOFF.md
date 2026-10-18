@@ -1,3 +1,10 @@
+## PSICOHISTORIA — Preflight 2027: serialización JSON verificada · 18/10/2026
+
+- **Bug real corregido:** el paquete privado de 2027 usa `json.dumps(sort_keys=True)`, que ordena alfabéticamente las claves `probabilities` de cada país, aunque el contrato `models` usa el orden científico preregistrado. `issue_2027_preflight.py` comparaba erróneamente el orden de claves de cada dict, rechazando una cohorte cuyos **seis modelos eran correctos**. Ahora exige cardinalidad y conjunto exacto de nombres, independiente del orden de serialización; se mantiene estricta la lista `models` principal.
+- **Prueba empírica local sin modificar el original:** paquete privado verificado 3/3 miembros, 196 países únicos, 1.176 probabilidades finitas válidas, outcomes nulos y cortes 2025. Estado `legacy_shadow_structural_checks=PASS`, pero `canonical_generator_executed=false` y `prospective_issuance=false`. Regresión sintética `sort_keys=True` añadida; no se marca `ISSUED`.
+
+---
+
 ## PSICOHISTORIA — Prerregistro de evaluación 2027 y comprobación de cohorte · 18/10/2026
 
 - **Política científica congelada antes de resultados 2027:** `research/psychohistory/policy_2027.json` fija objetivo UCDP `sb_total_deaths_best >=25`, universo 2025 + historial 2021–2025 (196 países), features/labels hasta 2025, seis modelos sin selección posterior, Brier pareado `v2_logistic` frente al baseline `frequency`, resultados ausentes sin imputación, y resolución en **la primera edición oficial** que cubra 2027. Se declara expresamente que el challenger fue elegido tras revisar backtests históricos: la evaluación futura es nueva, pero el benchmark anterior no fue confirmatorio.
