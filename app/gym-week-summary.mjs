@@ -56,13 +56,13 @@ function dayNutritionMarkup(day) {
   const tone = balance === null ? "is-unknown" : balance < 0 ? "is-deficit" :
     balance > 0 ? "is-surplus" : "is-neutral";
   const provisional = day.isToday && balance !== null ? " · provisional" : "";
-  return '<dl class="home-gym-day-nutrition" aria-label="Nutrición y gasto del día">' +
-    '<div class="' + tone + '"><dt>Balance</dt><dd>' + balanceLabel + '</dd></div>' +
-    '<div><dt>Gasto total</dt><dd>' + amount(metrics.burned, "kcal") + '</dd></div>' +
-    '<div><dt>Ingeridas</dt><dd>' + amount(metrics.consumed, "kcal") + '</dd></div>' +
-    '<div><dt>Proteína</dt><dd>' + amount(metrics.protein, "g") + '</dd></div>' +
-    (provisional ? '<small class="home-gym-nutrition-note">' + provisional.slice(3) + '</small>' : '') +
-    '</dl>';
+  return '<span class="home-gym-day-nutrition" aria-label="Nutrición y gasto del día">' +
+    '<span class="home-gym-nutrition-row ' + tone + '"><span class="home-gym-nutrition-label">Balance</span><strong>' + balanceLabel + '</strong></span>' +
+    '<span class="home-gym-nutrition-row"><span class="home-gym-nutrition-label">Gasto total</span><strong>' + amount(metrics.burned, "kcal") + '</strong></span>' +
+    '<span class="home-gym-nutrition-row"><span class="home-gym-nutrition-label">Ingeridas</span><strong>' + amount(metrics.consumed, "kcal") + '</strong></span>' +
+    '<span class="home-gym-nutrition-row"><span class="home-gym-nutrition-label">Proteína</span><strong>' + amount(metrics.protein, "g") + '</strong></span>' +
+    (provisional ? '<small class="home-gym-nutrition-note">provisional</small>' : '') +
+    '</span>';
 }
 
 export function gymWeekSummaryModel(payload, now = new Date(), nutritionHistory = []) {
@@ -167,7 +167,7 @@ export function renderHomeGymWeek(payload, now = new Date(), options = {}) {
           "; pulsar para ver ejercicios") + '">' + top +
         '<strong class="home-gym-day-group">' + escapeHtml(day.groups.join(" · ")) + '</strong>' +
         '<span class="home-gym-day-count">' + day.exerciseCount + ' ejercicios <span aria-hidden="true">⌄</span></span>' +
-        '</summary>' + dayNutritionMarkup(day) +
-        '<div class="home-gym-day-details">' + detailsForDay(day) + '</div></details>';
+        dayNutritionMarkup(day) +
+        '</summary><div class="home-gym-day-details">' + detailsForDay(day) + '</div></details>';
     }).join("") + '</div>';
 }
