@@ -148,6 +148,10 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
       ...item,
       moment: canonicalWeeklyMenuMoment(item),
       pantryProductId: pantryProduct?.id || null,
+      // Product photos are sourced from the private Pantry catalog, never guessed from menu names.
+      productImageUrl: typeof pantryProduct?.imageUrl === "string" && /^https:\/\//i.test(pantryProduct.imageUrl)
+        ? pantryProduct.imageUrl
+        : null,
       pantrySyncStatus: !foodId
         ? "not-applicable"
         : !pantryProductById
