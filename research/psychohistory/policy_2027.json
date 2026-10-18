@@ -1,0 +1,50 @@
+{
+  "schema": "psychohistory.2027.country_year.prespecified_scoring.v1",
+  "status": "PREISSUE_POLICY_UNISSUED",
+  "registered_on": "2026-10-18",
+  "target_year": 2027,
+  "phenomenon": "state_based_violence_country_year_presence",
+  "event_definition": "sb_total_deaths_best >= 25 within country's borders during calendar year 2027",
+  "dataset": "UCDP OrganizedViolenceCY",
+  "input_edition": "26.1",
+  "input_zip_sha256": "66910888f5653af42776d2debc1d72fe527559e7f7fc82e69b7c8771467f2d34",
+  "input_codebook_sha256": "88ba683426c2596fab908fcd68ae184025d0804ca9a099dea513898214b92b3c",
+  "feature_cutoff_year": 2025,
+  "training_labels_through_year": 2025,
+  "roster_rule": "All country_id values in 2025 source snapshot with uninterrupted country-year observations for 2021-2025; no imputation",
+  "expected_roster_size": 196,
+  "models": [
+    "frequency",
+    "persistence",
+    "markov",
+    "v1_memory_index",
+    "v2_logistic",
+    "interaction_table"
+  ],
+  "baseline": "frequency",
+  "primary_challenger": "v2_logistic",
+  "primary_metric": "paired_country_brier_score",
+  "primary_skill": "1 - brier(v2_logistic) / brier(frequency) if baseline Brier > 0; otherwise undefined",
+  "secondary_exploratory_models": [
+    "persistence",
+    "markov",
+    "v1_memory_index",
+    "interaction_table"
+  ],
+  "secondary_exploratory_metrics": [
+    "log_loss",
+    "average_precision_when_defined",
+    "calibration"
+  ],
+  "cohort_reporting": "Report all six models on the exact same resolved cohort; no model selection or recalibration using 2027 labels",
+  "missing_outcomes": "Unresolved; never assign zero or exclude silently. Report country IDs/count and paired coverage before any score",
+  "first_resolution_release_rule": "Use the first officially published UCDP OrganizedViolenceCY annual release that includes full 2027 calendar-year state-based totals; pin the exact archive and codebook bytes when first available; later revisions separately, without changing first score",
+  "uncertainty": "Report paired Brier difference, country-level bootstrap sensitivity, event frequency and sample coverage. One future annual cohort cannot establish generalizability across years",
+  "retrospective_selection_disclosure": "Primary challenger designated after historical revised-release backtests; the prospective 2027 result is an independent forward evaluation, not evidence that previous exploratory test selection was confirmatory",
+  "legal_temporal_trust": "A supplied TSA root alone is not independently accredited; source as-of and receipt validation require separate evidence",
+  "issuance_proven": false,
+  "independent_tsa_verified": false,
+  "asof_verified": false,
+  "outcomes_available": false,
+  "scoring_authorized": false
+}
