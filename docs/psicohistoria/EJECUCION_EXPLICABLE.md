@@ -6,7 +6,7 @@ La primera experiencia de «Calcular predicción retrospectiva» reutiliza **Fut
 
 `GET /api/research-futures` continúa calculando el resultado con `buildFutures`. El servidor genera además `psychohistory.futures.computation_trace.v1` mediante `buildComputationTrace`, aplicando los mismos conteos, matriz y propagaciones: comprueba igualdad numérica entre cada multiplicación y los niveles del motor, masa total 1, el año puente sin observar y baseline de frecuencia en la misma cohorte y horizonte. Una discrepancia provoca rechazo del cálculo, nunca un panel ficticio.
 
-El frontend `app/research-explainable.mjs` verifica de nuevo los frames contra el resultado recibido antes de dibujarlos. Cada clic sobre «Inspeccionar cálculo / Siguiente operación» **reproduce valores ya calculados**: no crea una barra de progreso de CPU ni vuelve a ajustar el modelo. En el inspector se muestra explícitamente «reproducción retrospectiva» y se conserva el grafo probabilístico como **primera vista** de Futuros.
+El frontend `app/research-explainable.mjs` verifica de nuevo los frames contra el resultado recibido antes de dibujarlos. Cada clic sobre «Inspeccionar cálculo / Siguiente operación» **reproduce valores ya calculados**: no crea una barra de progreso de CPU ni vuelve a ajustar el modelo. En el inspector se muestra explícitamente «reproducción retrospectiva». Desde **UI v0.5.10**, el panel de selección y el aviso de backtest quedan **encima** del grafo; el grafo probabilístico continúa como **primer resultado analítico** y la ejecución explicable aparece debajo de él. Antes de v0.5.10 el grafo estaba por encima de los selectores.
 
 ## Secuencia auditable
 

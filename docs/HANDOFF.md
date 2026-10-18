@@ -1,3 +1,11 @@
+## PSICOHISTORIA — UI v0.5.10 · configuración antes del árbol (18/10/2026)
+
+- **Cambio UX solicitado:** el bloque `Sociedad · Origen retrospectivo · Modelo · Calcular predicción retrospectiva` junto con el aviso de backtest ahora se monta **por encima** de la red de futuros. El grafo continúa siendo el **primer resultado visual**, y la reproducción matemática, casos históricos y paneles secundarios siguen debajo.
+- **Alcance:** exclusivamente `app/research-futures.mjs`, CSS responsive y pruebas de orden, versiones de caché UI v0.5.10 y contrato de ejecución explicable. No se modifica el cálculo, probabilidad, target, fuentes canónicas, Worker ni ledger.
+- **Entrega:** rama `fix/psychohistory-controls-above-network-20261018`. PR, CI y deploy pendientes de confirmar antes de declarar producción. Revisar aspecto en sesión autenticada; Actions prueba empaquetado y lógica, pero no sustituye QA visual.
+
+---
+
 ## PSICOHISTORIA — Ledger privado de borradores v0.1 (17/10/2026)
 
 - **Implementación fusionada en PR [#599](https://github.com/mamg97/segundo-cerebro/pull/599), commit `00024cf7c552`:** `research/psychohistory/prospective_draft_ledger.py` registra sólo eventos `UNSEALED_DRAFT` con SHA-256, cadena de integridad, directorio fuera de Git, archivos create-only, control de escrituras concurrentes y correcciones mediante nueva entrada que cita el hash anterior. Requiere dominio, target, geografía, horizonte, datos y código versionados, benchmark y protocolo de resolución. Tests exclusivamente sintéticos y contrato `docs/psicohistoria/REGISTRO_PROSPECTIVO.md`.

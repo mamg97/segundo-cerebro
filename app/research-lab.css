@@ -166,10 +166,12 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
 .future-event-marker{cursor:pointer;filter:drop-shadow(0 0 5px #ffc17e77)}
 .future-event-marker:focus-visible circle{stroke-width:3}
 .future-event-inspector{margin-bottom:12px}
-.future-after-network .future-controls{margin:10px 0}
-.future-after-network .future-controls-intro{display:none}
+.future-selection{margin:0 0 18px}
+.future-selection .section-heading{margin-bottom:10px}
+.future-selection .future-controls{margin:10px 0}
+.future-selection .future-controls-intro{display:none}
 .future-after-network .future-legend{margin:8px 0}
-@media(max-width:760px){.future-network-first{padding:13px}.future-network-first .future-graph{min-width:680px}.future-event-card{flex-basis:230px}.future-after-network .future-controls{margin-top:12px}}
+@media(max-width:760px){.future-network-first{padding:13px}.future-network-first .future-graph{min-width:680px}.future-event-card{flex-basis:230px}.future-selection .future-controls{margin-top:12px}}
 
 /* v0.5 research objective status; keep the SVG as the very first block. */
 .future-phenomena{padding:15px 18px;margin:0 0 16px;border-color:#26485c}
