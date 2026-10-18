@@ -1,0 +1,65 @@
+# Public reference data are downloaded ONLY to the ephemeral runner.
+# No UCDP files, manifests or model probabilities are uploaded as artifacts.
+# The actual pinned 26.1 CSV uses unsuffixed columns even though its PDF documents *_cy.
+name: Probe official UCDP CY 26.1 bytes without artifacts
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/source_schema.py'
+      - 'research/psychohistory/source_release_intake.py'
+      - 'research/psychohistory/benchmark.py'
+      - '.github/workflows/probe-ucdp-cy261-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-source-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch official public 26.1 ZIP and codebook to ephemeral runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/psychohistory-261"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 90 --max-filesize 20000000 \
+            --output "$RUNNER_TEMP/psychohistory-261/ucdp.zip" \
+            'https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-261-csv.zip'
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 90 --max-filesize 25000000 \
+            --output "$RUNNER_TEMP/psychohistory-261/codebook.pdf" \
+            'https://ucdp.uu.se/downloads/organizedviolencecy/UCDP_OrganizedViolenceCY_Codebook_261.pdf'
+      - name: Verify original checksums and country-year panel (no published data)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node research/psychohistory/download.mjs "$RUNNER_TEMP/psychohistory-261"
+          python3 research/psychohistory/source_release_intake.py \
+            --source-dir "$RUNNER_TEMP/psychohistory-261" \
+            --out "$RUNNER_TEMP/psychohistory-261-verified-manifest.json"
+          python3 - <<'PY'
+          import csv, io, json, os, zipfile
+          from pathlib import Path
+          from sys import path
+          path.insert(0, 'research/psychohistory')
+          from benchmark import load_official, audit
+          root = Path(os.environ['RUNNER_TEMP']) / 'psychohistory-261'
+          protocol = json.loads(Path('research/psychohistory/protocol.json').read_text())
+          rows, _ = load_official(root, protocol)
+          assert audit(rows, protocol, strict=True)['passed'] is True
+          with zipfile.ZipFile(root / 'ucdp.zip') as archive:
+              names = [x for x in archive.namelist() if x.lower().endswith('.csv')]
+              header = csv.DictReader(io.StringIO(archive.read(names[0]).decode('utf-8-sig'))).fieldnames
+          native = 'country_id_cy' in header and 'year_cy' in header
+          legacy = 'country_id' in header and 'year' in header
+          assert native != legacy, 'Ambiguous official CSV schema'
+          print('Official CSV header schema:', 'CODEBOOK_NATIVE' if native else 'INTERNAL_ALIASES')
+          print('Two pinned original hashes and strict panel verified; no independent as-of proof')
+          print('No prospective forecast was issued or scored')
+          PY
+      - name: Remove temporary source files without uploading artifacts
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/psychohistory-261" "$RUNNER_TEMP/psychohistory-261-verified-manifest.json"

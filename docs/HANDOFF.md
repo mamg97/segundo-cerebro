@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Originales UCDP CY 26.1 validados en CI efímera (18/10/2026)
+
+- **AVANCE EMPÍRICO COMPROBADO:** [workflow 39130567553](https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553), job `official-source-probe` **success**. El runner descargó los ZIP/PDF oficiales, verificó **los dos SHA-256 preregistrados**, ejecutó `source_release_intake.inspect()` sobre bytes reales (**7.132 país-año, 199 países, 1989–2025**) y `benchmark.audit(strict=True)` con resultado positivo. Sin entrenar ni revelar probabilidades o scores.
+- **Esquema real:** el PDF documenta columnas `*_cy`, pero el CSV pinneado usa nombres sin sufijo (`INTERNAL_ALIASES` observado en logs). **No había bug real de admisión**; se retiró el adaptador exploratorio para no modificar código científico innecesariamente. Se mantiene el protocolo original con hashes intactos.
+- **Nueva comprobación reproductible:** `.github/workflows/probe-ucdp-cy261-source.yml`, que solo usa un runner temporal; sin cache ni artifacts, elimina ZIP/PDF/manifiesto tras ejecutarse. Esta prueba acredita que los bytes exactos se descargaron y fueron válidos durante el run del 18/10/2026, **no su disponibilidad exacta durante un corte anterior**.
+- **Pendiente real:** obtener los originales y manifiesto para archivo permanente **exclusivamente en Drive privado** (la CI no los retiene); fijar prueba `as-of` adecuada, cohorte/modelo/resolución, registro privado y TSA externa independiente. `PsicoPredicciones` sigue con **0 emisiones**. No se ha ejecutado generación real de probabilidades 2027 ni se ha emitido pronóstico. Actualizar `COHORTE_2027_NO_EMITIDA.md` al crear el primer artefacto privado.
+
+---
+
 ## PSICOHISTORIA — Cohorte prospectiva 2027 sin etiquetas ni emisión (18/10/2026)
 
 - **Nueva capacidad científica:** `research/psychohistory/future_2027_candidates.py` reutiliza los seis modelos preregistrados de `benchmark.predict_origin` con outcomes **NULOS** para 2027, features limitadas a 2025 y entrenamiento con etiquetas solo hasta 2025. La cohorte incluye exclusivamente países presentes en 2025 y con un historial 2021–2025 continuo; no imputación, selección por acierto futuro ni uso de violencia observada durante 2026. Baseline `frequency` preservado. Tests sintéticos y contrato en `docs/psicohistoria/COHORTE_2027_NO_EMITIDA.md`.

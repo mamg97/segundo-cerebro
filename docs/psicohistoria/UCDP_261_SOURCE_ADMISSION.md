@@ -1,6 +1,6 @@
 # PSICOHISTORIA — Admisión de la fuente OrganizedViolenceCY 26.1
 
-Estado: **integrada en `main` mediante PR #613**, tras superar pruebas y control de privacidad. **El ZIP y el PDF oficiales todavía no se han validado contra sus hashes en un entorno con acceso a los archivos.** Esta entrega no introduce nuevos pronósticos.
+Estado: **integrada en `main` mediante PR #613**, tras superar pruebas y control de privacidad. **El ZIP y PDF oficiales ya superaron SHA-256 y auditoría empírica en CI efímera del 18/10/2026; falta archivarlos permanentemente en Drive privado.** Esta entrega no introduce nuevos pronósticos.
 
 ## Problema científico
 
@@ -9,6 +9,31 @@ El repositorio ya fija, antes de esta entrega, los hashes SHA-256 del ZIP oficia
 Esta puerta nueva (`source_release_intake.py`) permite una revisión de admisibilidad **sin entrenar ni puntuar modelos**. Exige el ZIP exacto, el PDF exacto, un CSV seguro, campos oficiales, versión 26.1 por fila, IDs país-año únicos, 7.132 filas, 199 países, años 1989–2025, series nacionales sin huecos internos y conteos de fallecimientos no negativos y enteros. Rechaza ZIPs con rutas peligrosas, miembros adicionales o tamaños desproporcionados.
 
 **Qué NO demuestra:** los hashes garantizan identidad de contenido respecto al protocolo ya fijado, no la fecha original de publicación ni que un fichero concreto fuese accesible en cada corte histórico. Un reloj local o una URL actual no son por sí solos sellos temporales independientes. El resultado siempre declara `historicalAsOfVerified=false`, `independentPublicationEvidenceVerified=false`, `prospectiveEligible=false` y `modelTrained=false`. Tampoco prueba que se haya emitido ningún pronóstico.
+
+## Auditoría de bytes oficiales — 18/10/2026
+
+**Evidencia empírica positiva:** [GitHub Actions run 39130567553](https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553),
+job `official-source-probe`, `success`. Un runner efímero descargó **el ZIP y el
+codebook oficiales originales** de las dos URL registradas; `download.mjs`
+verificó que **ambos SHA-256 coinciden exactamente** con `protocol.json`;
+`source_release_intake.py` validó **7.132 filas, 199 países, 1989–2025**;
+y `benchmark.audit(strict=True)` pasó sobre el CSV real.
+
+**Hallazgo de esquema:** el codebook 26.1 **documenta** columnas `*_cy`,
+pero las cabeceras del ZIP real descargado con el checksum fijado utilizan
+`country_id` y `year` sin ese sufijo (`INTERNAL_ALIASES` en los logs).
+Por tanto el código previo ya era compatible con el CSV original. Se
+descartó el adaptador de cabeceras propuesto inicialmente: habría agregado
+complejidad no necesaria para los bytes fijados. Se conservan el validador,
+benchmark, tests y hashes originales sin cambios.
+
+**Límite operativo:** los originales y el manifiesto se procesaron en
+`RUNNER_TEMP` y se borraron al finalizar el job, **sin subir archivos a
+GitHub/artifacts**. Aún falta archivar permanentemente ambos originales y el
+manifiesto en Drive privado. El hecho de descargarlos durante este workflow
+acredita acceso a los bytes en la fecha de ejecución, **no acredita su
+disponibilidad histórica exacta en junio de 2026, ni una TSA independiente,
+ni una emisión prospectiva**. `PsicoPredicciones` sigue con cero filas.
 
 ## Uso privado
 
@@ -27,7 +52,7 @@ El comando lee **exclusivamente el protocolo del repositorio** y crea el manifie
 
 ## Próxima puerta
 
-1. Recuperar efectivamente ZIP y PDF oficiales con el downloader; verificar que coinciden los SHA preregistrados; conservar copia privada de los bytes (esta sesión no pudo obtenerlos ni localizar su copia en Drive).
+1. Recuperar los dos originales en Drive privado y conservar allí una copia duradera de los bytes y su manifiesto. Su descarga y validación en el runner efímero ya quedó acreditada en el workflow 39130567553; ese runner borró ambos archivos al finalizar.
 2. Obtener prueba independiente de fecha/edición de publicación, con trazabilidad temporal antes del `asOf` de las variables que se usarán para el horizonte futuro.
 3. Construir las features del primer origen futuro únicamente con información anterior al corte; fijar universo y baseline (el benchmark retrospectivo actual no genera sin cambios predicciones de un año sin resultado observado).
 4. Crear un borrador privado; comprobar contenido, recibo de TSA independiente y contrato de resolución. Solo después habilitar una **primera emisión**. La calibración y utilidad requerirán observar resultados posteriores y un número de casos suficiente.

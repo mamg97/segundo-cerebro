@@ -1,7 +1,7 @@
 # PSICOHISTORIA — Cohorte futura 2027 sin etiquetas observadas
 
 **Implementación:** \`research/psychohistory/future_2027_candidates.py\`.
-**Estado:** capacidad de preparación privada, NO pronósticos emitidos. Aún no se han validado los bytes oficiales UCDP 26.1 con los SHA-256 preregistrados. No se crea ninguna fila de \`PsicoPredicciones\`.
+**Estado:** capacidad de preparación privada, NO pronósticos emitidos. La verificación empírica de los bytes oficiales UCDP 26.1 contra ambos SHA-256 preregistrados pasó en CI efímera (workflow 39130567553, 18/10/2026); los originales no están todavía archivados permanentemente en Drive privado y ninguna cohorte real se ha ejecutado. No se crea ninguna fila de \`PsicoPredicciones\`.
 
 ## Qué calcula
 
@@ -36,7 +36,7 @@ No editar ni sustituir los SHA preregistrados si la descarga no coincide. El gen
 Una edición UCDP 2025 publicada antes de emitir en octubre-diciembre 2026 puede servir como entrada de un futuro *shadow forecast*, pero deben fijarse de forma independiente la disponibilidad de sus bytes y de sus variables. La nota oficial del 9/6/2026 acredita estadísticas públicas de 2025, pero **no** prueba la fecha de publicación del ZIP concreto.
 
 Antes de afirmar una emisión real, falta:
-1. Recuperar y verificar **los dos archivos reales** con sus hashes preregistrados.
+1. Conservar **los dos archivos reales** y su manifiesto en Drive privado; la verificación efímera de sus hashes y contenido ya pasó en CI el 18/10/2026, pero no generó un archivo privado duradero.
 2. Conservar evidencia externa con fecha y alcance de versión y de disponibilidad *as-of* del input.
 3. Preregistrar país/universo exactos, elección de modelo por criterio fijado **sin usar 2027**, baseline y resolución.
 4. Transformar cada candidato en un borrador del ledger con identificador y todos los SHA, obtener un recibo RFC3161 **de TSA independiente verificada**, y registrar una emisión fechada realmente antes del año objetivo.
