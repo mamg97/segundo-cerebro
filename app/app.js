@@ -5942,16 +5942,17 @@ async function homeMenuRecipeOptions() {
   }).catch(error => { homeMenuRecipeOptionsPromise = null; throw error; });
   return homeMenuRecipeOptionsPromise;
 }
-function homeMenuEditPayload(item, action, newRecipeId = null, newServings = null) {
+function homeMenuEditPayload(item, action, newRecipeId = null, newServings = null, newCompanionType = null) {
   return {
     action, sourceRow: item.sourceRow, date: item.date, moment: item.moment,
     ...(item.recipeId ? {recipeId:item.recipeId} : {foodId:item.foodId}),
     name: item.name, updatedAt: item.updatedAt || "",
     ...(newRecipeId ? {newRecipeId} : {}),
-    ...(newServings !== null ? {newServings} : {})
+    ...(newServings !== null ? {newServings} : {}),
+    ...(newCompanionType ? {newCompanionType} : {})
   };
 }
-async function submitHomeMenuEdit(item, action, recipeId, newServings = null) {
+async function submitHomeMenuEdit(item, action, recipeId, newServings = null, newCompanionType = null) {
   if (homeMenuEditPending) return false;
   homeMenuEditPending = true;
   homeWeeklyMenuLastVerifiedSerial = ++homeWeeklyMenuRequestSerial;
@@ -5959,7 +5960,7 @@ async function submitHomeMenuEdit(item, action, recipeId, newServings = null) {
     const response = await fetch("/api/nutrition/menu/edit", {
       method: "POST", credentials: "same-origin",
       headers: {"Content-Type": "application/json", Accept:"application/json"},
-      body: JSON.stringify(homeMenuEditPayload(item,action,recipeId,newServings))
+      body: JSON.stringify(homeMenuEditPayload(item,action,recipeId,newServings,newCompanionType))
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.ok !== true) throw new Error(result.code || "MENU_EDIT_FAILED");
@@ -5994,7 +5995,7 @@ function homeMenuRecipeProjection(item, recipe, day, newServings = null) {
   const fields = ["kcalPerServing","proteinPerServing","carbsPerServing","fatPerServing"];
   const valid = Number.isFinite(factor) && factor > 0 &&
     fields.every(key => recipe[key] !== null && Number.isFinite(Number(recipe[key]))) &&
-    !/pendiente|pending|sin confirmar|por confirmar/i.test(String(recipe.precision || ""));
+    !/pendiente|pending|sin confirmar|por confirmar|no usar para nuevas|solo histor|exclusiv.{0,16}histor/i.test(String(recipe.precision || ""));
   if (!valid) return null;
   const values = fields.map(key => Number(recipe[key]) * factor);
   const beforeKcal = item.kcal == null ? NaN : Number(item.kcal);
@@ -6019,12 +6020,25 @@ function homeMenuEditDialog() {
 async function openHomeMenuRecipeEditor(item, day) {
   if (homeMenuEditPending) return;
   const dialog = homeMenuEditDialog();
+  const foodCompanion = Boolean(item.foodId && !item.recipeId && normalizeWeeklyMenuMoment(item.itemRole) === "acompanante");
+  const defaultShake = foodCompanion && normalizeWeeklyMenuMoment(item.companionType) === "yogur";
+  const alreadyHasPrimary = foodCompanion && (Array.isArray(day?.items) ? day.items : []).some(other =>
+    other.sourceRow !== item.sourceRow && Boolean(other.recipeId) &&
+    normalizeWeeklyMenuMoment(other.itemRole || "receta") !== "acompanante" &&
+    normalizeWeeklyMenuMoment(canonicalWeeklyMenuMoment(other)) === normalizeWeeklyMenuMoment(canonicalWeeklyMenuMoment(item)) &&
+    !["retirado","omitido","cancelado"].includes(normalizeWeeklyMenuMoment(other.status))
+  );
   dialog.innerHTML = `
     <div class="home-menu-editor-main">
       <header><div><small>Menú semanal · modificar</small><h3>Cambiar receta</h3></div>
         <button type="button" data-menu-editor-cancel aria-label="Cerrar selector">✕</button></header>
       <p class="home-menu-editor-current">Actual: <strong>${escapeHtml(item.name || "Receta")}</strong> · ${item.kcal == null ? "—" : escapeHtml(formatKcal(item.kcal))} · P ${item.protein == null ? "—" : escapeHtml(formatMacro(item.protein))}</p>
-      ${item.foodId && !item.recipeId ? '<p class="home-menu-editor-food-hint">Este alimento se sustituirá por una receta. Indica el número de raciones de la nueva receta; no se convertirán automáticamente los gramos del alimento en raciones.</p><label class="home-menu-editor-servings">Raciones de la nueva receta <input type="number" data-menu-editor-servings min="0.25" max="20" step="0.25" placeholder="Ej.: 1" inputmode="decimal"></label>' : ""}
+      ${item.foodId && !item.recipeId ? '<p class="home-menu-editor-food-hint">Indica las raciones exactas de la receta elegida; los gramos del producto anterior no se convierten automáticamente.</p><label class="home-menu-editor-servings">Raciones de la nueva receta <input type="number" data-menu-editor-servings min="0.25" max="20" step="0.25" placeholder="Ej.: 1" inputmode="decimal"></label>' : ""}
+      ${foodCompanion ? `<label class="home-menu-editor-role-label">Cómo se incorporará la nueva receta
+        <select data-menu-editor-role aria-label="Clasificación de la nueva receta">
+          <option value="" ${defaultShake ? "" : "selected"}>Receta principal (solo si no hay otra)</option>
+          <option value="batido" ${defaultShake ? "selected" : ""}>Batido como acompañante, sin añadir plato principal</option>
+        </select></label><p class="home-menu-editor-food-hint">Elige «Batido» solo si la receta seleccionada es realmente una bebida o batido. No se marcará como consumido.</p>` : ""}
       <label>Buscar recetas <input type="search" data-menu-editor-search placeholder="Nombre de receta…" autocomplete="off"></label>
       <label>Receta alternativa <select data-menu-editor-select size="6" aria-label="Seleccionar receta alternativa"></select></label>
       <div class="home-menu-editor-projection" data-menu-editor-preview role="status">Elige una receta para ver cómo cambiarían sus macros.</div>
@@ -6039,6 +6053,7 @@ async function openHomeMenuRecipeEditor(item, day) {
   const select = dialog.querySelector("[data-menu-editor-select]");
   const preview = dialog.querySelector("[data-menu-editor-preview]");
   const servingsInput = dialog.querySelector("[data-menu-editor-servings]");
+  const roleSelect = dialog.querySelector("[data-menu-editor-role]");
   const save = dialog.querySelector("[data-menu-editor-save]");
   dialog.showModal();
   const options = await homeMenuRecipeOptions();
@@ -6049,10 +6064,13 @@ async function openHomeMenuRecipeEditor(item, day) {
     selectedRecipe = options.find(recipe => recipe.id === select.value) || null;
     const requestedServings = servingsInput ? servingsInput.value : null;
     const macro = selectedRecipe && homeMenuRecipeProjection(item,selectedRecipe,day,requestedServings);
-    save.disabled = !macro || homeMenuEditPending;
-    preview.innerHTML = !macro
-      ? '<span>Esta receta no tiene macros o ración verificables; no se puede aplicar.</span>'
-      : `<strong>${escapeHtml(selectedRecipe.name)}</strong>
+    const conflictingPrimary = Boolean(alreadyHasPrimary && roleSelect?.value !== "batido");
+    save.disabled = !macro || homeMenuEditPending || conflictingPrimary;
+    preview.innerHTML = conflictingPrimary
+      ? '<span>Esta comida ya tiene una receta principal. Si estás sustituyendo el postre por un batido, selecciona «Batido como acompañante».</span>'
+      : !macro
+        ? '<span>Esta receta no tiene macros/ración verificables o es histórica y no debe reutilizarse.</span>'
+        : `<strong>${escapeHtml(selectedRecipe.name)}</strong>
         <div>${escapeHtml(formatKcal(macro.kcal))} · P ${escapeHtml(formatMacro(macro.protein))} · HC ${escapeHtml(formatMacro(macro.carbs))} · G ${escapeHtml(formatMacro(macro.fat))}</div>
         <small>Nuevo plan del día: ${macro.dayKcal == null ? "kcal pendientes" : escapeHtml(formatKcal(macro.dayKcal))}
         · ${macro.dayProtein == null ? "proteína pendiente" : "P " + escapeHtml(formatMacro(macro.dayProtein))}</small>`;
@@ -6069,12 +6087,13 @@ async function openHomeMenuRecipeEditor(item, day) {
   input.addEventListener("input",updateChoices);
   select.addEventListener("change",updatePreview);
   servingsInput?.addEventListener("input",updatePreview);
+  roleSelect?.addEventListener("change",updatePreview);
   save.addEventListener("click",async () => {
     if (!selectedRecipe || save.disabled) return;
     save.disabled = true;
     save.textContent = "Guardando…";
     try {
-      await submitHomeMenuEdit(item,"replace",selectedRecipe.id,servingsInput ? Number(servingsInput.value) : null);
+      await submitHomeMenuEdit(item,"replace",selectedRecipe.id,servingsInput ? Number(servingsInput.value) : null,roleSelect?.value || null);
       dialog.close();
     } catch(error) {
       preview.textContent = "No se pudo guardar (" + String(error.message || "error") + "). Revisa el menú y vuelve a intentarlo.";
