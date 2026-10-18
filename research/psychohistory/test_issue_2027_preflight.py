@@ -9,6 +9,7 @@ from issue_2027_preflight import inspect_report, digest
 HERE = Path(__file__).parent
 POLICY = json.loads((HERE / "policy_2027.json").read_text())
 PROTOCOL = json.loads((HERE / "protocol.json").read_text())
+OBSERVATION = json.loads((HERE / "source_observation_20261018.json").read_text())
 
 
 def imaginary_report(canonical=False):
@@ -72,6 +73,38 @@ class FrozenPreflightTests(unittest.TestCase):
         self.assertFalse(out["issuanceEligible"])
         self.assertFalse(out["independentTsaVerified"])
         self.assertFalse(out["sourcePublicationAsOfVerified"])
+
+    def test_forward_source_observation_in_canonical_preflight_does_not_issue(self):
+        r = inspect_report(imaginary_report(canonical=True), POLICY, PROTOCOL,
+                           source_observation=OBSERVATION)
+        self.assertEqual(r["status"], "CANONICAL_SHADOW_PREFLIGHT_PASSED_NOT_ISSUED")
+        self.assertTrue(r["forwardSourceByteObservation"]["sourceObservedBeforeTargetStart"])
+        self.assertFalse(r["forwardSourceByteObservation"]["sourceAsOfForActualIssuanceCertified"])
+        self.assertTrue(r["forwardSourceByteObservation"]["githubApiAndLogsMustBeRecheckedExternally"])
+        self.assertFalse(r["forecastIssued"])
+        self.assertFalse(r["issuanceEligible"])
+        self.assertFalse(r["independentTsaVerified"])
+
+    def test_future_planned_issue_is_hypothetical_not_an_issuance(self):
+        r = inspect_report(imaginary_report(canonical=True), POLICY, PROTOCOL,
+                           source_observation=OBSERVATION,
+                           planned_issue_at="2026-11-01T12:00:00Z")
+        self.assertTrue(r["forwardSourceByteObservation"]["plannedIssuanceAfterObservation"])
+        self.assertFalse(r["issuanceEligible"])
+        for issue in ("2026-06-09T00:00:00Z", "2027-01-01T00:00:00Z"):
+            with self.subTest(issue=issue), self.assertRaises(ValueError):
+                inspect_report(imaginary_report(canonical=True), POLICY, PROTOCOL,
+                               source_observation=OBSERVATION, planned_issue_at=issue)
+
+    def test_witness_mismatch_cannot_turn_canonical_report_into_certified_asof(self):
+        bad = copy.deepcopy(OBSERVATION)
+        bad["archiveSha256"] = "0" * 64
+        with self.assertRaises(ValueError):
+            inspect_report(imaginary_report(canonical=True), POLICY, PROTOCOL,
+                           source_observation=bad)
+        with self.assertRaisesRegex(ValueError, "requires a source observation"):
+            inspect_report(imaginary_report(canonical=True), POLICY, PROTOCOL,
+                           planned_issue_at="2026-11-01T12:00:00Z")
 
     def test_outcome_lookahead_duplicate_nonfinite_and_model_selection_are_rejected(self):
         for mutate in ("outcome", "year", "feature", "training", "duplicate",
