@@ -66,6 +66,8 @@ def main():
     result["historical_attachments"] = dict(doc)
 
     patterns = collections.Counter()
+    inline_images = collections.Counter()
+    current_path = ""
     added_lines = 0
     p = subprocess.Popen(
         ["git", "log", "--all", "--no-ext-diff", "--no-color",
@@ -78,12 +80,23 @@ def main():
                 p.kill()
                 print(json.dumps({"scan_complete": False, "reason": "AUDIT_TIMEOUT"}))
                 return 2
+            if line.startswith(b"+++ b/"):
+                current_path = line[6:].decode("utf-8", "replace")
+                continue
             if not line.startswith(b"+") or line.startswith(b"+++"):
                 continue
             added_lines += 1
             for label, pattern in RULES.items():
-                if pattern.search(line):
+                match = pattern.search(line)
+                if match:
                     patterns[label] += 1
+                    if label == "EMBEDDED_IMAGE_BYTES":
+                        root = current_path.split("/", 1)[0]
+                        safe_root = root if root in {"app", "design", "docs", "research", "private-cloudflare", "scripts"} else "other"
+                        ext = PurePosixPath(current_path).suffix.lower()
+                        safe_ext = ext if ext in {".js", ".mjs", ".html", ".json", ".md", ".py", ".svg"} else "other"
+                        size_class = "under_10_kb" if len(match.group()) < 14000 else ("under_100_kb" if len(match.group()) < 140000 else "over_100_kb")
+                        inline_images[(safe_root, safe_ext, size_class)] += 1
         status = p.wait()
     finally:
         if p.poll() is None:
@@ -94,6 +107,10 @@ def main():
         return 2
     result["added_lines_examined"] = added_lines
     result["potential_sensitive_line_counts"] = dict(patterns)
+    result["embedded_media_classification"] = [
+        {"directory_category": root, "extension": ext, "encoded_size": size, "count": count}
+        for (root, ext, size), count in sorted(inline_images.items())
+    ]
     result["scan_complete"] = True
     result["review_required"] = bool(patterns or image["outside_known_generic_art"] or doc)
     print(json.dumps(result, sort_keys=True))
