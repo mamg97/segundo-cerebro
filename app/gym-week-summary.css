@@ -1,0 +1,119 @@
+/* Home: small current-week workout strip immediately after the initial health/macros summary. */
+.home-gym-week {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  min-width: 0;
+}
+.home-gym-week-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.home-gym-week-header .context-label {
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+.home-gym-week-header h2 {
+  margin: 0;
+  font-size: clamp(14px, 1.7vw, 19px);
+  line-height: 1.3;
+}
+.home-gym-week-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 9px;
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+.home-gym-week-meta strong { color: var(--ink); font-size: 10px; }
+.home-gym-week-meta small { color: var(--ink-soft); font-size: 9px; }
+.home-gym-week-state { margin: 12px 0 0; font-size: 11px; color: var(--ink-soft); }
+.home-gym-week-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+  align-items: start;
+}
+.home-gym-week-day {
+  min-width: 0;
+  min-height: 77px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.home-gym-week-day.is-trained {
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--line));
+  background: color-mix(in srgb, var(--mint) 8%, var(--surface));
+}
+.home-gym-week-day.is-today {
+  outline: 2px solid color-mix(in srgb, var(--blue) 45%, transparent);
+  outline-offset: -2px;
+}
+.home-gym-day-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--ink-soft);
+  font-weight: 750;
+}
+.home-gym-day-heading b { color: var(--ink); font-size: 11px; }
+.home-gym-day-group {
+  display: block;
+  min-width: 0;
+  margin-top: 8px;
+  line-height: 1.28;
+  font-size: 11px;
+  color: var(--ink);
+  font-weight: 800;
+  overflow-wrap: break-word;
+}
+.home-gym-day-empty {
+  display: block;
+  margin-top: 10px;
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+.home-gym-week-day summary { list-style: none; cursor: pointer; }
+.home-gym-week-day summary::-webkit-details-marker { display: none; }
+.home-gym-week-day summary:focus-visible { outline: 2px solid var(--blue); border-radius: 5px; }
+.home-gym-day-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+  margin-top: 6px;
+  font-size: 9px;
+  color: var(--blue);
+}
+.home-gym-day-count span { transition: transform .15s; }
+.home-gym-week-day[open] .home-gym-day-count span { transform: rotate(180deg); }
+.home-gym-day-details {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  margin-top: 9px;
+}
+.home-gym-session + .home-gym-session { border-top: 1px solid var(--line); padding-top: 6px; margin-top: 8px; }
+.home-gym-session > strong { font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
+.home-gym-session ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.home-gym-session li { margin-bottom: 7px; font-size: 10px; overflow-wrap: anywhere; }
+.home-gym-session li span { display: block; line-height: 1.4; }
+.home-gym-session li small { display: block; margin-top: 1px; font-size: 9px; line-height: 1.35; color: var(--ink-soft); }
+@media (max-width: 960px) {
+  .home-gym-week-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .home-gym-week { padding: 12px; }
+  .home-gym-week-days { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .home-gym-week-day { padding: 8px 9px; min-height: 65px; }
+  .home-gym-week-header .text-action { font-size: 10px; flex: none; }
+  .home-gym-day-group { font-size: 11px; }
+}
