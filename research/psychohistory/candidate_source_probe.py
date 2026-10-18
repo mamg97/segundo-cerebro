@@ -26,9 +26,9 @@ def _parse_event_date(value):
     # Never silently truncate a genuine non-midnight time or a timezone.
     if not isinstance(value, str):
         raise ValueError("Missing source event date")
-    if re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", value):
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
         return date.fromisoformat(value)
-    if not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2} 00:00:00\\.\\d{3}", value):
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2} 00:00:00\.\d{3}", value):
         raise ValueError("Unexpected Candidate event date format")
     parsed = datetime.fromisoformat(value)
     if parsed.time() != time(0, 0) or parsed.tzinfo is not None:
