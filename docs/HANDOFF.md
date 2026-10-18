@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Cierre de reproducción nonce en ruta histórica · 18/10/2026
+
+- **Bug residual:** `research/psychohistory/cohort_timestamp.py` (ensayo antiguo de cinco modelos) verificaba la impronta RFC3161, pero **no** el nonce de la solicitud original, a diferencia de `sealing.py` endurecido en PR #624. Ahora exige `openssl ts -verify -data` **y** `-queryfile request.tsq`, rechaza consulta faltante/symlink, y aclara `tsa_independence_verified=false` para CA pinneada por el propio operador.
+- **Prueba de seguridad:** integración real de OpenSSL con CA y TSA sintéticas efímeras; el TSR válido inicial pasa y un TSQ nuevo del mismo compromiso con nonce diferente falla. Ningún recibo real ni hash privado sale a Git; la antigua cohorte sigue `UNSEALED_DRY_RUN_DO_NOT_SCORE_AS_PROSPECTIVE` y la nueva 2027 sigue `PRECOMPROMISO_NO_EMITIDO`. No existe todavía `ISSUED`.
+- **Diseño:** las rutas `cohort_timestamp.py` (ensayo histórico de cinco modelos) y `cohort_2027_precommit.py` (canónico 2027 de seis modelos) siguen separadas por contrato; no mezclar artefactos. Consolidar utilidades RFC3161 únicamente tras asegurar tests de equivalencia de ambos esquemas.
+
+---
+
 ## PSICOHISTORIA — Precompromiso canónico 2027 archivado en Drive privado · 18/10/2026
 
 - **Operación real completada (no solo tests):** el código exacto del commit de `cohort_2027_precommit.py` se comparó con su SHA de blob Git, se ejecutó en layout real `research/psychohistory` sobre el JSON canónico privado de 196 países × seis modelos y generó **un único** `commitment.bin` salted (256 bits), `request.tsq` RFC3161 con nonce y manifiesto con hashes de candidato, código, protocolo y política 2027. `verify_bundle` pasó: valida hashes exactos e impronta TSQ. **No se ha enviado** la solicitud ni recibido `receipt.tsr`.
