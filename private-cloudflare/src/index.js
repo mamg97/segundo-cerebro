@@ -12,7 +12,7 @@ import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-so
 import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
-import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows, weeklyMenuConsumptionMatchKey } from "./weekly-menu.js";
+import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { menuConsumedFallbackForDate } from "./nutrition-history-fallback.js";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
