@@ -180,7 +180,7 @@ def verify_bundle(source_path, bundle_path):
         if " - " not in line:
             continue
         hex_part = line.split(" - ", 1)[1].split("   ", 1)[0]
-        values.extend(re.findall(r"(?i)\\b[0-9a-f]{2}\\b", hex_part))
+        values.extend(re.findall(r"(?i)\b[0-9a-f]{2}\b", hex_part))
     if bytes.fromhex("".join(values)) != hashlib.sha256(signed).digest():
         raise ValueError("RFC3161 query imprint does not bind the actual commitment")
     return {
