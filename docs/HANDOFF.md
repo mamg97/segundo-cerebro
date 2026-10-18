@@ -1,3 +1,11 @@
+## ORGANIZADOR — Home: menú semanal de nuevo al final (18/10/2026)
+
+- Petición: conservar **exactamente** el selector de semanas y la matriz grande de «Menú de la semana», pero evitar que ocupen la zona principal superior de Segundo Cerebro.
+- Corrección mínima: mover el **mismo** `section#home-weekly-menu-panel` de la segunda posición de `daily-overview-grid` a **después de Agenda semanal y antes del footer** del Home. Sin duplicar nodos ni cambiar su contenido interno, listeners, estilos, caché, endpoints o lógica; el selector de histórico sigue encima de la tabla.
+- Regresión: `app/home-weekly-menu-history.test.mjs` comprueba el orden real del DOM y la singularidad de los IDs, además de las pruebas históricas existentes. Sin cambio de fuentes ni de dato alguno. Verificar CI y despliegue privado.
+
+---
+
 ## ORGANIZADOR — Home: selector de semanas históricas en Menú (18/10/2026)
 
 - Petición: en el bloque principal **«Menú de la semana»** de Salud/Home, sobre la matriz horizontal de 7 días, poder consultar semanas anteriores y regresar a la actual sin abrir el diálogo «Ver menú completo».
