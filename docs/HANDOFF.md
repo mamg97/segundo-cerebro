@@ -1,3 +1,10 @@
+## PSICOHISTORIA — Precompromiso 2027 sin emisión · 18/10/2026
+
+- **Nueva capacidad:** `research/psychohistory/cohort_2027_precommit.py` prepara en un directorio nuevo **privado** un único compromiso salted SHA-256 para toda la cohorte canónica 2027, vinculando informe de 196 países × seis modelos, política de evaluación, protocolo, código y ZIP/PDF oficiales pinneados. Usa `issue_2027_preflight` (que falla ante wrappers no canónicos), genera `commitment.bin` y `request.tsq` RFC3161 con nonce vía OpenSSL. `verify` revalida origen, salt, bytes y *message imprint* real en TSQ; los tests usan un roster **ficticio** y atacan cambios en probabilidades, salt y TSQ.
+- **Cautela científica:** NO se ha solicitado un TSR real con la cohorte; un TSQ no acredita fecha, independencia TSA, ni fuente `as-of`. No hay estado `ISSUED` y `PsicoPredicciones` sigue con cero emisiones. Documentación: [COHORTE_2027_PRECOMPROMISO_RFC3161.md](docs/psicohistoria/COHORTE_2027_PRECOMPROMISO_RFC3161.md). No subir los contenidos reales del bundle a Git ni artifacts. Próxima fase: preparar el bundle usando el archivo canónico en entorno privado y evaluar ancla de confianza externa antes del sellado.
+
+---
+
 ## PSICOHISTORIA — Ejecución canónica real 2027 cerrada, sin emisión · 18/10/2026
 
 - **CLI literal ejecutado fuera del repo público:** los ocho archivos actuales del motor y generador `future_2027_candidates.py`, modelo, validadores, protocolo y preflight se trasladaron por un canal temporal y verificaron con SHA de blob Git idénticos a `main`; el documento de transferencia fue eliminado. Desde el ZIP UCDP original de Drive privado (24/24 hashes intactos), `--private-archive` produjo **196 países × seis modelos = 1.176 probabilidades** `outcome=null`; todas coinciden exactamente con el wrapper anterior (máxima desviación 0).
