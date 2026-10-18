@@ -1,3 +1,13 @@
+## PSICOHISTORIA — Repriorización metodológica: núcleo predictivo primero · 18/10/2026
+
+- **Decisión de alcance:** congelar F1B bolsa como piloto técnico sintético tras PR #639, SIN importar cotizaciones ni desplegar señales bursátiles. Continuar estudio de fenómenos colectivos —sobre todo **nuevas apariciones/reapariciones** y no solo presencia persistente—, hasta contar con evidencia `as-of`, métricas robustas frente a baseline fuerte y al menos cohortes prospectivas resueltas. El método científico es el producto; las finanzas serán una aplicación eventual. No tocar MIDAS ni patrimonio.
+- **Prueba de falsación:** `research/psychohistory/core_model_readiness.py` + `core_readiness_policy.json` + tests ficticios. Audita por separado los resultados `presence` / `onset` del benchmark anual original 2016–2025, con misma muestra pareada, reconciliación anual, intervalos por bloques, estabilidad de dos mitades temporales fijas y recuento de positivos. Incluso superar el cribado devuelve `RESEARCH_CANDIDATE_NOT_CONFIRMATORY`: nunca aprueba predicciones operativas o bolsa ni inventa `asof_verified`. Los umbrales de este cribado son post-hoc respecto del informe ya examinado.
+- **Limitación empírica importante:** benchmark anual de *onset* revisado Brier V2 0,017557 vs frecuencia 0,017576 (~0,1 % de reducción); GED recencia/reaparición mejora en algunas ventanas pero cuenta solo 3 bloques temporales no solapados en test y carece de vintage histórica. Estos resultados **no prueban** anticipación fiable de nuevas crisis. Reutilizar `ged_asof_provenance.py` como admisión de Candidate antes de cualquier nuevo backtest.
+- **Siguiente entregable:** seleccionar y archivar un vintage Candidate concreto con fecha de disponibilidad/scope confirmados, construir panel as-of de inicio de eventos con baseline local recencia y evaluar bloques temporales independientes. No añadir nuevas apps, orbes o pantallas de bolsa ahora. Protocolo: [PUERTA_EVIDENCIA_CIENTIFICA_V1.md](docs/psicohistoria/PUERTA_EVIDENCIA_CIENTIFICA_V1.md).
+- **Progreso:** después de fusionar este cambio en main y comprobar CI, añadir nuevas filas **append-only** en `PsicoAvances`; reflejar núcleo `MAD-04=PARCIAL` y congelación de `EQ-03` sin marcarlo completado. `PsicoPredicciones` permanece con 0 emisiones.
+
+---
+
 ## ORGANIZADOR — Home: seguimiento semanal de Gimnasio bajo macros (18/10/2026)
 
 - Franja compacta `Esta semana en el gimnasio` **después** de `daily-overview-grid` (hábitos, kcal, proteína, Gym, peso) y **antes** de Finanzas. El selector histórico y la tabla de `Menú de la semana` siguen al pie del Home.
