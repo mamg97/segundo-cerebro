@@ -157,10 +157,14 @@ class ReceiptGateTests(unittest.TestCase):
                 changed["payload"]["sourceEditionReleaseDate"] = when
                 entry = append_draft(root, changed)
                 args = {**self.kwargs(), "ledger_dir": root, "entry_sha256": entry["sha256"]}
+                (self.prepared / "payload.json").write_text(json.dumps(changed["payload"]))
+                (self.prepared / "commitment.bin").write_bytes(commitment(changed["payload"], self.nonce))
                 with patch("prospective_receipt_gate.verify_rfc3161") as verifier:
-                    with self.assertRaises(ValueError):
+                    with self.assertRaisesRegex(ValueError, "strictly before as-of"):
                         verify_precommitment(**args)
                     verifier.assert_not_called()
+                (self.prepared / "payload.json").write_text(json.dumps(self.draft["payload"]))
+                (self.prepared / "commitment.bin").write_bytes(self.commit)
 
     def test_cryptographic_verifier_is_not_optional(self):
         with patch("prospective_receipt_gate.verify_rfc3161", side_effect=ValueError("TSA invalid")):
