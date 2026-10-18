@@ -13,6 +13,8 @@ import json
 import math
 from pathlib import Path
 
+from source_observation_gate import assess as assess_source_observation
+
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 CANONICAL_SCHEMA = "psychohistory.ucdp_cy261_future_candidates.v1"
@@ -37,7 +39,7 @@ def safe_private_file(path):
     return path
 
 
-def inspect_report(report, policy, protocol):
+def inspect_report(report, policy, protocol, *, source_observation=None, planned_issue_at=None):
     """Validate *unissued* probabilities without inspecting future outcomes."""
     if not isinstance(report, dict) or not isinstance(policy, dict):
         raise ValueError("Invalid report or frozen 2027 policy")
@@ -114,8 +116,17 @@ def inspect_report(report, policy, protocol):
     elif report.get("candidateGeneratorCodeFromGitExecutedDirectly") is not False:
         raise ValueError("Prior wrapper must explicitly disclose noncanonical execution")
 
-    # No receipt, independently attested source publication, issued payload
-    # or future outcome is read here. They cannot become verified by default.
+    # A GitHub byte-observation witness is helpful for forward planning, but
+    # must never upgrade a preflight to a real signed/prospectively issued forecast.
+    if planned_issue_at is not None and source_observation is None:
+        raise ValueError('A proposed issuance time requires a source observation')
+    observation_assessment = (
+        assess_source_observation(source_observation, protocol,
+                                  target_year=policy['target_year'],
+                                  planned_issue_at=planned_issue_at)
+        if source_observation is not None else None
+    )
+    # No external receipt or signed publication proof is read here.
     return {
         "schema": RESULT_SCHEMA,
         "status": ("CANONICAL_SHADOW_PREFLIGHT_PASSED_NOT_ISSUED"
@@ -126,6 +137,7 @@ def inspect_report(report, policy, protocol):
         "probabilitiesChecked": len(seen) * len(policy["models"]),
         "modelProtocolAndCodeMatched": code_verified,
         "outcomesObserved": 0,
+        "forwardSourceByteObservation": observation_assessment,
         "forecastIssued": False,
         "independentTsaVerified": False,
         "sourcePublicationAsOfVerified": False,
@@ -148,6 +160,10 @@ def main():
     parser.add_argument("--candidate-json", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--require-canonical", action="store_true")
+    parser.add_argument("--source-observation", type=Path,
+                        help="Optional public GitHub CI byte-observation JSON, NOT a timestamp receipt")
+    parser.add_argument("--planned-issue-at",
+                        help="Hypothetical UTC issue time for forward source check only; never marks ISSUED")
     args = parser.parse_args()
     source = safe_private_file(args.candidate_json)
     target = args.out.absolute()
@@ -157,7 +173,11 @@ def main():
     policy = json.loads(policy_path.read_text())
     protocol = json.loads((HERE / "protocol.json").read_text())
     report = json.loads(source.read_text())
-    result = inspect_report(report, policy, protocol)
+    observation = (json.loads(args.source_observation.read_text(encoding='utf-8'))
+                   if args.source_observation is not None else None)
+    result = inspect_report(report, policy, protocol,
+                            source_observation=observation,
+                            planned_issue_at=args.planned_issue_at)
     if args.require_canonical and not result["modelProtocolAndCodeMatched"]:
         raise ValueError("Noncanonical prior wrapper cannot pass strict preissue provenance")
     result["candidateFileSha256"] = digest(source)

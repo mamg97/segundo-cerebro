@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Testigo de fuente integrado en el preflight 2027 · 18/10/2026
+
+- **Cambio implementado:** `issue_2027_preflight.py` ahora acepta opcionalmente `--source-observation` y `--planned-issue-at` (simulación de instante, no emisión) e incorpora `source_observation_gate.assess()`. Rechaza SHA inconsistentes y marcas hipotéticas anteriores a la descarga verificada de ZIP/PDF por GitHub o posteriores al comienzo del año objetivo 2027; tests sintéticos de errores y regresión.
+- **Puerta científica:** un log del proveedor con bytes verificados el 18/10/2026 es útil para la planificación futura, pero el preflight **siempre** deja `sourceAsOfForActualIssuanceCertified=false`, `issuanceEligible=false`, `forecastIssued=false` y no implica CI/TSA de pronóstico ni vintages históricos. Nueva documentación en [COHORTE_2027_NO_EMITIDA.md](docs/psicohistoria/COHORTE_2027_NO_EMITIDA.md).
+- **Registro de progreso:** tras PR+CI, añadir un nuevo `AV-YYYYMMDD-NNN` sin modificar los 15 eventos existentes. Mantener `MAD-02=PARCIAL` y `MAD-05=PREPARADO_NO_EMITIDO`. No tocar predicciones privadas, protocolos ni hashes pinneados.
+
+---
+
 ## PSICOHISTORIA — Fechas de fuente 2027: observación pública exacta, vintage histórico aún abierto · 18/10/2026
 
 - **Nuevo dato fechado obtenido del proveedor GitHub:** Actions [run 39130567553](https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553), `completed/success`, comenzó **13:13:01 UTC** y terminó no después de **13:13:19 UTC** del 18/10/2026. Descarga de ZIP/PDF UCDP 26.1, hashes del protocolo y auditoría del panel constan como pasos exitosos. Los bytes exactos estaban observados entonces, **antes del año objetivo 2027**. La nota pública Uppsala de 09/06/2026 solo acredita cifras generales, **no esos mismos hashes en junio**.
