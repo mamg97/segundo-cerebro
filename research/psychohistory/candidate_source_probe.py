@@ -61,6 +61,7 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         countries = set()
         years = set()
         types = set()
+        bound_errors = {"before_1989": 0, "after_2024": 0, "reversed": 0}
         for row in reader:
             count += 1
             if count > MAX_ROWS:
@@ -69,8 +70,9 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
             if country < 1:
                 raise ValueError("Invalid country ID")
             start, end = _parse_event_date(row["date_start"]), _parse_event_date(row["date_end"])
-            if start > end or end.year > 2024 or start.year < 1989:
-                raise ValueError("Future, reversed or invalid event bounds")
+            bound_errors["before_1989"] += int(start.year < 1989)
+            bound_errors["after_2024"] += int(end.year > 2024)
+            bound_errors["reversed"] += int(start > end)
             typ = int(row["type_of_violence"])
             if typ not in (1, 2, 3):
                 raise ValueError("Unknown type of organized violence")
@@ -81,6 +83,9 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
         raise ValueError("Unparseable Candidate event CSV") from exc
     if not count:
         raise ValueError("No events in Candidate source")
+    if any(bound_errors.values()):
+        # Aggregate counts only: identify structural issue without printing events.
+        raise ValueError("Candidate event date bounds mismatch: " + json.dumps(bound_errors, sort_keys=True))
     return {
         "schema": "psychohistory.ucdp_candidate_observation.v1",
         "source": "UCDP_CANDIDATE", "edition": edition,
