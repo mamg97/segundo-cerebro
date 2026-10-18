@@ -10,6 +10,29 @@ Esta puerta nueva (`source_release_intake.py`) permite una revisión de admisibi
 
 **Qué NO demuestra:** los hashes garantizan identidad de contenido respecto al protocolo ya fijado, no la fecha original de publicación ni que un fichero concreto fuese accesible en cada corte histórico. Un reloj local o una URL actual no son por sí solos sellos temporales independientes. El resultado siempre declara `historicalAsOfVerified=false`, `independentPublicationEvidenceVerified=false`, `prospectiveEligible=false` y `modelTrained=false`. Tampoco prueba que se haya emitido ningún pronóstico.
 
+## Compatibilidad con las columnas documentadas en el codebook 26.1 (18/10/2026)
+
+El PDF oficial 26.1 especifica `country_cy`, `country_id_cy`, `year_cy`,
+`region_cy`, `sb_total_deaths_best_cy`, `sb_total_deaths_low_cy`,
+`sb_total_deaths_high_cy`, `ns_total_deaths_best_cy` y
+`os_total_deaths_best_cy`. El benchmark interno consume los nombres equivalentes
+sin `_cy`. Los tests anteriores solo utilizaban el esquema interno ficticio:
+**no comprobaban la compatibilidad con las cabeceras especificadas oficialmente**.
+
+`source_schema.py` define una conversión explícita de estos nueve nombres que
+comparten el validador y el lector del benchmark. Los valores no se transforman.
+El campo `Version` es obligatorio en el formato interno; para las cabeceras
+nativas, si falta se vincula a la versión del protocolo **solo después de
+verificar los hashes exactos de ambos originales**. Si consta una versión
+contradictoria se rechaza. Columnas ambiguas, mezcladas o incompletas también
+se rechazan, en lugar de seleccionar columnas por heurísticas.
+
+Fuentes: [codebook oficial 26.1](https://ucdp.uu.se/downloads/organizedviolencecy/UCDP_OrganizedViolenceCY_Codebook_261.pdf).
+**Limitación:** aún falta descargar el ZIP/PDF originales y observar las
+cabeceras del CSV real: compatibilidad documental y tests ficticios NO
+constituyen validación empírica ni prueba de fecha de publicación. No se han
+modificado los hashes, las predicciones ni el protocolo científico.
+
 ## Uso privado
 
 Mantener las fuentes y resultados fuera del repositorio público:
