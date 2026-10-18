@@ -1,7 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
-import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.53";
+import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.55";
 import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
 import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";
 import { mockState } from "../core/mock-state.js";
@@ -1424,6 +1424,7 @@ function healthWeightSummary(body = {}, selectedDate = localDateKey()) {
 // Last successfully fetched private Gym snapshot, shared by Home and Salud.
 // Session-local only: it never replaces the canonical /api/gym source.
 let homeGymSnapshot = null;
+let homeHealthWeekNutritionHistory = null;
 function renderHomeGymWeekSummary(gymData = homeGymSnapshot, options = {}) {
   const node = document.querySelector("#home-gym-week-content");
   if (!node) return;
@@ -1431,7 +1432,10 @@ function renderHomeGymWeekSummary(gymData = homeGymSnapshot, options = {}) {
     node.innerHTML = renderHomeGymWeek(null, new Date(), { privateMode: false });
     return;
   }
-  node.innerHTML = renderHomeGymWeek(gymData, new Date(), options);
+  node.innerHTML = renderHomeGymWeek(gymData, new Date(), {
+    ...options,
+    nutritionHistory: homeHealthWeekNutritionHistory
+  });
 }
 function renderHomeGymSummary(healthData, gymData) {
   const summary = deriveGymTodaySummary(healthData, gymData);
@@ -1477,6 +1481,7 @@ async function renderHomeHealthCard() {
     ]);
     if (!response.ok) throw new Error("HOME_HEALTH_" + response.status);
     const data = await response.json();
+    homeHealthWeekNutritionHistory = Array.isArray(data.nutritionHistory) ? data.nutritionHistory : null;
     const gymData = gymResponse?.ok ? await gymResponse.json().catch(() => null) : null;
     if (gymData?.ok === true && Array.isArray(gymData.sessions)) {
       homeGymSnapshot = gymData;
