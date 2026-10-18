@@ -1678,7 +1678,7 @@ async function loadHomeWeeklyMenu(_primaryData = null, options = {}) {
   if (!options.navigation && selected !== current) return true;
   const requestSerial = ++homeWeeklyMenuRequestSerial;
   const cached = homeWeeklyMenuWeekCache.get(selected);
-  if (!options.force && cached && cached.expiresAt > Date.now()) {
+  if (options.navigation && !options.force && cached && cached.expiresAt > Date.now()) {
     if (requestSerial === homeWeeklyMenuRequestSerial && selectedHomeMenuWeek() === selected) {
       homeWeeklyMenuRenderedWeek = selected;
       renderHomeWeeklyMenu(cached.data, selected);
@@ -5927,7 +5927,8 @@ async function submitHomeMenuEdit(item, action, recipeId, newServings = null) {
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.ok !== true) throw new Error(result.code || "MENU_EDIT_FAILED");
     // A new verified snapshot is required even after a successful write.
-    await Promise.all([loadHomeWeeklyMenu(),renderHomeNutritionCard()]);
+    homeWeeklyMenuWeekCache.delete(currentHomeMenuWeek());
+    await Promise.all([loadHomeWeeklyMenu(null, { force: true }),renderHomeNutritionCard()]);
     return true;
   } finally {
     homeMenuEditPending = false;
@@ -6232,7 +6233,19 @@ function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek()) {
     return;
   }
 
-  const moments = weeklyMenuMatrixMoments(model.days);
+  // Home always has seven weekday columns, including historically unplanned days.
+  const dayByDate = new Map(model.days.map(day => [day.date, day]));
+  const monday = new Date(selectedWeek + "T12:00:00Z");
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const dayDate = new Date(monday);
+    dayDate.setUTCDate(monday.getUTCDate() + index);
+    const key = dayDate.toISOString().slice(0, 10);
+    return dayByDate.get(key) || {
+      date: key, items: [], kcal: 0, protein: 0, consumedKcal: 0,
+      consumedProtein: 0, nutritionComplete: true, consumedNutritionComplete: true
+    };
+  });
+  const moments = weeklyMenuMatrixMoments(weekDays);
 
   content.innerHTML = `
     <div class="home-weekly-menu-objectives" aria-label="Objetivos nutricionales diarios">
@@ -6246,13 +6259,13 @@ function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek()) {
         <div class="home-weekly-menu-corner">
           <span>Momento</span>
         </div>
-        ${model.days.map((day) => renderHomeWeeklyMenuDayHeader(day, model)).join("")}
+        ${weekDays.map((day) => renderHomeWeeklyMenuDayHeader(day, model)).join("")}
 
         ${moments.map((moment) => `
           <div class="home-weekly-menu-row-label">
             <span>${escapeHtml(moment.label)}</span>
           </div>
-          ${model.days.map((day) => {
+          ${weekDays.map((day) => {
             const rows = weeklyMenuItemsForMoment(day, moment.key);
             const allConsumed = rows.length > 0 && rows.every(weeklyMenuItemIsConsumed);
             return `
@@ -11181,7 +11194,15 @@ function bindInteractions() {
   document.querySelector("#home-health-nutrition")?.addEventListener("click", () => openHealthTabFromHome("nutrition"));
   document.querySelector("#home-health-recipes")?.addEventListener("click", () => openHealthTabFromHome("recipes"));
   document.querySelector("#home-health-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
-  document.querySelector("#show-home-weekly-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
+  document.querySelector("#show-home-weekly-menu")?.addEventListener("click", () => {
+    const week = selectedHomeMenuWeek();
+    if (week !== currentHomeMenuWeek()) {
+      healthMenuSelectedWeek = week;
+      healthMenuViewData = null;
+    }
+    openHealthTabFromHome("menu");
+    if (week !== currentHomeMenuWeek()) void loadHistoricalMenuWeek(week);
+  });
   document.querySelector("#home-pantry-open")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-pantry-inventory")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-shopping-list")?.addEventListener("click", () => openPantryDetail("shopping"));
