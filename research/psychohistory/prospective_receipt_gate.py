@@ -108,9 +108,12 @@ def verify_precommitment(*, ledger_dir, entry_sha256, prepared_dir, receipt,
         raise ValueError("Source edition release date is not strictly before as-of day")
 
     evidence = verify_rfc3161(bundle, Path(receipt), Path(trust_root), Path(chain))
-    if not isinstance(evidence, dict) or evidence.get("verified") is not True or evidence.get(
-            "payloadMatched") is not True or evidence.get("independentTimestamp") is not True:
-        raise ValueError("RFC3161 cryptographic verification was not successful")
+    if (not isinstance(evidence, dict) or evidence.get("verified") is not True or
+            evidence.get("payloadMatched") is not True or
+            evidence.get("rfc3161SignatureVerifiedWithSuppliedTrustRoot") is not True or
+            evidence.get("rfc3161RequestNonceMatched") is not True or
+            evidence.get("independentTimestamp") is not False):
+        raise ValueError("RFC3161 imprint, original nonce or scoped signature evidence failed")
     instant = utc(evidence["timestamp"])
     if not (instant <= utc(payload["issuedAt"]) and instant < utc(payload["resolutionAt"])):
         raise ValueError("Time stamp is after the declared forecast horizon/issue date")
@@ -132,6 +135,7 @@ def verify_precommitment(*, ledger_dir, entry_sha256, prepared_dir, receipt,
         "artifactSha256": fingerprints,
         "sourceEditionDatePriorToAsOfClaim": True,
         "rfc3161SignatureVerifiedWithSuppliedTrustRoot": True,
+        "rfc3161RequestNonceMatched": True,
         "externalAuthorityIndependenceVerified": False,
         "sourceReleaseEvidenceIndependentlyVerified": False,
         "sourceAvailabilityAsOfVerified": False,
