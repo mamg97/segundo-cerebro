@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateMidasWorkflowRuns } from "./midas-health.js";
+import { evaluateMidasWorkflowRuns, midasAuditVerdict } from "./midas-health.js";
 
 const classic = "MIDAS classic S&P500 503 paper";
 const started = "2026-10-16T23:48:00Z";
@@ -14,12 +14,16 @@ test("running MIDAS is pending, never a verified success before grace expires", 
   const result = classicStatus([run("in_progress")], "2026-10-17T02:00:00Z");
   assert.equal(result.state, "running");
   assert.equal(result.ok, false);
+  assert.equal(result.pending, true);
+  assert.equal(midasAuditVerdict(result), "pending");
 });
 
 test("running MIDAS remains unverified after grace expires", () => {
   const result = classicStatus([run("queued")], "2026-10-17T07:00:00Z");
   assert.equal(result.state, "running");
   assert.equal(result.ok, false);
+  assert.equal(result.pending, false);
+  assert.equal(midasAuditVerdict(result), "fail");
 });
 
 test("completed success covers a cycle even when a backup is still running", () => {
@@ -41,4 +45,10 @@ test("completed failed run after grace is a failure, not running", () => {
   const result = classicStatus([run("completed", "failure")], "2026-10-17T07:00:00Z");
   assert.equal(result.state, "failed");
   assert.equal(result.ok, false);
+});
+
+test("successful and not-due workflows are not classified as pending", () => {
+  assert.equal(midasAuditVerdict({ ok: true, state: "success" }), "pass");
+  assert.equal(midasAuditVerdict({ ok: true, state: "not_due_yet" }), "pass");
+  assert.equal(midasAuditVerdict({ ok: false, state: "failed" }), "fail");
 });

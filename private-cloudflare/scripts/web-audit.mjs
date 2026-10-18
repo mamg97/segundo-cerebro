@@ -17,7 +17,7 @@ import {
   scheduledTrackIsWithinFirstSessionWindow,
   visibleMenuRow
 } from "../src/web-audit-utils.js";
-import { evaluateMidasWorkflowRuns } from "../src/midas-health.js";
+import { evaluateMidasWorkflowRuns, midasAuditVerdict } from "../src/midas-health.js";
 import { validLegacyMidasCohort } from "../src/midas-legacy-cohort-health.js";
 
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
@@ -443,7 +443,12 @@ async function auditMidasCompetition() {
     const detail = item.latest
       ? `${item.state} · run #${item.latest.run_number || "?"} · ${item.latest.created_at || ""}`
       : item.state;
-    assertCheck(item.ok, `MIDAS · workflow ${item.name}`, item.detail ? detail + " · " + item.detail : detail);
+    const verdict = midasAuditVerdict(item);
+    if (verdict === "pending") {
+      info(`MIDAS · workflow pendiente ${item.name}`, detail);
+      continue;
+    }
+    assertCheck(verdict === "pass", `MIDAS · workflow ${item.name}`, item.detail ? detail + " · " + item.detail : detail);
   }
 
   const successful = new Set(health.workflows.filter((item) => item.state === "success").map((item) => item.name));

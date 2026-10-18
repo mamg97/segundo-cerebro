@@ -47,7 +47,7 @@ export function evaluateMidasWorkflowRuns(runs, now = Date.now()) {
       if (success) return { name: spec.name, ok: true, state: "success", latest: success,
                             attempts: sameWindow.length };
       const running = sameWindow.find((run) => run.status !== "completed");
-      if (running) return { name: spec.name, ok: false, state: "running", latest: running,
+      if (running) return { name: spec.name, ok: false, state: "running", pending: true, latest: running,
                             attempts: sameWindow.length };
       return { name: spec.name, ok: true, state: "not_due_yet", latest };
     }
@@ -72,11 +72,17 @@ export function evaluateMidasWorkflowRuns(runs, now = Date.now()) {
     }
 
     const running = cycle.find((run) => run.status !== "completed");
-    if (running) return { name: spec.name, ok: false, state: "running", latest: running, attempts: cycle.length };
+    if (running) return { name: spec.name, ok: false, state: "running", pending: false, latest: running, attempts: cycle.length };
 
     return { name: spec.name, ok: false, state: "failed", latest,
       attempts: cycle.length,
       detail: "ningún intento schedule de la última ventana terminó correctamente" };
   });
   return { ok: workflows.every((item) => item.ok), workflows, issues: workflows.filter((item) => !item.ok) };
+}
+
+// Running is never verified. Before the grace deadline it is pending, not a failure.
+export function midasAuditVerdict(item) {
+  if (item?.state === "running" && item.pending === true) return "pending";
+  return item?.ok === true ? "pass" : "fail";
 }
