@@ -74,6 +74,33 @@ por el mero hecho de existir un JSON verificable o un ZIP privado.
 - **No se declara pronóstico emitido:** ninguno tiene TSA recibo externo ni source `as-of` acreditado para emisión. No existe outcome 2027 ni Brier prospectivo puntuable.
 
 
+## Testigo contemporáneo de fuente en el preflight privado (18/10/2026)
+
+El CLI `issue_2027_preflight.py` acepta opcionalmente
+`--source-observation research/psychohistory/source_observation_20261018.json`.
+Invoca la puerta `source_observation_gate.assess` para validar que los
+ZIP/PDF originales de SHA públicos constan descargados y comprobados
+en el [workflow GitHub 39130567553](https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553)
+en octubre 2026 **antes del horizonte 2027**. El fichero JSON por sí solo
+no acredita la autenticidad de metadatos del proveedor ni se puede
+utilizar para justificar ventanas retrospectivas.
+
+Se puede pasar `--planned-issue-at YYYY-MM-DDTHH:MM:SSZ` como ensayo
+hipotético (obligatoriamente posterior a 2026-10-18T13:13:19Z y
+anterior a 2027-01-01T00:00:00Z). Esta marca **no es la hora de
+una emisión efectuada** y no escribe `PsicoPredicciones`.
+
+Tanto el testigo válido como el control de fecha superado se añaden
+al reporte privado de preflight en `forwardSourceByteObservation`;
+siempre se mantienen `sourceAsOfForActualIssuanceCertified=false`,
+`issuanceEligible=false`, `independentTsaVerified=false`,
+`forecastIssued=false` y `outcome=null`.
+
+**No alterar** el JSON congelado original de 2027, código generador,
+protocolo ni policy por esta evidencia auxiliar. Para una emisión real
+seguiría siendo obligatorio reconsultar metadatos externos y validar
+el sello temporal de las probabilidades.
+
 ## Control temporal y bloqueo pendiente
 
 Una edición UCDP 2025 publicada antes de emitir en octubre-diciembre 2026 puede servir como entrada de un futuro *shadow forecast*, pero deben fijarse de forma independiente la disponibilidad de sus bytes y de sus variables. La nota oficial del 9/6/2026 acredita estadísticas públicas de 2025, pero **no** prueba la fecha de publicación del ZIP concreto.
