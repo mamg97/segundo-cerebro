@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Fechas de fuente 2027: observación pública exacta, vintage histórico aún abierto · 18/10/2026
+
+- **Nuevo dato fechado obtenido del proveedor GitHub:** Actions [run 39130567553](https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553), `completed/success`, comenzó **13:13:01 UTC** y terminó no después de **13:13:19 UTC** del 18/10/2026. Descarga de ZIP/PDF UCDP 26.1, hashes del protocolo y auditoría del panel constan como pasos exitosos. Los bytes exactos estaban observados entonces, **antes del año objetivo 2027**. La nota pública Uppsala de 09/06/2026 solo acredita cifras generales, **no esos mismos hashes en junio**.
+- **Gate con pruebas adversariales:** `research/psychohistory/source_observation_gate.py` + `source_observation_20261018.json` recogen esta evidencia pública sin cifras individuales. Rechazan SHA falso, fecha backdated, fallo de job y uso del testigo de octubre de 2026 en backtests anteriores. **No declara** `sourceAsOfForActualIssuanceCertified=true` ni verifica criptográficamente metadatos del API por sí solo; deberá reconsultarse el proveedor en cualquier futura emisión. [Nota de alcance](docs/psicohistoria/UCDP_261_OBSERVACION_FUTURA_ASOF_20261018.md).
+- **Estado científico invariable:** `MAD-02=PARCIAL` (vintage histórico no reconstruido), `MAD-05=PREPARADO_NO_EMITIDO`, `PsicoPredicciones=0`; no hay recibo temporal sobre la cohorte ni score prospectivo. Registrar PR tras CI/merge en `PsicoAvances` y actualizar fase de datos.
+
+---
+
 ## PSICOHISTORIA — OpenTimestamps como vía adicional para la evidencia temporal · 18/10/2026
 
 - **Experimento en curso:** `.github/workflows/psychohistory-ots-synthetic-probe.yml` prueba `opentimestamps-client==0.7.2` contra calendarios públicos utilizando **solo un archivo ficticio**, sin enviar la cohorte real, hashes privados, TSQ, salt ni probabilidades. La prueba verifica solo devolución de `.ots` parseable, **NO** confirmación ni verificación frente a un bloque Bitcoin. Sin artifacts, suscripciones ni cron.
