@@ -15,6 +15,22 @@
 
 **Review date:** 2026-10-18 · **Type:** documentary release evidence only; no downloaded official source bytes have been validated in this session.
 
+## Nota de disponibilidad para la cohorte futura 2027 (18/10/2026)
+
+Una evidencia posterior a la auditoría documental permite ahora **distinguir
+el origen retrospectivo de la disponibilidad para un pronóstico futuro**:
+GitHub Actions [#39130567553](https://github.com/mamg97/segundo-cerebro/actions/runs/39130567553)
+registró por API su descarga y verificación exitosa de **los dos hashes
+exactos** durante **2026-10-18 13:13:01–13:13:19 UTC**. Por tanto, tenemos
+evidencia documental de los bytes para un horizonte 2027 posterior a esa
+observación, sin demostrar su accesibilidad en los orígenes 2016–2025 ni
+una publicación exacta en junio 2026. El run de GitHub no es una TSA
+independiente de la emisión, y **ningún pronóstico se considera emitido**.
+
+Evaluación formal y pruebas adversariales:
+[UCDP_261_OBSERVACION_FUTURA_ASOF_20261018.md](UCDP_261_OBSERVACION_FUTURA_ASOF_20261018.md).
+El gate siempre devuelve `sourceAsOfForActualIssuanceCertified=false`.
+
 ## Evidence with explicit, limited scope
 
 1. **UCDP official download center (current page):**
