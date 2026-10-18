@@ -143,10 +143,10 @@ export function parseOnsetCasebook(experiments=[]) {
   }
   return {accepted:accepted.slice(0,1),rejected};
 }
-export function onsetCasebookPanel(experiments=[]){
+export function onsetCasebookPanel(experiments=[],kindFilter=null){
   const parsed=parseOnsetCasebook(experiments);
   if(!parsed.accepted.length)return '';
-  const data=parsed.accepted[0], context=parseGedContextBatches(experiments,data), events=[...data.cases].sort((a,b)=>
+  const data=parsed.accepted[0], context=parseGedContextBatches(experiments,data), events=[...data.cases].filter(c=>!kindFilter||c.kind===kindFilter).sort((a,b)=>
     b.year-a.year||a.kind.localeCompare(b.kind)||a.country.localeCompare(b.country));
   const html=events.map(c=>'<tr data-onset-case data-kind="'+esc(c.kind)+'" data-year="'+c.year+'">'+
     '<td>'+c.year+'</td><td><strong>'+esc(c.country)+'</strong></td>'+
@@ -173,10 +173,11 @@ export function onsetCasebookPanel(experiments=[]){
     'una versión UCDP 25.1 revisada; no fueron emitidas en esos años.</p>'+
     '<a href="'+esc(data.evidence)+'" target="_blank" rel="noopener noreferrer">Consultar todos los casos y el informe original privado ↗</a></section>';
 }
-export function onsetSummaryPanel(experiments=[]){
+export function onsetSummaryPanel(experiments=[],kindFilter=null){
   const parsed=parseOnsetSummaries(experiments);
-  if(!parsed.accepted.length)return '';
-  const rows=parsed.accepted.map(d=>{
+  const selected=parsed.accepted.filter(d=>!kindFilter||d.kind===kindFilter);
+  if(!selected.length)return '';
+  const rows=selected.map(d=>{
     const t=d.test,positive=t.countrySkill>0;
     return '<article class="future-onset-report"><div class="future-onset-report-title"><strong>'+
       esc(d.label)+'</strong><span>UCDP Onset 25.1 · País-año</span></div>'+
@@ -193,7 +194,7 @@ export function onsetSummaryPanel(experiments=[]){
   return '<section class="panel future-onset-science" aria-label="Resultados de inicio de conflictos UCDP">'+
     '<div class="panel-head"><h3>Inicios de conflictos · primer contraste con hechos históricos</h3>'+
     '<span>2016–2024 · Retrospectivo revisado</span></div>'+
-    onsetObservedAnnualChart(parsed.accepted)+onsetCasebookPanel(experiments)+'<div class="future-onset-reports">'+rows.join('')+'</div>'+
+    onsetObservedAnnualChart(selected)+onsetCasebookPanel(experiments,kindFilter)+'<div class="future-onset-reports">'+rows.join('')+'</div>'+
     '<p class="future-epistemic">Se muestran resultados de los dos baselines registrados, no probabilidades de una invasión, '+
     'un conflicto concreto o el año actual. La fuente 25.1 es retrospectivamente revisada y su disponibilidad original '+
     'as-of no está acreditada; el intervalo representa variación por bloques de años, no un test de eficacia prospectiva.</p>'+
