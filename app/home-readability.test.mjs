@@ -16,15 +16,15 @@ test("Home no longer renders the unused Próximos movimientos block", () => {
 });
 
 test("Home weekly menu keeps a readable meal-by-day matrix", () => {
-  const start = app.indexOf("function renderHomeWeeklyMenu(data)");
+  const start = app.indexOf("function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek())");
   const end = app.indexOf("function renderNutritionEntries", start);
   assert.ok(start >= 0 && end > start);
   const renderer = app.slice(start, end);
   assert.match(renderer, /home-weekly-menu-table-scroll/);
   assert.match(renderer, /home-weekly-menu-table-cell/);
-  assert.match(renderer, /weeklyMenuMatrixMoments\(model\.days\)/);
+  assert.match(renderer, /weeklyMenuMatrixMoments\(weekDays\)/);
   assert.match(renderer, /renderHomeWeeklyMenuDayHeader\(day, model\)/);
-  assert.match(renderer, /renderHomeWeeklyMenuMatrixCell\(rows\)/);
+  assert.match(renderer, /renderHomeWeeklyMenuMatrixCell\(rows, selectedWeek !== currentHomeMenuWeek\(\)\)/);
   assert.doesNotMatch(renderer, /class="home-weekly-menu-grid"/);
 });
 
