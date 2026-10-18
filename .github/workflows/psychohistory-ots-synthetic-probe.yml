@@ -1,0 +1,42 @@
+# OpenTimestamps interoperability test: ONLY invented bytes, no private source,
+# real forecast commitment, salt, nonce, hash, country ID or metadata.
+# Calendar acceptance is NOT proof of Bitcoin confirmation or independent verification.
+name: PSICOHISTORIA OpenTimestamps synthetic calendar probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/psychohistory-ots-synthetic-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-ots-calendar-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Install pinned public OpenTimestamps client
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --no-input --disable-pip-version-check opentimestamps-client==0.7.2
+      - name: Submit only a clearly synthetic sample to free calendar servers
+        shell: bash
+        run: |
+          set -euo pipefail
+          folder="$RUNNER_TEMP/psychohistory-ots-synthetic"
+          mkdir -p "$folder"
+          chmod 700 "$folder"
+          printf '%s\n' 'PSICOHISTORIA SYNTHETIC OTS PROBE - NO REAL FORECAST' > "$folder/fake.bin"
+          timeout 125 ots stamp "$folder/fake.bin"
+          test -s "$folder/fake.bin.ots"
+          ots info "$folder/fake.bin.ots" > "$folder/stamp-info.txt"
+          test -s "$folder/stamp-info.txt"
+          printf '%s\n' 'SYNTHETIC_OTS_CALENDAR_ACCEPTED_NOT_BITCOIN_VERIFIED'
+          printf '%s\n' 'No actual cohort was sent, stamped, verified or issued'
+      - name: Erase synthetic proof and ephemeral files
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/psychohistory-ots-synthetic"
