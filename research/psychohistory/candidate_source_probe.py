@@ -7,7 +7,7 @@ point-in-time coverage. No event-level data, IDs or forecasts are logged.
 from __future__ import annotations
 import argparse
 import csv
-from datetime import date
+from datetime import date, datetime, time
 import hashlib
 import io
 import json
@@ -19,6 +19,21 @@ SOURCE_URL = "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_0_12.csv"
 MAX_BYTES = 80_000_000
 MAX_ROWS = 500_000
 SHA = re.compile(r"[0-9a-f]{64}\Z")
+
+
+def _parse_event_date(value):
+    # Candidate may encode midnight as YYYY-MM-DD 00:00:00.000.
+    # Never silently truncate a genuine non-midnight time or a timezone.
+    if not isinstance(value, str):
+        raise ValueError("Missing source event date")
+    if re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", value):
+        return date.fromisoformat(value)
+    if not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2} 00:00:00\\.\\d{3}", value):
+        raise ValueError("Unexpected Candidate event date format")
+    parsed = datetime.fromisoformat(value)
+    if parsed.time() != time(0, 0) or parsed.tzinfo is not None:
+        raise ValueError("Non-midnight or timezone-specific event date")
+    return parsed.date()
 
 
 def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
@@ -53,7 +68,7 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
             country = int(row[id_field])
             if country < 1:
                 raise ValueError("Invalid country ID")
-            start, end = date.fromisoformat(row["date_start"]), date.fromisoformat(row["date_end"])
+            start, end = _parse_event_date(row["date_start"]), _parse_event_date(row["date_end"])
             if start > end or end.year > 2024 or start.year < 1989:
                 raise ValueError("Future, reversed or invalid event bounds")
             typ = int(row["type_of_violence"])
