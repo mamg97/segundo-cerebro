@@ -1,8 +1,10 @@
-## PSICOHISTORIA — Auditor de intervalos Candidate frente a saltos de año · 18/10/2026
+## PSICOHISTORIA — Reconciliación de Candidate mensual 24.0.12 y precision 0 · 18/10/2026
 
-- **Cambio en revisión:** el codebook UCDP Candidate 1.3 permite eventos cuyos intervalos `date_start/date_end` cruzan meses. Los seis finales posteriores a 2024 en la edición mensual 24.0.12 no constituyen prueba suficiente de fuga; se añaden diagnósticos sintéticos que distinguen intervalo diciembre–enero de inicio futuro o extremos sin anclaje en diciembre. [Protocolo](docs/psicohistoria/CANDIDATE_DATE_WINDOW_RECONCILIATION.md).
-- **Puerta cerrada:** el diagnóstico aún requiere observación real y CI tras el cambio; no se dispone de evidencia criptográfica de disponibilidad de los bytes en enero de 2025, ni roster de países sin incidentes, ni target/score `as-of`. Mantener `MAD-02=PARCIAL`, `PsicoPredicciones=0`; evitar deshacer la bitácora AV-026, crear otro evento correctivo solo cuando exista prueba.
-- **Siguiente acción:** ejecutar el probe real en runner efímero, investigar los rangos y precisión temporal de las seis filas y registrar corrección append-only al pasar CI y fusionar la PR.
+- **Avance 27 confirmado:** [PR #654](https://github.com/mamg97/segundo-cerebro/pull/654) fusionada en main como `c7e3941e8484`. Tests científicos, descarga auténtica en runner efímero y control de privacidad correctos. El [codebook UCDP Candidate 1.3](https://ucdp.uu.se/downloads/candidateged/ucdp-candidate-codebook1.3.pdf) admite eventos con `date_start` o `date_end` en el mes exportado.
+- **Descubrimiento preciso:** los 2.110 eventos de la edición 24.0.12 observada ahora tienen un extremo en diciembre de 2024; los seis finales en 2025 empiezan en diciembre, ninguno empieza fuera de la ventana. **Esos mismos seis son los únicos con `date_prec=0`**, que el codebook 1.3 no describe (categorías 1–5). Estado fail-closed: `SOURCE_PRECISION_CODEBOOK_MISMATCH_REVIEW_REQUIRED`. La conclusión anterior AV-026 sobre anomalía de fecha, sin estos matices, se corrige mediante **AV-20261018-027** append-only.
+- **Tracker y restricciones:** `PsicoAvances` AV-027 añadido y reconsultado; `PsicoFases.MAD-02=PARCIAL`, `PsicoHitos.V2-02=EN_CURSO`; `PsicoPredicciones=0`. No hay datos/versiones certificados históricamente `as-of`, tampoco roster completo, scores ni emisiones. No se toca Worker, interfaz ni cohorte 2027.
+- **Próxima tarea comprobable:** investigar el significado de `date_prec=0` mediante documentación/proveedor; luego contrastar fecha+bytes de release y derivar roster independiente para un replay de nuevas crisis sin fuga. [Informe metodológico](docs/psicohistoria/CANDIDATE_DATE_WINDOW_RECONCILIATION.md).
+
 
 ---
 
