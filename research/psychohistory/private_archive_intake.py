@@ -89,7 +89,8 @@ def verify_private_archive(path, protocol):
         if archived_protocol != protocol:
             raise ValueError("Archived protocol is not the currently pinned protocol")
         entries = source_manifest.get("inputs") if isinstance(source_manifest, dict) else None
-        if (not isinstance(source_manifest, dict) or\n                source_manifest.get("datasetVersion") != protocol["dataset_version"] or
+        if (not isinstance(source_manifest, dict) or
+                source_manifest.get("datasetVersion") != protocol["dataset_version"] or
                 not isinstance(entries, list) or len(entries) != 2):
             raise ValueError("Source provenance manifest is incomplete")
         expected_sources = {
