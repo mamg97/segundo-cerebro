@@ -2919,7 +2919,9 @@ async function fetchMenuCompanionProductImages(env, token) {
   if (!sheetId) return null;
   const params = new URLSearchParams({ majorDimension: "ROWS", valueRenderOption: "UNFORMATTED_VALUE" });
   params.append("ranges", "Productos!A1:A2000");
+  params.append("ranges", "Productos!F1:F2000");
   params.append("ranges", "Productos!R1:R2000");
+  params.append("ranges", "Productos!T1:T2000");
   const response = await fetch(
     "https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(sheetId) + "/values:batchGet?" + params,
     { headers: { Authorization: "Bearer " + token } }
@@ -2927,7 +2929,9 @@ async function fetchMenuCompanionProductImages(env, token) {
   if (!response.ok) throw new Error("MENU_PRODUCT_IMAGES_" + response.status);
   const ranges = (await response.json())?.valueRanges || [];
   const ids = ranges[0]?.values || [];
-  const images = ranges[1]?.values || [];
+  const formats = ranges[1]?.values || [];
+  const images = ranges[2]?.values || [];
+  const names = ranges[3]?.values || [];
   const products = new Map();
   for (let index = 1; index < ids.length; index++) {
     const id = String(ids[index]?.[0] || "").trim();
@@ -2935,6 +2939,8 @@ async function fetchMenuCompanionProductImages(env, token) {
     const candidate = String(images[index]?.[0] || "").trim();
     products.set(id, {
       id,
+      format: String(formats[index]?.[0] || "").trim(),
+      menuDisplayName: String(names[index]?.[0] || "").trim() || null,
       imageUrl: /^https:\/\//i.test(candidate) ? candidate : null
     });
   }
