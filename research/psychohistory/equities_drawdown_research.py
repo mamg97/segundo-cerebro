@@ -221,6 +221,45 @@ def evaluate(prices, asset, source_sha256):
     }
 
 
+
+def latest_shadow(prices, asset, source_sha256):
+    """Most-recent exploratory probability, outcome always UNKNOWN.
+
+    Never backdate this as a forecast issued on the most recent bar: the
+    source's actual download time, vendor vintage and exchange close time
+    are not independently attested by this code.
+    """
+    origin = len(prices) - 1
+    guess = predict_at(prices, origin)
+    return {
+        "schema": "psychohistory.equities_20session_shadow_latest.v1",
+        "asset_id": asset,
+        "origin_close_date": prices[origin][0].isoformat(),
+        "horizon_sessions": HORIZON,
+        "target": "ANY_ADJUSTED_CLOSE_DROP_5PCT_WITHIN_20_SESSIONS",
+        "status": "SHADOW_NOT_ISSUED",
+        "model_status": guess["status"],
+        "probability": guess["probability"],
+        "baseline_probability": guess["baseline"],
+        "train_n": guess["n"],
+        "last_resolved_training_label_date": guess["last_resolved"],
+        "outcome": None,
+        "input_sha256": source_sha256,
+        "independent_input_vintage_verified": False,
+        "forecast_issue_timestamp_verified": False,
+        "trade_signal_validated": False,
+        "realized_pnl": None,
+    }
+
+
+def write_private_json(payload, path):
+    p = private_path(path, create=True)
+    with p.open("x", encoding="utf-8") as f:
+        json.dump(payload, f, sort_keys=True, allow_nan=False, indent=2)
+        f.write("\n")
+    p.chmod(0o600)
+
+
 def write_private_csv(rows, path):
     p = private_path(path, create=True)
     with p.open("x", encoding="utf-8-sig", newline="") as f:
@@ -236,10 +275,14 @@ def main():
     ap.add_argument("--source-sha256", required=True)
     ap.add_argument("--source-asof", required=True, help="Vendor snapshot date, not independently verified")
     ap.add_argument("--output-csv", type=Path, required=True)
+    ap.add_argument("--latest-shadow-json", type=Path,
+                    help="Optional private research snapshot, NEVER an issued forecast")
     args = ap.parse_args()
     asset, prices, digest = read_prices(args.input_csv, args.source_sha256, args.source_asof)
     rows, report = evaluate(prices, asset, digest)
     write_private_csv(rows, args.output_csv)
+    if args.latest_shadow_json is not None:
+        write_private_json(latest_shadow(prices, asset, digest), args.latest_shadow_json)
     # Do not log real prices, securities, paths, or provenance hashes.
     print(json.dumps(report, sort_keys=True, allow_nan=False))
 
