@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import { menuWeekMonday, menuShiftWeek, menuWeekRangeLabel } from "./menu-week-history.js";
 
 const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
 const start = app.indexOf("let homeWeeklyMenuRequestSerial = 0;");
@@ -15,6 +16,9 @@ function harness(fetchImpl) {
   let unavailable = false;
   const context = {
     encodeURIComponent,
+    menuWeekMonday, menuShiftWeek, menuWeekRangeLabel,
+    document: { querySelector: () => null },
+    escapeHtml: (value) => String(value),
     localDateKey: () => "2026-06-02",
     fetch: (...args) => { calls.push(args); return fetchImpl(...args); },
     renderHomeWeeklyMenu: (data) => { renders.push(data); unavailable = false; },
@@ -32,7 +36,7 @@ function harness(fetchImpl) {
 const stale = { weeklyMenu: [
   { date:"2026-06-03", moment:"Comida", kcal:420, protein:21 }
 ] };
-const fresh = { ok:true, weeklyMenu: [
+const fresh = { ok:true, date:"2026-06-02", weekStart:"2026-06-01", weeklyMenu: [
   { date:"2026-06-03", moment:"Comida", kcal:420, protein:21 },
   { date:"2026-06-03", moment:"Media mañana", kcal:80, protein:12 },
   { date:"2026-06-05", moment:"Desayuno", kcal:200, protein:25 }
@@ -91,7 +95,7 @@ test("a later failed request cannot overwrite an earlier successful Sheets menu"
 test("an older delayed Sheets response cannot replace a later successful response", async () => {
   let resolveOlder;
   let n=0;
-  const older={ok:true,weeklyMenu:[{date:"2026-06-03",moment:"Comida",kcal:400,protein:18}]};
+  const older={ok:true,date:"2026-06-02",weekStart:"2026-06-01",weeklyMenu:[{date:"2026-06-03",moment:"Comida",kcal:400,protein:18}]};
   const h=harness(async () => {
     n+=1;
     if(n===1) return await new Promise(resolve => {resolveOlder=resolve;});
@@ -100,7 +104,7 @@ test("an older delayed Sheets response cannot replace a later successful respons
   const first=h.context.loadHomeWeeklyMenu();
   assert.equal(await h.context.loadHomeWeeklyMenu(),true);
   resolveOlder({ok:true,json:async()=>older});
-  assert.equal(await first,true);
+  assert.equal(await first,false, "superseded request must not report accepted data");
   assert.equal(h.renders.length,1);
   assert.equal(h.rendered.weeklyMenu.length,3);
 });

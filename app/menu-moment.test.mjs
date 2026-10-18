@@ -41,7 +41,7 @@ test("incomplete grouped meals and day totals are labeled as known subtotals", (
   assert.match(app, /weekly-menu-group-subtotal/);
   assert.match(app, /Subtotal conocido/);
   const headerStart = app.indexOf("function renderHomeWeeklyMenuPlanBar");
-  const headerEnd = app.indexOf("function renderHomeWeeklyMenu(data)", headerStart);
+  const headerEnd = app.indexOf("function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek())", headerStart);
   const header = app.slice(headerStart, headerEnd);
   assert.ok(header.includes('plannedIncomplete ? "≥" : ""'), "missing planned macros must stay visibly partial");
   assert.ok(header.includes('consumedIncomplete ? "≥" : ""'), "missing consumption must stay visibly partial");
@@ -101,7 +101,7 @@ test("opening a recipe from Home does not race the regular nutrition loader", ()
 
 
 test("Home renders a recipe link from recipe_id even when the light menu payload has no recipe object", () => {
-  const start = app.indexOf("function renderHomeWeeklyMenuMatrixCell(items)");
+  const start = app.indexOf("function renderHomeWeeklyMenuMatrixCell(items, readOnly = false)");
   const end = app.indexOf("async function openHomeWeeklyMenuRecipe", start);
   assert.ok(start >= 0 && end > start);
   const renderer = app.slice(start, end);

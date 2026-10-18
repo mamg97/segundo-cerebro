@@ -27964,3 +27964,112 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
     font-size: 12px;
   }
 }
+
+
+/* Home Menu history: compact week selector above the matrix at all widths.
+   These rules apply only to the private/dashboard Home menu surface. */
+.home-weekly-menu-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 18px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--blue) 6%);
+}
+.home-weekly-menu-week-period {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.home-weekly-menu-week-period small {
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+.home-weekly-menu-week-period strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 850;
+}
+.home-weekly-menu-week-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 7px;
+}
+.home-weekly-menu-week-controls > button {
+  min-height: 35px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--blue);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.home-weekly-menu-week-controls > button[data-home-menu-week-step] {
+  min-width: 37px;
+  font-size: 18px;
+  line-height: 1;
+}
+.home-weekly-menu-week-controls > button:disabled {
+  opacity: .42;
+  cursor: default;
+}
+.home-weekly-menu-week-controls label {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+.home-weekly-menu-week-controls input {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 160px;
+  min-height: 35px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+.home-weekly-menu-week-status {
+  flex: 1 0 100%;
+  min-height: 0;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+.home-weekly-menu-week-status:empty { display: none; }
+.home-weekly-menu-week-status.is-warning { color: var(--coral); }
+@media (max-width: 560px) {
+  .home-weekly-menu-navigation {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 9px;
+    padding: 11px;
+  }
+  .home-weekly-menu-week-controls {
+    width: 100%;
+  }
+  .home-weekly-menu-week-controls > button {
+    padding: 7px 9px;
+  }
+  .home-weekly-menu-week-controls label {
+    flex: 1 1 140px;
+  }
+  .home-weekly-menu-week-controls input {
+    flex: 1 1 auto;
+  }
+}

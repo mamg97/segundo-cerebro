@@ -4,7 +4,7 @@ import vm from "node:vm";
 import {readFileSync} from "node:fs";
 const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
 const css=readFileSync(new URL("./styles.css",import.meta.url),"utf8");
-const from=app.indexOf("function renderHomeWeeklyMenuMatrixCell(items) {");
+const from=app.indexOf("function renderHomeWeeklyMenuMatrixCell(items, readOnly = false) {");
 const to=app.indexOf("async function openHomeWeeklyMenuRecipe(",from);
 const projectionStart=app.indexOf("function homeMenuEditPayload(");
 const projectionEnd=app.indexOf("function homeMenuEditDialog()",projectionStart);

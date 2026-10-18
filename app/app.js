@@ -1602,13 +1602,94 @@ function renderHomeHabitsCard() {
 // snapshot must not overwrite an updated menu when a concurrent read fails.
 let homeWeeklyMenuRequestSerial = 0;
 let homeWeeklyMenuLastVerifiedSerial = 0;
-let homeWeeklyMenuLastVerifiedDate = null;
+// null means follow the current local calendar week across midnight/Sundays.
+let homeWeeklyMenuSelectedWeek = null;
+let homeWeeklyMenuRenderedWeek = null;
+const homeWeeklyMenuWeekCache = new Map();
+const HOME_WEEK_CACHE_MS = 5 * 60_000;
 
-async function loadHomeWeeklyMenu(_primaryData = null) {
-  const date = localDateKey();
+function currentHomeMenuWeek() {
+  return menuWeekMonday(localDateKey());
+}
+
+function selectedHomeMenuWeek() {
+  return homeWeeklyMenuSelectedWeek || currentHomeMenuWeek();
+}
+
+function homeWeeklyMenuWeekNavigationMarkup(week = selectedHomeMenuWeek()) {
+  const current = currentHomeMenuWeek();
+  const selected = menuWeekMonday(week) || current;
+  return '<div class="home-weekly-menu-week-period">' +
+    '<small>Semana seleccionada</small><strong>' + escapeHtml(menuWeekRangeLabel(selected)) + '</strong></div>' +
+    '<div class="home-weekly-menu-week-controls">' +
+      '<button type="button" data-home-menu-week-step="-1" aria-label="Semana anterior" title="Semana anterior">‹</button>' +
+      '<label>Ir a fecha <input type="date" id="home-menu-week-picker" value="' + selected +
+        '" max="' + localDateKey() + '" aria-label="Elegir una fecha de la semana"></label>' +
+      '<button type="button" data-home-menu-week-step="1" aria-label="Semana siguiente" title="Semana siguiente"' +
+        (selected >= current ? ' disabled' : '') + '>›</button>' +
+      '<button type="button" data-home-menu-week-current' + (selected === current ? ' disabled' : '') +
+        '>Esta semana</button>' +
+    '</div>';
+}
+
+function renderHomeWeeklyMenuNavigation(status = "", warning = false) {
+  const nav = document.querySelector("#home-weekly-menu-navigation");
+  if (!nav) return;
+  nav.innerHTML = homeWeeklyMenuWeekNavigationMarkup() +
+    '<p class="home-weekly-menu-week-status' + (warning ? ' is-warning' : '') +
+      '" role="status" aria-live="polite">' + escapeHtml(status) + '</p>';
+  nav.querySelectorAll("[data-home-menu-week-step]").forEach(button =>
+    button.addEventListener("click", () =>
+      void goToHomeMenuWeek(menuShiftWeek(selectedHomeMenuWeek(), Number(button.dataset.homeMenuWeekStep)))));
+  nav.querySelector("#home-menu-week-picker")?.addEventListener("change", event =>
+    void goToHomeMenuWeek(event.target.value));
+  nav.querySelector("[data-home-menu-week-current]")?.addEventListener("click", () =>
+    void goToHomeMenuWeek(currentHomeMenuWeek()));
+}
+
+async function goToHomeMenuWeek(date) {
+  const week = menuWeekMonday(date);
+  const current = currentHomeMenuWeek();
+  if (!week || !current || week > current || homeMenuEditPending) {
+    renderHomeWeeklyMenuNavigation("Solo puedes consultar semanas hasta la actual.", true);
+    return false;
+  }
+  const priorSelection = homeWeeklyMenuSelectedWeek;
+  const targetSelection = week === current ? null : week;
+  if (targetSelection === priorSelection && homeWeeklyMenuRenderedWeek === week) return true;
+  // Invalidate any older request immediately: it must not overwrite the choice.
+  ++homeWeeklyMenuRequestSerial;
+  homeWeeklyMenuSelectedWeek = targetSelection;
+  renderHomeWeeklyMenuNavigation("Consultando menú de la semana…");
+  const loaded = await loadHomeWeeklyMenu(null, { force: false, navigation: true });
+  if (!loaded && selectedHomeMenuWeek() === week) {
+    homeWeeklyMenuSelectedWeek = priorSelection;
+    renderHomeWeeklyMenuNavigation("No se pudo consultar esa semana. Se conserva la anterior.", true);
+  }
+  return loaded;
+}
+
+async function loadHomeWeeklyMenu(_primaryData = null, options = {}) {
+  const current = currentHomeMenuWeek();
+  const selected = selectedHomeMenuWeek();
+  if (!selected || !current) return false;
+  // Home's regular nutrition refresh is about today. Do not replace a history
+  // page the user is inspecting with the current week.
+  if (!options.navigation && selected !== current) return true;
   const requestSerial = ++homeWeeklyMenuRequestSerial;
+  const cached = homeWeeklyMenuWeekCache.get(selected);
+  if (options.navigation && !options.force && cached && cached.expiresAt > Date.now()) {
+    if (requestSerial === homeWeeklyMenuRequestSerial && selectedHomeMenuWeek() === selected) {
+      homeWeeklyMenuRenderedWeek = selected;
+      renderHomeWeeklyMenu(cached.data, selected);
+      homeWeeklyMenuLastVerifiedSerial = requestSerial;
+    }
+    return true;
+  }
+
+  renderHomeWeeklyMenuNavigation("Consultando menú de la semana…");
   let lastError = null;
-  // One bounded retry for an intermittent gateway/Sheets read failure.
+  const date = selected === current ? localDateKey() : selected;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const response = await fetch("/api/nutrition/menu?date=" + encodeURIComponent(date), {
@@ -1618,24 +1699,32 @@ async function loadHomeWeeklyMenu(_primaryData = null) {
       });
       if (!response.ok) throw new Error("HOME_WEEKLY_MENU_" + response.status);
       const data = await response.json();
-      if (!data?.ok || !Array.isArray(data.weeklyMenu)) throw new Error("HOME_WEEKLY_MENU_INVALID");
-      if (requestSerial >= homeWeeklyMenuLastVerifiedSerial || homeWeeklyMenuLastVerifiedDate !== date) {
-        homeWeeklyMenuLastVerifiedSerial = requestSerial;
-        homeWeeklyMenuLastVerifiedDate = date;
-        renderHomeWeeklyMenu(data);
+      if (!data?.ok || !Array.isArray(data.weeklyMenu) ||
+          menuWeekMonday(data.weekStart || data.date || "") !== selected) {
+        throw new Error("HOME_WEEKLY_MENU_INVALID_WEEK");
       }
-      return data.weeklyMenu.length > 0;
+      if (requestSerial !== homeWeeklyMenuRequestSerial || selectedHomeMenuWeek() !== selected) return false;
+      homeWeeklyMenuWeekCache.set(selected, { data, expiresAt: Date.now() + HOME_WEEK_CACHE_MS });
+      while (homeWeeklyMenuWeekCache.size > 12) {
+        homeWeeklyMenuWeekCache.delete(homeWeeklyMenuWeekCache.keys().next().value);
+      }
+      homeWeeklyMenuLastVerifiedSerial = requestSerial;
+      homeWeeklyMenuRenderedWeek = selected;
+      renderHomeWeeklyMenu(data, selected);
+      return true;
     } catch (error) {
       lastError = error;
     }
   }
-  console.warn("Home weekly menu live read unavailable", lastError);
-  // Another in-flight read may already have rendered a current, verified menu.
-  if (homeWeeklyMenuLastVerifiedDate === date) return true;
-  // Never silently present a potentially old full-nutrition cache as the
-  // current weekly plan: indicate unavailable until Sheets can be read.
-  if (requestSerial === homeWeeklyMenuRequestSerial) renderHomeWeeklyMenuUnavailable();
-  return false;
+  if (requestSerial !== homeWeeklyMenuRequestSerial || selectedHomeMenuWeek() !== selected) return false;
+  console.warn("Home weekly menu read unavailable", String(lastError?.message || "UNAVAILABLE"));
+  if (homeWeeklyMenuRenderedWeek === selected) {
+    renderHomeWeeklyMenuNavigation("No se ha podido actualizar. Se mantiene la última consulta.", true);
+  } else if (homeWeeklyMenuRenderedWeek === null) {
+    renderHomeWeeklyMenuUnavailable();
+  }
+  // A refresh failure does not invalidate an already verified view of this week.
+  return homeWeeklyMenuRenderedWeek === selected;
 }
 async function renderHomeNutritionCard() {
   const consumedNode = document.querySelector("#home-kcal-consumed");
@@ -5610,6 +5699,8 @@ function hideHomeWeeklyMenu() {
   if (!panel || !content) return;
   panel.hidden = true;
   content.innerHTML = "";
+  document.querySelector("#home-weekly-menu-navigation")?.replaceChildren();
+  homeWeeklyMenuRenderedWeek = null;
 }
 
 function renderHomeWeeklyMenuUnavailable() {
@@ -5617,6 +5708,7 @@ function renderHomeWeeklyMenuUnavailable() {
   const content = document.querySelector("#home-weekly-menu-content");
   if (!panel || !content) return;
   panel.hidden = false;
+  renderHomeWeeklyMenuNavigation("No se pudo consultar el menú. Puedes elegir otra semana.", true);
   content.innerHTML = `
     <div class="home-weekly-menu-state">
       <strong>Menú semanal temporalmente no disponible</strong>
@@ -5719,7 +5811,7 @@ function weeklyMenuItemsForMoment(day, momentKey) {
     .filter((item) => normalizeWeeklyMenuMoment(canonicalWeeklyMenuMoment(item)) === momentKey);
 }
 
-function renderHomeWeeklyMenuMatrixCell(items) {
+function renderHomeWeeklyMenuMatrixCell(items, readOnly = false) {
   const rows = Array.isArray(items) ? items.filter(Boolean) : [];
   if (!rows.length) return '<span class="home-weekly-menu-empty-cell">—</span>';
   return `
@@ -5746,7 +5838,7 @@ function renderHomeWeeklyMenuMatrixCell(items) {
         // moment or whether the row is a recipe or a Pantry food companion.
         const sourceId = Boolean(recipeId) !== Boolean(item.foodId);
         const planned = ["planificado","pendiente"].includes(normalizeWeeklyMenuMoment(item.status));
-        const canEdit = sourceId && planned && Number.isSafeInteger(item.sourceRow) && item.sourceRow > 1 &&
+        const canEdit = !readOnly && sourceId && planned && Number.isSafeInteger(item.sourceRow) && item.sourceRow > 1 &&
           (!item.itemRole || ["receta","acompanante"].includes(normalizeWeeklyMenuMoment(item.itemRole)));
         return `
           <div class="weekly-menu-group-item ${consumed ? "is-consumed" : ""}" data-menu-source-row="${Number(item.sourceRow) || 0}">
@@ -5772,7 +5864,7 @@ async function openHomeWeeklyMenuRecipe(data, recipeId) {
     .find((candidate) => String(candidate?.id || "") === String(recipeId || ""));
 
   if (!recipe) {
-    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(localDateKey()), {
+    const response = await fetch("/api/nutrition?date=" + encodeURIComponent(menuWeekMonday(data?.weekStart || data?.date || "") || selectedHomeMenuWeek()), {
       headers: { Accept: "application/json" },
       cache: "no-store",
       credentials: "same-origin"
@@ -5836,7 +5928,8 @@ async function submitHomeMenuEdit(item, action, recipeId, newServings = null) {
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.ok !== true) throw new Error(result.code || "MENU_EDIT_FAILED");
     // A new verified snapshot is required even after a successful write.
-    await Promise.all([loadHomeWeeklyMenu(),renderHomeNutritionCard()]);
+    homeWeeklyMenuWeekCache.delete(currentHomeMenuWeek());
+    await Promise.all([loadHomeWeeklyMenu(null, { force: true }),renderHomeNutritionCard()]);
     return true;
   } finally {
     homeMenuEditPending = false;
@@ -6123,24 +6216,37 @@ function renderHomeWeeklyMenuDayHeader(day, model) {
     </div>`;
 }
 
-function renderHomeWeeklyMenu(data) {
+function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek()) {
   const panel = document.querySelector("#home-weekly-menu-panel");
   const content = document.querySelector("#home-weekly-menu-content");
   if (!panel || !content) return;
 
   const model = weeklyMenuModel(data);
   panel.hidden = false;
+  renderHomeWeeklyMenuNavigation();
 
   if (!model.rows.length) {
     content.innerHTML = `
       <div class="home-weekly-menu-state">
-        <strong>Menú semanal sin filas para esta semana</strong>
-        <p>La sección permanece visible para distinguir un menú vacío de un error de carga.</p>
+        <strong>Sin menú registrado para ${escapeHtml(menuWeekRangeLabel(selectedWeek))}</strong>
+        <p>No hay comidas registradas en esta semana. Utiliza el selector para consultar otra.</p>
       </div>`;
     return;
   }
 
-  const moments = weeklyMenuMatrixMoments(model.days);
+  // Home always has seven weekday columns, including historically unplanned days.
+  const dayByDate = new Map(model.days.map(day => [day.date, day]));
+  const monday = new Date(selectedWeek + "T12:00:00Z");
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const dayDate = new Date(monday);
+    dayDate.setUTCDate(monday.getUTCDate() + index);
+    const key = dayDate.toISOString().slice(0, 10);
+    return dayByDate.get(key) || {
+      date: key, items: [], kcal: 0, protein: 0, consumedKcal: 0,
+      consumedProtein: 0, nutritionComplete: true, consumedNutritionComplete: true
+    };
+  });
+  const moments = weeklyMenuMatrixMoments(weekDays);
 
   content.innerHTML = `
     <div class="home-weekly-menu-objectives" aria-label="Objetivos nutricionales diarios">
@@ -6154,13 +6260,13 @@ function renderHomeWeeklyMenu(data) {
         <div class="home-weekly-menu-corner">
           <span>Momento</span>
         </div>
-        ${model.days.map((day) => renderHomeWeeklyMenuDayHeader(day, model)).join("")}
+        ${weekDays.map((day) => renderHomeWeeklyMenuDayHeader(day, model)).join("")}
 
         ${moments.map((moment) => `
           <div class="home-weekly-menu-row-label">
             <span>${escapeHtml(moment.label)}</span>
           </div>
-          ${model.days.map((day) => {
+          ${weekDays.map((day) => {
             const rows = weeklyMenuItemsForMoment(day, moment.key);
             const allConsumed = rows.length > 0 && rows.every(weeklyMenuItemIsConsumed);
             return `
@@ -6169,7 +6275,7 @@ function renderHomeWeeklyMenu(data) {
                 data-menu-date="${escapeHtml(day.date)}"
                 data-menu-moment="${escapeHtml(moment.key)}"
               >
-                ${renderHomeWeeklyMenuMatrixCell(rows)}
+                ${renderHomeWeeklyMenuMatrixCell(rows, selectedWeek !== currentHomeMenuWeek())}
               </div>`;
           }).join("")}
         `).join("")}
@@ -6178,7 +6284,7 @@ function renderHomeWeeklyMenu(data) {
 
   focusHomeWeeklyMenuOnToday(content);
   bindHomeWeeklyMenuRecipeLinks(content, data);
-  bindHomeWeeklyMenuEdits(content, data, model);
+  if (selectedWeek === currentHomeMenuWeek()) bindHomeWeeklyMenuEdits(content, data, model);
 }
 
 function formatRecipeAmount(ingredient) {
@@ -11089,7 +11195,15 @@ function bindInteractions() {
   document.querySelector("#home-health-nutrition")?.addEventListener("click", () => openHealthTabFromHome("nutrition"));
   document.querySelector("#home-health-recipes")?.addEventListener("click", () => openHealthTabFromHome("recipes"));
   document.querySelector("#home-health-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
-  document.querySelector("#show-home-weekly-menu")?.addEventListener("click", () => openHealthTabFromHome("menu"));
+  document.querySelector("#show-home-weekly-menu")?.addEventListener("click", () => {
+    const week = selectedHomeMenuWeek();
+    if (week !== currentHomeMenuWeek()) {
+      healthMenuSelectedWeek = week;
+      healthMenuViewData = null;
+    }
+    openHealthTabFromHome("menu");
+    if (week !== currentHomeMenuWeek()) void loadHistoricalMenuWeek(week);
+  });
   document.querySelector("#home-pantry-open")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-pantry-inventory")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-shopping-list")?.addEventListener("click", () => openPantryDetail("shopping"));

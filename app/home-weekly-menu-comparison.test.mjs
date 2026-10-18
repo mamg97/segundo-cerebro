@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
 const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 const start = app.indexOf("function renderHomeWeeklyMenuPlanBar(");
-const end = app.indexOf("function renderHomeWeeklyMenu(data) {", start);
+const end = app.indexOf("function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek()) {", start);
 assert.ok(start >= 0 && end > start, "Home weekly menu rendering functions must exist");
 
 const context = {
@@ -96,7 +96,7 @@ test("every Home day receives both goals without duplicating the visible goal su
   assert.match(html, /home-weekly-menu-plan-goal" value="1950" max="1950"/);
   assert.match(html, /home-weekly-menu-plan-goal" value="175" max="175"/);
   assert.doesNotMatch(html, /% consumid|obj\./);
-  const home = app.slice(app.indexOf("function renderHomeWeeklyMenu(data) {"), app.indexOf("function formatRecipeAmount("));
+  const home = app.slice(app.indexOf("function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek()) {"), app.indexOf("function formatRecipeAmount("));
   assert.equal((home.match(/class="home-weekly-menu-objectives"/g) || []).length, 1);
   assert.match(home, /model\.kcalTarget === null/);
   assert.match(home, /model\.proteinTarget === null/);
