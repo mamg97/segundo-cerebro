@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Precompromiso canónico 2027 archivado en Drive privado · 18/10/2026
+
+- **Operación real completada (no solo tests):** el código exacto del commit de `cohort_2027_precommit.py` se comparó con su SHA de blob Git, se ejecutó en layout real `research/psychohistory` sobre el JSON canónico privado de 196 países × seis modelos y generó **un único** `commitment.bin` salted (256 bits), `request.tsq` RFC3161 con nonce y manifiesto con hashes de candidato, código, protocolo y política 2027. `verify_bundle` pasó: valida hashes exactos e impronta TSQ. **No se ha enviado** la solicitud ni recibido `receipt.tsr`.
+- **Archivo privado durable:** `PSICOHISTORIA_2027_PRECOMPROMISO_NO_EMITIDO_20261018.zip` (cinco archivos, 1.827 bytes) está en `PSICOHISTORIA - EXPERIMENTOS` de Google Drive; lectura de vuelta coincidió byte a byte con el ZIP antes de subir. Metadata de Drive: `shared=false`, permiso únicamente de propietario. Nunca publicar en Git los bytes del TSQ, sal ni hashes privados.
+- **Fuente canónica de estado:** `PsicoExperimentos` registra `ucdp261-2027-cohort-tsq-prepared-20261018` con `PRECOMPROMISO_NO_EMITIDO`, `tsaContacted=false` y `forecastIssued=false`; se confirmó posteriormente que `PsicoPredicciones` sigue con solo cabeceras (0 emisiones). `main` commit `6fcf6a950be0` tiene CI científica, privacidad y demo Pages `success`.
+- **Bloqueo real:** elegir y acreditar ancla TSA de confianza **independiente**, publicar/archivar evidencia `as-of` y temporal de emisión, enviar exclusivamente TSQ desde entorno privado y validar TSR recibido antes de permitir cualquier `ISSUED`. No confundir solicitud o firma con prestador cualificado eIDAS ni afirmar skill.
+
+---
+
 ## PSICOHISTORIA — Precompromiso 2027 sin emisión · 18/10/2026
 
 - **Nueva capacidad:** `research/psychohistory/cohort_2027_precommit.py` prepara en un directorio nuevo **privado** un único compromiso salted SHA-256 para toda la cohorte canónica 2027, vinculando informe de 196 países × seis modelos, política de evaluación, protocolo, código y ZIP/PDF oficiales pinneados. Usa `issue_2027_preflight` (que falla ante wrappers no canónicos), genera `commitment.bin` y `request.tsq` RFC3161 con nonce vía OpenSSL. `verify` revalida origen, salt, bytes y *message imprint* real en TSQ; los tests usan un roster **ficticio** y atacan cambios en probabilidades, salt y TSQ.
