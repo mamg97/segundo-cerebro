@@ -62,3 +62,27 @@ El siguiente paso de admisión exige capturar evidencia histórica de publicaci�
 de **esta edición y estos bytes**, construir el roster completo del universo
 observado y fijar una política de asignación de eventos con fechas imprecisas
 antes de calcular ningún onset ni Brier.
+
+## Comprobación sobre el CSV oficial (ejecución real)
+
+La ejecución efímera de [GitHub Actions 39167983799](https://github.com/mamg97/segundo-cerebro/actions/runs/39167983799)
+sobre la edición 24.0.12 observada el 18/10/2026 encontró:
+
+- 2.110 filas y **2.110** extremos de fecha en diciembre de 2024.
+- **6** intervalos iniciados en diciembre de 2024 que finalizan en 2025;
+  ninguno empieza después del mes exportado, ninguno tiene ambos extremos
+  fuera de diciembre y ninguno presenta fechas invertidas.
+- Los **6** finales tardíos tienen `date_prec=0`.
+
+La clasificación de ventana pasó a
+`CROSS_YEAR_ENDS_COMPATIBLE_WITH_CODEBOOK_NOT_ASOF`; este resultado
+**solo** significa compatibilidad de los extremos con la regla de inclusión
+mensual. No confirma que su contenido fuera cognoscible en diciembre.
+
+**Advertencia adicional:** el [codebook v1.3](https://ucdp.uu.se/downloads/candidateged/ucdp-candidate-codebook1.3.pdf)
+define `date_prec` con categorías 1–5, no 0. El nuevo auditor también mide la
+distribución total de esta columna y emite
+`SOURCE_PRECISION_CODEBOOK_MISMATCH_REVIEW_REQUIRED` cuando observa
+valores no documentados. No interpreta 0 como una precisión numérica ni
+imputa fechas exactas. Sigue pendiente determinar si el 0 refleja un
+valor interno particular, una diferencia de versión o un problema del dato.
