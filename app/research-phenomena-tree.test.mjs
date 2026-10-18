@@ -5,7 +5,7 @@ import {FUTURE_PHENOMENA,phenomenaAvailability,phenomenaTree,phenomenonDetails,p
 
 const exhibit=(overrides={})=>({
   id:'FICTIONAL-EXPERIMENT',status:'SHADOW_NO_EMITIDO',
-  evidence:'https://drive.google.com/file/d/SYNTHETIC_PRIVATE_ID/view',
+  evidence:'https://drive.google.com/file/d/MOCK/view',
   notes:JSON.stringify({
     schema:'psychohistory.private_2027_risk_observatory.v1',
     targetYear:2027,countries:196,models:6,
@@ -38,7 +38,7 @@ test('2027 experiment link is admitted only from fully consistent private SHADOW
   const html=phenomenonDetails([good],'cohort2027');
   assert.match(html,/196 países · seis modelos/);
   assert.match(html,/Abrir observatorio privado 2027/);
-  assert.match(html,/SYNTHETIC_PRIVATE_ID/);
+  assert.match(html,/MOCK/);
   assert.match(html,/no emitida/i);
   for(const bad of [
     exhibit({status:'ISSUED'}),
