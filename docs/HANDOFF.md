@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Prerregistro de evaluación 2027 y comprobación de cohorte · 18/10/2026
+
+- **Política científica congelada antes de resultados 2027:** `research/psychohistory/policy_2027.json` fija objetivo UCDP `sb_total_deaths_best >=25`, universo 2025 + historial 2021–2025 (196 países), features/labels hasta 2025, seis modelos sin selección posterior, Brier pareado `v2_logistic` frente al baseline `frequency`, resultados ausentes sin imputación, y resolución en **la primera edición oficial** que cubra 2027. Se declara expresamente que el challenger fue elegido tras revisar backtests históricos: la evaluación futura es nueva, pero el benchmark anterior no fue confirmatorio.
+- **Preflight fail-closed:** `issue_2027_preflight.py` verifica informe privado, los dos SHA de UCDP, fuentes/modelos/cohorte, probabilidad por modelo, nulos 2027, años de entrenamiento y procedencia del generador; el ensayo anterior mediante wrapper solo puede obtener `LEGACY_SHADOW_STRUCTURALLY_VALID_NOT_CANONICAL`. La ejecución canónica solo se considera verificada si coinciden hashes de `protocol.json`, `benchmark.py` y `future_2027_candidates.py`. Ambas rutas conservan `forecastIssued=false` y `issuanceEligible=false`.
+- **Límites:** preregistro **no** implica sello temporal, disponibilidad de la fuente probada en fecha de emisión, anuncio prospectivo, calibración futura ni registro de probabilidades en `PsicoPredicciones` (0 emisiones). Contrato: [PREREGISTRO_SCORE_2027.md](docs/psicohistoria/PREREGISTRO_SCORE_2027.md). Solo tests sintéticos; datos/probabilidades privados permanecen fuera de Git.
+
+---
+
 ## PSICOHISTORIA — Puerta RFC3161: nonce y semántica de confianza corregidos · 18/10/2026
 
 - **Vulnerabilidad lógica corregida:** `sealing.verify()` verificaba la firma y la impronta del compromiso, pero no el nonce de la **solicitud original**; además devolvía `independentTimestamp=true` cuando la raíz de confianza se la pasaba el propio llamador. Ahora son obligatorias las comprobaciones OpenSSL `-data` **y** `-queryfile request.tsq`. Una solicitud ausente/sustituida o un TSR con nonce distinto falla; la comprobación de firma se declara `rfc3161SignatureVerifiedWithSuppliedTrustRoot=true` y la independencia externa queda `false`.
