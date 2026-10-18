@@ -16,6 +16,7 @@ test("Nutrition history carries intake completeness and Health coverage quality"
   const historyBuilder = worker.slice(start, end);
 
   assert.match(historyBuilder, /consumedEntryCount/);
+  assert.match(historyBuilder, /consumedProtein: consumedEntryCount > 0 \? dayConsumed\.protein : null/);
   assert.match(historyBuilder, /coverageQuality = dayEnergy \? healthCoverageQuality\(dayEnergy\) : "missing"/);
   assert.match(historyBuilder, /balanceKcal: burn === null \|\| !isHealthEnergyComparable\(dayEnergy\) \? null : dayConsumed\.kcal - burn/);
   assert.match(worker, /const historyStart = healthAddDays\(date, -29\)/);

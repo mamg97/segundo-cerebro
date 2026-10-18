@@ -3471,6 +3471,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     history.push({
       date: historyDate,
       consumedKcal: dayConsumed.kcal,
+      consumedProtein: consumedEntryCount > 0 ? dayConsumed.protein : null,
       consumedEntryCount,
       burnedKcal: burn,
       balanceKcal: burn === null || !isHealthEnergyComparable(dayEnergy) ? null : dayConsumed.kcal - burn,

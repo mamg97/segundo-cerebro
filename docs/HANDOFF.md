@@ -1,3 +1,12 @@
+## ORGANIZADOR · HOME semanal: balance energético y proteínas por día (18/10/2026)
+
+- **Nueva capacidad:** la franja `Esta semana en el gimnasio` presenta en **los siete días** (incluso sin entrenamiento) cuatro métricas procedentes del histórico privado de Salud: `Balance = ingeridas − gasto total`, gasto total, ingesta kcal y proteínas ingeridas. Los datos acompañan a las sesiones y son visibles incluso cuando el detalle de ejercicios está plegado.
+- **Fuente y carga:** la petición que Home ya realiza a `GET /api/health/overview?date=hoy` incluye `nutritionHistory` de 30 días; se añade solamente `consumedProtein` para cada fecha usando sumas **consumidas**, no planificadas. **Sin siete nuevas consultas** ni un segundo Sheet/cache. Reutiliza la instantánea en memoria cuando se refresca Gym.
+- **Semántica:** gasto fiable únicamente si `coverageQuality=full|live`; sin ingesta confirmada no se muestra una ingesta 0 ni se calcula balance. Déficit negativo verde, superávit positivo rojo y hoy provisional. Si falla Gym pero Salud está disponible, se muestra el histórico nutricional con aviso sin fingir sesiones vacías. Si faltan datos, `—`; no se extrapolan cifras.
+- **Arquitectura:** `app/gym-week-summary.mjs`, CSS/tests y la respuesta privada `private-cloudflare/src/index.js`; nuevos tests de siete días, días sin gimnasio, datos ausentes, cobertura parcial, futuro y ausencia de consultas adicionales. Assets estáticos con versión de caché actualizada; comprobar CI, despliegue del Worker y lectura autenticada del panel en producción antes de declarar el cambio visible en web privada.
+
+---
+
 ## PSICOHISTORIA — Repriorización metodológica: núcleo predictivo primero · 18/10/2026
 
 - **Decisión de alcance:** congelar F1B bolsa como piloto técnico sintético tras PR #639, SIN importar cotizaciones ni desplegar señales bursátiles. Continuar estudio de fenómenos colectivos —sobre todo **nuevas apariciones/reapariciones** y no solo presencia persistente—, hasta contar con evidencia `as-of`, métricas robustas frente a baseline fuerte y al menos cohortes prospectivas resueltas. El método científico es el producto; las finanzas serán una aplicación eventual. No tocar MIDAS ni patrimonio.
