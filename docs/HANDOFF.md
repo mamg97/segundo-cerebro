@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Puerta RFC3161 vinculada a ledger, v0.2 (18/10/2026)
+
+- **Capacidad desarrollada:** `research/psychohistory/prospective_receipt_gate.py` combina el ledger privado de borradores con el verificador OpenSSL `sealing.verify`. Revalida toda la cadena SHA256, el borrador exacto, nonce, compromiso, recibo RFC3161 y raíces/chain, además de los archivos fuente de **datos, código, protocolo científico y resolución** mediante SHA256. Cualquier archivo faltante/tocado o fecha nominal de release en/tras el día `asOf` bloquea la preparación. Emite solo un informe privado create-only.
+- **No habilita pronósticos:** una firma válida con raíz suministrada no demuestra independencia de la TSA ni disponibilidad `as-of` de la fuente, ni publicación efectiva del pronóstico. Los estados `ISSUED` y `SCORED` permanecen bloqueados, `prospectiveEligible=false` y `PsicoPredicciones` sigue vacío. Tests de puertas con TSA simulada y prueba de integración OpenSSL firmando un recibo RFC3161 mediante CA/TSA **sintéticas de test** (sin independencia ni TSA externa); ver `docs/psicohistoria/PUERTA_RECIBO_RFC3161_V02.md`.
+- **Cierre técnico pendiente:** PR, CI y merge sobre `main`; luego experimento de prueba con recibo TSA **real** y evidencia fuente vintage-correct antes de la primera emisión útil. Ningún dato privado, modelo ni frontend de Segundo Cerebro modificados.
+
+---
+
 ## PSICOHISTORIA — UI v0.5.12 · España inicial y lectura inmediata del árbol (18/10/2026)
 
 - **Selección:** `app/research-futures.mjs` preselecciona Spain (UCDP ID 230) si consta en el catálogo privado; en ausencia de España conserva el fallback válido. Respeta cualquier elección posterior y el recálculo automático v0.5.11.
