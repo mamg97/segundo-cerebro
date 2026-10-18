@@ -108,6 +108,14 @@ def candidate_rows(rows, protocol):
 
 
 def generate_private_candidates(source_dir, protocol):
+    # A caller cannot supply substitute checksums/roster expectations and then
+    # have them reported as the repository's preregistered protocol.
+    frozen = json.loads((HERE / 'protocol.json').read_text(encoding='utf-8'))
+    if protocol != frozen:
+        raise ValueError('Source protocol differs from the preregistered repository file')
+    source_root = Path(source_dir).resolve()
+    if source_root.is_relative_to(REPO):
+        raise ValueError('Original UCDP source bytes must stay outside the public repository')
     manifest = inspect(source_dir, protocol)
     if (not manifest['schemaValidated'] or
         not manifest['sourceChecksumMatchesPinnedProtocol'] or
