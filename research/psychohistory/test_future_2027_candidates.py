@@ -119,5 +119,59 @@ class FutureOriginCandidatesTests(unittest.TestCase):
         self.assertNotIn('score', json.dumps(future).lower())
 
 
+    def test_rejects_protocol_repin_before_any_source_is_read(self):
+        # Synthetic caller cannot override the preregistered hashes or sample sizes.
+        altered = {**PROTOCOL, 'archive_sha256': 'f'*64}
+        with patch('future_2027_candidates.inspect') as inspector:
+            with self.assertRaisesRegex(ValueError, 'preregistered repository'):
+                generate_private_candidates(Path('/SYNTHETIC/elsewhere'), altered)
+            inspector.assert_not_called()
+
+    def test_refuses_raw_sources_inside_public_repository(self):
+        root = Path(__file__).resolve().parents[2]
+        with patch('future_2027_candidates.inspect') as inspector:
+            with self.assertRaisesRegex(ValueError, 'outside the public repository'):
+                generate_private_candidates(root, PROTOCOL)
+            inspector.assert_not_called()
+
+    def test_full_synthetic_zip_to_future_candidates_pipeline(self):
+        # Exercises real ZIP hash -> CSV schema -> source audit -> frozen models
+        # without touching actual UCDP files or exposing synthetic probabilities.
+        import csv
+        import hashlib
+        import io
+        import tempfile
+        import zipfile
+        import future_2027_candidates as engine
+        with tempfile.TemporaryDirectory() as temp:
+            private = Path(temp)
+            rows = synthetic_country_years()
+            txt = io.StringIO()
+            writer = csv.DictWriter(txt, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+            with zipfile.ZipFile(private/'ucdp.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+                z.writestr('SYNTHETIC_COUNTRY_YEAR.csv', txt.getvalue())
+            (private/'codebook.pdf').write_bytes(b'%PDF-1.4 SYNTHETIC_FIXTURE_ONLY')
+            dummy = dict(PROTOCOL)
+            dummy['expected_raw_rows'] = len(rows)
+            dummy['expected_countries'] = 6
+            dummy['archive_sha256'] = hashlib.sha256((private/'ucdp.zip').read_bytes()).hexdigest()
+            dummy['codebook_sha256'] = hashlib.sha256((private/'codebook.pdf').read_bytes()).hexdigest()
+            (private/'protocol.json').write_text(json.dumps(dummy))
+            (private/'benchmark.py').write_bytes((Path(__file__).parent/'benchmark.py').read_bytes())
+            with patch.object(engine, 'HERE', private):
+                actual = generate_private_candidates(private, dummy)
+            self.assertEqual(actual['schema'], engine.SCHEMA)
+            self.assertEqual(len(actual['candidates']), 6)
+            self.assertTrue(actual['sourceIntegrityVerified'])
+            self.assertFalse(actual['sourcePublicationAsOfVerified'])
+            self.assertFalse(actual['forecastIssued'])
+            self.assertFalse(actual['prospectiveEligible'])
+            self.assertTrue(all(x['outcome'] is None for x in actual['candidates']))
+            self.assertEqual(actual['inputZipSha256'], dummy['archive_sha256'])
+            self.assertEqual(actual['inputCodebookSha256'], dummy['codebook_sha256'])
+
+
 if __name__ == '__main__':
     unittest.main()
