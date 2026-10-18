@@ -1,4 +1,5 @@
-import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.12';
+import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.13';
+import {phenomenaTree,phenomenonDetails} from './research-phenomena-tree.mjs?v=0.5.13';
 import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.12';
 import {explainableReplayPanel} from './research-explainable.mjs?v=0.5.12';
 // The browser renders server-calculated probabilities. It never fits a model.
@@ -326,6 +327,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
   }
   container.setAttribute('aria-live','off');
   let catalog = catalogs[0], country = preferredFutureCountry(catalog), model = 'markov', horizon = Math.min(3, catalog.maxHorizon);
+  let selectedPhenomenon = 'aggregate';
   let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, speed = 1;
   let error = '', loading = false, disposed = false, request = 0, abort = null, timer = null, inView = true;
   let traceStep = -1;
@@ -367,9 +369,9 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       '<button type="submit" class="future-calculate"' + (loading ? ' disabled' : '') + '>' + (loading ? 'Calculando…' : 'Calcular predicción retrospectiva') + '</button></form>' +
       '<p class="future-warning">BACKTEST EXPLORATORIO · Fuente histórica revisada. No es un pronóstico actual ni acredita información disponible en el origen.</p>' +
       (error ? '<p class="error" role="alert">' + esc(error) + '</p>' : '') + '</div>';
-    container.innerHTML = controlsAboveGraph + graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) +
-      phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) +
-      gedIncidentPreviewPanel(onsetExperiments) + '<div class="future-after-network">' +
+    container.innerHTML = phenomenaTree(onsetExperiments,selectedPhenomenon,true) + (selectedPhenomenon === 'aggregate' ?
+      controlsAboveGraph + graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) +
+      '<div class="future-after-network">' +
       (!result ? '<section class="panel empty"><strong>' + (loading ? 'Calculando con los parámetros canónicos…' : 'Selección pendiente de calcular') + '</strong><p>Las probabilidades procederán del motor privado. No se muestran resultados inventados.</p></section>' :
         '<div class="future-toolbar"><div class="filter-row"><button type="button" data-fmode="explorer" aria-pressed="' + (mode === 'explorer') + '">Explorador</button><button type="button" data-fmode="research" aria-pressed="' + (mode === 'research') + '">Investigador</button></div><span>' + esc(result.country.name) + ' · ' + esc(result.modelLabel) + '</span></div>' +
         '<div class="future-timeline"><label>Horizonte <strong>' + horizon + ' ' + (horizon === 1 ? 'año' : 'años') + ' → ' + snapshot.endYear + '</strong><input name="horizon" type="range" min="1" max="' + result.maxHorizon + '" step="1" value="' + horizon + '" aria-label="Horizonte en años"></label>' +
@@ -381,7 +383,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
         distribution(result, snapshot) + '<p class="chart-note">IP = intervalo paramétrico condicionado al modelo, no cobertura empírica acreditada. Masa total: ' +
         pct(snapshot.distribution.reduce((a,b)=>a+b,0)) + '.</p></section>' +
         '<section class="panel top-gap"><div class="panel-head"><h3>Historias individuales retenidas</h3><span>Sin renormalizar</span></div><div class="future-paths">' + snapshot.paths.map((path,i) => '<button type="button" data-fpath="' + i + '" aria-pressed="' + (selection?.kind === 'path' && selection.index === i) + '"><span>Camino ' + (i+1) + '</span><span>' + path.states.slice(1).map(s => ['00','01','10','11'][s]).join(' → ') + '</span><strong>' + pct(path.probability) + '</strong></button>').join('') + '</div><p class="future-mass">Masa representada: <strong>' + pct(snapshot.representedMass) + '</strong> · Otras historias: <strong>' + pct(snapshot.residualMass) + '</strong></p><p class="chart-note">Beam de ' + snapshot.beam + ' prefijos; hasta 12 historias mostradas. La masa residual incluye todas las historias omitidas. El grafo agregado superior conserva el 100 % de la masa y no depende de esta poda. Códigos: dos años consecutivos, 0 bajo el umbral y 1 por encima.</p></section>' : research(result, payload.metrics, horizon)) +
-        '<div class="future-methods" aria-label="Vertientes conectadas al núcleo">' + ['V1','V2','V3','V4'].map(id => '<button type="button" data-ftrack="' + id + '"><span class="orb-sphere"><span>' + id + '</span></span><strong>' + ({V1:'Memoria e hipótesis',V2:'Probabilidades',V3:'Mecanismos sintéticos',V4:'Evidencia y versiones'}[id]) + '</strong></button>').join('') + '</div></div>');
+        '<div class="future-methods" aria-label="Vertientes conectadas al núcleo">' + ['V1','V2','V3','V4'].map(id => '<button type="button" data-ftrack="' + id + '"><span class="orb-sphere"><span>' + id + '</span></span><strong>' + ({V1:'Memoria e hipótesis',V2:'Probabilidades',V3:'Mecanismos sintéticos',V4:'Evidencia y versiones'}[id]) + '</strong></button>').join('') + '</div></div>' : phenomenonDetails(onsetExperiments,selectedPhenomenon));
     // Filtering changes only the visible historical country-year rows, never source data.
     const caseYear=container.querySelector('[data-onset-case-year]');
     const caseKind=container.querySelector('[data-onset-case-kind]');
@@ -419,7 +421,13 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
     container.querySelector('[data-trace-next]')?.addEventListener('click',()=>{traceStep++;render('[data-trace-next]');});
     container.querySelector('[data-trace-prev]')?.addEventListener('click',()=>{traceStep=Math.max(0,traceStep-1);render('[data-trace-prev]');});
     container.querySelector('[data-trace-reset]')?.addEventListener('click',()=>{traceStep=-1;render('[data-trace-next]');});
-    container.querySelector('form').addEventListener('submit', e => {e.preventDefault(); load();});
+    container.querySelector('form')?.addEventListener('submit', e => {e.preventDefault(); load();});
+    container.querySelectorAll('[data-phenomenon]').forEach(button=>button.addEventListener('click',()=>{
+      const target=button.dataset.phenomenon;
+      if(target===selectedPhenomenon)return;
+      selectedPhenomenon=target; playing=false; selection=null;
+      render('[data-phenomenon="'+target+'"]');
+    }));
     container.querySelectorAll('.future-controls select').forEach(select => select.addEventListener('change', () => {
       if (select.name === 'catalog') {
         catalog = catalogs.find(c => c.id === select.value);
