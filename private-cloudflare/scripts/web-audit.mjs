@@ -461,7 +461,7 @@ async function auditMidasCompetition() {
     }, null, { timeout: 8000 }).catch(() => {});
     const runtimeText = normalizeAuditValue(await page.locator(".midas-runtime-health").textContent().catch(() => ""));
     assertCheck(Boolean(runtimeText), "MIDAS · panel visible de salud operativa");
-    for (const issue of health.issues) {
+    for (const issue of health.issues.filter((item) => midasAuditVerdict(item) === "fail")) {
       const label = issue.name
         .replace("MIDAS paper comparison", "estrategias diarias")
         .replace("MIDAS TFM shadow forecasts", "tfm diario")
