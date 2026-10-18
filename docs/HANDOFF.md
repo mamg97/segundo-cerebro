@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Cohorte prospectiva 2027 sin etiquetas ni emisión (18/10/2026)
+
+- **Nueva capacidad científica:** `research/psychohistory/future_2027_candidates.py` reutiliza los seis modelos preregistrados de `benchmark.predict_origin` con outcomes **NULOS** para 2027, features limitadas a 2025 y entrenamiento con etiquetas solo hasta 2025. La cohorte incluye exclusivamente países presentes en 2025 y con un historial 2021–2025 continuo; no imputación, selección por acierto futuro ni uso de violencia observada durante 2026. Baseline `frequency` preservado. Tests sintéticos y contrato en `docs/psicohistoria/COHORTE_2027_NO_EMITIDA.md`.
+- **Puerta imprescindible:** los archivos ZIP/PDF UCDP 26.1 **todavía no se han validado de verdad** contra el protocolo, por imposibilidad de descargarlos en esta sesión; el cálculo real de candidatos 2027 tampoco se ha ejecutado. Código no permite cálculo sin `source_release_intake.inspect()` y `benchmark.audit(strict=True)`. No modificar SHA preregistrados para encajar nuevas descargas.
+- **Ninguna emisión:** `forecastIssued=false`, `prospectiveEligible=false`, `outcome=null`, fuentes y modelos inalterados. `PsicoPredicciones` sigue sin filas de emisiones. La existencia de una nota de Uppsala sobre 2025 no demuestra el timestamp de los bytes exactos. Son necesarios archivo pinneado, evidencia de disponibilidad previa, modelo/universo/baseline fijados, emisión y TSA independiente reales.
+- **Cierre pendiente:** CI científica/privacidad, merge de PR, resultados reales del source gate y primera emisión autorizada solo cuando se acrediten requisitos. No hay cambios en Worker ni frontend.
+
+---
+
 ## PSICOHISTORIA — Puerta de admisión UCDP CY 26.1 (18/10/2026)
 
 - **Código recuperado e integrado en rama:** `research/psychohistory/source_release_intake.py` y `test_source_release_intake.py`, con dossiers `docs/psicohistoria/UCDP_261_SOURCE_ADMISSION.md` y `UCDP_261_RELEASE_EVIDENCE_20261018.md`. Las 5 pruebas sintéticas pasaron localmente y en [CI 39127511119](https://github.com/mamg97/segundo-cerebro/actions/runs/39127511119); la guarda de privacidad [39127511070](https://github.com/mamg97/segundo-cerebro/actions/runs/39127511070) también pasó. [PR #613](https://github.com/mamg97/segundo-cerebro/pull/613) fusionada en `f75effa20e54`.
