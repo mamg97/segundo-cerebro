@@ -1,3 +1,13 @@
+## PSICOHISTORIA — Primera vista privada de riesgo 2027, sin sobreafirmaciones · 18/10/2026
+
+- **Resultado interpretable ya disponible en Drive privado:** observatorio HTML autocontenido (196 países, ranking por V2 logística, base `frequency`, otros modelos, desacuerdo y búsqueda). Se verificaron hashes de los originales y la cohorte canónica; el HTML privado fue subido y leído de vuelta con `shared=false` y un solo permiso de propietario. **No** se ha publicado en GitHub ni se han emitido 1.176 predicciones.
+- **Conclusión científica cuantitativa:** del benchmark exploratorio real 2016–2025 sobre release revisada, presencia: Brier `frequency=0.144440` frente a `v2_logistic=0.039116` (~72,9 % skill descriptivo). **Aparición de nuevos episodios:** `0.017576` frente a `0.017557` (~0,1 %, sin evidencia de mejora sustancial). No convertir la buena identificación de persistencia en afirmaciones de anticipación de guerras nuevas.
+- **Nueva capacidad genérica:** `decision_view_2027.py` valida candidato canónico y ZIP originales privados, deriva nombres 2025 UCDP, genera CSV privado create-only, ordena por V2, preserva los seis modelos, muestra divergencia sin llamarla incertidumbre, bloquea futuros outcomes y fórmulas CSV; tests solo sintéticos. Documentación: [OBSERVATORIO_2027_INTERPRETABLE.md](docs/psicohistoria/OBSERVATORIO_2027_INTERPRETABLE.md).
+- **Horizonte de validación:** resultado anual 2027 no podrá puntuarse hasta la primera release UCDP completa correspondiente, previsiblemente en 2028 según anuncios de junio en años previos, **sin fecha garantizada**. Para producir predicciones realmente accionables en 30–90 días será preciso crear un panel mensual con UCDP Candidate, sus vintages y un protocolo/modelo independientes.
+- **Bitácora:** tras merge + CI, registrar evento nuevo en `PsicoAvances`, mantener `MAD-05=PREPARADO_NO_EMITIDO`, `PsicoPredicciones=0`; no convertir viewer exploratorio en `ISSUED`.
+
+---
+
 ## PSICOHISTORIA — Testigo de fuente integrado en el preflight 2027 · 18/10/2026
 
 - **Cambio implementado:** `issue_2027_preflight.py` ahora acepta opcionalmente `--source-observation` y `--planned-issue-at` (simulación de instante, no emisión) e incorpora `source_observation_gate.assess()`. Rechaza SHA inconsistentes y marcas hipotéticas anteriores a la descarga verificada de ZIP/PDF por GitHub o posteriores al comienzo del año objetivo 2027; tests sintéticos de errores y regresión.
