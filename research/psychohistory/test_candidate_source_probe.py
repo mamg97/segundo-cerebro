@@ -7,7 +7,7 @@ import unittest
 from candidate_source_probe import summarize, SOURCE_URL
 
 
-FIELDS = ["id", "country_id", "date_start", "date_end", "type_of_violence", "best"]
+FIELDS = ["id", "country_id", "date_start", "date_end", "date_prec", "type_of_violence", "best"]
 
 
 def fake(rows):
@@ -20,7 +20,7 @@ def fake(rows):
 
 def row(cid=123, start="2024-03-02", end="2024-03-02", typ=1):
     return {"id":"FICTIONAL", "country_id":str(cid), "date_start":start,
-            "date_end":end, "type_of_violence":str(typ), "best":"1"}
+            "date_end":end, "date_prec":"3", "type_of_violence":str(typ), "best":"1"}
 
 
 class CandidateSourceProbeTests(unittest.TestCase):
@@ -34,6 +34,7 @@ class CandidateSourceProbeTests(unittest.TestCase):
         self.assertFalse(out["absent_country_is_conflict_free"])
         self.assertFalse(out["as_of_verified"])
         self.assertTrue(out["source_date_scope_valid_for_nominal_2024"])
+        self.assertEqual(out["status"], "NOMINAL_EVENT_MONTH_ENDPOINTS_INTACT_NOT_ASOF")
         self.assertFalse(out["backtest_authorized"])
         self.assertFalse(out["forecast_issued"])
         self.assertNotIn("FICTIONAL", str(out))
@@ -42,17 +43,31 @@ class CandidateSourceProbeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             summarize(raw, expected_sha256="f"*64)
 
-    def test_temporal_and_type_guard(self):
+    def test_cross_year_event_end_is_not_automatically_future_information(self):
+        doc = summarize(fake([
+            row(start="2024-12-29", end="2025-01-03"),
+            row(start="2024-12-31", end="2025-01-01"),
+        ]))
+        self.assertEqual(doc["status"], "CROSS_YEAR_ENDS_COMPATIBLE_WITH_CODEBOOK_NOT_ASOF")
+        self.assertEqual(doc["date_scope_violation_counts"]["after_2024"], 2)
+        self.assertEqual(doc["month_window_audit"]["late_end_december_to_2025"], 2)
+        self.assertEqual(doc["month_window_audit"]["late_end_date_precision_counts"], {"3": 2})
+        self.assertEqual(doc["month_window_audit"]["neither_endpoint_in_export_month"], 0)
+        self.assertTrue(doc["event_month_window_compatible_with_codebook"])
+        self.assertFalse(doc["as_of_verified"])
+        self.assertFalse(doc["backtest_authorized"])
+
+    def test_temporal_scope_and_schema_fail_closed(self):
         for anomaly, testrow in [
-            ("after_2024", row(start="2024-12-31", end="2025-01-01")),
-            ("reversed", row(start="2024-03-04", end="2024-03-03")),
+            ("reversed", row(start="2024-12-07", end="2024-12-06")),
             ("before_1989", row(start="1980-01-01")),
+            ("future_start", row(start="2025-01-01", end="2025-01-02")),
+            ("no_december_endpoint", row(start="2024-11-25", end="2025-01-02")),
         ]:
             with self.subTest(anomaly=anomaly):
                 result = summarize(fake([testrow]))
-                self.assertEqual(result["status"], "OBSERVED_BUT_REPLAY_BLOCKED_DATE_SCOPE_ANOMALY")
-                self.assertFalse(result["source_date_scope_valid_for_nominal_2024"])
-                self.assertEqual(result["date_scope_violation_counts"][anomaly], 1)
+                self.assertEqual(result["status"], "SOURCE_MONTH_SCOPE_MISMATCH_REVIEW_REQUIRED")
+                self.assertFalse(result["event_month_window_compatible_with_codebook"])
                 self.assertFalse(result["as_of_verified"])
                 self.assertFalse(result["backtest_authorized"])
         for testrow in [
