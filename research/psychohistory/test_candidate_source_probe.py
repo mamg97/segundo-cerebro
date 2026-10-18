@@ -57,6 +57,18 @@ class CandidateSourceProbeTests(unittest.TestCase):
         self.assertFalse(doc["as_of_verified"])
         self.assertFalse(doc["backtest_authorized"])
 
+    def test_undocumented_date_precision_blocks_interpretation_not_observation(self):
+        event = row(start="2024-12-30", end="2025-01-02")
+        event["date_prec"] = "0"
+        result = summarize(fake([event]))
+        self.assertEqual(result["status"], "SOURCE_PRECISION_CODEBOOK_MISMATCH_REVIEW_REQUIRED")
+        self.assertTrue(result["event_month_window_compatible_with_codebook"])
+        self.assertEqual(result["date_precision_audit"]["counts"], {"0": 1})
+        self.assertEqual(result["date_precision_audit"]["values_outside_codebook_1_to_5"], ["0"])
+        self.assertTrue(result["date_precision_audit"]["requires_review"])
+        self.assertFalse(result["as_of_verified"])
+        self.assertFalse(result["backtest_authorized"])
+
     def test_temporal_scope_and_schema_fail_closed(self):
         for anomaly, testrow in [
             ("reversed", row(start="2024-12-07", end="2024-12-06")),
