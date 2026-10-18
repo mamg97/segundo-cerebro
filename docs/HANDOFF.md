@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Árbol navegable por seis fenómenos · 18/10/2026
+
+- **Entrega UI propuesta:** Futuros tiene árbol de ramas seleccionables: violencia estatal anual (grafo original sin alteraciones), inicio/reanudación interno, inicio/reanudación interestatal, reaparición GED (ventana 24 meses), cohorte 2027 no emitida (enlace privado validado) y otros fenómenos futuros sin datos. Las ramas no comparten espacio de estados ni muestran probabilidades de otro modelo como sustituto.
+- **Entrada y límites:** `app/research-phenomena-tree.mjs` consume solo los experimentos admitidos del API ya protegido (`PsicoExperimentos`) y validadores existentes Onset/GED. La cohorte 2027 enlaza a Drive privado solo si el sobre de observatorio demuestra 196 países, seis modelos y todas las banderas no emitidas. Sin fuentes válidas se informa `SIN DATOS ADMITIDOS`. Código público solo genérico/fixtures.
+- **Implementación:** menú ramificado antes del grafo; cambiar de rama no recalcula las predicciones, se preserva selección del grafo anual dentro de la sesión. Se añade filtro por objetivo a `onsetSummaryPanel`. Archivo público `app/research-lab.html` actualizado a v0.5.13; sin endpoints, pagos, Workflows nuevos ni tocar matrices/probabilidades.
+- **Validar despliegue:** ejecutar tests UI y CI/privacidad, fusionar PR; comprobar `deploy-private-cloudflare` en `main` y responder al usuario con enlace al laboratorio. No confundir GitHub Pages (demo) con la aplicación privada.
+- **Tabla:** registrar un nuevo evento append-only en `PsicoAvances` con evidencia real y estado tecnológico, sin convertir MAD-05 a completado ni insertar emisiones en `PsicoPredicciones`.
+
+---
 ## Menú semanal · Cambiar postre por batido sin duplicar plato principal (18/10/2026)
 
 - Error `PRIMARY_RECIPE_ALREADY_IN_MEAL` al sustituir un yogur planificado por una receta de bebida: el editor convertía cualquier alimento a segunda `receta` principal, aunque la fila de origen fuese `acompanante/yogur`.

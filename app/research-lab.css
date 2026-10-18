@@ -328,3 +328,39 @@ body[data-lab-view="futures"] .tabs{margin-top:8px;margin-bottom:17px}
 .future-guide-reading strong{color:#fff0d3}
 @media(max-width:850px){.future-guide-head{align-items:stretch;flex-direction:column}.future-guide-risk{width:100%}.future-guide-risk>div{flex:1;min-width:0}.future-guide-legend{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:470px){.future-graph-guide{padding:10px}.future-guide-risk>div{padding:7px}.future-guide-legend>span{padding:7px}.future-guide-legend b{font-size:10px}.future-guide-legend small{font-size:9px}}
+
+
+/* Multifenómeno: un árbol de objetivos, no una falsa distribución conjunta. */
+.phenomena-tree{margin:0 0 18px;padding:20px 22px;background:radial-gradient(ellipse at 48% -25%,#275d8266,transparent 64%),#0b1b2d}
+.phenomena-tree-heading{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.phenomena-tree-heading h2{font-size:clamp(19px,2.5vw,26px);margin:5px 0 6px}
+.phenomena-tree-heading p{margin:0;color:#a6c4da;font-size:12px;line-height:1.5}
+.phenomena-tree-root{flex:none;padding:12px 18px;border:1px solid #a56c3d;border-radius:15px;background:radial-gradient(ellipse at top,#5b352b,#122e45);box-shadow:0 0 25px #ff8a2820;font-size:11px;font-weight:800;letter-spacing:1px;text-align:center;color:#ffe7c7}
+.phenomena-tree-root span{display:block;margin-top:3px;color:#b5cadd;font-size:10px;font-weight:500;letter-spacing:0}
+.phenomena-tree-grid{--edge:#42627b;position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:30px 0 0;padding-top:20px}
+.phenomena-tree-grid:before{content:"";position:absolute;left:8%;right:8%;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--edge) 14%,#cf864b 50%,var(--edge) 86%,transparent)}
+.phenomena-tree-branch{position:relative;display:flex;flex-direction:column;min-height:135px;text-align:left;gap:8px;padding:17px 13px 14px;background:#10283c;border:1px solid #355775;border-radius:13px;color:#e4f3ff;cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+.phenomena-tree-branch:before{content:"";position:absolute;top:-20px;left:50%;height:20px;border-left:1px solid var(--edge)}
+.phenomena-tree-branch:hover{border-color:#83c9f0;transform:translateY(-2px)}
+.phenomena-tree-branch.active{border-color:#ff9b45;background:linear-gradient(160deg,#26334b,#133c53);box-shadow:0 0 0 1px #ff9b4540,0 0 22px #ff8a281c}
+.phenomena-tree-branch:focus-visible{outline:2px solid #ffe4bd;outline-offset:3px}
+.phenomena-branch-index{color:#86bbd9;font-size:10px;letter-spacing:1px}
+.phenomena-tree-branch strong{font-size:13px;line-height:1.25}
+.phenomena-branch-status{font-size:9px;font-weight:750;letter-spacing:.25px;color:#ffcd98;line-height:1.4}
+.phenomena-branch-status[data-evidence="unavailable"],.phenomena-branch-status[data-evidence="planned"]{color:#91a4b4}
+.phenomena-tree-branch small{font-size:10px;color:#aac4d6;margin-top:auto}
+.phenomena-tree-disclaimer{font-size:11px;line-height:1.5;color:#9db9cc;margin:12px 0 0}
+.phenomena-branch-detail{margin-bottom:14px;background:linear-gradient(155deg,#102a40,#0a1b2c)}
+.phenomena-branch-detail h2{margin:9px 0;font-size:clamp(19px,2.5vw,27px)}
+.phenomena-branch-detail p{font-size:13px;color:#c0d2e3;line-height:1.65}
+.phenomena-branch-detail dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.phenomena-branch-detail dl>div{padding:12px;border-radius:9px;background:#0c2033;border:1px solid #2a4a65}
+.phenomena-branch-detail dt{font-size:10px;color:#9db9ca;margin-bottom:5px}
+.phenomena-branch-detail dd{font-size:12px;color:#e6f2fc;margin:0;line-height:1.5}
+.phenomena-branch-detail .phenomena-data-warning{color:#e9bf89;font-size:11px}
+.phenomena-no-data,.phenomena-cohort{margin:0 0 18px}
+.phenomena-no-data p,.phenomena-cohort p{font-size:13px;line-height:1.6;color:#b1cddd}
+.phenomena-cohort a{font-size:13px;color:#90d3ff;text-underline-offset:3px}
+@media(max-width:1100px){.phenomena-tree-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 10px}.phenomena-tree-grid:before{display:none}.phenomena-tree-branch{min-height:110px}.phenomena-tree-branch:before{top:-10px;height:10px}}
+@media(max-width:640px){.phenomena-tree{padding:14px}.phenomena-tree-heading{align-items:flex-start;flex-direction:column}.phenomena-tree-root{align-self:flex-start}.phenomena-tree-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:15px;padding-top:0;gap:10px}.phenomena-tree-branch{padding:12px;min-height:124px}.phenomena-tree-branch:before{display:none}.phenomena-branch-status{font-size:9px}.phenomena-branch-index{font-size:9px}.phenomena-branch-detail dl{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.phenomena-tree-branch{transition:none}.phenomena-tree-branch:hover{transform:none}}
