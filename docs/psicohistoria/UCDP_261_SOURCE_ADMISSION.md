@@ -1,6 +1,6 @@
 # PSICOHISTORIA — Admisión de la fuente OrganizedViolenceCY 26.1
 
-Estado: **integrada en `main` mediante PR #613**, tras superar pruebas y control de privacidad. **El ZIP y PDF oficiales ya superaron SHA-256 y auditoría empírica en CI efímera del 18/10/2026; falta archivarlos permanentemente en Drive privado.** Esta entrega no introduce nuevos pronósticos.
+Estado: **integrada en `main` mediante PR #613**, tras superar pruebas y control de privacidad. **El ZIP y PDF oficiales ya superaron SHA-256 y auditoría empírica en CI efímera del 18/10/2026; se ha identificado su archivo privado original en una reproducción del 16/10/2026, con los hashes intactos.** Esta entrega no introduce nuevos pronósticos.
 
 ## Problema científico
 
@@ -29,8 +29,7 @@ benchmark, tests y hashes originales sin cambios.
 
 **Límite operativo:** los originales y el manifiesto se procesaron en
 `RUNNER_TEMP` y se borraron al finalizar el job, **sin subir archivos a
-GitHub/artifacts**. Aún falta archivar permanentemente ambos originales y el
-manifiesto en Drive privado. El hecho de descargarlos durante este workflow
+GitHub/artifacts**. Ambos originales y sus manifiestos ya están archivados en el paquete privado `PSICOHISTORIA_UCDP_261_REPRODUCCION.zip` (Drive, 16/10/2026), en `sources/ucdp.zip`, `sources/codebook.pdf`, `sources/sources.json` y `MANIFEST.json`. Se han contrastado los 24 hashes del manifiesto con el contenido real (24/24 válidos), además de las coberturas y la continuidad del CSV. No es necesario duplicar los archivos. El hecho de descargarlos durante este workflow
 acredita acceso a los bytes en la fecha de ejecución, **no acredita su
 disponibilidad histórica exacta en junio de 2026, ni una TSA independiente,
 ni una emisión prospectiva**. `PsicoPredicciones` sigue con cero filas.
@@ -52,11 +51,11 @@ El comando lee **exclusivamente el protocolo del repositorio** y crea el manifie
 
 ## Próxima puerta
 
-1. Recuperar los dos originales en Drive privado y conservar allí una copia duradera de los bytes y su manifiesto. Su descarga y validación en el runner efímero ya quedó acreditada en el workflow 39130567553; ese runner borró ambos archivos al finalizar.
+1. Reutilizar el paquete privado ya existente de 16/10/2026; ejecutar `private_archive_intake.py` para auditarlo con el gate compartido y conservar toda evidencia adicional exclusivamente fuera de Git. La segunda descarga efímera también quedó acreditada en el workflow 39130567553.
 2. Obtener prueba independiente de fecha/edición de publicación, con trazabilidad temporal antes del `asOf` de las variables que se usarán para el horizonte futuro.
 3. Construir las features del primer origen futuro únicamente con información anterior al corte; fijar universo y baseline (el benchmark retrospectivo actual no genera sin cambios predicciones de un año sin resultado observado).
 4. Crear un borrador privado; comprobar contenido, recibo de TSA independiente y contrato de resolución. Solo después habilitar una **primera emisión**. La calibración y utilidad requerirán observar resultados posteriores y un número de casos suficiente.
 
 ## Pruebas
 
-Las cinco pruebas de `test_source_release_intake.py` utilizan solo filas, países y ZIPs inequívocamente **sintéticos**. No incorporan microdatos UCDP, credenciales, datasets reales ni informes experimentales en Git. La ejecución local de esta entrega pasa 5/5 pruebas. La CI de PR #613 y el control de privacidad pasaron. No sustituye una validación con los bytes UCDP oficiales.
+Las cinco pruebas de `test_source_release_intake.py` utilizan solo filas, países y ZIPs inequívocamente **sintéticos**. No incorporan microdatos UCDP, credenciales, datasets reales ni informes experimentales en Git. La ejecución local de esta entrega pasa 5/5 pruebas. La CI de PR #613 y el control de privacidad pasaron. La validación independiente posterior con los bytes oficiales se completó en CI y se confirmó sobre el archivo privado original; las pruebas sintéticas no son esa validación.
