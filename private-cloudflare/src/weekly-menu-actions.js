@@ -46,7 +46,7 @@ export function previewMenuRecipe(item, recipe) {
     ? qty : /compartid[oa]/i.test(unit) && recipe.servings > 0
       ? recipe.servings * qty : null;
   const complete = multiplier !== null && multiplier > 0 &&
-    !/(?:pendiente|pending|sin confirmar|por confirmar)/i.test(recipe.precision || "") &&
+    !/(?:pendiente|pending|sin confirmar|por confirmar|no usar para nuevas|solo histor|exclusiv.{0,16}histor)/i.test(recipe.precision || "") &&
     [recipe.kcalPerServing,recipe.proteinPerServing,recipe.carbsPerServing,recipe.fatPerServing]
       .every(value => value !== null && Number.isFinite(value));
   return {
@@ -120,8 +120,17 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       throw new MenuEditError("INVALID_RECIPE_SELECTION");
     const candidate = recipes.find(x => x.id === payload.newRecipeId);
     if (!candidate) throw new MenuEditError("RECIPE_NOT_FOUND",404);
-    // Replacing a food requires a *user-selected* serving count. Never convert
-    // 100 g of fruit into 100 raciones of the target recipe.
+    // A recipe-based shake may replace a planned Pantry companion without
+    // creating a second main. This is an explicit *classification* from the
+    // editor, not a guess from the recipe name or the previous food type.
+    const newCompanionType = normalize(payload.newCompanionType);
+    const recipeAsCompanion = originalIsFood &&
+      normalize(original.data.tipo_item) === "acompanante" &&
+      newCompanionType === "batido";
+    if (newCompanionType && !recipeAsCompanion) {
+      throw new MenuEditError("INVALID_COMPANION_REPLACEMENT", 409);
+    }
+    // Food quantities are not servings: require an explicit new serving count.
     const newServings = originalIsFood ? numberOrNull(payload.newServings) : null;
     if (originalIsFood && (newServings === null || newServings <= 0 || newServings > 20))
       throw new MenuEditError("RECIPE_SERVINGS_REQUIRED",409);
@@ -139,7 +148,7 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
     // meal contract allows at most one primary recipe per date + moment,
     // even when a pre-existing primary has a *different* recipe_id.
     // Recipe-based companions (e.g. prepared shakes) are not primaries.
-    if (originalIsFood) {
+    if (originalIsFood && !recipeAsCompanion) {
       const sameMeal = all.filter(row => row.sourceRow !== original.sourceRow &&
         String(row.data.fecha) === payload.date &&
         normalize(canonicalWeeklyMenuMoment({moment:row.data.momento,name:row.data.nombre})) ===
@@ -165,8 +174,15 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       put(original,"food_id","");
       put(original,"cantidad",newServings);
       put(original,"unidad","ración");
-      put(original,"tipo_item","receta");
-      if (headers.includes("tipo_acompanante")) put(original,"tipo_acompanante","");
+      put(original,"tipo_item", recipeAsCompanion ? "acompanante" : "receta");
+      if (headers.includes("tipo_acompanante")) {
+        put(original,"tipo_acompanante",recipeAsCompanion ? "batido" : "");
+      }
+      if (recipeAsCompanion && headers.includes("nota")) {
+        // Previous Pantry product notes (e.g., about yogurt) must not be
+        // carried forward as if they described the replacement drink.
+        put(original,"nota","Batido como acompañante planificado; ración y macros de la receta seleccionada. Consumo no confirmado.");
+      }
     }
     put(original,"nombre", candidate.name);
     put(original,"kcal",macros.kcal);
