@@ -5219,10 +5219,9 @@ function weeklyMenuProductThumbnail(item, home = false) {
   const candidate = String(item?.productImageUrl || item?.product?.imageUrl || "").trim();
   if (!/^https:\/\//i.test(candidate)) return "";
   const className = home ? "home-menu-recipe-thumb is-product" : "weekly-menu-product-thumb";
-  return `<span class="${className}" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+  return `<span class="${className}" aria-hidden="true">
     <img src="${escapeHtml(candidate)}" width="${home ? 156 : 60}" height="${home ? 88 : 60}"
-      alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-      style="width:100%;height:100%;object-fit:contain;background:#f8fafc;border-radius:8px;">
+      alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
   </span>`;
 }
 
