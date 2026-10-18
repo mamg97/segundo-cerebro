@@ -6,7 +6,7 @@
 > con el protocolo; `source_release_intake.inspect()` y
 > `benchmark.audit(strict=True)` pasaron para **7.132 filas, 199 países,
 > 1989–2025**. El CSV original utiliza cabeceras sin `_cy`, pese al codebook.
-> Se borraron los originales del runner, sin artifact ni permanencia en Drive.
+> Se borraron los originales del runner sin artifact. **Pero existía una copia anterior de los mismos bytes en Drive privado (paquete de reproducción fechado 16/10/2026)**; se verificaron sus dos hashes y los 24 miembros de su manifiesto el 18/10/2026.
 > La tabla inferior es la auditoría documental anterior a ese run y **queda
 > superada solo en las filas de checksum, descarga y cobertura**, NO en las
 > de disponibilidad histórica, sellado independiente o emisión. Los hashes
@@ -43,15 +43,15 @@
 | --- | --- |
 | Official URL for current release and version | VERIFIED_REFERENCE |
 | Dated public UCDP announcement of 2025 statistics | VERIFIED_REFERENCE_2026-06-09 |
-| Specific ZIP/PDF exact bytes match preregistered SHA | NOT_EXECUTED_SOURCE_UNAVAILABLE |
+| Specific ZIP/PDF exact bytes match preregistered SHA | VERIFIED_IN_EPHEMERAL_CI_AND_PRIVATE_ARCHIVE_2026-10-18 |
 | Specifically these exact bytes were accessible by June 2026 | NOT_PROVEN |
-| Country-year coverage of actual 26.1 ZIP matches protocol | NOT_EXECUTED |
+| Country-year coverage of actual 26.1 ZIP matches protocol | VERIFIED_7132_ROWS_199_COUNTRIES_1989_TO_2025 |
 | Independent RFC3161 timestamp of prediction | NOT_EXECUTED |
 | Vintage-correct/as-of input availability for a planned forecast | NOT_PROVEN |
 | Forecast prospectively issued | FALSE |
 
-The published-release evidence may support **designing** a future `asOf` after June 2026, but does not itself upgrade `historicalAsOfVerified` or `prospectiveEligible`. The exact bytes, their release history, and any model-origin features must still be independently verified. No probability or real-world forecast is included in this dossier.
+The published-release evidence may support **designing** a future `asOf` after June 2026, but does not itself upgrade `historicalAsOfVerified` or `prospectiveEligible`. The exact bytes and their integrity are now verified, but their exact historical release timing, vintage-correct feature availability and model-origin eligibility remain unverified. No probability or real-world forecast is included in this dossier.
 
 ## Actions required before prospective issuance
 
-Download the ZIP and codebook from the official URLs *to a private directory*, run the existing `download.mjs` hash-pinned downloader, run the pending `source_release_intake.py`, preserve a private immutable archive and both SHA manifests, and independently verify the provenance/release timeline. Freeze a future issuance time, benchmark, target resolution and model inputs; obtain a genuine independent TSA receipt before declaring `ISSUED`. It remains prohibited to insert synthetic or retrospective rows into `PsicoPredicciones` as real forecasts.
+Preserve the **existing** private reproduction archive (originals + manifest; no duplicates); rerun `private_archive_intake.py` when required; and independently verify the provenance/release timeline. Freeze a future issuance time, benchmark, target resolution and model inputs; obtain a genuine independent TSA receipt before declaring `ISSUED`. It remains prohibited to insert synthetic or retrospective rows into `PsicoPredicciones` as real forecasts.
