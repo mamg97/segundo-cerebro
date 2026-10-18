@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {futureGraph, historicalCasePanel, historicalCaseSummary, historicalObservedTimeline, historicalCaseComparison, observedCaseAvailable, historicalEventCards, phenomenaScopePanel} from './research-futures.mjs';
+import {futureGraph, historicalCasePanel, historicalCaseSummary, historicalObservedTimeline, historicalCaseComparison, observedCaseAvailable, historicalEventCards, phenomenaScopePanel, preferredFutureCountry, futureGraphGuide} from './research-futures.mjs';
 import {forward,retainedPaths} from '../private-cloudflare/src/research-futures-engine.mjs';
 
 const matrix = [[.8,.2,0,0],[0,0,.3,.7],[.8,.2,0,0],[0,0,.3,.7]];
@@ -173,4 +173,47 @@ test('country, catalog and model changes immediately calculate rather than leavi
   assert.match(source,/render\(\); load\(\);/);
   assert.match(source,/abort\?\.abort\(\); abort = new AbortController\(\)/);
   assert.match(source,/if \(mine !== request \|\| disposed\) return/);
+});
+
+test('Spain ID 230 is the default if present, with safe fallback if missing',()=>{
+  const withSpain={countries:[{id:11,name:'SYNTHETIC REPUBLIC'},
+    {id:230,name:'Spain'},{id:12,name:'SYNTHETIC OTHER'}],suggestedCountryId:11};
+  assert.equal(preferredFutureCountry(withSpain),230);
+  assert.equal(preferredFutureCountry({countries:[{id:11,name:'SYNTHETIC REPUBLIC'}],suggestedCountryId:11}),11);
+  assert.equal(preferredFutureCountry({countries:[{id:5,name:'SYNTHETIC OTHER'}]}),5);
+  assert.equal(preferredFutureCountry({countries:[]}),null);
+  const source=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
+  assert.match(source,/country = preferredFutureCountry\(catalog\)/);
+  assert.match(source,/if \(!catalog\.countries\.some\(c => String\(c\.id\) === String\(country\)\)\) country = preferredFutureCountry\(catalog\)/);
+});
+
+test('graph guide states the exact 25-death binary target and each transition',()=>{
+  const fixture={country:{name:'SYNTHETIC <PLACE>'},cutoff:2018,origin:2020,
+    snapshots:[{endYear:2020,distribution:[.70,.10,.15,.05]},
+      {endYear:2021,distribution:[.65,.15,.10,.10]},
+      {endYear:2022,distribution:[.60,.20,.10,.10]}]};
+  const html=futureGraphGuide(fixture,3);
+  assert.match(html,/¿Se registrarán 25 o más muertes/);
+  assert.match(html,/2022/);
+  assert.match(html,/30 %/); // 01+11: current year at or above threshold
+  assert.match(html,/70 %/); // 00+10: below threshold
+  assert.match(html,/60 %/); // most likely pair of annual states
+  assert.match(html,/2018/);
+  assert.match(html,/2019 es puente sin observar/);
+  for(const label of ['Bajo → bajo','Entrada','Salida','Persistencia'])
+    assert.match(html,new RegExp(label));
+  assert.match(html,/no equivale a predecir una guerra o un ataque específico/);
+  assert.match(html,/SYNTHETIC &lt;PLACE&gt;/);
+  assert.doesNotMatch(html,/<PLACE>/);
+  assert.equal(futureGraphGuide({...fixture,snapshots:[{endYear:2020,distribution:[.5,.5,.5,.5]}]},1),'');
+});
+
+test('quick interpretation appears before SVG, no duplicate distant legend',()=>{
+ const source=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
+ const start=source.indexOf('const graphFirst = result ?');
+ const end=source.indexOf('const controlsAboveGraph =',start);
+ const graph=source.slice(start,end);
+ assert.ok(graph.indexOf('futureGraphGuide(result,horizon)')<graph.indexOf('futureGraph(result,horizon,selection,observed)'));
+ assert.doesNotMatch(source,/future-after-network.*future-legend/);
+ assert.match(source,/la trayectoria real se superpone a posteriori/);
 });
