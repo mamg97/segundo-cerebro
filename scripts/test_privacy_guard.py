@@ -24,5 +24,13 @@ class PrivacyGuardTests(unittest.TestCase):
         issues = findings("+++ b/docs/example.md\n@@ -0,0 +1 @@\n+" + email)
         self.assertEqual(issues[0][2], "PRIVATE_EMAIL")
 
+    def test_embedded_image_is_blocked_without_leaking_bytes(self):
+        payload = "data:image/png;base64," + "A" * 750
+        patch = "+++ b/app/old-icon.js\\n@@ -0,0 +1 @@\\n+const image='" + payload + "';"
+        patch = patch.replace("\\n", "\n")
+        issues = findings(patch, ["app/old-icon.js"])
+        self.assertIn(("app/old-icon.js", 1, "INLINE_IMAGE_BYTES"), issues)
+        self.assertNotIn(payload, str(issues))
+
 if __name__ == "__main__":
     unittest.main()
