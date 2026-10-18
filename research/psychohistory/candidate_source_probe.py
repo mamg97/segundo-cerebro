@@ -117,7 +117,7 @@ def summarize(raw: bytes, *, edition=SOURCE_EDITION, expected_sha256=None):
     undocumented_precisions = sorted(p for p in all_precision if p not in ("1","2","3","4","5"))
     # An undocumented codebook category is not grounds to infer a future
     # event, but it is grounds to withhold the scientific interpretation.
-    precision_requires_review = bool(undocumented_precisions)
+    precision_requires_review = bool(undocumented_precisions) or "date_prec" not in fields
     unexpected_scope = any((
         bound_errors["before_1989"], bound_errors["reversed"],
         boundaries["begins_after_export_month"],
