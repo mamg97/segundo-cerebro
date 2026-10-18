@@ -45,6 +45,24 @@ test("two small yogurts render as two cups, without altering the numeric quantit
   assert.equal(original.name, "Otro texto");
 });
 
+test("legacy 'ud' and 'envase' units are counted as individual cups", () => {
+  assert.equal(companionMenuDisplayName(
+    menu("small-coco", 1, "ud", "Original"),
+    products.get("small-coco")
+  ), "Yogur proteico de coco · 1 vasito (120 g)");
+  assert.equal(companionMenuDisplayName(
+    menu("small-coco", 2, "envases de 120 g", "Original"),
+    products.get("small-coco")
+  ), "Yogur proteico de coco · 2 vasitos (240 g)");
+});
+
+test("historical big-jar weights stay exactly as consumed", () => {
+  assert.equal(companionMenuDisplayName(
+    menu("jar-natural", 220, "g", "Original", "consumido"),
+    products.get("jar-natural")
+  ), "Yogur proteico natural · 220 g (tarro grande)");
+});
+
 test("large format has same canonical serving across legacy menu names", () => {
   const names = ["Yogur proteico natural (250 g)", "Yogur proteico natural · tarro grande · toma 250 g"];
   const [a,b] = prepareWeeklyMenuRows(names.map((name,i) => ({
