@@ -129,7 +129,7 @@ test("all seven days show four nutrition metrics, even without a gym session", (
   assert.match(html, /Ingeridas/);
   assert.equal((html.match(/class="is-deficit"/g) || []).length, 1);
   assert.equal((html.match(/class="is-surplus"/g) || []).length, 1);
-  assert.match(html, /<summary[^>]*>[^]*?<\/summary><dl class="home-gym-day-nutrition"/);
+  assert.match(html, /<summary[^>]*>[^]*?<span class="home-gym-day-nutrition"[^]*?<\/summary>/);
 });
 
 test("missing intake, incomplete expenditure and missing Health do not manufacture zero balance", () => {
@@ -143,7 +143,7 @@ test("missing intake, incomplete expenditure and missing Health do not manufactu
   const html = renderHomeGymWeek(input([]), today, { nutritionHistory: [] });
   assert.equal((html.match(/class="home-gym-day-nutrition"/g) || []).length, 7);
   assert.doesNotMatch(html, /(?:\+0|-0) kcal/);
-  assert.match(html, /<dt>Balance<\/dt><dd>—<\/dd>/);
+  assert.match(html, /home-gym-nutrition-label">Balance<\/span><strong>—<\/strong>/);
   const gymFailure = renderHomeGymWeek(null, today, { nutritionHistory: [] });
   assert.match(gymFailure, /Entrenamientos no disponibles/);
   assert.doesNotMatch(gymFailure, /0 días · 0 sesiones/);
