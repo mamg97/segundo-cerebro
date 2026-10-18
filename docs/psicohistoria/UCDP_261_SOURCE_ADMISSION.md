@@ -1,6 +1,6 @@
 # PSICOHISTORIA — Admisión de la fuente OrganizedViolenceCY 26.1
 
-Estado: **integrada en `main` mediante PR #613**, tras superar pruebas y control de privacidad. **El ZIP y el PDF oficiales todavía no se han validado contra sus hashes en un entorno con acceso a los archivos.** Esta entrega no introduce nuevos pronósticos.
+Estado: **integrada en `main` mediante PR #613**, tras superar pruebas y control de privacidad. **El ZIP y PDF oficiales ya superaron SHA-256 y auditoría empírica en CI efímera del 18/10/2026; falta archivarlos permanentemente en Drive privado.** Esta entrega no introduce nuevos pronósticos.
 
 ## Problema científico
 
@@ -52,7 +52,7 @@ El comando lee **exclusivamente el protocolo del repositorio** y crea el manifie
 
 ## Próxima puerta
 
-1. Recuperar efectivamente ZIP y PDF oficiales con el downloader; verificar que coinciden los SHA preregistrados; conservar copia privada de los bytes (esta sesión no pudo obtenerlos ni localizar su copia en Drive).
+1. Recuperar los dos originales en Drive privado y conservar allí una copia duradera de los bytes y su manifiesto. Su descarga y validación en el runner efímero ya quedó acreditada en el workflow 39130567553; ese runner borró ambos archivos al finalizar.
 2. Obtener prueba independiente de fecha/edición de publicación, con trazabilidad temporal antes del `asOf` de las variables que se usarán para el horizonte futuro.
 3. Construir las features del primer origen futuro únicamente con información anterior al corte; fijar universo y baseline (el benchmark retrospectivo actual no genera sin cambios predicciones de un año sin resultado observado).
 4. Crear un borrador privado; comprobar contenido, recibo de TSA independiente y contrato de resolución. Solo después habilitar una **primera emisión**. La calibración y utilidad requerirán observar resultados posteriores y un número de casos suficiente.
