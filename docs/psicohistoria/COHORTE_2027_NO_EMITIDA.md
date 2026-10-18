@@ -43,3 +43,21 @@ Antes de afirmar una emisión real, falta:
 5. Resolver a partir de un futuro dataset anual UCDP cuando se publique. Hasta entonces \`outcome=null\` y ninguna puntuación.
 
 Pruebas sintéticas: \`test_future_2027_candidates.py\` comprueba estructura sin labels, modelos idénticos al motor ya existente, ausencia de leak futuro, política de roster, cortes, cinco-year history y rechazo de fuente no validada. El resultado real no se guarda ni se simula en Git.
+
+## Ensayo científico privado del 18/10/2026 (NO emitido)
+
+Desde los originales UCDP 26.1 archivados y verificados en Drive (SHA 2/2 y
+manifiesto 24/24), se ejecutó en un contenedor privado un wrapper equivalente
+al algoritmo de `candidate_rows`, reutilizando `benchmark.py` y `engines.py`
+cuyos hashes Git de blobs coinciden exactamente con los vigentes en `main`.
+Resultado de QA: 196 candidatos país-2027, seis modelos, **1.176 probabilidades**
+finitas dentro de [0,1], 196 `outcome=null`, y todas las variables y etiquetas
+de entrenamiento con fecha máxima **2025**. Este wrapper no es la ejecución
+literal ni el certificado del runner CLI canónico, y el JSON no se ha archivado
+en Drive; permanece como artefacto privado de la conversación.
+
+No se han publicado probabilidades, no se ha creado `ISSUED`, no se ha
+seleccionado modelo por acierto futuro ni se ha declarado skill. La prueba
+sirve únicamente para avanzar desde el esquema sintético a un cálculo real
+**no puntuable**. La siguiente operación sigue siendo ejecución formal y
+almacenamiento en infraestructura privada, seguida de evidencia as-of/TSA.
