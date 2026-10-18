@@ -9,11 +9,12 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.44.52">
+    <link rel="stylesheet" href="./styles.css?v=0.44.53">
     <link rel="stylesheet" href="./vision.css?v=0.44.0">
     <link rel="stylesheet" href="./gym-month-calendar.css?v=0.44.48">
     <link rel="stylesheet" href="./gym-progress-photos.css?v=0.44.49">
-    <script type="module" src="./app.js?v=0.44.52"></script>
+    <link rel="stylesheet" href="./gym-week-summary.css?v=0.44.53">
+    <script type="module" src="./app.js?v=0.44.53"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -187,6 +188,19 @@
               <button id="home-objects-kits" type="button">Kits</button>
             </nav>
           </article>
+        </section>
+
+        <section id="home-gym-week" class="home-gym-week" aria-labelledby="home-gym-week-title">
+          <header class="home-gym-week-header">
+            <div>
+              <p class="context-label">Salud · entrenamiento</p>
+              <h2 id="home-gym-week-title">Esta semana en el gimnasio</h2>
+            </div>
+            <button id="home-gym-week-open" class="text-action" type="button">Ver Gimnasio ↗</button>
+          </header>
+          <div id="home-gym-week-content" aria-live="polite">
+            <p class="home-gym-week-state">Cargando entrenamientos guardados…</p>
+          </div>
         </section>
         <section class="money-horizon" aria-label="Resumen financiero y eventos importantes">
           <article class="budget-panel compact-budget-panel">
