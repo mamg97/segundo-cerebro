@@ -1,0 +1,22 @@
+name: Verify anonymous Cloudflare Access denial
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/security-anonymous-access.yml"
+      - "scripts/security-anonymous-access.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  anonymous-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify private routes deny an unauthenticated client
+        run: bash scripts/security-anonymous-access.sh
