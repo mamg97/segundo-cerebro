@@ -1,3 +1,13 @@
+## ORGANIZADOR — Home: selector de semanas históricas en Menú (18/10/2026)
+
+- Petición: en el bloque principal **«Menú de la semana»** de Salud/Home, sobre la matriz horizontal de 7 días, poder consultar semanas anteriores y regresar a la actual sin abrir el diálogo «Ver menú completo».
+- Se reutilizan `menuWeekMonday`, `menuShiftWeek` y `menuWeekRangeLabel`, con botones semana anterior/siguiente, fecha y «Esta semana»; bloque de navegación siempre visible también cuando la semana esté vacía o falle la lectura. En Home se muestran siete columnas lunes-domingo incluso si algún día no tiene filas canónicas.
+- Fuente de cada semana: `GET /api/nutrition/menu?date=<fecha>` ya existente, sin endpoints ni gasto nuevos; respuestas verificadas por `weekStart`, memoria RAM temporal de 5 minutos por semana, y contador de peticiones para ignorar respuestas antiguas. El refresco normal de Nutrición no sustituye la semana histórica abierta. Un error conserva la última semana válida, sin presentar platos inventados.
+- Histórico consultivo: los botones «Cambiar» / «Consumida» solo se vinculan en semana actual. Enlaces a recetas siguen disponibles y consultan la fecha realmente seleccionada; al regresar al menú de semana actual, las mutaciones invalidan la copia RAM y consultan el Sheet canónico.
+- Pruebas `app/home-weekly-menu-history.test.mjs`: semana ISO/límites, navegabilidad, semana incompleta, protección frente a carrera y edición histórica, versión de recursos. Sin escrituras en Sheets ni datos personales en Git. Pendiente verificar CI, despliegue privado y visual en producción.
+
+---
+
 ## PSICOHISTORIA — UI v0.5.12 · España inicial y lectura inmediata del árbol (18/10/2026)
 
 - **Selección:** `app/research-futures.mjs` preselecciona Spain (UCDP ID 230) si consta en el catálogo privado; en ausencia de España conserva el fallback válido. Respeta cualquier elección posterior y el recálculo automático v0.5.11.
