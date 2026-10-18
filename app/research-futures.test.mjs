@@ -107,8 +107,8 @@ test('app launches directly into research cases without covering initial viewpor
   assert.ok(js.includes('observed = observedCaseAvailable(data.result,horizon)'));
   assert.ok(js.includes('historicalCaseSummary(result, horizon)'));
   assert.ok(js.includes('historicalObservedTimeline(result, horizon)'));
-  assert.ok(js.includes('container.innerHTML = controlsAboveGraph + graphFirst + explainableReplayPanel('), 'configuration precedes the network while the network is the first analytical result');
-  assert.ok(js.indexOf('const controlsAboveGraph =') < js.indexOf('container.innerHTML = controlsAboveGraph + graphFirst +'));
+  assert.ok(js.includes("container.innerHTML = phenomenaTree(onsetExperiments,selectedPhenomenon,true) + (selectedPhenomenon === 'aggregate' ?"), 'phenomenon tree precedes the selected scientific network');
+  assert.ok(js.indexOf('const controlsAboveGraph =') < js.indexOf('container.innerHTML = phenomenaTree(onsetExperiments,selectedPhenomenon,true) +'));
   assert.ok(js.indexOf('const graphFirst = result ?') < js.indexOf('container.innerHTML = controlsAboveGraph + graphFirst +'));
   assert.ok(js.includes('<div class="future-selection"><div class="section-heading">'));
   assert.ok(js.includes('<form class="future-controls">'));
@@ -154,8 +154,8 @@ test('target scope separates current retrospective scores from not-yet-evaluated
   assert.equal((html.match(/SIN PROBABILIDADES REALES TODAVÍA/g)||[]).length,2);
   assert.doesNotMatch(html,/100 % de acierto|predicción prospectiva validada/);
   const source=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
-  assert.ok(source.includes('container.innerHTML = controlsAboveGraph + graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) +'));
-  assert.ok(source.includes("phenomenaScopePanel(onsetExperiments) + onsetSummaryPanel(onsetExperiments) +"));
+  assert.ok(source.includes('container.innerHTML = phenomenaTree(onsetExperiments,selectedPhenomenon,true) +'));
+  assert.ok(source.includes('phenomenonDetails(onsetExperiments,selectedPhenomenon)'));
 });
 
 test('country, catalog and model changes immediately calculate rather than leaving the tree blank',()=>{
