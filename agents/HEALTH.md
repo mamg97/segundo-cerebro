@@ -80,6 +80,7 @@ The Worker proxies recipe images through an authenticated same-origin endpoint. 
 - Pantry is household stock. Do not interpret multiple packs/trays as all belonging to Miguel; resolve the intended household meal and portion split before assigning consumption.
 - Keep planned and consumed distinct. Do not decrement Pantry stock until consumption/preparation is confirmed, unless the stock is explicitly reserved and the note says so.
 - A temporary training pause is represented in `ObjetivosActividad` by an effective row with `strength_sessions_week=0`; optional activity floors can be left unset when they must not be judged. Adherence must treat strength as `ignored`, never failed, while that row is effective.
+- A positive `ObjetivosActividad.strength_sessions_week` is a **weekly minimum**, not a cap or a daily rest schedule. Additional confirmed sessions above that threshold remain valid; completing the minimum must not automatically display `Descanso` or disable session entry. Only a medical pause encoded as 0 suppresses suggestions/entry. Recovery and training load still govern whether another session is advisable.
 - The base gym plan remains preserved during a pause. The private UI must suppress session suggestions/entry and show the pause reason from the active objective; reactivation happens by a later objective row after the user confirms the pause can end.
 
 ### Contrato de composición de tomas del planificador (vigente para nuevas entradas)
