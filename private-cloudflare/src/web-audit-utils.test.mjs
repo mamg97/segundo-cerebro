@@ -152,7 +152,7 @@ test("Home menu follows Agenda before footer and audit checks that placement", a
   const menu = html.indexOf('id="home-weekly-menu-panel"');
   const footer = html.indexOf("<footer", menu);
   assert.ok(agenda >= 0 && menu > agenda && footer > menu);
-  assert.match(audit, /workbench\\.nextElementSibling === menu/);
-  assert.match(audit, /menu\\.nextElementSibling === footer/);
+  assert.match(audit, /workbench\.nextElementSibling === menu/);
+  assert.match(audit, /menu\.nextElementSibling === footer/);
   assert.doesNotMatch(audit, /menú ocupa el segundo cuadro tras resumen de consumos/);
 });
