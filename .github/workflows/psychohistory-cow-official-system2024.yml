@@ -6,6 +6,8 @@ on:
     paths:
       - "research/psychohistory/cow_official_system2024.py"
       - "research/psychohistory/test_cow_official_system2024.py"
+      - "research/psychohistory/cow_official_system_reconcile.py"
+      - "research/psychohistory/test_cow_official_system_reconcile.py"
       - ".github/workflows/psychohistory-cow-official-system2024.yml"
   workflow_dispatch:
 permissions:
@@ -33,7 +35,28 @@ jobs:
           python3 research/psychohistory/cow_official_system2024.py \
             --archive "$RUNNER_TEMP/official-cow-System2024.zip"
           echo 'Metadata only. No country-year rows or historical as-of claims.'
+      - name: Fetch an independently pinned dated-state interval source
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+            --max-time 45 --max-filesize 90000 \
+            --output "$RUNNER_TEMP/cow-states2024-independent.csv" \
+            'https://raw.githubusercontent.com/brentonk/us_diplomatic_missions/0dda0ef93b7958f67c79031c1695dd9e5408a62c/input/cow_statelist2024.csv'
+      - name: Directly reconcile official code-year observations against source intervals
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/cow_official_system_reconcile.py \
+            --official-zip "$RUNNER_TEMP/official-cow-System2024.zip" \
+            --official-zip-sha256 de7cae05d9908cff3606df185518cda380dbdc4c4f24739e72b0b13c1cb4a3d4 \
+            --official-csv-sha256 1186f0c30fe549967bb5d33d0084ca47d6ab8215e298ec5ad83d34b6dbb04ea8 \
+            --intervals "$RUNNER_TEMP/cow-states2024-independent.csv" \
+            --interval-sha256 722153b45eda9c39826a04aab80ca7b29a8b1cfdfe5d92714503420555675484 \
+            --year 1990 --year 2002 --year 2006 --year 2011 \
+            --year 2020 --year 2024
+          echo 'No public country rows, no as-of approval, no UCDP labels.'
       - name: Purge the official ZIP even on failure
         if: always()
         shell: bash
-        run: rm -f "$RUNNER_TEMP/official-cow-System2024.zip"
+        run: rm -f "$RUNNER_TEMP/official-cow-System2024.zip" "$RUNNER_TEMP/cow-states2024-independent.csv"
