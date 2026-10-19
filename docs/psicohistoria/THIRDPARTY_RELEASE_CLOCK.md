@@ -1,64 +1,72 @@
 # PSICOHISTORIA — Puerta de exclusión temporal con metadatos de un tercero
 
-**19/10/2026 · Investigación:** separar afirmaciones de publicación, observación
-externa y certificación del contenido exacto. **No es una validación as-of**.
+**19/10/2026 · Investigación:** separar fecha declarada de publicación,
+fecha registrada de consulta y prueba de contenido exacto. **No es
+validación as-of, no emite predicciones y no ejecuta scores.**
 
-## Hallazgo público trazable
+## Evidencia publicada y volatilidad del catálogo externo
 
-El catálogo público de [Our World in Data (OWID) / Datasette](https://datasette-public.owid.io/owid)
-incluye un registro para UCDP Candidate **trimestral**
-\`v24.01.24.12\` (enero a diciembre 2024):
+El [catálogo público OWID / Datasette](https://datasette-public.owid.io/owid)
+contiene una entrada para UCDP Candidate mensual **24.0.10**:
 
-- **datePublished**: 2025-01-28 (fecha **declarada** en el catálogo).
-- **dateAccessed**: 2025-02-19 (fecha de **acceso registrada** por OWID).
-- **urlDownload**: \`https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_01_24_12.csv\`.
+- **datePublished = 2024-10-20** (declaración de publicación que conserva OWID).
+- **dateAccessed = 2024-11-22** (fecha de acceso registrada por OWID).
+- **urlDownload = https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_0_10.csv**
 - Editor: Uppsala Conflict Data Program.
 
-**No confundir:** \`v24.01.24.12\` **NO** es la edición mensual
-\`24.0.12\` previamente estudiada. La fecha de la primera no demuestra
-nada sobre la fecha de publicación exacta de la segunda.
+El registro figura en la [consulta viva de metadatos OWID para UCDP](https://datasette-public.owid.io/owid?p0=UCDP&sql=select+rowid%2C+id%2C+titleSnapshot%2C+title%2C+descriptionSnapshot%2C+description%2C+producer%2C+citationFull%2C+attribution%2C+attributionShort%2C+versionProducer%2C+urlMain%2C+urlDownload%2C+dateAccessed%2C+datePublished%2C+license+from+origins+where+%22attributionShort%22+%3D+%3Ap0+order+by+license+limit+101).
 
-Consulta de metadatos del registro del tercero reproducida con un único
-fetch efímero en [GitHub Actions (tercero)](../../.github/workflows/psychohistory-thirdparty-release-clock.yml).
-No se descargan CSV de eventos ni se almacenan datos nacionales en Git.
+**Advertencia contrastada:** en un índice de búsqueda anterior se observó
+también un registro trimestral \`v24.01.24.12\`, con publicación declarada
+28/01/2025 y acceso 19/02/2025. Ese ID ya no fue recuperable como
+coincidencia única durante la ejecución de la nueva CI. **No** se usó
+para el experimento, y esta discrepancia demuestra que la base de metadatos
+consultable hoy no es necesariamente un archivo histórico inmutable.
+No extrapolar fechas del trimestral al mensual.
 
-## Contrato científico del nuevo auditor
+La edición mensual **24.0.10** tampoco es \`24.0.12\` (diciembre) ni
+\`25.0.1\` (enero), estudiadas en los avances 27–28.
 
-\`research/psychohistory/thirdparty_release_clock.py\` comprueba por
-identidad la versión, URL de descarga, editor y fechas del tercero.
-Rechaza ediciones sustituidas, URLs que imitan el dominio oficial,
-fechas imposibles, respuestas con varias filas y orígenes desordenados.
+## Puerta implementada
 
-Para una hipótesis de pronóstico emitido el **día 1** de un mes:
+\`research/psychohistory/thirdparty_release_clock.py\` exige un único
+registro del tercero y comprueba editor, nombre de versión, URL exacta,
+fechas ISO, respuesta no ambigua y orden de fechas de los orígenes.
+Impide usar URLs de suplantación y versiones equivocadas.
 
-| Emisión hipotética | Resultado del guard |
+Dado el corte de emisiones hipotéticas al **día 1**, clasifica:
+
+| Emisión hipotética | Clasificación |
 |---|---|
-| 2025-01-01 | \`NOT_PUBLISHED_BY_DECLARED_DATE\`: la fecha declarada es posterior |
-| 2025-02-01 | \`NO_THIRD_PARTY_ACCESS_BEFORE_ISSUE\`: OWID aún no registra acceso |
-| 2025-03-01 | \`METADATA_PREISSUE_BYTES_NOT_ATTESTED\`: publicación y acceso declarados preceden al origen, pero NO existe testigo SHA-256 histórico |
+| 2024-10-01 | \`NOT_PUBLISHED_BY_DECLARED_DATE\`: el catálogo declara publicación posterior |
+| 2024-11-01 | \`NO_THIRD_PARTY_ACCESS_BEFORE_ISSUE\`: la fecha de acceso registrada es posterior |
+| 2024-12-01 | \`METADATA_PREISSUE_BYTES_NOT_ATTESTED\`: los dos metadatos preceden la emisión, **pero no acreditan los bytes exactos** |
 
-**Ningún resultado positivo**. Aunque un tercero afirme haber consultado el
-recurso en febrero, desconocemos si la fila del catálogo es inmutable y si
-los bytes descargables hoy coinciden con los observados entonces. La
-evidencia de una URL o de una fecha sin un contenido comprobable no valida
-un retrospectivo. \`source_as_of_verified=false\`,
+El programa **no** permite ninguna aprobación de replay:
+\`source_as_of_verified=false\`,
+\`independent_timestamp_cryptographically_authenticated=false\`,
+\`historical_byte_hash_attested_by_third_party=false\`,
 \`vintage_correct_replay_authorized=false\`, \`models_scored=false\`,
-\`forecast_issued=false\`. Tampoco valida cobertura de los países
-con cero incidentes.
+\`forecast_issued=false\`.
 
-El auditor no sustituye el verificador SHA de \`ged_asof_provenance.py\`
-ni \`asof_cohort_coverage.py\`; es una **restricción adicional** de fecha
-de fuente, todavía incapaz de habilitar un backtest.
+La presencia de metadatos, aunque sean gestionados por un tercero,
+no significa que el registro sea inmutable, que el fichero no haya
+cambiado después, ni que el archivo GED Candidate incluya el universo
+de países con cero incidentes. El cronograma de publicación no puede
+deducirse del número de versión ni de las fechas de los eventos.
 
-## Evidencia que falta
+## Reproducción y siguiente hito
 
-Un testigo independiente temporal de **esos bytes exactos**, no solo
-metadatos del catálogo, por ejemplo una instantánea externa fechada y
-verificable con checksum cotejable. Debe fijarse también el instante de
-emisión, embargo de etiquetas y roster de países predefinido sin información
-posterior. La mera presencia histórica de UCDP Candidate no demuestra
-capacidad predictiva.
+[GitHub Actions](../../.github/workflows/psychohistory-thirdparty-release-clock.yml)
+consulta una sola fila de metadatos públicos por HTTPS en un runner
+efímero. No descarga eventos, no almacena documentos ni crea un servicio
+de pago. Se confrontan las tres fechas de emisión hipotética contra los
+datos del catálogo en tiempo real; el resultado se guarda únicamente como
+salida agregada.
 
-Fuentes:
-[histórico oficial UCDP](https://ucdp.uu.se/downloads/olddw.html),
-[catálogo OWID, versión UCDP](https://datasette-public.owid.io/owid?p0=UCDP&sql=select+rowid%2C+id%2C+titleSnapshot%2C+title%2C+descriptionSnapshot%2C+description%2C+producer%2C+citationFull%2C+attribution%2C+attributionShort%2C+versionProducer%2C+urlMain%2C+urlDownload%2C+dateAccessed%2C+datePublished%2C+license+from+origins+where+%22attributionShort%22+%3D+%3Ap0+order+by+license+limit+101).
+Para avanzar científicamente se necesita un testigo externo
+independientemente fechado **de los bytes exactos** (comprobable por
+SHA-256), y después un roster de todos los países y features/etiquetas
+reconstruidas con versiones realmente disponibles antes de cada origen.
+
+**El módulo es una nueva barrera de exclusión, no una evidencia de skill.**
