@@ -140,3 +140,8 @@ Un hecho no sustituye a su fuente propietaria. Por ejemplo, un hecho `GASTO` pue
 - `POST /api/events/:id/references`
 
 La sincronización de lectura de `/api/state` reconcilia automáticamente los eventos importantes detectados en iCloud contra `SEGUNDO CEREBRO - EVENTOS`. No escribe en iCloud. Las rutas `/api/events` leen y escriben el Sheet canónico; D1 queda como fallback técnico durante la migración.
+
+
+## Vista privada de Viajes
+
+La navegación principal ofrece Viajes justo después de Proyectos. Cada ficha reutiliza registros de Eventos, EventoHechos y EventoRefs de tipo travel. Finanzas sigue como fuente de presupuesto y pagos, vinculada por finance_ref. El área es de consulta, sin tareas falsamente confirmadas. Véase docs/TRIPS_WORKSPACE.md.
