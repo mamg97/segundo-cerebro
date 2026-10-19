@@ -6107,7 +6107,9 @@ function homeMenuEditPayload(item, action, newRecipeId = null, newServings = nul
       ...(item.recipeId ? {recipeId:item.recipeId} : {foodId:item.foodId}),
       name: item.name, updatedAt: item.updatedAt || ""
     }),
-    ...(action === "add-food" ? {newFoodId:String(newRecipeId||"").replace(/^food:/,"")} : newRecipeId ? {newRecipeId} : {}),
+    ...(["add-food","replace-food"].includes(action)
+      ? {newFoodId:String(newRecipeId||"").replace(/^food:/,"")}
+      : newRecipeId ? {newRecipeId} : {}),
     ...(newServings !== null ? {newServings} : {}),
     ...(newCompanionType ? {newCompanionType} : {}),
     ...(["add","add-food"].includes(action) ? {confirmConsumed:Boolean(confirmConsumed)} : {})
@@ -6195,7 +6197,7 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
   );
   dialog.innerHTML = `
     <div class="home-menu-editor-main">
-      <header><div><small>Menú semanal · ${isAdd ? "añadir" : isCorrection ? "corregir consumo" : "modificar"}</small><h3>${isAdd ? "Añadir receta o acompañante" : isCorrection ? "Corregir receta consumida" : "Cambiar receta"}</h3></div>
+      <header><div><small>Menú semanal · ${isAdd ? "añadir" : isCorrection ? "corregir consumo" : "modificar"}</small><h3>${isAdd ? "Añadir receta o acompañante" : isCorrection ? "Corregir receta consumida" : foodCompanion ? "Cambiar alimento" : "Cambiar receta"}</h3></div>
         <button type="button" data-menu-editor-cancel aria-label="Cerrar selector">✕</button></header>
       <p class="home-menu-editor-current">${isAdd ? "Hueco libre: " + escapeHtml(item.moment) + " · " + escapeHtml(item.date)
         : "Actual: <strong>" + escapeHtml(item.name || "Receta") + "</strong> · " +
@@ -6235,17 +6237,23 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
   dialog.showModal();
   const options = await homeMenuRecipeOptions();
   if (!dialog.open) return;
-  let choices = options.filter(recipe => isAdd || (recipe.kind !== "food" && recipe.id !== item.recipeId));
+  let choices = options.filter(recipe => isAdd ||
+    (recipe.kind === "food"
+      ? foodCompanion && !isCorrection &&
+        recipe.companionType === normalizeWeeklyMenuMoment(item.companionType)
+      : recipe.id !== item.recipeId));
   let selectedRecipe = null;
   const updatePreview = () => {
     selectedRecipe = options.find(recipe => recipe.id === select.value) || null;
-    const selectingFood = isAdd && selectedRecipe?.kind === "food";
+    const selectingFood = selectedRecipe?.kind === "food";
     if (servingsInput) {
       servingsInput.step = selectingFood ? "1" : "0.25";
       servingsInput.min = selectingFood ? "1" : "0.25";
     }
     if (servingsLabel) servingsLabel.textContent = selectingFood
-      ? "Número de raciones (1 = 10 picos integrales)"
+      ? selectedRecipe.companionType === "yogur"
+        ? (selectedRecipe.unit === "g" ? "Tomas de 250 g (½ tarro grande)" : "Número de vasitos (1 = 120 g)")
+        : "Número de raciones (1 = 10 picos integrales)"
       : "Raciones de la receta elegida";
     if (roleSelect && selectingFood) {
       roleSelect.value = "extra";
@@ -6257,8 +6265,14 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
     } else if (consumedCheckbox) consumedCheckbox.disabled = false;
     const requestedServings = servingsInput ? servingsInput.value : null;
     const macro = selectedRecipe && homeMenuRecipeProjection(item,selectedRecipe,day,requestedServings,isAdd);
-    const conflictingPrimary = Boolean(alreadyHasPrimary && !roleSelect?.value);
-    save.disabled = !macro || homeMenuEditPending || conflictingPrimary ||
+    const conflictingPrimary = Boolean(!selectingFood && alreadyHasPrimary && !roleSelect?.value);
+    const foodNoChange = selectingFood && !isAdd &&
+      selectedRecipe.id === "food:"+item.foodId &&
+      Number(requestedServings)*Number(selectedRecipe.serving)===Number(item.quantity);
+    const isOnlyOneDessert = selectingFood && selectedRecipe.companionType === "yogur" &&
+      ["comida","cena"].includes(normalizeWeeklyMenuMoment(item.moment));
+    save.disabled = !macro || homeMenuEditPending || conflictingPrimary || foodNoChange ||
+      (isOnlyOneDessert && Number(requestedServings)!==1) ||
       Boolean(!isAdd && selectedRecipe?.id === item.recipeId && requestedServings === String(item.quantity));
     preview.innerHTML = conflictingPrimary
       ? '<span>Esta comida ya tiene un plato principal. Elige «Acompañamiento / extra» para añadirlo sin reemplazar el plato.</span>'
@@ -6281,7 +6295,7 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
   input.addEventListener("input",updateChoices);
   select.addEventListener("change",() => {
     const choice=options.find(recipe=>recipe.id===select.value);
-    if(isAdd && choice?.kind==="food" && servingsInput && !servingsInput.value.trim())
+    if(choice?.kind==="food" && servingsInput && !servingsInput.value.trim())
       servingsInput.value="1";
     updatePreview();
   });
@@ -6292,9 +6306,11 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
     save.disabled = true;
     save.textContent = "Guardando…";
     try {
-      await submitHomeMenuEdit(item,isAdd ? (selectedRecipe.kind==="food" ? "add-food" : "add") : "replace",selectedRecipe.id,
+      const action = selectedRecipe.kind === "food"
+        ? (isAdd ? "add-food" : "replace-food") : (isAdd ? "add" : "replace");
+      await submitHomeMenuEdit(item,action,selectedRecipe.id,
         servingsInput?.value.trim() ? Number(servingsInput.value) : null,
-        selectedRecipe.kind==="food" ? "guarnicion" : roleSelect?.value || null,
+        selectedRecipe.kind==="food" ? selectedRecipe.companionType : roleSelect?.value || null,
         selectedRecipe.kind==="food" ? false : Boolean(consumedCheckbox?.checked));
       dialog.close();
     } catch(error) {
