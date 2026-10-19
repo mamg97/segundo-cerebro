@@ -1,3 +1,9 @@
+# PSICOHISTORIA — Última verificación AV-037 (19/10/2026)
+
+PR #671 fusionada. UCDP Candidate solo declara cobertura mundial desde 20.0.10 (octubre 2020); septiembre 20.0.9 registró 809 eventos/41 países con eventos, octubre 20.0.10 1070/46. Ningún recuento identifica países sin eventos. 20.0.4 tiene ámbito documental ambiguo. La hoja privada tiene 37 avances y cero emisiones. MAD-02 sigue PARCIAL; V2-02 EN_CURSO. Ver [estudio](CANDIDATE_SCOPE_2020.md) y [PR](https://github.com/mamg97/segundo-cerebro/pull/671). Lo que sigue debajo es un relevo HISTÓRICO y no el estado más reciente.
+
+---
+
 # PSICOHISTORIA — Relevo científico vigente · 19/10/2026
 
 ## Avance AV-20261019-036
