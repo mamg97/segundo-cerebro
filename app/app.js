@@ -6074,28 +6074,43 @@ async function homeMenuRecipeOptions() {
   if (homeMenuRecipeOptionsPromise && Date.now() - homeMenuRecipeOptionsLoadedAt < 60_000)
     return homeMenuRecipeOptionsPromise;
   homeMenuRecipeOptionsLoadedAt = Date.now();
-  homeMenuRecipeOptionsPromise = fetch("/api/nutrition/menu/recipes", {
+  const recipeRequest = fetch("/api/nutrition/menu/recipes", {
     credentials: "same-origin", cache: "no-store", headers: {Accept:"application/json"}
   }).then(async response => {
     if (!response.ok) throw new Error("RECIPE_OPTIONS_" + response.status);
     const body = await response.json();
     if (!body?.ok || !Array.isArray(body.recipes)) throw new Error("RECIPE_OPTIONS_INVALID");
     return body.recipes;
-  }).catch(error => { homeMenuRecipeOptionsPromise = null; throw error; });
+  });
+  // Missing food presets must not block the existing recipe editor.
+  const foodRequest = fetch("/api/nutrition/menu/foods", {
+    credentials: "same-origin", cache: "no-store", headers: {Accept:"application/json"}
+  }).then(async response => {
+    if (!response.ok) throw new Error("FOOD_OPTIONS_" + response.status);
+    const body = await response.json();
+    if (!body?.ok || !Array.isArray(body.foods)) throw new Error("FOOD_OPTIONS_INVALID");
+    return body.foods.map(food => ({...food,id:"food:"+food.id,kind:"food",servings:1,precision:"estimación operativa"}));
+  }).catch(error => {
+    console.warn("Acompañantes de Comidas no disponibles",String(error?.message||error));
+    return [];
+  });
+  homeMenuRecipeOptionsPromise = Promise.all([recipeRequest,foodRequest])
+    .then(([recipes,foods]) => [...foods,...recipes])
+    .catch(error => { homeMenuRecipeOptionsPromise = null; throw error; });
   return homeMenuRecipeOptionsPromise;
 }
 function homeMenuEditPayload(item, action, newRecipeId = null, newServings = null, newCompanionType = null, confirmConsumed = false) {
   return {
     action, date: item.date, moment: item.moment,
-    ...(action === "add" ? {} : {
+    ...(["add","add-food"].includes(action) ? {} : {
       sourceRow: item.sourceRow,
       ...(item.recipeId ? {recipeId:item.recipeId} : {foodId:item.foodId}),
       name: item.name, updatedAt: item.updatedAt || ""
     }),
-    ...(newRecipeId ? {newRecipeId} : {}),
+    ...(action === "add-food" ? {newFoodId:String(newRecipeId||"").replace(/^food:/,"")} : newRecipeId ? {newRecipeId} : {}),
     ...(newServings !== null ? {newServings} : {}),
     ...(newCompanionType ? {newCompanionType} : {}),
-    ...(action === "add" ? {confirmConsumed:Boolean(confirmConsumed)} : {})
+    ...(["add","add-food"].includes(action) ? {confirmConsumed:Boolean(confirmConsumed)} : {})
   };
 }
 async function submitHomeMenuEdit(item, action, recipeId, newServings = null, newCompanionType = null, confirmConsumed = false) {
@@ -6160,7 +6175,7 @@ function homeMenuEditDialog() {
   dialog = document.createElement("dialog");
   dialog.id = "home-menu-edit-dialog";
   dialog.className = "home-menu-edit-dialog";
-  dialog.setAttribute("aria-label","Cambiar receta del menú");
+  dialog.setAttribute("aria-label","Editar receta o acompañante del menú");
   document.body.append(dialog);
   dialog.addEventListener("click", event => { if (event.target === dialog && !homeMenuEditPending) dialog.close(); });
   return dialog;
@@ -6180,14 +6195,14 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
   );
   dialog.innerHTML = `
     <div class="home-menu-editor-main">
-      <header><div><small>Menú semanal · ${isAdd ? "añadir" : isCorrection ? "corregir consumo" : "modificar"}</small><h3>${isAdd ? "Añadir receta" : isCorrection ? "Corregir receta consumida" : "Cambiar receta"}</h3></div>
+      <header><div><small>Menú semanal · ${isAdd ? "añadir" : isCorrection ? "corregir consumo" : "modificar"}</small><h3>${isAdd ? "Añadir receta o acompañante" : isCorrection ? "Corregir receta consumida" : "Cambiar receta"}</h3></div>
         <button type="button" data-menu-editor-cancel aria-label="Cerrar selector">✕</button></header>
       <p class="home-menu-editor-current">${isAdd ? "Hueco libre: " + escapeHtml(item.moment) + " · " + escapeHtml(item.date)
         : "Actual: <strong>" + escapeHtml(item.name || "Receta") + "</strong> · " +
           (item.kcal == null ? "—" : escapeHtml(formatKcal(item.kcal))) + " · P " +
           (item.protein == null ? "—" : escapeHtml(formatMacro(item.protein)))}</p>
       ${isCorrection ? '<p class="home-menu-editor-food-hint">El consumo seguirá confirmado. Se corregirá también el Registro existente si coincide de forma inequívoca.</p>' : ""}
-      <label class="home-menu-editor-servings">Raciones de la receta elegida
+      <label class="home-menu-editor-servings"><span data-menu-editor-serving-label>Raciones de la opción elegida</span>
         <input type="number" data-menu-editor-servings min="0.25" max="20" step="0.25"
           value="${!isAdd && /raci[oó]n/i.test(String(item.unit||"")) && Number(item.quantity)>0 ? escapeHtml(String(item.quantity)) : ""}"
           placeholder="Indica las raciones (ej.: 1)" inputmode="decimal">
@@ -6199,12 +6214,12 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
           <option value="extra" ${isAdd && alreadyHasPrimary ? "selected" : ""}>Acompañamiento / extra</option>
           <option value="batido" ${defaultShake ? "selected" : ""}>Batido como acompañamiento</option>
         </select></label><p class="home-menu-editor-food-hint">Los acompañamientos se suman a la comida existente sin reemplazarla.</p>` : ""}
-      <label>Buscar recetas <input type="search" data-menu-editor-search placeholder="Nombre de receta…" autocomplete="off"></label>
-      <label>Receta alternativa <select data-menu-editor-select size="6" aria-label="Seleccionar receta alternativa"></select></label>
+      <label>Buscar recetas o acompañantes <input type="search" data-menu-editor-search placeholder="Picos integrales, receta…" autocomplete="off"></label>
+      <label>Elegir alimento o receta <select data-menu-editor-select size="6" aria-label="Seleccionar alimento o receta"></select></label>
       <div class="home-menu-editor-projection" data-menu-editor-preview role="status">Elige una receta para ver cómo cambiarían sus macros.</div>
       <div class="home-menu-editor-footer">
         <button type="button" data-menu-editor-cancel>Cancelar</button>
-        <button type="button" data-menu-editor-save disabled>${isAdd ? "Añadir receta" : "Aplicar cambio"}</button>
+        <button type="button" data-menu-editor-save disabled>${isAdd ? "Añadir al menú" : "Aplicar cambio"}</button>
       </div>
     </div>`;
   dialog.querySelectorAll("[data-menu-editor-cancel]").forEach(x =>
@@ -6213,16 +6228,33 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
   const select = dialog.querySelector("[data-menu-editor-select]");
   const preview = dialog.querySelector("[data-menu-editor-preview]");
   const servingsInput = dialog.querySelector("[data-menu-editor-servings]");
+  const servingsLabel = dialog.querySelector("[data-menu-editor-serving-label]");
   const roleSelect = dialog.querySelector("[data-menu-editor-role]");
   const consumedCheckbox = dialog.querySelector("[data-menu-editor-confirm-consumed]");
   const save = dialog.querySelector("[data-menu-editor-save]");
   dialog.showModal();
   const options = await homeMenuRecipeOptions();
   if (!dialog.open) return;
-  let choices = options.filter(recipe => isAdd || recipe.id !== item.recipeId);
+  let choices = options.filter(recipe => isAdd || (recipe.kind !== "food" && recipe.id !== item.recipeId));
   let selectedRecipe = null;
   const updatePreview = () => {
     selectedRecipe = options.find(recipe => recipe.id === select.value) || null;
+    const selectingFood = isAdd && selectedRecipe?.kind === "food";
+    if (servingsInput) {
+      servingsInput.step = selectingFood ? "1" : "0.25";
+      servingsInput.min = selectingFood ? "1" : "0.25";
+    }
+    if (servingsLabel) servingsLabel.textContent = selectingFood
+      ? "Número de raciones (1 = 10 picos integrales)"
+      : "Raciones de la receta elegida";
+    if (roleSelect && selectingFood) {
+      roleSelect.value = "extra";
+      roleSelect.disabled = true;
+    } else if (roleSelect) roleSelect.disabled = false;
+    if (consumedCheckbox && selectingFood) {
+      consumedCheckbox.checked = false;
+      consumedCheckbox.disabled = true; // Food ingestion is confirmed via its menu row later.
+    } else if (consumedCheckbox) consumedCheckbox.disabled = false;
     const requestedServings = servingsInput ? servingsInput.value : null;
     const macro = selectedRecipe && homeMenuRecipeProjection(item,selectedRecipe,day,requestedServings,isAdd);
     const conflictingPrimary = Boolean(alreadyHasPrimary && !roleSelect?.value);
@@ -6247,7 +6279,12 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
     updatePreview();
   };
   input.addEventListener("input",updateChoices);
-  select.addEventListener("change",updatePreview);
+  select.addEventListener("change",() => {
+    const choice=options.find(recipe=>recipe.id===select.value);
+    if(isAdd && choice?.kind==="food" && servingsInput && !servingsInput.value.trim())
+      servingsInput.value="1";
+    updatePreview();
+  });
   servingsInput?.addEventListener("input",updatePreview);
   roleSelect?.addEventListener("change",updatePreview);
   save.addEventListener("click",async () => {
@@ -6255,15 +6292,16 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
     save.disabled = true;
     save.textContent = "Guardando…";
     try {
-      await submitHomeMenuEdit(item,isAdd ? "add" : "replace",selectedRecipe.id,
-        servingsInput?.value.trim() ? Number(servingsInput.value) : null,roleSelect?.value || null,
-        Boolean(consumedCheckbox?.checked));
+      await submitHomeMenuEdit(item,isAdd ? (selectedRecipe.kind==="food" ? "add-food" : "add") : "replace",selectedRecipe.id,
+        servingsInput?.value.trim() ? Number(servingsInput.value) : null,
+        selectedRecipe.kind==="food" ? "guarnicion" : roleSelect?.value || null,
+        selectedRecipe.kind==="food" ? false : Boolean(consumedCheckbox?.checked));
       dialog.close();
     } catch(error) {
       preview.textContent = "No se pudo guardar (" + String(error.message || "error") + "). Revisa el menú y vuelve a intentarlo.";
       save.disabled = true;
     } finally {
-      save.textContent = isAdd ? "Añadir receta" : "Aplicar cambio";
+      save.textContent = isAdd ? "Añadir al menú" : "Aplicar cambio";
     }
   });
   updateChoices();
