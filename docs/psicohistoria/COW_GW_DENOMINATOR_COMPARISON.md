@@ -64,3 +64,42 @@ antes de la fecha hipotética de emisión y elaborar un crosswalk versionado
 con reglas explícitas para fronteras, microestados y casos problemáticos;
 después verificar cobertura completa del archivo Candidate y bytes
 históricos con una fecha autenticable.
+
+## Observación sobre las tres fuentes reales · 19/10/2026
+
+La [ejecución empírica de COW y GW](https://github.com/mamg97/segundo-cerebro/actions/runs/39232848303)
+ha confirmado los siguientes recuentos, sin publicar filas individuales:
+
+| Período | COW (Estados de todo el mes) | GW+suplemento | Estado |
+|---|---:|---:|---|
+| Diciembre 2020 | 195 | 197 | Dos sistemas con criterios distintos |
+| Diciembre 2024 | 195 | No evaluable | GW caduca en 2020 |
+| Enero 2025 | No evaluable | No evaluable | Ambos fuera de cobertura |
+
+En 2020 hay 189 códigos numéricos presentes en ambos rosters, seis
+solo en COW y ocho solo en GW. **Estas no son cifras de países
+armonizados**, ya que el mismo número puede designar realidades diferentes.
+Además se detectó una sucesión bajo el mismo código COW en la fecha
+2006-06-03 (código 345) con ambos intervalos **incluyentes**: se conserva
+como `n_cow_shared_day_handoffs_not_disambiguated=1` y no se
+deduplica silenciosamente. Para meses de transición sin intervalo único
+que cubra todo el mes, se mantiene como pertenencia parcial.
+
+El sistema GW v7 consta de **202 códigos en lista principal y 23
+en el suplemento**, total combinado de 225 a lo largo de toda su
+historia. El recuento de 197 en diciembre 2020 corresponde a la
+definición GW con microestados incluidos. No sustituye los 174 de la
+lista principal del avance 30; explica su diferencia de alcance.
+
+Checksums SHA-256 de los bytes públicos observados **en octubre 2026**:
+
+- COW 2024: `722153b45eda9c39826a04aab80ca7b29a8b1cfdfe5d92714503420555675484`
+- GW principal: `70ba63cd8a936a25a701be5daffa1105411da5298ff890bf4bc27ed688892b2b`
+- GW microestados: `02b6cc749405b744258c3b314b668fa6438fbb7d869c3e7be4bd2cb6da2c5288`
+
+Estos hashes se fijan para la próxima CI pero **no constituyen
+testigos criptográficos de disponibilidad en 2020 o 2024**.
+
+La discordancia es una razón adicional para impedir un join automático
+COW→GW/UCDP y construir etiquetas negativas sin verificaciones de
+cobertura país-vintage.
