@@ -7,7 +7,7 @@ const css=readFileSync(new URL("./styles.css",import.meta.url),"utf8");
 const thumbFrom=app.indexOf("function weeklyMenuProductThumbnail(item, home = false) {");
 const thumbTo=app.indexOf("function renderWeeklyMenuItemTitle(",thumbFrom);
 assert.ok(thumbFrom>=0 && thumbTo>thumbFrom);
-const from=app.indexOf("function renderHomeWeeklyMenuMatrixCell(items, readOnly = false) {");
+const from=app.indexOf("function renderHomeWeeklyMenuMatrixCell(items, readOnly = false, date = \"\", moment = \"\") {");
 const to=app.indexOf("async function openHomeWeeklyMenuRecipe(",from);
 const projectionStart=app.indexOf("function homeMenuEditPayload(");
 const projectionEnd=app.indexOf("function homeMenuEditDialog()",projectionStart);
@@ -59,7 +59,7 @@ test("new editor is accessible on mobile without requiring hovering over cells",
  assert.match(app,/dialog\.showModal\(\)/);
  assert.match(app,/data-menu-editor-search/);
  assert.match(app,/data-menu-editor-preview/);
- assert.match(app,/submitHomeMenuEdit\(item,"replace",selectedRecipe\.id,servingsInput/);
+ assert.match(app,/submitHomeMenuEdit\(item,isAdd \? "add" : "replace",selectedRecipe\.id/);
 });
 
 
@@ -132,11 +132,11 @@ test("Home allows replacement and consumption for planned Pantry food at any mea
   }
 });
 
-test("consumed food/recipes remain protected from plan-only edits",()=>{
+test("consumed foods and recipes can be corrected but cannot be consumed twice",()=>{
   for(const food of [null,"food-b"]) {
     const recipe={...item,recipeId:food?null:item.recipeId,foodId:food,status:"consumido",itemRole:food?"acompanante":"receta"};
     const html=sandbox.renderHomeWeeklyMenuMatrixCell([recipe]);
-    assert.doesNotMatch(html,/data-home-menu-change=/);
+    assert.match(html,/data-home-menu-change="8"/);
     assert.doesNotMatch(html,/data-home-menu-consume=/);
     assert.match(html,/home-menu-consumed-label/);
   }
@@ -156,4 +156,32 @@ test("Home shows official product photo for a Pantry companion without inventing
   assert.match(html,/data-home-menu-consume=/);
   const bad=sandbox.renderHomeWeeklyMenuMatrixCell([{...pantry,productImageUrl:"javascript:alert(1)"}]);
   assert.doesNotMatch(bad,/<img/);
+});
+
+test("Home renders editable Añadir buttons on blank and companion-only slots",()=>{
+  const empty=sandbox.renderHomeWeeklyMenuMatrixCell([],false,"2026-10-15","Comida");
+  assert.match(empty,/data-home-menu-add-date="2026-10-15"/);
+  assert.match(empty,/data-home-menu-add-moment="Comida"/);
+  assert.match(empty,/＋ Añadir/);
+  const readonly=sandbox.renderHomeWeeklyMenuMatrixCell([],true,"2026-10-15","Comida");
+  assert.doesNotMatch(readonly,/data-home-menu-add/);
+  const companion={...item,recipeId:null,foodId:"yogurt",itemRole:"acompanante"};
+  const withCompanion=sandbox.renderHomeWeeklyMenuMatrixCell([companion],false,"2026-10-15","Comida");
+  assert.match(withCompanion,/data-home-menu-add-date=/);
+  assert.doesNotMatch(sandbox.renderHomeWeeklyMenuMatrixCell([item],false,"2026-10-15","Comida"),/data-home-menu-add/);
+  assert.match(css,/\.home-weekly-menu-table-cell \.home-menu-add-action/);
+});
+
+test("an unplanned week keeps five meal moments, and explicit consumption is optional on Add",()=>{
+  assert.match(app,/\["desayuno","Desayuno"\]/);
+  assert.match(app,/\["comida","Comida"\]/);
+  assert.match(app,/\["cena","Cena"\]/);
+  assert.match(app,/data-menu-editor-confirm-consumed/);
+  assert.match(app,/data-home-menu-add-date/);
+  assert.match(app,/bindHomeWeeklyMenuEdits\(content, data, model\);/);
+  const add=sandbox.homeMenuEditPayload({date:"2026-10-15",moment:"Cena"},"add","rec-b",1,null,true);
+  assert.deepEqual(JSON.parse(JSON.stringify(add)),{
+    action:"add",date:"2026-10-15",moment:"Cena",
+    newRecipeId:"rec-b",newServings:1,confirmConsumed:true
+  });
 });
