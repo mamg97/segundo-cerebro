@@ -10,7 +10,11 @@ def fake_catalog():
     <html><body><h2>UCDP Country-Year Dataset on Organized Violence</h2>
     <p>version 24.1: <a href="https://example.org/evil.csv">Intrastate Conflict Level Onset CSV</a></p>
     <h2>UCDP Onset Dataset</h2>
-    <p>version 25.1: <a href="/downloads/onset/fake-new.csv">Intrastate Conflict Level Onset CSV</a></p>
+    <p>version 25.1:
+       <a href="/downloads/onset/fake-new.csv">Intrastate Conflict Level Onset CSV</a>
+       <a href="/downloads/onset/fake-new-country.csv">Intrastate Country Level Onset CSV</a>
+       <a href="/downloads/onset/fake-new-codebook.pdf">Codebook</a>
+    </p>
     <p>version 24.1:
        <a href="/downloads/onset/fake-intrastate-country.csv">Intrastate Country Level Onset CSV</a>
        <a href="/downloads/onset/fake-intrastate-conflict.csv">Intrastate Conflict Level Onset CSV</a>
@@ -30,6 +34,15 @@ class OfficialOnsetProbeTests(unittest.TestCase):
         self.assertFalse(x["files_historically_available_before_issue_verified"])
         self.assertFalse(x["forecast_issued"])
         self.assertEqual(len(x["index_observed_sha256_now"]),64)
+
+    def test_25_1_kept_distinct_from_24_1_and_all_sources_approved_only_by_index(self):
+        x=parse_catalog(fake_catalog(),version="25.1")
+        self.assertTrue(x["source_urls"]["intrastate_conflict"].endswith("fake-new.csv"))
+        self.assertTrue(x["source_urls"]["intrastate_country"].endswith("fake-new-country.csv"))
+        self.assertEqual(x["version"],"25.1")
+        self.assertFalse(x["files_historically_available_before_issue_verified"])
+        with self.assertRaises(ValueError):
+            parse_catalog(fake_catalog(),version="26.1")
 
     def test_catalog_injection_and_duplicates_are_rejected(self):
         examples=[
