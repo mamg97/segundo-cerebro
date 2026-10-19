@@ -127,3 +127,26 @@ def analyze(cow_raw, gw_raw, micro_raw, months,
         'forecast_issued': False,
         'warning': 'Name equality is not territorial equivalence; source vintages and negative labels not certified.'
     }, review)
+
+def main():
+    import argparse
+    import json
+    from pathlib import Path
+    from cow_gw_token_review import save_review_private
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ('cow','gw','micro'):
+        parser.add_argument('--'+name, type=Path, required=True)
+        parser.add_argument('--'+name+'-sha256', required=True)
+    parser.add_argument('--month', action='append', required=True)
+    parser.add_argument('--private-review-output', type=Path)
+    args = parser.parse_args()
+    output, rows = analyze(args.cow.read_bytes(), args.gw.read_bytes(),
+                           args.micro.read_bytes(), args.month,
+                           args.cow_sha256, args.gw_sha256, args.micro_sha256)
+    if args.private_review_output:
+        save_review_private(rows, args.private_review_output)
+    print(json.dumps(output, sort_keys=True))
+
+
+if __name__ == '__main__':
+    main()
