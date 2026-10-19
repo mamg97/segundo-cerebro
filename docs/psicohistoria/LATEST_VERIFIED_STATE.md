@@ -1,5 +1,16 @@
 # PSICOHISTORIA — Estado científico verificado · 19/10/2026
 
+## AV-20261019-052 · UCDP/PRIO 19.1 ↔ 25.1: linaje de conflictos para 61 residuos
+
+- [PR #696](https://github.com/mamg97/segundo-cerebro/pull/696) **fusionada** en main (squash `eb2f74683d391c76ade1c4b2f25b2570b513099d`), fuente oficial UCDP/PRIO real, tests ficticios, CI científica, privacidad y Pages **SUCCESS** en PR y [main](https://github.com/mamg97/segundo-cerebro/actions/runs/39331566384).
+- [Auditor y documentación](PRIO_CONFLICT_LINEAGE_AV052.md): se descubrieron desde catálogo oficial las dos ediciones históricas UCDP/PRIO Armed Conflict. **19.1** CSV directo con 2.384 filas (hasta 2018) SHA-256 `722c58a955cb25a53b126f83f0e4a95e6a3129d9fefda7421f650b5c482fbd91`; **25.1** ZIP con 2.752 filas (hasta 2024), SHA-256 ZIP `b49f7e80510d8a5779a52d872aef5b26456b3f5cbdd3ec32031339488e81813f`, CSV interior `a7a2ff6caf6c854f4fafb1b17f616da1ed6bbc00612943ec6e071511ebea7a81`. Las identidades observadas son **de octubre 2026**, no prueba de accesibilidad pre-2020.
+- Sobre las **61** claves GW-año con `newconf=1` antiguo y onset1 modernos=0, filtrando solo violencia interna 3/4 y `gwno_loc`: **10** muestran conflicto interno activo en **ambas** ediciones, **0** solo en 19.1, **0** solo en 25.1 y **51** sin entrada intrastatal en ninguna. Los diez compartieron algún ID numérico de conflicto (identidad entre vintages **NO certificada**). Entre los 51 sin entrada: 45 antes de 1989 y 6 en 1989–2017.
+- **Implicación:** la diferencia de `newconf` no se explica de forma simple por eliminar conflictos internos activos de UCDP/PRIO 19.1 entre ediciones; las unidades *onset*, conflicto-año y díada-año son diferentes y la falta de correspondencia no demuestra ausencia de violencia real. Mantener los 61 y 51 sin «resolver» artificialmente.
+- **Canónico privado releído:** `PsicoAvances=52`, último `AV-20261019-052=VERIFICADO`; `MAD-02=PARCIAL`; `PsicoPredicciones=0`. AV-042 y AV-046 no se han mutado, 1.176 probabilidades sombra privadas 2027 intactas, coste adicional 0 €.
+- **AV-053 siguiente:** comparar UCDP Dyadic 19.1/25.1 para las mismas 61 claves, con código GW y hashes por fuente, sin publicar países ni afirmar causalidad; investigar por qué el CSV Onset antiguo enlazado como 19.1 termina en 2017. **No** simular predicciones históricas sin autenticar datos/roster/training as-of.
+
+---
+
 ## AV-20261019-051 · Diagnóstico empírico de 85 discrepancias residuales
 
 - [PR #695](https://github.com/mamg97/segundo-cerebro/pull/695) **fusionada** (squash `69806f6c1a56cfdac481ba2e7429283d129b2c52`). Pruebas sintéticas, pipeline de UCDP real y privacidad de PR SUCCESS; [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39329041698), privacy y Pages SUCCESS.
