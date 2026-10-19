@@ -111,5 +111,5 @@ test("card Modify opens editor directly and Delete reuses historical-safe soft-d
   assert.match(handlers, /if \(!recipe \|\| archived \|\| privateModeKind !== "remote"/);
   assert.match(handlers, /button\.disabled = true/);
   assert.match(handlers, /role", "alert"/);
-  assert.doesNotMatch(handlers, /fetch\("/api\/nutrition\/recipes\/edit"/);
+  assert.doesNotMatch(handlers, /\/api\/nutrition\/recipes\/edit/);
 });
