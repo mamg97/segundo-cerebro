@@ -27,7 +27,7 @@ TARGET = "ucdp25.1_intrastate_country_onset1"
 VERSION = "25.1"
 MIN_YEAR = 1947
 MAX_YEAR = 2024
-SOURCE_SHA = "e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe6a"
+SOURCE_SHA = "e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe2ea83fe6a"
 REQUIRED = ("year", "gwno_a", "newconf", "onset1", "onset5")
 
 
