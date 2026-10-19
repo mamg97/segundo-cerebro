@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const source = await readFile(new URL("./index.js", import.meta.url), "utf8");
 
 test("Health recipe schema reads private photo metadata without exposing Drive ids", () => {
-  assert.match(source, /Recetas!A1:O1000/);
+  assert.match(source, /Recetas!A1:Q1000/);
   assert.match(source, /foto_drive_file_id/);
   assert.match(source, /foto_mime_type/);
   assert.match(source, /foto_updated_at/);
