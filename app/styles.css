@@ -28315,3 +28315,38 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .pantry-shopping-list-item .pantry-confirm-inventory { width: 100%; min-height: 41px; }
   .pantry-shopping-form-buttons > button { flex: 1; }
 }
+
+.pantry-shopping-review {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+.pantry-shopping-review:empty { display: none; }
+.pantry-shopping-review > strong { font-size: 13px; }
+.pantry-shopping-review > p { margin: 0; color: var(--ink-soft); font-size: 11px; line-height: 1.45; }
+.pantry-review-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.pantry-review-item span { font-size: 12px; font-weight: 650; }
+.pantry-review-item button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--blue);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pantry-review-item button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
