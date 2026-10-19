@@ -426,6 +426,7 @@ function renderWorkspace(payload, initialView = "inventory") {
         '<div class="pantry-shopping-actions-footer">' +
           '<button type="button" class="pantry-shopping-add-toggle" data-shopping-add-toggle>＋ Añadir a la compra</button>' +
           '<form class="pantry-shopping-add-form" data-shopping-add-form hidden>' +
+            '<label>Buscar producto <input data-shopping-product-search type="search" placeholder="Busca por nombre…" autocomplete="off"></label>' +
             '<label>Producto <select name="productId" required>' + productChoices + '</select></label>' +
             '<label>Cantidad (opcional) <input type="number" name="quantity" min="0.01" step="any" placeholder="Sin confirmar"></label>' +
             '<label>Unidad o formato (opcional) <input name="unit" maxlength="70" placeholder="Ej.: envases, paquetes"></label>' +
