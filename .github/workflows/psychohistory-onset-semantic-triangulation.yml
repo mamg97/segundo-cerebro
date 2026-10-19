@@ -1,0 +1,36 @@
+# AV-049: only anonymous aggregated counts. No model, training or prediction.
+name: Psychohistory onset semantic triangulation
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_semantic_triangulation.py"
+      - "research/psychohistory/test_onset_semantic_triangulation.py"
+      - ".github/workflows/psychohistory-onset-semantic-triangulation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fixed-population-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Adversarial synthetic semantics and denominator tests
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s research/psychohistory -p test_onset_semantic_triangulation.py -v
+  official-three-way-compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compare old v19-linked vs v25.1 country and conflict (SHA pinned)
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_semantic_triangulation.py
+          echo 'These are label-definition alignments across editions; no causal attribution.'
+          echo 'Historical byte receipts and trained-onset skill remain unverified.'
