@@ -1,60 +1,55 @@
-# PSICOHISTORIA — Última verificación AV-037 (19/10/2026)
+# PSICOHISTORIA — Estado científico vigente · 19/10/2026
 
-PR #671 fusionada. UCDP Candidate solo declara cobertura mundial desde 20.0.10 (octubre 2020); septiembre 20.0.9 registró 809 eventos/41 países con eventos, octubre 20.0.10 1070/46. Ningún recuento identifica países sin eventos. 20.0.4 tiene ámbito documental ambiguo. La hoja privada tiene 37 avances y cero emisiones. MAD-02 sigue PARCIAL; V2-02 EN_CURSO. Ver [estudio](CANDIDATE_SCOPE_2020.md) y [PR](https://github.com/mamg97/segundo-cerebro/pull/671). Lo que sigue debajo es un relevo HISTÓRICO y no el estado más reciente.
+## AV-20261019-038 · Validación del panel oficial con ceros explícitos
 
----
+[PR #673](https://github.com/mamg97/segundo-cerebro/pull/673) fusionada
+en `main` (squash `3722e7effcda60bda36982bafb4cdc3c195042d2`).
+Se implementó `research/psychohistory/ucdp_country_year_zeros.py`
+y CI sin coste operativo adicional con fuente original UCDP
+[OrganizedViolenceCY v24.1](https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-241-csv.zip).
+[Ficha científica](UCDP_COUNTRY_YEAR_EXPLICIT_ZEROS.md).
 
-# PSICOHISTORIA — Relevo científico vigente · 19/10/2026
+**Resultado empírico reproducible, fuente oficial:** 6.740 filas
+país–año desde 1989 hasta 2023. **4.762** tienen los tres indicadores
+`sb_exist_cy/ns_exist_cy/os_exist_cy` explícitamente en 0 y
+**1.978** al menos un 1. En 2023: 196 filas; 133 ceros explícitos
+y 63 con algún indicador 1.
 
-## Avance AV-20261019-036
+Solo salen **agregados y SHA observados en 2026** de GitHub Actions;
+los originales se descargan y eliminan en el runner sin upload de
+filas ni artefactos. La PR pasó el test empírico, la batería sintética
+de más de 240 pruebas y privacidad. No hay cambios de frontend,
+Worker, pagos o modelos.
 
-[PR #669](https://github.com/mamg97/segundo-cerebro/pull/669)
-fusionada en `main` (squash `8af3750a1e9a4d7e29e4641d22990c115bd43d25`).
-Se descargó por primera vez el **ZIP oficial COW System2024**
-desde el proveedor y se contrastó su CSV original de cuatro
-columnas (`ccode`, `stateabb`, `statenme`, `year`) con la
-reconstrucción desde intervalos públicos COW v2024.
+## Límites de interpretación
 
-**Resultado real:** 17.511 códigos–año en el archivo oficial y
-17.511 en la reconstrucción; **17.511 coincidencias exactas**,
-cero registros extra/faltantes y cero abreviaturas fuera
-de las previstas por los intervalos. Hay un código–año de 2006
-con dos abreviaturas distintas en el histórico de intervalos,
-pero solo una fila oficial para ese código–año.
+- Un cero de UCDP GED equivale a **ausencia de violencia codificada
+  bajo su protocolo**, no inexistencia real de violencia; el codebook
+  documenta restricciones y umbrales.
+- El panel es **anual retrospectivo**, no una fuente de negativos
+  mensuales UCDP Candidate ni una medida directa de *onset*.
+- La versión publicada en 2024 **no estaba disponible como fuente
+  histórica antes de los orígenes**; no debe alimentar features.
+- No se ha cotejado aún el universo con un roster GW independiente
+  y versionado. No se certifica comparabilidad con COW `ccode`.
 
-[Informe metodológico y SHA observados](COW_OFFICIAL_SYSTEM2024_RECONCILIATION.md).
-[CI empírica oficial](https://github.com/mamg97/segundo-cerebro/actions/runs/39247215972)
-más unit-tests sintéticos y control privacidad completados en verde.
+## Estado canónico privado (releído tras escritura)
 
-La conciliación demuestra **integridad interna del panel COW actual**;
-no que los registros estuvieran disponibles en los orígenes históricos,
-ni que códigos COW y GW/UCDP fueran geográficamente equivalentes.
-La edición oficial v2024 fue publicada en noviembre de 2025.
-**No hay skill prospectiva demostrada ni backtest as-of autorizado.**
+`PsicoAvances=38` (`AV-20261019-038`);
+`PsicoFases.MAD-02=PARCIAL`,
+`PsicoHitos.V2-02=EN_CURSO`,
+`PsicoPredicciones=0` emisiones.
+La cohorte sombra 2027 y sus probabilidades siguen intactas.
 
-## Estado canónico y barreras
+## Próximo trabajo
 
-- Google Sheets privado: `PsicoAvances=36` (último
-  `AV-20261019-036`, escritura y relectura verificadas).
-- `PsicoFases.MAD-02=PARCIAL`, `PsicoHitos.V2-02=EN_CURSO`,
-  `PsicoPredicciones` únicamente cabecera, cero emisiones.
-- Cohorte shadow 2027 intacta. Ninguna acción sobre
-  probabilidades, Worker, front-end ni infraestructura de pago.
-- Prohibido inferir un país sin violencia desde ausencia de evento,
-  o extrapolar una edición posterior como si estuviese
-  disponible en origen.
+**Prioridad:** comprobar los 6.740 país–año frente a un roster GW
+realmente independiente y datado, con frontera y sucesiones, y definir
+onset frente a persistencia con suficiente historial. Solo después
+investigar una validación retrospectiva admisible, teniendo las
+features auténticamente disponibles antes de cada origen.
+No reportar Brier/skill ni emitir predicciones sin esas garantías.
 
-## Siguiente trabajo científico
-
-1. Localizar un **testigo independiente de fecha + hash de bytes**
-   de ediciones históricas UCDP y de rosters territoriales.
-2. Aprobar documentalmente un crosswalk temporal COW↔GW/UCDP,
-   especialmente para sucesiones, fronteras y microestados.
-3. Acreditar el universo completo de países cubiertos en cada
-   vintage UCDP, incluidos los de cero incidentes, y entonces
-   evaluar onset con particiones cronológicas y baselines adecuados.
-
-`docs/HANDOFF.md` es un archivo global muy grande cuya cabecera de
-PSICOHISTORIA conserva un evento antiguo por limitaciones de
-escritura del conector. **Esta nota pequeña y la hoja privada**
-son el relevo actualizado; no mantener dos estados canónicos distintos.
+`docs/HANDOFF.md` es un registro global demasiado grande y contiene
+una cabecera de PSICOHISTORIA desactualizada. Esta nota de dominio y el
+Sheet privado son el relevo científico más reciente.
