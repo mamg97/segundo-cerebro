@@ -1,0 +1,42 @@
+# Separate population source: Gleditsch-Ward version 7.0, through 2020 only.
+# Stored only in runner temp. This DOES NOT imply UCDP incidence/coverage.
+name: Audit independent Gleditsch-Ward state roster
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/independent_gw_roster.py"
+      - "research/psychohistory/test_independent_gw_roster.py"
+      - ".github/workflows/psychohistory-gw-roster.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gw-state-membership:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read pinned public mirror of GW historical state list
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+            --max-time 50 --max-filesize 300000 \
+            --output "$RUNNER_TEMP/gwstates-v7-through-2020.tsv" \
+            'https://raw.githubusercontent.com/brentonk/us_diplomatic_missions/0dda0ef93b7958f67c79031c1695dd9e5408a62c/input/ksgmdw.txt'
+      - name: Test independent country roster without joining violence labels
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/independent_gw_roster.py \
+            --gw-list "$RUNNER_TEMP/gwstates-v7-through-2020.tsv" \
+            --expected-sha256 70ba63cd8a936a25a701be5daffa1105411da5298ff890bf4bc27ed688892b2b \
+            --month 2019-12 --month 2020-12 --month 2021-01 --month 2024-12
+          echo 'All GW country population counts are separate from UCDP coverage and targets.'
+          echo 'Version 7.0 posted 2021-05-13: no as-of claim for 2019/2020.'
+      - name: Remove temporary state-list working copy
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/gwstates-v7-through-2020.tsv"
