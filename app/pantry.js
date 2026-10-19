@@ -354,8 +354,16 @@ function renderWorkspace(payload, initialView = "inventory") {
     registeredProducts.map(product => '<option value="' + escapeHtml(product.id) + '">' +
       escapeHtml(product.name) + '</option>').join("");
 
-  const productSearch = (value) => registeredProducts.filter(product =>
-    String(product.name || "").toLocaleLowerCase("es").includes(String(value || "").toLocaleLowerCase("es")));
+  const foldProductSearch = value => String(value || "").normalize("NFD").split("")
+    .filter(char => char.charCodeAt(0) < 768 || char.charCodeAt(0) > 879)
+    .join("").toLocaleLowerCase("es").trim();
+  const productSearch = value => {
+    const terms = foldProductSearch(value).split(" ").filter(Boolean);
+    return registeredProducts.filter(product => {
+      const words = foldProductSearch([product.name, ...(product.familyNames || [])].join(" "));
+      return terms.every(term => words.includes(term));
+    });
+  };
   const recentTickets = Array.isArray(payload.recentTickets) ? payload.recentTickets : [];
   const ticketCards = recentTickets.map((ticket) => {
     const prices = Array.isArray(ticket.priceObservations) ? ticket.priceObservations : [];
@@ -497,7 +505,7 @@ function renderWorkspace(payload, initialView = "inventory") {
   });
   body.querySelector("[data-shopping-add-toggle]")?.addEventListener("click",()=>{
     const form=body.querySelector("[data-shopping-add-form]");
-    if(form){form.hidden=false;form.querySelector("select")?.focus();}
+    if(form){form.hidden=false;form.querySelector("[data-shopping-product-search]")?.focus();}
   });
   body.querySelector("[data-shopping-add-cancel]")?.addEventListener("click",()=>{
     const form=body.querySelector("[data-shopping-add-form]");
