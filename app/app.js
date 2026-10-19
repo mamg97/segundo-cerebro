@@ -1,4 +1,5 @@
 import "./vendor/thinking-orbs/register.js";
+import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=0.44.63";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
 import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.59";
@@ -9,7 +10,7 @@ import { mockState } from "../core/mock-state.js";
 import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.62";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.63";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
@@ -571,6 +572,8 @@ function applyStateScope(scope, payload) {
       state.importantEventRules = payload.importantEventRules;
     }
     if (payload.eventsSummary) state.eventsSummary = payload.eventsSummary;
+    if (Array.isArray(payload.canonicalEventDates) && payload.eventsSheetSync !== "error")
+      state.canonicalEventDates = payload.canonicalEventDates;
     if (payload.calendarSummary) state.calendarSummary = payload.calendarSummary;
     if (Array.isArray(payload.events) && !preserveLastView) state.events = payload.events;
     renderEvents();
@@ -2090,6 +2093,13 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
       ? finance.importantEventRules
       : [];
 
+  // An unambiguous canonical Events record outranks a stale calendar alias,
+  // while the raw iCloud/Google agenda is left untouched.
+  const canonicalDateFor = title => canonicalImportantEventDate(
+    state.canonicalEventDates,
+    safeDisplayEventTitle(title)
+  );
+
   const calendarItems = (Array.isArray(state.events) ? state.events : [])
     .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now)
     .filter((event) => !isBirthdayReminderOnly([event.title, event.location || event.locationRef].filter(Boolean).join(" ")))
@@ -2105,11 +2115,13 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
       });
       const inferredKind = inferImportantKind([event.title, event.location || event.locationRef].filter(Boolean).join(" "));
       if (!rule && inferredKind === "important") return null;
+      const displayTitle = rule?.displayTitle || safeDisplayEventTitle(event.title);
+      const authoritative = canonicalDateFor(displayTitle);
       return {
         id: event.id || rule?.id || [event.calendarName, event.title, event.startsAt].join("|"),
-        title: rule?.displayTitle || safeDisplayEventTitle(event.title),
-        startsAt: event.startsAt,
-        endsAt: event.endsAt,
+        title: displayTitle,
+        startsAt: authoritative?.startsAt || event.startsAt,
+        endsAt: authoritative?.endsAt || event.endsAt,
         location: event.location || event.locationRef || null,
         kind: rule?.kind || inferredKind,
         status: eventStatusFromDates(event.startsAt, event.endsAt, event.status),

@@ -354,6 +354,16 @@ function renderWorkspace(payload, initialView = "inventory") {
     registeredProducts.map(product => '<option value="' + escapeHtml(product.id) + '">' +
       escapeHtml(product.name) + '</option>').join("");
 
+  const foldProductSearch = value => String(value || "").normalize("NFD").split("")
+    .filter(char => char.charCodeAt(0) < 768 || char.charCodeAt(0) > 879)
+    .join("").toLocaleLowerCase("es").trim();
+  const productSearch = value => {
+    const terms = foldProductSearch(value).split(" ").filter(Boolean);
+    return registeredProducts.filter(product => {
+      const words = foldProductSearch([product.name, ...(product.familyNames || [])].join(" "));
+      return terms.every(term => words.includes(term));
+    });
+  };
   const recentTickets = Array.isArray(payload.recentTickets) ? payload.recentTickets : [];
   const ticketCards = recentTickets.map((ticket) => {
     const prices = Array.isArray(ticket.priceObservations) ? ticket.priceObservations : [];
@@ -426,6 +436,7 @@ function renderWorkspace(payload, initialView = "inventory") {
         '<div class="pantry-shopping-actions-footer">' +
           '<button type="button" class="pantry-shopping-add-toggle" data-shopping-add-toggle>＋ Añadir a la compra</button>' +
           '<form class="pantry-shopping-add-form" data-shopping-add-form hidden>' +
+            '<label>Buscar producto <input data-shopping-product-search type="search" placeholder="Busca por nombre…" autocomplete="off"></label>' +
             '<label>Producto <select name="productId" required>' + productChoices + '</select></label>' +
             '<label>Cantidad (opcional) <input type="number" name="quantity" min="0.01" step="any" placeholder="Sin confirmar"></label>' +
             '<label>Unidad o formato (opcional) <input name="unit" maxlength="70" placeholder="Ej.: envases, paquetes"></label>' +
@@ -484,9 +495,17 @@ function renderWorkspace(payload, initialView = "inventory") {
       statusMessage("No se pudo actualizar. "+String(error?.message||"Reintenta"),true);
     }finally{busy.value=false;}
   };
+  body.querySelector("[data-shopping-product-search]")?.addEventListener("input", event => {
+    const select=body.querySelector('[data-shopping-add-form] select[name="productId"]');
+    if(!select)return;
+    const choices=productSearch(event.target.value);
+    select.innerHTML='<option value="">'+(choices.length?'Elige un producto':'Sin coincidencias')+'</option>' +
+      choices.slice(0,60).map(product=>'<option value="'+escapeHtml(product.id)+'">'+
+        escapeHtml(product.name)+'</option>').join("");
+  });
   body.querySelector("[data-shopping-add-toggle]")?.addEventListener("click",()=>{
     const form=body.querySelector("[data-shopping-add-form]");
-    if(form){form.hidden=false;form.querySelector("select")?.focus();}
+    if(form){form.hidden=false;form.querySelector("[data-shopping-product-search]")?.focus();}
   });
   body.querySelector("[data-shopping-add-cancel]")?.addEventListener("click",()=>{
     const form=body.querySelector("[data-shopping-add-form]");

@@ -34,5 +34,5 @@ test("history-only drink serving is blocked and mobile role selector fits modal"
   const v1 = html.match(/styles\.css\?v=([0-9.]+)/)?.[1];
   const v2 = html.match(/app\.js\?v=([0-9.]+)/)?.[1];
   assert.equal(v1, v2);
-  assert.equal(v1, "0.44.62");
+  assert.equal(v1, "0.44.63");
 });
