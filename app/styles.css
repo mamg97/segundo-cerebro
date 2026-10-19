@@ -28545,11 +28545,8 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
     line-height: 1.18;
   }
   .home-weekly-menu-table-cell .home-menu-recipe-title strong {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    overflow: hidden;
     overflow-wrap: anywhere;
+    white-space: normal;
   }
   .home-weekly-menu-table-cell .weekly-menu-group-item-macros { gap: 1px 4px; }
   .home-weekly-menu-table-cell .weekly-menu-group-item-macros b,
