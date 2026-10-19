@@ -86,11 +86,15 @@ class PrioHistoricalLineageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             reconcile(old,modern,modern,v,v,strict=True)
 
+    def test_missing_gwno_location_tracked_not_imputed_as_peace(self):
+        x=acd("year,conflict_id,type_of_conflict,gwno_loc\n2017,88,3,900\n2017,89,3,\n","19.1")
+        self.assertEqual(x["unresolved"],1)
+        self.assertEqual(x["keys"][(900,2017)],{88})
+
     def test_edition_errors_rejected(self):
         for data in (
             "year,conflict_id,type_of_conflict,gwno_loc\n2019,88,3,900\n",
             "year,conflict_id,type_of_conflict,gwno_loc\n2017,88,7,900\n",
-            "year,conflict_id,type_of_conflict,gwno_loc\n2017,88,3,900\n2017,88,3,\n",
             "year,conflict_id,type_of_conflict,wrong\n2017,88,3,900\n",
         ):
             with self.subTest(csv=data),self.assertRaises(ValueError):
