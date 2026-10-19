@@ -30,7 +30,7 @@ test("UI wires stable ingredient selection and photo-first projection",()=>{
   const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
   const css=readFileSync(new URL("./styles.css",import.meta.url),"utf8");
   const html=readFileSync(new URL("./index.html",import.meta.url),"utf8");
-  assert.match(app,/recipeIngredientChoices\(recipes\)/);
+  assert.match(app,/recipeIngredientChoices\(visibleCollection\)/);
   assert.match(app,/recipeCatalogItems\(recipes, selectedIngredient, selectedCategory, archived\)/);
   assert.match(app,/data-recipe-ingredient-select/);
   assert.match(app,/panel\.dataset\.recipeIngredient =/);
