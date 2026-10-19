@@ -2,6 +2,7 @@ import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-ca
 import { fetchGoogleCalendarSummary, hasGoogleCalendarConfig, safeGoogleCalendarErrorCode } from "./google-calendar.js";
 import { mergeCalendarSources } from "./calendar-federation.js";
 import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId } from "./pantry.js";
+import { performShoppingAction, reconcileMenuShopping, ShoppingActionError } from "./pantry-shopping-actions.js";
 import { habitQuestHasGoogleAuth, resolveHabitQuestSheetId } from "./habitquest-source.js";
 import { fetchMercadonaReference } from "./mercadona.js";
 import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
@@ -5078,6 +5079,11 @@ async function appendFamilyReference(request, env, caseId) {
 
 
 export default {
+  async scheduled(_controller, env, ctx) {
+    if (env.PRIVATE_APP_ENABLED !== "true") return;
+    ctx.waitUntil(reconcileMenuShopping(env,getGoogleAccessToken,{limit:25})
+      .catch(error => console.warn("Scheduled shopping reconciliation failed",String(error?.code||error?.message||"FAILED"))));
+  },
   async fetch(request, env, ctx) {
     if (env.PRIVATE_APP_ENABLED !== "true") {
       return json({
@@ -5399,6 +5405,11 @@ export default {
       try {
         const result = await editWeeklyMenu(request,env,getGoogleAccessToken);
         healthCache = {value:null,expiresAt:0,date:null};
+        // A changed pending menu should reach ListaCompra without waiting for
+        // the periodic run. This is best-effort and cannot invalidate a saved
+        // nutrition edit if Google Sheets is transiently unavailable.
+        ctx.waitUntil(reconcileMenuShopping(env,getGoogleAccessToken,{limit:25})
+          .catch(error => console.warn("Menu shopping reconciliation deferred",String(error?.code||error?.message||"FAILED"))));
         return json(result);
       } catch (error) {
         return json({ok:false,code:error instanceof MenuEditError ? error.code : "MENU_EDIT_FAILED"},error instanceof MenuEditError ? error.status : 502);
@@ -5764,6 +5775,24 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/pantry/shopping/action") {
+      if (request.method !== "POST") return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
+      try {
+        return json(await performShoppingAction(request,env,getGoogleAccessToken));
+      } catch (error) {
+        return json({ok:false,code:error instanceof ShoppingActionError ?
+          error.code:"SHOPPING_ACTION_FAILED"},error instanceof ShoppingActionError?error.status:502);
+      }
+    }
+    if (url.pathname === "/api/pantry/shopping/reconcile") {
+      if (request.method !== "POST") return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
+      try {
+        return json(await reconcileMenuShopping(env,getGoogleAccessToken,{limit:25}));
+      } catch (error) {
+        return json({ok:false,code:error instanceof ShoppingActionError ?
+          error.code:"SHOPPING_RECONCILIATION_FAILED"},error instanceof ShoppingActionError?error.status:502);
+      }
+    }
     if (url.pathname === "/api/pantry") {
       if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
       try {
