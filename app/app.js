@@ -1,7 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
-import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.55";
+import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.57";
 import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
 import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";
 import { mockState } from "../core/mock-state.js";
@@ -1425,17 +1425,137 @@ function healthWeightSummary(body = {}, selectedDate = localDateKey()) {
 // Session-local only: it never replaces the canonical /api/gym source.
 let homeGymSnapshot = null;
 let homeHealthWeekNutritionHistory = null;
+// null follows the local current week; historical data is never mistaken for
+// today's Gym snapshot or used by the current Health overview.
+let homeGymSelectedWeek = null;
+let homeGymHistoricalSnapshot = null;
+let homeGymWeekRequestSerial = 0;
+const homeGymWeekCache = new Map();
+const HOME_GYM_WEEK_CACHE_MS = 5 * 60_000;
+
+function currentHomeGymWeek() {
+  return menuWeekMonday(localDateKey());
+}
+function selectedHomeGymWeek() {
+  return homeGymSelectedWeek || currentHomeGymWeek();
+}
+function gymWeekSunday(weekStart) {
+  const monday = menuWeekMonday(weekStart);
+  if (!monday) return null;
+  const sunday = new Date(monday + "T12:00:00Z");
+  sunday.setUTCDate(sunday.getUTCDate() + 6);
+  return sunday.toISOString().slice(0, 10);
+}
+function renderHomeGymWeekNavigation(message = "", warning = false) {
+  const node = document.querySelector("#home-gym-week-navigation");
+  if (!node) return;
+  if (privateModeKind !== "remote") {
+    node.hidden = true;
+    return;
+  }
+  node.hidden = false;
+  const current = currentHomeGymWeek();
+  const selected = selectedHomeGymWeek();
+  node.innerHTML = '<div class="home-gym-week-period">' +
+    '<small>Semana seleccionada</small><strong>' + escapeHtml(menuWeekRangeLabel(selected)) + '</strong></div>' +
+    '<div class="home-gym-week-controls">' +
+      '<button type="button" data-home-gym-week-step="-1" aria-label="Semana anterior" title="Semana anterior">‹</button>' +
+      '<label>Ir a fecha <input type="date" id="home-gym-week-picker" value="' + selected +
+        '" max="' + localDateKey() + '" aria-label="Elegir una fecha de la semana de gimnasio"></label>' +
+      '<button type="button" data-home-gym-week-step="1" aria-label="Semana siguiente" title="Semana siguiente"' +
+        (selected >= current ? ' disabled' : '') + '>›</button>' +
+      '<button type="button" data-home-gym-week-current' + (selected === current ? ' disabled' : '') +
+        '>Esta semana</button></div>' +
+      '<p class="home-gym-week-nav-status' + (warning ? ' is-warning' : '') +
+        '" role="status" aria-live="polite">' + escapeHtml(message) + '</p>';
+  node.querySelectorAll("[data-home-gym-week-step]").forEach(button =>
+    button.addEventListener("click", () =>
+      void goToHomeGymWeek(menuShiftWeek(selectedHomeGymWeek(), Number(button.dataset.homeGymWeekStep)))));
+  node.querySelector("#home-gym-week-picker")?.addEventListener("change", event =>
+    void goToHomeGymWeek(event.target.value));
+  node.querySelector("[data-home-gym-week-current]")?.addEventListener("click", () =>
+    void goToHomeGymWeek(currentHomeGymWeek()));
+}
 function renderHomeGymWeekSummary(gymData = homeGymSnapshot, options = {}) {
   const node = document.querySelector("#home-gym-week-content");
   if (!node) return;
+  renderHomeGymWeekNavigation(options.navigationMessage || "", Boolean(options.warning));
   if (privateModeKind !== "remote") {
     node.innerHTML = renderHomeGymWeek(null, new Date(), { privateMode: false });
     return;
   }
-  node.innerHTML = renderHomeGymWeek(gymData, new Date(), {
+  const selected = selectedHomeGymWeek();
+  const current = selected === currentHomeGymWeek();
+  const historical = !current && homeGymHistoricalSnapshot?.week === selected
+    ? homeGymHistoricalSnapshot : null;
+  if (!current && !historical) {
+    node.innerHTML = '<p class="home-gym-week-state" role="status">' +
+      (options.loading ? 'Cargando semana seleccionada…' : 'Histórico no consultado. Selecciona la semana de nuevo.') +
+      '</p>';
+    return;
+  }
+  node.innerHTML = renderHomeGymWeek(current ? gymData : historical.gym, new Date(), {
     ...options,
-    nutritionHistory: homeHealthWeekNutritionHistory
+    selectedWeek: selected,
+    nutritionHistory: current ? homeHealthWeekNutritionHistory : historical.nutritionHistory
   });
+}
+async function goToHomeGymWeek(date) {
+  const week = menuWeekMonday(date);
+  const current = currentHomeGymWeek();
+  if (privateModeKind !== "remote" || !week || week > current) {
+    renderHomeGymWeekNavigation("Solo puedes consultar semanas hasta la actual.", true);
+    return false;
+  }
+  const previous = homeGymSelectedWeek;
+  homeGymSelectedWeek = week === current ? null : week;
+  const requestId = ++homeGymWeekRequestSerial;
+  if (week === current) {
+    renderHomeGymWeekSummary();
+    return true;
+  }
+  const cached = homeGymWeekCache.get(week);
+  if (cached && cached.expiresAt > Date.now()) {
+    homeGymHistoricalSnapshot = cached;
+    renderHomeGymWeekSummary();
+    return true;
+  }
+  homeGymHistoricalSnapshot = null;
+  renderHomeGymWeekSummary(null, { loading: true, navigationMessage: "Consultando histórico…" });
+  try {
+    const sunday = gymWeekSunday(week);
+    const [healthResponse, gymResponse] = await Promise.all([
+      fetch("/api/health/overview?date=" + encodeURIComponent(sunday), {
+        headers: { Accept: "application/json" }, cache: "no-store", credentials: "same-origin"
+      }),
+      fetch("/api/gym/week?start=" + encodeURIComponent(week), {
+        headers: { Accept: "application/json" }, cache: "no-store", credentials: "same-origin"
+      })
+    ]);
+    if (!healthResponse.ok || !gymResponse.ok) throw new Error("GYM_WEEK_SOURCE_UNAVAILABLE");
+    const [health, gym] = await Promise.all([healthResponse.json(), gymResponse.json()]);
+    if (!health?.ok || !Array.isArray(health.nutritionHistory) || !gym?.ok || !Array.isArray(gym.sessions)) {
+      throw new Error("GYM_WEEK_INVALID_RESPONSE");
+    }
+    if (requestId !== homeGymWeekRequestSerial || selectedHomeGymWeek() !== week) return false;
+    const snapshot = {
+      week, gym, nutritionHistory: health.nutritionHistory, expiresAt: Date.now() + HOME_GYM_WEEK_CACHE_MS
+    };
+    homeGymHistoricalSnapshot = snapshot;
+    homeGymWeekCache.set(week, snapshot);
+    while (homeGymWeekCache.size > 12) homeGymWeekCache.delete(homeGymWeekCache.keys().next().value);
+    renderHomeGymWeekSummary();
+    return true;
+  } catch (error) {
+    if (requestId !== homeGymWeekRequestSerial) return false;
+    homeGymSelectedWeek = previous;
+    homeGymHistoricalSnapshot = previous ? homeGymWeekCache.get(previous) || null : null;
+    renderHomeGymWeekSummary(homeGymSnapshot, {
+      navigationMessage: "No se pudo cargar esa semana. Se conserva la anterior.", warning: true
+    });
+    console.warn("Home gym weekly history unavailable", String(error?.message || error));
+    return false;
+  }
 }
 function renderHomeGymSummary(healthData, gymData) {
   const summary = deriveGymTodaySummary(healthData, gymData);
