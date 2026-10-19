@@ -142,7 +142,7 @@ export function planConsumedRegisterCorrection(values,payload,original,recipe,ma
 /** Presets explicitly opted in for manual side-dish selection in Health/Comidas. */
 export function manualCompanionOptions(values) {
   return rowTable(values)
-    .filter(row => /(?:^|[|\\s])MANUAL_COMPANION_PRESET(?:[|\\s]|$)/.test(String(row.data.nota || "")) &&
+    .filter(row => /(?:^|[|\s])MANUAL_COMPANION_PRESET(?:[|\s]|$)/.test(String(row.data.nota || "")) &&
       /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(String(row.data.id || "")))
     .map(({data}) => ({
       id: String(data.id), name: String(data.nombre || "").trim(),
