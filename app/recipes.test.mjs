@@ -28,7 +28,7 @@ test("recipe catalog renders compact image and name cards that open canonical de
   assert.match(app, /class="recipe-section recipe-ingredients"/);
   assert.match(app, /class="recipe-section recipe-steps"/);
   assert.match(app, /Preparación pendiente de confirmar/);
-  assert.match(app, /Pulsa una receta para abrir su ficha completa/);
+  assert.match(app, /Pulsa una receta para ver su ficha, modificarla o archivarla/);
   assert.match(app, /health-recipes/);
 });
 
@@ -59,8 +59,8 @@ test("production audit validates catalog density, image loading and detail navig
 
 
 test("recetario filtra por ingrediente y mantiene las fotos primero",()=>{
-  assert.match(app,/recipeCatalogItems\(recipes, selectedIngredient\)/);
-  assert.match(app,/recipeIngredientChoices\(recipes\)/);
+  assert.match(app,/recipeCatalogItems\(recipes, selectedIngredient, selectedCategory, archived\)/);
+  assert.match(app,/recipeIngredientChoices\(visibleCollection\)/);
   assert.match(app,/data-recipe-ingredient-select/);
   assert.match(css,/\.recipes-filter-controls/);
   assert.match(audit,/Salud · Recetas ordena primero las que tienen imagen/);
