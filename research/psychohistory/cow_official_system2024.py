@@ -6,6 +6,7 @@ This pilot reports structural metadata, NEVER approves an as-of vintage.
 from __future__ import annotations
 import argparse
 import hashlib
+import csv
 import io
 import json
 from pathlib import Path
@@ -41,6 +42,18 @@ def inspect(raw):
                     })
             if not files:
                 raise ValueError("Official archive has no files")
+            official = [e for e in members if e.filename == "System2024/system2024.csv"]
+            if len(official) != 1 or official[0].file_size > 2_000_000:
+                raise ValueError("Expected a unique bounded official system2024.csv")
+            csv_bytes = archive.read(official[0])
+            try:
+                sample = csv.DictReader(io.StringIO(csv_bytes.decode("utf-8-sig"), newline=""))
+                columns = sample.fieldnames
+                n_rows = sum(1 for _ in sample)
+            except (UnicodeError, csv.Error) as exc:
+                raise ValueError("Invalid CSV in official archive") from exc
+            if not columns or len(set(columns)) != len(columns) or not 5_000 <= n_rows <= 100_000:
+                raise ValueError("Official dataset schema or row count unexpected")
     except (BadZipFile, OSError) as exc:
         raise ValueError("Not a valid ZIP archive") from exc
     return {
@@ -48,6 +61,9 @@ def inspect(raw):
         "source_url": "https://correlatesofwar.org/wp-content/uploads/System2024.zip",
         "archive_sha256_observed_now": hashlib.sha256(raw).hexdigest(),
         "files": files,
+        "official_csv_header": columns,
+        "official_csv_rows": n_rows,
+        "official_csv_sha256_observed_now": hashlib.sha256(csv_bytes).hexdigest(),
         "downloaded_in_current_runner": True,
         "source_as_of_verified": False,
         "official_country_year_rows_verified": False,
