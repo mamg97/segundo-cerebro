@@ -1,5 +1,15 @@
 # PSICOHISTORIA — Estado científico verificado · 19/10/2026
 
+## AV-20261019-046 · Experimento alternativo de emisión en julio
+
+- [PR #687](https://github.com/mamg97/segundo-cerebro/pull/687) **fusionada en main** (squash `f42e68487243ab58a1950f34ab03692dadb47b10`); 7 pruebas adversariales de contrato, privacidad y [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39289947771) SUCCESS, Pages SUCCESS.
+- [Documento del protocolo](ONSET_JULY_ORIGIN_NEXT_YEAR_EXPERIMENT.md): hipótesis separada del origen de AV-042, con emisión simulada el 01/07/2020 a las 00:00 UTC, GED 20.1 (datos hasta 31/12/2019) anunciado oficialmente el 16/06/2020, y outcome de inicio/reanudación country-onset1 para **todo 2021**. Su población es el roster fijo **que habría sido conocido el día de emisión**, no solo países en riesgo según conocimiento posterior. Por tanto se trata de **incidencia incondicional** y NO de hazard condicionado a elegibilidad. UCDP Onset v25.1 solo puede usarse como resolución retrospectiva, nunca para entrenar un modelo de 2020.
+- El auditor `research/psychohistory/onset_july2020_nextyear_protocol.py` valida la geometría de fechas, versión, población, lag de publicación, horizontes y veto a hindsight, pero **nunca** autentica bytes de UCDP ni calcula scores o emisiones. Aún faltan fuentes/roster/etiquetas de entrenamiento con evidencias temporales independientes y una política territorial verificada.
+- **Sheets canónico verificado después de escribir:** `PsicoAvances=46`, último `AV-20261019-046` VERIFICADO; `PsicoFases.MAD-02=PARCIAL` y `PsicoPredicciones=0`. Modelos y 1.176 probabilidades sombra privadas para 2027 no modificados. Coste adicional 0 €.
+- Siguiente prueba empírica: autenticar una copia completa GED 20.1 y un roster de países sin eventos **anteriores al 01/07/2020**, además de etiquetas históricas de entrenamiento publicadas entonces. Nunca se atribuirá una emisión ficticia a 2020.
+
+---
+
 ## AV-20261019-045 · Testigo Git tercero GED 19.1 (sin as-of)
 
 - [PR #685](https://github.com/mamg97/segundo-cerebro/pull/685) fusionada en `main` (squash `b08286d71ee46ea85d6ec147ba71b2877bdc5106`); CI independiente del objeto Git, tests adversariales, privacidad y [CI de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39288896539) SUCCESS; publicación Pages SUCCESS.
