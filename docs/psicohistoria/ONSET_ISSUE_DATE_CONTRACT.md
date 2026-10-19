@@ -81,3 +81,37 @@ a COMPLETADA y `PsicoPredicciones` debe quedar vacío.
 `historical_issue_evidence_verified=false`,
 `backtest_authorized=false`,
 `models_scored=false` y `forecast_issued=false`.
+
+## Resultado de la primera ejecución empírica (edición 25.1 actual)
+
+[GitHub Actions del contrato](https://github.com/mamg97/segundo-cerebro/actions/workflows/psychohistory-onset-issue-gate.yml)
+ha descargado de UCDP el CSV exacto cuya integridad ya se
+había atestiguado al observarlo en octubre de 2026. Una primera
+ejecución quedó correctamente bloqueada por un hash transcrito
+con **57** caracteres; antes de aprobar nada se recuperó en el log
+el checksum de **64** caracteres y se comprobó que era idéntico al
+del avance 41. No hubo sustitución ni mutación externa de la fuente.
+
+El archivo oficial contiene **12.553** registros país-año
+1946–2024. El auditor ha obtenido, sin exportar códigos:
+
+| Año | Filas | `onset1=1` | `onset5=1` | Fila del año anterior disponible retrospectivamente |
+|---|---:|---:|---:|---:|
+| 1989 | 172 | 9 | 7 | 172 |
+| 2006 | 194 | 3 | 0 | 193 |
+| 2019 | 196 | 5 | 0 | 196 |
+| 2020 | 196 | 4 | 1 | 196 |
+| 2023 | 196 | 2 | 0 | 196 |
+| 2024 | 196 | 2 | 1 | 196 |
+
+En esos seis años **no** hay `onset1` ausente ni se observan
+casos `onset5=1` con `onset1≠1`. Esta es una propiedad
+observada del CSV revisado, no una validación universal del
+proceso de emisión.
+
+**Limitación fundamental:** 196 filas en 2020 no son 196
+Estados certificados `at risk`; una fila en 2019 tampoco
+acredita que el Estado estaba en paz y que esa información
+estaba disponible a 1/01/2020. El auditor deja
+`confirmed_risk_set_size=null`, `backtest_authorized=false`
+y `forecast_issued=false` para todas las fechas.
