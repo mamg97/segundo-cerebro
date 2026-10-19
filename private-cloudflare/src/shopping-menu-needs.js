@@ -33,7 +33,7 @@ export function derivePendingMenuNeeds(source,pantry,today){
     }),recipeId:String(data.recipe_id||""),foodId:String(data.food_id||""),
     status:data.estado,quantity:data.cantidad,unit:data.unidad,name:data.nombre,
     updatedAt:data.updated_at,note:data.nota
-  })).filter(x=>x.date>=today && eligible({estado:x.status})));
+  }))).filter(x=>x.date>=today && eligible({estado:x.status}));
   const aggregate=new Map();
   const diagnostics={menuPending:menu.length,ingredientLinksMissing:0,stockUnknown:0,unitUnknown:0};
   function add(productId, name, grams, from){
@@ -79,7 +79,7 @@ export function derivePendingMenuNeeds(source,pantry,today){
     const stock=inventory.filter(x=>x.productId===entry.productId);
     const out=stock.length>0&&stock.every(x=>x.stockStatus==="out");
     const available=stock.some(x=>["sufficient","medium"].includes(x.stockStatus));
-    const gramsStock=stock.every(x=>x.quantityUnit && /^g(ramos?)?$/i.test(String(x.quantityUnit).trim()) &&
+    const gramsStock=stock.length>0 && stock.every(x=>x.quantityUnit && /^g(ramos?)?$/i.test(String(x.quantityUnit).trim()) &&
       num(x.quantity)!==null) ?
       stock.reduce((sum,x)=>sum+Number(x.quantity),0):null;
     let classification="review",shortfall=null;
@@ -102,7 +102,7 @@ export function derivePendingMenuNeeds(source,pantry,today){
 // Manually added Apple/Web rows must survive even when a meal is consumed.
 export function planAutoShoppingChanges(derived,shoppingRows,now){
   const active=shoppingRows.filter(x=>String(x.record.estado||"").toUpperCase()==="COMPRAR");
-  const actions=[], seen=new Set();
+  const actions=[];
   for(const item of derived.needs){
     const matched=active.filter(x=>x.record.producto_id===item.productId);
     if(item.classification==="buy"){
@@ -115,7 +115,6 @@ export function planAutoShoppingChanges(derived,shoppingRows,now){
         if(!prior.length)actions.push({type:"create",need:item,now});
       }
     }
-    seen.add(item.productId);
   }
   for(const row of active){
     if(String(row.record.fuente||"")!=="menu-pendiente-auto")continue;
