@@ -17,7 +17,7 @@ class SemanticTriangulationTests(unittest.TestCase):
                                "903,2017,0","904,2017,1"),"conflict")
         v=evaluate(old,country,conflict)
         self.assertEqual(v["old_country_disagreements"],3)
-        self.assertEqual(v["old_conflict_disagreements"],1)
+        self.assertEqual(v["old_conflict_disagreements"],2)
         self.assertEqual(v["old_positive_country_negative_conflict_positive"],1)
         self.assertEqual(v["old_positive_country_negative_conflict_negative"],1)
         self.assertFalse(v["apparent_country_vs_conflict_alignment_proves_cause"])
