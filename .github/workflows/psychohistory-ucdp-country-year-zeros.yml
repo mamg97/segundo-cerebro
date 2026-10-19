@@ -31,6 +31,7 @@ jobs:
           set -euo pipefail
           python3 research/psychohistory/ucdp_country_year_zeros.py \
             --archive "$RUNNER_TEMP/organizedviolencecy-241-csv.zip" \
+            --archive-sha256 00410bdb65023d1bc8799f47f188677965046bb73447ee33094782db30076260 \
             --year 1989 --year 2006 --year 2019 --year 2020 --year 2023
           echo 'Only UCDP annual hindsight labels; not monthly Candidate negative or as-of features.'
       - name: Purge original country-year source on all outcomes
