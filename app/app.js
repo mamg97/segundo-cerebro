@@ -6187,6 +6187,25 @@ function homeMenuRecipeProjection(item, recipe, day, newServings = null, isAdd =
     dayProtein:Number.isFinite(beforeProtein) ? day.protein - beforeProtein + values[1] : null
   };
 }
+/** UI text must use the selected yogurt portion, not the catalog's one-cup name. */
+function homeMenuFoodPortionName(food, servings) {
+  if (food?.kind !== "food" || food.companionType !== "yogur") return food?.name || "";
+  const n=Number(servings);
+  if (!Number.isSafeInteger(n) || n<1) return food.name;
+  const base=String(food.name || "").replace(/\s*·\s*(?:1 vasito \(\d+ g\)|250 g \(½ tarro grande\))$/i,"");
+  const unit=String(food.unit || "");
+  const cupGrams=Number(/(\d+)\s*g/i.exec(unit)?.[1]);
+  if (/vasito/i.test(unit) && Number.isFinite(cupGrams) && cupGrams > 0) {
+    const count=Number(food.serving)*n;
+    return base+" · "+count+" "+(count===1?"vasito":"vasitos")+" ("+(count*cupGrams)+" g)";
+  }
+  if (unit==="g" && Number(food.serving)>0) {
+    const weight=Number(food.serving)*n;
+    return base+" · "+weight+" g"+(Number(food.serving)===250?
+      n===1?" (½ tarro grande)":n===2?" (1 tarro grande)":" ("+n+" tomas de 250 g)":"");
+  }
+  return food.name+" × "+n;
+}
 function homeMenuEditDialog() {
   let dialog = document.querySelector("#home-menu-edit-dialog");
   if (dialog) return dialog;
@@ -6285,16 +6304,14 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
     const foodNoChange = selectingFood && !isAdd &&
       selectedRecipe.id === "food:"+item.foodId &&
       Number(requestedServings)*Number(selectedRecipe.serving)===Number(item.quantity);
-    const isOnlyOneDessert = selectingFood && selectedRecipe.companionType === "yogur" &&
-      ["comida","cena"].includes(normalizeWeeklyMenuMoment(item.moment));
+    // One dessert row per meal, not one yogurt cup. API guards duplicate rows.
     save.disabled = !macro || homeMenuEditPending || conflictingPrimary || foodNoChange ||
-      (isOnlyOneDessert && Number(requestedServings)!==1) ||
       Boolean(!isAdd && selectedRecipe?.id === item.recipeId && requestedServings === String(item.quantity));
     preview.innerHTML = conflictingPrimary
       ? '<span>Esta comida ya tiene un plato principal. Elige «Acompañamiento / extra» para añadirlo sin reemplazar el plato.</span>'
       : !macro
         ? '<span>Esta receta no tiene macros/ración verificables o es histórica y no debe reutilizarse.</span>'
-        : `<strong>${escapeHtml(selectedRecipe.name)}</strong>
+        : `<strong>${escapeHtml(homeMenuFoodPortionName(selectedRecipe,requestedServings))}</strong>
         <div>${escapeHtml(formatKcal(macro.kcal))} · P ${escapeHtml(formatMacro(macro.protein))} · HC ${escapeHtml(formatMacro(macro.carbs))} · G ${escapeHtml(formatMacro(macro.fat))}</div>
         <small>Nuevo plan del día: ${macro.dayKcal == null ? "kcal pendientes" : escapeHtml(formatKcal(macro.dayKcal))}
         · ${macro.dayProtein == null ? "proteína pendiente" : "P " + escapeHtml(formatMacro(macro.dayProtein))}</small>`;
@@ -6337,6 +6354,15 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
     }
   });
   updateChoices();
+  if(!isAdd && foodCompanion && !isCorrection) {
+    const current=options.find(recipe=>recipe.id==="food:"+item.foodId);
+    if(current) {
+      const quantity=Number(item.quantity)/Number(current.serving);
+      if(Number.isSafeInteger(quantity)&&quantity>0&&servingsInput) servingsInput.value=String(quantity);
+      select.value=current.id;
+      updatePreview();
+    }
+  }
 }
 function bindHomeWeeklyMenuEdits(content, data, model) {
   const items = new Map(model.rows.filter(row => row?.sourceRow && (row?.recipeId || row?.foodId))
