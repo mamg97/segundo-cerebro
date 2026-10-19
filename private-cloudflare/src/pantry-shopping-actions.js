@@ -167,6 +167,12 @@ export async function reconcileMenuShopping(env,auth,{today,limit=12}={}){
   const [menu,recipes,ingredients]=await readBatch(env.HEALTH_SHEET_ID,token,[
     "MenuSemanal!A1:R2000","Recetas!A1:Q1000","IngredientesReceta!A1:L5000"
   ]);
+  // A truncated or schema-broken read must NEVER cancel active shopping needs.
+  if(!menu[0]?.includes("fecha")||!menu[0]?.includes("estado")||
+     !menu[0]?.includes("recipe_id")||!recipes[0]?.includes("recipe_id")||
+     !ingredients[0]?.includes("producto_id")||
+     menu.length>=2000||recipes.length>=1000||ingredients.length>=5000)
+    fail("MENU_SHOPPING_SOURCE_INCOMPLETE",503);
   const derived=derivePendingMenuNeeds({menu,recipes,ingredients},pantry.value,date);
   const sheet=await readPantryShoppingSheet(env,auth);
   const actions=planAutoShoppingChanges(derived,sheet.rows,nowIso());
