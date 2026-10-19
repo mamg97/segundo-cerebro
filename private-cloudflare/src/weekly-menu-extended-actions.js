@@ -138,3 +138,61 @@ export function planConsumedRegisterCorrection(values,payload,original,recipe,ma
   };
   return Object.entries(fields).map(([key,val])=>put("Registro",source.sourceRow,head,key,val));
 }
+
+/** Presets explicitly opted in for manual side-dish selection in Health/Comidas. */
+export function manualCompanionOptions(values) {
+  return rowTable(values)
+    .filter(row => /(?:^|[|\\s])MANUAL_COMPANION_PRESET(?:[|\\s]|$)/.test(String(row.data.nota || "")) &&
+      /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(String(row.data.id || "")))
+    .map(({data}) => ({
+      id: String(data.id), name: String(data.nombre || "").trim(),
+      serving: Number(data.racion), unit: String(data.unidad || "").trim(),
+      kcalPerServing: Number(data.kcal_racion),
+      proteinPerServing: Number(data.proteinas_g),
+      carbsPerServing: Number(data.carbohidratos_g),
+      fatPerServing: Number(data.grasas_g)
+    }))
+    .filter(item => item.name && item.unit && Number.isSafeInteger(item.serving) && item.serving > 0 &&
+      [item.kcalPerServing,item.proteinPerServing,item.carbsPerServing,item.fatPerServing]
+        .every(v => Number.isFinite(v) && v >= 0));
+}
+
+/** A manually selected food is an accompanying product, never a phantom recipe. */
+export function planMenuFoodAddition(values,payload,foods,now) {
+  const headers=(values?.[0]||[]).map(x=>String(x||"").trim());
+  const needed=["semana_inicio","fecha","momento","recipe_id","food_id","nombre","cantidad","unidad",
+    "estado","kcal","proteinas_g","carbohidratos_g","grasas_g","nota","updated_at","tipo_item","tipo_acompanante"];
+  ensure(needed.every(key=>headers.includes(key)));
+  ensure(validDate(payload?.date),"INVALID_MENU_DATE",400);
+  const label=allowedMoments.get(normalize(payload?.moment));
+  ensure(Boolean(label),"INVALID_MENU_MOMENT",400);
+  ensure(normalize(payload?.newCompanionType)==="guarnicion","INVALID_COMPANION_TYPE",400);
+  ensure(payload?.confirmConsumed!==true,"CONFIRM_CONSUMPTION_SEPARATELY",409);
+  const units=servings(payload?.newServings);
+  ensure(Number.isSafeInteger(units),"INVALID_FOOD_MULTIPLIER",400);
+  const food=foods.find(row=>row.id===payload?.newFoodId);
+  ensure(Boolean(food),"FOOD_NOT_FOUND",404);
+  const items=rowTable(values);
+  const peers=items.filter(row=>row.data.fecha===payload.date &&
+    momentKey(row.data)===normalize(label)&&active(row.data));
+  ensure(!peers.some(row=>row.data.food_id===food.id),"FOOD_ALREADY_IN_MEAL",409);
+  const sourceRow=items.length?Math.max(...items.map(x=>x.sourceRow))+1:2;
+  ensure(sourceRow>=2&&sourceRow<=2000,"MENU_SHEET_CAPACITY",409);
+  const count=food.serving*units;
+  const isPicos=/^picos/i.test(food.unit);
+  const name=isPicos?"Picos 100% integrales de trigo Hacendado · "+count+" picos" : food.name+(units===1?"":" × "+units);
+  const fields={
+    semana_inicio:startOfWeek(payload.date),fecha:payload.date,momento:label,
+    recipe_id:"",food_id:food.id,nombre:name,cantidad:count,unidad:food.unit,
+    estado:"planificado",
+    kcal:Math.round(food.kcalPerServing*units*1000)/1000,
+    proteinas_g:Math.round(food.proteinPerServing*units*1000)/1000,
+    carbohidratos_g:Math.round(food.carbsPerServing*units*1000)/1000,
+    grasas_g:Math.round(food.fatPerServing*units*1000)/1000,
+    nota:"Acompañante seleccionado manualmente de Comidas. "+units+" ración(es) de "+
+      food.serving+" "+food.unit+"; peso operativo 2 g/pico si aplica, NO medido. Consumo no confirmado.",
+    updated_at:now,tipo_item:"acompanante",tipo_acompanante:"guarnicion"
+  };
+  return {updates:Object.entries(fields).map(([key,value])=>put("MenuSemanal",sourceRow,headers,key,value)),
+    action:"add-food",sourceRow};
+}
