@@ -104,3 +104,19 @@ test("weekly matrix is larger but remains compact and internally scrollable", ()
   assert.match(css, /overflow-wrap:\s*anywhere/);
   assert.match(css, /@media \(min-width: 1560px\)[\s\S]*?min-width:\s*0/);
 });
+
+
+test("Home weekly menu is denser on phones while controls and desktop grid remain", () => {
+  const mobile = css.slice(css.lastIndexOf("/* Home weekly menu: dense mobile view only."));
+  assert.match(mobile, /@media \(max-width: 560px\)/);
+  assert.match(mobile, /grid-template-columns:\s*52px repeat\(7, 110px\)/);
+  assert.match(mobile, /max-height:\s*48px/);
+  assert.match(mobile, /font-size:\s*8\.75px/);
+  assert.match(mobile, /-webkit-line-clamp:\s*3/);
+  assert.match(mobile, /\.home-menu-item-actions button\s*\{[\s\S]*?min-height:\s*30px/);
+  assert.match(mobile, /\.home-menu-add-action\s*\{[\s\S]*?min-height:\s*30px/);
+  assert.match(app, /aria-label="Ver receta: \$\{escapeHtml\(item.name \|\| "Comida"\)\}"/);
+  assert.match(app, /data-home-menu-change/);
+  assert.match(app, /data-home-menu-add-date/);
+  assert.match(css, /grid-template-columns:\s*118px repeat\(7, minmax\(160px, 1fr\)\)/);
+});
