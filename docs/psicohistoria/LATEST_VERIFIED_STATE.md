@@ -1,54 +1,54 @@
-# PSICOHISTORIA — Estado científico verificado · 19/10/2026
+# PSICOHISTORIA — Relevo científico vigente · 19/10/2026
 
-## Último avance — AV-20261019-035
+## Avance AV-20261019-036
 
-[PR #667](https://github.com/mamg97/segundo-cerebro/pull/667) fusionada en
-`main` con squash `b5bbcf19cc42751fbc0ca3b9857009b485ed3cd7`.
-El módulo `research/psychohistory/cow_annual_origin_gate.py`
-reproduce la regla documental de COW `system2024`: un país-año figura
-si el Estado existió en el sistema **en cualquier momento de ese año**.
-Por tanto no constituye automáticamente el roster conocido el 1 de enero.
+[PR #669](https://github.com/mamg97/segundo-cerebro/pull/669)
+fusionada en `main` (squash `8af3750a1e9a4d7e29e4641d22990c115bd43d25`).
+Se descargó por primera vez el **ZIP oficial COW System2024**
+desde el proveedor y se contrastó su CSV original de cuatro
+columnas (`ccode`, `stateabb`, `statenme`, `year`) con la
+reconstrucción desde intervalos públicos COW v2024.
 
-Fuente pública `states2024` fijada por hash observado en octubre de 2026.
-[GitHub Actions](https://github.com/mamg97/segundo-cerebro/actions/runs/39245169245)
-reprodujo recuentos reales con tests sintéticos, privacidad y CI verdes.
-[Informe del avance](COW_ANNUAL_ORIGIN_GATE.md).
+**Resultado real:** 17.511 códigos–año en el archivo oficial y
+17.511 en la reconstrucción; **17.511 coincidencias exactas**,
+cero registros extra/faltantes y cero abreviaturas fuera
+de las previstas por los intervalos. Hay un código–año de 2006
+con dos abreviaturas distintas en el histórico de intervalos,
+pero solo una fila oficial para ese código–año.
 
-**Resultado retrospectivo (códigos anuales frente a códigos 1/01):**
-1990 165/161; 2002 192/191; 2006 193/192 (194 pares código–abreviatura
-anuales por sucesión); 2008 194/193; 2011 195/194; 2020 y 2024
-195/195. El año 2025 queda sin cobertura en esta versión.
+[Informe metodológico y SHA observados](COW_OFFICIAL_SYSTEM2024_RECONCILIATION.md).
+[CI empírica oficial](https://github.com/mamg97/segundo-cerebro/actions/runs/39247215972)
+más unit-tests sintéticos y control privacidad completados en verde.
 
-**Importante:** se reconstruyó la *regla oficial* desde el CSV de
-intervalos `states2024`; NO se ha verificado directamente el CSV
-`system2024`. La versión COW 2024 se publicó en noviembre de 2025;
-no sirve como dato históricamente disponible para emisiones
-anteriores. Código COW no equivale a identificador UCDP/GW.
+La conciliación demuestra **integridad interna del panel COW actual**;
+no que los registros estuvieran disponibles en los orígenes históricos,
+ni que códigos COW y GW/UCDP fueran geográficamente equivalentes.
+La edición oficial v2024 fue publicada en noviembre de 2025.
+**No hay skill prospectiva demostrada ni backtest as-of autorizado.**
 
-## Canónico privado y límites
+## Estado canónico y barreras
 
-- `PsicoAvances`: último `AV-20261019-035` (**35 eventos**),
-  escrito y releído.
+- Google Sheets privado: `PsicoAvances=36` (último
+  `AV-20261019-036`, escritura y relectura verificadas).
 - `PsicoFases.MAD-02=PARCIAL`, `PsicoHitos.V2-02=EN_CURSO`,
-  `PsicoPredicciones` sin emisiones.
-- Cohorte shadow 2027 y probabilidades sin cambios. Sin modificaciones
-  al Worker, frontend ni servicios de pago.
-- Sin testigos temporales de bytes exactos, sin correspondencia territorial
-  aprobada ni cobertura UCDP para Estados con cero sucesos: **NO**
-  entrenar ni emitir un backtest `as-of` como válido.
+  `PsicoPredicciones` únicamente cabecera, cero emisiones.
+- Cohorte shadow 2027 intacta. Ninguna acción sobre
+  probabilidades, Worker, front-end ni infraestructura de pago.
+- Prohibido inferir un país sin violencia desde ausencia de evento,
+  o extrapolar una edición posterior como si estuviese
+  disponible en origen.
 
-## Siguiente tarea concreta
+## Siguiente trabajo científico
 
-1. Conseguir y cotejar el **CSV oficial** `system2024`, si resulta
-   descargable, preservando cómo representa cambios de nombre bajo
-   el mismo código.
-2. Buscar roster realmente disponible en el origen histórico con
-   testigo independiente de contenido y fecha.
-3. Auditar el universo de cobertura UCDP, incluidos países sin eventos,
-   sin convertir `ausencia de fila` en etiqueta negativa.
+1. Localizar un **testigo independiente de fecha + hash de bytes**
+   de ediciones históricas UCDP y de rosters territoriales.
+2. Aprobar documentalmente un crosswalk temporal COW↔GW/UCDP,
+   especialmente para sucesiones, fronteras y microestados.
+3. Acreditar el universo completo de países cubiertos en cada
+   vintage UCDP, incluidos los de cero incidentes, y entonces
+   evaluar onset con particiones cronológicas y baselines adecuados.
 
-**Relevo:** `docs/HANDOFF.md` conserva secciones históricas extensas y
-una cabecera antigua de PSICOHISTORIA; esta nota pequeña es el último
-relevo técnico del subproyecto cuando el conector bloquea la escritura
-del documento global demasiado grande. El seguimiento privado sigue
-siendo la autoridad para el estado de avances y fases.
+`docs/HANDOFF.md` es un archivo global muy grande cuya cabecera de
+PSICOHISTORIA conserva un evento antiguo por limitaciones de
+escritura del conector. **Esta nota pequeña y la hoja privada**
+son el relevo actualizado; no mantener dos estados canónicos distintos.
