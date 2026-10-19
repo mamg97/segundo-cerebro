@@ -513,7 +513,7 @@ function renderWorkspace(payload, initialView = "inventory") {
           externalId:externalId||undefined,updatedAt});
       };
       if(productId)return confirmStock(productId);
-      // Unlinked Apple reminders must be resolved by explicit user selection:
+      // Unlinked iCloud list items require explicit product selection:
       // never guess a SKU just because two titles look similar.
       const dialog=document.createElement("dialog");
       dialog.className="pantry-shopping-product-picker";
