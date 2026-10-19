@@ -1,0 +1,33 @@
+# One-time research job, no publication of IDs or dataset row values.
+name: Psychohistory Onset 19 vs 25 retrospective label drift
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_cross_vintage_label_drift.py"
+      - "research/psychohistory/test_onset_cross_vintage_label_drift.py"
+      - ".github/workflows/psychohistory-onset-cross-vintage.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s research/psychohistory -p test_onset_cross_vintage_label_drift.py -v
+  official-retrospective-label-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Audit authentic two current official CSVs by fixed SHA, aggregate only
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_cross_vintage_label_drift.py
+          echo 'An historical release difference is not predictive accuracy.'
+          echo 'No country identifiers, feature matrices, scores or forecasts are emitted.'
