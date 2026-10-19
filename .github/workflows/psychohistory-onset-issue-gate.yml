@@ -1,0 +1,42 @@
+# No scheduled downloads and no country rows or individual labels in GitHub.
+# The source is a hindsight *outcome* (UCDP 25.1), not a forecasting feature.
+name: Psychohistory January country-onset issue gate
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_issue_contract.py"
+      - "research/psychohistory/test_onset_issue_contract.py"
+      - ".github/workflows/psychohistory-onset-issue-gate.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  issue-date-outcome-separation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve previously verified official UCDP Onset 25.1 country-level CSV
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 \
+            --fail --location --retry 2 --max-time 70 --max-filesize 20000000 \
+            --output "$RUNNER_TEMP/onset-country-251.csv" \
+            'https://ucdp.uu.se/downloads/onset/ucdp-intrastate-country-onset-251.csv'
+      - name: Reject as-of claims and quantify outcome/predecessor-row geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_issue_contract.py \
+            --reference-csv "$RUNNER_TEMP/onset-country-251.csv" \
+            --sha256 e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe6a \
+            --year 1989 --year 2006 --year 2019 --year 2020 --year 2023 --year 2024
+          echo 'A retrospective predecessor-row is not a 1 January risk-set certificate.'
+          echo 'No country identities, rows, forecasts, scores or trained models are published.'
+      - name: Delete the original country-level onset CSV
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/onset-country-251.csv"
