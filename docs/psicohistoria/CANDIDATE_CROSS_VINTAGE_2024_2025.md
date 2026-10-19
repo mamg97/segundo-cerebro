@@ -53,7 +53,7 @@ actual sin un pin previo independiente.
 python3 research/psychohistory/candidate_cross_vintage.py \
   --december /PRIVATE/GEDEvent_v24_0_12.csv \
   --january /PRIVATE/GEDEvent_v25_0_1.csv \
-  --december-sha256 <SHA256_OBSERVADO_ANERIORMENTE>
+  --december-sha256 <SHA256_OBSERVADO_ANTERIORMENTE>
 ```
 
 ## Puerta científica inalterada
