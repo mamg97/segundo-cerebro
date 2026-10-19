@@ -143,3 +143,16 @@ test("MIDAS audit detects a missing daily schedule after its grace window", () =
   ], now);
   assert.equal(health.workflows.find((item) => item.name === "MIDAS paper comparison").state, "missing_due_run");
 });
+
+test("Home menu follows Agenda before footer and audit checks that placement", async () => {
+  const { readFileSync } = await import("node:fs");
+  const html = readFileSync(new URL("../../app/index.html", import.meta.url), "utf8");
+  const audit = readFileSync(new URL("../scripts/web-audit.mjs", import.meta.url), "utf8");
+  const agenda = html.indexOf('id="agenda-overview"');
+  const menu = html.indexOf('id="home-weekly-menu-panel"');
+  const footer = html.indexOf("<footer", menu);
+  assert.ok(agenda >= 0 && menu > agenda && footer > menu);
+  assert.match(audit, /workbench\\.nextElementSibling === menu/);
+  assert.match(audit, /menu\\.nextElementSibling === footer/);
+  assert.doesNotMatch(audit, /menú ocupa el segundo cuadro tras resumen de consumos/);
+});
