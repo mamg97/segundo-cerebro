@@ -1,5 +1,25 @@
 # PSICOHISTORIA — Estado científico verificado · 19/10/2026
 
+## AV-20261019-048 · Diferencia REAL de labels onset entre vintages
+
+- [PR #689](https://github.com/mamg97/segundo-cerebro/pull/689) fusionada `main` (squash `c0c4d46c89cb325590c671c3bb52a9efe5f7d02c`), CI fuente oficial real y tests ficticios/privacidad/main/Pages **SUCCESS**.
+- [Auditor y documentación](ONSET_CROSS_VINTAGE_DRIFT_AV048.md): comparación retrospectiva entre Onset antiguo catalogado 19.1 y country-onset 25.1 sobre GW-año numéricos coincidentes 1946–2017. **10.130 pares**, 9.912 coincidencias (9.638 cero/cero, 274 uno/uno), **218 discordancias** (212 antiguo uno vs moderno cero, seis al revés); 2,15 % de discrepancia. Se observan 12 claves solo antiguas y 2.423 solo nuevas; estas cifras no certifican equivalencia territorial.
+- Dado que los codebooks antiguos hablan de reinicios por conflicto y la definición country-level moderna considera toda la violencia intrastatal de un Estado, hay **riesgo concreto de NO equivalencia del estimand**, además de revisiones retroactivas. No atribuir 212 casos a errores corregidos ni a rendimiento de un modelo. Una etiqueta revisada nunca se usa como entrenamiento conocido en 2020.
+
+## AV-20261019-047 · Fuentes empíricas auténticas 2019–2020
+
+- [PR #688](https://github.com/mamg97/segundo-cerebro/pull/688), squash `df3574bca2fe7f6f40232e6feeff1440a7776254`, CI de fuentes GED20.1 y Onset19.1, auditor de roster GW histórico, pruebas adversariales y main/privacidad/Pages **SUCCESS**.
+- [Resultados oficiales](HISTORICAL_TRAINING_SOURCE_AUDIT_AV047.md): GED20.1 contiene **225.385 eventos 1989–2019**, de ellos **12.484 en 2019** y 8.964 clasificados como **state-based** (no necesariamente conflicto interno). El vínculo del catálogo para Onset 19.1 entrega `onsets_computed.csv` con **10.203 filas, 10.142 GW-año únicos, 61 filas duplicadas con onset1 idéntico**; archivo finaliza en **2017**, pese a que el codebook 19.1 declara 2018. SHA-256 de ambos archivos observados octubre 2026 y fijados; no acredita disponibilidad histórica.
+- GW roster candidato, commit académico declarado mayo 2020, comprobado solo a nivel de metadatos Git, sin validar las identidades de países ni el reloj del servidor.
+
+## Estado y siguiente falsación
+
+- **Fuente canónica privada releída:** `PsicoAvances=48`, último `AV-20261019-048` VERIFICADO; `MAD-02=PARCIAL`; `PsicoPredicciones=0`. Cohorte privada de 2027 (1.176 probabilidades sombra) no alterada, coste incremental 0 €.
+- **AV-049 prioritario:** investigar con evidencia semántica si la asimetría 212/6 se debe a la diferencia de definiciones conflicto-vs-país; determinar si existe un target histórico realmente homologable y un roster 2020 con testigo temporal independiente. Solo después diseñar baselines en muestra pareada y score fuera de muestra.
+- No calcular un Brier de Onset v25.1 como si Onset antiguo fuera entrenamiento equivalente, no usar GED type_of_violence=1 como señal exclusiva de guerras civiles, y no inventar emisión de predicciones en 2020.
+
+---
+
 ## AV-20261019-046 · Experimento alternativo de emisión en julio
 
 - [PR #687](https://github.com/mamg97/segundo-cerebro/pull/687) **fusionada en main** (squash `f42e68487243ab58a1950f34ab03692dadb47b10`); 7 pruebas adversariales de contrato, privacidad y [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39289947771) SUCCESS, Pages SUCCESS.
