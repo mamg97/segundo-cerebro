@@ -422,6 +422,7 @@ function renderWorkspace(payload, initialView = "inventory") {
         '<span>' + (summary.estimatedBasketPartial ? "Estimación parcial" : "Estimación disponible") + '</span></div>' +
         '<p class="pantry-shopping-source">Fuente actual: ListaCompra de Segundo Cerebro.</p>' +
         '<div class="pantry-shopping-list">' + (shoppingRows || '<p class="pantry-empty">No hay productos pendientes.</p>') + '</div>' +
+        '<div class="pantry-shopping-review" data-shopping-review aria-live="polite"></div>' +
         '<div class="pantry-shopping-actions-footer">' +
           '<button type="button" class="pantry-shopping-add-toggle" data-shopping-add-toggle>＋ Añadir a la compra</button>' +
           '<form class="pantry-shopping-add-form" data-shopping-add-form hidden>' +
@@ -543,9 +544,28 @@ function renderWorkspace(payload, initialView = "inventory") {
       if(data.changed>0){
         const fresh=await fetchPantryPayload({attempts:2});
         renderWorkspace(fresh,"shopping");
-      }else if(data.diagnostics?.stockUnknown){
-        statusMessage(data.diagnostics.stockUnknown+
-          " ingrediente(s) con stock sin confirmar: no se añaden como compras hasta tener evidencia.");
+      }else{
+        const unknown=body.querySelector("[data-shopping-review]");
+        const review=Array.isArray(data.review)?data.review.slice(0,25):[];
+        if(unknown && review.length){
+          unknown.innerHTML='<strong>Ingredientes por comprobar</strong>' +
+            '<p>Hay recetas pendientes cuya disponibilidad no está confirmada. Pulsa «Falta» solo si compruebas que necesitas comprar el producto.</p>' +
+            review.map(item=>'<div class="pantry-review-item">' +
+              '<span>'+escapeHtml(item.name)+'</span>' +
+              '<button type="button" data-review-buy="'+escapeHtml(item.productId)+'">Falta · añadir a compra</button></div>').join("");
+          unknown.querySelectorAll("[data-review-buy]").forEach(button=>
+            button.addEventListener("click",()=>{
+              const id=button.dataset.reviewBuy;
+              const name=review.find(x=>x.productId===id)?.name||"Producto";
+              if(window.confirm("¿Confirmas que falta «"+name+"» en la despensa?")){
+                void pantryAction({action:"add",productId:id});
+              }
+            }));
+        }
+        if(data.diagnostics?.ingredientLinksMissing){
+          statusMessage(data.diagnostics.ingredientLinksMissing+
+            " ingrediente(s) del menú sin vinculación inequívoca con Productos; revisar en el recetario.");
+        }
       }
     }catch(error){
       statusMessage("Conciliación del menú pendiente: "+String(error?.message||"UNAVAILABLE"),true);
