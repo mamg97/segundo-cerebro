@@ -13,6 +13,7 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.63";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
+import { openTripsDetail } from "./trips.js?v=0.44.67";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -749,6 +750,13 @@ function ensureDerivedAreas() {
     }
   }
 
+  if (privateModeKind === "remote" && !state.areas.some((area) => area.id === "area-trips")) {
+    state.areas.push({
+      id: "area-trips", slug: "trips", title: "Viajes", shortTitle: "Viajes",
+      summary: "Itinerarios, reservas, alojamiento y gastos vinculados a Eventos.",
+      health: 85, tone: "blue", module: "Events", sensitivity: "confidencial", status: "steady"
+    });
+  }
   if (privateModeKind === "remote" && !state.areas.some((area) => area.id === "area-parents")) {
     const familySummary = state.familySummary || {};
     const openCount = Number(familySummary.openCount || 0);
@@ -916,7 +924,7 @@ function renderNavigation() {
   const canonicalOrder = [
     "area-general", "area-career", "area-finance", "area-calendar",
     "area-partner", "area-family", "area-health", "area-objects",
-    "area-wealth", "area-projects"
+    "area-wealth", "area-projects", "area-trips"
   ];
   const orderRank = new Map(canonicalOrder.map((id, index) => [id, index]));
   const parents = state.areas
@@ -11766,6 +11774,10 @@ function openArea(areaId) {
   }
   if (areaId === "area-projects" && privateModeKind === "remote") {
     openProjectsDetail(state.decisions, openMidasDialog);
+    return;
+  }
+  if (areaId === "area-trips" && privateModeKind === "remote") {
+    void openTripsDetail(state);
     return;
   }
   const area = areaById.get(areaId);
