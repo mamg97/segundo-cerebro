@@ -209,7 +209,7 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       if (headers.includes("tipo_acompanante")) {
         put(original,"tipo_acompanante",recipeAsCompanion ? "batido" : "");
       }
-      if (recipeAsCompanion && headers.includes("nota")) {
+      if (recipeAsCompanion && !correctingConsumption && headers.includes("nota")) {
         // Previous Pantry product notes (e.g., about yogurt) must not be
         // carried forward as if they described the replacement drink.
         put(original,"nota","Batido como acompañante planificado; ración y macros de la receta seleccionada. Consumo no confirmado.");
