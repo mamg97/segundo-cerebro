@@ -24,6 +24,11 @@ DYAD_OBSERVED_PINS_2026={
     "25.1":("e34d26c39d23739ab65bc52fd42747aa88e7ecdf84d16c7bacafd590ed767330","e5bf6e3779a903f3df3ec476592332ce51ccf3798174b3db4c1b06dd1dd5a7ba"),
 }
 
+DYAD_OBSERVED_PINS_2026={
+    "19.1":("b1eed9ae6540268a157694068c8f3b2be9bb6104640aec2d1c43dab487c9a0f6","b1eed9ae6540268a157694068c8f3b2be9bb6104640aec2d1c43dab487c9a0f6"),
+    "25.1":("e34d26c39d23739ab65bc52fd42747aa88e7ecdf84d16c7bacafd590ed767330","e5bf6e3779a903f3df3ec476592332ce51ccf3798174b3db4c1b06dd1dd5a7ba"),
+}
+
 
 class DyadIndex(Index):
     def handle_endtag(self,tag):
@@ -154,7 +159,10 @@ def main():
         expected_zip,expected_csv=DYAD_OBSERVED_PINS_2026[v]
         if sha256(dyad_blob).hexdigest()!=expected_zip or sha256(dyad_csv).hexdigest()!=expected_csv:
             raise ValueError("Dyadic edition bytes changed from October-2026 observed SHA pins")
-        dyads[v]=read_dyads(dyad_csv,v)
+        pinned_download,pinned_csv=DYAD_OBSERVED_PINS_2026[v]
+        if sha256(dyad_blob).hexdigest()!=pinned_download or sha256(dyad_csv).hexdigest()!=pinned_csv:
+            raise ValueError("Dyadic source changed from October-2026 observed pin; no silent replacement")
+                dyads[v]=read_dyads(dyad_csv,v)
         inventory[v]={"official_url":dyad_urls[v],
                       "download_sha256_observed_now":sha256(dyad_blob).hexdigest(),
                       "csv_sha256_observed_now":sha256(dyad_csv).hexdigest()}
