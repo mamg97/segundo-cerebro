@@ -64,9 +64,10 @@ class COWGWRosterTests(unittest.TestCase):
         cow_raw,base_raw,micro_raw=fake_inputs()
         c=parse_cow(cow_raw)
         g=build_gw_with_microstates(base_raw,micro_raw)
-        for periods in (["2024-12","2020-12"],["2020-12","2020-12"],["2024-13"],[],["2040-01"]):
+        for periods in (["2024-12","2020-12"],["2020-12","2020-12"],["2024-13"],[]):
             with self.subTest(periods=periods),self.assertRaises(ValueError):
                 compare(c,g,periods)
+        self.assertEqual(compare(c,g,["2040-01"])["months"][0]["status"],"NO_EVALUABLE_COW_AFTER_2024")
 
     def test_duplicate_state_code_intervals_and_gw_micro_overlap_rejected(self):
         cow_raw,base_raw,micro_raw=fake_inputs()
