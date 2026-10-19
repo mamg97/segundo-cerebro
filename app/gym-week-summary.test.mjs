@@ -159,7 +159,7 @@ test("Home reuses the existing private health overview history, no seven new req
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const worker = readFileSync(new URL("../private-cloudflare/src/index.js", import.meta.url), "utf8");
   assert.match(app, /homeHealthWeekNutritionHistory = Array\.isArray\(data\.nutritionHistory\)/);
-  assert.match(app, /nutritionHistory: homeHealthWeekNutritionHistory/);
+  assert.match(app, /nutritionHistory: current \? homeHealthWeekNutritionHistory : historical\.nutritionHistory/);
   assert.match(worker, /consumedProtein: consumedEntryCount > 0 \? dayConsumed\.protein : null/);
   assert.match(worker, /nutritionHistory: value\.history \|\| \[\]/);
   const source = readFileSync(new URL("./gym-week-summary.mjs", import.meta.url), "utf8");
