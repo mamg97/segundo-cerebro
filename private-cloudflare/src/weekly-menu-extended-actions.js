@@ -158,6 +158,29 @@ export function manualCompanionOptions(values) {
         .every(v => Number.isFinite(v) && v >= 0));
 }
 
+
+/** One dessert row may contain several cups. Keep the displayed amount consistent
+ * with the actual numeric quantity and macros, without implying multiple desserts. */
+export function companionServingTitle(food, portions, isDessert=false) {
+  const name=String(food?.name||"").trim();
+  const base=name.replace(/\\s*·\\s*(?:1 vasito \\(\\d+ g\\)|250 g \\(½ tarro grande\\))$/i,"");
+  const units=Number(portions);
+  if(food?.companionType!=="yogur"||!Number.isSafeInteger(units)||units<1)
+    return (isDessert?"Postre: ":"")+name+(units>1?" × "+units:"");
+  const portion=Number(food.serving);
+  const cup=/vasito/i.test(String(food.unit||""));
+  const gramsPerCup=Number(/(\\d+)\\s*g/i.exec(String(food.unit||""))?.[1]);
+  let descriptor;
+  if(cup&&Number.isFinite(gramsPerCup)&&gramsPerCup>0) {
+    const count=portion*units;
+    descriptor=count+" "+(count===1?"vasito":"vasitos")+" ("+(count*gramsPerCup)+" g)";
+  } else if(/^g$/i.test(String(food.unit||""))&&portion>0) {
+    const weight=portion*units;
+    descriptor=weight+" g"+(portion===250?units===1?" (½ tarro grande)":units===2?" (1 tarro grande)":" ("+units+" tomas de 250 g)":"");
+  } else descriptor=(portion*units)+" "+String(food.unit||"").trim();
+  return (isDessert?"Postre: ":"")+base+" · "+descriptor;
+}
+
 /** A manually selected food is an accompanying product, never a phantom recipe. */
 export function planMenuFoodAddition(values,payload,foods,now) {
   const headers=(values?.[0]||[]).map(x=>String(x||"").trim());
@@ -174,8 +197,6 @@ export function planMenuFoodAddition(values,payload,foods,now) {
   const food=foods.find(row=>row.id===payload?.newFoodId);
   ensure(Boolean(food),"FOOD_NOT_FOUND",404);
   ensure(normalize(payload.newCompanionType)===food.companionType,"FOOD_COMPANION_TYPE_MISMATCH",409);
-  if(food.companionType==="yogur" && ["comida","cena"].includes(normalize(label)))
-    ensure(units===1,"ONLY_ONE_DESSERT_PER_MEAL",409);
   const items=rowTable(values);
   const peers=items.filter(row=>row.data.fecha===payload.date &&
     momentKey(row.data)===normalize(label)&&active(row.data));
@@ -187,8 +208,7 @@ export function planMenuFoodAddition(values,payload,foods,now) {
   const count=food.serving*units;
   const isPicos=/^picos/i.test(food.unit);
   const name=isPicos?"Picos 100% integrales de trigo Hacendado · "+count+" picos" :
-    (food.companionType==="yogur" && ["comida","cena"].includes(normalize(label))?"Postre: ":"")+
-    food.name+(units===1?"":" × "+units);
+    companionServingTitle(food,units,food.companionType==="yogur" && ["comida","cena"].includes(normalize(label)));
   const fields={
     semana_inicio:startOfWeek(payload.date),fecha:payload.date,momento:label,
     recipe_id:"",food_id:food.id,nombre:name,cantidad:count,unidad:food.unit,
@@ -244,8 +264,6 @@ export function planMenuFoodReplacement(values,payload,foods,now){
   const n=servings(payload?.newServings);
   ensure(Number.isSafeInteger(n),"INVALID_FOOD_MULTIPLIER",400);
   const moment=momentKey(existing.data);
-  if(companionType==="yogur" && ["comida","cena"].includes(moment))
-    ensure(n===1,"ONLY_ONE_DESSERT_PER_MEAL",409);
   ensure(!(newId===foodId && Number(existing.data.cantidad)===selected.serving*n),
     "FOOD_SELECTION_UNCHANGED",409);
   const peers=items.filter(x=>x.sourceRow!==existing.sourceRow&&
@@ -261,9 +279,9 @@ export function planMenuFoodReplacement(values,payload,foods,now){
   ensure(copies.length===1,"AMBIGUOUS_FOOD_VERSIONS",409);
   const total=selected.serving*n;
   const prefix=companionType==="yogur"&&["comida","cena"].includes(moment)?"Postre: ":"";
-  const title=selected.name+(n===1?"":" × "+n);
+  const title=companionServingTitle(selected,n,Boolean(prefix));
   const fields={
-    recipe_id:"",food_id:selected.id,nombre:prefix+title,
+    recipe_id:"",food_id:selected.id,nombre:title,
     cantidad:total,unidad:selected.unit,
     kcal:Math.round(selected.kcalPerServing*n*1000)/1000,
     proteinas_g:Math.round(selected.proteinPerServing*n*1000)/1000,
