@@ -27,7 +27,7 @@ VERSIONS = {
     "20.0.9": "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v20_0_9.csv",
     "20.0.10": "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v20_0_10.csv",
 }
-VERSION = re.compile(r"^(18|19|20|21|22|23|24|25|26)\.0\.(\d{1,2})$")
+VERSION = re.compile(r"^(18|19|20|21|22|23|24|25|26)\.0\.([1-9]|1[0-2])$")
 MAX_HTML_BYTES = 3_000_000
 MAX_CSV_BYTES = 65_000_000
 MAX_EVENTS = 250_000
