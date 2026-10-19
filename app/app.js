@@ -13,6 +13,7 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.63";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
+import { openTravelsDetail } from "./travels.js?v=0.1.0";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -680,6 +681,21 @@ function initSystemOrbResponsiveSize() {
 
 function ensureDerivedAreas() {
   if (!Array.isArray(state.areas)) state.areas = [];
+  // Viajes es una vista privada de Eventos, no un almacén paralelo ni una categoría de Home.
+  if (privateModeKind === "remote" && !state.areas.some((area) => area.id === "area-travels")) {
+    state.areas.push({
+      id: "area-travels",
+      slug: "travels",
+      title: "Viajes",
+      shortTitle: "Viajes",
+      summary: "Reservas, itinerarios y preparación de cada viaje.",
+      health: 85,
+      tone: "blue",
+      module: "Travel",
+      sensitivity: "confidencial",
+      status: "steady"
+    });
+  }
   if (!state.areas.some((area) => area.id === "area-health")) {
     const wealthIndex = state.areas.findIndex((area) => area.id === "area-wealth");
     const healthArea = {
@@ -916,7 +932,7 @@ function renderNavigation() {
   const canonicalOrder = [
     "area-general", "area-career", "area-finance", "area-calendar",
     "area-partner", "area-family", "area-health", "area-objects",
-    "area-wealth", "area-projects"
+    "area-wealth", "area-projects", "area-travels"
   ];
   const orderRank = new Map(canonicalOrder.map((id, index) => [id, index]));
   const parents = state.areas
@@ -11722,6 +11738,10 @@ function openNavigationArea(areaId) {
 }
 
 function openArea(areaId) {
+  if (areaId === "area-travels") {
+    void openTravelsDetail(state.financeSummary, privateModeKind);
+    return;
+  }
   if (areaId === "area-events") {
     void openEventsWorkspaceInline("active");
     return;
