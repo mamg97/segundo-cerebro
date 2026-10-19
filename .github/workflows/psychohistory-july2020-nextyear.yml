@@ -1,0 +1,33 @@
+# AV-046: design validation only. No historical records, country IDs or scores.
+name: Psychohistory July next-year onset protocol
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_july2020_nextyear_protocol.py"
+      - "research/psychohistory/test_onset_july2020_nextyear_protocol.py"
+      - ".github/workflows/psychohistory-july2020-nextyear.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  delayed-origin-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run strict synthetic alternate-origin tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s research/psychohistory \
+            -p test_onset_july2020_nextyear_protocol.py -v
+      - name: Evaluate preregistered calendar and issue cutoffs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_july2020_nextyear_protocol.py
+          echo 'The historical 2020-06-16 announcement is documentary, NOT a byte witness.'
+          echo 'New target is all-country unconditional incidence, NOT AV-042 eligible-risk onset.'
+          echo 'No countries, labels, model training, scores or forecasts emitted.'
