@@ -6695,13 +6695,24 @@ function renderRecipesPanel(data) {
       <span class="recipes-filter-count" aria-live="polite">${sortedRecipes.length} ${sortedRecipes.length === 1 ? "receta" : "recetas"}</span>
     </div>
     ${sortedRecipes.length ? '<div class="recipes-grid">' + sortedRecipes.map(recipe => `
-      <button class="recipe-card recipe-catalog-card" type="button"
-        data-recipe-open="${escapeHtml(recipe.id || "")}"
-        aria-label="Abrir receta ${escapeHtml(recipe.name || "Receta")}">
-        <span class="recipe-photo recipe-catalog-photo">${recipePhotoMarkup(recipe)}</span>
-        <strong>${escapeHtml(recipe.name || "Receta")}</strong>
-        ${archived ? '<small class="recipe-archive-note">'+escapeHtml(recipe.status||"archivada")+'</small>' : ""}
-      </button>`).join("")+'</div>' :
+      <article class="recipe-catalog-item">
+        <button class="recipe-card recipe-catalog-card" type="button"
+          data-recipe-open="${escapeHtml(recipe.id || "")}"
+          aria-label="Abrir receta ${escapeHtml(recipe.name || "Receta")}">
+          <span class="recipe-photo recipe-catalog-photo">${recipePhotoMarkup(recipe)}</span>
+          <strong>${escapeHtml(recipe.name || "Receta")}</strong>
+          ${archived ? '<small class="recipe-archive-note">'+escapeHtml(recipe.status||"archivada")+'</small>' : ""}
+        </button>
+        ${!archived && privateModeKind === "remote" ? `
+          <div class="recipe-catalog-actions" aria-label="Acciones para ${escapeHtml(recipe.name || "Receta")}">
+            <button type="button" class="recipe-catalog-action is-edit"
+              data-recipe-card-edit="${escapeHtml(recipe.id || "")}"
+              aria-label="Modificar ${escapeHtml(recipe.name || "Receta")}">Modificar</button>
+            <button type="button" class="recipe-catalog-action is-delete"
+              data-recipe-card-delete="${escapeHtml(recipe.id || "")}"
+              aria-label="Eliminar ${escapeHtml(recipe.name || "Receta")}">Eliminar</button>
+          </div>` : ""}
+      </article>`).join("")+'</div>' :
       '<div class="health-empty health-empty-card"><strong>Sin coincidencias</strong><p>Cambia el filtro o elige «Todos los momentos».</p></div>'}
   `;
   panel.querySelector("[data-recipe-meal-select]")?.addEventListener("change", event => {
@@ -6721,6 +6732,40 @@ function renderRecipesPanel(data) {
     button.addEventListener("click", () => {
       const recipe = recipes.find(candidate => String(candidate.id || "") === String(button.dataset.recipeOpen || ""));
       if (recipe) renderRecipeDetail(panel, data, recipe);
+    }));
+  // Independent sibling buttons: never nest a button in the clickable recipe card.
+  // The action is scoped by its immutable recipe ID, not card position or sort order.
+  panel.querySelectorAll("[data-recipe-card-edit]").forEach(button =>
+    button.addEventListener("click", () => {
+      const recipe = recipes.find(candidate => String(candidate.id || "") === String(button.dataset.recipeCardEdit || ""));
+      if (!recipe || archived || privateModeKind !== "remote") return;
+      renderRecipeEditor(panel, recipe, {
+        onBack: () => renderRecipesPanel(data),
+        onSaved: refreshRecipeCatalog
+      });
+    }));
+  panel.querySelectorAll("[data-recipe-card-delete]").forEach(button =>
+    button.addEventListener("click", () => {
+      const recipe = recipes.find(candidate => String(candidate.id || "") === String(button.dataset.recipeCardDelete || ""));
+      if (!recipe || archived || privateModeKind !== "remote" || button.disabled) return;
+      button.disabled = true;
+      void deleteRecipeFromCatalog(recipe, refreshRecipeCatalog)
+        .then((deleted) => {
+          if (!deleted && button.isConnected) button.disabled = false;
+        })
+        .catch((error) => {
+          if (!button.isConnected) return;
+          button.disabled = false;
+          let notice = button.closest(".recipe-catalog-item")?.querySelector("[data-recipe-card-error]");
+          if (!notice) {
+            notice = document.createElement("p");
+            notice.className = "recipe-catalog-error";
+            notice.dataset.recipeCardError = "";
+            notice.setAttribute("role", "alert");
+            button.closest(".recipe-catalog-item")?.append(notice);
+          }
+          if (notice) notice.textContent = "No se pudo eliminar: " + String(error?.message || "ERROR");
+        });
     }));
 }
 
