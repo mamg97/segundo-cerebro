@@ -1,0 +1,39 @@
+# Source: the COW provider's exact official ZIP linked from dataset page.
+# No event rows, no country-level exports, no archive artifacts.
+name: Psychohistory official COW system2024 ZIP probe
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/cow_official_system2024.py"
+      - "research/psychohistory/test_cow_official_system2024.py"
+      - ".github/workflows/psychohistory-cow-official-system2024.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-cow-zip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download official public country-year archive to runner temp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location \
+            --retry 2 --max-time 75 --max-filesize 5000000 \
+            --output "$RUNNER_TEMP/official-cow-System2024.zip" \
+            'https://correlatesofwar.org/wp-content/uploads/System2024.zip'
+      - name: Print only ZIP structure and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/cow_official_system2024.py \
+            --archive "$RUNNER_TEMP/official-cow-System2024.zip"
+          echo 'Metadata only. No country-year rows or historical as-of claims.'
+      - name: Purge the official ZIP even on failure
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/official-cow-System2024.zip"
