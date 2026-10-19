@@ -4,10 +4,12 @@ import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("./index.js", import.meta.url), "utf8");
 const migration = readFileSync(new URL("../migrations/0009_gym_history_read.sql", import.meta.url), "utf8");
-const start = source.indexOf("async function fetchGymHistory(env) {");
+const start = source.indexOf("async function fetchGymHistory(env, { weekStart = null } = {}) {");
 const end = source.indexOf("\nasync function saveGymSession(", start);
 assert.ok(start > 0 && end > start, "real Gym history function exists");
-const readGym = new Function(source.slice(start, end) + "\nreturn fetchGymHistory;")();
+const readGym = new Function("healthAddDays", source.slice(start, end) + "\nreturn fetchGymHistory;")(
+  (date, days) => { const d = new Date(date + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); }
+);
 
 function fakeDb(sessions, entries) {
   const queries = [];
@@ -20,7 +22,8 @@ function fakeDb(sessions, entries) {
         return {
           bind(...args) { call.args = args; return this; },
           async all() {
-            if (/FROM gym_sessions/.test(sql)) return { results: sessions };
+            if (/FROM gym_sessions/.test(sql)) return { results: call.args.length === 2
+              ? sessions.filter(row => row.session_date >= call.args[0] && row.session_date <= call.args[1]) : sessions };
             if (/FROM gym_entries/.test(sql)) return {
               results: entries.filter((item) => call.args.includes(item.session_id))
             };
@@ -74,4 +77,22 @@ test("Gym history migration indexes bounded reads without deleting existing reco
     statements.every((line) => !/^(?:DROP\\b|DELETE\\b|TRUNCATE\\b|REPLACE\\s+INTO\\b)/i.test(line)),
     "migration must not contain destructive SQL statements"
   );
+});
+
+test("bounded historical read filters just one calendar week, not latest 40 sessions", async () => {
+  const records = [
+    {id: "older", session_date: "2026-10-12", day_id: "leg"},
+    {id: "old-other", session_date: "2026-10-04", day_id: "leg"},
+    {id: "recent", session_date: "2026-10-19", day_id: "arm"}
+  ];
+  const env = fakeDb(records, [
+    {id: 1, session_id: "older", exercise_id: "leg", exercise_name: "Leg press", load_value: 60},
+    {id: 2, session_id: "recent", exercise_id: "arm", exercise_name: "Curl", load_value: 30}
+  ]);
+  const result = await readGym(env, { weekStart: "2026-10-12" });
+  assert.deepEqual(env.queries[0].args, ["2026-10-12", "2026-10-18"]);
+  assert.match(env.queries[0].sql, /WHERE session_date BETWEEN \? AND \?/);
+  assert.match(env.queries[0].sql, /LIMIT 40/);
+  assert.deepEqual(result.sessions.map(row => row.id), ["older"]);
+  assert.deepEqual(Object.keys(result.progress), ["leg"]);
 });
