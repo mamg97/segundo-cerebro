@@ -1,0 +1,39 @@
+# UCDP official source: annual hindsight outcomes; never Candidate as-of features.
+name: Psychohistory official UCDP country-year zeros
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/ucdp_country_year_zeros.py"
+      - "research/psychohistory/test_ucdp_country_year_zeros.py"
+      - ".github/workflows/psychohistory-ucdp-country-year-zeros.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-ucdp-cy-24-1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch only official historical ZIP into ephemeral runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location \
+            --retry 2 --max-time 75 --max-filesize 3000000 \
+            --output "$RUNNER_TEMP/organizedviolencecy-241-csv.zip" \
+            'https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-241-csv.zip'
+      - name: Audit explicit country-year zeros, never emit country observations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ucdp_country_year_zeros.py \
+            --archive "$RUNNER_TEMP/organizedviolencecy-241-csv.zip" \
+            --year 1989 --year 2006 --year 2019 --year 2020 --year 2023
+          echo 'Only UCDP annual hindsight labels; not monthly Candidate negative or as-of features.'
+      - name: Purge original country-year source on all outcomes
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/organizedviolencecy-241-csv.zip"
