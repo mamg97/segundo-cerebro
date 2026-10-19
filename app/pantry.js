@@ -297,9 +297,16 @@ export function pantryShoppingRowMarkup(item, currency = "EUR") {
       '<span class="purchase-state state-' + escapeHtml(stateClass) + '">' + escapeHtml(item.state || "REVISAR") + '</span>' +
       '<span class="pantry-shopping-price">' + escapeHtml(shoppingPriceLabel(item, currency)) + '</span>';
 
-    return '<a class="pantry-shopping-row is-link" href="' + escapeHtml(mercadonaUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="' +
+    return '<article class="pantry-shopping-list-item">' +
+      '<a class="pantry-shopping-row is-link" href="' + escapeHtml(mercadonaUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="' +
       escapeHtml(exactMercadonaUrl ? ("Abrir " + displayName + " en Mercadona") : ("Buscar " + displayName + " en Mercadona")) +
-      '">' + content + '</a>';
+      '">' + content + '</a>' +
+      '<button type="button" class="pantry-confirm-inventory" data-shopping-available="' +
+        escapeHtml(item.productId || "") + '" data-shopping-name="' + escapeHtml(item.name || "") +
+        '" data-shopping-external="' + escapeHtml(item.externalId || "") +
+        '" data-shopping-updated="' + escapeHtml(item.updatedAt || "") +
+        '" aria-label="Ya está en despensa: ' + escapeHtml(displayName) +
+        '">✓ Ya está en despensa</button></article>';
   }
 
 function renderWorkspace(payload, initialView = "inventory") {
@@ -340,6 +347,12 @@ function renderWorkspace(payload, initialView = "inventory") {
   }).join("");
 
   const shoppingRows = shopping.map((item) => pantryShoppingRowMarkup(item, currency)).join("");
+  const registeredProducts = (Array.isArray(payload.products) ? payload.products : [])
+    .filter(product => product.id && product.name)
+    .sort((a,b) => a.name.localeCompare(b.name,"es"));
+  const productChoices = '<option value="">Elige un producto registrado</option>' +
+    registeredProducts.map(product => '<option value="' + escapeHtml(product.id) + '">' +
+      escapeHtml(product.name) + '</option>').join("");
 
   const recentTickets = Array.isArray(payload.recentTickets) ? payload.recentTickets : [];
   const ticketCards = recentTickets.map((ticket) => {
@@ -409,6 +422,18 @@ function renderWorkspace(payload, initialView = "inventory") {
         '<span>' + (summary.estimatedBasketPartial ? "Estimación parcial" : "Estimación disponible") + '</span></div>' +
         '<p class="pantry-shopping-source">Fuente actual: ListaCompra de Segundo Cerebro.</p>' +
         '<div class="pantry-shopping-list">' + (shoppingRows || '<p class="pantry-empty">No hay productos pendientes.</p>') + '</div>' +
+        '<div class="pantry-shopping-review" data-shopping-review aria-live="polite"></div>' +
+        '<div class="pantry-shopping-actions-footer">' +
+          '<button type="button" class="pantry-shopping-add-toggle" data-shopping-add-toggle>＋ Añadir a la compra</button>' +
+          '<form class="pantry-shopping-add-form" data-shopping-add-form hidden>' +
+            '<label>Producto <select name="productId" required>' + productChoices + '</select></label>' +
+            '<label>Cantidad (opcional) <input type="number" name="quantity" min="0.01" step="any" placeholder="Sin confirmar"></label>' +
+            '<label>Unidad o formato (opcional) <input name="unit" maxlength="70" placeholder="Ej.: envases, paquetes"></label>' +
+            '<div class="pantry-shopping-form-buttons">' +
+              '<button type="submit">Añadir producto</button><button type="button" data-shopping-add-cancel>Cancelar</button>' +
+            '</div></form>' +
+          '<p class="pantry-shopping-action-status" data-shopping-status role="status" aria-live="polite"></p>' +
+        '</div>' +
         '<div class="pantry-shopping-total"><span>Coste conocido de la compra</span>' +
         '<strong>' +
           (Number.isFinite(Number(summary.estimatedBasketTotal))
@@ -431,10 +456,128 @@ function renderWorkspace(payload, initialView = "inventory") {
       '</section>' +
     '</div>';
 
+
+  const statusMessage=(message,isError=false)=>{
+    const node=body.querySelector("[data-shopping-status]");
+    if(!node)return;
+    node.textContent=message;
+    node.classList.toggle("is-error",isError);
+  };
+  const busy={value:false};
+  const pantryAction=async(payload)=>{
+    if(busy.value)return;
+    busy.value=true;
+    try{
+      const response=await fetch("/api/pantry/shopping/action",{
+        method:"POST",credentials:"same-origin",cache:"no-store",
+        headers:{"Content-Type":"application/json",Accept:"application/json"},
+        body:JSON.stringify(payload)
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.ok)throw Error(data.code||"SHOPPING_ACTION_FAILED");
+      const fresh=await fetchPantryPayload({attempts:2});
+      renderWorkspace(fresh,"shopping");
+      const node=document.querySelector("#dialog-body [data-shopping-status]");
+      if(node)node.textContent=data.alreadyListed
+        ?"Este producto ya figura en la lista.":"Despensa y lista actualizadas. Sincronización con iPhone pendiente del agente del Mac.";
+    }catch(error){
+      statusMessage("No se pudo actualizar. "+String(error?.message||"Reintenta"),true);
+    }finally{busy.value=false;}
+  };
+  body.querySelector("[data-shopping-add-toggle]")?.addEventListener("click",()=>{
+    const form=body.querySelector("[data-shopping-add-form]");
+    if(form){form.hidden=false;form.querySelector("select")?.focus();}
+  });
+  body.querySelector("[data-shopping-add-cancel]")?.addEventListener("click",()=>{
+    const form=body.querySelector("[data-shopping-add-form]");
+    if(form)form.hidden=true;
+  });
+  body.querySelector("[data-shopping-add-form]")?.addEventListener("submit",event=>{
+    event.preventDefault();
+    const form=event.currentTarget;
+    const productId=form.elements.namedItem("productId")?.value;
+    if(!productId){statusMessage("Selecciona un producto.",true);return;}
+    void pantryAction({action:"add",productId,
+      quantity:form.elements.namedItem("quantity")?.value||null,
+      unit:form.elements.namedItem("unit")?.value||""});
+  });
+  body.querySelectorAll("[data-shopping-available]").forEach(button=>
+    button.addEventListener("click",()=>{
+      if(busy.value)return;
+      const productId=button.dataset.shoppingAvailable||"";
+      const shoppingName=button.dataset.shoppingName||"";
+      const externalId=button.dataset.shoppingExternal||"";
+      const updatedAt=button.dataset.shoppingUpdated||"";
+      const confirmStock=(id)=>{
+        if(!window.confirm("¿Confirmas que «"+shoppingName+"» ya está disponible en la despensa? No se registrará como compra ni se inventará la cantidad."))return;
+        void pantryAction({action:"available",productId:id,shoppingName,
+          externalId:externalId||undefined,updatedAt});
+      };
+      if(productId)return confirmStock(productId);
+      // Unlinked iCloud list items require explicit product selection:
+      // never guess a SKU just because two titles look similar.
+      const dialog=document.createElement("dialog");
+      dialog.className="pantry-shopping-product-picker";
+      dialog.innerHTML='<form method="dialog"><h3>Vincular producto</h3>' +
+        '<p>Selecciona qué producto del catálogo corresponde a '+escapeHtml(shoppingName)+
+        '. Se confirmará su disponibilidad sin inventar cantidades.</p>' +
+        '<select required>'+productChoices+'</select><div>' +
+        '<button type="button" data-shopping-link-confirm>Vincular y confirmar</button>' +
+        '<button type="submit">Cancelar</button></div></form>';
+      document.body.append(dialog);
+      dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+      dialog.querySelector("[data-shopping-link-confirm]")?.addEventListener("click",()=>{
+        const selected=dialog.querySelector("select")?.value;
+        if(!selected)return;
+        dialog.close();confirmStock(selected);
+      });
+      dialog.showModal();
+    }));
+  const reconcileShopping=async()=>{
+    try{
+      const response=await fetch("/api/pantry/shopping/reconcile",{
+        method:"POST",credentials:"same-origin",cache:"no-store",
+        headers:{Accept:"application/json"}
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.ok)throw Error(data.code||"SYNC_UNAVAILABLE");
+      if(data.changed>0){
+        const fresh=await fetchPantryPayload({attempts:2});
+        renderWorkspace(fresh,"shopping");
+      }else{
+        const unknown=body.querySelector("[data-shopping-review]");
+        const review=Array.isArray(data.review)?data.review.slice(0,25):[];
+        if(unknown && review.length){
+          unknown.innerHTML='<strong>Ingredientes por comprobar</strong>' +
+            '<p>Hay recetas pendientes cuya disponibilidad no está confirmada. Pulsa «Falta» solo si compruebas que necesitas comprar el producto.</p>' +
+            review.map(item=>'<div class="pantry-review-item">' +
+              '<span>'+escapeHtml(item.name)+'</span>' +
+              '<button type="button" data-review-buy="'+escapeHtml(item.productId)+'">Falta · añadir a compra</button></div>').join("");
+          unknown.querySelectorAll("[data-review-buy]").forEach(button=>
+            button.addEventListener("click",()=>{
+              const id=button.dataset.reviewBuy;
+              const name=review.find(x=>x.productId===id)?.name||"Producto";
+              if(window.confirm("¿Confirmas que falta «"+name+"» en la despensa?")){
+                void pantryAction({action:"add",productId:id});
+              }
+            }));
+        }
+        if(data.diagnostics?.ingredientLinksMissing){
+          statusMessage(data.diagnostics.ingredientLinksMissing+
+            " ingrediente(s) del menú sin vinculación inequívoca con Productos; revisar en el recetario.");
+        }
+      }
+    }catch(error){
+      statusMessage("Conciliación del menú pendiente: "+String(error?.message||"UNAVAILABLE"),true);
+    }
+  };
+
   setPantryView(body, initialView);
   body.querySelectorAll("[data-pantry-view]").forEach((button) => button.addEventListener("click", () => {
     setPantryView(body, button.dataset.pantryView);
+    if(button.dataset.pantryView==="shopping")void reconcileShopping();
   }));
+  if(initialView==="shopping")void reconcileShopping();
 
   let activeLocation = "Todo";
   let activeCategory = "Todo";

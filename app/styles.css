@@ -28254,3 +28254,99 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 .home-menu-editor-confirm input { width: 18px; height: 18px; accent-color: var(--blue); }
 .home-menu-item-actions .home-menu-consumed-label { align-self: center; flex: 1 1 auto; }
 .home-menu-item-actions .home-menu-consumed-label + button { flex: 1 1 auto; }
+
+/* ListaCompra remains one canonical sheet and one Apple Reminders mirror. */
+.pantry-shopping-list-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 9px;
+}
+.pantry-shopping-list-item > .pantry-shopping-row { width: 100%; box-sizing: border-box; }
+.pantry-confirm-inventory, .pantry-shopping-add-toggle,
+.pantry-shopping-add-form button, .pantry-shopping-product-picker button {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  min-height: 37px;
+  padding: 7px 12px;
+  background: var(--paper);
+  color: var(--blue);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pantry-confirm-inventory { align-self: flex-end; color: var(--mint); }
+.pantry-shopping-actions-footer { padding: 12px 0; display: grid; gap: 12px; }
+.pantry-shopping-add-form { display: grid; gap: 11px; }
+.pantry-shopping-add-form[hidden] { display: none; }
+.pantry-shopping-add-form label { display: grid; gap: 5px; font-size: 12px; font-weight: 750; }
+.pantry-shopping-add-form select, .pantry-shopping-add-form input,
+.pantry-shopping-product-picker select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 41px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+.pantry-shopping-form-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.pantry-shopping-action-status { margin: 0; font-size: 11px; color: var(--ink-soft); }
+.pantry-shopping-action-status:empty { display: none; }
+.pantry-shopping-action-status.is-error { color: var(--coral); }
+.pantry-shopping-product-picker {
+  width: min(94vw,480px);
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.pantry-shopping-product-picker::backdrop { background: #0008; }
+.pantry-shopping-product-picker form { display: grid; gap: 13px; }
+.pantry-shopping-product-picker form > div { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 560px) {
+  .pantry-shopping-list-item .pantry-confirm-inventory { width: 100%; min-height: 41px; }
+  .pantry-shopping-form-buttons > button { flex: 1; }
+}
+
+.pantry-shopping-review {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+.pantry-shopping-review:empty { display: none; }
+.pantry-shopping-review > strong { font-size: 13px; }
+.pantry-shopping-review > p { margin: 0; color: var(--ink-soft); font-size: 11px; line-height: 1.45; }
+.pantry-review-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.pantry-review-item span { font-size: 12px; font-weight: 650; }
+.pantry-review-item button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--blue);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pantry-review-item button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }

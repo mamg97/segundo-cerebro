@@ -8,8 +8,12 @@ test("production Worker has no legacy per-minute Objects staging cron", () => {
   assert.equal(crons.includes("* * * * *"),false);
 });
 
-test("production Worker no longer registers the legacy staging scheduled handler", () => {
+test("production Worker allows only bounded 30-minute menu-shopping cron, never legacy staging work", () => {
   const source=fs.readFileSync(new URL("./index.js", import.meta.url),"utf8");
+  const config=JSON.parse(fs.readFileSync(new URL("../wrangler.bootstrap.jsonc", import.meta.url),"utf8"));
   assert.equal(source.includes("processObjectsImageQueue"),false);
-  assert.equal(/async\s+scheduled\s*\(/.test(source),false);
+  assert.deepEqual(config.triggers.crons,["*/30 * * * *"]);
+  assert.match(source,/async scheduled\(_controller, env, ctx\)/);
+  assert.match(source,/reconcileMenuShopping\(env,getGoogleAccessToken,\{limit:25\}\)/);
+  assert.doesNotMatch(source,/await processObjectsImageQueue/);
 });

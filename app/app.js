@@ -9,7 +9,7 @@ import { mockState } from "../core/mock-state.js";
 import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.33";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.62";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
