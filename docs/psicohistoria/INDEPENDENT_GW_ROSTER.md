@@ -56,3 +56,23 @@ ficticios. No hay nuevos servicios ni costes.
 Siguiente paso: localizar lista GW validada hasta 2024/25 y acreditar
 fuentes Candidate históricas, incluida cobertura explícita de países
 sin incidentes, antes de evaluar un onset o una crisis nueva.
+
+## Primera ejecución empírica · 19/10/2026
+
+La [ejecución del auditor con fuente GW real](https://github.com/mamg97/segundo-cerebro/actions/runs/39230716327)
+ha procesado 216 intervalos, correspondientes a 202 códigos de
+Estado distintos en **toda la historia**. Para diciembre de 2019
+y de 2020 se identificaron **174 Estados miembros durante todo el
+mes**, sin altas parciales en esos dos meses. Para enero de 2021 y
+diciembre de 2024 el resultado fue correctamente
+NO_EVALUABLE_SOURCE_CENSORED_2020.
+
+Al leer la fuente se comprobó que el fichero contiene caracteres de
+codificación heredada (Windows-1252), por lo que el parser acepta
+explícitamente ese formato cuando falla UTF-8, sin alterar bytes ni
+checksum original. El SHA-256 observado **hoy** es:
+70ba63cd8a936a25a701be5daffa1105411da5298ff890bf4bc27ed688892b2b.
+Se ha fijado como control de integridad en el workflow.
+
+**No es una certificación de datos disponibles antes de 2021** ni
+transforma las ausencias de incidentes en etiquetas negativas UCDP.
