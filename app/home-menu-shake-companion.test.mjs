@@ -14,7 +14,7 @@ test("planned yogurt replacement exposes an explicit shake companion classificat
   assert.match(app, /Batido como acompañamiento/);
   assert.match(app, /Esta comida ya tiene un plato principal/);
   assert.match(app, /roleSelect\?\.addEventListener\("change",updatePreview\)/);
-  assert.match(app, /submitHomeMenuEdit\(item,isAdd \? "add" : "replace",selectedRecipe\.id/);
+  assert.match(app, /submitHomeMenuEdit\\(item,isAdd \\? \\(selectedRecipe\\.kind==="food" \\? "add-food" : "add"\\) : "replace",selectedRecipe\\.id/);
 });
 
 test("backend honors only explicitly typed drink companions; main recipe guard remains intact", () => {
