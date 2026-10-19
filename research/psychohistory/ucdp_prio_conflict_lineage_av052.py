@@ -58,7 +58,7 @@ def official_acd_links(raw):
         url=urljoin(INDEX,parser.links[version][0]);uri=urlparse(url)
         if (uri.scheme!="https" or uri.netloc!="ucdp.uu.se"
             or not uri.path.startswith("/downloads/ucdpprio/")
-            or not uri.path.endswith("-csv.zip") or uri.query or uri.fragment):
+            or not (uri.path.endswith("-csv.zip") or uri.path.endswith(".csv")) or uri.query or uri.fragment):
             raise ValueError("Untrusted official data URL")
         found[version]=url
     if found["19.1"]==found["25.1"]:raise ValueError("Same bytes twice")
@@ -164,9 +164,11 @@ def main():
     versions=official_acd_links(fetch(INDEX,2_000_000))
     parsed={};inventory={}
     for edition,url in versions.items():
-        blob=fetch(url,20_000_000);csv_blob=safe_csv(blob)
+        blob=fetch(url,20_000_000 if url.endswith(".zip") else 35_000_000)
+        csv_blob=safe_csv(blob) if url.endswith(".zip") else blob
         parsed[edition]=acd_years(csv_blob,edition)
-        inventory[edition]={"url":url,"zip_sha256_observed_now":sha256(blob).hexdigest(),
+        inventory[edition]={"url":url,"download_sha256_observed_now":sha256(blob).hexdigest(),
+                            "download_format":"ZIP" if url.endswith(".zip") else "CSV",
                             "csv_sha256_observed_now":sha256(csv_blob).hexdigest()}
     data={}
     for name,(url,pin) in SOURCES.items():
