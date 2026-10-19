@@ -23,7 +23,11 @@ from urllib.request import Request, urlopen
 import zipfile
 
 INDEX = "https://ucdp.uu.se/downloads/olddw.html"
-SCHEMA = "psychohistory.ucdp_historical_training_source_audit.v1"
+SCHEMA = "psychohistory.ucdp_historical_training_source_audit.v2"
+OBSERVED_OCT2026 = {
+    "ged20": ("5e35b74f52dc67a18aabfab86f69655c847e87320684662a6112dec46d65111f", "14edadfe5b3842d4b5ba4d7260be6593332f671eafd08a02483d7b7dd3d6efb4"),
+    "onset19": ("ba54aeace175173b7643a2c14ba35ce89a2fcfd31712085e4fd13de656f752a8", "ba54aeace175173b7643a2c14ba35ce89a2fcfd31712085e4fd13de656f752a8"),
+}
 SOURCE_TYPES = {
     "ged20": ("UCDP Georeferenced Event Dataset", "GED 20.1:", "ged"),
     "onset19": ("UCDP Onset Dataset", "version 19.1:", "onset"),
@@ -183,11 +187,12 @@ def audit_table(data, kind):
         "onset19_conflicting_country_year_keys":len(conflicting_keys) if kind=="onset19" else None,
         "monadic_country_year_uniqueness_verified":(not duplicated_rows) if kind=="onset19" else None,
         "onset19_usable_without_explicit_duplicate_resolution":(not duplicated_rows) if kind=="onset19" else False,
-        "ged_latest_year_intrastate_event_rows": (
+        "ged_latest_year_statebased_event_rows": (
             types["1"] if kind=="ged20" else None),
         "historical_labels_version_available_as_candidate_only":kind=="onset19",
         "complete_issue_roster_certified":False,
         "source_bytes_historically_authenticated":False,
+        "vintage_correct_training_authorized":False,
         "backtest_authorized":False,
         "forecast_issued":False,
     }
@@ -246,6 +251,11 @@ def audit_official(online=True):
             data=fetch_limited(url,90_000_000)
             parsed=unpack_csv(data,url)
             result=audit_table(parsed,name)
+            expected_archive,expected_csv=OBSERVED_OCT2026[name]
+            if sha256(data).hexdigest()!=expected_archive or sha256(parsed).hexdigest()!=expected_csv:
+                raise ValueError("UCDP historical file changed from October 2026 observed pins; no silent repin")
+            result["catalog_label_edition_proven_from_embedded_bytes"]=False
+            result["observed_source_hash_matches_2026_pin"]=True
             result.update({"status":("OFFICIAL_BYTES_OBSERVED_NOW_NOT_HISTORICAL" if result["declared_latest_year_represented"] else "OFFICIAL_BYTES_OBSERVED_NOW_TRUNCATED_COVERAGE"),
                            "download_url":url,"download_sha256_observed_now":sha256(data).hexdigest(),
                            "csv_sha256_observed_now":sha256(parsed).hexdigest()})
