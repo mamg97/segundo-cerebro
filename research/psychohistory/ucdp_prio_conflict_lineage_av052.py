@@ -20,6 +20,11 @@ from onset_four_variant_semantics import fetch
 
 INDEX="https://ucdp.uu.se/downloads/olddw.html"
 SCHEMA="psychohistory.prio_conflict_lineage_61.v1"
+ACD_OBSERVED_PINS_2026={
+    "19.1":("722c58a955cb25a53b126f83f0e4a95e6a3129d9fefda7421f650b5c482fbd91","722c58a955cb25a53b126f83f0e4a95e6a3129d9fefda7421f650b5c482fbd91"),
+    "25.1":("b49f7e80510d8a5779a52d872aef5b26456b3f5cbdd3ec32031339488e81813f","a7a2ff6caf6c854f4fafb1b17f616da1ed6bbc00612943ec6e071511ebea7a81"),
+}
+
 
 class Index(HTMLParser):
     def __init__(self):
@@ -166,6 +171,9 @@ def main():
     for edition,url in versions.items():
         blob=fetch(url,20_000_000 if url.endswith(".zip") else 35_000_000)
         csv_blob=safe_csv(blob) if url.endswith(".zip") else blob
+        expected_download,expected_csv=ACD_OBSERVED_PINS_2026[edition]
+        if sha256(blob).hexdigest()!=expected_download or sha256(csv_blob).hexdigest()!=expected_csv:
+            raise ValueError("ACD official bytes changed from October-2026 observed pins; do not silently repin")
         parsed[edition]=acd_years(csv_blob,edition)
         inventory[edition]={"url":url,"download_sha256_observed_now":sha256(blob).hexdigest(),
                             "download_format":"ZIP" if url.endswith(".zip") else "CSV",
