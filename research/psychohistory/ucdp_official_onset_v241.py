@@ -27,8 +27,9 @@ MAX_CSV = 20_000_000
 
 
 class CatalogParser(HTMLParser):
-    def __init__(self):
+    def __init__(self, target_version=VERSION):
         super().__init__(convert_charrefs=True)
+        self.target_version = target_version
         self.in_heading = False
         self.heading = []
         self.section = ""
@@ -63,17 +64,19 @@ class CatalogParser(HTMLParser):
             self.in_heading = False
         elif tag == "a" and self.link_href is not None:
             label = " ".join(" ".join(self.link_text).split())
-            if self.section == "UCDP Onset Dataset" and self.version == VERSION:
+            if self.section == "UCDP Onset Dataset" and self.version == self.target_version:
                 self.entries.append((label,self.link_href))
             self.link_href = None
             self.link_text = []
 
 
-def parse_catalog(page):
+def parse_catalog(page, version=VERSION):
+    if version not in ("24.1","25.1"):
+        raise ValueError("Only explicitly archived 24.1 and 25.1 onset versions")
     if not isinstance(page,bytes) or not 1000 <= len(page) <= MAX_HTML:
         raise ValueError("Missing or unexpectedly sized UCDP archive index")
     try:
-        parser = CatalogParser()
+        parser = CatalogParser(version)
         parser.feed(page.decode("utf-8-sig"))
     except (UnicodeError,ValueError) as exc:
         raise ValueError("Unreadable UCDP archive index") from exc
@@ -105,7 +108,7 @@ def parse_catalog(page):
     return {
         "schema":"psychohistory.ucdp_onset_catalog_v241.v1",
         "index_observed_sha256_now":hashlib.sha256(page).hexdigest(),
-        "version":VERSION,
+        "version":version,
         "source_urls":matches,
         "files_historically_available_before_issue_verified":False,
         "asof_backtest_authorized":False,
@@ -113,7 +116,9 @@ def parse_catalog(page):
     }
 
 
-def summarize_csv(raw,kind, expected_sha=None):
+def summarize_csv(raw,kind, expected_sha=None, version=VERSION):
+    if version not in ("24.1","25.1"):
+        raise ValueError("Unsupported historical version")
     if kind not in ("intrastate_conflict","intrastate_country"):
         raise ValueError("Unknown onset source type")
     if not isinstance(raw,bytes) or not 20<len(raw)<=MAX_CSV:
@@ -136,7 +141,7 @@ def summarize_csv(raw,kind, expected_sha=None):
             if None in row or row["year"] is None or not row["year"].isdecimal():
                 raise ValueError("Malformed onset row/year")
             y=int(row["year"])
-            if y<1946 or y>2023:
+            if y<1946 or y>(2023 if version=="24.1" else 2024):
                 raise ValueError("Outside official 24.1 1946-2023 coverage")
             years.add(y)
             tally+=1
@@ -149,6 +154,7 @@ def summarize_csv(raw,kind, expected_sha=None):
 
     return {
         "kind":kind,
+        "version":version,
         "sha256_observed_now":digest,
         "columns":names,
         "n_rows":tally,
@@ -165,16 +171,17 @@ def summarize_csv(raw,kind, expected_sha=None):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--catalog",type=Path,required=True)
+    p.add_argument("--version",choices=("24.1","25.1"),default="24.1")
     p.add_argument("--intrastate-conflict",type=Path)
     p.add_argument("--intrastate-country",type=Path)
     a=p.parse_args()
-    report=parse_catalog(a.catalog.read_bytes())
+    report=parse_catalog(a.catalog.read_bytes(),version=a.version)
     if a.intrastate_conflict or a.intrastate_country:
         if not (a.intrastate_conflict and a.intrastate_country):
             raise ValueError("Both official onset levels required")
         report["files"]=[
-            summarize_csv(a.intrastate_conflict.read_bytes(),"intrastate_conflict"),
-            summarize_csv(a.intrastate_country.read_bytes(),"intrastate_country"),
+            summarize_csv(a.intrastate_conflict.read_bytes(),"intrastate_conflict",version=a.version),
+            summarize_csv(a.intrastate_country.read_bytes(),"intrastate_country",version=a.version),
         ]
     print(json.dumps(report,sort_keys=True))
 
