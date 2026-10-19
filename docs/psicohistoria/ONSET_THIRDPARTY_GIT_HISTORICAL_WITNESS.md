@@ -4,13 +4,13 @@
 
 ## Nuevo hallazgo empírico
 
-En el repositorio académico externo [knapply/data4ds4da](https://github.com/knapply/data4ds4da), el [commit público `02ac3d72`](https://github.com/knapply/data4ds4da/commit/02ac3d720bb0a34248888a6900e2d7854be8a4ba) incorpora una referencia a UCDP GED 19.1 y declara **2020-01-11 17:55:45 UTC** como fecha de autor y committer. GitHub informa **firma no verificada (`unsigned`)**. La fuente R del mismo proyecto dice haber obtenido GED 19.1 el **10 de enero de 2020**. <https://rdrr.io/github/knapply/data4ds4da/src/data-raw/ucdp_19.1.R>
+En el repositorio académico externo [knapply/data4ds4da](https://github.com/knapply/data4ds4da), el [commit público `33316d93`](https://github.com/knapply/data4ds4da/commit/33316d9367907b8452d3a5ac3fe0ff2bd7da7f43) incorpora una referencia a UCDP GED 19.1 y declara **2020-01-10 15:14:26 UTC** como fecha de autor y committer. GitHub informa **firma no verificada (`unsigned`)**. La fuente R del mismo proyecto dice haber obtenido GED 19.1 el **10 de enero de 2020**. <https://rdrr.io/github/knapply/data4ds4da/src/data-raw/ucdp_19.1.R>
 
 La API de GitHub permite verificar, **hoy**, sin descargar el dataset, estos objetos inmutables:
 
-- Commit Git: `02ac3d720bb0a34248888a6900e2d7854be8a4ba`
-- Tree Git: `58119f4869633210bc28b94bce9061596a517ed3`
-- Ruta CSV original: `inst/datasets/ucdp_19.1/ged191.csv`
+- Commit Git: `33316d9367907b8452d3a5ac3fe0ff2bd7da7f43`
+- Tree Git: `9996db934c356ee561ba477b1a0a32bc996b0dc1`
+- Ruta CSV original: `inst/ucdp_19.1/ged191.csv`
 - Blob Git SHA-1: `3f7e4621ba0d264a62b221fa06773e02d66d046f`
 - Tamaño declarado: **68.235.762 bytes**.
 
@@ -25,8 +25,10 @@ En particular:
 | Emisión hipotética | Qué permite concluir |
 |---|---|
 | 1 enero 2019 | El commit declara una fecha posterior. No atestigua disponibilidad antes de emitir. |
-| 1 enero 2020 | El commit declara 11 enero 2020, después del origen. Su existencia **no prueba** que GED 19.1 fuese inaccesible el 1 enero: solo carecemos de un testigo válido para ese día. |
+| 1 enero 2020 | El commit declara 10 enero 2020, después del origen. Su existencia **no prueba** que GED 19.1 fuese inaccesible el 1 enero: solo carecemos de un testigo válido para ese día. |
 | 1 enero 2021 | La fecha **declarada** del commit precede al origen, pero sigue sin ser sello independiente; además GED 19.1 concluye en **2018**, no cubre la actividad del año previo 2020. |
+
+El commit posterior [`02ac3d72`](https://github.com/knapply/data4ds4da/commit/02ac3d720bb0a34248888a6900e2d7854be8a4ba) del 11/01/2020 **renombra** el archivo a `inst/datasets/ucdp_19.1/ged191.csv` con el **mismo SHA de blob**; no es la primera incorporación observable en la historia Git. Ambos relojes son declarados y los commits no están firmados.
 
 El comunicado [Uppsala 16 junio 2020](https://www.uu.se/en/department/peace-and-conflict-research/news/archive/2020-06-16-major-data-releases-from-ucdp) anuncia por primera vez GED **20.1**, que contiene eventos de 1989–2019. Esa edición tampoco permite un replay que la utilice el **1/01/2020**. El anuncio fechado atestigua la cronología declarada de una edición, pero no sus bytes.
 
