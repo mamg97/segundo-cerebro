@@ -16,7 +16,7 @@ import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { menuConsumedFallbackForDate } from "./nutrition-history-fallback.js";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
-import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
+import { editWeeklyMenu, listWeeklyMenuRecipes, listWeeklyMenuFoods, MenuEditError } from "./weekly-menu-actions.js";
 import { mutateRecipe, RecipeEditError } from "./recipe-editor.js";
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
 import { prospectiveSummary } from "./research-evaluation.js";
@@ -5397,6 +5397,15 @@ export default {
       try { return json(await listWeeklyMenuRecipes(env,getGoogleAccessToken)); }
       catch (error) {
         return json({ok:false,code:error instanceof MenuEditError ? error.code : "MENU_RECIPES_FAILED"},error instanceof MenuEditError ? error.status : 502);
+      }
+    }
+
+    if (url.pathname === "/api/nutrition/menu/foods") {
+      if (request.method !== "GET") return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
+      try { return json(await listWeeklyMenuFoods(env,getGoogleAccessToken)); }
+      catch (error) {
+        return json({ok:false,code:error instanceof MenuEditError ? error.code : "MENU_FOODS_FAILED"},
+          error instanceof MenuEditError ? error.status : 502);
       }
     }
 
