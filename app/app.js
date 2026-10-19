@@ -6156,9 +6156,9 @@ function homeMenuEditDialog() {
   dialog.addEventListener("click", event => { if (event.target === dialog && !homeMenuEditPending) dialog.close(); });
   return dialog;
 }
-async function openHomeMenuRecipeEditor(item, day, options = {}) {
+async function openHomeMenuRecipeEditor(item, day, settings = {}) {
   if (homeMenuEditPending) return;
-  const isAdd = options.mode === "add";
+  const isAdd = settings.mode === "add";
   const isCorrection = !isAdd && weeklyMenuItemIsConsumed(item);
   const dialog = homeMenuEditDialog();
   const foodCompanion = Boolean(item.foodId && !item.recipeId && normalizeWeeklyMenuMoment(item.itemRole) === "acompanante");
