@@ -45,7 +45,7 @@ horizonte sin declararlo.
 
 ## Prueba con fuente oficial
 
-La [CI específica](../../.github/workflows/psychohistory-onset-issue-gate.yml) descarga únicamente el CSV país 25.1 auténtico (hash SHA-256 observado octubre 2026 `e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe6a`) a memoria efímera.
+La [CI específica](../../.github/workflows/psychohistory-onset-issue-gate.yml) descarga únicamente el CSV país 25.1 auténtico (hash SHA-256 observado octubre 2026 `e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe2ea83fe6a`) a memoria efímera.
 Valida unicidad país-año, campos oficiales, fechas, `onset1` y `onset5`, y calcula agregados de:
 
 - número de filas país-año con `onset1=1` y `onset5=1`;
