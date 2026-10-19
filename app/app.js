@@ -5950,7 +5950,11 @@ function weeklyMenuMomentRank(value) {
 }
 
 function weeklyMenuMatrixMoments(days) {
-  const found = new Map();
+  // Display standard mealtimes even if nobody has planned anything yet.
+  const found = new Map([
+    ["desayuno","Desayuno"],["media manana","Media mañana"],
+    ["comida","Comida"],["merienda","Merienda"],["cena","Cena"]
+  ]);
   for (const day of Array.isArray(days) ? days : []) {
     for (const item of Array.isArray(day?.items) ? day.items : []) {
       const label = canonicalWeeklyMenuMoment(item);
@@ -5968,9 +5972,16 @@ function weeklyMenuItemsForMoment(day, momentKey) {
     .filter((item) => normalizeWeeklyMenuMoment(canonicalWeeklyMenuMoment(item)) === momentKey);
 }
 
-function renderHomeWeeklyMenuMatrixCell(items, readOnly = false) {
+function renderHomeWeeklyMenuMatrixCell(items, readOnly = false, date = "", moment = "") {
   const rows = Array.isArray(items) ? items.filter(Boolean) : [];
-  if (!rows.length) return '<span class="home-weekly-menu-empty-cell">—</span>';
+  const primaryAssigned = rows.some(row =>
+    Boolean(row.recipeId || row.foodId) &&
+    normalizeWeeklyMenuMoment(row.itemRole || "receta") !== "acompanante");
+  const addButton = !readOnly && !primaryAssigned && date && moment
+    ? `<button type="button" class="home-menu-add-action" data-home-menu-add-date="${escapeHtml(date)}"
+      data-home-menu-add-moment="${escapeHtml(moment)}" aria-label="Añadir receta para ${escapeHtml(moment)} del ${escapeHtml(date)}">＋ Añadir</button>`
+    : "";
+  if (!rows.length) return '<span class="home-weekly-menu-empty-cell">—</span>' + addButton;
   return `
     <div class="weekly-menu-group-items is-compact">
       ${rows.map((item) => {
@@ -5991,11 +6002,11 @@ function renderHomeWeeklyMenuMatrixCell(items, readOnly = false) {
           : `${weeklyMenuProductThumbnail(item, true)}<strong>${escapeHtml(item.name || "Comida")}</strong>`;
         // A sourceRow is the exact row in the private canonical Sheet, not a
         // guessed position in a deduplicated list. Mutation revalidates it.
-        // All *planned* canonical items can be replaced, irrespective of
-        // moment or whether the row is a recipe or a Pantry food companion.
+        // Confirmed items are also correctable. Their consumption status must
+        // be retained and any matching Registro entry reconciled server-side.
         const sourceId = Boolean(recipeId) !== Boolean(item.foodId);
         const planned = ["planificado","pendiente"].includes(normalizeWeeklyMenuMoment(item.status));
-        const canEdit = !readOnly && sourceId && planned && Number.isSafeInteger(item.sourceRow) && item.sourceRow > 1 &&
+        const canEdit = !readOnly && sourceId && (planned || consumed) && Number.isSafeInteger(item.sourceRow) && item.sourceRow > 1 &&
           (!item.itemRole || ["receta","acompanante"].includes(normalizeWeeklyMenuMoment(item.itemRole)));
         return `
           <div class="weekly-menu-group-item ${consumed ? "is-consumed" : ""}" data-menu-source-row="${Number(item.sourceRow) || 0}">
@@ -6007,12 +6018,13 @@ function renderHomeWeeklyMenuMatrixCell(items, readOnly = false) {
               <span>${protein}</span>
             </div>
             ${canEdit ? `<div class="home-menu-item-actions">
-              <button type="button" data-home-menu-consume="${item.sourceRow}" aria-label="Marcar ${escapeHtml(item.name)} como consumida">✓ Consumida</button>
+              ${planned ? `<button type="button" data-home-menu-consume="${item.sourceRow}" aria-label="Marcar ${escapeHtml(item.name)} como consumida">✓ Consumida</button>`
+                : '<small class="home-menu-consumed-label">✓ Consumida</small>'}
               <button type="button" data-home-menu-change="${item.sourceRow}" aria-label="Cambiar alimento o receta ${escapeHtml(item.name)}">Cambiar</button>
             </div>` : consumed ? '<small class="home-menu-consumed-label">✓ Consumida</small>' : ""}
           </div>`;
       }).join("")}
-    </div>`;
+    </div>${addButton}`;
 }
 
 async function openHomeWeeklyMenuRecipe(data, recipeId) {
@@ -6063,17 +6075,21 @@ async function homeMenuRecipeOptions() {
   }).catch(error => { homeMenuRecipeOptionsPromise = null; throw error; });
   return homeMenuRecipeOptionsPromise;
 }
-function homeMenuEditPayload(item, action, newRecipeId = null, newServings = null, newCompanionType = null) {
+function homeMenuEditPayload(item, action, newRecipeId = null, newServings = null, newCompanionType = null, confirmConsumed = false) {
   return {
-    action, sourceRow: item.sourceRow, date: item.date, moment: item.moment,
-    ...(item.recipeId ? {recipeId:item.recipeId} : {foodId:item.foodId}),
-    name: item.name, updatedAt: item.updatedAt || "",
+    action, date: item.date, moment: item.moment,
+    ...(action === "add" ? {} : {
+      sourceRow: item.sourceRow,
+      ...(item.recipeId ? {recipeId:item.recipeId} : {foodId:item.foodId}),
+      name: item.name, updatedAt: item.updatedAt || ""
+    }),
     ...(newRecipeId ? {newRecipeId} : {}),
     ...(newServings !== null ? {newServings} : {}),
-    ...(newCompanionType ? {newCompanionType} : {})
+    ...(newCompanionType ? {newCompanionType} : {}),
+    ...(action === "add" ? {confirmConsumed:Boolean(confirmConsumed)} : {})
   };
 }
-async function submitHomeMenuEdit(item, action, recipeId, newServings = null, newCompanionType = null) {
+async function submitHomeMenuEdit(item, action, recipeId, newServings = null, newCompanionType = null, confirmConsumed = false) {
   if (homeMenuEditPending) return false;
   homeMenuEditPending = true;
   homeWeeklyMenuLastVerifiedSerial = ++homeWeeklyMenuRequestSerial;
@@ -6081,13 +6097,14 @@ async function submitHomeMenuEdit(item, action, recipeId, newServings = null, ne
     const response = await fetch("/api/nutrition/menu/edit", {
       method: "POST", credentials: "same-origin",
       headers: {"Content-Type": "application/json", Accept:"application/json"},
-      body: JSON.stringify(homeMenuEditPayload(item,action,recipeId,newServings,newCompanionType))
+      body: JSON.stringify(homeMenuEditPayload(item,action,recipeId,newServings,newCompanionType,confirmConsumed))
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.ok !== true) throw new Error(result.code || "MENU_EDIT_FAILED");
     // A new verified snapshot is required even after a successful write.
+    homeWeeklyMenuWeekCache.delete(selectedHomeMenuWeek());
     homeWeeklyMenuWeekCache.delete(currentHomeMenuWeek());
-    await Promise.all([loadHomeWeeklyMenu(null, { force: true }),renderHomeNutritionCard()]);
+    await Promise.all([loadHomeWeeklyMenu(null, { force: true, navigation: true }),renderHomeNutritionCard()]);
     return true;
   } finally {
     homeMenuEditPending = false;
@@ -6104,13 +6121,14 @@ function homeMenuInlineNotice(content, text, isError = false) {
   notice.classList.toggle("is-error", isError);
   notice.textContent = text;
 }
-function homeMenuRecipeProjection(item, recipe, day, newServings = null) {
+function homeMenuRecipeProjection(item, recipe, day, newServings = null, isAdd = false) {
   // Mirror server-side portion validation: missing is never one serving.
   const quantity = item.quantity == null || String(item.quantity).trim() === "" ? NaN : Number(item.quantity);
   const unit = normalizeWeeklyMenuMoment(item.unit);
   const sourceIsFood = Boolean(item.foodId) && !item.recipeId;
   const servings = newServings == null || String(newServings).trim() === "" ? NaN : Number(newServings);
-  const factor = sourceIsFood ? (Number.isFinite(servings) && servings > 0 && servings <= 20 ? servings : NaN)
+  const factor = (sourceIsFood || isAdd) ? (Number.isFinite(servings) && servings > 0 && servings <= 20 ? servings : NaN)
+    : Number.isFinite(servings) && servings > 0 && servings <= 20 ? servings
     : /racion/.test(unit) ? quantity
       : /compartid/.test(unit) && Number(recipe.servings) > 0 ? quantity * recipe.servings : NaN;
   const fields = ["kcalPerServing","proteinPerServing","carbsPerServing","fatPerServing"];
@@ -6119,8 +6137,8 @@ function homeMenuRecipeProjection(item, recipe, day, newServings = null) {
     !/pendiente|pending|sin confirmar|por confirmar|no usar para nuevas|solo histor|exclusiv.{0,16}histor/i.test(String(recipe.precision || ""));
   if (!valid) return null;
   const values = fields.map(key => Number(recipe[key]) * factor);
-  const beforeKcal = item.kcal == null ? NaN : Number(item.kcal);
-  const beforeProtein = item.protein == null ? NaN : Number(item.protein);
+  const beforeKcal = isAdd ? 0 : item.kcal == null ? NaN : Number(item.kcal);
+  const beforeProtein = isAdd ? 0 : item.protein == null ? NaN : Number(item.protein);
   return {
     kcal:values[0], protein:values[1], carbs:values[2], fat:values[3],
     dayKcal:Number.isFinite(beforeKcal) ? day.kcal - beforeKcal + values[0] : null,
@@ -6138,12 +6156,14 @@ function homeMenuEditDialog() {
   dialog.addEventListener("click", event => { if (event.target === dialog && !homeMenuEditPending) dialog.close(); });
   return dialog;
 }
-async function openHomeMenuRecipeEditor(item, day) {
+async function openHomeMenuRecipeEditor(item, day, options = {}) {
   if (homeMenuEditPending) return;
+  const isAdd = options.mode === "add";
+  const isCorrection = !isAdd && weeklyMenuItemIsConsumed(item);
   const dialog = homeMenuEditDialog();
   const foodCompanion = Boolean(item.foodId && !item.recipeId && normalizeWeeklyMenuMoment(item.itemRole) === "acompanante");
   const defaultShake = foodCompanion && normalizeWeeklyMenuMoment(item.companionType) === "yogur";
-  const alreadyHasPrimary = foodCompanion && (Array.isArray(day?.items) ? day.items : []).some(other =>
+  const alreadyHasPrimary = (foodCompanion || isAdd) && (Array.isArray(day?.items) ? day.items : []).some(other =>
     other.sourceRow !== item.sourceRow && Boolean(other.recipeId) &&
     normalizeWeeklyMenuMoment(other.itemRole || "receta") !== "acompanante" &&
     normalizeWeeklyMenuMoment(canonicalWeeklyMenuMoment(other)) === normalizeWeeklyMenuMoment(canonicalWeeklyMenuMoment(item)) &&
@@ -6151,10 +6171,19 @@ async function openHomeMenuRecipeEditor(item, day) {
   );
   dialog.innerHTML = `
     <div class="home-menu-editor-main">
-      <header><div><small>Menú semanal · modificar</small><h3>Cambiar receta</h3></div>
+      <header><div><small>Menú semanal · ${isAdd ? "añadir" : isCorrection ? "corregir consumo" : "modificar"}</small><h3>${isAdd ? "Añadir receta" : isCorrection ? "Corregir receta consumida" : "Cambiar receta"}</h3></div>
         <button type="button" data-menu-editor-cancel aria-label="Cerrar selector">✕</button></header>
-      <p class="home-menu-editor-current">Actual: <strong>${escapeHtml(item.name || "Receta")}</strong> · ${item.kcal == null ? "—" : escapeHtml(formatKcal(item.kcal))} · P ${item.protein == null ? "—" : escapeHtml(formatMacro(item.protein))}</p>
-      ${item.foodId && !item.recipeId ? '<p class="home-menu-editor-food-hint">Indica las raciones exactas de la receta elegida; los gramos del producto anterior no se convierten automáticamente.</p><label class="home-menu-editor-servings">Raciones de la nueva receta <input type="number" data-menu-editor-servings min="0.25" max="20" step="0.25" placeholder="Ej.: 1" inputmode="decimal"></label>' : ""}
+      <p class="home-menu-editor-current">${isAdd ? "Hueco libre: " + escapeHtml(item.moment) + " · " + escapeHtml(item.date)
+        : "Actual: <strong>" + escapeHtml(item.name || "Receta") + "</strong> · " +
+          (item.kcal == null ? "—" : escapeHtml(formatKcal(item.kcal))) + " · P " +
+          (item.protein == null ? "—" : escapeHtml(formatMacro(item.protein)))}</p>
+      ${isCorrection ? '<p class="home-menu-editor-food-hint">El consumo seguirá confirmado. Se corregirá también el Registro existente si coincide de forma inequívoca.</p>' : ""}
+      <label class="home-menu-editor-servings">Raciones de la receta elegida
+        <input type="number" data-menu-editor-servings min="0.25" max="20" step="0.25"
+          value="${!isAdd && /raci[oó]n/i.test(String(item.unit||"")) && Number(item.quantity)>0 ? escapeHtml(String(item.quantity)) : ""}"
+          placeholder="Indica las raciones (ej.: 1)" inputmode="decimal">
+      </label>
+      ${isAdd ? '<label class="home-menu-editor-confirm"><input type="checkbox" data-menu-editor-confirm-consumed> Ya la he consumido</label>' : ""}
       ${foodCompanion ? `<label class="home-menu-editor-role-label">Cómo se incorporará la nueva receta
         <select data-menu-editor-role aria-label="Clasificación de la nueva receta">
           <option value="" ${defaultShake ? "" : "selected"}>Receta principal (solo si no hay otra)</option>
@@ -6165,7 +6194,7 @@ async function openHomeMenuRecipeEditor(item, day) {
       <div class="home-menu-editor-projection" data-menu-editor-preview role="status">Elige una receta para ver cómo cambiarían sus macros.</div>
       <div class="home-menu-editor-footer">
         <button type="button" data-menu-editor-cancel>Cancelar</button>
-        <button type="button" data-menu-editor-save disabled>Aplicar cambio</button>
+        <button type="button" data-menu-editor-save disabled>${isAdd ? "Añadir receta" : "Aplicar cambio"}</button>
       </div>
     </div>`;
   dialog.querySelectorAll("[data-menu-editor-cancel]").forEach(x =>
@@ -6175,18 +6204,20 @@ async function openHomeMenuRecipeEditor(item, day) {
   const preview = dialog.querySelector("[data-menu-editor-preview]");
   const servingsInput = dialog.querySelector("[data-menu-editor-servings]");
   const roleSelect = dialog.querySelector("[data-menu-editor-role]");
+  const consumedCheckbox = dialog.querySelector("[data-menu-editor-confirm-consumed]");
   const save = dialog.querySelector("[data-menu-editor-save]");
   dialog.showModal();
   const options = await homeMenuRecipeOptions();
   if (!dialog.open) return;
-  let choices = options.filter(recipe => recipe.id !== item.recipeId);
+  let choices = options.filter(recipe => isAdd || recipe.id !== item.recipeId);
   let selectedRecipe = null;
   const updatePreview = () => {
     selectedRecipe = options.find(recipe => recipe.id === select.value) || null;
     const requestedServings = servingsInput ? servingsInput.value : null;
-    const macro = selectedRecipe && homeMenuRecipeProjection(item,selectedRecipe,day,requestedServings);
+    const macro = selectedRecipe && homeMenuRecipeProjection(item,selectedRecipe,day,requestedServings,isAdd);
     const conflictingPrimary = Boolean(alreadyHasPrimary && roleSelect?.value !== "batido");
-    save.disabled = !macro || homeMenuEditPending || conflictingPrimary;
+    save.disabled = !macro || homeMenuEditPending || conflictingPrimary ||
+      Boolean(!isAdd && selectedRecipe?.id === item.recipeId && requestedServings === String(item.quantity));
     preview.innerHTML = conflictingPrimary
       ? '<span>Esta comida ya tiene una receta principal. Si estás sustituyendo el postre por un batido, selecciona «Batido como acompañante».</span>'
       : !macro
@@ -6214,13 +6245,15 @@ async function openHomeMenuRecipeEditor(item, day) {
     save.disabled = true;
     save.textContent = "Guardando…";
     try {
-      await submitHomeMenuEdit(item,"replace",selectedRecipe.id,servingsInput ? Number(servingsInput.value) : null,roleSelect?.value || null);
+      await submitHomeMenuEdit(item,isAdd ? "add" : "replace",selectedRecipe.id,
+        servingsInput?.value.trim() ? Number(servingsInput.value) : null,roleSelect?.value || null,
+        Boolean(consumedCheckbox?.checked));
       dialog.close();
     } catch(error) {
       preview.textContent = "No se pudo guardar (" + String(error.message || "error") + "). Revisa el menú y vuelve a intentarlo.";
       save.disabled = true;
     } finally {
-      save.textContent = "Aplicar cambio";
+      save.textContent = isAdd ? "Añadir receta" : "Aplicar cambio";
     }
   });
   updateChoices();
@@ -6252,6 +6285,23 @@ function bindHomeWeeklyMenuEdits(content, data, model) {
         if (source) source.status = originalStatus;
         renderHomeWeeklyMenu(data);
         homeMenuInlineNotice(content,"No se pudo registrar el consumo. " + String(error.message || "Reintenta"),true);
+      }
+    }));
+  content.querySelectorAll("[data-home-menu-add-date]").forEach(button =>
+    button.addEventListener("click",async () => {
+      if (homeMenuEditPending) return;
+      const date = button.dataset.homeMenuAddDate;
+      const moment = button.dataset.homeMenuAddMoment;
+      const day = model.days.find(row => row.date === date) || {date,items:[],kcal:0,protein:0};
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) || !moment) return;
+      button.disabled = true;
+      try {
+        await openHomeMenuRecipeEditor({date,moment,name:"",quantity:null,unit:"ración"}, day, {mode:"add"});
+      } catch (error) {
+        homeMenuInlineNotice(content,"No se pudo abrir Añadir. " + String(error?.message||"Reintenta"),true);
+        homeMenuEditDialog().close();
+      } finally {
+        if (button.isConnected) button.disabled = false;
       }
     }));
   content.querySelectorAll("[data-home-menu-change]").forEach(button =>
@@ -6404,15 +6454,8 @@ function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek()) {
   panel.hidden = false;
   renderHomeWeeklyMenuNavigation();
 
-  if (!model.rows.length) {
-    content.innerHTML = `
-      <div class="home-weekly-menu-state">
-        <strong>Sin menú registrado para ${escapeHtml(menuWeekRangeLabel(selectedWeek))}</strong>
-        <p>No hay comidas registradas en esta semana. Utiliza el selector para consultar otra.</p>
-      </div>`;
-    return;
-  }
-
+  // Show the seven-day matrix even when no recipes exist; every standard
+  // mealtime must expose an Add control instead of a dead empty-state.
   // Home always has seven weekday columns, including historically unplanned days.
   const dayByDate = new Map(model.days.map(day => [day.date, day]));
   const monday = new Date(selectedWeek + "T12:00:00Z");
@@ -6454,7 +6497,7 @@ function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek()) {
                 data-menu-date="${escapeHtml(day.date)}"
                 data-menu-moment="${escapeHtml(moment.key)}"
               >
-                ${renderHomeWeeklyMenuMatrixCell(rows, selectedWeek !== currentHomeMenuWeek())}
+                ${renderHomeWeeklyMenuMatrixCell(rows, false, day.date, moment.label)}
               </div>`;
           }).join("")}
         `).join("")}
@@ -6463,7 +6506,7 @@ function renderHomeWeeklyMenu(data, selectedWeek = selectedHomeMenuWeek()) {
 
   focusHomeWeeklyMenuOnToday(content);
   bindHomeWeeklyMenuRecipeLinks(content, data);
-  if (selectedWeek === currentHomeMenuWeek()) bindHomeWeeklyMenuEdits(content, data, model);
+  bindHomeWeeklyMenuEdits(content, data, model);
 }
 
 function formatRecipeAmount(ingredient) {
