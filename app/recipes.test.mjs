@@ -75,3 +75,41 @@ test("recipe product drill-down audit uses original canonical identity, not firs
   assert.match(audit,/catalogCards\.nth\(Math\.max\(0, canonicalIndex\)\)\.click\(\)/);
   assert.match(audit,/RECIPE_CATALOG_DIAG/);
 });
+
+
+test("catalog card shows separate Modify and Delete controls on active private recipes", () => {
+  assert.match(app, /<article class="recipe-catalog-item">/);
+  assert.match(app, /<button class="recipe-card recipe-catalog-card" type="button"/);
+  assert.match(app, /<\/button>\s*\$\{!archived && privateModeKind === "remote" \?/);
+  assert.match(app, /class="recipe-catalog-actions"/);
+  assert.match(app, /data-recipe-card-edit="\$\{escapeHtml\(recipe\.id \|\| ""\)\}"/);
+  assert.match(app, /data-recipe-card-delete="\$\{escapeHtml\(recipe\.id \|\| ""\)\}"/);
+  assert.match(app, /aria-label="Modificar \$\{escapeHtml\(recipe\.name \|\| "Receta"\)\}"/);
+  assert.match(app, /aria-label="Eliminar \$\{escapeHtml\(recipe\.name \|\| "Receta"\)\}"/);
+  // The main button closes before its sibling action controls; no nested buttons.
+  const start = app.indexOf('<article class="recipe-catalog-item">');
+  const end = app.indexOf('</article>', start);
+  assert.ok(start >= 0 && end > start);
+  const card = app.slice(start, end);
+  const mainEnd = card.indexOf('</button>');
+  const actionsStart = card.indexOf('class="recipe-catalog-actions"');
+  assert.ok(mainEnd >= 0 && actionsStart > mainEnd);
+  assert.match(css, /\.recipe-catalog-actions\s*\{\s*display:\s*grid/);
+  assert.match(css, /\.recipe-catalog-action\s*\{[\s\S]*?min-height:\s*36px/);
+});
+
+test("card Modify opens editor directly and Delete reuses historical-safe soft-delete", () => {
+  const editBinding = app.indexOf('panel.querySelectorAll("[data-recipe-card-edit]")');
+  const deleteBinding = app.indexOf('panel.querySelectorAll("[data-recipe-card-delete]")');
+  assert.ok(editBinding >= 0 && deleteBinding > editBinding);
+  const handlers = app.slice(editBinding, app.indexOf('\nfunction renderNutritionEntries', deleteBinding));
+  assert.match(handlers, /recipes\.find\(candidate => String\(candidate\.id \|\| ""\) === String\(button\.dataset\.recipeCardEdit \|\| ""\)\)/);
+  assert.match(handlers, /renderRecipeEditor\(panel, recipe/);
+  assert.match(handlers, /onBack: \(\) => renderRecipesPanel\(data\)/);
+  assert.match(handlers, /onSaved: refreshRecipeCatalog/);
+  assert.match(handlers, /deleteRecipeFromCatalog\(recipe, refreshRecipeCatalog\)/);
+  assert.match(handlers, /if \(!recipe \|\| archived \|\| privateModeKind !== "remote"/);
+  assert.match(handlers, /button\.disabled = true/);
+  assert.match(handlers, /role", "alert"/);
+  assert.doesNotMatch(handlers, /fetch\("/api\/nutrition\/recipes\/edit"/);
+});
