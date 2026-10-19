@@ -70,3 +70,35 @@ backtest vintage-correct admisible**.
 
 El resultado experimental se documentará **después** de observar CI:
 no escribir conclusiones empíricas hipotéticas en esta página.
+
+## Resultado observado — comparación oficial 19/10/2026
+
+[GitHub Actions 39222046842](https://github.com/mamg97/segundo-cerebro/actions/runs/39222046842)
+ha descargado y contrastado ambos CSV oficiales. Solo se han publicado recuentos:
+
+| Evidencia | Resultado |
+|---|---:|
+| Eventos edición diciembre 24.0.12 | 2.110 |
+| Eventos edición enero 25.0.1 | 2.159 |
+| IDs coincidentes en ambas | 7 |
+| Coincidencias país/tipo contradictorias | 0 |
+| IDs coincidentes con intervalo modificado | 2 |
+| IDs coincidentes con `date_prec` modificado | 2 |
+| `date_prec=0` en diciembre | 6 |
+| De esos 6, observados con el mismo ID/país/tipo en enero | **6** |
+| De esos 6, aún `date_prec=0` en enero | **5** |
+| De esos 6, `date_prec` pasa a 1–5 | **1** |
+| De esos 6, intervalo de fechas modificado | 1 |
+| `date_prec=0` total de enero | 7 |
+| Filas sin extremo en su mes nominal | 0 en ambos archivos |
+
+Hash del CSV **enero observado en octubre 2026**, aún sin ancla histórica
+independiente: `805c36c8ca7e2fa71285a5dc7db3461e3d4b1724ddd99ded48e2aab2bb27c9a3`.
+El SHA-256 de diciembre coincide con el fijado en la inspección anterior.
+
+**Interpretación:** el código 0 persiste de una release mensual a la siguiente,
+lo que debilita la hipótesis de un simple error aislado del CSV de diciembre.
+Sin embargo, ni su significado técnico ni la fecha pública de esos bytes
+quedan determinados por la comparación. Una transición de código no es
+prueba de que el evento fuera conocido en el corte temporal. No se ha
+construido un roster negativo ni calculado una sola métrica predictiva.
