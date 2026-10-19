@@ -33,3 +33,33 @@ Pruebas adversariales sintéticas exigen denominador común fijo, rechazan dupli
 Ningún resultado autoriza entrenar con etiquetas actuales en una fecha histórica, ni autoriza un Brier de predicción real. La reconstrucción **as-of** de 2020 exige versión histórica con bytes y momento de publicación autenticados, roster y crosswalk territorial, y un target definido de una única forma.
 
 Se mantienen `MAD-02=PARCIAL`, `PsicoPredicciones=0` y la cohorte privada de 2027 intacta.
+
+## Primera ejecucion con tres CSV oficiales SHA-pinned
+
+El runner de la PR #691 ha obtenido las tres fuentes reales. Sobre **10.130** claves GW-año comunes 1946–2017, sin etiquetas desconocidas en esa interseccion:
+
+| Etiquetas comparadas | Pares discordantes |
+|---|---:|
+| Antiguo vs moderno country-level 25.1 | **218** |
+| Antiguo vs moderno conflict-level 25.1, proyectado ANY por país-año | **96** |
+
+Desglose exacto de tres flags, siempre en orden **antiguo, 25.1 country, 25.1 conflict ANY**:
+
+| Firma | Número |
+|---|---:|
+| 000 | 9.633 |
+| 001 | 5 |
+| 010 | 0 |
+| 011 | 6 |
+| 100 | 85 |
+| 101 | 127 |
+| 110 | 0 |
+| 111 | 274 |
+
+De las 212 diferencias `antiguo=1, country25=0`, **127** tienen `conflict25=1`; **85** tienen `conflict25=0`. El archivo antiguo encaja mejor con la proyección moderna por conflicto, pero **la coincidencia no acredita que esa sea la causa de cada caso**, dado que se comparan distintas revisiones de UCDP con posibles cambios de historia, codificación y marco estatal.
+
+Desglose agregado de firmas por periodo: 1946–1988, 5.210 pares; 1989–2017, 4.920. Las 61 repeticiones por GW-año del archivo antiguo y 53 de conflict-level moderno se agrupan únicamente a efectos descriptivos con una regla explícita de ANY onset, no para construir un target operacional de aparición.
+
+**Consecuencia estratégica**: si el producto científico pretende pronosticar un conflicto NUEVO mientras otro está activo, el estimand country-level onset1 (AV-042) es conceptualmente equivocado. Debemos decidir explícitamente si queremos *nuevos conflictos/díadas*, *reinicios por conflicto*, o *transición país desde ausencia de conflicto intrastatal*. No se puede maximizar habilidad estadística eligiendo el más fácil después de ver los resultados. La diferencia de etiquetas por edición impide usar 19.1 retrospectiva como sustituto sin un estudio de equivalencia. Fuente UCDP codebook 25.1: https://ucdp.uu.se/downloads/onset/ucdp-codebook-onset-251.pdf
+
+Las pruebas y fuentes nuevas se ejecutan sin publicar IDs, nombres ni filas. Todos los gates de as-of, entrenamiento historico, backtest y forecast siguen FALSE.
