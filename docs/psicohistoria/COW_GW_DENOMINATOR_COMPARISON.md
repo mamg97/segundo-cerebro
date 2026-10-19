@@ -67,7 +67,7 @@ históricos con una fecha autenticable.
 
 ## Observación sobre las tres fuentes reales · 19/10/2026
 
-La [ejecución empírica de COW y GW](https://github.com/mamg97/segundo-cerebro/actions/runs/39232848303)
+La [ejecución empírica de COW y GW](https://github.com/mamg97/segundo-cerebro/actions/runs/39232909196)
 ha confirmado los siguientes recuentos, sin publicar filas individuales:
 
 | Período | COW (Estados de todo el mes) | GW+suplemento | Estado |
