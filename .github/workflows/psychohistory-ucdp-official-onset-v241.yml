@@ -1,0 +1,85 @@
+# Official UCDP Onset 24.1 historical outcomes, not forecast-time predictors.
+# One manual/PR-only CI; original country/conflict rows remain ephemeral.
+name: Psychohistory official UCDP Onset 24.1 source probe
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/ucdp_official_onset_v241.py"
+      - "research/psychohistory/test_ucdp_official_onset_v241.py"
+      - "research/psychohistory/ucdp_onset_v251_semantics.py"
+      - "research/psychohistory/test_ucdp_onset_v251_semantics.py"
+      - ".github/workflows/psychohistory-ucdp-official-onset-v241.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-onset-schemas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch UCDP historical index only to the temporary directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/onset-v241"
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail --location \
+            --retry 2 --max-time 45 --max-filesize 3000000 \
+            --output "$RUNNER_TEMP/onset-v241/olddw.html" \
+            'https://ucdp.uu.se/downloads/olddw.html'
+      - name: Check historical 24.1 and 25.1 sources, fail closed on unavailable records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/onset-v241" <<'PY'
+          import hashlib, json, pathlib, subprocess, sys
+          sys.path.insert(0, "research/psychohistory")
+          from ucdp_official_onset_v241 import parse_catalog, summarize_csv
+          folder=pathlib.Path(sys.argv[1])
+          archive=(folder/"olddw.html").read_bytes()
+          summary=[]
+          for version in ("24.1","25.1"):
+              links=parse_catalog(archive,version=version)["source_urls"]
+              for name in ("intrastate_conflict","intrastate_country"):
+                  output=folder/(version+"-"+name+".csv")
+                  result=subprocess.run([
+                      "curl","--silent","--show-error","--location",
+                      "--proto","=https","--proto-redir","=https",
+                      "--tlsv1.2","--retry","1","--max-time","75",
+                      "--max-filesize","20000000","--write-out","%{http_code}",
+                      "--output",str(output),links[name],
+                  ],capture_output=True,text=True)
+                  status=result.stdout.strip()
+                  item={"version":version,"kind":name,"status_code":status,
+                        "file_retrievable":result.returncode==0 and status=="200"}
+                  if item["file_retrievable"]:
+                      source=summarize_csv(output.read_bytes(),name,version=version)
+                      item["schema"]=source
+                  else:
+                      output.unlink(missing_ok=True)
+                      item["meaning"]="OFFICIAL_ARCHIVE_LINK_NOT_USABLE_NO_LABELS_LOADED"
+                  summary.append(item)
+          print(json.dumps({
+             "schema":"psychohistory.ucdp_onset_historical_link_availability.v1",
+             "catalog_sha256_observed_now":hashlib.sha256(archive).hexdigest(),
+             "source_status":summary,
+             "vintage_correct_backtest":False,"forecast_issued":False,
+             "warning":"Catalog listing alone does not ensure CSV retrievability, historical as-of or a forecasting denominator.",
+          },sort_keys=True))
+          PY
+      - name: Compare verified, available 25.1 conflict-level and country-level onset data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ucdp_onset_v251_semantics.py \
+            --conflict "$RUNNER_TEMP/onset-v241/25.1-intrastate_conflict.csv" \
+            --country "$RUNNER_TEMP/onset-v241/25.1-intrastate_country.csv" \
+            --conflict-sha256 a5a64b749693c85fd3b50a1311608a44c0846d528352baeb3767f25e50d52fe1 \
+            --country-sha256 e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe2ea83fe6a
+          echo "Retrospective conflict vs country onset labels; no pre-issue predictors or forecasts."
+      - name: Delete the original index and both onset datasets, even on failure
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/onset-v241"
