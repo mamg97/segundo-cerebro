@@ -1,4 +1,5 @@
 import "./vendor/thinking-orbs/register.js";
+import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=0.44.63";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
 import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.59";
@@ -9,7 +10,7 @@ import { mockState } from "../core/mock-state.js";
 import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.62";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.63";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
@@ -2092,16 +2093,12 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
       ? finance.importantEventRules
       : [];
 
-  // An unambiguous canonical Events record outranks a stale calendar alias.
-  // This corrects only the important-event cards; raw calendar data remains intact.
-  const canonical = (Array.isArray(state.canonicalEventDates) ? state.canonicalEventDates : [])
-    .filter(item => item.startsAt && item.status !== "CANCELADO");
-  const canonicalDateFor = title => {
-    const normalized = normalizeForMatch(safeDisplayEventTitle(title));
-    const matches = canonical.filter(item =>
-      normalizeForMatch(safeDisplayEventTitle(item.title)) === normalized);
-    return matches.length === 1 ? matches[0] : null;
-  };
+  // An unambiguous canonical Events record outranks a stale calendar alias,
+  // while the raw iCloud/Google agenda is left untouched.
+  const canonicalDateFor = title => canonicalImportantEventDate(
+    state.canonicalEventDates,
+    safeDisplayEventTitle(title)
+  );
 
   const calendarItems = (Array.isArray(state.events) ? state.events : [])
     .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now)
