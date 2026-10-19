@@ -1,5 +1,15 @@
 # PSICOHISTORIA — Estado científico verificado · 19/10/2026
 
+## AV-20261019-049 · Triangulación semántica de inicio intrastatal
+
+- [PR #691](https://github.com/mamg97/segundo-cerebro/pull/691) **fusionada en main** (squash `5a009bd793fc7f7593473acd090de7382356d64f`). PR pruebas sintéticas, triangulación de tres CSV reales y privacidad SUCCESS; [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39297184405), privacy y Pages SUCCESS.
+- [Documento detallado](ONSET_SEMANTIC_TRIANGULATION_AV049.md): usando **exactamente 10.130** claves GW-año comunes 1946–2017, discrepancias de `onset1` antiguo frente a UCDP25.1 intrastatal **country** = **218**, frente a UCDP25.1 **conflict** agrupado por «al menos un inicio» = **96**. De los **212** antiguo=1/country=0, **127** son conflict=1, y **85** conflict=0. Quedan seis antiguo=0/country=1 (también conflict=1). Años antiguos 1946–1988 = 5.210 pares; 1989–2017 = 4.920.
+- Los CSV oficiales fueron comprobados por SHA-256 observados en 2026; 61 filas duplicadas en archivo antiguo y 53 en conflicto moderno se gestionan para comparación descriptiva sin inventar nuevas etiquetas. **Una coincidencia no demuestra causa individual**; cambio de unidad riesgo-conflicto/país y revisión histórica son hipótesis distintas. No admitir Onset25.1 como etiqueta entrenable disponible en 2020.
+- **Canónico privado releído:** `PsicoAvances=49`, último `AV-20261019-049` VERIFICADO; `PsicoFases.MAD-02=PARCIAL`; `PsicoPredicciones=0`. Cohorte sombra 2027 sin modificar y sin gasto adicional.
+- **Próxima investigación:** contrastar también variante moderna country-level multiple-onset y explicar los 85 residuales por periodos; continuar búsqueda de etiquetas históricas y roster de países con testigos independientes anteriores a emisión. Ningún Brier o habilidad científica demostrados.
+
+---
+
 ## AV-20261019-048 · Diferencia REAL de labels onset entre vintages
 
 - [PR #689](https://github.com/mamg97/segundo-cerebro/pull/689) fusionada `main` (squash `c0c4d46c89cb325590c671c3bb52a9efe5f7d02c`), CI fuente oficial real y tests ficticios/privacidad/main/Pages **SUCCESS**.
