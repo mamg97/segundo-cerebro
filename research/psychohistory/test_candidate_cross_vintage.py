@@ -63,8 +63,8 @@ class CrossVintageTests(unittest.TestCase):
         self.assertFalse(result["country_zero_event_roster_verified"])
         self.assertFalse(result["source_as_of_verified"])
         self.assertFalse(result["forecast_issued"])
-        self.assertNotIn("123", str(result))
-        self.assertNotIn("789", str(result))
+        self.assertNotIn("country_id", str(result))
+        self.assertNotIn("event_id", str(result))
 
     def test_identity_conflict_never_masquerades_as_precision_transition(self):
         altered = make([
