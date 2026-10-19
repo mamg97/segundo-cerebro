@@ -1,55 +1,54 @@
 # PSICOHISTORIA — Estado científico vigente · 19/10/2026
 
-## AV-20261019-038 · Validación del panel oficial con ceros explícitos
+## AV-20261019-039 — Panel GW/UCDP y transiciones sin confundir onset
 
-[PR #673](https://github.com/mamg97/segundo-cerebro/pull/673) fusionada
-en `main` (squash `3722e7effcda60bda36982bafb4cdc3c195042d2`).
-Se implementó `research/psychohistory/ucdp_country_year_zeros.py`
-y CI sin coste operativo adicional con fuente original UCDP
-[OrganizedViolenceCY v24.1](https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-241-csv.zip).
-[Ficha científica](UCDP_COUNTRY_YEAR_EXPLICIT_ZEROS.md).
+[PR #674](https://github.com/mamg97/segundo-cerebro/pull/674)
+fusionada en `main`, squash `13484ca86013f0083f8122bf8ccdcbca82da5b64`.
+Nuevo diagnóstico `research/psychohistory/ucdp_gw_annual_alignment.py`
+compara **UCDP OrganizedViolenceCY 24.1** y
+**Gleditsch–Ward v7.0 + microestados** con checksums originales observados
+en octubre de 2026. Fuentes solo en runner efímero, salida pública
+únicamente agregada, CI real, tests sintéticos y privacidad verdes.
+[Informe científico](UCDP_GW_ANNUAL_ALIGNMENT.md).
 
-**Resultado empírico reproducible, fuente oficial:** 6.740 filas
-país–año desde 1989 hasta 2023. **4.762** tienen los tres indicadores
-`sb_exist_cy/ns_exist_cy/os_exist_cy` explícitamente en 0 y
-**1.978** al menos un 1. En 2023: 196 filas; 133 ceros explícitos
-y 63 con algún indicador 1.
+### Resultados empíricos
 
-Solo salen **agregados y SHA observados en 2026** de GitHub Actions;
-los originales se descargan y eliminan en el runner sin upload de
-filas ni artefactos. La PR pasó el test empírico, la batería sintética
-de más de 240 pruebas y privacidad. No hay cambios de frontend,
-Worker, pagos o modelos.
+- 1989: **172** país–años UCDP, **171** miembros GW,
+  **171** códigos numéricos coincidentes.
+- 2006: **194** UCDP, **194** GW, **193** códigos coincidentes.
+- 2019 y 2020: **196** UCDP, **197** GW, **194** coincidentes;
+  dos solo UCDP y tres solo GW. **No declarar concordancia geográfica
+  aprobada por la simple coincidencia del número.**
+- GW v7 termina 2020; comparaciones de 2021–2023 marcadas
+  `NO_EVALUABLE_GW7_EXPIRED_2020`.
+- Transiciones retrospectivas UCDP 2020 sobre 196 filas con 2019
+  presente: **7** cambios `0→1`, **55** `1→1`,
+  **10** `1→0`, **124** `0→0`. `0→1` significa
+  inicio/reaparición de *alguna* violencia codificada en un
+  país–año; **NO** inicio de una nueva díada o conflicto.
 
-## Límites de interpretación
+### Estado canónico privado comprobado
 
-- Un cero de UCDP GED equivale a **ausencia de violencia codificada
-  bajo su protocolo**, no inexistencia real de violencia; el codebook
-  documenta restricciones y umbrales.
-- El panel es **anual retrospectivo**, no una fuente de negativos
-  mensuales UCDP Candidate ni una medida directa de *onset*.
-- La versión publicada en 2024 **no estaba disponible como fuente
-  histórica antes de los orígenes**; no debe alimentar features.
-- No se ha cotejado aún el universo con un roster GW independiente
-  y versionado. No se certifica comparabilidad con COW `ccode`.
+- `PsicoAvances`: **39** eventos, último `AV-20261019-039`.
+- `PsicoFases.MAD-02=PARCIAL`;
+  `PsicoHitos.V2-02=EN_CURSO`;
+  `PsicoPredicciones=0`.
+- Cohorte shadow 2027 y sus probabilidades intactas.
+  Sin cambios en Worker, frontend, modelos ni servicios de pago.
 
-## Estado canónico privado (releído tras escritura)
+### Próximo hito científico
 
-`PsicoAvances=38` (`AV-20261019-038`);
-`PsicoFases.MAD-02=PARCIAL`,
-`PsicoHitos.V2-02=EN_CURSO`,
-`PsicoPredicciones=0` emisiones.
-La cohorte sombra 2027 y sus probabilidades siguen intactas.
+1. Investigar las discrepancias entre códigos UCDP/GW con
+   metadatos de territorio y tiempo, sin asumir equivalencia numérica.
+2. Definir **onset por ID de conflicto/díada** con historial previo,
+   período de paz y tratamiento del primer año censurado.
+3. Verificar genuinos vintages de **features disponibles antes del
+   origen** de predicción, con evidencia independiente del
+   contenido exacto de los archivos.
+4. **No** reportar Brier ni afirmar skill de predicción nueva
+   hasta superar estas puertas.
 
-## Próximo trabajo
-
-**Prioridad:** comprobar los 6.740 país–año frente a un roster GW
-realmente independiente y datado, con frontera y sucesiones, y definir
-onset frente a persistencia con suficiente historial. Solo después
-investigar una validación retrospectiva admisible, teniendo las
-features auténticamente disponibles antes de cada origen.
-No reportar Brier/skill ni emitir predicciones sin esas garantías.
-
-`docs/HANDOFF.md` es un registro global demasiado grande y contiene
-una cabecera de PSICOHISTORIA desactualizada. Esta nota de dominio y el
-Sheet privado son el relevo científico más reciente.
+`docs/HANDOFF.md` conserva un encabezado de PSICOHISTORIA obsoleto
+porque su tamaño impide actualizarlo a través del conector.
+Esta nota pequeña del subproyecto y la hoja privada son el
+relevo operativo vigente.
