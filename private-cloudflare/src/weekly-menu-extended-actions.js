@@ -163,13 +163,13 @@ export function manualCompanionOptions(values) {
  * with the actual numeric quantity and macros, without implying multiple desserts. */
 export function companionServingTitle(food, portions, isDessert=false) {
   const name=String(food?.name||"").trim();
-  const base=name.replace(/\\s*·\\s*(?:1 vasito \\(\\d+ g\\)|250 g \\(½ tarro grande\\))$/i,"");
+  const base=name.replace(/\s*·\s*(?:1 vasito \(\d+ g\)|250 g \(½ tarro grande\))$/i,"");
   const units=Number(portions);
   if(food?.companionType!=="yogur"||!Number.isSafeInteger(units)||units<1)
     return (isDessert?"Postre: ":"")+name+(units>1?" × "+units:"");
   const portion=Number(food.serving);
   const cup=/vasito/i.test(String(food.unit||""));
-  const gramsPerCup=Number(/(\\d+)\\s*g/i.exec(String(food.unit||""))?.[1]);
+  const gramsPerCup=Number(/(\d+)\s*g/i.exec(String(food.unit||""))?.[1]);
   let descriptor;
   if(cup&&Number.isFinite(gramsPerCup)&&gramsPerCup>0) {
     const count=portion*units;
