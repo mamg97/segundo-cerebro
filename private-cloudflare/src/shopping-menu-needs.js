@@ -1,7 +1,7 @@
 // Derived, read-only cross-domain shopping demand. Canonical sources stay
 // Health/MenuSemanal/IngredientesReceta and Pantry/Productos/Inventario/ListaCompra.
 import { canonicalWeeklyMenuMoment, dedupeWeeklyMenuRows } from "./weekly-menu.js";
-import { findPantryProductExact } from "./pantry.js";
+import { findPantryProductExact, normalizePantryProductName } from "./pantry.js";
 const norm=v=>String(v??"").trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 const num=v=>v==null||v===""?null:Number.isFinite(Number(v))?Number(v):null;
 export const records=values=>{
@@ -38,9 +38,15 @@ export function derivePendingMenuNeeds(source,pantry,today){
   const diagnostics={menuPending:menu.length,ingredientLinksMissing:0,stockUnknown:0,unitUnknown:0};
   function add(productId, name, grams, from){
     if(!productId||!products.some(x=>x.id===productId))return;
-    if(!aggregate.has(productId))aggregate.set(productId,{
-      productId,name,requiredGrams:0,gramsKnown:true,mealCount:0,sources:new Set()
-    });
+    if(!aggregate.has(productId)){
+      const product=products.find(x=>x.id===productId);
+      const matchLabels=[product?.name,...(product?.familyNames||[])]
+        .filter(label=>label && findPantryProductExact(products,label)?.id===productId)
+        .map(normalizePantryProductName);
+      aggregate.set(productId,{
+        productId,name,matchLabels,requiredGrams:0,gramsKnown:true,mealCount:0,sources:new Set()
+      });
+    }
     const item=aggregate.get(productId);
     if(grams===null)item.gramsKnown=false;
     else item.requiredGrams+=grams;
@@ -104,7 +110,9 @@ export function planAutoShoppingChanges(derived,shoppingRows,now){
   const active=shoppingRows.filter(x=>String(x.record.estado||"").toUpperCase()==="COMPRAR");
   const actions=[];
   for(const item of derived.needs){
-    const matched=active.filter(x=>x.record.producto_id===item.productId);
+    const matched=active.filter(x=>x.record.producto_id===item.productId ||
+      (!x.record.producto_id && item.matchLabels?.includes(
+        normalizePantryProductName(x.record.nombre))));
     if(item.classification==="buy"){
       if(!matched.length){
         const prior=shoppingRows.filter(x=>x.record.producto_id===item.productId &&
