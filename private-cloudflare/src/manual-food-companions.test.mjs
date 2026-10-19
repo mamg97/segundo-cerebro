@@ -84,7 +84,7 @@ test("authenticated menu add-food reads Comidas and edits only MenuSemanal in ch
 test("manual menu selector binds typed food ID, not fake recipe ID",()=>{
   const app=readFileSync(new URL("../../app/app.js",import.meta.url),"utf8");
   assert.match(app,/\/api\/nutrition\/menu\/foods/);
-  assert.match(app,/selectedRecipe\.kind==="food" \? "add-food"/);
-  assert.match(app,/selectedRecipe\.kind==="food" \? "guarnicion"/);
+  assert.ok(app.includes('isAdd ? "add-food" : "replace-food"'));
+  assert.ok(app.includes('selectedRecipe.kind==="food" ? selectedRecipe.companionType'));
   assert.match(app,/CONFIRM_CONSUMPTION_SEPARATELY|consumedCheckbox\.disabled = true/);
 });

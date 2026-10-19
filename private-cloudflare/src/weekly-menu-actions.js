@@ -1,7 +1,7 @@
 // Authenticated private menu mutations: MenuSemanal and Recetas remain the
 // only authorities. No D1 copy, cache of personal rows or blind append.
 import { canonicalWeeklyMenuMoment, weeklyMenuIdentity } from "./weekly-menu.js";
-import { planMenuAddition, planMenuFoodAddition, manualCompanionOptions, planConsumedRegisterCorrection, MenuSlotError } from "./weekly-menu-extended-actions.js";
+import { planMenuAddition, planMenuFoodAddition, planMenuFoodReplacement, manualCompanionOptions, planConsumedRegisterCorrection, MenuSlotError } from "./weekly-menu-extended-actions.js";
 
 const MENU_RANGE = "MenuSemanal!A1:R2000";
 const RECIPES_RANGE = "Recetas!A1:Q1000";
@@ -77,6 +77,7 @@ function lastRow(rows) {
 export function planMenuSheetEdits(values, payload, recipes, now = new Date().toISOString(), registroValues = null) {
   if (payload?.action === "add") return planMenuAddition(values, payload, recipes, now);
   if (payload?.action === "add-food") return planMenuFoodAddition(values, payload, recipes, now);
+  if (payload?.action === "replace-food") return planMenuFoodReplacement(values,payload,recipes,now);
   const headers = (values?.[0] || []).map(x => String(x || "").trim());
   const required = payload.action === "replace" ? [...FIELDS, ...NUTRI_FIELDS, "cantidad", "unidad"] : FIELDS;
   if (!required.every(k => headers.includes(k))) throw new MenuEditError("MENU_SCHEMA_UNSUPPORTED", 409);
@@ -235,14 +236,14 @@ export async function editWeeklyMenu(request, env, accessToken, fetchImpl = fetc
   const base = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}`;
   const query = new URLSearchParams({ranges:MENU_RANGE,majorDimension:"ROWS",valueRenderOption:"UNFORMATTED_VALUE"});
   if (["replace","add"].includes(payload.action)) query.append("ranges",RECIPES_RANGE);
-  if (payload.action === "add-food") query.append("ranges",FOODS_RANGE);
+  if (["add-food","replace-food"].includes(payload.action)) query.append("ranges",FOODS_RANGE);
   if (payload.action === "replace") query.append("ranges","Registro!A1:N6000");
   const read = await fetchImpl(`${base}/values:batchGet?${query}`,{headers:{Authorization:`Bearer ${token}`}});
   if (!read.ok) throw new MenuEditError("MENU_READ_FAILED",502);
   const ranges = (await read.json()).valueRanges || [];
   const recipeList = ["replace","add"].includes(payload.action)
     ? recipeAlternatives(table(ranges[1]?.values || []))
-    : payload.action === "add-food" ? manualCompanionOptions(ranges[1]?.values || []) : [];
+    : ["add-food","replace-food"].includes(payload.action) ? manualCompanionOptions(ranges[1]?.values || []) : [];
   let plan;
   try {
     plan = planMenuSheetEdits(ranges[0]?.values || [],payload,recipeList,new Date().toISOString(),
