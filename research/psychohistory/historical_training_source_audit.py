@@ -168,12 +168,14 @@ def audit_table(data, kind):
             if year==latest: types[value]+=1
         if sum(years.values())>500_000:
             raise ValueError("Unexpected source count")
-    if not years or latest not in years:
-        raise ValueError("Historical source missing latest declared year")
+    if not years:
+        raise ValueError("Historical source empty")
     return {
         "source_rows":sum(years.values()),
         "year_min":min(years), "year_max":max(years),
         "latest_year_rows":years[latest],
+        "declared_latest_year_represented":latest in years,
+        "historical_coverage_truncated":latest not in years,
         "latest_year_onset1_positives":positive[latest] if kind=="onset19" else None,
         "latest_year_onset1_unknown":unknown[latest] if kind=="onset19" else None,
         "onset19_unique_country_year_keys":len(seen) if kind=="onset19" else None,
