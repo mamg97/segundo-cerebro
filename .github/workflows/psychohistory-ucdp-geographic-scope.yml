@@ -1,0 +1,48 @@
+# No private sources; UCDP public historical rows stay on ephemeral runner.
+name: Psychohistory UCDP Candidate geographic coverage gates
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/ucdp_candidate_geographic_scope.py"
+      - "research/psychohistory/test_ucdp_candidate_geographic_scope.py"
+      - ".github/workflows/psychohistory-ucdp-geographic-scope.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  historic-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch official old-version catalogue and consecutive monthly editions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ucdp-geography"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+            --max-time 45 --max-filesize 3000000 \
+            --output "$RUNNER_TEMP/ucdp-geography/olddw.html" \
+            'https://ucdp.uu.se/downloads/olddw.html'
+          root='https://ucdp.uu.se/downloads/candidateged'
+          for month in 9 10; do
+            curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+              --max-time 65 --max-filesize 65000000 \
+              --output "$RUNNER_TEMP/ucdp-geography/GEDEvent_v20_0_${month}.csv" \
+              "$root/GEDEvent_v20_0_${month}.csv"
+          done
+      - name: Audit declared regions and aggregate event-positive countries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ucdp_candidate_geographic_scope.py \
+            --official-page "$RUNNER_TEMP/ucdp-geography/olddw.html" \
+            --september "$RUNNER_TEMP/ucdp-geography/GEDEvent_v20_0_9.csv" \
+            --october "$RUNNER_TEMP/ucdp-geography/GEDEvent_v20_0_10.csv"
+          echo "No geographic denominator, 0-event label, or as-of data certified."
+      - name: Remove all raw source files even if validation fails
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/ucdp-geography"
