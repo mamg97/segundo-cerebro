@@ -29,3 +29,24 @@ El auditor no publica nombres ni códigos de países, identificadores de conflic
 ## Próxima falsación
 
 Separar revisiones del código histórico de los cambios semánticos. Priorizar una revisión independiente de definiciones y un conjunto de etiquetas verdaderamente accesible antes del origen de un experimento, con roster país-año válido y país sin eventos. Solo entonces diseñar un baseline prospectivo honesto.
+
+## Resultado REAL de la auditoría de octubre 2026
+
+La ejecución en GitHub Actions ha descargado los tres CSV oficiales, ha vuelto a cotejar sus SHA-256 y ha mantenido idénticas las **10.130** claves GW-año. Los tres subconjuntos preregistrados conservan 85, 127 y seis observaciones.
+
+**En los 85 residuales (antiguo onset1=1, country25=0, conflict25=0):**
+
+- Fuente antigua: **61** casos `newconf=1`; **24** casos `newconf=0`. Ninguna etiqueta desconocida en los CSV comprobados.
+- Fuente moderna country25 y conflict25: en estos **85** casos, las dos tienen `newconf=0`; country25 presenta `onset5=0` para los 85.
+- Fuente antigua: `onset5=1` en **70**, `onset5=0` en **15**.
+- Por periodo: **43** de 1946–1969, **23** de 1970–1988, **6** de 1989–1999 y **13** de 2000–2017. Por tanto **66/85** anteriores a 1989.
+
+**Entre los 127 antiguo=1, moderno country=0, moderno conflict=1:** antiguo `newconf=1` para 56 y cero para 71; conflict25 `newconf=1` para 54 y cero para 73; antiguo `onset5=1` para 80. La existencia de onset conflict-level no implica identidad nueva de conflicto.
+
+**Los seis inversos (antiguo=0, country=1, conflict=1):** antiguo `newconf=0` en los seis; country25 `newconf=1` en los seis y conflict25 `newconf=0` en los seis. Es otra advertencia de que los indicadores `newconf` no son intercambiables entre variantes, aun dentro de 25.1.
+
+### Interpretación y límites
+
+En 61 de 85 diferencias, el archivo antiguo no se limita a marcar un reinicio corto: etiqueta también **`newconf=1`**. Esto descarta como explicación única una simple discrepancia del umbral de reinicio `onset1`. **No prueba** que UCDP haya eliminado 61 conflictos auténticos: la variable antigua contempla una nueva identidad de conflicto o díada y la moderna puede usar otra estructura y revisiones de codificación. Hay que investigar el linaje editorial de los conflictos y las definiciones, además del horizonte y la concordancia territorial.
+
+Todos los hashes contrastados son testigos de **2026**, no una cadena de disponibilidad pre-2020. Las observaciones se inspeccionan en un runner efímero y solo se registran agregados, nunca países individuales. `MAD-02` seguirá PARCIAL hasta reconstruir el universo y las fuentes `as-of`; no se calcularán Brier ni pronósticos históricos ficticios.
