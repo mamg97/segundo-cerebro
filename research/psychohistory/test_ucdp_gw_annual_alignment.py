@@ -41,7 +41,8 @@ def fake_sources(*, unknown_code=False, duplicates=False):
               [(code,"AAA","Imaginary Land","1989-01-01","2020-12-31")
                for code in range(100,139)],"\t")
     micro=_csv(["statenumber","stateid","countryname","start","end"],
-               [(139,"BBB","Imaginary Island","1989-01-01","2019-12-31")],"\t")
+               [(139,"BBB","Imaginary Island","1989-01-01","2019-12-31"),
+                (140,"CCC","Ancient Island","1970-01-01","1988-12-31")],"\t")
     return buf.getvalue(),base,micro
 
 
