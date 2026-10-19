@@ -83,6 +83,22 @@ class COWGWRosterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_cow(cow_raw.replace(b",2024\r\n",b",2025\r\n"))
 
+    def test_same_day_code_handoff_is_counted_not_silently_merged(self):
+        boundary = cow(
+            ("OLD",345,"Fictional predecessor",1944,10,20,2006,6,3,2024),
+            ("NEW",345,"Fictional successor",2006,6,3,2024,12,31,2024),
+        )
+        c = parse_cow(boundary)
+        self.assertEqual(c["n_touching_boundary_dates_unresolved"],1)
+        gw_raw,base_raw,micro_raw = fake_inputs()
+        g = build_gw_with_microstates(base_raw,micro_raw)
+        result = compare(c,g,["2006-06","2024-12"])
+        self.assertEqual(result["n_cow_shared_day_handoffs_not_disambiguated"],1)
+        self.assertEqual(result["months"][0]["n_cow_full_month"],0)
+        self.assertEqual(result["months"][0]["n_cow_partial_month"],1)
+        self.assertEqual(result["months"][1]["n_cow_full_month"],1)
+        self.assertFalse(result["geographic_concordance_reviewed"])
+
     def test_no_future_state_or_invalid_schema(self):
         bad=cow(("FKA",100,"Fictitious A",2010,1,1,2025,12,31,2024),
                 ("FKB",200,"Fictitious B",2010,1,1,2024,12,31,2024))
