@@ -1,0 +1,54 @@
+# This verifies retrospective GW/UCDP numerical correspondence only.
+# Never place country rows or personally identifying data in public CI.
+name: Psychohistory annual UCDP versus GW7 roster audit
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/ucdp_gw_annual_alignment.py"
+      - "research/psychohistory/test_ucdp_gw_annual_alignment.py"
+      - ".github/workflows/psychohistory-ucdp-gw-annual.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-ucdp-gw-annual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download three public archives only to ephemeral workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ucdp-gw-annual"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+            --max-time 75 --max-filesize 3000000 \
+            --output "$RUNNER_TEMP/ucdp-gw-annual/ucdp-24-1.zip" \
+            'https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-241-csv.zip'
+          root='https://raw.githubusercontent.com/brentonk/us_diplomatic_missions/0dda0ef93b7958f67c79031c1695dd9e5408a62c/input'
+          for row in 'ksgmdw.txt:gw.tsv' 'microstates.txt:micro.tsv'; do
+            IFS=: read -r origin localfile <<< "$row"
+            curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+              --max-time 45 --max-filesize 300000 \
+              --output "$RUNNER_TEMP/ucdp-gw-annual/$localfile" "$root/$origin"
+          done
+      - name: Print only aggregate historical state roster mismatches and 0->1 diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ucdp_gw_annual_alignment.py \
+            --ucdp-zip "$RUNNER_TEMP/ucdp-gw-annual/ucdp-24-1.zip" \
+            --ucdp-zip-sha256 00410bdb65023d1bc8799f47f188677965046bb73447ee33094782db30076260 \
+            --gw "$RUNNER_TEMP/ucdp-gw-annual/gw.tsv" \
+            --gw-sha256 70ba63cd8a936a25a701be5daffa1105411da5298ff890bf4bc27ed688892b2b \
+            --micro "$RUNNER_TEMP/ucdp-gw-annual/micro.tsv" \
+            --micro-sha256 02b6cc749405b744258c3b314b668fa6438fbb7d869c3e7be4bd2cb6da2c5288 \
+            --year 1989 --year 1990 --year 2006 --year 2011 \
+            --year 2019 --year 2020 --year 2021 --year 2023
+          echo "Do not interpret country-level 0->1 as new dyadic conflict, or retrospective labels as issue-date knowledge."
+      - name: Erase ephemeral third-party source files even on failure
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/ucdp-gw-annual"
