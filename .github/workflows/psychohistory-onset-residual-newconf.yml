@@ -1,0 +1,36 @@
+# AV-051: official data inspected only in ephemeral CI; aggregate output only.
+name: Psychohistory Onset 85 residual newconf classification
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_residual_newconf_audit.py"
+      - "research/psychohistory/test_onset_residual_newconf_audit.py"
+      - ".github/workflows/psychohistory-onset-residual-newconf.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  adversarial-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify synthetic classifications and negative-leakage assertions
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s research/psychohistory -p test_onset_residual_newconf_audit.py -v
+  historical-ucdp-three-way-residuals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Calculate anonymized real 2026 archival newconf and onset5 residual distributions
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_residual_newconf_audit.py
+          echo "No historical as-of source, risk set, forecast, model or Brier established."
+          echo "No country IDs, case examples, country histories or original data rows are published."
