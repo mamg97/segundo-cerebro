@@ -11,8 +11,8 @@ test("planned yogurt replacement exposes an explicit shake companion classificat
   assert.match(app, /const foodCompanion = Boolean\(item\.foodId/);
   assert.match(app, /const defaultShake = foodCompanion && normalizeWeeklyMenuMoment\(item\.companionType\) === "yogur"/);
   assert.match(app, /data-menu-editor-role/);
-  assert.match(app, /Batido como acompañante, sin añadir plato principal/);
-  assert.match(app, /Esta comida ya tiene una receta principal/);
+  assert.match(app, /Batido como acompañamiento/);
+  assert.match(app, /Esta comida ya tiene un plato principal/);
   assert.match(app, /roleSelect\?\.addEventListener\("change",updatePreview\)/);
   assert.match(app, /submitHomeMenuEdit\(item,isAdd \? "add" : "replace",selectedRecipe\.id/);
 });
