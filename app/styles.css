@@ -28568,3 +28568,39 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
     font-size: 8.5px;
   }
 }
+
+/* 2026-10-19 · Dense, legible iPhone Home weekly menu (not global text). */
+@media (max-width: 600px) {
+  .home-weekly-menu-panel { padding: 12px 10px; }
+  .home-weekly-menu-table { grid-template-columns: 56px repeat(7, 116px); min-width: 868px; }
+  .home-weekly-menu-corner,
+  .home-weekly-menu-row-label { padding: 5px 3px; }
+  .home-weekly-menu-corner span,
+  .home-weekly-menu-row-label span { font-size: 8px; line-height: 1.1; }
+  .home-weekly-menu-table-day > header { padding: 5px 5px 4px; }
+  .home-weekly-menu-table-day > header small { font-size: 8px; }
+  .home-weekly-menu-table-day > header strong { font-size: 10px; line-height: 1.15; }
+  .home-weekly-menu-table-cell { padding: 5px; min-height: 32px; }
+  .home-weekly-menu-table-cell .weekly-menu-group-item { gap: 3px; padding: 4px 0; }
+  .home-weekly-menu-table-cell .home-weekly-menu-recipe-link { gap: 4px; }
+  .home-weekly-menu-table-cell .home-menu-recipe-thumb {
+    width: 100%; max-width: 98px; max-height: 55px; border-radius: 6px;
+  }
+  .home-weekly-menu-table-cell .home-menu-recipe-title strong,
+  .home-weekly-menu-table-cell .weekly-menu-group-item-copy strong {
+    font-size: 9px; line-height: 1.18; overflow-wrap: anywhere;
+  }
+  .home-weekly-menu-table-cell .weekly-menu-group-item-macros b,
+  .home-weekly-menu-table-cell .weekly-menu-group-item-macros span {
+    font-size: 8px; line-height: 1.18;
+  }
+  .home-weekly-menu-table-cell .home-menu-item-actions { gap: 4px; }
+  .home-weekly-menu-table-cell .home-menu-item-actions button {
+    min-height: 30px; padding: 4px; font-size: 9px;
+  }
+  .home-weekly-menu-table-cell .home-menu-consumed-label { font-size: 8.5px; }
+  .home-weekly-menu-table-cell .home-menu-add-action {
+    width: 100%; min-height: 31px; margin-top: 4px;
+    padding: 5px 4px; font-size: 9px;
+  }
+}
