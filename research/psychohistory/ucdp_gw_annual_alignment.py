@@ -110,7 +110,7 @@ def reconcile(zip_bytes, gw_bytes, micro_bytes, years,
         if year > GW_LAST_YEAR:
             roster[year] = {
                 "year":year,"status":"NO_EVALUABLE_GW7_EXPIRED_2020",
-                "n_udcp_country_years":len(obs_codes),
+                "n_ucdp_country_years":len(obs_codes),
                 "n_gw_any_year_members":None,
                 "n_numeric_matches":None,
                 "n_ucdp_codes_without_gw_member":None,
@@ -121,7 +121,7 @@ def reconcile(zip_bytes, gw_bytes, micro_bytes, years,
         gw_codes = _gw_anypart_year_roster(gw["intervals"], year)
         roster[year] = {
             "year":year,"status":"NUMERIC_ROSTER_CANDIDATE_UNREVIEWED",
-            "n_udcp_country_years":len(obs_codes),
+            "n_ucdp_country_years":len(obs_codes),
             "n_gw_any_year_members":len(gw_codes),
             "n_numeric_matches":len(obs_codes & gw_codes),
             "n_ucdp_codes_without_gw_member":len(obs_codes-gw_codes),
@@ -129,7 +129,7 @@ def reconcile(zip_bytes, gw_bytes, micro_bytes, years,
             "numeric_identity_approved":False,
         }
     transitions=[_transition_summary(observations,y) for y in years]
-    if any(x["n_country_year_rows"] != roster[x["year"]]["n_udcp_country_years"]
+    if any(x["n_country_year_rows"] != roster[x["year"]]["n_ucdp_country_years"]
            for x in transitions):
         raise ValueError("Cross-check of country-year denominator failed")
     return {
