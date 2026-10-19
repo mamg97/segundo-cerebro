@@ -571,6 +571,8 @@ function applyStateScope(scope, payload) {
       state.importantEventRules = payload.importantEventRules;
     }
     if (payload.eventsSummary) state.eventsSummary = payload.eventsSummary;
+    if (Array.isArray(payload.canonicalEventDates) && payload.eventsSheetSync !== "error")
+      state.canonicalEventDates = payload.canonicalEventDates;
     if (payload.calendarSummary) state.calendarSummary = payload.calendarSummary;
     if (Array.isArray(payload.events) && !preserveLastView) state.events = payload.events;
     renderEvents();
@@ -2090,6 +2092,17 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
       ? finance.importantEventRules
       : [];
 
+  // An unambiguous canonical Events record outranks a stale calendar alias.
+  // This corrects only the important-event cards; raw calendar data remains intact.
+  const canonical = (Array.isArray(state.canonicalEventDates) ? state.canonicalEventDates : [])
+    .filter(item => item.startsAt && item.status !== "CANCELADO");
+  const canonicalDateFor = title => {
+    const normalized = normalizeForMatch(safeDisplayEventTitle(title));
+    const matches = canonical.filter(item =>
+      normalizeForMatch(safeDisplayEventTitle(item.title)) === normalized);
+    return matches.length === 1 ? matches[0] : null;
+  };
+
   const calendarItems = (Array.isArray(state.events) ? state.events : [])
     .filter((event) => new Date(event.endsAt || event.startsAt).getTime() >= now)
     .filter((event) => !isBirthdayReminderOnly([event.title, event.location || event.locationRef].filter(Boolean).join(" ")))
@@ -2105,11 +2118,13 @@ function collectImportantEvents(finance = state.financeSummary || {}) {
       });
       const inferredKind = inferImportantKind([event.title, event.location || event.locationRef].filter(Boolean).join(" "));
       if (!rule && inferredKind === "important") return null;
+      const displayTitle = rule?.displayTitle || safeDisplayEventTitle(event.title);
+      const authoritative = canonicalDateFor(displayTitle);
       return {
         id: event.id || rule?.id || [event.calendarName, event.title, event.startsAt].join("|"),
-        title: rule?.displayTitle || safeDisplayEventTitle(event.title),
-        startsAt: event.startsAt,
-        endsAt: event.endsAt,
+        title: displayTitle,
+        startsAt: authoritative?.startsAt || event.startsAt,
+        endsAt: authoritative?.endsAt || event.endsAt,
         location: event.location || event.locationRef || null,
         kind: rule?.kind || inferredKind,
         status: eventStatusFromDates(event.startsAt, event.endsAt, event.status),
