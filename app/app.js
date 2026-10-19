@@ -11232,10 +11232,82 @@ function renderBudgetGroup(name, items, currency) {
           <span><b>${formatMoney(totals.remaining, currency)}</b> saldo partidas</span>
         </div>
       </div>
-      <div class="budget-detail-list">
-        ${items.map((item) => renderBudgetCategoryDetail(item, currency)).join("")}
-      </div>
+      ${name === "Común"
+        ? renderBudgetCompactTable(items, currency)
+        : `<div class="budget-detail-list">
+            ${items.map((item) => renderBudgetCategoryDetail(item, currency)).join("")}
+          </div>`}
     </section>`;
+}
+
+// A dense table for the shared budget; detailed audit notes stay collapsed.
+function renderBudgetCompactTable(items, currency) {
+  return `
+    <div class="budget-compact-table" aria-label="Partidas del presupuesto compartido">
+      <div class="budget-compact-columns" aria-hidden="true">
+        <span>Partida</span><span>Progreso</span>
+        <span>Presupuesto</span><span>Gastado</span><span>Saldo</span><span></span>
+      </div>
+      <div class="budget-compact-rows">
+        ${items.map((item) => renderBudgetCompactRow(item, currency)).join("")}
+      </div>
+    </div>`;
+}
+
+function renderBudgetCompactRow(item, currency) {
+  const budgeted = numberOrZero(item.budgeted);
+  const spent = numberOrZero(item.spent);
+  const committed = numberOrZero(item.committed);
+  const remaining = Number.isFinite(Number(item.remaining))
+    ? Number(item.remaining)
+    : budgeted - spent - committed;
+  const used = spent + committed;
+  const ratio = budgeted > 0 ? used / budgeted * 100 : null;
+  const percent = ratio === null ? null : Math.round(ratio);
+  const overBudget = ratio !== null ? ratio > 100 : used > 0;
+  const nearLimit = ratio !== null && ratio >= 85 && ratio <= 100;
+  const progressValue = ratio === null ? (used > 0 ? 100 : 0) : Math.min(100, Math.max(0, ratio));
+  const progressText = percent === null ? "Sin partida" : percent + "%";
+  const sourceStatus = String(item.sourceStatus || item.source_status || "").toUpperCase();
+  const statusLabel = sourceStatus.includes("PROVISIONAL") || sourceStatus.includes("PENDING")
+    ? "Pendiente de conciliar"
+    : sourceStatus.includes("RECONCILIADO") || sourceStatus.includes("CONFIRMADO")
+      ? "Conciliado"
+      : sourceStatus === "DERIVADO" ? "Derivado" : "Estado sin verificar";
+  const title = String(item.title || "Partida sin nombre");
+  const normalizedTitle = title.toLowerCase();
+  const normalizedId = String(item.id || "").toLowerCase();
+  const isElectricity = normalizedTitle === "luz"
+    || normalizedTitle.includes("electricidad")
+    || normalizedId === "luz"
+    || normalizedId.includes("electric");
+
+  return `
+    <details class="budget-compact-entry${overBudget ? " is-over" : nearLimit ? " is-near" : ""}">
+      <summary class="budget-compact-line" aria-label="${escapeHtml(title)}. ${escapeHtml(progressText)} utilizado. Ver detalle">
+        <span class="budget-compact-label">${escapeHtml(title)}</span>
+        <span class="budget-compact-progress-cell">
+          <progress max="100" value="${progressValue}"
+            aria-label="${escapeHtml(title)}: ${percent === null ? "sin presupuesto definido" : percent + "% gastado y comprometido"}">${progressValue}</progress>
+          <span class="budget-compact-percent">${escapeHtml(progressText)}</span>
+        </span>
+        <span class="budget-compact-amount budget-compact-planned" data-label="Prev.">${formatMoney(budgeted, currency)}</span>
+        <span class="budget-compact-amount budget-compact-spent" data-label="Gast.">${formatMoney(spent, currency)}</span>
+        <span class="budget-compact-amount budget-compact-remaining${remaining < 0 ? " is-negative" : ""}" data-label="Saldo">${formatMoney(remaining, currency)}</span>
+        <span class="budget-compact-chevron" aria-hidden="true">⌄</span>
+      </summary>
+      <div class="budget-compact-detail">
+        <div class="budget-compact-detail-metrics">
+          <span>Presupuesto <strong>${formatMoney(budgeted, currency)}</strong></span>
+          <span>Gastado <strong>${formatMoney(spent, currency)}</strong></span>
+          <span>Comprometido <strong>${formatMoney(committed, currency)}</strong></span>
+          <span>Saldo partida <strong>${formatMoney(remaining, currency)}</strong></span>
+        </div>
+        <p class="budget-compact-status">Conciliación: ${escapeHtml(statusLabel)}</p>
+        ${item.note ? `<p class="budget-compact-note">${escapeHtml(item.note)}</p>` : ""}
+        ${isElectricity ? `<button type="button" class="budget-compact-electricity" data-open-electricity="true">Ver histórico de electricidad →</button>` : ""}
+      </div>
+    </details>`;
 }
 
 function renderBudgetCategoryDetail(item, currency) {
