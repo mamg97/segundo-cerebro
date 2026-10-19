@@ -15073,6 +15073,9 @@ html[data-theme="dark"] .liquidity-svg-base {
 .allocation-8 { background: #ffd60a !important; }
 .allocation-hold { background: #ff453a !important; }
 .allocation-free { background: #32d74b !important; }
+/* Neutral earmarked capital, not available discretionary money. */
+.allocation-undetailed { background: #657e98 !important; }
+
 
 .liquidity-account-legend {
   display: grid;
