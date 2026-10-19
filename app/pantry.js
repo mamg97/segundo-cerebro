@@ -354,6 +354,8 @@ function renderWorkspace(payload, initialView = "inventory") {
     registeredProducts.map(product => '<option value="' + escapeHtml(product.id) + '">' +
       escapeHtml(product.name) + '</option>').join("");
 
+  const productSearch = (value) => registeredProducts.filter(product =>
+    String(product.name || "").toLocaleLowerCase("es").includes(String(value || "").toLocaleLowerCase("es")));
   const recentTickets = Array.isArray(payload.recentTickets) ? payload.recentTickets : [];
   const ticketCards = recentTickets.map((ticket) => {
     const prices = Array.isArray(ticket.priceObservations) ? ticket.priceObservations : [];
