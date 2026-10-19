@@ -3243,6 +3243,28 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     updatedAt: item.updated_at || null
   })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.name);
 
+  // Legacy recipes had no meal category. Infer the best-fitting category from
+  // actual MenuSemanal uses, without mutating any historical row.
+  const categoryFromMoment = (moment) => {
+    const m = String(moment || "").trim().toLowerCase();
+    if (m === "desayuno" || m === "mañana oficina") return "desayuno";
+    if (m === "comida" || m === "cena") return "comida_cena";
+    if (m === "media mañana" || m === "merienda" || m === "snack") return "media_manana_merienda";
+    return null;
+  };
+  const categoryScoreByRecipe = new Map();
+  for (const row of weeklyMenuRows) {
+    if (!row.recipeId || /^(?:omitido|retirado|cancelado)$/.test(row.status)) continue;
+    const category = categoryFromMoment(row.moment);
+    if (!category) continue;
+    if (!categoryScoreByRecipe.has(row.recipeId)) categoryScoreByRecipe.set(row.recipeId, new Map());
+    const counts = categoryScoreByRecipe.get(row.recipeId);
+    counts.set(category, (counts.get(category) || 0) + (row.status === "consumido" ? 2 : 1));
+  }
+  const inferredCategory = (id) => {
+    const scores = categoryScoreByRecipe.get(id);
+    return scores ? [...scores.entries()].sort((a, b) => b[1] - a[1])[0][0] : null;
+  };
   const recipeRows = parseTableRows(valueRanges[8]?.values || []).map((item) => ({
     id: String(item.recipe_id || "").trim(),
     name: String(item.nombre || "").trim(),
@@ -3259,7 +3281,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     photoFileId: String(item.foto_drive_file_id || "").trim() || null,
     photoMimeType: String(item.foto_mime_type || "").trim() || null,
     photoUpdatedAt: String(item.foto_updated_at || "").trim() || null,
-    category: String(item.categoria_receta || "").trim() || null,
+    category: String(item.categoria_receta || "").trim() || inferredCategory(String(item.recipe_id || "").trim()),
     status: String(item.estado_receta || "activa").trim().toLowerCase()
   })).filter((item) => item.id);
 
