@@ -57,6 +57,12 @@ class CrossVintageTests(unittest.TestCase):
             "n_retaining_code_zero": 0, "n_changed_date_interval": 1,
         })
         self.assertEqual(result["monthly_window_mismatch_counts"], {"december": 0, "january": 0})
+        self.assertEqual(result["code_zero_date_geometry_by_edition"]["december"], {
+            "n": 2, "n_started_in_nominal_month": 2,
+            "n_end_after_nominal_month": 2,
+            "n_end_in_nominal_month": 0, "n_same_day_interval": 0})
+        self.assertEqual(result["code_zero_date_geometry_by_edition"]["january"]["n"], 0)
+
         self.assertTrue(result["december_pinned_from_prior_2026_observation"])
         self.assertFalse(result["january_pinned_from_prior_observation"])
         self.assertFalse(result["event_identity_stable_across_editions_verified"])
