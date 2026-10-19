@@ -88,3 +88,12 @@ test("shopping UI includes chooser and stock confirmation; private cron and menu
   assert.match(service,/fuente:"menu-pendiente-auto"/);
   assert.match(config,/"triggers": \{ "crons": \["\*\/30 \* \* \* \*"\] \}/);
 });
+
+
+test("an existing unlinked Apple reminder under a unique family alias is not duplicated",()=>{
+  const needed=derivePendingMenuNeeds(source(),pantry("out"),"2026-10-19");
+  const existing=[{rowNumber:2,record:{
+    producto_id:"",nombre:"HÉLICES",estado:"COMPRAR",fuente:"apple-reminders"
+  }}];
+  assert.equal(planAutoShoppingChanges(needed,existing,"T").length,0);
+});
