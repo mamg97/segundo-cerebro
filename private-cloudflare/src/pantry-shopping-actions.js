@@ -50,10 +50,13 @@ function checkedProduct(pantry,id){
   if(!product)fail("PRODUCT_NOT_FOUND",404);
   return product;
 }
-function chooseShoppingRow(rows,id,providedId=null){
-  const selected=rows.filter(x=>x.record.producto_id===id &&
+function chooseShoppingRow(rows,id,providedId=null,shoppingName=null){
+  const selected=rows.filter(x=>
     String(x.record.estado||"").toUpperCase()==="COMPRAR" &&
-    (!providedId||x.record.external_id===providedId));
+    (!providedId||x.record.external_id===providedId) &&
+    (x.record.producto_id===id ||
+      (shoppingName && !x.record.producto_id &&
+       normalizePantryProductName(x.record.nombre)===normalizePantryProductName(shoppingName))));
   if(selected.length>1)fail("AMBIGUOUS_SHOPPING_ROWS");
   return selected[0]||null;
 }
@@ -108,7 +111,8 @@ export async function performShoppingAction(request,env,auth){
   if(!pantry.value)fail("PANTRY_UNAVAILABLE",503);
   const product=checkedProduct(pantry.value,id);
   const sheet=await readPantryShoppingSheet(env,auth);
-  const active=chooseShoppingRow(sheet.rows,id,payload.externalId||null);
+  const active=chooseShoppingRow(sheet.rows,id,payload.externalId||null,
+    action==="available"?String(payload.shoppingName||""):null);
   const date=nowIso();
   const quantity=payload.quantity==null||payload.quantity===""?null:Number(payload.quantity);
   if(quantity!==null&&(!Number.isFinite(quantity)||quantity<=0||quantity>10000))
@@ -142,7 +146,7 @@ export async function performShoppingAction(request,env,auth){
   // Apple reminder when the Mac agent next runs. Do not mark COMPRADO.
   await setInventoryAvailability(env,auth,product,{available:true,now:date});
   await updatePantryShoppingRow(sheet,active.rowNumber,
-    updatedShoppingRecord(active.record,date,{estado:"CANCELADO",
+    updatedShoppingRecord(active.record,date,{estado:"CANCELADO",producto_id:product.id,
       motivo:"Disponible en despensa (confirmación explícita)",
       fuente:"web-inventory-confirmation"}));
   return {ok:true,action:"available",productId:id,appleSync:"pending_macos_bridge"};
