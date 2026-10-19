@@ -6388,6 +6388,10 @@ export default {
             googleCalendarSync: googleCalendar.status || "error",
             importantEventRules: eventsStore.value?.rules || [],
             eventsSummary: eventsStore.value?.summary || null,
+            canonicalEventDates: eventsStore.value?.events?.map(item => ({
+              title:item.title,startsAt:item.startsAt,endsAt:item.endsAt,
+              status:item.status,sourceProvider:item.sourceProvider,calendarRef:item.calendarRef
+            })) || [],
             calendarSummary: federatedCalendar || null,
             events: Array.isArray(federatedCalendar?.events) ? federatedCalendar.events : []
           });
@@ -6488,6 +6492,12 @@ export default {
       }
       if (eventsStore.value?.summary) {
         state.eventsSummary = eventsStore.value.summary;
+      }
+      if (Array.isArray(eventsStore.value?.events)) {
+        state.canonicalEventDates = eventsStore.value.events.map(item => ({
+          title:item.title,startsAt:item.startsAt,endsAt:item.endsAt,
+          status:item.status,sourceProvider:item.sourceProvider,calendarRef:item.calendarRef
+        }));
       }
 
       const calendarSync = calendar.status || "error";
