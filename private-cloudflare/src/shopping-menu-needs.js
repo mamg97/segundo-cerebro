@@ -96,7 +96,7 @@ export function derivePendingMenuNeeds(source,pantry,today){
     }else if(available)classification="available";
     if(classification==="review")diagnostics.stockUnknown++;
     needs.push({
-      productId:entry.productId,name:entry.name,classification,
+      productId:entry.productId,name:entry.name,matchLabels:entry.matchLabels,classification,
       requiredGrams:entry.gramsKnown?Math.round(entry.requiredGrams*10)/10:null,
       shortfallGrams:shortfall===null?null:Math.round(shortfall*10)/10,
       mealCount:entry.mealCount,dates:[...entry.sources].sort()
