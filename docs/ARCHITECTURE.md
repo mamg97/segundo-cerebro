@@ -594,3 +594,8 @@ El scoring prospectivo falla cerrado sin un recibo de sellado independiente veri
 
 Los backtests viven en `PsicoExperimentos.notas` como sobres JSON versionados; `research-results.mjs` comprueba coherencia y agrupa únicamente muestras/protocolos idénticos. No necesitan tabla, API, cron o despliegue por cada resultado nuevo. La UI muestra leaderboard, tasas anuales y calibración históricos separados del registro prospectivo; V3 muestra sensibilidad explícitamente sintética. Los archivos completos y releases de entrada se archivan en Drive privado y se referencian desde el Sheet. No se ejecutan ajustes ni se descargan datasets en el Worker. Fuente metodológica: `docs/PSYCHOHISTORY_BENCHMARK.md`.
 
+
+
+### Viajes — vista privada
+
+La navegación incluye Viajes después de Proyectos solo en private-remote, leyendo GET /api/events?scope=all&kind=travel y GET /api/events/:id. Agrupa hechos y referencias privadas; FINANZAS mantiene el presupuesto a través de finance_ref. Sin nuevas fuentes de negocio ni coste adicional. Véase docs/TRIPS_WORKSPACE.md.
