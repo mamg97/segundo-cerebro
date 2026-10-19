@@ -25,3 +25,29 @@ No se alteran AV-042, AV-046, predicciones, modelos, patrimonio, repositorios pr
 ## Próximo experimento
 
 Si persisten casos sin correspondencia en UCDP/PRIO y Dyadic, revisar qué fuente o script generó realmente el antiguo `onsets_computed.csv`, qué versión y fecha de publicación puede autenticarse y qué significa `newconf` respecto a conflicto y díada. El paso siguiente es reconstruir una línea de procedencia **por edición y por definición**, no entrenar aún con etiquetas incompatibles.
+
+## Resultado de contraste REAL en GitHub Actions (19/10/2026)
+
+La CI ha inspeccionado los datasets originales, sin imprimir filas, países ni dyad_id individuales.
+
+| Fuente | Ubicación en UCDP | Filas | Último año | SHA-256 descarga observada 2026 |
+|---|---|---:|---:|---|
+| Dyadic 19.1 | https://ucdp.uu.se/downloads/dyadic/ucdp-dyadic-191.csv | **3.000** | 2018 | `b1eed9ae6540268a157694068c8f3b2be9bb6104640aec2d1c43dab487c9a0f6` |
+| Dyadic 25.1 | https://ucdp.uu.se/downloads/dyadic/ucdp-dyadic-251-csv.zip | **3.432** | 2024 | `e34d26c39d23739ab65bc52fd42747aa88e7ecdf84d16c7bacafd590ed767330` |
+
+El CSV interno del ZIP Dyadic 25.1 tiene SHA-256 `e5bf6e3779a903f3df3ec476592332ce51ccf3798174b3db4c1b06dd1dd5a7ba`. Estos hashes identifican bytes **observados en octubre de 2026**, no demuestran disponibilidad histórica anterior a julio de 2020.
+
+El panel de 10.130 país-año y el subgrupo de 61 antiguos con newconf positivo se mantuvieron EXACTAMENTE sin exclusiones retrospectivas. Contando solo díadas internas (tipos 3 y 4) en `gwno_loc`:
+
+| Actividad dyadic por GW-año | Cantidad |
+|---|---:|
+| En ambas ediciones | **10** |
+| Solo Dyadic 19.1 | **0** |
+| Solo Dyadic 25.1 | **0** |
+| Sin díada interna en ninguna | **51** |
+
+De los diez con actividad en ambas ediciones, **los diez** comparten algún `dyad_id` y algún `conflict_id` numérico. No se detectaron desfases entre IDs de conflicto presentes en el archivo Dyadic y el Armed Conflict Dataset **para esos diez**. De los 51 sin díada, 45 preceden a 1989 y seis corresponden a 1989–2017.
+
+**Resultado negativo importante:** el pasar de conflicto-año a díada-año **no** cambia la distribución 10/51 observada en AV-052. No implica que 51 países/años no tuviesen violencia real. El antiguo archivo Onset no es una instantánea histórica de UCDP Dyadic reconocida y puede contener semánticas o versiones de datos distintas. La revisión causal sigue **no adjudicada**.
+
+El próximo avance debe investigar la **procedencia y fechas del archivo concreto `onsets_computed.csv`** servido bajo la etiqueta 19.1. Su cobertura real hasta 2017, frente a los originales Armed Conflict/Dyadic 19.1 que incluyen 2018, ya apunta a desalineación documental. No convertir esa pista en una datación ni usar el CSV antiguo como fuente de entrenamiento sin pruebas.
