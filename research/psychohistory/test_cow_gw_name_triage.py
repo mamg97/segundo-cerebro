@@ -63,3 +63,31 @@ class NameTriageTests(unittest.TestCase):
         self.assertNotEqual(_name('Old State'),_name('New State'))
         with self.assertRaises(ValueError):
             _name('  ')
+
+    def test_fail_closed_on_invalid_origin_or_corrupt_source(self):
+        c,g,m=samples()
+        for origins in ([],['2020-12','2020-12'],['2024-12','2020-12'],['2024-13']):
+            with self.subTest(origins=origins), self.assertRaises(ValueError):
+                analyze(c,g,m,origins)
+        duplicated=encode(COW,[cow('AAA',100,'a'),cow('AAA',200,'b')])
+        with self.assertRaises(ValueError):
+            analyze(duplicated,g,m,['2020-12'])
+        with self.assertRaises(ValueError):
+            analyze(c,g,m,['2020-12'],cow_hash='f'*64)
+
+    def test_private_queue_is_create_only(self):
+        import tempfile
+        from pathlib import Path
+        from cow_gw_token_review import save_review_private
+        result,review=analyze(*samples(),['2020-12'])
+        with tempfile.TemporaryDirectory() as temp:
+            dest=Path(temp)/'review.json'
+            save_review_private(review,dest)
+            self.assertIn('EXACT_NAME_LEAD_UNAPPROVED',dest.read_text())
+            with self.assertRaises(FileExistsError):
+                save_review_private(review,dest)
+        self.assertFalse(result['forecast_issued'])
+
+
+if __name__ == '__main__':
+    unittest.main()
