@@ -1,5 +1,16 @@
 # PSICOHISTORIA — Estado científico verificado · 19/10/2026
 
+## AV-20261019-051 · Diagnóstico empírico de 85 discrepancias residuales
+
+- [PR #695](https://github.com/mamg97/segundo-cerebro/pull/695) **fusionada** (squash `69806f6c1a56cfdac481ba2e7429283d129b2c52`). Pruebas sintéticas, pipeline de UCDP real y privacidad de PR SUCCESS; [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39329041698), privacy y Pages SUCCESS.
+- [Auditor y resultados](ONSET_RESIDUAL_NEWCONF_AV051.md): panel inalterado de **10.130** claves GW-año. Entre los **85** casos antiguo `onset1=1` frente a dos variantes modernas `onset1=0`, `newconf` antiguo=1 en **61** y =0 en 24; `newconf` moderno=0 en los 85. Además, `onset5` antiguo=1 en 70 y =0 en 15, mientras country25 `onset5=0` en todos. **43** residuales en 1946–1969, **23** en 1970–1988, **6** en 1989–1999 y **13** en 2000–2017. Hashes UCDP fijados como observaciones de 2026, no testigos temporales de 2020.
+- De los otros **127** casos antiguo1/country0/conflict1, `newconf` antiguo1=56 y moderno conflict1=54. En los seis inversos antiguo0/country1/conflict1, `newconf` antiguo=0 y moderno country=1. No son indicadores semánticamente intercambiables.
+- Hallazgo: las 61 discrepancias de `newconf` antiguo vs moderno muestran que el problema **no se resuelve sólo alterando el umbral de reinicio**. No se infiere eliminación de conflictos verdaderos ni 61 errores corregidos: la definición antigua incluye conflictos/díadas y las revisiones del código pueden diferir.
+- **Canónico privado releído:** `PsicoAvances=51`, último `AV-20261019-051=VERIFICADO`; `MAD-02=PARCIAL`; `PsicoPredicciones=0`. Cohorte sombra 2027 (1.176 probabilidades privadas) intacta, sin nuevos costes.
+- **AV-052 siguiente:** reconciliar versiones históricas UCDP/PRIO por conflictos/díadas y aclarar identidad/revisión de `newconf` sin difundir identidades de países. Ningún Brier, entrenamiento ni emisión de forecast autorizados hasta verificar bytes y relojes de fuente, roster y etiquetas train en su fecha.
+
+---
+
 ## AV-20261019-050 · Cuatro definiciones oficiales de UCDP comparadas
 
 - [PR #693](https://github.com/mamg97/segundo-cerebro/pull/693) fusionada en `main` (squash `e978cd86e692ff4efe97d64329eeb812a7a977a8`). Auditor de catálogo/CSV real, pruebas sintéticas, [main ciencia](https://github.com/mamg97/segundo-cerebro/actions/runs/39298237486), privacidad y Pages SUCCESS.
