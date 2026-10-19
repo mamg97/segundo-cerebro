@@ -38,7 +38,7 @@ jobs:
           set -euo pipefail
           python3 research/psychohistory/onset_issue_contract.py \
             --reference-csv "$RUNNER_TEMP/onset-country-251.csv" \
-            --sha256 e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe6a \
+            --sha256 e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe2ea83fe6a \
             --year 1989 --year 2006 --year 2019 --year 2020 --year 2023 --year 2024
           echo 'A retrospective predecessor-row is not a 1 January risk-set certificate.'
           echo 'No country identities, rows, forecasts, scores or trained models are published.'
