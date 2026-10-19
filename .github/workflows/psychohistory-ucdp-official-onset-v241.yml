@@ -1,0 +1,60 @@
+# Official UCDP Onset 24.1 historical outcomes, not forecast-time predictors.
+# One manual/PR-only CI; original country/conflict rows remain ephemeral.
+name: Psychohistory official UCDP Onset 24.1 source probe
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/ucdp_official_onset_v241.py"
+      - "research/psychohistory/test_ucdp_official_onset_v241.py"
+      - ".github/workflows/psychohistory-ucdp-official-onset-v241.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-onset-schemas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch UCDP historical index only to the temporary directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/onset-v241"
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail --location \
+            --retry 2 --max-time 45 --max-filesize 3000000 \
+            --output "$RUNNER_TEMP/onset-v241/olddw.html" \
+            'https://ucdp.uu.se/downloads/olddw.html'
+      - name: Resolve links of *exactly* historical version 24.1 from official index
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/onset-v241" <<'PY'
+          import pathlib, subprocess, sys
+          sys.path.insert(0, "research/psychohistory")
+          from ucdp_official_onset_v241 import parse_catalog
+          folder=pathlib.Path(sys.argv[1])
+          refs=parse_catalog((folder/"olddw.html").read_bytes())["source_urls"]
+          for name in ("intrastate_conflict","intrastate_country"):
+              subprocess.run([
+                  "curl","--proto","=https","--proto-redir","=https",
+                  "--tlsv1.2","--fail","--location","--retry","2",
+                  "--max-time","75","--max-filesize","20000000",
+                  "--output",str(folder/(name+".csv")), refs[name],
+              ],check=True)
+          PY
+      - name: Inspect only exact-onset sources and aggregate metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ucdp_official_onset_v241.py \
+            --catalog "$RUNNER_TEMP/onset-v241/olddw.html" \
+            --intrastate-conflict "$RUNNER_TEMP/onset-v241/intrastate_conflict.csv" \
+            --intrastate-country "$RUNNER_TEMP/onset-v241/intrastate_country.csv"
+          echo 'No conflict/country IDs, labels, event rows, probability, or onset score published.'
+      - name: Delete the original index and both onset datasets, even on failure
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/onset-v241"
