@@ -68,7 +68,6 @@ class HistoricalOfficialAuditTests(unittest.TestCase):
             b"year,gwno_a,onset1\n2020,900,1\n",
             b"year,gwno_a,onset1\n2018,900,maybe\n",
             b"year,gwno_a,onset1\n2018,9AB,1\n",
-            b"year,gwno_a,onset1\n2017,900,1\n",
         ):
             with self.subTest(data=data), self.assertRaises(ValueError):
                 audit_table(data,"onset19")
@@ -90,6 +89,13 @@ class HistoricalOfficialAuditTests(unittest.TestCase):
         ):
             with self.subTest(data=data),self.assertRaises(ValueError):
                 audit_table(data,"ged20")
+
+    def test_missing_final_declared_year_is_missing_coverage_not_zero(self):
+        r=audit_table(b"year,gwno_a,onset1\n2017,901,1\n","onset19")
+        self.assertFalse(r["declared_latest_year_represented"])
+        self.assertTrue(r["historical_coverage_truncated"])
+        self.assertEqual(r["latest_year_rows"],0)
+        self.assertFalse(r["backtest_authorized"])
 
     def test_safe_single_csv_zip(self):
         data=archive()
