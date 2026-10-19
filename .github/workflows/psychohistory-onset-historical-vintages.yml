@@ -1,0 +1,40 @@
+# AV-043: public HTML metadata only, never download country/event datasets.
+name: Psychohistory historical onset vintage triage
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_historical_vintages.py"
+      - "research/psychohistory/test_onset_historical_vintages.py"
+      - ".github/workflows/psychohistory-onset-historical-vintages.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  historical-vintage-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Synthetic metadata tests
+        run: python3 -m unittest discover -s research/psychohistory -p test_onset_historical_vintages.py -v
+      - name: Download only the public source index
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 \
+            --fail --location --retry 2 --max-time 35 --max-filesize 1000000 \
+            --output "$RUNNER_TEMP/ucdp-historical-index.html" \
+            'https://ucdp.uu.se/downloads/olddw.html'
+      - name: Match official current links, never admit them as historical witnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_historical_vintages.py \
+            --index-html "$RUNNER_TEMP/ucdp-historical-index.html" --require-index-links \
+            --issue-date 2019-01-01 --issue-date 2020-01-01 --issue-date 2021-01-01
+          echo 'HTML presence today is NOT authenticated historical availability.'
+      - name: Delete public temporary HTML
+        if: always()
+        run: rm -f "$RUNNER_TEMP/ucdp-historical-index.html"
