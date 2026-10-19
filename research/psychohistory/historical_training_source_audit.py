@@ -129,7 +129,9 @@ def audit_table(data, kind):
     types=Counter()
     positive=Counter()
     unknown=Counter()
-    seen=set()
+    seen={}
+    duplicated_rows=0
+    conflicting_keys=set()
     latest=2018 if kind=="onset19" else 2019
     earliest=1946 if kind=="onset19" else 1989
     for row in reader:
@@ -147,9 +149,6 @@ def audit_table(data, kind):
             if not ident.isdigit() or int(ident)<1:
                 raise ValueError("Invalid country code")
             key=(ident,year)
-            if key in seen:
-                raise ValueError("Country-year duplicate in monadic 19.1")
-            seen.add(key)
             onset=row["onset1"].strip()
             if onset=="1":
                 positive[year]+=1
@@ -157,6 +156,11 @@ def audit_table(data, kind):
                 unknown[year]+=1
             elif onset!="0":
                 raise ValueError("Invalid binary/unknown onset1")
+            if key in seen:
+                duplicated_rows+=1
+                if seen[key]!=onset: conflicting_keys.add(key)
+            else:
+                seen[key]=onset
         else:
             value=row["type_of_violence"].strip()
             if value not in ("1","2","3"):
@@ -172,6 +176,11 @@ def audit_table(data, kind):
         "latest_year_rows":years[latest],
         "latest_year_onset1_positives":positive[latest] if kind=="onset19" else None,
         "latest_year_onset1_unknown":unknown[latest] if kind=="onset19" else None,
+        "onset19_unique_country_year_keys":len(seen) if kind=="onset19" else None,
+        "onset19_duplicate_rows_beyond_first":duplicated_rows if kind=="onset19" else None,
+        "onset19_conflicting_country_year_keys":len(conflicting_keys) if kind=="onset19" else None,
+        "monadic_country_year_uniqueness_verified":(not duplicated_rows) if kind=="onset19" else None,
+        "onset19_usable_without_explicit_duplicate_resolution":(not duplicated_rows) if kind=="onset19" else False,
         "ged_latest_year_intrastate_event_rows": (
             types["1"] if kind=="ged20" else None),
         "historical_labels_version_available_as_candidate_only":kind=="onset19",
