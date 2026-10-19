@@ -6,6 +6,8 @@ on:
     paths:
       - "research/psychohistory/ucdp_official_onset_v241.py"
       - "research/psychohistory/test_ucdp_official_onset_v241.py"
+      - "research/psychohistory/ucdp_onset_v251_semantics.py"
+      - "research/psychohistory/test_ucdp_onset_v251_semantics.py"
       - ".github/workflows/psychohistory-ucdp-official-onset-v241.yml"
   workflow_dispatch:
 permissions:
@@ -67,6 +69,16 @@ jobs:
              "warning":"Catalog listing alone does not ensure CSV retrievability, historical as-of or a forecasting denominator.",
           },sort_keys=True))
           PY
+      - name: Compare verified, available 25.1 conflict-level and country-level onset data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ucdp_onset_v251_semantics.py \
+            --conflict "$RUNNER_TEMP/onset-v241/25.1-intrastate_conflict.csv" \
+            --country "$RUNNER_TEMP/onset-v241/25.1-intrastate_country.csv" \
+            --conflict-sha256 a5a64b749693c85fd3b50a1311608a44c0846d528352baeb3767f25e50d52fe1 \
+            --country-sha256 e2b59e65aaca88403991465b78fb407d7eddcefadeb18c7f1397bfe2ea83fe6a
+          echo "Retrospective conflict vs country onset labels; no pre-issue predictors or forecasts."
       - name: Delete the original index and both onset datasets, even on failure
         if: always()
         shell: bash
