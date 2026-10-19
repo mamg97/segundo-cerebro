@@ -10348,10 +10348,20 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
   const allocations = allAllocations.filter((item) => String(item.kind || "").toLowerCase() !== "card_hold");
   const retained = holds.reduce((sum, item) => sum + Number(item.amount), 0);
   const committed = allocations.reduce((sum, item) => sum + Number(item.amount), 0);
-  const free = Math.max(0, balance - committed - retained);
+  // Free cash is a canonical accounting classification, not the remainder
+  // after the few reservations currently itemized in ReservasCuenta.
+  // In particular, a shared account funds the whole monthly budget even if
+  // individual recurring bills have not yet been fully expanded into rows.
+  const remainder = Math.max(0, balance - committed - retained);
   const explicitInternalFree = firstFinite(account?.free);
-  const internalFree = explicitInternalFree !== null ? Math.max(0, explicitInternalFree) : free;
-  const personalAdjustment = internalFree - free;
+  const isCommon = ["santander-comun", "bbva-comun"].includes(String(account?.id || "").toLowerCase())
+    || ["común", "comun", "shared"].includes(String(account?.owner || "").trim().toLowerCase());
+  const internalFree = explicitInternalFree !== null
+    ? Math.max(0, explicitInternalFree)
+    : isCommon ? 0 : remainder;
+  const free = Math.min(remainder, internalFree);
+  const pendingBreakdown = Math.max(0, remainder - free);
+  const personalAdjustment = Math.max(0, internalFree - free);
   const excess = Math.max(0, committed + retained - balance);
   const availableAfterHolds = Math.max(0, balance - retained);
   const rawSegments = [
@@ -10370,6 +10380,12 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
       chargeDay: item.chargeDay ?? null,
       kind: "commitment"
     })),
+    ...(pendingBreakdown > 0 ? [{
+      label: isCommon ? "Presupuesto común · sin desglosar" : "Fondos sin desglose verificado",
+      amount: pendingBreakdown,
+      className: "allocation-undetailed",
+      kind: "undetailed"
+    }] : []),
     ...(free > 0 ? [{
       label: "Libre",
       amount: free,
@@ -10386,6 +10402,7 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
     retained,
     committed,
     free,
+    pendingBreakdown,
     internalFree,
     personalAdjustment,
     excess,
@@ -10438,6 +10455,7 @@ function renderHomeLiquidityOverview(accounts, fallbackCurrency = "EUR") {
                 <div class="home-liquidity-account-meta">
                   ${model.retained > 0 ? `<span>Saldo total <b>${formatMoney(model.balance, model.currency)}</b></span>` : ""}
                   <span>Libre interno <b>${formatMoney(model.internalFree, model.currency)}</b></span>
+                  ${model.pendingBreakdown > 0.01 ? `<span>Sin desglosar <b>${formatMoney(model.pendingBreakdown, model.currency)}</b></span>` : ""}
                   ${Math.abs(model.personalAdjustment) > 0.01 ? `<span>Ajuste personal <b>${model.personalAdjustment > 0 ? "+" : ""}${formatMoney(model.personalAdjustment, model.currency)}</b></span>` : ""}
                   ${model.retained > 0 ? `<span>Retenido <b>${formatMoney(model.retained, model.currency)}</b></span>` : ""}
                   ${model.excess > 0.01 ? `<span class="is-warning">Pendiente de cubrir <b>${formatMoney(model.excess, model.currency)}</b></span>` : ""}
@@ -10592,6 +10610,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
             retained,
             committed,
             free,
+            pendingBreakdown,
             internalFree,
             personalAdjustment,
             excess,
@@ -10687,6 +10706,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
 
               <footer class="liquidity-account-summary">
                 <span>Comprometido <b>${formatMoney(committed, currency)}</b></span>
+                ${pendingBreakdown > 0.01 ? `<span>Presupuesto sin desglose <b>${formatMoney(pendingBreakdown, currency)}</b></span>` : ""}
                 <span>Libre interno <b>${formatMoney(internalFree, currency)}</b></span>
                 ${Math.abs(personalAdjustment) > 0.01 ? `<span>Ajuste personal <b>${personalAdjustment > 0 ? "+" : ""}${formatMoney(personalAdjustment, currency)}</b></span>` : ""}
                 <span>Retenido <b>${formatMoney(retained, currency)}</b></span>
