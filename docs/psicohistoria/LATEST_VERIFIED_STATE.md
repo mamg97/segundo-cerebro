@@ -1,5 +1,15 @@
 # PSICOHISTORIA — Estado científico verificado · 19/10/2026
 
+## AV-20261019-050 · Cuatro definiciones oficiales de UCDP comparadas
+
+- [PR #693](https://github.com/mamg97/segundo-cerebro/pull/693) fusionada en `main` (squash `e978cd86e692ff4efe97d64329eeb812a7a977a8`). Auditor de catálogo/CSV real, pruebas sintéticas, [main ciencia](https://github.com/mamg97/segundo-cerebro/actions/runs/39298237486), privacidad y Pages SUCCESS.
+- [Documento científico](ONSET_FOUR_VARIANT_SEMANTICS_AV050.md). Se incorpora UCDP 25.1 country-level multiple-onset oficial (`ucdp-intrastate-country-multiple-onset-251.csv`, SHA-256 observado octubre 2026 `5fe7411942aa7e6a38d6386faa64f4d7f0703482509f121c4136c0e3223d7f05`). Consta de 12.606 filas y 53 duplicaciones por GW-año; para comparación se proyectan filas repetidas por OR descriptivo sin aprobar entrenamiento.
+- Sobre **10.130** GW-año comunes (1946–2017), discrepancias con etiqueta antigua: 25.1 **country** = **218**, 25.1 **country multiple** = **218** y 25.1 **conflict ANY** = **96**. Las binarias `onset1` de country y country-multiple coinciden sobre este subconjunto, sin implicar igualdad de otros indicadores, periodos ni estimands. De 212 antiguos positivos frente a country negativo, 127 son conflict positivo pero multiple negativo y **85** permanecen negativos en todas las definiciones modernas; **66 de estos 85** son anteriores a 1989 y **19** posteriores (hasta 2017).
+- **Canónico Sheets releído:** `PsicoAvances=50` con `AV-20261019-050=VERIFICADO`; `MAD-02=PARCIAL`; `PsicoPredicciones=0`. AV-042/046 sin mutar, cohorte sombra privada 2027 sin cambios, 0 € gasto adicional.
+- **Próximo ensayo AV-051:** estudiar por separado las 85 diferencias residuales contra historias de conflicto UCDP/PRIO y etiqueta `newconf`; continuar autenticación de vintages y roster pre-emisión. No declarar causalidad de revisiones ni emitir Brier ficticio.
+
+---
+
 ## AV-20261019-049 · Triangulación semántica de inicio intrastatal
 
 - [PR #691](https://github.com/mamg97/segundo-cerebro/pull/691) **fusionada en main** (squash `5a009bd793fc7f7593473acd090de7382356d64f`). PR pruebas sintéticas, triangulación de tres CSV reales y privacidad SUCCESS; [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39297184405), privacy y Pages SUCCESS.
