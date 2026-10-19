@@ -159,10 +159,7 @@ def main():
         expected_zip,expected_csv=DYAD_OBSERVED_PINS_2026[v]
         if sha256(dyad_blob).hexdigest()!=expected_zip or sha256(dyad_csv).hexdigest()!=expected_csv:
             raise ValueError("Dyadic edition bytes changed from October-2026 observed SHA pins")
-        pinned_download,pinned_csv=DYAD_OBSERVED_PINS_2026[v]
-        if sha256(dyad_blob).hexdigest()!=pinned_download or sha256(dyad_csv).hexdigest()!=pinned_csv:
-            raise ValueError("Dyadic source changed from October-2026 observed pin; no silent replacement")
-                dyads[v]=read_dyads(dyad_csv,v)
+        dyads[v]=read_dyads(dyad_csv,v)
         inventory[v]={"official_url":dyad_urls[v],
                       "download_sha256_observed_now":sha256(dyad_blob).hexdigest(),
                       "csv_sha256_observed_now":sha256(dyad_csv).hexdigest()}
