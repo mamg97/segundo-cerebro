@@ -36,6 +36,10 @@ function batchRow(sheet,start,values){
 export function planRecipeMutation(sources,payload,{now="2026-10-19T10:00:00.000Z",newId}={}){
   if(!payload||!["edit","delete"].includes(payload.action)||!ID.test(trim(payload.recipeId,160)))
     throw new RecipeEditError("RECIPE_INVALID_EDIT");
+  const headers=sources.recipes?.[0]||[];
+  if ((headers[15] && headers[15]!=="categoria_receta") ||
+      (headers[16] && headers[16]!=="estado_receta"))
+    throw new RecipeEditError("RECIPE_SCHEMA_CONFLICT",409);
   const catalog=rows(sources.recipes||[]);
   const source=catalog.find(x=>trim(x.data.recipe_id)===payload.recipeId);
   if(!source)throw new RecipeEditError("RECIPE_NOT_FOUND",404);
