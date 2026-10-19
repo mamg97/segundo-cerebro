@@ -1969,16 +1969,16 @@ try {
   });
   assertCheck(pinnedActions, "Home · Actualizar permanece fijo junto a los demás botones al desplazarse");
 
-  const menuSecondCard = await page.evaluate(() => {
-    const summary = document.querySelector(".daily-overview-grid");
-    const first = summary?.querySelector(":scope > #home-health-card");
-    const second = summary?.querySelector(":scope > #home-weekly-menu-panel");
-    const pantry = summary?.querySelector(":scope > #home-pantry-card");
-    return Boolean(first && second && pantry && first.nextElementSibling === second &&
-      second.nextElementSibling === pantry &&
-      getComputedStyle(second).gridColumnStart === "1");
+  const menuAfterAgenda = await page.evaluate(() => {
+    const agenda = document.querySelector("#agenda-overview");
+    const menu = document.querySelector("#home-weekly-menu-panel");
+    const footer = document.querySelector("main > footer");
+    const workbench = agenda?.closest(".workbench");
+    return Boolean(agenda && menu && footer && workbench &&
+      workbench.nextElementSibling === menu &&
+      menu.nextElementSibling === footer);
   });
-  assertCheck(menuSecondCard, "Home · menú ocupa el segundo cuadro tras resumen de consumos");
+  assertCheck(menuAfterAgenda, "Home · menú aparece después de Agenda y antes del pie");
 
 
   // A brand-new Chromium session must receive content-fingerprinted JS/CSS,
