@@ -24,7 +24,7 @@ test("Home weekly menu keeps a readable meal-by-day matrix", () => {
   assert.match(renderer, /home-weekly-menu-table-cell/);
   assert.match(renderer, /weeklyMenuMatrixMoments\(weekDays\)/);
   assert.match(renderer, /renderHomeWeeklyMenuDayHeader\(day, model\)/);
-  assert.match(renderer, /renderHomeWeeklyMenuMatrixCell\(rows, selectedWeek !== currentHomeMenuWeek\(\)\)/);
+  assert.match(renderer, /renderHomeWeeklyMenuMatrixCell\(rows, false, day.date, moment.label\)/);
   assert.doesNotMatch(renderer, /class="home-weekly-menu-grid"/);
 });
 
