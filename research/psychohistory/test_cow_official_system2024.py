@@ -26,8 +26,15 @@ class OfficialZIPTests(unittest.TestCase):
         self.assertFalse(x["source_as_of_verified"])
         self.assertFalse(x["official_country_year_rows_verified"])
         self.assertFalse(x["forecast_issued"])
-        self.assertNotIn("100",str(x))
-        self.assertNotIn("2010",str(x))
+        # Literal country data must not escape. Never search short digit
+        # substrings in str(x): cryptographic hashes can randomly contain
+        # those digits, causing a flaky test on identical source rows.
+        self.assertNotIn("100,2010",repr(x))
+        self.assertNotIn("country_rows",x)
+        self.assertNotIn("country_records",x)
+        self.assertNotIn("country_ids",x)
+        self.assertEqual(len(x["archive_sha256_observed_now"]),64)
+        self.assertEqual(len(x["official_csv_sha256_observed_now"]),64)
     def test_bad_or_unsafe_archives_rejected(self):
         samples=[b"notzip",b"",zippath([("../outside.txt",b"fictional")]),
                  zippath([("/absolute.csv",b"fictional")]),
