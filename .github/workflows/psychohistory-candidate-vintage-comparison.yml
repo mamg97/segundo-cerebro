@@ -1,0 +1,46 @@
+# One-off, public-source only diagnostic; not a backtest or as-of certification.
+# Downloads source bytes to ephemeral runner, never uploads source/artifacts.
+name: Compare UCDP Candidate December 2024 and January 2025
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/candidate_cross_vintage.py"
+      - "research/psychohistory/test_candidate_cross_vintage.py"
+      - ".github/workflows/psychohistory-candidate-vintage-comparison.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consecutive-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download both official public Candidate editions, ephemeral only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ucdp-consecutive-candidate"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+            --max-time 110 --max-filesize 80000000 \
+            --output "$RUNNER_TEMP/ucdp-consecutive-candidate/december.csv" \
+            "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_0_12.csv"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+            --max-time 110 --max-filesize 80000000 \
+            --output "$RUNNER_TEMP/ucdp-consecutive-candidate/january.csv" \
+            "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v25_0_1.csv"
+      - name: Compare aggregate ID/precision transitions without exporting events
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/candidate_cross_vintage.py \
+            --december "$RUNNER_TEMP/ucdp-consecutive-candidate/december.csv" \
+            --january "$RUNNER_TEMP/ucdp-consecutive-candidate/january.csv" \
+            --december-sha256 1d826e7db13620c9978b1c3b173f01e94420ff025a6a1d2368873a8b34835b28
+          echo "Current-source comparison only. Historical as-of and model skill NOT certified."
+      - name: Securely discard ephemeral public-source working copies
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/ucdp-consecutive-candidate"
