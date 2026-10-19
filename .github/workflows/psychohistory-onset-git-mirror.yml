@@ -1,0 +1,50 @@
+# Read only third-party Git metadata, never the 68-MB CSV or its events.
+name: Psychohistory third-party historical Git mirror
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_git_mirror_witness.py"
+      - "research/psychohistory/test_onset_git_mirror_witness.py"
+      - ".github/workflows/psychohistory-onset-git-mirror.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metadata-only-mirror-witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test adversarial fictional GitHub metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s research/psychohistory -p test_onset_git_mirror_witness.py -v
+      - name: Read only immutable GitHub third-party commit and tree metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail \
+            --location --retry 2 --max-time 35 --max-filesize 1000000 \
+            -H 'Accept: application/vnd.github+json' \
+            -o "$RUNNER_TEMP/thirdparty-commit.json" \
+            'https://api.github.com/repos/knapply/data4ds4da/commits/33316d9367907b8452d3a5ac3fe0ff2bd7da7f43'
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail \
+            --location --retry 2 --max-time 35 --max-filesize 1000000 \
+            -H 'Accept: application/vnd.github+json' \
+            -o "$RUNNER_TEMP/thirdparty-tree.json" \
+            'https://api.github.com/repos/knapply/data4ds4da/git/trees/9996db934c356ee561ba477b1a0a32bc996b0dc1?recursive=1'
+      - name: Certify metadata identity only; never assert historical server timestamps
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_git_mirror_witness.py \
+            --commit-json "$RUNNER_TEMP/thirdparty-commit.json" \
+            --tree-json "$RUNNER_TEMP/thirdparty-tree.json" \
+            --issue-date 2019-01-01 --issue-date 2020-01-01 --issue-date 2021-01-01
+      - name: Delete transient third-party metadata
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/thirdparty-commit.json" "$RUNNER_TEMP/thirdparty-tree.json"
