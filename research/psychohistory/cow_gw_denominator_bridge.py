@@ -69,13 +69,20 @@ def parse_cow(raw, expected_sha256=None):
         raise ValueError("Cannot parse COW v2024 CSV") from exc
     if not intervals or count < 2:
         raise ValueError("Insufficient COW membership data")
+    touching_boundaries = 0
     for code, times in intervals.items():
         times.sort()
-        if any(a[1] >= z[0] for a,z in zip(times,times[1:])):
-            raise ValueError("Overlapping intervals for a COW state code")
+        for previous, following in zip(times, times[1:]):
+            if previous[1] > following[0]:
+                raise ValueError("Overlapping COW intervals beyond a single boundary day")
+            if previous[1] == following[0]:
+                # COW v2024 uses an inclusive 2006-06-03 handoff for code 345.
+                # Record ambiguity; never decide which state owns that day.
+                touching_boundaries += 1
     return {"schema":"psychohistory.cow2024_membership_input.v1",
             "version":OFFICIAL_COW_VERSION,"sha256_observed_now":digest,
             "n_intervals":count,"n_distinct_codes_historical":len(intervals),
+            "n_touching_boundary_dates_unresolved":touching_boundaries,
             "intervals":intervals,
             "hash_matches_prior_observation":expected_sha256 is not None}
 
@@ -164,6 +171,7 @@ def compare(cow, gw, months):
         "gw_micro_sha256_observed_now":gw["micro_sha256_observed_now"],
         "n_cow_historical_intervals":cow["n_intervals"],
         "n_cow_historical_codes":cow["n_distinct_codes_historical"],
+        "n_cow_shared_day_handoffs_not_disambiguated":cow["n_touching_boundary_dates_unresolved"],
         "n_gw_base_codes":gw["n_gw_base_codes"],
         "n_gw_micro_codes":gw["n_gw_micro_codes"],
         "n_gw_combined_codes":gw["n_combined_codes"],
