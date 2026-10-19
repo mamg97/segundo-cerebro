@@ -73,3 +73,31 @@ Siguiente etapa: registrar decisiones individuales con evidencia y
 versiones pertinentes, diseñar un `crosswalk` validado con casos
 especiales y conseguir testigos de disponibilidad histórica de datos
 Candidate y roster, todo ello antes de construir negativos.
+
+## Resultados empíricos de las fuentes públicas
+
+La [ejecución 39235681286](https://github.com/mamg97/segundo-cerebro/actions/runs/39235681286)
+ha procesado realmente los ficheros originales fijados en la PR, con
+trazas reducidas a contadores y sin generar la cola individual en CI.
+
+| Mes | COW completo | GW+micro completo | Abreviatura y número coinciden | Abreviatura coincide, número difiere | COW sin abreviatura pareja | GW sin abreviatura pareja |
+|---|---:|---:|---:|---:|---:|---:|
+| 2019-12 | 195 | 197 | 186 | 4 | 5 | 7 |
+| 2020-12 | 195 | 197 | 186 | 4 | 5 | 7 |
+| 2024-12 | 195 | — | — | — | — | — |
+| 2025-01 | — | — | — | — | — | — |
+
+Para cada uno de los dos meses comparables, **190 propuestas textuales**
+(186 con número igual, cuatro con número diferente), dos contactos
+numéricos no resueltos con abreviatura distinta. **Ningún ID se ha
+homologado.** Las coincidencias tampoco certifican continuidad territorial
+en períodos posteriores a los intervalos de las fuentes.
+
+La cola de revisión privada, si un responsable la genera manualmente,
+contendría **404 entradas** para los meses 2019-12 y 2020-12 juntos:
+190 propuestas y 12 pendientes de cada mes. La CI no la produjo, no
+guardó filas individuales ni publicó tabla de correspondencias.
+
+Estos resultados identifican explícitamente el trabajo pendiente, pero
+**no resuelven ninguna etiqueta negativa de conflictos ni permiten
+construir un panel `as-of` válido**.
