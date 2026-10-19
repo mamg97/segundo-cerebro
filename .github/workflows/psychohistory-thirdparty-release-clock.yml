@@ -1,0 +1,43 @@
+# Read a third-party PUBLIC catalog record, never archive UCDP event data.
+# Metadata observation is NOT a dated byte attestation or a valid backtest.
+name: Psychohistory third-party Candidate release metadata check
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/thirdparty_release_clock.py"
+      - "research/psychohistory/test_thirdparty_release_clock.py"
+      - ".github/workflows/psychohistory-thirdparty-release-clock.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate-release-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve independently maintained OWID UCDP version metadata into runner temp
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+            --max-time 60 --max-filesize 1000000 -G \
+            --data-urlencode 'sql=select producer,versionProducer,urlDownload,datePublished,dateAccessed from origins where id=2913' \
+            --output "$RUNNER_TEMP/ucdp-quarterly-metadata.json" \
+            'https://datasette-public.owid.io/owid.json'
+      - name: Apply conservative three-origin metadata-only gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/thirdparty_release_clock.py \
+            --catalog-json "$RUNNER_TEMP/ucdp-quarterly-metadata.json" \
+            --expected-version "v24.01.24.12" \
+            --expected-download-url "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_01_24_12.csv" \
+            --catalog-evidence-url "https://datasette-public.owid.io/owid.json?sql=select%20producer%2CversionProducer%2CurlDownload%2CdatePublished%2CdateAccessed%20from%20origins%20where%20id%3D2913" \
+            --issue-month 2025-01 --issue-month 2025-02 --issue-month 2025-03
+          echo 'No historical byte attestation, no model score, no real-time issue.'
+      - name: Delete third-party catalog response
+        if: always()
+        run: rm -f "$RUNNER_TEMP/ucdp-quarterly-metadata.json"
