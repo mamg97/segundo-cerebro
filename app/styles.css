@@ -28220,3 +28220,37 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .recipe-catalog-actions { gap: 5px; padding-inline: 0; }
   .recipe-catalog-action { min-height: 40px; padding: 7px 3px; font-size: 10.5px; }
 }
+
+/* Weekly menu: editable consumed meals and explicit unassigned slots. */
+.home-weekly-menu-table-cell .home-menu-add-action {
+  display: block;
+  width: 100%;
+  min-height: 37px;
+  margin-top: 7px;
+  padding: 8px 7px;
+  border: 1px dashed color-mix(in srgb, var(--blue) 55%, var(--line));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--blue) 5%, var(--surface));
+  color: var(--blue);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.home-weekly-menu-table-cell .home-menu-add-action:hover {
+  border-style: solid;
+  background: color-mix(in srgb, var(--blue) 11%, var(--surface));
+}
+.home-menu-add-action:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.home-menu-add-action:disabled { opacity: .5; cursor: wait; }
+.home-menu-editor-confirm {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--ink);
+}
+.home-menu-editor-confirm input { width: 18px; height: 18px; accent-color: var(--blue); }
+.home-menu-item-actions .home-menu-consumed-label { align-self: center; flex: 1 1 auto; }
+.home-menu-item-actions .home-menu-consumed-label + button { flex: 1 1 auto; }
