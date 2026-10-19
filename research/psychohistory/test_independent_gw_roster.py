@@ -57,6 +57,16 @@ class IndependentGwRosterTests(unittest.TestCase):
                 (123,"FAK","Fictionia","2020-01-02","2020-01-01"),
                 (456,"SIM","Simuland","2019-01-01","2020-12-31")))
 
+    def test_legacy_state_names_decode_but_original_bytes_stay_hashed(self):
+        source = (
+            "statenumber\\tstateid\\tcountryname\\tstart\\tend\\n"
+            "123\\tFAK\\tFicci\u00f3nia\\t2010-01-01\\t2020-12-31\\n"
+            "456\\tSIM\\tSimuland\\t2011-01-01\\t2020-12-31\\n"
+        ).replace("\\t", "\t").replace("\\n", "\n").encode("cp1252")
+        result = parse_intervals(source)
+        self.assertEqual(result["hash_observed_now"], hashlib.sha256(source).hexdigest())
+        self.assertEqual(audit_months(result, ["2020-12"])["months"][0]["n_members_full_month"], 2)
+
     def test_roster_rejects_unordered_months_and_missing_country_codes(self):
         source = parse_intervals(sample())
         for months in (["2020-01","2019-01"], ["2020-01","2020-01"], ["2020-00"], [],["2040-13"]):
