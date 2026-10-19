@@ -30,12 +30,12 @@ jobs:
             --location --retry 2 --max-time 35 --max-filesize 1000000 \
             -H 'Accept: application/vnd.github+json' \
             -o "$RUNNER_TEMP/thirdparty-commit.json" \
-            'https://api.github.com/repos/knapply/data4ds4da/commits/02ac3d720bb0a34248888a6900e2d7854be8a4ba'
+            'https://api.github.com/repos/knapply/data4ds4da/commits/33316d9367907b8452d3a5ac3fe0ff2bd7da7f43'
           curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail \
             --location --retry 2 --max-time 35 --max-filesize 1000000 \
             -H 'Accept: application/vnd.github+json' \
             -o "$RUNNER_TEMP/thirdparty-tree.json" \
-            'https://api.github.com/repos/knapply/data4ds4da/git/trees/58119f4869633210bc28b94bce9061596a517ed3?recursive=1'
+            'https://api.github.com/repos/knapply/data4ds4da/git/trees/9996db934c356ee561ba477b1a0a32bc996b0dc1?recursive=1'
       - name: Certify metadata identity only; never assert historical server timestamps
         shell: bash
         run: |
