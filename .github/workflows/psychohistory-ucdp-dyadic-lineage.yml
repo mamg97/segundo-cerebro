@@ -1,0 +1,34 @@
+# AV-053: read-only public UCDP archives; no IDs or historical event rows in logs.
+name: Psychohistory historical UCDP dyadic lineage
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/ucdp_dyadic_lineage_av053.py"
+      - "research/psychohistory/test_ucdp_dyadic_lineage_av053.py"
+      - ".github/workflows/psychohistory-ucdp-dyadic-lineage.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  adversarial-fake-dyads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s research/psychohistory -p test_ucdp_dyadic_lineage_av053.py -v
+  real-official-dyadic-vintages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compare exact 61 historical newconf cases against Dyadic 19.1 and 25.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ucdp_dyadic_lineage_av053.py
+          echo 'Only source SHA256 and aggregate dyad-year coverage are reported.'
+          echo 'No cross-release dyad identity or historical as-of timestamp is certified.'
