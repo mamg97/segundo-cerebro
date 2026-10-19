@@ -119,11 +119,12 @@ def run():
             raise ValueError("Pinned existing UCDP checksum changed")
         parsed[key]=parse(raw,key)
     latest=fetch(url)
-    multi=parse(latest,"country")
+    multi=parse(latest,"conflict")
     report=four_way(parsed["old"],parsed["country"],parsed["conflict"],multi)
     report["new_variant_official_link"]=url
     report["new_variant_sha256_observed_oct2026"]=sha256(latest).hexdigest()
     report["new_variant_rows"]=multi["rows"]
+    report["new_variant_duplicate_rows_projected_by_any"]=multi["duplicates"]
     report["new_variant_country_year_uniqueness_verified"]=multi["duplicates"]==0
     return report
 
