@@ -59,3 +59,31 @@ fechas efectivas y política sobre sucesión/microestados.
 
 [Workflow de inspección real](../../.github/workflows/psychohistory-cow-gw-name-triage.yml).
 La sección de resultados empíricos se incorporará tras pasar CI.
+
+## Resultado empírico verificado — 19/10/2026
+
+La [ejecución del auditor con las tres fuentes reales](https://github.com/mamg97/segundo-cerebro/actions/runs/39240446962)
+ha encontrado los siguientes recuentos:
+
+| Mes | Estados COW / GW+micro | Abreviatura coincidente | Abreviatura igual, número distinto | Nombre exacto entre abreviaturas diferentes | Pendientes COW / GW tras filtrar por nombre |
+|---|---|---:|---:|---:|---:|
+| Diciembre 2019 | 195 / 197 | 190 | 4 | 3 | 2 / 4 |
+| Diciembre 2020 | 195 / 197 | 190 | 4 | 3 | 2 / 4 |
+| Diciembre 2024 | 195 / sin cobertura GW | — | — | 0 | — |
+| Enero 2025 | sin cobertura / sin cobertura | — | — | 0 | — |
+
+De las tres coincidencias exactas de nombre entre abreviaturas
+diferentes, **una** conserva el número de código y **dos** lo cambian.
+Las tres quedan expresamente como **candidatas no aprobadas**.
+Se observan asimismo **dos** contactos numéricos entre abreviaturas
+no emparejadas; el número compartido **no implica** identidad.
+
+La ejecución generó únicamente **seis unidades de revisión potencial**
+(tres por mes comparable) como contador: **no** exportó sus nombres ni
+creó la cola detallada opcional. No encontró nombres duplicados
+ambiguos en esos dos meses, sin que ello signifique que las
+definiciones territoriales sean comparables.
+
+La normalización de nombres sirve para ordenar la inspección
+documental, no para alterar las cifras del denominador ni pasar
+ninguna puerta de `as-of`, geografía UCDP, labels o forecast.
