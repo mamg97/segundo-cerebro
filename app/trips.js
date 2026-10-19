@@ -187,3 +187,6 @@ export async function openTripsDetail(state,refresh=false) {
     body?.querySelector("[data-trips-retry]")?.addEventListener("click",()=>void openTripsDetail(state,true));
   }
 }
+
+// Pure helpers exported for deterministic tests with synthetic examples only.
+export { classify as classifyTripFact, titleFrom as tripDisplayTitle, dateRange as tripDateRange, validHttp as tripSafeExternalUrl };
