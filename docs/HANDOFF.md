@@ -1,3 +1,12 @@
+## PSICOHISTORIA — Comparación real Candidate diciembre 2024 → enero 2025 · 19/10/2026
+
+- **Entrega científica AV-20261019-028:** [PR #655](https://github.com/mamg97/segundo-cerebro/pull/655) fusionada en `main` (`e5fe7ab26b13`). Comparador epímero de archivos públicos 24.0.12/25.0.1, CI científica, privacidad y prueba de fuente real en success. Los CSV no se subieron a Git ni a artifacts.
+- **Resultado verificable:** 2.110 eventos diciembre, 2.159 enero, siete ID coincidentes. Los **seis** `date_prec=0` de diciembre reaparecen en enero: cinco conservan 0 y uno pasa a 1–5. En diciembre, los seis comienzan en el mes y terminan después; en enero, los siete registros con código 0 comienzan antes del mes y terminan dentro. Patrón descriptivo, **NO definición oficial de 0 ni demostración de fecha as-of**. [Protocolo y evidencia](docs/psicohistoria/CANDIDATE_CROSS_VINTAGE_2024_2025.md).
+- **Canon revalidado:** `PsicoAvances` append-only +1 (28); `MAD-02=PARCIAL`, `V2-02=EN_CURSO`, `PsicoPredicciones=0`. Fuentes observadas en octubre 2026, no certificadas como disponibles en 2024/25. Sin scores, forecasts reales, modificaciones en cohorte 2027, Worker o frontend.
+- **Siguiente prioridad:** solicitar o hallar aclaración normativa para `date_prec=0`; verificar fecha de publicación de **bytes exactos**, no solo nombre de versión; conseguir roster completo de países, incluidos los sin incidentes, y comenzar replay estrictamente vintage-correct cuando se cumplan los gates. No tocar bolsa ni convertir el resultado en skill.
+
+---
+
 ## PSICOHISTORIA — Reconciliación de Candidate mensual 24.0.12 y precision 0 · 18/10/2026
 
 - **Avance 27 confirmado:** [PR #654](https://github.com/mamg97/segundo-cerebro/pull/654) fusionada en main como `c7e3941e8484`. Tests científicos, descarga auténtica en runner efímero y control de privacidad correctos. El [codebook UCDP Candidate 1.3](https://ucdp.uu.se/downloads/candidateged/ucdp-candidate-codebook1.3.pdf) admite eventos con `date_start` o `date_end` en el mes exportado.
