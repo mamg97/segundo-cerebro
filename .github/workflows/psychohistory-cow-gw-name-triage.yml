@@ -1,0 +1,48 @@
+# Only aggregate counts: candidate name equalities are not COW/GW identity approval.
+name: Psychohistory independent state-name triage
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/cow_gw_name_triage.py"
+      - "research/psychohistory/test_cow_gw_name_triage.py"
+      - ".github/workflows/psychohistory-cow-gw-name-triage.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  country-name-review-leads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch public state-system lists at immutable Git commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/gw-cow-names"
+          origin="https://raw.githubusercontent.com/brentonk/us_diplomatic_missions/0dda0ef93b7958f67c79031c1695dd9e5408a62c/input"
+          for record in 'cow_statelist2024.csv:cow.csv' 'ksgmdw.txt:gw.txt' 'microstates.txt:micro.txt'; do
+            IFS=: read -r remote localfile <<< "$record"
+            curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
+              --max-time 45 --max-filesize 90000 \
+              --output "$RUNNER_TEMP/gw-cow-names/$localfile" "$origin/$remote"
+          done
+      - name: Validate source hashes and print ONLY aggregates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/cow_gw_name_triage.py \
+            --cow "$RUNNER_TEMP/gw-cow-names/cow.csv" \
+            --gw "$RUNNER_TEMP/gw-cow-names/gw.txt" \
+            --micro "$RUNNER_TEMP/gw-cow-names/micro.txt" \
+            --cow-sha256 722153b45eda9c39826a04aab80ca7b29a8b1cfdfe5d92714503420555675484 \
+            --gw-sha256 70ba63cd8a936a25a701be5daffa1105411da5298ff890bf4bc27ed688892b2b \
+            --micro-sha256 02b6cc749405b744258c3b314b668fa6438fbb7d869c3e7be4bd2cb6da2c5288 \
+            --month 2019-12 --month 2020-12 --month 2024-12 --month 2025-01
+          echo "Name matches are UNAPPROVED leads; do not infer UCDP coverage or issue dates."
+      - name: Destroy ephemeral state-system data
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/gw-cow-names"
