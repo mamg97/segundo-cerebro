@@ -39,7 +39,9 @@ jobs:
             --cow "$RUNNER_TEMP/cow-gw-membership/cow.csv" \
             --gw "$RUNNER_TEMP/cow-gw-membership/gw.txt" \
             --micro "$RUNNER_TEMP/cow-gw-membership/micro.txt" \
+            --cow-sha256 722153b45eda9c39826a04aab80ca7b29a8b1cfdfe5d92714503420555675484 \
             --gw-sha256 70ba63cd8a936a25a701be5daffa1105411da5298ff890bf4bc27ed688892b2b \
+            --micro-sha256 02b6cc749405b744258c3b314b668fa6438fbb7d869c3e7be4bd2cb6da2c5288 \
             --month 2020-12 --month 2024-12 --month 2025-01
           echo 'A 2025-published COW 2024 retrospective roster does NOT license a 2024 as-of forecast.'
           echo 'COW country codes are NOT equivalent to GW/UCDP country_id.'
