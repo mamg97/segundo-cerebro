@@ -24,20 +24,20 @@ jobs:
           set -euo pipefail
           curl --proto '=https' --tlsv1.2 --fail --location --retry 2 \
             --max-time 60 --max-filesize 1000000 -G \
-            --data-urlencode 'sql=select producer,versionProducer,urlDownload,datePublished,dateAccessed from origins where id=2913' \
-            --output "$RUNNER_TEMP/ucdp-quarterly-metadata.json" \
+            --data-urlencode 'sql=select producer,versionProducer,urlDownload,datePublished,dateAccessed from origins where id=2054' \
+            --output "$RUNNER_TEMP/ucdp-monthly-metadata.json" \
             'https://datasette-public.owid.io/owid.json'
       - name: Apply conservative three-origin metadata-only gate
         shell: bash
         run: |
           set -euo pipefail
           python3 research/psychohistory/thirdparty_release_clock.py \
-            --catalog-json "$RUNNER_TEMP/ucdp-quarterly-metadata.json" \
-            --expected-version "v24.01.24.12" \
-            --expected-download-url "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_01_24_12.csv" \
-            --catalog-evidence-url "https://datasette-public.owid.io/owid.json?sql=select%20producer%2CversionProducer%2CurlDownload%2CdatePublished%2CdateAccessed%20from%20origins%20where%20id%3D2913" \
-            --issue-month 2025-01 --issue-month 2025-02 --issue-month 2025-03
+            --catalog-json "$RUNNER_TEMP/ucdp-monthly-metadata.json" \
+            --expected-version "24.0.10" \
+            --expected-download-url "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_0_10.csv" \
+            --catalog-evidence-url "https://datasette-public.owid.io/owid.json?sql=select%20producer%2CversionProducer%2CurlDownload%2CdatePublished%2CdateAccessed%20from%20origins%20where%20id%3D2054" \
+            --issue-month 2024-10 --issue-month 2024-11 --issue-month 2024-12
           echo 'No historical byte attestation, no model score, no real-time issue.'
       - name: Delete third-party catalog response
         if: always()
-        run: rm -f "$RUNNER_TEMP/ucdp-quarterly-metadata.json"
+        run: rm -f "$RUNNER_TEMP/ucdp-monthly-metadata.json"
