@@ -146,6 +146,7 @@ export function manualCompanionOptions(values) {
       /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(String(row.data.id || "")))
     .map(({data}) => ({
       id: String(data.id), name: String(data.nombre || "").trim(),
+      companionType: /FOOD_COMPANION_TYPE:(yogur|guarnicion)/i.exec(String(data.nota||""))?.[1]?.toLowerCase() || "guarnicion",
       serving: Number(data.racion), unit: String(data.unidad || "").trim(),
       kcalPerServing: Number(data.kcal_racion),
       proteinPerServing: Number(data.proteinas_g),
@@ -166,21 +167,28 @@ export function planMenuFoodAddition(values,payload,foods,now) {
   ensure(validDate(payload?.date),"INVALID_MENU_DATE",400);
   const label=allowedMoments.get(normalize(payload?.moment));
   ensure(Boolean(label),"INVALID_MENU_MOMENT",400);
-  ensure(normalize(payload?.newCompanionType)==="guarnicion","INVALID_COMPANION_TYPE",400);
+  ensure(["guarnicion","yogur"].includes(normalize(payload?.newCompanionType)),"INVALID_COMPANION_TYPE",400);
   ensure(payload?.confirmConsumed!==true,"CONFIRM_CONSUMPTION_SEPARATELY",409);
   const units=servings(payload?.newServings);
   ensure(Number.isSafeInteger(units),"INVALID_FOOD_MULTIPLIER",400);
   const food=foods.find(row=>row.id===payload?.newFoodId);
   ensure(Boolean(food),"FOOD_NOT_FOUND",404);
+  ensure(normalize(payload.newCompanionType)===food.companionType,"FOOD_COMPANION_TYPE_MISMATCH",409);
+  if(food.companionType==="yogur" && ["comida","cena"].includes(normalize(label)))
+    ensure(units===1,"ONLY_ONE_DESSERT_PER_MEAL",409);
   const items=rowTable(values);
   const peers=items.filter(row=>row.data.fecha===payload.date &&
     momentKey(row.data)===normalize(label)&&active(row.data));
   ensure(!peers.some(row=>row.data.food_id===food.id),"FOOD_ALREADY_IN_MEAL",409);
+  if(food.companionType==="yogur" && ["comida","cena"].includes(normalize(label)))
+    ensure(!peers.some(row=>normalize(row.data.tipo_acompanante)==="yogur"),"DESSERT_ALREADY_IN_MEAL",409);
   const sourceRow=items.length?Math.max(...items.map(x=>x.sourceRow))+1:2;
   ensure(sourceRow>=2&&sourceRow<=2000,"MENU_SHEET_CAPACITY",409);
   const count=food.serving*units;
   const isPicos=/^picos/i.test(food.unit);
-  const name=isPicos?"Picos 100% integrales de trigo Hacendado · "+count+" picos" : food.name+(units===1?"":" × "+units);
+  const name=isPicos?"Picos 100% integrales de trigo Hacendado · "+count+" picos" :
+    (food.companionType==="yogur" && ["comida","cena"].includes(normalize(label))?"Postre: ":"")+
+    food.name+(units===1?"":" × "+units);
   const fields={
     semana_inicio:startOfWeek(payload.date),fecha:payload.date,momento:label,
     recipe_id:"",food_id:food.id,nombre:name,cantidad:count,unidad:food.unit,
@@ -189,10 +197,84 @@ export function planMenuFoodAddition(values,payload,foods,now) {
     proteinas_g:Math.round(food.proteinPerServing*units*1000)/1000,
     carbohidratos_g:Math.round(food.carbsPerServing*units*1000)/1000,
     grasas_g:Math.round(food.fatPerServing*units*1000)/1000,
-    nota:"Acompañante seleccionado manualmente de Comidas. "+units+" ración(es) de "+
-      food.serving+" "+food.unit+"; peso operativo 2 g/pico si aplica, NO medido. Consumo no confirmado.",
-    updated_at:now,tipo_item:"acompanante",tipo_acompanante:"guarnicion"
+    nota:"Acompañante seleccionado manualmente de Comidas / Despensa. "+
+      units+" ración(es) de "+food.serving+" "+food.unit+
+      (isPicos?"; peso operativo 2 g/pico estimado, NO medido":"")+
+      ". Consumo no confirmado.",
+    updated_at:now,tipo_item:"acompanante",tipo_acompanante:food.companionType
   };
   return {updates:Object.entries(fields).map(([key,value])=>put("MenuSemanal",sourceRow,headers,key,value)),
     action:"add-food",sourceRow};
+}
+
+/**
+ * Safely swaps an existing PLANNED food companion (e.g. natural yogurt to coconut)
+ * without turning it into a recipe, losing its product photo, duplicating Registro,
+ * or changing the main dish. Requires the stale-proof source-row identity.
+ */
+export function planMenuFoodReplacement(values,payload,foods,now){
+  const headers=(values?.[0]||[]).map(x=>String(x||"").trim());
+  const keys=["fecha","momento","recipe_id","food_id","nombre","cantidad","unidad",
+    "estado","kcal","proteinas_g","carbohidratos_g","grasas_g","nota","updated_at","tipo_item","tipo_acompanante"];
+  ensure(keys.every(k=>headers.includes(k)),"MENU_SCHEMA_UNSUPPORTED",409);
+  ensure(validDate(payload?.date),"INVALID_MENU_DATE",400);
+  ensure(Number.isSafeInteger(payload?.sourceRow)&&payload.sourceRow>=2&&payload.sourceRow<=2000,
+    "INVALID_MENU_EDIT",400);
+  const foodId=String(payload?.foodId||"");
+  const newId=String(payload?.newFoodId||"");
+  ensure(/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(foodId) &&
+    /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(newId),"INVALID_FOOD_SELECTION",400);
+  const items=rowTable(values);
+  const existing=items.find(x=>x.sourceRow===payload.sourceRow);
+  ensure(existing && existing.data.fecha===payload.date &&
+    existing.data.recipe_id==="" && existing.data.food_id===foodId &&
+    existing.data.nombre===payload.name &&
+    String(existing.data.updated_at||"")===String(payload.updatedAt||"") &&
+    momentKey(existing.data)===normalize(canonicalWeeklyMenuMoment({moment:payload.moment,name:payload.name})),
+    "MENU_EDIT_CONFLICT",409);
+  ensure(["planificado","pendiente"].includes(normalize(existing.data.estado)),
+    "MENU_EDIT_NOT_PLANNED",409);
+  ensure(normalize(existing.data.tipo_item)==="acompanante",
+    "MENU_EDIT_NOT_SUPPORTED_ITEM",409);
+  const companionType=normalize(existing.data.tipo_acompanante);
+  ensure(["yogur","guarnicion"].includes(companionType),"INVALID_FOOD_COMPANION",409);
+  const selected=foods.find(x=>x.id===newId);
+  ensure(selected,"FOOD_NOT_FOUND",404);
+  ensure(selected.companionType===companionType,"FOOD_COMPANION_TYPE_MISMATCH",409);
+  const n=servings(payload?.newServings);
+  ensure(Number.isSafeInteger(n),"INVALID_FOOD_MULTIPLIER",400);
+  const moment=momentKey(existing.data);
+  if(companionType==="yogur" && ["comida","cena"].includes(moment))
+    ensure(n===1,"ONLY_ONE_DESSERT_PER_MEAL",409);
+  ensure(!(newId===foodId && Number(existing.data.cantidad)===selected.serving*n),
+    "FOOD_SELECTION_UNCHANGED",409);
+  const peers=items.filter(x=>x.sourceRow!==existing.sourceRow&&
+    x.data.fecha===payload.date&&momentKey(x.data)===moment&&active(x.data));
+  ensure(!peers.some(x=>x.data.food_id===newId),"FOOD_ALREADY_IN_MEAL",409);
+  if(companionType==="yogur"&&["comida","cena"].includes(moment))
+    ensure(!peers.some(x=>normalize(x.data.tipo_acompanante)==="yogur"),
+      "DESSERT_ALREADY_IN_MEAL",409);
+  // Older duplicates of the old source identity must be retired to prevent
+  // a ghost yogurt returning when the current ID is updated.
+  const copies=items.filter(x=>x.data.fecha===existing.data.fecha &&
+    momentKey(x.data)===moment && x.data.food_id===foodId&&active(x.data));
+  ensure(copies.length===1,"AMBIGUOUS_FOOD_VERSIONS",409);
+  const total=selected.serving*n;
+  const prefix=companionType==="yogur"&&["comida","cena"].includes(moment)?"Postre: ":"";
+  const title=selected.name+(n===1?"":" × "+n);
+  const fields={
+    recipe_id:"",food_id:selected.id,nombre:prefix+title,
+    cantidad:total,unidad:selected.unit,
+    kcal:Math.round(selected.kcalPerServing*n*1000)/1000,
+    proteinas_g:Math.round(selected.proteinPerServing*n*1000)/1000,
+    carbohidratos_g:Math.round(selected.carbsPerServing*n*1000)/1000,
+    grasas_g:Math.round(selected.fatPerServing*n*1000)/1000,
+    nota:"Sustitución manual de alimento previsto. Anterior: "+
+      String(existing.data.nombre||"").slice(0,180)+
+      ". Nuevo producto canónico de Despensa: "+selected.id+
+      ". Sin consumo confirmado; no afecta al plato principal ni a Registro.",
+    updated_at:now,tipo_item:"acompanante",tipo_acompanante:companionType
+  };
+  return {updates:Object.entries(fields).map(([key,v])=>put("MenuSemanal",existing.sourceRow,headers,key,v)),
+    action:"replace-food",sourceRow:existing.sourceRow};
 }
