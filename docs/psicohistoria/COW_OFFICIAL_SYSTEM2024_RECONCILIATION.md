@@ -53,7 +53,7 @@ exclusivamente una relación descriptiva **COW frente a COW**.
 
 ## Resultado empírico: conciliación exacta
 
-Evidencia: [GitHub Actions de la PR #669](https://github.com/mamg97/segundo-cerebro/actions/runs/39246504045).
+Evidencia: [GitHub Actions de la PR #669](https://github.com/mamg97/segundo-cerebro/actions/runs/39247155902).
 
 | Métrica agregada | Resultado |
 |---|---:|
