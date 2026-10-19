@@ -36,7 +36,7 @@ test("Consumed, change, and add remain visible and tappable on narrow phones",()
 
 test("Compact layout is explicitly mobile scoped; asset versions are consistent",()=>{
   assert.match(mobile,/^\/\* Mobile Home weekly menu: more days[\s\S]*?@media \(max-width: 560px\)/);
-  assert.equal(html.includes("styles.css?v=0.44.65"),true);
-  assert.equal(html.includes("app.js?v=0.44.65"),true);
+  assert.equal(html.includes("styles.css?v=0.44.66"),true);
+  assert.equal(html.includes("app.js?v=0.44.66"),true);
   assert.match(css,/\.home-weekly-menu-table\s*\{[\s\S]*?grid-template-columns: 118px repeat\(7, minmax\(160px, 1fr\)\)/);
 });
