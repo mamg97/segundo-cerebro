@@ -91,7 +91,8 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       String(original.data.food_id || "").trim() !== String(payload.foodId || "") ||
       String(original.data.updated_at || "") !== String(payload.updatedAt || "") ||
       String(original.data.nombre || "").trim() !== String(payload.name || "").trim() ||
-      String(original.data.momento || "").trim() !== String(payload.moment || "").trim())
+      normalize(canonicalWeeklyMenuMoment({moment:original.data.momento,name:original.data.nombre,note:original.data.nota})) !==
+        normalize(canonicalWeeklyMenuMoment({moment:payload.moment,name:payload.name})))
     throw new MenuEditError("MENU_EDIT_CONFLICT", 409);
   const oldIdentity = asIdentity(original.data);
   const duplicates = all.filter(row => asIdentity(row.data) === oldIdentity);
