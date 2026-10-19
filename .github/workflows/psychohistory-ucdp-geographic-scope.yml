@@ -40,7 +40,9 @@ jobs:
           python3 research/psychohistory/ucdp_candidate_geographic_scope.py \
             --official-page "$RUNNER_TEMP/ucdp-geography/olddw.html" \
             --september "$RUNNER_TEMP/ucdp-geography/GEDEvent_v20_0_9.csv" \
-            --october "$RUNNER_TEMP/ucdp-geography/GEDEvent_v20_0_10.csv"
+            --october "$RUNNER_TEMP/ucdp-geography/GEDEvent_v20_0_10.csv" \
+            --september-sha256 a140ba18797a8efa1441536919afd8abb9ac356b33c4c33100ccfe67a8d7c968 \
+            --october-sha256 f0c164efba1325a774be72431d9934277c12ac4b8aa56838977e43b3e5492bd0
           echo "No geographic denominator, 0-event label, or as-of data certified."
       - name: Remove all raw source files even if validation fails
         if: always()
