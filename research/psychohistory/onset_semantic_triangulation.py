@@ -28,7 +28,7 @@ SOURCES={
 }
 
 def parse(data, kind):
-    if kind not in SOURCES or not isinstance(data,bytes) or not 100<=len(data)<=30_000_000:
+    if kind not in SOURCES or not isinstance(data,bytes) or not 20<=len(data)<=30_000_000:
         raise ValueError("Unknown source or bad size")
     try: rdr=csv.DictReader(io.StringIO(data.decode("utf-8-sig"),newline=""))
     except UnicodeError as e: raise ValueError("Expected UTF8 CSV") from e
