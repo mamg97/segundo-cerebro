@@ -165,7 +165,7 @@ def compare_token_candidates(cow, gw, months):
         "months":public,"n_private_review_rows":len(private_review),
         "one_to_one_geographic_concordance_verified":False,
         "release_dates_independently_authenticated":False,
-        "source_as_of_verified":False,"udcp_event_coverage_verified":False,
+        "source_as_of_verified":False,"ucdp_event_coverage_verified":False,
         "absence_of_event_equals_zero_verified":False,
         "vintage_correct_backtest":False,"scores_computed":False,
         "forecast_issued":False,
