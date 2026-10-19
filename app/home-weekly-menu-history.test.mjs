@@ -47,17 +47,18 @@ test("Home shows seven weekdays and supports unplanned historical days without i
   assert.match(app, /items: \[\], kcal: 0, protein: 0/);
   assert.match(app, /weekDays.map\(\(day\) => renderHomeWeeklyMenuDayHeader/);
   assert.match(app, /weekDays.map\(\(day\) => \{/);
-  assert.match(app, /Sin menú registrado para/);
-  assert.match(app, /No hay comidas registradas en esta semana/);
+  assert.match(app, /Show the seven-day matrix even when no recipes exist/);
+  assert.match(app, /\["desayuno","Desayuno"\]/);
+  assert.match(app, /\["merienda","Merienda"\]/);
 });
 
-test("historical weeks are read-only and current-week edits revalidate private canonical data", () => {
-  assert.match(app, /function renderHomeWeeklyMenuMatrixCell\(items, readOnly = false\)/);
-  assert.match(app, /const canEdit = !readOnly && sourceId && planned/);
-  assert.match(app, /renderHomeWeeklyMenuMatrixCell\(rows, selectedWeek !== currentHomeMenuWeek\(\)\)/);
-  assert.match(app, /if \(selectedWeek === currentHomeMenuWeek\(\)\) bindHomeWeeklyMenuEdits/);
-  assert.match(app, /homeWeeklyMenuWeekCache.delete\(currentHomeMenuWeek\(\)\)/);
-  assert.match(app, /loadHomeWeeklyMenu\(null, \{ force: true \}\)/);
+test("historical weeks support checked correction, addition and refresh of the selected week", () => {
+  assert.match(app, /function renderHomeWeeklyMenuMatrixCell\(items, readOnly = false, date = "", moment = ""\)/);
+  assert.match(app, /\(planned \|\| consumed\)/);
+  assert.match(app, /renderHomeWeeklyMenuMatrixCell\(rows, false, day.date, moment.label\)/);
+  assert.match(app, /bindHomeWeeklyMenuEdits\(content, data, model\);/);
+  assert.match(app, /homeWeeklyMenuWeekCache.delete\(selectedHomeMenuWeek\(\)\)/);
+  assert.match(app, /loadHomeWeeklyMenu\(null, \{ force: true, navigation: true \}\)/);
   assert.match(app, /menuWeekMonday\(data\?\.weekStart \|\| data\?\.date \|\| ""\) \|\| selectedHomeMenuWeek\(\)/);
 });
 
