@@ -1,48 +1,54 @@
-# PSICOHISTORIA — Último relevo científico verificado (19/10/2026)
+# PSICOHISTORIA — Estado científico verificado · 19/10/2026
 
-## Estado de referencia
+## Último avance — AV-20261019-035
 
-- **AV-20261019-034** registrado y reconsultado en la hoja privada canónica de PROYECTOS.
-- [PR #666](https://github.com/mamg97/segundo-cerebro/pull/666) fusionada en `main`, squash `4023d1d304d8073afadf86c24dc89d08d890c3b6`.
-- GitHub Actions: auditor real de estados, tests sintéticos, CI `main` y revisión de privacidad completados con éxito.
-- Documentación y evidencia: [ISSUE_DAY_ROSTER_GATE.md](ISSUE_DAY_ROSTER_GATE.md), [ejecución de fuentes públicas](https://github.com/mamg97/segundo-cerebro/actions/runs/39242450612).
+[PR #667](https://github.com/mamg97/segundo-cerebro/pull/667) fusionada en
+`main` con squash `b5bbcf19cc42751fbc0ca3b9857009b485ed3cd7`.
+El módulo `research/psychohistory/cow_annual_origin_gate.py`
+reproduce la regla documental de COW `system2024`: un país-año figura
+si el Estado existió en el sistema **en cualquier momento de ese año**.
+Por tanto no constituye automáticamente el roster conocido el 1 de enero.
 
-## Resultado científico
+Fuente pública `states2024` fijada por hash observado en octubre de 2026.
+[GitHub Actions](https://github.com/mamg97/segundo-cerebro/actions/runs/39245169245)
+reprodujo recuentos reales con tests sintéticos, privacidad y CI verdes.
+[Informe del avance](COW_ANNUAL_ORIGIN_GATE.md).
 
-Para emisiones el día 1, elegir como universo de países los miembros
-de **todo el mes** puede usar información que ocurre después del origen:
-junio de 2006 registra 192 Estados presentes el día 1 pero solo 191
-durante todo el mes, tanto COW v2024 como GW v7+micro; dos altas
-posteriores al origen y una baja. Julio 2011 incluye una nueva
-pertenencia durante el mes en ambos sistemas.
+**Resultado retrospectivo (códigos anuales frente a códigos 1/01):**
+1990 165/161; 2002 192/191; 2006 193/192 (194 pares código–abreviatura
+anuales por sucesión); 2008 194/193; 2011 195/194; 2020 y 2024
+195/195. El año 2025 queda sin cobertura en esta versión.
 
-Este análisis se hizo con ficheros observados en 2026, publicados
-en 2025 (COW v2024) y 2021 (GW v7); **no acredita vintages as-of**
-para 2006, 2011 o 2020. Los hashes actuales no son evidencia de
-los bytes históricamente descargables.
+**Importante:** se reconstruyó la *regla oficial* desde el CSV de
+intervalos `states2024`; NO se ha verificado directamente el CSV
+`system2024`. La versión COW 2024 se publicó en noviembre de 2025;
+no sirve como dato históricamente disponible para emisiones
+anteriores. Código COW no equivale a identificador UCDP/GW.
 
-## Bloqueos y siguiente tarea
+## Canónico privado y límites
 
-- `MAD-02=PARCIAL`, `V2-02=EN_CURSO`, `PsicoAvances=34`,
-  `PsicoPredicciones=0`; cohorte shadow 2027 intacta y no emitida.
-- No usar COW `ccode` como UCDP/GW `country_id` sin concordancia
-  territorial revisada y fechada.
-- **Siguiente avance prioritario:** comprobar de forma empírica los
-  country-year de COW `system.csv`, cuyo codebook incluye un país si
-  estuvo presente en cualquier momento del año. No aceptar ese
-  denominador como universo conocido el 1 de enero, y separar origen,
-  publicación del vintage, cobertura y definición de negativos UCDP.
-- Siguen pendientes evidencia independiente del contenido exacto
-  de versiones históricas, cobertura de países sin incidentes y un
-  backtest onset sin fugas. No afirmar predicción efectiva ni nuevos
-  Brier scores hasta demostrarlo.
+- `PsicoAvances`: último `AV-20261019-035` (**35 eventos**),
+  escrito y releído.
+- `PsicoFases.MAD-02=PARCIAL`, `PsicoHitos.V2-02=EN_CURSO`,
+  `PsicoPredicciones` sin emisiones.
+- Cohorte shadow 2027 y probabilidades sin cambios. Sin modificaciones
+  al Worker, frontend ni servicios de pago.
+- Sin testigos temporales de bytes exactos, sin correspondencia territorial
+  aprobada ni cobertura UCDP para Estados con cero sucesos: **NO**
+  entrenar ni emitir un backtest `as-of` como válido.
 
-## Notas operativas
+## Siguiente tarea concreta
 
-`docs/HANDOFF.md` contiene el relevo global del repositorio, pero
-su sección introductoria de PSICOHISTORIA quedó en AV-033 porque
-la actualización de un archivo de gran tamaño fue bloqueada por
-la conexión en este turno. El estado válido más reciente de
-PSICOHISTORIA está en **esta nota**, el informe de AV-034
-y las pestañas privadas `PsicoAvances` / `PsicoFases`.
-Este documento contiene únicamente información técnica pública.
+1. Conseguir y cotejar el **CSV oficial** `system2024`, si resulta
+   descargable, preservando cómo representa cambios de nombre bajo
+   el mismo código.
+2. Buscar roster realmente disponible en el origen histórico con
+   testigo independiente de contenido y fecha.
+3. Auditar el universo de cobertura UCDP, incluidos países sin eventos,
+   sin convertir `ausencia de fila` en etiqueta negativa.
+
+**Relevo:** `docs/HANDOFF.md` conserva secciones históricas extensas y
+una cabecera antigua de PSICOHISTORIA; esta nota pequeña es el último
+relevo técnico del subproyecto cuando el conector bloquea la escritura
+del documento global demasiado grande. El seguimiento privado sigue
+siendo la autoridad para el estado de avances y fases.
