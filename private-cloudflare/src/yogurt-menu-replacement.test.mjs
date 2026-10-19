@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {manualCompanionOptions,planMenuFoodReplacement,planMenuFoodAddition} from "./weekly-menu-extended-actions.js";
+import {manualCompanionOptions,planMenuFoodReplacement,planMenuFoodAddition,companionServingTitle} from "./weekly-menu-extended-actions.js";
 import {editWeeklyMenu} from "./weekly-menu-actions.js";
 
 const headers=["semana_inicio","fecha","momento","recipe_id","food_id","nombre","cantidad","unidad","estado",
@@ -65,12 +65,68 @@ test("correct variant of small natural is one 120g cup, not 250g",()=>{
   assert.equal(map["MenuSemanal!K3"],12);
 });
 
-test("food replacement refuses consumed, stale, fake, cross-type, double-dessert or two cups at dinner",()=>{
+test("two coconut cups are one postre item with accurate 240g, calories and protein",()=>{
+  const r=planMenuFoodReplacement([headers,main,old],
+    {...payload,newServings:2},foods,"T");
+  const map=kv(r);
+  assert.equal(map["MenuSemanal!F3"],"Postre: Yogur proteico de coco · 2 vasitos (240 g)");
+  assert.equal(map["MenuSemanal!G3"],2);
+  assert.equal(map["MenuSemanal!H3"],"vasito de 120 g");
+  assert.equal(map["MenuSemanal!J3"],146.4);
+  assert.equal(map["MenuSemanal!K3"],19.92);
+  assert.equal(map["MenuSemanal!L3"],13.68);
+  assert.equal(map["MenuSemanal!M3"],1.2);
+  assert.equal(map["MenuSemanal!R3"],"yogur");
+  assert.ok(!("MenuSemanal!I3" in map),"planned remains planned");
+  assert.ok(r.updates.every(x=>x.range.endsWith("3")));
+});
+
+test("changing 1 coconut cup to 2 in the same planned menu row is allowed",()=>{
+  const oldCoco=old.slice();
+  oldCoco[4]="merc-proteinas-coco";
+  oldCoco[5]="Postre: Yogur proteico de coco · 1 vasito (120 g)";
+  oldCoco[6]=1;
+  oldCoco[7]="vasito de 120 g";
+  oldCoco[9]=73.2;
+  oldCoco[10]=9.96;
+  const replacement=planMenuFoodReplacement([headers,main,oldCoco],
+    {...payload,foodId:oldCoco[4],name:oldCoco[5],newFoodId:oldCoco[4],newServings:2},foods,"T");
+  const m=kv(replacement);
+  assert.equal(m["MenuSemanal!F3"],"Postre: Yogur proteico de coco · 2 vasitos (240 g)");
+  assert.equal(m["MenuSemanal!J3"],146.4);
+  assert.equal(m["MenuSemanal!K3"],19.92);
+  assert.equal(m["MenuSemanal!G3"],2);
+  assert.ok(!("MenuSemanal!I3" in m));
+});
+
+test("two-cup postre addition is allowed but a second dessert entry is still blocked",()=>{
+  const request={action:"add-food",date:"2026-10-19",moment:"Comida",
+    newFoodId:"merc-proteinas-coco",newCompanionType:"yogur",newServings:2};
+  const r=planMenuFoodAddition([headers,main],request,foods,"T");
+  const m=kv(r);
+  assert.equal(m["MenuSemanal!F3"],"Postre: Yogur proteico de coco · 2 vasitos (240 g)");
+  assert.equal(m["MenuSemanal!G3"],2);
+  assert.equal(m["MenuSemanal!J3"],146.4);
+  assert.equal(m["MenuSemanal!K3"],19.92);
+  assert.equal(m["MenuSemanal!I3"],"planificado");
+  assert.throws(()=>planMenuFoodAddition([headers,main,old],request,foods,"T"),
+    error=>error.code==="DESSERT_ALREADY_IN_MEAL");
+});
+
+test("other yogurt presentations scale without falsely retaining 1 vasito on 2 units",()=>{
+  assert.equal(companionServingTitle(foods.find(x=>x.id==="merc-proteinas-fresa"),2,true),
+    "Postre: Yogur proteico de fresa · 2 vasitos (240 g)");
+  assert.equal(companionServingTitle(foods.find(x=>x.id==="merc-proteinas-natural-4x120g"),2,false),
+    "Yogur proteico natural · 2 vasitos (240 g)");
+  assert.equal(companionServingTitle(foods.find(x=>x.id==="merc-proteinas-natural"),2,true),
+    "Postre: Yogur proteico natural · 500 g (1 tarro grande)");
+});
+
+test("food replacement refuses consumed, stale, fake, cross-type, or duplicate dessert rows",()=>{
   const take=(q,rows=[headers,main,old])=>planMenuFoodReplacement(rows,q,foods,"T");
   assert.throws(()=>take({...payload,updatedAt:"STALE"}),e=>e.code==="MENU_EDIT_CONFLICT");
   assert.throws(()=>take({...payload,newFoodId:"not-listed"}),e=>e.code==="FOOD_NOT_FOUND");
   assert.throws(()=>take({...payload,newFoodId:"merc-picos-100-integral"}),e=>e.code==="FOOD_COMPANION_TYPE_MISMATCH");
-  assert.throws(()=>take({...payload,newServings:2}),e=>e.code==="ONLY_ONE_DESSERT_PER_MEAL");
   const consumed=old.slice();consumed[8]="consumido";
   assert.throws(()=>take(payload,[headers,main,consumed]),e=>e.code==="MENU_EDIT_NOT_PLANNED");
   const other=old.slice();other[4]="merc-proteinas-fresa";other[5]="Postre: Yogur fresa";other[15]="new";
@@ -113,4 +169,6 @@ test("UI offers typed yogurt swaps and shows a useful yogurt portion label",()=>
   assert.match(app,/Number of cups|Número de vasitos/);
   assert.match(app,/replace-food/);
   assert.match(app,/foodNoChange/);
+  assert.match(app,/homeMenuFoodPortionName\(selectedRecipe,requestedServings\)/);
+  assert.doesNotMatch(app,/isOnlyOneDessert && Number\(requestedServings\)!==1/);
 });
