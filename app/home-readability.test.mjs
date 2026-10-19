@@ -112,7 +112,8 @@ test("Home weekly menu is denser on phones while controls and desktop grid remai
   assert.match(mobile, /grid-template-columns:\s*52px repeat\(7, 110px\)/);
   assert.match(mobile, /max-height:\s*48px/);
   assert.match(mobile, /font-size:\s*8\.75px/);
-  assert.match(mobile, /-webkit-line-clamp:\s*3/);
+  assert.match(mobile, /white-space:\s*normal/);
+  assert.doesNotMatch(mobile, /-webkit-line-clamp/);
   assert.match(mobile, /\.home-menu-item-actions button\s*\{[\s\S]*?min-height:\s*30px/);
   assert.match(mobile, /\.home-menu-add-action\s*\{[\s\S]*?min-height:\s*30px/);
   assert.match(app, /aria-label="Ver receta: \$\{escapeHtml\(item.name \|\| "Comida"\)\}"/);
