@@ -85,7 +85,7 @@ export function planMenuAddition(values,payload,recipes,now){
     semana_inicio:startOfWeek(payload.date),fecha:payload.date,momento:label,
     recipe_id:recipe.id,food_id:"",nombre:recipe.name,cantidad:quantity,unidad:"ración",
     estado:status,kcal,proteinas_g:protein,carbohidratos_g:carbs,grasas_g:fat,
-    sesion_gym:"",nota:status==="consumido"
+    sesion_gym:placeholder[0]?.data.sesion_gym||"",nota:status==="consumido"
       ? "Añadido y confirmado como consumido desde el menú semanal."
       : "Añadido al menú semanal; consumo pendiente.",
     updated_at:now,tipo_item:"receta",tipo_acompanante:""
@@ -108,6 +108,13 @@ export function planConsumedRegisterCorrection(values,payload,original,recipe,ma
     normalize(x.data.item_id)===normalize(oldId) &&
     momentKey(x.data)===sameMoment && normalize(x.data.estado)==="consumido");
   ensure(matching.length<=1,"AMBIGUOUS_CONSUMED_REGISTRO");
+  // Legacy name-only rows could represent the same consumption. Refuse to
+  // claim a zero-match reconciliation when their provenance is ambiguous.
+  ensure(!all.some(x=>x.data.fecha===payload.date &&
+    !String(x.data.item_id||"").trim() &&
+    normalize(x.data.item_nombre)===normalize(original.nombre) &&
+    momentKey(x.data)===sameMoment && normalize(x.data.estado)==="consumido"),
+    "AMBIGUOUS_CONSUMED_REGISTRO");
   // If a new ID is already independently recorded, correcting the old
   // record into that same identity would double-count the meal.
   ensure(!all.some(x=>x.data.fecha===payload.date &&
