@@ -1,0 +1,11 @@
+# PSICOHISTORIA — AV-050 · Cuatro definiciones intrastatales bajo un único denominador
+
+**Investigación comparativa, no entrenamiento ni backtest.** AV-049 comprobó que las etiquetas antiguas difieren 218 veces de 25.1 country-level pero 96 de 25.1 conflict-level en el mismo conjunto fijo de 10.130 pares. De los 212 antiguos positivos cuando country-level es cero, 127 coinciden con conflict-level positivo y 85 no.
+
+El codebook oficial [UCDP 25.1](https://ucdp.uu.se/downloads/onset/ucdp-codebook-onset-251.pdf) define además **Intrastate Country Level Multiple Onset**: al identificar nuevos conflictos usa historia de conflicto, mientras que al identificar reinicios toma la historia del conjunto del país. No es reducible sin más a la versión conflict-level ni a la versión country-level sencilla.
+
+El auditor `research/psychohistory/onset_four_variant_semantics.py` recupera la URL exacta de esta tercera versión moderna **desde el catálogo oficial**, bajo la sección y la edición apropiadas; nunca inventa ni deriva la ruta de un archivo ficticio. Comprueba SHA-256 antiguo/country/conflict fijados en AV-049 y registra el digest de la cuarta fuente como **observación actual**, no como prueba de fecha histórica. La regla de comparación exige las mismas 10.130 claves GW-año conocidas; no admite eliminar países ni etiquetas para favorecer la concordancia.
+
+Entrega ocho subconjuntos descriptivos nuevos: 16 firmas binarias del orden `old, modern country, modern conflict ANY, modern country multiple`, cambios de etiqueta respecto a old y una comparación para el grupo residual antiguo=1/country=0/conflict=0. Rechaza faltantes, duplicados country-level y alteraciones del índice en pruebas ficticias. Todo se computa en runner efímero, sin exponer identidades de países, probabilidades ni filas.
+
+La coincidencia de etiquetas a través de ediciones no demuestra causa ni disponibilidad **as-of** en 2020. Cualquier skill de predicción requerirá roster independiente, versiones de training labels auténticas anteriores a la emisión y un único estimand preregistrado. Por diseño todos los indicadores de backtest, score, emisión y autenticidad temporal quedan en false. No se modifica el protocolo original AV-042, el experimento alternativo AV-046, ni la cohorte sombra 2027.
