@@ -246,7 +246,7 @@ def audit_official(online=True):
             data=fetch_limited(url,90_000_000)
             parsed=unpack_csv(data,url)
             result=audit_table(parsed,name)
-            result.update({"status":"OFFICIAL_BYTES_OBSERVED_NOW_NOT_HISTORICAL",
+            result.update({"status":("OFFICIAL_BYTES_OBSERVED_NOW_NOT_HISTORICAL" if result["declared_latest_year_represented"] else "OFFICIAL_BYTES_OBSERVED_NOW_TRUNCATED_COVERAGE"),
                            "download_url":url,"download_sha256_observed_now":sha256(data).hexdigest(),
                            "csv_sha256_observed_now":sha256(parsed).hexdigest()})
         except (HTTPError,URLError,TimeoutError,OSError) as exc:
