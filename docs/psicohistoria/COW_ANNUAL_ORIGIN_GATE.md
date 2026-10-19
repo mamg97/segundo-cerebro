@@ -79,3 +79,36 @@ oficial `system2024` directamente y certificar su regla real de
 representación de códigos repetidos; localizar fuente territorial
 independiente y efectivamente disponible antes de cada origen,
 además de evidencia de cobertura UCDP incluyendo Estados sin sucesos.
+
+## Primera ejecución real de fuente pública · 19/10/2026
+
+La [ejecución observacional](https://github.com/mamg97/segundo-cerebro/actions/runs/39245169245)
+validó el SHA-256 del fichero de intervalos de COW y ejecutó la
+reconstrucción de la regla anual sin almacenar datos por Estado.
+
+| Año | Códigos COW el 1/01 | Códigos en cualquier momento del año | Códigos solo anuales, ausentes el 1/01 | Pares código–abreviatura anuales |
+|---|---:|---:|---:|---:|
+| 1990 | 161 | 165 | 4 | 165 |
+| 2002 | 191 | 192 | 1 | 192 |
+| 2006 | 192 | 193 | 1 | **194** |
+| 2008 | 193 | 194 | 1 | 194 |
+| 2011 | 194 | 195 | 1 | 195 |
+| 2020 | 195 | 195 | 0 | 195 |
+| 2024 | 195 | 195 | 0 | 195 |
+| 2025 | — | — | **NO_EVALUABLE** | — |
+
+En 2006 hay **un** código adicional en el conjunto anual con
+respecto al origen enero 1, pero **dos** pares código–abreviatura
+que no aparecen ese día (incluida una sucesión bajo el mismo
+código). No son dos países nuevos independientemente
+certificados. El controlador no equipara números ni etiquetas
+a continuidad territorial.
+
+El resultado anual COW **se ha reconstruido de intervalos**
+en una fuente moderna publicada en 2025. **No** se han
+obtenido los bytes del fichero oficial `system2024`; tampoco
+hay prueba de su disponibilidad histórica. El hallazgo
+valida el riesgo del contrato temporal, NO un backtest.
+
+Las tres comprobaciones de la PR (test unitarios, privacidad
+y lectura empírica) terminaron correctamente antes del merge.
