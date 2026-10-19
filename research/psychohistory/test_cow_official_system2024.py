@@ -14,10 +14,14 @@ def zippath(entries):
 
 class OfficialZIPTests(unittest.TestCase):
     def test_safe_archive_only_metadata(self):
-        raw=zippath([("System2024.csv",b"ccode,year\n100,2010\n"),
-                     ("System2024.dta",b"fictional")])
+        fake_csv=b"ccode,year\\n".replace(b"\\n",b"\n")+b"".join(
+            b"100,2010\n" for _ in range(6000))
+        raw=zippath([("System2024/system2024.csv",fake_csv),
+                     ("System2024/system2024.dta",b"fictional")])
         x=inspect(raw)
         self.assertEqual(len(x["files"]),2)
+        self.assertEqual(x["official_csv_rows"],6000)
+        self.assertEqual(x["official_csv_header"],["ccode","year"])
         self.assertTrue(x["downloaded_in_current_runner"])
         self.assertFalse(x["source_as_of_verified"])
         self.assertFalse(x["official_country_year_rows_verified"])
