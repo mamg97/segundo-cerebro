@@ -1,6 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
+import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.59";
 import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.57";
 import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
 import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";
@@ -6493,6 +6494,16 @@ function recipeMacrosLabel(recipe) {
 
 const recipeIngredientClickControllers = new WeakMap();
 
+async function refreshRecipeCatalog() {
+  const response = await fetch("/api/nutrition?date=" + encodeURIComponent(localDateKey()) + "&refresh=1", {
+    headers: { Accept: "application/json" }, cache: "no-store", credentials: "same-origin"
+  });
+  if (!response.ok) throw new Error("RECIPE_REFRESH_FAILED");
+  const updated = await response.json();
+  if (!Array.isArray(updated.recipes)) throw new Error("RECIPE_REFRESH_INVALID");
+  renderRecipesPanel(updated);
+}
+
 function renderRecipeDetail(panel, data, recipe, options = {}) {
   const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
   const onBack = typeof options.onBack === "function" ? options.onBack : () => renderRecipesPanel(data);
@@ -6503,6 +6514,10 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
   panel.innerHTML = `
     <div class="recipe-detail-toolbar">
       <button class="recipe-back" type="button" data-recipes-back>${escapeHtml(backLabel)}</button>
+      ${privateModeKind === "remote" && !["eliminada", "sustituida", "archivada"].includes(String(recipe.status || "").toLowerCase())
+        ? '<button class="recipe-manage-action" type="button" data-recipe-edit>Modificar receta</button>' +
+          '<button class="recipe-manage-action is-delete" type="button" data-recipe-delete>Eliminar receta</button>'
+        : '<span class="recipe-archive-note">Versión histórica conservada · solo lectura</span>'}
       <a class="master-source-link" href="/api/source-link?target=health-recipes" target="_blank" rel="noopener noreferrer">Abrir Sheet ↗</a>
     </div>
 
@@ -6556,6 +6571,24 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
   `;
 
   panel.querySelector("[data-recipes-back]")?.addEventListener("click", onBack);
+  panel.querySelector("[data-recipe-edit]")?.addEventListener("click", () =>
+    renderRecipeEditor(panel, recipe, {
+      onBack: () => renderRecipeDetail(panel, data, recipe, options),
+      onSaved: refreshRecipeCatalog
+    }));
+  panel.querySelector("[data-recipe-delete]")?.addEventListener("click", (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    void deleteRecipeFromCatalog(recipe, refreshRecipeCatalog)
+      .catch((error) => {
+        button.disabled = false;
+        const warning = document.createElement("p");
+        warning.className = "recipe-edit-error";
+        warning.setAttribute("role", "alert");
+        warning.textContent = "No se pudo eliminar: " + String(error?.message || "ERROR");
+        button.after(warning);
+      }).then((success) => { if (!success && button.isConnected) button.disabled = false; });
+  });
   recipeIngredientClickControllers.get(panel)?.abort();
   const clickController = new AbortController();
   recipeIngredientClickControllers.set(panel, clickController);
@@ -6623,64 +6656,72 @@ function renderRecipesPanel(data) {
   if (!panel) return;
   recipeIngredientClickControllers.get(panel)?.abort();
   recipeIngredientClickControllers.delete(panel);
-
   const recipes = Array.isArray(data?.recipes) ? data.recipes : [];
-  const ingredients = recipeIngredientChoices(recipes);
+  const archived = panel.dataset.recipeArchiveView === "true";
+  const visibleCollection = recipes.filter(recipe =>
+    ["eliminada", "sustituida", "archivada"].includes(String(recipe.status || "").toLowerCase()) === archived);
+  const ingredients = recipeIngredientChoices(visibleCollection);
   const previous = String(panel.dataset.recipeIngredient || "");
-  const selectedIngredient = ingredients.some(ingredient => ingredient.key === previous) ? previous : "";
+  const selectedIngredient = ingredients.some(item => item.key === previous) ? previous : "";
   panel.dataset.recipeIngredient = selectedIngredient;
-  const sortedRecipes = recipeCatalogItems(recipes, selectedIngredient);
+  const allowedCategories = ["desayuno","comida_cena","media_manana_merienda"];
+  const selectedCategory = allowedCategories.includes(panel.dataset.recipeCategory) ? panel.dataset.recipeCategory : "";
+  const sortedRecipes = recipeCatalogItems(recipes, selectedIngredient, selectedCategory, archived);
+  const archiveCount = recipes.length - recipes.filter(recipe =>
+    !["eliminada","sustituida","archivada"].includes(String(recipe.status || "").toLowerCase())).length;
   panel.innerHTML = `
     <div class="recipes-toolbar">
       <div>
         <p class="context-label">Nutrición · recetario</p>
         <h3>Recetas</h3>
-        <p>Pulsa una receta para abrir su ficha completa con ingredientes y preparación.</p>
+        <p>Filtra por momento del día o ingrediente. Pulsa una receta para ver su ficha, modificarla o archivarla.</p>
       </div>
       <a class="master-source-link" href="/api/source-link?target=health-recipes" target="_blank" rel="noopener noreferrer">Abrir Sheet ↗</a>
     </div>
-
-    ${recipes.length ? `
-      <div class="recipes-filter-controls">
-        <label for="recipe-ingredient-select">Filtrar recetas por ingrediente</label>
-        <select id="recipe-ingredient-select" class="recipes-filter-select" data-recipe-ingredient-select>
-          <option value="">Todos los ingredientes</option>
-          ${ingredients.map((ingredient) => `<option value="${escapeHtml(ingredient.key)}" ${ingredient.key === selectedIngredient ? "selected" : ""}>${escapeHtml(ingredient.label)} (${ingredient.count})</option>`).join("")}
-        </select>
-        <span class="recipes-filter-count" aria-live="polite">${sortedRecipes.length} ${sortedRecipes.length === 1 ? "receta" : "recetas"}</span>
-      </div>
-      ${sortedRecipes.length ? `
-        <div class="recipes-grid">
-          ${sortedRecipes.map((recipe) => `
-            <button
-              class="recipe-card recipe-catalog-card"
-              type="button"
-              data-recipe-open="${escapeHtml(recipe.id || "")}"
-              aria-label="Abrir receta ${escapeHtml(recipe.name || "Receta")}"
-            >
-              <span class="recipe-photo recipe-catalog-photo">
-                ${recipePhotoMarkup(recipe)}
-              </span>
-              <strong>${escapeHtml(recipe.name || "Receta")}</strong>
-            </button>
-          `).join("")}
-        </div>`
-        : '<div class="health-empty health-empty-card"><strong>Sin coincidencias</strong><p>Prueba con otro ingrediente o selecciona «Todos los ingredientes».</p></div>'}
-    `
-      : '<div class="health-empty health-empty-card"><strong>Recetario preparado</strong><p>Cuando se añada la primera receta a la fuente privada, aparecerá aquí automáticamente.</p></div>'}
+    <div class="recipes-filter-controls">
+      <label for="recipe-meal-select">Momento del día</label>
+      <select id="recipe-meal-select" class="recipes-filter-select" data-recipe-meal-select>
+        <option value="">Todos los momentos</option>
+        <option value="desayuno" ${selectedCategory === "desayuno" ? "selected" : ""}>Desayuno</option>
+        <option value="comida_cena" ${selectedCategory === "comida_cena" ? "selected" : ""}>Comida / cena</option>
+        <option value="media_manana_merienda" ${selectedCategory === "media_manana_merienda" ? "selected" : ""}>Media mañana / merienda</option>
+      </select>
+      <label for="recipe-ingredient-select">Filtrar por ingrediente</label>
+      <select id="recipe-ingredient-select" class="recipes-filter-select" data-recipe-ingredient-select>
+        <option value="">Todos los ingredientes</option>
+        ${ingredients.map(item => '<option value="'+escapeHtml(item.key)+'" '+(item.key === selectedIngredient ? "selected" : "")+'>'+escapeHtml(item.label)+' ('+item.count+')</option>').join("")}
+      </select>
+      <button type="button" class="recipe-archive-toggle" data-recipe-archive-toggle aria-pressed="${archived ? "true" : "false"}">${archived ? "Ver recetas activas" : "Ver eliminadas / sustituidas ("+archiveCount+")"}</button>
+      <span class="recipes-filter-count" aria-live="polite">${sortedRecipes.length} ${sortedRecipes.length === 1 ? "receta" : "recetas"}</span>
+    </div>
+    ${sortedRecipes.length ? '<div class="recipes-grid">' + sortedRecipes.map(recipe => `
+      <button class="recipe-card recipe-catalog-card" type="button"
+        data-recipe-open="${escapeHtml(recipe.id || "")}"
+        aria-label="Abrir receta ${escapeHtml(recipe.name || "Receta")}">
+        <span class="recipe-photo recipe-catalog-photo">${recipePhotoMarkup(recipe)}</span>
+        <strong>${escapeHtml(recipe.name || "Receta")}</strong>
+        ${archived ? '<small class="recipe-archive-note">'+escapeHtml(recipe.status||"archivada")+'</small>' : ""}
+      </button>`).join("")+'</div>' :
+      '<div class="health-empty health-empty-card"><strong>Sin coincidencias</strong><p>Cambia el filtro o elige «Todos los momentos».</p></div>'}
   `;
-
-  panel.querySelector("[data-recipe-ingredient-select]")?.addEventListener("change", (event) => {
-    panel.dataset.recipeIngredient = String(event.currentTarget.value || "");
+  panel.querySelector("[data-recipe-meal-select]")?.addEventListener("change", event => {
+    panel.dataset.recipeCategory = event.currentTarget.value || "";
     renderRecipesPanel(data);
-    panel.querySelector("[data-recipe-ingredient-select]")?.focus({preventScroll: true});
   });
-  panel.querySelectorAll("[data-recipe-open]").forEach((button) => {
+  panel.querySelector("[data-recipe-ingredient-select]")?.addEventListener("change", event => {
+    panel.dataset.recipeIngredient = event.currentTarget.value || "";
+    renderRecipesPanel(data);
+  });
+  panel.querySelector("[data-recipe-archive-toggle]")?.addEventListener("click", () => {
+    panel.dataset.recipeArchiveView = archived ? "false" : "true";
+    panel.dataset.recipeIngredient = "";
+    renderRecipesPanel(data);
+  });
+  panel.querySelectorAll("[data-recipe-open]").forEach(button =>
     button.addEventListener("click", () => {
-      const recipe = recipes.find((candidate) => String(candidate.id || "") === String(button.dataset.recipeOpen || ""));
+      const recipe = recipes.find(candidate => String(candidate.id || "") === String(button.dataset.recipeOpen || ""));
       if (recipe) renderRecipeDetail(panel, data, recipe);
-    });
-  });
+    }));
 }
 
 function renderNutritionEntries(entries) {

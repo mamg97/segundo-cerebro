@@ -3,7 +3,7 @@
 import { canonicalWeeklyMenuMoment, weeklyMenuIdentity } from "./weekly-menu.js";
 
 const MENU_RANGE = "MenuSemanal!A1:R2000";
-const RECIPES_RANGE = "Recetas!A1:O1000";
+const RECIPES_RANGE = "Recetas!A1:Q1000";
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/;
 const FIELDS = ["fecha", "momento", "recipe_id", "nombre", "estado", "updated_at"];
@@ -27,7 +27,8 @@ function table(values) {
 }
 export function recipeAlternatives(rows) {
   return rows.filter(row => SAFE_ID_RE.test(String(row.data.recipe_id || "")) &&
-    String(row.data.nombre || "").trim()).map(({ data }) => ({
+    String(row.data.nombre || "").trim() &&
+    !["eliminada", "sustituida", "archivada"].includes(normalize(row.data.estado_receta))).map(({ data }) => ({
       id: String(data.recipe_id).trim(),
       name: String(data.nombre).trim(),
       servings: numberOrNull(data.raciones),

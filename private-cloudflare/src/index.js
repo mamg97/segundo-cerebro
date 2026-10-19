@@ -16,6 +16,7 @@ import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.
 import { menuConsumedFallbackForDate } from "./nutrition-history-fallback.js";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, MenuEditError } from "./weekly-menu-actions.js";
+import { mutateRecipe, RecipeEditError } from "./recipe-editor.js";
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
 import { prospectiveSummary } from "./research-evaluation.js";
 import { researchFuturesResponse } from "./research-futures.js";
@@ -272,7 +273,7 @@ async function fetchHealthRecipePhotoMeta(env, recipeId) {
     if (!recipePhotoCache.inFlight) {
       recipePhotoCache.inFlight = (async () => {
         const token = await getGoogleAccessToken(env);
-        const range = encodeURIComponent("Recetas!A1:O1000");
+        const range = encodeURIComponent("Recetas!A1:Q1000");
         const endpoint =
           "https://sheets.googleapis.com/v4/spreadsheets/" +
           encodeURIComponent(env.HEALTH_SHEET_ID) +
@@ -2967,7 +2968,7 @@ async function fetchWeeklyMenuLight(env, options = {}) {
     return null;
   });
   // Recipe photos still resolve through the authenticated same-origin route.
-  const ranges = ["MenuSemanal!A1:R2000", "Objetivos!A1:H500", "Recetas!A1:O1000"];
+  const ranges = ["MenuSemanal!A1:R2000", "Objetivos!A1:H500", "Recetas!A1:Q1000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -3067,7 +3068,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
         return null;
       })
     : Promise.resolve(null);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:R2000", "Recetas!A1:O1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000", "RecuperacionDiariaApple!A1:S2000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:R2000", "Recetas!A1:Q1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000", "RecuperacionDiariaApple!A1:S2000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -3242,6 +3243,28 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     updatedAt: item.updated_at || null
   })).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.name);
 
+  // Legacy recipes had no meal category. Infer the best-fitting category from
+  // actual MenuSemanal uses, without mutating any historical row.
+  const categoryFromMoment = (moment) => {
+    const m = String(moment || "").trim().toLowerCase();
+    if (m === "desayuno" || m === "mañana oficina") return "desayuno";
+    if (m === "comida" || m === "cena") return "comida_cena";
+    if (m === "media mañana" || m === "merienda" || m === "snack") return "media_manana_merienda";
+    return null;
+  };
+  const categoryScoreByRecipe = new Map();
+  for (const row of weeklyMenuRows) {
+    if (!row.recipeId || /^(?:omitido|retirado|cancelado)$/.test(row.status)) continue;
+    const category = categoryFromMoment(row.moment);
+    if (!category) continue;
+    if (!categoryScoreByRecipe.has(row.recipeId)) categoryScoreByRecipe.set(row.recipeId, new Map());
+    const counts = categoryScoreByRecipe.get(row.recipeId);
+    counts.set(category, (counts.get(category) || 0) + (row.status === "consumido" ? 2 : 1));
+  }
+  const inferredCategory = (id) => {
+    const scores = categoryScoreByRecipe.get(id);
+    return scores ? [...scores.entries()].sort((a, b) => b[1] - a[1])[0][0] : null;
+  };
   const recipeRows = parseTableRows(valueRanges[8]?.values || []).map((item) => ({
     id: String(item.recipe_id || "").trim(),
     name: String(item.nombre || "").trim(),
@@ -3257,7 +3280,9 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     updatedAt: item.updated_at || null,
     photoFileId: String(item.foto_drive_file_id || "").trim() || null,
     photoMimeType: String(item.foto_mime_type || "").trim() || null,
-    photoUpdatedAt: String(item.foto_updated_at || "").trim() || null
+    photoUpdatedAt: String(item.foto_updated_at || "").trim() || null,
+    category: String(item.categoria_receta || "").trim() || inferredCategory(String(item.recipe_id || "").trim()),
+    status: String(item.estado_receta || "activa").trim().toLowerCase()
   })).filter((item) => item.id);
 
   recipePhotoCache = {
@@ -5342,6 +5367,22 @@ export default {
       } catch (error) {
         console.warn("Recipe photo read failed", String(error?.message || error));
         return json({ ok: false, code: "RECIPE_PHOTO_READ_FAILED" }, 502);
+      }
+    }
+
+    // Editing creates a NEW active version. The old recipe ID and its
+    // ingredients/steps remain immutable for historical MenuSemanal links.
+    if (url.pathname === "/api/nutrition/recipes/edit") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const result = await mutateRecipe(request, env, getGoogleAccessToken);
+        healthCache = { value: null, expiresAt: 0, date: null };
+        recipePhotoCache = { value: new Map(), expiresAt: 0 };
+        return json(result);
+      } catch (error) {
+        return json({ ok: false,
+          code: error instanceof RecipeEditError ? error.code : "RECIPE_EDIT_FAILED"
+        }, error instanceof RecipeEditError ? error.status : 502);
       }
     }
 

@@ -28108,3 +28108,69 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   height: auto;
   white-space: normal;
 }
+
+/* Recipe lifecycle: category selector, versioned editor, archive browser. */
+.recipes-filter-controls [data-recipe-meal-select] { max-width: min(100%, 420px); }
+.recipe-archive-toggle,
+.recipe-manage-action,
+.recipe-edit-actions > button {
+  min-height: 37px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 12px;
+  background: var(--paper);
+  color: var(--blue);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.recipe-archive-toggle[aria-pressed="true"] {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 10%, var(--surface));
+}
+.recipe-manage-action.is-delete, .recipe-edit-error { color: var(--coral); }
+.recipe-archive-note { font-size: 11px; color: var(--ink-soft); }
+.recipe-edit-form {
+  max-width: 1000px;
+  display: grid;
+  gap: 14px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.recipe-edit-form h3 { margin: 0; font-size: 23px; }
+.recipe-edit-info { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ink-soft); }
+.recipe-edit-fields { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 11px; }
+.recipe-edit-form label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.recipe-edit-form label small { display: block; font-size: 11px; line-height: 1.5; font-weight: 400; color: var(--ink-soft); }
+.recipe-edit-form input,.recipe-edit-form select,.recipe-edit-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+.recipe-edit-form textarea { resize: vertical; white-space: pre-wrap; }
+.recipe-edit-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; }
+.recipe-edit-actions > button[type="submit"] { background: var(--blue); color: white; border-color: var(--blue); }
+.recipe-edit-actions > button:disabled { opacity: .5; cursor: wait; }
+@media (max-width: 600px) {
+  .recipe-edit-fields { grid-template-columns: 1fr; }
+  .recipe-edit-form { padding: 12px; }
+  .recipes-filter-controls { align-items: stretch; }
+  .recipe-archive-toggle { width: 100%; }
+}
