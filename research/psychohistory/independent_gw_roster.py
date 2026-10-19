@@ -41,7 +41,13 @@ def parse_intervals(raw, expected_sha256=None):
     ):
         raise ValueError("Pinned GW mirror bytes differ")
     try:
-        reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig"), newline=""), delimiter="\t")
+        # The published GW v7.0 tab file contains legacy non-UTF8 names.
+        # Keep original raw bytes/hash untouched; explicitly allow cp1252.
+        try:
+            decoded = raw.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            decoded = raw.decode("cp1252")
+        reader = csv.DictReader(io.StringIO(decoded, newline=""), delimiter="\t")
         if reader.fieldnames != list(FIELDS):
             raise ValueError("Unexpected GW source columns")
         records = {}
