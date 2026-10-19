@@ -31,21 +31,40 @@ function classify(f) {
   const txt = String(f?.summary || "");
   const match = txt.match(/^([^|]{3,45})\s*\|\s*([\s\S]+)$/);
   const label = match ? match[1].trim() : "";
-  const content = match ? match[2].trim() : txt;
+  let content = match ? match[2].trim() : txt;
   const code = norm(label);
+  let displayLabel=label || (f.type === "PLAN"?"Plan":f.type||"Nota");
+  if (code==="plan_dia") {
+    const parts=content.split(" | ");
+    if (parts.length>=2) {
+      displayLabel=parts[0];
+      content=parts.slice(1).join(" | ");
+    }
+  }
+  if (code==="tarea") {
+    const parts=content.split(" | ");
+    if (parts.length>=3) {
+      displayLabel=parts[0].replaceAll("-"," ").replace(/^./,c=>c.toUpperCase())+" · "+parts[1];
+      content=parts.slice(2).join(" | ");
+    }
+  }
+  if (code==="vuelo" || code==="reserva") {
+    const parts=content.split(" | ");
+    if(parts.length>=2){displayLabel=(label+" · "+parts[0]).trim();content=parts.slice(1).join(" | ");}
+  }
   let bucket = "notes";
   if (code==="destino") bucket="destination";
   else if (/^vuelo|^transporte|^traslado/.test(code) || f.type==="TRANSPORTE") bucket="transport";
   else if (/^alojamiento|^hotel|^airbnb/.test(code)) bucket="accommodation";
-  else if (/^dia |^itinerario|^plan diario|^ruta/.test(code)) bucket="itinerary";
+  else if (/^dia |^itinerario|^plan diario|^plan_dia|^ruta/.test(code)) bucket="itinerary";
   else if (/^pendiente|^por reservar|^accion|^tarea/.test(code)) bucket="pending";
-  else if (/^pago|^presupuesto|^gasto|^coste/.test(code) || f.type==="GASTO") bucket="payments";
+  else if (/^pago|^presupuesto|^gasto|^coste|^finanzas/.test(code) || f.type==="GASTO") bucket="payments";
   else if (/^confirmado|^reserva/.test(code)) bucket="bookings";
-  return {label:label || (f.type === "PLAN"?"Plan":f.type||"Nota"),content,bucket};
+  return {label:displayLabel,content,bucket};
 }
 const titleFrom = (payload) => {
   const dest = (payload?.facts || []).map(classify).find(x=>x.bucket==="destination")?.content;
-  return dest || payload?.event?.title || "Viaje";
+  return (dest?dest.split(" · ")[0].trim():null) || payload?.event?.title || "Viaje";
 };
 function getMoneyRecord(event,state) {
   const rows = Array.isArray(state?.financeSummary?.upcomingCommitments) ? state.financeSummary.upcomingCommitments : [];
