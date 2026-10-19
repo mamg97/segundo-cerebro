@@ -14,7 +14,7 @@ test("planned yogurt replacement exposes an explicit shake companion classificat
   assert.match(app, /Batido como acompañante, sin añadir plato principal/);
   assert.match(app, /Esta comida ya tiene una receta principal/);
   assert.match(app, /roleSelect\?\.addEventListener\("change",updatePreview\)/);
-  assert.match(app, /submitHomeMenuEdit\(item,"replace",selectedRecipe\.id,servingsInput \? Number\(servingsInput\.value\) : null,roleSelect\?\.value \|\| null\)/);
+  assert.match(app, /submitHomeMenuEdit\(item,isAdd \? "add" : "replace",selectedRecipe\.id/);
 });
 
 test("backend honors only explicitly typed drink companions; main recipe guard remains intact", () => {
@@ -34,5 +34,5 @@ test("history-only drink serving is blocked and mobile role selector fits modal"
   const v1 = html.match(/styles\.css\?v=([0-9.]+)/)?.[1];
   const v2 = html.match(/app\.js\?v=([0-9.]+)/)?.[1];
   assert.equal(v1, v2);
-  assert.equal(v1, "0.44.60");
+  assert.equal(v1, "0.44.61");
 });

@@ -1,6 +1,7 @@
 // Authenticated private menu mutations: MenuSemanal and Recetas remain the
 // only authorities. No D1 copy, cache of personal rows or blind append.
 import { canonicalWeeklyMenuMoment, weeklyMenuIdentity } from "./weekly-menu.js";
+import { planMenuAddition, planConsumedRegisterCorrection, MenuSlotError } from "./weekly-menu-extended-actions.js";
 
 const MENU_RANGE = "MenuSemanal!A1:R2000";
 const RECIPES_RANGE = "Recetas!A1:Q1000";
@@ -72,7 +73,8 @@ function lastRow(rows) {
     (Date.parse(a.data.updated_at || "") || 0) - (Date.parse(b.data.updated_at || "") || 0) ||
     a.sourceRow - b.sourceRow).at(-1);
 }
-export function planMenuSheetEdits(values, payload, recipes, now = new Date().toISOString()) {
+export function planMenuSheetEdits(values, payload, recipes, now = new Date().toISOString(), registroValues = null) {
+  if (payload?.action === "add") return planMenuAddition(values, payload, recipes, now);
   const headers = (values?.[0] || []).map(x => String(x || "").trim());
   const required = payload.action === "replace" ? [...FIELDS, ...NUTRI_FIELDS, "cantidad", "unidad"] : FIELDS;
   if (!required.every(k => headers.includes(k))) throw new MenuEditError("MENU_SCHEMA_UNSUPPORTED", 409);
@@ -89,14 +91,18 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       String(original.data.food_id || "").trim() !== String(payload.foodId || "") ||
       String(original.data.updated_at || "") !== String(payload.updatedAt || "") ||
       String(original.data.nombre || "").trim() !== String(payload.name || "").trim() ||
-      String(original.data.momento || "").trim() !== String(payload.moment || "").trim())
+      normalize(canonicalWeeklyMenuMoment({moment:original.data.momento,name:original.data.nombre,note:original.data.nota})) !==
+        normalize(canonicalWeeklyMenuMoment({moment:payload.moment,name:payload.name})))
     throw new MenuEditError("MENU_EDIT_CONFLICT", 409);
   const oldIdentity = asIdentity(original.data);
   const duplicates = all.filter(row => asIdentity(row.data) === oldIdentity);
   if (lastRow(duplicates)?.sourceRow !== original.sourceRow) throw new MenuEditError("MENU_EDIT_CONFLICT",409);
   const currentStatus = normalize(original.data.estado);
-  if (currentStatus !== "planificado" && currentStatus !== "pendiente")
+  const correctingConsumption = currentStatus === "consumido" && payload.action === "replace";
+  if (!["planificado","pendiente"].includes(currentStatus) && !correctingConsumption)
     throw new MenuEditError("MENU_EDIT_NOT_PLANNED", 409);
+  if (correctingConsumption && !registroValues)
+    throw new MenuEditError("CONSUMED_REGISTER_REQUIRED", 409);
   // A planned food or companion is a canonical menu row too. Do not confuse
   // quantities in grams with the number of servings in the new recipe.
   const originalIsFood = Boolean(original.data.food_id) && !original.data.recipe_id;
@@ -116,8 +122,12 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
     put(original,"estado","consumido");
     put(original,"updated_at",now);
   } else {
+    const changePortion = payload.newServings !== undefined && payload.newServings !== null;
+    const requestedPortion = changePortion ? numberOrNull(payload.newServings) : null;
+    if (changePortion && (requestedPortion === null || requestedPortion <= 0 || requestedPortion > 20))
+      throw new MenuEditError("RECIPE_SERVINGS_REQUIRED",409);
     if (!SAFE_ID_RE.test(payload.newRecipeId || "") ||
-        (originalIsRecipe && payload.newRecipeId === payload.recipeId))
+        (originalIsRecipe && payload.newRecipeId === payload.recipeId && !changePortion))
       throw new MenuEditError("INVALID_RECIPE_SELECTION");
     const candidate = recipes.find(x => x.id === payload.newRecipeId);
     if (!candidate) throw new MenuEditError("RECIPE_NOT_FOUND",404);
@@ -132,11 +142,11 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       throw new MenuEditError("INVALID_COMPANION_REPLACEMENT", 409);
     }
     // Food quantities are not servings: require an explicit new serving count.
-    const newServings = originalIsFood ? numberOrNull(payload.newServings) : null;
+    const newServings = originalIsFood ? requestedPortion : changePortion ? requestedPortion : null;
     if (originalIsFood && (newServings === null || newServings <= 0 || newServings > 20))
       throw new MenuEditError("RECIPE_SERVINGS_REQUIRED",409);
     const macros = previewMenuRecipe(
-      originalIsFood ? {cantidad:newServings,unidad:"ración"} : original.data, candidate);
+      newServings !== null ? {cantidad:newServings,unidad:"ración"} : original.data, candidate);
     if (!macros.supported) throw new MenuEditError("RECIPE_MACROS_OR_PORTION_PENDING",409);
     const conflict = all.find(row => row.sourceRow !== original.sourceRow &&
       String(row.data.fecha) === payload.date &&
@@ -166,7 +176,27 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       if (row.sourceRow === original.sourceRow) continue;
       put(row,"estado","retirado"); put(row,"updated_at",now);
     }
+    // A confirmed meal remains confirmed after a correction. Apply the
+    // replacement to the canonical MenuSemanal row and, when present, the
+    // exact matching Registro entry in the same Sheets batch.
+    if (correctingConsumption) {
+      const quantity = newServings !== null ? newServings :
+        /raci[oó]n/i.test(String(original.data.unidad)) ? numberOrNull(original.data.cantidad) :
+        /compartid[oa]/i.test(String(original.data.unidad)) &&
+          candidate.servings > 0 ? candidate.servings * numberOrNull(original.data.cantidad) : null;
+      if (quantity === null || quantity <= 0)
+        throw new MenuEditError("RECIPE_SERVINGS_REQUIRED",409);
+      const registerUpdates = planConsumedRegisterCorrection(
+        registroValues,payload,original.data,candidate,macros,quantity,now);
+      updates.push(...registerUpdates);
+      put(original,"nota","Consumo corregido el "+now+". Receta anterior: "+String(original.data.nombre||"").slice(0,180)+
+        ". Revisión explícita de la ingesta; cantidades y macros actualizadas.");
+    }
     put(original,"recipe_id", candidate.id);
+    if (!originalIsFood && newServings !== null) {
+      put(original,"cantidad",newServings);
+      put(original,"unidad","ración");
+    }
     if (originalIsFood) {
       // Convert one source row to one recipe, keeping date/moment and row
       // identity, with no duplicate plan and no accidental pantry reference.
@@ -179,7 +209,7 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
       if (headers.includes("tipo_acompanante")) {
         put(original,"tipo_acompanante",recipeAsCompanion ? "batido" : "");
       }
-      if (recipeAsCompanion && headers.includes("nota")) {
+      if (recipeAsCompanion && !correctingConsumption && headers.includes("nota")) {
         // Previous Pantry product notes (e.g., about yogurt) must not be
         // carried forward as if they described the replacement drink.
         put(original,"nota","Batido como acompañante planificado; ración y macros de la receta seleccionada. Consumo no confirmado.");
@@ -202,12 +232,22 @@ export async function editWeeklyMenu(request, env, accessToken, fetchImpl = fetc
   const token = await accessToken(env);
   const base = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}`;
   const query = new URLSearchParams({ranges:MENU_RANGE,majorDimension:"ROWS",valueRenderOption:"UNFORMATTED_VALUE"});
-  if (payload.action === "replace") query.append("ranges",RECIPES_RANGE);
+  if (["replace","add"].includes(payload.action)) query.append("ranges",RECIPES_RANGE);
+  if (payload.action === "replace") query.append("ranges","Registro!A1:N6000");
   const read = await fetchImpl(`${base}/values:batchGet?${query}`,{headers:{Authorization:`Bearer ${token}`}});
   if (!read.ok) throw new MenuEditError("MENU_READ_FAILED",502);
   const ranges = (await read.json()).valueRanges || [];
-  const recipeList = payload.action === "replace" ? recipeAlternatives(table(ranges[1]?.values || [])) : [];
-  const plan = planMenuSheetEdits(ranges[0]?.values || [],payload,recipeList);
+  const recipeList = ["replace","add"].includes(payload.action)
+    ? recipeAlternatives(table(ranges[1]?.values || [])) : [];
+  let plan;
+  try {
+    plan = planMenuSheetEdits(ranges[0]?.values || [],payload,recipeList,new Date().toISOString(),
+      payload.action === "replace" ? (ranges[2]?.values || []) : null);
+  } catch (error) {
+    if (error instanceof MenuSlotError)
+      throw new MenuEditError(error.code,error.status);
+    throw error;
+  }
   const written = await fetchImpl(`${base}/values:batchUpdate`,{
     method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},
     body:JSON.stringify({valueInputOption:"RAW",data:plan.updates})

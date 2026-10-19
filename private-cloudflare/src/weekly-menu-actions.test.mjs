@@ -37,7 +37,7 @@ test("stale identity, stale timestamp, consumed rows and unsupported portions re
   assert.throws(()=>planMenuSheetEdits([header,original],{...payload,updatedAt:"stale"},[]),e=>e.code==="MENU_EDIT_CONFLICT");
   assert.throws(()=>planMenuSheetEdits([header,original],{...payload,sourceRow:23},[]),e=>e.code==="MENU_EDIT_CONFLICT");
   const consumed=[...original];consumed[8]="consumido";
-  assert.throws(()=>planMenuSheetEdits([header,consumed],payload,[]),e=>e.code==="MENU_EDIT_NOT_PLANNED");
+  assert.throws(()=>planMenuSheetEdits([header,consumed],{...payload,action:"replace",newRecipeId:"r-b"},recipes),e=>e.code==="CONSUMED_REGISTER_REQUIRED");
   const noPortion=[...original];noPortion[7]="plato";
   assert.throws(()=>planMenuSheetEdits([header,noPortion],{...payload,action:"replace",newRecipeId:"r-b"},recipes),e=>e.code==="RECIPE_MACROS_OR_PORTION_PENDING");
   const badRecipe=[{...recipes[0],id:"r-b",proteinPerServing:null}];
@@ -85,7 +85,7 @@ test("planned Pantry companions can be replaced with recipe only after explicit 
     ["MenuSemanal!M2",15],["MenuSemanal!P2","2026-10-15T10:00:00Z"]
   ]);
   const companionStatus=[...fruit];companionStatus[8]="consumido";
-  assert.throws(()=>planMenuSheetEdits([header,companionStatus],foodPayload,recipes),e=>e.code==="MENU_EDIT_NOT_PLANNED");
+  assert.throws(()=>planMenuSheetEdits([header,companionStatus],foodPayload,recipes),e=>e.code==="CONSUMED_REGISTER_REQUIRED");
   for(const val of [undefined,null,"",0,-1,21]) {
     assert.throws(()=>planMenuSheetEdits([header,fruit],{...foodPayload,newServings:val},recipes),
       e=>e.code==="RECIPE_SERVINGS_REQUIRED");
@@ -172,7 +172,7 @@ test("shake classification must be explicit and authorized only for a planned co
     e=>e.code==="INVALID_COMPANION_REPLACEMENT");
   const consumed=[...yogurt];consumed[8]="consumido";
   assert.throws(()=>planMenuSheetEdits([header,consumed],{...base,newCompanionType:"batido"},recipes),
-    e=>e.code==="MENU_EDIT_NOT_PLANNED");
+    e=>e.code==="CONSUMED_REGISTER_REQUIRED");
 });
 
 test("historical one-time recipe portions are never silently reused in a new plan",()=>{

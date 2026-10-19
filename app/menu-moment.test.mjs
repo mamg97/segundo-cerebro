@@ -101,7 +101,7 @@ test("opening a recipe from Home does not race the regular nutrition loader", ()
 
 
 test("Home renders a recipe link from recipe_id even when the light menu payload has no recipe object", () => {
-  const start = app.indexOf("function renderHomeWeeklyMenuMatrixCell(items, readOnly = false)");
+  const start = app.indexOf('function renderHomeWeeklyMenuMatrixCell(items, readOnly = false, date = "", moment = "")');
   const end = app.indexOf("async function openHomeWeeklyMenuRecipe", start);
   assert.ok(start >= 0 && end > start);
   const renderer = app.slice(start, end);
