@@ -59,6 +59,50 @@ function numberOrNull(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+// A menu ingredient's grams are nutritional demand, not purchasable units.
+// Derive a basket total only when its unit can be reconciled with the
+// observed ticket price basis and, for packaged foods, the verified format.
+export function estimateShoppingCost({
+  unitPrice, priceBase, targetQuantity, targetUnit, productFormat, explicitCost
+} = {}) {
+  const override = numberOrNull(explicitCost);
+  if (override !== null) return override;
+  const price = numberOrNull(unitPrice);
+  const qty = numberOrNull(targetQuantity);
+  if (price === null || qty === null || qty <= 0) return null;
+  const basis = String(priceBase || "").toLowerCase().replace(/\s+/g, "");
+  const unit = String(targetUnit || "").toLowerCase().trim();
+  const isGrams = /^(g|gramos?)(?:\b|$)/.test(unit);
+  const isKg = /^(kg|kilogramos?)(?:\b|$)/.test(unit);
+  const isMl = /^(ml|mililitros?)(?:\b|$)/.test(unit);
+  const isL = /^(l|litros?)(?:\b|$)/.test(unit);
+
+  if (/\/kg$/.test(basis)) return isKg ? price * qty : isGrams ? price * qty / 1000 : null;
+  if (/\/100g$/.test(basis)) return isKg ? price * qty * 10 : isGrams ? price * qty / 100 : null;
+  if (/\/l$/.test(basis)) return isL ? price * qty : isMl ? price * qty / 1000 : null;
+  if (/\/100ml$/.test(basis)) return isL ? price * qty * 10 : isMl ? price * qty / 100 : null;
+
+  if (isGrams || isKg) {
+    // E.g. one verified 120 g melva tin supplies 80 g drained fish.
+    // Never equate an arbitrary number of grams with the number of tins.
+    const format = String(productFormat || "").toLowerCase();
+    const drained = format.match(/(\d+(?:[.,]\d+)?)\s*g\s*escurrid/);
+    if (/lata/.test(format) && drained) {
+      const gramsPerTin = numberOrNull(drained[1]);
+      if (gramsPerTin > 0) {
+        const grams = isKg ? qty * 1000 : qty;
+        return price * Math.ceil(grams / gramsPerTin - 1e-9);
+      }
+    }
+    return null;
+  }
+  if (isMl || isL) return null;
+  if (!unit || /^(latas?|botes?|packs?|paquetes?|bandejas?|tarrinas?|botellas?|briks?|tetrabriks?|cajas?|bolsas?|envases?|unidades?|uds?|manojos?|piezas?|frascos?|tarros?|cartones?|rollos?)(?:\b|$)/.test(unit))
+    return price * qty;
+  // Unknown or nutritional units are never multiplied by €/commercial unit.
+  return null;
+}
+
 export function summarizeShoppingCostCoverage(items = []) {
   const knownCosts = items
     .map((item) => item?.estimatedCost)
@@ -317,23 +361,18 @@ export function buildPayload(valueRanges = []) {
     const ticketPrices = history.filter((item) => item.ticketId || /ticket/i.test(String(item.source || "")));
     const lastTicketPrice = ticketPrices.length ? ticketPrices[ticketPrices.length - 1] : null;
     const targetQuantity = numberOrNull(row.cantidad_objetivo) ?? (row.cantidad_objetivo || null);
-    // Observed prices by kg/litre are not a purchase total without weight.
+    // Unit prices from receipts must match the shopping unit before computing totals.
     const observedPrice = lastTicketPrice || latestPrice;
     const unitPrice = lastTicketPrice?.price ?? numberOrNull(row.precio_estimado) ?? latestPrice?.price ?? null;
     const priceBase = observedPrice?.priceBase || null;
-    const perMassOrVolume = /\/\s*(kg|l|100\s*g|100\s*ml)(?:\b|$)/i.test(String(priceBase || ""));
-    const targetUnitNormalized = String(row.unidad || "").toLowerCase().trim();
-    const matchingUnit = !perMassOrVolume ||
-      (/\/\s*kg\b/i.test(priceBase) && /^kg\b/.test(targetUnitNormalized)) ||
-      (/\/\s*l\b/i.test(priceBase) && /^(l|litros?)\b/.test(targetUnitNormalized));
-    const explicitCost = numberOrNull(row.coste_estimado);
-    const targetNumber = numberOrNull(targetQuantity);
-    const estimatedCost = explicitCost ?? (
-      unitPrice === null ? null :
-      perMassOrVolume && (!matchingUnit || targetNumber === null || targetNumber <= 0)
-        ? null
-        : targetNumber !== null && targetNumber > 0 ? unitPrice * targetNumber : unitPrice
-    );
+    const estimatedCost = estimateShoppingCost({
+      unitPrice,
+      priceBase,
+      targetQuantity,
+      targetUnit: row.unidad,
+      productFormat: product.format,
+      explicitCost: row.coste_estimado
+    });
     return {
       externalId: row.external_id || null,
       appleReminderId: row.apple_reminder_id || null,
