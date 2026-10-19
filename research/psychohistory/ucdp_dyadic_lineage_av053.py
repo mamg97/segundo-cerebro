@@ -19,6 +19,11 @@ from onset_four_variant_semantics import fetch
 from ucdp_prio_conflict_lineage_av052 import INDEX,Index,safe_csv,acd_years,official_acd_links,ACD_OBSERVED_PINS_2026
 
 SCHEMA="psychohistory.dyadic_lineage_61.v1"
+DYAD_OBSERVED_PINS_2026={
+    "19.1":("b1eed9ae6540268a157694068c8f3b2be9bb6104640aec2d1c43dab487c9a0f6","b1eed9ae6540268a157694068c8f3b2be9bb6104640aec2d1c43dab487c9a0f6"),
+    "25.1":("e34d26c39d23739ab65bc52fd42747aa88e7ecdf84d16c7bacafd590ed767330","e5bf6e3779a903f3df3ec476592332ce51ccf3798174b3db4c1b06dd1dd5a7ba"),
+}
+
 
 class DyadIndex(Index):
     def handle_endtag(self,tag):
@@ -146,6 +151,9 @@ def main():
             raise ValueError("ACD historical current hash changed")
         acds[v]=acd_years(csv,v)
         dyad_blob,dyad_csv=source_data(dyad_urls[v])
+        expected_zip,expected_csv=DYAD_OBSERVED_PINS_2026[v]
+        if sha256(dyad_blob).hexdigest()!=expected_zip or sha256(dyad_csv).hexdigest()!=expected_csv:
+            raise ValueError("Dyadic edition bytes changed from October-2026 observed SHA pins")
         dyads[v]=read_dyads(dyad_csv,v)
         inventory[v]={"official_url":dyad_urls[v],
                       "download_sha256_observed_now":sha256(dyad_blob).hexdigest(),
