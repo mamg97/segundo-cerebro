@@ -22,9 +22,13 @@ export function recipeIngredientChoices(recipes) {
     a.label.localeCompare(b.label,"es",{sensitivity:"base"}) || a.key.localeCompare(b.key));
 }
 
-export function recipeCatalogItems(recipes, selectedIngredient = "") {
+export function recipeCatalogItems(recipes, selectedIngredient = "", selectedCategory = "", archiveView = false) {
   const key = recipeIngredientKey(selectedIngredient);
   return (Array.isArray(recipes) ? recipes : [])
+    .filter(recipe => archiveView
+      ? ["eliminada", "sustituida", "archivada"].includes(String(recipe?.status || "").toLowerCase())
+      : !["eliminada", "sustituida", "archivada"].includes(String(recipe?.status || "").toLowerCase()))
+    .filter(recipe => !selectedCategory || recipe?.category === selectedCategory)
     .filter(recipe => !key || (Array.isArray(recipe?.ingredients) &&
       recipe.ingredients.some(ingredient => recipeIngredientKey(ingredient?.name) === key)))
     .sort((a,b) => Number(Boolean(b?.photoUrl)) - Number(Boolean(a?.photoUrl)));
