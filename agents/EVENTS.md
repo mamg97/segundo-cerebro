@@ -140,3 +140,24 @@ Un hecho no sustituye a su fuente propietaria. Por ejemplo, un hecho `GASTO` pue
 - `POST /api/events/:id/references`
 
 La sincronización de lectura de `/api/state` reconcilia automáticamente los eventos importantes detectados en iCloud contra `SEGUNDO CEREBRO - EVENTOS`. No escribe en iCloud. Las rutas `/api/events` leen y escriben el Sheet canónico; D1 queda como fallback técnico durante la migración.
+
+## Vista privada de Viajes
+
+La pestaña **Viajes** está en la navegación privada inmediatamente detrás de
+Proyectos. Es una presentación especializada de los eventos `kind=travel`,
+no otra fuente de verdad. Consulta `/api/events?scope=all&kind=travel` y
+`/api/events/:id`, reutilizando el Sheet Eventos y sus hechos/referencias.
+
+- La ficha contiene vuelos, alojamiento, reservas, actividades por fecha,
+  tareas, presupuesto enlazado y documentación por viaje.
+- Los identificadores de viaje y la cronología proceden de Eventos.
+- El nombre real del destino, si difiere del alias de Agenda, se lee de
+  `EventoHechos`; no debe hardcodearse en la web o Git.
+- El componente financiero se enlaza por `finance_ref` con el estado canónico
+  de Finanzas. Los montos previstos nunca se presentan como pagos ejecutados.
+- Las tareas se marcan añadiendo hechos `TAREA_ESTADO` con el endpoint
+  existente de Eventos, no editando fechas, reservas, saldos ni inventarios.
+- En GitHub Pages no aparece la pestaña ni un histórico privado; el acceso
+  real requiere Cloudflare Access y modo `private-remote`.
+
+Contrato y ejemplos exclusivamente sintéticos: `docs/TRAVEL_WORKSPACE.md`.
