@@ -1,56 +1,68 @@
 # PSICOHISTORIA — Estado científico vigente · 19/10/2026
 
-## AV-20261019-040 · Corrección de CI posterior al avance 39
+## AV-20261019-041: UCDP Onset oficial, dos universos distintos
 
-- **AV-039**, [PR #674](https://github.com/mamg97/segundo-cerebro/pull/674)
-  fusionada: comparación anual de UCDP OrganizedViolenceCY 24.1 con
-  GW v7.0 + microestados. 2020: **196** país–años UCDP y
-  **197** miembros GW; **194** números de código comunes,
-  **2** solo en UCDP y **3** solo en GW. No se han homologado
-  identidades nacionales. [Documento científico](UCDP_GW_ANNUAL_ALIGNMENT.md).
-- En las transiciones retrospectivas **2019→2020**, UCDP cuenta
-  **7** países que pasan de ningún indicador de violencia codificada
-  a alguno (`0→1`), **55** que persisten (`1→1`), **10**
-  que pasan a cero y **124** que se mantienen en cero.
-  **No es onset por ID de conflicto o díada**; son cambios anuales
-  de presencia de violencia GED bajo criterios UCDP.
-- **AV-040**, [PR #676](https://github.com/mamg97/segundo-cerebro/pull/676)
-  fusionada, squash `829f06e7d980575b45f976da9f0e3493969abb9a`.
-  La CI de `main` posterior a PR #674 encontró una prueba antigua
-  intermitente que buscaba `100` y `2010` dentro de
-  `str(metadata)`: un hash SHA puede contener cualquiera de esas
-  subcadenas sin que haya publicación de filas.
-  Sustituida por checks de privacidad estructurales y prueba
-  de ausencia de una **fila completa**.
-  **CI científica, privacidad y despliegue de main de PR #676 SUCCESS.**
-  El avance 39 ni sus datos han sido alterados.
+[PR #677](https://github.com/mamg97/segundo-cerebro/pull/677)
+fusionada en `main`, squash `04873706851fa6616be82ebb7217b3376c419d15`.
+Se ha descubierto y auditado la definición y disponibilidad
+de los conjuntos **UCDP Onset** para aparición y reanudación
+de conflictos armados intrastatales.
+[Informe](UCDP_OFFICIAL_ONSET_SOURCE_AUDIT.md).
+[CI UCDP real](https://github.com/mamg97/segundo-cerebro/actions/runs/39256556596)
+con **unit-tests, privacidad y main CI en verde**.
 
-## Estado privado canónico (escritura y relectura confirmadas)
+- En el catálogo oficial histórico figuran los CSV intrastatales
+  **24.1**, pero hoy ambos devuelven **HTTP 404**; por ello
+  **no** se consideran accesibles ni validados por filas.
+- Los CSV oficiales **25.1** intrastatales sí son descargables
+  (HTTP 200), con cobertura **1946–2024**: variante por
+  conflicto **12.606 filas**, **12.553 país–años únicos**;
+  variante por país **12.553 filas únicas**. Existen
+  **53 filas adicionales** por combinación país–año en
+  el archivo por conflicto; la variante país tiene como
+  máximo una por país/año.
+- En 2020 `onset5=1` aparece **3** veces en la variante
+  por conflicto y **1** en la variante por país. **No
+  son el mismo target ni riesgo**. `onset5` incluye
+  nuevas apariciones Y reanudaciones después de inactividad;
+  `newconf` es variable distinta.
+- Fuente `25.1` observada en octubre 2026 y SHA fijados
+  en el workflow. Campo `conflict_ids` con espacios
+  iniciales en cabecera país normalizado **solo en memoria**.
+  Los originales viven en runner efímero; no se subieron
+  filas ni códigos individuales.
 
-- `PsicoAvances=40`, último `AV-20261019-040`
-  (evento correctivo separado de AV-039).
-- `PsicoFases.MAD-02=PARCIAL`,
-  `PsicoHitos.V2-02=EN_CURSO`,
-  `PsicoPredicciones=0` emisiones.
-- Cohorte shadow 2027, probabilidades, modelos, Worker y
-  aplicación sin cambios operativos atribuibles a este trabajo.
+**Punto metodológico:** por definición del codebook UCDP,
+los países con conflicto intrastatal activo **no integran
+el riesgo de nuevo onset de país** en esa variante. La
+variante por conflicto sí admite múltiples nuevos inicios
+con otros conflictos activos. Esto impide etiquetar
+una transición anual de violencia genérica `0→1` como
+nuevo conflicto/díada o sumar recuentos entre targets.
 
-## Límites y próximo paso
+## Estado privado comprobado
 
-GW v7 termina en 2020; no extrapolar miembros 2021–2023.
-El cruce numérico de UCDP y GW no sustituye una concordancia
-geográfica histórica. Los archivos UCDP 24.1 y GW7 fueron
-publicados después de muchos orígenes hipotéticos: los hashes
-observados en octubre de 2026 no acreditan bytes `as-of`.
+- `PsicoAvances=41`, último `AV-20261019-041`.
+- `PsicoFases.MAD-02=PARCIAL`, `PsicoHitos.V2-02=EN_CURSO`.
+- `PsicoPredicciones=0` emisiones.
+- Cohorte shadow 2027 intacta; sin alterar modelos, Worker,
+  frontend ni gasto recurrente.
 
-**Próximo hito:** auditar las discordancias GW–UCDP por
-codificación y tiempo; definir onset a nivel conflicto/díada
-con paz previa, censura del primer registro e identidad estable,
-y verificar vintages anteriores al origen para las features.
-**No publicar Brier/skill ni emitir predicciones hasta
-cumplir las puertas científicas pendientes.**
+## Barreras y próximo paso
 
-`docs/HANDOFF.md` global conserva una cabecera histórica
-obsoleta por limitaciones de tamaño del conector. La hoja
-privada de PROYECTOS y esta nota técnica pequeña son el
-relevo actual de PSICOHISTORIA.
+1. Fijar **una** definición de objetivo: intrastatal
+   por país o por identidad de conflicto, y un protocolo
+   predeclarado de elegibilidad y censura para cada origen.
+2. Conciliar geografías GW, revisiones y longitud de
+   historia necesaria; distinguir `newconf` de
+   `onset1/2/3/5/10/20`.
+3. Para las features, verificar **bytes y fecha de publicación
+   anterior al origen**; los archivos 25.1 de 2025 solo
+   aportan resolución retrospectiva de resultados históricos.
+4. Sin fuentes `as-of`, no calcular Brier ni afirmar
+   capacidad de anticipación; 0 emisiones reales.
+
+`docs/HANDOFF.md` global contiene una cabecera antigua
+de PSICOHISTORIA por su gran tamaño, de modo que esta
+nota pequeña y el Sheet privado constituyen el relevo
+actual del subproyecto.
