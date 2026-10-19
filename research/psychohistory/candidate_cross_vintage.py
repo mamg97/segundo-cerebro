@@ -91,6 +91,21 @@ def read_month(raw, version, expected_sha256=None):
     }
 
 
+def zero_date_geometry(vintage):
+    """Count relative dates for zero-precision events, never reveal record IDs."""
+    year, m = map(int, VERSIONS[vintage["version"]][0].split("-"))
+    month_start = date(year, m, 1)
+    month_end = date(year + (m == 12), m % 12 + 1, 1)
+    rows = [row for row in vintage["rows"].values() if row[4] == "0"]
+    return {
+        "n": len(rows),
+        "n_started_in_nominal_month": sum(month_start <= row[2] < month_end for row in rows),
+        "n_end_after_nominal_month": sum(row[3] >= month_end for row in rows),
+        "n_end_in_nominal_month": sum(month_start <= row[3] < month_end for row in rows),
+        "n_same_day_interval": sum(row[2] == row[3] for row in rows),
+    }
+
+
 def compare(december, january):
     if december.get("version") != "24.0.12" or january.get("version") != "25.0.1":
         raise ValueError("Require December 2024 -> January 2025 sequence")
@@ -140,6 +155,10 @@ def compare(december, january):
                 d[eid][2:4] != j[eid][2:4] for eid in z_overlap),
         },
         "january_code_zero_count": len(j_zero),
+        "code_zero_date_geometry_by_edition": {
+            "december": zero_date_geometry(december),
+            "january": zero_date_geometry(january),
+        },
         "status": "CROSS_VINTAGE_DESCRIPTIVE_ONLY_NOT_ASOF",
         "event_identity_stable_across_editions_verified": False,
         "historical_publication_dates_independently_verified": False,
