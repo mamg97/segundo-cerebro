@@ -83,8 +83,8 @@ test("home insertion immediately follows macro summary before finance, menu stay
   const footer = page.indexOf("<footer>");
   assert.ok(summary >= 0 && summary < gym && gym < finance && finance < agenda && agenda < menu && menu < footer);
   assert.equal(page.match(/id="home-gym-week"/g)?.length, 1);
-  assert.match(page, /gym-week-summary\.css\?v=0\.44\.55/);
-  assert.match(app, /gym-week-summary\.mjs\?v=0\.44\.55/);
+  assert.match(page, /gym-week-summary\.css\?v=0\.44\.57/);
+  assert.match(app, /gym-week-summary\.mjs\?v=0\.44\.57/);
   assert.match(app, /homeGymSnapshot = gymData;\s*renderHomeGymWeekSummary\(gymData\)/);
   assert.match(app, /homeGymSnapshot = data;\s*if \(privateModeKind === "remote"\) renderHomeGymWeekSummary\(data\)/);
   assert.match(app, /home-gym-week-open/);
@@ -159,10 +159,78 @@ test("Home reuses the existing private health overview history, no seven new req
   const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
   const worker = readFileSync(new URL("../private-cloudflare/src/index.js", import.meta.url), "utf8");
   assert.match(app, /homeHealthWeekNutritionHistory = Array\.isArray\(data\.nutritionHistory\)/);
-  assert.match(app, /nutritionHistory: homeHealthWeekNutritionHistory/);
+  assert.match(app, /nutritionHistory: current \? homeHealthWeekNutritionHistory : historical\.nutritionHistory/);
   assert.match(worker, /consumedProtein: consumedEntryCount > 0 \? dayConsumed\.protein : null/);
   assert.match(worker, /nutritionHistory: value\.history \|\| \[\]/);
   const source = readFileSync(new URL("./gym-week-summary.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(source, /fetch\(/);
 });
 
+
+test("selected historical week renders actual saved sessions and nutrition instead of current week", () => {
+  const now = new Date(2026, 9, 19, 10, 16);
+  const history = [
+    {date: "2026-10-16", consumedEntryCount: 5, consumedKcal: 2345,
+     consumedProtein: 207, burnedKcal: 2925, coverageQuality: "full"},
+    {date: "2026-10-17", consumedEntryCount: 2, consumedKcal: 1781,
+     consumedProtein: 95, burnedKcal: 1748, coverageQuality: "full"},
+    {date: "2026-10-19", consumedEntryCount: 1, consumedKcal: 100,
+     consumedProtein: 10, burnedKcal: 500, coverageQuality: "live"}
+  ];
+  const source = input([
+    session("2026-10-14", "Pierna completa"),
+    session("2026-10-16", "Empuje"),
+    session("2026-10-19", "Pecho")
+  ]);
+  const model = gymWeekSummaryModel(source, now, history, "2026-10-12");
+  assert.equal(model.weekStart, "2026-10-12");
+  assert.equal(model.weekEnd, "2026-10-18");
+  assert.equal(model.trainedDays, 2);
+  assert.equal(model.sessionCount, 2);
+  assert.equal(model.days[4].nutrition.consumed, 2345);
+  assert.equal(model.days[4].nutrition.burned, 2925);
+  assert.equal(model.days[4].nutrition.balance, -580);
+  assert.equal(model.days[4].nutrition.protein, 207);
+  assert.equal(model.days[5].nutrition.balance, 33);
+  assert.equal(model.days.find(d => d.isToday), undefined);
+  const html = renderHomeGymWeek(source, now, { selectedWeek: "2026-10-12", nutritionHistory: history });
+  assert.match(html, /Semana 12–18 oct/);
+  assert.match(html, /2 días · 2 sesiones/);
+  assert.match(html, /-580 kcal/);
+  assert.doesNotMatch(html, /data-gym-week-date="2026-10-19"/);
+});
+
+test("historical week selection rejects non-Mondays, invalid dates, and future weeks", () => {
+  const now = new Date(2026, 9, 19, 10);
+  for (const invalid of ["2026-10-13", "2026-10-99", "2026-10-26", "bad"]) {
+    assert.throws(() => gymWeekSummaryModel(input([]), now, [], invalid), /INVALID_GYM_WEEK_SELECTION/);
+  }
+  const current = gymWeekSummaryModel(input([]), now);
+  assert.equal(current.weekStart, "2026-10-19");
+  assert.equal(current.days[1].isFuture, true);
+});
+
+test("Home historical navigator uses one bounded gym GET and one dated Health GET", () => {
+  const page = readFileSync(new URL("./index.html", import.meta.url), "utf8");
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("./gym-week-summary.css", import.meta.url), "utf8");
+  const backend = readFileSync(new URL("../private-cloudflare/src/index.js", import.meta.url), "utf8");
+  assert.match(page, /id="home-gym-week-navigation"/);
+  assert.match(app, /data-home-gym-week-step="-1"/);
+  assert.match(app, /data-home-gym-week-step="1"/);
+  assert.match(app, /id="home-gym-week-picker"/);
+  assert.match(app, /data-home-gym-week-current/);
+  assert.match(app, /const week = menuWeekMonday\(date\)/);
+  assert.match(app, /week > current/);
+  assert.match(app, /requestId !== homeGymWeekRequestSerial/);
+  assert.match(app, /fetch\("\/api\/gym\/week\?start="/);
+  assert.match(app, /fetch\("\/api\/health\/overview\?date="/);
+  assert.match(app, /homeGymWeekCache\.set\(week, snapshot\)/);
+  assert.match(css, /home-gym-week-controls/);
+  assert.match(backend, /if \(url\.pathname === "\/api\/gym\/week"\)/);
+  assert.match(backend, /WHERE session_date BETWEEN \? AND \?/);
+  assert.match(backend, /LIMIT 40/);
+  assert.match(backend, /parsed\.getUTCDay\(\) !== 1/);
+  assert.match(backend, /weekStart > localHealthDateKey\(\)/);
+  assert.doesNotMatch(app, /localStorage\.setItem\("homeGym/);
+});

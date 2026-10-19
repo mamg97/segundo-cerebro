@@ -4158,15 +4158,24 @@ async function ensureGymTables(env) {
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_gym_sessions_date ON gym_sessions(session_date DESC)").run();
 }
 
-async function fetchGymHistory(env) {
-  // Tables and indexes are provisioned by migration 0009 before deployment.
-  // Do not issue schema DDL from a GET: it amplifies D1 consumption.
-  const sessionsResult = await env.DB.prepare(`
-    SELECT id, session_date, day_id, day_title, notes, created_at
-    FROM gym_sessions
-    ORDER BY session_date DESC, created_at DESC
-    LIMIT 40
-  `).all();
+async function fetchGymHistory(env, { weekStart = null } = {}) {
+  // An optional bounded week read makes old weeks available even after the
+  // 40 latest sessions change. Keep the existing default snapshot unchanged.
+  // No table DDL or unbounded historical scan on GET.
+  const sessionsResult = weekStart
+    ? await env.DB.prepare(`
+      SELECT id, session_date, day_id, day_title, notes, created_at
+      FROM gym_sessions
+      WHERE session_date BETWEEN ? AND ?
+      ORDER BY session_date DESC, created_at DESC
+      LIMIT 40
+    `).bind(weekStart, healthAddDays(weekStart, 6)).all()
+    : await env.DB.prepare(`
+      SELECT id, session_date, day_id, day_title, notes, created_at
+      FROM gym_sessions
+      ORDER BY session_date DESC, created_at DESC
+      LIMIT 40
+    `).all();
   const sessionIds = (sessionsResult.results || []).map((session) => session.id);
 
   // The response only uses the 40 most recent sessions. Loading entries
@@ -5567,6 +5576,27 @@ export default {
       catch (error) {
         console.warn("Gym plan exercise write failed", String(error?.message || error));
         return json({ ok: false, code: "GYM_PLAN_WRITE_FAILED" }, 502);
+      }
+    }
+
+    // Only the sessions belonging to the requested calendar week, read-only.
+    // This endpoint avoids the heavyweight current Gym plan/Health bootstrap.
+    if (url.pathname === "/api/gym/week") {
+      if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      const weekStart = url.searchParams.get("start");
+      const parsed = /^\d{4}-\d{2}-\d{2}$/.test(String(weekStart || ""))
+        ? new Date(weekStart + "T12:00:00Z") : null;
+      if (!parsed || Number.isNaN(parsed.getTime()) ||
+          parsed.toISOString().slice(0, 10) !== weekStart ||
+          parsed.getUTCDay() !== 1 || weekStart > localHealthDateKey()) {
+        return json({ ok: false, code: "INVALID_GYM_WEEK" }, 400);
+      }
+      try {
+        const history = await fetchGymHistory(env, { weekStart });
+        return json({ ok: true, ...history });
+      } catch (error) {
+        console.warn("Gym week read failed", safePrivateReadDiagnostic(error));
+        return json({ ok: false, code: "GYM_WEEK_READ_FAILED" }, 502);
       }
     }
 

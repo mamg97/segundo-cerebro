@@ -1,5 +1,5 @@
-// Home-only weekly gym activity: uses the already loaded private /api/gym
-// session snapshot. No new endpoint, no inferred attendance, no browser storage.
+// Home weekly gym activity: current /api/gym snapshot or explicitly selected
+// bounded /api/gym/week history. No inferred attendance or browser storage.
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -65,11 +65,16 @@ function dayNutritionMarkup(day) {
     '</span>';
 }
 
-export function gymWeekSummaryModel(payload, now = new Date(), nutritionHistory = []) {
+export function gymWeekSummaryModel(payload, now = new Date(), nutritionHistory = [], selectedWeek = null) {
   const current = new Date(now);
   if (!Number.isFinite(current.getTime())) throw new TypeError("INVALID_GYM_WEEK_DATE");
-  const start = new Date(current.getFullYear(), current.getMonth(), current.getDate(), 12);
-  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const start = selectedWeek === null
+    ? new Date(current.getFullYear(), current.getMonth(), current.getDate(), 12)
+    : validDateKey(selectedWeek) ? new Date(selectedWeek + "T12:00:00") : null;
+  if (!start || (selectedWeek !== null && (start.getDay() !== 1 || selectedWeek > dateKey(current)))) {
+    throw new TypeError("INVALID_GYM_WEEK_SELECTION");
+  }
+  if (selectedWeek === null) start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
   const today = dateKey(current);
   const nutritionByDate = new Map();
   for (const entry of Array.isArray(nutritionHistory) ? nutritionHistory : []) {
@@ -141,7 +146,7 @@ export function renderHomeGymWeek(payload, now = new Date(), options = {}) {
         options.loading ? "Cargando entrenamientos guardados…" : "No se pudo consultar el histórico de gimnasio.") +
       '</p>';
   }
-  const model = gymWeekSummaryModel(payload, now, options.nutritionHistory);
+  const model = gymWeekSummaryModel(payload, now, options.nutritionHistory, options.selectedWeek || null);
   const gymMessage = !gymAvailable ? '<p class="home-gym-week-state" role="status">Entrenamientos no disponibles; se muestra la nutrición registrada.</p>' : '';
   return gymMessage + '<div class="home-gym-week-meta"><span>Semana ' + escapeHtml(model.weekLabel) +
     '</span><strong>' + (gymAvailable
@@ -149,7 +154,7 @@ export function renderHomeGymWeek(payload, now = new Date(), options = {}) {
         ' · ' + model.sessionCount + (model.sessionCount === 1 ? " sesión" : " sesiones")
       : "Entrenos sin consultar") +
     '</strong>' + (options.stale ? '<small>Última consulta disponible</small>' : '') + '</div>' +
-    '<div class="home-gym-week-days" aria-label="Días de entrenamiento de la semana actual">' +
+    '<div class="home-gym-week-days" aria-label="Días de entrenamiento de la semana seleccionada">' +
     model.days.map(day => {
       const trained = day.sessions.length > 0;
       const classes = ['home-gym-week-day', trained ? 'is-trained' : '', day.isToday ? 'is-today' : ''].filter(Boolean).join(" ");
