@@ -1,5 +1,23 @@
 # PSICOHISTORIA — Estado científico verificado · 19/10/2026
 
+## AV-20261019-045 · Testigo Git tercero GED 19.1 (sin as-of)
+
+- [PR #685](https://github.com/mamg97/segundo-cerebro/pull/685) fusionada en `main` (squash `b08286d71ee46ea85d6ec147ba71b2877bdc5106`); CI independiente del objeto Git, tests adversariales, privacidad y [CI de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39288896539) SUCCESS; publicación Pages SUCCESS.
+- [Evidencia académica](ONSET_THIRDPARTY_GIT_HISTORICAL_WITNESS.md): GED 19.1 mirror, commit Git `33316d9367907b8452d3a5ac3fe0ff2bd7da7f43` con fecha declarada 10/01/2020 y firma `unsigned`, árbol `9996db934c356ee561ba477b1a0a32bc996b0dc1`, blob `3f7e4621ba0d264a62b221fa06773e02d66d046f`, 68.235.762 bytes. El 11/01 la ruta se renombró conservando el mismo blob. Su timestamp Git no certifica recepción o acceso histórico pre-origen.
+- **Canónico privado comprobado:** `PsicoAvances=45`, último `AV-20261019-045` VERIFICADO; `MAD-02=PARCIAL`; `PsicoPredicciones=0`. No se han modificado las 1.176 probabilidades sombra privadas de 2027.
+
+## AV-20261019-044 · Auditor de capturas CDX
+
+- [PR #684](https://github.com/mamg97/segundo-cerebro/pull/684), squash `7c6a74eae0233634e3988687a53f36cbb2a3a170`, CI real, 9 tests ficticios, privacidad, main y Pages SUCCESS.
+- [Protocolo](ONSET_ARCHIVE_BYTE_WITNESS_TRIAL.md) y sondeo Internet Archive: `INDEX_REQUEST_UNAVAILABLE_NOT_EVIDENCE_OF_ABSENCE`; captura no verificable **no** equivale a ausencia. SHA1 CDX no autentica tiempo de depósito. Origen UTC del auditor es una hipótesis nueva, no la definición retroactiva de AV-042.
+- Ningún backtest ni Brier nuevo, ninguna emisión de forecast. Coste incremental 0 €.
+
+## Próxima entrega científica
+
+Diseñar explícitamente un origen y horizonte que admitan publicaciones anuales con retraso de meses, y un denominador formal de observaciones prospectivas sin fingir riesgos condicionados. No reutilizar datasets revisados de años posteriores como inputs/labels históricos entrenables; exigir testigos independientes de publicación y roster completo antes de calcular cualquier skill.
+
+---
+
 ## AV-20261019-043 · Vintages históricos con auditoría temporal fail-closed
 
 - [PR #680](https://github.com/mamg97/segundo-cerebro/pull/680) **fusionada en main**, squash `396f12a7e3ca98d9c7eaa887b38d214c60b64d8a`. Workflow independiente de índice histórico UCDP, tests sintéticos y privacidad **SUCCESS**. [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39262787362), privacidad y demo Pages **SUCCESS**.
