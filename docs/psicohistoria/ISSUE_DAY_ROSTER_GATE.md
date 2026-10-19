@@ -73,3 +73,33 @@ usan exclusivamente países ficticios.
 que ya existiera al origen, fijar la identidad geográfica revisada
 por cada período y documentar cobertura UCDP de todos los Estados
 (incluidos los de cero sucesos) antes de probar onset.
+
+## Resultados de la primera ejecución real
+
+La [ejecución independiente del auditor](https://github.com/mamg97/segundo-cerebro/actions/runs/39242330576)
+ha pasado la descarga y validación SHA de los tres archivos.
+
+| Mes | Sistema | Miembros al día 1 | Miembros del mes completo | Altas después del día 1 | Bajas dentro del mes |
+|---|---|---:|---:|---:|---:|
+| 2006-06 | COW 2024 | 192 | 191 | 2 | 1 |
+| 2006-06 | GW v7 + micro | 192 | 191 | 2 | 1 |
+| 2011-07 | COW 2024 | 194 | 194 | 1 | 0 |
+| 2011-07 | GW v7 + micro | 196 | 196 | 1 | 0 |
+| 2020-12 | COW 2024 | 195 | 195 | 0 | 0 |
+| 2020-12 | GW v7 + micro | 197 | 197 | 0 | 0 |
+| 2024-12 | COW 2024 | 195 | 195 | 0 | 0 |
+| 2024-12 | GW v7 + micro | No evaluable | No evaluable | — | — |
+| 2025-01 | Ambos | No evaluable | No evaluable | — | — |
+
+Los recuentos de altas son códigos de Estado cuyo intervalo
+empieza durante el mes *después* del día 1; no se atribuyen a
+predicciones realmente emitidas ni implican violencia. Los casos
+observados de 2006 prueban que los dos criterios de pertenencia
+tienen resultados distintos; en julio 2011 coinciden los
+denominadores para el primer día y todo el mes, pero existe
+una nueva pertenencia posterior al día 1.
+
+**Limitación esencial:** todos esos intervalos proceden de
+versiones publicadas en 2021 o 2025; por eso la reconstrucción
+retrospectiva es descriptiva y **no demuestra que el registro
+hubiera sido conocido por un analista en el origen**.
