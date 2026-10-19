@@ -1,0 +1,62 @@
+# AV-047: read-only; official 2019/2020 vintages inspected in ephemeral runner.
+# Never commit raw CSV/ZIP, state IDs, individual rows, trained models or scores.
+name: Psychohistory historical label and 2020 roster source audit
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/historical_training_source_audit.py"
+      - "research/psychohistory/test_historical_training_source_audit.py"
+      - "research/psychohistory/onset_gw_roster_2020_mirror.py"
+      - "research/psychohistory/test_onset_gw_roster_2020_mirror.py"
+      - ".github/workflows/psychohistory-historical-training-sources.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-adversarial-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify official-link, monadic targets, GW mirror adversarial tests
+        run: |
+          python3 -m unittest discover -s research/psychohistory -p test_historical_training_source_audit.py -v
+          python3 -m unittest discover -s research/psychohistory -p test_onset_gw_roster_2020_mirror.py -v
+  genuine-official-source-intake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Probe real official historical index and CSV / ZIP only in memory
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/historical_training_source_audit.py
+          echo 'Hashes are OBSERVED NOW, never independently authenticated as of July 2020.'
+          echo 'Onset 19.1 labels may NOT be used for 2020 model fitting without date evidence.'
+          echo 'No actual backtest or forecasts issued.'
+  historical-gw-git-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Query May 2020 GW package metadata only (NO RData parsing)
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 30 --max-filesize 1000000 \
+            'https://api.github.com/repos/andybega/states/commits/a42f5b0ce0b648abbdc2d5bf156ae51637d2fdaa' \
+            -o "$RUNNER_TEMP/gw-commit.json"
+          curl --fail --location --retry 2 --max-time 30 --max-filesize 1000000 \
+            'https://api.github.com/repos/andybega/states/git/trees/3e531cc283e35551623b2acbd8418fbfaf37a8e6?recursive=1' \
+            -o "$RUNNER_TEMP/gw-tree.json"
+          python3 research/psychohistory/onset_gw_roster_2020_mirror.py \
+            --commit-json "$RUNNER_TEMP/gw-commit.json" \
+            --tree-json "$RUNNER_TEMP/gw-tree.json"
+      - name: Delete temporary public metadata
+        if: always()
+        run: rm -f "$RUNNER_TEMP/gw-commit.json" "$RUNNER_TEMP/gw-tree.json"
