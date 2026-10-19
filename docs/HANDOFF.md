@@ -1,35 +1,9 @@
-## PSICOHISTORIA — Comparación real Candidate diciembre 2024 → enero 2025 · 19/10/2026
+## PSICOHISTORIA — Estado científico vigente · 19/10/2026
 
-- **Entrega científica AV-20261019-028:** [PR #655](https://github.com/mamg97/segundo-cerebro/pull/655) fusionada en `main` (`e5fe7ab26b13`). Comparador epímero de archivos públicos 24.0.12/25.0.1, CI científica, privacidad y prueba de fuente real en success. Los CSV no se subieron a Git ni a artifacts.
-- **Resultado verificable:** 2.110 eventos diciembre, 2.159 enero, siete ID coincidentes. Los **seis** `date_prec=0` de diciembre reaparecen en enero: cinco conservan 0 y uno pasa a 1–5. En diciembre, los seis comienzan en el mes y terminan después; en enero, los siete registros con código 0 comienzan antes del mes y terminan dentro. Patrón descriptivo, **NO definición oficial de 0 ni demostración de fecha as-of**. [Protocolo y evidencia](docs/psicohistoria/CANDIDATE_CROSS_VINTAGE_2024_2025.md).
-- **Canon revalidado:** `PsicoAvances` append-only +1 (28); `MAD-02=PARCIAL`, `V2-02=EN_CURSO`, `PsicoPredicciones=0`. Fuentes observadas en octubre 2026, no certificadas como disponibles en 2024/25. Sin scores, forecasts reales, modificaciones en cohorte 2027, Worker o frontend.
-- **Siguiente prioridad:** solicitar o hallar aclaración normativa para `date_prec=0`; verificar fecha de publicación de **bytes exactos**, no solo nombre de versión; conseguir roster completo de países, incluidos los sin incidentes, y comenzar replay estrictamente vintage-correct cuando se cumplan los gates. No tocar bolsa ni convertir el resultado en skill.
-
----
-
-## PSICOHISTORIA — Reconciliación de Candidate mensual 24.0.12 y precision 0 · 18/10/2026
-
-- **Avance 27 confirmado:** [PR #654](https://github.com/mamg97/segundo-cerebro/pull/654) fusionada en main como `c7e3941e8484`. Tests científicos, descarga auténtica en runner efímero y control de privacidad correctos. El [codebook UCDP Candidate 1.3](https://ucdp.uu.se/downloads/candidateged/ucdp-candidate-codebook1.3.pdf) admite eventos con `date_start` o `date_end` en el mes exportado.
-- **Descubrimiento preciso:** los 2.110 eventos de la edición 24.0.12 observada ahora tienen un extremo en diciembre de 2024; los seis finales en 2025 empiezan en diciembre, ninguno empieza fuera de la ventana. **Esos mismos seis son los únicos con `date_prec=0`**, que el codebook 1.3 no describe (categorías 1–5). Estado fail-closed: `SOURCE_PRECISION_CODEBOOK_MISMATCH_REVIEW_REQUIRED`. La conclusión anterior AV-026 sobre anomalía de fecha, sin estos matices, se corrige mediante **AV-20261018-027** append-only.
-- **Tracker y restricciones:** `PsicoAvances` AV-027 añadido y reconsultado; `PsicoFases.MAD-02=PARCIAL`, `PsicoHitos.V2-02=EN_CURSO`; `PsicoPredicciones=0`. No hay datos/versiones certificados históricamente `as-of`, tampoco roster completo, scores ni emisiones. No se toca Worker, interfaz ni cohorte 2027.
-- **Próxima tarea comprobable:** investigar el significado de `date_prec=0` mediante documentación/proveedor; luego contrastar fecha+bytes de release y derivar roster independiente para un replay de nuevas crisis sin fuga. [Informe metodológico](docs/psicohistoria/CANDIDATE_DATE_WINDOW_RECONCILIATION.md).
-
-
----
-
-## PSICOHISTORIA — Observación empírica Candidate archivado 24.0.12 · 18/10/2026
-
-- **Nueva prueba pública efímera:** `.github/workflows/psychohistory-candidate-source-probe.yml` descarga del proveedor el CSV histórico 24.0.12 en un runner temporal y `candidate_source_probe.py` verifica cabecera/eventos/fechas y calcula hash observado, filas y número de países con eventos, sin publicar datos individuales ni artifacts.
-- **Límites:** la edición 24.0.12 figura en el archivo oficial UCDP, pero el fetch de hoy no acredita que esos bytes estuvieran disponibles en 2024. El número de países con eventos no es cobertura de países sin incidentes: no se puede derivar un denominador mundial solo del CSV. Sin `as_of_verified`, `backtest_authorized` ni emisiones. No cambian Worker, web, 2027 ni `PsicoPredicciones`.
-- **Evidencia empírica y CI verde:** [PR #653](https://github.com/mamg97/segundo-cerebro/pull/653) fusionada en main (squash `c5a14a01a94a`); [observación de fuente 39161290880](https://github.com/mamg97/segundo-cerebro/actions/runs/39161290880) y tests/guard de privacidad superados. Fuente descargada ahora: 2.110 eventos, 43 países CON eventos, seis `date_end` posteriores a 2024, ningún intervalo invertido. Por ello `status=OBSERVED_BUT_REPLAY_BLOCKED_DATE_SCOPE_ANOMALY`; **no** se valida publicación ni cobertura histórica. `PsicoAvances` AV-20261018-026 y `MAD-02=PARCIAL` escritos y reconsultados; `PsicoPredicciones=0`. Siguiente paso: aclarar las seis filas con codebook, conseguir evidencia independiente de release/bytes y un roster completo de países antes de medir skill. [Alcance](docs/psicohistoria/CANDIDATE_OBSERVATION_2024.md).
-
----
-
-## PSICOHISTORIA — Cobertura completa de Candidate país-origen · 18/10/2026
-
-- **Nuevo audit offline:** `research/psychohistory/asof_cohort_coverage.py` clasifica TODOS los países-origen planificados (no solo positivos) según existencia de Candidate de bytes pinneados SHA, ámbito declarado y release declarado anterior al mes de emisión. Falta de vintage ≠ ausencia de violencia. Orígenes sin cobertura son `NO_EVALUABLE`; los denominadores quedan explícitos.
-- **Puerta de seguridad epistemológica:** la fecha de publicación/ámbito del manifiesto no están independientemente autenticados y los bytes Candidate no se han reconstruido en targets/features; `source_as_of_verified=false`, `scores_computed=false`, `forecast_issued=false`. No actualiza la cohorte 2027, Worker, UI ni `PsicoPredicciones`. Solo CI sintética y reportes privados create-only.
-- **Verificación y seguimiento:** [PR #652](https://github.com/mamg97/segundo-cerebro/pull/652) fusionada en `main` (squash `97850b14c95b`); tests científicos, privacidad y demo Pages de la rama principal en `success`. Bitácora privada `PsicoAvances` AV-20261018-025 añadida y reconsultada; `MAD-02=PARCIAL`, `PsicoPredicciones=0`. [Protocolo](docs/psicohistoria/CANDIDATE_ASOF_COVERAGE.md). Siguiente hito: capturar un Candidate auténtico, verificar cobertura en bytes y datar el release independientemente antes de puntuar modelos.
+- **Último avance verificable: AV-20261019-029.** [PR #657](https://github.com/mamg97/segundo-cerebro/pull/657) fusionada (squash `b3598152a594`). Auditor de metadatos de publicación y acceso de OWID para UCDP Candidate mensual `24.0.10` con [prueba empírica GitHub Actions 39228782534](https://github.com/mamg97/segundo-cerebro/actions/runs/39228782534), tests científicos sintéticos y guardia de privacidad superados.
+- **Resultado:** OWID registra publicación declarada `2024-10-20` y consulta externa `2024-11-22`. Para orígenes hipotéticos `2024-10-01`, `2024-11-01` y `2024-12-01`, las clasificaciones son respectivamente publicación aún no declarada, acceso aún no registrado y **solo metadatos**. El propio catálogo puede cambiar; un registro trimestral observado en un índice anterior no pudo recuperarse como entrada única actual. **Ninguna fecha es testigo criptográfico de bytes históricos.** [Protocolo](docs/psicohistoria/THIRDPARTY_RELEASE_CLOCK.md).
+- **Estado canónico privado:** `PsicoAvances=29` (evento 029 añadido y releído); `PsicoFases.MAD-02=PARCIAL`, `PsicoHitos.V2-02=EN_CURSO`, `PsicoPredicciones=0`. Sin modificación de Worker, UI, cartera, fuentes canónicas ajenas ni probabilidades de cohorte 2027. No hay skill prospectiva demostrada.
+- **Trabajo pendiente con prioridad:** hallar testigo temporal **independiente y verificable** de bytes exactos UCDP (SHA-256 del momento relevante), aclarar con el proveedor semántica de `date_prec=0`, reconstruir roster de países con y sin incidentes y validar covariables/labels as-of antes de un backtest. No extrapolar publicación de edición trimestral a mensual. No emitir pronósticos de forma retroactiva.
 
 ---
 
