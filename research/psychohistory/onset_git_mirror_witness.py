@@ -14,9 +14,9 @@ import re
 
 SCHEMA = 'psychohistory.ged191_thirdparty_git_tree_metadata.v1'
 REPO = 'knapply/data4ds4da'
-COMMIT = '02ac3d720bb0a34248888a6900e2d7854be8a4ba'
-TREE = '58119f4869633210bc28b94bce9061596a517ed3'
-PATH = 'inst/datasets/ucdp_19.1/ged191.csv'
+COMMIT = '33316d9367907b8452d3a5ac3fe0ff2bd7da7f43'
+TREE = '9996db934c356ee561ba477b1a0a32bc996b0dc1'
+PATH = 'inst/ucdp_19.1/ged191.csv'
 BLOB = '3f7e4621ba0d264a62b221fa06773e02d66d046f'
 SIZE = 68235762
 SOURCE_OBSERVATIONS_END = date(2018,12,31)
@@ -57,7 +57,7 @@ def inspect_mirror(commit, tree, issue_dates=('2020-01-01','2021-01-01')):
     committer=internal.get('committer',{})
     author_clock=_utc(author.get('date'))
     committer_clock=_utc(committer.get('date'))
-    if author_clock!=committer_clock or committer_clock.isoformat()!='2020-01-11T17:55:45+00:00':
+    if author_clock!=committer_clock or committer_clock.isoformat()!='2020-01-10T15:14:26+00:00':
         raise ValueError('Pinned third-party claim of commit time changed')
     verification=internal.get('verification',{})
     if verification.get('verified') is not False or verification.get('reason')!='unsigned':
