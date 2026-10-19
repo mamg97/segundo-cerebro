@@ -28350,3 +28350,143 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   cursor: pointer;
 }
 .pantry-review-item button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+
+/* Mobile Home weekly menu: more days and meals per viewport, with horizontal
+   scrolling confined to the matrix. The desktop layout is unchanged. */
+@media (max-width: 560px) {
+  .daily-overview-grid > #home-weekly-menu-panel {
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 8px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .home-weekly-menu-objectives {
+    gap: 3px 9px;
+    padding-bottom: 6px;
+    font-size: 9.5px;
+  }
+  .home-weekly-menu-objectives > strong { font-size: 10px; }
+  .home-weekly-menu-scale-legend { font-size: 9px; line-height: 1.3; }
+
+  .home-weekly-menu-table-scroll {
+    min-width: 0;
+    max-width: 100%;
+    padding-bottom: 3px;
+    scrollbar-gutter: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .home-weekly-menu-table {
+    grid-template-columns: 64px repeat(7, 128px);
+    min-width: 960px;
+    border-radius: 10px;
+  }
+
+  .home-weekly-menu-corner,
+  .home-weekly-menu-row-label {
+    left: 0;
+    padding: 6px 4px;
+  }
+  .home-weekly-menu-corner span,
+  .home-weekly-menu-row-label span {
+    font-size: 8.5px;
+    line-height: 1.15;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+  }
+  .home-weekly-menu-table-day > header {
+    min-height: 0;
+    padding: 6px 6px 4px;
+    gap: 2px;
+  }
+  .home-weekly-menu-table-day > header small {
+    font-size: 8px;
+    line-height: 1.1;
+  }
+  .home-weekly-menu-table-day > header strong {
+    margin-top: 1px;
+    font-size: 10px;
+    line-height: 1.15;
+  }
+  .home-weekly-menu-table-day .home-weekly-menu-progress {
+    gap: 5px;
+    padding: 5px 6px 7px;
+  }
+  .home-weekly-menu-plan-metric .home-weekly-menu-plan-label {
+    margin-bottom: 2px;
+    font-size: 9px;
+    line-height: 1.1;
+  }
+  .home-weekly-menu-plan-bar {
+    height: 19px;
+    border-radius: 5px;
+  }
+  .home-weekly-menu-plan-bar .home-weekly-menu-plan-value {
+    padding: 0 2px;
+    font-size: 8.5px;
+    letter-spacing: -0.02em;
+  }
+  .home-weekly-menu-plan-metric .home-weekly-menu-plan-partial {
+    margin-top: 2px;
+    font-size: 8px;
+    line-height: 1.15;
+  }
+
+  .home-weekly-menu-table-cell {
+    min-width: 0;
+    min-height: 45px;
+    padding: 5px 6px;
+  }
+  .home-weekly-menu-table-cell .weekly-menu-group-item {
+    gap: 2px;
+    padding: 4px 0;
+  }
+  .home-weekly-menu-table-cell .home-weekly-menu-recipe-link {
+    gap: 4px;
+    padding: 0;
+  }
+  .home-weekly-menu-table-cell .home-menu-recipe-thumb {
+    width: 100%;
+    max-width: 114px;
+    max-height: 62px;
+    border-radius: 6px;
+  }
+  .home-weekly-menu-table-cell .home-menu-recipe-title {
+    gap: 3px;
+  }
+  .home-weekly-menu-table-cell .home-menu-recipe-title strong,
+  .home-weekly-menu-table-cell .weekly-menu-group-item-copy strong {
+    font-size: 9.75px;
+    line-height: 1.2;
+  }
+  .home-weekly-menu-table-cell .weekly-menu-group-item-macros {
+    gap: 2px 6px;
+  }
+  .home-weekly-menu-table-cell .weekly-menu-group-item-macros b,
+  .home-weekly-menu-table-cell .weekly-menu-group-item-macros span {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+  .home-weekly-menu-table-cell .home-menu-item-actions {
+    gap: 4px;
+  }
+  .home-weekly-menu-table-cell .home-menu-item-actions button {
+    min-height: 32px;
+    padding: 4px 5px;
+    font-size: 9.5px;
+  }
+  .home-weekly-menu-table-cell .home-menu-consumed-label {
+    align-self: center;
+    font-size: 9px;
+  }
+  .home-weekly-menu-table-cell .home-menu-add-action {
+    min-height: 34px;
+    margin-top: 4px;
+    padding: 5px 3px;
+    font-size: 9.5px;
+    white-space: nowrap;
+  }
+}
