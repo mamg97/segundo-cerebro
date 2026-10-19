@@ -59,7 +59,7 @@ sin incidentes, antes de evaluar un onset o una crisis nueva.
 
 ## Primera ejecución empírica · 19/10/2026
 
-La [ejecución del auditor con fuente GW real](https://github.com/mamg97/segundo-cerebro/actions/runs/39230716327)
+La [ejecución del auditor con fuente GW real](https://github.com/mamg97/segundo-cerebro/actions/runs/39230727444)
 ha procesado 216 intervalos, correspondientes a 202 códigos de
 Estado distintos en **toda la historia**. Para diciembre de 2019
 y de 2020 se identificaron **174 Estados miembros durante todo el
