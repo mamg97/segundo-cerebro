@@ -5986,10 +5986,7 @@ function weeklyMenuItemsForMoment(day, momentKey) {
 
 function renderHomeWeeklyMenuMatrixCell(items, readOnly = false, date = "", moment = "") {
   const rows = Array.isArray(items) ? items.filter(Boolean) : [];
-  const primaryAssigned = rows.some(row =>
-    Boolean(row.recipeId || row.foodId) &&
-    normalizeWeeklyMenuMoment(row.itemRole || "receta") !== "acompanante");
-  const addButton = !readOnly && !primaryAssigned && date && moment
+  const addButton = !readOnly && date && moment
     ? `<button type="button" class="home-menu-add-action" data-home-menu-add-date="${escapeHtml(date)}"
       data-home-menu-add-moment="${escapeHtml(moment)}" aria-label="Añadir receta para ${escapeHtml(moment)} del ${escapeHtml(date)}">＋ Añadir</button>`
     : "";
@@ -6196,11 +6193,12 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
           placeholder="Indica las raciones (ej.: 1)" inputmode="decimal">
       </label>
       ${isAdd ? '<label class="home-menu-editor-confirm"><input type="checkbox" data-menu-editor-confirm-consumed> Ya la he consumido</label>' : ""}
-      ${foodCompanion ? `<label class="home-menu-editor-role-label">Cómo se incorporará la nueva receta
+      ${(foodCompanion || isAdd) ? `<label class="home-menu-editor-role-label">Cómo se incorporará la nueva receta
         <select data-menu-editor-role aria-label="Clasificación de la nueva receta">
-          <option value="" ${defaultShake ? "" : "selected"}>Receta principal (solo si no hay otra)</option>
-          <option value="batido" ${defaultShake ? "selected" : ""}>Batido como acompañante, sin añadir plato principal</option>
-        </select></label><p class="home-menu-editor-food-hint">Elige «Batido» solo si la receta seleccionada es realmente una bebida o batido. No se marcará como consumido.</p>` : ""}
+          <option value="" ${defaultShake || (isAdd && alreadyHasPrimary) ? "" : "selected"}>Plato principal (solo si no existe otro)</option>
+          <option value="extra" ${isAdd && alreadyHasPrimary ? "selected" : ""}>Acompañamiento / extra</option>
+          <option value="batido" ${defaultShake ? "selected" : ""}>Batido como acompañamiento</option>
+        </select></label><p class="home-menu-editor-food-hint">Los acompañamientos se suman a la comida existente sin reemplazarla.</p>` : ""}
       <label>Buscar recetas <input type="search" data-menu-editor-search placeholder="Nombre de receta…" autocomplete="off"></label>
       <label>Receta alternativa <select data-menu-editor-select size="6" aria-label="Seleccionar receta alternativa"></select></label>
       <div class="home-menu-editor-projection" data-menu-editor-preview role="status">Elige una receta para ver cómo cambiarían sus macros.</div>
@@ -6227,11 +6225,11 @@ async function openHomeMenuRecipeEditor(item, day, settings = {}) {
     selectedRecipe = options.find(recipe => recipe.id === select.value) || null;
     const requestedServings = servingsInput ? servingsInput.value : null;
     const macro = selectedRecipe && homeMenuRecipeProjection(item,selectedRecipe,day,requestedServings,isAdd);
-    const conflictingPrimary = Boolean(alreadyHasPrimary && roleSelect?.value !== "batido");
+    const conflictingPrimary = Boolean(alreadyHasPrimary && !roleSelect?.value);
     save.disabled = !macro || homeMenuEditPending || conflictingPrimary ||
       Boolean(!isAdd && selectedRecipe?.id === item.recipeId && requestedServings === String(item.quantity));
     preview.innerHTML = conflictingPrimary
-      ? '<span>Esta comida ya tiene una receta principal. Si estás sustituyendo el postre por un batido, selecciona «Batido como acompañante».</span>'
+      ? '<span>Esta comida ya tiene un plato principal. Elige «Acompañamiento / extra» para añadirlo sin reemplazar el plato.</span>'
       : !macro
         ? '<span>Esta receta no tiene macros/ración verificables o es histórica y no debe reutilizarse.</span>'
         : `<strong>${escapeHtml(selectedRecipe.name)}</strong>

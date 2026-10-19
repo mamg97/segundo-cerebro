@@ -64,6 +64,10 @@ export function planMenuAddition(values,payload,recipes,now){
   ensure(Boolean(label),"INVALID_MENU_MOMENT",400);
   ensure(/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(String(payload?.newRecipeId||"")),"INVALID_RECIPE_SELECTION",400);
   const quantity=servings(payload.newServings);
+  const companionType=String(payload.newCompanionType || "").trim().toLowerCase();
+  ensure(["","extra","batido","yogur","fruta","guarnicion","postre"].includes(companionType),
+    "INVALID_COMPANION_TYPE",400);
+  const asCompanion=Boolean(companionType);
   const recipe=recipes.find(r=>r.id===payload.newRecipeId);
   ensure(Boolean(recipe),"RECIPE_NOT_FOUND",404);
   const [kcal,protein,carbs,fat]=completeRecipe(recipe,quantity);
@@ -71,13 +75,13 @@ export function planMenuAddition(values,payload,recipes,now){
   const peers=items.filter(x=>x.data.fecha===payload.date && momentKey(x.data)===normalize(label) && active(x.data));
   const primary=peers.filter(x=>
     Boolean(x.data.recipe_id||x.data.food_id) && normalize(x.data.tipo_item||"receta")!=="acompanante");
-  ensure(!primary.length,"PRIMARY_RECIPE_ALREADY_IN_MEAL");
+  if(!asCompanion) ensure(!primary.length,"PRIMARY_RECIPE_ALREADY_IN_MEAL");
   ensure(!peers.some(x=>x.data.recipe_id===recipe.id),"RECIPE_ALREADY_IN_MEAL");
   // An unassigned textual placeholder is replaced, not duplicated.
   const placeholder=peers.filter(x=>!x.data.recipe_id&&!x.data.food_id &&
     ["planificado","pendiente"].includes(normalize(x.data.estado)));
   ensure(placeholder.length<=1,"AMBIGUOUS_MENU_PLACEHOLDER");
-  const sourceRow=placeholder[0]?.sourceRow ||
+  const sourceRow=(!asCompanion ? placeholder[0]?.sourceRow : null) ||
     (items.length?Math.max(...items.map(x=>x.sourceRow))+1:2);
   ensure(sourceRow>=2&&sourceRow<=2000,"MENU_SHEET_CAPACITY");
   const status=payload.confirmConsumed===true?"consumido":"planificado";
@@ -85,10 +89,10 @@ export function planMenuAddition(values,payload,recipes,now){
     semana_inicio:startOfWeek(payload.date),fecha:payload.date,momento:label,
     recipe_id:recipe.id,food_id:"",nombre:recipe.name,cantidad:quantity,unidad:"ración",
     estado:status,kcal,proteinas_g:protein,carbohidratos_g:carbs,grasas_g:fat,
-    sesion_gym:placeholder[0]?.data.sesion_gym||"",nota:status==="consumido"
+    sesion_gym:!asCompanion ? placeholder[0]?.data.sesion_gym||"" : "",nota:status==="consumido"
       ? "Añadido y confirmado como consumido desde el menú semanal."
       : "Añadido al menú semanal; consumo pendiente.",
-    updated_at:now,tipo_item:"receta",tipo_acompanante:""
+    updated_at:now,tipo_item:asCompanion?"acompanante":"receta",tipo_acompanante:companionType
   };
   const updates=Object.entries(fields).filter(([key])=>headers.includes(key))
     .map(([key,val])=>put("MenuSemanal",sourceRow,headers,key,val));
