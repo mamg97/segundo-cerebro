@@ -1,0 +1,34 @@
+# Observational third-party capture index only; never pull country rows.
+name: Psychohistory archival timestamp witness trial
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_archive_witness.py"
+      - "research/psychohistory/onset_archive_probe.py"
+      - "research/psychohistory/test_onset_archive_witness.py"
+      - "research/psychohistory/test_onset_archive_probe.py"
+      - ".github/workflows/psychohistory-archive-witness.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archival-asof-triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify adversarial archive snapshots (fiction only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s research/psychohistory \
+            -p 'test_onset_archive*.py' -v
+      - name: Query third-party public CDX index best-effort
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_archive_probe.py
+          echo 'HTTP errors and missing index are UNKNOWN, not proof of no captures.'
+          echo 'No historical byte-level witness approved, no forecasts, no country rows.'
