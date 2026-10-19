@@ -487,6 +487,14 @@ function renderWorkspace(payload, initialView = "inventory") {
       statusMessage("No se pudo actualizar. "+String(error?.message||"Reintenta"),true);
     }finally{busy.value=false;}
   };
+  body.querySelector("[data-shopping-product-search]")?.addEventListener("input", event => {
+    const select=body.querySelector('[data-shopping-add-form] select[name="productId"]');
+    if(!select)return;
+    const choices=productSearch(event.target.value);
+    select.innerHTML='<option value="">'+(choices.length?'Elige un producto':'Sin coincidencias')+'</option>' +
+      choices.slice(0,60).map(product=>'<option value="'+escapeHtml(product.id)+'">'+
+        escapeHtml(product.name)+'</option>').join("");
+  });
   body.querySelector("[data-shopping-add-toggle]")?.addEventListener("click",()=>{
     const form=body.querySelector("[data-shopping-add-form]");
     if(form){form.hidden=false;form.querySelector("select")?.focus();}
