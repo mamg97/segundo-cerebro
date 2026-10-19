@@ -75,7 +75,7 @@ class HistoricalOfficialAuditTests(unittest.TestCase):
     def test_ged_2019_intrastate_not_country_risk_set(self):
         data=b"year,type_of_violence\n1989,1\n2019,1\n2019,2\n2019,3\n"
         r=audit_table(data,"ged20")
-        self.assertEqual(r["ged_latest_year_intrastate_event_rows"],1)
+        self.assertEqual(r["ged_latest_year_statebased_event_rows"],1)
         self.assertEqual(r["latest_year_rows"],3)
         self.assertIsNone(r["latest_year_onset1_positives"])
         self.assertFalse(r["complete_issue_roster_certified"])
@@ -96,6 +96,12 @@ class HistoricalOfficialAuditTests(unittest.TestCase):
         self.assertTrue(r["historical_coverage_truncated"])
         self.assertEqual(r["latest_year_rows"],0)
         self.assertFalse(r["backtest_authorized"])
+
+    def test_state_based_not_equivalent_to_intrastate(self):
+        x=audit_table(b"year,type_of_violence\n2019,1\n2019,2\n","ged20")
+        self.assertEqual(x["ged_latest_year_statebased_event_rows"],1)
+        self.assertNotIn("intrastate",repr(x))
+        self.assertFalse(x["backtest_authorized"])
 
     def test_safe_single_csv_zip(self):
         data=archive()
