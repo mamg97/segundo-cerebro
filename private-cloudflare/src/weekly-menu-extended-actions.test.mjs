@@ -117,3 +117,30 @@ test("the browser wires the weekly matrix, canonical Add and consumed correction
   assert.match(worker,/planConsumedRegisterCorrection/);
   assert.match(worker,/planMenuAddition/);
 });
+
+test("adding recipe accompaniment preserves existing primary and verified nutrition",()=>{
+  const planned=[...old];planned[8]="planificado";
+  const payload={...add,date:"2026-10-16",moment:"Comida",newCompanionType:"extra"};
+  const plan=planMenuAddition([menuHeader,planned],payload,recipes,"2026-10-19T13:00:00Z");
+  const values=Object.fromEntries(plan.updates.map(x=>[x.range,x.values[0][0]]));
+  assert.equal(plan.sourceRow,3);
+  assert.equal(values["MenuSemanal!Q3"],"acompanante");
+  assert.equal(values["MenuSemanal!R3"],"extra");
+  assert.equal(values["MenuSemanal!D3"],"r-b");
+  assert.equal(values["MenuSemanal!J3"],450);
+  assert.ok(!plan.updates.some(x=>x.range.endsWith("2")));
+  assert.throws(()=>planMenuAddition([menuHeader,planned],{...payload,newCompanionType:""},recipes,"T"),
+    e=>e.code==="PRIMARY_RECIPE_ALREADY_IN_MEAL");
+  assert.throws(()=>planMenuAddition([menuHeader,planned],{...payload,newCompanionType:"random"},recipes,"T"),
+    e=>e.code==="INVALID_COMPANION_TYPE");
+});
+
+test("menu reconciliation reads the actual bounded ingredient grid and preserves manual purchases",()=>{
+  const service=readFileSync(new URL("./pantry-shopping-actions.js",import.meta.url),"utf8");
+  const css=readFileSync(new URL("../../app/styles.css",import.meta.url),"utf8");
+  assert.match(service,/IngredientesReceta!A1:L3001/);
+  assert.doesNotMatch(service,/IngredientesReceta!A1:L5000/);
+  assert.match(service,/familyNames\?\.\[0\]/);
+  assert.match(css,/Dense, legible iPhone Home weekly menu/);
+  assert.match(css,/\.home-weekly-menu-table-cell \.home-menu-add-action/);
+});
