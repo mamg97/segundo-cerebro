@@ -53,9 +53,18 @@ class HistoricalOfficialAuditTests(unittest.TestCase):
         self.assertFalse(r["complete_issue_roster_certified"])
         self.assertFalse(r["backtest_authorized"])
 
-    def test_onset_duplicates_hindsight_and_bad_labels_rejected(self):
+    def test_onset_duplicate_flags_reported_not_automatically_collapsed(self):
+        d=b"year,gwno_a,onset1\n2018,900,1\n2018,900,0\n2018,901,1\n"
+        outcome=audit_table(d,"onset19")
+        self.assertEqual(outcome["onset19_unique_country_year_keys"],2)
+        self.assertEqual(outcome["onset19_duplicate_rows_beyond_first"],1)
+        self.assertEqual(outcome["onset19_conflicting_country_year_keys"],1)
+        self.assertFalse(outcome["monadic_country_year_uniqueness_verified"])
+        self.assertFalse(outcome["onset19_usable_without_explicit_duplicate_resolution"])
+        self.assertFalse(outcome["backtest_authorized"])
+
+    def test_onset_hindsight_and_bad_labels_rejected(self):
         for data in (
-            b"year,gwno_a,onset1\n2018,900,1\n2018,900,0\n",
             b"year,gwno_a,onset1\n2020,900,1\n",
             b"year,gwno_a,onset1\n2018,900,maybe\n",
             b"year,gwno_a,onset1\n2018,9AB,1\n",
@@ -89,7 +98,7 @@ class HistoricalOfficialAuditTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             unpack_csv(archive("../data.csv"),"https://ucdp.uu.se/downloads/ged/ged201-csv.zip")
         with self.assertRaises(ValueError):
-            unpack_csv(b"unknown","https://ucdp.uu.se/downloads/ged/ged201.csv")
+            audit_table(unpack_csv(b"unknown","https://ucdp.uu.se/downloads/ged/ged201.csv"),"ged20")
 
     def test_no_outcome_state_rows_ever_returned(self):
         r=audit_table(b"year,gwno_a,onset1\n2018,98765,1\n","onset19")
