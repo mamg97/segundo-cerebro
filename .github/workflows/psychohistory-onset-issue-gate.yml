@@ -26,6 +26,12 @@ jobs:
             --fail --location --retry 2 --max-time 70 --max-filesize 20000000 \
             --output "$RUNNER_TEMP/onset-country-251.csv" \
             'https://ucdp.uu.se/downloads/onset/ucdp-intrastate-country-onset-251.csv'
+      - name: Record current public-source digest before enforcing pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum "$RUNNER_TEMP/onset-country-251.csv"
+          echo "Observed bytes must match the pinned previously verified 25.1 archive; do not approve source mutations."
       - name: Reject as-of claims and quantify outcome/predecessor-row geometry
         shell: bash
         run: |
