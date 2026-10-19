@@ -13,6 +13,13 @@ export class ShoppingActionError extends Error {
 }
 const fail=(code,status)=>{throw new ShoppingActionError(code,status);};
 const nowIso=()=>new Date().toISOString();
+const madridDateKey=()=>{
+  const parts=new Intl.DateTimeFormat("en-GB",{
+    timeZone:"Europe/Madrid",year:"numeric",month:"2-digit",day:"2-digit"
+  }).formatToParts(new Date());
+  const get=type=>parts.find(x=>x.type===type)?.value;
+  return get("year")+"-"+get("month")+"-"+get("day");
+};
 const headersNeeded=["inventario_id","producto_id","nombre","ubicacion","cantidad_aprox",
   "unidad_stock","nivel_stock","abierto","caducidad_visible","confianza","origen","ultima_revision","notas"];
 function googleUrl(id,ending){
@@ -153,7 +160,7 @@ export async function performShoppingAction(request,env,auth){
 }
 export async function reconcileMenuShopping(env,auth,{today,limit=12}={}){
   if(!env.HEALTH_SHEET_ID)fail("HEALTH_NOT_CONFIGURED",503);
-  const date=today||new Date().toISOString().slice(0,10);
+  const date=today||madridDateKey();
   const pantry=await fetchPantrySummary(env,auth);
   if(!pantry.value)fail("PANTRY_NOT_CONFIGURED",503);
   const token=await auth(env);
