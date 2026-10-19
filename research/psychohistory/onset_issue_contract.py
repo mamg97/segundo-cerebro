@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 import csv
-from datetime import date, timedelta
+from datetime import date
 from hashlib import sha256
 import io
 import json
@@ -163,7 +163,7 @@ def reference_audit(raw, expected_sha=SOURCE_SHA, years=(1989, 2006, 2019, 2020,
             "confirmed_risk_set_size":None,
         })
     return {
-        "schema":"psychohistory.udcp_25_1_country_outcome_row_coverage.v1",
+        "schema":"psychohistory.ucdp_25_1_country_outcome_row_coverage.v1",
         "source_version":VERSION,
         "observed_source_sha256_now":sha256(raw).hexdigest(),
         "n_annual_country_year_outcome_rows":len(records),
