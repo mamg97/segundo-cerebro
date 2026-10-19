@@ -8,8 +8,8 @@ def fixture():
     return (
         {'sha':COMMIT,'commit':{
             'tree':{'sha':TREE},
-            'author':{'date':'2020-01-11T17:55:45Z'},
-            'committer':{'date':'2020-01-11T17:55:45Z'},
+            'author':{'date':'2020-01-10T15:14:26Z'},
+            'committer':{'date':'2020-01-10T15:14:26Z'},
             'verification':{'verified':False,'reason':'unsigned'}}},
         {'sha':TREE,'truncated':False,'tree':[
             {'path':PATH,'sha':BLOB,'size':SIZE,'type':'blob','mode':'100644'},
@@ -55,7 +55,7 @@ class HistoricalGitMirrorTests(unittest.TestCase):
     def test_unsigned_commit_not_time_attestation(self):
         for change in [('verification',{'verified':True,'reason':'valid'}),
                        ('author',{'date':'2020-01-01T00:00:00Z'}),
-                       ('committer',{'date':'2020-01-11T17:55:46Z'}),
+                       ('committer',{'date':'2020-01-10T15:14:27Z'}),
                        ('tree',{'sha':'f'*40})]:
             c,t=fixture()
             c['commit'][change[0]]=change[1]
