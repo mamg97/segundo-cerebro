@@ -28174,3 +28174,49 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   .recipes-filter-controls { align-items: stretch; }
   .recipe-archive-toggle { width: 100%; }
 }
+
+/* Independent card actions; the existing main button remains the detail target. */
+.recipe-catalog-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.recipe-catalog-item > .recipe-catalog-card {
+  flex: 1 1 auto;
+  align-content: start;
+}
+.recipe-catalog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding: 0 2px 2px;
+}
+.recipe-catalog-action {
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 5px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--blue);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+.recipe-catalog-action:hover {
+  background: color-mix(in srgb, var(--blue) 10%, var(--paper));
+}
+.recipe-catalog-action.is-delete { color: var(--coral); }
+.recipe-catalog-action.is-delete:hover {
+  background: color-mix(in srgb, var(--coral) 9%, var(--paper));
+}
+.recipe-catalog-action:disabled { opacity: .5; cursor: wait; }
+.recipe-catalog-action:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.recipe-catalog-error { color: var(--coral); margin: 1px 0 5px; font-size: 10px; }
+@media (max-width: 429px) {
+  .recipe-catalog-actions { gap: 5px; padding-inline: 0; }
+  .recipe-catalog-action { min-height: 40px; padding: 7px 3px; font-size: 10.5px; }
+}
