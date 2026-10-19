@@ -55,13 +55,10 @@ class IssueDayRosterTests(unittest.TestCase):
             (100,"NEW",date(2020,6,1),date(2020,12,31)),
             (200,"AAA",date(2010,1,1),date(2020,12,31)),
         ]
-        result=inspect_membership(rows,*_month_dates("2020-06"))
-        self.assertEqual(result["n_ambiguous_issue_day_codes"],1)
-        self.assertEqual(result["n_first_day_members"],1)
-        self.assertEqual(result["n_full_month_members"],2)
-        # If a disputed issue-day state would be treated as stable, reject
-        # the contradiction rather than including it retrospectively.
-        # This assertion is intentionally reached only through a raised error.
+        # On an inclusive shared-day transition a full-month successor
+        # conflicts with the doubly occupied issue day: fail closed.
+        with self.assertRaises(ValueError):
+            inspect_membership(rows,*_month_dates("2020-06"))
 
     def test_bad_interval_is_rejected(self):
         with self.assertRaises(ValueError):
