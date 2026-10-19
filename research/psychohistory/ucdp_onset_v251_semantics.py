@@ -69,8 +69,9 @@ def read_source(raw,sha,level,selected_years=SELECTED):
             distinct_years.add(y)
             country_years[(code,y)]+=1
             counts[("rows",y)]+=1
-            # A year with no previous observation is sentinel 1815 in
-            # UCDP's codebook. Keep null/invalid separately, never impute.
+            # UCDP documents 1815 as a sentinel for no previous onset.
+            # Blank/NA is a distinct raw-field state: NEVER interpret
+            # blank as no past conflict, no onset, or eligibility.
             previous=row["year_prev"].strip()
             if previous not in ("","NA") and (
                     not previous.isdecimal() or not 1815<=int(previous)<y):
@@ -109,7 +110,7 @@ def read_source(raw,sha,level,selected_years=SELECTED):
           "n_onset10":counts[("yes",y,"onset10")],
           "n_onset20":counts[("yes",y,"onset20")],
           "n_missing_onset1":counts[("missing",y,"onset1")],
-          "n_previous_year_missing":counts[("unknown_previous",y)],
+          "n_year_prev_field_blank_or_NA":counts[("unknown_previous",y)],
           "eligible_denominator_at_issue_verified":False,
         })
     return {
