@@ -19,6 +19,7 @@ from onset_semantic_triangulation import SOURCES, parse, evaluate
 INDEX="https://ucdp.uu.se/downloads/olddw.html"
 SCHEMA="psychohistory.four_onset_semantics.v1"
 LINK_TEXT="Intrastate Country Level Multiple Onset CSV"
+MULTIPLE_SHA_OBSERVED_2026="5fe7411942aa7e6a38d6386faa64f4d7f0703482509f121c4136c0e3223d7f05"
 
 class OnsetLinks(HTMLParser):
     def __init__(self):
@@ -119,6 +120,8 @@ def run():
             raise ValueError("Pinned existing UCDP checksum changed")
         parsed[key]=parse(raw,key)
     latest=fetch(url)
+    if sha256(latest).hexdigest()!=MULTIPLE_SHA_OBSERVED_2026:
+        raise ValueError("Modern multiple-onset source changed since observed 2026 pin")
     multi=parse(latest,"conflict")
     report=four_way(parsed["old"],parsed["country"],parsed["conflict"],multi)
     report["new_variant_official_link"]=url
