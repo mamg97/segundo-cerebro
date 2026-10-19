@@ -102,3 +102,23 @@ Sin embargo, ni su significado técnico ni la fecha pública de esos bytes
 quedan determinados por la comparación. Una transición de código no es
 prueba de que el evento fuera conocido en el corte temporal. No se ha
 construido un roster negativo ni calculado una sola métrica predictiva.
+
+### Patrón temporal del valor 0 en dos ediciones
+
+La [ejecución 39222302947](https://github.com/mamg97/segundo-cerebro/actions/runs/39222302947)
+incorpora el diagnóstico agregado de la posición de los extremos
+respecto a cada ventana mensual:
+
+| Ventana | Filas `date_prec=0` | Empiezan dentro del mes | Terminan después del mes | Terminan dentro del mes | Intervalo mismo día |
+|---|---:|---:|---:|---:|---:|
+| Diciembre 2024 | 6 | 6 | 6 | 0 | 0 |
+| Enero 2025 | 7 | 0 | 0 | 7 | 0 |
+
+Todas las filas con código 0 examinadas atraviesan el límite temporal de
+su edición (en diciembre, hacia el mes siguiente; en enero, desde el anterior).
+**Hipótesis exploratoria:** el código 0 está asociado a intervalos de
+solapamiento entre exportaciones mensuales. No existe una definición oficial
+validada de esta categoría y el hecho de que coincida en dos versiones no
+implica causalidad ni universalidad. No reinterpretar código 0 como una nueva
+categoría ni cambiar las fechas originales. Debe consultar al proveedor
+antes de admitir este campo para un modelo.
