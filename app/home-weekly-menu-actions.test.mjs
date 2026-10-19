@@ -168,7 +168,7 @@ test("Home renders editable Añadir buttons on blank and companion-only slots",(
   const companion={...item,recipeId:null,foodId:"yogurt",itemRole:"acompanante"};
   const withCompanion=sandbox.renderHomeWeeklyMenuMatrixCell([companion],false,"2026-10-15","Comida");
   assert.match(withCompanion,/data-home-menu-add-date=/);
-  assert.doesNotMatch(sandbox.renderHomeWeeklyMenuMatrixCell([item],false,"2026-10-15","Comida"),/data-home-menu-add/);
+  assert.match(sandbox.renderHomeWeeklyMenuMatrixCell([item],false,"2026-10-15","Comida"),/data-home-menu-add-date=/);
   assert.match(css,/\.home-weekly-menu-table-cell \.home-menu-add-action/);
 });
 
@@ -184,4 +184,15 @@ test("an unplanned week keeps five meal moments, and explicit consumption is opt
     action:"add",date:"2026-10-15",moment:"Cena",
     newRecipeId:"rec-b",newServings:1,confirmConsumed:true
   });
+});
+
+test("Añadir always stays visible for occupied and consumed meals; companion mode does not replace",()=>{
+  const consumed={...item,status:"consumido",itemRole:"receta"};
+  const html=sandbox.renderHomeWeeklyMenuMatrixCell([consumed],false,"2026-10-19","Desayuno");
+  assert.match(html,/data-home-menu-add-date="2026-10-19"/);
+  assert.match(html,/data-home-menu-add-moment="Desayuno"/);
+  assert.match(app,/Acompañamiento \/ extra/);
+  assert.match(app,/data-menu-editor-role/);
+  assert.match(app,/isAdd && alreadyHasPrimary/);
+  assert.match(app,/alreadyHasPrimary && !roleSelect\?\.value/);
 });
