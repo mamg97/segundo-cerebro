@@ -1,4 +1,15 @@
-# PSICOHISTORIA — Estado científico verificado · 19/10/2026
+# PSICOHISTORIA — Estado científico verificado · 20/10/2026
+
+## AV-20261019-053 · UCDP Dyadic 19.1–25.1 (conjunto fijo de 61)
+
+- [PR #697](https://github.com/mamg97/segundo-cerebro/pull/697) **fusionada** (squash `291e3aa715f31a358235a4d6d342b5e21f4f2b80`), pruebas sintéticas, auditor de las dos fuentes UCDP reales, privacidad y [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39332902303) SUCCESS, Pages SUCCESS.
+- [Documento de resultados](UCDP_DYADIC_LINEAGE_AV053.md). Dyadic 19.1: **3.000 filas** hasta 2018 (SHA-256 CSV observado octubre 2026 `b1eed9ae6540268a157694068c8f3b2be9bb6104640aec2d1c43dab487c9a0f6`); Dyadic 25.1: **3.432 filas** hasta 2024 (SHA ZIP `e34d26c39d23739ab65bc52fd42747aa88e7ecdf84d16c7bacafd590ed767330`; CSV interno `e5bf6e3779a903f3df3ec476592332ce51ccf3798174b3db4c1b06dd1dd5a7ba`). Los hashes sólo autentican identidad **observada en 2026**, no disponibilidad pre-2020.
+- Sobre 61 GW-año fijados (antiguo `newconf=1`, ambas variantes modernas `onset1=0`): **10** con actividad interna por díadas en **ambas** ediciones, **0** sólo antigua/moderna y **51** sin díadas internas identificadas en ninguna. Los diez comparten algún `dyad_id` y `conflict_id` numérico. Se preservó el universo original de 10.130 GW-año y los 85 residuales. No se divulgaron códigos, nombres ni filas de países.
+- Coincide con el resultado ACD AV-052 bajo la agregación país-año. **No** atribuir automáticamente las 51 diferencias a errores o ausencia de violencia: unidad/conflicto/díada y edición pueden tener semánticas distintas.
+- **Canónico privado releído y deduplicado:** `PsicoAvances=53`, último `AV-20261019-053=VERIFICADO`; `MAD-02=PARCIAL`; `PsicoPredicciones=0`. Se detectó y eliminó una fila duplicada de AV-053 sobre la misma PR #697; ninguna evidencia útil se perdió. Cohorte sombra privada 2027 sin cambios y coste incremental 0 €.
+- **AV-054:** examinar el contenido real y versión efectiva de `onsets_computed.csv` (enlace catalogado 19.1 pero cobertura terminada en 2017), y su concordancia con el codebook de UCDP Onset 19.1. Antes de cualquier entrenamiento histórico: verificar publicación as-of, roster GW completo y etiquetas del mismo estimand.
+
+---
 
 ## AV-20261019-052 · UCDP/PRIO 19.1 ↔ 25.1: linaje de conflictos para 61 residuos
 
