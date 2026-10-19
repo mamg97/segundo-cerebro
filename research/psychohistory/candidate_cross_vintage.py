@@ -103,7 +103,7 @@ def compare(december, january):
     z_overlap = d_zero & valid
     d_cross_year = {eid for eid, row in d.items()
                     if row[2].year == 2024 and row[3].year > 2024}
-    matched_prec = Counter((d[eid][4], j[eid][4]) for eid in valid)
+    # Never emit a row-level transition, country ID or individual event ID.
     return {
         "schema": "psychohistory.ucdp_candidate_cross_vintage_observation.v1",
         "source_editions": ["24.0.12", "25.0.1"],
