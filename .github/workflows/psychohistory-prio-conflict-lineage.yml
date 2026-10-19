@@ -1,0 +1,34 @@
+# AV-052: public UCDP sources inspected only transiently; aggregates only in logs.
+name: Psychohistory UCDP PRIO conflict lineage
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/ucdp_prio_conflict_lineage_av052.py"
+      - "research/psychohistory/test_ucdp_prio_conflict_lineage_av052.py"
+      - ".github/workflows/psychohistory-prio-conflict-lineage.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  adversarial-ucdp-prio-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s research/psychohistory -p test_ucdp_prio_conflict_lineage_av052.py -v
+  official-acd-191-251-lineage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify official UCDP/PRIO 19.1 and 25.1 conflict-year vintages in memory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ucdp_prio_conflict_lineage_av052.py
+          echo "Only aggregate country-year lineage statuses and observed 2026 SHA256 have been logged."
+          echo "No row-level IDs, model scores or backtests are published or authorized."
