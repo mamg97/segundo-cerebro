@@ -4,6 +4,8 @@ import {readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 export const REQUIRED_TARGET='UCDP_OrganizedViolenceCY_state_based_total_best_ge25';
 export const SOURCES=Object.freeze({
+ organizedviolencecy_24_1:Object.freeze({product:'organizedviolencecy',edition:'24.1',releaseYearClaim:2024,observedThrough:2023,exactTarget:true,reference:'https://ucdp.uu.se/downloads/olddw.html'}),
+ organizedviolencecy_25_1:Object.freeze({product:'organizedviolencecy',edition:'25.1',releaseYearClaim:2025,observedThrough:2024,exactTarget:true,reference:'https://ucdp.uu.se/downloads/olddw.html'}),
  organizedviolencecy_26_1:Object.freeze({product:'organizedviolencecy',edition:'26.1',releaseYearClaim:2026,observedThrough:2025,exactTarget:true,reference:'https://ucdp.uu.se/downloads/'}),
  ged_24_1:Object.freeze({product:'ged',edition:'24.1',releaseYearClaim:2024,observedThrough:2023,exactTarget:false,reference:'https://ucdp.uu.se/downloads/replication_data.html'}),
  ged_26_1:Object.freeze({product:'ged',edition:'26.1',releaseYearClaim:2026,observedThrough:2025,exactTarget:false,reference:'https://ucdp.uu.se/downloads/'})
@@ -50,7 +52,7 @@ export function auditFutureSourceAsOf({origin,cutoff,sourceId,mode='historical_r
    'VERIFY_ISSUE_TIME_MODEL_FEATURES_AND_TRAINING_LABELS',
    'REGISTER_FORWARD_FREEZE_BEFORE_OUTCOME'
   ],
-  warning:'Today official source listings are not independent as-of witnesses; GED event rows differ from OrganizedViolenceCY country-year data.'};
+  warning:'UCDP publishes archived OrganizedViolenceCY 24.1 and 25.1; current API exposure is not their complete inventory. Archived editions are candidate vintages, not independently timestamped at issue. GED event rows are a different product.'};
 }
 export function auditFutureCatalogAsOf(catalog,sourceId){
  if(!catalog||catalog.runType!=='retrospective_revised_release'||
