@@ -1,0 +1,42 @@
+name: Psychohistory quick-glance laboratory UI
+on:
+  pull_request:
+    paths:
+      - "app/research-lab-brief.mjs"
+      - "app/research-lab-brief.test.mjs"
+      - "app/research-lab.html"
+      - "app/research-lab.js"
+      - "app/research-lab.css"
+      - "app/research-onset.test.mjs"
+      - ".github/workflows/psychohistory-lab-brief-ui.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/research-lab-brief.mjs"
+      - "app/research-lab-brief.test.mjs"
+      - "app/research-lab.html"
+      - "app/research-lab.js"
+      - "app/research-lab.css"
+      - "app/research-onset.test.mjs"
+      - ".github/workflows/psychohistory-lab-brief-ui.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui-scientific-honesty:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check research modules and run dashboard regression tests
+        run: |
+          set -euo pipefail
+          node --check app/research-lab.js
+          node --check app/research-lab-brief.mjs
+          node --test app/research-lab-brief.test.mjs app/research-lab.test.mjs app/research-shadow2027.test.mjs app/research-shadow2027-inline.test.mjs app/research-onset.test.mjs
+          echo "The 2027 cohort is private; tests use only fictional IDs and never fetch country probabilities."
