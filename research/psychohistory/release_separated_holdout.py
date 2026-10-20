@@ -50,9 +50,15 @@ def bounded_zip(path: Path, expected_hash: str, source_version: str):
     expected={"country_id","year","Version","region","sb_total_deaths_best",
               "ns_total_deaths_best","os_total_deaths_best","country",
               "sb_total_deaths_low","sb_total_deaths_high"}
-    if not expected.issubset(reader.fieldnames):
-        raise ValueError("Official model features missing in edition")
-    rows=list(reader)
+    # Old official editions use suffix _cy for some columns. Accept exact,
+    # unambiguous aliases only; NEVER fill a genuinely missing feature.
+    fields={}
+    for name in expected:
+        aliases=[x for x in (name,name+"_cy") if x in reader.fieldnames]
+        if len(aliases)!=1:
+            raise ValueError("Official model field absent/ambiguous: "+name)
+        fields[name]=aliases[0]
+    rows=[{name:r[key] for name,key in fields.items()} for r in reader]
     for r in rows:
         # Normalize only an explicit v-prefix, preserving the original source bytes.
         if r["Version"].strip().lstrip("v")!=source_version:
