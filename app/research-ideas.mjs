@@ -19,6 +19,30 @@ export function ideaGraph(state) {
     (ids.has(r.sourceProjectId)||ids.has(r.target))&&lookup.has(r.sourceProjectId)&&lookup.has(r.target));
   return {branches,edges,lookup};
 }
+export function renderAgendaObservations(lab){
+ const agenda=lab?.agenda;
+ if(!agenda||!Array.isArray(agenda.events)||!agenda.events.length){
+   return '<section class="panel ideas-synergy"><h3>Agenda institucional · A1</h3><p class="subtext">Sin encuentros documentados en las fuentes privadas del laboratorio. No hay predicciones emitidas.</p></section>';
+ }
+ const events=agenda.events.filter(e=>e?.issuanceStatus==="NOT_ISSUED"&&e?.source?.evidence==="OFFICIAL_CALENDAR_REFERENCE_ONLY");
+ const cards=events.map(e=>{
+   const link=officialLink(e.source.url);
+   return '<article class="ideas-card ideas-event-card"><small>FUENTE OFICIAL · SIN CAPTURA SELLADA</small>'+
+     '<h3>'+escapeHtml(e.institution)+'</h3><p>'+escapeHtml(e.title)+'</p>'+
+     '<p class="ideas-event-date">'+escapeHtml(e.startDate)+' → '+escapeHtml(e.endDate)+'</p>'+
+     '<p class="ideas-event-status">Sin pronóstico · Sin resultado</p>'+
+     (link?'<a href="'+escapeHtml(link)+'" target="_blank" rel="noopener noreferrer">Consultar agenda oficial ↗</a>':'')+
+     '</article>';
+ }).join("");
+ return '<section class="ideas-synergy"><div class="section-heading"><div><span class="eyebrow">A1 · OBSERVACIÓN INSTITUCIONAL</span>'+
+  '<h2>Reuniones en seguimiento</h2></div></div>'+
+  '<p class="ideas-intro">Fuentes públicas consultadas y registradas. Aún no existe captura verificable de bytes ni sello independiente; ninguna reunión tiene pronóstico emitido.</p>'+
+  (cards?'<div class="ideas-grid">'+cards+'</div>':'<div class="panel">Sin referencias admisibles.</div>')+'</section>';
+}
+function officialLink(value){
+ try{const u=new URL(value);return u.protocol==="https:"&&["www.federalreserve.gov","www.ecb.europa.eu","ecb.europa.eu"].includes(u.hostname)&&!u.username&&!u.password&&!u.hash?u.href:null;}catch{return null;}
+}
+
 export function renderIdeaNetwork(state){
   const {branches,edges,lookup}=ideaGraph(state);
   const intro='<div class="section-heading"><div><span class="eyebrow">LABORATORIO DE IDEAS</span>'+
@@ -35,7 +59,7 @@ export function renderIdeaNetwork(state){
   }).join("");
   const synergy=edges.map(r=>'<li><strong>'+escapeHtml(lookup.get(r.sourceProjectId)?.name)+
      ' → '+escapeHtml(lookup.get(r.target)?.name)+'</strong> · '+escapeHtml(r.description||r.type)+'</li>').join("");
-  return intro+'<div class="ideas-grid">'+cards+'</div>'+
+  return intro+'<div class="ideas-grid">'+cards+'</div>'+renderAgendaObservations(state?.lab)+
    '<section class="panel ideas-synergy"><div class="panel-head"><h3>Conexiones registradas</h3><span>Solo relaciones de la fuente privada</span></div>'+
    (synergy?'<ul>'+synergy+'</ul>':'<p class="subtext">Aún no hay relaciones verificadas entre aplicaciones.</p>')+
    '<p class="legend-note">Una relación de investigación no constituye influencia causal, evidencia predictiva ni señal de inversión. Estados y textos proceden exclusivamente del catálogo privado.</p></section>';

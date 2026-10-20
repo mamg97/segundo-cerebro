@@ -1,4 +1,5 @@
 import { googleReadFetch, sheetsBatchGet } from "./google-read.js";
+import { buildAgendaRadar } from "./psycho-agenda.js";
 
 const SHEET_TITLE = "SEGUNDO CEREBRO - PROYECTOS";
 const SOURCE_KEY = "PROJECTS_SHEET_ID";
@@ -143,6 +144,11 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
   ];
   const sets = await sheetsBatchGet(id, ranges, token);
   const [milestones, kpis, experiments, predictions] = sets.map((s) => table(s?.values || []));
+  let agenda={events:[],sourceStatus:"UNAVAILABLE",forecastCount:0};
+  try {
+    const paired=await sheetsBatchGet(id,["PsicoAgendaEventos!A1:K150","PsicoAgendaFuentes!A1:K150"],token);
+    agenda=buildAgendaRadar(table(paired[0]?.values||[]),table(paired[1]?.values||[]));
+  } catch { /* New optional private tabs must not affect the verified original lab. */ }
   const safeNumber = (v) => {
     if (v === null || v === undefined || v === "") return null;
     const n = Number(v);
@@ -150,6 +156,7 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
   };
   const result = {
     status:"ok-live",
+    agenda,
     milestones:milestones.filter(x=>x.hito_id && /^V[1-4]$/.test(x.vertiente)).map(x=>({
       id:String(x.hito_id), track:String(x.vertiente), title:String(x.titulo||""),
       phase:String(x.fase||""), status:String(x.estado||"PENDIENTE"),

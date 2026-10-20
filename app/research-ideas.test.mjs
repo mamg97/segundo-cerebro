@@ -38,3 +38,16 @@ test("link allowlist and integration with real private tab",()=>{
  assert.match(js,/relations:projectsPayload\.relations/);
  assert.match(js,/AVAILABLE_VIEWS/);
 });
+
+test("agenda observations only accept unissued source-referenced rows and escape HTML",async()=>{
+ const {renderAgendaObservations}=await import("./research-ideas.mjs");
+ const record={id:"fake",institution:"<b>Central</b>",title:"Reunión ficticia",startDate:"2026-11-05",
+ endDate:"2026-11-06",issuanceStatus:"NOT_ISSUED",
+ source:{url:"https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html",
+ evidence:"OFFICIAL_CALENDAR_REFERENCE_ONLY"}};
+ const result=renderAgendaObservations({agenda:{events:[record]}});
+ assert.match(result,/Sin pronóstico/);
+ assert.match(result,/&lt;b&gt;Central&lt;\/b&gt;/);
+ assert.doesNotMatch(result,/<b>Central<\/b>/);
+ assert.doesNotMatch(renderAgendaObservations({agenda:{events:[{...record,issuanceStatus:"ISSUED"}]}}),/Reunión ficticia/);
+});
