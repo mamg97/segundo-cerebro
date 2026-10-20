@@ -17,6 +17,7 @@ from pathlib import Path
 
 from benchmark import audit, panel, predict_origin, metrics
 from vintage_audit import load_csv_vintage
+from paired_country_uncertainty import compare_to_references
 
 HERE=Path(__file__).resolve().parent
 PROTOCOL=json.loads((HERE/"protocol.json").read_text(encoding="utf-8"))
@@ -164,6 +165,7 @@ def run(earlier:Path,later:Path,pinned_earlier:str,pinned_later:str):
        "earlier_label_revisions_among_scored":revision_changes,
        "earlier_labels_in_both_vintages":pairable,
        "models":summary,
+       "descriptive_paired_country_uncertainty":compare_to_references(scored),
        "independent_preissue_byte_witness":False,
        "forecast_issued":False,
        "prospective_skill_demonstrated":False,
