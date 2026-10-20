@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {hobbiesMarkup,wineThumbnailMarkup,wineShopMarkup,externalCatalogLink} from "./hobbies.js";
+import {hobbiesMarkup,wineThumbnailMarkup,wineShopMarkup,externalCatalogLink,sortHobbyRecords} from "./hobbies.js";
 import {HOBBY_CATEGORIES,hrefForHobby} from "./area-routes.mjs";
 
 test("Hobbies root has compact tabs, defaults to Películas, and has no oversized banner",()=>{
@@ -35,7 +35,7 @@ test("Hobbies has the canonical area route and responsive styling, no embedded p
  assert.match(app,/"area-travels", "area-hobbies"/);
  assert.match(app,/route\.areaId==="area-hobbies"/);
  assert.match(routes,/hrefForHobby/);
- assert.match(html,/hobbies\.css\?v=0\.1\.4/);
+ assert.match(html,/hobbies\.css\?v=0\.1\.5/);
  assert.match(css,/\.hby-list-table/);
  assert.match(css,/\.hby-tabs/);
  assert.match(readFileSync(new URL("./hobbies.js",import.meta.url),"utf8"),/shown\.map\(recordRow\)/);
@@ -89,5 +89,65 @@ test("Hobbies compact CSS includes dedicated media link and mobile-safe layout",
  assert.match(src,/externalCatalogLink\(item,store.category\)/);
  assert.match(css,/hby-list-table--media \.hby-list-external/);
  assert.match(css,/hby-list-table--media td\{padding:5px 10px;height:32px/);
+ assert.doesNotMatch(css,/overflow-y:auto|height:100vh/);
+});
+
+test("Column sorting uses Spanish natural text, both directions and leaves canonical order untouched",()=>{
+ const rows=[
+  {id:"z",titulo:"Zorro 12",subtipo:"Drama",puntuacion:10},
+  {id:"a",titulo:"Álbum 2",subtipo:"Aventura",puntuacion:2},
+  {id:"b",titulo:"album 10",subtipo:"Drama",puntuacion:""},
+  {id:"c",titulo:"Cielo",subtipo:"Aventura",puntuacion:9},
+  {id:"d",titulo:"Cielo",subtipo:"Aventura",puntuacion:9}
+ ];
+ const ids=x=>x.map(row=>row.id);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"peliculas","titulo")) ,["a","b","c","d","z"]);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"peliculas","titulo","desc")),["z","c","d","b","a"]);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"peliculas","nota")),["a","c","d","z","b"]);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"peliculas","nota","desc")),["z","c","d","a","b"]);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"peliculas","genero")),["a","c","d","z","b"]);
+ assert.deepEqual(ids(rows),["z","a","b","c","d"]);
+ assert.deepEqual(sortHobbyRecords(rows,"peliculas","not-a-column"),rows);
+});
+test("Numeric ratings including 0 are correctly sorted and missing scores stay last in both directions",()=>{
+ const rows=[{puntuacion:""},{puntuacion:0},{puntuacion:10},{puntuacion:"7,5"},{puntuacion:null},{puntuacion:"bad"}];
+ const values=x=>x.map(v=>v.puntuacion);
+ assert.deepEqual(values(sortHobbyRecords(rows,"series","nota")), [0,"7,5",10,"",null,"bad"]);
+ assert.deepEqual(values(sortHobbyRecords(rows,"series","nota","desc")), [10,"7,5",0,"",null,"bad"]);
+});
+test("Wine sort headers use displayed column semantics: photo, denomination, price and merchant",()=>{
+ const rows=[
+  {id:"b",marca:"B",tipo:"Tinto",denominacion:"Rioja",precio:18,tienda:"El Corte Inglés",imagen_url:""},
+  {id:"a",marca:"A",tipo:"Blanco",denominacion:"Rueda",precio:7,tienda:"",imagen_url:"https://img.example.org/w.jpg"},
+  {id:"c",marca:"C",tipo:"Rosado",denominacion:"",precio:"",tienda:"Amazon",imagen_url:""}
+ ];
+ const ids=x=>x.map(v=>v.id);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","foto")),["a","b","c"]);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","genero")),["b","c","a"]); // Denominación visually falls back to tipo
+ assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","estado")),["a","c","b"]);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","nota","desc")),["b","a","c"]);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","enlace")),["c","a","b"]);
+});
+test("Sorting 722 rows happens across the complete collection, not only first page",()=>{
+ const data=Array.from({length:722},(_,i)=>({id:i+1,titulo:"Ejemplo "+(i+1)}));
+ const descending=sortHobbyRecords(data,"peliculas","titulo","desc");
+ assert.deepEqual(descending.slice(0,3).map(x=>x.id),[722,721,720]);
+ assert.equal(descending.slice(0,48).length,48);
+ assert.equal(descending[48].id,674);
+ assert.equal(data[0].id,1);
+});
+test("Sortable headers expose aria-sort, accessible click toggles and mobile controls",()=>{
+ const js=readFileSync(new URL("./hobbies.js",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./hobbies.css",import.meta.url),"utf8");
+ assert.match(js,/data-hby-sort/);
+ assert.match(js,/aria-sort/);
+ assert.match(js,/ascending.*descending/);
+ assert.match(js,/sortHobbyRecords\(filtered,store.category,store.sortKey,store.sortDir\)/);
+ assert.match(js,/sortKey:""/);
+ assert.match(js,/store.page=1;show\(\)/);
+ assert.match(js,/hby-mobile-sort/);
+ assert.match(js,/hby-mobile-direction/);
+ assert.match(css,/\.hby-sort-button:focus-visible/);
+ assert.match(css,/@media\(max-width:650px\)/);
  assert.doesNotMatch(css,/overflow-y:auto|height:100vh/);
 });

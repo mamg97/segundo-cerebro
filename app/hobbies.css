@@ -221,3 +221,21 @@
  .hby-list-table--media .hby-list-external a{font-size:12px;min-height:30px;display:inline-flex;align-items:center}
  .hby-list-table--media .hby-list-actions button{min-height:30px;padding:6px 9px}
 }
+
+/* Hobbies v0.1.5: accessible column sorting, preserving compact row density. */
+.hby-list-table .hby-sort-button{display:inline-flex;align-items:center;justify-content:flex-start;gap:5px;padding:2px 0;width:100%;min-height:22px;background:transparent;border:0;color:inherit;font:inherit;font-size:inherit;font-weight:inherit;text-align:left;white-space:nowrap;cursor:pointer}
+.hby-list-table .hby-sort-button:hover,.hby-list-table .hby-sort-button:focus-visible{color:var(--blue)}
+.hby-list-table .hby-sort-button:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+.hby-list-table .hby-sort-button.is-active{color:var(--blue)}
+.hby-list-table .hby-sort-indicator{font-size:11px;line-height:1;color:var(--ink-soft);flex:0 0 auto}
+.hby-list-table .hby-sort-button.is-active .hby-sort-indicator{color:var(--blue)}
+.hby-list-table th[aria-sort] .hby-sort-button{min-width:0}
+.hby-list-table th:nth-last-child(3) .hby-sort-button{justify-content:flex-end}
+@media(max-width:650px){
+ /* Mobile cards hide the desktop header; sorting remains available by a compact control bar. */
+ .hby-mobile-sort-tools{display:flex;align-items:center;gap:6px;margin:6px 0 2px}
+ .hby-mobile-sort-tools label{font-size:11px;color:var(--ink-soft)}
+ .hby-mobile-sort-tools select{min-height:40px;padding:7px 10px;min-width:0;flex:1;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:12px}
+ .hby-mobile-sort-tools button{min-height:40px;padding:7px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--blue);font-size:13px;font-weight:800}
+}
+@media(min-width:651px){.hby-mobile-sort-tools{display:none}}
