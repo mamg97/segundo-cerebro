@@ -28,3 +28,16 @@ En 2026, `destinations` es el campo vigente y sustituye `self_hosted_domains`. E
 **No es éxito:** publicar `aud`, activar variables sin verificar o afirmar que la tabla integrada ya muestra los 196 países. La verificación en una sesión real legítima y su contraste con una sesión anónima siguen independientes.
 
 **Estado científico:** `MAD-02=PARCIAL`, `PsicoPredicciones=0`; la cohorte 2027 permanece con 196 países × seis modelos, `SHADOW_NO_EMITIDO`, sin nuevos pronósticos, scoring ni costes. El plan de emisión prospectiva con sello externo antes de enero de 2027 sigue siendo el principal bloqueo científico.
+
+## Hallazgo de producción durante AV-059 y actualización metodológica
+
+El primer workflow de lectura de metadatos ejecutado en `main`, [run 39427421926](https://github.com/mamg97/segundo-cerebro/actions/runs/39427421926), acreditó:
+- `APPSAPI=OK`: las credenciales de despliegue existentes **sí pueden listar aplicaciones Access**.
+- `ORGANIZATIONAPI=READ_SCOPE_DENIED`: **no** tienen el permiso específico de lectura de organización Zero Trust.
+- `TARGETAPP=NONE`, `AUDIENCE=UNVERIFIED`, `TEAMDOMAIN=UNVERIFIED` utilizando el primer comparador **solo de hostnames**.
+
+**Importante:** este `NONE` inicial **no significa que las rutas estén abiertas** (AV-058 obtuvo redirecciones Access en producción). Cloudflare permite [destinos `worker` y `all_workers`](https://developers.cloudflare.com/workers/configuration/cloudflare-access/), por lo que una app que protege directamente al Worker o todos los Workers puede no tener un `domain` del hostname consultado.
+
+La revisión amplía el auditor para distinguir `WORKER_SCOPED_ACCESS_PRESENT_UNMATCHED` de `NO_WORKER_SCOPE_OBSERVED`, sin exponer los `worker_id`. **No determina la audiencia correcta ni certifica la cobertura de una aplicación sin cruzar el identificador real del Worker, la prioridad de destinos/overrides y su política**. Los permisos insuficientes siguen figurando en el resultado y `safeToEnablePrivate2027=false` es incondicional.
+
+La ejecución periódica de diagnóstico ahora puede **completar con éxito técnico aunque una lectura esté denegada o no haya coincidencia**, pero su estado NO aprueba habilitar el visor. Solo una prueba posterior autenticada y una configuración del Worker auditable podrán cambiar la conclusión operativa. No se añaden permisos, claves o secretos nuevos y no se vuelcan configuraciones en logs.
