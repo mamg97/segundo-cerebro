@@ -89,6 +89,7 @@ export function renderResearchBriefing(lab,now=new Date()){
     '<button type="button" class="brief-primary" data-brief-go="shadow2027">Ver riesgos de 2027 →</button>'+
     '<button type="button" class="brief-secondary" data-brief-go="science">¿Funcionan los modelos?</button>'+
     '<button type="button" class="brief-secondary" data-brief-go="overview">Ver mapa del proyecto</button>'+
+    '<button type="button" class="brief-secondary" data-brief-go="ideas">Explorar líneas y sinergias</button>'+
     '</div>'+
     '<section class="brief-strategy"><div class="brief-section-head">'+
     '<h3>Comentarios estratégicos</h3><span>Qué merece nuestra atención</span></div>'+

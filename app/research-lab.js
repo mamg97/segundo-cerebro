@@ -1,6 +1,7 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.13';
 import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
+import {renderIdeaNetwork} from './research-ideas.mjs?v=0.5.19';
 import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.18';
 import {mountInlineShadow2027} from './research-shadow2027-inline.mjs?v=0.5.17';
 import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
@@ -19,7 +20,7 @@ const finite=(n)=>typeof n==="number"&&Number.isFinite(n);
 const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d}):"Sin datos";
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
-const AVAILABLE_VIEWS=new Set(["brief","futures","shadow2027","overview","science","operations","roadmap"]);
+const AVAILABLE_VIEWS=new Set(["brief","futures","shadow2027","overview","ideas","science","operations","roadmap"]);
 let activeView="brief";
 const initialView=new URLSearchParams(window.location.search).get("view");
 if(AVAILABLE_VIEWS.has(initialView))activeView=initialView;
@@ -253,7 +254,7 @@ function render(){
   disposeFutures();
   disposeShadow();
   header();metrics();
-  root.innerHTML=activeView==="brief"?renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="brief"?renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="science"?science():activeView==="operations"?operations():roadmap();
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
   root.querySelectorAll("[data-brief-go]").forEach(button=>button.addEventListener("click",()=>{
     const view=button.dataset.briefGo;
@@ -290,7 +291,7 @@ async function load(){
     const [projectsPayload,lab]=await Promise.all([projectsRes.json(),labRes.json()]);
     if(mine!==generation)return;
     if(!projectsPayload.ok||!lab.ok||!["ok-live","ok-cache"].includes(lab.status))throw new Error("Fuente todavía no disponible");
-    state={projects:projectsPayload.projects||[],lab};
+    state={projects:projectsPayload.projects||[],relations:projectsPayload.relations||[],lab};
     status.textContent="Registro privado · "+(lab.status==="ok-cache"?"caché":"sincronizado")+" · "+state.lab.milestones.length+" hitos";
     render();
   }catch(error){

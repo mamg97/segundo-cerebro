@@ -76,3 +76,7 @@ Los anillos representan hitos cerrados, jamás precisión científica. Los score
 ## Seguridad y coste
 
 Privacidad equivalente al resto de Segundo Cerebro: datos operativos en Sheets y Worker tras Cloudflare Access, nunca en Git público ni en la demo. Coste incremental cero; carga manual/bajo demanda. No inferencias a nivel de personas identificadas, secretos ni datos de ámbitos personales en registros de investigación.
+
+## Aplicaciones derivadas A1–A3 (20/10/2026, AV-062)
+
+Se investigan **sin sustituir V1–V4**: A1 anticipación de decisiones públicas a partir de agendas verificadas históricamente; A2 transmisión económica/financiera de noticias no esperadas; A3 Radar País como hipótesis comercial. Su coordinación, dependencias y estado residen en el registro privado `Proyectos/Documentacion/Relaciones`, no en porcentajes o carteras del código público. Véase [protocolo de agenda y sinergias](psicohistoria/AGENDA_INSTITUCIONAL_SINERGIAS_AV062.md). No hay capacidades prospectivas, financieras ni comerciales acreditadas. La línea F1B bursátil anterior se conserva como trabajo sintético aparcado; A2 no la desbloquea ni la conecta a órdenes.
