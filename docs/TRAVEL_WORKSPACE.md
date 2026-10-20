@@ -57,3 +57,13 @@ Añadir nuevas filas al Sheet, no editar el JS para cambiar el viaje.
 - \`node --test app/travels.test.mjs\`
 - CI y build privado \`private-cloudflare/package.json\`.
 - Control autenticado de escritorio/móvil tras despliegue, incluida la no exposición en Pages.
+
+
+## Panel visual ampliado (v2)
+- Cabecera visual del viaje, indicadores de días/tareas/provisiones, navegación de secciones, mapa y planning con pestañas de días, más panel de reservas y presupuesto.
+- La consulta de ubicación se extrae exclusivamente del primer ALOJAMIENTO del evento privado, hasta el primer punto y coma. Si no existe dirección se muestra vacío, sin suposiciones.
+- El iframe de Google Maps solo se crea tras un clic explícito en Mostrar mapa interactivo. Hasta entonces Google no recibe la dirección. La CSP autoriza únicamente frame-src https://www.google.com https://maps.google.com y mantiene frame-ancestors none.
+- La barra del presupuesto representa provisión de fondos de financeSummary.upcomingCommitments, jamás pagos ejecutados. El enlace conduce a Finanzas para el detalle.
+- Los planes por día y tours deseados no equivalen a reservas. Las tareas editables mantienen la escritura append-only TAREA_ESTADO en Eventos.
+- Sin APIs de pago, claves, almacenaje local, geolocalización del dispositivo ni datos privados en Git.
+- Pruebas: node --test app/travels.test.mjs app/travels-dashboard.test.mjs; revisar mapa en producción solo bajo sesión autenticada.
