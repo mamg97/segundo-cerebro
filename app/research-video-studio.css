@@ -1,0 +1,32 @@
+/* Psychohistory audiovisual studio · educational browser-local prototype. */
+.video-studio{display:grid;gap:24px;min-width:0}
+.video-studio-head{display:flex;align-items:end;justify-content:space-between;gap:20px}
+.video-studio-head h2{margin:8px 0;font-size:clamp(24px,3vw,39px);letter-spacing:-1px;font-weight:580}
+.video-studio-head p{margin:0;color:#a8b5bf;font-size:13px}
+.video-studio-tag{color:#9bdfec;border:1px solid #385662;white-space:nowrap;padding:8px 10px;border-radius:5px;font:650 10px ui-monospace,monospace;letter-spacing:1.4px}
+.video-studio-grid{display:grid;grid-template-columns:minmax(260px,.62fr) minmax(300px,1fr);gap:22px;align-items:start}
+.video-studio-player{display:flex;align-items:center;flex-direction:column;gap:12px;background:#090d13;border:1px solid #263a43;padding:22px;border-radius:9px;min-width:0}
+.video-studio-player canvas{display:block;width:min(100%,380px);height:auto;aspect-ratio:9/16;border-radius:8px;border:1px solid #35464e;background:#05090d;box-shadow:0 16px 45px #0007}
+.video-studio-player>span{font-size:11px;color:#94a4ae;text-align:center}
+.video-studio-control{min-width:0;display:grid;gap:13px;align-content:start;background:#0a0e13;border:1px solid #303940;border-radius:9px;padding:clamp(16px,2.2vw,28px)}
+.video-studio-control label{color:#94d5e1;font:650 11px ui-monospace,monospace;letter-spacing:1px;text-transform:uppercase}
+.video-studio-control select{min-height:47px;color:#ecf7fa;background:#101921;border:1px solid #46545e;border-radius:5px;padding:12px;font-size:14px;width:100%}
+.video-studio-scenes{display:grid;gap:0;border-top:1px solid #2d363f;border-bottom:1px solid #2d363f}
+.video-studio-scenes>div{display:flex;align-items:baseline;gap:16px;padding:12px 2px;border-bottom:1px solid #202a32;font-size:12px}
+.video-studio-scenes>div:last-child{border-bottom:none}
+.video-studio-scenes>div span{flex:1;min-width:0;font-size:13px;font-weight:550;color:#e8eff2}
+.video-studio-scenes small{flex:none;font:11px ui-monospace,monospace;color:#9dafbb}
+.video-studio-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.video-studio-buttons button{font-size:12px;border:1px solid #4b5961;border-radius:5px;background:#131c24;color:#e7f5f7;padding:12px;min-height:44px;font-weight:650}
+.video-studio-buttons #video-studio-export{background:#d9edef;border-color:#d9edef;color:#102029}
+.video-studio-buttons #video-studio-stop{grid-column:1/-1}
+.video-studio-buttons button:disabled{opacity:.4;cursor:default}
+.video-studio-buttons button:not(:disabled):hover{filter:brightness(1.15)}
+.video-studio-state{font-size:12px;color:#b6cad0;min-height:2em;line-height:1.55;margin:0}
+#video-studio-download{display:block;border:1px solid #8bb7c4;padding:12px;border-radius:5px;color:#e4f5fc;text-decoration:none;text-align:center;font-weight:650;font-size:13px;background:#173038}
+#video-studio-download[hidden]{display:none}
+.video-studio-control details{border-top:1px solid #2d373f;padding-top:12px;font-size:12px;color:#a9bdc8;line-height:1.6}
+.video-studio-control summary{cursor:pointer;color:#d6e7ec;font-size:12px}
+.video-studio-control details p{margin:10px 0 2px}
+@media(max-width:850px){.video-studio-grid{grid-template-columns:1fr}.video-studio-player{padding:16px}.video-studio-player canvas{width:min(100%,320px)}}
+@media(max-width:550px){.video-studio-head{align-items:start;flex-direction:column;gap:12px}.video-studio-control{padding:14px}.video-studio-scenes>div{gap:10px}.video-studio-scenes>div span{font-size:12px}}

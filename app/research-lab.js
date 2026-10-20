@@ -6,6 +6,7 @@ import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0
 import {mountInlineShadow2027} from './research-shadow2027-inline.mjs?v=0.5.17';
 import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
+import {mountResearchVideoStudio} from './research-video-studio.mjs?v=0.5.23';
 import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.1';
 const TRACKS=[
   {id:"V1",color:"#ff8a28",subtitle:"Hipótesis históricas y regularidades"},
@@ -20,7 +21,7 @@ const finite=(n)=>typeof n==="number"&&Number.isFinite(n);
 const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d}):"Sin datos";
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
-const AVAILABLE_VIEWS=new Set(["brief","futures","shadow2027","overview","ideas","science","operations","roadmap"]);
+const AVAILABLE_VIEWS=new Set(["brief","futures","shadow2027","overview","ideas","video","science","operations","roadmap"]);
 let activeView="brief";
 const initialView=new URLSearchParams(window.location.search).get("view");
 if(AVAILABLE_VIEWS.has(initialView))activeView=initialView;
@@ -33,6 +34,7 @@ let disposeNeural=()=>{};
 let motionPaused=false;
 let disposeFutures=()=>{};
 let disposeShadow=()=>{};
+let disposeVideo=()=>{};
 
 function scientificPlot(points,{title,xLabel,yLabel,lines=[],diagonal=false}={}){
   if(!points.length)return empty('Sin datos', 'Pendiente de validación');
@@ -253,8 +255,9 @@ function render(){
   disposeNeural();
   disposeFutures();
   disposeShadow();
+  disposeVideo();
   header();metrics();
-  root.innerHTML=activeView==="brief"?renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="brief"?renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
   root.querySelectorAll("[data-brief-go]").forEach(button=>button.addEventListener("click",()=>{
     const view=button.dataset.briefGo;
@@ -264,6 +267,7 @@ function render(){
     document.querySelector('[data-view="'+view+'"]')?.focus({preventScroll:true});
   }));
   if(activeView==="shadow2027")disposeShadow=mountInlineShadow2027(root);
+  if(activeView==="video")disposeVideo=mountResearchVideoStudio(root.querySelector("#research-video-studio"));
   if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;activeView='overview';render();},onsetExperiments:state.lab.experiments||[]});
   if(activeView==="overview")disposeNeural=mountNeural(root.querySelector('.neural-stage'),{activeTrack,paused:motionPaused,onPause:value=>{motionPaused=value;}});
   root.querySelectorAll("button[data-track]").forEach(x=>x.addEventListener("click",()=>{

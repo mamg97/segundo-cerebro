@@ -1,6 +1,6 @@
 # PSICOHISTORIA — Diseño del estudio audiovisual
 
-Fecha: 2026-10-20. Esto es una especificación de producto, no un generador de vídeo terminado.
+Fecha: 2026-10-20. Especificación de producto y estado: **V0 experimental implementada**, con vídeos educativos sintéticos grabables localmente en el navegador. El motor de predicciones reales y la narración final siguen pendientes.
 
 ## Objetivo y límites
 
@@ -41,3 +41,11 @@ Una publicación visual no confiere validez científica. No confundir experiment
 GitHub público contendrá únicamente código, plantillas y fixtures ficticios. Los datos originales, guiones con resultados privados, voz y vídeos reales quedan en infraestructura protegida por Cloudflare Access y almacenamiento privado. Prohibido automatizar publicación sin revisión. Rotular permanentemente RETROSPECTIVO, EXPLORATORIO, SHADOW_NO_EMITIDO, EMITIDO o EVALUADO según corresponda. El diseño nunca atribuirá predicción de nuevas guerras a un modelo de presencia anual.
 
 **Esta entrega no genera MP4 ni modifica fuentes canónicas, modelos, API, credenciales, costes o decisiones de acceso.**
+
+## Entrega V0 · 20/10/2026
+
+La vista privada `?view=video` integra `app/research-video-studio.mjs` y `app/research-video-studio.css`, muestra dos guiones educativos de siete escenas y previsualiza animaciones originales 9:16 mediante Canvas. `MediaRecorder` y `canvas.captureStream(24)` permiten grabar **45 segundos** sin enviar nada a servidores; exporta **WebM o MP4 según los códecs disponibles en el navegador**. Añade una pista sonora ambiental local cuando Web Audio está disponible. No hay voz generada en el editor (se indica en la interfaz). Se requiere navegador compatible y mantener la pestaña activa mientras se graba.
+
+Se produjo además un piloto externo de 45 s, MP4 vertical Full HD, con música y voz local. El fichero de vídeo no se incorpora al repositorio público ni se expone desde un endpoint, y no se declara producto de previsión emitida. Un prototipo local no acredita la calidad de un pipeline editorial profesional.
+
+**Fuera de alcance:** automatización de la narración de calidad, lectura segura y redacción de hallazgos privados, render server-side, publicación, almacenamiento compartido o generación ilimitada desatendida. El motor V0 es puramente educativo y no accede a `PsicoPredicciones` ni a probabilidades país-modelo.
