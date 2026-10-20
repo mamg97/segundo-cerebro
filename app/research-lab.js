@@ -1,6 +1,7 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.13';
-import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.14';
+import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
+import {mountInlineShadow2027} from './research-shadow2027-inline.mjs?v=0.5.17';
 import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
 import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.1';
@@ -29,6 +30,7 @@ let selectedModel='';
 let disposeNeural=()=>{};
 let motionPaused=false;
 let disposeFutures=()=>{};
+let disposeShadow=()=>{};
 
 function scientificPlot(points,{title,xLabel,yLabel,lines=[],diagonal=false}={}){
   if(!points.length)return empty('Sin datos', 'Pendiente de validación');
@@ -248,9 +250,11 @@ function render(){
   document.body.dataset.labView = activeView;
   disposeNeural();
   disposeFutures();
+  disposeShadow();
   header();metrics();
   root.innerHTML=activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
+  if(activeView==="shadow2027")disposeShadow=mountInlineShadow2027(root);
   if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;activeView='overview';render();},onsetExperiments:state.lab.experiments||[]});
   if(activeView==="overview")disposeNeural=mountNeural(root.querySelector('.neural-stage'),{activeTrack,paused:motionPaused,onPause:value=>{motionPaused=value;}});
   root.querySelectorAll("button[data-track]").forEach(x=>x.addEventListener("click",()=>{
