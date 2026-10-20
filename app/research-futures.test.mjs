@@ -214,7 +214,7 @@ test('quick interpretation appears before SVG, no duplicate distant legend',()=>
  const start=source.indexOf('const graphFirst = result ?');
  const end=source.indexOf('const controlsAboveGraph =',start);
  const graph=source.slice(start,end);
- assert.ok(graph.indexOf('futureGraphGuide(result,horizon)')<graph.indexOf('futureGraph(result,horizon,selection,observed)'));
+ assert.ok(graph.indexOf('futureGraphGuide(result,horizon)')<graph.indexOf('futureGraph(result,horizon,selection,observed,true)'));
  assert.doesNotMatch(source,/future-after-network.*future-legend/);
  assert.match(source,/la trayectoria real se superpone a posteriori/);
 });
