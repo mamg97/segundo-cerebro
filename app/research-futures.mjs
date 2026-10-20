@@ -1,4 +1,5 @@
 import {predictionYearStrip} from './research-futures-trees.mjs?v=0.5.24';
+import {retrospectivePathDiagnosticPanel} from './research-futures-diagnostics.mjs?v=0.5.29';
 import {questionSummary,questionSelect,futureNodeRail,supportedQuestionIds} from './research-futures-questions.mjs?v=0.5.25';
 import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.13';
 import {phenomenaTree,phenomenonDetails} from './research-phenomena-tree.mjs?v=0.5.13';
@@ -382,7 +383,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
       '<div class="future-graph-layout"><div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed,true)+'</div>'+
        futureNodeRail(question)+'</div>'+
-      (observed?historicalEventCards(result,result.maxHorizon):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
+      (observed?historicalEventCards(result,result.maxHorizon)+retrospectivePathDiagnosticPanel(result,model):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
       '<p class="chart-note">El país inicial es España cuando está en el catálogo; puedes elegir cualquier otro país en el selector superior. No se selecciona por aciertos históricos del modelo.'+
       ' Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
       ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. El año seleccionado cambia el detalle, no recorta el árbol. Datos UCDP retrospectivos revisados.</p></section>' :
