@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {hobbiesMarkup,wineThumbnailMarkup,wineShopMarkup,externalCatalogLink,sortHobbyRecords} from "./hobbies.js";
+import {hobbiesMarkup,wineThumbnailMarkup,wineShopMarkup,externalCatalogLink,sortHobbyRecords,hobbyEditorOptions,hobbySelectField} from "./hobbies.js";
 import {HOBBY_CATEGORIES,hrefForHobby} from "./area-routes.mjs";
 
 test("Hobbies root has compact tabs, defaults to Películas, and has no oversized banner",()=>{
@@ -35,7 +35,7 @@ test("Hobbies has the canonical area route and responsive styling, no embedded p
  assert.match(app,/"area-travels", "area-hobbies"/);
  assert.match(app,/route\.areaId==="area-hobbies"/);
  assert.match(routes,/hrefForHobby/);
- assert.match(html,/hobbies\.css\?v=0\.1\.5/);
+ assert.match(html,/hobbies\.css\?v=0\.1\.6/);
  assert.match(css,/\.hby-list-table/);
  assert.match(css,/\.hby-tabs/);
  assert.match(readFileSync(new URL("./hobbies.js",import.meta.url),"utf8"),/shown\.map\(recordRow\)/);
@@ -150,4 +150,53 @@ test("Sortable headers expose aria-sort, accessible click toggles and mobile con
  assert.match(css,/\.hby-sort-button:focus-visible/);
  assert.match(css,/@media\(max-width:650px\)/);
  assert.doesNotMatch(css,/overflow-y:auto|height:100vh/);
+});
+
+test("Editor dropdown options derive from existing canonical fields, without overwriting records",()=>{
+ const items=[
+  {subtipo:"Drama",subtipo_2:"Fantasía",estado:"Pendiente"},
+  {subtipo:"Aventuras",subtipo_2:"Cazatesoros",estado:"En curso"},
+  {subtipo:"drama",subtipo_2:"Cazatesoros",estado:"Vista"},
+  {subtipo:"Áventura 2",subtipo_2:"",estado:""},
+  {subtipo:"",subtipo_2:"",estado:"Vista"}
+ ];
+ const original=JSON.stringify(items);
+ assert.deepEqual(hobbyEditorOptions(items,"subtipo"),["Áventura 2","Aventuras","Drama"]);
+ assert.deepEqual(hobbyEditorOptions(items,"subtipo_2","Inédito"),["Cazatesoros","Fantasía","Inédito"]);
+ assert.deepEqual(hobbyEditorOptions(items,"estado"),["En curso","Pendiente","Vista"]);
+ assert.equal(JSON.stringify(items),original);
+});
+test("Numeric scores show ordered 0-10 half-point steps and preserve imported decimals",()=>{
+ const list=hobbyEditorOptions([{puntuacion:9.3},{puntuacion:"6,7"},{puntuacion:""},{puntuacion:"bad"}],"puntuacion",6.7,true);
+ assert.equal(list[0],"0");assert.equal(list[list.length-1],"10");
+ assert.ok(list.includes("9.3"));assert.ok(list.includes("6.7"));assert.ok(list.includes("6.5"));
+ assert.equal(new Set(list).size,list.length);
+ assert.ok(list.every(x=>Number.isFinite(Number(x))&&Number(x)>=0&&Number(x)<=10));
+});
+test("Editor selects preserve exact existing value, allow blank or Otro, and escape sheet strings",()=>{
+ const html=hobbySelectField("subtipo","Género / subtipo","Aventuras",["Drama","Aventuras","<script>"]);
+ assert.match(html,/<select name="subtipo" data-hby-choice="subtipo">/);
+ assert.match(html,/<option value="Aventuras" selected>Aventuras<\/option>/);
+ assert.match(html,/<option value="">Sin especificar<\/option>/);
+ assert.match(html,/Otro… \(escribir\)/);
+ assert.match(html,/name="subtipo__other"/);
+ assert.match(html,/hidden disabled/);
+ assert.doesNotMatch(html,/<script>/);
+ assert.match(html,/&lt;script&gt;/);
+});
+test("Editor uses selectors for classification and scores, calendar picker for dates and free text for notes",()=>{
+ const src=readFileSync(new URL("./hobbies.js",import.meta.url),"utf8");
+ assert.match(src,/editorChoice\("subtipo","Género \/ subtipo"/);
+ assert.match(src,/editorChoice\("subtipo_2","Subtipo adicional"/);
+ assert.match(src,/editorChoice\("estado","Estado"/);
+ assert.match(src,/editorChoice\("puntuacion","Puntuación \(0–10\)"/);
+ assert.match(src,/editorChoice\("tipo","Tipo \/ vino"/);
+ assert.match(src,/editorChoice\("denominacion","Denominación"/);
+ assert.match(src,/editorChoice\("nota","Puntuación \(0–10\)"/);
+ assert.match(src,/inputField\("fecha_inicio","Fecha inicio",item\?\.fecha_inicio,"date"\)/);
+ assert.match(src,/inputField\("fecha_fin","Fecha fin",item\?\.fecha_fin,"date"\)/);
+ assert.match(src,/inputField\("comentarios","Notas y comentarios"/);
+ assert.match(src,/value===OTHER_OPTION/);
+ assert.match(src,/input\.required=custom/);
+ assert.match(src,/hby-form/);
 });
