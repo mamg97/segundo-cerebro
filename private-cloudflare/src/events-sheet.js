@@ -166,7 +166,8 @@ function inferCalendarEventKind(event) {
   const text = normalize([event?.title, event?.location, event?.locationRef].filter(Boolean).join(" "));
   if (isNonEventOperationalReminder(event)) return null;
   if (/boda|preboda|celebracion|aniversario|brunch|comida|cena|concierto|teatro|fiesta|quedada/.test(text)) return "social";
-  if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|airbnb/.test(text)) return "travel";
+  // Calendar text never confers travel membership; only explicit canonical kind=travel does.
+  if (/viaje|vuelo|escapada|marbella|valencia|puy du fou|airbnb/.test(text)) return "important";
   return null;
 }
 
@@ -547,7 +548,9 @@ export async function syncCalendarEventsToEventsSheet(env, getGoogleAccessToken,
     const candidateId = eventIdForCalendar(event, rule);
     const dateKey = eventDay(event.startsAt);
     const targetTitle = trim(rule?.displayTitle || event.title || "Evento", 240);
-    const targetKind = trim(rule?.kind || inferredKind || "important", 40).toLowerCase();
+    const inferredOrRuleKind = trim(rule?.kind || inferredKind || "important", 40).toLowerCase();
+    // Existing manual classifications are preserved by row?.kind below.
+    const targetKind = inferredOrRuleKind === "travel" ? "important" : inferredOrRuleKind;
     let row = existing.find((item) => item.calendarRef === event.id)
       || existing.find((item) => item.id === candidateId)
       || existing.find((item) =>
