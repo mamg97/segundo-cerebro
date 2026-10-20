@@ -4,7 +4,7 @@ const SUPPORTED=new Set(["peliculas","series","libros","vinos"]);
 const mediaFields=["titulo","subtipo","subtipo_2","estado","puntuacion","fecha_inicio","fecha_fin","comentarios"];
 const wineFields=["marca","tipo","denominacion","nota","precio","comentarios","tienda","tienda_url","imagen_url"];
 const LIMIT=48;
-const store={category:null,items:[],filter:"",search:"",page:1,editing:null,error:"",busy:false,loaded:false};
+const store={category:null,items:[],filter:"",search:"",page:1,sortKey:"",sortDir:"asc",editing:null,error:"",busy:false,loaded:false};
 const byId=id=>HOBBY_CATEGORIES.find(c=>c.id===id);
 const titleOf=(item,category)=>category==="vinos"?[item.marca,item.tipo].filter(Boolean).join(" · ")||"Vino sin marca":item.titulo||"Sin título";
 // Single tabbed workspace. The top-level route defaults to Películas.
@@ -43,10 +43,56 @@ function message(e){
   INVALID_STORE_URL:"La tienda debe ser Amazon.es o El Corte Inglés (HTTPS).",INVALID_IMAGE_URL:"La imagen debe utilizar una URL HTTPS válida.",INVALID_RETAILER:"La tienda elegida no corresponde al enlace.",FIELD_TOO_LONG:"Un campo es demasiado largo.",
   SHEETS_READ_FAILED:"No se ha podido leer el Google Sheet."}[e.message]||"No se pudo completar la operación ("+e.message+").";
 }
+
+const HOBBY_SORT_KEYS=Object.freeze(["foto","titulo","genero","estado","nota","enlace"]);
+const HOBBY_SORT_COLLATOR=new Intl.Collator("es",{numeric:true,sensitivity:"base"});
+function sortValue(item,category,key){
+ const wine=category==="vinos";
+ switch(key){
+  case "foto": return wine?(item.imagen_url?"Con foto":"Sin foto"):null;
+  case "titulo": return titleOf(item,category);
+  case "genero": return wine?(item.denominacion||item.tipo):(item.subtipo||item.subtipo_2);
+  case "estado": return wine?item.tipo:item.estado;
+  case "nota": {
+   const raw=wine?item.precio:item.puntuacion;
+   if(raw===null||raw===undefined||String(raw).trim()==="")return null;
+   const number=Number(String(raw).replace(",","."));
+   return Number.isFinite(number)?number:null;
+  }
+  // For FilmAffinity/Amazon searches the linked destination is derived from the title.
+  // For bottles, this is the name of the linked retailer (or the Amazon search fallback).
+  case "enlace": return wine?(item.tienda||"Amazon (búsqueda)"):item.titulo;
+  default: return null;
+ }
+}
+export function sortHobbyRecords(items,category,key,direction="asc"){
+ if(!HOBBY_SORT_KEYS.includes(key))return [...items];
+ const sign=direction==="desc"?-1:1;
+ return items.map((item,index)=>({item,index,value:sortValue(item,category,key)})).sort((a,b)=>{
+  const missingA=a.value===null||a.value===undefined||a.value==="";
+  const missingB=b.value===null||b.value===undefined||b.value==="";
+  if(missingA!==missingB)return missingA?1:-1; // Unrated/unknown items stay last both ways.
+  if(missingA)return a.index-b.index;
+  const comparison=typeof a.value==="number"&&typeof b.value==="number"
+   ?a.value-b.value:HOBBY_SORT_COLLATOR.compare(String(a.value),String(b.value));
+  return sign*Math.sign(comparison)||a.index-b.index;
+ }).map(entry=>entry.item);
+}
+function sortHeader(label,key){
+ const selected=store.sortKey===key;
+ const direction=selected?store.sortDir:"asc";
+ const indicator=selected?(direction==="asc"?"▲":"▼"):"↕";
+ const nextDirection=selected&&direction==="asc"?"desc":"asc";
+ return '<th scope="col" aria-sort="'+(selected?(direction==="asc"?"ascending":"descending"):"none")+'">'+
+  '<button type="button" class="hby-sort-button'+(selected?' is-active':'')+'" data-hby-sort="'+key+
+  '" title="Ordenar por '+esc(label)+'" aria-label="Ordenar '+esc(label)+' '+(nextDirection==="asc"?"ascendente":"descendente")+'">'+
+  '<span>'+esc(label)+'</span><span class="hby-sort-indicator" aria-hidden="true">'+indicator+'</span></button></th>';
+}
 function listed(){
  const q=store.search.trim().toLocaleLowerCase("es");
- return store.items.filter(item=> (!store.filter||item.estado===store.filter) &&
+ const filtered=store.items.filter(item=> (!store.filter||item.estado===store.filter) &&
  (!q||[item.titulo,item.marca,item.tipo,item.subtipo,item.subtipo_2,item.denominacion,item.comentarios,item.estado,item.tienda].join(" ").toLocaleLowerCase("es").includes(q)));
+ return sortHobbyRecords(filtered,store.category,store.sortKey,store.sortDir);
 }
 
 function wineUrl(raw,retailer=false){
@@ -122,11 +168,11 @@ function catalogMarkup(){
  (wine?'':'<label>Estado<select id="hby-status">'+statusOptions()+'</select></label>')+
  '<button id="hby-reload" type="button">↻ Actualizar</button></div>'+
  (subset.length?'<div class="hby-list-wrap"><table class="hby-list-table '+(wine?'hby-list-table--wine':'hby-list-table--media')+'"><thead><tr>'+
- (wine?'<th scope="col">Foto</th>':'')+
- '<th scope="col">Título</th><th scope="col">'+(wine?'Denominación':'Género')+'</th>'+
- '<th scope="col">'+(wine?'Tipo':'Estado')+'</th><th scope="col">'+(wine?'Precio':'Nota')+'</th>'+
- '<th scope="col">'+(wine?'Tienda':'Buscar en')+'</th>'+
- '<th scope="col">Acciones</th></tr></thead><tbody>'+shown.map(recordRow).join("")+'</tbody></table></div>'+
+ (wine?sortHeader("Foto","foto"):"")+
+ sortHeader("Título","titulo")+sortHeader(wine?"Denominación":"Género","genero")+
+ sortHeader(wine?"Tipo":"Estado","estado")+sortHeader(wine?"Precio":"Nota","nota")+
+ sortHeader(wine?"Tienda":"Buscar en","enlace")+
+ '<th scope="col" title="Editar cada registro; no es un dato ordenable">Acciones</th></tr></thead><tbody>'+shown.map(recordRow).join("")+'</tbody></table></div>'+
  (shown.length<subset.length?'<button id="hby-more" class="hby-more" type="button">Ver más ('+(subset.length-shown.length)+' restantes)</button>':''):
  '<div class="hby-empty"><h4>No hay resultados</h4><p>Prueba con otros filtros o añade un registro.</p></div>')+
  '<p class="hby-source-note">Fuente oficial: Google Sheets · Se conservan las referencias al registro original y las incidencias de migración.</p>';
@@ -206,6 +252,12 @@ function bind(root){
  root.querySelector("#hby-reload")?.addEventListener("click",()=>void reload());
  root.querySelector("#hby-search")?.addEventListener("input",e=>{store.search=e.target.value;store.page=1;const position=e.target.selectionStart;show();const next=document.querySelector("#hby-search");next?.focus();if(next&&position!=null)next.setSelectionRange(position,position);});
  root.querySelector("#hby-status")?.addEventListener("change",e=>{store.filter=e.target.value;store.page=1;show();});
+ root.querySelectorAll("[data-hby-sort]").forEach(button=>button.addEventListener("click",()=>{
+  const key=button.dataset.hbySort;
+  if(!HOBBY_SORT_KEYS.includes(key))return;
+  store.sortDir=store.sortKey===key&&store.sortDir==="asc"?"desc":"asc";
+  store.sortKey=key;store.page=1;show();
+ }));
  root.querySelector("#hby-more")?.addEventListener("click",()=>{store.page++;show();});
  root.querySelectorAll("[data-hby-photo]").forEach(button=>button.addEventListener("click",()=>{
   const item=store.items.find(x=>x.id===button.dataset.hbyPhoto);if(item)openWinePhoto(item);
@@ -247,6 +299,6 @@ export function openHobbiesDetail(categoryId=null){
   if(block)block.innerHTML='<div class="hby-empty"><h4>Catálogos privados</h4><p>Los registros se consultan exclusivamente desde la versión privada de Segundo Cerebro.</p></div>';
   return;
  }
- store.category=selected;store.editing=null;store.items=[];store.filter="";store.search="";store.page=1;store.loaded=false;store.error="";
+ store.category=selected;store.editing=null;store.items=[];store.filter="";store.search="";store.page=1;store.sortKey="";store.sortDir="asc";store.loaded=false;store.error="";
  void reload();
 }
