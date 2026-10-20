@@ -65,13 +65,15 @@ class ReleaseSeparatedFirstPassageTests(unittest.TestCase):
     def test_missing_2024_never_becomes_zero_or_no_event(self):
         rows=[r for r in self.v26 if not(r["year"]=="2024" and r["country_id"]=="1")]
         self.s26=zipped(self.new,rows)
-        data=self.report()
+        # Strict official intake correctly rejects gaps. Test missing-label
+        # scoring separately without weakening archive integrity.
+        data=evaluate_rows(self.v24,rows)
         self.assertEqual(data["n_evaluable"],7)
         self.assertEqual(data["missing_one_or_more_future_labels"],1)
         self.assertEqual(sum(data[k] for k in
             ("event_first_2024","event_first_2025","no_event_by_2025")),7)
     def test_wrong_zip_hash_rejected_and_no_rows_exposed(self):
-        with self.assertRaisesRegex(ValueError,"SHA256 mismatch"):
+        with self.assertRaisesRegex(ValueError,"Archive bytes changed|SHA256 mismatch"):
             with mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
                 run(self.old,self.new,"0"*64,self.s26)
         s=self.report()
