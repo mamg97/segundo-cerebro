@@ -39,4 +39,21 @@ Se incluyen pruebas que comprueban (a) conservación de probabilidades, (b) ause
 - Priorizar un siguiente corte y fuente independientes (p. ej. 23.1→25.1 con formato y codebook verificados), horizonte distinto y evaluación sellada antes de extraer conclusiones.
 - No alterar `PsicoPredicciones`, fuentes canónicas 26.1, inversiones, aplicaciones de pago ni el estado de 2027 `SHADOW_NO_EMITIDO`.
 
-**Resultados reales:** solo se añadirán cuando el workflow pinneado termine y puedan auditarse sus salidas; nunca se rellenarán cifras supuestas.
+## Resultados reales observados en workflow oficial
+
+La ejecución `Psychohistory frozen 24.1 to 26.1 holdout research` de la [PR #748](https://github.com/mamg97/segundo-cerebro/pull/748), con descargas ZIP verificadas contra los dos SHA-256 congelados, finalizó correctamente. El motor original ajustado exclusivamente con datos 24.1 hasta 2023 admitió **196 países**. Edición 26.1 confirmó **5 primeros cambios en 2024**, **3 primeros cambios en 2025** y **188 países sin cruce** hasta 2025. No hubo exclusiones por etiqueta posterior ausente. En los 196 países donde ambas ediciones contienen datos de 2023, el **indicador binario 2023** no cambió (0 revisiones de categoría); esto no descarta revisiones del número exacto de muertes.
+
+| Modelo (sin reentrenar) | Brier primer cambio 2024/2025 | Log loss con clip 1e-12 | Eventos observados a los que dio P=0 |
+| --- | ---: | ---: | ---: |
+| Markov país regularizado | **0,079299** | **0,185283** | 0 |
+| Memoria de dos estados | 0,080887 | 0,197899 | 0 |
+| Persistencia determinista | 0,081633 | 1,127797 | **8** |
+| Markov global | 0,087524 | 0,214580 | 0 |
+| Frecuencia constante | 0,400992 | 0,902779 | 0 |
+
+**Interpretación:** Markov país regularizado obtiene el menor Brier agregado, pero la diferencia con persistencia es solo **−0,002334 puntos**, con **ocho eventos** en una ventana temporal; insuficiente para declarar superioridad. El log loss de persistencia corresponde a ceros artificialmente recortados y se notifica explícitamente, nunca se interpreta como log score sin recorte. La selección del mejor modelo conociendo estos valores invalidaría un test confirmatorio futuro.
+
+**Auditoría de filtraciones:** seis pruebas sintéticas de conservación de masa, control de SHA, exclusión de etiquetas faltantes, inmutabilidad del ajuste ante cambios del 2023 revisado y separación de resultados posteriores se superaron. El validador original de UCDP rechaza internamente cualquier gap país-año: **no se debilitó** para permitir datos incompletos; el escenario de una etiqueta ausente se comprobó a nivel del scorer puro.
+
+**Alcance:** evidencia retrospectiva con independencia de edición en el cálculo (24.1 train, 26.1 target), no comprobación externa de bytes disponibles en enero 2025; ningún pronóstico emitido entonces. Próxima evaluación: un corte temporal independiente sellado y análisis de incertidumbre por evento muy raro (8/196), sin recalibrar estos mismos resultados.
+
