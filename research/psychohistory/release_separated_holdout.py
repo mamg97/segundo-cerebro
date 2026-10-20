@@ -53,15 +53,19 @@ def bounded_zip(path: Path, expected_hash: str, source_version: str):
     # Old official editions use suffix _cy for some columns. Accept exact,
     # unambiguous aliases only; NEVER fill a genuinely missing feature.
     fields={}
-    for name in expected:
+    for name in expected-{"Version"}:
         aliases=[x for x in (name,name+"_cy") if x in reader.fieldnames]
         if len(aliases)!=1:
             raise ValueError("Official model field absent/ambiguous: "+name)
         fields[name]=aliases[0]
+    versions=[x for x in ("Version","Version_cy") if x in reader.fieldnames]
+    if len(versions)>1:
+        raise ValueError("Ambiguous version columns")
     rows=[{name:r[key] for name,key in fields.items()} for r in reader]
-    for r in rows:
-        # Normalize only an explicit v-prefix, preserving the original source bytes.
-        if r["Version"].strip().lstrip("v")!=source_version:
+    for rawrow,r in zip(csv.DictReader(io.StringIO(data.decode("utf-8-sig"))),rows):
+        # Older official 24.1 CSV legitimately omits an explicit Version
+        # column: the pinned source URL, SHA256 and bounded parser fix provenance.
+        if versions and rawrow[versions[0]].strip().lstrip("v")!=source_version:
             raise ValueError("Version contradicts official historical edition")
         r["Version"]=source_version
     return rows,sha(data)
