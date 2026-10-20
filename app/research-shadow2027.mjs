@@ -47,8 +47,8 @@ export function shadow2027Section(experiments, predictions = []) {
     '<div class="kpi"><div><strong>196 países · 6 modelos</strong>' +
     '<small>1.176 probabilidades en una cohorte privada sin reentrenamiento</small></div>' +
     '<b>SHADOW</b></div>' +
-    '<div class="kpi"><div><strong>Emisiones oficiales</strong>' +
-    '<small>El ranking no acredita sello externo, calibración ni skill prospectivo</small></div>' +
+    '<div class="kpi"><div><strong>Filas de PsicoPredicciones</strong>' +
+    '<small>Es el registro general del laboratorio, no emisiones de esta cohorte</small></div>' +
     '<b>' + String(issued) + '</b></div></div>' +
     action +
     '<p class="legend-note"><strong>Validez científica:</strong> resultados exploratorios ' +
