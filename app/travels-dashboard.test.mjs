@@ -31,7 +31,7 @@ test("dashboard never loads third party iframe automatically; consent click is e
   assert.match(html,/id="trv-dash-plan"/);
   assert.match(html,/id="trv-dash-tasks"/);
   assert.match(html,/id="trv-dash-budget"/);
-  assert.match(html,/data-trv-day="1"/);
+  assert.match(html,/class="trv-timetable"/);
 });
 test("budget progression represents provisioning, not paid invoices",()=>{
   assert.deepEqual(tripBudgetStatus({totalBudget:800,reserved:300,needed:500}),
@@ -57,8 +57,8 @@ test("privacy and permissions: only private app embeds maps on demand",()=>{
   const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
   const travels=readFileSync(new URL("./travels.js",import.meta.url),"utf8");
   const privateWorker=readFileSync(new URL("../private-cloudflare/src/index.js",import.meta.url),"utf8");
-  assert.match(index,/travels\.css\?v=0\.3\.0/);
-  assert.match(app,/travels\.js\?v=0\.2\.0/);
+  assert.match(index,/travels\.css\?v=0\.4\.0/);
+  assert.match(app,/travels\.js\?v=0\.3\.0/);
   assert.match(travels,/tripDashboardMarkup/);
   assert.match(travels,/bindTripDashboard/);
   assert.match(privateWorker,/frame-src https:\/\/www\.google\.com https:\/\/maps\.google\.com/);
