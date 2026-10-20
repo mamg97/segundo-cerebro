@@ -65,3 +65,44 @@ test("organization scope missing cannot certify team domain",async()=>{
   assert.equal(out.teamDomain,"UNVERIFIED");
   assert.equal(out.safeToEnablePrivate2027,false);
 });
+
+test("2026 Cloudflare destinations take precedence over deprecated self_hosted_domains",()=>{
+  const withDestination={type:"self_hosted",domain:"other.example.org",
+    self_hosted_domains:[{domain:target}],
+    destinations:[{type:"public",uri:target}]};
+  assert.equal(findAppCoveringAllPaths([withDestination]).length,1);
+  assert.equal(findAppCoveringAllPaths([{...withDestination,destinations:[{type:"public",uri:"other.example.org"}]}]).length,0);
+});
+test("incomplete API pagination cannot approve a seemingly matching app",async()=>{
+  const full=[app,...Array.from({length:99},(_,i)=>({type:"self_hosted",domain:"unrelated"+i+".invalid"}))];
+  let n=0;
+  const fetcher=async(url,options)=>{
+    if(url.endsWith("/access/organizations"))return Response.json({success:true,result:org});
+    n++;
+    return Response.json({success:true,result:full,result_info:{total_pages:8}});
+  };
+  const out=await auditAccessMetadata({accountId,apiToken,fetcher});
+  assert.equal(n,5);
+  assert.equal(out.appsApi,"INCOMPLETE_PAGINATION");
+  assert.equal(out.targetApp,"UNVERIFIED");
+  assert.equal(out.safeToEnablePrivate2027,false);
+});
+
+test("Cloudflare 2026 Worker-scope Access applications are not mistaken for zero protection",async()=>{
+  for(const type of ["worker","all_workers"]){
+    const workerApp={type:"self_hosted",destinations:[type==="worker"?
+      {type:"worker",worker_id:"synthetic-id"}:{type:"all_workers"}],aud:"syntheticaud123"};
+    const out=await auditAccessMetadata({accountId,apiToken,fetcher:apiMock({apps:[workerApp]})});
+    assert.equal(out.targetApp,"NONE");
+    assert.equal(out.accessScopeHint,"WORKER_SCOPED_ACCESS_PRESENT_UNMATCHED");
+    assert.equal(out.audience,"UNVERIFIED");
+    assert.equal(out.safeToEnablePrivate2027,false);
+    assert.doesNotMatch(JSON.stringify(out),/synthetic-id|syntheticaud123/);
+  }
+});
+test("no Worker scopes is reported as absence of identified candidates, not absence of Access",async()=>{
+  const out=await auditAccessMetadata({accountId,apiToken,
+    fetcher:apiMock({apps:[{type:"self_hosted",domain:"different.example.org"}]})});
+  assert.equal(out.accessScopeHint,"NO_WORKER_SCOPE_OBSERVED");
+  assert.equal(out.safeToEnablePrivate2027,false);
+});
