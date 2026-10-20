@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {weddingTotals,weddingEntryCard,WEDDING_TYPES} from "./wedding.js";
+import {weddingTotals,weddingEntryCard,WEDDING_TYPES,isPinterestLink,inspirationItems} from "./wedding.js";
 import {routeFromHash} from "./area-routes.mjs";
 test("wedding is a Pareja sub-block, not a separate top-level area",()=>{
  assert.equal(routeFromHash("#/pareja/boda").areaId,"area-partner");
@@ -37,7 +37,6 @@ test("wedding shows budget dashboard directly without the decorative introductio
 });
 
 test("Pinterest links are recognized without trusting lookalike domains",()=>{
- const {isPinterestLink}=await import("./wedding.js");
  assert.equal(isPinterestLink("https://www.pinterest.com/pin/1234/"),true);
  assert.equal(isPinterestLink("https://pin.it/example"),true);
  assert.equal(isPinterestLink("https://pinterest.com.evil.example/pin/1"),false);
@@ -45,7 +44,6 @@ test("Pinterest links are recognized without trusting lookalike domains",()=>{
  assert.equal(isPinterestLink("javascript:alert(1)"),false);
 });
 test("moodboard excludes discarded ideas, filters categories, and preserves existing planning",async()=>{
- const {inspirationItems}=await import("./wedding.js");
  const items=[
   {id:"1",title:"Flores silvestres",description:"centros",category:"decoracion",status:"idea",photoUrl:"/api/wedding/items/a/photo"},
   {id:"2",title:"Banquete",description:"",category:"catering",status:"pendiente",url:"https://www.pinterest.com/pin/1"},
