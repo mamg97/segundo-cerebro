@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - "research/psychohistory/historic23_holdout_2024.py"
+      - 'research/psychohistory/paired_country_uncertainty.py'
+      - 'research/psychohistory/test_paired_country_uncertainty.py'
       - "research/psychohistory/test_historic23_holdout_2024.py"
       - ".github/workflows/psychohistory-2024-release-holdout.yml"
   workflow_dispatch:
@@ -17,7 +19,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Fail closed on unsourced outcomes and future changes
-        run: python3 -m unittest discover -s research/psychohistory -p test_historic23_holdout_2024.py -v
+        run: |
+          python3 -m unittest discover -s research/psychohistory -p test_historic23_holdout_2024.py -v
+          python3 -m unittest discover -s research/psychohistory -p test_paired_country_uncertainty.py -v
   official-2024-holdout-retrospective:
     runs-on: ubuntu-latest
     timeout-minutes: 7

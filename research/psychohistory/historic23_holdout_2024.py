@@ -16,6 +16,7 @@ from collections import Counter
 from benchmark import audit,panel,predict_origin,metrics
 from release_separated_holdout import bounded_zip
 from historic23_xlsx_probe import column_num,NS
+from paired_country_uncertainty import compare_to_references
 
 HERE=Path(__file__).resolve().parent
 CORE=json.loads((HERE/"protocol.json").read_text(encoding="utf-8"))
@@ -174,6 +175,7 @@ def eval_2024(historic_xlsx, later_csv_zip):
             "source_outcome_audit":{"rows":quality["rows"],"countries":quality["countries"],
                                     "years":quality["years"],"member_sha256":member_hash},
             "models":all_scores,
+            "descriptive_paired_country_uncertainty":compare_to_references(scored),
             "as_of_historical_bytes_verified":False,"forecast_issued":False,
             "prospective_skill_demonstrated":False,"trading_authorized":False,
             "caveat":"Scoring decided after inspecting 2025. Two release-separated evaluations cannot establish out-of-sample temporal skill; 23.1 bytes not witnessed as of 2023."}
