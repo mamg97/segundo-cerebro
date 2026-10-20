@@ -1,4 +1,5 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
+import {LAB_VIEWS,labGroupForView,labDefaultView} from './research-lab-navigation.mjs?v=0.5.26';
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.25';
 import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
 import {renderIdeaNetwork} from './research-ideas.mjs?v=0.5.20';
@@ -21,7 +22,7 @@ const finite=(n)=>typeof n==="number"&&Number.isFinite(n);
 const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d}):"Sin datos";
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
-const AVAILABLE_VIEWS=new Set(["brief","futures","shadow2027","overview","ideas","video","science","operations","roadmap"]);
+const AVAILABLE_VIEWS=new Set(LAB_VIEWS);
 let activeView="brief";
 const initialView=new URLSearchParams(window.location.search).get("view");
 if(AVAILABLE_VIEWS.has(initialView))activeView=initialView;
@@ -249,6 +250,16 @@ function roadmap(){
     TRACKS.map(t=>'<button data-filter="'+t.id+'" class="'+(milestoneFilter===t.id?'active':'')+'">'+t.id+'</button>').join("")+'</div>'+
     '<section class="panel"><div class="milestones">'+ms.map(m=>'<div><span class="eyebrow">'+esc(m.track)+' / '+esc(m.id)+'</span>'+milestoneRow(m)+'</div>').join("")+'</div></section>';
 }
+function navigateView(view,{updateHistory=true}={}){
+  if(!AVAILABLE_VIEWS.has(view)||view===activeView)return;
+  activeView=view;
+  if(updateHistory){
+    const url=new URL(window.location.href);
+    url.searchParams.set('view',view);
+    window.history.pushState({labView:view},'',url);
+  }
+  render();
+}
 function render(){
   if(!state)return;
   document.body.dataset.labView = activeView;
@@ -258,12 +269,25 @@ function render(){
   disposeVideo();
   header();metrics();
   root.innerHTML=activeView==="brief"?renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
-  document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
+  const group=labGroupForView(activeView);
+  const subtabs=document.getElementById('lab-subtabs');
+  subtabs.hidden=group==='brief';
+  document.querySelectorAll('[data-nav-group]').forEach(x=>{
+    const active=x.dataset.navGroup===group;
+    x.classList.toggle('active',active);
+    x.setAttribute('aria-pressed',String(active));
+  });
+  document.querySelectorAll("[data-view]").forEach(x=>{
+    x.hidden=x.dataset.navParent!==undefined && x.dataset.navParent!==group;
+    const active=x.dataset.view===activeView;
+    x.classList.toggle("active",active);
+    if(active)x.setAttribute("aria-current","page");
+    else x.removeAttribute("aria-current");
+  });
   root.querySelectorAll("[data-brief-go]").forEach(button=>button.addEventListener("click",()=>{
     const view=button.dataset.briefGo;
     if(!AVAILABLE_VIEWS.has(view))return;
-    activeView=view;
-    render();
+    navigateView(view);
     document.querySelector('[data-view="'+view+'"]')?.focus({preventScroll:true});
   }));
   if(activeView==="shadow2027")disposeShadow=mountInlineShadow2027(root);
@@ -276,7 +300,7 @@ function render(){
     root.querySelector('.'+source+'[data-track="'+activeTrack+'"]').focus({preventScroll:true});
   }));
   root.querySelector('[data-open-science]')?.addEventListener('click',()=>{
-    activeView='science';render();document.querySelector('[data-view="science"]').focus({preventScroll:true});
+    navigateView('science');document.querySelector('[data-view="science"]')?.focus({preventScroll:true});
   });
   root.querySelectorAll("[data-filter]").forEach(x=>x.addEventListener("click",()=>{milestoneFilter=x.dataset.filter;render();}));
   root.querySelectorAll('[data-task]').forEach(x=>x.addEventListener('click',()=>{selectedTask=x.dataset.task;selectedModel='';render();}));
@@ -306,5 +330,14 @@ async function load(){
   }finally{if(mine===generation)refresh.disabled=false;}
 }
 document.getElementById("refresh").addEventListener("click",load);
-document.querySelectorAll("[data-view]").forEach(x=>x.addEventListener("click",()=>{activeView=x.dataset.view;render();}));
+document.querySelectorAll('[data-nav-group]').forEach(x=>x.addEventListener('click',()=>{
+  const next=labDefaultView(x.dataset.navGroup);
+  if(next)navigateView(next);
+}));
+document.querySelectorAll("[data-view]").forEach(x=>x.addEventListener("click",()=>navigateView(x.dataset.view)));
+window.addEventListener('popstate',()=>{
+  const target=new URLSearchParams(window.location.search).get('view');
+  const view=AVAILABLE_VIEWS.has(target)?target:'brief';
+  if(view!==activeView){activeView=view;render();}
+});
 load();

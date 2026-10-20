@@ -1,0 +1,17 @@
+/* AV-073: only four primary choices; subordinate views are contextual. */
+.tabs.lab-primary-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;overflow:visible;border-bottom:0;margin:0 0 7px}
+.tabs.lab-primary-tabs button{margin:0;flex:0 0 auto;padding:10px clamp(12px,1.7vw,19px);min-height:41px;border:1px solid #303d47;border-radius:8px;background:#10171d;color:#b9cad9;font-size:12px;white-space:normal}
+.tabs.lab-primary-tabs button.active{color:#fff;background:#1d3546;border-color:#91b9d8;font-weight:750}
+.tabs.lab-primary-tabs button:hover{background:#1d2b36}
+.lab-subtabs{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-height:42px;margin:0 0 22px;padding:6px;border:1px solid #2d3e4a;border-radius:8px;background:#0b131c}
+.lab-subtabs[hidden],.lab-subtabs button[hidden]{display:none!important}
+.lab-subtabs button{color:#a9bece;border:1px solid transparent;border-radius:6px;background:transparent;padding:8px 14px;font-size:12px;min-height:35px}
+.lab-subtabs button.active{background:#21384a;border-color:#648cad;color:#fff;font-weight:700}
+.lab-subtabs button:hover{background:#1b2b38;color:#fff}
+.lab-primary-tabs button:focus-visible,.lab-subtabs button:focus-visible{outline:2px solid #b9e0ff;outline-offset:2px}
+@media(max-width:680px){
+ .tabs.lab-primary-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ .tabs.lab-primary-tabs button{min-width:0;padding:9px 2px;font-size:clamp(9px,2.8vw,11px);line-height:1.2}
+ .lab-subtabs{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin;margin-bottom:14px;padding:4px}
+ .lab-subtabs button{flex:0 0 auto;scroll-snap-align:start;font-size:11px;padding:8px 10px}
+}

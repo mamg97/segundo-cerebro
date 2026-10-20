@@ -11,14 +11,15 @@
   <link rel="stylesheet" href="./research-lab-monochrome.css?v=0.5.22">
   <link rel="stylesheet" href="./research-video-studio.css?v=0.5.23">
   <link rel="stylesheet" href="./research-futures-trees.css?v=0.5.25">
-  <script type="module" src="./research-lab.js?v=0.5.25"></script>
+  <link rel="stylesheet" href="./research-lab-navigation.css?v=0.5.26">
+  <script type="module" src="./research-lab.js?v=0.5.26"></script>
 </head>
 <body>
   <div class="ambient" aria-hidden="true"></div>
   <div class="app-frame">
     <header class="topbar">
       <a class="back" href="./index.html" aria-label="Volver a Segundo Cerebro">← <span>SEGUNDO CEREBRO</span></a>
-      <span class="top-brand">PSICOHISTORIA <span class="vtag">v0.5.25</span></span>
+      <span class="top-brand">PSICOHISTORIA <span class="vtag">v0.5.26</span></span>
       <button type="button" id="refresh" class="refresh">↻ <span>Actualizar</span></button>
     </header>
     <main>
@@ -65,16 +66,21 @@
       </section>
       <section id="status" class="status" role="status" aria-live="polite">Leyendo registros privados…</section>
       <section class="metric-row" id="headline-metrics" aria-label="Indicadores principales"></section>
-      <nav class="tabs" id="tabs" aria-label="Vistas del laboratorio">
+      <nav class="tabs lab-primary-tabs" id="tabs" aria-label="Secciones principales del laboratorio">
         <button type="button" data-view="brief" class="active">Inicio</button>
-        <button type="button" data-view="futures">Explorador</button>
-        <button type="button" data-view="shadow2027">Riesgos 2027</button>
-        <button type="button" data-view="overview">Mapa del proyecto</button>
-        <button type="button" data-view="ideas">Ideas y sinergias</button>
-        <button type="button" data-view="video">Estudio audiovisual</button>
-        <button type="button" data-view="science">Evidencia</button>
-        <button type="button" data-view="operations">Registro</button>
-        <button type="button" data-view="roadmap">Hitos</button>
+        <button type="button" data-nav-group="forecast" aria-pressed="false">Predicciones</button>
+        <button type="button" data-nav-group="research" aria-pressed="false">Investigación</button>
+        <button type="button" data-nav-group="create" aria-pressed="false">Crear</button>
+      </nav>
+      <nav class="lab-subtabs" id="lab-subtabs" aria-label="Vistas de la sección actual" hidden>
+        <button type="button" data-nav-parent="forecast" data-view="futures">Explorador</button>
+        <button type="button" data-nav-parent="forecast" data-view="shadow2027">Riesgos 2027</button>
+        <button type="button" data-nav-parent="research" data-view="overview">Mapa del proyecto</button>
+        <button type="button" data-nav-parent="research" data-view="science">Evidencia</button>
+        <button type="button" data-nav-parent="research" data-view="operations">Registro</button>
+        <button type="button" data-nav-parent="research" data-view="roadmap">Hitos</button>
+        <button type="button" data-nav-parent="create" data-view="ideas">Ideas y sinergias</button>
+        <button type="button" data-nav-parent="create" data-view="video">Estudio audiovisual</button>
       </nav>
       <section id="view" aria-live="polite"></section>
     </main>
