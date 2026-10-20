@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { decodeLookSheetPreview, serveObjectsLookSheetPreview } from "./look-sheet-media.js";
 
 test("LookMedia preview accepts a compact private WebP with valid signature", () => {
-  const bytes = Buffer.from("RIFF\\0\\0\\0\\0WEBPVP8 ", "binary");
+  const bytes = Buffer.from([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80, 86, 80, 56, 32]);
   const preview = decodeLookSheetPreview({
     mime_type: "image/webp", base64_preview: bytes.toString("base64")
   });
@@ -12,7 +12,7 @@ test("LookMedia preview accepts a compact private WebP with valid signature", ()
 });
 
 test("LookMedia rejects MIME mismatch, malformed previews and oversized base64", () => {
-  const image = Buffer.from("RIFF\\0\\0\\0\\0WEBPVP8 ", "binary").toString("base64");
+  const image = Buffer.from([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80, 86, 80, 56, 32]).toString("base64");
   assert.throws(() => decodeLookSheetPreview({mime_type:"text/html",base64_preview:image}), /MIME/);
   assert.throws(() => decodeLookSheetPreview({mime_type:"image/png",base64_preview:image}), /SIGNATURE/);
   assert.throws(() => decodeLookSheetPreview({mime_type:"image/webp",base64_preview:"@@"}), /PREVIEW/);
