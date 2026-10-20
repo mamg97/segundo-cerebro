@@ -1,5 +1,15 @@
 # PSICOHISTORIA — Estado científico verificado · 20/10/2026
 
+## AV-20261020-071 · Un árbol anual completo por predicción retrospectiva
+
+- [PR #730](https://github.com/mamg97/segundo-cerebro/pull/730) fusionada en `main` (squash `d751308e3c6cb29efc46647ea48ec65c3647834c`), **sin modificar el motor probabilístico, datasets ni cohorte prospectiva de 2027**. La vista privada `?view=futures` presenta un índice de **árboles existentes** por catálogo/origen retrospectivo (solo orígenes canónicos, sin inventar años ni emisiones) y un árbol completo con corte → puente no observado → todos los años proyectados.
+- Seleccionar un año sirve para inspeccionar su probabilidad, scoring histórico y caminos retenidos, **sin recortar el árbol**. La trayectoria histórica real continúa como capa independiente, opcional, obtenida a posteriori de UCDP revisada. Estilos aislados `app/research-futures-trees.css` con desplazamiento horizontal en móvil. [Especificación y controles AV-071](ARBOLES_POR_PREDICCION_AV071.md).
+- **Pruebas PR en verde**: UI laboratorio `39461063135`, Worker privado `39461062831`, privacidad `39461062827`, gates Access/2027 `39461062810`/`39461062875`. Despliegue de producción Cloudflare Worker `39461194768` **SUCCESS**, UI main `39461194921`, guard privacidad `39461194931` y demo Pages `39461194788` SUCCESS. La inspección visual autenticada en Chrome tras refrescar no se ha realizado; no se afirma comprobación visual directa.
+- El estudio audiovisual añadido en paralelo por [PR #729](https://github.com/mamg97/segundo-cerebro/pull/729) se **conservó expresamente** al integrar los árboles. Para evitar colisión, los avances canónicos `AV-069` (vídeos) y `AV-070` (verificación audiovisual) se respetan, y esta mejora de árboles se identifica finalmente como **AV-071**.
+- **Sin nueva evidencia científica:** `PsicoPredicciones` sigue vacía, 2027 `SHADOW_NO_EMITIDO`. No se alteraron modelos ni métricas de AV-064/066/068. El cambio es una representación más comprensible y completa de cálculos retrospectivos ya existentes.
+
+---
+
 ## AV-20261020-068 · Incertidumbre país: aún no existe ventaja robusta frente a Markov
 
 - **[PR #727](https://github.com/mamg97/segundo-cerebro/pull/727) fusionada** (squash `1a5fee246ceb2ab1939ded9fbf793fa9b649fab9`). Incorpora `paired_country_uncertainty.py` (bootstrap pareado de pérdidas Brier por país, 1.000 remuestreos, semilla fija) en las dos evaluaciones ya existentes de 2024 y 2025. No cambia modelos/hyperparámetros, tareas del Laboratorio ni 2027. Informe empírico completo: [AV-068](PAIRED_COUNTRY_UNCERTAINTY_AV068.md). CI empírica [2024 #39457269332](https://github.com/mamg97/segundo-cerebro/actions/runs/39457269332) y [2025 #39457269585](https://github.com/mamg97/segundo-cerebro/actions/runs/39457269585), más repetición CI en PR y guard privacidad **SUCCESS**.
