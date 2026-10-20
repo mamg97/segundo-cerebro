@@ -10,6 +10,7 @@ import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objec
 import { safePrivateReadDiagnostic } from "./private-read-diagnostics.js";
 import { createSingleFlight } from "./single-flight.js";
 import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-source.js";
+import { ensureCurrentFinanceCycle } from "./finance-cycle.mjs";
 import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { serveObjectsLookSheetPreview } from "./look-sheet-media.js";
@@ -1458,6 +1459,7 @@ async function fetchFinanceSummaryUncached(env) {
       periodStart: summary.period_start || null,
       periodEnd: summary.period_end || null,
       periodLabel: formatPeriodLabel(summary.period_start, summary.period_end),
+      budgetStatus: summary.status || null,
       currency: summary.currency || "EUR",
       income: miguelIncome !== null && andreaIncome !== null ? miguelIncome + andreaIncome : null,
       plannedOutflows: withSavings,
@@ -1491,6 +1493,10 @@ async function fetchFinanceSummaryUncached(env) {
       updatedAt: summary.updated_at || null
     }
   };
+
+  // Cycle rollover safety: a stale Sheet cannot display last month's spending
+  // under the newly active cycle. Source remains canonical and unmodified.
+  value.monthlyBudget = ensureCurrentFinanceCycle(value.monthlyBudget);
 
   financeCache = {
     value,
