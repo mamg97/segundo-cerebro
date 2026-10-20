@@ -137,6 +137,13 @@ jobs:
         with:
           node-version: "22"
 
+      # Independently check the real workers.dev boundary from an anonymous
+      # GitHub runner BEFORE minting any OIDC service/audit credentials.
+      # A public 200 or a network failure MUST fail, never be treated as private.
+      - name: Verify PSICOHISTORIA anonymous access denied in production
+        if: ${{ steps.cadence.outputs.run_audit == 'true' }}
+        run: node private-cloudflare/scripts/audit-psychohistory-anonymous.mjs
+
       - name: Install audit browser
         if: ${{ steps.cadence.outputs.run_audit == 'true' }}
         working-directory: private-cloudflare

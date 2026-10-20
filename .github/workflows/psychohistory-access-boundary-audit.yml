@@ -1,0 +1,41 @@
+name: Psychohistory private 2027 anonymous Access boundary
+on:
+  pull_request:
+    paths:
+      - "private-cloudflare/scripts/audit-psychohistory-anonymous.mjs"
+      - "private-cloudflare/scripts/audit-psychohistory-anonymous.test.mjs"
+      - ".github/workflows/psychohistory-access-boundary-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  no-secrets-security-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test fail-closed response classification and no data leakage
+        run: |
+          set -euo pipefail
+          node --test private-cloudflare/scripts/audit-psychohistory-anonymous.test.mjs
+  production-anonymous-boundary:
+    needs: no-secrets-security-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check three live unauthenticated routes (strict no body)
+        run: |
+          set -euo pipefail
+          node private-cloudflare/scripts/audit-psychohistory-anonymous.mjs
+          echo "No tokens, credentials, browser cookies, country identifiers or probabilities used."
