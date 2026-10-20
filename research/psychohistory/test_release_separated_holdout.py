@@ -97,4 +97,30 @@ class FrozenVintageHoldoutTests(unittest.TestCase):
         self.assertNotEqual(before["positive_outcomes"],after["positive_outcomes"])
         self.assertFalse(after["prospective_skill_demonstrated"])
 
+
+    def test_old_archival_schema_without_version_and_with_suffixes(self):
+        rows=make_version("24.1",2023)
+        # UCDP historical releases do not all include the same metadata columns.
+        renamed=[]
+        for raw in rows:
+            v={("country_id_cy" if k=="country_id" else
+                "sb_total_deaths_best_cy" if k=="sb_total_deaths_best" else k):value
+               for k,value in raw.items() if k!="Version"}
+            renamed.append(v)
+        path=Path(self.t.name)/"archival.zip"
+        digest=zipped(path,renamed)
+        loaded,quality=probe(path,digest,"24.1")
+        self.assertEqual(len(loaded),len(rows))
+        self.assertTrue(all(r["Version"]=="24.1" for r in loaded))
+        self.assertEqual(quality["years"],[1989,2023])
+
+    def test_ambiguous_archival_alias_rejected(self):
+        rows=make_version("24.1",2023)
+        rows[0]["country_id_cy"]=rows[0]["country_id"]
+        path=Path(self.t.name)/"ambiguous.zip"
+        # the test fixture is intentionally inconsistent; never auto-resolve.
+        digest=zipped(path,rows)
+        with self.assertRaisesRegex(ValueError,"ambiguous"):
+            bounded_zip(path,digest,"24.1")
+
 if __name__=="__main__":unittest.main()
