@@ -195,6 +195,41 @@ function inputField(name,label,value,type="text"){
  if(name==="comentarios")return '<label class="hby-full">'+label+'<textarea name="'+name+'" rows="5" maxlength="'+max+'">'+esc(value||"")+'</textarea></label>';
  return '<label>'+label+'<input name="'+name+'" type="'+type+'" '+(type==="number"?'min="0" max="'+(name==="precio"?"100000":"10")+'" step="0.1"':'maxlength="'+max+'"')+' value="'+esc(value??"")+'"></label>';
 }
+
+const OTHER_OPTION="__hby_other__";
+const EDITOR_COLLATOR=new Intl.Collator("es",{sensitivity:"base",numeric:true});
+export function hobbyEditorOptions(items,field,current="",numeric=false){
+ const values=[...(items||[]).map(item=>item?.[field]),current].filter(value=>value!==null&&value!==undefined&&String(value).trim()!=="");
+ if(numeric){
+  for(let n=0;n<=20;n++)values.push(n/2);
+ }
+ const seen=new Set();
+ return values.map(value=>numeric?String(value).trim().replace(",","."):String(value).trim()) // Numeric choices use dot-decimal convention.
+  .filter(value=>{
+   const key=value.toLocaleLowerCase("es");
+   if(seen.has(key))return false;
+   if(numeric&&(!Number.isFinite(Number(value))||Number(value)<0||Number(value)>10))return false;
+   seen.add(key);return true;
+  })
+  .sort(numeric?(a,b)=>Number(a)-Number(b):(a,b)=>EDITOR_COLLATOR.compare(a,b));
+}
+export function hobbySelectField(name,label,value,options,{numeric=false}={}){
+ const current=value===null||value===undefined?"":(numeric?String(value).trim().replace(",","."):String(value).trim());
+ const unique=[...options];
+ if(current&&!unique.includes(current))unique.push(current);
+ const sorted=unique.sort(numeric?(a,b)=>Number(a)-Number(b):(a,b)=>EDITOR_COLLATOR.compare(a,b));
+ const list=['<option value=""'+(!current?' selected':'')+'>Sin especificar</option>',
+  ...sorted.map(option=>'<option value="'+esc(option)+'"'+(option===current?' selected':'')+'>'+esc(option)+'</option>'),
+  '<option value="'+OTHER_OPTION+'">Otro… (escribir)</option>'].join("");
+ const max=numeric?10:200;
+ return '<label>'+esc(label)+'<select name="'+esc(name)+'" data-hby-choice="'+esc(name)+'">'+list+'</select>'+
+  '<input name="'+esc(name)+'__other" data-hby-other="'+esc(name)+'" type="'+(numeric?'number':'text')+'"'+
+  (numeric?' min="0" max="10" step="any"':' maxlength="'+max+'"')+
+  ' placeholder="Nuevo valor de '+esc(label)+'" aria-label="Nuevo valor de '+esc(label)+'" hidden disabled></label>';
+}
+function editorChoice(name,label,value,{numeric=false}={}){
+ return hobbySelectField(name,label,value,hobbyEditorOptions(store.items,name,value,numeric),{numeric});
+}
 function shopEditor(item){
  return '<label>Tienda<select name="tienda"><option value="">Sin enlace</option>'+
  ['El Corte Inglés','Amazon'].map(name=>'<option value="'+esc(name)+'"'+(item?.tienda===name?' selected':'')+'>'+esc(name)+'</option>').join('')+
@@ -209,10 +244,10 @@ function editor(){
  '<div class="hby-editor"><h3>'+(item?"Editar ficha":"Nuevo registro")+'</h3>'+
  (item&&item.sourceRow?'<p>Registro original en la fila '+esc(item.sourceRow)+'. Los campos históricos y las incidencias no se borrarán.</p>':'')+
  '<form id="hby-form"><div class="hby-editor-fields">'+
- (wine?inputField("marca","Marca / bodega *",item?.marca)+inputField("tipo","Tipo / vino",item?.tipo)+inputField("denominacion","Denominación",item?.denominacion)+inputField("nota","Puntuación (0–10)",item?.nota,"number")+inputField("precio","Precio (€)",item?.precio,"number")+shopEditor(item):
- inputField("titulo","Título *",item?.titulo)+inputField("subtipo","Género / subtipo",item?.subtipo)+
- inputField("subtipo_2","Subtipo adicional",item?.subtipo_2)+
- inputField("estado","Estado",item?.estado)+inputField("puntuacion","Puntuación (0–10)",item?.puntuacion,"number")+
+ (wine?inputField("marca","Marca / bodega *",item?.marca)+editorChoice("tipo","Tipo / vino",item?.tipo)+editorChoice("denominacion","Denominación",item?.denominacion)+editorChoice("nota","Puntuación (0–10)",item?.nota,{numeric:true})+inputField("precio","Precio (€)",item?.precio,"number")+shopEditor(item):
+ inputField("titulo","Título *",item?.titulo)+editorChoice("subtipo","Género / subtipo",item?.subtipo)+
+ editorChoice("subtipo_2","Subtipo adicional",item?.subtipo_2)+
+ editorChoice("estado","Estado",item?.estado)+editorChoice("puntuacion","Puntuación (0–10)",item?.puntuacion,{numeric:true})+
  inputField("fecha_inicio","Fecha inicio",item?.fecha_inicio,"date")+inputField("fecha_fin","Fecha fin",item?.fecha_fin,"date"))+
  inputField("comentarios","Notas y comentarios",item?.comentarios)+
  '</div><div class="hby-editor-actions"><button class="hby-main-action" type="submit">Guardar en Sheets</button>'+
@@ -281,11 +316,23 @@ function bind(root){
  root.querySelectorAll("[data-hby-edit]").forEach(b=>b.addEventListener("click",()=>{store.editing=b.dataset.hbyEdit;store.error="";show();}));
  root.querySelector("#hby-back")?.addEventListener("click",()=>{store.editing=null;store.error="";show();});
  root.querySelector("#hby-cancel")?.addEventListener("click",()=>{store.editing=null;store.error="";show();});
+ root.querySelectorAll("[data-hby-choice]").forEach(select=>select.addEventListener("change",()=>{
+  const name=select.dataset.hbyChoice,input=root.querySelector('[data-hby-other="'+name+'"]');
+  if(!input)return;
+  const custom=select.value===OTHER_OPTION;
+  input.hidden=!custom;input.disabled=!custom;input.required=custom;
+  if(custom)input.focus();
+ }));
  root.querySelector("#hby-form")?.addEventListener("submit",event=>{
   event.preventDefault();
   const data=new FormData(event.currentTarget),item=store.items.find(x=>x.id===store.editing),names=store.category==="vinos"?wineFields:mediaFields;
   const body={};
-  for(const key of names){let value=data.get(key)||"";if(["nota","precio","puntuacion"].includes(key))value=value===""?"":Number(value);body[key]=value;}
+  for(const key of names){
+   let value=data.get(key)||"";
+   if(value===OTHER_OPTION)value=String(data.get(key+"__other")||"").trim();
+   if(["nota","precio","puntuacion"].includes(key))value=value===""?"":Number(value);
+   body[key]=value;
+  }
   if(!(body.titulo||body.marca)){store.error="Falta el título o la marca.";show();return;}
   void change(()=>request("/api/hobbies/"+store.category+(item?"/"+encodeURIComponent(item.id):""),item?"PATCH":"POST",{...body,...(item?{revision:item.revision}:{})}));
  });

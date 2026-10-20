@@ -239,3 +239,9 @@
  .hby-mobile-sort-tools button{min-height:40px;padding:7px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--blue);font-size:13px;font-weight:800}
 }
 @media(min-width:651px){.hby-mobile-sort-tools{display:none}}
+
+/* Hobbies editor: canonical choices with an optional custom value. */
+.hby-editor-fields select[data-hby-choice]{cursor:pointer;appearance:auto}
+.hby-editor-fields input[data-hby-other]{margin-top:2px;border-style:dashed}
+.hby-editor-fields input[data-hby-other][hidden]{display:none!important}
+.hby-editor-fields select[data-hby-choice]:focus-visible,.hby-editor-fields input[data-hby-other]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
