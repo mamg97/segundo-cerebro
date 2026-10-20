@@ -39,7 +39,7 @@ test("viajes: no exponer fixtures personales ni datos reales en Git",()=>{
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  assert.match(app,/if \(privateModeKind === "remote" && !state\.areas\.some\(\(area\) => area\.id === "area-travels"\)\)/);
  assert.match(app,/"area-projects", "area-travels"/);
- assert.match(app,/openTravelsDetail\(state\.financeSummary, privateModeKind\)/);
+ assert.match(app,/openTravelsDetail\(state\.financeSummary, privateModeKind, routedTravelDetailId\)/);
  const html=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  assert.match(html,/travels\.css\?v=/);
 });
