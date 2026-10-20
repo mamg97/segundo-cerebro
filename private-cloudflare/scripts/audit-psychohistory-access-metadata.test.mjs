@@ -87,3 +87,22 @@ test("incomplete API pagination cannot approve a seemingly matching app",async()
   assert.equal(out.targetApp,"UNVERIFIED");
   assert.equal(out.safeToEnablePrivate2027,false);
 });
+
+test("Cloudflare 2026 Worker-scope Access applications are not mistaken for zero protection",async()=>{
+  for(const type of ["worker","all_workers"]){
+    const workerApp={type:"self_hosted",destinations:[type==="worker"?
+      {type:"worker",worker_id:"synthetic-id"}:{type:"all_workers"}],aud:"syntheticaud123"};
+    const out=await auditAccessMetadata({accountId,apiToken,fetcher:apiMock({apps:[workerApp]})});
+    assert.equal(out.targetApp,"NONE");
+    assert.equal(out.accessScopeHint,"WORKER_SCOPED_ACCESS_PRESENT_UNMATCHED");
+    assert.equal(out.audience,"UNVERIFIED");
+    assert.equal(out.safeToEnablePrivate2027,false);
+    assert.doesNotMatch(JSON.stringify(out),/synthetic-id|syntheticaud123/);
+  }
+});
+test("no Worker scopes is reported as absence of identified candidates, not absence of Access",async()=>{
+  const out=await auditAccessMetadata({accountId,apiToken,
+    fetcher:apiMock({apps:[{type:"self_hosted",domain:"different.example.org"}]})});
+  assert.equal(out.accessScopeHint,"NO_WORKER_SCOPE_OBSERVED");
+  assert.equal(out.safeToEnablePrivate2027,false);
+});
