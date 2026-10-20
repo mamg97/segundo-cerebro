@@ -161,3 +161,9 @@ no otra fuente de verdad. Consulta `/api/events?scope=all&kind=travel` y
   real requiere Cloudflare Access y modo `private-remote`.
 
 Contrato y ejemplos exclusivamente sintéticos: `docs/TRAVEL_WORKSPACE.md`.
+
+
+## Clasificación estricta evento / viaje
+- **Por defecto todo registro de calendario es un evento.** La etiqueta `kind=travel` solo se usa tras declaración expresa del usuario, registrada en la hoja canónica Eventos.
+- No promover a viaje por palabras como viaje, escapada, avión, hotel, destinos o recordatorios ni por reglas de sincronización. Las clasificaciones manuales existentes prevalecen sobre inferencias.
+- Viajes es una vista filtrada sobre Eventos: planificación horaria `PLAN_HORA` y ficha privada navegable por URL, conservando claves de acceso y presupuestos en sus fuentes propietarias.

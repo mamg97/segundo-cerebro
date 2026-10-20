@@ -1,3 +1,4 @@
+import { travelScheduleMarkup } from "./travel-timetable.js?v=0.1.0";
 // Generic travel dashboard: no trip-specific details or private coordinates in the public repository.
 const escapeText=value=>String(value==null?"":value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 const money=value=>{
@@ -36,12 +37,8 @@ export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,boo
    '<div class="trv-map-canvas" data-trv-map-canvas><div class="trv-map-intro"><span class="trv-map-pin">⌖</span><strong>El alojamiento, en el mapa</strong><p>El mapa utiliza Google Maps. Tu dirección solo se compartirá con Google si decides cargarlo.</p><button type="button" data-trv-show-map>Mostrar mapa interactivo</button></div></div>'+
    '<p class="trv-map-footer"><a href="'+escapeText(external)+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Abrir ruta en Google Maps ↗</a><span>Dirección leída de Eventos.</span></p>':
    '<div class="trv-muted">Aún no consta un alojamiento con dirección en Eventos. No se muestra una ubicación inventada.</div>')+'</section>';
-  const plan='<section class="trv-panel trv-dash-planning" id="trv-dash-plan"><div class="trv-panel-head"><h3>▤ Planning por días</h3><small>Ideas y horarios sujetos a reserva</small></div>'+
-   (days.length?'<div class="trv-day-nav" role="group" aria-label="Días del viaje">'+days.map((d,i)=>
-      '<button type="button" data-trv-day="'+i+'" aria-pressed="'+(i===0?"true":"false")+'" class="'+(i===0?"is-active":"")+'"><small>DÍA '+(i+1)+'</small><strong>'+escapeText(dayLabel(d.date))+'</strong></button>').join("")+'</div>'+
-     '<div class="trv-day-plan" data-trv-day-panel><span>DÍA 1 · PROPUESTA</span><h4>'+escapeText(dayLabel(days[0].date))+'</h4><p>'+escapeText(days[0].text)+'</p></div>':
-     '<p class="trv-muted">El planning todavía no está registrado en Eventos.</p>')+
-     '<p class="trv-footnote">Un tour propuesto no implica una plaza reservada: comprueba su confirmación en el proveedor.</p></section>';
+  const plan='<section class="trv-panel trv-dash-planning" id="trv-dash-plan"><div class="trv-panel-head"><h3>▤ Planning horario</h3><small>Horas × días · Confirmado / Pendiente / Propuesta</small></div>'+travelScheduleMarkup(groups,dayLabel)+
+     '<p class="trv-footnote">Los bloques pendientes y orientativos no son reservas confirmadas. Las horas proceden de Eventos.</p></section>';
   const percent=b.percent;
   const budgetProgress=percent===null?"":'<div class="trv-budget-meter"><div role="progressbar" aria-label="Presupuesto provisionado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'"><span data-trv-budget-percent="'+percent+'"></span></div><small>'+percent+' % del presupuesto provisionado; no equivale a gasto pagado</small></div>';
   const nav='<nav class="trv-dash-nav" aria-label="Secciones del viaje">'+
@@ -70,13 +67,5 @@ export function bindTripDashboard({root,groups,dayLabel}){
   root.querySelectorAll("[data-trv-go]").forEach(b=>b.addEventListener("click",()=>{
     const id=anchors[b.dataset.trvGo];
     if(id)root.querySelector("#"+id)?.scrollIntoView({behavior:"smooth",block:"start"});
-  }));
-  root.querySelectorAll("[data-trv-day]").forEach(b=>b.addEventListener("click",()=>{
-    const index=Number(b.dataset.trvDay),day=groups.days?.[index];if(!day)return;
-    root.querySelectorAll("[data-trv-day]").forEach(el=>{
-      el.classList.toggle("is-active",el===b);el.setAttribute("aria-pressed",String(el===b));
-    });
-    const panel=root.querySelector("[data-trv-day-panel]");
-    if(panel)panel.innerHTML='<span>DÍA '+(index+1)+' · PROPUESTA</span><h4>'+escapeText(dayLabel(day.date))+'</h4><p>'+escapeText(day.text)+'</p>';
   }));
 }

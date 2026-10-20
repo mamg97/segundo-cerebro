@@ -14,7 +14,7 @@ test("Viajes uses the viewport rather than the shared 920px modal limit",()=>{
     assert.ok(block.includes(rule),rule);
   }
   assert.match(css,/\.detail-dialog\.travels-dialog\[open\] #dialog-body\s*\{[\s\S]*?min-height:0;[\s\S]*?max-height:none;[\s\S]*?overflow-y:auto;/);
-  assert.match(index,/href="\.\/travels\.css\?v=0\.3\.0"/);
+  assert.match(index,/href="\.\/travels\.css\?v=0\.4\.0"/);
 });
 test("map and tasks fill a responsive two-column workspace and avoid nested task scroll",()=>{
   assert.match(css,/\.detail-dialog\.travels-dialog\[open\] \.trv-dash-lead\s*\{[\s\S]*?grid-template-columns:minmax\(0,1\.5fr\) minmax\(360px,1fr\)/);
@@ -26,6 +26,6 @@ test("map and tasks fill a responsive two-column workspace and avoid nested task
 });
 test("Other workspaces cannot inherit the fullscreen Travel state",()=>{
   assert.match(css,/\.detail-dialog\.travels-dialog\[open\]/);
-  assert.match(travels,/dialog\.addEventListener\("close", \(\) => dialog\.classList\.remove\("travels-dialog"\)\)/);
+  assert.match(travels,/if\(!dialog\.open\)dialog\.classList\.remove\("travels-dialog"\)/);
   assert.doesNotMatch(css,/\.detail-dialog\[open\]\s*\{\s*width:100vw/);
 });

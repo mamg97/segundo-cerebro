@@ -74,3 +74,11 @@ Añadir nuevas filas al Sheet, no editar el JS para cambiar el viaje.
 - El mapa y las tareas se reparten el espacio horizontal en escritorio. La altura del mapa crece con el viewport y la checklist no introduce un segundo scroll; en tablet y móvil se apilan los bloques.
 - Se respetan las safe areas en pantallas móviles, y la clase de Viajes se limpia al cerrar para no alterar otros módulos.
 - Validación: app/travels-fullscreen.test.mjs y comprobación geométrica en Chromium con viewports 1600x900, 1024x768, 768x1024 y 390x844 (geometría sintética sin datos privados).
+
+
+## Agenda horaria y navegación por URL (octubre 2026)
+- PLAN_HORA usa el contrato `PLAN_HORA | YYYY-MM-DD | HH:MM | CONFIRMADO|PENDIENTE|PROPUESTA | CATEGORIA | detalle`. Cada viaje organiza las horas en filas y los días en columnas, con notas PLAN_DIA desplegables, sin inventar franjas para actividades no fechadas. Un tour pendiente nunca se muestra como reserva confirmada.
+- Cada apartado principal tiene una URL privada `/app/#/slug` y las fichas de viaje `/app/#/viajes/<evento_id_codificado>`, con navegación anterior/siguiente y menú superior persistente. El segmento hash no concede permisos; la aplicación y sus APIs siguen sujetas a Cloudflare Access y al control del usuario autorizado.
+- El frontend conserva un solo marco visual para módulos sin duplicar datos ni crear rutas de backend. Si se comparte una URL con alguien sin acceso autorizado, deberá obtener primero el permiso de Cloudflare Access.
+- Evento es la categoría por defecto. Solo una decisión explícita del usuario promueve un registro a `kind=travel`. El mero título de iCloud/Google no lo hace; la sincronización preserva la clasificación manual en Eventos.
+- Cambios operativos de clasificación se aplican únicamente al Sheet canónico privado, no se codifican nombres/destinos reales en GitHub.

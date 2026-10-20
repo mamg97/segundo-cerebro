@@ -1,4 +1,5 @@
-import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.1.0";
+import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.2.0";
+import { hrefForTravel, hrefForArea } from "./area-routes.mjs?v=0.1.0";
 // Viajes: vista privada sobre el ledger canónico de Eventos.
 // La fuente de viajes y hechos es /api/events; Finanzas mantiene la autoridad del dinero.
 function escapeText(value) {
@@ -13,7 +14,7 @@ function summaryParts(value) {
 
 export function parseTravelDetail(payload) {
   const facts = Array.isArray(payload && payload.facts) ? payload.facts : [];
-  const groups = { flights: [], bookings: [], days: [], tasks: [], notes: [], accommodation: [], destination: [] };
+  const groups = { flights: [], bookings: [], days: [], slots: [], tasks: [], notes: [], accommodation: [], destination: [] };
   const latestTaskStates = new Map();
   for (const fact of facts) {
     const parts = summaryParts(fact.summary);
@@ -30,6 +31,7 @@ export function parseTravelDetail(payload) {
     else if (prefix === "ALOJAMIENTO") groups.accommodation.push({ text: rest.join(" | "), fact });
     else if (prefix === "RESERVA") groups.bookings.push({ key: rest[0], text: rest.slice(1).join(" · "), fact });
     else if (prefix === "PLAN_DIA") groups.days.push({ date: rest[0], text: rest.slice(1).join(" · "), fact });
+    else if (prefix === "PLAN_HORA" && rest.length >= 5) groups.slots.push({ date: rest[0], time: rest[1], status: rest[2], category: rest[3], text: rest.slice(4).join(" | "), fact });
     else if (prefix === "TAREA") {
       groups.tasks.push({
         key: rest[0], status: latestTaskStates.get(rest[0]) || rest[1],
@@ -40,6 +42,7 @@ export function parseTravelDetail(payload) {
     }
   }
   groups.days.sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+  groups.slots.sort((a, b) => (a.date+" "+a.time).localeCompare(b.date+" "+b.time));
   return groups;
 }
 
@@ -70,13 +73,19 @@ async function getJson(url, options) {
 const state = { financeSummary: null, mode: "demo", trips: [], details: new Map(), selected: null };
 const body = () => document.querySelector("#dialog-body");
 function getDialog() { return document.querySelector("#detail-dialog"); }
+let travelRequestSequence=0;
+function travelViewActive(){
+  const dialog=getDialog();
+  return !!dialog?.open && dialog.classList.contains("travels-dialog") &&
+    (!document.body.classList.contains("route-area-active") || window.location.hash.startsWith("#/viajes"));
+}
 let travelsCloseCleanupRegistered = false;
 function setDialog(title, context) {
   const dialog = getDialog();
   if (!dialog) return null;
   // Never leave the fullscreen Travel class behind when another workspace reuses this dialog.
   if (!travelsCloseCleanupRegistered) {
-    dialog.addEventListener("close", () => dialog.classList.remove("travels-dialog"));
+    dialog.addEventListener("close", () => { if(!dialog.open)dialog.classList.remove("travels-dialog"); });
     travelsCloseCleanupRegistered = true;
   }
   dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog",
@@ -116,7 +125,13 @@ function renderList() {
     '<p class="trv-footnote">Fuente: Eventos · Los importes oficiales permanecen en Finanzas. No se muestran datos reales en la demo pública.</p></div>';
   body().innerHTML = html;
   body().querySelectorAll("[data-trv-open]").forEach((button) => button.addEventListener("click", () => {
-    void openTrip(button.dataset.trvOpen);
+    const id=button.dataset.trvOpen;
+    if(!id)return;
+    if(document.body.classList.contains("route-area-active")){
+      history.pushState(null,"",hrefForTravel(id));
+      window.dispatchEvent(new Event("area-route-synced"));
+    }
+    void openTrip(id);
   }));
 }
 function section(title, content, subtitle) {
@@ -192,7 +207,13 @@ function renderDetail(payload) {
     dayLabel: dateLabel
   });
   bindTripDashboard({ root: body(), groups, dayLabel: dateLabel });
-  body().querySelector("[data-trv-back]")?.addEventListener("click",renderList);
+  body().querySelector("[data-trv-back]")?.addEventListener("click",()=>{
+    if(document.body.classList.contains("route-area-active")){
+      history.pushState(null,"",hrefForArea("area-travels"));
+      window.dispatchEvent(new Event("area-route-synced"));
+    }
+    renderList();
+  });
   body().querySelector("[data-trv-budget]")?.addEventListener("click",(e)=>{
     e.preventDefault();getDialog()?.close();
     document.querySelector('[data-nav-area-id="area-finance"]')?.click();
@@ -218,8 +239,9 @@ async function changeTask(eventId,taskId,button) {
     });
     const updated=result.event?result:await getJson("/api/events/"+encodeURIComponent(eventId));
     state.details.set(eventId,updated);
-    renderDetail(updated);
+    if(travelViewActive() && state.selected===eventId)renderDetail(updated);
   } catch(error) {
+    if(!travelViewActive() || !button.isConnected)return;
     button.disabled=false;button.innerHTML=original;
     const note=document.createElement("p");note.className="trv-error";
     note.textContent="No se pudo guardar el cambio. Vuelve a intentarlo.";
@@ -234,15 +256,17 @@ async function openTrip(eventId) {
   try {
     const cached=state.details.get(eventId);
     const detail=cached||await getJson("/api/events/"+encodeURIComponent(eventId));
-    if(state.selected!==eventId)return;
+    if(state.selected!==eventId || !travelViewActive())return;
     state.details.set(eventId,detail);
     renderDetail(detail);
   }catch(error){
+    if(!travelViewActive())return;
     body().innerHTML='<div class="trv-wrap"><p class="trv-error">No se pudo cargar este viaje.</p><button type="button" class="trv-back" data-retry>Volver</button></div>';
     body().querySelector("[data-retry]")?.addEventListener("click",renderList);
   }
 }
-export async function openTravelsDetail(financeSummary, mode) {
+export async function openTravelsDetail(financeSummary, mode, initialTripId=null) {
+  const requestId=++travelRequestSequence;
   state.financeSummary=financeSummary||{};
   state.mode=mode;
   state.selected=null;
@@ -257,6 +281,7 @@ export async function openTravelsDetail(financeSummary, mode) {
   }
   try{
     const data=await getJson("/api/events?scope=all&kind=travel");
+    if(requestId!==travelRequestSequence || !travelViewActive())return;
     state.trips=Array.isArray(data.events)?data.events:[];
     const now=Date.now();
     state.trips.sort((a,b)=>{
@@ -266,10 +291,13 @@ export async function openTravelsDetail(financeSummary, mode) {
     const upcoming=state.trips.filter((t)=>!["CERRADO","CANCELADO"].includes(t.status)).slice(0,4);
     if(upcoming.length){
       const first=await getJson("/api/events/"+encodeURIComponent(upcoming[0].id));
+      if(requestId!==travelRequestSequence || !travelViewActive())return;
       if(first.event)state.details.set(upcoming[0].id,first);
     }
     renderList();
+    if(initialTripId && state.trips.some(x=>x.id===initialTripId)) await openTrip(initialTripId);
   }catch(error){
+    if(requestId!==travelRequestSequence || !travelViewActive())return;
     body().innerHTML='<div class="trv-wrap"><p class="trv-error">No ha sido posible consultar Eventos. No se mostrarán datos de prueba como si fueran reales.</p><button type="button" class="trv-back" id="trv-retry">Reintentar</button></div>';
     body().querySelector("#trv-retry")?.addEventListener("click",()=>void openTravelsDetail(financeSummary,mode));
   }
