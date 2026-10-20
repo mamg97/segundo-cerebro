@@ -26,6 +26,12 @@ class Historic23FirstPassageTests(unittest.TestCase):
     self.assertEqual(r["evaluable"],7)
     self.assertEqual(r["firstChange2023"]+r["firstChange2024"]+r["noChangeBy2024"],7)
     self.assertEqual(r["initialLow"]+r["initialHigh"],7)
+    uncertainty=r["descriptivePairedUncertainty"]
+    self.assertEqual(uncertainty["origin"],2024)
+    self.assertEqual(uncertainty["nCountries"],7)
+    self.assertEqual(uncertainty["last_training_year"],2022)
+    self.assertFalse(uncertainty["prospectiveSkillProven"])
+    self.assertAlmostEqual(uncertainty["comparisonsVsPersistence"]["country_shrinkage"]["meanDeltaBrier"],r["models"]["country_shrinkage"]["brierFirstEvent"]-r["models"]["persistence"]["brierFirstEvent"])
     self.assertEqual(r["modelsRecalibratedWithLaterRelease"],False)
     self.assertEqual(r["prospectiveSkillProven"],False)
     self.assertNotIn("SYNTHETIC_1",str(r))
