@@ -85,6 +85,7 @@ test("Hobbies compact CSS includes dedicated media link and mobile-safe layout",
  const css=readFileSync(new URL("./hobbies.css",import.meta.url),"utf8");
  const src=readFileSync(new URL("./hobbies.js",import.meta.url),"utf8");
  assert.match(src,/hby-list-table--media/);
+ assert.match(src,/strong title=/);
  assert.match(src,/externalCatalogLink\(item,store.category\)/);
  assert.match(css,/hby-list-table--media \.hby-list-external/);
  assert.match(css,/hby-list-table--media td\{padding:5px 10px;height:32px/);
