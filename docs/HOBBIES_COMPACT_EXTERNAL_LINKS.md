@@ -24,3 +24,13 @@ Comprobar pruebas `app/hobbies.test.mjs` (categorías, codificación, seguridad 
 - Comparación española natural (`Intl.Collator` con `numeric:true`), valores numéricos reales en notas/precios, ausencia de dato siempre al final, empates estables según orden original.
 - Conserva búsqueda, filtros, editor y miniaturas. Al cambiar de columna vuelve a la primera página; `Actualizar` conserva la selección, cambiar de pestaña la reinicia.
 - En pantallas pequeñas, donde la cabecera está oculta, se ofrece un selector compacto de campo y botón para invertir la dirección.
+
+## Editor de fichas con valores normalizados (20/10/2026)
+- Título de películas, series y libros: texto libre. Marca/bodega de vinos: texto libre (identificador visible).
+- Género/subtipo, subtipo adicional y estado: `<select>` con el conjunto ordenado de **valores existentes en el Sheet canónico** de esa categoría, no una taxonomía inventada.
+- Puntuación: `<select>` de 0 a 10 en tramos de 0,5, añadiendo además decimales históricos que ya existan, sin sobrescribir su precisión.
+- Vinos: tipo, denominación y puntuación también son listas; precio se conserva numérico (importe variable), vínculos/imagen son URLs y tienda mantiene su selector existente.
+- Opción `Sin especificar` y `Otro… (escribir)` en cada lista: permite crear taxonomía nueva de forma controlada sin bloquear casos desconocidos. Al elegir «Otro» aparece un único campo requerido para escribir la nueva opción. El nuevo valor se guarda mediante el mismo PATCH/POST privado y se reutiliza en futuras listas. No se cambia el esquema ni se escriben opciones de manera paralela.
+- Fechas siguen ofreciendo calendario nativo (no una lista imposible de todos los días) y comentarios siguen siendo texto libre.
+- Mantener los valores originales existentes, incluidos históricos raros. Nunca cambiar masivamente los registros ni normalizar automáticamente los datos canónicos.
+- El selector se alimenta exclusivamente de los ítems ya cargados desde la API privada, sin red extra ni coste recurrente.
