@@ -20,7 +20,7 @@ test('authorized registry record supplies a link but no model probabilities', ()
   assert.match(html,/NO EMITIDO/);
   assert.match(html,/No representa inicio de guerra/);
   assert.match(html,/rel="noopener noreferrer"/);
-  assert.match(html,/Emisiones oficiales/);
+  assert.match(html,/Filas de PsicoPredicciones/);
   assert.doesNotMatch(html,/0\.9876|credential|tokenSecret/);
 });
 
