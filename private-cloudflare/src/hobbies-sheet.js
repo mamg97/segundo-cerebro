@@ -94,7 +94,7 @@ export function decodeHobbiesRows(type,values){
  return out;
 }
 async function loadData(type,token,sheetId,{fetcher=fetch}={}){
- const url="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(sheetId)+"/values/"+encodeURIComponent("Catalogo!A1:P2000")+"?valueRenderOption=UNFORMATTED_VALUE";
+ const url="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(sheetId)+"/values/"+encodeURIComponent(type==="vinos"?"Catalogo!A1:P2000":"Catalogo!A1:Q2000")+"?valueRenderOption=UNFORMATTED_VALUE";
  const r=await fetcher(url,{headers:{Authorization:"Bearer "+token,Accept:"application/json"},cache:"no-store"});
  if(!r.ok)throw new HobbiesError("SHEETS_READ_FAILED",502);
  return decodeHobbiesRows(type,(await r.json())?.values||[]);
