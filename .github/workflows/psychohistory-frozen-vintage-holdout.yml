@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'research/psychohistory/release_separated_holdout.py'
+      - 'research/psychohistory/release_separated_first_passage.py'
+      - 'research/psychohistory/test_release_separated_first_passage.py'
       - 'research/psychohistory/paired_country_uncertainty.py'
       - 'research/psychohistory/test_paired_country_uncertainty.py'
       - 'research/psychohistory/test_release_separated_holdout.py'
@@ -21,6 +23,7 @@ jobs:
       - name: Verify frozen train and independent outcome gates
         run: |
           python3 -m unittest discover -s research/psychohistory -p test_release_separated_holdout.py -v
+          python3 -m unittest discover -s research/psychohistory -p test_release_separated_first_passage.py -v
           python3 -m unittest discover -s research/psychohistory -p test_paired_country_uncertainty.py -v
   release-separated-one-year-retrospective:
     runs-on: ubuntu-latest
@@ -45,7 +48,12 @@ jobs:
             --earlier "$RUNNER_TEMP/old.zip" --later "$RUNNER_TEMP/new.zip" \
             --sha24 00410bdb65023d1bc8799f47f188677965046bb73447ee33094782db30076260 \
             --sha26 66910888f5653af42776d2debc1d72fe527559e7f7fc82e69b7c8771467f2d34
-          echo 'Scores are RETROSPECTIVE and restricted to a single 2025 target year; not prospective evidence.'
+          echo 'First-passage: OLD 24.1 training through 2023, 2024 bridge and 2025 labels from NEW 26.1 only:'
+          python3 research/psychohistory/release_separated_first_passage.py \
+            --earlier "$RUNNER_TEMP/old.zip" --later "$RUNNER_TEMP/new.zip" \
+            --sha24 00410bdb65023d1bc8799f47f188677965046bb73447ee33094782db30076260 \
+            --sha26 66910888f5653af42776d2debc1d72fe527559e7f7fc82e69b7c8771467f2d34
+          echo 'Scores are RETROSPECTIVE with frozen source separation, not a 2025 issued forecast.'
       - name: Destroy downloaded ZIP archives
         if: always()
         run: rm -f "$RUNNER_TEMP/old.zip" "$RUNNER_TEMP/new.zip"
