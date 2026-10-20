@@ -325,7 +325,7 @@ export const LAB_GLOSSARY=Object.freeze([
 export const glossaryById=Object.freeze(Object.fromEntries(LAB_GLOSSARY.map(item=>[item.id,item])));
 export const glossaryIds=Object.freeze(LAB_GLOSSARY.map(item=>item.id));
 const candidates=LAB_GLOSSARY.flatMap(item=>item.variants.map(phrase=>({id:item.id,phrase}))).sort((a,b)=>b.phrase.length-a.phrase.length||a.id.localeCompare(b.id));
-const escapeRegex=s=>s.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&');
+const escapeRegex=s=>s.replace(/([\\^$.*+?()[\]{}|])/g,'\\$1');
 const pattern=new RegExp('(?<![\\p{L}\\p{N}])('+candidates.map(c=>escapeRegex(c.phrase)).join('|')+')(?![\\p{L}\\p{N}])','giu');
 const ids=new Map(candidates.map(c=>[c.phrase.toLocaleLowerCase('es'),c.id]));
 export function glossaryMatches(text,limit=6){
