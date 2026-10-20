@@ -228,3 +228,31 @@
   .detail-dialog.travels-dialog[open] .trv-map-intro{min-height:285px}
   .detail-dialog.travels-dialog[open] .trv-map-canvas iframe{height:285px}
 }
+
+
+/* Itinerario horario: horas verticales, días horizontales. */
+.trv-timetable-scroll{width:100%;max-width:100%;overflow:auto;max-height:min(78vh,1000px);border:1px solid var(--line);border-radius:14px;overscroll-behavior:contain;scrollbar-width:thin}
+.trv-timetable{width:100%;min-width:810px;border-collapse:separate;border-spacing:0;table-layout:fixed;color:var(--ink);font-variant-numeric:tabular-nums}
+.trv-timetable thead th{position:sticky;top:0;z-index:2;text-align:left;padding:15px 12px;background:var(--surface);border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top}
+.trv-timetable thead th>span{display:block;color:var(--blue);font-size:10px;font-weight:850;letter-spacing:.09em}
+.trv-timetable thead th>strong{display:block;margin-top:5px;font-size:12px;font-weight:850;text-transform:capitalize;line-height:1.4}
+.trv-timetable .trv-time-axis{position:sticky;left:0;width:82px;min-width:82px;max-width:82px;z-index:3;text-align:center;background:var(--paper);border-right:1px solid var(--line);font-weight:800}
+.trv-timetable thead .trv-time-axis{top:0;z-index:4;background:var(--surface)}
+.trv-timetable tbody th,.trv-timetable tbody td{padding:8px 9px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top}
+.trv-timetable tbody tr:last-child td,.trv-timetable tbody tr:last-child th{border-bottom:0}
+.trv-timetable tbody td{height:63px;background:var(--surface);min-width:175px}
+.trv-timetable tbody tr:nth-child(even) td{background:var(--paper)}
+.trv-time-empty{display:block;text-align:center;padding:11px;color:var(--ink-soft);opacity:.32}
+.trv-time-activity{border:1px solid var(--line);border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:9px;padding:9px 10px;display:grid;gap:5px;min-height:50px}
+.trv-time-activity[data-state="PENDIENTE"]{border-left-color:#d69f4a;background:color-mix(in srgb,var(--surface) 90%,#e0a852)}
+.trv-time-activity[data-state="PROPUESTA"]{border-left-color:#8a97ab;background:var(--surface)}
+.trv-time-activity strong{font-size:12px;font-weight:700;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+.trv-time-activity small{font-size:9px;font-weight:900;letter-spacing:.07em;color:var(--ink-soft)}
+.trv-time-category{color:var(--blue);font-size:9px;font-weight:900;letter-spacing:.08em}
+.trv-time-notes{border:1px solid var(--line);border-radius:12px;margin:12px 0;padding:12px 15px;background:var(--paper)}
+.trv-time-notes summary{font-weight:800;font-size:13px;cursor:pointer}
+.trv-time-notes>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;margin-top:14px}
+.trv-time-notes article{border-left:3px solid var(--blue);padding-left:12px}
+.trv-time-notes strong{font-size:12px;text-transform:capitalize}
+.trv-time-notes p{font-size:12px;line-height:1.55;color:var(--ink-soft);margin:6px 0}
+@media(max-width:800px){.trv-timetable{min-width:790px}.trv-timetable thead th{padding:12px 9px}.trv-timetable .trv-time-axis{width:66px;min-width:66px;max-width:66px;font-size:12px}.trv-time-activity{padding:8px}.trv-timetable-scroll{max-height:none}}
