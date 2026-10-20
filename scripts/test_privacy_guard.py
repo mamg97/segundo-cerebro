@@ -1,4 +1,6 @@
 import unittest
+import re
+from pathlib import Path
 from privacy_guard import findings, path_findings
 
 class PrivacyGuardTests(unittest.TestCase):
@@ -31,6 +33,16 @@ class PrivacyGuardTests(unittest.TestCase):
         issues = findings(patch, ["app/old-icon.js"])
         self.assertIn(("app/old-icon.js", 1, "INLINE_IMAGE_BYTES"), issues)
         self.assertNotIn(payload, str(issues))
+
+    def test_public_calendar_legend_has_generic_labels(self):
+        # The public demo must never hardcode people's or account names.
+        html = (Path(__file__).resolve().parents[1] / "app" / "index.html").read_text(encoding="utf-8")
+        for source, label in (("partner", "Compartido"), ("gemini", "Asistente")):
+            values = re.findall(
+                rf'<span><i class="calendar-legend-dot {source}"></i>([^<]*)</span>',
+                html,
+            )
+            self.assertEqual(values, [label], f"Non-generic public calendar legend: {source}")
 
 if __name__ == "__main__":
     unittest.main()
