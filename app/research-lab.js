@@ -18,8 +18,9 @@ const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d})
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
 const AVAILABLE_VIEWS=new Set(["futures","shadow2027","overview","science","operations","roadmap"]);
+let activeView="futures";
 const initialView=new URLSearchParams(window.location.search).get("view");
-let activeView=AVAILABLE_VIEWS.has(initialView)?initialView:"futures";
+if(AVAILABLE_VIEWS.has(initialView))activeView=initialView;
 let activeTrack=TRACKS.some(t=>t.id===new URLSearchParams(window.location.search).get("track")) ? new URLSearchParams(window.location.search).get("track") : "V2";
 let milestoneFilter="TODOS";
 let generation=0;
