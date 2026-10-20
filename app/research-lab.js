@@ -1,7 +1,7 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.13';
 import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
-import {renderIdeaNetwork} from './research-ideas.mjs?v=0.5.19';
+import {renderIdeaNetwork} from './research-ideas.mjs?v=0.5.20';
 import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.18';
 import {mountInlineShadow2027} from './research-shadow2027-inline.mjs?v=0.5.17';
 import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
