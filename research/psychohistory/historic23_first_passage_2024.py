@@ -13,6 +13,7 @@ from pathlib import Path
 import historic23_holdout_2024 as historic
 from futures import prepare,fit,matrix_for,MODELS
 from release_separated_first_passage import first_passage_bins,brier,FUTURES,EPS
+from release_first_passage_uncertainty import uncertainty_summary
 
 ORIGIN=2024
 CUTOFF=2022
@@ -35,6 +36,7 @@ def evaluate(earlier,later):
             for m in MODELS}
     trainedSignature=hashlib.sha256()
     first2023=first2024=noChange=missing=revised2022=compared=0
+    private_loss_rows=[]
     startLow=startHigh=0
     for country in trained["countries"]:
         matrices={m:matrix_for(trained,country,m,FUTURES) for m in MODELS}
@@ -54,14 +56,17 @@ def evaluate(earlier,later):
         if (cid,CUTOFF) in revised:
             compared+=1
             revised2022+=int(revised[cid,CUTOFF]!=init)
+        case_losses={}
         for m in MODELS:
             probabilities=first_passage_bins(country["initial"],matrices[m])
             if len(probabilities)!=3:
                 raise ValueError("Wrong two-year event distribution")
             entry=totals[m]
-            entry["brier"]+=brier(probabilities,outcome)
+            case_losses[m]=brier(probabilities,outcome)
+            entry["brier"]+=case_losses[m]
             entry["logLossCapped"]+=-math.log(max(EPS,probabilities[outcome]))
             entry["zeroActualProbability"]+=int(probabilities[outcome]==0)
+        private_loss_rows.append({"country":cid,"initial_high":init,"first":outcome,"losses":case_losses})
     n=first2023+first2024+noChange
     if n<1 or n+missing!=len(trained["countries"]):
         raise ValueError("Inconsistent cohort: no silent missing outcomes")
@@ -78,6 +83,7 @@ def evaluate(earlier,later):
         "noChangeBy2024":noChange,
         "comparable2022RevisedLabels":compared,"revised2022ThresholdChanges":revised2022,
         "trainedParameterSetSha256":trainedSignature.hexdigest(),
+        "descriptivePairedUncertainty":uncertainty_summary(private_loss_rows,repetitions=3000,seed=54182,origin=ORIGIN),
         "models":{m:{
            "brierFirstEvent":totals[m]["brier"]/n,
            "logLossClipped":totals[m]["logLossCapped"]/n,
