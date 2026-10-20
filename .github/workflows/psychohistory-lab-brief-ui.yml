@@ -10,6 +10,9 @@ on:
       - "app/research-lab.js"
       - "app/research-lab.css"
       - "app/research-lab-monochrome.css"
+      - "app/research-video-studio.mjs"
+      - "app/research-video-studio.css"
+      - "app/research-video-studio.test.mjs"
       - "app/research-onset.test.mjs"
       - ".github/workflows/psychohistory-lab-brief-ui.yml"
   push:
@@ -23,6 +26,9 @@ on:
       - "app/research-lab.js"
       - "app/research-lab.css"
       - "app/research-lab-monochrome.css"
+      - "app/research-video-studio.mjs"
+      - "app/research-video-studio.css"
+      - "app/research-video-studio.test.mjs"
       - "app/research-onset.test.mjs"
       - ".github/workflows/psychohistory-lab-brief-ui.yml"
   workflow_dispatch:
@@ -43,7 +49,8 @@ jobs:
         run: |
           set -euo pipefail
           node --check app/research-lab.js
+          node --check app/research-video-studio.mjs
           node --check app/research-lab-brief.mjs
           node --check app/research-ideas.mjs
-          node --test app/research-ideas.test.mjs app/research-lab-brief.test.mjs app/research-lab.test.mjs app/research-shadow2027.test.mjs app/research-shadow2027-inline.test.mjs app/research-onset.test.mjs
+          node --test app/research-ideas.test.mjs app/research-lab-brief.test.mjs app/research-video-studio.test.mjs app/research-lab.test.mjs app/research-shadow2027.test.mjs app/research-shadow2027-inline.test.mjs app/research-onset.test.mjs
           echo "The 2027 cohort is private; tests use only fictional IDs and never fetch country probabilities."
