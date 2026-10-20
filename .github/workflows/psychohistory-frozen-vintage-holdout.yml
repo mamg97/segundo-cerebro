@@ -1,0 +1,47 @@
+name: Psychohistory frozen 24.1 to 26.1 holdout research
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/release_separated_holdout.py'
+      - 'research/psychohistory/test_release_separated_holdout.py'
+      - '.github/workflows/psychohistory-frozen-vintage-holdout.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-scientific-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify frozen train and independent outcome gates
+        run: python3 -m unittest discover -s research/psychohistory -p test_release_separated_holdout.py -v
+  release-separated-one-year-retrospective:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve old and newer genuine official ZIP editions only
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 45 --max-filesize 20000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-241-csv.zip \
+            -o "$RUNNER_TEMP/old.zip"
+          curl --fail --location --retry 2 --max-time 45 --max-filesize 20000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-261-csv.zip \
+            -o "$RUNNER_TEMP/new.zip"
+          echo 'Official ZIP observed NOW, not attested to have existed identically in 2024:'
+          sha256sum "$RUNNER_TEMP/old.zip" "$RUNNER_TEMP/new.zip" | sed -E 's@  .*@  ephemeral official ZIP@'
+          # Hash pinned from prior observation in Actions #39452503769, before any 2025 scoring.
+          python3 research/psychohistory/release_separated_holdout.py \
+            --earlier "$RUNNER_TEMP/old.zip" --later "$RUNNER_TEMP/new.zip" \
+            --sha24 00410bdb65023d1bc8799f47f188677965046bb73447ee33094782db30076260 \
+            --sha26 66910888f5653af42776d2debc1d72fe527559e7f7fc82e69b7c8771467f2d34
+          echo 'Scores are RETROSPECTIVE and restricted to a single 2025 target year; not prospective evidence.'
+      - name: Destroy downloaded ZIP archives
+        if: always()
+        run: rm -f "$RUNNER_TEMP/old.zip" "$RUNNER_TEMP/new.zip"
