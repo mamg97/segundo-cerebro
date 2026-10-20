@@ -97,11 +97,12 @@ test('all models compare on same observed event; unknown outcomes never receive 
   assert.doesNotMatch(historicalCaseSummary(unresolved,1),/30 %/);
 });
 
-test('app launches directly into research cases without covering initial viewport',()=>{
+test('app launches into executive summary while keeping technical research cases available',()=>{
   const labJs=readFileSync(new URL('./research-lab.js',import.meta.url),'utf8');
   const css=readFileSync(new URL('./research-lab.css',import.meta.url),'utf8');
   const js=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
-  assert.ok(labJs.includes('activeView="futures"'));
+  assert.ok(labJs.includes('activeView="brief"')); 
+  assert.ok(labJs.includes('mountFutureExplorer('), 'technical research cases remain available as separate view');
   assert.ok(labJs.includes('document.body.dataset.labView = activeView'));
   assert.ok(css.includes('body[data-lab-view="futures"] .hero'));
   assert.ok(js.includes('observed = observedCaseAvailable(data.result,horizon)'));
