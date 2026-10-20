@@ -70,6 +70,7 @@ export async function auditAccessMetadata({accountId,apiToken,fetcher=fetch}={})
     method:"GET_ONLY_NO_CONFIGURATION_CHANGES",
     appsApi:"NOT_CHECKED",organizationApi:"NOT_CHECKED",
     targetApp:"UNVERIFIED",audience:"UNVERIFIED",teamDomain:"UNVERIFIED",
+    accessScopeHint:"UNVERIFIED",
     authenticatedUserTest:"NOT_PERFORMED",workerRouteConfigured:"NOT_CHECKED",
     configAutomaticallyWritten:false,tokenOrIdentifiersLogged:false,
     safeToEnablePrivate2027:false,
@@ -98,6 +99,15 @@ export async function auditAccessMetadata({accountId,apiToken,fetcher=fetch}={})
     if(out.appsApi==="OK"){
       const matches=findAppCoveringAllPaths(pages);
       out.targetApp=matches.length===1?"UNIQUE":matches.length===0?"NONE":"AMBIGUOUS";
+      // Current Cloudflare (2026) supports Worker-wide destinations with no
+      // public hostname on the Access app. The script does NOT possess a
+      // Worker ID crosswalk, and must not infer a unique audience from one.
+      const workerScopes=pages.filter(app=>app?.type==="self_hosted"&&
+        Array.isArray(app?.destinations)&&app.destinations.some(d=>
+          ["all_workers","worker"].includes(d?.type)));
+      out.accessScopeHint=matches.length?
+        "HOSTNAME_CANDIDATE":workerScopes.length?
+        "WORKER_SCOPED_ACCESS_PRESENT_UNMATCHED":"NO_WORKER_SCOPE_OBSERVED";
       if(matches.length===1){
         out.audience=AUD_RE.test(String(matches[0].aud??""))?
           "VALID_SHAPE_NOT_EXPORTED":"MISSING_OR_INVALID";
@@ -121,7 +131,7 @@ if(import.meta.url===new URL("file://"+process.argv[1]).href){
   });
   // No raw JSON from the provider, not even on errors.
   for(const key of ["appsApi","organizationApi","targetApp","audience","teamDomain",
-    "authenticatedUserTest","workerRouteConfigured","safeToEnablePrivate2027"]){
+    "accessScopeHint","authenticatedUserTest","workerRouteConfigured","safeToEnablePrivate2027"]){
     console.log(key.toUpperCase()+"="+report[key]);
   }
   // Permissions may be missing; not a CI failure for other parts of
