@@ -125,7 +125,7 @@ function catalogMarkup(){
  (wine?'<th scope="col">Foto</th>':'')+
  '<th scope="col">Título</th><th scope="col">'+(wine?'Denominación':'Género')+'</th>'+
  '<th scope="col">'+(wine?'Tipo':'Estado')+'</th><th scope="col">'+(wine?'Precio':'Nota')+'</th>'+
- <th scope="col">'+(wine?'Tienda':'Buscar en')+'</th>'+
+ '<th scope="col">'+(wine?'Tienda':'Buscar en')+'</th>'+
  '<th scope="col">Acciones</th></tr></thead><tbody>'+shown.map(recordRow).join("")+'</tbody></table></div>'+
  (shown.length<subset.length?'<button id="hby-more" class="hby-more" type="button">Ver más ('+(subset.length-shown.length)+' restantes)</button>':''):
  '<div class="hby-empty"><h4>No hay resultados</h4><p>Prueba con otros filtros o añade un registro.</p></div>')+
