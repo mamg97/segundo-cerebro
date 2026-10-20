@@ -11831,6 +11831,13 @@ function applyAreaRoute(){
   activeAreaHash=hash;
   const dialog=document.querySelector("#detail-dialog");
   if(dialog.open){ignoreRouteCloseEvents++;dialog.close()}
+  // The shared dialog must not inherit presentation classes from its previous area.
+  dialog.classList.remove(
+    "travels-dialog","wealth-dialog","health-dialog","habits-dialog",
+    "budget-dialog","parents-dialog","electricity-dialog","pantry-dialog",
+    "objects-dialog","projects-dialog","events-workspace-dialog",
+    "event-detail-dialog","important-events-dialog"
+  );
   restoreAgendaPortal();
   routedTravelDetailId=route.detailId||null;
   document.querySelectorAll("[data-nav-area-id]").forEach(el=>{
