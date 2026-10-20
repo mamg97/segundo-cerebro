@@ -1,3 +1,4 @@
+import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.1.0";
 // Viajes: vista privada sobre el ledger canónico de Eventos.
 // La fuente de viajes y hechos es /api/events; Finanzas mantiene la autoridad del dinero.
 function escapeText(value) {
@@ -163,7 +164,7 @@ function renderDetail(payload) {
   const event = payload.event, groups = parseTravelDetail(payload);
   const destination = tripCaption(event, payload);
   setDialog(destination, "Viajes · ficha de viaje");
-  const hero = '<div class="trv-hero"><button type="button" class="trv-back" data-trv-back>← Todos los viajes</button>' +
+  const hero = '<div class="trv-hero trv-dashboard-hero"><button type="button" class="trv-back" data-trv-back>← Todos los viajes</button>' +
     '<span class="trv-kicker">✦ EXPEDIENTE DE VIAJE</span><h2>' + escapeText(destination) + '</h2>' +
     '<p>' + escapeText(event.summary || "Planificación del viaje") + '</p><div class="trv-dates">' +
     '<span>🗓 ' + escapeText(dateLabel(event.startsAt)) + '</span>' +
@@ -176,9 +177,15 @@ function renderDetail(payload) {
     : '<p class="trv-muted">Pendiente de planificar.</p>',"Horarios propuestos ≠ reservas confirmadas");
   const notes = groups.notes.filter((n)=>n.type==="NOTA_VIAJE");
   const extras = notes.length ? section("Alternativas y observaciones",notes.map((n)=>'<p>' + escapeText(n.text) + '</p>').join(""),"Opcional") : "";
-  body().innerHTML = '<div class="trv-wrap">' + hero + '<div class="trv-columns"><div>' +
-    flights + lodging + days + '</div><div>' + bookings + financeSection(event) + tasksSection(groups,event.id) +
-    referencesSection(payload.references) + extras + '</div></div></div>';
+  const budgetItem = (Array.isArray(state.financeSummary?.upcomingCommitments) ? state.financeSummary.upcomingCommitments : [])
+    .find((row) => event.financeRef && row.id === event.financeRef) || null;
+  body().innerHTML = tripDashboardMarkup({
+    hero, groups, financeItem: budgetItem, flights, lodging, bookings,
+    budgetSection: financeSection(event), tasksSection: tasksSection(groups,event.id),
+    refsSection: referencesSection(payload.references), extrasSection: extras,
+    dayLabel: dateLabel
+  });
+  bindTripDashboard({ root: body(), groups, dayLabel: dateLabel });
   body().querySelector("[data-trv-back]")?.addEventListener("click",renderList);
   body().querySelector("[data-trv-budget]")?.addEventListener("click",(e)=>{
     e.preventDefault();getDialog()?.close();
