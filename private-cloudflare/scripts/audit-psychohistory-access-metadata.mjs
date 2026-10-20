@@ -15,6 +15,14 @@ const AUD_RE=/^[a-zA-Z0-9_-]{8,160}$/;
 
 function appPaths(app){
   const arr=[];
+  // Cloudflare has deprecated self_hosted_domains: destinations now take
+  // precedence. Never combine a stale deprecated wildcard with a new scope.
+  if(Array.isArray(app?.destinations)&&app.destinations.length){
+    for(const item of app.destinations){
+      if(item?.type==="public"&&typeof item?.uri==="string")arr.push(item.uri);
+    }
+    return arr;
+  }
   if(typeof app?.domain==="string")arr.push(app.domain);
   if(Array.isArray(app?.self_hosted_domains)){
     for(const item of app.self_hosted_domains){
@@ -62,6 +70,7 @@ export async function auditAccessMetadata({accountId,apiToken,fetcher=fetch}={})
     method:"GET_ONLY_NO_CONFIGURATION_CHANGES",
     appsApi:"NOT_CHECKED",organizationApi:"NOT_CHECKED",
     targetApp:"UNVERIFIED",audience:"UNVERIFIED",teamDomain:"UNVERIFIED",
+    accessScopeHint:"UNVERIFIED",
     authenticatedUserTest:"NOT_PERFORMED",workerRouteConfigured:"NOT_CHECKED",
     configAutomaticallyWritten:false,tokenOrIdentifiersLogged:false,
     safeToEnablePrivate2027:false,
@@ -74,6 +83,7 @@ export async function auditAccessMetadata({accountId,apiToken,fetcher=fetch}={})
   // outputting request/response contents or the Access application audience.
   const pages=[];
   try{
+    let complete=false;
     for(let page=1;page<=5;page++){
       const res=await getJson("/accounts/"+accountId+"/access/apps?per_page=100&page="+page,
         apiToken,{fetcher});
@@ -83,11 +93,21 @@ export async function auditAccessMetadata({accountId,apiToken,fetcher=fetch}={})
       pages.push(...res.result);
       if(pages.length>500){out.appsApi="INVALID_RESPONSE";break;}
       const total=Number(res.result_info?.total_pages??page);
-      if((Number.isSafeInteger(total)&&total<=page)||res.result.length<100)break;
+      if((Number.isSafeInteger(total)&&total<=page)||res.result.length<100){complete=true;break;}
     }
+    if(out.appsApi==="OK"&&!complete)out.appsApi="INCOMPLETE_PAGINATION";
     if(out.appsApi==="OK"){
       const matches=findAppCoveringAllPaths(pages);
       out.targetApp=matches.length===1?"UNIQUE":matches.length===0?"NONE":"AMBIGUOUS";
+      // Current Cloudflare (2026) supports Worker-wide destinations with no
+      // public hostname on the Access app. The script does NOT possess a
+      // Worker ID crosswalk, and must not infer a unique audience from one.
+      const workerScopes=pages.filter(app=>app?.type==="self_hosted"&&
+        Array.isArray(app?.destinations)&&app.destinations.some(d=>
+          ["all_workers","worker"].includes(d?.type)));
+      out.accessScopeHint=matches.length?
+        "HOSTNAME_CANDIDATE":workerScopes.length?
+        "WORKER_SCOPED_ACCESS_PRESENT_UNMATCHED":"NO_WORKER_SCOPE_OBSERVED";
       if(matches.length===1){
         out.audience=AUD_RE.test(String(matches[0].aud??""))?
           "VALID_SHAPE_NOT_EXPORTED":"MISSING_OR_INVALID";
@@ -111,10 +131,12 @@ if(import.meta.url===new URL("file://"+process.argv[1]).href){
   });
   // No raw JSON from the provider, not even on errors.
   for(const key of ["appsApi","organizationApi","targetApp","audience","teamDomain",
-    "authenticatedUserTest","workerRouteConfigured","safeToEnablePrivate2027"]){
+    "accessScopeHint","authenticatedUserTest","workerRouteConfigured","safeToEnablePrivate2027"]){
     console.log(key.toUpperCase()+"="+report[key]);
   }
-  // Permissions may be missing; not a CI failure for other parts of
-  // Segundo Cerebro, but definitely NOT proof of Access configuration.
-  if(report.appsApi==="OK"&&report.targetApp!=="UNIQUE")process.exitCode=2;
+  // A read-only discovery that reports NONE/AMBIGUOUS/READ_SCOPE_DENIED
+  // is a valid *diagnostic* outcome, not an excuse to unlock the route.
+  // Only exceptions in execution should fail CI; the security flag remains
+  // explicitly false until a separate positive authenticated test is made.
+  console.log("PROSPECTIVE_SHADOW_UNLOCKED=false");
 }
