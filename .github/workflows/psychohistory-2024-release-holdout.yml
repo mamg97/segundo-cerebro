@@ -6,6 +6,8 @@ on:
       - 'research/psychohistory/paired_country_uncertainty.py'
       - 'research/psychohistory/test_paired_country_uncertainty.py'
       - "research/psychohistory/test_historic23_holdout_2024.py"
+      - "research/psychohistory/historic23_first_passage_2024.py"
+      - "research/psychohistory/test_historic23_first_passage_2024.py"
       - ".github/workflows/psychohistory-2024-release-holdout.yml"
   workflow_dispatch:
 permissions:
@@ -21,6 +23,7 @@ jobs:
       - name: Fail closed on unsourced outcomes and future changes
         run: |
           python3 -m unittest discover -s research/psychohistory -p test_historic23_holdout_2024.py -v
+          python3 -m unittest discover -s research/psychohistory -p test_historic23_first_passage_2024.py -v
           python3 -m unittest discover -s research/psychohistory -p test_paired_country_uncertainty.py -v
   official-2024-holdout-retrospective:
     runs-on: ubuntu-latest
@@ -41,6 +44,9 @@ jobs:
           echo 'Expected historic and resolution digests, no country-level output:'
           sha256sum "$RUNNER_TEMP/cy231.xlsx" "$RUNNER_TEMP/cy251.zip" | sed -E 's@  .*@  ephemeral official source@'
           python3 research/psychohistory/historic23_holdout_2024.py \
+             --23-xlsx "$RUNNER_TEMP/cy231.xlsx" --25-zip "$RUNNER_TEMP/cy251.zip"
+          echo 'AV-082: source-separated 23.1→25.1, first threshold crossing in 2023/2024:'
+          python3 research/psychohistory/historic23_first_passage_2024.py \
              --23-xlsx "$RUNNER_TEMP/cy231.xlsx" --25-zip "$RUNNER_TEMP/cy251.zip"
           echo 'Both ZIP/XLSX read-only; 2024 output is RETROSPECTIVE and never a forecast issued in 2023.'
       - name: Delete ephemeral download
