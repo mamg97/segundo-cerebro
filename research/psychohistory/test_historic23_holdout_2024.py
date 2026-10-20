@@ -82,8 +82,12 @@ class HistoricHoldoutTests(unittest.TestCase):
             report=subject.eval_2024(self.old,self.new)
             self.assertEqual(report["unresolved_outcome"],1)
             self.assertEqual(report["scored_identical_countries"],6)
-    def test_no_unpinned_outcome(self):
+    def test_no_unpinned_or_unapproved_outcome(self):
         with mock.patch.object(subject,"PIN_231",self.pin_old):
-            with self.assertRaisesRegex(ValueError,"not yet pinned"):
-                subject.eval_2024(self.old,self.new)
+            with mock.patch.object(subject,"PIN_251",""):
+                with self.assertRaisesRegex(ValueError,"not yet pinned"):
+                    subject.eval_2024(self.old,self.new)
+            with mock.patch.object(subject,"PIN_251","f"*64):
+                with self.assertRaisesRegex(ValueError,"ZIP SHA256 mismatch"):
+                    subject.eval_2024(self.old,self.new)
 if __name__=="__main__": unittest.main()
