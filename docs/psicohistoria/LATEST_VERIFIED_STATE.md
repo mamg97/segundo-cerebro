@@ -1,5 +1,16 @@
 # PSICOHISTORIA — Estado científico verificado · 20/10/2026
 
+## AV-20261020-062 · Laboratorio de ideas y aplicaciones, desplegado
+
+- **[PR #713](https://github.com/mamg97/segundo-cerebro/pull/713) fusionada** en `main` (squash `3f9f5f43ddc13d4ab46896c80f3be19c65779e6a`). Código, prototipo y metodología documentados en [AGENDA_INSTITUCIONAL_SINERGIAS_AV062.md](AGENDA_INSTITUCIONAL_SINERGIAS_AV062.md). El catálogo canónico privado `SEGUNDO CEREBRO - PROYECTOS` registra tres subproyectos derivados A1 Agenda institucional, A2 Transmisión macrofinanciera y A3 Radar País, más documentación y relaciones con V1–V4 y MIDAS como posible consumidor **solo lectura futuro**.
+- **Interfaz nueva desplegada:** pestaña `Ideas y sinergias` en Laboratorio Virtual privado, `?view=ideas`, carga únicamente datos y relaciones del API existente `/api/projects` bajo Access; cards responsive, enlaces con lista restringida y escape HTML. Sin valores de países, carteras ni probabilidades empotrados en Git. Si faltan registros, estado vacío honesto. La pantalla `Inicio` enlaza a esta vista; diagramas y vistas anteriores se conservan.
+- **Primer desarrollo A1:** `research/psychohistory/agenda_asof.py` valida estructuralmente timestamps UTC, evento posterior al corte, capturas SHA256 y observaciones de fuentes públicas antes de emisión. No acredita por sí mismo autenticidad de captura, presencia de participantes ni recibos externos. Pruebas adversariales **sintéticas**, cero scraping real, entrenamiento o emisiones.
+- **Pruebas PR todas SUCCESS:** UX `39446533836`, motores `39446533853`, seguridad Worker `39446533761`, privada 2027 `39446533786`, JWT `39446533787`, repositorio público `39446534141`. **Postmerge:** UI `39446692871`, motores `39446692887`, privacidad `39446692769`, demo Pages `39446692903`, **[Cloudflare production deploy `39446692802`](https://github.com/mamg97/segundo-cerebro/actions/runs/39446692802) SUCCESS con paso `Deploy production Worker` SUCCESS**. No inspección manual de navegador autenticado.
+- **Verificación canónica privada:** `PsicoAvances.AV-20261020-062=VERIFICADO` para software/metodología; `PsicoFases.AG-01=PARCIAL`, `AG-02=NO_INICIADA`, `MF-01=PARCIAL`, `RP-01=NO_INICIADA`. La cohorte 2027 y `PsicoPredicciones` permanecen intactas (**cero emisiones**); F1B bursátil sigue aplazada por la [puerta científica](PUERTA_EVIDENCIA_CIENTIFICA_V1.md). No señales, trading, ingresos ni validación prospectiva.
+- **Continuación prioritaria:** núcleo V1–V4: fuente UCDP **as-of** y ancla temporal independiente para emisión 2027; A1: seleccionar UN outcome institucional, auditar capturas históricas y participantes efectivamente publicados, fijar baseline + prueba de ablation temporal, y solo después estudiar A2. Mantener coste incremental 0 € y privacidad.
+
+---
+
 ## AV-20261020-061 · Laboratorio ejecutivo intuitivo en Segundo Cerebro, desplegado
 
 - **[PR #710](https://github.com/mamg97/segundo-cerebro/pull/710) fusionada**, squash `485d0670c91f14e6f07edfc0bab38ffe02b11580`. La página privada `app/research-lab.html` inicia ahora en **«Inicio»** y no en el explorador técnico. [Documento AV-061](LABORATORIO_EJECUTIVO_AV061.md). Gráficos, órbitas y simulaciones anteriores conservados en pestañas secundarias.
