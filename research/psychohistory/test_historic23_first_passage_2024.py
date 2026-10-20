@@ -54,7 +54,7 @@ class Historic23FirstPassageTests(unittest.TestCase):
     self.assertEqual(scored["missingOutcome"],1)
     self.assertEqual(scored["firstChange2023"]+scored["firstChange2024"]+scored["noChangeBy2024"],6)
  def test_wrong_source_hash_refused(self):
-    with self.assertRaisesRegex(ValueError,"not preregistered"):
+    with self.assertRaisesRegex(ValueError,"Historic 23.1 XLSX bytes changed|not preregistered"):
         run(self.old,self.new)
     with mock.patch.object(base,"PIN_231",self.pinold),mock.patch.object(base,"PIN_251","0"*64):
         with self.assertRaisesRegex(ValueError,"SHA256 mismatch"):
