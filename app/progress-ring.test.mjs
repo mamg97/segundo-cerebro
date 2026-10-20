@@ -105,7 +105,7 @@ assert.match(app, /function renderHomeLiquidityOverview/);
 assert.match(app, /Disponible bancario y distribución/);
 assert.match(app, /formatMoney\(model\.availableAfterHolds, model\.currency\)/);
 assert.match(app, /Saldo total <b>/);
-assert.match(app, /Libre interno <b>/);
+assert.match(app, /Libre confirmado <b>/);
 assert.match(app, /explicitInternalFree/);
 assert.match(app, /personalAdjustment/);
 assert.match(app, /Ajuste personal <b>/);
