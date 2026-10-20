@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="theme-color" content="#07101d">
+  <meta name="theme-color" content="#05070a">
   <meta name="description" content="Laboratorio de investigación privado de Segundo Cerebro">
-  <title>Laboratorio de investigación · Segundo Cerebro</title>
+  <title>Psicohistoria · Laboratorio científico privado</title>
   <link rel="stylesheet" href="./research-lab.css?v=0.5.18">
+  <link rel="stylesheet" href="./research-lab-monochrome.css?v=0.5.21">
   <script type="module" src="./research-lab.js?v=0.5.18"></script>
 </head>
 <body>
@@ -15,7 +16,7 @@
   <div class="app-frame">
     <header class="topbar">
       <a class="back" href="./index.html" aria-label="Volver a Segundo Cerebro">← <span>SEGUNDO CEREBRO</span></a>
-      <span class="top-brand">PSICOHISTORIA <span class="vtag">v0.5.20</span></span>
+      <span class="top-brand">PSICOHISTORIA <span class="vtag">v0.5.21</span></span>
       <button type="button" id="refresh" class="refresh">↻ <span>Actualizar</span></button>
     </header>
     <main>
@@ -27,15 +28,36 @@
           <div class="pills"><span class="pill"><span class="signal"></span> DATOS CANÓNICOS</span><span class="pill subtle" id="as-of">Sincronizando…</span></div>
         </div>
         <div class="hero-mark" aria-hidden="true">
-          <svg viewBox="0 0 174 174" width="174" height="174">
-            <defs><radialGradient id="core"><stop stop-color="#ffbb75"/><stop offset="0.45" stop-color="#ff7a1a"/><stop offset="1" stop-color="#132f50"/></radialGradient></defs>
-            <circle cx="87" cy="87" r="72" fill="none" stroke="#26486b" stroke-width="1.5" stroke-dasharray="3 9"/>
-            <circle cx="87" cy="87" r="55" fill="none" stroke="#2c72b3" stroke-width="1" stroke-dasharray="7 7"/>
-            <ellipse cx="87" cy="87" rx="69" ry="29" transform="rotate(-31 87 87)" fill="none" stroke="#86b9e1" opacity=".38"/>
-            <circle cx="87" cy="87" r="21" fill="url(#core)"/>
-            <circle cx="87" cy="87" r="8" fill="#ffefdd"/>
-            <circle cx="25" cy="59" r="4" fill="#ff8a28"/><circle cx="143" cy="124" r="4" fill="#64b8f9"/>
-            <circle cx="130" cy="27" r="4" fill="#8bdcca"/><circle cx="62" cy="153" r="4" fill="#c7a4ff"/>
+          <svg viewBox="0 0 320 320" width="320" height="320" focusable="false">
+            <defs>
+              <radialGradient id="psico-halo" cx="40%" cy="32%" r="72%">
+                <stop stop-color="#d6ecf1" stop-opacity=".32"/>
+                <stop offset=".42" stop-color="#8faebc" stop-opacity=".10"/>
+                <stop offset="1" stop-color="#05090d" stop-opacity=".02"/>
+              </radialGradient>
+              <pattern id="psico-dots" width="7" height="7" patternUnits="userSpaceOnUse">
+                <circle cx="3.5" cy="3.5" r=".8" fill="#eefaff" opacity=".76"/>
+              </pattern>
+              <clipPath id="psico-planet"><circle cx="166" cy="158" r="105"/></clipPath>
+            </defs>
+            <g fill="none" stroke="#a4b8c1" stroke-opacity=".3" stroke-width=".75">
+              <circle cx="166" cy="158" r="136" stroke-dasharray="1 7"/>
+              <circle cx="166" cy="158" r="120" stroke-dasharray="1 9"/>
+              <path d="M 18,158 H 310 M 166,14 V 302" stroke-dasharray="3 9"/>
+            </g>
+            <circle cx="166" cy="158" r="105" fill="url(#psico-halo)" stroke="#8db1bf" stroke-opacity=".45"/>
+            <g clip-path="url(#psico-planet)">
+              <ellipse cx="166" cy="158" rx="101" ry="36" fill="none" stroke="#d7eaf0" stroke-opacity=".18"/>
+              <ellipse cx="166" cy="158" rx="55" ry="105" fill="none" stroke="#d7eaf0" stroke-opacity=".15"/>
+              <path d="M61 158H271M80 104H251M80 210H251" fill="none" stroke="#a5bfc9" stroke-opacity=".16"/>
+              <circle cx="166" cy="158" r="103" fill="url(#psico-dots)"/>
+            </g>
+            <g class="orbital-ring" fill="none" stroke="#e1eff4" stroke-opacity=".67" stroke-width="1">
+              <ellipse cx="166" cy="158" rx="151" ry="53" transform="rotate(-29 166 158)"/>
+              <ellipse cx="166" cy="158" rx="150" ry="51" transform="rotate(57 166 158)" stroke-opacity=".33"/>
+              <circle cx="295" cy="89" r="3" fill="#dcecf0" stroke="none"/>
+              <circle cx="33" cy="219" r="2" fill="#91e7f2" stroke="none"/>
+            </g>
           </svg>
         </div>
       </section>
