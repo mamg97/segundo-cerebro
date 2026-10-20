@@ -99,7 +99,7 @@ function recordRow(item){
  const notes=item.comentarios?'<small class="hby-row-note" title="'+esc(item.comentarios)+'">'+esc(item.comentarios)+'</small>':'';
  return '<tr data-hby-record="'+esc(item.id)+'">'+
   (wine?wineThumbnailMarkup(item):"")+
-  '<td class="hby-list-title" data-label="Título"><strong>'+esc(title)+'</strong>'+notes+issue+'</td>'+
+  '<td class="hby-list-title" data-label="Título"><strong title="'+esc(title)+'">'+esc(title)+'</strong>'+notes+issue+'</td>'+
   '<td class="hby-list-type" data-label="'+(wine?'Denominación':'Género')+'">'+esc(genre)+'</td>'+
   (wine?'<td class="hby-list-status" data-label="Tipo">'+esc(item.tipo||"—")+'</td>':
         '<td class="hby-list-status" data-label="Estado"><span class="hby-record-status">'+esc(item.estado||"—")+'</span></td>')+
