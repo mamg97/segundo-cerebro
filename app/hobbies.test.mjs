@@ -123,7 +123,7 @@ test("Wine sort headers use displayed column semantics: photo, denomination, pri
  ];
  const ids=x=>x.map(v=>v.id);
  assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","foto")),["a","b","c"]);
- assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","genero")),["b","a","c"]);
+ assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","genero")),["b","c","a"]); // Denominación visually falls back to tipo
  assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","estado")),["a","c","b"]);
  assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","nota","desc")),["b","a","c"]);
  assert.deepEqual(ids(sortHobbyRecords(rows,"vinos","enlace")),["c","a","b"]);
