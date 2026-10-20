@@ -26,6 +26,7 @@ test("Public repository does not contain private catalogue row data or sheet IDs
  const code=readFileSync(new URL("./hobbies-sheet.js",import.meta.url),"utf8");
  const frontend=readFileSync(new URL("../../app/hobbies.js",import.meta.url),"utf8");
  assert.match(code,/valueInputOption=RAW/);
+ assert.match(code,/type==="vinos"\?"Catalogo!A1:P2000":"Catalogo!A1:Q2000"/);
  assert.match(code,/revision\+1/);
  assert.match(code,/MIGRATION_NOT_ACTIVE/);
  assert.match(frontend,/api\/hobbies\//);
