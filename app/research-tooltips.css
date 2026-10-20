@@ -1,0 +1,9 @@
+/* AV-075: floating explanations outside scrolling cards; no inline HTML styles. */
+.lab-glossary-term{display:inline!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;border-bottom:1px dotted #9bd0ef!important;border-radius:0!important;color:inherit!important;background:transparent!important;font:inherit!important;font-weight:inherit!important;line-height:inherit!important;letter-spacing:inherit!important;white-space:normal!important;text-align:inherit!important;cursor:help!important}
+.lab-glossary-term:hover,.lab-glossary-term[aria-expanded="true"]{color:#c2e7ff!important;border-bottom-style:solid!important}
+.lab-glossary-term:focus-visible{outline:2px solid #b7e2ff!important;outline-offset:3px!important;border-radius:2px!important}
+.lab-glossary-popover{position:fixed;top:0;left:0;z-index:2147483000;box-sizing:border-box;width:min(340px,calc(100vw - 20px));max-height:min(330px,calc(100vh - 20px));overflow-y:auto;border:1px solid #607f95;border-radius:10px;background:#102434;color:#f1f8ff;padding:13px 15px;box-shadow:0 14px 32px #0009;font-size:12px;line-height:1.45;pointer-events:none}
+.lab-glossary-popover[hidden]{display:none!important}
+.lab-glossary-popover strong{display:block;margin-bottom:6px;font-size:13px;font-weight:750;color:#fff}
+.lab-glossary-popover p{margin:0 0 6px;font-size:12px;line-height:1.45;color:#e2edf7}
+.lab-glossary-popover small{display:block;font-size:11px;line-height:1.4;color:#b7cad7}
