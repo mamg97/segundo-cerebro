@@ -1,5 +1,15 @@
 # PSICOHISTORIA — Estado científico verificado · 20/10/2026
 
+## AV-20261020-063 · Primeros eventos institucionales reales en radar privado (sin forecasting)
+
+- **[PR #716](https://github.com/mamg97/segundo-cerebro/pull/716) fusionada** en `main` (squash `bf29e0e524334285da17ca76f0171c1bf22d2b9a`); **[Cloudflare Worker producción #39449052376](https://github.com/mamg97/segundo-cerebro/actions/runs/39449052376) SUCCESS**, con el paso `Deploy production Worker` SUCCESS. Postmerge: UI #39449052225, privacidad #39449052217, Pages #39449052134 SUCCESS. Cinco CI PR SUCCESS, incluidos Worker completo, UI, Access y guard privacidad.
+- **Dos fuentes oficiales reales identificadas**, en el Sheets privado canónico `SEGUNDO CEREBRO - PROYECTOS`: `PsicoAgendaEventos` + `PsicoAgendaFuentes` contienen reuniones monetarias futuras de Fed/FOMC y BCE, fechas y enlaces oficiales. Se registraron únicamente como `PROGRAMADA_FUENTE_OFICIAL` + `NO_EMITIDA`, estado `REFERENCIA_OFICIAL_SIN_CAPTURA_DE_BYTES`; **campos `published_at`, `first_seen_utc`, `capture_sha256` vacíos**, porque NO existe snapshot original ni testigo externo de tiempo.
+- **Nueva capacidad real:** adaptador `private-cloudflare/src/psycho-agenda.js` lee fuentes privadas opcionales (sin impactar V1–V4 ni 2027), permite sólo calendarios en dominios oficiales preadmitidos, valida fechas, evita links manipulados, duplicados y estados falsos; informa `forecastCount=0`. `Ideas y sinergias` muestra «Reuniones en seguimiento» con URLs oficiales y advertencia de falta de captura, predicción y resultado. Documento [AV-063](AGENDA_COHORTE_OBSERVACIONAL_AV063.md).
+- **Canónico revalidado:** `AV-20261020-063=VERIFICADO` solamente para ingeniería/datos descubiertos; `AG-01=PARCIAL`, `AG-02=NO_INICIADA`, `AG-03=NO_INICIADA`, `MF-01=PARCIAL`, `RP-01=NO_INICIADA`; **`PsicoPredicciones` vacío** y 2027 continúa `SHADOW_NO_EMITIDO`. No se han usado cotizaciones, operaciones, fuentes restringidas o pagos.
+- **Siguiente puerta A1:** captura original privada con SHA256 y testigo temporal independiente; definición exacta de tasa monetaria y variable resultado; expectativas disponibles ANTES del anuncio, baseline y corte fijo. **Prioridad troncal sin cambio:** reconstrucción UCDP `as-of`, precompromiso/sello independiente 2027 y validación fuera de muestra de fenómenos colectivos. No se ha probado skill con agendas ni con mercados financieros.
+
+---
+
 ## AV-20261020-062 · Laboratorio de ideas y aplicaciones, desplegado
 
 - **[PR #713](https://github.com/mamg97/segundo-cerebro/pull/713) fusionada** en `main` (squash `3f9f5f43ddc13d4ab46896c80f3be19c65779e6a`). Código, prototipo y metodología documentados en [AGENDA_INSTITUCIONAL_SINERGIAS_AV062.md](AGENDA_INSTITUCIONAL_SINERGIAS_AV062.md). El catálogo canónico privado `SEGUNDO CEREBRO - PROYECTOS` registra tres subproyectos derivados A1 Agenda institucional, A2 Transmisión macrofinanciera y A3 Radar País, más documentación y relaciones con V1–V4 y MIDAS como posible consumidor **solo lectura futuro**.
