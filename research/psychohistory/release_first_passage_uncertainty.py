@@ -61,8 +61,8 @@ def paired_country_losses(earlier,later):
     return country_losses
 
 
-def uncertainty_summary(rows,repetitions=DRAW_COUNT,seed=SEED):
-    if not isinstance(rows,list) or len(rows)<3 or type(repetitions) is not int or not 100<=repetitions<=10000 or type(seed) is not int or not 0<=seed<=2**32-1:
+def uncertainty_summary(rows,repetitions=DRAW_COUNT,seed=SEED,origin=ORIGIN):
+    if not isinstance(rows,list) or len(rows)<3 or type(repetitions) is not int or not 100<=repetitions<=10000 or type(seed) is not int or not 0<=seed<=2**32-1 or origin not in (2024,2025):
         raise ValueError("Invalid paired uncertainty specification")
     ordered=sorted(rows,key=lambda r:r["country"])
     keys=set()
@@ -107,7 +107,7 @@ def uncertainty_summary(rows,repetitions=DRAW_COUNT,seed=SEED):
     return {
         "schema":"psychohistory.futures.release_holdout_first_change_uncertainty.v1",
         "status":"POSTHOC_SINGLE_ORIGIN_DESCRIPTIVE_ONLY",
-        "origin":ORIGIN,"last_training_year":TRAIN_END,
+        "origin":origin,"last_training_year":origin-2,
         "nCountries":n,
         "nInitialLow":len(groups[0]),"nInitialHigh":len(groups[1]),
         "eventRate":{"observedFirstChange":len(events),"nNoChange":len(nonevents),
