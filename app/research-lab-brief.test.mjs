@@ -98,3 +98,16 @@ test("monochrome lab theme remains accessible, responsive and scientifically hon
   assert.doesNotMatch(html,/style=/);
   assert.ok(!html.includes("PsicoPredicciones"));
 });
+
+test("laboratory uses the full viewport while preserving mobile and chart layouts",()=>{
+  const html=readFileSync(new URL("./research-lab.html",import.meta.url),"utf8");
+  const css=readFileSync(new URL("./research-lab-monochrome.css",import.meta.url),"utf8");
+  assert.match(html,/research-lab-monochrome\.css\?v=0\.5\.22/);
+  assert.match(css,/\.app-frame\{width:100%;max-width:none;margin:0/);
+  assert.match(css,/main,#view\{min-width:0;width:100%\}/);
+  assert.match(css,/grid-template-columns:minmax\(0,1\.9fr\) minmax\(210px,\.65fr\)/);
+  assert.match(css,/@media\(max-width:650px\)/);
+  assert.match(css,/display:block;min-height:175px/);
+  assert.doesNotMatch(css,/\.app-frame\{max-width:1540px/);
+  assert.doesNotMatch(css,/@import|url\(https?:/);
+});
