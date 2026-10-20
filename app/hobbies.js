@@ -78,7 +78,7 @@ export function wineShopMarkup(item){
 export function externalCatalogLink(item,category){
  if(!["peliculas","series","libros"].includes(category))return "";
  const raw=String(item?.titulo??"").trim();
- const query=raw.replace(/\\s*\\(\\d{4}\\)\\s*$/,"").trim()||raw;
+ const query=raw.replace(/\s*\(\d{4}\)\s*$/,"").trim()||raw;
  if(!query)return '<td class="hby-list-external" data-label="Buscar en">—</td>';
  const films=category!=="libros";
  const service=films?"FilmAffinity":"Amazon";
