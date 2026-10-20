@@ -72,9 +72,11 @@ test("overcommitted account never fabricates free or unclassified cash", () => {
   assert.equal(x.excess, 40);
 });
 
-test("UI renders undetailed allocation in neutral color, not the green Libre slice", () => {
+test("shared unallocated money stays neutral; personal remainder is shown as provisional", () => {
   assert.match(css, /\.allocation-undetailed\s*\{[^}]*background:/);
-  assert.match(app, /className: "allocation-undetailed"/);
-  assert.match(app, /Sin desglosar <b>/);
-  assert.match(app, /Presupuesto sin desglose <b>/);
+  assert.match(app, /className: isCommon \? "allocation-undetailed" : "allocation-provisional-free"/);
+  assert.match(app, /"Sin desglosar"/);
+  assert.match(app, /"Presupuesto sin desglose"/);
+  assert.match(app, /Libre provisional/);
+  assert.match(css, /\.allocation-provisional-free/);
 });
