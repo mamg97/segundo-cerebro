@@ -1,6 +1,7 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.13';
 import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
+import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.18';
 import {mountInlineShadow2027} from './research-shadow2027-inline.mjs?v=0.5.17';
 import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
@@ -18,8 +19,8 @@ const finite=(n)=>typeof n==="number"&&Number.isFinite(n);
 const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d}):"Sin datos";
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
-const AVAILABLE_VIEWS=new Set(["futures","shadow2027","overview","science","operations","roadmap"]);
-let activeView="futures";
+const AVAILABLE_VIEWS=new Set(["brief","futures","shadow2027","overview","science","operations","roadmap"]);
+let activeView="brief";
 const initialView=new URLSearchParams(window.location.search).get("view");
 if(AVAILABLE_VIEWS.has(initialView))activeView=initialView;
 let activeTrack=TRACKS.some(t=>t.id===new URLSearchParams(window.location.search).get("track")) ? new URLSearchParams(window.location.search).get("track") : "V2";
@@ -113,18 +114,18 @@ function empty(title,sub){
 }
 function header(){
   const p=state?.projects.find(x=>x.id==="prj-psicohistoria");
-  document.getElementById("project-title").textContent=p?.name||"Laboratorio de investigación";
-  document.getElementById("project-summary").textContent=p?.summary||"Investigación estructurada mediante cuatro vertientes comparables.";
+  document.getElementById("project-title").textContent="Psicohistoria";
+  document.getElementById("project-summary").textContent="¿Podemos anticipar fenómenos sociales? Aquí verás qué hemos comprobado y qué falta demostrar.";
   document.getElementById("as-of").textContent="Consulta privada · "+new Date().toLocaleString("es-ES",{dateStyle:"short",timeStyle:"short"});
 }
 function metrics(){
-  const m=state?.lab.milestones||[];
   const e=state?.lab.evaluation||{};
+  const f=briefingFacts(state?.lab);
   const data=[
-    ["VERTIENTES",String(TRACKS.length),"líneas de investigación"],
-    ["HITOS VERIFICADOS",completed()+"/"+m.length,"sin ponderación artificial"],
-    ["EVALUACIONES",String((state?.lab.experiments||[]).filter(isResearchScore).length),"registros modelo / objetivo"],
-    ["BRIER PROSPECTIVO",fmt(e.brier,4),String(e.resolved||0)+" predicciones evaluables"]
+    ["PAÍSES 2027",f.shadow?String(f.countryCount):"—",f.shadow?"ranking experimental disponible":"Sin cohorte válida"],
+    ["MODELOS",f.shadow?String(f.modelCount):"—",f.shadow?"comparación experimental":"Sin verificación"],
+    ["EMISIONES",String(f.issued),"registradas; no equivale a habilidad"],
+    ["EVALUADAS",String(f.resolved),"resueltas prospectivas"]
   ];
   document.getElementById("headline-metrics").innerHTML=data.map(x=>'<article class="metric"><small>'+esc(x[0])+'</small><strong>'+esc(x[1])+'</strong><em>'+esc(x[2])+'</em></article>').join("");
 }
@@ -252,8 +253,15 @@ function render(){
   disposeFutures();
   disposeShadow();
   header();metrics();
-  root.innerHTML=activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="brief"?renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
+  root.querySelectorAll("[data-brief-go]").forEach(button=>button.addEventListener("click",()=>{
+    const view=button.dataset.briefGo;
+    if(!AVAILABLE_VIEWS.has(view))return;
+    activeView=view;
+    render();
+    document.querySelector('[data-view="'+view+'"]')?.focus({preventScroll:true});
+  }));
   if(activeView==="shadow2027")disposeShadow=mountInlineShadow2027(root);
   if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;activeView='overview';render();},onsetExperiments:state.lab.experiments||[]});
   if(activeView==="overview")disposeNeural=mountNeural(root.querySelector('.neural-stage'),{activeTrack,paused:motionPaused,onPause:value=>{motionPaused=value;}});
@@ -283,7 +291,7 @@ async function load(){
     if(mine!==generation)return;
     if(!projectsPayload.ok||!lab.ok||!["ok-live","ok-cache"].includes(lab.status))throw new Error("Fuente todavía no disponible");
     state={projects:projectsPayload.projects||[],lab};
-    status.textContent="Datos obtenidos del registro privado · "+(lab.status==="ok-cache"?"caché reciente":"lectura actual")+" · "+state.lab.milestones.length+" hitos";
+    status.textContent="Registro privado · "+(lab.status==="ok-cache"?"caché":"sincronizado")+" · "+state.lab.milestones.length+" hitos";
     render();
   }catch(error){
     if(mine!==generation)return;
