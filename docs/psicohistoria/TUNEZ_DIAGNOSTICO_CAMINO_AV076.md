@@ -53,3 +53,23 @@ Catálogo `3e3354a6acf0-catalog-2020`, corte 2018 y estado inicial `00`: todos l
 Módulo puro `app/research-futures-diagnostics.mjs`: contrasta cada año observable con la **probabilidad modal predicha** en el año original y su probabilidad asignada al desenlace efectivo. Un panel `<details>` aparece exclusivamente con la realidad posterior visible y no modifica `matrix`, `levels`, `snapshots` ni `scoreHistoricalCases`. Disponibilidad parcial no se denomina acierto.
 
 **Siguiente estudio científico recomendado:** analizar en toda la cohorte (no solo Túnez) si Markov falla de forma sistemática en el primer año de salida `11→10` y en los dos años posteriores. Comparar Brier de Markov, persistencia, memoria y shrinkage contra una referencia fuerte, por grupos de origen y período; comprobar independencia temporal y edición de fuente. Hipótesis a falsar: **mala detección del momento de cambios de régimen**, no que «Túnez fue un caso impredecible». No entrenar con 2017 para evaluarlo después como si fuese evidencia ex ante.
+
+## Extensión a TODOS los países: ¿es Túnez un caso aislado?
+
+Se repitió el algoritmo ORIGINAL (sin optimización posterior) sobre la totalidad de los catálogos históricos de `PsicoExperimentos` (195 países, origen 2016; 196 países, origen 2020). Para cada país y año se reprodujo la matriz del motor en `private-cloudflare/src/research-futures-engine.mjs`, comparando estado observado ex post con probabilidad y Brier multicategoría. El módulo independiente `research/psychohistory/audit_future_regime_changes.mjs` reproduce el experimento a partir de cada JSON canónico suministrado en un archivo local (no se publica la lista país-a-país en GitHub ni en logs). Instrucción: `node research/psychohistory/audit_future_regime_changes.mjs /ruta/segura/catalogo.json`.
+
+| Modelo sin reajuste | Origen 2016: Brier promedio N=1950 | Origen 2020: Brier promedio N=1176 |
+| --- | ---: | ---: |
+| Persistencia determinista | **0,168205** | **0,120748** |
+| Markov país regularizado | 0,176577 | 0,136659 |
+| Memoria 2 estados | 0,189404 | 0,135443 |
+| **Markov global** | **0,226989** | **0,170239** |
+| Frecuencia constante | 0,369573 | 0,375321 |
+
+Totales de estado observado en el catálogo 2016: `00:1582, 01:34, 10:34, 11:300` (1.950 observaciones dependientes). Catálogo 2020: `00:951, 01:19, 10:18, 11:188` (1.176 observaciones dependientes).
+
+**Diagnóstico de eventos de salida:** en 2016 los 34 registros `10` fueron divergencias modales de Markov global (probabilidad media adjudicada al estado verdaderamente observado en esos casos `0,057343`). En el catálogo 2020, los 18 registros `10` también quedaron fuera del estado modal (probabilidad media `0,064392`). Asimismo, todos los 34 casos `01` de 2016 y 19 de 2020 quedaron fuera del estado modal. **Esto refleja el desbalance de clases y la decisión de tomar el máximo; NO basta para afirmar mala calibración o incapacidad de pronosticar probabilidades de eventos raros.** Comparar el Brier ponderado por estado, evaluación calibrada por bin y sensibilidad a prevalencias futuras antes de decidir.
+
+**Conclusión que cambia la prioridad científica:** aunque Markov global fue el mejor de estos cinco modelos para el caso particular de Túnez 2016–2025, **la persistencia determinista obtiene menor Brier agregado en ambos catálogos**, seguida de modelos regularizados o de memoria. Por tanto, no usar el ejemplo de Túnez para seleccionar Markov como campeón. Los catálogos se construyeron retrospectivamente con revisiones históricas de UCDP 26.1, comparten países y años, y no son holdouts verdaderamente independientes ni han superado el gate as-of de origen. **No combinar con AV-064/066 como si fueran evidencia confirmatoria independiente**.
+
+El paso siguiente es evaluar una métrica específica de tiempo hasta la primera salida/entrada y la calibration condicional sin modificar el modelo sobre estas mismas cohortes; repetir sobre nuevas ediciones/fechas de origen solo con fuentes históricas acreditadas, referencias fuertes y resultados sellados.
