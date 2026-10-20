@@ -1,0 +1,32 @@
+name: Psychohistory archived 23.1 2024 scientific discovery
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/historic23_xlsx_probe.py"
+      - "research/psychohistory/test_historic23_xlsx_probe.py"
+      - ".github/workflows/psychohistory-historic23-discovery.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  adversarial-metadata-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify URL constraints and no row-level metadata disclosures
+        run: python3 -m unittest discover -s research/psychohistory -p test_historic23_xlsx_probe.py -v
+  official-discovery-not-scoring:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Inspect current official 23.1 Excel schema and SHA, never 2024 labels
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/historic23_xlsx_probe.py
+          echo 'Research gate: NEVER train on a 2025/2026 release or issue claims from 2026 download.'
