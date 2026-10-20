@@ -1,0 +1,25 @@
+name: Psychohistory 2027 private observatory integrity contract
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/shadow_observatory_2027_integrity.py"
+      - "research/psychohistory/test_shadow_observatory_2027_integrity.py"
+      - ".github/workflows/psychohistory-2027-shadow-observatory.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Strictly check generic HTML and synthetic tests
+        run: |
+          set -euo pipefail
+          python3 -m py_compile research/psychohistory/shadow_observatory_2027_integrity.py
+          python3 -m unittest discover -s research/psychohistory -p test_shadow_observatory_2027_integrity.py -v
+          echo "Real country rankings remain in private Google Drive, never in GitHub Actions."
+          echo "No predicted events, scores, emission receipts, or private IDs are created."
