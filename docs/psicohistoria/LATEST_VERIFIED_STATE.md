@@ -1,5 +1,15 @@
 # PSICOHISTORIA — Estado científico verificado · 20/10/2026
 
+## AV-20261020-068 · Incertidumbre país: aún no existe ventaja robusta frente a Markov
+
+- **[PR #727](https://github.com/mamg97/segundo-cerebro/pull/727) fusionada** (squash `1a5fee246ceb2ab1939ded9fbf793fa9b649fab9`). Incorpora `paired_country_uncertainty.py` (bootstrap pareado de pérdidas Brier por país, 1.000 remuestreos, semilla fija) en las dos evaluaciones ya existentes de 2024 y 2025. No cambia modelos/hyperparámetros, tareas del Laboratorio ni 2027. Informe empírico completo: [AV-068](PAIRED_COUNTRY_UNCERTAINTY_AV068.md). CI empírica [2024 #39457269332](https://github.com/mamg97/segundo-cerebro/actions/runs/39457269332) y [2025 #39457269585](https://github.com/mamg97/segundo-cerebro/actions/runs/39457269585), más repetición CI en PR y guard privacidad **SUCCESS**.
+- **Nueva conclusión obligatoria:** V2 logistic tiene menor Brier **puntual** frente a Markov y persistencia en ambos años, pero los IC país **cruzan cero**. Diferencia V2−Markov 2024 **−0,01399365**, IC descriptivo `[-0,03132139; +0,00108897]`; 2025 **−0,00234692**, IC `[-0,01097375; +0,00686542]`. Frente persistencia también cruzan cero en 2024 y 2025. Solo frente al baseline débil de frecuencia los intervalos son completamente negativos. **Ninguna superioridad robusta o habilidad prospectiva puede afirmarse**.
+- **El bootstrap no es confirmatorio**: elegido tras mirar los resultados, asume países remuestreables pero no corrige dependencias geopolíticas espaciales, hay solo un bloque temporal por año y la procedencia de bytes históricos UCDP no está autenticada al origen. No sumar 2024 y 2025 como dos repeticiones temporales independientes. El target sigue siendo **presencia de violencia estatal ≥25**, no onset.
+- **Canónico privado:** `PsicoAvances.AV-20261020-068=VERIFICADO` para implementación/medición descriptiva; ocho registros `av068-countrybootstrap-*` en `PsicoExperimentos` con valores e intervalos íntegros y caveats. `MAD-04=PARCIAL` y `PsicoPredicciones` continúa vacío. 2027 sigue SHADOW_NO_EMITIDO; F1B bolsa aparcado y no se modificó MIDAS. Avance UI paralelo AV-067 permanece separado.
+- **Siguiente prioridad real:** conseguir archivos observados auténticamente antes de su fecha de origen y nuevos bloques temporales autónomos; valorar el skill V2 frente a persistencia y Markov bajo condiciones no ajustadas a 2024/2025. Preparar sello temporal externo de cohorte 2027, sin afirmar emisión hasta recibo independiente validado.
+
+---
+
 ## AV-20261020-066 · Dos cortes temporales reales 2024/2025 (exploratorios)
 
 - **PR [#723](https://github.com/mamg97/segundo-cerebro/pull/723)** (exploración 23.1) y [#724](https://github.com/mamg97/segundo-cerebro/pull/724) (segundo holdout, squash `705b28b6ea9d2b6c9af5b9c774660cb9207de1d6`) fusionadas en `main`; SIN tocar frontend/Cloudflare y manteniendo trabajo visual paralelo. [Documento científico AV-066](HISTORIC23_2024_HOLDOUT_AV066.md).
