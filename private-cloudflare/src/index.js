@@ -22,6 +22,7 @@ import { mutateRecipe, RecipeEditError } from "./recipe-editor.js";
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
 import { verifyPsychoAccess } from "./research-shadow2027-auth.js";
 import { handleWeddingRequest } from "./wedding-store.js";
+import { handleHobbiesRequest } from "./hobbies-sheet.js";
 import { fetchPrivate2027Ranking } from "./research-shadow2027-private.js";
 import { prospectiveSummary } from "./research-evaluation.js";
 import { researchFuturesResponse } from "./research-futures.js";
@@ -5101,6 +5102,10 @@ export default {
 
     if (url.pathname.startsWith("/v1/shopping-list/")) {
       return withSecurityHeaders(await handleShoppingSyncRequest(request, env, getGoogleAccessToken));
+    }
+
+    if (url.pathname.startsWith("/api/hobbies/")) {
+      return withSecurityHeaders(await handleHobbiesRequest(request, env, getGoogleAccessToken));
     }
 
     if (url.pathname === "/api/wedding/items" || url.pathname.startsWith("/api/wedding/items/")) {
