@@ -4,13 +4,29 @@ const SPEC={
  peliculas:{title:"SEGUNDO CEREBRO - HOBBIES - PELICULAS",prefix:"pel",headers:["id","titulo","subtipo","subtipo_2","estado","puntuacion","fecha_inicio","fecha_fin","comentarios","tipo_origen","estado_origen","fila_origen","revision","incidencia_migracion","actualizado_en","actualizado_por","archivado"],editable:["titulo","subtipo","subtipo_2","estado","puntuacion","fecha_inicio","fecha_fin","comentarios"]},
  series:{title:"SEGUNDO CEREBRO - HOBBIES - SERIES",prefix:"ser",headers:["id","titulo","subtipo","subtipo_2","estado","puntuacion","fecha_inicio","fecha_fin","comentarios","tipo_origen","estado_origen","fila_origen","revision","incidencia_migracion","actualizado_en","actualizado_por","archivado"],editable:["titulo","subtipo","subtipo_2","estado","puntuacion","fecha_inicio","fecha_fin","comentarios"]},
  libros:{title:"SEGUNDO CEREBRO - HOBBIES - LIBROS",prefix:"lib",headers:["id","titulo","subtipo","subtipo_2","estado","puntuacion","fecha_inicio","fecha_fin","comentarios","tipo_origen","estado_origen","fila_origen","revision","incidencia_migracion","actualizado_en","actualizado_por","archivado"],editable:["titulo","subtipo","subtipo_2","estado","puntuacion","fecha_inicio","fecha_fin","comentarios"]},
- vinos:{title:"SEGUNDO CEREBRO - HOBBIES - VINOS",prefix:"vin",headers:["id","marca","tipo","denominacion","nota","precio","comentarios","fila_origen","revision","incidencia_migracion","actualizado_en","actualizado_por","archivado"],editable:["marca","tipo","denominacion","nota","precio","comentarios"]}
+ vinos:{title:"SEGUNDO CEREBRO - HOBBIES - VINOS",prefix:"vin",headers:["id","marca","tipo","denominacion","nota","precio","comentarios","fila_origen","revision","incidencia_migracion","actualizado_en","actualizado_por","archivado","tienda","tienda_url","imagen_url"],editable:["marca","tipo","denominacion","nota","precio","comentarios","tienda","tienda_url","imagen_url"]}
 };
 const CACHE=new Map();
 export const HOBBY_TYPES=Object.freeze(Object.keys(SPEC));
 export class HobbiesError extends Error{constructor(code,status=400){super(code);this.code=code;this.status=status;}}
 const send=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
 const text=(v,max)=>{const s=String(v??"").trim();if(s.length>max)throw new HobbiesError("FIELD_TOO_LONG");return s;};
+const RETAILERS=Object.freeze({"Amazon":host=>host==="amazon.es"||host.endsWith(".amazon.es"),"El Corte Inglés":host=>host==="elcorteingles.es"||host.endsWith(".elcorteingles.es")});
+export function normalizeWineUrl(value,kind="image"){
+ const raw=text(value,1800);if(!raw)return "";
+ let url;try{url=new URL(raw);}catch{throw new HobbiesError(kind==="store"?"INVALID_STORE_URL":"INVALID_IMAGE_URL");}
+ if(url.protocol!=="https:"||url.username||url.password||url.port||!url.hostname.includes(".")||
+    /^(localhost|127\\.|10\\.|192\\.168\\.|172\\.|169\\.254\\.)/i.test(url.hostname))
+    throw new HobbiesError(kind==="store"?"INVALID_STORE_URL":"INVALID_IMAGE_URL");
+ if(kind==="store"&&!Object.values(RETAILERS).some(fn=>fn(url.hostname.toLowerCase())))
+    throw new HobbiesError("INVALID_STORE_URL");
+ return url.href;
+}
+function retailerFromUrl(value){
+ if(!value)return "";
+ const host=new URL(value).hostname.toLowerCase();
+ return Object.keys(RETAILERS).find(key=>RETAILERS[key](host))||"";
+}
 function safeId(v){const s=String(v||"");if(!/^[A-Za-z0-9_-]{4,90}$/.test(s))throw new HobbiesError("INVALID_ID");return s;}
 function requireCategory(type){if(!Object.hasOwn(SPEC,type))throw new HobbiesError("INVALID_CATEGORY",404);return SPEC[type];}
 function getActor(request){
@@ -31,12 +47,27 @@ function editablePayload(spec,src,previous={}){
    if(!Number.isFinite(n)||n<0||(key==="precio"?n>100000:key==="puntuacion"||key==="nota"?n>10:false))throw new HobbiesError("INVALID_NUMBER");
    p[key]=n;continue;
   }
+  if(key==="tienda_url"||key==="imagen_url"){
+   p[key]=normalizeWineUrl(val,key==="tienda_url"?"store":"image");
+   continue;
+  }
+  if(key==="tienda"){
+   const provider=text(val,40);
+   if(provider&&!Object.hasOwn(RETAILERS,provider))throw new HobbiesError("INVALID_RETAILER");
+   p[key]=provider;
+   continue;
+  }
   if(key==="fecha_inicio"||key==="fecha_fin"){
    const date=text(val,10);
    if(date&&!/^\d{4}-\d{2}-\d{2}$/.test(date))throw new HobbiesError("INVALID_DATE");
    p[key]=date;continue;
   }
   p[key]=text(val,key==="comentarios"?4000:key==="titulo"?300:200);
+ }
+ if(spec.prefix==="vin"){
+  const inferred=retailerFromUrl(p.tienda_url);
+  if(inferred&&p.tienda&&p.tienda!==inferred)throw new HobbiesError("INVALID_RETAILER");
+  p.tienda=inferred||"";
  }
  const primary=spec.editable.includes("titulo")?"titulo":"marca";
  if(!p[primary])throw new HobbiesError("TITLE_REQUIRED");
@@ -63,7 +94,7 @@ export function decodeHobbiesRows(type,values){
  return out;
 }
 async function loadData(type,token,sheetId,{fetcher=fetch}={}){
- const url="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(sheetId)+"/values/"+encodeURIComponent("Catalogo!A1:Q2000")+"?valueRenderOption=UNFORMATTED_VALUE";
+ const url="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(sheetId)+"/values/"+encodeURIComponent("Catalogo!A1:P2000")+"?valueRenderOption=UNFORMATTED_VALUE";
  const r=await fetcher(url,{headers:{Authorization:"Bearer "+token,Accept:"application/json"},cache:"no-store"});
  if(!r.ok)throw new HobbiesError("SHEETS_READ_FAILED",502);
  return decodeHobbiesRows(type,(await r.json())?.values||[]);
@@ -96,12 +127,12 @@ function toRow(spec,p){
  return spec.headers.map(h=>p[h]??"");
 }
 async function writeExisting(id,token,type,item,{fetcher=fetch}={}){
- const spec=requireCategory(type),lastCol=type==="vinos"?"M":"Q",range="Catalogo!A"+item.sheetRow+":"+lastCol+item.sheetRow;
+ const spec=requireCategory(type),lastCol=type==="vinos"?"P":"Q",range="Catalogo!A"+item.sheetRow+":"+lastCol+item.sheetRow;
  const u="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(id)+"/values/"+encodeURIComponent(range)+"?valueInputOption=RAW";
  await googleWrite(u,token,{range,majorDimension:"ROWS",values:[toRow(spec,item)]},"PUT",{fetcher});
 }
 async function append(id,token,type,item,{fetcher=fetch}={}){
- const spec=requireCategory(type),lastCol=type==="vinos"?"M":"Q",range="Catalogo!A:"+lastCol;
+ const spec=requireCategory(type),lastCol=type==="vinos"?"P":"Q",range="Catalogo!A:"+lastCol;
  const u="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(id)+"/values/"+encodeURIComponent(range)+":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS";
  await googleWrite(u,token,{majorDimension:"ROWS",values:[toRow(spec,item)]},"POST",{fetcher});
 }
