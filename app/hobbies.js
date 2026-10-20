@@ -73,6 +73,21 @@ export function wineShopMarkup(item){
  '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Ver '+esc(titleOf(item,"vinos"))+' en '+esc(retailer)+'">'+esc(retailer)+' ↗</a>':
  '<a class="hby-shop-search" href="'+esc(search)+'" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Buscar '+esc(titleOf(item,"vinos"))+' en Amazon; producto sin verificar">Buscar en Amazon ↗</a>')+'</td>';
 }
+// Search links deliberately open result pages, never pretend to be verified work/edition IDs.
+// Purely derived from the private canonical title: no row mutations, scraping or paid APIs.
+export function externalCatalogLink(item,category){
+ if(!["peliculas","series","libros"].includes(category))return "";
+ const raw=String(item?.titulo??"").trim();
+ const query=raw.replace(/\\s*\\(\\d{4}\\)\\s*$/,"").trim()||raw;
+ if(!query)return '<td class="hby-list-external" data-label="Buscar en">—</td>';
+ const films=category!=="libros";
+ const service=films?"FilmAffinity":"Amazon";
+ const url=films
+  ?"https://www.filmaffinity.com/es/search.php?stype=title&stext="+encodeURIComponent(query)
+  :"https://www.amazon.es/s?k="+encodeURIComponent(query)+"&i=stripbooks";
+ return '<td class="hby-list-external" data-label="Buscar en"><a class="hby-external-link" href="'+esc(url)+
+ '" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" title="Buscar '+esc(raw)+' en '+service+' (resultados, no ficha verificada)" aria-label="Buscar '+esc(raw)+' en '+service+'">'+service+' ↗</a></td>';
+}
 function recordRow(item){
  const wine=store.category==="vinos",score=wine?item.nota:item.puntuacion;
  const genre=wine?(item.denominacion||item.tipo||"—"):(item.subtipo||item.subtipo_2||"—");
@@ -89,7 +104,7 @@ function recordRow(item){
   (wine?'<td class="hby-list-status" data-label="Tipo">'+esc(item.tipo||"—")+'</td>':
         '<td class="hby-list-status" data-label="Estado"><span class="hby-record-status">'+esc(item.estado||"—")+'</span></td>')+
   '<td class="hby-list-score" data-label="'+(wine?'Precio':'Nota')+'">'+metricText+'</td>'+
-  (wine?wineShopMarkup(item):"")+
+  (wine?wineShopMarkup(item):externalCatalogLink(item,store.category))+
   '<td class="hby-list-actions"><button type="button" data-hby-edit="'+esc(item.id)+'" aria-label="Editar '+esc(title)+'">Editar</button></td>'+
  '</tr>';
 }
@@ -106,11 +121,11 @@ function catalogMarkup(){
  '<div class="hby-catalog-tools"><label>Buscar<input id="hby-search" type="search" value="'+esc(store.search)+'" placeholder="Buscar por título, género o notas…"></label>'+
  (wine?'':'<label>Estado<select id="hby-status">'+statusOptions()+'</select></label>')+
  '<button id="hby-reload" type="button">↻ Actualizar</button></div>'+
- (subset.length?'<div class="hby-list-wrap"><table class="hby-list-table'+(wine?' hby-list-table--wine':'')+'"><thead><tr>'+
+ (subset.length?'<div class="hby-list-wrap"><table class="hby-list-table '+(wine?'hby-list-table--wine':'hby-list-table--media')+'"><thead><tr>'+
  (wine?'<th scope="col">Foto</th>':'')+
  '<th scope="col">Título</th><th scope="col">'+(wine?'Denominación':'Género')+'</th>'+
  '<th scope="col">'+(wine?'Tipo':'Estado')+'</th><th scope="col">'+(wine?'Precio':'Nota')+'</th>'+
- (wine?'<th scope="col">Tienda</th>':'')+
+ <th scope="col">'+(wine?'Tienda':'Buscar en')+'</th>'+
  '<th scope="col">Acciones</th></tr></thead><tbody>'+shown.map(recordRow).join("")+'</tbody></table></div>'+
  (shown.length<subset.length?'<button id="hby-more" class="hby-more" type="button">Ver más ('+(subset.length-shown.length)+' restantes)</button>':''):
  '<div class="hby-empty"><h4>No hay resultados</h4><p>Prueba con otros filtros o añade un registro.</p></div>')+
