@@ -1,6 +1,7 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {LAB_VIEWS,labGroupForView,labDefaultView} from './research-lab-navigation.mjs?v=0.5.26';
-import {mountFutureExplorer} from './research-futures.mjs?v=0.5.27';
+import {mountLaboratoryGlossary} from './research-tooltip.mjs?v=0.5.28';
+import {mountFutureExplorer} from './research-futures.mjs?v=0.5.28';
 import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
 import {renderIdeaNetwork} from './research-ideas.mjs?v=0.5.20';
 import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.18';
@@ -340,4 +341,5 @@ window.addEventListener('popstate',()=>{
   const view=AVAILABLE_VIEWS.has(target)?target:'brief';
   if(view!==activeView){activeView=view;render();}
 });
+mountLaboratoryGlossary(root);
 load();
