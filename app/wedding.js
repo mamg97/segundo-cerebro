@@ -11,7 +11,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"inspiracion",inspirationFilter:"all",inspirationSearch:"",ideaMode:false};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -45,9 +45,78 @@ function cards(){
     '<small class="wed-author">Actualizado por '+esc(i.updatedBy||"Participante")+'</small></div></article>';
  }).join("")+'</div>';
 }
+
+// An inspiration wall backed by the existing private wedding entries, not a Pinterest scraper.
+const INSPIRATION_CATEGORIES=["all","finca","catering","decoracion","fotografia","musica","invitaciones","vestuario","ideas","otros"];
+export function isPinterestLink(link){
+ if(!link)return false;
+ try{
+  const host=new URL(link).hostname.toLowerCase();
+  return host==="pin.it"||host.endsWith(".pin.it")||host==="pinterest.com"||
+   host.endsWith(".pinterest.com")||host==="pinterest.es"||host.endsWith(".pinterest.es");
+ }catch{return false;}
+}
+export function inspirationItems(items,filter="all",search=""){
+ const normalized=String(search||"").trim().toLocaleLowerCase("es");
+ return items.filter(item=>{
+  if(item.status==="descartado"||!INSPIRATION_CATEGORIES.includes(item.category))return false;
+  if(!item.photoUrl&&!item.url&&item.status!=="idea")return false;
+  if(filter!=="all"&&item.category!==filter)return false;
+  if(normalized&&![item.title,item.description,item.provider,typeName(item.category)].join(" ").toLocaleLowerCase("es").includes(normalized))return false;
+  return true;
+ });
+}
+function viewTabs(){
+ return '<nav class="wed-view-tabs" aria-label="Secciones de boda">'+
+  '<button type="button" data-wed-view="inspiracion" aria-pressed="'+(state.view==="inspiracion")+'">✦ Inspiración</button>'+
+  '<button type="button" data-wed-view="planificacion" aria-pressed="'+(state.view==="planificacion")+'">☷ Planificación y presupuesto</button>'+
+ '</nav>';
+}
+function inspirationCard(item){
+ const pinterest=isPinterestLink(item.url);
+ const link=item.url?'<a class="wed-pin-source" href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer">'+
+ (pinterest?'Ver en Pinterest ↗':'Ver referencia ↗')+'</a>':'';
+ const cover=item.photoUrl?
+   '<img class="wed-pin-photo" alt="Imagen de inspiración: '+esc(item.title)+'" loading="lazy" src="'+esc(item.photoUrl)+'?v='+encodeURIComponent(item.updatedAt||"1")+'">':
+   '<div class="wed-pin-placeholder" aria-hidden="true"><span>✦</span></div>';
+ return '<article class="wed-pin" data-wed-pin="'+esc(item.id)+'">'+cover+
+  '<div class="wed-pin-details"><div class="wed-pin-category">'+esc(typeName(item.category))+'</div>'+
+  '<h4>'+esc(item.title)+'</h4>'+
+  (item.description?'<p>'+esc(item.description)+'</p>':'')+
+  '<div class="wed-pin-actions">'+link+
+  '<button type="button" data-wed-edit="'+esc(item.id)+'" aria-label="Editar idea '+esc(item.title)+'">Editar</button></div>'+
+  '<small class="wed-pin-author">Guardado por '+esc(item.createdBy||"Participante")+'</small></div></article>';
+}
+function inspirationCards(){
+ const items=inspirationItems(state.items,state.inspirationFilter,state.inspirationSearch);
+ if(!items.length)return '<div class="wed-inspo-empty">'+
+  '<div class="wed-inspo-empty-icon" aria-hidden="true">✧</div>'+
+  '<h3>Aquí empieza vuestro tablero de inspiración</h3>'+
+  '<p>Guardad decoración, rincones de fincas, flores, vestidos o ideas de Pinterest. El tablero será compartido entre las cuentas autorizadas.</p>'+
+  '<button type="button" class="wed-primary" id="wed-first-pin">+ Guardar primera idea</button></div>';
+ return '<div class="wed-masonry">'+items.map(inspirationCard).join("")+'</div>';
+}
+function inspirationHome(){
+ const count=inspirationItems(state.items).length;
+ return '<div class="wed-workspace wed-inspiration">'+viewTabs()+
+ '<div class="wed-inspo-head"><div><h3>Inspiración</h3><small>'+count+' ideas guardadas · fotos y enlaces</small></div>'+
+ '<button class="wed-primary" type="button" id="wed-add-pin">+ Guardar idea</button></div>'+
+ '<div class="wed-inspo-guide"><strong>De Pinterest a vuestro tablero:</strong> Copiar enlace del pin → Guardar idea → Pegar el enlace. Podéis adjuntar una foto de referencia desde el móvil.</div>'+
+ '<div class="wed-inspo-controls"><label>Buscar ideas<input type="search" id="wed-inspo-search" value="'+esc(state.inspirationSearch)+'" placeholder="Flores, finca, decoración…"></label>'+
+ '<button id="wed-inspo-refresh" type="button">↻ Actualizar</button></div>'+
+ '<nav class="wed-inspo-filters" aria-label="Categorías de inspiración">'+INSPIRATION_CATEGORIES.map(category=>{
+  const item=WEDDING_TYPES.find(x=>x[0]===category);
+  return '<button type="button" data-wed-inspo-filter="'+category+'" aria-pressed="'+(state.inspirationFilter===category)+'">'+esc(item?.[1]||category)+'</button>';
+ }).join("")+'</nav>'+
+ '<div id="wed-inspo-results">'+inspirationCards()+'</div>'+
+ '<p class="wed-inspo-footnote">Los enlaces abren Pinterest o la web original. Las fotos que subáis se guardan de forma privada en Segundo Cerebro; la sincronización automática con Pinterest aún no está activa.</p>'+
+ '</div>';
+}
+
 function home(){
+ if(state.view==="inspiracion")return inspirationHome();
  const n=weddingTotals(state.items);
- return '<div class="wed-workspace">'+
+ return '<div class="wed-workspace">'+viewTabs()+
    '<div class="wed-stats"><div><small>Elementos activos</small><strong>'+n.total+'</strong></div>'+
    '<div><small>Presupuesto planificado</small><strong>'+eur(n.planned)+'</strong></div>'+
    '<div><small>Contratado</small><strong>'+eur(n.committed)+'</strong></div>'+
@@ -64,19 +133,21 @@ function home(){
 function moneyInput(name,label,value){return '<label>'+label+' (€)<input type="number" min="0" max="10000000" step="0.01" name="'+name+'" value="'+(value==null?"":(value/100).toFixed(2))+'" placeholder="0,00"></label>';}
 function editor(){
  const original=state.editing&&state.editing!=="new"?state.items.find(x=>x.id===state.editing):null;
- return '<div class="wed-editor-wrap"><button id="wed-back" class="wed-back" type="button">← Volver al tablero</button>'+
-  '<div class="wed-editor"><h3>'+(original?"Editar elemento":"Añadir a la boda")+'</h3><p>Podréis modificar estos datos desde cualquiera de vuestras sesiones autorizadas.</p>'+
+ const inspirationMode=state.ideaMode&&!original;
+ return '<div class="wed-editor-wrap"><button id="wed-back" class="wed-back" type="button">← Volver a '+(state.view==="inspiracion"?"Inspiración":"Planificación")+'</button>'+
+  '<div class="wed-editor"><h3>'+(original?"Editar elemento":inspirationMode?"Guardar idea de inspiración":"Añadir a la boda")+'</h3>'+
+  '<p>'+(inspirationMode?"Pega el enlace de Pinterest (si lo tienes), añade notas y adjunta una imagen de referencia.":"Podréis modificar estos datos desde cualquiera de vuestras sesiones autorizadas.")+'</p>'+
   '<form id="wed-form"><div class="wed-form-grid">'+
   '<label>Categoría<select name="category" required>'+WEDDING_TYPES.filter(x=>x[0]!=="all").map(x=>'<option value="'+x[0]+'" '+((original?.category||"ideas")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
   '<label>Estado<select name="status" required>'+STATUSES.map(x=>'<option value="'+x[0]+'" '+((original?.status||"idea")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
   '<label class="wide">Nombre o idea *<input type="text" name="title" maxlength="180" required value="'+esc(original?.title||"")+'" placeholder="Ej. Visitar finca…"></label>'+
   '<label class="wide">Descripción y notas<textarea name="description" rows="4" maxlength="4000" placeholder="Detalles, pros y contras, preguntas pendientes…">'+esc(original?.description||"")+'</textarea></label>'+
   '<label>Proveedor / contacto<input name="provider" maxlength="180" value="'+esc(original?.provider||"")+'" placeholder="Nombre del proveedor"></label>'+
-  '<label>Web o referencia HTTPS<input name="url" type="url" maxlength="600" value="'+esc(original?.url||"")+'" placeholder="https://…"></label>'+
+  '<label>Enlace original (Pinterest o web) HTTPS<input name="url" type="url" maxlength="600" value="'+esc(original?.url||"")+'" placeholder="https://www.pinterest.com/pin/…"></label>'+
   moneyInput("estimateCents","Estimado",original?.estimateCents)+moneyInput("contractedCents","Contratado",original?.contractedCents)+
   moneyInput("paidCents","Pagado",original?.paidCents)+
   '<label>Fecha clave<input type="date" name="dueDate" value="'+esc(original?.dueDate||"")+'"></label>'+
-  '<label class="wide">Fotografía de referencia (JPG/PNG/WebP)<input type="file" name="photo" id="wed-photo-input" accept="image/jpeg,image/png,image/webp"><small>Las imágenes se optimizan antes de guardarse en el espacio privado.</small></label>'+
+  '<label class="wide">Fotografía de referencia (JPG/PNG/WebP)<input type="file" name="photo" id="wed-photo-input" accept="image/jpeg,image/png,image/webp"><small>Una imagen por idea. Solo subid fotos que podáis conservar o compartir de forma privada.</small></label>'+
   (original?.photoUrl?'<div class="wed-photo-existing wide"><img alt="Foto actual" src="'+esc(original.photoUrl)+'?v='+Date.now()+'"><button id="wed-photo-remove" type="button">Quitar foto</button></div>':'')+
   '</div><div class="wed-form-actions"><button class="wed-primary" id="wed-submit" type="submit">Guardar</button>'+
   (original?'<button class="wed-danger" id="wed-delete" type="button">Eliminar elemento</button>':'')+
@@ -136,14 +207,31 @@ async function sendPhoto(id,file){
  const r=await fetch("/api/wedding/items/"+encodeURIComponent(id)+"/photo",{method:"POST",credentials:"same-origin",body:fd});
  const body=await r.json().catch(()=>({}));if(!r.ok||!body.ok)throw new Error(body.code||"IMAGE_UPLOAD_FAILED");
 }
+function startIdea(){
+ state.view="inspiracion";state.ideaMode=true;state.editing="new";state.error="";show();
+}
 function bind(area){
- area.querySelector("#wed-new")?.addEventListener("click",()=>{state.editing="new";state.error="";show();});
+ area.querySelectorAll("[data-wed-view]").forEach(button=>button.addEventListener("click",()=>{
+  state.view=button.dataset.wedView;state.editing=null;state.error="";show();
+ }));
+ area.querySelector("#wed-add-pin")?.addEventListener("click",startIdea);
+ area.querySelector("#wed-first-pin")?.addEventListener("click",startIdea);
+ area.querySelector("#wed-inspo-refresh")?.addEventListener("click",()=>{state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
+ area.querySelectorAll("[data-wed-inspo-filter]").forEach(button=>button.addEventListener("click",()=>{
+  state.inspirationFilter=button.dataset.wedInspoFilter;state.error="";show();
+ }));
+ area.querySelector("#wed-inspo-search")?.addEventListener("input",event=>{
+  state.inspirationSearch=event.target.value;
+  const target=area.querySelector("#wed-inspo-results");if(target){target.innerHTML=inspirationCards();bindCards(target);bindEmptyInspiration(target);}
+ });
+ area.querySelector("#wed-new")?.addEventListener("click",()=>{state.editing="new";state.ideaMode=false;state.error="";show();});
  area.querySelector("#wed-back")?.addEventListener("click",()=>{state.editing=null;state.error="";show();});
  area.querySelector("#wed-cancel")?.addEventListener("click",()=>{state.editing=null;state.error="";show();});
  area.querySelector("#wed-refresh")?.addEventListener("click",()=>{state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
  area.querySelector("#wed-search")?.addEventListener("input",e=>{state.search=e.target.value;const target=area.querySelector("#wed-results");if(target){target.innerHTML=cards();bindCards(target);}});
  area.querySelectorAll("[data-wed-filter]").forEach(btn=>btn.addEventListener("click",()=>{state.filter=btn.dataset.wedFilter;state.error="";show();}));
  bindCards(area);
+ bindEmptyInspiration(area);
  area.querySelector("#wed-form")?.addEventListener("submit",event=>{
   event.preventDefault();
   const form=event.currentTarget,data=new FormData(form),original=state.items.find(i=>i.id===state.editing),photo=form.elements.photo?.files?.[0];
@@ -167,13 +255,16 @@ function bind(area){
    void mutate(async()=>{const r=await fetch("/api/wedding/items/"+encodeURIComponent(item.id)+"/photo",{method:"DELETE",credentials:"same-origin"});if(!r.ok)throw new Error("PHOTO_DELETE_FAILED");});
  });
 }
-function bindCards(root){root.querySelectorAll("[data-wed-edit]").forEach(btn=>btn.addEventListener("click",()=>{state.editing=btn.dataset.wedEdit;state.error="";show();}));}
+function bindEmptyInspiration(root){
+ root.querySelector("#wed-first-pin")?.addEventListener("click",startIdea);
+}
+function bindCards(root){root.querySelectorAll("[data-wed-edit]").forEach(btn=>btn.addEventListener("click",()=>{state.editing=btn.dataset.wedEdit;state.ideaMode=false;state.error="";show();}));}
 export function openWeddingDetail(remote){
  const dialog=document.querySelector("#detail-dialog"),body=document.querySelector("#dialog-body");if(!dialog||!body)return;
  document.querySelector("#dialog-context").textContent="Pareja · proyecto compartido";
  document.querySelector("#dialog-title").textContent="Boda";
  dialog.classList.add("wedding-dialog");
- state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";
+ state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="inspiracion";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();
  if(!remote){body.innerHTML='<div class="wed-locked"><h3>Boda</h3><p>Este apartado permite añadir ideas, presupuestos y fotos en la versión privada de Segundo Cerebro.</p></div>';return;}

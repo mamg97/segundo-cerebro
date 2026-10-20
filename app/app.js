@@ -15,7 +15,7 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configu
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
-import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.1";
+import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.2";
 import { hrefForArea, routeFromHash } from "./area-routes.mjs?v=0.1.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";

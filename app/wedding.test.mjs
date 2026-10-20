@@ -22,7 +22,7 @@ test("budget math does not double count paid and excluded entries",()=>{
 test("wedding has private API and responsive separate stylesheet",()=>{
  const app=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
- assert.match(app,/wedding\.css\?v=0\.1\.1/);
+ assert.match(app,/wedding\.css\?v=0\.1\.2/);
  assert.match(style,/\.wed-grid/);
  assert.doesNotMatch(style,/overflow-y:auto/);
 });
@@ -34,4 +34,36 @@ test("wedding shows budget dashboard directly without the decorative introductio
  assert.match(source,/<div class="wed-toolbar">/);
  assert.doesNotMatch(source,/wed-hero|Una boda a nuestra manera|NUESTRO PROYECTO EN COMÚN/);
  assert.doesNotMatch(css,/\.wed-hero/);
+});
+
+test("Pinterest links are recognized without trusting lookalike domains",()=>{
+ const {isPinterestLink}=await import("./wedding.js");
+ assert.equal(isPinterestLink("https://www.pinterest.com/pin/1234/"),true);
+ assert.equal(isPinterestLink("https://pin.it/example"),true);
+ assert.equal(isPinterestLink("https://pinterest.com.evil.example/pin/1"),false);
+ assert.equal(isPinterestLink("https://example.com/pinterest.com"),false);
+ assert.equal(isPinterestLink("javascript:alert(1)"),false);
+});
+test("moodboard excludes discarded ideas, filters categories, and preserves existing planning",async()=>{
+ const {inspirationItems}=await import("./wedding.js");
+ const items=[
+  {id:"1",title:"Flores silvestres",description:"centros",category:"decoracion",status:"idea",photoUrl:"/api/wedding/items/a/photo"},
+  {id:"2",title:"Banquete",description:"",category:"catering",status:"pendiente",url:"https://www.pinterest.com/pin/1"},
+  {id:"3",title:"Descartada",category:"decoracion",status:"descartado",photoUrl:"/photo"},
+  {id:"4",title:"Lista de invitados",category:"invitados",status:"idea",photoUrl:"/photo"},
+  {id:"5",title:"Precio finca",category:"finca",status:"presupuestado",estimateCents:12000}
+ ];
+ assert.deepEqual(inspirationItems(items).map(x=>x.id),["1","2"]);
+ assert.deepEqual(inspirationItems(items,"decoracion","Flores").map(x=>x.id),["1"]);
+ assert.deepEqual(inspirationItems(items,"catering").map(x=>x.id),["2"]);
+ const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ assert.match(source,/class="wed-masonry"/);
+ assert.match(source,/data-wed-view="inspiracion"/);
+ assert.match(source,/data-wed-view="planificacion"/);
+ assert.match(source,/sendPhoto\(result\.item\.id,photo\)/);
+ assert.match(source,/wed-stats/);
+ assert.doesNotMatch(source,/api\.pinterest\.com|PINAR_TOKEN|PINTEREST_CLIENT_SECRET/);
+ const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
+ assert.match(style,/\.wed-masonry/);
+ assert.doesNotMatch(style,/overflow-y:auto/);
 });
