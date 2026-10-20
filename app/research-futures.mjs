@@ -1,4 +1,4 @@
-import {predictionTreeIndex,predictionYearStrip} from './research-futures-trees.mjs?v=0.5.24';
+import {predictionYearStrip} from './research-futures-trees.mjs?v=0.5.24';
 import {questionSummary,questionSelect,futureNodeRail,supportedQuestionIds} from './research-futures-questions.mjs?v=0.5.25';
 import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.13';
 import {phenomenaTree,phenomenonDetails} from './research-phenomena-tree.mjs?v=0.5.13';
@@ -330,6 +330,23 @@ function research(result, metrics, horizon) {
   return html + '<details class="panel top-gap future-provenance"><summary>Supuestos, procedencia y reproducción</summary><p>Origen: 1 de enero de ' + result.origin + '. Información admitida hasta ' + result.cutoff + '. Se integra el año ' + (result.origin - 1) + ' sin observar su desenlace. Matriz estacionaria durante toda la trayectoria.</p><p>Modelo: ' + esc(result.modelLabel) + ' · versión ' + esc(result.version) + ' · fuente ' + esc(result.datasetVersion) + '.</p><p>' + esc(result.uncertainty.caveat || 'Persistencia determinista: no hay distribución paramétrica estimada.') + '</p>' + result.caveats.map(c => '<p>' + esc(c) + '</p>').join('') + '<p>Protocolo: ' + esc(result.protocolSha256) + '<br>Código de ajuste: ' + esc(result.codeSha256) + '<br>Run: ' + esc(result.runId) + '</p>' + (result.evidence ? '<a href="' + esc(result.evidence) + '" target="_blank" rel="noopener noreferrer">Archivo privado de reproducción ↗</a>' : '') + '</details>';
 }
 
+
+/** The question and observed overlay are presentation-only; no model refit. */
+export function futureFilterBar({catalogs,catalog,country,model,question,observed,canShowObserved,loading}) {
+  return '<form class="future-controls future-controls-single-row" aria-label="Configurar predicción retrospectiva">'+
+    '<label class="future-filter-field">Sociedad<select name="country">'+
+      [...catalog.countries].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>option(c.id,c.name,country)).join('')+'</select></label>'+
+    '<label class="future-filter-field">Predicción · origen<select name="catalog">'+
+      catalogs.map(c=>option(c.id,c.origin+' · información ≤ '+c.cutoff,catalog.id)).join('')+'</select></label>'+
+    '<label class="future-filter-field">Modelo<select name="model">'+
+      Object.entries(catalog.models).map(([id,name])=>option(id,name,model)).join('')+'</select></label>'+
+    questionSelect(question)+
+    '<label class="future-observed-toggle future-filter-observed"><input type="checkbox" name="observed"'+
+      (observed?' checked':'')+(canShowObserved?'':' disabled')+'> Mostrar realidad</label>'+
+    '<button type="submit" class="future-calculate" aria-label="Calcular predicción retrospectiva"'+
+      (loading?' disabled':'')+'>'+(loading?'Calculando…':'Calcular')+'</button></form>';
+}
+
 export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, onsetExperiments = []} = {}) {
   if (!catalogs?.length) {
     container.innerHTML = '<section class="panel empty"><strong>Futures Engine · Sin datos auditados</strong><p>El registro privado aún no contiene un catálogo de transiciones válido. No se dibujan probabilidades de ejemplo.</p></section>';
@@ -360,10 +377,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
     const graphFirst = result ?
       '<section class="panel future-network future-network-first"><div class="panel-head"><div><span class="eyebrow">PSICOHISTORIA / OBSERVATORIO</span>'+
       '<h2>Árbol completo · predicción '+result.origin+'</h2><p>'+esc(result.country.name)+' · datos hasta '+result.cutoff+' · años '+result.cutoff+'–'+(result.origin+result.maxHorizon-1)+' · '+esc(result.modelLabel)+'</p></div>'+
-      '<label class="future-observed-toggle"><input type="checkbox" name="observed"'+(observed?' checked':'')+
-      (!observedCaseAvailable(result,horizon)?' disabled':'')+'> Mostrar lo que ocurrió</label></div>'+
-      '<div class="future-question-bar">'+questionSelect(question)+
-      '<p>La pregunta cambia el resultado destacado, no el modelo. Las cuatro filas conservan sus probabilidades.</p></div>'+
+      '</div>'+ 
       futureGraphGuide(result,horizon,question) + predictionYearStrip(result,horizon) +
       '<p class="future-network-key"><span><b>━━ Ámbar:</b> evolución registrada posteriormente</span><span>● Otros colores: probabilidad de cada estado</span>'+
       '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
@@ -376,11 +390,8 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
       (loading?'Cargando las trayectorias calculadas…':'Preparando la consulta de datos reales…')+'</p></section>';
     const controlsAboveGraph = '<div class="future-selection"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
-      '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
-      '<label>Predicción · año de origen<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
-      '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
-      '<button type="submit" class="future-calculate"' + (loading ? ' disabled' : '') + '>' + (loading ? 'Calculando…' : 'Calcular predicción retrospectiva') + '</button></form>' +
-      predictionTreeIndex(catalogs,catalog.id) + '<p class="future-warning">BACKTEST EXPLORATORIO · Fuente histórica revisada. No es un pronóstico actual ni acredita información disponible en el origen.</p>' +
+      futureFilterBar({catalogs,catalog,country,model,question,observed,canShowObserved:observedCaseAvailable(result,horizon),loading})+
+      '<p class="future-warning">BACKTEST EXPLORATORIO · Fuente histórica revisada. No es un pronóstico actual ni acredita información disponible en el origen.</p>' +
       (error ? '<p class="error" role="alert">' + esc(error) + '</p>' : '') + '</div>';
     const annualHTML = controlsAboveGraph + graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) +
       '<div class="future-after-network">' +
@@ -442,15 +453,6 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       selectedPhenomenon=target; playing=false; selection=null;
       render('[data-phenomenon="'+target+'"]');
     }));
-    container.querySelectorAll('button[data-ftree]').forEach(button=>button.addEventListener('click',()=>{
-      const next=catalogs.find(c=>c.id===button.dataset.ftree);
-      if(!next||next.id===catalog.id)return;
-      catalog=next;
-      if(!catalog.countries.some(c=>String(c.id)===String(country)))country=preferredFutureCountry(catalog);
-      if(!Object.hasOwn(catalog.models,model))model='markov';
-      horizon=catalog.maxHorizon;
-      void load('[data-ftree="'+esc(catalog.id)+'"]');
-    }));
     container.querySelectorAll('button[data-fyear]').forEach(button=>button.addEventListener('click',()=>{
       const next=Number(button.dataset.fyear);
       if(!payload?.result || !Number.isInteger(next)||next<1||next>payload.result.maxHorizon)return;
@@ -458,7 +460,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       observed=observedCaseAvailable(payload.result,horizon);
       render('[data-fyear="'+next+'"]');
     }));
-    container.querySelectorAll('.future-controls select').forEach(select => select.addEventListener('change', () => {
+    container.querySelectorAll('.future-controls select[name="country"],.future-controls select[name="catalog"],.future-controls select[name="model"]').forEach(select => select.addEventListener('change', () => {
       if (select.name === 'catalog') {
         catalog = catalogs.find(c => c.id === select.value);
         if (!catalog.countries.some(c => String(c.id) === String(country))) country = preferredFutureCountry(catalog);

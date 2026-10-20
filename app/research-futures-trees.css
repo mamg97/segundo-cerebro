@@ -57,3 +57,49 @@
  .future-question-select{min-width:0}
  .future-node-rail{grid-template-columns:minmax(0,1fr)}
 }
+
+/* AV-074 · Single prediction configuration bar, no duplicate cards / question panel. */
+.future-selection .future-controls.future-controls-single-row{
+  display:grid;
+  grid-template-columns:minmax(105px,.75fr) minmax(165px,1.12fr) minmax(150px,1fr) minmax(228px,1.5fr) max-content max-content;
+  align-items:end;gap:9px;margin:8px 0 6px;padding:11px 13px;border-radius:10px
+}
+.future-controls-single-row .future-filter-field,
+.future-controls-single-row .future-question-select{
+  display:flex;flex-direction:column;gap:6px;min-width:0;max-width:none;
+  font-size:10px;font-weight:650;letter-spacing:0
+}
+.future-controls-single-row .future-question-select>span{font-size:10px;font-weight:650;letter-spacing:0;color:#a9bfd2}
+.future-controls-single-row select,
+.future-controls-single-row .future-question-select select{
+  width:100%;min-width:0;max-width:100%;height:42px;min-height:42px;
+  padding:8px 9px;font-size:12px;border-radius:7px
+}
+.future-controls-single-row .future-observed-toggle.future-filter-observed{
+  display:flex;flex-direction:row;justify-content:center;align-items:center;gap:6px;
+  min-height:42px;padding:0 8px;font-size:11px;line-height:1.2;
+  color:#c5d5e0;white-space:nowrap;cursor:pointer
+}
+.future-controls-single-row .future-filter-observed input{margin:0;flex:0 0 auto}
+.future-controls-single-row .future-filter-observed:has(input:disabled){opacity:.6;cursor:not-allowed}
+.future-controls-single-row .future-calculate{min-height:42px;min-width:104px;padding:9px 13px;white-space:nowrap;font-size:12px}
+.future-selection .future-warning{margin:6px 0 10px}
+@media (max-width:1160px){
+  .future-selection .future-controls.future-controls-single-row{
+    grid-template-columns:repeat(4,minmax(0,1fr));gap:9px 11px
+  }
+  .future-controls-single-row .future-filter-observed{grid-column:3}
+  .future-controls-single-row .future-calculate{grid-column:4}
+}
+@media (max-width:700px){
+  .future-selection .future-controls.future-controls-single-row{
+    grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;gap:9px
+  }
+  .future-controls-single-row .future-filter-observed{grid-column:1}
+  .future-controls-single-row .future-calculate{grid-column:2}
+}
+@media (max-width:420px){
+  .future-selection .future-controls.future-controls-single-row{grid-template-columns:minmax(0,1fr)}
+  .future-controls-single-row .future-filter-observed,
+  .future-controls-single-row .future-calculate{grid-column:1}
+}
