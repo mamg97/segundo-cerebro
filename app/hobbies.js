@@ -204,7 +204,7 @@ export function hobbyEditorOptions(items,field,current="",numeric=false){
   for(let n=0;n<=20;n++)values.push(n/2);
  }
  const seen=new Set();
- return values.map(value=>String(value).trim().replace(numeric?",":/^$/,".")) // Numeric choices use dot-decimal convention.
+ return values.map(value=>numeric?String(value).trim().replace(",","."):String(value).trim()) // Numeric choices use dot-decimal convention.
   .filter(value=>{
    const key=value.toLocaleLowerCase("es");
    if(seen.has(key))return false;
@@ -214,7 +214,7 @@ export function hobbyEditorOptions(items,field,current="",numeric=false){
   .sort(numeric?(a,b)=>Number(a)-Number(b):(a,b)=>EDITOR_COLLATOR.compare(a,b));
 }
 export function hobbySelectField(name,label,value,options,{numeric=false}={}){
- const current=value===null||value===undefined?"":String(value).trim().replace(numeric?",":/^$/,".");
+ const current=value===null||value===undefined?"":(numeric?String(value).trim().replace(",","."):String(value).trim());
  const unique=[...options];
  if(current&&!unique.includes(current))unique.push(current);
  const sorted=unique.sort(numeric?(a,b)=>Number(a)-Number(b):(a,b)=>EDITOR_COLLATOR.compare(a,b));
