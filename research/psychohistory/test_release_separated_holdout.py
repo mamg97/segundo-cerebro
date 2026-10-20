@@ -87,9 +87,9 @@ class FrozenVintageHoldoutTests(unittest.TestCase):
         for r in changed:
             if int(r["year"])==2025 and r["country_id"]=="2":
                 r["sb_total_deaths_best"]="900" if r["sb_total_deaths_best"]=="0" else "0"
-        new_hash=zipped(self.new,changed)
         with mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
             before=run(self.old,self.new,self.s24,self.s26)
+        new_hash=zipped(self.new,changed)
         with mock.patch.dict(PROTOCOL,{"archive_sha256":new_hash}):
             after=run(self.old,self.new,self.s24,new_hash)
         self.assertEqual(before["train_eligible_rows"],after["train_eligible_rows"])
