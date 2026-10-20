@@ -24,3 +24,9 @@ El codebook oficial 24.1 está fechado en 2024 y la URL oficial figura en el ín
 ## Límites irreductibles
 
 No hay testigo histórico independiente de los bytes 24.1. El fichero oficial actualizado en 2026 podría no ser idéntico al original de 2024. Puede haber cambios de codificación territorial entre ediciones y los países no son independientes. Si faltan campos en 24.1, no fabricar features ni scores: devolver error y evaluar otro diseño. El experimento sigue subordinado al sello 2027 y la reconstrucción temporal del núcleo científico.
+
+## Antes del primer score (procedencia del pin)
+
+- Las reglas de cohortes y seis modelos quedaron en PR #720 con commit `aaaf021bc1dc921255b9a1872945d9fc910133dc`, **antes** de observar el rendimiento de 2025.
+- [GitHub Actions #39452503769](https://github.com/mamg97/segundo-cerebro/actions/runs/39452503769) descargó los ZIP oficiales y observó por primera vez su SHA-256 actual: 24.1 `00410bdb65023d1bc8799f47f188677965046bb73447ee33094782db30076260`, 26.1 `66910888f5653af42776d2debc1d72fe527559e7f7fc82e69b7c8771467f2d34` (ya registrado previamente). En ese job **no se ejecutó evaluación de etiquetas 2025**, solamente descarga y hash.
+- La siguiente ejecución habilita el **primer score** con esos hashes obligatorios. El pin es una observación hecha en 2026, **no demuestra existencia de esos bytes en 2024**.
