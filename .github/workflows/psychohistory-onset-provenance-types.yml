@@ -1,0 +1,36 @@
+# AV-054: source-vintage audit; never publish conflict-country rows or scoring.
+name: Psychohistory Onset 19.1 vintage and conflict-type audit
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/onset_provenance_types_av054.py"
+      - "research/psychohistory/test_onset_provenance_types_av054.py"
+      - ".github/workflows/psychohistory-onset-provenance-types.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fictional-adversarial-type-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Enforce no silent as-of or revised target changes
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s research/psychohistory -p test_onset_provenance_types_av054.py -v
+  official-type-and-vintage-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Audit exact Onset and ACD version bytes and 61 frozen residuals
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/onset_provenance_types_av054.py
+          echo 'Source byte identity is observed today; no historical release time or causal error established.'
+          echo 'No actual forecast, backtest, country identifiers or risk-set rows published.'
