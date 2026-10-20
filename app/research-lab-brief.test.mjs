@@ -81,3 +81,20 @@ test("strategic brief uses only fixed non-sensitive text and escapes visible cou
   assert.match(html,/1 resultados evaluables/);
   assert.doesNotMatch(html,/CF-Access-Jwt|Authorization|fakeId|syntheticId/);
 });
+
+test("monochrome lab theme remains accessible, responsive and scientifically honest",()=>{
+  const html=readFileSync(new URL("./research-lab.html",import.meta.url),"utf8");
+  const css=readFileSync(new URL("./research-lab-monochrome.css",import.meta.url),"utf8");
+  assert.match(html,/research-lab-monochrome/);
+  assert.match(html,/noindex,nofollow,noarchive/);
+  assert.match(html,/id="view"/);
+  assert.match(html,/id="headline-metrics"/);
+  assert.match(html,/class="hero-mark" aria-hidden="true"/);
+  assert.match(css,/prefers-reduced-motion:reduce/);
+  assert.match(css,/overflow-x:auto/);
+  assert.match(css,/@media/);
+  assert.match(css,/--base:#05070a/);
+  assert.doesNotMatch(css,/@import/);
+  assert.doesNotMatch(html,/style=/);
+  assert.ok(!html.includes("PsicoPredicciones"));
+});
