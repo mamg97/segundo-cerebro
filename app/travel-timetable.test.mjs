@@ -46,3 +46,17 @@ test("no trip schedule or real private data is embedded in public code",()=>{
   assert.equal(js.includes(str),false);
  }
 });
+
+test("compact itinerary distinguishes empty and occupied hours, preserving descriptions and statuses",()=>{
+  const markup=travelScheduleMarkup(fixture(),date=>date);
+  assert.match(markup,/<tr class="trv-time-row-empty"><th scope="row" class="trv-time-axis">08:00<\/th>/);
+  assert.match(markup,/<tr class="trv-time-row-active"><th scope="row" class="trv-time-axis">10:00<\/th>/);
+  assert.match(markup,/<tr class="trv-time-row-active"><th scope="row" class="trv-time-axis">20:45<\/th>/);
+  assert.match(markup,/Paseo por reservar/);
+  assert.match(markup,/CONFIRMADO/);
+  const css=readFileSync(new URL("./travels.css",import.meta.url),"utf8");
+  assert.match(css,/\.trv-timetable tbody \.trv-time-row-empty td\{height:20px\}/);
+  assert.match(css,/grid-template-areas:"category status" "description description"/);
+  assert.match(css,/\.trv-timetable tbody td\{height:auto;/);
+  assert.doesNotMatch(css,/\.trv-timetable tbody td\{height:63px/);
+});

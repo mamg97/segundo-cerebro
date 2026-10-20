@@ -23,7 +23,7 @@ export function travelScheduleMarkup(groups,dayLabel) {
   if(!model.days.length)return '<p class="trv-muted">Todavía no hay jornadas planificadas en Eventos.</p>';
   const titles='<tr><th scope="col" class="trv-time-axis">Hora</th>'+model.days.map((d,i)=>
     '<th scope="col"><span>DÍA '+(i+1)+'</span><strong>'+e(dayLabel(d.date))+'</strong></th>').join("")+'</tr>';
-  const rows=model.times.map(time=>'<tr><th scope="row" class="trv-time-axis">'+e(time)+'</th>'+model.days.map(day=>{
+  const rows=model.times.map(time=>'<tr class="'+(model.days.some(day=>(model.cells.get(day.date+"|"+time)||[]).length>0)?"trv-time-row-active":"trv-time-row-empty")+'"><th scope="row" class="trv-time-axis">'+e(time)+'</th>'+model.days.map(day=>{
     const items=model.cells.get(day.date+"|"+time)||[];
     return '<td>'+ (items.length?items.map(slot=>{
       const label=["CONFIRMADO","PENDIENTE","PROPUESTA"].includes(slot.status)?slot.status:"PROPUESTA";
