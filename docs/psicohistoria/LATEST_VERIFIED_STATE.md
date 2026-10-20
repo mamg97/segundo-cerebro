@@ -1,5 +1,16 @@
 # PSICOHISTORIA — Estado científico verificado · 20/10/2026
 
+## AV-20261020-058 · Comprobación externa de Cloudflare Access para las rutas privadas
+
+- [PR #702](https://github.com/mamg97/segundo-cerebro/pull/702) **fusionada** (squash `f0740afedc345d90a335bfbe673fc3fbc89270df`). Auditor sin tokens ni credenciales que consulta tres rutas en producción y **nunca lee ni registra** cuerpos de respuesta, URLs de Sheets, países o probabilidades.
+- [Primera prueba real, GitHub Actions run #39423024862](https://github.com/mamg97/segundo-cerebro/actions/runs/39423024862): `/api/research-lab` **302 BLOCKED**, `/api/research-shadow2027` **302 BLOCKED**, `/app/research-lab.html?view=shadow2027` **302 BLOCKED** por redirección validada al flujo de Cloudflare Access. Todas sin cookie/JWT. Un HTTP 200 o error no clasificable haría fallar el trabajo; un fallo de conexión no cuenta como control de privacidad superado.
+- **Vigilancia recurrente real**: prueba añadida al auditor horario existente `.github/workflows/web-audit.yml`, **antes de obtener OIDC**. El paso `Verify PSICOHISTORIA anonymous access denied in production` en el primer [run de producción #39423562922](https://github.com/mamg97/segundo-cerebro/actions/runs/39423562922) tras merge completó **SUCCESS**. CI completa de Worker del PR, privacidad y páginas de PR/main y despliegue privado de main **SUCCESS**. No se han modificado reglas Access, ni tokens ni credenciales.
+- [Auditor y limitaciones](ACCESS_ANONYMOUS_BOUNDARY_AV058.md). Un 302 legítimo demuestra **solo bloqueo de peticiones anónimas en esas tres rutas y en ese instante**, no prueba acceso de un usuario autorizado. La configuración **real** `PSICO_ACCESS_TEAM_DOMAIN` / `PSICO_ACCESS_APP_AUD` del segundo control del AV-057 y una respuesta 200 con JWT válido siguen **PENDIENTES**. Hasta entonces, la tabla inline permanece denegada por defecto; el enlace anterior a la hoja privada funciona de manera independiente.
+- **Criterio explícito del propietario:** PSICOHISTORIA dentro de Segundo Cerebro; no publicar observatorio abierto. **Canónico privado releído**: `PsicoAvances=58`, `AV-20261020-058=VERIFICADO` como ingeniería/seguridad auditada; `MAD-02=PARCIAL`; `PsicoPredicciones=0`. Cohorte sombra 2027 (196 países, seis modelos) sin cambios, 0 euros adicionales.
+- **AV-059 siguiente:** verificar, solo con permisos de lectura mínimos y sin divulgar valores, si la app Cloudflare Access que cubre el hostname tiene AUD y team domain identificables a través de la API del propietario; probar sesión real antes de activar el visor inline. No usar IDs de cuenta como AUD ni aceptar claims solo por email. En paralelo, pendiente el sello y registro prospectivo externos de la cohorte 2027, independientemente de su interfaz.
+
+---
+
 ## AV-20261020-057 · Decisión: SOLO dentro de Segundo Cerebro · visor 2027 con Access criptográfico
 
 - **Privacidad confirmada expresamente por el propietario:** PSICOHISTORIA permanece **dentro de Segundo Cerebro**; NO se abre un observatorio público ni se distribuyen probabilidades en GitHub Pages. Se conserva la hoja privada de 196 países × 6 modelos (1.176 probabilidades) sin modificación, `SHADOW_NO_EMITIDO`.
