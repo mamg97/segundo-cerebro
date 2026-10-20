@@ -15,6 +15,14 @@ const AUD_RE=/^[a-zA-Z0-9_-]{8,160}$/;
 
 function appPaths(app){
   const arr=[];
+  // Cloudflare has deprecated self_hosted_domains: destinations now take
+  // precedence. Never combine a stale deprecated wildcard with a new scope.
+  if(Array.isArray(app?.destinations)&&app.destinations.length){
+    for(const item of app.destinations){
+      if(item?.type==="public"&&typeof item?.uri==="string")arr.push(item.uri);
+    }
+    return arr;
+  }
   if(typeof app?.domain==="string")arr.push(app.domain);
   if(Array.isArray(app?.self_hosted_domains)){
     for(const item of app.self_hosted_domains){
@@ -74,6 +82,7 @@ export async function auditAccessMetadata({accountId,apiToken,fetcher=fetch}={})
   // outputting request/response contents or the Access application audience.
   const pages=[];
   try{
+    let complete=false;
     for(let page=1;page<=5;page++){
       const res=await getJson("/accounts/"+accountId+"/access/apps?per_page=100&page="+page,
         apiToken,{fetcher});
@@ -83,8 +92,9 @@ export async function auditAccessMetadata({accountId,apiToken,fetcher=fetch}={})
       pages.push(...res.result);
       if(pages.length>500){out.appsApi="INVALID_RESPONSE";break;}
       const total=Number(res.result_info?.total_pages??page);
-      if((Number.isSafeInteger(total)&&total<=page)||res.result.length<100)break;
+      if((Number.isSafeInteger(total)&&total<=page)||res.result.length<100){complete=true;break;}
     }
+    if(out.appsApi==="OK"&&!complete)out.appsApi="INCOMPLETE_PAGINATION";
     if(out.appsApi==="OK"){
       const matches=findAppCoveringAllPaths(pages);
       out.targetApp=matches.length===1?"UNIQUE":matches.length===0?"NONE":"AMBIGUOUS";
