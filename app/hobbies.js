@@ -7,41 +7,27 @@ const LIMIT=48;
 const store={category:null,items:[],filter:"",search:"",page:1,editing:null,error:"",busy:false,loaded:false};
 const byId=id=>HOBBY_CATEGORIES.find(c=>c.id===id);
 const titleOf=(item,category)=>category==="vinos"?[item.marca,item.tipo].filter(Boolean).join(" · ")||"Vino sin marca":item.titulo||"Sin título";
-function card(hobby){
- return '<a class="hby-card" href="'+hrefForHobby(hobby.id)+'" data-hby-category="'+esc(hobby.id)+'">'+
- '<span class="hby-card-symbol" aria-hidden="true">'+hobby.icon+'</span>'+
- '<span class="hby-card-content"><small>'+esc(hobby.subtitle)+'</small>'+
- '<strong>'+esc(hobby.title)+'</strong><span>'+esc(hobby.description)+'</span></span>'+
- '<span class="hby-card-arrow" aria-hidden="true">↗</span></a>';
-}
-function overview(){
- return '<section class="hby-page" aria-label="Explorar hobbies">'+
- '<div class="hby-hero"><div><span class="hby-eyebrow">TU ESPACIO PERSONAL</span>'+
- '<h3>Disfrutar también es parte del plan.</h3>'+
- '<p>Organiza lo que ves, lees, pruebas y recorres. Cada afición tendrá su histórico, favoritos y próximas ideas.</p></div>'+
- '<span class="hby-hero-mark" aria-hidden="true">✦</span></div>'+
- '<div class="hby-section-head"><h3>Explora tus aficiones</h3><span>'+HOBBY_CATEGORIES.length+' secciones iniciales</span></div>'+
- '<div class="hby-grid">'+HOBBY_CATEGORIES.map(card).join("")+'</div>'+
- '<p class="hby-hint">Películas, series, libros y vinos consultan sus fuentes oficiales de Google Sheets. Rutas en moto continuará como módulo independiente.</p>'+
- '</section>';
-}
-function categoryView(hobby){
- return '<section class="hby-page" data-hby-current="'+esc(hobby.id)+'">'+
- '<a class="hby-back" href="'+hrefForArea("area-hobbies")+'">← Todos los hobbies</a>'+
- '<div class="hby-category-hero"><span class="hby-category-icon" aria-hidden="true">'+hobby.icon+'</span>'+
- '<div><small>HOBBIES / '+esc(hobby.title.toLocaleUpperCase("es"))+'</small>'+
- '<h3>'+esc(hobby.title)+'</h3><p>'+esc(hobby.description)+'</p></div></div>'+
- (SUPPORTED.has(hobby.id)?'<div id="hby-dynamic"><div class="hby-loading">Cargando catálogo privado…</div></div>':
- '<div class="hby-section-head"><h3>Tu colección</h3><span>Por conectar</span></div>'+
- '<div class="hby-empty"><h4>Rutas en moto · Próximamente</h4><p>Este apartado tendrá sus rutas, itinerarios y mapas propios.</p></div>')+
- '</section>';
+// Single tabbed workspace. The top-level route defaults to Películas.
+const DEFAULT_CATEGORY="peliculas";
+const TABS=["peliculas","series","libros","vinos","rutas-moto"];
+function tabs(selected){
+ return '<nav class="hby-tabs" aria-label="Colecciones de hobbies">'+
+  TABS.map(id=>{
+   const hobby=byId(id),current=id===selected;
+   return '<a class="hby-tab'+(current?' is-active':'')+'" href="'+hrefForHobby(id)+'"'+
+    (current?' aria-current="page"':'')+'><span aria-hidden="true">'+hobby.icon+'</span> '+esc(hobby.title)+'</a>';
+  }).join("")+'</nav>';
 }
 export function hobbiesMarkup(categoryId=null){
- if(!categoryId)return overview();
- const hobby=byId(categoryId);
- return hobby?categoryView(hobby):overview();
+ const selected=byId(categoryId)?categoryId:DEFAULT_CATEGORY;
+ return '<section class="hby-page" data-hby-current="'+esc(selected)+'">'+tabs(selected)+
+ (SUPPORTED.has(selected)?'<div id="hby-dynamic"><div class="hby-loading">Cargando catálogo privado…</div></div>':
+ '<div class="hby-empty"><h4>Rutas en moto</h4><p>Este apartado tendrá sus rutas, itinerarios y mapas propios.</p></div>')+
+ '</section>';
 }
-const active=()=>document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/hobbies/"+store.category;
+const active=()=>document.querySelector("#detail-dialog")?.open&&
+ (window.location.hash==="#/hobbies/"+store.category||
+  (window.location.hash==="#/hobbies"&&store.category===DEFAULT_CATEGORY));
 async function request(path,method="GET",payload){
  const response=await fetch(path,{method,credentials:"same-origin",cache:"no-store",headers:payload?{"Content-Type":"application/json","Accept":"application/json"}:{"Accept":"application/json"},body:payload?JSON.stringify(payload):undefined});
  const data=await response.json().catch(()=>({code:"INVALID_RESPONSE"}));
@@ -61,32 +47,40 @@ function listed(){
  return store.items.filter(item=> (!store.filter||item.estado===store.filter) &&
  (!q||[item.titulo,item.marca,item.tipo,item.subtipo,item.subtipo_2,item.denominacion,item.comentarios,item.estado].join(" ").toLocaleLowerCase("es").includes(q)));
 }
-function recordCard(item){
- const win=store.category==="vinos",score=win?item.nota:item.puntuacion;
+function recordRow(item){
+ const wine=store.category==="vinos",score=wine?item.nota:item.puntuacion;
+ const genre=wine?(item.denominacion||item.tipo||"—"):(item.subtipo||item.subtipo_2||"—");
+ const metric=wine?item.precio:score;
+ const metricText=metric!==""&&metric!=null&&Number.isFinite(Number(metric))
+   ?(wine?Number(metric).toLocaleString("es-ES",{style:"currency",currency:"EUR"}):esc(metric)+"/10"):"—";
  const title=titleOf(item,store.category);
- return '<article class="hby-record" data-hby-record="'+esc(item.id)+'">'+
- '<div class="hby-record-meta"><span>'+esc(win?(item.denominacion||"Vino"):(item.subtipo||"Catálogo"))+'</span>'+
- (item.estado?'<span class="hby-record-status">'+esc(item.estado)+'</span>':'')+'</div>'+
- '<h4>'+esc(title)+'</h4>'+
- (win&&item.precio!==""?'<p class="hby-record-price">'+Number(item.precio).toLocaleString("es-ES",{style:"currency",currency:"EUR"})+'</p>':'')+
- (score!==""&&score!=null?'<strong class="hby-score">'+esc(score)+'/10</strong>':'')+
- (item.comentarios?'<p class="hby-record-notes">'+esc(item.comentarios)+'</p>':'')+
- (item.incidencia_migracion?'<p class="hby-review">Pendiente de revisión: '+esc(item.incidencia_migracion)+'</p>':'')+
- '<div class="hby-record-actions"><small>'+esc(item.fecha_fin||item.fecha_inicio||"")+'</small>'+
- '<button type="button" data-hby-edit="'+esc(item.id)+'">Editar</button></div></article>';
+ const issue=item.incidencia_migracion?'<small class="hby-review">Revisar: '+esc(item.incidencia_migracion)+'</small>':'';
+ const notes=item.comentarios?'<small class="hby-row-note" title="'+esc(item.comentarios)+'">'+esc(item.comentarios)+'</small>':'';
+ return '<tr data-hby-record="'+esc(item.id)+'">'+
+  '<td class="hby-list-title" data-label="Título"><strong>'+esc(title)+'</strong>'+notes+issue+'</td>'+
+  '<td class="hby-list-type" data-label="'+(wine?'Denominación':'Género')+'">'+esc(genre)+'</td>'+
+  (wine?'<td class="hby-list-status" data-label="Tipo">'+esc(item.tipo||"—")+'</td>':
+        '<td class="hby-list-status" data-label="Estado"><span class="hby-record-status">'+esc(item.estado||"—")+'</span></td>')+
+  '<td class="hby-list-score" data-label="'+(wine?'Precio':'Nota')+'">'+metricText+'</td>'+
+  '<td class="hby-list-actions"><button type="button" data-hby-edit="'+esc(item.id)+'" aria-label="Editar '+esc(title)+'">Editar</button></td>'+
+ '</tr>';
 }
 function statusOptions(){
  const all=[...new Set(store.items.map(x=>x.estado).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
  return '<option value="">Todos los estados</option>'+all.map(s=>'<option value="'+esc(s)+'" '+(store.filter===s?"selected":"")+'>'+esc(s)+'</option>').join("");
 }
 function catalogMarkup(){
- const subset=listed(),shown=subset.slice(0,store.page*LIMIT);
- return '<div class="hby-catalog-head"><div><h3>Tu catálogo</h3><small>'+store.items.length+' registros · '+subset.length+' en esta vista</small></div>'+
- '<button type="button" class="hby-main-action" id="hby-add">+ Añadir</button></div>'+
- '<div class="hby-catalog-tools"><label>Buscar<input id="hby-search" type="search" value="'+esc(store.search)+'" placeholder="Título, autor, bodega, notas…"></label>'+
- (store.category==="vinos"?'':'<label>Estado<select id="hby-status">'+statusOptions()+'</select></label>')+
+ const subset=listed(),shown=subset.slice(0,store.page*LIMIT),wine=store.category==="vinos";
+ return '<div class="hby-catalog-head"><div><h3>Tu '+(wine?'bodega':'catálogo')+'</h3>'+
+  '<small>'+store.items.length+' registros · '+subset.length+' en esta vista</small></div>'+
+  '<button type="button" class="hby-main-action" id="hby-add">+ Añadir</button></div>'+
+ '<div class="hby-catalog-tools"><label>Buscar<input id="hby-search" type="search" value="'+esc(store.search)+'" placeholder="Buscar por título, género o notas…"></label>'+
+ (wine?'':'<label>Estado<select id="hby-status">'+statusOptions()+'</select></label>')+
  '<button id="hby-reload" type="button">↻ Actualizar</button></div>'+
- (subset.length?'<div class="hby-record-grid">'+shown.map(recordCard).join("")+'</div>'+
+ (subset.length?'<div class="hby-list-wrap"><table class="hby-list-table"><thead><tr>'+
+ '<th scope="col">Título</th><th scope="col">'+(wine?'Denominación':'Género')+'</th>'+
+ '<th scope="col">'+(wine?'Tipo':'Estado')+'</th><th scope="col">'+(wine?'Precio':'Nota')+'</th>'+
+ '<th scope="col">Acciones</th></tr></thead><tbody>'+shown.map(recordRow).join("")+'</tbody></table></div>'+
  (shown.length<subset.length?'<button id="hby-more" class="hby-more" type="button">Ver más ('+(subset.length-shown.length)+' restantes)</button>':''):
  '<div class="hby-empty"><h4>No hay resultados</h4><p>Prueba con otros filtros o añade un registro.</p></div>')+
  '<p class="hby-source-note">Fuente oficial: Google Sheets · Se conservan las referencias al registro original y las incidencias de migración.</p>';
@@ -119,8 +113,9 @@ function show(){
  bind(place);
 }
 async function load(){
- const data=await request("/api/hobbies/"+store.category);
- if(!active())return;
+ const category=store.category;
+ const data=await request("/api/hobbies/"+category);
+ if(!active()||store.category!==category)return;
  store.items=data.items||[];store.error="";store.loaded=true;show();
 }
 function reload(){
@@ -161,18 +156,18 @@ function bind(root){
 export function openHobbiesDetail(categoryId=null){
  const dialog=document.querySelector("#detail-dialog"),content=document.querySelector("#dialog-body");
  if(!dialog||!content)return;
+ const selected=byId(categoryId)?categoryId:DEFAULT_CATEGORY;
  dialog.classList.add("hobbies-dialog");
- const hobby=byId(categoryId);
  document.querySelector("#dialog-context").textContent="Hobbies · colección personal";
- document.querySelector("#dialog-title").textContent=hobby?hobby.title:"Hobbies";
- content.innerHTML=hobbiesMarkup(categoryId);content.scrollTop=0;
+ document.querySelector("#dialog-title").textContent="Hobbies";
+ content.innerHTML=hobbiesMarkup(selected);content.scrollTop=0;
  if(!dialog.open)dialog.showModal();
- if(!categoryId||!SUPPORTED.has(categoryId))return;
+ if(!SUPPORTED.has(selected))return;
  if(globalThis.__SECOND_BRAIN_REMOTE__!==true){
   const block=content.querySelector("#hby-dynamic");
   if(block)block.innerHTML='<div class="hby-empty"><h4>Catálogos privados</h4><p>Los registros se consultan exclusivamente desde la versión privada de Segundo Cerebro.</p></div>';
   return;
  }
- store.category=categoryId;store.editing=null;store.items=[];store.filter="";store.search="";store.page=1;store.loaded=false;store.error="";
+ store.category=selected;store.editing=null;store.items=[];store.filter="";store.search="";store.page=1;store.loaded=false;store.error="";
  void reload();
 }

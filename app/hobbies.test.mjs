@@ -4,21 +4,25 @@ import {readFileSync} from "node:fs";
 import {hobbiesMarkup} from "./hobbies.js";
 import {HOBBY_CATEGORIES,hrefForHobby} from "./area-routes.mjs";
 
-test("Hobbies overview links to all categories without inventing records",()=>{
+test("Hobbies root has compact tabs, defaults to Películas, and has no oversized banner",()=>{
  const html=hobbiesMarkup();
- assert.match(html,/Explora tus aficiones/);
+ assert.match(html,/class="hby-tabs"/);
+ assert.match(html,/data-hby-current="peliculas"/);
+ assert.match(html,/href="#\/hobbies\/peliculas" aria-current="page"/);
+ assert.match(html,/id="hby-dynamic"/);
  for(const hobby of HOBBY_CATEGORIES){
    assert.ok(html.includes('href="'+hrefForHobby(hobby.id)+'"'));
    assert.ok(html.includes(hobby.title));
  }
- assert.match(html,/fuentes oficiales de Google Sheets/);
+ assert.doesNotMatch(html,/Disfrutar también es parte del plan|hby-hero|hby-category-hero|hby-card/);
 });
-test("Hobbies category views expose tailored metadata and a back link",()=>{
+test("All categories share the same tabs and keep their own linked URL",()=>{
  for(const hobby of HOBBY_CATEGORIES){
-   const html=hobbiesMarkup(hobby.id);
-   assert.match(html,/href="#\/hobbies"/);
-   assert.match(html,/id="hby-dynamic"|class="hby-empty"/);
-   assert.ok(html.includes(hobby.title));
+  const html=hobbiesMarkup(hobby.id);
+  assert.match(html,/class="hby-tabs"/);
+  assert.ok(html.includes('href="'+hrefForHobby(hobby.id)+'" aria-current="page"'));
+  assert.match(html,/id="hby-dynamic"|class="hby-empty"/);
+  assert.doesNotMatch(html,/hby-category-hero|hby-hero/);
  }
 });
 test("Hobbies has the canonical area route and responsive styling, no embedded personal entries",()=>{
@@ -31,8 +35,10 @@ test("Hobbies has the canonical area route and responsive styling, no embedded p
  assert.match(app,/"area-travels", "area-hobbies"/);
  assert.match(app,/route\.areaId==="area-hobbies"/);
  assert.match(routes,/hrefForHobby/);
- assert.match(html,/hobbies\.css\?v=0\.1\.1/);
- assert.match(css,/\.hby-grid/);
+ assert.match(html,/hobbies\.css\?v=0\.1\.2/);
+ assert.match(css,/\.hby-list-table/);
+ assert.match(css,/\.hby-tabs/);
+ assert.match(readFileSync(new URL("./hobbies.js",import.meta.url),"utf8"),/shown\.map\(recordRow\)/);
  assert.doesNotMatch(css,/overflow-y:auto|height:100vh/);
  for(const sensitive of ["Miguel","Andrea","Varsovia","Montecristo"]){
    assert.equal(routes.includes(sensitive),false);

@@ -75,3 +75,58 @@
 .hby-editor-actions .hby-danger{color:#c85b5b!important}
 @media(max-width:1060px){.hby-record-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.hby-record-grid{grid-template-columns:1fr}.hby-editor-fields{grid-template-columns:1fr}.hby-editor-fields .hby-full{grid-column:1}.hby-catalog-head h3{font-size:20px}.hby-catalog-tools{align-items:stretch}.hby-catalog-tools button{width:100%}}
+
+
+/* Hobbies v0.1.2: compact category tabs and one semantic list (no intro banner). */
+.hby-page{max-width:none;width:100%;padding:0 0 28px;box-sizing:border-box}
+.hby-tabs{display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--line);padding:0 0 0 2px;margin:2px 0 13px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+.hby-tab{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;flex:0 0 auto;padding:12px 17px 11px;border-bottom:3px solid transparent;color:var(--ink-soft);font-size:13px;font-weight:800;text-decoration:none;transition:color .12s ease,background-color .12s ease}
+.hby-tab:hover,.hby-tab:focus-visible{background:var(--blue-soft);color:var(--ink);outline-offset:-2px}
+.hby-tab.is-active{color:var(--blue);border-bottom-color:var(--blue)}
+.hby-catalog-head{margin:10px 0 9px}
+.hby-catalog-head h3{font-size:19px}
+.hby-catalog-tools{margin:8px 0 10px}
+.hby-list-wrap{width:100%;min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hby-list-table{width:100%;border-collapse:collapse;border-spacing:0;table-layout:fixed;font-size:12px;background:var(--surface)}
+.hby-list-table th{color:var(--ink-soft);font-size:10px;font-weight:800;text-align:left;background:var(--paper);padding:12px 13px;border-bottom:1px solid var(--line)}
+.hby-list-table th:nth-child(1){width:43%}
+.hby-list-table th:nth-child(2){width:26%}
+.hby-list-table th:nth-child(3){width:13%}
+.hby-list-table th:nth-child(4){width:9%;text-align:right}
+.hby-list-table th:nth-child(5){width:9%;text-align:right}
+.hby-list-table td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle;min-width:0;overflow-wrap:anywhere}
+.hby-list-table tr:last-child td{border-bottom:0}
+.hby-list-table tbody tr:hover{background:var(--blue-soft)}
+.hby-list-title strong{font-size:13px;font-weight:800;display:block;line-height:1.25}
+.hby-row-note{display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:100%;color:var(--ink-soft);font-size:10px;line-height:1.4;margin-top:3px}
+.hby-list-type{color:var(--ink-soft);font-size:11px}
+.hby-list-score{text-align:right;font-weight:850;color:var(--blue);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hby-list-actions{text-align:right}
+.hby-list-actions button{padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--blue);font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.hby-list-actions button:hover,.hby-list-actions button:focus-visible{border-color:var(--blue);background:var(--blue-soft)}
+.hby-review{display:block;font-size:10px;margin-top:4px}
+.hby-source-note{margin:14px 0}
+@media(max-width:840px){
+ .hby-list-table th:nth-child(1){width:42%}
+ .hby-list-table th:nth-child(2){width:24%}
+ .hby-list-table th:nth-child(3){width:14%}
+ .hby-list-table th:nth-child(4){width:10%}
+ .hby-list-table th:nth-child(5){width:10%}
+}
+@media(max-width:650px){
+ .hby-tabs{margin-bottom:9px}
+ .hby-tab{font-size:12px;padding:11px 12px}
+ .hby-list-wrap{border:0;border-radius:0;overflow:visible}
+ .hby-list-table,.hby-list-table tbody,.hby-list-table tr{display:block;width:100%}
+ .hby-list-table thead{display:none}
+ .hby-list-table tr{display:grid;grid-template-columns:1fr auto;column-gap:14px;row-gap:5px;margin-bottom:8px;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-sizing:border-box}
+ .hby-list-table tr:last-child td{border:0}
+ .hby-list-table td{display:block;border:0;padding:0}
+ .hby-list-table .hby-list-title{grid-column:1/-1}
+ .hby-list-title strong{font-size:13px}
+ .hby-list-table .hby-list-type{grid-column:1}
+ .hby-list-table .hby-list-status{grid-column:2;grid-row:2;text-align:right}
+ .hby-list-table .hby-list-score{grid-column:1;grid-row:3;text-align:left}
+ .hby-list-table .hby-list-actions{grid-column:2;grid-row:3;text-align:right}
+ .hby-catalog-tools{gap:7px}
+}
