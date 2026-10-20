@@ -1,5 +1,6 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.13';
+import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.14';
 import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
 import {parseBacktests, comparableGroups, parseSimulations, parseRecoverySimulations} from './research-results.mjs?v=0.4.1';
@@ -16,7 +17,10 @@ const finite=(n)=>typeof n==="number"&&Number.isFinite(n);
 const fmt=(n,d=2)=>finite(n)?n.toLocaleString("es-ES",{maximumFractionDigits:d}):"Sin datos";
 const url=(s)=>typeof s==="string"&&/^https:\/\/[^ \r\n]+$/.test(s)?s:null;
 let state=null;
+const AVAILABLE_VIEWS=new Set(["futures","shadow2027","overview","science","operations","roadmap"]);
 let activeView="futures";
+const initialView=new URLSearchParams(window.location.search).get("view");
+if(AVAILABLE_VIEWS.has(initialView))activeView=initialView;
 let activeTrack=TRACKS.some(t=>t.id===new URLSearchParams(window.location.search).get("track")) ? new URLSearchParams(window.location.search).get("track") : "V2";
 let milestoneFilter="TODOS";
 let generation=0;
@@ -245,7 +249,7 @@ function render(){
   disposeNeural();
   disposeFutures();
   header();metrics();
-  root.innerHTML=activeView==="futures"?'<div id="future-explorer"></div>':activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="science"?science():activeView==="operations"?operations():roadmap();
   document.querySelectorAll("[data-view]").forEach(x=>{x.classList.toggle("active",x.dataset.view===activeView);x.setAttribute("aria-current",x.dataset.view===activeView?"page":"false");});
   if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;activeView='overview';render();},onsetExperiments:state.lab.experiments||[]});
   if(activeView==="overview")disposeNeural=mountNeural(root.querySelector('.neural-stage'),{activeTrack,paused:motionPaused,onPause:value=>{motionPaused=value;}});

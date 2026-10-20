@@ -1,0 +1,27 @@
+name: Psychohistory 2027 private research entry
+on:
+  pull_request:
+    paths:
+      - "app/research-shadow2027.mjs"
+      - "app/research-shadow2027.test.mjs"
+      - "app/research-lab.html"
+      - "app/research-lab.js"
+      - ".github/workflows/psychohistory-private-2027-navigation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-private-link-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify no private URLs in public files and fail-closed rendering
+        run: |
+          set -euo pipefail
+          node --check app/research-lab.js
+          node --check app/research-shadow2027.mjs
+          node --test app/research-shadow2027.test.mjs app/research-lab.test.mjs
+          echo "No country-level values, IDs, private sheet URL, or live drive access in the public repository."
