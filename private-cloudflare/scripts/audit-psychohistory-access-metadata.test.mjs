@@ -6,14 +6,15 @@ const accountId="abcd".repeat(8),apiToken="fictionalreadtoken".repeat(2);
 const target="segundo-cerebro.mamg97.workers.dev";
 const app={type:"self_hosted",domain:target,aud:"synthetic-app-aud"};
 const org={auth_domain:"synthetic-team.cloudflareaccess.com"};
-function apiMock({apps=[app],orgResult=org,appsStatus=200,orgStatus=200}={}){
+function apiMock({apps=[app],orgResult=org,appsStatus=200,orgStatus=200,workerStatus=200}={}){
   return async(url,options)=>{
     assert.equal(options.method,"GET");
     assert.equal(options.redirect,"error");
     assert.ok(url.startsWith("https://api.cloudflare.com/client/v4/accounts/"));
     const useOrg=url.endsWith("/access/organizations");
-    const status=useOrg?orgStatus:appsStatus;
-    return Response.json(status===200?{success:true,result:useOrg?orgResult:apps,
+    const useWorkers=url.includes("/workers/workers?");
+    const status=useOrg?orgStatus:useWorkers?workerStatus:appsStatus;
+    return Response.json(status===200?{success:true,result:useOrg?orgResult:useWorkers?[{id:"fake-worker-id",name:"segundo-cerebro"}]:apps,
       result_info:{total_pages:1}}:{success:false,errors:[{message:"do not leak"}]},{status});
   };
 }
@@ -64,4 +65,30 @@ test("organization scope missing cannot certify team domain",async()=>{
   assert.equal(out.organizationApi,"READ_SCOPE_DENIED");
   assert.equal(out.teamDomain,"UNVERIFIED");
   assert.equal(out.safeToEnablePrivate2027,false);
+});
+
+test("new public destinations supersede deprecated domain and preserve exact host",async()=>{
+  const rewritten={...app,domain:"unrelated.invalid",
+    destinations:[{type:"public",uri:"https://"+target,overrides:undefined}]};
+  const out=await auditAccessMetadata({accountId,apiToken,
+    fetcher:apiMock({apps:[rewritten]})});
+  assert.equal(out.targetApp,"UNIQUE");
+  assert.equal(out.appCoverage,"PUBLIC_HOSTNAME");
+  assert.equal(out.audience,"VALID_SHAPE_NOT_EXPORTED");
+});
+test("Workers-level destination is matched only using actual Worker ID",async()=>{
+  const workerApp={...app,domain:"unrelated.invalid",
+    destinations:[{type:"worker",worker_id:"fake-worker-id"}]};
+  let out=await auditAccessMetadata({accountId,apiToken,fetcher:apiMock({apps:[workerApp]})});
+  assert.equal(out.targetApp,"UNIQUE");
+  assert.equal(out.appCoverage,"WORKER_DESTINATION");
+  out=await auditAccessMetadata({accountId,apiToken,
+    fetcher:apiMock({apps:[workerApp],workerStatus:403})});
+  assert.equal(out.workersApi,"READ_SCOPE_DENIED");
+  assert.equal(out.targetApp,"NONE");
+});
+test("Access destination public overrides never implicitly certify private paths",()=>{
+  const risky={...app,domain:target,
+    destinations:[{type:"public",uri:target,overrides:[{behavior:"public",path_pattern:"/api/*"}]}]};
+  assert.equal(findAppCoveringAllPaths([risky]).length,0);
 });
