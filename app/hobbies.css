@@ -165,3 +165,59 @@
  .hby-list-table--wine .hby-list-shop{grid-column:2;grid-row:4}
  .hby-list-table--wine .hby-list-actions{grid-column:3;grid-row:4}
 }
+
+/* Hobbies v0.1.4 — denser catalogue, no nested scrollbars. Wine photos retain their height. */
+.hobbies-dialog > #dialog-title{font-size:clamp(24px,2vw,30px);line-height:1.1;margin-bottom:11px}
+.hobbies-dialog > #dialog-context{margin-bottom:5px}
+.hby-page{padding-bottom:15px}
+.hby-tabs{gap:3px;margin:0 0 8px}
+.hby-tab{padding:8px 13px 7px;font-size:12px}
+.hby-catalog-head{margin:5px 0 5px;gap:8px}
+.hby-catalog-head h3{margin:0 0 2px;font-size:17px}
+.hby-catalog-head small{font-size:11px}
+.hby-catalog-head .hby-main-action{padding:7px 12px;min-height:34px}
+.hby-catalog-tools{margin:6px 0 7px;gap:7px}
+.hby-catalog-tools label{gap:2px;font-size:10px}
+.hby-catalog-tools input,.hby-catalog-tools select{min-height:33px;padding:6px 9px;font-size:12px}
+.hby-catalog-tools button:not(.hby-main-action){min-height:33px;padding:6px 9px}
+.hby-list-table--media{table-layout:fixed;font-size:12px}
+.hby-list-table--media th{padding:8px 10px;font-size:10px}
+.hby-list-table--media td{padding:5px 10px;height:32px;box-sizing:border-box}
+.hby-list-table--media th:nth-child(1){width:38%}
+.hby-list-table--media th:nth-child(2){width:24%}
+.hby-list-table--media th:nth-child(3){width:12%}
+.hby-list-table--media th:nth-child(4){width:8%;text-align:right}
+.hby-list-table--media th:nth-child(5){width:10%}
+.hby-list-table--media th:nth-child(6){width:8%;text-align:right}
+.hby-list-table--media .hby-list-title strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.hby-list-table--media .hby-row-note{display:none}
+.hby-list-table--media .hby-list-type{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px}
+.hby-list-table--media .hby-record-status{padding:2px 6px;font-size:10px}
+.hby-list-table--media .hby-list-score{font-size:11px}
+.hby-list-table--media .hby-list-actions button{padding:5px 8px;font-size:10px}
+.hby-list-table--media .hby-list-external a{display:inline-block;max-width:100%;font-size:11px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--blue);text-decoration:none}
+.hby-list-table--media .hby-list-external a:hover,.hby-list-table--media .hby-list-external a:focus-visible{text-decoration:underline}
+.hby-source-note{margin:8px 0}
+@media(max-width:840px) and (min-width:651px){
+ .hby-list-table--media th:nth-child(1){width:33%}
+ .hby-list-table--media th:nth-child(2){width:22%}
+ .hby-list-table--media th:nth-child(3){width:13%}
+ .hby-list-table--media th:nth-child(4){width:9%}
+ .hby-list-table--media th:nth-child(5){width:13%}
+ .hby-list-table--media th:nth-child(6){width:10%}
+}
+@media(max-width:650px){
+ .hby-tab{padding:9px 11px;font-size:12px}
+ .hby-catalog-tools input,.hby-catalog-tools select,.hby-catalog-tools button:not(.hby-main-action){min-height:41px}
+ .hby-list-table--media tr{row-gap:3px;padding:9px 11px;margin-bottom:6px}
+ .hby-list-table--media td{height:auto;padding:0}
+ .hby-list-table--media .hby-list-title{grid-column:1/-1;grid-row:1}
+ .hby-list-table--media .hby-list-title strong{font-size:13px}
+ .hby-list-table--media .hby-list-type{grid-column:1;grid-row:2}
+ .hby-list-table--media .hby-list-status{grid-column:2;grid-row:2}
+ .hby-list-table--media .hby-list-score{grid-column:1;grid-row:3}
+ .hby-list-table--media .hby-list-external{grid-column:1;grid-row:4}
+ .hby-list-table--media .hby-list-actions{grid-column:2;grid-row:4}
+ .hby-list-table--media .hby-list-external a{font-size:12px;min-height:30px;display:inline-flex;align-items:center}
+ .hby-list-table--media .hby-list-actions button{min-height:30px;padding:6px 9px}
+}
