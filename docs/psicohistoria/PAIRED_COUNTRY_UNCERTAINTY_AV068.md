@@ -1,4 +1,4 @@
-# PSICOHISTORIA · AV-067 — Incertidumbre emparejada entre países, dos tests reales
+# PSICOHISTORIA · AV-068 — Incertidumbre emparejada entre países, dos tests reales
 
 20/10/2026. **Esta incertidumbre se propone DESPUÉS de observar los resultados 2024 y 2025**. Solo descriptiva: no añade grados de libertad al entrenamiento ni convierte retrospectiva en pronóstico.
 
