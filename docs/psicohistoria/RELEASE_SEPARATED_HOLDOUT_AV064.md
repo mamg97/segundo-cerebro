@@ -30,3 +30,24 @@ No hay testigo histórico independiente de los bytes 24.1. El fichero oficial ac
 - Las reglas de cohortes y seis modelos quedaron en PR #720 con commit `aaaf021bc1dc921255b9a1872945d9fc910133dc`, **antes** de observar el rendimiento de 2025.
 - [GitHub Actions #39452503769](https://github.com/mamg97/segundo-cerebro/actions/runs/39452503769) descargó los ZIP oficiales y observó por primera vez su SHA-256 actual: 24.1 `00410bdb65023d1bc8799f47f188677965046bb73447ee33094782db30076260`, 26.1 `66910888f5653af42776d2debc1d72fe527559e7f7fc82e69b7c8771467f2d34` (ya registrado previamente). En ese job **no se ejecutó evaluación de etiquetas 2025**, solamente descarga y hash.
 - La siguiente ejecución habilita el **primer score** con esos hashes obligatorios. El pin es una observación hecha en 2026, **no demuestra existencia de esos bytes en 2024**.
+
+
+## Primer resultado EMPÍRICO observado (20/10/2026)
+
+[GitHub Actions #39453143638](https://github.com/mamg97/segundo-cerebro/actions/runs/39453143638) ejecutó con **datos oficiales**, ZIPs comparados contra los SHA observados antes del scoring, adaptador de columnas de edición 24.1 limitado a alias exactos `_cy` y `Version` opcional sin rellenar features. Pruebas adversariales sintéticas, guard de privacidad y suite completa del núcleo: SUCCESS. Resultado con etiquetas 2025 de 26.1 que nunca entran en entrenamiento:
+
+| Modelo ya fijado | Brier 2025 ↓ | Brier Skill vs frecuencia |
+| --- | ---: | ---: |
+| Frequency | 0.14385283 | 0.000000 |
+| Persistence (estado 2023) | 0.04081633 | 0.716263 |
+| Markov | 0.03909019 | 0.728263 |
+| V1 memory index | 0.04750615 | 0.669759 |
+| V2 logistic | 0.03674327 | 0.744577 |
+| Interaction table | 0.03632530 | 0.747483 |
+
+- Cohorte **196 países**, **34 positivos** (2025), sin desenlaces faltantes, 0 exclusiones por histórico entre los países 2023; train panel **5.556** observaciones históricas elegibles (24.1 hasta 2023). 196 países tenían su etiqueta 2023 presente en 24.1 y 26.1 y **0 cruzaron el umbral 25** entre ambas ediciones. Esto no significa ausencia de revisiones de las muertes numéricas.
+- V2 mejora ~**74,46 %** el Brier respecto al baseline de frecuencia, ~**9,98 %** respecto a persistencia y ~**6,00 %** respecto a Markov; pierde ~**1,15 % relativo** en Brier frente a `interaction_table`. En log loss V2 (0.138745) aventaja marginalmente a `interaction_table` (0.139018), sin introducir selección posterior de ganador.
+- **Interpretación prudente:** la mayor parte del beneficio refleja persistencia de violencia estatal. Un solo año no permite cuantificar estabilidad temporal ni extrapolar a onset o reacciones bursátiles. El éxito comparado con frecuencia NO es éxito frente a todos los comparadores fuertes. Las revisiones de la edición antigua, la codificación territorial y el testigo de bytes anterior a 2025 siguen sin verificar. `retrospective_single_target_year_not_confirmatory`, `prospective_skill_demonstrated=false`.
+- **Acción científica siguiente:** replicar el diseño con ediciones fuente anteriores y años completos distintos. **24.1 → 2025 fue un experimento único**: repetirlo, inspeccionar regiones o ajustar pesos en ese mismo 2025 no convertiría un resultado exploratorio en confirmatorio. Mantener 2027 como evaluación genuinamente prospectiva condicionada al sello externo y sin cambiar sus seis modelos.
+
+La fuente oficial histórica es [UCDP Historical Versions](https://ucdp.uu.se/downloads/olddw.html) y el [codebook 24.1](https://ucdp.uu.se/downloads/organizedviolencecy/UCDP_OrganizedViolenceCY_Codebook_241.pdf). Se reutiliza el protocolo de seis modelos de `benchmark.py`; **no** se ha calculado rentabilidad bursátil.
