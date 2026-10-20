@@ -29,3 +29,28 @@ La aparición de actividad extraestatal o interestatal en una combinación GW-a�
 Se mantienen invariablemente: `asof_source_bytes_pre2020_verified=false`, `model_training_authorised=false`, `backtest_authorised=false`, `forecast_issued=false`. No se imputan ceros ni se genera un Brier. La cohorte de pronósticos privados sombra 2027 permanece sin alterar.
 
 **Siguiente decisión empírica:** si existe discrepancia entre definición del manual y cobertura / categorías observadas del archivo, identificar el origen verificable del CSV realmente publicable en 2019 o 2020 y su fecha independiente; sin eso bloquearlo como fuente histórica entrenable. `MAD-02` permanece `PARCIAL`.
+
+## Resultado real con fuentes oficiales y hashes conservados
+
+El job de [GitHub Actions de la PR #698](https://github.com/mamg97/segundo-cerebro/pull/698) ha descargado y verificado nuevamente los cinco archivos UCDP oficiales con los mismos SHA-256 observados en 2026. Se conserva la muestra **10.130 GW-año**, los **85** residuos y el subconjunto de **61** antiguos `newconf=1`.
+
+**Clasificación reproducida en ambas ediciones UCDP/PRIO ACD, siempre por coincidencia `(gwno_loc, año)`:**
+
+| Clasificación de conflicto en esos 61 casos | ACD 19.1 | ACD 25.1 |
+|---|---:|---:|
+| Actividad exclusivamente no interna (tipos 1/2) | **38** | **38** |
+| Actividad interna + no interna (alguno de tipos 3/4 y 1/2) | **10** | **10** |
+| Solo actividad interna | **0** | **0** |
+| No coincide con clave GW-año de ACD | **13** | **13** |
+
+Dentro de los **38** exclusivamente no internos, **37** presentan tipo **2 interestatal** y **uno** tipo **1 extraestatal** en ambas ediciones. Los **13** sin correspondencia ACD son **todos anteriores a 1989**. De los 10 casos mixtos, seis son anteriores a 1989 y cuatro corresponden a 1989–2017. Entre los 38 no internos exclusivos, 32 son anteriores a 1989 y seis posteriores. No existen errores de parsing de ubicación `gwno_loc` en los CSV analizados.
+
+El resultado de AV-052 (**10 con al menos una actividad interna en ambas ediciones y 51 sin interna en ninguna**) sigue siendo **exactamente correcto**: 51 se descompone ahora en **38 con otra clase de conflicto identificada** y **13 sin ninguna coincidencia**.
+
+La fuente antigua que figura bajo Onset 19.1 confirma por bytes observados (SHA `ba54aeace175173b7643a2c14ba35ce89a2fcfd31712085e4fd13de656f752a8`): 10.203 filas, 10.142 claves país-año, 61 filas duplicadas sin etiquetas `onset1` contradictorias, cobertura **1946–2017**, **ninguna observación 2018**. Esto contradice estructuralmente dos afirmaciones del [codebook Onset 19.1](https://ucdp.uu.se/downloads/onset/UCDP_Onset_Dataset_Codebook_19.1.pdf): monadicidad por país-año y finalización en 2018.
+
+**Interpretación epistemológica:** en 48/61 GW-año hay al menos alguna actividad no intrastatal según ACD; para **38** no se identifica ninguna interna. Esta concordancia es compatible con que el Onset antiguo contenga episodios de otra unidad de análisis o que el archivo servido se haya etiquetado con una versión que no le corresponde. **No es una demostración de que los 38 `newconf` antiguos provinieran exactamente de esos 38 conflictos interestatales/extraestatales**: se requiere un ID de episodio/identidad de conflicto trazable, no presente en la tabla usada para unir los ficheros. Los trece restantes y los diez mixtos continúan sin diagnóstico causal cerrado.
+
+**Decisión técnica:** etiquetar el Onset antiguo como `INCOMPATIBLE_UNVERIFIED_VINTAGE` para modelar onset intrastatal 25.1 y bloquear su utilización como etiquetas de training históricas, hasta conseguir un archivo original completo con procedencia y fecha, y homologar la definición de target. Este avance valida la auditoría diagnóstica, no la madurez científica del forecasting.
+
+El job solo muestra categorías y estadísticos agregados; la identidad de países, eventos y conflictos no sale a los logs ni al repositorio. `MAD-02=PARCIAL`; sin Brier, scores, emisiones o coste adicional.
