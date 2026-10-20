@@ -292,7 +292,7 @@ function render(){
   }));
   if(activeView==="shadow2027")disposeShadow=mountInlineShadow2027(root);
   if(activeView==="video")disposeVideo=mountResearchVideoStudio(root.querySelector("#research-video-studio"));
-  if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;activeView='overview';render();},onsetExperiments:state.lab.experiments||[]});
+  if(activeView==="futures")disposeFutures=mountFutureExplorer(root.querySelector('#future-explorer'),state.lab.futuresCatalogs,{onTrack:id=>{activeTrack=id;navigateView('overview');},onsetExperiments:state.lab.experiments||[]});
   if(activeView==="overview")disposeNeural=mountNeural(root.querySelector('.neural-stage'),{activeTrack,paused:motionPaused,onPause:value=>{motionPaused=value;}});
   root.querySelectorAll("button[data-track]").forEach(x=>x.addEventListener("click",()=>{
     const source=x.classList.contains('neural-orb')?'neural-orb':'track-card';
