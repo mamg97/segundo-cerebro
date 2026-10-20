@@ -112,9 +112,9 @@ test('app launches into executive summary while keeping technical research cases
   assert.ok(js.indexOf('const controlsAboveGraph =') < js.indexOf('container.innerHTML = phenomenaTree(onsetExperiments,selectedPhenomenon,true) +'));
   assert.ok(js.indexOf('const graphFirst = result ?') < js.indexOf('const annualHTML = controlsAboveGraph + graphFirst'));
   assert.ok(js.includes('<div class="future-selection"><div class="section-heading">'));
-  assert.ok(js.includes('<form class="future-controls">'));
+  assert.ok(js.includes('<form class="future-controls future-controls-single-row"'));
   assert.ok(js.includes('Calcular predicción retrospectiva'));
-  assert.equal((js.match(/<form class="future-controls">/g) || []).length, 1, 'only one selection form');
+  assert.equal((js.match(/<form class="future-controls future-controls-single-row"/g) || []).length, 1, 'only one selection form');
   assert.ok(js.includes('historicalEventCards(result,result.maxHorizon)'));
   assert.ok(js.includes('data-fevent'));
   assert.ok(js.includes('observed = observedCaseAvailable(data.result,horizon)'));
@@ -161,7 +161,7 @@ test('target scope separates current retrospective scores from not-yet-evaluated
 
 test('country, catalog and model changes immediately calculate rather than leaving the tree blank',()=>{
   const source=readFileSync(new URL('./research-futures.mjs',import.meta.url),'utf8');
-  const selectorStart=source.indexOf("container.querySelectorAll('.future-controls select').forEach");
+  const selectorStart=source.indexOf("container.querySelectorAll('.future-controls select[name=\"country\"]");
   const selectorEnd=source.indexOf("container.querySelector('[name=\"horizon\"]')?.addEventListener",selectorStart);
   assert.ok(selectorStart>=0 && selectorEnd>selectorStart);
   const handler=source.slice(selectorStart,selectorEnd);
