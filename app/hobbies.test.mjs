@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {hobbiesMarkup} from "./hobbies.js";
+import {hobbiesMarkup,wineThumbnailMarkup,wineShopMarkup} from "./hobbies.js";
 import {HOBBY_CATEGORIES,hrefForHobby} from "./area-routes.mjs";
 
 test("Hobbies root has compact tabs, defaults to Películas, and has no oversized banner",()=>{
@@ -43,4 +43,19 @@ test("Hobbies has the canonical area route and responsive styling, no embedded p
  for(const sensitive of ["Miguel","Andrea","Varsovia","Montecristo"]){
    assert.equal(routes.includes(sensitive),false);
  }
+});
+
+test("Wine media uses click-to-enlarge thumbnails and safe store links",()=>{
+ const bottle={id:"vin-test-01",marca:"Viña Test",tipo:"Reserva",imagen_url:"https://images.example.org/vino-test.jpg",tienda_url:"https://www.elcorteingles.es/supermercado/abc/"};
+ const thumb=wineThumbnailMarkup(bottle),shop=wineShopMarkup(bottle);
+ assert.match(thumb,/data-hby-photo="vin-test-01"/);
+ assert.match(thumb,/loading="lazy"/);
+ assert.match(thumb,/referrerpolicy="no-referrer"/);
+ assert.match(shop,/El Corte Inglés/);
+ assert.match(shop,/target="_blank"/);
+ assert.match(shop,/noopener noreferrer/);
+ assert.doesNotMatch(shop,/amazon/);
+ assert.match(wineThumbnailMarkup({...bottle,imagen_url:"javascript:alert(1)"}),/Fotografía pendiente/);
+ assert.match(wineShopMarkup({...bottle,tienda_url:"https:\/\/www.example.org\/wrong"}),/hby-shop-empty/);
+ assert.doesNotMatch(wineThumbnailMarkup({...bottle,marca:'<img src=x onerror=1>'}),/<img src=x/);
 });
