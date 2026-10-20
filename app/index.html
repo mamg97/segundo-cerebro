@@ -14,14 +14,15 @@
     <link rel="stylesheet" href="./gym-month-calendar.css?v=0.44.48">
     <link rel="stylesheet" href="./gym-progress-photos.css?v=0.44.49">
     <link rel="stylesheet" href="./gym-week-summary.css?v=0.44.57">
-    <link rel="stylesheet" href="./travels.css?v=0.3.0">
-    <script type="module" src="./app.js?v=0.44.66"></script>
+    <link rel="stylesheet" href="./travels.css?v=0.4.0">
+    <link rel="stylesheet" href="./area-routes.css?v=0.1.0">
+    <script type="module" src="./app.js?v=0.44.67"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Navegación principal">
-        <a class="brand" href="#overview" aria-label="Segundo Cerebro, inicio">
+        <a class="brand" href="#/inicio" aria-label="Segundo Cerebro, inicio">
           <img class="brand-mark" src="./brain-logo.png?v=0.12.2" alt="" aria-hidden="true">
           <span><strong>Segundo</strong><small>Cerebro</small></span>
         </a>
@@ -327,6 +328,7 @@
 
     <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="dialog-title">
       <button id="close-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+      <button id="copy-area-link" type="button" hidden title="Copia la dirección de esta vista privada">Compartir enlace</button>
       <p id="dialog-context" class="context-label"></p>
       <h2 id="dialog-title"></h2>
       <div id="dialog-body"></div>
