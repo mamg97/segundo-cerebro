@@ -46,7 +46,7 @@ function message(e){
 function listed(){
  const q=store.search.trim().toLocaleLowerCase("es");
  return store.items.filter(item=> (!store.filter||item.estado===store.filter) &&
- (!q||[item.titulo,item.marca,item.tipo,item.subtipo,item.subtipo_2,item.denominacion,item.comentarios,item.estado].join(" ").toLocaleLowerCase("es").includes(q)));
+ (!q||[item.titulo,item.marca,item.tipo,item.subtipo,item.subtipo_2,item.denominacion,item.comentarios,item.estado,item.tienda].join(" ").toLocaleLowerCase("es").includes(q)));
 }
 
 function wineUrl(raw,retailer=false){
@@ -68,9 +68,10 @@ export function wineThumbnailMarkup(item){
 export function wineShopMarkup(item){
  const url=wineUrl(item.tienda_url,true),host=url?new URL(url).hostname:"";
  const retailer=/(^|\.)amazon\.es$/.test(host)?"Amazon":/(^|\.)elcorteingles\.es$/.test(host)?"El Corte Inglés":"";
+ const search='https://www.amazon.es/s?k='+encodeURIComponent([item.marca,item.tipo,item.denominacion,"vino"].filter(Boolean).join(" "));
  return '<td class="hby-list-shop" data-label="Tienda">'+(retailer?
  '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Ver '+esc(titleOf(item,"vinos"))+' en '+esc(retailer)+'">'+esc(retailer)+' ↗</a>':
- '<span class="hby-shop-empty">—</span>')+'</td>';
+ '<a class="hby-shop-search" href="'+esc(search)+'" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Buscar '+esc(titleOf(item,"vinos"))+' en Amazon; producto sin verificar">Buscar en Amazon ↗</a>')+'</td>';
 }
 function recordRow(item){
  const wine=store.category==="vinos",score=wine?item.nota:item.puntuacion;
