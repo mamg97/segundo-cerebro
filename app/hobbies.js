@@ -54,8 +54,8 @@ function wineUrl(raw,retailer=false){
   if(!raw)return "";
   const url=new URL(String(raw)),host=url.hostname.toLowerCase();
   if(url.protocol!=="https:"||url.username||url.password||url.port||!host.includes(".")||
-     /^(localhost|127\\.|10\\.|192\\.168\\.|172\\.|169\\.254\\.)/i.test(host))return "";
-  if(retailer&&!(/(^|\\.)amazon\\.es$/.test(host)||/(^|\\.)elcorteingles\\.es$/.test(host)))return "";
+     /^(localhost|127\.|10\.|192\.168\.|172\.|169\.254\.)/i.test(host))return "";
+  if(retailer&&!(/(^|\.)amazon\.es$/.test(host)||/(^|\.)elcorteingles\.es$/.test(host)))return "";
   return url.href;
  }catch{return "";}
 }
@@ -67,7 +67,7 @@ export function wineThumbnailMarkup(item){
 }
 export function wineShopMarkup(item){
  const url=wineUrl(item.tienda_url,true),host=url?new URL(url).hostname:"";
- const retailer=/(^|\\.)amazon\\.es$/.test(host)?"Amazon":/(^|\\.)elcorteingles\\.es$/.test(host)?"El Corte Inglés":"";
+ const retailer=/(^|\.)amazon\.es$/.test(host)?"Amazon":/(^|\.)elcorteingles\.es$/.test(host)?"El Corte Inglés":"";
  return '<td class="hby-list-shop" data-label="Tienda">'+(retailer?
  '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Ver '+esc(titleOf(item,"vinos"))+' en '+esc(retailer)+'">'+esc(retailer)+' ↗</a>':
  '<span class="hby-shop-empty">—</span>')+'</td>';
