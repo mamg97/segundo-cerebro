@@ -1,5 +1,15 @@
 # PSICOHISTORIA — Estado científico verificado · 20/10/2026
 
+## AV-20261020-060 · Cloudflare Access: reto anónimo de login y correlación de audiencia
+
+- [PR #708](https://github.com/mamg97/segundo-cerebro/pull/708) **fusionada** (squash `1fda497894ab6d75f75cd6eec77965c07de65609`), con pruebas adversariales, comprobación real de las tres rutas privadas desde GitHub Actions y [documentación](ACCESS_LOGIN_CHALLENGE_AV060.md). [CI de producción](https://github.com/mamg97/segundo-cerebro/actions/runs/39432333571), privacidad `39432333469`, Pages `39432336389` y despliegue Cloudflare `39432333699` **SUCCESS**.
+- **Hallazgo observado, sin exponer datos privados:** `ALLROUTESREDIRECTTOACCESS=true`; `AUDIENCEHINTSTATUS=NOT_PRESENT`; `TEAMHOSTHINTSTATUS=CONSISTENT`; `APPCORRELATION=NOT_EVALUABLE`; `PRODUCTIONJWTACCEPTANCETEST=NOT_PERFORMED`; `SHADOW2027UNLOCKED=false`. Los tres `Location` HTTPS llegan al flujo de Access y muestran un mismo dominio de equipo, pero **ninguno lleva un segmento AUD de 64 hex** que permita cruzar sin ambigüedades con la lista oficial de aplicaciones.
+- **Controles de seguridad:** sin cookies, credenciales, lectura de respuestas privadas, ni impresión de `Location`, AUD, host de equipo, IDs de apps, JWT, nombres de países o probabilidades. La API de la organización Zero Trust continúa sin permiso read-only para el token vigente (AV-059). **No se ha configurado la ruta inline ni se ha relajado la verificación RSA/JWKS.** El enlace a la hoja privada sigue disponible en la pestaña 2027 experimental de Segundo Cerebro.
+- **Canónico privado reabierto:** `PsicoAvances=60`, `AV-20261020-060=VERIFICADO` para ejecución de diagnóstico/CI; `PsicoFases.MAD-02=PARCIAL`; `PsicoPredicciones=0`. 196 países × seis modelos 2027 siguen `SHADOW_NO_EMITIDO`, intactos; 0 € de nueva infraestructura.
+- **AV-061 operativo:** acceso autorizado a metadatos de la aplicación concreta Access, obtener su audiencia exacta y el `auth_domain` real **sin publicarlos**, configurar Worker por canal privado y validar sesión válida frente a anónimo; nunca inferir JWT positivo de un 302. **AV-061 científico paralelo:** emisión 2027 requiere sello temporal externo, roster, reglas as-of y bloqueo de revision hindsight, y sigue sin estar aprobada.
+
+---
+
 ## AV-20261020-059 · Cloudflare Access: permisos reales y destinos Worker (lectura segura)
 
 - **Entrega fusionada y verificada:** PR inicial [#704](https://github.com/mamg97/segundo-cerebro/pull/704) añadió `private-cloudflare/scripts/audit-psychohistory-access-metadata.mjs` y tests read-only; la corrección [PR #707](https://github.com/mamg97/segundo-cerebro/pull/707) se reconstruyó sobre main y fusionó squash `cab6d04f5ffa1856df7f787b6ea3e674bab92355`. Se cerró PR #705 en conflicto **sin fusionarla**. [Documento de diagnóstico](ACCESS_READONLY_METADATA_AV059.md).
