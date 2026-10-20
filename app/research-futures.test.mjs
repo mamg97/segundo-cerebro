@@ -115,7 +115,7 @@ test('app launches into executive summary while keeping technical research cases
   assert.ok(js.includes('<form class="future-controls">'));
   assert.ok(js.includes('Calcular predicción retrospectiva'));
   assert.equal((js.match(/<form class="future-controls">/g) || []).length, 1, 'only one selection form');
-  assert.ok(js.includes('historicalEventCards(result,horizon)'));
+  assert.ok(js.includes('historicalEventCards(result,result.maxHorizon)'));
   assert.ok(js.includes('data-fevent'));
   assert.ok(js.includes('observed = observedCaseAvailable(data.result,horizon)'));
 });
@@ -214,7 +214,7 @@ test('quick interpretation appears before SVG, no duplicate distant legend',()=>
  const start=source.indexOf('const graphFirst = result ?');
  const end=source.indexOf('const controlsAboveGraph =',start);
  const graph=source.slice(start,end);
- assert.ok(graph.indexOf('futureGraphGuide(result,horizon)')<graph.indexOf('futureGraph(result,horizon,selection,observed)'));
+ assert.ok(graph.indexOf('futureGraphGuide(result,horizon)')<graph.indexOf('futureGraph(result,horizon,selection,observed,true)'));
  assert.doesNotMatch(source,/future-after-network.*future-legend/);
  assert.match(source,/la trayectoria real se superpone a posteriori/);
 });

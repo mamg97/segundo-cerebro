@@ -1,0 +1,22 @@
+/* AV-069 isolated tree controls, without touching the parallel laboratory redesign */
+.future-tree-index{margin:12px 0 16px;padding:14px;border:1px solid #344453;border-radius:10px;background:#0b131c}
+.future-tree-index-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.future-tree-index-head h3{font-size:14px;margin:0;color:#ecf5fc}
+.future-tree-index-head p,.future-tree-index-note{margin:4px 0 7px;font-size:11px;color:#aec3d7}
+.future-tree-cards{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.future-tree-card{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:166px;text-align:left;padding:11px 13px;border:1px solid #345166;border-radius:9px;background:#112433;color:#e5f1fc}
+.future-tree-card small{font-size:10px;letter-spacing:.7px;font-weight:700;color:#acc4d9}
+.future-tree-card strong{font-size:15px;font-variant-numeric:tabular-nums}
+.future-tree-card span{font-size:10px;color:#b5c5d4}
+.future-tree-card.active{border-color:#93d0f7;background:#213b4f}
+.future-tree-card:hover,.future-year-select:hover{border-color:#a5d5f4}
+.future-year-strip{display:flex;align-items:stretch;gap:5px;max-width:100%;overflow-x:auto;padding:12px 1px 9px;scrollbar-color:#537387 #102130}
+.future-year-static,.future-year-select{flex:1 0 98px;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:98px;text-align:center;padding:9px 7px;border:1px solid #35556b;border-radius:8px;background:#112939;color:#e2f1fd}
+.future-year-static{background:#1a212b;color:#dde6ef}
+.future-year-static strong,.future-year-select strong{font-size:15px;line-height:1.2;font-variant-numeric:tabular-nums}
+.future-year-static small,.future-year-select small{font-size:9px;line-height:1.2;color:#afc5d9}
+.future-year-select.active{background:#214258;border-color:#b9e0ff}
+.future-network-first .future-graph{width:auto;max-width:none;min-width:0;height:420px;min-height:420px;display:block}
+.future-year-current{fill:#9bd1ff20;stroke:#a2d8fa80;stroke-width:1}
+.future-tree-card:focus-visible,.future-year-select:focus-visible{outline:2px solid #cfeaff;outline-offset:2px}
+@media(max-width:720px){.future-tree-index{padding:11px}.future-tree-cards{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory}.future-tree-card{min-width:190px;scroll-snap-align:start}.future-year-static,.future-year-select{flex-basis:108px}}

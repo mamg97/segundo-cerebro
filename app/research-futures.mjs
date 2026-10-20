@@ -1,3 +1,4 @@
+import {predictionTreeIndex,predictionYearStrip} from './research-futures-trees.mjs?v=0.5.24';
 import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.13';
 import {phenomenaTree,phenomenonDetails} from './research-phenomena-tree.mjs?v=0.5.13';
 import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.12';
@@ -47,7 +48,7 @@ export function futureGraphGuide(result, horizon) {
     '<div class="future-guide-head"><div><small>LA PREGUNTA DEL ÁRBOL · '+esc(result.country.name)+' · '+snapshot.endYear+'</small>'+
     '<h3>¿Se registrarán 25 o más muertes relacionadas con violencia estatal durante '+snapshot.endYear+'?</h3>'+
     '<p>Último año admitido: '+result.cutoff+' · '+(result.origin-1)+' es puente sin observar · '+
-    result.origin+'–'+snapshot.endYear+' son los años objetivo históricos. La fuente está revisada, no es información verificada en aquel momento.</p></div>'+
+    result.origin+'–'+(Number.isInteger(result.maxHorizon)?result.origin+result.maxHorizon-1:snapshot.endYear)+' son los años objetivo históricos. La fuente está revisada, no es información verificada en aquel momento.</p></div>'+
     '<div class="future-guide-risk" aria-label="Resumen de probabilidades del objetivo anual">'+
       '<div><small>≥25 muertes · '+snapshot.endYear+'</small><strong>'+pct(above)+'</strong></div>'+
       '<div><small>&lt;25 muertes · '+snapshot.endYear+'</small><strong>'+pct(below)+'</strong></div>'+
@@ -104,13 +105,20 @@ export function historicalEventCards(result,horizon) {
     '<div class="future-event-cards">'+cards.join('')+'</div>'+
     '<p class="chart-note">Las díadas indican partes enfrentadas reportadas por UCDP; no son incidentes puntuales ni demuestran causalidad. El estado 00 no implica paz ni ausencia de otras violencias. Fuente: OrganizedViolenceCY 26.1, CC BY 4.0.</p>';
 }
-export function futureGraph(result, horizon, selection = null, observed = false) {
-  const levels = result.levels.slice(0, horizon + 2), width = 152 + (levels.length - 1) * 126;
+export function futureGraph(result, horizon, selection = null, observed = false, completeTree = false) {
+  const shown = completeTree ? result.maxHorizon : horizon;
+  const levels = result.levels.slice(0, shown + 2), width = 152 + (levels.length - 1) * 126;
   let svg = '<svg class="future-graph" viewBox="0 0 ' + width + ' 420" width="' + width + '" height="420" aria-label="Grafo temporal agregado de probabilidades. Las historias individuales se detallan debajo.">' +
     '<defs><radialGradient id="future-core"><stop stop-color="#fff3dd"/><stop offset=".16" stop-color="#ffbd7e"/><stop offset=".6" stop-color="#ff8a2855"/><stop offset="1" stop-color="#ff8a2800"/></radialGradient></defs>';
+  if(completeTree)svg += '<path class="future-year-axis" d="M'+point(0,0).x+' 53 H'+point(levels.length-1,0).x+
+    '" fill="none" stroke="#547287" stroke-width="1.5" aria-hidden="true"/>';
   levels.forEach((level, i) => {
+    const inspected=completeTree && i === horizon + 1;
+    if(inspected)svg+='<rect class="future-year-current" x="'+(point(i,0).x-45)+'" y="5" width="90" height="43" rx="8" aria-hidden="true"/>';
+    const stage = i === 0 ? 'último dato' : i === 1 ? 'puente no observado' :
+      completeTree ? (inspected?'proyección seleccionada':'proyección') : 'horizonte ' + (i - 1);
     svg += '<text class="future-year" x="' + point(i, 0).x + '" y="25" text-anchor="middle">' + level.year + '</text>' +
-      '<text class="future-year-note" x="' + point(i, 0).x + '" y="43" text-anchor="middle">' + (i === 0 ? 'último dato' : i === 1 ? 'puente no observado' : 'horizonte ' + (i - 1)) + '</text>';
+      '<text class="future-year-note" x="' + point(i, 0).x + '" y="43" text-anchor="middle">' + stage + '</text>';
     if (!i) return;
     level.flows.forEach((edge, index) => {
       if (edge.mass <= 0) return;
@@ -326,7 +334,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
     return () => {};
   }
   container.setAttribute('aria-live','off');
-  let catalog = catalogs[0], country = preferredFutureCountry(catalog), model = 'markov', horizon = Math.min(3, catalog.maxHorizon);
+  let catalog = catalogs[0], country = preferredFutureCountry(catalog), model = 'markov', horizon = catalog.maxHorizon;
   let selectedPhenomenon = 'aggregate';
   let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, speed = 1;
   let error = '', loading = false, disposed = false, request = 0, abort = null, timer = null, inView = true;
@@ -349,35 +357,35 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
     // Configuration is first; the network remains the first analytical result, followed by explainable replay.
     const graphFirst = result ?
       '<section class="panel future-network future-network-first"><div class="panel-head"><div><span class="eyebrow">PSICOHISTORIA / OBSERVATORIO</span>'+
-      '<h2>Futuros posibles frente a hechos reales</h2><p>'+esc(result.country.name)+' · '+snapshot.endYear+' · '+esc(result.modelLabel)+'</p></div>'+
+      '<h2>Árbol completo · predicción '+result.origin+'</h2><p>'+esc(result.country.name)+' · datos hasta '+result.cutoff+' · años '+result.cutoff+'–'+(result.origin+result.maxHorizon-1)+' · '+esc(result.modelLabel)+'</p></div>'+
       '<label class="future-observed-toggle"><input type="checkbox" name="observed"'+(observed?' checked':'')+
       (!observedCaseAvailable(result,horizon)?' disabled':'')+'> Mostrar lo que ocurrió</label></div>'+
-      futureGraphGuide(result,horizon) +
+      futureGraphGuide(result,horizon) + predictionYearStrip(result,horizon) +
       '<p class="future-network-key"><span><b>━━ Ámbar:</b> evolución registrada posteriormente</span><span>● Otros colores: probabilidad de cada estado</span>'+
       '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
-      '<div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed)+'</div>'+
-      (observed?historicalEventCards(result,horizon):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
+      '<div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed,true)+'</div>'+
+      (observed?historicalEventCards(result,result.maxHorizon):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
       '<p class="chart-note">El país inicial es España cuando está en el catálogo; puedes elegir cualquier otro país en el selector superior. No se selecciona por aciertos históricos del modelo.'+
       ' Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
-      ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. Datos UCDP retrospectivos revisados.</p></section>' :
+      ' El puente '+(result.origin-1)+' fue desconocido en el corte '+result.cutoff+'. El año seleccionado cambia el detalle, no recorta el árbol. Datos UCDP retrospectivos revisados.</p></section>' :
       '<section class="panel future-network future-network-first future-network-loading"><h2>Futuros posibles frente a hechos reales</h2><p>'+
       (loading?'Cargando las trayectorias calculadas…':'Preparando la consulta de datos reales…')+'</p></section>';
     const controlsAboveGraph = '<div class="future-selection"><div class="section-heading"><div><span class="eyebrow">FUTURES ENGINE / ' + esc(catalog.version) + '</span><h2>Un presente. Futuros posibles.</h2></div><p>Transiciones observables · evidencia retrospectiva</p></div>' +
       '<form class="future-controls"><label>Sociedad<select name="country">' + [...catalog.countries].sort((a,b) => a.name.localeCompare(b.name)).map(c => option(c.id, c.name, country)).join('') + '</select></label>' +
-      '<label>Origen retrospectivo<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
+      '<label>Predicción · año de origen<select name="catalog">' + catalogs.map(c => option(c.id, c.origin + ' · información ≤ ' + c.cutoff, catalog.id)).join('') + '</select></label>' +
       '<label>Modelo<select name="model">' + Object.entries(catalog.models).map(([id,name]) => option(id, name, model)).join('') + '</select></label>' +
       '<button type="submit" class="future-calculate"' + (loading ? ' disabled' : '') + '>' + (loading ? 'Calculando…' : 'Calcular predicción retrospectiva') + '</button></form>' +
-      '<p class="future-warning">BACKTEST EXPLORATORIO · Fuente histórica revisada. No es un pronóstico actual ni acredita información disponible en el origen.</p>' +
+      predictionTreeIndex(catalogs,catalog.id) + '<p class="future-warning">BACKTEST EXPLORATORIO · Fuente histórica revisada. No es un pronóstico actual ni acredita información disponible en el origen.</p>' +
       (error ? '<p class="error" role="alert">' + esc(error) + '</p>' : '') + '</div>';
     const annualHTML = controlsAboveGraph + graphFirst + explainableReplayPanel(payload?.trace,result,traceStep) +
       '<div class="future-after-network">' +
       (!result ? '<section class="panel empty"><strong>' + (loading ? 'Calculando con los parámetros canónicos…' : 'Selección pendiente de calcular') + '</strong><p>Las probabilidades procederán del motor privado. No se muestran resultados inventados.</p></section>' :
         '<div class="future-toolbar"><div class="filter-row"><button type="button" data-fmode="explorer" aria-pressed="' + (mode === 'explorer') + '">Explorador</button><button type="button" data-fmode="research" aria-pressed="' + (mode === 'research') + '">Investigador</button></div><span>' + esc(result.country.name) + ' · ' + esc(result.modelLabel) + '</span></div>' +
-        '<div class="future-timeline"><label>Horizonte <strong>' + horizon + ' ' + (horizon === 1 ? 'año' : 'años') + ' → ' + snapshot.endYear + '</strong><input name="horizon" type="range" min="1" max="' + result.maxHorizon + '" step="1" value="' + horizon + '" aria-label="Horizonte en años"></label>' +
+        '<div class="future-timeline"><label>Año inspeccionado <strong>' + snapshot.endYear + ' · horizonte '+horizon+' de '+result.maxHorizon+'</strong><input name="horizon" type="range" min="1" max="' + result.maxHorizon + '" step="1" value="' + horizon + '" aria-label="Horizonte en años"></label>' +
         '<button type="button" data-play aria-pressed="' + playing + '"' + (media.matches ? ' disabled' : '') + '>' + (playing ? 'Ⅱ Pausar tiempo' : '▶ Recorrer años') + '</button><label>Velocidad<select name="speed">' + [0.5,1,2].map(n => option(n,n+'×',speed)).join('') + '</select></label><button type="button" data-fpause aria-pressed="' + (paused || media.matches) + '"' + (media.matches ? ' disabled' : '') + '>' + (media.matches ? 'Movimiento reducido' : paused ? 'Reanudar pulsos' : 'Pausar pulsos') + '</button></div>' +
         historicalCaseSummary(result, horizon) +
         (mode === 'explorer' ? '<section class="panel top-gap future-event-inspector" aria-live="polite">' + detail(result,horizon,selection) + '</section>' +
-        historicalObservedTimeline(result, horizon) + historicalCaseComparison(result,horizon) +
+        historicalObservedTimeline(result, result.maxHorizon) + historicalCaseComparison(result,horizon) +
         '<section class="panel top-gap future-state-distribution"><div class="panel-head"><h3>Futuros posibles · probabilidades calculadas</h3><span>Sin condicionar al resultado real</span></div>' +
         distribution(result, snapshot) + '<p class="chart-note">IP = intervalo paramétrico condicionado al modelo, no cobertura empírica acreditada. Masa total: ' +
         pct(snapshot.distribution.reduce((a,b)=>a+b,0)) + '.</p></section>' +
@@ -429,11 +437,27 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       selectedPhenomenon=target; playing=false; selection=null;
       render('[data-phenomenon="'+target+'"]');
     }));
+    container.querySelectorAll('button[data-ftree]').forEach(button=>button.addEventListener('click',()=>{
+      const next=catalogs.find(c=>c.id===button.dataset.ftree);
+      if(!next||next.id===catalog.id)return;
+      catalog=next;
+      if(!catalog.countries.some(c=>String(c.id)===String(country)))country=preferredFutureCountry(catalog);
+      if(!Object.hasOwn(catalog.models,model))model='markov';
+      horizon=catalog.maxHorizon;
+      void load('[data-ftree="'+esc(catalog.id)+'"]');
+    }));
+    container.querySelectorAll('button[data-fyear]').forEach(button=>button.addEventListener('click',()=>{
+      const next=Number(button.dataset.fyear);
+      if(!payload?.result || !Number.isInteger(next)||next<1||next>payload.result.maxHorizon)return;
+      horizon=next;selection=null;playing=false;
+      observed=observedCaseAvailable(payload.result,horizon);
+      render('[data-fyear="'+next+'"]');
+    }));
     container.querySelectorAll('.future-controls select').forEach(select => select.addEventListener('change', () => {
       if (select.name === 'catalog') {
         catalog = catalogs.find(c => c.id === select.value);
         if (!catalog.countries.some(c => String(c.id) === String(country))) country = preferredFutureCountry(catalog);
-        horizon = Math.min(horizon, catalog.maxHorizon);
+        horizon = catalog.maxHorizon;
       } else if (select.name === 'country') country = Number(select.value); else model = select.value;
       // A selector change invalidates the previous result and immediately asks the
       // private engine for the newly selected country/origin/model. load() aborts
