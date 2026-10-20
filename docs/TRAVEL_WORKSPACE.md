@@ -67,3 +67,10 @@ Añadir nuevas filas al Sheet, no editar el JS para cambiar el viaje.
 - Los planes por día y tours deseados no equivalen a reservas. Las tareas editables mantienen la escritura append-only TAREA_ESTADO en Eventos.
 - Sin APIs de pago, claves, almacenaje local, geolocalización del dispositivo ni datos privados en Git.
 - Pruebas: node --test app/travels.test.mjs app/travels-dashboard.test.mjs; revisar mapa en producción solo bajo sesión autenticada.
+
+
+## Vista a pantalla completa
+- El apartado Viajes utiliza un dialog exclusivo de ancho y alto completo mientras está abierto, sin el límite de 920 px de otros módulos. Cabecera y cierre quedan accesibles y el contenido tiene un solo scroll vertical.
+- El mapa y las tareas se reparten el espacio horizontal en escritorio. La altura del mapa crece con el viewport y la checklist no introduce un segundo scroll; en tablet y móvil se apilan los bloques.
+- Se respetan las safe areas en pantallas móviles, y la clase de Viajes se limpia al cerrar para no alterar otros módulos.
+- Validación: app/travels-fullscreen.test.mjs y comprobación geométrica en Chromium con viewports 1600x900, 1024x768, 768x1024 y 390x844 (geometría sintética sin datos privados).

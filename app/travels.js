@@ -70,9 +70,15 @@ async function getJson(url, options) {
 const state = { financeSummary: null, mode: "demo", trips: [], details: new Map(), selected: null };
 const body = () => document.querySelector("#dialog-body");
 function getDialog() { return document.querySelector("#detail-dialog"); }
+let travelsCloseCleanupRegistered = false;
 function setDialog(title, context) {
   const dialog = getDialog();
   if (!dialog) return null;
+  // Never leave the fullscreen Travel class behind when another workspace reuses this dialog.
+  if (!travelsCloseCleanupRegistered) {
+    dialog.addEventListener("close", () => dialog.classList.remove("travels-dialog"));
+    travelsCloseCleanupRegistered = true;
+  }
   dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog",
     "budget-dialog","parents-dialog","electricity-dialog","pantry-dialog","objects-dialog",
     "projects-dialog","events-workspace-dialog","event-detail-dialog");

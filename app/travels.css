@@ -119,3 +119,112 @@
 @media(max-width:890px){.trv-dash-lead{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.trv-dash-metric{grid-template-columns:1fr;gap:5px}.trv-dash-metric>span{grid-row:auto}.trv-dash-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:780px){.trv-dash-lead,.trv-dash-details{grid-template-columns:1fr}.trv-dash-lead #trv-dash-tasks .trv-tasks{max-height:none;overflow:visible}.trv-day-nav button{min-width:145px}.trv-dashboard-hero h2{max-width:100%}}
 @media(max-width:460px){.trv-dashboard{gap:12px}.trv-dashboard-hero{min-height:215px}.trv-dashboard-hero::after{right:15px;top:58px;font-size:65px}.trv-dash-metrics{gap:8px}.trv-dash-metric{padding:12px 11px}.trv-dash-metric strong{font-size:17px}.trv-map-canvas,.trv-map-intro{min-height:235px}.trv-day-nav button{min-width:135px}.trv-dash-planning,.trv-dash-lead .trv-panel{padding:14px}}
+
+
+/* Viajes v0.3 — fullscreen workspace. Overrides shared 920px detail-dialog. 
+   Only applies while the Travel dialog is open; other workspaces are unaffected. */
+.detail-dialog.travels-dialog[open]{
+  box-sizing:border-box;
+  position:fixed;
+  inset:0;
+  margin:0;
+  width:100vw;
+  max-width:none;
+  height:100dvh;
+  max-height:none;
+  padding:clamp(16px,1.8vw,30px);
+  border:0;
+  border-radius:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.detail-dialog.travels-dialog[open] #dialog-context{
+  flex:0 0 auto;
+  padding-right:58px;
+  margin:0 0 7px;
+}
+.detail-dialog.travels-dialog[open] #dialog-title{
+  flex:0 0 auto;
+  padding-right:58px;
+  margin:0 0 16px;
+  font-size:clamp(23px,2.2vw,34px);
+}
+.detail-dialog.travels-dialog[open] #close-dialog{
+  position:absolute;
+  top:max(11px,env(safe-area-inset-top));
+  right:max(11px,env(safe-area-inset-right));
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  font-size:27px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+  z-index:30;
+}
+.detail-dialog.travels-dialog[open] #dialog-body{
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  max-height:none;
+  width:100%;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  padding:0 clamp(0px,.5vw,9px) max(22px,env(safe-area-inset-bottom));
+}
+.detail-dialog.travels-dialog[open] .trv-wrap{
+  width:100%;
+  min-width:0;
+  max-width:none;
+}
+.detail-dialog.travels-dialog[open] .trv-dash-lead{
+  grid-template-columns:minmax(0,1.5fr) minmax(360px,1fr);
+  align-items:stretch;
+}
+.detail-dialog.travels-dialog[open] .trv-dash-details{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.detail-dialog.travels-dialog[open] .trv-map-canvas,
+.detail-dialog.travels-dialog[open] .trv-map-intro{
+  min-height:clamp(330px,48vh,560px);
+}
+.detail-dialog.travels-dialog[open] .trv-map-canvas iframe{
+  height:clamp(330px,48vh,560px);
+}
+.detail-dialog.travels-dialog[open] .trv-dash-lead #trv-dash-tasks .trv-tasks{
+  max-height:none;
+  overflow:visible;
+}
+.detail-dialog.travels-dialog[open] .trv-day-nav button{
+  flex:1 1 0;
+  min-width:175px;
+  max-width:none;
+}
+@media(max-width:960px){
+  .detail-dialog.travels-dialog[open] .trv-dash-lead,
+  .detail-dialog.travels-dialog[open] .trv-dash-details{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .detail-dialog.travels-dialog[open] .trv-map-canvas,
+  .detail-dialog.travels-dialog[open] .trv-map-intro{min-height:340px}
+  .detail-dialog.travels-dialog[open] .trv-map-canvas iframe{height:340px}
+  .detail-dialog.travels-dialog[open] .trv-day-nav button{flex:1 0 auto;min-width:156px}
+}
+@media(max-width:600px){
+  .detail-dialog.travels-dialog[open]{
+    padding:calc(11px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));
+  }
+  .detail-dialog.travels-dialog[open] #dialog-context{font-size:11px;margin-bottom:3px}
+  .detail-dialog.travels-dialog[open] #dialog-title{font-size:23px;margin-bottom:12px}
+  .detail-dialog.travels-dialog[open] #dialog-body{
+    scrollbar-gutter:auto;
+    padding:0 0 max(15px,env(safe-area-inset-bottom));
+  }
+  .detail-dialog.travels-dialog[open] .trv-map-canvas,
+  .detail-dialog.travels-dialog[open] .trv-map-intro{min-height:285px}
+  .detail-dialog.travels-dialog[open] .trv-map-canvas iframe{height:285px}
+}
