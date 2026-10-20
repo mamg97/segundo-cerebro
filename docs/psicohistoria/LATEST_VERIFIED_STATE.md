@@ -1,5 +1,17 @@
 # PSICOHISTORIA — Estado científico verificado · 20/10/2026
 
+## AV-20261020-055 · Observatorio de riesgos 2027 disponible en móvil, exclusivamente privado
+
+- [PR #699](https://github.com/mamg97/segundo-cerebro/pull/699) **fusionada** en main, squash `3b14565df5b7b4e4588d46d77189d42ce2873c00`. Tests sintéticos, [CI científica main](https://github.com/mamg97/segundo-cerebro/actions/runs/39388415741), privacidad y Pages **SUCCESS**.
+- **Entrega privada realmente creada y comprobada**: hoja nativa de Google Sheets en carpeta PSICOHISTORIA - EXPERIMENTOS, con pestañas `Ranking 2027` y `Guía y límites`. **196 países únicos, seis probabilidades por país (1.176)**, campos de baseline y comparación; filtros y congelación de títulos para consulta móvil. Acceso y enlace REAL **solo en el registro privado `PsicoExperimentos`** bajo `ucdp261-2027-mobile-private-ranking-20261020`; no revelar el ID del fichero ni probabilidades en Git público. Comprobado `shared=false`, 197 filas de Ranking (incluida cabecera), integridad de rangos [0,1], orden y deltas porcentuales.
+- Fuente: el HTML privado canónico creado el **18/10/2026**; no se ha generado ningún forecast distinto, no se ha entrenado de nuevo ni modificado la cohorte. Meta `issued=false`; **33 países** con logística experimental >=50 %, uno con diferencia entre V2 e interacciones >=20 puntos porcentuales. Son estadísticas exploratorias, **no alertas de guerra o seguridad**.
+- [Auditor offline reutilizable](../../research/psychohistory/shadow_observatory_2027_integrity.py) y [contrato](PRIVATE_2027_MOBILE_OBSERVATORY_AV055.md): verifica JSON de un observatorio HTML privado sin ejecutar scripts ni publicar IDs, rangos [0,1], cardinalidad, unicidad, ranking, deltas y advertencias. CI de GitHub usa exclusivamente datos ficticios; validación de bytes privados reales efectuada a través de Drive fuera del repositorio.
+- Un comparador externo, [VIEWS fatalities003](https://viewsforecasting.org/data/), se ha incorporado a la guía privada para permitir consulta de predicciones mensuales **externas**, que NO comparten horizonte ni exactamente el mismo target anual que PSICOHISTORIA.
+- **Estado canónico releído**: `PsicoAvances=55`, último `AV-20261020-055=VERIFICADO` (entrega de producto e integridad); `PsicoFases.MAD-02=PARCIAL`, `PsicoPredicciones=0`. El target propio 2027 es presencia anual de >=25 muertes estatales y no aparición de nueva guerra. Cohorte sombra 2027 intacta, coste incremental 0 €.
+- **Próximo paso prioritario**: preparar **emisión prospectiva realmente verificable antes de 01/01/2027**, solo con fuente timestamped as-of, recibo RFC3161 de autoridad independiente y registro privado append-only. No otorgar elegibilidad por la mera existencia del ranking, precompromiso local o test sintético. Primer scoring prospectivo del año 2027 solo tras publicación oficial que lo cubra íntegramente (provisionalmente **2028**). Para nuevos conflictos a 1–3 meses, experimento y métrica aparte usando vintages mensuales y benchmark VIEWS; fecha de valor predictivo propio aún indeterminada.
+
+---
+
 ## AV-20261020-054 · Onset 19.1: contradicción de vintage y contaminación aparente de universo
 
 - [PR #698](https://github.com/mamg97/segundo-cerebro/pull/698) **fusionada** (squash `766e3b8ab8ac4e9700767dddbc6d115cbfd60cf9`). Pruebas adversariales, lectura de cinco ficheros UCDP oficiales SHA-pinned y [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39382388341), privacidad y Pages **SUCCESS**.
