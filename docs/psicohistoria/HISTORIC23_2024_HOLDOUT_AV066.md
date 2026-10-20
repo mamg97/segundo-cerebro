@@ -16,3 +16,7 @@ For 2024:
 - Must report experimental status as `RETROSPECTIVE_ONE_YEAR_RELEASE_SEPARATED_NOT_CONFIRMATORY` and `forecast_issued=false`. No certainty or trading claim from two years.
 
 This PR **only pins 25.1 hash and tests synthetic inputs**. It does not compute real 2024 scores until the pinned SHA is inserted in the source after inspecting official download logs. No UI changes, no paid infrastructure, no changes to 2027 cohort.
+
+## Pin de resultado antes de puntuar
+
+El primer job [CI #39455838398](https://github.com/mamg97/segundo-cerebro/actions/runs/39455838398) descargó SOLO la edición 25.1 con la sentencia explícita sin scoring; SHA256 actual `564ce9a33652a5d7adef30f00ce6ac86411dedbcc10ef60ca9bdfbfeb9fea917`. Al igual que 23.1, ese sello significa integridad desde nuestra observación de hoy, no identidad de los bytes históricos en 2023 o 2025. Se activa ahora el análisis de 2024 sin cambiar cohortes, umbral, features o hiperparámetros tras la observación de 2025.
