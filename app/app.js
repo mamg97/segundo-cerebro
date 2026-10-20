@@ -11793,6 +11793,7 @@ function setupAreaRoutes(){
     if(window.location.hash!=="#/inicio")history.pushState(null,"","#/inicio");
     applyAreaRoute();
   });
+  window.addEventListener("area-route-synced",()=>{activeAreaHash=window.location.hash});
   window.addEventListener("hashchange",()=>applyAreaRoute());
   window.addEventListener("popstate",()=>applyAreaRoute());
   document.querySelector("#copy-area-link")?.addEventListener("click",async()=>{
