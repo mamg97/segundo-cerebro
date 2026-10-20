@@ -19,6 +19,8 @@ import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, listWeeklyMenuFoods, MenuEditError } from "./weekly-menu-actions.js";
 import { mutateRecipe, RecipeEditError } from "./recipe-editor.js";
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
+import { verifyPsychoAccess } from "./research-shadow2027-auth.js";
+import { fetchPrivate2027Ranking } from "./research-shadow2027-private.js";
 import { prospectiveSummary } from "./research-evaluation.js";
 import { researchFuturesResponse } from "./research-futures.js";
 import { researchUcdpEvidenceResponse } from "./research-ucdp-evidence.mjs";
@@ -5996,6 +5998,21 @@ export default {
         return json(response.body,response.status);
       } catch {
         return json({ok:false,code:"FUTURES_READ_FAILED"},502);
+      }
+    }
+
+    // Extra application-layer check, not just Cloudflare Access perimeter:
+    // country-level research values must never be served on a bypass hostname.
+    if (url.pathname === "/api/research-shadow2027") {
+      if (request.method !== "GET") return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
+      const result=await verifyPsychoAccess(request,env);
+      if (!result.ok) return json({ok:false,code:"SHADOW_ACCESS_DENIED"},403);
+      try {
+        const payload=await fetchPrivate2027Ranking(env,getGoogleAccessToken);
+        return json(payload);
+      } catch {
+        // Do not reveal private IDs, tokens, sheet names or country names in errors.
+        return json({ok:false,code:"SHADOW_PRIVATE_DATA_UNAVAILABLE"},503);
       }
     }
 

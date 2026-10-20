@@ -51,6 +51,7 @@ export function shadow2027Section(experiments, predictions = []) {
     '<small>Es el registro general del laboratorio, no emisiones de esta cohorte</small></div>' +
     '<b>' + String(issued) + '</b></div></div>' +
     action +
+    '<div class="top-gap"><button type="button" data-shadow2027-load class="refresh">Ver países y modelos aquí (requiere Access verificado)</button><div data-shadow2027-content role="status" aria-live="polite"></div></div>' +
     '<p class="legend-note"><strong>Validez científica:</strong> resultados exploratorios ' +
     'de una fuente histórica revisada. La evaluación del año completo 2027 ' +
     'solo será posible cuando se publiquen los datos oficiales, previsiblemente en 2028. ' +

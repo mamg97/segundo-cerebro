@@ -1,0 +1,33 @@
+name: Psychohistory 2027 private inline Access gate
+on:
+  pull_request:
+    paths:
+      - "private-cloudflare/src/research-shadow2027-*.js"
+      - "private-cloudflare/src/research-shadow2027-*.test.mjs"
+      - "private-cloudflare/src/index.js"
+      - "app/research-shadow2027*.mjs"
+      - "app/research-shadow2027*.test.mjs"
+      - "app/research-lab.js"
+      - "app/research-lab.html"
+      - ".github/workflows/psychohistory-private-2027-inline.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fail-closed-auth-and-private-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test signed Cloudflare Access JWT and private Sheets 2027 guards
+        run: |
+          set -euo pipefail
+          node --test private-cloudflare/src/research-shadow2027-auth.test.mjs private-cloudflare/src/research-shadow2027-private.test.mjs app/research-shadow2027-inline.test.mjs app/research-shadow2027.test.mjs
+          node --check app/research-lab.js
+          node --check private-cloudflare/src/index.js
+          echo 'No actual country probabilities are committed to Git, served to unauthenticated clients or logged by these tests.'
