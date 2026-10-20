@@ -1,4 +1,5 @@
 import {predictionTreeIndex,predictionYearStrip} from './research-futures-trees.mjs?v=0.5.24';
+import {questionSummary,questionSelect,futureNodeRail,supportedQuestionIds} from './research-futures-questions.mjs?v=0.5.25';
 import {onsetSummaryPanel,parseOnsetSummaries} from './research-onset.mjs?v=0.5.13';
 import {phenomenaTree,phenomenonDetails} from './research-phenomena-tree.mjs?v=0.5.13';
 import {gedIncidentPreviewPanel} from './research-ged-reemergence.mjs?v=0.5.12';
@@ -29,13 +30,14 @@ export function preferredFutureCountry(catalog) {
 // Condense the *actual* four-state distribution into a single-year question.
 // Index 01 and 11 imply current-year state-based deaths >=25, while 00
 // and 10 imply current-year deaths <25. This is NOT a new war-onset target.
-export function futureGraphGuide(result, horizon) {
+export function futureGraphGuide(result, horizon, question = 'atleast25') {
   const snapshot = result?.snapshots?.[horizon - 1];
   const masses = snapshot?.distribution;
   if (!Array.isArray(masses) || masses.length !== 4 ||
       masses.some(p => typeof p !== 'number' || !Number.isFinite(p) || p < 0 || p > 1) ||
       Math.abs(masses.reduce((a,b)=>a+b,0)-1) > 1e-7) return '';
-  const above = masses[1] + masses[3], below = masses[0] + masses[2];
+  const answer = questionSummary(masses,snapshot.endYear,question);
+  if(!answer)return '';
   const dominant = masses.indexOf(Math.max(...masses));
   const names = ['00 · Bajo → bajo','01 · Entrada','10 · Salida','11 · Persistencia'];
   const explanations = [
@@ -46,12 +48,12 @@ export function futureGraphGuide(result, horizon) {
   ];
   return '<section class="future-graph-guide" aria-label="Qué futuros evalúa este árbol">'+
     '<div class="future-guide-head"><div><small>LA PREGUNTA DEL ÁRBOL · '+esc(result.country.name)+' · '+snapshot.endYear+'</small>'+
-    '<h3>¿Se registrarán 25 o más muertes relacionadas con violencia estatal durante '+snapshot.endYear+'?</h3>'+
+    '<h3>'+esc(answer.question)+'</h3>'+
     '<p>Último año admitido: '+result.cutoff+' · '+(result.origin-1)+' es puente sin observar · '+
     result.origin+'–'+(Number.isInteger(result.maxHorizon)?result.origin+result.maxHorizon-1:snapshot.endYear)+' son los años objetivo históricos. La fuente está revisada, no es información verificada en aquel momento.</p></div>'+
     '<div class="future-guide-risk" aria-label="Resumen de probabilidades del objetivo anual">'+
-      '<div><small>≥25 muertes · '+snapshot.endYear+'</small><strong>'+pct(above)+'</strong></div>'+
-      '<div><small>&lt;25 muertes · '+snapshot.endYear+'</small><strong>'+pct(below)+'</strong></div>'+
+      '<div><small>'+esc(answer.yes)+' · '+snapshot.endYear+'</small><strong>'+pct(answer.answer)+'</strong></div>'+
+      '<div><small>'+esc(answer.no)+' · '+snapshot.endYear+'</small><strong>'+pct(answer.complement)+'</strong></div>'+
     '</div></div>'+
     '<div class="future-guide-legend" aria-label="Significado de los cuatro estados">'+
       names.map((name,i)=>'<span data-state="'+i+'"><i aria-hidden="true"></i><span><b>'+esc(name)+'</b>'+
@@ -336,7 +338,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
   container.setAttribute('aria-live','off');
   let catalog = catalogs[0], country = preferredFutureCountry(catalog), model = 'markov', horizon = catalog.maxHorizon;
   let selectedPhenomenon = 'aggregate';
-  let payload = null, selection = null, mode = 'explorer', paused = false, playing = false, observed = false, speed = 1;
+  let payload = null, selection = null, question = 'atleast25', mode = 'explorer', paused = false, playing = false, observed = false, speed = 1;
   let error = '', loading = false, disposed = false, request = 0, abort = null, timer = null, inView = true;
   let traceStep = -1;
   const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -360,10 +362,13 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       '<h2>Árbol completo · predicción '+result.origin+'</h2><p>'+esc(result.country.name)+' · datos hasta '+result.cutoff+' · años '+result.cutoff+'–'+(result.origin+result.maxHorizon-1)+' · '+esc(result.modelLabel)+'</p></div>'+
       '<label class="future-observed-toggle"><input type="checkbox" name="observed"'+(observed?' checked':'')+
       (!observedCaseAvailable(result,horizon)?' disabled':'')+'> Mostrar lo que ocurrió</label></div>'+
-      futureGraphGuide(result,horizon) + predictionYearStrip(result,horizon) +
+      '<div class="future-question-bar">'+questionSelect(question)+
+      '<p>La pregunta cambia el resultado destacado, no el modelo. Las cuatro filas conservan sus probabilidades.</p></div>'+
+      futureGraphGuide(result,horizon,question) + predictionYearStrip(result,horizon) +
       '<p class="future-network-key"><span><b>━━ Ámbar:</b> evolución registrada posteriormente</span><span>● Otros colores: probabilidad de cada estado</span>'+
       '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
-      '<div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed,true)+'</div>'+
+      '<div class="future-graph-layout"><div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed,true)+'</div>'+
+       futureNodeRail(question)+'</div>'+
       (observed?historicalEventCards(result,result.maxHorizon):'<p class="subtext">La trayectoria real está oculta. Activa «Mostrar lo que ocurrió» para consultarla.</p>')+
       '<p class="chart-note">El país inicial es España cuando está en el catálogo; puedes elegir cualquier otro país en el selector superior. No se selecciona por aciertos históricos del modelo.'+
       ' Las líneas conservan la masa probabilística total; la trayectoria real se superpone a posteriori, nunca modifica el modelo.'+
@@ -464,6 +469,11 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       // the previous request and restores focus to the changed control.
       void load('[name="'+select.name+'"]');
     }));
+    container.querySelector('[name="prediction-question"]')?.addEventListener('change', e => {
+      if(!supportedQuestionIds.includes(e.target.value))return;
+      question=e.target.value;selection=null;playing=false;
+      render('[name="prediction-question"]');
+    });
     container.querySelector('[name="horizon"]')?.addEventListener('change', e => {horizon = Number(e.target.value); selection = null; playing = false; observed = observedCaseAvailable(payload?.result,horizon); render('[name="horizon"]');});
     container.querySelector('[name="speed"]')?.addEventListener('change', e => {speed = Number(e.target.value); schedule();});
     container.querySelector('[name="observed"]')?.addEventListener('change', e => {observed = e.target.checked; render('[name="observed"]');});
