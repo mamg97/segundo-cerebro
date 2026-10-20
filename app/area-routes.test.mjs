@@ -28,7 +28,7 @@ test("top navbar remains independently available in every route, no authorizatio
   assert.match(app,/window\.addEventListener\("hashchange"/);
   assert.match(app,/window\.addEventListener\("popstate"/);
   assert.match(app,/hrefForArea\(area\.id\)/);
-  assert.match(app,/window\.dispatchEvent/); // Main app still dispatches changes.
+  assert.match(app,/window\.addEventListener\("area-route-synced"/);
   assert.match(css,/body\.route-area-active \.sidebar\s*\{[\s\S]*?position:fixed/);
   assert.match(css,/z-index:5000/);
   assert.match(index,/id="copy-area-link"/);
