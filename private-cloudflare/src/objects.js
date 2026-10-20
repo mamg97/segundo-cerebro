@@ -4,7 +4,7 @@ const SHEET_TITLE = "SEGUNDO CEREBRO - OBJETOS";
 const SOURCE_KEY = "OBJECTS_SHEET_ID";
 const CACHE_MS = 30_000;
 const VISUAL_PROCESS_STATES = new Set(["pendiente", "procesada", "revisar"]);
-const LOOK_ROLES = new Set(["superior", "exterior", "inferior", "calzado", "accesorio"]);
+const LOOK_ROLES = new Set(["interior", "superior", "exterior", "inferior", "calzado", "accesorio"]);
 
 let cache = {
   value: null,
@@ -100,6 +100,8 @@ export function normalizeLookRole(input) {
     .replace(/\s+/g, " ");
 
   const aliases = {
+    "capa interior": "interior",
+    "camisa interior": "interior",
     "capa superior": "superior",
     "parte superior": "superior",
     "capa exterior": "exterior",
@@ -600,17 +602,22 @@ export function validateObjectsLookSelection(wardrobe = [], rawItems = []) {
 
   if (normalized.length < 3 || normalized.length > 5) throw new Error("INVALID_OBJECTS_LOOK_ITEMS");
   const seenRoles = new Set();
+  const seenObjectIds = new Set();
   for (const item of normalized) {
     if (!LOOK_ROLES.has(item.role)) throw new Error("INVALID_OBJECTS_LOOK_ROLE");
     if (seenRoles.has(item.role)) throw new Error("INVALID_OBJECTS_LOOK_DUPLICATE_ROLE");
+    if (seenObjectIds.has(item.objectId)) throw new Error("INVALID_OBJECTS_LOOK_DUPLICATE_OBJECT");
     seenRoles.add(item.role);
+    seenObjectIds.add(item.objectId);
     const garment = byId.get(item.objectId);
     if (!garment) throw new Error("INVALID_OBJECTS_LOOK_OBJECT");
     if (["VENDIDO", "DONADO", "DESCARTADO", "PERDIDO"].includes(String(garment.status || ""))) {
       throw new Error("INVALID_OBJECTS_LOOK_OBJECT_STATUS");
     }
     const garmentLayer = normalizeLookRole(garment.layer || inferWardrobeLayer([garment.subcategory, garment.name].filter(Boolean).join(" ")));
-    if (garmentLayer && garmentLayer !== item.role) {
+    // An inner shirt or base layer is a wardrobe "superior" garment, but
+    // occupies its own slot beneath the visible knitwear/sweater.
+    if (garmentLayer && garmentLayer !== item.role && !(item.role === "interior" && garmentLayer === "superior")) {
       throw new Error("INVALID_OBJECTS_LOOK_LAYER");
     }
   }
