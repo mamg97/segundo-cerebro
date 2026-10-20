@@ -1,4 +1,4 @@
-# PSICOHISTORIA — AV-069 · Un árbol completo por predicción
+# PSICOHISTORIA — AV-071 · Un árbol completo por predicción
 
 **20/10/2026.** El árbol, no los horizontes técnicos, es la unidad principal del explorador retrospectivo. No se modifica el algoritmo de cuatro estados ni la remodelación global del laboratorio.
 
