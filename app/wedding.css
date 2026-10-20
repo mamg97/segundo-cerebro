@@ -3,11 +3,7 @@
 .wed-entry>span:first-child{font-size:32px}.wed-entry>span:nth-child(2){display:grid;gap:4px;flex:1}.wed-entry strong{font-size:20px}.wed-entry small{font-size:12px;color:var(--ink-soft)}.wed-entry b{color:var(--blue);font-size:24px}.wed-entry:hover,.wed-entry:focus-visible{border-color:var(--blue)}
 .wedding-dialog #dialog-body{min-width:0}
 .wed-workspace,.wed-editor-wrap{width:100%;max-width:1560px;margin:0 auto;padding:0 0 40px;color:var(--ink)}
-.wed-hero{display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden;min-height:175px;padding:clamp(24px,4vw,44px);border-radius:20px;background:linear-gradient(120deg,#0b2543 0%,#245977 75%,#2f8194 100%);color:#fff}
-.wed-hero>div{z-index:1;max-width:720px}.wed-hero small{font-weight:850;letter-spacing:.15em;color:#efc99a;font-size:10px}
-.wed-hero h3{font-size:clamp(25px,3vw,39px);line-height:1.15;margin:11px 0}.wed-hero p{font-size:14px;color:#e0edf6;line-height:1.55;max-width:670px;margin:0}
-.wed-hero>span{position:absolute;right:7%;font-size:clamp(85px,12vw,165px);color:#ffffff32}
-.wed-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 27px}
+.wed-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 23px}
 .wed-stats>div{padding:17px 20px;border:1px solid var(--line);border-radius:13px;background:var(--surface);min-width:0}
 .wed-stats small{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:8px}.wed-stats strong{display:block;font-size:clamp(17px,2vw,26px);letter-spacing:-.03em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .wed-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}.wed-toolbar h3{font-size:23px;margin:0 0 4px}.wed-toolbar small{font-size:12px;color:var(--ink-soft)}
@@ -45,4 +41,4 @@
 .wed-photo-existing{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.wed-photo-existing img{height:110px;max-width:250px;object-fit:contain;border:1px solid var(--line);border-radius:10px}
 .wed-photo-existing button{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px 12px;cursor:pointer}
 @media(max-width:1100px){.wed-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:750px){.wed-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.wed-grid{grid-template-columns:1fr}.wed-hero{min-height:140px;padding:22px 20px}.wed-hero>span{right:-9px;bottom:-12px}.wed-hero h3{font-size:28px}.wed-toolbar h3{font-size:20px}.wed-form-grid{grid-template-columns:1fr}.wed-form-grid .wide{grid-column:1}.wed-controls{align-items:stretch}.wed-stats>div{padding:14px}.wed-editor{padding:17px}}
+@media(max-width:750px){.wed-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.wed-grid{grid-template-columns:1fr}.wed-toolbar h3{font-size:20px}.wed-form-grid{grid-template-columns:1fr}.wed-form-grid .wide{grid-column:1}.wed-controls{align-items:stretch}.wed-stats>div{padding:14px}.wed-editor{padding:17px}}

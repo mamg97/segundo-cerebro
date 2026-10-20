@@ -22,7 +22,16 @@ test("budget math does not double count paid and excluded entries",()=>{
 test("wedding has private API and responsive separate stylesheet",()=>{
  const app=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
- assert.match(app,/wedding\.css\?v=0\.1\.0/);
+ assert.match(app,/wedding\.css\?v=0\.1\.1/);
  assert.match(style,/\.wed-grid/);
  assert.doesNotMatch(style,/overflow-y:auto/);
+});
+
+test("wedding shows budget dashboard directly without the decorative introduction",()=>{
+ const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
+ assert.match(source,/<div class="wed-stats">/);
+ assert.match(source,/<div class="wed-toolbar">/);
+ assert.doesNotMatch(source,/wed-hero|Una boda a nuestra manera|NUESTRO PROYECTO EN COMÚN/);
+ assert.doesNotMatch(css,/\.wed-hero/);
 });

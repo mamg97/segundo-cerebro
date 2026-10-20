@@ -48,8 +48,6 @@ function cards(){
 function home(){
  const n=weddingTotals(state.items);
  return '<div class="wed-workspace">'+
-   '<div class="wed-hero"><div><small>NUESTRO PROYECTO EN COMÚN</small><h3>Una boda a nuestra manera.</h3>'+
-   '<p>Ideas, proveedores y decisiones en un mismo lugar. Lo que añada uno estará disponible para el otro.</p></div><span aria-hidden="true">✧</span></div>'+
    '<div class="wed-stats"><div><small>Elementos activos</small><strong>'+n.total+'</strong></div>'+
    '<div><small>Presupuesto planificado</small><strong>'+eur(n.planned)+'</strong></div>'+
    '<div><small>Contratado</small><strong>'+eur(n.committed)+'</strong></div>'+
