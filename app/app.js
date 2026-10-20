@@ -14,7 +14,7 @@ import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configureP
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
-import { openHobbiesDetail } from "./hobbies.js?v=0.1.4";
+import { openHobbiesDetail } from "./hobbies.js?v=0.1.5";
 import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.1";
 import { hrefForArea, routeFromHash } from "./area-routes.mjs?v=0.1.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
