@@ -9,6 +9,7 @@ on:
       - "app/research-lab.html"
       - "app/research-lab.js"
       - "app/research-lab.css"
+      - "app/research-lab-monochrome.css"
       - "app/research-onset.test.mjs"
       - ".github/workflows/psychohistory-lab-brief-ui.yml"
   push:
@@ -21,6 +22,7 @@ on:
       - "app/research-lab.html"
       - "app/research-lab.js"
       - "app/research-lab.css"
+      - "app/research-lab-monochrome.css"
       - "app/research-onset.test.mjs"
       - ".github/workflows/psychohistory-lab-brief-ui.yml"
   workflow_dispatch:
