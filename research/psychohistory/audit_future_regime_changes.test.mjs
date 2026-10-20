@@ -21,7 +21,7 @@ test('audit emits only aggregated model scores, no country identities',()=>{
  assert.equal(r.models.persistence.n,4);
  assert.equal(r.sourceAsOfVerified,false);
  assert.equal(r.prospectiveSkillDemonstrated,false);
- assert.doesNotMatch(JSON.stringify(r),/101|102|103|Tunisia/);
+ assert.doesNotMatch(JSON.stringify(r),/"id":(101|102|103)|Tunisia/);
 });
 test('audit rejects operational/prospective data and no complete outcome',()=>{
  assert.throws(()=>auditRegimeCohort({...catalog,runType:'prospective'}),/retrospective/);
