@@ -10405,6 +10405,9 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
     : isCommon ? 0 : remainder;
   const free = Math.min(remainder, internalFree);
   const pendingBreakdown = Math.max(0, remainder - free);
+  // A personal remainder is potentially spendable, but not reconciled free cash.
+  // Keep the canonical free value unchanged until the bank statement is verified.
+  const provisionalFree = isCommon ? 0 : pendingBreakdown;
   const personalAdjustment = Math.max(0, internalFree - free);
   const excess = Math.max(0, committed + retained - balance);
   const availableAfterHolds = Math.max(0, balance - retained);
@@ -10425,10 +10428,10 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
       kind: "commitment"
     })),
     ...(pendingBreakdown > 0 ? [{
-      label: isCommon ? "Presupuesto común · sin desglosar" : "Fondos sin desglose verificado",
+      label: isCommon ? "Presupuesto común · sin desglosar" : "Libre provisional · pendiente de conciliar",
       amount: pendingBreakdown,
-      className: "allocation-undetailed",
-      kind: "undetailed"
+      className: isCommon ? "allocation-undetailed" : "allocation-provisional-free",
+      kind: isCommon ? "undetailed" : "provisional_free"
     }] : []),
     ...(free > 0 ? [{
       label: "Libre",
@@ -10447,6 +10450,7 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
     committed,
     free,
     pendingBreakdown,
+    provisionalFree,
     internalFree,
     personalAdjustment,
     excess,
@@ -10456,6 +10460,15 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
   };
 }
 
+function visibleLiquidityAccounts(accounts) {
+  // Hide zero-balance physical cash bars; keep their ledger and history intact.
+  return (Array.isArray(accounts) ? accounts : []).filter((account) => {
+    const isCash = String(account?.bank || "").toLowerCase() === "efectivo"
+      || String(account?.id || "").toLowerCase().startsWith("efectivo-");
+    return !isCash || Math.abs(numberOrZero(account?.balance)) >= 0.005;
+  });
+}
+
 function orderedLiquidityAccounts(accounts) {
   const accountRank = new Map([
     ["openbank-miguel", 0],
@@ -10463,7 +10476,7 @@ function orderedLiquidityAccounts(accounts) {
     ["santander-comun", 2],
     ["bbva-comun", 3]
   ]);
-  return [...(Array.isArray(accounts) ? accounts : [])]
+  return visibleLiquidityAccounts(accounts)
     .sort((a, b) => (accountRank.get(a.id) ?? 99) - (accountRank.get(b.id) ?? 99));
 }
 
@@ -10498,8 +10511,8 @@ function renderHomeLiquidityOverview(accounts, fallbackCurrency = "EUR") {
                 </div>
                 <div class="home-liquidity-account-meta">
                   ${model.retained > 0 ? `<span>Saldo total <b>${formatMoney(model.balance, model.currency)}</b></span>` : ""}
-                  <span>Libre interno <b>${formatMoney(model.internalFree, model.currency)}</b></span>
-                  ${model.pendingBreakdown > 0.01 ? `<span>Sin desglosar <b>${formatMoney(model.pendingBreakdown, model.currency)}</b></span>` : ""}
+                  <span>Libre confirmado <b>${formatMoney(model.internalFree, model.currency)}</b></span>
+                  ${model.pendingBreakdown > 0.01 ? `<span>${model.provisionalFree > 0.01 ? "Libre provisional" : "Sin desglosar"} <b>${formatMoney(model.pendingBreakdown, model.currency)}</b></span>` : ""}
                   ${Math.abs(model.personalAdjustment) > 0.01 ? `<span>Ajuste personal <b>${model.personalAdjustment > 0 ? "+" : ""}${formatMoney(model.personalAdjustment, model.currency)}</b></span>` : ""}
                   ${model.retained > 0 ? `<span>Retenido <b>${formatMoney(model.retained, model.currency)}</b></span>` : ""}
                   ${model.excess > 0.01 ? `<span class="is-warning">Pendiente de cubrir <b>${formatMoney(model.excess, model.currency)}</b></span>` : ""}
@@ -10632,7 +10645,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
   const accountRank = new Map([
     ["openbank-miguel", 0], ["openbank-andrea", 1], ["santander-comun", 2], ["bbva-comun", 3]
   ]);
-  const orderedAccounts = [...accounts].sort((a, b) => (accountRank.get(a.id) ?? 99) - (accountRank.get(b.id) ?? 99));
+  const orderedAccounts = visibleLiquidityAccounts(accounts).sort((a, b) => (accountRank.get(a.id) ?? 99) - (accountRank.get(b.id) ?? 99));
 
   return `
     <section class="liquidity-section">
@@ -10655,6 +10668,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
             committed,
             free,
             pendingBreakdown,
+            provisionalFree,
             internalFree,
             personalAdjustment,
             excess,
@@ -10750,8 +10764,8 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
 
               <footer class="liquidity-account-summary">
                 <span>Comprometido <b>${formatMoney(committed, currency)}</b></span>
-                ${pendingBreakdown > 0.01 ? `<span>Presupuesto sin desglose <b>${formatMoney(pendingBreakdown, currency)}</b></span>` : ""}
-                <span>Libre interno <b>${formatMoney(internalFree, currency)}</b></span>
+                ${pendingBreakdown > 0.01 ? `<span>${provisionalFree > 0.01 ? "Libre provisional · sin conciliar" : "Presupuesto sin desglose"} <b>${formatMoney(pendingBreakdown, currency)}</b></span>` : ""}
+                <span>Libre confirmado <b>${formatMoney(internalFree, currency)}</b></span>
                 ${Math.abs(personalAdjustment) > 0.01 ? `<span>Ajuste personal <b>${personalAdjustment > 0 ? "+" : ""}${formatMoney(personalAdjustment, currency)}</b></span>` : ""}
                 <span>Retenido <b>${formatMoney(retained, currency)}</b></span>
                 <span>Pendiente de cubrir <b>${excess > 0.01 ? formatMoney(excess, currency) : "0,00 €"}</b></span>
