@@ -13,7 +13,7 @@ function summaryParts(value) {
 
 export function parseTravelDetail(payload) {
   const facts = Array.isArray(payload && payload.facts) ? payload.facts : [];
-  const groups = { flights: [], bookings: [], days: [], tasks: [], notes: [], accommodation: [], destination: [] };
+  const groups = { flights: [], bookings: [], days: [], slots: [], tasks: [], notes: [], accommodation: [], destination: [] };
   const latestTaskStates = new Map();
   for (const fact of facts) {
     const parts = summaryParts(fact.summary);
@@ -30,6 +30,7 @@ export function parseTravelDetail(payload) {
     else if (prefix === "ALOJAMIENTO") groups.accommodation.push({ text: rest.join(" | "), fact });
     else if (prefix === "RESERVA") groups.bookings.push({ key: rest[0], text: rest.slice(1).join(" · "), fact });
     else if (prefix === "PLAN_DIA") groups.days.push({ date: rest[0], text: rest.slice(1).join(" · "), fact });
+    else if (prefix === "PLAN_HORA" && rest.length >= 5) groups.slots.push({ date: rest[0], time: rest[1], status: rest[2], category: rest[3], text: rest.slice(4).join(" | "), fact });
     else if (prefix === "TAREA") {
       groups.tasks.push({
         key: rest[0], status: latestTaskStates.get(rest[0]) || rest[1],
@@ -40,6 +41,7 @@ export function parseTravelDetail(payload) {
     }
   }
   groups.days.sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+  groups.slots.sort((a, b) => (a.date+" "+a.time).localeCompare(b.date+" "+b.time));
   return groups;
 }
 
