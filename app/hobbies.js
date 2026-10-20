@@ -88,6 +88,18 @@ function sortHeader(label,key){
   '" title="Ordenar por '+esc(label)+'" aria-label="Ordenar '+esc(label)+' '+(nextDirection==="asc"?"ascendente":"descendente")+'">'+
   '<span>'+esc(label)+'</span><span class="hby-sort-indicator" aria-hidden="true">'+indicator+'</span></button></th>';
 }
+function mobileSortMarkup(wine){
+ const options=[["","Orden original"],...(wine?[["foto","Foto"]]:[]),["titulo","Título"],["genero",wine?"Denominación":"Género"],["estado",wine?"Tipo":"Estado"],["nota",wine?"Precio":"Nota"],["enlace",wine?"Tienda":"Buscar en"]];
+ return '<div class="hby-mobile-sort-tools"><label for="hby-mobile-sort">Ordenar</label><select id="hby-mobile-sort">'+
+  options.map(([key,label])=>'<option value="'+key+'"'+(store.sortKey===key?' selected':'')+'>'+esc(label)+'</option>').join("")+
+  '</select><button id="hby-mobile-direction" type="button"'+(!store.sortKey?' disabled':'')+
+  ' title="Invertir orden" aria-label="Invertir orden">'+(store.sortDir==="asc"?"↑":"↓")+'</button></div>';
+}
+function setSort(key,flip=false){
+ if(!HOBBY_SORT_KEYS.includes(key)){store.sortKey="";store.sortDir="asc";}
+ else{store.sortDir=flip&&store.sortKey===key&&store.sortDir==="asc"?"desc":"asc";store.sortKey=key;}
+ store.page=1;show();
+}
 function listed(){
  const q=store.search.trim().toLocaleLowerCase("es");
  const filtered=store.items.filter(item=> (!store.filter||item.estado===store.filter) &&
@@ -167,6 +179,7 @@ function catalogMarkup(){
  '<div class="hby-catalog-tools"><label>Buscar<input id="hby-search" type="search" value="'+esc(store.search)+'" placeholder="Buscar por título, género o notas…"></label>'+
  (wine?'':'<label>Estado<select id="hby-status">'+statusOptions()+'</select></label>')+
  '<button id="hby-reload" type="button">↻ Actualizar</button></div>'+
+ (subset.length?mobileSortMarkup(wine):"")+
  (subset.length?'<div class="hby-list-wrap"><table class="hby-list-table '+(wine?'hby-list-table--wine':'hby-list-table--media')+'"><thead><tr>'+
  (wine?sortHeader("Foto","foto"):"")+
  sortHeader("Título","titulo")+sortHeader(wine?"Denominación":"Género","genero")+
@@ -252,12 +265,11 @@ function bind(root){
  root.querySelector("#hby-reload")?.addEventListener("click",()=>void reload());
  root.querySelector("#hby-search")?.addEventListener("input",e=>{store.search=e.target.value;store.page=1;const position=e.target.selectionStart;show();const next=document.querySelector("#hby-search");next?.focus();if(next&&position!=null)next.setSelectionRange(position,position);});
  root.querySelector("#hby-status")?.addEventListener("change",e=>{store.filter=e.target.value;store.page=1;show();});
- root.querySelectorAll("[data-hby-sort]").forEach(button=>button.addEventListener("click",()=>{
-  const key=button.dataset.hbySort;
-  if(!HOBBY_SORT_KEYS.includes(key))return;
-  store.sortDir=store.sortKey===key&&store.sortDir==="asc"?"desc":"asc";
-  store.sortKey=key;store.page=1;show();
- }));
+ root.querySelectorAll("[data-hby-sort]").forEach(button=>button.addEventListener("click",()=>setSort(button.dataset.hbySort,true)));
+ root.querySelector("#hby-mobile-sort")?.addEventListener("change",e=>setSort(e.target.value));
+ root.querySelector("#hby-mobile-direction")?.addEventListener("click",()=>{
+  if(store.sortKey){store.sortDir=store.sortDir==="asc"?"desc":"asc";store.page=1;show();}
+ });
  root.querySelector("#hby-more")?.addEventListener("click",()=>{store.page++;show();});
  root.querySelectorAll("[data-hby-photo]").forEach(button=>button.addEventListener("click",()=>{
   const item=store.items.find(x=>x.id===button.dataset.hbyPhoto);if(item)openWinePhoto(item);
