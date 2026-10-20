@@ -15075,6 +15075,10 @@ html[data-theme="dark"] .liquidity-svg-base {
 .allocation-free { background: #32d74b !important; }
 /* Neutral earmarked capital, not available discretionary money. */
 .allocation-undetailed { background: #657e98 !important; }
+/* Potentially available personal money: striped, never the solid green of confirmed free cash. */
+.allocation-provisional-free {
+  background: repeating-linear-gradient(135deg, #24b45d 0 5px, #657e98 5px 10px) !important;
+}
 
 
 .liquidity-account-legend {
