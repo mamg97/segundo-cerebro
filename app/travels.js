@@ -1,4 +1,5 @@
-import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.1.0";
+import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.2.0";
+import { hrefForTravel, hrefForArea } from "./area-routes.mjs?v=0.1.0";
 // Viajes: vista privada sobre el ledger canónico de Eventos.
 // La fuente de viajes y hechos es /api/events; Finanzas mantiene la autoridad del dinero.
 function escapeText(value) {
@@ -78,7 +79,7 @@ function setDialog(title, context) {
   if (!dialog) return null;
   // Never leave the fullscreen Travel class behind when another workspace reuses this dialog.
   if (!travelsCloseCleanupRegistered) {
-    dialog.addEventListener("close", () => dialog.classList.remove("travels-dialog"));
+    dialog.addEventListener("close", () => { if(!dialog.open)dialog.classList.remove("travels-dialog"); });
     travelsCloseCleanupRegistered = true;
   }
   dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog",
@@ -118,7 +119,13 @@ function renderList() {
     '<p class="trv-footnote">Fuente: Eventos · Los importes oficiales permanecen en Finanzas. No se muestran datos reales en la demo pública.</p></div>';
   body().innerHTML = html;
   body().querySelectorAll("[data-trv-open]").forEach((button) => button.addEventListener("click", () => {
-    void openTrip(button.dataset.trvOpen);
+    const id=button.dataset.trvOpen;
+    if(!id)return;
+    if(document.body.classList.contains("route-area-active")){
+      history.pushState(null,"",hrefForTravel(id));
+      window.dispatchEvent(new Event("area-route-synced"));
+    }
+    void openTrip(id);
   }));
 }
 function section(title, content, subtitle) {
@@ -194,7 +201,13 @@ function renderDetail(payload) {
     dayLabel: dateLabel
   });
   bindTripDashboard({ root: body(), groups, dayLabel: dateLabel });
-  body().querySelector("[data-trv-back]")?.addEventListener("click",renderList);
+  body().querySelector("[data-trv-back]")?.addEventListener("click",()=>{
+    if(document.body.classList.contains("route-area-active")){
+      history.pushState(null,"",hrefForArea("area-travels"));
+      window.dispatchEvent(new Event("area-route-synced"));
+    }
+    renderList();
+  });
   body().querySelector("[data-trv-budget]")?.addEventListener("click",(e)=>{
     e.preventDefault();getDialog()?.close();
     document.querySelector('[data-nav-area-id="area-finance"]')?.click();
@@ -244,7 +257,7 @@ async function openTrip(eventId) {
     body().querySelector("[data-retry]")?.addEventListener("click",renderList);
   }
 }
-export async function openTravelsDetail(financeSummary, mode) {
+export async function openTravelsDetail(financeSummary, mode, initialTripId=null) {
   state.financeSummary=financeSummary||{};
   state.mode=mode;
   state.selected=null;
@@ -271,6 +284,7 @@ export async function openTravelsDetail(financeSummary, mode) {
       if(first.event)state.details.set(upcoming[0].id,first);
     }
     renderList();
+    if(initialTripId && state.trips.some(x=>x.id===initialTripId)) await openTrip(initialTripId);
   }catch(error){
     body().innerHTML='<div class="trv-wrap"><p class="trv-error">No ha sido posible consultar Eventos. No se mostrarán datos de prueba como si fueran reales.</p><button type="button" class="trv-back" id="trv-retry">Reintentar</button></div>';
     body().querySelector("#trv-retry")?.addEventListener("click",()=>void openTravelsDetail(financeSummary,mode));
