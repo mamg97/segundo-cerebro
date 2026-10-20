@@ -19,6 +19,17 @@ test('older GED 24.1 is a chronological candidate for 2025 but a DIFFERENT produ
  assert.ok(a.blockers.includes(BLOCKERS.RISK_SET));
  assert.equal(a.asOfTrainingInputsRebuilt,false);
 });
+test('OrganizedViolenceCY 24.1 is the SAME product and a plausible but unverified 2025-era source',()=>{
+ const a=auditFutureSourceAsOf({origin:2025,cutoff:2023,sourceId:'organizedviolencecy_24_1'});
+ assert.equal(a.releaseYearBeforeIssue,true);
+ assert.equal(a.coversTrainingCutoff,true);
+ assert.equal(a.sameProductTargetCandidate,true);
+ assert.equal(a.vintageCorrectBacktestAuthorized,false);
+ assert.ok(a.blockers.includes(BLOCKERS.BYTES));
+ assert.ok(a.blockers.includes(BLOCKERS.FREEZE));
+ const later=auditFutureSourceAsOf({origin:2025,cutoff:2023,sourceId:'organizedviolencecy_25_1'});
+ assert.ok(later.blockers.includes(BLOCKERS.RELEASE));
+});
 test('a hypothetical 2027 issue with a 2026 listing is still unapproved',()=>{
  const a=auditFutureSourceAsOf({origin:2027,cutoff:2025,sourceId:'organizedviolencecy_26_1',mode:'prospective_preparation'});
  assert.equal(a.releaseYearBeforeIssue,true);
@@ -36,7 +47,7 @@ test('user-supplied source claims cannot promote or expose countries',()=>{
  assert.throws(()=>auditFutureCatalogAsOf({...catalog,prospectiveEligible:true},'organizedviolencecy_26_1'),/REVISED/);
 });
 test('reject unsupported sources, broken cutoffs and empty countries',()=>{
- assert.equal(Object.keys(SOURCES).length,3);
+ assert.equal(Object.keys(SOURCES).length,5);
  assert.throws(()=>auditFutureSourceAsOf({origin:2016,cutoff:2015,sourceId:'ged_24_1'}),/INVALID/);
  assert.throws(()=>auditFutureSourceAsOf({origin:2016,cutoff:2014,sourceId:'forged_verified'}),/INVALID/);
  assert.throws(()=>auditFutureCatalogAsOf({...catalog,countries:[]},'organizedviolencecy_26_1'),/REVISED/);
