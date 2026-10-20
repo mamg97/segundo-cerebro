@@ -22,11 +22,12 @@ export function routeFromHash(hash){
   const areaId=slugToArea.get(parts[0]);
   if(!areaId || parts.length>2)return null;
   if(parts.length===2){
-    if(areaId!=="area-travels"&&areaId!=="area-hobbies")return null;
+    if(areaId!=="area-travels"&&areaId!=="area-hobbies"&&areaId!=="area-partner")return null;
     try{
       const id=decodeURIComponent(parts[1]);
       if(!id||id.length>500||id.includes("/")||id.includes("\\")||id.includes("\0"))return null;
       if(areaId==="area-hobbies"&&!hobbyIds.has(id))return null;
+      if(areaId==="area-partner"&&id!=="boda")return null;
       return {areaId,detailId:id};
     }catch{return null}
   }
@@ -37,4 +38,5 @@ export function hrefForTravel(id){
   return "#/viajes/"+encodeURIComponent(id);
 }
 export function hrefForHobby(id){return hobbyIds.has(id)?"#/hobbies/"+id:hrefForArea("area-hobbies")}
+export function hrefForWedding(){return "#/pareja/boda"}
 export function isNamedArea(areaId){return areaToSlug.has(areaId)}

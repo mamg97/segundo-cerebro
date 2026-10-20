@@ -15,7 +15,8 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configu
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.0";
-import { hrefForArea, routeFromHash } from "./area-routes.mjs?v=0.1.1";
+import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.0";
+import { hrefForArea, routeFromHash } from "./area-routes.mjs?v=0.1.2";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -11787,6 +11788,7 @@ function bindInteractions() {
 // Hash URLs have no permissions of their own; private APIs still require Cloudflare Access.
 let routedTravelDetailId=null;
 let routedHobbyId=null;
+let routedPartnerId=null;
 let ignoreRouteCloseEvents=0;
 let restoreCalendarSection=null;
 let activeAreaHash=null;
@@ -11860,6 +11862,7 @@ function applyAreaRoute(){
   restoreAgendaPortal();
   routedTravelDetailId=route.areaId==="area-travels"?(route.detailId||null):null;
   routedHobbyId=route.areaId==="area-hobbies"?(route.detailId||null):null;
+  routedPartnerId=route.areaId==="area-partner"?(route.detailId||null):null;
   document.querySelectorAll("[data-nav-area-id]").forEach(el=>{
     const active=el.dataset.navAreaId===route.areaId;
     el.classList.toggle("active",active);
@@ -11883,6 +11886,10 @@ function openNavigationArea(areaId) {
 }
 
 function openArea(areaId) {
+  if (areaId === "area-partner" && routedPartnerId === "boda") {
+    openWeddingDetail(privateModeKind === "remote");
+    return;
+  }
   if (areaId === "area-hobbies") {
     openHobbiesDetail(routedHobbyId);
     return;
@@ -11971,9 +11978,9 @@ function openArea(areaId) {
       detail: [item.horizon, item.metric && item.target && `${item.metric}: ${item.target}`].filter(Boolean).join(" · "),
     })),
   ];
-  document.querySelector("#dialog-body").innerHTML = entries.length
+  document.querySelector("#dialog-body").innerHTML = (areaId === "area-partner" ? weddingEntryCard() : "") + (entries.length
     ? `<ul class="dialog-list">${entries.map((item) => `<li><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></li>`).join("")}</ul>`
-    : `<p>No hay asuntos asociados a esta área.</p>`;
+    : `<p>No hay asuntos asociados a esta área.</p>`);
   dialog.showModal();
 }
 

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,routeFromHash} from "./area-routes.mjs";
+import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,routeFromHash} from "./area-routes.mjs";
 
 test("main areas have independent, stable URLs and a home route",()=>{
   assert.equal(hrefForArea("area-general"),"#/inicio");
@@ -56,4 +56,11 @@ test("Hobbies has five independent and validated shareable category routes",()=>
    assert.equal(routeFromHash(invalid),null);
  }
  assert.equal(hrefForHobby("desconocido"),"#/hobbies");
+});
+
+test("Pareja contains a shareable Boda route with restricted subpaths",()=>{
+ assert.equal(hrefForWedding(),"#/pareja/boda");
+ assert.deepEqual(routeFromHash("#/pareja/boda"),{areaId:"area-partner",detailId:"boda"});
+ assert.equal(routeFromHash("#/pareja").detailId,null);
+ for(const path of ["#/pareja/otro","#/pareja/%","#/pareja/%2F","#/pareja/boda/ideas"])assert.equal(routeFromHash(path),null);
 });
