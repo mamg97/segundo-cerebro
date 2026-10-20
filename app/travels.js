@@ -73,6 +73,12 @@ async function getJson(url, options) {
 const state = { financeSummary: null, mode: "demo", trips: [], details: new Map(), selected: null };
 const body = () => document.querySelector("#dialog-body");
 function getDialog() { return document.querySelector("#detail-dialog"); }
+let travelRequestSequence=0;
+function travelViewActive(){
+  const dialog=getDialog();
+  return !!dialog?.open && dialog.classList.contains("travels-dialog") &&
+    (!document.body.classList.contains("route-area-active") || window.location.hash.startsWith("#/viajes"));
+}
 let travelsCloseCleanupRegistered = false;
 function setDialog(title, context) {
   const dialog = getDialog();
@@ -233,8 +239,9 @@ async function changeTask(eventId,taskId,button) {
     });
     const updated=result.event?result:await getJson("/api/events/"+encodeURIComponent(eventId));
     state.details.set(eventId,updated);
-    renderDetail(updated);
+    if(travelViewActive() && state.selected===eventId)renderDetail(updated);
   } catch(error) {
+    if(!travelViewActive() || !button.isConnected)return;
     button.disabled=false;button.innerHTML=original;
     const note=document.createElement("p");note.className="trv-error";
     note.textContent="No se pudo guardar el cambio. Vuelve a intentarlo.";
@@ -249,15 +256,17 @@ async function openTrip(eventId) {
   try {
     const cached=state.details.get(eventId);
     const detail=cached||await getJson("/api/events/"+encodeURIComponent(eventId));
-    if(state.selected!==eventId)return;
+    if(state.selected!==eventId || !travelViewActive())return;
     state.details.set(eventId,detail);
     renderDetail(detail);
   }catch(error){
+    if(!travelViewActive())return;
     body().innerHTML='<div class="trv-wrap"><p class="trv-error">No se pudo cargar este viaje.</p><button type="button" class="trv-back" data-retry>Volver</button></div>';
     body().querySelector("[data-retry]")?.addEventListener("click",renderList);
   }
 }
 export async function openTravelsDetail(financeSummary, mode, initialTripId=null) {
+  const requestId=++travelRequestSequence;
   state.financeSummary=financeSummary||{};
   state.mode=mode;
   state.selected=null;
@@ -272,6 +281,7 @@ export async function openTravelsDetail(financeSummary, mode, initialTripId=null
   }
   try{
     const data=await getJson("/api/events?scope=all&kind=travel");
+    if(requestId!==travelRequestSequence || !travelViewActive())return;
     state.trips=Array.isArray(data.events)?data.events:[];
     const now=Date.now();
     state.trips.sort((a,b)=>{
@@ -281,11 +291,13 @@ export async function openTravelsDetail(financeSummary, mode, initialTripId=null
     const upcoming=state.trips.filter((t)=>!["CERRADO","CANCELADO"].includes(t.status)).slice(0,4);
     if(upcoming.length){
       const first=await getJson("/api/events/"+encodeURIComponent(upcoming[0].id));
+      if(requestId!==travelRequestSequence || !travelViewActive())return;
       if(first.event)state.details.set(upcoming[0].id,first);
     }
     renderList();
     if(initialTripId && state.trips.some(x=>x.id===initialTripId)) await openTrip(initialTripId);
   }catch(error){
+    if(requestId!==travelRequestSequence || !travelViewActive())return;
     body().innerHTML='<div class="trv-wrap"><p class="trv-error">No ha sido posible consultar Eventos. No se mostrarán datos de prueba como si fueran reales.</p><button type="button" class="trv-back" id="trv-retry">Reintentar</button></div>';
     body().querySelector("#trv-retry")?.addEventListener("click",()=>void openTravelsDetail(financeSummary,mode));
   }
