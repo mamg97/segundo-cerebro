@@ -1,0 +1,41 @@
+/* Hobbies: responsive, private-ready catalogue shell; no user records in public code. */
+.hobbies-dialog #dialog-body{min-width:0}
+.hby-page{max-width:1540px;margin:0 auto;padding:2px 0 36px;color:var(--ink)}
+.hby-hero{display:flex;position:relative;justify-content:space-between;align-items:center;gap:24px;min-height:220px;padding:clamp(24px,4vw,49px);background:linear-gradient(120deg,#122d50,#1b5c77);border-radius:22px;color:#fff;overflow:hidden}
+.hby-hero>div{position:relative;z-index:1;max-width:740px}
+.hby-eyebrow{display:block;color:#ffce92;font-size:10px;font-weight:900;letter-spacing:.17em}
+.hby-hero h3{font-size:clamp(25px,3vw,43px);line-height:1.12;margin:14px 0 13px;letter-spacing:-.035em}
+.hby-hero p{font-size:clamp(13px,1.3vw,16px);line-height:1.65;color:#e2eef6;margin:0;max-width:680px}
+.hby-hero-mark{font-size:clamp(80px,11vw,175px);color:#ffffff27;line-height:1;transform:rotate(-15deg);pointer-events:none}
+.hby-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:15px;flex-wrap:wrap;margin:25px 0 13px}
+.hby-section-head h3{font-size:clamp(18px,2vw,24px);font-weight:850;letter-spacing:-.025em;margin:0}
+.hby-section-head>span{font-size:12px;color:var(--ink-soft)}
+.hby-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.hby-card{display:flex;position:relative;flex-direction:column;align-items:flex-start;gap:12px;min-height:190px;padding:23px;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);text-decoration:none;box-shadow:0 5px 18px rgba(6,25,42,.04);transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.hby-card:hover,.hby-card:focus-visible{transform:translateY(-2px);border-color:var(--blue);box-shadow:0 9px 25px rgba(6,25,42,.10);outline-offset:3px}
+.hby-card-symbol{display:grid;place-items:center;width:48px;height:48px;border-radius:13px;font-size:26px;background:var(--blue-soft)}
+.hby-card-content{display:grid;gap:5px;padding-right:15px}
+.hby-card-content small{font-size:10px;color:var(--blue);font-weight:800;letter-spacing:.03em}
+.hby-card-content strong{font-size:21px;font-weight:850;letter-spacing:-.02em}
+.hby-card-content>span{font-size:13px;line-height:1.45;color:var(--ink-soft)}
+.hby-card-arrow{position:absolute;top:22px;right:20px;font-size:21px;color:var(--blue);font-weight:800}
+.hby-hint{font-size:12px;color:var(--ink-soft);line-height:1.6;margin:22px 2px}
+.hby-back{display:inline-flex;margin:0 0 17px;padding:8px 0;color:var(--blue);font-size:13px;font-weight:800;text-decoration:none}
+.hby-back:hover,.hby-back:focus-visible{text-decoration:underline}
+.hby-category-hero{display:flex;align-items:center;gap:22px;padding:28px;border:1px solid var(--line);border-radius:19px;background:linear-gradient(130deg,var(--blue-soft),var(--surface));min-height:148px}
+.hby-category-icon{display:grid;place-items:center;flex:0 0 78px;width:78px;height:78px;border-radius:21px;background:var(--surface);font-size:43px}
+.hby-category-hero small{display:block;font-size:10px;font-weight:900;letter-spacing:.11em;color:var(--blue)}
+.hby-category-hero h3{font-size:clamp(25px,3vw,36px);margin:6px 0 5px;letter-spacing:-.03em}
+.hby-category-hero p{margin:0;color:var(--ink-soft);line-height:1.45;font-size:14px}
+.hby-stages{display:flex;gap:8px;flex-wrap:wrap}
+.hby-stages span{padding:9px 14px;background:var(--surface);border:1px solid var(--line);border-radius:999px;color:var(--ink-soft);font-size:12px;font-weight:750}
+.hby-empty{text-align:center;display:grid;justify-items:center;gap:8px;place-content:center;margin:18px 0 25px;padding:38px 20px;min-height:200px;border:1px dashed var(--line);border-radius:16px;background:var(--paper)}
+.hby-empty>span{font-size:34px;color:var(--blue)}
+.hby-empty h4{font-size:19px;margin:2px 0}
+.hby-empty p{font-size:13px;line-height:1.6;color:var(--ink-soft);margin:0;max-width:570px}
+.hby-schema{padding:19px 21px;border:1px solid var(--line);background:var(--surface);border-radius:15px}
+.hby-schema h4{font-size:14px;margin:0 0 13px}
+.hby-schema>div{display:flex;gap:8px;flex-wrap:wrap}
+.hby-schema>div span{font-size:12px;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+@media(max-width:1050px){.hby-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.hby-page{padding-bottom:24px}.hby-hero{min-height:180px;padding:22px 20px}.hby-hero-mark{position:absolute;right:0;bottom:-25px;font-size:110px}.hby-hero h3{font-size:26px;max-width:275px}.hby-hero p{font-size:13px;position:relative;z-index:1}.hby-grid{grid-template-columns:1fr;gap:10px}.hby-card{min-height:116px;display:grid;grid-template-columns:42px minmax(0,1fr) 14px;align-items:start;padding:17px;gap:12px}.hby-card-symbol{width:42px;height:42px;font-size:23px;border-radius:10px}.hby-card-content strong{font-size:18px}.hby-card-arrow{position:static;align-self:start;font-size:18px}.hby-category-hero{padding:18px 15px;gap:14px;min-height:120px}.hby-category-icon{width:54px;height:54px;flex-basis:54px;font-size:29px}.hby-category-hero h3{font-size:26px}.hby-empty{min-height:180px;padding:26px 15px}}

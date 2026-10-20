@@ -14,7 +14,8 @@ import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configureP
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
-import { hrefForArea, routeFromHash } from "./area-routes.mjs?v=0.1.0";
+import { openHobbiesDetail } from "./hobbies.js?v=0.1.0";
+import { hrefForArea, routeFromHash } from "./area-routes.mjs?v=0.1.1";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -697,6 +698,14 @@ function ensureDerivedAreas() {
       status: "steady"
     });
   }
+  // An independent, extensible workspace; no user records are hard-coded.
+  if (!state.areas.some((area) => area.id === "area-hobbies")) {
+    state.areas.push({
+      id: "area-hobbies", slug: "hobbies", title: "Hobbies", shortTitle: "Hobbies",
+      summary: "Películas, series, libros, vinos, rutas en moto y más.",
+      health: 85, tone: "blue", module: "Hobbies", sensitivity: "privado", status: "steady"
+    });
+  }
   if (!state.areas.some((area) => area.id === "area-health")) {
     const wealthIndex = state.areas.findIndex((area) => area.id === "area-wealth");
     const healthArea = {
@@ -934,7 +943,7 @@ function renderNavigation() {
   const canonicalOrder = [
     "area-general", "area-career", "area-finance", "area-calendar",
     "area-partner", "area-family", "area-health", "area-objects",
-    "area-wealth", "area-projects", "area-travels"
+    "area-wealth", "area-projects", "area-travels", "area-hobbies"
   ];
   const orderRank = new Map(canonicalOrder.map((id, index) => [id, index]));
   const parents = state.areas
@@ -11763,6 +11772,7 @@ function bindInteractions() {
 // Per-area routes use non-modal workspaces so the existing top navigation remains usable.
 // Hash URLs have no permissions of their own; private APIs still require Cloudflare Access.
 let routedTravelDetailId=null;
+let routedHobbyId=null;
 let ignoreRouteCloseEvents=0;
 let restoreCalendarSection=null;
 let activeAreaHash=null;
@@ -11831,10 +11841,11 @@ function applyAreaRoute(){
     "travels-dialog","wealth-dialog","health-dialog","habits-dialog",
     "budget-dialog","parents-dialog","electricity-dialog","pantry-dialog",
     "objects-dialog","projects-dialog","events-workspace-dialog",
-    "event-detail-dialog","important-events-dialog"
+    "event-detail-dialog","important-events-dialog","hobbies-dialog"
   );
   restoreAgendaPortal();
-  routedTravelDetailId=route.detailId||null;
+  routedTravelDetailId=route.areaId==="area-travels"?(route.detailId||null):null;
+  routedHobbyId=route.areaId==="area-hobbies"?(route.detailId||null):null;
   document.querySelectorAll("[data-nav-area-id]").forEach(el=>{
     const active=el.dataset.navAreaId===route.areaId;
     el.classList.toggle("active",active);
@@ -11858,6 +11869,10 @@ function openNavigationArea(areaId) {
 }
 
 function openArea(areaId) {
+  if (areaId === "area-hobbies") {
+    openHobbiesDetail(routedHobbyId);
+    return;
+  }
   if (areaId === "area-travels") {
     void openTravelsDetail(state.financeSummary, privateModeKind, routedTravelDetailId);
     return;

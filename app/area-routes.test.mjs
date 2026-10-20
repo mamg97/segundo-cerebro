@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {hrefForArea,hrefForTravel,routeFromHash} from "./area-routes.mjs";
+import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,routeFromHash} from "./area-routes.mjs";
 
 test("main areas have independent, stable URLs and a home route",()=>{
   assert.equal(hrefForArea("area-general"),"#/inicio");
-  for(const id of ["area-career","area-finance","area-calendar","area-partner","area-family","area-health","area-objects","area-wealth","area-projects","area-travels"]){
+  for(const id of ["area-career","area-finance","area-calendar","area-partner","area-family","area-health","area-objects","area-wealth","area-projects","area-travels","area-hobbies"]){
     const route=routeFromHash(hrefForArea(id));
     assert.equal(route.areaId,id);
     assert.equal(route.detailId,null);
@@ -43,4 +43,17 @@ test("routed areas expose only one vertical scrollbar and preserve horizontal it
   assert.match(css,/body\.route-area-active\s*\{[^}]*height:100dvh;[^}]*overflow:hidden;/);
   assert.match(css,/body\.route-area-active #detail-dialog\[open\] #dialog-body\s*\{[^}]*overflow-y:auto;/);
   assert.match(travels,/\.trv-timetable-scroll\s*\{[^}]*overflow-x:auto;[^}]*max-height:none;/);
+});
+
+test("Hobbies has five independent and validated shareable category routes",()=>{
+ assert.equal(hrefForArea("area-hobbies"),"#/hobbies");
+ assert.deepEqual(HOBBY_CATEGORIES.map(x=>x.id),["peliculas","series","libros","vinos","rutas-moto"]);
+ for(const category of HOBBY_CATEGORIES){
+   assert.deepEqual(routeFromHash(hrefForHobby(category.id)),{areaId:"area-hobbies",detailId:category.id});
+ }
+ assert.equal(routeFromHash("#/hobbies").detailId,null);
+ for(const invalid of ["#/hobbies/otro","#/hobbies/%2F","#/hobbies/%","#/hobbies/peliculas/extra"]){
+   assert.equal(routeFromHash(invalid),null);
+ }
+ assert.equal(hrefForHobby("desconocido"),"#/hobbies");
 });
