@@ -35,7 +35,7 @@ test("Hobbies has the canonical area route and responsive styling, no embedded p
  assert.match(app,/"area-travels", "area-hobbies"/);
  assert.match(app,/route\.areaId==="area-hobbies"/);
  assert.match(routes,/hrefForHobby/);
- assert.match(html,/hobbies\.css\?v=0\.1\.2/);
+ assert.match(html,/hobbies\.css\?v=0\.1\.3/);
  assert.match(css,/\.hby-list-table/);
  assert.match(css,/\.hby-tabs/);
  assert.match(readFileSync(new URL("./hobbies.js",import.meta.url),"utf8"),/shown\.map\(recordRow\)/);
@@ -56,6 +56,6 @@ test("Wine media uses click-to-enlarge thumbnails and safe store links",()=>{
  assert.match(shop,/noopener noreferrer/);
  assert.doesNotMatch(shop,/amazon/);
  assert.match(wineThumbnailMarkup({...bottle,imagen_url:"javascript:alert(1)"}),/Fotografía pendiente/);
- assert.match(wineShopMarkup({...bottle,tienda_url:"https:\/\/www.example.org\/wrong"}),/hby-shop-empty/);
+ assert.match(wineShopMarkup({...bottle,tienda_url:"https:\/\/www.example.org\/wrong"}),/Buscar en Amazon/);
  assert.doesNotMatch(wineThumbnailMarkup({...bottle,marca:'<img src=x onerror=1>'}),/<img src=x/);
 });
