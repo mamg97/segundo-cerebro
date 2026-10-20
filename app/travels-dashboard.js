@@ -43,7 +43,7 @@ export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,boo
      '<p class="trv-muted">El planning todavía no está registrado en Eventos.</p>')+
      '<p class="trv-footnote">Un tour propuesto no implica una plaza reservada: comprueba su confirmación en el proveedor.</p></section>';
   const percent=b.percent;
-  const budgetProgress=percent===null?"":'<div class="trv-budget-meter"><div role="progressbar" aria-label="Presupuesto provisionado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'"><span style="width:'+percent+'%"></span></div><small>'+percent+' % del presupuesto provisionado; no equivale a gasto pagado</small></div>';
+  const budgetProgress=percent===null?"":'<div class="trv-budget-meter"><div role="progressbar" aria-label="Presupuesto provisionado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'"><span data-trv-budget-percent="'+percent+'"></span></div><small>'+percent+' % del presupuesto provisionado; no equivale a gasto pagado</small></div>';
   const nav='<nav class="trv-dash-nav" aria-label="Secciones del viaje">'+
    [["map","⌖ Mapa"],["plan","▤ Días"],["tasks","✓ Pendientes"],["budget","€ Presupuesto"],["bookings","✈ Reservas"]]
    .map(([id,label])=>'<button type="button" data-trv-go="'+id+'">'+label+'</button>').join("")+'</nav>';
@@ -54,6 +54,7 @@ export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,boo
    '<p class="trv-footnote">Datos canónicos privados de Eventos y Finanzas · Sin registros de gastos paralelos.</p></div>';
 }
 export function bindTripDashboard({root,groups,dayLabel}){
+  root.querySelectorAll("[data-trv-budget-percent]").forEach(el=>{const v=Number(el.dataset.trvBudgetPercent);if(Number.isFinite(v))el.style.width=Math.max(0,Math.min(100,v))+"%"});
   const mapButton=root.querySelector("[data-trv-show-map]");
   mapButton?.addEventListener("click",()=>{
     const address=lodgingMapAddress(groups),src=tripMapLink(address);
