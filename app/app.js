@@ -11776,12 +11776,7 @@ function setupAreaRoutes(){
     }
     if(!dialog.open)nativeShowModal();
   };
-  const updateNavHeight=()=>{
-    const h=Math.ceil(document.querySelector(".sidebar")?.getBoundingClientRect().height||62);
-    document.documentElement.style.setProperty("--route-nav-height",h+"px");
-  };
-  updateNavHeight();
-  window.addEventListener("resize",updateNavHeight);
+  // Navigation height is reserved by a static stylesheet to satisfy CSP style-src self.
   dialog.addEventListener("close",()=>{
     if(ignoreRouteCloseEvents>0){ignoreRouteCloseEvents--;return}
     if(!document.body.classList.contains("route-area-active"))return;
