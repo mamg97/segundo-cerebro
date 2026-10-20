@@ -1,5 +1,16 @@
 # PSICOHISTORIA — Estado científico verificado · 20/10/2026
 
+## AV-20261020-054 · Onset 19.1: contradicción de vintage y contaminación aparente de universo
+
+- [PR #698](https://github.com/mamg97/segundo-cerebro/pull/698) **fusionada** (squash `766e3b8ab8ac4e9700767dddbc6d115cbfd60cf9`). Pruebas adversariales, lectura de cinco ficheros UCDP oficiales SHA-pinned y [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39382388341), privacidad y Pages **SUCCESS**.
+- [Auditor y evidencia](ONSET_191_PROVENANCE_TYPES_AV054.md): muestra preregistrada de **10.130** GW-año y **61** residuales `newconf=1` antiguo / `onset1=0` moderno. Conflictos UCDP/PRIO 19.1 y 25.1 idénticos por categorías de `gwno_loc` para esos 61: **38** con actividad **solo no intrastatal** (37 interestatales tipo2 y 1 extraestatal tipo1), **10** mixtos (interna y no interna), **0** solo interna y **13** sin clave ACD. Los **51 sin actividad interna** del AV-052 se dividen ahora en 38 con conflictos de otros tipos y 13 sin coincidencia. En los 13 sin clave, todos los años son anteriores a 1989.
+- El [codebook oficial UCDP Onset 19.1](https://ucdp.uu.se/downloads/onset/UCDP_Onset_Dataset_Codebook_19.1.pdf) anuncia muestra monádica país-año **1946–2018** con tipos internos **3/4**. El CSV actualmente servido por el catálogo histórico como 19.1 (`onsets_computed.csv`, SHA-256 observado 2026 `ba54aeace175173b7643a2c14ba35ce89a2fcfd31712085e4fd13de656f752a8`) termina **2017** y tiene **10.203** filas para **10.142** claves GW-año, con **61** repeticiones. Una fuente académica externa (*peacesciencer*) también documenta multiplicidad de episodios y ejemplos extraestatales. **La identidad y completitud de la edición etiquetada 19.1 NO están certificadas.**
+- Esta coincidencia por país-año con conflicto tipo1/2 **no establece** cuál fue el conflicto específico que produjo cada `newconf` ni prueba error individual. Dictamen operativo: **INCOMPATIBLE_UNVERIFIED_VINTAGE** para entrenar onset intrastatal 25.1; no admitirlo como etiquetas históricas sin obtener archivo correcto, reloj temporal independiente y definiciones homologadas.
+- **Canónico privado releído:** `PsicoAvances=54`, último `AV-20261020-054=VERIFICADO`; `MAD-02=PARCIAL`; `PsicoPredicciones=0`. Cohorte privada 2027 no modificada, coste adicional 0 €.
+- **AV-055 pendiente:** buscar versión original Onset 19.1 *efectivamente publicada en 2019* y la causa de que el enlace actual sirva 1946–2017; también auditar en qué medida los episodios extraestatales/interestatales pasan a `onset1` antiguo. Sin sello de publicación, roster completo GW al origen, etiquetas comparables y exclusión de hindsight, **no hay backtest/Brier real ni predicción emitida**.
+
+---
+
 ## AV-20261019-053 · UCDP Dyadic 19.1–25.1 (conjunto fijo de 61)
 
 - [PR #697](https://github.com/mamg97/segundo-cerebro/pull/697) **fusionada** (squash `291e3aa715f31a358235a4d6d342b5e21f4f2b80`), pruebas sintéticas, auditor de las dos fuentes UCDP reales, privacidad y [CI científica de main](https://github.com/mamg97/segundo-cerebro/actions/runs/39332902303) SUCCESS, Pages SUCCESS.
