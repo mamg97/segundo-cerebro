@@ -49,8 +49,8 @@ export function futureGraphGuide(result, horizon, question = 'atleast25') {
   return '<section class="future-graph-guide" aria-label="Qué futuros evalúa este árbol">'+
     '<div class="future-guide-head"><div><small>LA PREGUNTA DEL ÁRBOL · '+esc(result.country.name)+' · '+snapshot.endYear+'</small>'+
     '<h3>'+esc(answer.question)+'</h3>'+
-    '<p>Último año admitido: '+result.cutoff+' · '+(result.origin-1)+' es puente sin observar · '+
-    result.origin+'–'+(Number.isInteger(result.maxHorizon)?result.origin+result.maxHorizon-1:snapshot.endYear)+' son los años objetivo históricos. La fuente está revisada, no es información verificada en aquel momento.</p></div>'+
+    '<p>Datos hasta '+result.cutoff+' · puente no observado '+(result.origin-1)+' · proyección '+
+    result.origin+'–'+(Number.isInteger(result.maxHorizon)?result.origin+result.maxHorizon-1:snapshot.endYear)+'. Fuente revisada; disponibilidad en origen sin verificar.</p></div>'+
     '<div class="future-guide-risk" aria-label="Resumen de probabilidades del objetivo anual">'+
       '<div><small>'+esc(answer.yes)+' · '+snapshot.endYear+'</small><strong>'+pct(answer.answer)+'</strong></div>'+
       '<div><small>'+esc(answer.no)+' · '+snapshot.endYear+'</small><strong>'+pct(answer.complement)+'</strong></div>'+
@@ -58,11 +58,10 @@ export function futureGraphGuide(result, horizon, question = 'atleast25') {
     '<div class="future-guide-legend" aria-label="Significado de los cuatro estados">'+
       names.map((name,i)=>'<span data-state="'+i+'"><i aria-hidden="true"></i><span><b>'+esc(name)+'</b>'+
       '<small>'+esc(explanations[i])+'</small></span></span>').join('')+'</div>'+
-    '<p class="future-guide-reading"><strong>Nodos:</strong> probabilidad del estado en cada año. '+
-    '<strong>Líneas:</strong> flujo agregado entre estados (no un camino individual). '+
-    '<strong>Ámbar discontinuo:</strong> trayectoria observada después, solo para contraste. '+
-    '<strong>Estado más probable al final:</strong> '+esc(names[dominant])+' ('+pct(masses[dominant])+'). '+
-    'Esto no equivale a predecir una guerra o un ataque específico.</p></section>';
+    '<p class="future-guide-reading"><strong>Nodos:</strong> probabilidades · '+
+    '<strong>Flujos:</strong> transiciones · <strong>Trayectoria observada:</strong> contraste posterior · '+
+    '<strong>Estado más probable:</strong> '+esc(names[dominant])+' ('+pct(masses[dominant])+'). '+
+    'No predice guerras ni ataques concretos.</p></section>';
 }
 
 export const observedCaseAvailable = (result, horizon) =>
@@ -379,7 +378,7 @@ export function mountFutureExplorer(container, catalogs, {onTrack = () => {}, on
       '<h2>Árbol completo · predicción '+result.origin+'</h2><p>'+esc(result.country.name)+' · datos hasta '+result.cutoff+' · años '+result.cutoff+'–'+(result.origin+result.maxHorizon-1)+' · '+esc(result.modelLabel)+'</p></div>'+
       '</div>'+ 
       futureGraphGuide(result,horizon,question) + predictionYearStrip(result,horizon) +
-      '<p class="future-network-key"><span><b>━━ Ámbar:</b> evolución registrada posteriormente</span><span>● Otros colores: probabilidad de cada estado</span>'+
+      '<p class="future-network-key"><span><b>━━ Ámbar:</b> trayectoria observada</span><span>● Colores: probabilidades por estado</span>'+
       '<span>ⓘ Inspecciona las marcas y los acontecimientos por año</span></p>'+
       '<div class="future-graph-layout"><div class="future-graph-scroll">'+futureGraph(result,horizon,selection,observed,true)+'</div>'+
        futureNodeRail(question)+'</div>'+

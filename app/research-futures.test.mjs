@@ -200,10 +200,10 @@ test('graph guide states the exact 25-death binary target and each transition',(
   assert.match(html,/70 %/); // 00+10: below threshold
   assert.match(html,/60 %/); // most likely pair of annual states
   assert.match(html,/2018/);
-  assert.match(html,/2019 es puente sin observar/);
+  assert.match(html,/puente no observado 2019/);
   for(const label of ['Bajo → bajo','Entrada','Salida','Persistencia'])
     assert.match(html,new RegExp(label));
-  assert.match(html,/no equivale a predecir una guerra o un ataque específico/);
+  assert.match(html,/No predice guerras ni ataques concretos/);
   assert.match(html,/SYNTHETIC &lt;PLACE&gt;/);
   assert.doesNotMatch(html,/<PLACE>/);
   assert.equal(futureGraphGuide({...fixture,snapshots:[{endYear:2020,distribution:[.5,.5,.5,.5]}]},1),'');

@@ -1,6 +1,7 @@
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {LAB_VIEWS,labGroupForView,labDefaultView} from './research-lab-navigation.mjs?v=0.5.26';
-import {mountFutureExplorer} from './research-futures.mjs?v=0.5.27';
+import {mountLaboratoryGlossary} from './research-tooltip.mjs?v=0.5.28';
+import {mountFutureExplorer} from './research-futures.mjs?v=0.5.28';
 import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
 import {renderIdeaNetwork} from './research-ideas.mjs?v=0.5.20';
 import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.18';
@@ -240,7 +241,7 @@ function operations(){
         ["Resultados rechazados",String(e.rejectedResolved||0),"Control automático de fechas"],
         ["KPIs definidos",String(state.lab.kpis.length),"No equivale a KPIs medidos"]
       ].map(a=>'<div class="kpi"><div><strong>'+esc(a[0])+'</strong><small>'+esc(a[2])+'</small></div><b>'+esc(a[1])+'</b></div>').join("")+'</div>'+
-      '<p class="legend-note">Persistencia: registro privado de Google Sheets; lecturas mediante Worker autenticado. Actualización manual para limitar llamadas y coste.</p></section>'+
+      '<p class="legend-note">Registro canónico en Sheets · acceso privado · actualización manual.</p></section>'+
     '</div>';
 }
 function roadmap(){
@@ -340,4 +341,5 @@ window.addEventListener('popstate',()=>{
   const view=AVAILABLE_VIEWS.has(target)?target:'brief';
   if(view!==activeView){activeView=view;render();}
 });
+mountLaboratoryGlossary(root);
 load();
