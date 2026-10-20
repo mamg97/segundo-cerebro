@@ -2,6 +2,7 @@
 body.route-area-active .sidebar{
  position:fixed;inset:0 0 auto 0;z-index:5000;width:100%;margin:0;
  background:var(--surface);border-bottom:1px solid var(--line);
+ transform:none;box-shadow:none;visibility:visible;
 }
 body.route-area-active #detail-dialog[open]{
  box-sizing:border-box;position:fixed;
