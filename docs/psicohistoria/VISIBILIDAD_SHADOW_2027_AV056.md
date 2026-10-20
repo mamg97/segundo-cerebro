@@ -22,7 +22,7 @@ Esto **no equivale** a que el usuario deba navegar siempre por Drive. El lugar c
 
 ## Puertas y garantías
 
-- Esta PR **no despliega automáticamente el Worker privado**. El merge GitHub puede actualizar GitHub Pages (mock) y CI, pero los usuarios de la URL Cloudflare solo verán la nueva pestaña después de un despliegue real y verificación de autenticación Access.
+- La PR **no despliega** por sí sola el Worker privado, pero una fusión en `main` que modifica `app/**` sí activa el workflow existente `.github/workflows/deploy-private-cloudflare.yml`. La pestaña estará visible en Cloudflare **solo si el job de despliegue termina con éxito** y se comprueba la autenticación de Cloudflare Access; GitHub Pages conserva un entorno mock independiente.
 - El ranking privado de Google Sheets del AV-055 **ya existe**, no depende de esta integración. El acceso directo sigue siendo válido incluso si el Worker está en una versión anterior.
 - No se altera la cohorte, la política de score o el ledger `PsicoPredicciones`. **MAD-02=PARCIAL**, cero pronósticos oficialmente emitidos.
 - Predicciones abiertas/publicadas: técnicamente posibles, pero requieren consentimiento explícito sobre distribución de probabilidades aún no validadas y una política de archivado/versionado; no se activa la publicación por preguntar "por qué privado".
