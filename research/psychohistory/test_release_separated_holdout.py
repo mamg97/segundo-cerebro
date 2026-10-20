@@ -5,6 +5,7 @@ import io
 import json
 import tempfile
 import unittest
+from unittest import mock
 import zipfile
 from pathlib import Path
 
@@ -58,7 +59,7 @@ class FrozenVintageHoldoutTests(unittest.TestCase):
 
     def test_scoring_cannot_use_outcome_revisions_as_features(self):
         # Unit test frozen train path even when later source has a different digest:
-        with unittest.mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
+        with mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
             before=run(self.old,self.new,self.s24,self.s26)
             modified=copy.deepcopy(self.new_rows)
             # Change all later-version 2023 historical values: train MUST stay frozen.
@@ -66,7 +67,7 @@ class FrozenVintageHoldoutTests(unittest.TestCase):
                 if int(r["year"])<=2023:
                     r["sb_total_deaths_best"]="999"
             self.s26=zipped(self.new,modified)
-            with unittest.mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
+            with mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
                 after=run(self.old,self.new,self.s24,self.s26)
         self.assertEqual(before["models"],after["models"])
         self.assertNotEqual(before["earlier_label_revisions_among_scored"],after["earlier_label_revisions_among_scored"])
@@ -76,7 +77,7 @@ class FrozenVintageHoldoutTests(unittest.TestCase):
     def test_missing_resolution_not_converted_to_zero(self):
         truncated=[r for r in self.new_rows if not(int(r["year"])==2025 and r["country_id"]=="1")]
         self.s26=zipped(self.new,truncated)
-        with unittest.mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
+        with mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
             result=run(self.old,self.new,self.s24,self.s26)
         self.assertEqual(result["not_evaluable_no_later_outcome"],1)
         self.assertEqual(result["scored_identical_cohort"],7)
@@ -87,9 +88,9 @@ class FrozenVintageHoldoutTests(unittest.TestCase):
             if int(r["year"])==2025 and r["country_id"]=="2":
                 r["sb_total_deaths_best"]="900" if r["sb_total_deaths_best"]=="0" else "0"
         new_hash=zipped(self.new,changed)
-        with unittest.mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
+        with mock.patch.dict(PROTOCOL,{"archive_sha256":self.s26}):
             before=run(self.old,self.new,self.s24,self.s26)
-        with unittest.mock.patch.dict(PROTOCOL,{"archive_sha256":new_hash}):
+        with mock.patch.dict(PROTOCOL,{"archive_sha256":new_hash}):
             after=run(self.old,self.new,self.s24,new_hash)
         self.assertEqual(before["train_eligible_rows"],after["train_eligible_rows"])
         self.assertEqual(before["scored_identical_cohort"],after["scored_identical_cohort"])
