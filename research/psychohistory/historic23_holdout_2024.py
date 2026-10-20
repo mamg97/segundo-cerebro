@@ -20,7 +20,7 @@ from historic23_xlsx_probe import column_num,NS
 HERE=Path(__file__).resolve().parent
 CORE=json.loads((HERE/"protocol.json").read_text(encoding="utf-8"))
 PIN_231="6c7dc09cc3173b21568a88d70862bee6a9199b2c6b217719698d9298ca8ecaff"
-PIN_251="" # Must be filled from a SHA observation performed BEFORE labels are scored.
+PIN_251="564ce9a33652a5d7adef30f00ce6ac86411dedbcc10ef60ca9bdfbfeb9fea917" # Observed in no-score CI #39455838398
 YEAR=2024
 TRAIN_END=2022
 OLD_VERSION="23.1"
