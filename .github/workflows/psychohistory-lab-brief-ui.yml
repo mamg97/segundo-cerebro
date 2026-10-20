@@ -8,6 +8,8 @@ on:
       - "app/research-lab-brief.test.mjs"
       - "app/research-futures.mjs"
       - "app/research-futures.test.mjs"
+      - "app/research-futures-questions.mjs"
+      - "app/research-futures-questions.test.mjs"
       - "app/research-futures-trees.mjs"
       - "app/research-futures-trees.test.mjs"
       - "app/research-futures-trees.css"
@@ -29,6 +31,8 @@ on:
       - "app/research-lab-brief.test.mjs"
       - "app/research-futures.mjs"
       - "app/research-futures.test.mjs"
+      - "app/research-futures-questions.mjs"
+      - "app/research-futures-questions.test.mjs"
       - "app/research-futures-trees.mjs"
       - "app/research-futures-trees.test.mjs"
       - "app/research-futures-trees.css"
@@ -61,8 +65,9 @@ jobs:
           node --check app/research-lab.js
           node --check app/research-futures.mjs
           node --check app/research-futures-trees.mjs
+          node --check app/research-futures-questions.mjs
           node --check app/research-video-studio.mjs
           node --check app/research-lab-brief.mjs
           node --check app/research-ideas.mjs
-          node --test app/research-futures.test.mjs app/research-futures-trees.test.mjs app/research-ideas.test.mjs app/research-lab-brief.test.mjs app/research-video-studio.test.mjs app/research-lab.test.mjs app/research-shadow2027.test.mjs app/research-shadow2027-inline.test.mjs app/research-onset.test.mjs
+          node --test app/research-futures-questions.test.mjs app/research-futures.test.mjs app/research-futures-trees.test.mjs app/research-ideas.test.mjs app/research-lab-brief.test.mjs app/research-video-studio.test.mjs app/research-lab.test.mjs app/research-shadow2027.test.mjs app/research-shadow2027-inline.test.mjs app/research-onset.test.mjs
           echo "The 2027 cohort is private; tests use only fictional IDs and never fetch country probabilities."
