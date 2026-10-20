@@ -103,3 +103,16 @@
   .future-controls-single-row .future-filter-observed,
   .future-controls-single-row .future-calculate{grid-column:1}
 }
+
+/* AV-076: compact, ex-post per-country probability-vs-observed diagnostic. */
+.future-retrospective-diagnostic{margin:10px 0 0;border:1px solid #425e70;border-radius:8px;background:#101d29;overflow:hidden}
+.future-retrospective-diagnostic summary{padding:11px 13px;color:#d8eafb;font-size:12px;cursor:pointer;list-style-position:inside}
+.future-retrospective-diagnostic summary strong{font-size:12px;color:#fff}
+.future-retrospective-diagnostic summary:hover{background:#1c3446}
+.future-retrospective-diagnostic[open] summary{border-bottom:1px solid #425e70}
+.future-retrospective-diagnostic>p{padding:0 13px;margin:11px 0;line-height:1.5;font-size:11px;color:#c6d8e6}
+.future-retrospective-diagnostic .chart-note{color:#a8b9ca}
+.future-retrospective-diagnostic-scroll{max-width:100%;overflow-x:auto;padding:10px 13px 0}
+.future-retrospective-diagnostic table{width:100%;border-collapse:collapse;font-size:11px;min-width:500px;color:#dee9f2}
+.future-retrospective-diagnostic th,.future-retrospective-diagnostic td{border-bottom:1px solid #345062;text-align:left;padding:8px}
+.future-retrospective-diagnostic summary:focus-visible{outline:2px solid #bbdfff;outline-offset:-2px}
