@@ -38,6 +38,6 @@ test('UI changes inspection while preserving full graph and scientific year deta
  assert.match(js,/predictionYearStrip\(result,horizon\)/);
  assert.match(js,/historicalObservedTimeline\(result, result\.maxHorizon\)/);
  assert.match(js,/historicalCaseSummary\(result, horizon\)/);
- assert.match(js,/button\[data-ftree\]/);
+ assert.match(js,/name="catalog"/);\n assert.doesNotMatch(js,/predictionTreeIndex\(catalogs,catalog\.id\)/);
  assert.match(js,/button\[data-fyear\]/);
 });
