@@ -13,7 +13,8 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.63";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.2";
-import { openTravelsDetail } from "./travels.js?v=0.2.0";
+import { openTravelsDetail } from "./travels.js?v=0.3.0";
+import { hrefForArea, routeFromHash } from "./area-routes.mjs?v=0.1.0";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -810,6 +811,7 @@ async function init() {
   renderCreditOverview();
   renderWealthOverview();
   bindInteractions();
+  setupAreaRoutes();
   // Initial degraded state recovers without requiring an explicit user reload.
   if (privateModeKind === "remote" && !calendarSnapshotComplete(state.calendarSummary)) {
     void refreshCalendarView();
@@ -941,7 +943,7 @@ function renderNavigation() {
 
   nav.innerHTML = parents.map((area, index) => `
     <div class="nav-group" data-nav-group="${escapeHtml(area.id)}">
-      <a class="nav-link nav-link-parent nav-tone-${escapeHtml(area.tone || "blue")} ${index === 0 ? "active" : ""}" href="#overview" data-nav-area-id="${area.id}">
+      <a class="nav-link nav-link-parent nav-tone-${escapeHtml(area.tone || "blue")} ${index === 0 ? "active" : ""}" href="${hrefForArea(area.id)}" data-nav-area-id="${area.id}">
         ${escapeHtml(area.shortTitle)}
       </a>
     </div>`
@@ -11750,9 +11752,98 @@ function bindInteractions() {
     event.preventDefault();
     document.body.classList.remove("nav-open");
     menuButton?.setAttribute("aria-expanded", "false");
-    document.querySelectorAll("[data-nav-area-id]").forEach((node) => node.classList.toggle("active", node === link));
-    openNavigationArea(link.dataset.navAreaId);
+    const areaId=link.dataset.navAreaId;
+    if(!areaId)return;
+    const target=hrefForArea(areaId);
+    if(window.location.hash!==target)history.pushState(null,"",target);
+    applyAreaRoute();
   }));
+}
+
+// Per-area routes use non-modal workspaces so the existing top navigation remains usable.
+// Hash URLs have no permissions of their own; private APIs still require Cloudflare Access.
+let routedTravelDetailId=null;
+let ignoreRouteCloseEvents=0;
+let restoreCalendarSection=null;
+let activeAreaHash=null;
+function setupAreaRoutes(){
+  const dialog=document.querySelector("#detail-dialog");
+  const nativeShowModal=dialog.showModal.bind(dialog);
+  dialog.showModal=function(){
+    if(document.body.classList.contains("route-area-active")){
+      if(!dialog.open)dialog.show();
+      return;
+    }
+    if(!dialog.open)nativeShowModal();
+  };
+  const updateNavHeight=()=>{
+    const h=Math.ceil(document.querySelector(".sidebar")?.getBoundingClientRect().height||62);
+    document.documentElement.style.setProperty("--route-nav-height",h+"px");
+  };
+  updateNavHeight();
+  window.addEventListener("resize",updateNavHeight);
+  dialog.addEventListener("close",()=>{
+    if(ignoreRouteCloseEvents>0){ignoreRouteCloseEvents--;return}
+    if(!document.body.classList.contains("route-area-active"))return;
+    history.pushState(null,"","#/inicio");
+    applyAreaRoute();
+  });
+  document.querySelector(".brand")?.addEventListener("click",e=>{
+    e.preventDefault();
+    if(window.location.hash!=="#/inicio")history.pushState(null,"","#/inicio");
+    applyAreaRoute();
+  });
+  window.addEventListener("hashchange",()=>applyAreaRoute());
+  window.addEventListener("popstate",()=>applyAreaRoute());
+  document.querySelector("#copy-area-link")?.addEventListener("click",async()=>{
+    const btn=document.querySelector("#copy-area-link");
+    try{await navigator.clipboard.writeText(window.location.href);if(btn)btn.textContent="✓ Enlace copiado"}
+    catch{window.prompt("Copia este enlace. La persona necesitará acceso autorizado:",window.location.href)}
+    window.setTimeout(()=>{if(btn)btn.textContent="Compartir enlace"},2400);
+  });
+  applyAreaRoute();
+}
+function restoreAgendaPortal(){
+  if(restoreCalendarSection){restoreCalendarSection();restoreCalendarSection=null}
+}
+function openAgendaRoute(){
+  renderEvents();
+  const original=document.querySelector("#agenda-overview");
+  const container=document.querySelector("#dialog-body");
+  const dialog=document.querySelector("#detail-dialog");
+  if(!original||!container||!dialog)return;
+  const marker=document.createComment("agenda-route-anchor");
+  original.parentNode.insertBefore(marker,original);
+  container.replaceChildren(original);
+  restoreCalendarSection=()=>{if(marker.parentNode)marker.replaceWith(original)};
+  dialog.classList.remove("travels-dialog","wealth-dialog","health-dialog","projects-dialog");
+  document.querySelector("#dialog-context").textContent="Agenda · vista independiente";
+  document.querySelector("#dialog-title").textContent="Agenda";
+  dialog.showModal();
+  void refreshCalendarView();
+}
+function applyAreaRoute(){
+  const hash=window.location.hash||"#/inicio";
+  if(hash===activeAreaHash)return;
+  const route=routeFromHash(hash);
+  if(!route)return; // Ignore unrelated in-page anchors.
+  activeAreaHash=hash;
+  const dialog=document.querySelector("#detail-dialog");
+  if(dialog.open){ignoreRouteCloseEvents++;dialog.close()}
+  restoreAgendaPortal();
+  routedTravelDetailId=route.detailId||null;
+  document.querySelectorAll("[data-nav-area-id]").forEach(el=>{
+    const active=el.dataset.navAreaId===route.areaId;
+    el.classList.toggle("active",active);
+    if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current");
+  });
+  const home=route.areaId==="area-general";
+  document.body.classList.toggle("route-area-active",!home);
+  const copy=document.querySelector("#copy-area-link");
+  if(copy)copy.hidden=home;
+  if(home){window.scrollTo({top:0,behavior:"instant"});return}
+  if(route.areaId==="area-calendar"){openAgendaRoute();return}
+  openArea(route.areaId);
 }
 
 function openNavigationArea(areaId) {
@@ -11765,7 +11856,7 @@ function openNavigationArea(areaId) {
 
 function openArea(areaId) {
   if (areaId === "area-travels") {
-    void openTravelsDetail(state.financeSummary, privateModeKind);
+    void openTravelsDetail(state.financeSummary, privateModeKind, routedTravelDetailId);
     return;
   }
   if (areaId === "area-events") {
