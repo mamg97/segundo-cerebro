@@ -12,6 +12,7 @@ import { createSingleFlight } from "./single-flight.js";
 import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-source.js";
 import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
+import { serveObjectsLookSheetPreview } from "./look-sheet-media.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { menuConsumedFallbackForDate } from "./nutrition-history-fallback.js";
@@ -5921,6 +5922,15 @@ export default {
       const lookId = decodeURIComponent(lookImageMatch[1]);
       try {
         if (request.method === "GET") {
+          const version = url.searchParams.get("v") || "";
+          // RecipeMedia-equivalent previews use an explicit version namespace,
+          // so existing D1-backed look photos keep their original behavior.
+          if (version.startsWith("sheet-")) {
+            const preview = await serveObjectsLookSheetPreview(env, getGoogleAccessToken, lookId, version);
+            return preview
+              ? withSecurityHeaders(preview)
+              : json({ ok: false, code: "OBJECTS_LOOK_MEDIA_NOT_FOUND" }, 404);
+          }
           const response = await readObjectsLookImage(request, env, lookId);
           return withSecurityHeaders(response);
         }
