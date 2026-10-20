@@ -16,3 +16,11 @@ La tabla de Películas, Series y Libros es más densa en escritorio (alto de fil
 
 ## Validación
 Comprobar pruebas `app/hobbies.test.mjs` (categorías, codificación, seguridad HTML, móvil), tests generales y guarda de privacidad. Después verificar CI, fusionar y confirmar despliegue de Cloudflare Worker. Sin datos canónicos privados en el repositorio.
+
+## Ordenación interactiva (20/10/2026)
+- Encabezados ordenables mediante botón accesible (teclado, `aria-sort`) y flechas ascendente/descendente.
+- Columnas: título, género/denominación, estado/tipo, nota/precio, proveedor de enlace, y foto (vinos). `Acciones` no ordena porque solo contiene botones Editar.
+- El orden se calcula sobre **toda** la colección filtrada antes de mostrar los primeros 48 registros y no persiste en la fuente canónica.
+- Comparación española natural (`Intl.Collator` con `numeric:true`), valores numéricos reales en notas/precios, ausencia de dato siempre al final, empates estables según orden original.
+- Conserva búsqueda, filtros, editor y miniaturas. Al cambiar de columna vuelve a la primera página; `Actualizar` conserva la selección, cambiar de pestaña la reinicia.
+- En pantallas pequeñas, donde la cabecera está oculta, se ofrece un selector compacto de campo y botón para invertir la dirección.
