@@ -396,23 +396,23 @@ function lookUsageHistoryView(payload,mode="looks",sort="recent") {
 }
 
 function builderOptions(rows,role) {
-  const candidates=(rows||[]).filter(x=>x.layer===role && !["VENDIDO","DONADO","DESCARTADO","PERDIDO"].includes(String(x.status||"")));
-  return '<option value="">'+(role==="exterior"?"Sin exterior":"Seleccionar")+'</option>'+candidates.map(x=>'<option value="'+e(x.objectId)+'">'+e([x.name,x.brand,x.primaryColor||x.color].filter(Boolean).join(" · "))+'</option>').join("");
+  const candidates=(rows||[]).filter(x=>(role==="interior"?x.layer==="superior":x.layer===role) && !["VENDIDO","DONADO","DESCARTADO","PERDIDO"].includes(String(x.status||"")));
+  return '<option value="">'+(["interior","exterior"].includes(role)?("Sin "+(role==="interior"?"camisa interior":"exterior")):"Seleccionar")+'</option>'+candidates.map(x=>'<option value="'+e(x.objectId)+'">'+e([x.name,x.brand,x.primaryColor||x.color].filter(Boolean).join(" · "))+'</option>').join("");
 }
 
 function builderView(payload) {
   if (pending(payload)) return pendingView();
   const rows=payload.wardrobe||[], f=payload.facets||{};
-  return '<section class="look-builder"><div class="look-builder-head"><div><small>Constructor visual · MVP</small><strong>Combina solo prendas que ya existen</strong><p>Superior, inferior y calzado son necesarios; exterior es opcional. El guardado escribe en Looks + LookItems de la fuente canónica.</p></div><button type="button" data-objects-tab="wardrobe">Volver al armario</button></div>'+
+  return '<section class="look-builder"><div class="look-builder-head"><div><small>Constructor visual · MVP</small><strong>Combina solo prendas que ya existen</strong><p>Superior, inferior y calzado son necesarios; camisa interior y exterior son opcionales. El guardado escribe en Looks + LookItems de la fuente canónica.</p></div><button type="button" data-objects-tab="wardrobe">Volver al armario</button></div>'+
     '<div class="look-builder-layout"><section class="look-builder-controls">'+
       '<label>Nombre del look<input id="look-builder-name" type="text" placeholder="Ej. Oficina azul y gris"></label>'+
       '<label>Contexto<input id="look-builder-context" type="text" placeholder="Oficina, viaje, cena…"></label>'+
       '<label>Formalidad<select id="look-builder-formality"><option value="">Sin indicar</option>'+opts(f.formalities)+'</select></label>'+
       '<label>Temporada<select id="look-builder-season"><option value="">Sin indicar</option>'+opts(f.seasons)+'</select></label>'+
       '<label class="look-builder-office"><input id="look-builder-office" type="checkbox"> Apto para oficina</label>'+
-      '<div class="look-builder-selectors">'+["superior","exterior","inferior","calzado"].map(role=>'<label><span>'+e(role)+'</span><select data-look-role="'+role+'">'+builderOptions(rows,role)+'</select></label>').join("")+'</div>'+
+      '<div class="look-builder-selectors">'+["interior","superior","exterior","inferior","calzado"].map(role=>'<label><span>'+e(role)+'</span><select data-look-role="'+role+'">'+builderOptions(rows,role)+'</select></label>').join("")+'</div>'+
       '<div class="look-builder-save-row"><span id="look-builder-message">Selecciona superior, inferior y calzado.</span><button id="look-builder-save" class="objects-primary-action" type="button">Guardar look</button></div>'+
-    '</section><section class="look-builder-preview" aria-label="Vista previa del look">'+["exterior","superior","inferior","calzado"].map(role=>'<article data-look-preview="'+role+'"><small>'+e(role)+'</small><div><span>◫</span></div><strong>Sin seleccionar</strong></article>').join("")+'</section></div></section>';
+    '</section><section class="look-builder-preview" aria-label="Vista previa del look">'+["exterior","superior","interior","inferior","calzado"].map(role=>'<article data-look-preview="'+role+'"><small>'+e(role)+'</small><div><span>◫</span></div><strong>Sin seleccionar</strong></article>').join("")+'</section></div></section>';
 }
 
 function kitsView(payload) {
