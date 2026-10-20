@@ -1,0 +1,44 @@
+name: Psychohistory 2024 isolated 23.1 holdout
+on:
+  pull_request:
+    paths:
+      - "research/psychohistory/historic23_holdout_2024.py"
+      - "research/psychohistory/test_historic23_holdout_2024.py"
+      - ".github/workflows/psychohistory-2024-release-holdout.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frozen-logic-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fail closed on unsourced outcomes and future changes
+        run: python3 -m unittest discover -s research/psychohistory -p test_historic23_holdout_2024.py -v
+  official-2024-holdout-retrospective:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Pin official 25.1 ZIP checksum WITHOUT reading outcomes
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 45 --max-filesize 12000000 \
+             https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-251-csv.zip \
+             -o "$RUNNER_TEMP/cy251.zip"
+          curl --fail --location --retry 2 --max-time 45 --max-filesize 12000000 \
+             https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy_v23_1.xlsx \
+             -o "$RUNNER_TEMP/cy231.xlsx"
+          echo 'Expected historic and resolution digests, no country-level output:'
+          sha256sum "$RUNNER_TEMP/cy231.xlsx" "$RUNNER_TEMP/cy251.zip" | sed -E 's@  .*@  ephemeral official source@'
+          python3 research/psychohistory/historic23_holdout_2024.py \
+             --23-xlsx "$RUNNER_TEMP/cy231.xlsx" --25-zip "$RUNNER_TEMP/cy251.zip"
+          echo 'Both ZIP/XLSX read-only; 2024 output is RETROSPECTIVE and never a forecast issued in 2023.'
+      - name: Delete ephemeral download
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cy251.zip" "$RUNNER_TEMP/cy231.xlsx"
