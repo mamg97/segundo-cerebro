@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {HOBBY_TYPES,HobbiesError,decodeHobbiesRows,handleHobbiesRequest} from "./hobbies-sheet.js";
+import {HOBBY_TYPES,HobbiesError,decodeHobbiesRows,handleHobbiesRequest,normalizeWineUrl} from "./hobbies-sheet.js";
 test("Hobbies schema stays in Google Sheets with revision and lineage columns",()=>{
  assert.deepEqual(HOBBY_TYPES,["peliculas","series","libros","vinos"]);
  const headers=["id","titulo","subtipo","subtipo_2","estado","puntuacion","fecha_inicio","fecha_fin","comentarios","tipo_origen","estado_origen","fila_origen","revision","incidencia_migracion","actualizado_en","actualizado_por","archivado"];
@@ -30,4 +30,25 @@ test("Public repository does not contain private catalogue row data or sheet IDs
  assert.match(code,/MIGRATION_NOT_ACTIVE/);
  assert.match(frontend,/api\/hobbies\//);
  assert.doesNotMatch(code,/1TLJSUN65|18UvzJo|1C0x3tSUY/);
+});
+
+test("Wine extended Sheet columns preserve revision and lineage",()=>{
+ const headers=["id","marca","tipo","denominacion","nota","precio","comentarios","fila_origen","revision","incidencia_migracion","actualizado_en","actualizado_por","archivado","tienda","tienda_url","imagen_url"];
+ const rows=[headers,["vin-synthetic","Bodega sintética","Blanco","","","","",3,1,"","","","","Amazon","https://www.amazon.es/dp/TEST0001","https://images.example.org/test.jpg"]];
+ const records=decodeHobbiesRows("vinos",rows);
+ assert.equal(records.length,1);
+ assert.equal(records[0].sourceRow,3);
+ assert.equal(records[0].revision,1);
+ assert.equal(records[0].tienda,"Amazon");
+ assert.equal(records[0].imagen_url,"https://images.example.org/test.jpg");
+ assert.throws(()=>decodeHobbiesRows("vinos",[headers.slice(0,13),rows[1]]),e=>e.code==="SHEET_SCHEMA_MISMATCH");
+});
+test("Wine media URLs require HTTPS, with merchant allowlisting",()=>{
+ assert.equal(normalizeWineUrl("https://images.example.org/test.webp"),"https://images.example.org/test.webp");
+ assert.equal(normalizeWineUrl("https://www.elcorteingles.es/supermercado/","store"),"https://www.elcorteingles.es/supermercado/");
+ assert.equal(normalizeWineUrl("https://www.amazon.es/dp/ABC","store"),"https://www.amazon.es/dp/ABC");
+ for(const u of ["javascript:alert(1)","http://amazon.es/x","https://localhost/x","https://amazon.es.evil.org/a"]){
+   assert.throws(()=>normalizeWineUrl(u,"store"),HobbiesError);
+ }
+ assert.throws(()=>normalizeWineUrl("https://example.com/x","store"),HobbiesError);
 });
