@@ -1984,6 +1984,15 @@ function renderBudgetOverview() {
         <strong>Presupuesto pendiente de conectar</strong>
         <p>Cuando el estado privado incluya el ciclo mensual verás aquí el resumen.</p>
       </div>`;
+  } else if (monthly.pendingCycle) {
+    period.textContent = monthly.periodLabel || monthly.period || "Ciclo actual";
+    summary.innerHTML = `
+      <div class="budget-empty">
+        <strong>Nuevo ciclo pendiente de conciliar</strong>
+        <p>El ciclo actual ya está abierto, pero su presupuesto canónico todavía no está actualizado. No se muestran los gastos del mes anterior como si fueran actuales.</p>
+      </div>
+      ${renderHomeLiquidityOverview(monthly.liquidityAccounts, monthly.currency || "EUR")}
+    `;
   } else {
     const currency = monthly.currency || "EUR";
     const plannedOutflows = firstFinite(monthly.plannedOutflows, monthly.budgetedExpenses, monthly.budgeted);
@@ -2003,6 +2012,7 @@ function renderBudgetOverview() {
 
     period.textContent = monthly.periodLabel || monthly.period || "Periodo actual";
     summary.innerHTML = `
+      ${String(monthly.budgetStatus || "").includes("PROVISIONAL") ? '<p class="budget-net-note">Ciclo abierto · presupuestos de referencia provisionales hasta confirmar las partidas nuevas.</p>' : ""}
       <div class="budget-compact-top">
         <div class="budget-primary">
           <span>Gasto + ahorro previsto</span>
@@ -11269,6 +11279,11 @@ function openBudgetDetail(options = {}) {
         <div><span>Libre conjunto</span><strong>${jointNet === null ? "—" : formatMoney(jointNet, currency)}</strong></div>
       </div>
       <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
+      ${monthly.pendingCycle
+        ? '<p class="budget-net-note">El ciclo actual aún no tiene partidas conciliadas en la fuente canónica; las del ciclo anterior se han ocultado para evitar errores.</p>'
+        : String(monthly.budgetStatus || "").includes("PROVISIONAL")
+          ? '<p class="budget-net-note">Ciclo 20–20 abierto. Los importes presupuestados de referencia son provisionales; los gastos solo corresponden al ciclo vigente.</p>'
+          : ""}
       ${accountWorkspaceIncomplete ? '<p class="account-transactions-empty" data-finance-workspace-status="unavailable">Datos bancarios pendientes de recuperar desde la fuente privada. No se muestran cuentas ni movimientos supuestos.</p>' : ""}
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
       ${bankTabsReady ? renderAccountTransactionsWorkspace(accountTransactions, workspaceAccounts, currency) : ""}
