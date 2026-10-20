@@ -121,3 +121,44 @@ test("look items expose canonical wardrobe image references without duplicating 
   assert.equal(item.garmentView, "frontal");
   assert.equal(item.layer, "superior");
 });
+
+
+test("five-piece office look accepts a shirt interior beneath a superior sweater", () => {
+  const wardrobe = [
+    { objectId: "shirt", layer: "superior", status: "DISPONIBLE" },
+    { objectId: "sweater", layer: "superior", status: "DISPONIBLE" },
+    { objectId: "puffer", layer: "exterior", status: "DISPONIBLE" },
+    { objectId: "jeans", layer: "inferior", status: "DISPONIBLE" },
+    { objectId: "sneakers", layer: "calzado", status: "DISPONIBLE" }
+  ];
+  const items = validateObjectsLookSelection(wardrobe, [
+    { objectId: "shirt", role: "interior" },
+    { objectId: "sweater", role: "superior" },
+    { objectId: "puffer", role: "exterior" },
+    { objectId: "jeans", role: "inferior" },
+    { objectId: "sneakers", role: "calzado" }
+  ]);
+  assert.equal(items.length, 5);
+  assert.equal(items[0].role, "interior");
+  assert.equal(normalizeLookRole("capa interior"), "interior");
+});
+
+test("interior cannot be shoes and a garment cannot occupy two roles", () => {
+  const wardrobe = [
+    { objectId: "shirt", layer: "superior" },
+    { objectId: "jeans", layer: "inferior" },
+    { objectId: "sneakers", layer: "calzado" }
+  ];
+  assert.throws(() => validateObjectsLookSelection(wardrobe, [
+    { objectId: "sneakers", role: "interior" },
+    { objectId: "shirt", role: "superior" },
+    { objectId: "jeans", role: "inferior" },
+    { objectId: "sneakers", role: "calzado" }
+  ]), /INVALID_OBJECTS_LOOK_LAYER/);
+  assert.throws(() => validateObjectsLookSelection(wardrobe, [
+    { objectId: "shirt", role: "interior" },
+    { objectId: "shirt", role: "superior" },
+    { objectId: "jeans", role: "inferior" },
+    { objectId: "sneakers", role: "calzado" }
+  ]), /INVALID_OBJECTS_LOOK_DUPLICATE_OBJECT/);
+});
