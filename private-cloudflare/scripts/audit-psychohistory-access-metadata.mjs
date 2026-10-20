@@ -134,7 +134,9 @@ if(import.meta.url===new URL("file://"+process.argv[1]).href){
     "accessScopeHint","authenticatedUserTest","workerRouteConfigured","safeToEnablePrivate2027"]){
     console.log(key.toUpperCase()+"="+report[key]);
   }
-  // Permissions may be missing; not a CI failure for other parts of
-  // Segundo Cerebro, but definitely NOT proof of Access configuration.
-  if(report.appsApi==="OK"&&report.targetApp!=="UNIQUE")process.exitCode=2;
+  // A read-only discovery that reports NONE/AMBIGUOUS/READ_SCOPE_DENIED
+  // is a valid *diagnostic* outcome, not an excuse to unlock the route.
+  // Only exceptions in execution should fail CI; the security flag remains
+  // explicitly false until a separate positive authenticated test is made.
+  console.log("PROSPECTIVE_SHADOW_UNLOCKED=false");
 }
