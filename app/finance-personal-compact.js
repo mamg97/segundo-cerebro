@@ -92,7 +92,7 @@ export function installPersonalBudgetCompactView() {
       .forEach(compactPersonalBudgetGroup);
   };
   const observer = new MutationObserver(enhance);
-  // The main finance renderer replaces dialog-body innerHTML. Observe only
+  // The main finance renderer replaces the dialog-body contents. Observe only
   // that direct replacement; avoid feedback loops from the enhancement itself.
   observer.observe(body, { childList: true });
   enhance();
