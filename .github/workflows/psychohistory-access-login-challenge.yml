@@ -1,0 +1,63 @@
+name: Psychohistory Access login challenge read-only
+on:
+  pull_request:
+    paths:
+      - "private-cloudflare/scripts/audit-psychohistory-access-challenge.mjs"
+      - "private-cloudflare/scripts/audit-psychohistory-access-challenge.test.mjs"
+      - ".github/workflows/psychohistory-access-login-challenge.yml"
+  push:
+    branches: [main]
+    paths:
+      - "private-cloudflare/scripts/audit-psychohistory-access-challenge.mjs"
+      - "private-cloudflare/scripts/audit-psychohistory-access-challenge.test.mjs"
+      - ".github/workflows/psychohistory-access-login-challenge.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  security-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Eight synthetic challenge and metadata correlation tests
+        run: node --test private-cloudflare/scripts/audit-psychohistory-access-challenge.test.mjs
+  anonymous-challenge:
+    needs: security-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Read anonymous Access redirect headers only
+        run: node private-cloudflare/scripts/audit-psychohistory-access-challenge.mjs
+  correlate-with-existing-read-scope:
+    if: github.event_name != 'pull_request'
+    needs: anonymous-challenge
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ACCESS_READ_TOKEN: ${{ secrets.CLOUDFLARE_ACCESS_READ_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Compare challenge hint with Access app listing without printing identifiers
+        run: |
+          set -euo pipefail
+          node private-cloudflare/scripts/audit-psychohistory-access-challenge.mjs
+          echo "Read-only diagnostic. No Cloudflare settings changed and private 2027 remains locked."
