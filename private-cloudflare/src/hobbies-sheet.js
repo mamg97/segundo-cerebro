@@ -16,7 +16,7 @@ export function normalizeWineUrl(value,kind="image"){
  const raw=text(value,1800);if(!raw)return "";
  let url;try{url=new URL(raw);}catch{throw new HobbiesError(kind==="store"?"INVALID_STORE_URL":"INVALID_IMAGE_URL");}
  if(url.protocol!=="https:"||url.username||url.password||url.port||!url.hostname.includes(".")||
-    /^(localhost|127\\.|10\\.|192\\.168\\.|172\\.|169\\.254\\.)/i.test(url.hostname))
+    /^(localhost|127\.|10\.|192\.168\.|172\.|169\.254\.)/i.test(url.hostname))
     throw new HobbiesError(kind==="store"?"INVALID_STORE_URL":"INVALID_IMAGE_URL");
  if(kind==="store"&&!Object.values(RETAILERS).some(fn=>fn(url.hostname.toLowerCase())))
     throw new HobbiesError("INVALID_STORE_URL");
