@@ -594,3 +594,7 @@ El scoring prospectivo falla cerrado sin un recibo de sellado independiente veri
 
 Los backtests viven en `PsicoExperimentos.notas` como sobres JSON versionados; `research-results.mjs` comprueba coherencia y agrupa únicamente muestras/protocolos idénticos. No necesitan tabla, API, cron o despliegue por cada resultado nuevo. La UI muestra leaderboard, tasas anuales y calibración históricos separados del registro prospectivo; V3 muestra sensibilidad explícitamente sintética. Los archivos completos y releases de entrada se archivan en Drive privado y se referencian desde el Sheet. No se ejecutan ajustes ni se descargan datasets en el Worker. Fuente metodológica: `docs/PSYCHOHISTORY_BENCHMARK.md`.
 
+
+
+### Enrutamiento de áreas (privado)
+El frontend incorpora enlaces estables por fragmento (por ejemplo `#/salud` y `#/viajes/ID`). La barra de navegación principal queda visible sobre la vista de cada área. La ruta resuelve únicamente presentación tras autenticación Cloudflare Access; no concede acceso ni contiene datos canónicos. Los endpoints y permisos no cambian. Calendario y Eventos conservan su fuente externa; los paneles de viaje usan `PLAN_HORA` privado para la matriz horas × días.
