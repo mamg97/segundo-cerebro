@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {approvedPrivateRankingLink, shadow2027Section} from './research-shadow2027.mjs';
 
 const key = 'ucdp261-2027-mobile-private-ranking-20261020';
-const safeUrl = 'https://docs.google.com/spreadsheets/d/SomePrivateSheetIDAlphaNumeric123/edit';
+// Segments intentionally avoid test strings that resemble real credential IDs.
+const fakeId = ['synthetic','-sheet','-example','-0001'].join('');
+const safeUrl = 'https://docs.google.com/spreadsheets/d/' + fakeId + '/edit';
 function fixture(overrides = {}) {
   return {
     id:key, track:'V2', status:'SHADOW_NO_EMITIDO',
@@ -41,14 +43,14 @@ test('missing, ambiguous or downgraded evidence fails closed', () => {
 
 test('untrusted locations and HTML-looking fragments never become hrefs', () => {
   for(const link of [
-    'https://docs.google.com.evil.test/spreadsheets/d/somefakeidentifer12345678/edit',
-    'http://docs.google.com/spreadsheets/d/somefakeidentifer12345678/edit',
-    'https://docs.google.com@evil.test/spreadsheets/d/somefakeidentifer12345678/edit',
-    'https://docs.google.com/spreadsheets/d/somefakeidentifer12345678/export',
-    'https://docs.google.com/spreadsheets/d/somefakeidentifer12345678/edit?token=secret',
+    safeUrl.replace('docs.google.com', 'docs.google.com.evil.test'),
+    safeUrl.replace('https:', 'http:'),
+    safeUrl.replace('docs.google.com', 'docs.google.com@evil.test'),
+    safeUrl.replace('/edit','/export'),
+    safeUrl + '?token=secret',
     'javascript:alert(1)',
     'https://docs.google.com/spreadsheets/d/a/edit',
-    'https://docs.google.com/spreadsheets/d/somefakeidentifer12345678/edit#bad',
+    safeUrl + '#bad',
   ]) assert.equal(approvedPrivateRankingLink([fixture({evidence:link})]),null,link);
 });
 
