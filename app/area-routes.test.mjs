@@ -32,6 +32,15 @@ test("top navbar remains independently available in every route, no authorizatio
   assert.match(css,/body\.route-area-active \.sidebar\s*\{[\s\S]*?position:fixed/);
   assert.match(css,/z-index:5000/);
   assert.match(index,/id="copy-area-link"/);
-  assert.match(index,/href="\.\/area-routes\.css\?v=0\.1\.0"/);
+  assert.match(index,/href="\.\/area-routes\.css\?v=0\.1\.1"/);
   assert.doesNotMatch(index,/Cloudflare-Access-Jwt-Assertion|client_secret|private_token/);
+});
+
+test("routed areas expose only one vertical scrollbar and preserve horizontal itinerary scrolling",()=>{
+  const css=readFileSync(new URL("./area-routes.css",import.meta.url),"utf8");
+  const travels=readFileSync(new URL("./travels.css",import.meta.url),"utf8");
+  assert.match(css,/html:has\(> body\.route-area-active\)\s*\{[^}]*overflow-y:hidden;/);
+  assert.match(css,/body\.route-area-active\s*\{[^}]*height:100dvh;[^}]*overflow:hidden;/);
+  assert.match(css,/body\.route-area-active #detail-dialog\[open\] #dialog-body\s*\{[^}]*overflow-y:auto;/);
+  assert.match(travels,/\.trv-timetable-scroll\s*\{[^}]*overflow-x:auto;[^}]*max-height:none;/);
 });

@@ -231,7 +231,7 @@
 
 
 /* Itinerario horario: horas verticales, días horizontales. */
-.trv-timetable-scroll{width:100%;max-width:100%;overflow:auto;max-height:min(78vh,1000px);border:1px solid var(--line);border-radius:14px;overscroll-behavior:contain;scrollbar-width:thin}
+.trv-timetable-scroll{width:100%;max-width:100%;overflow-x:auto;max-height:none;border:1px solid var(--line);border-radius:14px;overscroll-behavior:contain;scrollbar-width:thin}
 .trv-timetable{width:100%;min-width:810px;border-collapse:separate;border-spacing:0;table-layout:fixed;color:var(--ink);font-variant-numeric:tabular-nums}
 .trv-timetable thead th{position:sticky;top:0;z-index:2;text-align:left;padding:15px 12px;background:var(--surface);border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top}
 .trv-timetable thead th>span{display:block;color:var(--blue);font-size:10px;font-weight:850;letter-spacing:.09em}
