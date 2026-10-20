@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {parsePrivate2027Evidence,validate2027Rows,fetchPrivate2027Ranking} from "./research-shadow2027-private.js";
 
 const EID="ucdp261-2027-mobile-private-ranking-20261020";
-const fakeId=["test-sheet","2027","example","shortparts"].join("-");
+const fakeId=["test","sheet","2027","fake"].join("-");
 const url="https://docs.google.com/spreadsheets/d/"+fakeId+"/edit";
 const experiment=updates=>({id:EID,track:"V2",status:"SHADOW_NO_EMITIDO",
   metric:"paises_ranqueados_sin_emision",value:196,
