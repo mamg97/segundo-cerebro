@@ -49,7 +49,7 @@ export function packingPlannerMarkup(list,objects=[]) {
   const rows=parts.map(([part,label])=>'<div class="packing-plan-period">'+esc(label)+'</div>'+days.map(day=>slot(day.key,part)).join("")).join("");
   return '<section class="packing-planning" aria-label="Planning previsto del viaje">'+
     '<div class="packing-plan-heading"><div><small>PLAN DEL VIAJE</small><h4>Qué usar cada día</h4></div><span>Selecciona una actividad para ver todas las prendas</span></div>'+
-    '<div class="packing-plan-scroll"><div class="packing-plan-grid" style="--packing-plan-days:'+days.length+'">'+header+rows+'</div></div>'+
+    '<div class="packing-plan-scroll"><div class="packing-plan-grid packing-plan-cols-'+days.length+'">'+header+rows+'</div></div>'+
     '<div class="packing-plan-focus" id="packing-plan-focus" aria-live="polite">Selecciona una actividad para ver su conjunto y los detalles previstos.</div>'+
   '</section>';
 }
