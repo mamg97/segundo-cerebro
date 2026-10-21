@@ -1,5 +1,20 @@
 # PSICOHISTORIA — Estado científico verificado · 21/10/2026
 
+## AV-087 · Observación de Candidate vigente: calidad temporal pendiente
+
+- Candidate 26.0.9 (septiembre 2026) y codebook 1.5 oficiales, con hashes
+  observados el 21/10/2026. 2.014 registros y 44 países con registros; no es un
+  roster completo. Precisión 1–5: 1.725/262/6/15/6; cero códigos 0.
+- Un intervalo abarca todo septiembre sin extremos dentro del mes. Se conserva
+  en el denominador y el auditor devuelve SOURCE_QUALITY_BLOCKED. Requiere
+  aclarar el contrato de exportación; no demuestra fecha futura ni error del proveedor.
+- [Informe AV-087](AV087_CANDIDATE_ACTUAL_CALIDAD_TEMPORAL.md), lector reutilizado,
+  cuatro tests nuevos y workflow sin cron. 417 pruebas locales. Consultar el
+  [handoff](CODEX_CHATGPT_HANDOFF.md) para cierre remoto y estado del registro.
+- Ningún modelo entrenado, puntuación o emisión nueva; no equivale a CY anual.
+
+---
+
 ## AV-086 · Corrección geográfica de AV-085 y diagnóstico mensual
 
 - Estado de implementación y evidencia: [handoff Codex↔ChatGPT](CODEX_CHATGPT_HANDOFF.md).

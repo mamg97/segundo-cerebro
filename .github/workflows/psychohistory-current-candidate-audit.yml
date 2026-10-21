@@ -1,0 +1,34 @@
+name: Psychohistory current Candidate source quality audit
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/candidate_current_snapshot_audit.py'
+      - 'research/psychohistory/test_candidate_current_snapshot_audit.py'
+      - 'research/psychohistory/candidate_cross_vintage.py'
+      - '.github/workflows/psychohistory-current-candidate-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-current-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Synthetic source admission tests
+        run: python3 -m unittest discover -s research/psychohistory -p 'test_candidate*.py' -v
+      - name: Inspect complete pinned source and codebook, without country or event rows
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 90 --max-filesize 80000000 \
+            https://ucdp.uu.se/downloads/candidateged/GEDEvent_v26_0_9.csv -o "$RUNNER_TEMP/candidate.csv"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 90 --max-filesize 2000000 \
+            https://ucdp.uu.se/downloads/candidateged/ucdp-candidate-codebook1.5.pdf -o "$RUNNER_TEMP/candidate-codebook.pdf"
+          python3 research/psychohistory/candidate_current_snapshot_audit.py \
+            --source "$RUNNER_TEMP/candidate.csv" --codebook "$RUNNER_TEMP/candidate-codebook.pdf"
+          echo 'A source-quality block is a research result, never authorization to score or issue.'
+      - name: Remove ephemeral source bytes
+        if: always()
+        run: rm -f "$RUNNER_TEMP/candidate.csv" "$RUNNER_TEMP/candidate-codebook.pdf"
