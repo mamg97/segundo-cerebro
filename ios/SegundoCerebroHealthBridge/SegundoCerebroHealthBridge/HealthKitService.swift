@@ -153,14 +153,17 @@ final class HealthKitService {
         }
     }
 
-    func installObserverQueries(onUpdate: @escaping @Sendable () async -> Void) {
+    func installObserverQueries(onUpdate: @escaping @Sendable (Bool) async -> Void) {
         guard isAvailable, observerQueries.isEmpty else { return }
 
         for type in readTypes {
             guard let sampleType = type as? HKSampleType else { continue }
+            // Only an actual weight update bypasses the general sync cooldown;
+            // other body/activity notifications use the normal rate limit.
+            let isWeightUpdate = (type as? HKQuantityType)?.identifier == HKQuantityTypeIdentifier.bodyMass.rawValue
             let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { _, completion, _ in
                 Task {
-                    await onUpdate()
+                    await onUpdate(isWeightUpdate)
                     completion()
                 }
             }
@@ -171,8 +174,17 @@ final class HealthKitService {
 
     func enableBackgroundDelivery() {
         guard isAvailable else { return }
+        let immediateBodyTypes: Set<String> = [
+            HKQuantityTypeIdentifier.bodyMass.rawValue,
+            HKQuantityTypeIdentifier.bodyFatPercentage.rawValue,
+            HKQuantityTypeIdentifier.bodyMassIndex.rawValue,
+            HKQuantityTypeIdentifier.leanBodyMass.rawValue
+        ]
         for type in readTypes {
-            store.enableBackgroundDelivery(for: type, frequency: .hourly) { _, _ in }
+            let identifier = (type as? HKQuantityType)?.identifier
+            let frequency: HKUpdateFrequency = identifier.map { immediateBodyTypes.contains($0) } == true
+                ? .immediate : .hourly
+            store.enableBackgroundDelivery(for: type, frequency: frequency) { _, _ in }
         }
     }
 
