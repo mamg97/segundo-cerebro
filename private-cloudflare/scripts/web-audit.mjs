@@ -3189,19 +3189,13 @@ try {
         const recipesWithPhotos = canonicalRecipes.filter((recipe) => recipe?.photoUrl);
         const visibleRecipesWithPhotos = activeRecipes.filter((recipe) => recipe?.photoUrl);
         for (const recipe of recipesWithPhotos) {
-          const probe = await page.evaluate(async (src) => {
-            const response = await fetch(src, { cache: "no-store", credentials: "same-origin" });
-            const contentType = response.headers.get("content-type") || "";
-            let body = null;
-            if (!response.ok && contentType.includes("application/json")) {
-              try { body = await response.json(); } catch {}
-            }
-            return { status: response.status, ok: response.ok, contentType, body };
-          }, recipe.photoUrl);
+          // Reuse the same authenticated, bounded fetch+decode verifier as
+          // visual auditing. A failure remains a real failed check.
+          const probe = await probeVisualImage(recipe.photoUrl);
           assertCheck(
-            probe.ok && /^image\//i.test(probe.contentType),
+            probe.ok && /^image\//i.test(probe.contentType) && probe.decoded,
             `Salud · foto receta ${recipe.id || recipe.name || "sin-id"} responde como imagen`,
-            `HTTP ${probe.status} · ${probe.contentType || "sin content-type"}${probe.body?.code ? " · " + probe.body.code : ""}`
+            `HTTP ${probe.status} · ${probe.contentType || "sin content-type"} · decoded=${Boolean(probe.decoded)}`
           );
         }
 
