@@ -41,6 +41,8 @@ const checks = [];
 const networkFailures = [];
 // Fixed-code diagnostic only; never include private image paths, tokens or exception text.
 const imageRouteFailures = new Map();
+// Fixed structural diagnostics, emitted once each; no page text or private IDs.
+const emittedVisualProportionCodes = new Set();
 // Privacy-safe request lifecycle counters: never retain URLs or bank payloads.
 const bankReadTransport = { started: 0, responses: [], failed: 0 };
 const ignoredNetworkAborts = [];
@@ -829,6 +831,7 @@ async function auditVisualSnapshot(label) {
     const distortedImages = [];
     const brokenImages = [];
     const proportions = [];
+    const proportionCodes = [];
     const componentOverflows = [];
 
     const rootOverflow = Math.max(
@@ -953,6 +956,7 @@ async function auditVisualSnapshot(label) {
       const rect = dialog.getBoundingClientRect();
       if (rect.width > viewport.width - 8 || rect.left < 0 || rect.right > viewport.width) {
         proportions.push(`dialog ${Math.round(rect.width)}px en viewport ${viewport.width}px`);
+        proportionCodes.push("DIALOG_WIDTH_OUT_OF_BOUNDS");
       }
       if (close && title && visible(close) && visible(title)) {
         const closeRect = close.getBoundingClientRect();
@@ -1002,6 +1006,8 @@ async function auditVisualSnapshot(label) {
         }));
         const implausible = cardHeights.filter((item) => item.height < 90 || item.height > 380);
         if (implausible.length) {
+          if (implausible.some((item) => item.height > 380)) proportionCodes.push("HOME_SUMMARY_HEIGHT_TOO_TALL");
+          if (implausible.some((item) => item.height < 90)) proportionCodes.push("HOME_SUMMARY_HEIGHT_TOO_SHORT");
           proportions.push(
             `home-summary-card altura fuera de rango: ${implausible.map((item) => item.name + "=" + item.height + "px").join(",")}`
           );
@@ -1009,7 +1015,7 @@ async function auditVisualSnapshot(label) {
       }
     }
 
-    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, brokenImages, proportions, componentOverflows };
+    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, brokenImages, proportions, proportionCodes, componentOverflows };
   });
 
   assertCheck(report.rootOverflow <= 3, `Visual ${label} · sin overflow global`, `overflow=${report.rootOverflow}px`);
@@ -1055,6 +1061,15 @@ async function auditVisualSnapshot(label) {
       return `${item.name} src=${String(item.src || "").slice(0, 140)} status=${probe.status ?? "?"} type=${probe.contentType || "?"} decoded=${Boolean(probe.decoded)}${probe.error ? " error=" + probe.error : ""}`;
     }).join(" | ")
   );
+  // This currently fails repeatedly across visual snapshots. Surface only
+  // allowlisted structural categories, not dimensions, DOM IDs or page text.
+  for (const code of new Set(report.proportionCodes || [])) {
+    if (!["DIALOG_WIDTH_OUT_OF_BOUNDS", "HOME_SUMMARY_HEIGHT_TOO_TALL", "HOME_SUMMARY_HEIGHT_TOO_SHORT"].includes(code)) continue;
+    if (!emittedVisualProportionCodes.has(code)) {
+      emittedVisualProportionCodes.add(code);
+      console.error("[AUDIT_VISUAL_PROPORTION_DIAG] " + code);
+    }
+  }
   assertCheck(report.proportions.length === 0, `Visual ${label} · proporciones coherentes`, report.proportions.slice(0, 4).join(" | "));
 }
 
