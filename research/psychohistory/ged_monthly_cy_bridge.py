@@ -33,6 +33,7 @@ GED_RELEASES={
 MAX_BYTES=90_000_000
 MAX_CSV_BYTES=490_000_000
 MAX_EVENTS=700_000
+MIN_EXPECTED_ROWS=10_000
 BUCKETS=("zero_exact_eligible_records","one","two_to_four","five_or_more")
 YEARS={2022:(2023,2024),2023:(2024,2025)}
 
@@ -74,6 +75,7 @@ def ged_features(archive,cutoff,*,expected_sha):
     if sha256(archive)!=expected_sha:
         raise ValueError("GED archive SHA mismatch")
     counts=collections.Counter()
+    recent_quarter=collections.Counter()
     excluded=collections.Counter()
     seen=set()
     n=0
@@ -111,9 +113,10 @@ def ged_features(archive,cutoff,*,expected_sha):
                 # State-based lethal GED event at a geographic LOCATION.
                 # Not the same target as annual CY participating country.
                 counts[cid]+=1
-    if n<10000:
+                if start.month in (10,11,12):recent_quarter[cid]+=1
+    if n<MIN_EXPECTED_ROWS:
         raise ValueError("Inadequate complete historical GED archive")
-    return counts,{"edition":meta["edition"],"cutoffYear":cutoff,
+    return counts,recent_quarter,{"edition":meta["edition"],"cutoffYear":cutoff,
         "sourceHash":expected_sha,"nGedSourceRows":n,
         "nCountriesWithExactLethalLocations":len(counts),
         "excludedCutoffYear":dict(excluded),
@@ -126,8 +129,8 @@ def bucket(value):
     return 0 if value==0 else 1 if value==1 else 2 if value<=4 else 3
 
 
-def summary(earlier,later,ged,cutoff):
-    if cutoff not in YEARS or not earlier or not later or not isinstance(ged,dict):
+def summary(earlier,later,ged,cutoff,ged_last_quarter):
+    if cutoff not in YEARS or not earlier or not later or not isinstance(ged,dict) or not isinstance(ged_last_quarter,dict):
         raise ValueError("Bad source-separated window")
     lookup=prepare(earlier,{"threshold_deaths":25})
     if not lookup or max(y for _,y in lookup)!=cutoff:
@@ -141,6 +144,7 @@ def summary(earlier,later,ged,cutoff):
         if k in outcomes:raise ValueError("Duplicated annual outcome")
         outcomes[k]=int(float(r["sb_total_deaths_best"])>=25)
     cells=[[[0,0,0] for _ in range(4)] for __ in range(2)]
+    quarter_cells=[[[0,0,0] for _ in range(2)] for __ in range(2)]
     missing=0
     present=0
     for c in fitted["countries"]:
@@ -150,9 +154,14 @@ def summary(earlier,later,ged,cutoff):
         base=c["initial"]%2
         labels=[outcomes[cid,y] for y in YEARS[cutoff]]
         first=next((i for i,t in enumerate(labels) if t!=base),2)
-        feature=bucket(ged.get(cid,0))
+        recorded=ged.get(cid,0)
+        quarter=ged_last_quarter.get(cid,0)
+        if not isinstance(quarter,int) or not 0<=quarter<=recorded:
+            raise ValueError("Quarter evidence contradicts old annual GED source")
+        feature=bucket(recorded)
         if feature:present+=1
         cells[base][feature][first]+=1
+        quarter_cells[base][int(quarter>0)][first]+=1
     n=sum(sum(sum(v) for v in group) for group in cells)
     if n<1 or n+missing!=len(fitted["countries"]):
         raise ValueError("No scored country or missing country accounting")
@@ -166,13 +175,20 @@ def summary(earlier,later,ged,cutoff):
                 "firstChangeBridge":first,"firstChangeTarget":second,
                 "noFirstChange":stable,
                 "observedFirstChangeRateDescriptive":(first+second)/count if count else None})
+    quarters=[{"initialRegime":"below25" if r==0 else "atleast25",
+                "exactLethalEventRecordedInLast3Months":bool(q),
+                "n":sum(quarter_cells[r][q]),
+                "firstChangeBridge":quarter_cells[r][q][0],
+                "firstChangeTarget":quarter_cells[r][q][1],
+                "noChange":quarter_cells[r][q][2]}
+                for r in (0,1) for q in (0,1)]
     return {"schema":"psychohistory.futures.ged_monthly_feature_to_cy_bridge.v1",
         "status":"RETROSPECTIVE_FEATURE_FEASIBILITY_NOT_OUT_OF_SAMPLE_SKILL",
         "cutoff":cutoff,"hypotheticalIssue":cutoff+2,
         "observedYears":list(YEARS[cutoff]),
         "nCountries":n,"oldAnnualRoster":len(fitted["countries"]),
         "missingOutcomeCountries":missing,"countriesWithPositiveExactGEDLocations":present,
-        "cells":bands,
+        "cells":bands,"lastQuarterOctoberToDecember":quarters,
         "gedZeroMeaning":"NO_RECORDED_EXACT_DAY_STATE_BASED_LETHAL_GED_EVENT_IN_CUTOFF_YEAR_NOT_ZERO_VIOLENCE",
         "countryIdJoin":"GED_EVENT_LOCATION_VS_CY_COUNTRY_LEVEL_PARTICIPATION_NOT_EQUIVALENT",
         "crossProductTargetIdentical":False,"modelRefit":False,
@@ -182,14 +198,14 @@ def summary(earlier,later,ged,cutoff):
 
 
 def run(ged_zip,cy_old,cy_new,cutoff):
-    feature,provenance=ged_features(ged_zip,cutoff,expected_sha=GED_RELEASES[cutoff]["sha256"])
+    feature,quarter,provenance=ged_features(ged_zip,cutoff,expected_sha=GED_RELEASES[cutoff]["sha256"])
     if cutoff==2022:
         old,_=cy23.rows_23_xlsx(cy_old,cy23.PIN_231)
         later,_=cy23.bounded_zip(cy_new,cy23.PIN_251,cy23.NEW_VERSION)
     else:
         old,_=cy24.probe(cy_old,"00410bdb65023d1bc8799f47f188677965046bb73447ee33094782db30076260",cy24.OLD_VERSION)
         later,_=cy24.probe(cy_new,cy24.PROTOCOL["archive_sha256"],cy24.NEW_VERSION)
-    return {**summary(old,later,feature,cutoff),"gedSource":provenance}
+    return {**summary(old,later,feature,cutoff,quarter),"gedSource":provenance}
 
 
 def main():
