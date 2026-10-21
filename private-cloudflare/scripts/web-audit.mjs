@@ -946,12 +946,23 @@ async function auditVisualSnapshot(label) {
       });
     }
 
+    // Routed area views intentionally occupy the entire viewport below the top navigation.
+    // Keep strict overflow/position checks, but do not require dialog-style side margins.
+    const dialogGeometryValid = (rect, viewport, fullscreen, navHeight) => {
+      if (fullscreen) {
+        return Math.abs(rect.left) <= 3 && Math.abs(rect.right - viewport.width) <= 3
+          && Math.abs(rect.top - navHeight) <= 4 && Math.abs(rect.bottom - viewport.height) <= 4;
+      }
+      return rect.width <= viewport.width - 8 && rect.left >= 0 && rect.right <= viewport.width;
+    };
     const dialog = document.querySelector(".detail-dialog[open]");
     const close = document.querySelector(".detail-dialog[open] .dialog-close");
     const title = document.querySelector(".detail-dialog[open] #dialog-title");
     if (dialog && visible(dialog)) {
       const rect = dialog.getBoundingClientRect();
-      if (rect.width > viewport.width - 8 || rect.left < 0 || rect.right > viewport.width) {
+      const routeFullscreen = dialog.id === "detail-dialog" && document.body.classList.contains("route-area-active");
+      const navHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--route-nav-height")) || 64;
+      if (!dialogGeometryValid(rect, viewport, routeFullscreen, navHeight)) {
         proportions.push(`dialog ${Math.round(rect.width)}px en viewport ${viewport.width}px`);
       }
       if (close && title && visible(close) && visible(title)) {
