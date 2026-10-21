@@ -4,7 +4,9 @@ Science-only, after-hoc feasibility experiment. Fits no new prediction model.
 Train/evaluation roster and binary annual outcomes are exclusively from pinned
 old/revised OrganizedViolenceCY editions. GED 23.1/24.1 supplies PRE-CUTOFF
 date-exact state-based lethal event *locations* only; no equivalence of its
-geographical identifiers to annual country participation is assumed.
+event count to annual threshold state is assumed. Both products use geographic
+GW country identifiers; CY is a GED-derived within-borders aggregate, not an
+actor-participation dataset (see AV086 correction and official codebooks).
 
 No zeros for violence are inferred from missing GED events or unprecise dates.
 Archive release timing at hypothetical issue is NOT externally witnessed.
@@ -18,6 +20,7 @@ from datetime import datetime,date
 import hashlib
 import io
 import json
+import math
 from pathlib import Path
 import re
 import zipfile
@@ -66,7 +69,7 @@ def parse_day(raw):
     return parsed.date()
 
 
-def ged_features(archive,cutoff,*,expected_sha):
+def ged_monthly_panel(archive,cutoff,*,expected_sha):
     if cutoff not in GED_RELEASES:
         raise ValueError("Unsupported historical feature cutoff")
     meta=GED_RELEASES[cutoff]
@@ -77,6 +80,7 @@ def ged_features(archive,cutoff,*,expected_sha):
     counts=collections.Counter()
     recent_quarter=collections.Counter()
     excluded=collections.Counter()
+    panel={}
     seen=set()
     n=0
     with zipfile.ZipFile(archive) as z:
@@ -88,6 +92,8 @@ def ged_features(archive,cutoff,*,expected_sha):
             required={"id","country_id","year","type_of_violence","best","date_start","date_end","date_prec"}
             if not reader.fieldnames or not required.issubset(reader.fieldnames):
                 raise ValueError("GED archive schema lacks exact historical event fields")
+            if len(reader.fieldnames)!=len(set(reader.fieldnames)):
+                raise ValueError("Duplicate GED column")
             for row in reader:
                 n+=1
                 if n>MAX_EVENTS:raise ValueError("GED event count out of bounds")
@@ -97,31 +103,67 @@ def ged_features(archive,cutoff,*,expected_sha):
                     deaths=int(row["best"]);precision=int(row["date_prec"])
                 except (ValueError,TypeError,KeyError) as exc:
                     raise ValueError("Bad GED observation") from exc
-                if event_id in seen or event_id<1 or cid<1 or y<1989 or y>cutoff or typ not in (1,2,3) or deaths<0 or precision<1:
+                if None in row or any(v is None for v in row.values()):
+                    raise ValueError("Ragged GED observation")
+                if event_id in seen or event_id<1 or cid<1 or y<1989 or y>cutoff or typ not in (1,2,3) or deaths<0 or precision not in range(1,6):
                     raise ValueError("Duplicate, future or invalid archived GED record")
                 seen.add(event_id)
+                # Validate EVERY row, including old years and excluded violence types.
+                start,end=parse_day(row["date_start"]),parse_day(row["date_end"])
+                if start>end or end.year>cutoff or start.year<1989 or not start.year<=y<=end.year:
+                    raise ValueError("Future, reversed or misaligned GED date interval")
                 if y!=cutoff:continue
                 if typ!=1:
                     excluded["non_state_based"]+=1;continue
                 if deaths<1:
                     excluded["nonlethal_best"]+=1;continue
+                item=panel.setdefault(cid,{"months":[0]*12,"deaths":[0]*12,
+                    "allDateDeaths":0,"impreciseRecords":0,"name":row.get("country")})
+                if item["name"]!=row.get("country"):
+                    raise ValueError("Inconsistent GED geographic name")
+                item["allDateDeaths"]+=deaths
                 if precision!=1:
+                    item["impreciseRecords"]+=1
                     excluded["imprecise_date"]+=1;continue
-                start,end=parse_day(row["date_start"]),parse_day(row["date_end"])
                 if start!=end or start.year!=cutoff:
                     excluded["non_exact_day_or_misaligned_year"]+=1;continue
                 # State-based lethal GED event at a geographic LOCATION.
-                # Not the same target as annual CY participating country.
+                # Not the same target as annual CY >=25 deaths, derived from GED.
                 counts[cid]+=1
+                item["months"][start.month-1]+=1
+                item["deaths"][start.month-1]+=deaths
                 if start.month in (10,11,12):recent_quarter[cid]+=1
     if n<MIN_EXPECTED_ROWS:
         raise ValueError("Inadequate complete historical GED archive")
-    return counts,recent_quarter,{"edition":meta["edition"],"cutoffYear":cutoff,
+    return panel,{"edition":meta["edition"],"cutoffYear":cutoff,
         "sourceHash":expected_sha,"nGedSourceRows":n,
         "nCountriesWithExactLethalLocations":len(counts),
         "excludedCutoffYear":dict(excluded),
-        "geographicEventLocationsNotAnnualParticipation":True,
+        "countrySemantics":"GW_LOCATION_IN_BOTH_PRODUCTS_CY_DERIVED_FROM_GED",
+        "monthlyZeroMeaning":"NO_ELIGIBLE_RECORD_NOT_VERIFIED_ABSENCE_OF_VIOLENCE",
         "sourceAsOfHistoricalIssueVerified":False}
+
+
+def ged_features(archive,cutoff,*,expected_sha):
+    panel,quality=ged_monthly_panel(archive,cutoff,expected_sha=expected_sha)
+    counts=collections.Counter({cid:sum(v["months"]) for cid,v in panel.items() if sum(v["months"])})
+    quarter=collections.Counter({cid:sum(v["months"][9:]) for cid,v in panel.items() if sum(v["months"][9:])})
+    return counts,quarter,quality
+
+
+def monthly_descriptors(item):
+    """Recorded exact-day subset only. Concentration is TEMPORAL, not spatial."""
+    months=item["months"];deaths=item["deaths"]
+    if len(months)!=12 or len(deaths)!=12 or any(type(v) is not int or v<0 for v in months+deaths):
+        raise ValueError("Invalid monthly recorded counts")
+    n=sum(months)
+    return {"recordedExactEvents":n,"recordedExactDeaths":sum(deaths),
+        "monthsWithEligibleRecords":sum(v>0 for v in months),
+        "q4MinusQ3RecordedEvents":sum(months[9:])-sum(months[6:9]),
+        "linearMonthlyCountSlope":sum((i-5.5)*v for i,v in enumerate(months))/143,
+        "temporalEventHHI":sum((v/n)**2 for v in months) if n else None,
+        "monthsSinceLastEligibleRecord":11-max(i for i,v in enumerate(months) if v) if n else None,
+        "excludedImpreciseRecords":item["impreciseRecords"]}
 
 
 def bucket(value):
@@ -132,6 +174,13 @@ def bucket(value):
 def summary(earlier,later,ged,cutoff,ged_last_quarter):
     if cutoff not in YEARS or not earlier or not later or not isinstance(ged,dict) or not isinstance(ged_last_quarter,dict):
         raise ValueError("Bad source-separated window")
+    training_keys=set()
+    for row in earlier:
+        key=(int(row['country_id']),int(row['year']))
+        deaths=float(row['sb_total_deaths_best'])
+        if key in training_keys or key[1]>cutoff or not math.isfinite(deaths) or deaths<0:
+            raise ValueError('Invalid, duplicate or future annual training record at cutoff')
+        training_keys.add(key)
     lookup=prepare(earlier,{"threshold_deaths":25})
     if not lookup or max(y for _,y in lookup)!=cutoff:
         raise ValueError("Annual training source not frozen at cutoff")
@@ -142,7 +191,10 @@ def summary(earlier,later,ged,cutoff,ged_last_quarter):
         if year not in YEARS[cutoff]:continue
         k=(int(r["country_id"]),year)
         if k in outcomes:raise ValueError("Duplicated annual outcome")
-        outcomes[k]=int(float(r["sb_total_deaths_best"])>=25)
+        deaths=float(r["sb_total_deaths_best"])
+        if not math.isfinite(deaths) or deaths<0:
+            raise ValueError('Invalid annual outcome deaths')
+        outcomes[k]=int(deaths>=25)
     cells=[[[0,0,0] for _ in range(4)] for __ in range(2)]
     quarter_cells=[[[0,0,0] for _ in range(2)] for __ in range(2)]
     missing=0
@@ -190,7 +242,7 @@ def summary(earlier,later,ged,cutoff,ged_last_quarter):
         "missingOutcomeCountries":missing,"countriesWithPositiveExactGEDLocations":present,
         "cells":bands,"lastQuarterOctoberToDecember":quarters,
         "gedZeroMeaning":"NO_RECORDED_EXACT_DAY_STATE_BASED_LETHAL_GED_EVENT_IN_CUTOFF_YEAR_NOT_ZERO_VIOLENCE",
-        "countryIdJoin":"GED_EVENT_LOCATION_VS_CY_COUNTRY_LEVEL_PARTICIPATION_NOT_EQUIVALENT",
+        "countryIdJoin":"SHARED_GW_GEOGRAPHY_CY_IS_GED_DERIVED_WITHIN_BORDERS_AGGREGATE",
         "crossProductTargetIdentical":False,"modelRefit":False,
         "realTimeIssueAvailabilityVerified":False,"forecastIssued":False,
         "prospectiveSkillDemonstrated":False,"confirmatory":False,

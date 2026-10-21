@@ -4,6 +4,9 @@ on:
     paths:
       - 'research/psychohistory/ged_monthly_cy_bridge.py'
       - 'research/psychohistory/test_ged_monthly_cy_bridge.py'
+      - 'research/psychohistory/ged_monthly_cy_diagnostics.py'
+      - 'research/psychohistory/test_ged_monthly_cy_diagnostics.py'
+      - 'research/psychohistory/ged_cy_source_contract.json'
       - '.github/workflows/psychohistory-ged-monthly-cy-bridge.yml'
   workflow_dispatch:
 permissions:
@@ -20,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m py_compile research/psychohistory/ged_monthly_cy_bridge.py
-          python3 -m unittest discover -s research/psychohistory -p test_ged_monthly_cy_bridge.py -v
+          python3 -m unittest discover -s research/psychohistory -p 'test_ged_monthly_cy*.py' -v
           echo 'No country risk, predictions or GED event identities emitted.'
   discover-official-monthly-vintages:
     runs-on: ubuntu-latest
@@ -38,6 +41,19 @@ jobs:
           curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 110 \
             --max-filesize 90000000 \
             https://ucdp.uu.se/downloads/ged/ged241-csv.zip -o "$RUNNER_TEMP/ged24.zip"
+      - name: Verify exact official codebook bytes and source contract
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,urllib.request
+          contract=json.load(open('research/psychohistory/ged_cy_source_contract.json'))
+          assert contract['historical_bytes_availability_verified'] is False
+          for item in contract['codebooks']:
+              with urllib.request.urlopen(item['url'],timeout=60) as response:
+                  body=response.read(2000001)
+              assert len(body)==item['bytes'] and body.startswith(b'%PDF-')
+              assert hashlib.sha256(body).hexdigest()==item['sha256']
+          print('Four official codebooks match pinned bytes; historical issue availability unverified.')
+          PY
       - name: Discover archive byte SHA without scoring or issuing forecasts
         run: |
           set -euo pipefail
@@ -62,7 +78,11 @@ jobs:
             --ged "$RUNNER_TEMP/ged23.zip" --cy-old "$RUNNER_TEMP/cy23.xlsx" --cy-new "$RUNNER_TEMP/cy25.zip" --cutoff 2022
           python3 research/psychohistory/ged_monthly_cy_bridge.py \
             --ged "$RUNNER_TEMP/ged24.zip" --cy-old "$RUNNER_TEMP/cy24.zip" --cy-new "$RUNNER_TEMP/cy26.zip" --cutoff 2023
-          echo 'RETROSPECTIVE and post-hoc! Event location != country-year participating actor; no 2024/25 forecasts issued.'
+          python3 research/psychohistory/ged_monthly_cy_diagnostics.py \
+            --ged "$RUNNER_TEMP/ged23.zip" --cy-old "$RUNNER_TEMP/cy23.xlsx" --cy-new "$RUNNER_TEMP/cy25.zip" --cutoff 2022
+          python3 research/psychohistory/ged_monthly_cy_diagnostics.py \
+            --ged "$RUNNER_TEMP/ged24.zip" --cy-old "$RUNNER_TEMP/cy24.zip" --cy-new "$RUNNER_TEMP/cy26.zip" --cutoff 2023
+          echo 'RETROSPECTIVE and post-hoc! CY is GED-derived within-borders geography; incident counts != annual threshold target. No forecasts issued.'
       - name: Delete ephemeral archive bytes
         if: always()
         run: rm -f "$RUNNER_TEMP/ged23.zip" "$RUNNER_TEMP/ged24.zip" "$RUNNER_TEMP/cy23.xlsx" "$RUNNER_TEMP/cy25.zip" "$RUNNER_TEMP/cy24.zip" "$RUNNER_TEMP/cy26.zip"
