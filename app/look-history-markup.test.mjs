@@ -10,7 +10,7 @@ const source = await readFile(new URL("./objects.js", import.meta.url), "utf8");
 function renderHistory(mode, sort, payload) {
   const body = { innerHTML: "", querySelector: () => null, querySelectorAll: () => [] };
   const context = { document: { querySelector: () => body }, payload, mode, sort };
-  runInNewContext(source.replace(/^export /gm, "") +
+  runInNewContext(source.replace(/^import .*;\s*$/gm, "").replace(/^export /gm, "") +
     "\nlookUsageHistoryView(payload, mode, sort);", context);
   const parsed = spawnSync("python3", ["-c", `
 import json, sys
