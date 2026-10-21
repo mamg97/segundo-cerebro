@@ -3193,7 +3193,7 @@ try {
           // visual auditing. A failure remains a real failed check.
           const probe = await probeVisualImage(recipe.photoUrl);
           assertCheck(
-            probe.ok && /^image\\//i.test(probe.contentType) && probe.decoded,
+            probe.ok && /^image\//i.test(probe.contentType) && probe.decoded,
             `Salud · foto receta ${recipe.id || recipe.name || "sin-id"} responde como imagen`,
             `HTTP ${probe.status} · ${probe.contentType || "sin content-type"} · decoded=${Boolean(probe.decoded)}`
           );
