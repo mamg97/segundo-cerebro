@@ -8,7 +8,7 @@ const css=readFileSync(new URL("./styles.css",import.meta.url),"utf8");
 function runtime() {
   const context={document:{createElement:()=>({className:"",textContent:"",setAttribute(){}})}};
   vm.createContext(context);
-  vm.runInContext(source.replace(/^export /gm,""),context);
+  vm.runInContext(source.replace(/^import .*;\s*$/gm,"").replace(/^export /gm,""),context);
   return context;
 }
 const example={
