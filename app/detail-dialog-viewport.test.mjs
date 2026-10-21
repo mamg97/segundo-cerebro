@@ -15,7 +15,9 @@ test("detail-dialog open box remains within viewport even at mobile widths", () 
 });
 
 test("visual browser audit retains its independent strict dialog geometry check", () => {
-  assert.match(audit, /rect\.width > viewport\.width - 8 \|\| rect\.left < 0 \|\| rect\.right > viewport\.width/);
+  assert.match(audit, /assessAuditDialogGeometry\(report\.dialogGeometry\)/);
+  assert.match(audit, /document\.body\.classList\.contains\("route-area-active"\)/);
+  assert.match(audit, /dialog\.classList\.contains\("travels-dialog"\)/);
   assert.match(audit, /assertCheck\(report\.proportions\.length === 0/);
   assert.match(audit, /DIALOG_WIDTH_OUT_OF_BOUNDS/);
 });
