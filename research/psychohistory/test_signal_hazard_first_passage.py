@@ -42,6 +42,9 @@ class SignalHazardTests(unittest.TestCase):
     self.assertFalse(result["prospectiveSkillProven"])
     self.assertEqual(result["pairedUncertainty"]["draws"],2000)
     self.assertEqual(result["n"],8)
+    self.assertEqual(sum(sum(sum(outcomes) for outcomes in flags) for flags in result["sourceSignal"]["observedFirstChangeOutcomeByRegimeAndFlag"]),8)
+    self.assertEqual(sum(sum(row) for row in result["sourceSignal"]["flagCountsByRegime"]),8)
+    self.assertNotIn('"country_id"',str(result))
  def test_missing_label_is_not_zero(self):
     original=make_version("24.1",2023)
     later=make_version("26.1",2025)
