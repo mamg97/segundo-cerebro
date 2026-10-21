@@ -5,7 +5,7 @@ import { fetchPantrySummary, hasPantryGoogleConfig, resolvePantrySpreadsheetId }
 import { performShoppingAction, reconcileMenuShopping, ShoppingActionError } from "./pantry-shopping-actions.js";
 import { habitQuestHasGoogleAuth, resolveHabitQuestSheetId } from "./habitquest-source.js";
 import { fetchMercadonaReference } from "./mercadona.js";
-import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook } from "./objects.js";
+import { fetchObjectsSummary, hasObjectsGoogleConfig, createObjectsLook, updateObjectsPackingItem } from "./objects.js";
 import { ObjectsImageError, readObjectsImage, uploadObjectsImage } from "./objects-images.js";
 import { safePrivateReadDiagnostic } from "./private-read-diagnostics.js";
 import { createSingleFlight } from "./single-flight.js";
@@ -5830,6 +5830,23 @@ export default {
       } catch (error) {
         console.warn("Pantry read failed", String(error?.message || "PANTRY_READ_ERROR"));
         return json({ ok: false, code: "PANTRY_READ_FAILED" }, 502);
+      }
+    }
+
+    if (url.pathname === "/api/objects/list/item") {
+      if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED" }, 405);
+      try {
+        const body = await request.json();
+        const updated = await updateObjectsPackingItem(env, getGoogleAccessToken, body);
+        return json({ ok: true, ...updated });
+      } catch (error) {
+        const code = String(error?.message || "OBJECTS_PACKING_WRITE_FAILED");
+        if (code.startsWith("INVALID_OBJECTS_PACKING_")) return json({ ok: false, code }, 400);
+        if (code === "OBJECTS_PACKING_STATE_CONFLICT") return json({ ok: false, code }, 409);
+        if (code === "OBJECTS_PACKING_ITEM_NOT_FOUND") return json({ ok: false, code }, 404);
+        if (code === "OBJECTS_NOT_CONFIGURED" || code === "OBJECTS_SOURCE_PENDING") return json({ ok: false, code }, 503);
+        console.warn("Objects packing state update failed", safePrivateReadDiagnostic(error));
+        return json({ ok: false, code: "OBJECTS_PACKING_WRITE_FAILED" }, 502);
       }
     }
 
