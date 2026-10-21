@@ -2,6 +2,11 @@
 
 ## AV-087 · Observación de Candidate vigente: calidad temporal pendiente
 
+- **[PR #761](https://github.com/mamg97/segundo-cerebro/pull/761)** fusionada
+  (`de804901136903987af54325cfb117ff649f100f`), cuatro checks SUCCESS; fuente
+  oficial `39617592333`. AV-087 VERIFICADO en registro privado, un experimento
+  agregado releído. Se verifica la observación, no se admite el replay científico.
+
 - Candidate 26.0.9 (septiembre 2026) y codebook 1.5 oficiales, con hashes
   observados el 21/10/2026. 2.014 registros y 44 países con registros; no es un
   roster completo. Precisión 1–5: 1.725/262/6/15/6; cero códigos 0.
@@ -16,6 +21,11 @@
 ---
 
 ## AV-086 · Corrección geográfica de AV-085 y diagnóstico mensual
+
+- **[PR #760](https://github.com/mamg97/segundo-cerebro/pull/760)** fusionada
+  (`31dba31a01e79bd1c27664126df3353ba13ef16c`), cuatro checks SUCCESS; fuente
+  oficial `39615996330`. AV-086 VERIFICADO, dos informes agregados canónicos
+  releídos; evento AV-085 preservado.
 
 - Estado de implementación y evidencia: [handoff Codex↔ChatGPT](CODEX_CHATGPT_HANDOFF.md).
 - **Corrección:** los codebooks CY 23.1/24.1 definen un agregado geográfico
