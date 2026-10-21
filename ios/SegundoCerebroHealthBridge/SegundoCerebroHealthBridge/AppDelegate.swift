@@ -13,8 +13,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         registerBackgroundRefresh()
 
-        HealthKitService.shared.installObserverQueries { [weak self] in
-            _ = await self?.performAutomaticSync(trigger: .healthKit)
+        HealthKitService.shared.installObserverQueries { [weak self] isWeightUpdate in
+            _ = await self?.performAutomaticSync(trigger: isWeightUpdate ? .bodyMass : .healthKit)
         }
 
         if UserDefaults.standard.bool(forKey: "healthBridge.didRequestHealthAuthorization") {
