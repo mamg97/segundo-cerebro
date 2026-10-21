@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { assessAuditDialogGeometry } from "../src/audit-dialog-geometry.js";
 import { recipeCatalogItems } from "../../app/recipe-catalog-filter.mjs";
 import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mjs";
 import { createAuditImageReadGate } from "./audit-image-read-gate.mjs";
@@ -833,6 +834,7 @@ async function auditVisualSnapshot(label) {
     const brokenImages = [];
     const proportions = [];
     const proportionCodes = [];
+    let dialogGeometry = null;
     const componentOverflows = [];
 
     const rootOverflow = Math.max(
@@ -955,25 +957,26 @@ async function auditVisualSnapshot(label) {
     const title = document.querySelector(".detail-dialog[open] #dialog-title");
     if (dialog && visible(dialog)) {
       const rect = dialog.getBoundingClientRect();
-      if (rect.width > viewport.width - 8 || rect.left < 0 || rect.right > viewport.width) {
-        proportions.push(`dialog ${Math.round(rect.width)}px en viewport ${viewport.width}px`);
-        proportionCodes.push("DIALOG_WIDTH_OUT_OF_BOUNDS");
-        // Only structural, fixed-code evidence; no private dialog/DOM text.
-        if (rect.width > viewport.width - 8) proportionCodes.push("DIALOG_BOX_TOO_WIDE");
-        if (rect.left < 0) proportionCodes.push("DIALOG_LEFT_OFFSCREEN");
-        if (rect.right > viewport.width) proportionCodes.push("DIALOG_RIGHT_OFFSCREEN");
-        const style = getComputedStyle(dialog);
-        if (viewport.width <= 760) proportionCodes.push("DIALOG_MOBILE_VIEWPORT");
-        else proportionCodes.push("DIALOG_DESKTOP_VIEWPORT");
-        if (dialog.classList.contains("health-dialog")) proportionCodes.push("DIALOG_KIND_HEALTH");
-        else if (dialog.classList.contains("wealth-dialog")) proportionCodes.push("DIALOG_KIND_WEALTH");
-        else if (dialog.classList.contains("parents-dialog")) proportionCodes.push("DIALOG_KIND_PARENTS");
-        else proportionCodes.push("DIALOG_KIND_OTHER");
-        if (parseFloat(style.minWidth) > viewport.width - 8) proportionCodes.push("DIALOG_MIN_WIDTH_EXCEEDS_VIEWPORT");
-        if (parseFloat(style.maxWidth) > viewport.width - 8) proportionCodes.push("DIALOG_MAX_WIDTH_EXCEEDS_VIEWPORT");
-        if (style.position === "fixed") proportionCodes.push("DIALOG_POSITION_FIXED");
-        if (style.position === "absolute") proportionCodes.push("DIALOG_POSITION_ABSOLUTE");
-      }
+      const style = getComputedStyle(dialog);
+      // These are the two explicit fullscreen contracts in the *loaded*
+      // app/area-routes.css and app/travels.css, both following styles.css.
+      // Ordinary dialogs must still retain eight pixels of width gutter.
+      const intentionalFullscreen =
+        (document.body.classList.contains("route-area-active") && dialog.id === "detail-dialog") ||
+        dialog.classList.contains("travels-dialog");
+      dialogGeometry = {
+        width: rect.width, left: rect.left, right: rect.right,
+        viewportWidth: viewport.width, intentionalFullscreen,
+        contextCodes: [
+          viewport.width <= 760 ? "DIALOG_MOBILE_VIEWPORT" : "DIALOG_DESKTOP_VIEWPORT",
+          dialog.classList.contains("health-dialog") ? "DIALOG_KIND_HEALTH" :
+          dialog.classList.contains("wealth-dialog") ? "DIALOG_KIND_WEALTH" :
+          dialog.classList.contains("parents-dialog") ? "DIALOG_KIND_PARENTS" : "DIALOG_KIND_OTHER",
+          style.position === "fixed" ? "DIALOG_POSITION_FIXED" : "DIALOG_POSITION_ABSOLUTE",
+          parseFloat(style.minWidth) > viewport.width - 8 ? "DIALOG_MIN_WIDTH_EXCEEDS_VIEWPORT" : "",
+          parseFloat(style.maxWidth) > viewport.width - 8 ? "DIALOG_MAX_WIDTH_EXCEEDS_VIEWPORT" : "",
+        ].filter(Boolean)
+      };
       if (close && title && visible(close) && visible(title)) {
         const closeRect = close.getBoundingClientRect();
         const range = document.createRange();
@@ -1031,9 +1034,15 @@ async function auditVisualSnapshot(label) {
       }
     }
 
-    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, brokenImages, proportions, proportionCodes, componentOverflows };
+    return { viewport, rootOverflow, outOfBounds, clippedText, overlaps, distortedImages, brokenImages, proportions, proportionCodes, componentOverflows, dialogGeometry };
   });
 
+  const dialogAssessment = assessAuditDialogGeometry(report.dialogGeometry);
+  if (!dialogAssessment.ok) {
+    report.proportions.push("dialog viewport geometry violation");
+    report.proportionCodes.push("DIALOG_WIDTH_OUT_OF_BOUNDS", ...dialogAssessment.codes,
+      ...(report.dialogGeometry?.contextCodes || []));
+  }
   assertCheck(report.rootOverflow <= 3, `Visual ${label} · sin overflow global`, `overflow=${report.rootOverflow}px`);
   assertCheck(report.outOfBounds.length === 0, `Visual ${label} · contenido dentro del viewport`, report.outOfBounds.slice(0, 4).join(" | "));
   assertCheck(report.clippedText.length === 0, `Visual ${label} · texto sin clipping`, report.clippedText.slice(0, 4).join(" | "));
@@ -1085,7 +1094,7 @@ async function auditVisualSnapshot(label) {
       "DIALOG_MOBILE_VIEWPORT", "DIALOG_DESKTOP_VIEWPORT",
       "DIALOG_KIND_HEALTH", "DIALOG_KIND_WEALTH", "DIALOG_KIND_PARENTS", "DIALOG_KIND_OTHER",
       "DIALOG_MIN_WIDTH_EXCEEDS_VIEWPORT", "DIALOG_MAX_WIDTH_EXCEEDS_VIEWPORT",
-      "DIALOG_POSITION_FIXED", "DIALOG_POSITION_ABSOLUTE"].includes(code)) continue;
+      "DIALOG_POSITION_FIXED", "DIALOG_POSITION_ABSOLUTE", "DIALOG_GEOMETRY_INVALID"].includes(code)) continue;
     if (!emittedVisualProportionCodes.has(code)) {
       emittedVisualProportionCodes.add(code);
       console.error("[AUDIT_VISUAL_PROPORTION_DIAG] " + code);
