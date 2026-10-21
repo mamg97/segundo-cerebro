@@ -64,6 +64,12 @@ test("diagnostic labels are fixed allowlisted codes with no private identifiers"
   assert.equal(/(secreta|privado-123|example.com)/.test(texts),false);
 });
 
+test("recipe photo audits share the strict decoded-image probe with visual checks", () => {
+  assert.match(auditor, /for \(const recipe of recipesWithPhotos\) \{[\s\S]*?await probeVisualImage\(recipe\.photoUrl\)/);
+  assert.match(auditor, /probe\.ok && \/\^image\\\/\/i\.test\(probe\.contentType\) && probe\.decoded/);
+  assert.doesNotMatch(auditor, /for \(const recipe of recipesWithPhotos\) \{[\s\S]*?page\.evaluate\(async \(src\) =>/);
+});
+
 test("recipe browser audit compares active cards with active canonical rows and separately checks archive", () => {
   assert.match(auditor, /import \{ recipeCatalogItems \} from "\.\.\/\.\.\/app\/recipe-catalog-filter\.mjs"/);
   assert.match(auditor, /const activeRecipes = recipeCatalogItems\(canonicalRecipes, "", "", false\)/);
