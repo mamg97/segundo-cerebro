@@ -958,6 +958,21 @@ async function auditVisualSnapshot(label) {
       if (rect.width > viewport.width - 8 || rect.left < 0 || rect.right > viewport.width) {
         proportions.push(`dialog ${Math.round(rect.width)}px en viewport ${viewport.width}px`);
         proportionCodes.push("DIALOG_WIDTH_OUT_OF_BOUNDS");
+        // Only structural, fixed-code evidence; no private dialog/DOM text.
+        if (rect.width > viewport.width - 8) proportionCodes.push("DIALOG_BOX_TOO_WIDE");
+        if (rect.left < 0) proportionCodes.push("DIALOG_LEFT_OFFSCREEN");
+        if (rect.right > viewport.width) proportionCodes.push("DIALOG_RIGHT_OFFSCREEN");
+        const style = getComputedStyle(dialog);
+        if (viewport.width <= 760) proportionCodes.push("DIALOG_MOBILE_VIEWPORT");
+        else proportionCodes.push("DIALOG_DESKTOP_VIEWPORT");
+        if (dialog.classList.contains("health-dialog")) proportionCodes.push("DIALOG_KIND_HEALTH");
+        else if (dialog.classList.contains("wealth-dialog")) proportionCodes.push("DIALOG_KIND_WEALTH");
+        else if (dialog.classList.contains("parents-dialog")) proportionCodes.push("DIALOG_KIND_PARENTS");
+        else proportionCodes.push("DIALOG_KIND_OTHER");
+        if (parseFloat(style.minWidth) > viewport.width - 8) proportionCodes.push("DIALOG_MIN_WIDTH_EXCEEDS_VIEWPORT");
+        if (parseFloat(style.maxWidth) > viewport.width - 8) proportionCodes.push("DIALOG_MAX_WIDTH_EXCEEDS_VIEWPORT");
+        if (style.position === "fixed") proportionCodes.push("DIALOG_POSITION_FIXED");
+        if (style.position === "absolute") proportionCodes.push("DIALOG_POSITION_ABSOLUTE");
       }
       if (close && title && visible(close) && visible(title)) {
         const closeRect = close.getBoundingClientRect();
@@ -1065,7 +1080,12 @@ async function auditVisualSnapshot(label) {
   // This currently fails repeatedly across visual snapshots. Surface only
   // allowlisted structural categories, not dimensions, DOM IDs or page text.
   for (const code of new Set(report.proportionCodes || [])) {
-    if (!["DIALOG_WIDTH_OUT_OF_BOUNDS", "HOME_SUMMARY_HEIGHT_TOO_TALL", "HOME_SUMMARY_HEIGHT_TOO_SHORT"].includes(code)) continue;
+    if (!["DIALOG_WIDTH_OUT_OF_BOUNDS", "HOME_SUMMARY_HEIGHT_TOO_TALL", "HOME_SUMMARY_HEIGHT_TOO_SHORT",
+      "DIALOG_BOX_TOO_WIDE", "DIALOG_LEFT_OFFSCREEN", "DIALOG_RIGHT_OFFSCREEN",
+      "DIALOG_MOBILE_VIEWPORT", "DIALOG_DESKTOP_VIEWPORT",
+      "DIALOG_KIND_HEALTH", "DIALOG_KIND_WEALTH", "DIALOG_KIND_PARENTS", "DIALOG_KIND_OTHER",
+      "DIALOG_MIN_WIDTH_EXCEEDS_VIEWPORT", "DIALOG_MAX_WIDTH_EXCEEDS_VIEWPORT",
+      "DIALOG_POSITION_FIXED", "DIALOG_POSITION_ABSOLUTE"].includes(code)) continue;
     if (!emittedVisualProportionCodes.has(code)) {
       emittedVisualProportionCodes.add(code);
       console.error("[AUDIT_VISUAL_PROPORTION_DIAG] " + code);
