@@ -1,4 +1,4 @@
-const TABS = [["summary","Resumen"],["inventory","Inventario"],["wardrobe","Armario visual"],["builder","Combinador"],["looks","Looks"],["kits","Kits"],["lists","Listas"]];
+const TABS = [["summary","Resumen"],["inventory","Inventario"],["wardrobe","Armario visual"],["builder","Combinador"],["looks","Looks"],["kits","Kits"],["lists","Viajes y listas"]];
 let activeTab = "summary";
 let objectsFlash = "";
 let objectsViewMemory = null;
@@ -427,8 +427,20 @@ function progress(items) {
 }
 function listsView(payload) {
   if (pending(payload)) return pendingView();
-  const rows=payload.lists||[];
-  return '<div class="context-lists-grid">'+(rows.length?rows.map(x=>{const p=progress(x.items),missing=(x.items||[]).filter(i=>i.state==="FALTA_COMPRAR").length;return '<button class="context-list-card" type="button" data-list-open="'+e(x.id)+'"><span class="context-list-top"><span>'+e(x.context||"Contexto")+'</span><b>'+e(x.status||"ACTIVA")+'</b></span><strong>'+e(x.name||"Lista")+'</strong><small>'+e([x.destination,x.startDate?d(x.startDate):null,x.endDate?d(x.endDate):null].filter(Boolean).join(" · ")||"Sin fechas")+'</small><progress class="context-list-progress" max="100" value="'+p.pct+'" aria-label="'+p.pct+'% preparado"></progress><span class="context-list-foot"><span>'+p.prepared+'/'+p.total+' preparados</span><span>'+(missing?missing+" por comprar":"sin compras pendientes")+'</span></span></button>';}).join(""):empty("No hay listas contextuales","Viajes y eventos podrán generarlas reutilizando objetos y kits."))+'</div>';
+  const rows=[...(payload.lists||[])].sort((a,b)=>String(b.startDate||"").localeCompare(String(a.startDate||"")));
+  const cards=(items)=>items.map(x=>{
+    const p=progress(x.items), missing=(x.items||[]).filter(i=>i.state==="FALTA_COMPRAR").length;
+    return '<button class="context-list-card" type="button" data-list-open="'+e(x.id)+'"><span class="context-list-top"><span>'+e(x.context||"Contexto")+'</span><b>'+e(x.status||"ACTIVA")+'</b></span>'+
+      '<strong>'+e(x.name||"Lista")+'</strong><small>'+e([x.destination,x.startDate?d(x.startDate):null,x.endDate?d(x.endDate):null].filter(Boolean).join(" · ")||"Sin fechas")+'</small>'+
+      '<progress class="context-list-progress" max="100" value="'+p.pct+'" aria-label="'+p.pct+'% preparado"></progress>'+
+      '<span class="context-list-foot"><span>'+p.prepared+'/'+p.total+' preparados</span><span>'+(missing?missing+" por comprar":"Pulsa para preparar")+'</span></span></button>';
+  }).join("");
+  const travel=rows.filter(x=>/viaje|equipaje/i.test(String(x.context||"")));
+  const others=rows.filter(x=>!travel.includes(x));
+  return '<section class="packing-list-hub"><div class="objects-section-title"><small>Viajes</small><strong>Maletas y equipaje</strong><p>Checklist interactiva por etapas. Marca cada cosa solo cuando esté realmente preparada.</p></div>'+
+    '<div class="context-lists-grid">'+(travel.length?cards(travel):empty("Sin viajes registrados"))+'</div>'+
+    (others.length?'<div class="objects-section-title"><small>Otros contextos</small><strong>Listas generales</strong></div><div class="context-lists-grid">'+cards(others)+'</div>':"")+
+    '</section>';
 }
 
 function detailObject(item,payload) {
