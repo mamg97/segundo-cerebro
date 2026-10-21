@@ -44,7 +44,7 @@ struct ContentView: View {
                     }
 
                     LabeledContent("Cadencia automática") {
-                        Text("Hasta 3 veces al día")
+                        Text("Actividad cada 8 h; peso prioritario")
                             .foregroundStyle(.secondary)
                     }
 
@@ -119,7 +119,7 @@ struct ContentView: View {
                 } header: {
                     Text("Acciones")
                 } footer: {
-                    Text("La sincronización manual actualiza hoy y ayer. Después HealthKit puede despertar la app cuando existan datos nuevos; iOS decide el momento exacto.")
+                    Text("La sincronización reconcilia hoy y los dos días anteriores. Después HealthKit puede despertar la app cuando existan datos nuevos; iOS decide el momento exacto.")
                 }
 
                 Section {
@@ -138,6 +138,19 @@ struct ContentView: View {
                 }
 
                 Section {
+                    LabeledContent("Versión", value: state.installedVersion)
+                    if let attempt = state.lastAttempt {
+                        LabeledContent("Último intento") { Text(attempt, format: .dateTime.day().month().hour().minute()) }
+                    }
+                    if let read = state.lastBodyReadAt {
+                        LabeledContent("Última lectura corporal") { Text(read, format: .dateTime.day().month().hour().minute()) }
+                        LabeledContent("Muestras en esa lectura", value: String(state.bodyReadCount))
+                    }
+                    if let weight = state.lastWeightReadAt {
+                        LabeledContent("Fecha del último peso leído") { Text(weight, format: .dateTime.day().month().hour().minute()) }
+                    }
+                    if state.hasPendingBody { Text("Hay mediciones corporales pendientes de enviar.").foregroundStyle(.orange) }
+                    if let failure = state.lastFailure { Text("Último error: \(failure)").foregroundStyle(.red) }
                     Text(state.statusMessage)
                         .font(.footnote)
                         .foregroundStyle(state.statusMessage.localizedCaseInsensitiveContains("fallida") ? .red : .secondary)
@@ -147,9 +160,10 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Health Bridge")
+            .task { await state.reconcileOnForeground() }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active {
-                    state.refreshDiagnostics()
+                    Task { await state.reconcileOnForeground() }
                 }
             }
         }

@@ -17,6 +17,8 @@ jobs:
           node-version: "22"
       - name: Validate HealthKit weight freshness contract
         run: node --test ios/SegundoCerebroHealthBridge/scripts/health-weight-freshness.test.mjs
+      - name: Exercise persistent sync coordination
+        run: sh ios/SegundoCerebroHealthBridge/scripts/test-sync-coordinator.sh
       - name: Build HealthKit bridge
         run: |
           xcodebuild \

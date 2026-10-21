@@ -6,7 +6,7 @@ const root = new URL("../SegundoCerebroHealthBridge/", import.meta.url);
 const read = (name) => readFile(new URL(name, root), "utf8");
 const [health, sync, delegate, state] = await Promise.all([
   read("HealthKitService.swift"),
-  read("SyncService.swift"),
+  read("SyncCoordinator.swift"),
   read("AppDelegate.swift"),
   read("AppState.swift")
 ]);
@@ -20,7 +20,7 @@ test("weight observer is distinguished from other HealthKit changes", () => {
 test("new weight bypasses only the normal eight-hour automatic cooldown", () => {
   assert.match(sync, /case bodyMass/);
   assert.match(sync, /static let automaticSyncInterval: TimeInterval = 8 \* 60 \* 60/);
-  assert.match(sync, /if trigger\.isAutomatic,\s*trigger != \.bodyMass,\s*defaults\.integer/);
+  assert.match(sync, /pendingBodySync/);
   assert.match(state, /case \.bodyMass: "Automática · nuevo peso"/);
 });
 

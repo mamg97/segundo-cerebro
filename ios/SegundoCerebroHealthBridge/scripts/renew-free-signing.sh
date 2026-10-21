@@ -12,6 +12,7 @@ readonly STATE_DIR="${HOME}/Library/Application Support/SegundoCerebroHealthBrid
 readonly DERIVED_DATA_DIR="${STATE_DIR}/DerivedData"
 readonly LAST_ATTEMPT_FILE="${STATE_DIR}/free-signing-last-attempt"
 readonly LAST_SUCCESS_FILE="${STATE_DIR}/free-signing-last-success"
+readonly LAST_REVISION_FILE="${STATE_DIR}/free-signing-last-revision"
 readonly LAST_ERROR_FILE="${STATE_DIR}/free-signing-last-error"
 readonly MAX_SUCCESS_AGE_SECONDS=$((5 * 24 * 60 * 60))
 readonly BUNDLE_ID="com.mamg97.segundocerebro.healthbridge"
@@ -27,7 +28,18 @@ record_failure() {
 }
 trap record_failure ERR
 
-if [[ "${1:-}" != "--force" && -f "${LAST_SUCCESS_FILE}" ]]; then
+# Renew only a clean main checkout, advanced without rewriting local history.
+readonly REPO_DIR="$(git -C "${PROJECT_DIR}" rev-parse --show-toplevel)"
+if [[ "$(git -C "${REPO_DIR}" branch --show-current)" != "main" || -n "$(git -C "${REPO_DIR}" status --porcelain)" ]]; then
+  echo "Renovación detenida: se requiere main limpio; se conservan todos los cambios locales."
+  exit 2
+fi
+git -C "${REPO_DIR}" fetch --quiet origin main
+git -C "${REPO_DIR}" merge --ff-only --quiet origin/main
+readonly SOURCE_REVISION="$(git -C "${REPO_DIR}" rev-parse HEAD)"
+readonly INSTALLED_REVISION="$(cat "${LAST_REVISION_FILE}" 2>/dev/null || true)"
+
+if [[ "${1:-}" != "--force" && -f "${LAST_SUCCESS_FILE}" && "${INSTALLED_REVISION}" == "${SOURCE_REVISION}" ]]; then
   readonly last_success="$(<"${LAST_SUCCESS_FILE}")"
   readonly now="$(date +%s)"
   if [[ "${last_success}" == <-> ]] && (( now - last_success < MAX_SUCCESS_AGE_SECONDS )); then
@@ -47,6 +59,7 @@ xcodebuild \
   -allowProvisioningUpdates \
   DEVELOPMENT_TEAM="${TEAM_ID}" \
   CODE_SIGN_STYLE=Automatic \
+  HEALTH_BRIDGE_REVISION="${SOURCE_REVISION}" \
   build
 
 xcrun devicectl device install app --device "${DEVICE_ID}" "${APP_PATH}"
@@ -56,6 +69,7 @@ if ! xcrun devicectl device process launch --device "${DEVICE_ID}" "${BUNDLE_ID}
   echo "La app quedó renovada, pero iOS no permitió abrirla en este momento."
 fi
 
+printf '%s\n' "${SOURCE_REVISION}" > "${LAST_REVISION_FILE}"
 date +%s > "${LAST_SUCCESS_FILE}"
 rm -f "${LAST_ERROR_FILE}"
 echo "Firma gratuita renovada correctamente."

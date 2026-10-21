@@ -450,8 +450,8 @@ Automatic body-composition freshness is owned by the HealthKit → native bridge
 Operational cadence:
 - body mass, body-fat percentage, BMI and lean body mass request HealthKit Background Delivery with `.immediate`;
 - high-frequency activity/recovery signals remain `.hourly`;
-- bringing the bridge app to the foreground reconciles today + yesterday immediately;
-- `BGAppRefreshTask` requests an additional one-hour fallback reconciliation, but iOS may run it later;
+- bringing the bridge app to the foreground reconciles today and the previous two days (duplicate activations within 60 seconds are coalesced);
+- `BGAppRefreshTask` requests ordinary reconciliation after eight hours, or a recovery opportunity after 15 minutes when work remains pending; iOS may run it later;
 - a stale Home weight must therefore be diagnosed first as a device/HealthKit/bridge delivery issue, not “fixed” by manually overwriting `MedicionesCorporalesApple`.
 
 The derived Sheet remains useful for analysis and audit. It may lag D1 until its normal derived-history refresh executes; that lag must never cause the Home to ignore a newer D1 sample.
@@ -481,3 +481,10 @@ The visual exercise library is an external **read-only reference layer**, not a 
 - Each series consists of three real views for one explicit `YYYY-MM-DD` date: `frente`, `diagonal`, `perfil`. This is distinct from completed gym sessions (`gym_sessions` in D1); do not infer workout attendance from a photo or fabricate missing dates/angles.
 - Gallery, comparison and multipart upload are loaded only on the private Gym `Progreso físico` tab. Image bytes go through authenticated same-origin URLs with no-store; `GET /api/state` and the overview never transport photos.
 - Browser photo processing must strip location/camera metadata before upload. Originals are archived by explicit workflow, not silently deleted; deleting a gallery series does not destroy archived originals. Do not diagnose physical health or infer body-fat percentage solely from progress photos.
+
+
+### Persistent body delivery and installation identity
+
+Body events received during another sync remain pending until a subsequent HealthKit read succeeds. Locked-device and failed-upload retries preserve body priority across launches. Foreground reconciliation bypasses the activity cooldown, with a 60-second activation guard; failed automatic uploads back off for 60 seconds. Native diagnostics show last attempt/error, body read time/count, latest weight measurement time and installed version/revision. None of these signals alone certifies fresh weight in D1.
+
+The free-signing script requires a clean main checkout, fetches and fast-forwards origin/main, and reinstalls when the source revision changes even inside the five-day signing window. It refuses divergent or dirty work instead of resetting it. A renewed profile is not proof of background HealthKit delivery. Real-device validation and a later automatic sample remain mandatory.
