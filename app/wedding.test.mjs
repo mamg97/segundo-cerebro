@@ -22,7 +22,7 @@ test("budget math does not double count paid and excluded entries",()=>{
 test("wedding has private API and responsive separate stylesheet",()=>{
  const app=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
- assert.match(app,/wedding\.css\?v=0\.1\.2/);
+ assert.match(app,/wedding\.css\?v=0\.1\.3/);
  assert.match(style,/\.wed-grid/);
  assert.doesNotMatch(style,/overflow-y:auto/);
 });
@@ -64,4 +64,24 @@ test("moodboard excludes discarded ideas, filters categories, and preserves exis
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
  assert.match(style,/\.wed-masonry/);
  assert.doesNotMatch(style,/overflow-y:auto/);
+});
+
+test("mobile inspiration supports gallery, camera, clipboard screenshots and ten photos",async()=>{
+ const {quickTitle,QUICK_IMAGE_LIMIT}=await import("./wedding.js");
+ assert.equal(QUICK_IMAGE_LIMIT,10);
+ assert.equal(quickTitle("Flores",0,3),"Flores · 1");
+ assert.equal(quickTitle("Flores",2,3),"Flores · 3");
+ assert.equal(quickTitle("",0,1,"21/10/2026"),"Inspiración · 21/10/2026");
+ const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ assert.match(source,/wed-mobile-gallery-input" type="file" accept="image\/\*,\.heic,\.heif" multiple/);
+ assert.match(source,/wed-mobile-camera-input" type="file" accept="image\/\*" capture="environment"/);
+ assert.match(source,/clipboardData\?\.items/);
+ assert.match(source,/async function optimizedPhoto/);
+ assert.match(source,/await sendPhoto\(item\.createdId,item\.file\)/);
+ assert.match(source,/state\.quickFiles\.shift\(\)/);
+ assert.match(source,/id="wed-floating-add"/);
+ const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
+ assert.match(css,/env\(safe-area-inset-bottom\)/);
+ assert.match(css,/\.wed-mobile-actions\{position:sticky/);
+ assert.doesNotMatch(css,/overflow-y:auto/);
 });

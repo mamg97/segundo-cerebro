@@ -84,3 +84,55 @@
 @media(max-width:820px){.wed-masonry{column-count:2}}
 @media(max-width:520px){.wed-masonry{column-count:2;column-gap:9px}.wed-pin{margin-bottom:9px}.wed-pin-details{padding:10px;gap:6px}.wed-pin-details h4{font-size:13px}.wed-pin-author{font-size:9px}.wed-view-tabs button{font-size:12px;padding:11px 10px}.wed-inspo-head h3{font-size:20px}.wed-inspo-guide{font-size:11px}}
 @media(max-width:370px){.wed-masonry{column-count:1}}
+
+
+/* Phone-first saving; native gallery multi-select and camera stay separate. */
+.wed-mobile-editor{width:100%;max-width:780px;margin:0 auto 40px;box-sizing:border-box}
+.wed-mobile-editor>h3{font-size:27px;margin:0 0 5px}
+.wed-mobile-intro{font-size:13px;line-height:1.55;color:var(--ink-soft);margin:0 0 17px}
+.wed-mobile-upload{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:18px;margin:0 0 15px}
+.wed-mobile-upload>strong{display:block;margin-bottom:13px;font-size:15px}
+.wed-mobile-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wed-mobile-choices label{position:relative;display:flex;align-items:center;justify-content:center;min-height:53px;padding:10px;border:1px solid var(--line);border-radius:11px;color:var(--ink);background:var(--paper);font-size:13px;font-weight:850;text-align:center;cursor:pointer}
+.wed-mobile-choices .wed-mobile-gallery{background:var(--blue);color:white;border-color:var(--blue)}
+.wed-mobile-choices input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.wed-mobile-choices label:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+.wed-mobile-preview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:14px 0 8px}
+.wed-mobile-thumb{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:10px;background:var(--paper)}
+.wed-mobile-thumb img{display:block;width:100%;height:100%;object-fit:cover}
+.wed-mobile-thumb button{position:absolute;right:4px;top:4px;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;border:0;background:#0d1d2bee;color:#fff;font-size:20px;cursor:pointer}
+.wed-mobile-empty,.wed-mobile-counter{font-size:11px;color:var(--ink-soft);line-height:1.55;margin:11px 0 4px}
+.wed-mobile-paste{display:grid;gap:6px;margin-top:14px;font-size:11px;color:var(--ink-soft);font-weight:800}
+.wed-mobile-paste input{padding:11px 12px;font:inherit;font-size:13px;min-height:44px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:9px;box-sizing:border-box;width:100%}
+.wed-mobile-fields{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.wed-mobile-fields label{display:grid;gap:7px;font-size:12px;font-weight:800}
+.wed-mobile-fields .wide{grid-column:1/-1}
+.wed-mobile-fields input,.wed-mobile-fields select,.wed-mobile-fields textarea{font:inherit;font-size:14px;min-height:44px;padding:10px 12px;width:100%;min-width:0;box-sizing:border-box;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:9px}
+.wed-mobile-fields textarea{resize:vertical;min-height:68px}
+.wed-mobile-feedback{min-height:20px;font-size:12px;font-weight:750;color:var(--ink-soft);line-height:1.5}
+.wed-mobile-feedback.is-error{color:#de8973}
+.wed-mobile-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:10px 0}
+.wed-mobile-actions>button:not(.wed-primary){padding:12px 16px;min-height:47px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:10px;font:inherit;font-size:13px;cursor:pointer}
+.wed-mobile-actions .wed-primary{min-height:47px}
+.wed-mobile-actions .wed-primary:disabled{opacity:.6;cursor:wait}
+.wed-pin-photo{max-height:none;object-fit:contain}
+.wed-floating-add{display:none}
+@media(max-width:650px){
+ .wed-mobile-editor{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+ .wed-mobile-editor>h3{font-size:23px}
+ .wed-mobile-intro{font-size:12px;margin-bottom:11px}
+ .wed-mobile-upload{padding:13px;margin-bottom:12px}
+ .wed-mobile-choices label{min-height:54px;font-size:13px}
+ .wed-mobile-preview{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .wed-mobile-fields{grid-template-columns:1fr;gap:12px}
+ .wed-mobile-fields .wide{grid-column:1}
+ .wed-mobile-actions{position:sticky;bottom:0;z-index:10;padding:10px 11px calc(10px + env(safe-area-inset-bottom));border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:0 -6px 23px #0004;margin-top:12px}
+ .wed-mobile-actions .wed-primary{flex:1;min-height:49px}
+ .wed-mobile-actions>button:not(.wed-primary){min-height:49px}
+ .wed-inspiration{padding-bottom:calc(95px + env(safe-area-inset-bottom))}
+ .wed-inspiration .wed-floating-add{display:flex;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));align-items:center;justify-content:center;min-height:53px;min-width:163px;background:var(--blue);border:1px solid #ffffff29;color:white;border-radius:999px;font:inherit;font-size:13px;font-weight:850;box-shadow:0 6px 20px #0006;z-index:20;cursor:pointer}
+ .wed-inspo-head>.wed-primary{display:none}
+ .wed-inspo-guide{font-size:11px;line-height:1.5;padding:10px 12px}
+ .wed-inspo-empty{padding:25px 16px}
+ .wed-inspo-filters button{min-height:40px}
+}
