@@ -38,10 +38,12 @@ Los datos ausentes se envían como ausentes. La app no estima valores ni genera 
 - El backend usa UPSERT; repetir una sincronización no duplica días.
 - `HKObserverQuery` + HealthKit Background Delivery permiten que iOS despierte la app cuando cambian tipos observados.
 - Los tipos corporales (`bodyMass`, grasa corporal, IMC y masa magra) solicitan Background Delivery con frecuencia `.immediate`, porque cambian pocas veces al día y el Home debe reflejar una pesada nueva cuanto antes.
+- **Corrección de frescura:** las notificaciones automáticas debidas a una nueva muestra `bodyMass` no se descartan por el límite ordinario de 8 horas entre sincronizaciones de actividad. Los demás avisos HealthKit siguen limitados para evitar llamadas excesivas. iOS conserva el control del momento real de entrega y puede retrasarla.
 - Actividad, entrenamientos, sueño y recuperación mantienen entrega `.hourly` para no provocar despertares continuos por señales de alta frecuencia.
 - Al volver la app al primer plano se ejecuta una reconciliación inmediata de esos tres días.
 - `BGAppRefreshTask` solicita una reconciliación adicional a partir de una hora; iOS decide el momento real y puede retrasarla.
 - El botón **Sincronizar ahora** existe para instalación, diagnóstico y recuperación puntual.
+- **Importante:** GitHub Actions valida el proyecto pero no actualiza automáticamente el ejecutable del iPhone. Después de modificar el bridge, hay que recompilar e instalar la versión nueva desde Xcode (renovando la firma gratuita cuando proceda) y comprobar una sincronización real. Si el dato ya está en Apple Salud, pulsar **Sincronizar ahora** recupera la pesada sin escribir duplicados en la pestaña derivada del Sheet.
 
 ## Seguridad
 
