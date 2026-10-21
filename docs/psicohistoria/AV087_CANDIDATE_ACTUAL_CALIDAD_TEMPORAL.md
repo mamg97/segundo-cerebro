@@ -1,4 +1,4 @@
-# AV-087 — Candidate mensual vigente: código temporal resuelto en esta edición, alcance pendiente
+# AV-087 — Candidate mensual vigente: sin códigos 0 en esta edición, alcance pendiente
 
 21/10/2026. Observación de fuente nueva, sin entrenamiento, scoring o emisión.
 No replica los experimentos de diciembre 2024 / enero 2025 de AV-026–028.
@@ -75,3 +75,7 @@ Después fijar una cohorte y objetivo **mensual** con negativos de registro
 explícitos, sin interpretarlos como ausencia de violencia real. Solo entonces
 preespecificar una señal adelantada/actores/geografía y evaluar meses futuros
 no solapados. El estado de la cohorte anual 2027 no cambia.
+
+Cierre: PR [#761](https://github.com/mamg97/segundo-cerebro/pull/761) fusionada;
+cuatro checks SUCCESS, reproducción oficial run `39617592333`. Registro
+AV-20261021-087 y experimento agregado escritos y releídos; MAD-02 PARCIAL.
