@@ -64,6 +64,18 @@ test("diagnostic labels are fixed allowlisted codes with no private identifiers"
   assert.equal(/(secreta|privado-123|example.com)/.test(texts),false);
 });
 
+test("recipe browser audit compares active cards with active canonical rows and separately checks archive", () => {
+  assert.match(auditor, /import \{ recipeCatalogItems \} from "\.\.\/\.\.\/app\/recipe-catalog-filter\.mjs"/);
+  assert.match(auditor, /const activeRecipes = recipeCatalogItems\(canonicalRecipes, "", "", false\)/);
+  assert.match(auditor, /const archivedRecipes = recipeCatalogItems\(canonicalRecipes, "", "", true\)/);
+  assert.match(auditor, /activeRecipes\.length \+ archivedRecipes\.length === canonicalRecipes\.length/);
+  assert.match(auditor, /photoOrder\.photoCount === visibleRecipesWithPhotos\.length/);
+  assert.match(auditor, /const expectedMatches = activeRecipes\.filter/);
+  assert.match(auditor, /const firstCanonicalRecipe = activeRecipes\[0\]\?\.id/);
+  assert.match(auditor, /Recetas archivadas se muestran con recuento canónico/);
+  assert.match(auditor, /Recetas regresa al catálogo activo sin perder filas/);
+});
+
 test("visual proportion failures emit fixed privacy-safe codes without hiding failures", () => {
   assert.match(auditor, /\[AUDIT_VISUAL_PROPORTION_DIAG\]/);
   assert.match(auditor, /HOME_SUMMARY_HEIGHT_TOO_TALL/);

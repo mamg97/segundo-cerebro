@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { recipeCatalogItems } from "../../app/recipe-catalog-filter.mjs";
 import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mjs";
 import { createAuditImageReadGate } from "./audit-image-read-gate.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
@@ -2827,7 +2828,14 @@ try {
     }, null, { timeout: 12000 });
     const healthTabs = ["overview", "medical", "vision", "gym", "nutrition", "recipes", "menu"];
     const healthNutritionSnapshot = uiNutrition?.ok === true ? uiNutrition : nutrition.body;
-    const expectedRecipeCount = Array.isArray(healthNutritionSnapshot?.recipes) ? healthNutritionSnapshot.recipes.length : 0;
+    // The default catalogue intentionally hides archived/replaced recipes.
+    // Source reconciliation still covers both partitions, not just visible cards.
+    const canonicalRecipes = Array.isArray(healthNutritionSnapshot?.recipes) ? healthNutritionSnapshot.recipes : [];
+    const activeRecipes = recipeCatalogItems(canonicalRecipes, "", "", false);
+    const archivedRecipes = recipeCatalogItems(canonicalRecipes, "", "", true);
+    const expectedRecipeCount = activeRecipes.length;
+    assertCheck(activeRecipes.length + archivedRecipes.length === canonicalRecipes.length,
+      "Salud · Recetas activas y archivadas conservan toda la fuente");
 
     for (const tab of healthTabs) {
       const button = page.locator(`[data-health-tab="${tab}"]`);
@@ -3156,8 +3164,10 @@ try {
           `UI=${recipeCount} API=${expectedRecipeCount}`
         );
 
-        const recipesWithPhotos = (Array.isArray(healthNutritionSnapshot?.recipes) ? healthNutritionSnapshot.recipes : [])
-          .filter((recipe) => recipe?.photoUrl);
+        // Probe every source photo (including archived), but compare visible
+        // order and count only against the ACTIVE tab's own projection.
+        const recipesWithPhotos = canonicalRecipes.filter((recipe) => recipe?.photoUrl);
+        const visibleRecipesWithPhotos = activeRecipes.filter((recipe) => recipe?.photoUrl);
         for (const recipe of recipesWithPhotos) {
           const probe = await page.evaluate(async (src) => {
             const response = await fetch(src, { cache: "no-store", credentials: "same-origin" });
@@ -3223,16 +3233,29 @@ try {
             photoCount: photos.filter(Boolean).length
           };
         });
-        const photoOrderValid = photoOrder.valid && photoOrder.photoCount === recipesWithPhotos.length;
+        const photoOrderValid = photoOrder.valid && photoOrder.photoCount === visibleRecipesWithPhotos.length;
         if (!photoOrderValid) console.error("[RECIPE_CATALOG_DIAG] PHOTO_ORDER_MISMATCH");
         assertCheck(photoOrderValid,
           "Salud · Recetas ordena primero las que tienen imagen");
+        // Verify the canonical archived partition is available through the UI
+        // without blending retired recipes into the active catalogue or ranking.
+        const archiveToggle = panel.locator("[data-recipe-archive-toggle]").first();
+        const archiveToggleExists = await archiveToggle.count() === 1;
+        assertCheck(archiveToggleExists, "Salud · Recetas mantiene acceso a versiones archivadas");
+        if (archiveToggleExists && archivedRecipes.length > 0) {
+          await archiveToggle.click();
+          assertCheck(await panel.locator("[data-recipe-open]").count() === archivedRecipes.length,
+            "Salud · Recetas archivadas se muestran con recuento canónico");
+          await panel.locator("[data-recipe-archive-toggle]").first().click();
+          assertCheck(await panel.locator("[data-recipe-open]").count() === expectedRecipeCount,
+            "Salud · Recetas regresa al catálogo activo sin perder filas");
+        }
         const picker = panel.locator("[data-recipe-ingredient-select]");
         const hasPicker = await picker.count() === (expectedRecipeCount ? 1 : 0);
         assertCheck(hasPicker, "Salud · Recetas muestra selector de ingredientes del Sheet");
         if (hasPicker && await picker.locator("option").count() > 1) {
           const ingredientKey = await picker.locator("option").nth(1).getAttribute("value");
-          const expectedMatches = (healthNutritionSnapshot.recipes || []).filter(recipe =>
+          const expectedMatches = activeRecipes.filter(recipe =>
             (recipe.ingredients || []).some(item =>
               String(item.name || "").trim().replace(/\s+/g, " ")
                 .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -3264,7 +3287,7 @@ try {
           // Photo-first UI ordering differs from the source row order. Product
           // drill-down regression tests must use the same canonical recipe as
           // before sorting, rather than relying on the first visible card.
-          const firstCanonicalRecipe = healthNutritionSnapshot?.recipes?.[0]?.id;
+          const firstCanonicalRecipe = activeRecipes[0]?.id;
           const canonicalIndex = await catalogCards.evaluateAll((nodes, id) =>
             nodes.findIndex(node => node.getAttribute("data-recipe-open") === String(id || "")),
             firstCanonicalRecipe);
