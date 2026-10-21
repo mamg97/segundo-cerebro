@@ -37,7 +37,10 @@ class SignalHazardTests(unittest.TestCase):
       if row["year"]=="2024" and row["country_id"]=="2":
         row["sb_total_deaths_best"]="999" if row["sb_total_deaths_best"]=="0" else "0"
     shifted=evaluate(original,future,2023)
-    self.assertEqual(result["sourceSignal"],shifted["sourceSignal"])
+    self.assertEqual(result["sourceSignal"]["trainedCellCounts"],shifted["sourceSignal"]["trainedCellCounts"])
+    self.assertEqual(result["sourceSignal"]["flagCountsByRegime"],shifted["sourceSignal"]["flagCountsByRegime"])
+    self.assertEqual(result["sourceSignal"]["meanPredictedEventRiskByRegimeAndFlag"],shifted["sourceSignal"]["meanPredictedEventRiskByRegimeAndFlag"])
+    self.assertNotEqual(result["sourceSignal"]["observedFirstChangeOutcomeByRegimeAndFlag"],shifted["sourceSignal"]["observedFirstChangeOutcomeByRegimeAndFlag"])
     self.assertNotEqual(result["models"],shifted["models"])
     self.assertFalse(result["prospectiveSkillProven"])
     self.assertEqual(result["pairedUncertainty"]["draws"],2000)
