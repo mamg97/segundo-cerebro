@@ -205,7 +205,7 @@ test("packing state update writes only the matching item state cell", async () =
     },async()=>"token",{listId:"list-test-20261021",itemId:"list-test-20261021-001",expectedState:"SELECCIONADO",state:"PREPARADO"});
     assert.equal(result.state,"PREPARADO");
     assert.equal(calls.length,2);
-    assert.match(calls[1].url,/ListaItems%21F3/);
+    assert.match(calls[1].url,/ListaItems(?:%21|!)F3/);
     assert.equal(calls[1].options.method,"PUT");
     assert.deepEqual(JSON.parse(calls[1].options.body),{values:[["PREPARADO"]]});
   }finally{globalThis.fetch=originalFetch;}
