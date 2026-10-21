@@ -3,6 +3,7 @@ import Foundation
 enum SyncTrigger: String, Sendable {
     case manual
     case healthKit
+    case bodyMass
     case backgroundRefresh
     case protectedDataRetry
 
@@ -59,7 +60,11 @@ actor SyncService {
 
         let defaults = UserDefaults.standard
         let now = Date()
+        // A real new weight observation must not be discarded just because a routine
+        // activity sync happened recently. All other automatic signals retain the
+        // normal 8-hour guard to protect free-tier usage.
         if trigger.isAutomatic,
+           trigger != .bodyMass,
            defaults.integer(forKey: SyncDefaults.reconciliationRevision) >= Self.currentReconciliationRevision,
            let last = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date,
            now.timeIntervalSince(last) < Self.automaticSyncInterval {
