@@ -448,6 +448,30 @@ export function buildPayload(rows) {
     });
   }
 
+  // Planning rows are scoped to their packing list. Event times are optional:
+  // never invent a clock time for an undated "preboda" or "boda" slot.
+  const planningByList = new Map();
+  for (const row of rows.listPlanning || []) {
+    const listId = String(value(row, "lista_id") || "").trim();
+    const date = dateOrNull(value(row, "fecha"));
+    if (!listId || !date) continue;
+    if (!planningByList.has(listId)) planningByList.set(listId, []);
+    const objectIds = list(value(row, "objetos_ids"))
+      .filter((id) => byId.has(id));
+    planningByList.get(listId).push({
+      date,
+      daypart: String(value(row, "momento") || "sin_hora"),
+      title: String(value(row, "actividad") || "Actividad"),
+      detail: String(value(row, "detalle") || ""),
+      objectIds,
+      garmentNotes: String(value(row, "prendas_texto") || ""),
+      status: String(value(row, "estado") || "PLANIFICADO"),
+      order: numberOrNull(value(row, "orden")) ?? 0,
+      location: String(value(row, "ubicacion") || "")
+    });
+  }
+  for (const values of planningByList.values()) values.sort((a,b)=>a.date.localeCompare(b.date)||a.order-b.order);
+
   const contextLists = rows.lists.map((row) => {
     const id = String(value(row, "lista_id", "id") || "").trim();
     return {
@@ -462,6 +486,7 @@ export function buildPayload(rows) {
       activities: list(value(row, "actividades", "activities")),
       status: value(row, "estado", "status") || "ACTIVA",
       items: listItems.get(id) || [],
+      planning: planningByList.get(id) || [],
       updatedAt: dateOrNull(value(row, "updated_at", "fecha_revision")),
       notes: value(row, "notas", "notes")
     };
@@ -557,7 +582,8 @@ export async function fetchObjectsSummary(env, getGoogleAccessToken) {
     ["kits", "Kits", "A1:AZ2000"],
     ["kitItems", "KitItems", "A1:AZ10000"],
     ["lists", "Listas", "A1:AZ2000"],
-    ["listItems", "ListaItems", "A1:AZ10000"]
+    ["listItems", "ListaItems", "A1:AZ10000"],
+    ["listPlanning", "ListaPlanning", "A1:J3000"]
   ];
   const active = requested.filter(([, tab]) => titles.has(tab));
   const batches = await sheetsBatchGet(
