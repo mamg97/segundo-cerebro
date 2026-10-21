@@ -11,7 +11,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"inspiracion",inspirationFilter:"all",inspirationSearch:"",ideaMode:false};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"inspiracion",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:""};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -109,7 +109,8 @@ function inspirationHome(){
   return '<button type="button" data-wed-inspo-filter="'+category+'" aria-pressed="'+(state.inspirationFilter===category)+'">'+esc(item?.[1]||category)+'</button>';
  }).join("")+'</nav>'+
  '<div id="wed-inspo-results">'+inspirationCards()+'</div>'+
- '<p class="wed-inspo-footnote">Los enlaces abren Pinterest o la web original. Las fotos que subáis se guardan de forma privada en Segundo Cerebro; la sincronización automática con Pinterest aún no está activa.</p>'+
+ '<p class="wed-inspo-footnote">Fotos privadas y enlaces a su origen; Pinterest no está sincronizado automáticamente.</p>'+
+ '<button type="button" class="wed-floating-add" id="wed-floating-add">＋ Guardar fotos</button>'+
  '</div>';
 }
 
@@ -132,6 +133,7 @@ function home(){
 }
 function moneyInput(name,label,value){return '<label>'+label+' (€)<input type="number" min="0" max="10000000" step="0.01" name="'+name+'" value="'+(value==null?"":(value/100).toFixed(2))+'" placeholder="0,00"></label>';}
 function editor(){
+ if(state.ideaMode&&state.editing==="new")return quickEditor();
  const original=state.editing&&state.editing!=="new"?state.items.find(x=>x.id===state.editing):null;
  const inspirationMode=state.ideaMode&&!original;
  return '<div class="wed-editor-wrap"><button id="wed-back" class="wed-back" type="button">← Volver a '+(state.view==="inspiracion"?"Inspiración":"Planificación")+'</button>'+
@@ -182,24 +184,152 @@ function cents(form,name){
  const num=Number(raw);if(!Number.isFinite(num)||num<0)return NaN;
  return Math.round(num*100);
 }
+// Photo-based capture is independent from budget entry; one idea per uploaded photo.
+export const QUICK_IMAGE_LIMIT=10;
+export function quickTitle(title,index,total,stamp=""){
+ const base=String(title||"").trim()||("Inspiración"+(stamp?" · "+stamp:""));
+ return total>1?base+" · "+(index+1):base;
+}
+function clearQuickFiles(){
+ for(const item of state.quickFiles)URL.revokeObjectURL(item.preview);
+ state.quickFiles=[];state.quickError="";
+}
+function selectQuickFiles(files){
+ const candidates=Array.from(files||[]);
+ const accepted=candidates.filter(file=>file.type.startsWith("image/")||/\.(heic|heif)$/i.test(file.name));
+ const available=Math.max(0,QUICK_IMAGE_LIMIT-state.quickFiles.length);
+ for(const file of accepted.slice(0,available)){
+  if(state.quickFiles.some(x=>x.file.name===file.name&&x.file.lastModified===file.lastModified&&x.file.size===file.size))continue;
+  state.quickFiles.push({file,preview:URL.createObjectURL(file),createdId:null});
+ }
+ state.quickError=accepted.length>available?"Máximo 10 imágenes por tanda. Guarda estas y añade las demás después.":
+ candidates.length!==accepted.length?"Se descartaron archivos que no eran imágenes.":"";
+}
+function quickPhotosMarkup(){
+ return state.quickFiles.length?
+  '<div class="wed-mobile-preview">'+state.quickFiles.map((item,i)=>
+   '<div class="wed-mobile-thumb"><img src="'+esc(item.preview)+'" alt="Foto seleccionada '+(i+1)+'">'+
+   '<button type="button" data-wed-photo-remove="'+i+'" aria-label="Quitar foto '+(i+1)+'">×</button></div>').join("")+
+  '</div><small class="wed-mobile-counter">'+state.quickFiles.length+' de 10 · una idea por imagen</small>':
+  '<p class="wed-mobile-empty">Selecciona capturas o fotos desde el móvil. También puedes guardar un enlace sin foto.</p>';
+}
+function quickEditor(){
+ const options=WEDDING_TYPES.filter(x=>INSPIRATION_CATEGORIES.includes(x[0])&&x[0]!=="all").map(x=>
+  '<option value="'+x[0]+'" '+((state.inspirationFilter==="all"?"ideas":state.inspirationFilter)===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("");
+ return '<div class="wed-mobile-editor"><button type="button" id="wed-back" class="wed-back">← Inspiración</button>'+
+  '<h3>Guardar inspiración</h3><p class="wed-mobile-intro">Añade varias capturas a la vez desde Fotos o haz una foto. Los detalles son opcionales.</p>'+
+  '<form id="wed-mobile-form">'+
+  '<section class="wed-mobile-upload"><strong>Fotos o capturas</strong>'+
+  '<div class="wed-mobile-choices">'+
+  '<label class="wed-mobile-gallery">▧ Elegir de galería<input id="wed-mobile-gallery-input" type="file" accept="image/*,.heic,.heif" multiple></label>'+
+  '<label class="wed-mobile-camera">◎ Hacer foto<input id="wed-mobile-camera-input" type="file" accept="image/*" capture="environment"></label>'+
+  '</div><div id="wed-mobile-preview-area">'+quickPhotosMarkup()+'</div>'+
+  '<label class="wed-mobile-paste">Pegar captura desde el portapapeles<input id="wed-mobile-paste-input" type="text" placeholder="Toca aquí y pulsa Pegar"></label></section>'+
+  '<section class="wed-mobile-fields">'+
+  '<label>Categoría<select name="category">'+options+'</select></label>'+
+  '<label>Título (opcional)<input name="title" maxlength="180" placeholder="Ej. Decoración floral"></label>'+
+  '<label class="wide">Enlace de Pinterest (opcional)<input type="url" name="url" maxlength="600" inputmode="url" placeholder="https://pin.it/…"></label>'+
+  '<label class="wide">Notas (opcional)<textarea name="description" maxlength="4000" rows="2" placeholder="Qué te gusta de esta idea…"></textarea></label>'+
+  '</section><p id="wed-mobile-feedback" class="wed-mobile-feedback" role="status" aria-live="polite">'+esc(state.quickError)+'</p>'+
+  '<div class="wed-mobile-actions"><button type="button" id="wed-mobile-cancel">Cancelar</button>'+
+  '<button type="submit" id="wed-mobile-save" class="wed-primary">Guardar inspiración</button></div></form></div>';
+}
+function quickFeedback(message,error=false){
+ const node=document.querySelector("#wed-mobile-feedback");
+ if(node){node.textContent=message;node.classList.toggle("is-error",error);}
+}
+function quickRefreshPreview(){
+ const box=document.querySelector("#wed-mobile-preview-area");
+ if(box)box.innerHTML=quickPhotosMarkup();
+ quickFeedback(state.quickError,!!state.quickError);
+}
+async function readImage(file){
+ if(typeof createImageBitmap==="function"){
+  try{const bmp=await createImageBitmap(file);return {source:bmp,width:bmp.width,height:bmp.height,close:()=>bmp.close()};}catch{}
+ }
+ const url=URL.createObjectURL(file);
+ try{
+  const image=new Image();
+  await new Promise((ok,fail)=>{image.onload=ok;image.onerror=()=>fail(new Error("IMAGE_UNSUPPORTED"));image.src=url;});
+  return {source:image,width:image.naturalWidth,height:image.naturalHeight,close:()=>{}};
+ }finally{URL.revokeObjectURL(url);}
+}
 async function optimizedPhoto(file){
  if(!file)return null;
- if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("INVALID_IMAGE");
- // User-supplied photos are resized on-device; originals never enter the public repository.
- const bitmap=await createImageBitmap(file);
+ if(!file.type?.startsWith("image/")&&!/\.(heic|heif)$/i.test(file.name))throw new Error("INVALID_IMAGE");
+ const image=await readImage(file);
  try{
-  for(let max=1500;max>=700;max-=200){
-   const ratio=Math.min(1,max/Math.max(bitmap.width,bitmap.height));
-   const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));
+  const longest=Math.max(image.width,image.height);
+  if(!longest)throw new Error("INVALID_IMAGE");
+  for(let size=1500;size>=600;size-=150){
+   const scale=Math.min(1,size/longest),canvas=document.createElement("canvas");
+   canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
    const ctx=canvas.getContext("2d");if(!ctx)throw new Error("IMAGE_PROCESSING_FAILED");
-   ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
-   for(const quality of [.82,.7,.55]){
+   ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image.source,0,0,canvas.width,canvas.height);
+   for(const quality of [.82,.68,.5,.38]){
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));
-    if(blob&&blob.size<=900000)return new File([blob],"boda.jpg",{type:"image/jpeg"});
+    if(blob&&blob.size<=900000)return new File([blob],"inspiracion.jpg",{type:"image/jpeg"});
    }
   }
   throw new Error("IMAGE_TOO_LARGE");
- }finally{bitmap.close();}
+ }finally{image.close();}
+}
+function quickItemPayload(fields,title){
+ return {category:fields.get("category")||"ideas",status:"idea",title,
+  description:String(fields.get("description")||"").trim(),url:String(fields.get("url")||"").trim(),
+  provider:"",estimateCents:null,contractedCents:null,paidCents:0,dueDate:""};
+}
+async function saveMobilePhotos(event){
+ event.preventDefault();
+ if(state.quickBusy)return;
+ const form=event.currentTarget,fields=new FormData(form),url=String(fields.get("url")||"").trim();
+ if(!state.quickFiles.length&&!url){quickFeedback("Selecciona fotos o añade un enlace para guardar.",true);return;}
+ if(!form.reportValidity())return;
+ state.quickBusy=true;const btn=form.querySelector("#wed-mobile-save");if(btn)btn.disabled=true;
+ const total=state.quickFiles.length,stamp=new Date().toLocaleDateString("es-ES");
+ let completed=0;
+ try{
+  if(!total){
+   await getJson("/api/wedding/items","POST",quickItemPayload(fields,quickTitle(fields.get("title"),0,1,stamp)));
+  }else{
+   while(state.quickFiles.length){
+    const item=state.quickFiles[0],index=total-state.quickFiles.length;
+    quickFeedback("Guardando foto "+(index+1)+" de "+total+"…");
+    if(!item.createdId){
+     const saved=await getJson("/api/wedding/items","POST",quickItemPayload(fields,quickTitle(fields.get("title"),index,total,stamp)));
+     item.createdId=saved.item.id;
+    }
+    await sendPhoto(item.createdId,item.file);
+    URL.revokeObjectURL(item.preview);state.quickFiles.shift();completed++;
+   }
+  }
+  state.editing=null;state.ideaMode=false;state.quickError="";
+  await load();
+ }catch(error){
+  state.quickError=(completed?completed+" fotos guardadas. ":"")+errorMsg(error)+
+   (state.quickFiles.length?" Reintenta: solo se enviarán las pendientes.":"");
+  quickFeedback(state.quickError,true);
+ }finally{state.quickBusy=false;if(btn)btn.disabled=false;}
+}
+function bindMobileForm(root){
+ root.querySelector("#wed-mobile-cancel")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;show();});
+ for(const id of ["#wed-mobile-gallery-input","#wed-mobile-camera-input"]){
+  root.querySelector(id)?.addEventListener("change",event=>{selectQuickFiles(event.target.files);event.target.value="";quickRefreshPreview();});
+ }
+ root.querySelector("#wed-mobile-preview-area")?.addEventListener("click",event=>{
+  const remove=event.target.closest("[data-wed-photo-remove]");if(!remove||state.quickBusy)return;
+  const picked=state.quickFiles.splice(Number(remove.dataset.wedPhotoRemove),1)[0];
+  if(picked)URL.revokeObjectURL(picked.preview);quickRefreshPreview();
+ });
+ root.querySelector("#wed-mobile-paste-input")?.addEventListener("paste",event=>{
+  const images=Array.from(event.clipboardData?.items||[]).filter(item=>item.type?.startsWith("image/")).map(item=>item.getAsFile()).filter(Boolean);
+  if(images.length){event.preventDefault();selectQuickFiles(images);quickRefreshPreview();}
+  else{
+   const text=event.clipboardData?.getData("text/plain")?.trim();
+   if(text&&text.startsWith("https://")){event.preventDefault();root.querySelector('input[name="url"]').value=text;quickFeedback("Enlace pegado.");}
+  }
+ });
+ root.querySelector("#wed-mobile-form")?.addEventListener("submit",event=>void saveMobilePhotos(event));
 }
 async function sendPhoto(id,file){
  const optimized=await optimizedPhoto(file);if(!optimized)return;
@@ -208,13 +338,15 @@ async function sendPhoto(id,file){
  const body=await r.json().catch(()=>({}));if(!r.ok||!body.ok)throw new Error(body.code||"IMAGE_UPLOAD_FAILED");
 }
 function startIdea(){
- state.view="inspiracion";state.ideaMode=true;state.editing="new";state.error="";show();
+ clearQuickFiles();state.view="inspiracion";state.ideaMode=true;state.editing="new";state.error="";show();
 }
 function bind(area){
+ if(area.querySelector("#wed-mobile-form"))bindMobileForm(area);
  area.querySelectorAll("[data-wed-view]").forEach(button=>button.addEventListener("click",()=>{
-  state.view=button.dataset.wedView;state.editing=null;state.error="";show();
+  clearQuickFiles();state.view=button.dataset.wedView;state.editing=null;state.error="";show();
  }));
  area.querySelector("#wed-add-pin")?.addEventListener("click",startIdea);
+ area.querySelector("#wed-floating-add")?.addEventListener("click",startIdea);
  area.querySelector("#wed-first-pin")?.addEventListener("click",startIdea);
  area.querySelector("#wed-inspo-refresh")?.addEventListener("click",()=>{state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
  area.querySelectorAll("[data-wed-inspo-filter]").forEach(button=>button.addEventListener("click",()=>{
@@ -225,8 +357,8 @@ function bind(area){
   const target=area.querySelector("#wed-inspo-results");if(target){target.innerHTML=inspirationCards();bindCards(target);bindEmptyInspiration(target);}
  });
  area.querySelector("#wed-new")?.addEventListener("click",()=>{state.editing="new";state.ideaMode=false;state.error="";show();});
- area.querySelector("#wed-back")?.addEventListener("click",()=>{state.editing=null;state.error="";show();});
- area.querySelector("#wed-cancel")?.addEventListener("click",()=>{state.editing=null;state.error="";show();});
+ area.querySelector("#wed-back")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;state.error="";show();});
+ area.querySelector("#wed-cancel")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;state.error="";show();});
  area.querySelector("#wed-refresh")?.addEventListener("click",()=>{state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
  area.querySelector("#wed-search")?.addEventListener("input",e=>{state.search=e.target.value;const target=area.querySelector("#wed-results");if(target){target.innerHTML=cards();bindCards(target);}});
  area.querySelectorAll("[data-wed-filter]").forEach(btn=>btn.addEventListener("click",()=>{state.filter=btn.dataset.wedFilter;state.error="";show();}));
@@ -264,7 +396,7 @@ export function openWeddingDetail(remote){
  document.querySelector("#dialog-context").textContent="Pareja · proyecto compartido";
  document.querySelector("#dialog-title").textContent="Boda";
  dialog.classList.add("wedding-dialog");
- state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="inspiracion";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;
+ clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="inspiracion";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();
  if(!remote){body.innerHTML='<div class="wed-locked"><h3>Boda</h3><p>Este apartado permite añadir ideas, presupuestos y fotos en la versión privada de Segundo Cerebro.</p></div>';return;}
