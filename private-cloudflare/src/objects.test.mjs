@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildPayload, inferWardrobeLayer, normalizeLookRole, validateObjectsLookSelection } from "./objects.js";
+import { buildPayload, inferWardrobeLayer, normalizeLookRole, validateObjectsLookSelection, updateObjectsPackingItem } from "./objects.js";
 
 test("inferWardrobeLayer maps common wardrobe types to visual layers", () => {
   assert.equal(inferWardrobeLayer("Camisa Oxford"), "superior");
@@ -161,4 +161,58 @@ test("interior cannot be shoes and a garment cannot occupy two roles", () => {
     { objectId: "jeans", role: "inferior" },
     { objectId: "sneakers", role: "calzado" }
   ]), /INVALID_OBJECTS_LOOK_DUPLICATE_OBJECT/);
+});
+
+
+test("travel lists preserve stable item identity, packing stages and literal quantities", () => {
+  const payload=buildPayload({
+    objects:[],wardrobe:[],looks:[],lookItems:[],kits:[],kitItems:[],
+    lists:[{lista_id:"list-villafranca-sevilla-20261021",nombre:"Viaje Villafranca + Sevilla",contexto:"viaje / lista de equipaje"}],
+    listItems:[{
+      lista_id:"list-villafranca-sevilla-20261021", item_id:"list-villafranca-sevilla-20261021-001",
+      nombre:"Calzoncillos", cantidad:"7-8", importancia:"NECESARIO", estado:"SELECCIONADO",
+      etapa:"Madrid → Villafranca",grupo:"Básicos y viaje",orden:3
+    }]
+  });
+  assert.equal(payload.lists.length,1);
+  const item=payload.lists[0].items[0];
+  assert.equal(item.id,"list-villafranca-sevilla-20261021-001");
+  assert.equal(item.name,"Calzoncillos");
+  assert.equal(item.quantityLabel,"7-8");
+  assert.equal(item.stage,"Madrid → Villafranca");
+  assert.equal(item.group,"Básicos y viaje");
+  assert.equal(item.order,3);
+  assert.equal(item.state,"SELECCIONADO");
+});
+
+test("packing state update writes only the matching item state cell", async () => {
+  const originalFetch=globalThis.fetch;
+  const calls=[];
+  globalThis.fetch=async (url,options={})=>{
+    calls.push({url:String(url),options});
+    if(!options.method||options.method==="GET"){
+      return new Response(JSON.stringify({values:[
+        ["lista_id","objeto_id","nombre","cantidad","importancia","estado","kit_id","notas","item_id","etapa","grupo","orden"],
+        ["other-list","","Unrelated",1,"NECESARIO","SELECCIONADO","","","other-list-001"],
+        ["list-test-20261021","","Colonia",1,"NECESARIO","SELECCIONADO","","","list-test-20261021-001"]
+      ]}),{status:200,headers:{"Content-Type":"application/json"}});
+    }
+    return new Response(JSON.stringify({updatedCells:1}),{status:200,headers:{"Content-Type":"application/json"}});
+  };
+  try{
+    const result=await updateObjectsPackingItem({
+      GOOGLE_CLIENT_ID:"test",GOOGLE_CLIENT_SECRET:"test",GOOGLE_REFRESH_TOKEN:"test",OBJECTS_SHEET_ID:"test-sheet"
+    },async()=>"token",{listId:"list-test-20261021",itemId:"list-test-20261021-001",expectedState:"SELECCIONADO",state:"PREPARADO"});
+    assert.equal(result.state,"PREPARADO");
+    assert.equal(calls.length,2);
+    assert.match(calls[1].url,/ListaItems(?:%21|!)F3/);
+    assert.equal(calls[1].options.method,"PUT");
+    assert.deepEqual(JSON.parse(calls[1].options.body),{values:[["PREPARADO"]]});
+  }finally{globalThis.fetch=originalFetch;}
+});
+
+test("packing API rejects unsafe state and ambiguous identifiers without a write", async () => {
+  await assert.rejects(()=>updateObjectsPackingItem({
+    GOOGLE_CLIENT_ID:"test",GOOGLE_CLIENT_SECRET:"test",GOOGLE_REFRESH_TOKEN:"test"
+  },async()=>"token",{listId:"list-test-20261021",itemId:"list-test-20261021-001",expectedState:"SELECCIONADO",state:"INVENTADO"}),/INVALID_OBJECTS_PACKING_STATE/);
 });
