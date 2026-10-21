@@ -64,6 +64,17 @@ test("diagnostic labels are fixed allowlisted codes with no private identifiers"
   assert.equal(/(secreta|privado-123|example.com)/.test(texts),false);
 });
 
+test("visual proportion failures emit fixed privacy-safe codes without hiding failures", () => {
+  assert.match(auditor, /\[AUDIT_VISUAL_PROPORTION_DIAG\]/);
+  assert.match(auditor, /HOME_SUMMARY_HEIGHT_TOO_TALL/);
+  assert.match(auditor, /HOME_SUMMARY_HEIGHT_TOO_SHORT/);
+  assert.match(auditor, /DIALOG_WIDTH_OUT_OF_BOUNDS/);
+  assert.match(auditor, /emittedVisualProportionCodes\.has\(code\)/);
+  assert.match(auditor, /assertCheck\(report\.proportions\.length === 0/);
+  // No raw card IDs, prices, rendered text, or DOM heights in the public diagnostic.
+  assert.doesNotMatch(auditor, /\[AUDIT_VISUAL_PROPORTION_DIAG\].*report\.proportions/);
+});
+
 test("audit emits only diagnostic codes, not raw network or failure details", () => {
   assert.match(auditor, /safeAuditDiagnosticCode\(name\)/);
   assert.match(auditor, /safeAuditNetworkFailureCode\(entry\)/);
