@@ -1,0 +1,49 @@
+name: Psychohistory AV-085 archived monthly GED to annual CY bridge
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/ged_monthly_cy_bridge.py'
+      - 'research/psychohistory/test_ged_monthly_cy_bridge.py'
+      - '.github/workflows/psychohistory-ged-monthly-cy-bridge.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  monthly-bridge-synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test old features vs later annual outcomes and provenance controls
+        run: |
+          set -euo pipefail
+          python3 -m py_compile research/psychohistory/ged_monthly_cy_bridge.py
+          python3 -m unittest discover -s research/psychohistory -p test_ged_monthly_cy_bridge.py -v
+          echo 'No country risk, predictions or GED event identities emitted.'
+  discover-official-monthly-vintages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download GED23.1 and GED24.1 archival releases ephemerally
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 110 \
+            --max-filesize 90000000 \
+            https://ucdp.uu.se/downloads/ged/ged231-csv.zip -o "$RUNNER_TEMP/ged23.zip"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 110 \
+            --max-filesize 90000000 \
+            https://ucdp.uu.se/downloads/ged/ged241-csv.zip -o "$RUNNER_TEMP/ged24.zip"
+      - name: Discover archive byte SHA without scoring or issuing forecasts
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ged_monthly_cy_bridge.py --ged "$RUNNER_TEMP/ged23.zip" --discover
+          python3 research/psychohistory/ged_monthly_cy_bridge.py --ged "$RUNNER_TEMP/ged24.zip" --discover
+          echo 'This discovery cannot authenticate historical release timestamps.'
+      - name: Delete ephemeral archive bytes
+        if: always()
+        run: rm -f "$RUNNER_TEMP/ged23.zip" "$RUNNER_TEMP/ged24.zip"
