@@ -69,8 +69,8 @@ test("recetario filtra por ingrediente y mantiene las fotos primero",()=>{
 });
 
 
-test("recipe product drill-down audit uses original canonical identity, not first photo-sorted tile",()=>{
-  assert.match(audit,/firstCanonicalRecipe = healthNutritionSnapshot\?\.recipes\?\.\[0\]\?\.id/);
+test("recipe product drill-down audit uses first ACTIVE canonical identity, not first photo-sorted tile",()=>{
+  assert.match(audit,/firstCanonicalRecipe = activeRecipes\[0\]\?\.id/);
   assert.match(audit,/canonicalIndex = await catalogCards\.evaluateAll/);
   assert.match(audit,/catalogCards\.nth\(Math\.max\(0, canonicalIndex\)\)\.click\(\)/);
   assert.match(audit,/RECIPE_CATALOG_DIAG/);
