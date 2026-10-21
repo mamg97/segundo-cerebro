@@ -143,6 +143,8 @@ def evaluate(old_rows,later_rows,cutoff):
     change={m:0.0 for m in names}
     stable={m:0.0 for m in names}
     flags=[[0,0] for _ in range(2)]
+    outcomes_by_flag=[[[0,0,0] for _ in range(2)] for __ in range(2)]
+    predicted_event_mass=[[[0.0,0.0] for _ in range(2)] for __ in range(2)]
     n=missing=events=none=firstYear=secondYear=0
     pairs=[]
     for country in fitted["countries"]:
@@ -154,6 +156,7 @@ def evaluate(old_rows,later_rows,cutoff):
         flag=signal(old,cid,cutoff)
         flags[regime][flag]+=1
         actual=next((i for i,y in enumerate(years) if future[cid,y]!=regime),2)
+        outcomes_by_flag[regime][flag][actual]+=1
         n+=1
         if actual<2:events+=1
         else:none+=1
@@ -163,6 +166,8 @@ def evaluate(old_rows,later_rows,cutoff):
         for m in names:
             if m=="signal_hazard":
                 dist=first_change_with_signal(regime,age,flag,trained)
+                predicted_event_mass[regime][flag][0]+=dist[0]+dist[1]
+                predicted_event_mass[regime][flag][1]+=1
             elif m=="duration_hazard_fixed":
                 dist=first_change_by_duration(regime,age,trained["duration"]["rates"])
             else:
@@ -185,6 +190,10 @@ def evaluate(old_rows,later_rows,cutoff):
             "lowRegimeNearThreshold":"10<=old sb_total_deaths_best<25",
             "highRegimePriorYearDecline":"old current>=25 and old prior>=25 and old current<=0.5*old prior",
             "flagCountsByRegime":flags,
+            "observedFirstChangeOutcomeByRegimeAndFlag":outcomes_by_flag,
+            "meanPredictedEventRiskByRegimeAndFlag":[
+                [predicted_event_mass[r][f][0]/predicted_event_mass[r][f][1] if predicted_event_mass[r][f][1] else None
+                    for f in (0,1)] for r in (0,1)],
             "bucketEdges":["1","2-3","4-7","8+"],"fixedPseudoCount":PRIOR,
             "yearTwoSignalSource":"UNKNOWN; FALLBACK TO DURATION-ONLY HAZARD",
             "trainedCellCounts":trained["cells"]},
