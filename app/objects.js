@@ -533,10 +533,10 @@ function detailList(list,payload) {
             (String(qty)!=="1"?'<small>'+e(qty)+'</small>':"")+'</span>'+
             '</label>';
         }).join("");
-        return '<details class="packing-group"'+(idx===0&&k<2?" open":"")+'><summary><strong>'+e(name)+'</strong><span>'+done+'/'+groupItems.length+'</span></summary>'+
+        return '<details class="packing-group" data-pack-group="'+e(stage+'|'+name)+'"'+(idx===0&&k<2?" open":"")+'><summary><strong>'+e(name)+'</strong><span>'+done+'/'+groupItems.length+'</span></summary>'+
           '<div class="packing-check-rows">'+lines+'</div></details>';
       }).join("");
-      return '<details class="packing-stage"'+(idx===0?" open":"")+'><summary><strong>'+e(stage)+'</strong>'+
+      return '<details class="packing-stage" data-pack-stage="'+e(stage)+'"'+(idx===0?" open":"")+'><summary><strong>'+e(stage)+'</strong>'+
         '<span>'+packed+' de '+stageItems.length+' preparados</span></summary><div class="packing-groups">'+groups+'</div></details>';
     }).join("");
     body.innerHTML=heading+'<div class="packing-task-area"><p id="packing-save-status" role="status" aria-live="polite">Abre cada apartado y marca los elementos cuando los tengas preparados.</p>'+stages+'</div>';
@@ -566,7 +566,11 @@ function detailList(list,payload) {
         }catch{ /* The state mutation is confirmed even if its subsequent read is temporarily unavailable. */ }
         objectsViewMemory?.remember(updated);
         const scroll=body.scrollTop;
+        const openedStages=new Set([...body.querySelectorAll("[data-pack-stage][open]")].map(el=>el.dataset.packStage));
+        const openedGroups=new Set([...body.querySelectorAll("[data-pack-group][open]")].map(el=>el.dataset.packGroup));
         detailList(updatedList,updated);
+        body.querySelectorAll("[data-pack-stage]").forEach(el=>{el.open=openedStages.has(el.dataset.packStage);});
+        body.querySelectorAll("[data-pack-group]").forEach(el=>{el.open=openedGroups.has(el.dataset.packGroup);});
         body.scrollTop=scroll;
         const msg=body.querySelector("#packing-save-status");
         if(msg)msg.textContent="Guardado: "+item.name+(next==="PREPARADO"?" · preparado.":" · vuelve a pendientes.");
