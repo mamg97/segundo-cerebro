@@ -28797,3 +28797,15 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 }
 
 
+
+/* Audit #643: keep a modal's border box within the active visual viewport.
+   Width presets above remain intact; the modal can still scroll its contents.
+   Horizontal centering prevents a wide intrinsic child from shifting the
+   native <dialog> outside the screen, especially after viewport changes. */
+.detail-dialog[open] {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: calc(100vw - 16px);
+  inset-inline: 0;
+  margin-inline: auto;
+}
