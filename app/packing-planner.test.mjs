@@ -22,7 +22,7 @@ test("Villafranca and Sevilla planner uses seven real dates and no invented time
   assert.match(markup,/Camisa Dustin/);
   assert.match(markup,/data-plan-event="2"/);
   assert.doesNotMatch(markup,/19:00|20:00/);
-  assert.doesNotMatch(markup,/<script|onerror=/);
+  assert.doesNotMatch(markup,/<script|<img/);
 });
 
 test("planner encodes untrusted HTML and ignores out-of-range events",()=>{
@@ -33,7 +33,7 @@ test("planner encodes untrusted HTML and ignores out-of-range events",()=>{
       {date:"2026-11-25",daypart:"tarde",order:10,title:"Future event",objectIds:[]}
     ]
   },[]);
-  assert.doesNotMatch(markup,/<img|onerror=/);
+  assert.doesNotMatch(markup,/<img/);
   assert.match(markup,/&lt;img/);
   assert.doesNotMatch(markup,/Future event/);
 });
