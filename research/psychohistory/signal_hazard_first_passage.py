@@ -48,7 +48,7 @@ def old_lookup(rows,cutoff):
         key=(cid,year)
         if key in old:raise ValueError("Duplicate country-year input")
         death=numeric(r["sb_total_deaths_best"])
-        old[key]={"b":int(death>=25),"deaths":death}
+        old[key]={"b":int(death>=25),"deaths":death,"name":r["country"],"region":r["region"]}
     if max(y for _,y in old)!=cutoff:
         raise ValueError("Incorrect historical training cut")
     return old
