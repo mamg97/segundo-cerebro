@@ -216,3 +216,28 @@ test("packing API rejects unsafe state and ambiguous identifiers without a write
     GOOGLE_CLIENT_ID:"test",GOOGLE_CLIENT_SECRET:"test",GOOGLE_REFRESH_TOKEN:"test"
   },async()=>"token",{listId:"list-test-20261021",itemId:"list-test-20261021-001",expectedState:"SELECCIONADO",state:"INVENTADO"}),/INVALID_OBJECTS_PACKING_STATE/);
 });
+
+
+test("planned outfits join their real wardrobe IDs to one travel list only",()=>{
+  const payload=buildPayload({
+    objects:[{objeto_id:"shirt-1",nombre:"Camisa de gala",categoria:"Ropa",estado:"DISPONIBLE"}],
+    wardrobe:[],looks:[],lookItems:[],kits:[],kitItems:[],
+    lists:[
+      {lista_id:"trip-a",nombre:"Viaje A",contexto:"viaje",fecha_inicio:"2026-10-21",fecha_fin:"2026-10-27"},
+      {lista_id:"trip-b",nombre:"Viaje B",contexto:"viaje"}
+    ],
+    listItems:[],
+    listPlanning:[
+      {lista_id:"trip-a",fecha:"2026-10-23",momento:"sin_hora",actividad:"Preboda",objetos_ids:"shirt-1;unknown-thing",prendas_texto:"americana verde",orden:2},
+      {lista_id:"trip-b",fecha:"2026-10-24",momento:"noche",actividad:"Otra boda",objetos_ids:"shirt-1",orden:1}
+    ]
+  });
+  const a=payload.lists.find(x=>x.id==="trip-a");
+  const b=payload.lists.find(x=>x.id==="trip-b");
+  assert.equal(a.planning.length,1);
+  assert.equal(b.planning.length,1);
+  assert.deepEqual(a.planning[0].objectIds,["shirt-1"]);
+  assert.equal(a.planning[0].daypart,"sin_hora");
+  assert.equal(a.planning[0].garmentNotes,"americana verde");
+  assert.equal(a.planning[0].date,"2026-10-23");
+});

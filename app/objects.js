@@ -1,3 +1,5 @@
+import { packingPlannerMarkup, packingPlanModel } from "./packing-planner.mjs";
+
 const TABS = [["summary","Resumen"],["inventory","Inventario"],["wardrobe","Armario visual"],["builder","Combinador"],["looks","Looks"],["kits","Kits"],["lists","Viajes y listas"]];
 let activeTab = "summary";
 let objectsFlash = "";
@@ -498,56 +500,87 @@ function detailLook(look,payload) {
   }));
 }
 
-function detailList(list,payload) {
+function detailList(list,payload,selectedStage=null,selectedPlan=null) {
   const body=document.querySelector("#dialog-body");
   const items=(list.items||[]).slice().sort((a,b)=>Number(a.order||0)-Number(b.order||0));
-  const p=progress(items),isTrip=/viaje|equipaje/i.test(String(list.context||""));
-  const progressText=p.prepared+" / "+p.total+" preparados";
+  const prog=progress(items),isTrip=/viaje|equipaje/i.test(String(list.context||""));
   const heading='<button class="objects-back" data-objects-back type="button">← Volver a listas</button>'+
-    '<section class="packing-trip-head"><span class="object-category">'+e(list.context||"Lista")+'</span>'+
-    '<h3>'+e(list.name||"Viaje")+'</h3><p>'+e([list.destination,d(list.startDate),d(list.endDate)].filter(x=>x&&x!=="—").join(" · "))+'</p>'+
-    '<div class="packing-trip-progress"><strong>'+e(progressText)+'</strong><span>'+p.pct+'%</span></div>'+
-    '<progress max="100" value="'+p.pct+'" aria-label="'+p.pct+'% de la maleta preparada"></progress>'+
-    (list.notes?'<small class="packing-trip-notes">'+e(list.notes)+'</small>':"")+'</section>';
+    '<section class="packing-trip-head"><div class="packing-head-main"><div><small>'+e(list.context||"Lista")+'</small><h3>'+e(list.name||"Viaje")+'</h3><p>'+e([list.destination,d(list.startDate),d(list.endDate)].filter(x=>x&&x!=="—").join(" · "))+'</p></div>'+
+    '<div class="packing-head-count"><strong>'+prog.prepared+' / '+prog.total+'</strong><small>preparados</small></div></div>'+
+    '<progress max="100" value="'+prog.pct+'" aria-label="'+prog.pct+'% de la maleta preparada"></progress>'+
+    (list.notes?'<details class="packing-trip-extras"><summary>Notas y logística del viaje</summary><p>'+e(list.notes)+'</p></details>':"")+'</section>';
+
   if(!isTrip){
     body.innerHTML=heading+'<div class="packing-legacy">'+(items.length?items.map(i=>
       '<article><span class="packing-importance">'+e(label(i.importance))+'</span><div><strong>'+e(i.name)+'</strong><small>'+e(i.notes||"")+'</small></div><span class="packing-state">'+e(label(i.state))+'</span></article>'
     ).join(""):empty("Lista vacía"))+'</div>';
-  } else {
+  }else{
     const stageNames=[...new Set(items.map(i=>i.stage||"Sin etapa asignada"))];
-    const stages=stageNames.map((stage,idx)=>{
-      const stageItems=items.filter(i=>(i.stage||"Sin etapa asignada")===stage);
-      const packed=stageItems.filter(i=>i.state==="PREPARADO").length;
-      const names=[...new Set(stageItems.map(i=>i.group||"Otros"))];
-      const groups=names.map((name,k)=>{
-        const groupItems=stageItems.filter(i=>(i.group||"Otros")===name);
-        const done=groupItems.filter(i=>i.state==="PREPARADO").length;
-        const lines=groupItems.map(item=>{
-          const prepared=item.state==="PREPARADO",canToggle=Boolean(item.id)&&["PREPARADO","SELECCIONADO"].includes(item.state);
-          const qty=item.quantityLabel||item.quantity||1;
-          return '<label class="packing-check-row'+(prepared?" is-packed":"")+'">'+
-            '<input type="checkbox" data-pack-toggle="'+e(item.id||"")+'"'+(prepared?" checked":"")+(canToggle?"":" disabled")+' aria-label="'+e(item.name||"Elemento")+'">'+
-            '<span class="packing-check-copy"><strong>'+e(item.name||"Elemento")+'</strong>'+
-            (item.notes?'<small>'+e(item.notes)+'</small>':"")+'</span>'+
-            '<span class="packing-check-meta"><span>'+e(item.importance==="NECESARIO"?"Imprescindible":item.importance==="RECOMENDADO"?"Recomendado":"Opcional")+'</span>'+
-            (String(qty)!=="1"?'<small>'+e(qty)+'</small>':"")+'</span>'+
-            '</label>';
-        }).join("");
-        return '<details class="packing-group" data-pack-group="'+e(stage+'|'+name)+'"'+(idx===0&&k<2?" open":"")+'><summary><strong>'+e(name)+'</strong><span>'+done+'/'+groupItems.length+'</span></summary>'+
-          '<div class="packing-check-rows">'+lines+'</div></details>';
+    const stage=stageNames.includes(selectedStage)?selectedStage:stageNames[0];
+    const stageItems=items.filter(i=>(i.stage||"Sin etapa asignada")===stage);
+    const groups=[...new Set(stageItems.map(i=>i.group||"Otros"))].map(name=>{
+      const groupItems=stageItems.filter(i=>(i.group||"Otros")===name);
+      const ready=groupItems.filter(i=>i.state==="PREPARADO").length;
+      const entries=groupItems.map(item=>{
+        const prepared=item.state==="PREPARADO",canToggle=Boolean(item.id)&&["PREPARADO","SELECCIONADO"].includes(item.state);
+        const qty=String(item.quantityLabel||item.quantity||1);
+        return '<label class="packing-compact-item'+(prepared?" is-packed":"")+'">'+
+          '<input type="checkbox" data-pack-toggle="'+e(item.id||"")+'"'+(prepared?" checked":"")+(canToggle?"":" disabled")+' aria-label="Preparado: '+e(item.name||"Elemento")+'">'+
+          '<span class="packing-compact-name">'+e(item.name||"Elemento")+
+          (qty!=="1"?'<span class="packing-qty">'+e(qty)+'</span>':"")+'</span>'+
+          '<span class="packing-compact-importance'+(item.importance==="NECESARIO"?" needed":"")+'" title="'+e(item.importance==="NECESARIO"?"Imprescindible":item.importance==="RECOMENDADO"?"Recomendado":"Opcional")+'"></span>'+
+          '</label>';
       }).join("");
-      return '<details class="packing-stage" data-pack-stage="'+e(stage)+'"'+(idx===0?" open":"")+'><summary><strong>'+e(stage)+'</strong>'+
-        '<span>'+packed+' de '+stageItems.length+' preparados</span></summary><div class="packing-groups">'+groups+'</div></details>';
+      return '<section class="packing-compact-group"><div class="packing-compact-group-head"><strong>'+e(name)+'</strong><small>'+ready+'/'+groupItems.length+'</small></div>'+
+        '<div class="packing-compact-rows">'+entries+'</div></section>';
     }).join("");
-    body.innerHTML=heading+'<div class="packing-task-area"><p id="packing-save-status" role="status" aria-live="polite">Abre cada apartado y marca los elementos cuando los tengas preparados.</p>'+stages+'</div>';
+    const stages=stageNames.map((name,i)=>{
+      const related=items.filter(x=>(x.stage||"Sin etapa asignada")===name);
+      const ready=related.filter(x=>x.state==="PREPARADO").length;
+      return '<button type="button" data-pack-stage-select="'+e(name)+'" aria-pressed="'+(name===stage?"true":"false")+'" class="packing-stage-tab'+(name===stage?" active":"")+'">'+
+        '<strong>'+e(name)+'</strong><small>'+ready+'/'+related.length+'</small></button>';
+    }).join("");
+    body.innerHTML=heading+
+      packingPlannerMarkup(list,payload.objects||[])+
+      '<section class="packing-checklist"><div class="packing-list-heading"><div><small>CHECKLIST DE LA MALETA</small><h4>Qué tienes preparado</h4></div><span>Marca lo que ya esté guardado o comprobado</span></div>'+
+      '<div class="packing-stage-tabs">'+stages+'</div>'+
+      '<div id="packing-save-status" role="status" aria-live="polite">Los cambios se guardan en Segundo Cerebro.</div>'+
+      '<div class="packing-stage-columns">'+groups+'</div></section>';
+    const planItems=packingPlanModel(list).events;
+    const objectsById=new Map((payload.objects||[]).map(x=>[String(x.id),x]));
+    const wardrobeById=new Map((payload.wardrobe||[]).map(x=>[String(x.objectId),x]));
+    const focus=(order)=>{
+      const entry=planItems.find(x=>String(x.order)===String(order));
+      const node=body.querySelector("#packing-plan-focus");
+      if(!node||!entry)return;
+      const garmentCards=(entry.objectIds||[]).map(id=>{
+        const object=objectsById.get(String(id)),garment=wardrobeById.get(String(id));
+        const pic=visualUrl(garment);
+        const name=object?.name||garment?.name||"Prenda";
+        return '<span class="packing-focus-garment">'+(pic?'<img loading="lazy" src="'+e(pic)+'" alt="">':'<span class="packing-focus-placeholder">◫</span>')+
+          '<small>'+e(name)+'</small></span>';
+      }).join("");
+      node.innerHTML='<div class="packing-focus-title"><strong>'+e(entry.title)+'</strong><small>'+e(entry.location||"")+'</small></div>'+
+        (entry.detail?'<p>'+e(entry.detail)+'</p>':"")+
+        (garmentCards?'<div class="packing-focus-garments">'+garmentCards+'</div>':"")+
+        (entry.garmentNotes?'<p class="packing-focus-other"><strong>También:</strong> '+e(entry.garmentNotes)+'</p>':"");
+      body.querySelectorAll("[data-plan-event]").forEach(b=>b.classList.toggle("active",String(b.dataset.planEvent)===String(order)));
+    };
+    body.querySelectorAll("[data-plan-event]").forEach(b=>b.addEventListener("click",()=>focus(b.dataset.planEvent)));
+    if(selectedPlan!==null)focus(selectedPlan);
+    body.querySelectorAll("[data-pack-stage-select]").forEach(b=>b.addEventListener("click",()=>{
+      const scroll=body.scrollTop;
+      detailList(list,payload,b.dataset.packStageSelect,selectedPlan);
+      body.scrollTop=scroll;
+    }));
     body.querySelectorAll("[data-pack-toggle]").forEach(input=>input.addEventListener("change",async()=>{
       const item=items.find(x=>String(x.id)===String(input.dataset.packToggle));
       if(!item)return;
       const previous=item.state,next=input.checked?"PREPARADO":"SELECCIONADO";
       input.disabled=true;
       const status=body.querySelector("#packing-save-status");
-      if(status)status.textContent="Guardando el estado en Segundo Cerebro…";
-      try {
+      if(status)status.textContent="Guardando…";
+      try{
         const response=await fetch("/api/objects/list/item",{
           method:"POST",credentials:"same-origin",
           headers:{"Content-Type":"application/json",Accept:"application/json"},
@@ -556,24 +589,20 @@ function detailList(list,payload) {
         const result=await response.json().catch(()=>({}));
         if(!response.ok||!result.ok)throw new Error(result.code||"PACKING_SAVE_FAILED");
         item.state=next;
+        // Render the new confirmed state immediately. A separate read refreshes
+        // the canonical cache; never undo successful saves because read failed.
         let updated=payload,updatedList=list;
         try{
           const reload=await fetch("/api/objects",{headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"});
-          if(reload.ok){
-            updated=await reload.json();
-            updatedList=(updated.lists||[]).find(x=>x.id===list.id)||list;
-          }
-        }catch{ /* The state mutation is confirmed even if its subsequent read is temporarily unavailable. */ }
+          if(reload.ok){updated=await reload.json();updatedList=(updated.lists||[]).find(x=>x.id===list.id)||list;}
+        }catch{}
         objectsViewMemory?.remember(updated);
         const scroll=body.scrollTop;
-        const openedStages=new Set([...body.querySelectorAll("[data-pack-stage][open]")].map(el=>el.dataset.packStage));
-        const openedGroups=new Set([...body.querySelectorAll("[data-pack-group][open]")].map(el=>el.dataset.packGroup));
-        detailList(updatedList,updated);
-        body.querySelectorAll("[data-pack-stage]").forEach(el=>{el.open=openedStages.has(el.dataset.packStage);});
-        body.querySelectorAll("[data-pack-group]").forEach(el=>{el.open=openedGroups.has(el.dataset.packGroup);});
+        const currentlyFocused=body.querySelector(".packing-plan-event.active")?.dataset.planEvent||selectedPlan;
+        detailList(updatedList,updated,stage,currentlyFocused);
         body.scrollTop=scroll;
-        const msg=body.querySelector("#packing-save-status");
-        if(msg)msg.textContent="Guardado: "+item.name+(next==="PREPARADO"?" · preparado.":" · vuelve a pendientes.");
+        const message=body.querySelector("#packing-save-status");
+        if(message)message.textContent="Guardado: "+item.name+(next==="PREPARADO"?" · preparado.":" · pendiente.");
       }catch(error){
         input.checked=previous==="PREPARADO";
         input.disabled=false;
