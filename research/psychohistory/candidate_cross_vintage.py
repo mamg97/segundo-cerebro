@@ -25,6 +25,7 @@ from candidate_source_probe import _parse_event_date
 VERSIONS = {
     "24.0.12": ("2024-12", "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v24_0_12.csv"),
     "25.0.1": ("2025-01", "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v25_0_1.csv"),
+    "26.0.9": ("2026-09", "https://ucdp.uu.se/downloads/candidateged/GEDEvent_v26_0_9.csv"),
 }
 FIELDS = ("id", "country_id", "type_of_violence", "date_start", "date_end", "date_prec")
 MAX_SOURCE_BYTES = 80_000_000
@@ -57,6 +58,8 @@ def read_month(raw, version, expected_sha256=None):
         for n, row in enumerate(reader, start=1):
             if n > MAX_EVENTS:
                 raise ValueError("Excess event count")
+            if None in row or any(v is None for v in row.values()):
+                raise ValueError("Ragged Candidate record")
             ident = row["id"]
             if not isinstance(ident, str) or not ident.isdecimal() or int(ident) <= 0:
                 raise ValueError("Invalid event identifier")

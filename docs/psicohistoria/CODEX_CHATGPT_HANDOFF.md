@@ -13,8 +13,11 @@ prompt AV-085 interrumpido.
 
 ## Incremento actual AV-086
 
-Implementación local completa, pendiente de cierre remoto y sincronización
-canónica hasta que conste evidencia posterior en este documento:
+PR #760 fusionada, squash `31dba31a01e79bd1c27664126df3353ba13ef16c`.
+Cuatro checks SUCCESS; reproducción oficial run `39615996330`, motores
+`39615996361` y privacidad `39615996339`. AV-086 VERIFICADO y dos informes
+agregados registrados/releídos en las hojas canónicas; AV-085 intacto.
+MAD-02/MAD-04 siguen PARCIAL. Implementado:
 
 - Corrección CY: geografía dentro de fronteras, derivada de GED, no actor
   participante. Reconciliación 196/196 totales por edición y nombres sin
@@ -43,5 +46,20 @@ admisibles; nunca excluirlos silenciosamente ni imputar paz. No seleccionar
 señales sobre 2023–2025 y llamarlas confirmaciones independientes.
 
 Antes de asignar nuevos IDs, releer `PsicoAvances` y `PsicoExperimentos`.
-Actualizar el registro append-only con evento correctivo que referencie AV-085,
-y MAD-02/MAD-04 sin completarlas. No reescribir la fila histórica AV-085.
+La corrección AV-086 ya referencia AV-085 sin reescribir esa fila.
+
+## Nuevo incremento AV-087 en curso
+
+Fuente Candidate vigente 26.0.9 y codebook 1.5, hashes fijados, 2.014 registros
+y 44 países con registros. Cero precisiones no documentadas; un intervalo
+abarca todo septiembre sin extremos dentro del mes. Se conserva, se señala
+y se bloquea replay, sin calificarlo automáticamente como filtración futura.
+`candidate_current_snapshot_audit.py` reutiliza el lector existente, añade
+cuatro tests y un workflow de fuentes oficiales. 417 tests locales superados.
+Informe: `AV087_CANDIDATE_ACTUAL_CALIDAD_TEMPORAL.md`. Fusión, CI y registro
+canónico de este segundo incremento pendientes de comprobación.
+
+Siguiente tarea: aclarar la regla de exportación para intervalos que abarcan
+un mes completo y documentar reloj externo de snapshots nuevos antes de un
+nuevo origen; luego fijar objetivo mensual y cohorte. No repetir el estudio
+2024/25 ni interpretar las 44 ubicaciones con eventos como población total.
