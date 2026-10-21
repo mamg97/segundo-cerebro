@@ -82,6 +82,7 @@ final class AppState: ObservableObject {
         switch lastSyncTrigger {
         case .manual: "Manual"
         case .healthKit: "Automática · nuevos datos de Salud"
+        case .bodyMass: "Automática · nuevo peso"
         case .backgroundRefresh: "Automática · reconciliación periódica"
         case .protectedDataRetry: "Automática · reintento tras desbloqueo"
         case nil: "Sin información"
