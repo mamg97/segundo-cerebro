@@ -44,6 +44,25 @@ jobs:
           python3 research/psychohistory/ged_monthly_cy_bridge.py --ged "$RUNNER_TEMP/ged23.zip" --discover
           python3 research/psychohistory/ged_monthly_cy_bridge.py --ged "$RUNNER_TEMP/ged24.zip" --discover
           echo 'This discovery cannot authenticate historical release timestamps.'
+      - name: Download exact pinned historical CY training and scoring releases
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 110 --max-filesize 20000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy_v23_1.xlsx -o "$RUNNER_TEMP/cy23.xlsx"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 110 --max-filesize 20000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-251-csv.zip -o "$RUNNER_TEMP/cy25.zip"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 110 --max-filesize 20000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-241-csv.zip -o "$RUNNER_TEMP/cy24.zip"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 110 --max-filesize 20000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-261-csv.zip -o "$RUNNER_TEMP/cy26.zip"
+      - name: Evaluate OLD GED incident timing vs OLD CY roster and NEW CY outcomes
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/ged_monthly_cy_bridge.py \
+            --ged "$RUNNER_TEMP/ged23.zip" --cy-old "$RUNNER_TEMP/cy23.xlsx" --cy-new "$RUNNER_TEMP/cy25.zip" --cutoff 2022
+          python3 research/psychohistory/ged_monthly_cy_bridge.py \
+            --ged "$RUNNER_TEMP/ged24.zip" --cy-old "$RUNNER_TEMP/cy24.zip" --cy-new "$RUNNER_TEMP/cy26.zip" --cutoff 2023
+          echo 'RETROSPECTIVE and post-hoc! Event location != country-year participating actor; no 2024/25 forecasts issued.'
       - name: Delete ephemeral archive bytes
         if: always()
-        run: rm -f "$RUNNER_TEMP/ged23.zip" "$RUNNER_TEMP/ged24.zip"
+        run: rm -f "$RUNNER_TEMP/ged23.zip" "$RUNNER_TEMP/ged24.zip" "$RUNNER_TEMP/cy23.xlsx" "$RUNNER_TEMP/cy25.zip" "$RUNNER_TEMP/cy24.zip" "$RUNNER_TEMP/cy26.zip"
