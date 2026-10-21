@@ -1,0 +1,54 @@
+name: Psychohistory AV-083 duration hazard cross-edition research
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/duration_hazard_first_passage.py'
+      - 'research/psychohistory/test_duration_hazard_first_passage.py'
+      - '.github/workflows/psychohistory-duration-hazard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-duration-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check Python syntax, historical cutoffs and all synthetic adversarial tests
+        run: |
+          set -euo pipefail
+          python3 -m py_compile research/psychohistory/duration_hazard_first_passage.py
+          python3 -m unittest discover -s research/psychohistory -p test_duration_hazard_first_passage.py -v
+          echo 'No cohort predictions, country names, prospective or trading signals have been emitted.'
+  pinned-vintage-two-windows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download historical official UCDP files with bounds
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 45 --max-filesize 12000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy_v23_1.xlsx -o "$RUNNER_TEMP/cy23.xlsx"
+          curl --fail --location --retry 2 --max-time 45 --max-filesize 12000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-251-csv.zip -o "$RUNNER_TEMP/cy25.zip"
+          curl --fail --location --retry 2 --max-time 45 --max-filesize 20000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-241-csv.zip -o "$RUNNER_TEMP/cy24.zip"
+          curl --fail --location --retry 2 --max-time 45 --max-filesize 20000000 \
+            https://ucdp.uu.se/downloads/organizedviolencecy/organizedviolencecy-261-csv.zip -o "$RUNNER_TEMP/cy26.zip"
+          echo 'Only exact pinned official archives are parsed by the research CLI.'
+      - name: Evaluate untouched models and duration challenger on both revised-release holdouts
+        run: |
+          set -euo pipefail
+          python3 research/psychohistory/duration_hazard_first_passage.py \
+            --old "$RUNNER_TEMP/cy23.xlsx" --new "$RUNNER_TEMP/cy25.zip" --edition 23to25
+          python3 research/psychohistory/duration_hazard_first_passage.py \
+            --old "$RUNNER_TEMP/cy24.zip" --new "$RUNNER_TEMP/cy26.zip" --edition 24to26
+          echo 'Retrospective development ONLY; do not select champion or issue prospective predictions.'
+      - name: Delete ephemeral datasets after execution
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cy23.xlsx" "$RUNNER_TEMP/cy24.zip" "$RUNNER_TEMP/cy25.zip" "$RUNNER_TEMP/cy26.zip"
