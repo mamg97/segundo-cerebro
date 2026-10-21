@@ -500,9 +500,85 @@ function detailLook(look,payload) {
 
 function detailList(list,payload) {
   const body=document.querySelector("#dialog-body");
-  body.innerHTML='<button class="objects-back" data-objects-back type="button">← Volver a Objetos</button><section class="object-detail"><div class="object-detail-head"><div><span class="object-category">'+e(list.context||"Lista")+'</span><h3>'+e(list.name||"Lista")+'</h3><p>'+e([list.destination,list.startDate?d(list.startDate):null,list.endDate?d(list.endDate):null].filter(Boolean).join(" · ")||"Sin fechas")+'</p></div><span class="object-status">'+e(list.status||"ACTIVA")+'</span></div><div class="packing-list">'+
-    ((list.items||[]).length?(list.items||[]).map(x=>'<article><span class="packing-importance">'+e(x.importance||"RECOMENDADO")+'</span><div><strong>'+e(x.name||"Necesidad")+'</strong><small>'+(x.objectId?"Objeto del inventario":x.state==="FALTA_COMPRAR"?"No disponible · comprar":"Necesidad contextual")+'</small></div><span class="packing-state">'+e(label(x.state))+'</span></article>').join(""):empty("Lista vacía"))+'</div></section>';
-  body.querySelector("[data-objects-back]")?.addEventListener("click",()=>renderWorkspace(payload));
+  const items=(list.items||[]).slice().sort((a,b)=>Number(a.order||0)-Number(b.order||0));
+  const p=progress(items),isTrip=/viaje|equipaje/i.test(String(list.context||""));
+  const progressText=p.prepared+" / "+p.total+" preparados";
+  const heading='<button class="objects-back" data-objects-back type="button">← Volver a listas</button>'+
+    '<section class="packing-trip-head"><span class="object-category">'+e(list.context||"Lista")+'</span>'+
+    '<h3>'+e(list.name||"Viaje")+'</h3><p>'+e([list.destination,d(list.startDate),d(list.endDate)].filter(x=>x&&x!=="—").join(" · "))+'</p>'+
+    '<div class="packing-trip-progress"><strong>'+e(progressText)+'</strong><span>'+p.pct+'%</span></div>'+
+    '<progress max="100" value="'+p.pct+'" aria-label="'+p.pct+'% de la maleta preparada"></progress>'+
+    (list.notes?'<small class="packing-trip-notes">'+e(list.notes)+'</small>':"")+'</section>';
+  if(!isTrip){
+    body.innerHTML=heading+'<div class="packing-legacy">'+(items.length?items.map(i=>
+      '<article><span class="packing-importance">'+e(label(i.importance))+'</span><div><strong>'+e(i.name)+'</strong><small>'+e(i.notes||"")+'</small></div><span class="packing-state">'+e(label(i.state))+'</span></article>'
+    ).join(""):empty("Lista vacía"))+'</div>';
+  } else {
+    const stageNames=[...new Set(items.map(i=>i.stage||"Sin etapa asignada"))];
+    const stages=stageNames.map((stage,idx)=>{
+      const stageItems=items.filter(i=>(i.stage||"Sin etapa asignada")===stage);
+      const packed=stageItems.filter(i=>i.state==="PREPARADO").length;
+      const names=[...new Set(stageItems.map(i=>i.group||"Otros"))];
+      const groups=names.map((name,k)=>{
+        const groupItems=stageItems.filter(i=>(i.group||"Otros")===name);
+        const done=groupItems.filter(i=>i.state==="PREPARADO").length;
+        const lines=groupItems.map(item=>{
+          const prepared=item.state==="PREPARADO",canToggle=Boolean(item.id)&&["PREPARADO","SELECCIONADO"].includes(item.state);
+          const qty=item.quantityLabel||item.quantity||1;
+          return '<label class="packing-check-row'+(prepared?" is-packed":"")+'">'+
+            '<input type="checkbox" data-pack-toggle="'+e(item.id||"")+'"'+(prepared?" checked":"")+(canToggle?"":" disabled")+' aria-label="'+e(item.name||"Elemento")+'">'+
+            '<span class="packing-check-copy"><strong>'+e(item.name||"Elemento")+'</strong>'+
+            (item.notes?'<small>'+e(item.notes)+'</small>':"")+'</span>'+
+            '<span class="packing-check-meta"><span>'+e(item.importance==="NECESARIO"?"Imprescindible":item.importance==="RECOMENDADO"?"Recomendado":"Opcional")+'</span>'+
+            (String(qty)!=="1"?'<small>'+e(qty)+'</small>':"")+'</span>'+
+            '</label>';
+        }).join("");
+        return '<details class="packing-group"'+(idx===0&&k<2?" open":"")+'><summary><strong>'+e(name)+'</strong><span>'+done+'/'+groupItems.length+'</span></summary>'+
+          '<div class="packing-check-rows">'+lines+'</div></details>';
+      }).join("");
+      return '<details class="packing-stage"'+(idx===0?" open":"")+'><summary><strong>'+e(stage)+'</strong>'+
+        '<span>'+packed+' de '+stageItems.length+' preparados</span></summary><div class="packing-groups">'+groups+'</div></details>';
+    }).join("");
+    body.innerHTML=heading+'<div class="packing-task-area"><p id="packing-save-status" role="status" aria-live="polite">Abre cada apartado y marca los elementos cuando los tengas preparados.</p>'+stages+'</div>';
+    body.querySelectorAll("[data-pack-toggle]").forEach(input=>input.addEventListener("change",async()=>{
+      const item=items.find(x=>String(x.id)===String(input.dataset.packToggle));
+      if(!item)return;
+      const previous=item.state,next=input.checked?"PREPARADO":"SELECCIONADO";
+      input.disabled=true;
+      const status=body.querySelector("#packing-save-status");
+      if(status)status.textContent="Guardando el estado en Segundo Cerebro…";
+      try {
+        const response=await fetch("/api/objects/list/item",{
+          method:"POST",credentials:"same-origin",
+          headers:{"Content-Type":"application/json",Accept:"application/json"},
+          body:JSON.stringify({listId:list.id,itemId:item.id,expectedState:previous,state:next})
+        });
+        const result=await response.json().catch(()=>({}));
+        if(!response.ok||!result.ok)throw new Error(result.code||"PACKING_SAVE_FAILED");
+        item.state=next;
+        let updated=payload,updatedList=list;
+        try{
+          const reload=await fetch("/api/objects",{headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"});
+          if(reload.ok){
+            updated=await reload.json();
+            updatedList=(updated.lists||[]).find(x=>x.id===list.id)||list;
+          }
+        }catch{ /* The state mutation is confirmed even if its subsequent read is temporarily unavailable. */ }
+        objectsViewMemory?.remember(updated);
+        const scroll=body.scrollTop;
+        detailList(updatedList,updated);
+        body.scrollTop=scroll;
+        const msg=body.querySelector("#packing-save-status");
+        if(msg)msg.textContent="Guardado: "+item.name+(next==="PREPARADO"?" · preparado.":" · vuelve a pendientes.");
+      }catch(error){
+        input.checked=previous==="PREPARADO";
+        input.disabled=false;
+        console.warn("Packing list update failed",error);
+        if(status)status.textContent="No se ha podido guardar. La casilla sigue sin cambios. Reintenta.";
+      }
+    }));
+  }
+  body.querySelector("[data-objects-back]")?.addEventListener("click",()=>{activeTab="lists";renderWorkspace(payload);});
 }
 
 function bind(payload) {
