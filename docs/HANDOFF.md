@@ -1,4 +1,16 @@
-## PSICOHISTORIA — Estado científico vigente · 19/10/2026
+## PSICOHISTORIA — Continuidad vigente · 21/10/2026
+
+Estado y próximo paso técnico: [handoff Codex ↔ ChatGPT](psicohistoria/CODEX_CHATGPT_HANDOFF.md)
+y [último estado científico](psicohistoria/LATEST_VERIFIED_STATE.md). Esos
+documentos sustituyen las referencias de progreso obsoletas que siguen abajo.
+AV-085 ya estaba fusionada en PR #757. AV-086 corrige la interpretación
+geográfica CY y añade diagnóstico mensual/falsas alarmas sin modelo nuevo.
+413 pruebas locales; fuentes oficiales completas con hashes coincidentes.
+El cierre de PR/Actions y registro canónico se documenta en el handoff específico.
+
+---
+
+## PSICOHISTORIA — Referencia histórica · 19/10/2026
 
 - **Último avance científico registrado: AV-20261019-033.** [PR #664](https://github.com/mamg97/segundo-cerebro/pull/664), fusionada en `main` (squash `7eba015e0d7c`). Nuevo `research/psychohistory/cow_gw_name_triage.py` clasifica nombres equivalentes **solo como propuestas no aprobadas**, sin cambios en modelos. [CI de tres fuentes reales](https://github.com/mamg97/segundo-cerebro/actions/runs/39240581105), tests sintéticos y privacidad correctos. [Método y datos agregados](docs/psicohistoria/COW_GW_NAME_TRIAGE.md).
 - **Resultado empírico:** diciembre 2019 y 2020: COW 195 y GW+micro 197. De los 5 COW y 7 GW sin abreviatura correspondiente, hay **3 nombres exactos** (uno de código igual y dos de código distinto) por mes; restan **2 COW y 4 GW** sin pareja exacta. También persisten cuatro abreviaturas idénticas con código distinto y dos contactos numéricos que pueden ser falsos amigos. Ninguna equivalencia está aprobada. GW v7 acaba 2020, COW v2024 publicada 2025: no inferir universo válido as-of para 2024.

@@ -2,11 +2,17 @@
 
 **21/10/2026 · V2/V4 · Estado: EXPLORATORIO RETROSPECTIVO, NO PRONÓSTICO EMITIDO**
 
+**Corrección AV-086:** CY es un agregado geográfico derivado de GED dentro de
+las fronteras, con códigos GW; no mide participación del país. La distinción
+correcta es conteo de incidentes frente a estado anual por umbral, no ubicación
+frente a participación. Se verificaron los codebooks específicos y coinciden
+196/196 totales por edición. [Corrección, controles y falsas alarmas](AV086_CORRECCION_GEOGRAFICA_Y_DIAGNOSTICO_MENSUAL.md).
+
 ## Pregunta científica
 
 ¿Los **incidentes letales estatales con fechas exactas** del año anterior, agregados desde UCDP GED, identifican anticipadamente países que **cruzan por primera vez** el umbral anual de 25 muertes de UCDP OrganizedViolenceCY?
 
-La propuesta avanza respecto a AV-084 porque GED tiene observaciones con fecha diaria (pueden agregarse por mes), pero **GED = incidentes localizados geográficamente**, mientras que `OrganizedViolenceCY` registra un agregado país-año bajo su propia definición de violencia estatal. Los productos son **distintos**: coincidir un ID de país no implica identidad de la participación, la clasificación de eventos ni las muertes; no se sustituye uno por otro. La falta de un incidente elegible en GED **NO** significa que no hubiera violencia en ese país.
+GED permite agregación mensual de incidentes; `OrganizedViolenceCY` deriva sus agregados geográficos anuales del propio GED. Ambos usan códigos GW. El indicador restringido a incidentes con día exacto y la etiqueta anual ≥25 muertes siguen siendo variables distintas. La falta de un incidente elegible **NO** significa que no hubiera violencia.
 
 ## Metodología cerrada
 

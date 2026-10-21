@@ -1,8 +1,33 @@
-# PSICOHISTORIA — Estado científico verificado · 20/10/2026
+# PSICOHISTORIA — Estado científico verificado · 21/10/2026
+
+## AV-086 · Corrección geográfica de AV-085 y diagnóstico mensual
+
+- Estado de implementación y evidencia: [handoff Codex↔ChatGPT](CODEX_CHATGPT_HANDOFF.md).
+- **Corrección:** los codebooks CY 23.1/24.1 definen un agregado geográfico
+  dentro de fronteras, derivado de GED; no participación de países. Coinciden
+  los nombres y 196/196 totales de muertes estatales de cada edición. No son
+  fuentes independientes. Se corrige esa afirmación de AV-085, preservando sus
+  resultados descriptivos. [Informe AV-086](AV086_CORRECCION_GEOGRAFICA_Y_DIAGNOSTICO_MENSUAL.md).
+- Doce meses de registros exactos, tendencia, recencia, recurrencia, intensidad
+  y concentración temporal; fechas validadas incluso en filas excluidas,
+  precisión 1–5, faltantes/NaN/duplicados rechazados. Cuatro codebooks con
+  URL/tamaño/SHA fijados; seis archivos GED/CY oficiales íntegros reproducidos.
+- Los cinco modelos originales y duración AV-083 permanecen intactos. Se
+  replican sus Brier, añadiendo log loss, calibración y alarmas. Al 10 %,
+  duración detecta 8/11 y 5/8 cambios con 34/185 y 35/188 falsas alarmas;
+  precisión 19,05 % / 12,50 %. Las bandas pareadas de cinco regiones incluyen
+  cero. GED Q4 detecta 0/5 y 0/4 entradas, con 3 y 6 falsas alarmas.
+- **No es otro modelo ni validación independiente**: mismos años solapados,
+  análisis post hoc, bytes descargados 2026 sin testigo histórico. Ninguna
+  mejora prospectiva demostrada. `2027 SHADOW_NO_EMITIDO` se conserva.
+- Próximo paso: fuente Candidate mensual con reloj externo, protocolo de señal
+  y objetivo mensual propio registrados antes de un período futuro nuevo.
+
+---
 
 ## AV-20261021-085 · Puente GED mensual → primeras transiciones anuales: valor limitado de Q4
 
-- **[PR #757](https://github.com/mamg97/segundo-cerebro/pull/757)** fusionada a `main`, squash `37c0cbe5b94be80a7f71f19c1ec4588a38c54ea5`. Nueva herramienta científica `research/psychohistory/ged_monthly_cy_bridge.py`: combinar **incidentes state-based letales GED con día EXACTO** anteriores al corte, como predictores descriptivos geográficos, y el **primer cambio anual de estado ≥25 muertes** de OrganizedViolenceCY como resultado distinto. No inferir igualdad entre `country_id` de **localización del evento** en GED y **participación del país** en CY; cero registros GED elegibles **NO equivale** a cero violencia. Se mantienen fuentes, universo país y scoring separados por edición. Pruebas sintéticas contra fecha futura, SHA incorrecto, fechas imprecisas, tipos ajenos, datos faltantes y suma de conteos trimestrales; CI oficial SHA pinneado, motor y privacidad **SUCCESS**.
+- **[PR #757](https://github.com/mamg97/segundo-cerebro/pull/757)** fusionada a `main`, squash `37c0cbe5b94be80a7f71f19c1ec4588a38c54ea5`. Herramienta `ged_monthly_cy_bridge.py`: incidentes estatales letales GED de día exacto como predictor descriptivo y primer cambio anual CY ≥25 muertes como desenlace distinto. **AV-086 corrige la interpretación previa:** ambos productos usan geografía GW; CY es un agregado de GED dentro de fronteras, no participación. Cero registros elegibles no acredita cero violencia. Fuentes y scoring separados por edición. CI oficial, motor y privacidad de AV-085 SUCCESS.
 - Datos verificados en dos cohortes retrospectivas de **196 países** cada una: origen 2024: GED `23.1` hasta 2022, CY `23.1` para riesgo/corte y `25.1` para desenlace 2023/24; origen 2025: GED `24.1` hasta 2023, CY `24.1` para riesgo/corte y `26.1` para desenlace 2024/25. GED23.1 SHA `9aa082f9e1f62da5ea3245c39b1cee45daab6dc8b3a17fb0f0cdae9ba13ce6f7`, GED24.1 SHA `202e84f3bc91f085b2a886959cbbdeed9d381d758ee897b68520f59ea631c760` (**observados y fijados el 21/10/2026**, NO emitidos históricamente).
 - **Países inicialmente BAJOS (<25)**: en corte 2022, entre 147 sin incidente GED estatal letal exacto hubo 3 primeras entradas en 2023–24; entre 12 con ≥1 incidente hubo 2 primeras entradas. En corte 2023, entre 150 sin registro hubo 3 entradas en 2024–25; entre 12 con registro, **1**. Los países con cualquier incidente GED en el **último trimestre octubre–diciembre** fueron apenas **3 y 6**, respectivamente, con **cero primeras entradas** posteriores en estas dos muestras. El antecedente de un incidente anual muestra una asociación descriptiva débil, el de actividad en Q4 ninguna evidencia positiva; tamaños muestrales insuficientes.
 - El archivo GED 23.1 incluyó **316.818** filas históricas; GED 24.1 **349.733**. Exclusiones en años del corte por fecha imprecisa `2.565/4.534`; por tipo no estatal `6.926/8.185` y por `best=0` `1.512/1.544`, respectivamente. Los países sin incidente de **fecha exacta** no son países sin violencia. No se han construido nuevos scores/modelos; solo tablas agregadas de asociación, que **no demuestran causalidad, habilidad prospectiva ni rendimiento financiero**.

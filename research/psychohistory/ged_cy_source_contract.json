@@ -1,0 +1,34 @@
+{
+  "schema": "psychohistory.ged_cy_source_contract.v1",
+  "observed_utc_date": "2026-10-21",
+  "historical_bytes_availability_verified": false,
+  "geographic_identifiers": "Gleditsch-Ward country in both products",
+  "cy_provenance": "GED-derived within-country-borders annual aggregates; not country actor participation",
+  "event_count_equals_annual_threshold_target": false,
+  "codebooks": [
+    {
+      "url": "https://ucdp.uu.se/downloads/ged/ged231.pdf",
+      "sha256": "d53aadf9f0643c93900b7c0ad0322929dd3de1dc09f4f8b78f89c02f1380af12",
+      "bytes": 809091,
+      "coverage": [1989, 2022]
+    },
+    {
+      "url": "https://ucdp.uu.se/downloads/ged/ged241.pdf",
+      "sha256": "fda1822e4225e1995b642c66b25f2f090321d945815a5280f67dc862829952e9",
+      "bytes": 494913,
+      "coverage": [1989, 2023]
+    },
+    {
+      "url": "https://ucdp.uu.se/downloads/organizedviolencecy/UCDP_OrganizedViolenceCY_Codebook_231.pdf",
+      "sha256": "2ff7cf22e203bd9c2056db164d968bf2deb91c820cf3f9f5393a5d1599bc397c",
+      "bytes": 135750,
+      "coverage": [1989, 2022]
+    },
+    {
+      "url": "https://ucdp.uu.se/downloads/organizedviolencecy/UCDP_OrganizedViolenceCY_Codebook_241.pdf",
+      "sha256": "afdf989c3f48a50d861c42e16d69c95e087582940161c58877e8401deb6e2212",
+      "bytes": 139511,
+      "coverage": [1989, 2023]
+    }
+  ]
+}
