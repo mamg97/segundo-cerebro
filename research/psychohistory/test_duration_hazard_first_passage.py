@@ -25,6 +25,12 @@ class DurationHazardTests(unittest.TestCase):
     self.assertFalse(a["prospectiveSkillProven"])
     self.assertFalse(a["prespecifiedBeforeInspectedHoldout"])
     self.assertEqual(a["countryN"],8)
+    self.assertEqual(a["uncertainty"],after["uncertainty"])
+    self.assertEqual(a["uncertainty"]["draws"],3000)
+    self.assertFalse(a["uncertainty"]["confirmatory"])
+    for m in ("persistence","country_shrinkage"):
+        self.assertEqual(len(a["uncertainty"]["comparisons"][m]["descriptivePercentile95"]),2)
+        self.assertAlmostEqual(a["uncertainty"]["comparisons"][m]["meanDeltaBrier"],a["models"]["duration_hazard_fixed"]["meanBrier"]-a["models"][m]["meanBrier"])
     self.assertEqual(a["countryN"],sum([a["firstChangesTotal"],a["noChange"]]))
  def test_target_changes_affect_evaluation_not_training_statistics(self):
     old=make_version("24.1",2023)
