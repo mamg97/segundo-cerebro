@@ -27,8 +27,8 @@ from futures import fit,prepare
 from release_separated_first_passage import FUTURES
 
 GED_RELEASES={
-  2022:{"edition":"GED 23.1","url":"https://ucdp.uu.se/downloads/ged/ged231-csv.zip","sha256":None},
-  2023:{"edition":"GED 24.1","url":"https://ucdp.uu.se/downloads/ged/ged241-csv.zip","sha256":None}
+  2022:{"edition":"GED 23.1","url":"https://ucdp.uu.se/downloads/ged/ged231-csv.zip","sha256":"9aa082f9e1f62da5ea3245c39b1cee45daab6dc8b3a17fb0f0cdae9ba13ce6f7"},
+  2023:{"edition":"GED 24.1","url":"https://ucdp.uu.se/downloads/ged/ged241-csv.zip","sha256":"202e84f3bc91f085b2a886959cbbdeed9d381d758ee897b68520f59ea631c760"}
 }
 MAX_BYTES=90_000_000
 MAX_CSV_BYTES=490_000_000
