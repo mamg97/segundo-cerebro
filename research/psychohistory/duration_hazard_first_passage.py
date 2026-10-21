@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import random
 from pathlib import Path
 from collections import defaultdict
 
@@ -73,6 +74,32 @@ def first_change_by_duration(regime,age,rates,steps=2):
         raise ValueError("First-event mass violation")
     return bins
 
+def paired_bootstrap(rows,seed,draws=3000):
+    """Post-hoc percentile bands; paired country resampling stratified by initial regime."""
+    if not rows or type(seed) is not int or draws<100:
+        raise ValueError("No paired sample or invalid resampling")
+    groups=[[r for r in rows if r["regime"]==k] for k in (0,1)]
+    n=len(rows)
+    models=("persistence","country_shrinkage")
+    diffs={m:[r["scores"]["duration_hazard_fixed"]-r["scores"][m] for r in rows] for m in models}
+    draws_by_model={m:[] for m in models}
+    rng=random.Random(seed)
+    for _ in range(draws):
+        picks=[]
+        for group in groups:
+            picks.extend(group[rng.randrange(len(group))] for __ in range(len(group)))
+        for m in models:
+            draws_by_model[m].append(
+                math.fsum(r["scores"]["duration_hazard_fixed"]-r["scores"][m] for r in picks)/n)
+    def q(arr,p):
+        v=sorted(arr);x=p*(len(v)-1);j=int(x)
+        return v[j]+(v[min(len(v)-1,j+1)]-v[j])*(x-j)
+    return {"draws":draws,"seed":seed,"method":"paired_stratified_country_bootstrap",
+            "comparisons":{m:{"meanDeltaBrier":math.fsum(diffs[m])/n,
+               "descriptivePercentile95":[q(draws_by_model[m],.025),q(draws_by_model[m],.975)]}
+               for m in models},
+            "regionsDependenceModelled":False,"confirmatory":False}
+
 def evaluate(early_rows,later_rows,cutoff):
     if cutoff not in YEARS_BY_CUTOFF or not early_rows or not later_rows:
         raise ValueError("Invalid source-separated vintage design")
@@ -92,6 +119,7 @@ def evaluate(early_rows,later_rows,cutoff):
     stable_losses={m:0.0 for m in model_ids}
     zero={m:0 for m in model_ids}
     n=missing=events=stable=event0=event1=low=high=0
+    paired_rows=[]
     for country in fitted["countries"]:
         cid=country["id"]
         if any((cid,yr) not in resolution for yr in years):
@@ -106,16 +134,19 @@ def evaluate(early_rows,later_rows,cutoff):
         else:events+=1
         if actual==0:event0+=1
         if actual==1:event1+=1
+        case_scores={}
         for model in model_ids:
             if model=="duration_hazard_fixed":
                 probs=first_change_by_duration(init,age,duration["rates"])
             else:
                 probs=first_passage_bins(country["initial"],matrix_for(fitted,country,model,FUTURES))
             score=brier(probs,actual)
+            case_scores[model]=score
             totals[model]+=score
             if actual==2:stable_losses[model]+=score
             else:event_losses[model]+=score
             zero[model]+=int(probs[actual]==0)
+        paired_rows.append({"regime":init,"scores":case_scores})
     if n<1 or n+missing!=len(fitted["countries"]):
         raise ValueError("No evaluable cases or missing cohort accounting")
     return {
@@ -126,6 +157,7 @@ def evaluate(early_rows,later_rows,cutoff):
         "firstChangeAtBridge":event0,"firstChangeAtTarget":event1,
         "firstChangesTotal":events,"noChange":stable,
         "initialLow":low,"initialHigh":high,
+        "uncertainty":paired_bootstrap(paired_rows,seed=54183+cutoff),
         "durationSpecification":{
             "bins":["1","2-3","4-7","8+"],
             "priorStrength":CONCENTRATION,
