@@ -433,13 +433,18 @@ export function buildPayload(rows) {
     if (!listItems.has(listId)) listItems.set(listId, []);
     const objectId = String(value(row, "objeto_id") || "").trim();
     listItems.get(listId).push({
+      id: value(row, "item_id") || null,
       objectId: objectId || null,
-      name: byId.get(objectId)?.name || value(row, "nombre", "necesidad"),
+      name: value(row, "nombre", "necesidad") || byId.get(objectId)?.name || null,
       quantity: numberOrNull(value(row, "cantidad", "quantity")) ?? 1,
+      quantityLabel: String(value(row, "cantidad", "quantity") ?? "1"),
       importance: listImportance(value(row, "importancia", "importance")),
       state: packingState(value(row, "estado", "state")),
       sourceKitId: value(row, "kit_id", "source_kit_id"),
-      notes: value(row, "notas", "notes")
+      notes: value(row, "notas", "notes"),
+      stage: value(row, "etapa") || null,
+      group: value(row, "grupo") || null,
+      order: numberOrNull(value(row, "orden")) ?? null
     });
   }
 
@@ -678,4 +683,56 @@ export async function createObjectsLook(env, getGoogleAccessToken, payload = {})
     itemCount: normalized.length,
     source: { kind: "private-sheet", name: SHEET_TITLE }
   };
+}
+
+/**
+ * Write one packing check against a stable, private item_id. All other rows,
+ * lists, inventory and look history remain unchanged.
+ */
+export async function updateObjectsPackingItem(env, getGoogleAccessToken, payload = {}) {
+  if (!hasObjectsGoogleConfig(env)) throw new Error("OBJECTS_NOT_CONFIGURED");
+  const listId = String(payload.listId || "").trim();
+  const itemId = String(payload.itemId || "").trim();
+  const state = String(payload.state || "").trim();
+  const expectedState = String(payload.expectedState || "").trim();
+  const safeId = /^[a-z0-9][a-z0-9_-]{4,160}$/i;
+  if (!safeId.test(listId) || !safeId.test(itemId)) throw new Error("INVALID_OBJECTS_PACKING_ID");
+  if (!["PREPARADO", "SELECCIONADO"].includes(state)
+      || !["SELECCIONADO", "PREPARADO"].includes(expectedState)) {
+    throw new Error("INVALID_OBJECTS_PACKING_STATE");
+  }
+
+  const token = await getGoogleAccessToken(env);
+  const spreadsheetId = await resolveSpreadsheetId(env, token);
+  if (!spreadsheetId) throw new Error("OBJECTS_SOURCE_PENDING");
+
+  const range = encodeURIComponent("ListaItems!A1:L10000");
+  const base = "https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(spreadsheetId) + "/values/";
+  const read = await googleReadFetch(base + range + "?valueRenderOption=UNFORMATTED_VALUE", {
+    headers: { Authorization: "Bearer " + token }
+  }, { attempts: 3, baseDelayMs: 180 });
+  if (!read.ok) throw new Error("OBJECTS_PACKING_READ_FAILED");
+  const values = (await read.json())?.values || [];
+  const headers = (values[0] || []).map((v) => String(v || "").trim());
+  const indices = ["lista_id", "item_id", "estado"].map((key) => headers.indexOf(key));
+  if (indices.some((i) => i < 0)) throw new Error("OBJECTS_PACKING_SCHEMA_MISSING");
+  const matches = values.slice(1).map((row, index) => ({ row, index: index + 2 })).filter(({ row }) =>
+    String(row[indices[0]] || "").trim() === listId
+      && String(row[indices[1]] || "").trim() === itemId
+  );
+  if (matches.length !== 1) throw new Error("OBJECTS_PACKING_ITEM_NOT_FOUND");
+  const match = matches[0];
+  const currentState = String(match.row[indices[2]] || "").trim();
+  if (currentState !== expectedState) throw new Error("OBJECTS_PACKING_STATE_CONFLICT");
+  if (currentState === state) return { listId, itemId, state, unchanged: true };
+  const stateColumn = String.fromCharCode(65 + indices[2]); // F for canonical ListaItems.
+  const cell = encodeURIComponent("ListaItems!" + stateColumn + match.index);
+  const write = await fetch(base + cell + "?valueInputOption=RAW", {
+    method: "PUT",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ values: [[state]] })
+  });
+  if (!write.ok) throw new Error("OBJECTS_PACKING_WRITE_FAILED");
+  invalidateObjectsCache();
+  return { listId, itemId, state };
 }
