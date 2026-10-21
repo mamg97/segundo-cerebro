@@ -12,6 +12,11 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate HealthKit weight freshness contract
+        run: node --test ios/SegundoCerebroHealthBridge/scripts/health-weight-freshness.test.mjs
       - name: Build HealthKit bridge
         run: |
           xcodebuild \
