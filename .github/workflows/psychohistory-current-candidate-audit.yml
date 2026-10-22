@@ -4,6 +4,8 @@ on:
     paths:
       - 'research/psychohistory/candidate_current_snapshot_audit.py'
       - 'research/psychohistory/test_candidate_current_snapshot_audit.py'
+      - 'research/psychohistory/candidate_monthly_quarterly_audit.py'
+      - 'research/psychohistory/test_candidate_monthly_quarterly_audit.py'
       - 'research/psychohistory/candidate_cross_vintage.py'
       - '.github/workflows/psychohistory-current-candidate-audit.yml'
   workflow_dispatch:
@@ -28,7 +30,11 @@ jobs:
             https://ucdp.uu.se/downloads/candidateged/ucdp-candidate-codebook1.5.pdf -o "$RUNNER_TEMP/candidate-codebook.pdf"
           python3 research/psychohistory/candidate_current_snapshot_audit.py \
             --source "$RUNNER_TEMP/candidate.csv" --codebook "$RUNNER_TEMP/candidate-codebook.pdf"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 90 --max-filesize 80000000 \
+            https://ucdp.uu.se/downloads/candidateged/GEDEvent_v26_01_26_09.csv -o "$RUNNER_TEMP/candidate-quarterly.csv"
+          python3 research/psychohistory/candidate_monthly_quarterly_audit.py \
+            --monthly "$RUNNER_TEMP/candidate.csv" --quarterly "$RUNNER_TEMP/candidate-quarterly.csv"
           echo 'A source-quality block is a research result, never authorization to score or issue.'
       - name: Remove ephemeral source bytes
         if: always()
-        run: rm -f "$RUNNER_TEMP/candidate.csv" "$RUNNER_TEMP/candidate-codebook.pdf"
+        run: rm -f "$RUNNER_TEMP/candidate.csv" "$RUNNER_TEMP/candidate-codebook.pdf" "$RUNNER_TEMP/candidate-quarterly.csv"
