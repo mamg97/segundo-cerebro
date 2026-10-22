@@ -1,5 +1,11 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-102 · contraste WPP–Census sin score
+
+[AV-102](AV102_WPP_CENSUS_US_POPULATION_SCOPE.md) coteja la población USA de 2023 entre WPP 2022/2024 y Census Vintage 2023, con archivos oficiales privados fijados por SHA. El desfase entre población de facto y residente, y la posible dependencia de fuentes, bloquean interpretar la diferencia como error predictivo. `DEM-02` PARCIAL/NO.
+
+---
+
 ## AV-101 · versiones de réplicas USGS
 
 [AV-101](AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) recupera 27 versiones OAF de un evento, conserva tres JSON tempranos con SHA y compara 167 sismos M≥5 con 11 productos OAF en septiembre 2026. En las tres versiones estudiadas la primera ventana ya había comenzado antes de actualizarse el producto; no hay evaluación prospectiva válida. `SIS-02` PARCIAL/NO, sin score ni pronóstico propio.

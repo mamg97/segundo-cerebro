@@ -52,3 +52,8 @@ un diseño propio. Otra es comparar proyecciones con censos/registrales
 independientes, con definición compatible de población, país y fecha. No se
 elige ninguno como target definitivo con esta auditoría. `DEM-01/02` deben
 seguir `PARCIAL`; no existe emisión ni score de demografía.
+
+**Avance posterior:** [AV-102](AV102_WPP_CENSUS_US_POPULATION_SCOPE.md)
+archiva Census Vintage 2023 y compara la fila estadounidense 2023 con ambas
+ediciones ONU. La diferencia de universo de facto/residente impide llamar a
+la brecha «error de pronóstico». `DEM-02` continúa PARCIAL/NO.
