@@ -1,3 +1,14 @@
+## PSICOHISTORIA — AV-089 · macro RUC con vintages · 22/10/2026
+
+Auditoría reproducible de una fuente macroeconómica independiente de UCDP:
+244 cortes trimestrales del desempleo de EE. UU. y 141.146 celdas numéricas
+en el libro original archivado fuera de Git. El [informe](psicohistoria/AV089_MACRO_RUC_VINTAGES.md)
+y el [mapa de dominios](psicohistoria/MAPA_LINEAS_INDEPENDIENTES_20261022.md)
+fijan pregunta y siguientes gates. Pendiente de PR/CI y registro privado;
+no hay modelo validado, score, emisión ni cambio a Candidate/2027.
+
+---
+
 ## PSICOHISTORIA — AV-088 · cotejo Candidate mensual/trimestral · 22/10/2026
 
 [PR #778](https://github.com/mamg97/segundo-cerebro/pull/778) documenta y
