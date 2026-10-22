@@ -1,5 +1,16 @@
 # PSICOHISTORIA — Estado científico verificado · 22/10/2026
 
+## AV-091 · Índice privado de comunicados BLS en revisión
+
+- [PR #782](https://github.com/mamg97/segundo-cerebro/pull/782) está fusionada
+  con tres checks SUCCESS; AV-090 consta en el Sheet privado. `MAC-02` sigue
+  `PARCIAL`, criterio `NO`.
+- [AV-091](AV091_BLS_ARCHIVE_LINK_INVENTORY.md) prepara 188 enlaces BLS y
+  una ausencia documentada de octubre de 2025. Código y CI pendientes de
+  cierre. Ningún comunicado original se conserva todavía para el target.
+
+---
+
 ## AV-090 · Auditoría de cobertura RUC en revisión
 
 - [PR #780](https://github.com/mamg97/segundo-cerebro/pull/780) quedó

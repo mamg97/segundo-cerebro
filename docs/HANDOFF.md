@@ -1,3 +1,16 @@
+## PSICOHISTORIA — AV-091 · enlaces BLS para el reloj macro · 22/10/2026
+
+[PR #782](https://github.com/mamg97/segundo-cerebro/pull/782) se fusionó
+(squash `4299bb8287a2d28507c1d948517e216c61f936a5`) tras 423 pruebas
+locales y tres checks SUCCESS. AV-090 consta en el Sheet privado;
+`MAC-02=PARCIAL`. El [inventario AV-091](psicohistoria/AV091_BLS_ARCHIVE_LINK_INVENTORY.md)
+reúne en privado 188 enlaces oficiales BLS para 189 meses 2011-01…2026-09,
+con octubre de 2025 explícitamente ausente. Código y CI nuevos en revisión;
+no declarar AV-091 cerrado ni avanzar fase hasta fusionar y registrar.
+Faltan originales BLS, tasas de primera publicación y reloj RUC independiente.
+
+---
+
 ## PSICOHISTORIA — AV-090 · cobertura RUC y excepción 2025 · 22/10/2026
 
 [PR #780](https://github.com/mamg97/segundo-cerebro/pull/780) se fusionó
@@ -6,9 +19,8 @@ correctas. AV-089 consta en el registro privado; `MAC-01/02=PARCIAL`.
 La [auditoría AV-090](psicohistoria/AV090_RUC_OBSERVATION_COVERAGE.md)
 comprueba primeras apariciones en el XLSX RUC: 728 meses evaluables, uno
 con retraso de cuatro meses y octubre de 2025 ausente, coherente con la nota
-oficial BLS del cierre federal. El nuevo código y CI están en revisión;
-**no registrar AV-090 como verificado** hasta pasar CI, cerrar PR y escribir
-el evento privado. Falta calendario histórico de publicación y target BLS
+oficial BLS del cierre federal. PR #782 fusionada y AV-090 registrado.
+Falta calendario histórico de publicación y target BLS
 de primera salida; sin backtest ni predicción.
 
 ---
