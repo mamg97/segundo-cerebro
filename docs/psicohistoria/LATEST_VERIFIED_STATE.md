@@ -2,7 +2,7 @@
 
 ## AV-098 · verificación metodológica HTOPS
 
-[AV-098](AV098_HTOPS_QUESTIONNAIRE_AND_UNCERTAINTY.md) coteja la misma pregunta de soledad en marzo/julio 2026 y el error estándar oficial de la celda agregada de julio. Los originales están en el archivo privado con hashes. La admisión sigue bloqueada por primera publicación/revisiones y varianza del agregado histórico; no hay pronóstico ni gate científico completado. Este documento queda pendiente de publicación y registro append-only en el Sheet hasta el cierre de la PR.
+[AV-098](AV098_HTOPS_QUESTIONNAIRE_AND_UNCERTAINTY.md) coteja la misma pregunta de soledad en marzo/julio 2026 y el error estándar oficial de la celda agregada de julio. Los originales están en el archivo privado con hashes. La admisión sigue bloqueada por primera publicación/revisiones y varianza del agregado histórico; no hay pronóstico ni gate científico completado. El avance requiere registro append-only en el Sheet privado una vez verificada la publicación.
 
 ---
 
