@@ -95,3 +95,13 @@ Próximo paso científico: aclaración documental del contrato de UCDP para
 intervalos que abarcan un mes completo, seguida de un testigo externo de
 disponibilidad antes del nuevo origen, roster completo y target mensual
 preespecificado. No actualizar `PsicoPredicciones` ni admitir la cohorte.
+
+## Actualización 23/10/2026 · líneas independientes
+
+HTOPS [AV-098](AV098_HTOPS_QUESTIONNAIRE_AND_UNCERTAINTY.md) y BTOS
+[AV-099](AV099_BTOS_TECH_SOURCE_FEASIBILITY.md) están fusionadas y registradas
+en el Sheet privado; ninguna ha superado el gate de emisión. En macro,
+[AV-100](AV100_BLS_RELEASE_DOM_PILOT.md) extrae cinco tasas nacionales de
+serializaciones DOM BLS completas conservadas privadamente con SHA. No son
+bytes originales de primera publicación; faltan 183 páginas del índice y el
+reloj RUC independiente. No ejecutar backtest ni escribir predicciones.

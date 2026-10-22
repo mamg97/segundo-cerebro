@@ -3781,5 +3781,7 @@ Actualización 23/10/2026: [AV-098](psicohistoria/AV098_HTOPS_QUESTIONNAIRE_AND_
 
 La línea tecnológica [AV-099](psicohistoria/AV099_BTOS_TECH_SOURCE_FEASIBILITY.md) identifica BTOS nacional, sus errores estándar y calendario quincenal. El cambio de redacción de 2025 y el rótulo actual de un cuestionario de 2027 exigen reconstruir instrumentos y primeras publicaciones por ola antes de admitir una serie o pronóstico. Originales y hashes se conservan en el archivo privado fuera de Git.
 
+El [piloto AV-100](psicohistoria/AV100_BLS_RELEASE_DOM_PILOT.md) lee cinco tasas de páginas BLS archivadas y conserva capturas DOM completas fuera de Git con SHA. No demuestra los bytes de primera publicación; MAC-02 sigue PARCIAL/NO y aún no hay backtest.
+
 ---
 

@@ -1,5 +1,11 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-100 · piloto BLS de cinco meses
+
+[AV-100](AV100_BLS_RELEASE_DOM_PILOT.md) documenta cinco páginas BLS completas serializadas del navegador, con hash privado y extractor que distingue mes de referencia y fecha del comunicado. Se extrajeron tasas nacionales de 9,0 %, 14,7 %, 4,4 %, 4,3 % y 4,2 % para los cinco meses indicados. Las capturas son DOM actual, no bytes originales ni prueba de primera publicación. `MAC-02` sigue PARCIAL/NO; no hay backtest ni predicción.
+
+---
+
 ## AV-099 · fuente tecnológica BTOS en revisión
 
 [AV-099](AV099_BTOS_TECH_SOURCE_FEASIBILITY.md) localiza datos nacionales, errores estándar y fechas de BTOS, y documenta las rupturas de redacción y los metadatos futuros del archivo actual. Los cuatro originales están archivados privadamente. No hay serie histórica point-in-time, target admitido ni emisión. El cierre documental se registra en el Sheet privado una vez verificada la publicación.

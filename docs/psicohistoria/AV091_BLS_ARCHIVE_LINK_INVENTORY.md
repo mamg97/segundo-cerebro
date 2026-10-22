@@ -37,6 +37,11 @@ La fecha en la URL no equivale a comprobar el encabezado y la tasa inicial
 de cada comunicado, su disponibilidad histórica independiente ni la hora
 de cierre de cada vintage RUC.
 
+**Avance posterior:** [AV-100](AV100_BLS_RELEASE_DOM_PILOT.md) conserva cinco
+serializaciones DOM completas de páginas archivadas y extrae sus tasas. No son
+respuestas HTTP originales ni prueba de los bytes del día de publicación;
+quedan 183 enlaces sin captura. El estado científico de `MAC-02` no cambia.
+
 ## Siguiente puerta
 
 Conservar los originales BLS que se usen, cotejar fecha y tasa de primera
