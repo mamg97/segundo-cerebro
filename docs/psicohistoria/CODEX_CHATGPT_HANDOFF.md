@@ -111,3 +111,8 @@ OAF superseded en ComCat, pero la primera ventana de tres productos ya estaba
 en marcha al actualizarse cada uno. El conjunto actual de septiembre tiene
 167 sismos M≥5 y solo 11 con OAF, sin que eso defina elegibilidad. SIS-02
 sigue PARCIAL/NO; no puntuar la probabilidad USGS como predicción propia.
+
+[AV-102](AV102_WPP_CENSUS_US_POPULATION_SCOPE.md) conserva tres originales
+Census V2023 y contrasta la fila USA 2023 con WPP 2022/2024. La fecha de
+referencia coincide, pero los universos de facto/residente no; no llamar
+«error» a la diferencia ni admitir desenlace hasta conciliar definiciones.
