@@ -28380,12 +28380,18 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 .recipe-catalog-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   gap: 7px;
   padding: 0 2px 2px;
 }
 .recipe-catalog-action {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 36px;
+  box-sizing: border-box;
   padding: 7px 5px;
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -28394,6 +28400,8 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   font: inherit;
   font-size: 11px;
   font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
   text-align: center;
   cursor: pointer;
 }
@@ -28407,9 +28415,25 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 .recipe-catalog-action:disabled { opacity: .5; cursor: wait; }
 .recipe-catalog-action:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .recipe-catalog-error { color: var(--coral); margin: 1px 0 5px; font-size: 10px; }
+/* Narrow recipe tiles cannot fit two full-word actions side by side.
+   Stack full-width buttons while keeping the three-column catalog and
+   separate edit/delete targets. Also works with enlarged iOS text. */
+@media (max-width: 760px) {
+  .recipe-catalog-actions {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+    padding: 0 2px 2px;
+  }
+  .recipe-catalog-action {
+    min-height: 40px;
+    padding: 8px 6px;
+    font-size: 12px;
+    white-space: normal;
+  }
+}
 @media (max-width: 429px) {
-  .recipe-catalog-actions { gap: 5px; padding-inline: 0; }
-  .recipe-catalog-action { min-height: 40px; padding: 7px 3px; font-size: 10.5px; }
+  .recipe-catalog-actions { padding-inline: 0; }
+  .recipe-catalog-action { padding-inline: 4px; }
 }
 
 /* Weekly menu: editable consumed meals and explicit unassigned slots. */
