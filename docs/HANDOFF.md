@@ -1,3 +1,17 @@
+## PSICOHISTORIA — AV-092 · primeras ediciones demográficas WPP · 22/10/2026
+
+[PR #783](https://github.com/mamg97/segundo-cerebro/pull/783) se fusionó
+(squash `bfa3d48d58b6e8752f786b29375da327650b4fd3`) tras dos checks
+SUCCESS. AV-091 consta en el Sheet; `MAC-02=PARCIAL`.
+La [auditoría AV-092](psicohistoria/AV092_WPP_DEMOGRAPHIC_VINTAGES.md)
+abre demografía con WPP 2022/2024 oficiales: 237 países/áreas con identidades
+coincidentes y población 2023 revisada. Fuentes conservadas fuera de Git;
+el ZIP completo de 2022 no se archivó. Código/CI en revisión; no declarar
+AV-092 cerrado hasta fusionar y registrar. La edición 2024 es una revisión,
+no verdad externa ni score de predicción.
+
+---
+
 ## PSICOHISTORIA — AV-091 · enlaces BLS para el reloj macro · 22/10/2026
 
 [PR #782](https://github.com/mamg97/segundo-cerebro/pull/782) se fusionó
@@ -5,8 +19,8 @@
 locales y tres checks SUCCESS. AV-090 consta en el Sheet privado;
 `MAC-02=PARCIAL`. El [inventario AV-091](psicohistoria/AV091_BLS_ARCHIVE_LINK_INVENTORY.md)
 reúne en privado 188 enlaces oficiales BLS para 189 meses 2011-01…2026-09,
-con octubre de 2025 explícitamente ausente. Código y CI nuevos en revisión;
-no declarar AV-091 cerrado ni avanzar fase hasta fusionar y registrar.
+con octubre de 2025 explícitamente ausente. PR #783 fusionada y AV-091
+registrado; la fase científica sigue parcial.
 Faltan originales BLS, tasas de primera publicación y reloj RUC independiente.
 
 ---

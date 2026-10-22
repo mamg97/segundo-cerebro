@@ -1,5 +1,15 @@
 # PSICOHISTORIA — Estado científico verificado · 22/10/2026
 
+## AV-092 · Fuentes WPP demográficas en revisión
+
+- [PR #783](https://github.com/mamg97/segundo-cerebro/pull/783) está
+  fusionada, AV-091 consta en el Sheet y `MAC-02` sigue parcial.
+- [AV-092](AV092_WPP_DEMOGRAPHIC_VINTAGES.md) audita esquema y geografía
+  entre WPP 2022/2024; código y CI pendientes. Ningún target demográfico
+  admitido, score ni emisión.
+
+---
+
 ## AV-091 · Índice privado de comunicados BLS en revisión
 
 - [PR #782](https://github.com/mamg97/segundo-cerebro/pull/782) está fusionada
