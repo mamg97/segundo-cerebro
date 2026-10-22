@@ -32,7 +32,7 @@ test("top navbar remains independently available in every route, no authorizatio
   assert.match(css,/body\.route-area-active \.sidebar\s*\{[\s\S]*?position:fixed/);
   assert.match(css,/z-index:5000/);
   assert.match(index,/id="copy-area-link"/);
-  assert.match(index,/href="\.\/area-routes\.css\?v=0\.1\.1"/);
+  assert.match(index,/href="\.\/area-routes\.css\?v=0\.1\.2"/);
   assert.doesNotMatch(index,/Cloudflare-Access-Jwt-Assertion|client_secret|private_token/);
 });
 
@@ -63,4 +63,13 @@ test("Pareja contains a shareable Boda route with restricted subpaths",()=>{
  assert.deepEqual(routeFromHash("#/pareja/boda"),{areaId:"area-partner",detailId:"boda"});
  assert.equal(routeFromHash("#/pareja").detailId,null);
  for(const path of ["#/pareja/otro","#/pareja/%","#/pareja/%2F","#/pareja/boda/ideas"])assert.equal(routeFromHash(path),null);
+});
+
+// A fixed two-row mobile nav must not obscure a routed view or its actions.
+test("mobile routed header reserves navbar height and share/close actions",()=>{
+ const css=readFileSync(new URL("./area-routes.css",import.meta.url),"utf8");
+ assert.match(css, /@media\\(max-width:760px\\)\\{[\\s\\S]*?--route-nav-height:84px/);
+ assert.match(css, /body\\.route-area-active \\.sidebar\\{min-height:var\\(--route-nav-height\\)\\}/);
+ assert.match(css, /body\\.route-area-active #detail-dialog\\[open\\] #dialog-context,[\\s\\S]*?padding-right:180px/);
+ assert.doesNotMatch(css, /padding-right:105px/);
 });
