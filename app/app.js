@@ -536,7 +536,12 @@ function applyStateScope(scope, payload) {
       );
       // A scoped budget refresh cannot erase verified banking history.
       const financeDialog = document.querySelector("#detail-dialog.budget-dialog[open]");
-      if (financeDialog) openBudgetDetail();
+      if (financeDialog) {
+        const body=financeDialog.querySelector("#dialog-body");
+        const previousScroll=body?.scrollTop||0;
+        openBudgetDetail({skipRefresh:true});
+        if(body)body.scrollTop=previousScroll;
+      }
     }
     if (Array.isArray(payload.importantEventRules)) state.importantEventRules = payload.importantEventRules;
     if (payload.healthSummary) state.healthSummary = payload.healthSummary;
@@ -610,52 +615,67 @@ async function refreshCalendarView({ force = false } = {}) {
 async function refreshStateScope(scope) {
   try {
     const payload = await fetchStateScope(scope);
-    applyStateScope(scope, payload);
-    return { scope, ok: true };
+    const applied=applyStateScope(scope, payload);
+    return { scope, ok: applied===true };
   } catch (error) {
     console.warn("Incremental refresh failed", scope, error);
     return { scope, ok: false };
   }
 }
 
-async function refreshApp() {
-  const button = document.querySelector("#refresh-app");
-  if (button) {
-    button.disabled = true;
-    button.classList.add("is-refreshing");
-    button.setAttribute("aria-label", "Actualizando datos visibles");
-    button.setAttribute("aria-busy", "true");
+let refreshAppPending=false;
+async function refreshApp(){
+  if(refreshAppPending)return {ok:false,reason:"busy"};
+  refreshAppPending=true;
+  const button=document.querySelector("#refresh-app");
+  if(button){
+    button.disabled=true;button.classList.add("is-refreshing");
+    button.setAttribute("aria-label","Actualizando datos visibles");
+    button.setAttribute("aria-busy","true");
   }
-
-  try {
-    // Keep each domain in an independent request so one expensive source cannot
-    // consume the CPU budget of the whole dashboard. Detail workspaces remain
-    // lazy and refresh themselves when opened.
-    // An explicit user refresh invalidates detail payload freshness too;
-    // retained views remain visible until their next successful read.
+  try{
     pantryDetailMemory.invalidate();
     objectsDetailMemory.invalidate();
-    verifiedFinanceBankWorkspace = null;
-    await Promise.allSettled([
+    verifiedFinanceBankWorkspace=null;
+    const results=await Promise.all([
       refreshStateScope("finance"),
       refreshStateScope("habits"),
-      refreshStateScope("pantry")
+      refreshStateScope("pantry"),
+      refreshStateScope("objects")
     ]);
-    await Promise.allSettled([
-      refreshStateScope("objects"),
-      refreshCalendarView({ force: true })
-    ]);
-    await Promise.allSettled([
-      renderHomeHealthCard(),
-      loadHomeWeeklyMenu()
-    ]);
+    const calendar=await refreshCalendarView({force:true});
+    const extras=await Promise.allSettled([renderHomeHealthCard(),loadHomeWeeklyMenu()]);
+    let bankOk=true;
+    const financeDialog=document.querySelector("#detail-dialog.budget-dialog[open]");
+    if(financeDialog&&canReadPrivateFinanceBankWorkspace()){
+      try{
+        // Fetch the canonical bank workspace explicitly: a scoped finance read
+        // alone can leave the open account list stale.
+        const bank=await fetchFinanceBankWorkspace(12000);
+        verifiedFinanceBankWorkspace={accounts:bank.accounts,transactions:bank.transactions};
+        state.financeSummary=mergeVerifiedFinanceBankWorkspace(state.financeSummary,verifiedFinanceBankWorkspace);
+        const scroller=financeDialog.querySelector("#dialog-body");
+        const top=scroller?.scrollTop||0;
+        openBudgetDetail({skipRefresh:true});
+        if(scroller)scroller.scrollTop=top;
+      }catch(error){
+        bankOk=false;
+        console.warn("Finance refresh incomplete","FINANCE_BANK_SOURCE_UNAVAILABLE");
+      }
+    }
     renderMode();
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.classList.remove("is-refreshing");
-      button.setAttribute("aria-label", "Actualizar datos visibles");
-      button.setAttribute("aria-busy", "false");
+    return {ok:results.every(x=>x.ok===true) && bankOk &&
+      calendar.status!=="failed"&&calendar.status!=="partial"&&
+      extras.every(x=>x.status==="fulfilled")};
+  }catch(error){
+    console.warn("Refresh failed","REFRESH_UNAVAILABLE");
+    return {ok:false};
+  }finally{
+    refreshAppPending=false;
+    if(button){
+      button.disabled=false;button.classList.remove("is-refreshing");
+      button.setAttribute("aria-label","Actualizar datos visibles");
+      button.setAttribute("aria-busy","false");
     }
   }
 }
@@ -811,10 +831,13 @@ async function init() {
   renderMode();
   renderDate();
   renderNavigation();
-  initializeMobileNavigation({navigateTo: (hash) => {
-    if(window.location.hash!==hash)history.pushState(null,"",hash);
-    applyAreaRoute();
-  }});
+  initializeMobileNavigation({
+    navigateTo: (hash) => {
+      if(window.location.hash!==hash)history.pushState(null,"",hash);
+      applyAreaRoute();
+    },
+    onRefresh: refreshApp
+  });
   renderDailyOverview();
   renderEvents();
   if (privateModeKind === "remote" && calendarSnapshotComplete(state.calendarSummary)) {

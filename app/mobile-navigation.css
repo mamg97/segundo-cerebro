@@ -111,3 +111,71 @@
 @media(min-width:761px){
  .mobile-app-header,.mobile-bottom-nav,.mobile-navigation-sheet{display:none!important}
 }
+
+/* Compact liquidity summary only on phones: horizontal bars, no fixed 258px
+   leader graph, readable allocations, and one scrolling surface. */
+@media(max-width:760px){
+ .liquidity-section{padding:12px!important;min-width:0}
+ .liquidity-section-heading{gap:4px!important;margin-bottom:8px!important}
+ .liquidity-section-heading h3{font-size:17px!important;line-height:1.25!important;margin:2px 0!important}
+ .liquidity-section-heading > span{font-size:10px!important}
+ .liquidity-account-list{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+ .liquidity-account-card{padding:12px!important;min-height:0!important;border-radius:14px!important}
+ .liquidity-account-card .liquidity-card-header{
+   display:flex!important;flex-direction:row!important;align-items:flex-start;justify-content:space-between;
+   gap:12px;min-height:0!important
+ }
+ .liquidity-card-header > div:first-child{min-width:0}
+ .liquidity-card-header > div:first-child strong{font-size:14px!important}
+ .liquidity-card-header > div:first-child span{display:none!important}
+ .liquidity-card-header > div:first-child small{font-size:10px!important;margin-top:3px!important}
+ .liquidity-balance{text-align:right!important;flex:0 0 auto}
+ .liquidity-balance small{display:none!important}
+ .liquidity-balance b{font-size:17px!important}
+ .liquidity-account-chart{
+   display:flex!important;flex-direction:column!important;min-height:0!important;
+   margin-top:8px!important;gap:5px!important
+ }
+ .liquidity-leader-layer{display:none!important}
+ .liquidity-bar-wrap{display:block!important;min-width:0;width:100%}
+ .liquidity-stacked-bar-2d{
+   display:flex!important;flex-direction:row!important;width:100%!important;height:12px!important;
+   border-radius:9px!important;box-shadow:none!important
+ }
+ .liquidity-bar-segment-2d{height:100%!important;width:auto!important;min-width:0!important;border-top:0!important;border-right:1px solid rgba(0,0,0,.15)}
+ .liquidity-bar-caption{display:none!important}
+ .liquidity-account-legend,.liquidity-account-legend.is-variable-height{
+   display:grid!important;grid-template-rows:none!important;grid-auto-rows:auto!important;
+   height:auto!important;max-height:none!important;overflow:visible!important;
+   gap:0!important;align-content:start!important;width:100%
+ }
+ .liquidity-account-legend .liquidity-legend-row,
+ .liquidity-account-legend.is-variable-height .liquidity-legend-row{
+   display:grid!important;min-height:28px!important;align-self:auto!important;
+   grid-template-columns:8px minmax(0,1fr) auto!important;gap:7px!important;
+   padding:5px 0!important;align-content:center!important
+ }
+ .liquidity-legend-row em{font-size:11px!important;overflow:hidden;text-overflow:ellipsis;white-space:normal;line-height:1.25}
+ .liquidity-legend-row span:not(.liquidity-legend-value)>small{display:none!important}
+ .liquidity-legend-value{min-width:0!important;justify-items:end!important}
+ .liquidity-legend-value b{font-size:11px!important}
+ .liquidity-charge-date{font-size:9px!important}
+ .bank-holds-block{margin-top:7px!important;padding:8px!important}
+ .bank-holds-block:has(.bank-holds-empty){display:none!important}
+ .bank-holds-heading strong{font-size:11px!important}
+ .liquidity-account-summary{
+   margin-top:7px!important;padding-top:8px!important;gap:6px 9px!important;
+   grid-template-columns:repeat(2,minmax(0,1fr))!important
+ }
+ .liquidity-account-summary span,.liquidity-account-summary b{font-size:10px!important}
+ .liquidity-warning{font-size:10px!important;margin-top:7px!important}
+ .mobile-header-action.is-refreshing svg{animation:mobile-sync-spin .9s linear infinite}
+ .mobile-refresh-feedback:not([hidden]){
+   display:block;position:absolute;right:12px;top:calc(100% + 7px);z-index:4;
+   border:1px solid var(--line);border-radius:10px;background:var(--surface);
+   padding:9px 12px;box-shadow:0 8px 20px rgba(0,0,0,.2);color:var(--ink);
+   font-size:12px;font-weight:750;max-width:220px
+ }
+ @keyframes mobile-sync-spin{to{transform:rotate(360deg)}}
+}
+@media(prefers-reduced-motion:reduce){.mobile-header-action.is-refreshing svg{animation:none}}

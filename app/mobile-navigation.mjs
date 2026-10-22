@@ -43,12 +43,12 @@ export function mobileRememberedRoute(id,cache){
  if(!MOBILE_AREAS.some(x=>x[0]===id))return "#/inicio";
  const v=cache?.[id];return v&&routeFromHash(v)?.areaId===id?v:hrefForArea(id);
 }
-let go,route={areaId:"area-general",detailId:null},hash="#/inicio",mode="",trigger=null;
+let go,onRefresh,refreshBusy=false,refreshFeedbackTimer=null,route={"area-general",detailId:null},hash="#/inicio",mode="",trigger=null;
 const historyByArea={};
 const dom=(id)=>document.getElementById(id);
 function markup(){return '<div id="mobile-app-header" class="mobile-app-header">'+
  '<button id="mobile-context-trigger" class="mobile-context-trigger" type="button" aria-haspopup="dialog" aria-expanded="false"><span><small id="mobile-context-area">Inicio</small><strong id="mobile-context-label">Inicio</strong></span>'+ico("down")+'</button>'+
- '<button id="mobile-refresh-action" class="mobile-header-action" type="button" aria-label="Actualizar">'+ico("refresh")+'</button></div>'+
+ '<button id="mobile-refresh-action" class="mobile-header-action" type="button" aria-label="Actualizar datos" aria-busy="false">'+ico("refresh")+'</button><span class="mobile-refresh-feedback" id="mobile-refresh-feedback" role="status" aria-live="polite" hidden></span></div>'+
  '<nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Navegación móvil">'+MOBILE_AREAS.slice(0,5).map(([id,label,icon])=>
  '<a href="'+hrefForArea(id)+'" data-mobile-main="'+id+'">'+ico(icon)+'<span>'+label+'</span></a>').join("")+
  '<button id="mobile-more-trigger" type="button" aria-expanded="false">'+ico("grid")+'<span>Más</span></button></nav>'+
@@ -96,11 +96,27 @@ export function syncMobileNavigation(nextRoute,nextHash){
  dom("mobile-more-trigger")?.classList.toggle("is-current",label.tab==="more");
  if(mode)renderSheet();
 }
-export function initializeMobileNavigation({navigateTo}){
- go=navigateTo;if(dom("mobile-app-header"))return;
+export function initializeMobileNavigation({navigateTo,onRefresh:refreshHandler}){
+ go=navigateTo;onRefresh=refreshHandler;if(dom("mobile-app-header"))return;
  document.body.insertAdjacentHTML("beforeend",markup());
  dom("mobile-context-trigger").addEventListener("click",e=>openSheet("sections",e.currentTarget));
- dom("mobile-refresh-action").addEventListener("click",()=>dom("refresh-app")?.click());
+ dom("mobile-refresh-action").addEventListener("click",async()=>{
+  if(refreshBusy)return;
+  const button=dom("mobile-refresh-action"),feedback=dom("mobile-refresh-feedback");
+  refreshBusy=true;button.disabled=true;button.classList.add("is-refreshing");
+  button.setAttribute("aria-busy","true");
+  if(refreshFeedbackTimer)clearTimeout(refreshFeedbackTimer);
+  feedback.hidden=false;feedback.textContent="Actualizando datos…";
+  try{
+    const result=await onRefresh?.();
+    feedback.textContent=result?.ok===true?"Datos actualizados":"Actualización parcial o fallida";
+  }catch(error){feedback.textContent="No se pudo actualizar";}
+  finally{
+    refreshBusy=false;button.disabled=false;button.classList.remove("is-refreshing");
+    button.setAttribute("aria-busy","false");
+    refreshFeedbackTimer=setTimeout(()=>{feedback.hidden=true;},4500);
+  }
+ });
  dom("mobile-bottom-nav").addEventListener("click",e=>{
   const area=e.target.closest("[data-mobile-main]");if(area){e.preventDefault();navigate(mobileRememberedRoute(area.dataset.mobileMain,historyByArea));}
  });

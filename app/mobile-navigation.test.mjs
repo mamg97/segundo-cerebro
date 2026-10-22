@@ -39,7 +39,7 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
  assert.match(app,/syncMobileNavigation\(route,hash\)/);
  assert.match(app,/routedHealthTabId/);
  assert.match(app,/hrefForHealthTab/);
- assert.match(index,/mobile-navigation\.css\?v=0\.1\.1/);
+ assert.match(index,/mobile-navigation\.css\?v=0\.1\.2/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(min-width:761px\)/);
  assert.match(css,/env\(safe-area-inset-bottom/);
@@ -54,7 +54,23 @@ test("HTML links to both navigation stylesheets and respects iOS safe areas",()=
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
  assert.match(index,/<link rel="stylesheet" href="\.\/area-routes\.css\?v=0\.1\.4">/);
- assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.1">/);
+ assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.2">/);
  assert.match(css,/--mobile-toolbar-height:calc\(58px \+ env\(safe-area-inset-top,0px\)\)/);
  assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
+});
+
+test("mobile refresh calls real refresh, gives feedback and compact bars avoid fixed 258px",()=>{
+ const script=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
+ assert.match(script,/onRefresh:refreshHandler/);
+ assert.match(script,/const result=await onRefresh\?\.\(\)/);
+ assert.doesNotMatch(script,/refresh-app"\)\?\.click/);
+ assert.match(script,/Actualización parcial o fallida/);
+ assert.match(app,/onRefresh: refreshApp/);
+ assert.match(app,/await fetchFinanceBankWorkspace\(12000\)/);
+ assert.match(app,/scroller\.scrollTop=top/);
+ assert.match(css,/\.liquidity-stacked-bar-2d\{[\s\S]*?flex-direction:row/);
+ assert.match(css,/\.liquidity-account-legend,.liquidity-account-legend\.is-variable-height\{/);
+ assert.match(css,/\.bank-holds-block:has\(\.bank-holds-empty\)/);
 });
