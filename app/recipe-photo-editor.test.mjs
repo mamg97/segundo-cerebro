@@ -51,3 +51,14 @@ test("private recipe images are read before inherited Google Drive photos",()=>{
  assert.match(migration,/recipe_photo_versions/);
  assert.doesNotMatch(recipe,/MenuSemanal!|Registro!/);
 });
+
+test("after recipe photo edit the home menu invalidates cached photo references and reloads",()=>{
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ const first=app.indexOf("async function refreshRecipeCatalog()");
+ const second=app.indexOf("function renderRecipeDetail(",first);
+ assert.ok(first>=0 && second>first);
+ const code=app.slice(first,second);
+ assert.match(code,/homeWeeklyMenuWeekCache\.clear\(\)/);
+ assert.match(code,/await loadHomeWeeklyMenu\(null, \{ navigation: true, force: true \}\)/);
+ assert.match(code,/renderRecipesPanel\(updated\)/);
+});

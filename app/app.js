@@ -6702,6 +6702,10 @@ async function refreshRecipeCatalog() {
   const updated = await response.json();
   if (!Array.isArray(updated.recipes)) throw new Error("RECIPE_REFRESH_INVALID");
   renderRecipesPanel(updated);
+  // Photo edits create a new immutable recipe ID. The menu may retain the old
+  // recipe_id but must re-read its display-only photo fallback immediately.
+  homeWeeklyMenuWeekCache.clear();
+  await loadHomeWeeklyMenu(null, { navigation: true, force: true });
 }
 
 function renderRecipeDetail(panel, data, recipe, options = {}) {
