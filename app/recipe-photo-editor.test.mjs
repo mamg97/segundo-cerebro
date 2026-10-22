@@ -59,6 +59,6 @@ test("after recipe photo edit the home menu invalidates cached photo references 
  assert.ok(first>=0 && second>first);
  const code=app.slice(first,second);
  assert.match(code,/homeWeeklyMenuWeekCache\.clear\(\)/);
- assert.match(code,/await loadHomeWeeklyMenu\(null, \{ navigation: true, force: true \}\)/);
+ assert.match(code,/await loadHomeWeeklyMenu\(updated, \{ navigation: true, force: true \}\)/);
  assert.match(code,/renderRecipesPanel\(updated\)/);
 });
