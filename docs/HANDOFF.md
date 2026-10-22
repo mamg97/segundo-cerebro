@@ -3759,3 +3759,23 @@ Antes de cualquier cambio:
 - El fallback no escribe durante GET, no sustituye la obligación de registrar el consumo y no se aplica a filas sin identidad exacta.
 - Motivo: el 06/10/2026 el salmón con ñoquis estaba consumido en MenuSemanal pero faltaba en Registro; la Home mostraba 1296 kcal / 92 g en vez de 2062 kcal / 133 g.
 
+## PSICOHISTORIA — cierre de auditorías de fuente · 22/10/2026
+
+[PR #784](https://github.com/mamg97/segundo-cerebro/pull/784) WPP,
+[PR #785](https://github.com/mamg97/segundo-cerebro/pull/785) USGS y
+[PR #786](https://github.com/mamg97/segundo-cerebro/pull/786) HTOPS están
+fusionadas. WPP pasó 427 pruebas locales y CI motores/privacidad SUCCESS;
+las PR documentales pasaron privacidad. Las fuentes originales y hashes están
+en el archivo privado fuera de Git. En el Sheet privado AV-092/093/094
+permanecen como eventos históricos `EN_CURSO` y AV-095/096/097 cierran las
+auditorías. DEM/SIS/SOC 01/02 siguen PARCIAL y 03–07 NO_INICIADA, todos con
+criterio `NO`. No hay target admitido, score ni pronóstico nuevo.
+
+Las secciones anteriores a este cierre describen el estado cuando las PR
+todavía estaban en revisión. Próximo trabajo: reloj as-of y desenlace externo
+en WPP; primeras versiones y denominador completo en USGS; cuestionario,
+ponderación y primeras publicaciones en HTOPS. Macro aún requiere originales
+BLS y reloj RUC independiente. Candidate UCDP permanece bloqueado.
+
+---
+

@@ -1,5 +1,24 @@
 # PSICOHISTORIA — Estado científico verificado · 22/10/2026
 
+## AV-095/096/097 · cierre de tres auditorías de fuente
+
+- [WPP AV-092](AV092_WPP_DEMOGRAPHIC_VINTAGES.md) se fusionó en
+  [PR #784](https://github.com/mamg97/segundo-cerebro/pull/784), con 427
+  pruebas locales y CI de motores/privacidad SUCCESS.
+- [USGS AV-093](AV093_USGS_OAF_SOURCE_FEASIBILITY.md) y
+  [HTOPS AV-094](AV094_HTOPS_SOCIAL_SOURCE_FEASIBILITY.md) se fusionaron en
+  [PR #785](https://github.com/mamg97/segundo-cerebro/pull/785) y
+  [PR #786](https://github.com/mamg97/segundo-cerebro/pull/786), con
+  controles de privacidad SUCCESS.
+- El Sheet privado conserva AV-092/093/094 `EN_CURSO` y añade AV-095/096/097
+  `VERIFICADO` como cierres append-only. DEM/SIS/SOC 01/02 son PARCIAL y
+  03–07 NO_INICIADA, todos con criterio `NO`. Fuentes oficiales en archivo
+  privado. No hay target admitido, score ni forecast nuevo.
+
+Las secciones inferiores son instantáneas anteriores al cierre.
+
+---
+
 ## AV-092 · Fuentes WPP demográficas en revisión
 
 - [PR #783](https://github.com/mamg97/segundo-cerebro/pull/783) está
