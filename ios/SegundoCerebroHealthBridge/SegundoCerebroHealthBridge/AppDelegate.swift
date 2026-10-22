@@ -13,8 +13,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         registerBackgroundRefresh()
 
-        HealthKitService.shared.installObserverQueries { [weak self] isWeightUpdate in
-            _ = await self?.performAutomaticSync(trigger: isWeightUpdate ? .bodyMass : .healthKit)
+        HealthKitService.shared.installObserverQueries { [weak self] isBodyUpdate in
+            _ = await self?.performAutomaticSync(trigger: isBodyUpdate ? .bodyMass : .healthKit)
         }
 
         if UserDefaults.standard.bool(forKey: "healthBridge.didRequestHealthAuthorization") {
@@ -84,12 +84,17 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     private func performAutomaticSync(trigger: SyncTrigger) async -> Bool {
         guard UIApplication.shared.isProtectedDataAvailable else {
             await SyncService.shared.deferSync(trigger: trigger)
+            scheduleBackgroundRefresh()
             return false
         }
 
         do {
             let result = try await SyncService.shared.syncRecentDays(trigger: trigger)
-            if result.wasSkipped { return !UserDefaults.standard.bool(forKey: SyncDefaults.pendingProtectedDataRetry) }
+            if result.wasSkipped {
+                let pending = UserDefaults.standard.bool(forKey: SyncDefaults.pendingProtectedDataRetry)
+                if pending { scheduleBackgroundRefresh() }
+                return !pending
+            }
             scheduleBackgroundRefresh()
             return true
         } catch {

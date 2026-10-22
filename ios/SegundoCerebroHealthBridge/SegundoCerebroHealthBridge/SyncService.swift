@@ -73,6 +73,16 @@ actor SyncService {
             )
 
             let response = try await post(payload, token: token)
+            // Only acknowledge the weight timestamp when the entire body batch was accepted.
+            if response.bodySamplesAccepted == snapshot.bodySamples.count,
+               let latest = snapshot.bodySamples.filter({ $0.type == "bodyMass" }).map(\.measuredAt).max(),
+               let measuredAt = formatter.date(from: latest) ?? ISO8601DateFormatter().date(from: latest) {
+                let previous = defaults.object(forKey: SyncDefaults.lastAcceptedWeightMeasuredAt) as? Date
+                if previous == nil || measuredAt >= previous! {
+                    defaults.set(measuredAt, forKey: SyncDefaults.lastAcceptedWeightMeasuredAt)
+                    defaults.set(Date(), forKey: SyncDefaults.lastWeightAcceptedAt)
+                }
+            }
             syncedDays += 1
             bodySamples += response.bodySamplesAccepted ?? 0
             if response.recoveryAccepted == true { recoveryDays += 1 }

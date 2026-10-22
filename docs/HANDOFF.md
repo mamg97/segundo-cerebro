@@ -1,3 +1,11 @@
+## Health Bridge — actualización de revisión PR #773
+
+Esta nota actualiza el bloque anterior que permanece debajo. Ocho pruebas Swift de coordinación, seis ensayos del renovador con comandos simulados y tres pruebas del SQL productivo sobre SQLite en memoria cubren concurrencia, reintentos, reapertura, varias pesadas/día, UTC, llegada atrasada y UPSERT. Fixtures exclusivamente sintéticos. El fallo del marcador del renovador quedó corregido; las cuatro métricas corporales conservan prioridad. Diagnósticos separan lectura, medición y envío aceptado, con errores de entrega HealthKit y SHA instalada.
+
+Pendiente: CI y build del último commit, publicación e instalación de la revisión aprobada; nueva pesada hasta D1/API/UI y posterior sincronización automática real. No retirar el Atajo. La ventana ordinaria de tres días no acredita recuperación de muestras más antiguas: requieren recuperación histórica explícita. CORRECCIÓN IMPLEMENTADA · VALIDACIÓN EN DISPOSITIVO PENDIENTE.
+
+---
+
 ## Health Bridge — reparación de coordinación en revisión
 
 Rama `codex/health-weight-forensics`: cola corporal persistente, relectura si llega un peso durante otra sincronización, recuperación al desbloquear y al abrir la app. Siete pruebas Swift ejecutables pasan; doce pruebas existentes de identidad, unión corporal, normalización y ventana temporal pasan. Diagnósticos privados y revisión de instalación añadidos; renovador propuesto avanza main limpio y reinstala cambios aunque la firma siga vigente. No se ha actualizado el checkout del renovador real ni instalado esta versión en iPhone.

@@ -128,6 +128,23 @@ actor Source {
             _ = try await coordinator.sync(trigger: .bodyMass)
             try expect(await source.count() == 2, "Joined an already completed task")
         }
+        try await run("foreground arriving during activity is reconciled once despite duplicate activation") { defaults, clock, source, coordinator in
+            await source.configure(hold: true)
+            let activity = Task { try await coordinator.sync(trigger: .healthKit) }
+            await source.waitForFirstRead()
+            await source.publish()
+            let foreground = Task { try await coordinator.sync(trigger: .foreground) }
+            let deadline = Date().addingTimeInterval(3)
+            while defaults.object(forKey: SyncDefaults.lastForegroundAttempt) == nil, Date() < deadline { await Task.yield() }
+            try expect(defaults.object(forKey: SyncDefaults.lastForegroundAttempt) != nil, "Foreground not queued")
+            let duplicate = try await coordinator.sync(trigger: .foreground)
+            try expect(duplicate.wasSkipped, "Duplicate activation queued extra work")
+            await source.release()
+            _ = try await activity.value
+            let result = try await foreground.value
+            try expect(result.bodySamples == 2, "Foreground sample missing")
+            try expect(await source.triggers() == [.healthKit, .foreground], "Expected exactly one foreground reconciliation")
+        }
         print("\(passed) executable coordination tests passed")
     }
 }

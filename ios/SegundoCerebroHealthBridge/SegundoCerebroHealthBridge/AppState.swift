@@ -17,12 +17,16 @@ final class AppState: ObservableObject {
     @Published var lastBodyReadAt: Date?
     @Published var bodyReadCount = 0
     @Published var hasPendingBody = false
+    @Published var lastWeightAcceptedAt: Date?
+    @Published var lastAcceptedWeightMeasuredAt: Date?
+    @Published var healthKitFailures: [String] = []
     var installedVersion: String {
         let info = Bundle.main.infoDictionary ?? [:]
         return "\(info["CFBundleShortVersionString"] as? String ?? "?") (\(info["CFBundleVersion"] as? String ?? "?")) · \(info["HealthBridgeRevision"] as? String ?? "sin revisión")"
     }
 
     init() {
+        UserDefaults.standard.set(Bundle.main.object(forInfoDictionaryKey: "HealthBridgeRevision") as? String ?? "unknown", forKey: "healthBridge.installedRevision")
         refreshDiagnostics()
         if didRequestHealthAuthorization {
             HealthKitService.shared.enableBackgroundDelivery()
@@ -89,6 +93,9 @@ final class AppState: ObservableObject {
 
     func refreshDiagnostics() {
         let defaults = UserDefaults.standard
+        lastWeightAcceptedAt = defaults.object(forKey: SyncDefaults.lastWeightAcceptedAt) as? Date
+        lastAcceptedWeightMeasuredAt = defaults.object(forKey: SyncDefaults.lastAcceptedWeightMeasuredAt) as? Date
+        healthKitFailures = (defaults.dictionary(forKey: SyncDefaults.healthKitFailures) as? [String: String] ?? [:]).values.sorted()
         lastAttempt = defaults.object(forKey: SyncDefaults.lastAttempt) as? Date
         lastFailure = defaults.string(forKey: SyncDefaults.lastFailure)
         lastWeightReadAt = defaults.object(forKey: SyncDefaults.lastWeightReadAt) as? Date
@@ -106,7 +113,7 @@ final class AppState: ObservableObject {
         case .manual: "Manual"
         case .foreground: "Al abrir la app"
         case .healthKit: "Automática · nuevos datos de Salud"
-        case .bodyMass: "Automática · nuevo peso"
+        case .bodyMass: "Automática · medición corporal"
         case .backgroundRefresh: "Automática · reconciliación periódica"
         case .protectedDataRetry: "Automática · reintento tras desbloqueo"
         case nil: "Sin información"

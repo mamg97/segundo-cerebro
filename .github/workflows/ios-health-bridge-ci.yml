@@ -19,6 +19,10 @@ jobs:
         run: node --test ios/SegundoCerebroHealthBridge/scripts/health-weight-freshness.test.mjs
       - name: Exercise persistent sync coordination
         run: sh ios/SegundoCerebroHealthBridge/scripts/test-sync-coordinator.sh
+      - name: Exercise renewal and real body SQL
+        run: |
+          python3 ios/SegundoCerebroHealthBridge/scripts/test_renew_free_signing.py
+          node --experimental-sqlite --test private-cloudflare/src/health-body-d1.test.mjs
       - name: Build HealthKit bridge
         run: |
           xcodebuild \

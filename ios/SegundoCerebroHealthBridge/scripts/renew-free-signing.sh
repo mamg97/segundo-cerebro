@@ -22,7 +22,7 @@ mkdir -p "${STATE_DIR}"
 date +%s > "${LAST_ATTEMPT_FILE}"
 
 record_failure() {
-  local exit_code=$?
+  local exit_code=${1:-$?}
   printf '%s exit=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${exit_code}" > "${LAST_ERROR_FILE}"
   exit "${exit_code}"
 }
@@ -32,7 +32,7 @@ trap record_failure ERR
 readonly REPO_DIR="$(git -C "${PROJECT_DIR}" rev-parse --show-toplevel)"
 if [[ "$(git -C "${REPO_DIR}" branch --show-current)" != "main" || -n "$(git -C "${REPO_DIR}" status --porcelain)" ]]; then
   echo "Renovación detenida: se requiere main limpio; se conservan todos los cambios locales."
-  exit 2
+  record_failure 2
 fi
 git -C "${REPO_DIR}" fetch --quiet origin main
 git -C "${REPO_DIR}" merge --ff-only --quiet origin/main

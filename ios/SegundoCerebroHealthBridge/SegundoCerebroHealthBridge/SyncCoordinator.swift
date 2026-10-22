@@ -24,6 +24,9 @@ enum SyncDefaults {
     static let pendingBodySync = "healthBridge.pendingBodySync"
     static let lastFailureAt = "healthBridge.lastFailureAt"
     static let lastForegroundAttempt = "healthBridge.lastForegroundAttempt"
+    static let lastWeightAcceptedAt = "healthBridge.lastWeightAcceptedAt"
+    static let lastAcceptedWeightMeasuredAt = "healthBridge.lastAcceptedWeightMeasuredAt"
+    static let healthKitFailures = "healthBridge.healthKitFailures"
     static let lastBodyReadAt = "healthBridge.lastBodyReadAt"
     static let lastWeightReadAt = "healthBridge.lastWeightReadAt"
     static let lastBodyReadCount = "healthBridge.lastBodyReadCount"
@@ -73,6 +76,7 @@ actor SyncCoordinator {
            let last = defaults.object(forKey: SyncDefaults.lastForegroundAttempt) as? Date,
            time.timeIntervalSince(last) < 60 { return skipped(trigger, at: time) }
 
+        if trigger == .foreground { defaults.set(time, forKey: SyncDefaults.lastForegroundAttempt) }
         if trigger == .bodyMass || trigger == .manual || trigger == .foreground {
             deferSync(trigger: trigger)
         }
@@ -90,7 +94,6 @@ actor SyncCoordinator {
            time.timeIntervalSince(last) < Self.automaticSyncInterval {
             return skipped(trigger, at: time)
         }
-        if trigger == .foreground { defaults.set(time, forKey: SyncDefaults.lastForegroundAttempt) }
         let effective = defaults.bool(forKey: SyncDefaults.pendingBodySync) ? SyncTrigger.bodyMass : trigger
         let task = Task { try await self.drain(days: days, trigger: effective) }
         inFlight = task

@@ -44,7 +44,7 @@ struct ContentView: View {
                     }
 
                     LabeledContent("Cadencia automática") {
-                        Text("Actividad cada 8 h; peso prioritario")
+                        Text("Actividad cada 8 h; cuerpo prioritario")
                             .foregroundStyle(.secondary)
                     }
 
@@ -148,6 +148,17 @@ struct ContentView: View {
                     }
                     if let weight = state.lastWeightReadAt {
                         LabeledContent("Fecha del último peso leído") { Text(weight, format: .dateTime.day().month().hour().minute()) }
+                    }
+                    if let received = state.lastWeightAcceptedAt {
+                        LabeledContent("Peso: envío aceptado") { Text(received, format: .dateTime.day().month().hour().minute()) }
+                    }
+                    if let measured = state.lastAcceptedWeightMeasuredAt {
+                        LabeledContent("Fecha del peso enviado") { Text(measured, format: .dateTime.day().month().hour().minute()) }
+                    }
+                    if !state.healthKitFailures.isEmpty {
+                        DisclosureGroup("Avisos de entrega de Salud (\(state.healthKitFailures.count))") {
+                            ForEach(state.healthKitFailures, id: \.self) { Text($0).font(.caption) }
+                        }.foregroundStyle(.orange)
                     }
                     if state.hasPendingBody { Text("Hay mediciones corporales pendientes de enviar.").foregroundStyle(.orange) }
                     if let failure = state.lastFailure { Text("Último error: \(failure)").foregroundStyle(.red) }
