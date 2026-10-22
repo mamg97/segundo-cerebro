@@ -22,7 +22,7 @@ test("budget math does not double count paid and excluded entries",()=>{
 test("wedding has private API and responsive separate stylesheet",()=>{
  const app=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
- assert.match(app,/wedding\.css\?v=0\.1\.3/);
+ assert.match(app,/wedding\.css\?v=0\.1\.4/);
  assert.match(style,/\.wed-grid/);
  assert.doesNotMatch(style,/overflow-y:auto/);
 });
@@ -84,4 +84,25 @@ test("mobile inspiration supports gallery, camera, clipboard screenshots and ten
  assert.match(css,/env\(safe-area-inset-bottom\)/);
  assert.match(css,/\.wed-mobile-actions\{position:sticky/);
  assert.doesNotMatch(css,/overflow-y:auto/);
+});
+
+
+test("wedding category chips form a visible three-column phone grid without horizontal scrolling",()=>{
+ const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
+ const mobile=css.split("/* Wedding category filters: show every category at once on phones.")[1];
+ assert.ok(mobile);
+ assert.match(mobile,/@media\(max-width:650px\)/);
+ assert.match(mobile,/\.wed-inspo-filters,\s*\.wed-filters\s*\{/);
+ assert.match(mobile,/display:grid;/);
+ assert.match(mobile,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(mobile,/overflow-x:visible;/);
+ assert.match(mobile,/white-space:normal;/);
+ assert.match(mobile,/\.wed-inspo-filters button,\s*\.wed-filters button\s*\{/);
+ assert.match(mobile,/min-width:0;/);
+ assert.match(mobile,/min-height:44px;/);
+ assert.match(mobile,/overflow-wrap:anywhere;/);
+ const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ assert.match(source,/class="wed-inspo-filters"/);
+ assert.match(source,/class="wed-filters"/);
+ assert.match(source,/aria-pressed="/);
 });
