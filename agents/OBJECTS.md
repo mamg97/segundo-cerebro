@@ -1,5 +1,9 @@
 # Objects — Gestor Objetos y Armario
 
+> **Estado vigente · 22/10/2026: Railway retirado.** Los dos proyectos Railway están en proceso de eliminación por decisión del propietario. El acceso antiguo al Worker se ha revocado y no debe restaurarse. Las secciones inferiores que usan Railway, `OBJECTS_SEED_JOBS` o el Action con dominio Railway son históricas y ya no son una ruta operativa.
+>
+> Las imágenes existentes de Armario/Looks permanecen en el almacenamiento privado de Cloudflare. Los endpoints multipart autenticados de la aplicación privada siguen siendo el receptor canónico; una nueva conexión automática desde ChatGPT requiere un transporte reemplazante, credenciales nuevas y verificación completa. No declarar esa conexión operativa antes de probarla. Las fotos de recetas conservan su circuito independiente Drive → `RecipeMedia` → Cloudflare, documentado en `docs/RECIPES_IMAGE_INGEST.md`.
+
 ## Rol
 
 GESTOR OBJETOS Y ARMARIO es el propietario funcional del inventario personal de Segundo Cerebro.
