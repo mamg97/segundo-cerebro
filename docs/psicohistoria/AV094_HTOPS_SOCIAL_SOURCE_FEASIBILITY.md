@@ -15,3 +15,5 @@ Lectura de las tablas: ambas usan una población total nacional de 261.534.494 a
 Una pregunta prospectiva acotada sería anticipar la proporción nacional de adultos que declaran soledad `Always or Usually` en una futura ola HTOPS, con fecha de corte anterior a su trabajo de campo, definición idéntica de pregunta, tratamiento fijo de no respuesta y benchmark de persistencia de la última ola admisible. Deben fijarse antes del resultado la ola, primera publicación objetivo, tolerancia de revisión, incertidumbre muestral y calendario. También hay que verificar que la pregunta seguirá incluida.
 
 Estado: **fuente localizada, contrato y reloj as-of bloqueados**. No empalmar 2020–2026, no entrenar con las tablas actuales como si fueran vintages originales y no emitir probabilidad.
+
+Continuación: [AV-098](AV098_HTOPS_QUESTIONNAIRE_AND_UNCERTAINTY.md) verifica los cuestionarios, las tasas de respuesta y el error estándar publicado de julio; el reloj de primera publicación y el gate prospectivo siguen pendientes.

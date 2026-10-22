@@ -3777,5 +3777,7 @@ en WPP; primeras versiones y denominador completo en USGS; cuestionario,
 ponderación y primeras publicaciones en HTOPS. Macro aún requiere originales
 BLS y reloj RUC independiente. Candidate UCDP permanece bloqueado.
 
+Actualización 23/10/2026: [AV-098](psicohistoria/AV098_HTOPS_QUESTIONNAIRE_AND_UNCERTAINTY.md) verifica que `SOC2_first` conserva pregunta y respuestas en marzo/julio HTOPS 2026 y documenta el error estándar oficial de julio. Siguen pendientes vintages de primera publicación y evaluación prospectiva; SOC continúa PARCIAL, sin emisión.
+
 ---
 
