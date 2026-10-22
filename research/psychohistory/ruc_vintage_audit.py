@@ -140,7 +140,10 @@ def audit(path: Path, expected_sha256: str) -> dict:
         if not isinstance(value, float):
             raise ValueError("Non-numeric observation")
         year, quarter = vintages[column - 2]
-        if months[row - 2] > (year, quarter * 3):
+        # RUC documentation places the vintage around the 15th of the
+        # quarter's middle month; the previous month's observation is the
+        # latest potentially available one.
+        if months[row - 2] > (year, (quarter - 1) * 3 + 1):
             raise ValueError("Vintage contains a future observation")
         numeric += 1
         nonempty_by_vintage[column - 2] += 1

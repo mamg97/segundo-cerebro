@@ -21,7 +21,7 @@ def fixture(path: Path, *, future=False, gap=False, text=False) -> str:
     rows = ["<row r='1'><c r='A1' t='s'><v>0</v></c><c r='B1' t='s'><v>1</v></c><c r='C1' t='s'><v>2</v></c></row>"]
     for i in range(4):
         row = i + 2
-        b = f"<c r='B{row}'><v>4.1</v></c>" if i == (3 if future else 0) else ""
+        b = f"<c r='B{row}'><v>4.1</v></c>" if i == (1 if future else 0) else ""
         c = f"<c r='C{row}' t='s'><v>1</v></c>" if text and i == 3 else f"<c r='C{row}'><v>4.2</v></c>" if i == 3 else ""
         rows.append(f"<row r='{row}'><c r='A{row}' t='s'><v>{i+3}</v></c>{b}{c}</row>")
     sheet = "<worksheet xmlns='http://schemas.openxmlformats.org/spreadsheetml/2006/main'><sheetData>" + "".join(rows) + "</sheetData></worksheet>"

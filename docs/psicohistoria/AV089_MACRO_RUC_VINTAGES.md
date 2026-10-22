@@ -24,9 +24,14 @@ Git; 575.288 bytes; SHA-256
 El enlace permite descargar un libro actualizado; este hash acredita la
 observación de hoy, no su existencia en un corte histórico.
 
-`research/psychohistory/ruc_vintage_audit.py` exige el hash completo, valida
-encabezados, meses ordenados sin saltos, celdas numéricas, rangos de tasa y
-que ninguna columna contenga valores de meses posteriores a su trimestre.
+La [documentación general de la Fed de Filadelfia](https://www.philadelphiafed.org/-/media/FRBP/Assets/Surveys-And-Data/real-time-data/data-files/documentation/gen_doc_nonNIPA.pdf?hash=8BD09C82580BA89D3C098226605C15E8&sc_lang=en)
+y las [notas RUC](https://www.philadelphiafed.org/-/media/FRBP/Assets/Surveys-And-Data/real-time-data/data-files/RUC/specific_documentation_RUC.pdf?hash=6BE5193C1647B3EDF9DBF9D719144461&sc_lang=en)
+sitúan cada vintage hacia el día 15 del mes central del trimestre. Por ello
+el último mes potencialmente disponible es enero, abril, julio u octubre,
+según el trimestre. `research/psychohistory/ruc_vintage_audit.py` exige el
+hash completo, valida encabezados, meses ordenados sin saltos, celdas
+numéricas, rangos de tasa y que ninguna columna contenga valores de meses
+posteriores a ese corte.
 Usa solo la biblioteca estándar y publica contadores agregados. Resultado:
 
 | Medida | Observado |
@@ -34,9 +39,9 @@ Usa solo la biblioteca estándar y publica contadores agregados. Resultado:
 | Vintages | 244, de 1965Q4 a 2026Q3 |
 | Meses de observación | 955, de 1947-01 a 2026-07 |
 | Celdas numéricas | 141.146 |
-| Celdas con fecha posterior al trimestre de su columna | 0 |
+| Celdas posteriores al mes potencialmente disponible | 0 |
 
-Los cortes no garantizan la disponibilidad de todos los meses de su trimestre;
+Los cortes no garantizan la disponibilidad del último mes potencial;
 por ejemplo, el último mes numérico varía entre columnas. Tampoco se ha
 comprobado aquí la hora exacta de publicación de cada vintage o de cada dato
 del Bureau of Labor Statistics. El campo de vintage no es un sello temporal
