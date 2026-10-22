@@ -1,3 +1,17 @@
+## PSICOHISTORIA — AV-088 · cotejo Candidate mensual/trimestral · 22/10/2026
+
+[PR #778](https://github.com/mamg97/segundo-cerebro/pull/778) documenta y
+reproduce, con dos CSV oficiales fijados por SHA, que los 2.014 registros de
+septiembre aparecen con campos básicos iguales en la edición trimestral. El
+único intervalo que abarca septiembre sin extremos en el mes persiste. Ambas
+exportaciones proceden de UCDP: `SOURCE_QUALITY_BLOCKED` sigue vigente; no hay
+modelo, scoring, emisión ni cambio de la cohorte 2027. Ver
+[AV-088](psicohistoria/AV088_CANDIDATE_MENSUAL_TRIMESTRAL.md) para pruebas,
+límites y siguiente evidencia necesaria. Consultar la PR y el registro privado
+para el estado de cierre, sin inferir aprobación científica por CI verde.
+
+---
+
 ## Seguridad · Retirada de Railway · 22/10/2026
 
 - Por decisión expresa del propietario, los proyectos Railway del puente de imágenes y del sincronizador de borradores se han dado de baja con el plazo normal de cancelación de 48 horas. No forzar su restauración ni crear servicios nuevos para sustituirlos automáticamente.

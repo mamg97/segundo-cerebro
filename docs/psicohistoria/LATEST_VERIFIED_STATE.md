@@ -1,4 +1,20 @@
-# PSICOHISTORIA — Estado científico verificado · 21/10/2026
+# PSICOHISTORIA — Estado científico verificado · 22/10/2026
+
+## AV-088 · La anomalía Candidate persiste en la exportación trimestral
+
+- [PR #778](https://github.com/mamg97/segundo-cerebro/pull/778) compara las
+  descargas oficiales de septiembre 26.0.9 y enero–septiembre 26.01.26.09,
+  ambas fijadas por hash. Los 2.014 registros mensuales aparecen con los
+  campos básicos idénticos entre los 16.633 trimestrales, incluido el único
+  intervalo que abarca septiembre sin un extremo dentro del mes. Informe
+  [AV-088](AV088_CANDIDATE_MENSUAL_TRIMESTRAL.md).
+- Esta es una correspondencia entre dos exportaciones UCDP, no una fuente
+  independiente ni una aclaración de la regla textual. `SOURCE_QUALITY_BLOCKED`
+  continúa; faltan reloj externo, roster y objetivo mensual preespecificado.
+  No hay scoring ni emisión y 2027 sigue `SHADOW_NO_EMITIDO`. Consultar la PR
+  y el registro privado para el cierre de código y el evento canónico.
+
+---
 
 ## AV-087 · Observación de Candidate vigente: calidad temporal pendiente
 
