@@ -68,8 +68,8 @@ test("Pareja contains a shareable Boda route with restricted subpaths",()=>{
 // A fixed two-row mobile nav must not obscure a routed view or its actions.
 test("mobile routed header reserves navbar height and share/close actions",()=>{
  const css=readFileSync(new URL("./area-routes.css",import.meta.url),"utf8");
- assert.match(css, /@media\\(max-width:760px\\)\\{[\\s\\S]*?--route-nav-height:84px/);
- assert.match(css, /body\\.route-area-active \\.sidebar\\{min-height:var\\(--route-nav-height\\)\\}/);
- assert.match(css, /body\\.route-area-active #detail-dialog\\[open\\] #dialog-context,[\\s\\S]*?padding-right:180px/);
+ assert.match(css, /@media\(max-width:760px\)\{[\s\S]*?--route-nav-height:84px/);
+ assert.match(css, /body\.route-area-active \.sidebar\{min-height:var\(--route-nav-height\)\}/);
+ assert.match(css, /body\.route-area-active #detail-dialog\[open\] #dialog-context,[\s\S]*?padding-right:180px/);
  assert.doesNotMatch(css, /padding-right:105px/);
 });
