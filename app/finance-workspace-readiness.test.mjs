@@ -134,8 +134,8 @@ test("verified canonical bank snapshot survives out-of-order scoped summary refr
 test("real Finance UI preserves verified bank rows when a scoped budget update arrives", () => {
   assert.match(app, /payload\.financeSummary\) \{\s+state\.financeSummary = mergeVerifiedFinanceBankWorkspace\(/);
   assert.match(app, /const financeDialog = document\.querySelector\("#detail-dialog\.budget-dialog\[open\]"\)/);
-  assert.match(app, /if \(financeDialog\) openBudgetDetail\(\)/);
+  assert.match(app, /if \(financeDialog\) \{[\s\S]*?openBudgetDetail\(\{skipRefresh:true\}\)/);
   assert.match(app, /verifiedFinanceBankWorkspace = \{\s+accounts: workspace\.accounts,\s+transactions: workspace\.transactions/);
   assert.match(app, /state\.financeSummary = mergeVerifiedFinanceBankWorkspace\(\s+state\.financeSummary, verifiedFinanceBankWorkspace/);
-  assert.match(app, /verifiedFinanceBankWorkspace = null;\s+await Promise\.allSettled\(\[/);
+  assert.match(app, /verifiedFinanceBankWorkspace=null;\s+const results=await Promise\.all\(\[/);
 });

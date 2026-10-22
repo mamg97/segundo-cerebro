@@ -17,7 +17,7 @@ import { openTravelsDetail } from "./travels.js?v=0.3.0";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
 import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.3";
 import { hrefForArea, hrefForHealthTab, routeFromHash } from "./area-routes.mjs?v=0.1.3";
-import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.0";
+import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.1";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -643,7 +643,7 @@ async function refreshApp(){
       refreshStateScope("pantry"),
       refreshStateScope("objects")
     ]);
-    const calendar=await refreshCalendarView({force:true});
+    const calendar=await refreshCalendarView({ force: true });
     const extras=await Promise.allSettled([renderHomeHealthCard(),loadHomeWeeklyMenu()]);
     let bankOk=true;
     const financeDialog=document.querySelector("#detail-dialog.budget-dialog[open]");

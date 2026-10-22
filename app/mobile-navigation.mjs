@@ -43,7 +43,7 @@ export function mobileRememberedRoute(id,cache){
  if(!MOBILE_AREAS.some(x=>x[0]===id))return "#/inicio";
  const v=cache?.[id];return v&&routeFromHash(v)?.areaId===id?v:hrefForArea(id);
 }
-let go,onRefresh,refreshBusy=false,refreshFeedbackTimer=null,route={"area-general",detailId:null},hash="#/inicio",mode="",trigger=null;
+let go,onRefresh,refreshBusy=false,refreshFeedbackTimer=null,route={areaId:"area-general",detailId:null},hash="#/inicio",mode="",trigger=null;
 const historyByArea={};
 const dom=(id)=>document.getElementById(id);
 function markup(){return '<div id="mobile-app-header" class="mobile-app-header">'+
