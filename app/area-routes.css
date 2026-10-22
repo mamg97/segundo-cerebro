@@ -79,3 +79,45 @@ body.route-area-active #detail-dialog[open] #agenda-overview{
  }
  body.route-area-active #detail-dialog[open] #dialog-body{scrollbar-gutter:auto}
 }
+
+
+/* iPhone: the two-row navigation occupies more than the desktop's 64px.
+   Reserve exactly the same height for the pinned bar and routed viewport. */
+@media (max-width:760px){
+ :root{--route-nav-height:88px}
+ body.route-area-active .app-shell > .sidebar{
+  box-sizing:border-box;
+  height:var(--route-nav-height);
+  min-height:var(--route-nav-height);
+ }
+ body.route-area-active #detail-dialog[open] #dialog-context{
+  padding-right:178px;
+  min-width:0;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+ }
+ body.route-area-active #detail-dialog[open] #dialog-title{
+  padding-right:178px;
+  overflow-wrap:anywhere;
+ }
+ /* In Boda, place the title next to Share/Close; omit the redundant context
+    label. :has guards against the shared dialog retaining a stale class. */
+ body.route-area-active #detail-dialog.wedding-dialog[open]:has(#dialog-body > :is(.wed-workspace,.wed-editor-wrap,.wed-loading,.wed-locked)) #dialog-context{
+  display:none;
+ }
+ body.route-area-active #detail-dialog.wedding-dialog[open]:has(#dialog-body > :is(.wed-workspace,.wed-editor-wrap,.wed-loading,.wed-locked)) #dialog-title{
+  display:flex;
+  align-items:center;
+  min-height:44px;
+  margin:0 0 10px;
+  padding-right:178px;
+ }
+}
+@media (max-width:600px){
+ body.route-area-active #detail-dialog[open] #copy-area-link{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+ }
+}
