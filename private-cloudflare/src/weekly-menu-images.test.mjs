@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 
 test("thumbnail reference is versioned, same-origin and never leaks Drive IDs", () => {
@@ -66,7 +67,7 @@ test("latest active revision supplies photo; archived versions are not inherited
  ];
  const map=menuRecipePhotoUrls(rows);
  assert.match(map.get("a"),/a-rev-11111111-aaa-rev-22222222-bbb/);
- assert.match(map.get("a-rev-11111111-aaa"),/a-rev-11111111-aaa-rev-22222222-bbb/);
+ assert.match(map.get("a-rev-11111111-aaa"),/a-rev-11111111-aaa\/image\?v=/); // archived version keeps its own image
  assert.equal(map.has("b"),false);
 });
 test("menu UI uses canonical photoUrl and does not mutate historical nutrition",()=>{
