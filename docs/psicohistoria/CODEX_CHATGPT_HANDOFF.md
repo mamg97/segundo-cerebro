@@ -105,3 +105,9 @@ en el Sheet privado; ninguna ha superado el gate de emisión. En macro,
 serializaciones DOM BLS completas conservadas privadamente con SHA. No son
 bytes originales de primera publicación; faltan 183 páginas del índice y el
 reloj RUC independiente. No ejecutar backtest ni escribir predicciones.
+
+[AV-101](AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) encuentra las versiones
+OAF superseded en ComCat, pero la primera ventana de tres productos ya estaba
+en marcha al actualizarse cada uno. El conjunto actual de septiembre tiene
+167 sismos M≥5 y solo 11 con OAF, sin que eso defina elegibilidad. SIS-02
+sigue PARCIAL/NO; no puntuar la probabilidad USGS como predicción propia.

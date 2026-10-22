@@ -19,3 +19,9 @@ El detalle de `us6000tx38` muestra un único producto `oaf` en la respuesta cons
 5. Predefinir benchmark, score probabilístico, splits temporales y evaluación de calibración. No puntuar el snapshot actual ni inferir precisión de las 11 observaciones filtradas.
 
 Estado: **fuente localizada; calidad temporal y denominador bloqueados**. No registrar fase superada, score ni predicción.
+
+**Avance posterior:** [AV-101](AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md)
+recupera 27 versiones OAF de `us6000tx38` con `includesuperseded=true`,
+archiva las tres primeras y compara 167 sismos M≥5 con 11 que tienen OAF en
+la consulta actual. La primera ventana empieza antes de la actualización del
+producto; aún no hay cohorte prospectiva ni score admisible.
