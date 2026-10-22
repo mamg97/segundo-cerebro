@@ -20,6 +20,7 @@ import { menuConsumedFallbackForDate } from "./nutrition-history-fallback.js";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, listWeeklyMenuFoods, MenuEditError } from "./weekly-menu-actions.js";
 import { mutateRecipe, RecipeEditError } from "./recipe-editor.js";
+import { serveRecipeVersionPhoto, RecipePhotoError } from "./recipe-photo-store.js";
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
 import { verifyPsychoAccess } from "./research-shadow2027-auth.js";
 import { handleWeddingRequest } from "./wedding-store.js";
@@ -390,6 +391,9 @@ function decodeRecipePreview(preview) {
 }
 
 async function serveHealthRecipePhoto(env, recipeId) {
+  // A versioned mobile upload takes precedence over inherited Drive photos.
+  const privatePhoto = await serveRecipeVersionPhoto(env,recipeId);
+  if(privatePhoto)return withSecurityHeaders(privatePhoto);
   const preview = await fetchHealthRecipePreview(env, recipeId);
   if (preview) {
     try {
@@ -5403,6 +5407,7 @@ export default {
         const result = await mutateRecipe(request, env, getGoogleAccessToken);
         healthCache = { value: null, expiresAt: 0, date: null };
         recipePhotoCache = { value: new Map(), expiresAt: 0 };
+        recipePreviewCache = { value: new Map(), expiresAt: 0 };
         return json(result);
       } catch (error) {
         return json({ ok: false,

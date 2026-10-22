@@ -1,4 +1,5 @@
 // Versioned recipe editing: never overwrite a recipe referenced by old meals.
+import {RecipePhotoError,readRecipePhotoFile,hasRecipePhoto,saveRecipeVersionPhoto,deleteRecipeVersionPhoto} from "./recipe-photo-store.js";
 // Read/write scope: canonical private Recetas, IngredientesReceta, PasosReceta.
 export class RecipeEditError extends Error {
   constructor(code,status=400){super(code);this.code=code;this.status=status;}
@@ -63,7 +64,9 @@ export function planRecipeMutation(sources,payload,{now="2026-10-19T10:00:00.000
     newId,name,servings,kcal===""?"":kcal*servings,kcal,protein,carbs,fat,
     trim(payload.precision,60)||trim(d.precision,60),trim(d.fuente,400),
     trim(payload.note,4000),now,
-    value(d.foto_drive_file_id),value(d.foto_mime_type),value(d.foto_updated_at),
+    payload._privatePhoto?"private_"+newId:value(d.foto_drive_file_id),
+    payload._privatePhoto?"image/jpeg":value(d.foto_mime_type),
+    payload._privatePhoto?now:value(d.foto_updated_at),
     category,"activa"
   ];
   const ingredientRows=rows(sources.ingredients||[])
@@ -101,8 +104,22 @@ export function planRecipeMutation(sources,payload,{now="2026-10-19T10:00:00.000
 }
 export async function mutateRecipe(request,env,accessToken,fetchImpl=fetch){
   if(!env.HEALTH_SHEET_ID)throw new RecipeEditError("HEALTH_NOT_CONFIGURED",503);
-  let payload;
-  try{payload=await request.json();}catch{throw new RecipeEditError("INVALID_JSON");}
+  let payload,photo=null;
+  const contentType=String(request.headers.get("Content-Type")||"").toLowerCase();
+  if(contentType.startsWith("multipart/form-data")){
+    if(request.headers.get("Origin")!==new URL(request.url).origin)throw new RecipeEditError("INVALID_ORIGIN",403);
+    if(Number(request.headers.get("Content-Length")||0)>1_100_000)throw new RecipeEditError("RECIPE_PHOTO_TOO_LARGE",413);
+    let fields;
+    try{fields=await request.formData();payload=JSON.parse(String(fields.get("payload")||""));}catch{throw new RecipeEditError("RECIPE_FORM_INVALID");}
+    if(payload?.action!=="edit")throw new RecipeEditError("RECIPE_PHOTO_EDIT_ONLY");
+    try{photo=await readRecipePhotoFile(fields.get("photo"));}catch(error){
+      if(error instanceof RecipePhotoError)throw new RecipeEditError(error.code,error.status);
+      throw new RecipeEditError("RECIPE_PHOTO_INVALID");
+    }
+    if(!photo)throw new RecipeEditError("RECIPE_PHOTO_REQUIRED");
+  }else if(contentType.startsWith("application/json")){
+    try{payload=await request.json();}catch{throw new RecipeEditError("INVALID_JSON");}
+  }else throw new RecipeEditError("RECIPE_CONTENT_TYPE_REQUIRED",415);
   const token=await accessToken(env);
   const base="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(env.HEALTH_SHEET_ID);
   const query=new URLSearchParams({majorDimension:"ROWS",valueRenderOption:"UNFORMATTED_VALUE"});
@@ -113,13 +130,34 @@ export async function mutateRecipe(request,env,accessToken,fetchImpl=fetch){
   const now=new Date().toISOString();
   const sourceId=trim(payload?.recipeId,120);
   const newId=sourceId.slice(0,75)+"-rev-"+crypto.randomUUID().slice(0,12);
+  let priorStored=false;
+  // Historical photos stored in private D1 must be cloned into the new immutable ID.
+  if(payload?.action==="edit"){
+    try{priorStored=await hasRecipePhoto(env,sourceId);}catch(error){
+      if(error instanceof RecipePhotoError)throw new RecipeEditError(error.code,error.status);
+      throw new RecipeEditError("RECIPE_PHOTO_LOOKUP_FAILED",502);
+    }
+  }
+  const newPhoto=Boolean(photo||priorStored);
   const plan=planRecipeMutation({
     recipes:ranges[0]?.values||[],ingredients:ranges[1]?.values||[],steps:ranges[2]?.values||[]
-  },payload,{now,newId});
-  const write=await fetchImpl(base+"/values:batchUpdate",{
-    method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
-    body:JSON.stringify({valueInputOption:"RAW",data:plan.updates})
-  });
-  if(!write.ok)throw new RecipeEditError("RECIPE_WRITE_FAILED",502);
-  return {ok:true,action:plan.action,recipeId:plan.recipeId,priorRecipeId:plan.priorRecipeId||null};
+  },{...payload,_privatePhoto:newPhoto},{now,newId});
+  let staged=false;
+  try{
+    if(plan.action==="edit"&&newPhoto){
+      await saveRecipeVersionPhoto(env,{fromId:sourceId,toId:newId,photo,now});
+      staged=true;
+    }
+    const write=await fetchImpl(base+"/values:batchUpdate",{
+      method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({valueInputOption:"RAW",data:plan.updates})
+    });
+    if(!write.ok)throw new RecipeEditError("RECIPE_WRITE_FAILED",502);
+    return {ok:true,action:plan.action,recipeId:plan.recipeId,priorRecipeId:plan.priorRecipeId||null,photoUpdated:Boolean(photo)};
+  }catch(error){
+    if(staged)try{await deleteRecipeVersionPhoto(env,newId);}catch{console.warn("Recipe photo staging cleanup failed");}
+    if(error instanceof RecipeEditError)throw error;
+    if(error instanceof RecipePhotoError)throw new RecipeEditError(error.code,error.status);
+    throw new RecipeEditError("RECIPE_VERSION_WRITE_FAILED",502);
+  }
 }

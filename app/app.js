@@ -2,7 +2,7 @@ import "./vendor/thinking-orbs/register.js";
 import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=0.44.63";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
-import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.59";
+import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.60";
 import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.57";
 import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
 import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";

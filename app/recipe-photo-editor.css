@@ -1,0 +1,27 @@
+/* Recipe photo editor: touch-first, desktop-compatible. */
+.recipe-edit-photo{display:grid;gap:10px;border:1px solid var(--line);
+ border-radius:15px;background:var(--surface);padding:15px;margin:14px 0 20px;max-width:100%;box-sizing:border-box}
+.recipe-edit-photo>strong{font-size:15px}
+.recipe-edit-photo-preview{width:100%;min-height:150px;aspect-ratio:16/9;display:grid;place-items:center;
+ overflow:hidden;border-radius:12px;background:var(--paper);color:var(--ink-soft);
+ border:1px solid var(--line);font-size:12px}
+.recipe-edit-photo-preview img{display:block;width:100%;height:100%;min-height:0;object-fit:contain;object-position:center}
+.recipe-edit-photo-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.recipe-edit-photo-button{position:relative;display:inline-flex;align-items:center;justify-content:center;
+ min-height:46px;flex:1 1 175px;padding:9px 12px;box-sizing:border-box;
+ border:1px solid var(--line);border-radius:10px;background:var(--paper);font:inherit;
+ font-size:12px;font-weight:800;text-align:center;cursor:pointer;color:var(--ink)}
+.recipe-edit-photo-button:first-child{background:var(--blue);color:#fff;border-color:var(--blue)}
+.recipe-edit-photo-button input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.recipe-edit-photo-button:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+.recipe-edit-photo-actions>button{border:1px solid var(--line);border-radius:9px;background:var(--paper);
+ color:var(--ink);padding:10px 12px;min-height:44px;font-size:12px;cursor:pointer}
+.recipe-edit-photo>small{font-size:11px;color:var(--ink-soft);line-height:1.5}
+@media(max-width:760px){
+ .recipe-edit-photo{padding:12px;gap:9px;margin:9px 0 16px}
+ .recipe-edit-photo-preview{min-height:120px}
+ .recipe-edit-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .recipe-edit-photo-button{min-width:0;min-height:51px;font-size:12px}
+ .recipe-edit-photo-actions>button{grid-column:1/-1}
+ .recipe-edit-form .recipe-edit-actions{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+}
