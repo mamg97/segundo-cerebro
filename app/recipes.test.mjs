@@ -113,3 +113,21 @@ test("card Modify opens editor directly and Delete reuses historical-safe soft-d
   assert.match(handlers, /role", "alert"/);
   assert.doesNotMatch(handlers, /\/api\/nutrition\/recipes\/edit/);
 });
+
+test("mobile recipe action buttons stack within each narrow tile without clipped labels", () => {
+  const start = css.indexOf("/* Independent card actions;");
+  const end = css.indexOf("/* Weekly menu:", start);
+  assert.ok(start > 0 && end > start, "expected recipe action CSS section");
+  const actions = css.slice(start, end);
+  assert.match(actions, /\.recipe-catalog-actions\s*\{[^}]*width:\s*100%/);
+  assert.match(actions, /\.recipe-catalog-action\s*\{[^}]*max-width:\s*100%/);
+  assert.match(actions, /\.recipe-catalog-action\s*\{[^}]*box-sizing:\s*border-box/);
+  assert.match(actions, /\.recipe-catalog-action\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  const mobile = actions.slice(actions.indexOf("@media (max-width: 760px)"));
+  assert.match(mobile, /\.recipe-catalog-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(mobile, /\.recipe-catalog-action\s*\{[^}]*min-height:\s*40px/);
+  assert.match(mobile, /\.recipe-catalog-action\s*\{[^}]*font-size:\s*12px/);
+  assert.match(mobile, /\.recipe-catalog-action\s*\{[^}]*white-space:\s*normal/);
+  // The mobile patch must not collapse the three-column recipe catalog.
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.recipes-grid\s*\{\s*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+});
