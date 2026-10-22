@@ -50,10 +50,18 @@ texto inesperado y una observación futura.
 El workflow `psychohistory-ruc-vintage-audit.yml` repite la descarga oficial,
 comprueba el hash y borra el archivo efímero; no tiene cron.
 
+El [archivo de fechas de publicación BLS](https://www.philadelphiafed.org/-/media/FRBP/Assets/Surveys-And-Data/real-time-data/data-files/documentation/Release_-Dates-Employment_Situation-BLS.xls?hash=17AFD71F659BEA793E9D95F0796C44C5&sc_lang=en)
+enlazado por la Fed también se archivó como original (34.816 bytes,
+SHA-256 `b583847169fd5ca4074917e1105887b0bc5b8e3b4d2f9576023388b5b57565ee`).
+Su tabla declara años 1966–2010; la nota del archivo llama **tentativas**
+a las fechas de 2010 y falta la última celda. No cubre 2011–2026 ni
+certifica por sí sola la hora de cierre de las columnas RUC. Una conversión
+de inspección a CSV se dejó fuera del archivo original.
+
 ## Siguiente experimento admisible
 
-1. Archivar y comprobar las fechas de publicación oficiales enlazadas desde
-   la misma página. Definir el instante de emisión **posterior** a cada
+1. Completar el reloj de publicación oficial después de 2010, verificar las
+   fechas históricas que entren en la muestra y definir emisión **posterior** a cada
    publicación y determinar el último mes realmente disponible.
 2. Extraer la primera publicación del objetivo futuro desde un corte posterior
    y establecer el benchmark y un protocolo de evaluación con ventanas
