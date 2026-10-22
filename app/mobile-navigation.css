@@ -2,7 +2,7 @@
 .mobile-app-header,.mobile-bottom-nav,.mobile-navigation-sheet{display:none}
 @media(max-width:760px){
  :root{
-  --mobile-toolbar-height:58px;
+  --mobile-toolbar-height:calc(58px + env(safe-area-inset-top,0px));
   --mobile-dock-height:calc(67px + env(safe-area-inset-bottom,0px));
   --route-nav-height:var(--mobile-toolbar-height);
  }
@@ -12,7 +12,7 @@
  .mobile-app-header{
   display:flex;align-items:center;position:fixed;top:0;left:0;right:0;
   z-index:5501;height:var(--mobile-toolbar-height);gap:6px;
-  padding:5px max(13px,env(safe-area-inset-right)) 5px max(13px,env(safe-area-inset-left));
+  padding:calc(5px + env(safe-area-inset-top,0px)) max(13px,env(safe-area-inset-right)) 5px max(13px,env(safe-area-inset-left));
   background:var(--surface);color:var(--ink);border-bottom:1px solid var(--line);
   box-shadow:0 3px 12px rgba(0,0,0,.06);
  }
@@ -36,7 +36,7 @@
   height:var(--mobile-dock-height);
   padding:4px max(8px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left));
   border-top:1px solid var(--line);
-  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  background:var(--surface);
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
   box-shadow:0 -4px 20px rgba(0,0,0,.13);
  }

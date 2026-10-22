@@ -39,7 +39,7 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
  assert.match(app,/syncMobileNavigation\(route,hash\)/);
  assert.match(app,/routedHealthTabId/);
  assert.match(app,/hrefForHealthTab/);
- assert.match(index,/mobile-navigation\.css\?v=0\.1\.0/);
+ assert.match(index,/mobile-navigation\.css\?v=0\.1\.1/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(min-width:761px\)/);
  assert.match(css,/env\(safe-area-inset-bottom/);
@@ -48,4 +48,13 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
  assert.doesNotMatch(css,/height:88px/);
  assert.match(module,/aria-modal="true"/);
  assert.match(module,/aria-current="page"/);
+});
+
+test("HTML links to both navigation stylesheets and respects iOS safe areas",()=>{
+ const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
+ assert.match(index,/<link rel="stylesheet" href="\.\/area-routes\.css\?v=0\.1\.4">/);
+ assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.1">/);
+ assert.match(css,/--mobile-toolbar-height:calc\(58px \+ env\(safe-area-inset-top,0px\)\)/);
+ assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
 });
