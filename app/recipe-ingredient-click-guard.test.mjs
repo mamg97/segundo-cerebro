@@ -34,5 +34,5 @@ test("an async Nutrition refresh keeps the photo editor mounted", async () => {
   assert.match(app, /recipeView\?\.querySelector\("[^"]*\.recipe-edit-form/);
   assert.match(app, /resolveRecipeIngredientButton\(event\.target, panel\)/);
   assert.match(app, /recipeIngredientClickControllers\.get\(panel\)\?\.abort\(\);\s*recipeIngredientClickControllers\.delete\(panel\);\s*renderRecipeEditor/);
-  assert.doesNotMatch(app, /event\.target\?\.closest\?\.\("\[data-recipe-ingredient\]\ "\)/);
+  assert.doesNotMatch(app, /event\\.target\\?\\.closest\\?\\.\\("\\[data-recipe-ingredient\\]"\\)/);
 });
