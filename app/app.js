@@ -24,6 +24,7 @@ import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
 import { renderHealthDayBalance } from "./health-daily-balance.js?v=0.44.1";
 import { menuWeekMonday, menuShiftWeek, menuWeekRangeLabel } from "./menu-week-history.js?v=0.44.12";
+import { reconcileHomeMenuPhotos } from "./home-menu-photo-resolver.mjs?v=0.1.0";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.24";
 import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.12";
@@ -1873,7 +1874,7 @@ async function goToHomeMenuWeek(date) {
   return loaded;
 }
 
-async function loadHomeWeeklyMenu(_primaryData = null, options = {}) {
+async function loadHomeWeeklyMenu(primaryData = null, options = {}) {
   const current = currentHomeMenuWeek();
   const selected = selectedHomeMenuWeek();
   if (!selected || !current) return false;
@@ -1908,6 +1909,13 @@ async function loadHomeWeeklyMenu(_primaryData = null, options = {}) {
         throw new Error("HOME_WEEKLY_MENU_INVALID_WEEK");
       }
       if (requestSerial !== homeWeeklyMenuRequestSerial || selectedHomeMenuWeek() !== selected) return false;
+      // Merge photo references from the simultaneously fetched canonical
+      // Recetas catalogue. Existing historical menu IDs and macros stay fixed.
+      // This repairs missing thumbnails after an immutable photo-only edit,
+      // without guessing an image from recipe names.
+      if(Array.isArray(primaryData?.recipes)){
+        data.weeklyMenu=reconcileHomeMenuPhotos(data.weeklyMenu,primaryData.recipes);
+      }
       homeWeeklyMenuWeekCache.set(selected, { data, expiresAt: Date.now() + HOME_WEEK_CACHE_MS });
       while (homeWeeklyMenuWeekCache.size > 12) {
         homeWeeklyMenuWeekCache.delete(homeWeeklyMenuWeekCache.keys().next().value);
@@ -6705,7 +6713,7 @@ async function refreshRecipeCatalog() {
   // Photo edits create a new immutable recipe ID. The menu may retain the old
   // recipe_id but must re-read its display-only photo fallback immediately.
   homeWeeklyMenuWeekCache.clear();
-  await loadHomeWeeklyMenu(null, { navigation: true, force: true });
+  await loadHomeWeeklyMenu(updated, { navigation: true, force: true });
 }
 
 function renderRecipeDetail(panel, data, recipe, options = {}) {
