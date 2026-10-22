@@ -1,3 +1,12 @@
+## Seguridad · Retirada de Railway · 22/10/2026
+
+- Por decisión expresa del propietario, los proyectos Railway del puente de imágenes y del sincronizador de borradores se han dado de baja con el plazo normal de cancelación de 48 horas. No forzar su restauración ni crear servicios nuevos para sustituirlos automáticamente.
+- Revocado en Cloudflare el permiso antiguo del puente; se elimina también `OBJECTS_BRIDGE_UPSTREAM_SHA256` de `private-cloudflare/wrangler.bootstrap.jsonc` para impedir que un despliegue restaure esa autorización.
+- Las imágenes existentes permanecen en Cloudflare; las fotos de recetas usan su circuito independiente Drive/RecipeMedia. El receptor multipart privado de Armario/Looks existe, pero la conexión automática desde ChatGPT que usaba Railway aún necesita un reemplazo y verificación completa.
+- `agents/OBJECTS.md` y `docs/OBJECTS_IMAGE_INGEST.md` contienen el aviso vigente. Las instrucciones inferiores que exigen Railway son históricas. No describir un reemplazo como operativo ni introducir pagos o exposición pública de imágenes.
+
+---
+
 ## Health Bridge — actualización de revisión PR #773
 
 Esta nota actualiza el bloque anterior que permanece debajo. Ocho pruebas Swift de coordinación, seis ensayos del renovador con comandos simulados y tres pruebas del SQL productivo sobre SQLite en memoria cubren concurrencia, reintentos, reapertura, varias pesadas/día, UTC, llegada atrasada y UPSERT. Fixtures exclusivamente sintéticos. El fallo del marcador del renovador quedó corregido; las cuatro métricas corporales conservan prioridad. Diagnósticos separan lectura, medición y envío aceptado, con errores de entrega HealthKit y SHA instalada.
