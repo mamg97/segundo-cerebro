@@ -1,5 +1,19 @@
 # PSICOHISTORIA — Estado científico verificado · 22/10/2026
 
+## AV-089 · Fuente macroeconómica en preparación
+
+- Rama de trabajo para auditar los vintages trimestrales RUC de desempleo
+  mensual de la Reserva Federal de Filadelfia, independiente de UCDP. 244
+  vintages, 955 meses y 141.146 celdas numéricas con original y hash
+  conservados fuera de Git. [Informe AV-089](AV089_MACRO_RUC_VINTAGES.md).
+- Pendiente de cierre remoto y registro canónico: este bloque es una
+  **preparación**, no un pronóstico ni un backtest. Falta fechar las
+  publicaciones de cada vintage y la primera observación del target.
+- El [mapa de líneas](MAPA_LINEAS_INDEPENDIENTES_20261022.md) distingue los
+  siete dominios y sus preguntas pendientes; sus etapas no se comparten.
+
+---
+
 ## AV-088 · La anomalía Candidate persiste en la exportación trimestral
 
 - [PR #778](https://github.com/mamg97/segundo-cerebro/pull/778) compara las

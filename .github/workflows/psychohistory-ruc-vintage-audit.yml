@@ -1,0 +1,32 @@
+name: Psychohistory RUC vintage source audit
+on:
+  pull_request:
+    paths:
+      - 'research/psychohistory/ruc_vintage_audit.py'
+      - 'research/psychohistory/test_ruc_vintage_audit.py'
+      - '.github/workflows/psychohistory-ruc-vintage-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-ruc-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test adversarial vintage layouts
+        run: python3 -m unittest discover -s research/psychohistory -p 'test_ruc_vintage_audit.py' -v
+      - name: Download and audit pinned official workbook
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 2 --max-time 90 --max-filesize 5000000 \
+            'https://www.philadelphiafed.org/-/media/FRBP/Assets/Surveys-And-Data/real-time-data/data-files/xlsx/rucQvMd.xlsx?hash=A96BC0C2253B04EAEB8C4DC42D4F5CBA&sc_lang=en' \
+            -o "$RUNNER_TEMP/rucQvMd.xlsx"
+          python3 research/psychohistory/ruc_vintage_audit.py \
+            --workbook "$RUNNER_TEMP/rucQvMd.xlsx" \
+            --sha256 d971e59d3ed5f1322a46631743508fb1ad5eee39bfbe12425a641a277fdd9b9a
+      - name: Remove ephemeral workbook
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rucQvMd.xlsx"
