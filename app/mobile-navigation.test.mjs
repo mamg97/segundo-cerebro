@@ -74,3 +74,16 @@ test("mobile refresh calls real refresh, gives feedback and compact bars avoid f
  assert.match(css,/\.liquidity-account-legend,.liquidity-account-legend\.is-variable-height\{/);
  assert.match(css,/\.bank-holds-block:has\(\.bank-holds-empty\)/);
 });
+
+test("mobile refresh shows one circular arrow rather than two opposing arrows",()=>{
+ const source=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
+ const icon=source.match(/refresh:'([^']+)'/)?.[1];
+ assert.ok(icon,"Refresh icon exists");
+ assert.equal((icon.match(/<path /g)||[]).length,2);
+ assert.match(icon,/M21 3v5h-5/);
+ assert.doesNotMatch(icon,/M4 17v-5h5|M20 7v5h-5/);
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
+ assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.2/);
+ assert.match(index,/app\.js\?v=0\.44\.81/);
+});

@@ -19,7 +19,7 @@ const PATHS={
  plane:'<path d="M21 3 3 10l8 3 3 8 7-18ZM11 13 21 3"/>',
  book:'<path d="M12 6c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v15"/>',
  down:'<path d="m6 9 6 6 6-6"/>',
- refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5 12a7 7 0 0 1 12-5l3 5M4 12l3 5a7 7 0 0 0 12-5"/>'
+ refresh:'<path d="M21 11a9 9 0 1 1-2.2-5.8L21 8"/><path d="M21 3v5h-5"/>'
 };
 const ico=name=>'<svg aria-hidden="true" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">'+(PATHS[name]||PATHS.grid)+'</svg>';
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
