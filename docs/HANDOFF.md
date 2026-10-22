@@ -3783,5 +3783,7 @@ La línea tecnológica [AV-099](psicohistoria/AV099_BTOS_TECH_SOURCE_FEASIBILITY
 
 El [piloto AV-100](psicohistoria/AV100_BLS_RELEASE_DOM_PILOT.md) lee cinco tasas de páginas BLS archivadas y conserva capturas DOM completas fuera de Git con SHA. No demuestra los bytes de primera publicación; MAC-02 sigue PARCIAL/NO y aún no hay backtest.
 
+[AV-101](psicohistoria/AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) recupera versiones OAF superseded y el conjunto de sismos M≥5 sin filtro de producto. La primera ventana empieza antes de la actualización del producto en tres versiones estudiadas; SIS-02 continúa PARCIAL/NO y no se ha calculado habilidad.
+
 ---
 

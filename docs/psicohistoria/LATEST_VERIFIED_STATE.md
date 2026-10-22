@@ -1,5 +1,11 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-101 · versiones de réplicas USGS
+
+[AV-101](AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) recupera 27 versiones OAF de un evento, conserva tres JSON tempranos con SHA y compara 167 sismos M≥5 con 11 productos OAF en septiembre 2026. En las tres versiones estudiadas la primera ventana ya había comenzado antes de actualizarse el producto; no hay evaluación prospectiva válida. `SIS-02` PARCIAL/NO, sin score ni pronóstico propio.
+
+---
+
 ## AV-100 · piloto BLS de cinco meses
 
 [AV-100](AV100_BLS_RELEASE_DOM_PILOT.md) documenta cinco páginas BLS completas serializadas del navegador, con hash privado y extractor que distingue mes de referencia y fecha del comunicado. Se extrajeron tasas nacionales de 9,0 %, 14,7 %, 4,4 %, 4,3 % y 4,2 % para los cinco meses indicados. Las capturas son DOM actual, no bytes originales ni prueba de primera publicación. `MAC-02` sigue PARCIAL/NO; no hay backtest ni predicción.
