@@ -1,5 +1,16 @@
 # PSICOHISTORIA — Estado científico verificado · 22/10/2026
 
+## AV-090 · Auditoría de cobertura RUC en revisión
+
+- [PR #780](https://github.com/mamg97/segundo-cerebro/pull/780) quedó
+  fusionada con tres checks correctos; `AV-20261022-089` está en el Sheet
+  privado y `MAC-01/02` siguen parciales, con criterio no superado.
+- [AV-090](AV090_RUC_OBSERVATION_COVERAGE.md) cuenta primeras apariciones
+  trimestrales y documenta la excepción del cierre federal de 2025. Código y
+  CI pendientes de cierre; no equivale a primer dato BLS ni a backtest.
+
+---
+
 ## AV-089 · Fuente macroeconómica en preparación
 
 - Rama de trabajo para auditar los vintages trimestrales RUC de desempleo

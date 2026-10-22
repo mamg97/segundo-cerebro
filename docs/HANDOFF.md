@@ -1,10 +1,25 @@
+## PSICOHISTORIA — AV-090 · cobertura RUC y excepción 2025 · 22/10/2026
+
+[PR #780](https://github.com/mamg97/segundo-cerebro/pull/780) se fusionó
+(squash `cd6bcfd11dddf0a2a1d58891803f622294ee74fd`) tras tres CI
+correctas. AV-089 consta en el registro privado; `MAC-01/02=PARCIAL`.
+La [auditoría AV-090](psicohistoria/AV090_RUC_OBSERVATION_COVERAGE.md)
+comprueba primeras apariciones en el XLSX RUC: 728 meses evaluables, uno
+con retraso de cuatro meses y octubre de 2025 ausente, coherente con la nota
+oficial BLS del cierre federal. El nuevo código y CI están en revisión;
+**no registrar AV-090 como verificado** hasta pasar CI, cerrar PR y escribir
+el evento privado. Falta calendario histórico de publicación y target BLS
+de primera salida; sin backtest ni predicción.
+
+---
+
 ## PSICOHISTORIA — AV-089 · macro RUC con vintages · 22/10/2026
 
 Auditoría reproducible de una fuente macroeconómica independiente de UCDP:
 244 cortes trimestrales del desempleo de EE. UU. y 141.146 celdas numéricas
 en el libro original archivado fuera de Git. El [informe](psicohistoria/AV089_MACRO_RUC_VINTAGES.md)
 y el [mapa de dominios](psicohistoria/MAPA_LINEAS_INDEPENDIENTES_20261022.md)
-fijan pregunta y siguientes gates. Pendiente de PR/CI y registro privado;
+fijan pregunta y siguientes gates. PR #780 fusionada y AV-089 registrado;
 no hay modelo validado, score, emisión ni cambio a Candidate/2027.
 
 ---
