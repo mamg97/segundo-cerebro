@@ -1,5 +1,11 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-103 · deriva del instrumento BTOS
+
+[AV-103](AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) conserva el nuevo suplemento SI del directorio oficial y registra que el enlace AI anterior ahora devuelve 404. La numeración de los cuestionarios actuales no se corresponde directamente con IDs del libro nacional; tampoco prueba el instrumento de `202621`. `TEC-02` PARCIAL/NO, sin pronóstico.
+
+---
+
 ## AV-102 · contraste WPP–Census sin score
 
 [AV-102](AV102_WPP_CENSUS_US_POPULATION_SCOPE.md) coteja la población USA de 2023 entre WPP 2022/2024 y Census Vintage 2023, con archivos oficiales privados fijados por SHA. El desfase entre población de facto y residente, y la posible dependencia de fuentes, bloquean interpretar la diferencia como error predictivo. `DEM-02` PARCIAL/NO.

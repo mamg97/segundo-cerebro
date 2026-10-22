@@ -3787,5 +3787,7 @@ El [piloto AV-100](psicohistoria/AV100_BLS_RELEASE_DOM_PILOT.md) lee cinco tasas
 
 [AV-102](psicohistoria/AV102_WPP_CENSUS_US_POPULATION_SCOPE.md) incorpora el Census Vintage 2023 al contraste demográfico con WPP 2022/2024. La población de facto ONU y la residente Census no son el mismo target; DEM-02 continúa PARCIAL/NO, sin score.
 
+[AV-103](psicohistoria/AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) conserva el suplemento SI actual de BTOS y documenta la sustitución del enlace AI anterior. No se infiere el cuestionario administrado en `202621` a partir de PDFs actuales ni de IDs del libro; TEC-02 PARCIAL/NO.
+
 ---
 
