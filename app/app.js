@@ -3,6 +3,7 @@ import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
 import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.60";
+import { resolveRecipeIngredientButton } from "./recipe-ingredient-click-guard.mjs?v=0.1.0";
 import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.57";
 import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
 import { calendarSnapshotComplete, createOnDemandViewRefresh, createPayloadViewMemory } from "./view-memory.mjs?v=0.44.47";
@@ -3712,7 +3713,7 @@ async function loadNutritionPanel(dateKey) {
     // A nutrition refresh must not discard a recipe/ingredient the user
     // opened while its background request was still in flight.
     const recipeView = document.querySelector("#recipes-panel");
-    if (!recipeView?.querySelector(".recipe-detail-card, [data-ingredient-back], [data-ingredient-detail]"))
+    if (!recipeView?.querySelector(".recipe-detail-card, .recipe-edit-form, [data-ingredient-back], [data-ingredient-detail]"))
       renderRecipesPanel(payload);
     renderMenuPanel(payload);
     return true;
@@ -6770,11 +6771,15 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
   `;
 
   panel.querySelector("[data-recipes-back]")?.addEventListener("click", onBack);
-  panel.querySelector("[data-recipe-edit]")?.addEventListener("click", () =>
+  panel.querySelector("[data-recipe-edit]")?.addEventListener("click", () => {
+    // The ingredient handler belongs to the detail view, not the editor.
+    recipeIngredientClickControllers.get(panel)?.abort();
+    recipeIngredientClickControllers.delete(panel);
     renderRecipeEditor(panel, recipe, {
       onBack: () => renderRecipeDetail(panel, data, recipe, options),
       onSaved: refreshRecipeCatalog
-    }));
+    });
+  });
   panel.querySelector("[data-recipe-delete]")?.addEventListener("click", (event) => {
     const button = event.currentTarget;
     button.disabled = true;
@@ -6794,8 +6799,8 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
   panel.dataset.recipeIngredientHandler = "delegated";
   // Capture on a stable ancestor: button DOM can change during async rendering.
   panel.addEventListener("click", async (event) => {
-    const button = event.target?.closest?.("[data-recipe-ingredient]");
-    if (!button || !panel.contains(button)) return;
+    const button = resolveRecipeIngredientButton(event.target, panel);
+    if (!button) return;
     const rawIndex = button.getAttribute("data-recipe-ingredient");
     const index = rawIndex !== null && String(rawIndex).trim() !== "" ? Number(rawIndex) : NaN;
     const ingredient = Number.isSafeInteger(index) && index >= 0 && index < ingredients.length
@@ -6805,10 +6810,9 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
         panel.querySelector(`[data-recipe-ingredient="${index}"]`)?.focus({ preventScroll: true });
       };
     if (!ingredient || typeof ingredient !== "object") {
+      // A stale/malformed click must never replace the editor or drop an
+      // unsaved photo. Keep the current detail visible and let the user retry.
       panel.dataset.ingredientPantryState = "invalid-reference";
-      panel.innerHTML = '<button type="button" class="recipe-back" data-ingredient-back>← Volver a la receta</button>' +
-        '<p class="recipe-pending" role="alert">Ingrediente no encontrado en esta receta. Vuelve a la ficha para reintentar.</p>';
-      panel.querySelector("[data-ingredient-back]")?.addEventListener("click", restore);
       return;
     }
       // Switch synchronously before the lazy module resolves. This prevents
