@@ -1,5 +1,11 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-099 · fuente tecnológica BTOS en revisión
+
+[AV-099](AV099_BTOS_TECH_SOURCE_FEASIBILITY.md) localiza datos nacionales, errores estándar y fechas de BTOS, y documenta las rupturas de redacción y los metadatos futuros del archivo actual. Los cuatro originales están archivados privadamente. No hay serie histórica point-in-time, target admitido ni emisión. El cierre documental se registra en el Sheet privado una vez verificada la publicación.
+
+---
+
 ## AV-098 · verificación metodológica HTOPS
 
 [AV-098](AV098_HTOPS_QUESTIONNAIRE_AND_UNCERTAINTY.md) coteja la misma pregunta de soledad en marzo/julio 2026 y el error estándar oficial de la celda agregada de julio. Los originales están en el archivo privado con hashes. La admisión sigue bloqueada por primera publicación/revisiones y varianza del agregado histórico; no hay pronóstico ni gate científico completado. El avance requiere registro append-only en el Sheet privado una vez verificada la publicación.
