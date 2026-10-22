@@ -73,3 +73,16 @@ test("mobile routed header reserves navbar height and share/close actions",()=>{
  assert.match(css, /body\.route-area-active #detail-dialog\[open\] #dialog-context,[\s\S]*?padding-right:180px/);
  assert.doesNotMatch(css, /padding-right:105px/);
 });
+
+
+test("mobile wedding header stays below the fixed two-row navbar without overlapping Share/Close",()=>{
+ const css=readFileSync(new URL("./area-routes.css",import.meta.url),"utf8");
+ const wedding=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ assert.match(css,/:root\{--route-nav-height:88px\}/);
+ assert.match(css,/height:var\(--route-nav-height\)/);
+ assert.match(css,/top:var\(--route-nav-height,64px\)/);
+ assert.match(css,/#detail-dialog\.wedding-dialog\[open\]:has\(#dialog-body > :is\(/);
+ assert.match(css,/#dialog-context\{\s*display:none;/);
+ assert.match(css,/#dialog-title\{[\s\S]*?min-height:44px;/);
+ assert.match(wedding,/dialog\.classList\.add\("wedding-dialog"\)/);
+});
