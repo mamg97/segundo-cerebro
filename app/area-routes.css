@@ -55,6 +55,15 @@ body.route-area-active #detail-dialog[open] #copy-area-link{
 body.route-area-active #detail-dialog[open] #agenda-overview{
  width:100%;max-width:none;scroll-margin:0;
 }
+/* Two-row phone navigation is ~83px tall; leave room for it on every route. */
+@media(max-width:760px){
+ :root{--route-nav-height:84px}
+ body.route-area-active .sidebar{min-height:var(--route-nav-height)}
+ body.route-area-active #detail-dialog[open] #dialog-context,
+ body.route-area-active #detail-dialog[open] #dialog-title{
+  padding-right:180px;overflow-wrap:anywhere;
+ }
+}
 @media(max-width:900px){
  body.route-area-active #detail-dialog[open] .trv-dash-details{grid-template-columns:1fr}
 }
@@ -62,8 +71,8 @@ body.route-area-active #detail-dialog[open] #agenda-overview{
  body.route-area-active #detail-dialog[open]{
    padding:12px max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));
  }
- body.route-area-active #detail-dialog[open] #dialog-title{padding-right:105px;font-size:22px}
- body.route-area-active #detail-dialog[open] #dialog-context{padding-right:105px}
+ body.route-area-active #detail-dialog[open] #dialog-title{padding-right:180px;font-size:22px}
+ body.route-area-active #detail-dialog[open] #dialog-context{padding-right:180px}
  body.route-area-active #detail-dialog[open] #close-dialog{right:12px;top:8px}
  body.route-area-active #detail-dialog[open] #copy-area-link{
   top:8px;right:65px;padding:8px;font-size:10px;max-width:110px;
