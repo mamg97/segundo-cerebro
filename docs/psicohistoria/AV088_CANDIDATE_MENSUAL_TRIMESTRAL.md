@@ -1,6 +1,6 @@
 # AV-088 — Correspondencia mensual y trimestral de Candidate 2026
 
-22/10/2026 · Investigación en revisión. Es una comparación de dos descargas
+22/10/2026 · Comparación reproducible de dos descargas
 oficiales del mismo proveedor, no una fuente independiente ni un pronóstico.
 
 ## Pregunta y fuentes
@@ -42,7 +42,8 @@ autoriza replay, scoring, modelo nuevo o emisión.
 irregulares y devuelve exclusivamente contadores y banderas negativas de
 admisión. La CI descarga las fuentes de manera efímera y las borra. Los tests
 sintéticos cubren persistencia del intervalo, discrepancias, ausencias, hash y
-filas irregulares. La verificación remota de la PR aún está pendiente.
+filas irregulares. La [PR #778](https://github.com/mamg97/segundo-cerebro/pull/778)
+conserva el estado de cierre y los checks remotos.
 
 Para levantar el bloqueo hace falta una aclaración documental de UCDP sobre
 los intervalos que abarcan un mes completo o una regla de exportación

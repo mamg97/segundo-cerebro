@@ -78,3 +78,20 @@ Siguiente tarea: aclarar la regla de exportación para intervalos que abarcan
 un mes completo y documentar reloj externo de snapshots nuevos antes de un
 nuevo origen; luego fijar objetivo mensual y cohorte. No repetir el estudio
 2024/25 ni interpretar las 44 ubicaciones con eventos como población total.
+
+## AV-088 · Cotejo de la exportación trimestral
+
+La [PR #778](https://github.com/mamg97/segundo-cerebro/pull/778) incorpora
+un comparador de las ediciones oficiales septiembre 26.0.9 y enero–septiembre
+26.01.26.09, fijadas por SHA. Los 2.014 registros mensuales aparecen con seis
+campos básicos idénticos en el trimestral de 16.633 registros. La anomalía
+de AV-087 permanece con las mismas fechas y precisión. Esta evidencia no
+independiza las fuentes ni explica la regla de inclusión mensual; el resultado
+sigue `SOURCE_QUALITY_BLOCKED`. La PR ejecuta tests sintéticos y descarga
+efímera de ambos CSV. No hay scoring ni emisión. Informe:
+[AV-088](AV088_CANDIDATE_MENSUAL_TRIMESTRAL.md).
+
+Próximo paso científico: aclaración documental del contrato de UCDP para
+intervalos que abarcan un mes completo, seguida de un testigo externo de
+disponibilidad antes del nuevo origen, roster completo y target mensual
+preespecificado. No actualizar `PsicoPredicciones` ni admitir la cohorte.
