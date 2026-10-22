@@ -1,3 +1,21 @@
+## Health Bridge — actualización de revisión PR #773
+
+Esta nota actualiza el bloque anterior que permanece debajo. Ocho pruebas Swift de coordinación, seis ensayos del renovador con comandos simulados y tres pruebas del SQL productivo sobre SQLite en memoria cubren concurrencia, reintentos, reapertura, varias pesadas/día, UTC, llegada atrasada y UPSERT. Fixtures exclusivamente sintéticos. El fallo del marcador del renovador quedó corregido; las cuatro métricas corporales conservan prioridad. Diagnósticos separan lectura, medición y envío aceptado, con errores de entrega HealthKit y SHA instalada.
+
+Pendiente: CI y build del último commit, publicación e instalación de la revisión aprobada; nueva pesada hasta D1/API/UI y posterior sincronización automática real. No retirar el Atajo. La ventana ordinaria de tres días no acredita recuperación de muestras más antiguas: requieren recuperación histórica explícita. CORRECCIÓN IMPLEMENTADA · VALIDACIÓN EN DISPOSITIVO PENDIENTE.
+
+---
+
+## Health Bridge — reparación de coordinación en revisión
+
+Rama `codex/health-weight-forensics`: cola corporal persistente, relectura si llega un peso durante otra sincronización, recuperación al desbloquear y al abrir la app. Siete pruebas Swift ejecutables pasan; doce pruebas existentes de identidad, unión corporal, normalización y ventana temporal pasan. Diagnósticos privados y revisión de instalación añadidos; renovador propuesto avanza main limpio y reinstala cambios aunque la firma siga vigente. No se ha actualizado el checkout del renovador real ni instalado esta versión en iPhone.
+
+Revisión forense: #231 añadió entrega inmediata y primer plano; #361 los retiró; #763 recuperó prioridad de bodyMass, pero no las carreras/reintentos. CI de #763 pasó compilación y guard de privacidad; no acreditó instalación ni entrega automática física. El checkout operativo del renovador comprobado seguía anterior a #763. Estos hechos no prueban qué notificación concreta faltó en el incidente.
+
+Pendientes antes de merge/cierre: pruebas del renovador, prueba de UPSERT real y llegada fuera de orden, completar auditoría/observabilidad, revisión y CI, actualizar el checkout operativo e instalar la revisión aprobada; probar una nueva pesada hasta la UI y otra automática posterior. Estado: implementación parcial en revisión, validación física pendiente. No declarar resuelto.
+
+---
+
 ## PSICOHISTORIA — Continuidad vigente · 21/10/2026
 
 Estado y próximo paso técnico: [handoff Codex ↔ ChatGPT](psicohistoria/CODEX_CHATGPT_HANDOFF.md)

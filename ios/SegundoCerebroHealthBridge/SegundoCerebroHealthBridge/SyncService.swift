@@ -1,49 +1,17 @@
 import Foundation
 
-enum SyncTrigger: String, Sendable {
-    case manual
-    case healthKit
-    case bodyMass
-    case backgroundRefresh
-    case protectedDataRetry
-
-    var isAutomatic: Bool { self != .manual }
-}
-
-enum SyncDefaults {
-    static let lastSuccessfulSync = "healthBridge.lastSuccessfulSync"
-    static let lastSuccessfulTrigger = "healthBridge.lastSuccessfulSyncTrigger"
-    static let lastSuccessfulSummary = "healthBridge.lastSuccessfulSyncSummary"
-    static let lastAttempt = "healthBridge.lastSyncAttempt"
-    static let lastAttemptTrigger = "healthBridge.lastSyncAttemptTrigger"
-    static let lastFailure = "healthBridge.lastSyncFailure"
-    static let nextBackgroundRefreshEarliest = "healthBridge.nextBackgroundRefreshEarliest"
-    static let backgroundScheduleFailure = "healthBridge.backgroundScheduleFailure"
-    static let pendingProtectedDataRetry = "healthBridge.pendingProtectedDataRetry"
-    static let reconciliationRevision = "healthBridge.reconciliationRevision"
-}
-
-struct SyncRunResult: Sendable {
-    let syncedDays: Int
-    let bodySamples: Int
-    let recoveryDays: Int
-    let extendedMetrics: Int
-    let finishedAt: Date
-    let trigger: SyncTrigger
-    let wasSkipped: Bool
-}
-
 actor SyncService {
     static let shared = SyncService()
-    static let automaticSyncInterval: TimeInterval = 8 * 60 * 60
+    static let automaticSyncInterval = SyncCoordinator.automaticSyncInterval
     static let automaticReconciliationDays = 3
-    private static let currentReconciliationRevision = 4
 
     static let endpoint = URL(string: "https://segundo-cerebro-health-ingest.mamg97.workers.dev/v1/sync")!
 
     private let health = HealthKitService.shared
     private let session: URLSession
-    private var inFlightSync: Task<SyncRunResult, Error>?
+    private lazy var coordinator = SyncCoordinator { [self] days, trigger in
+        try await performSync(days: days, trigger: trigger)
+    }
 
     private init() {
         let configuration = URLSessionConfiguration.ephemeral
@@ -54,48 +22,11 @@ actor SyncService {
     }
 
     func syncRecentDays(days: Int = automaticReconciliationDays, trigger: SyncTrigger = .manual) async throws -> SyncRunResult {
-        if let inFlightSync {
-            return try await inFlightSync.value
-        }
+        try await coordinator.sync(days: days, trigger: trigger)
+    }
 
-        let defaults = UserDefaults.standard
-        let now = Date()
-        // A real new weight observation must not be discarded just because a routine
-        // activity sync happened recently. All other automatic signals retain the
-        // normal 8-hour guard to protect free-tier usage.
-        if trigger.isAutomatic,
-           trigger != .bodyMass,
-           defaults.integer(forKey: SyncDefaults.reconciliationRevision) >= Self.currentReconciliationRevision,
-           let last = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date,
-           now.timeIntervalSince(last) < Self.automaticSyncInterval {
-            return SyncRunResult(
-                syncedDays: 0,
-                bodySamples: 0,
-                recoveryDays: 0,
-                extendedMetrics: 0,
-                finishedAt: last,
-                trigger: trigger,
-                wasSkipped: true
-            )
-        }
-
-        defaults.set(now, forKey: SyncDefaults.lastAttempt)
-        defaults.set(trigger.rawValue, forKey: SyncDefaults.lastAttemptTrigger)
-
-        let task = Task { [self] in
-            try await performSync(days: days, trigger: trigger)
-        }
-        inFlightSync = task
-
-        do {
-            let result = try await task.value
-            inFlightSync = nil
-            return result
-        } catch {
-            inFlightSync = nil
-            defaults.set(error.localizedDescription, forKey: SyncDefaults.lastFailure)
-            throw error
-        }
+    func deferSync(trigger: SyncTrigger) async {
+        await coordinator.deferSync(trigger: trigger)
     }
 
     private func performSync(days: Int, trigger: SyncTrigger) async throws -> SyncRunResult {
@@ -117,6 +48,18 @@ actor SyncService {
         for offset in stride(from: count - 1, through: 0, by: -1) {
             guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
             let snapshot = try await health.snapshot(for: date)
+            let defaults = UserDefaults.standard
+            defaults.set(Date(), forKey: SyncDefaults.lastBodyReadAt)
+            defaults.set(snapshot.bodySamples.count, forKey: SyncDefaults.lastBodyReadCount)
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let latest = snapshot.bodySamples.filter({ $0.type == "bodyMass" }).map(\.measuredAt).max(),
+               let measuredAt = formatter.date(from: latest) ?? ISO8601DateFormatter().date(from: latest) {
+                let previous = defaults.object(forKey: SyncDefaults.lastWeightReadAt) as? Date
+                if previous == nil || measuredAt > previous! {
+                    defaults.set(measuredAt, forKey: SyncDefaults.lastWeightReadAt)
+                }
+            }
             guard snapshot.activity != nil || !snapshot.bodySamples.isEmpty || snapshot.recovery != nil || !snapshot.metrics.isEmpty else {
                 continue
             }
@@ -130,6 +73,16 @@ actor SyncService {
             )
 
             let response = try await post(payload, token: token)
+            // Only acknowledge the weight timestamp when the entire body batch was accepted.
+            if response.bodySamplesAccepted == snapshot.bodySamples.count,
+               let latest = snapshot.bodySamples.filter({ $0.type == "bodyMass" }).map(\.measuredAt).max(),
+               let measuredAt = formatter.date(from: latest) ?? ISO8601DateFormatter().date(from: latest) {
+                let previous = defaults.object(forKey: SyncDefaults.lastAcceptedWeightMeasuredAt) as? Date
+                if previous == nil || measuredAt >= previous! {
+                    defaults.set(measuredAt, forKey: SyncDefaults.lastAcceptedWeightMeasuredAt)
+                    defaults.set(Date(), forKey: SyncDefaults.lastWeightAcceptedAt)
+                }
+            }
             syncedDays += 1
             bodySamples += response.bodySamplesAccepted ?? 0
             if response.recoveryAccepted == true { recoveryDays += 1 }
@@ -137,13 +90,6 @@ actor SyncService {
         }
 
         let finishedAt = Date()
-        let summary = "\(syncedDays) días · \(bodySamples) muestras corporales · \(recoveryDays) días de recuperación · \(extendedMetrics) métricas ampliadas"
-        let defaults = UserDefaults.standard
-        defaults.set(finishedAt, forKey: SyncDefaults.lastSuccessfulSync)
-        defaults.set(trigger.rawValue, forKey: SyncDefaults.lastSuccessfulTrigger)
-        defaults.set(summary, forKey: SyncDefaults.lastSuccessfulSummary)
-        defaults.set(Self.currentReconciliationRevision, forKey: SyncDefaults.reconciliationRevision)
-        defaults.removeObject(forKey: SyncDefaults.lastFailure)
         return SyncRunResult(
             syncedDays: syncedDays,
             bodySamples: bodySamples,

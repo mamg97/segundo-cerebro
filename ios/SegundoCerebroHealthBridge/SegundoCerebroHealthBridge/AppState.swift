@@ -11,8 +11,22 @@ final class AppState: ObservableObject {
     @Published var lastSyncTrigger: SyncTrigger?
     @Published var lastSyncSummary: String?
     @Published var nextBackgroundRefreshEarliest: Date?
+    @Published var lastAttempt: Date?
+    @Published var lastFailure: String?
+    @Published var lastWeightReadAt: Date?
+    @Published var lastBodyReadAt: Date?
+    @Published var bodyReadCount = 0
+    @Published var hasPendingBody = false
+    @Published var lastWeightAcceptedAt: Date?
+    @Published var lastAcceptedWeightMeasuredAt: Date?
+    @Published var healthKitFailures: [String] = []
+    var installedVersion: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        return "\(info["CFBundleShortVersionString"] as? String ?? "?") (\(info["CFBundleVersion"] as? String ?? "?")) · \(info["HealthBridgeRevision"] as? String ?? "sin revisión")"
+    }
 
     init() {
+        UserDefaults.standard.set(Bundle.main.object(forInfoDictionaryKey: "HealthBridgeRevision") as? String ?? "unknown", forKey: "healthBridge.installedRevision")
         refreshDiagnostics()
         if didRequestHealthAuthorization {
             HealthKitService.shared.enableBackgroundDelivery()
@@ -70,8 +84,24 @@ final class AppState: ObservableObject {
         }
     }
 
+    func reconcileOnForeground() async {
+        guard didRequestHealthAuthorization, hasToken else { return }
+        do { _ = try await SyncService.shared.syncRecentDays(trigger: .foreground) }
+        catch { statusMessage = "Sincronización pendiente: \(error.localizedDescription)" }
+        refreshDiagnostics()
+    }
+
     func refreshDiagnostics() {
         let defaults = UserDefaults.standard
+        lastWeightAcceptedAt = defaults.object(forKey: SyncDefaults.lastWeightAcceptedAt) as? Date
+        lastAcceptedWeightMeasuredAt = defaults.object(forKey: SyncDefaults.lastAcceptedWeightMeasuredAt) as? Date
+        healthKitFailures = (defaults.dictionary(forKey: SyncDefaults.healthKitFailures) as? [String: String] ?? [:]).values.sorted()
+        lastAttempt = defaults.object(forKey: SyncDefaults.lastAttempt) as? Date
+        lastFailure = defaults.string(forKey: SyncDefaults.lastFailure)
+        lastWeightReadAt = defaults.object(forKey: SyncDefaults.lastWeightReadAt) as? Date
+        lastBodyReadAt = defaults.object(forKey: SyncDefaults.lastBodyReadAt) as? Date
+        bodyReadCount = defaults.integer(forKey: SyncDefaults.lastBodyReadCount)
+        hasPendingBody = defaults.bool(forKey: SyncDefaults.pendingBodySync)
         lastSuccessfulSync = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date
         lastSyncTrigger = defaults.string(forKey: SyncDefaults.lastSuccessfulTrigger).flatMap(SyncTrigger.init(rawValue:))
         lastSyncSummary = defaults.string(forKey: SyncDefaults.lastSuccessfulSummary)
@@ -81,8 +111,9 @@ final class AppState: ObservableObject {
     var lastSyncTriggerLabel: String {
         switch lastSyncTrigger {
         case .manual: "Manual"
+        case .foreground: "Al abrir la app"
         case .healthKit: "Automática · nuevos datos de Salud"
-        case .bodyMass: "Automática · nuevo peso"
+        case .bodyMass: "Automática · medición corporal"
         case .backgroundRefresh: "Automática · reconciliación periódica"
         case .protectedDataRetry: "Automática · reintento tras desbloqueo"
         case nil: "Sin información"

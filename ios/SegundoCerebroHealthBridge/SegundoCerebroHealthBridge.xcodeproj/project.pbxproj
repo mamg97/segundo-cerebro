@@ -17,6 +17,7 @@
 		A10000000000000000000008 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* SyncService.swift */; };
 		A10000000000000000000009 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000011 /* HealthKit.framework */; };
 		A1000000000000000000000A /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* Security.framework */; };
+		A1000000000000000000000B /* SyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* SyncCoordinator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 		B1000000000000000000000B /* SegundoCerebroHealthBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SegundoCerebroHealthBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000011 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		B10000000000000000000012 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		B10000000000000000000013 /* SyncCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +70,7 @@
 				B10000000000000000000006 /* KeychainStore.swift */,
 				B10000000000000000000007 /* Models.swift */,
 				B10000000000000000000008 /* SyncService.swift */,
+				B10000000000000000000013 /* SyncCoordinator.swift */,
 				B10000000000000000000009 /* Info.plist */,
 				B1000000000000000000000A /* SegundoCerebroHealthBridge.entitlements */,
 			);
@@ -167,6 +170,7 @@
 				A10000000000000000000006 /* KeychainStore.swift in Sources */,
 				A10000000000000000000007 /* Models.swift in Sources */,
 				A10000000000000000000008 /* SyncService.swift in Sources */,
+				A1000000000000000000000B /* SyncCoordinator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -210,7 +214,8 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SegundoCerebroHealthBridge/SegundoCerebroHealthBridge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
+				HEALTH_BRIDGE_REVISION = "developer-build";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SegundoCerebroHealthBridge/Info.plist;
@@ -219,7 +224,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mamg97.segundocerebro.healthbridge;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -234,7 +239,8 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SegundoCerebroHealthBridge/SegundoCerebroHealthBridge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
+				HEALTH_BRIDGE_REVISION = "developer-build";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SegundoCerebroHealthBridge/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -242,7 +248,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mamg97.segundocerebro.healthbridge;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

@@ -6,6 +6,24 @@ final class HealthKitService {
 
     private let store = HKHealthStore()
     private var observerQueries: [HKObserverQuery] = []
+    private let diagnosticLock = NSLock()
+    private let immediateBodyTypes: Set<String> = [
+        HKQuantityTypeIdentifier.bodyMass.rawValue,
+        HKQuantityTypeIdentifier.bodyFatPercentage.rawValue,
+        HKQuantityTypeIdentifier.bodyMassIndex.rawValue,
+        HKQuantityTypeIdentifier.leanBodyMass.rawValue
+    ]
+
+    private func recordDeliveryResult(_ error: Error?, success: Bool, operation: String, identifier: String) {
+        diagnosticLock.lock()
+        defer { diagnosticLock.unlock() }
+        let defaults = UserDefaults.standard
+        var failures = defaults.dictionary(forKey: SyncDefaults.healthKitFailures) as? [String: String] ?? [:]
+        let key = operation + ":" + identifier
+        if success && error == nil { failures.removeValue(forKey: key) }
+        else { failures[key] = "\(operation) · \(identifier) · código \((error as NSError?)?.code ?? -1)" }
+        defaults.set(failures, forKey: SyncDefaults.healthKitFailures)
+    }
 
     private init() {}
 
@@ -158,12 +176,12 @@ final class HealthKitService {
 
         for type in readTypes {
             guard let sampleType = type as? HKSampleType else { continue }
-            // Only an actual weight update bypasses the general sync cooldown;
-            // other body/activity notifications use the normal rate limit.
-            let isWeightUpdate = (type as? HKQuantityType)?.identifier == HKQuantityTypeIdentifier.bodyMass.rawValue
-            let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { _, completion, _ in
+            // Each body metric may arrive separately; preserve all four notifications.
+            let isBodyUpdate = immediateBodyTypes.contains(type.identifier)
+            let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { [self] _, completion, error in
+                recordDeliveryResult(error, success: error == nil, operation: "Observación", identifier: type.identifier)
                 Task {
-                    await onUpdate(isWeightUpdate)
+                    await onUpdate(isBodyUpdate)
                     completion()
                 }
             }
@@ -174,17 +192,13 @@ final class HealthKitService {
 
     func enableBackgroundDelivery() {
         guard isAvailable else { return }
-        let immediateBodyTypes: Set<String> = [
-            HKQuantityTypeIdentifier.bodyMass.rawValue,
-            HKQuantityTypeIdentifier.bodyFatPercentage.rawValue,
-            HKQuantityTypeIdentifier.bodyMassIndex.rawValue,
-            HKQuantityTypeIdentifier.leanBodyMass.rawValue
-        ]
         for type in readTypes {
             let identifier = (type as? HKQuantityType)?.identifier
             let frequency: HKUpdateFrequency = identifier.map { immediateBodyTypes.contains($0) } == true
                 ? .immediate : .hourly
-            store.enableBackgroundDelivery(for: type, frequency: frequency) { _, _ in }
+            store.enableBackgroundDelivery(for: type, frequency: frequency) { [self] success, error in
+                recordDeliveryResult(error, success: success, operation: "Segundo plano", identifier: type.identifier)
+            }
         }
     }
 

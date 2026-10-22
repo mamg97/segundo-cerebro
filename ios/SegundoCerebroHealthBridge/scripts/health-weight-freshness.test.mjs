@@ -6,22 +6,22 @@ const root = new URL("../SegundoCerebroHealthBridge/", import.meta.url);
 const read = (name) => readFile(new URL(name, root), "utf8");
 const [health, sync, delegate, state] = await Promise.all([
   read("HealthKitService.swift"),
-  read("SyncService.swift"),
+  read("SyncCoordinator.swift"),
   read("AppDelegate.swift"),
   read("AppState.swift")
 ]);
 
-test("weight observer is distinguished from other HealthKit changes", () => {
-  assert.match(health, /isWeightUpdate = \(type as\? HKQuantityType\)\?\.identifier == HKQuantityTypeIdentifier\.bodyMass\.rawValue/);
-  assert.match(health, /await onUpdate\(isWeightUpdate\)/);
-  assert.match(delegate, /isWeightUpdate \? \.bodyMass : \.healthKit/);
+test("body observers are distinguished from high-frequency HealthKit changes", () => {
+  assert.match(health, /isBodyUpdate = immediateBodyTypes\.contains\(type\.identifier\)/);
+  assert.match(health, /await onUpdate\(isBodyUpdate\)/);
+  assert.match(delegate, /isBodyUpdate \? \.bodyMass : \.healthKit/);
 });
 
 test("new weight bypasses only the normal eight-hour automatic cooldown", () => {
   assert.match(sync, /case bodyMass/);
   assert.match(sync, /static let automaticSyncInterval: TimeInterval = 8 \* 60 \* 60/);
-  assert.match(sync, /if trigger\.isAutomatic,\s*trigger != \.bodyMass,\s*defaults\.integer/);
-  assert.match(state, /case \.bodyMass: "Automática · nuevo peso"/);
+  assert.match(sync, /pendingBodySync/);
+  assert.match(state, /case \.bodyMass: "Automática · medición corporal"/);
 });
 
 test("body metrics request immediate background notifications; activity stays hourly", () => {

@@ -13,8 +13,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         registerBackgroundRefresh()
 
-        HealthKitService.shared.installObserverQueries { [weak self] isWeightUpdate in
-            _ = await self?.performAutomaticSync(trigger: isWeightUpdate ? .bodyMass : .healthKit)
+        HealthKitService.shared.installObserverQueries { [weak self] isBodyUpdate in
+            _ = await self?.performAutomaticSync(trigger: isBodyUpdate ? .bodyMass : .healthKit)
         }
 
         if UserDefaults.standard.bool(forKey: "healthBridge.didRequestHealthAuthorization") {
@@ -62,7 +62,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         let defaults = UserDefaults.standard
         let now = Date()
         let earliest: Date
-        if let lastSuccessfulSync = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date {
+        if defaults.bool(forKey: SyncDefaults.pendingProtectedDataRetry) {
+            earliest = now.addingTimeInterval(15 * 60)
+        } else if let lastSuccessfulSync = defaults.object(forKey: SyncDefaults.lastSuccessfulSync) as? Date {
             earliest = max(now, lastSuccessfulSync.addingTimeInterval(SyncService.automaticSyncInterval))
         } else {
             earliest = now.addingTimeInterval(SyncService.automaticSyncInterval)
@@ -81,13 +83,18 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
     private func performAutomaticSync(trigger: SyncTrigger) async -> Bool {
         guard UIApplication.shared.isProtectedDataAvailable else {
-            UserDefaults.standard.set(true, forKey: SyncDefaults.pendingProtectedDataRetry)
+            await SyncService.shared.deferSync(trigger: trigger)
+            scheduleBackgroundRefresh()
             return false
         }
 
         do {
-            _ = try await SyncService.shared.syncRecentDays(trigger: trigger)
-            UserDefaults.standard.removeObject(forKey: SyncDefaults.pendingProtectedDataRetry)
+            let result = try await SyncService.shared.syncRecentDays(trigger: trigger)
+            if result.wasSkipped {
+                let pending = UserDefaults.standard.bool(forKey: SyncDefaults.pendingProtectedDataRetry)
+                if pending { scheduleBackgroundRefresh() }
+                return !pending
+            }
             scheduleBackgroundRefresh()
             return true
         } catch {

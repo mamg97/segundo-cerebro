@@ -41,7 +41,7 @@ Los datos ausentes se envían como ausentes. La app no estima valores ni genera 
 - **Corrección de frescura:** las notificaciones automáticas debidas a una nueva muestra `bodyMass` no se descartan por el límite ordinario de 8 horas entre sincronizaciones de actividad. Los demás avisos HealthKit siguen limitados para evitar llamadas excesivas. iOS conserva el control del momento real de entrega y puede retrasarla.
 - Actividad, entrenamientos, sueño y recuperación mantienen entrega `.hourly` para no provocar despertares continuos por señales de alta frecuencia.
 - Al volver la app al primer plano se ejecuta una reconciliación inmediata de esos tres días.
-- `BGAppRefreshTask` solicita una reconciliación adicional a partir de una hora; iOS decide el momento real y puede retrasarla.
+- `BGAppRefreshTask` solicita reconciliación ordinaria a partir de ocho horas, o recuperación a partir de 15 minutos si hay trabajo pendiente; iOS decide el momento real y puede retrasarla.
 - El botón **Sincronizar ahora** existe para instalación, diagnóstico y recuperación puntual.
 - **Importante:** GitHub Actions valida el proyecto pero no actualiza automáticamente el ejecutable del iPhone. Después de modificar el bridge, hay que recompilar e instalar la versión nueva desde Xcode (renovando la firma gratuita cuando proceda) y comprobar una sincronización real. Si el dato ya está en Apple Salud, pulsar **Sincronizar ahora** recupera la pesada sin escribir duplicados en la pestaña derivada del Sheet.
 
@@ -126,3 +126,12 @@ se puede desactivar su automatización. Conviene conservarlo unos días como fal
 - `KeychainStore.swift`: token privado.
 - `AppDelegate.swift`: observers + Background Delivery + BGTask.
 - `ContentView.swift`: instalación y diagnóstico.
+
+
+### Persistent body delivery and installation identity
+
+Body events received during another sync remain pending until a subsequent HealthKit read succeeds. Locked-device and failed-upload retries preserve body priority across launches. Foreground reconciliation bypasses the activity cooldown, with a 60-second activation guard; failed automatic uploads back off for 60 seconds. Native diagnostics show last attempt/error, body read time/count, latest weight measurement time and installed version/revision. None of these signals alone certifies fresh weight in D1.
+
+The free-signing script requires a clean main checkout, fetches and fast-forwards origin/main, and reinstalls when the source revision changes even inside the five-day signing window. It refuses divergent or dirty work instead of resetting it. A renewed profile is not proof of background HealthKit delivery. Real-device validation and a later automatic sample remain mandatory.
+
+Body priority covers weight, fat percentage, BMI and lean body mass independently. Private diagnostics distinguish the newest weight read, the measurement date acknowledged by ingest and the latest acknowledgement time (which may be a repeated UPSERT, not first receipt). HealthKit observer/delivery errors remain visible until the corresponding operation succeeds. The ordinary three-day reconciliation does not prove recovery of arbitrarily old late samples; historical recovery is a separate explicit operation.
