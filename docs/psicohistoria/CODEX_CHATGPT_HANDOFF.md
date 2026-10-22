@@ -116,3 +116,8 @@ sigue PARCIAL/NO; no puntuar la probabilidad USGS como predicción propia.
 Census V2023 y contrasta la fila USA 2023 con WPP 2022/2024. La fecha de
 referencia coincide, pero los universos de facto/residente no; no llamar
 «error» a la diferencia ni admitir desenlace hasta conciliar definiciones.
+
+[AV-103](AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) confirma que el directorio BTOS
+sustituyó el enlace del suplemento AI por el SI actual; conserva el nuevo PDF
+con hash privado. La numeración del suplemento, el cuestionario básico y el
+libro nacional no se alinea por sí sola. TEC-02 sigue PARCIAL/NO.

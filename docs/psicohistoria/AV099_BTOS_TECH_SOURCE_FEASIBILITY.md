@@ -19,3 +19,8 @@ Hay otra cautela de vintage: el libro actual rotula las preguntas con «Super In
 Una pregunta evaluable sería anticipar la proporción nacional `Yes` a uso actual de IA/SI en una **ola futura elegida antes del campo**, con universo, redacción administrada, categoría de no respuesta y versión de primera publicación fijados de antemano. Benchmark mínimo: persistencia de la última ola admisible disponible antes del corte. Usar la fecha real de publicación del resultado como verificación del desenlace, nunca la expectativa de seis meses del mismo cuestionario. La estimación de `202621` es solo un ejemplo de lectura de fuente, **no una predicción retroactiva**.
 
 Estado: **fuente y reloj de ejemplo localizados; contrato as-of y comparabilidad bloqueados**. Falta conservar bytes originales de la primera publicación, fechar los instrumentos usados en 2026, delimitar la serie homogénea y fijar el protocolo prospectivo. No escribir `PsicoPredicciones` ni declarar skill.
+
+**Avance posterior:** [AV-103](AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) conserva
+el suplemento SI actual y verifica que el enlace del suplemento AI previo
+devuelve 404. Los PDF actuales usan otra numeración que el libro; todavía no
+hay mapeo por periodo administrado. `TEC-02` sigue PARCIAL/NO.
