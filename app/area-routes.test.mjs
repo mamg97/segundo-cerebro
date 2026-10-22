@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,routeFromHash} from "./area-routes.mjs";
+import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,hrefForHealthTab,HEALTH_SECTION_IDS,routeFromHash} from "./area-routes.mjs";
 
 test("main areas have independent, stable URLs and a home route",()=>{
   assert.equal(hrefForArea("area-general"),"#/inicio");
@@ -32,7 +32,7 @@ test("top navbar remains independently available in every route, no authorizatio
   assert.match(css,/body\.route-area-active \.sidebar\s*\{[\s\S]*?position:fixed/);
   assert.match(css,/z-index:5000/);
   assert.match(index,/id="copy-area-link"/);
-  assert.match(index,/href="\.\/area-routes\.css\?v=0\.1\.3"/);
+  assert.match(index,/href="\.\/area-routes\.css\?v=0\.1\.4"/);
   assert.doesNotMatch(index,/Cloudflare-Access-Jwt-Assertion|client_secret|private_token/);
 });
 
@@ -68,11 +68,18 @@ test("Pareja contains a shareable Boda route with restricted subpaths",()=>{
 test("mobile wedding header stays below the fixed two-row navbar without overlapping Share/Close",()=>{
  const css=readFileSync(new URL("./area-routes.css",import.meta.url),"utf8");
  const wedding=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
- assert.match(css,/:root\{--route-nav-height:88px\}/);
+ assert.match(css,/:root\{--route-nav-height:60px\}/);
  assert.match(css,/height:var\(--route-nav-height\)/);
  assert.match(css,/top:var\(--route-nav-height,64px\)/);
  assert.match(css,/#detail-dialog\.wedding-dialog\[open\]:has\(#dialog-body > :is\(/);
  assert.match(css,/#dialog-context\{\s*display:none;/);
  assert.match(css,/#dialog-title\{[\s\S]*?min-height:44px;/);
  assert.match(wedding,/dialog\.classList\.add\("wedding-dialog"\)/);
+});
+
+test("health subroutes are shareable and deny invalid sections",()=>{
+ for(const id of HEALTH_SECTION_IDS)assert.deepEqual(routeFromHash(hrefForHealthTab(id)),{areaId:"area-health",detailId:id});
+ assert.equal(routeFromHash("#/salud/unknown"),null);
+ assert.equal(routeFromHash("#/salud/%2f"),null);
+ assert.equal(hrefForHealthTab("invalid"),"#/salud");
 });

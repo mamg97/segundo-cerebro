@@ -7,6 +7,8 @@ export const HOBBY_CATEGORIES=Object.freeze([
 {id:"rutas-moto",title:"Rutas en moto",icon:"🏍️",subtitle:"Carreteras por descubrir",description:"Rutas planificadas, recorridas y favoritas.",stages:["Por hacer","Realizadas","Favoritas"],fields:["Recorrido","Kilómetros","Duración","Mapa","Notas"]}
 ]);
 const hobbyIds=new Set(HOBBY_CATEGORIES.map(item=>item.id));
+export const HEALTH_SECTION_IDS=Object.freeze(["overview","medical","vision","gym","nutrition","recipes","menu"]);
+const healthSectionIds=new Set(HEALTH_SECTION_IDS);
 const routes=[
  ["area-general","inicio"],["area-career","carrera"],["area-finance","finanzas"],
  ["area-calendar","agenda"],["area-partner","pareja"],["area-family","familia"],
@@ -22,12 +24,13 @@ export function routeFromHash(hash){
   const areaId=slugToArea.get(parts[0]);
   if(!areaId || parts.length>2)return null;
   if(parts.length===2){
-    if(areaId!=="area-travels"&&areaId!=="area-hobbies"&&areaId!=="area-partner")return null;
+    if(areaId!=="area-travels"&&areaId!=="area-hobbies"&&areaId!=="area-partner"&&areaId!=="area-health")return null;
     try{
       const id=decodeURIComponent(parts[1]);
       if(!id||id.length>500||id.includes("/")||id.includes("\\")||id.includes("\0"))return null;
       if(areaId==="area-hobbies"&&!hobbyIds.has(id))return null;
       if(areaId==="area-partner"&&id!=="boda")return null;
+      if(areaId==="area-health"&&!healthSectionIds.has(id))return null;
       return {areaId,detailId:id};
     }catch{return null}
   }
@@ -39,4 +42,5 @@ export function hrefForTravel(id){
 }
 export function hrefForHobby(id){return hobbyIds.has(id)?"#/hobbies/"+id:hrefForArea("area-hobbies")}
 export function hrefForWedding(){return "#/pareja/boda"}
+export function hrefForHealthTab(tab){return healthSectionIds.has(tab)?"#/salud/"+tab:hrefForArea("area-health")}
 export function isNamedArea(areaId){return areaToSlug.has(areaId)}

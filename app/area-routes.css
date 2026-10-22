@@ -72,10 +72,9 @@ body.route-area-active #detail-dialog[open] #agenda-overview{
 }
 
 
-/* iPhone: the two-row navigation occupies more than the desktop's 64px.
-   Reserve exactly the same height for the pinned bar and routed viewport. */
+/* Mobile toolbar and dock replace the prior two-row navbar. */
 @media (max-width:760px){
- :root{--route-nav-height:88px}
+ :root{--route-nav-height:60px}
  body.route-area-active .app-shell > .sidebar{
   box-sizing:border-box;
   height:var(--route-nav-height);

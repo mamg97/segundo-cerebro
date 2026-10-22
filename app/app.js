@@ -16,7 +16,8 @@ import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
 import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.3";
-import { hrefForArea, routeFromHash } from "./area-routes.mjs?v=0.1.2";
+import { hrefForArea, hrefForHealthTab, routeFromHash } from "./area-routes.mjs?v=0.1.3";
+import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.0";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -810,6 +811,10 @@ async function init() {
   renderMode();
   renderDate();
   renderNavigation();
+  initializeMobileNavigation({navigateTo: (hash) => {
+    if(window.location.hash!==hash)history.pushState(null,"",hash);
+    applyAreaRoute();
+  }});
   renderDailyOverview();
   renderEvents();
   if (privateModeKind === "remote" && calendarSnapshotComplete(state.calendarSummary)) {
@@ -11804,6 +11809,7 @@ function bindInteractions() {
 let routedTravelDetailId=null;
 let routedHobbyId=null;
 let routedPartnerId=null;
+let routedHealthTabId=null;
 let ignoreRouteCloseEvents=0;
 let restoreCalendarSection=null;
 let activeAreaHash=null;
@@ -11830,6 +11836,16 @@ function setupAreaRoutes(){
     applyAreaRoute();
   });
   window.addEventListener("area-route-synced",()=>{activeAreaHash=window.location.hash});
+  dialog.addEventListener("click",event=>{
+    const tab=event.target.closest("[data-health-tab]");
+    if(!tab||!document.body.classList.contains("route-area-active"))return;
+    if(routeFromHash(window.location.hash)?.areaId!=="area-health")return;
+    const target=hrefForHealthTab(tab.dataset.healthTab);
+    if(window.location.hash===target)return;
+    history.replaceState(null,"",target);
+    activeAreaHash=target;
+    syncMobileNavigation(routeFromHash(target),target);
+  });
   window.addEventListener("hashchange",()=>applyAreaRoute());
   window.addEventListener("popstate",()=>applyAreaRoute());
   document.querySelector("#copy-area-link")?.addEventListener("click",async()=>{
@@ -11878,6 +11894,8 @@ function applyAreaRoute(){
   routedTravelDetailId=route.areaId==="area-travels"?(route.detailId||null):null;
   routedHobbyId=route.areaId==="area-hobbies"?(route.detailId||null):null;
   routedPartnerId=route.areaId==="area-partner"?(route.detailId||null):null;
+  routedHealthTabId=route.areaId==="area-health"?(route.detailId||null):null;
+  syncMobileNavigation(route,hash);
   document.querySelectorAll("[data-nav-area-id]").forEach(el=>{
     const active=el.dataset.navAreaId===route.areaId;
     el.classList.toggle("active",active);
@@ -11937,6 +11955,9 @@ function openArea(areaId) {
   }
   if (areaId === "area-health") {
     openHealthDetail();
+    if(routedHealthTabId&&routedHealthTabId!=="overview"){
+      document.querySelector('[data-health-tab="'+routedHealthTabId+'"]')?.click();
+    }
     return;
   }
   if (areaId === "area-habits") {
