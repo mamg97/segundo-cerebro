@@ -55,15 +55,6 @@ body.route-area-active #detail-dialog[open] #copy-area-link{
 body.route-area-active #detail-dialog[open] #agenda-overview{
  width:100%;max-width:none;scroll-margin:0;
 }
-/* Two-row phone navigation is ~83px tall; leave room for it on every route. */
-@media(max-width:760px){
- :root{--route-nav-height:84px}
- body.route-area-active .sidebar{min-height:var(--route-nav-height)}
- body.route-area-active #detail-dialog[open] #dialog-context,
- body.route-area-active #detail-dialog[open] #dialog-title{
-  padding-right:180px;overflow-wrap:anywhere;
- }
-}
 @media(max-width:900px){
  body.route-area-active #detail-dialog[open] .trv-dash-details{grid-template-columns:1fr}
 }
