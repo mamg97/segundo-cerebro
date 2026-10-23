@@ -73,12 +73,31 @@ def capture(event_id: str, output_dir: Path, *, fetch=_fetch,
                 "product_update_utc": _iso(stamp), "first_window_start_utc": _iso(start),
                 "forecast_received_utc": _iso(forecast_received)}
 
+    technical_url = f"{HOST}/product/oaf/{code}/{source}/{stamp}/forecast_data.json"
+    if product["contents"]["forecast_data.json"]["url"] != technical_url:
+        raise ValueError("technical URL does not match official product identity")
+    technical_raw, technical_headers = fetch(technical_url)
+    technical_received = clock()
+    technical = json.loads(technical_raw)
+    if technical.get("pdl_event_id") != event_id:
+        raise ValueError("technical event ID mismatch")
+    results = technical.get("results", {})
+    selected = [key[:-4] for key, value in results.items()
+                if key.endswith("_pdl") and value is True]
+    if len(selected) != 1 or results.get(selected[0] + "_json") != forecast:
+        raise ValueError("missing, ambiguous, unsupported or mismatched published model")
+    if technical_received >= start:
+        return {"status": "REJECTED_TECHNICAL_RECEIVED_LATE", "event_id": event_id,
+                "first_window_start_utc": _iso(start),
+                "technical_received_utc": _iso(technical_received)}
+
     folder = output_dir / f"{event_id}-{stamp}"
     folder.mkdir(parents=True, exist_ok=False)
     files = []
     for name, url, raw, headers, received in (
         ("detail.geojson", detail_url, detail_raw, detail_headers, detail_received),
         ("forecast.json", forecast_url, forecast_raw, forecast_headers, forecast_received),
+        ("forecast_data.json", technical_url, technical_raw, technical_headers, technical_received),
     ):
         with (folder / name).open("xb") as stream:
             stream.write(raw)
@@ -89,8 +108,10 @@ def capture(event_id: str, output_dir: Path, *, fetch=_fetch,
                       "headers": headers})
     persisted = clock()
     admitted = persisted < start
-    manifest = {"schema": "psychohistory.usgs_oaf_prewindow_capture.v1",
+    manifest = {"schema": "psychohistory.usgs_oaf_prewindow_capture.v2",
                 "event_id": event_id, "product_update_utc": _iso(stamp),
+                "selected_published_model": selected[0],
+                "technical_forecast_pair_verified": True,
                 "first_window_start_utc": _iso(start), "first_window_end_utc": _iso(end),
                 "raw_payloads_persisted_utc": _iso(persisted),
                 "capture_before_window": admitted,
