@@ -76,8 +76,8 @@ test("remaining image and console failures expose only bounded diagnostic famili
   assert.equal(safeAuditConsoleLocationCode("https://private.invalid/api/private-record-123", origin), "API");
   assert.equal(safeAuditConsoleLocationCode("https://other.invalid/person@example.com", origin), "EXTERNAL");
   assert.equal(safeAuditConsoleLocationCode("not a url", origin), "NO_LOCATION");
-  assert.match(auditor, /\\[AUDIT_VISUAL_IMAGE_DIAG\\]/);
-  assert.match(auditor, /\\[AUDIT_BROWSER_ORIGIN_DIAG\\]/);
+  assert.match(auditor, /\[AUDIT_VISUAL_IMAGE_DIAG\]/);
+  assert.match(auditor, /\[AUDIT_BROWSER_ORIGIN_DIAG\]/);
   for (const output of [
     safeAuditImageProbeCode({ status: 502, error: "secret" }, "/private/123"),
     safeAuditConsoleLocationCode("https://private.invalid/app/app.js?token=secret", origin)
