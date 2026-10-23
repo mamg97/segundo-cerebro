@@ -185,7 +185,7 @@ export function safeAuditImageProbeCode(probe, src) {
   if (status >= 500 && status < 600) return "HTTP_5XX";
   if (status >= 400 && status < 500) return "HTTP_4XX";
   if (status !== 200) return status === 0 ? "TRANSPORT_FAILURE" : "HTTP_OTHER";
-  if (!/^image\\//i.test(String(probe?.contentType || ""))) return "INVALID_CONTENT_TYPE";
+  if (!/^image\//i.test(String(probe?.contentType || ""))) return "INVALID_CONTENT_TYPE";
   if (!probe?.decoded) return "DECODE_FAILED";
   return "UNKNOWN";
 }
@@ -197,8 +197,8 @@ export function safeAuditConsoleLocationCode(sourceUrl, appOrigin) {
   try {
     const source = new URL(sourceUrl);
     if (source.origin !== new URL(appOrigin).origin) return "EXTERNAL";
-    if (/^\\/(?:app|assets)\\//.test(source.pathname)) return "APP_ASSET";
-    if (/^\\/api\\//.test(source.pathname)) return "API";
+    if (/^\/(?:app|assets)\//.test(source.pathname)) return "APP_ASSET";
+    if (/^\/api\//.test(source.pathname)) return "API";
     return "SAME_ORIGIN_OTHER";
   } catch {
     return "NO_LOCATION";
