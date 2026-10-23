@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-114 · geometría y modelo OAF · 23/10/2026
+
+[AV-114](psicohistoria/AV114_USGS_GEOMETRY_PROVENANCE.md) verifica igualdad del pronóstico publicado con el modelo bayesiano seleccionado en el archivo técnico; conserva centro de mayor precisión y parámetros de profundidad. API y cálculo tienen valores por defecto distintos: falta justificar el contrato de desenlace antes de contar eventos. SIS-02 permanece PARCIAL/NO, sin score ni emisión. El cierre de publicación y registro se consulta en la PR asociada y la fuente privada.
+
+---
+
 ## PSICOHISTORIA — AV-113 · cuestionario AI recuperado · 23/10/2026
 
 [AV-113](psicohistoria/AV113_BTOS_RECOVERED_AI_INSTRUMENT.md) conserva un cuestionario oficial AI autónomo con redacción ampliada y el comunicado que fecha el suplemento de noviembre de 2025 a febrero de 2026. Los metadatos PDF y HTTP no prueban disponibilidad histórica ni instrumento de octubre de 2026. Publicación y cierre: [PR #804](https://github.com/mamg97/segundo-cerebro/pull/804) y registro canónico privado; la fusión no sincroniza por sí sola el Sheet. TEC-02 sigue PARCIAL/NO, sin emisión.
