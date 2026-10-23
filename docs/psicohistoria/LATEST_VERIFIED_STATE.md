@@ -1,5 +1,9 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-109 · cronología de publicación HTOPS
+
+[AV-109](AV109_HTOPS_RELEASE_CHRONOLOGY.md) distingue el comunicado Census del 23/07/2026 para tablas de marzo, su revisión posterior de ponderaciones y el índice actual que fecha julio y la actualización de marzo el 24/09. Las páginas actuales no reconstruyen el primer XLSX de marzo ni demuestran ausencia de una edición previa de julio. `SOC-02` PARCIAL/NO.
+
 ## AV-108 · reloj de recogida HTOPS
 
 [AV-108](AV108_HTOPS_FIELDWORK_CLOCK.md) verifica que las olas HTOPS de marzo y julio de 2026 recogieron respuestas del 13–30/03 y 15/07–03/08, respectivamente. La ola de julio cruza de mes; un corte prospectivo debe preceder al inicio de campo y seguir faltando la primera publicación de los resultados. `SOC-02` PARCIAL/NO.

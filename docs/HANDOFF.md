@@ -3781,6 +3781,8 @@ Actualización 23/10/2026: [AV-098](psicohistoria/AV098_HTOPS_QUESTIONNAIRE_AND_
 
 [AV-108](psicohistoria/AV108_HTOPS_FIELDWORK_CLOCK.md) fija el trabajo de campo HTOPS de marzo (13–30/03/2026) y julio (15/07–03/08/2026) desde las declaraciones oficiales. La ola de julio cruza a agosto; el corte de una emisión futura debe anteceder al comienzo de campo, con primera publicación y revisiones conservadas. SOC-02 PARCIAL/NO.
 
+[AV-109](psicohistoria/AV109_HTOPS_RELEASE_CHRONOLOGY.md) añade el comunicado Census del 23/07 para tablas de marzo y el índice actual que registra julio y una revisión de marzo el 24/09. HTML completos y SHA privados; no se han recuperado los bytes XLSX de la primera salida. Fijar versión del desenlace antes de score; SOC-02 PARCIAL/NO.
+
 La línea tecnológica [AV-099](psicohistoria/AV099_BTOS_TECH_SOURCE_FEASIBILITY.md) identifica BTOS nacional, sus errores estándar y calendario quincenal. El cambio de redacción de 2025 y el rótulo actual de un cuestionario de 2027 exigen reconstruir instrumentos y primeras publicaciones por ola antes de admitir una serie o pronóstico. Originales y hashes se conservan en el archivo privado fuera de Git.
 
 El [piloto AV-100](psicohistoria/AV100_BLS_RELEASE_DOM_PILOT.md) lee cinco tasas de páginas BLS archivadas y conserva capturas DOM completas fuera de Git con SHA. No demuestra los bytes de primera publicación; MAC-02 sigue PARCIAL/NO y aún no hay backtest.
