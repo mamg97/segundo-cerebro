@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-119 · selector diario ALFRED · 23/10/2026
+
+[AV-119](psicohistoria/AV119_ALFRED_ASOF_SELECTOR.md) valida 335 intervalos y 189 meses y reconstruye 724 celdas de cuatro cortes oficiales. Nueve pruebas sintéticas pasan; separa no publicado, ausente y disponible. Resolución diaria, sin atestación intradía ni predicción; MAC-02 PARCIAL/NO. Próximo: contrato del experimento antes de entrenar. Publicación y registro canónico se verifican por separado.
+
+---
+
 ## PSICOHISTORIA — AV-118 · revisiones RUC/ALFRED · 23/10/2026
 
 [AV-118](psicohistoria/AV118_RUC_INITIAL_RELEASE_COMPARISON.md) compara 186 meses: cuatro primeras apariciones RUC difieren de la publicación inicial ALFRED en 0,1 puntos. Una ausencia común y dos meses fuera de RUC se conservan separados. Tres pruebas sintéticas y ensayo real; no se puntúan predicciones. MAC-02 PARCIAL/NO. Publicación y registro canónico se verifican por separado.
