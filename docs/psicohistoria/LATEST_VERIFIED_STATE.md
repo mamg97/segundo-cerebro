@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-122 · reloj USGS OAF · 23/10/2026
+
+[AV-122](AV122_USGS_TEMPORAL_WINDOW.md) vincula la probabilidad con timeStart/timeEnd publicados y contrasta 16 ventanas de cuatro archivos. creationTime difiere del inicio; no usarlo como sustituto. Regla de borde discreto y contrato completo pendientes; SIS-02 PARCIAL/NO, sin desenlaces ni score.
+
+---
+
 ## PSICOHISTORIA — AV-121 · ensayo macro negativo · 23/10/2026
 
 [AV-121](AV121_MACRO_EXPLORATORY_RESULTS.md) ejecuta el contrato publicado AV120: 27 casos, cuatro eventos; Brier 0,162164 frente a 0,138304, habilidad −17,25 %. No demuestra ventaja. Comprobación separada de variables/etiquetas, entrenamiento y métricas; conserva exclusiones y resultado sin ajustes. MAC-03/04 PARCIAL/NO, sin emisión.
