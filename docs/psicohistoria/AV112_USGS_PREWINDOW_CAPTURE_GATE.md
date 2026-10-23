@@ -1,0 +1,9 @@
+# AV-112 — Captura OAF previa a una ventana completa
+
+23/10/2026. Herramienta manual de procedencia temporal, no un pronóstico propio ni un backtest.
+
+`research/psychohistory/usgs_oaf_prewindow_capture.py` consulta un evento público en la [API USGS](https://earthquake.usgs.gov/fdsnws/event/1/), selecciona la versión OAF `UPDATE` más reciente y exige que el URL de `forecast.json` coincida exactamente con el producto oficial. Solo admite como candidata la primera ventana `1 Day` de 24 horas cuando **su inicio es posterior tanto a `updateTime` como a la recepción y persistencia local de los bytes**. La carpeta de destino se crea una sola vez; guarda respuesta del evento, pronóstico, URL, cabeceras, tamaño, SHA-256 y horas UTC. Un reloj local sin atestación independiente queda marcado como tal en el manifiesto. Los archivos de captura se guardan **fuera de Git**.
+
+Cuatro pruebas sintéticas verifican captura íntegra, rechazo sin escritura cuando la ventana ya empezó, rechazo si la persistencia llega tarde, bloqueo de URL ajena y creación única. En una consulta pública real del evento `us6000u3jd` el 23/10/2026 a las 04:13 UTC, el producto estaba actualizado a las 03:04:29, pero su primera ventana comenzaba a las 03:00:00; el programa devolvió `REJECTED_WINDOW_STARTED` y no creó emisión ni archivo admitido.
+
+Una futura salida `CAPTURED_PREWINDOW` solo acreditaría que **estos bytes se guardaron localmente antes del inicio según el reloj del equipo**. No prueba disponibilidad pública histórica en `updateTime`, reloj independiente, identidad estable del evento, universo elegible, outcome final ni habilidad estadística. Antes de puntuar habría que conservar catálogo/versiones y reglas de desenlace, verificar el reloj y registrar explícitamente cualquier pronóstico de Psicohistoria con un protocolo aprobado. `SIS-02` sigue `PARCIAL`, `criterio_superado=NO`.

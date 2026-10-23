@@ -1,5 +1,9 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-112 · gate manual de captura OAF
+
+[AV-112](AV112_USGS_PREWINDOW_CAPTURE_GATE.md) añade un capturador público USGS que solo admite bytes archivados antes del comienzo de una ventana completa y falla cerrado en cuatro pruebas sintéticas. La consulta real `us6000u3jd` llegó tarde y fue rechazada. Reloj local no atestado, outcome y elegibilidad siguen pendientes; `SIS-02` PARCIAL/NO.
+
 ## AV-111 · conflicto textual BTOS V4
 
 [AV-111](AV111_BTOS_V4_WORDING_CONFLICT.md) compara el DOCX OMB y el apéndice Census, ambos rotulados V4/Cycle 2/AI revisado 23/07/2025: uno limita el uso a producción de bienes/servicios y el otro usa cualquier función. El rótulo no identifica un instrumento administrado; `TEC-02` PARCIAL/NO.
