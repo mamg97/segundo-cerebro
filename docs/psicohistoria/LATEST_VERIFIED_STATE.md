@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-113 · cuestionario AI recuperado · 23/10/2026
+
+[AV-113](AV113_BTOS_RECOVERED_AI_INSTRUMENT.md) conserva un cuestionario oficial AI autónomo con redacción ampliada y el comunicado que fecha el suplemento de noviembre de 2025 a febrero de 2026. Los metadatos PDF y HTTP no prueban disponibilidad histórica ni instrumento de octubre de 2026. Publicación y cierre: [PR #804](https://github.com/mamg97/segundo-cerebro/pull/804) y registro canónico privado; la fusión no sincroniza por sí sola el Sheet. TEC-02 sigue PARCIAL/NO, sin emisión.
+
+---
+
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
 ## AV-112 · gate manual de captura OAF
