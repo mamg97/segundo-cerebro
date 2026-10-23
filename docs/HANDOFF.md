@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-115 · captura técnica OAF · 23/10/2026
+
+[AV-115](psicohistoria/AV115_USGS_TECHNICAL_CAPTURE.md) amplía la captura a tres originales y exige identidad y coincidencia del modelo publicado con el archivo técnico antes de admitirla. Siete pruebas sintéticas pasan; no hay captura real nueva, emisión ni score. SIS-02 continúa PARCIAL/NO. El cierre de PR y la escritura canónica se verifican por separado.
+
+---
+
 ## PSICOHISTORIA — AV-114 · geometría y modelo OAF · 23/10/2026
 
 [AV-114](psicohistoria/AV114_USGS_GEOMETRY_PROVENANCE.md) verifica igualdad del pronóstico publicado con el modelo bayesiano seleccionado en el archivo técnico; conserva centro de mayor precisión y parámetros de profundidad. API y cálculo tienen valores por defecto distintos: falta justificar el contrato de desenlace antes de contar eventos. SIS-02 permanece PARCIAL/NO, sin score ni emisión. El cierre de publicación y registro se consulta en la PR asociada y la fuente privada.
