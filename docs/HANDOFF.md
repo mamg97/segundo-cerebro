@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-117 · primeras publicaciones ALFRED · 23/10/2026
+
+[AV-117](psicohistoria/AV117_ALFRED_INITIAL_RELEASES.md) recupera 189 meses iniciales de UNRATE: 188 tasas y una ausencia conservada. Los cinco casos BLS del piloto coinciden en fecha y tasa. Auditor local y seis pruebas sintéticas; originales privados. El reloj tiene resolución diaria, sin prueba intradía ni bytes BLS iniciales. MAC-02 PARCIAL/NO, sin score. Cierre de PR y registro privado se verifican por separado.
+
+---
+
 ## PSICOHISTORIA — AV-116 · semántica de magnitud OAF · 23/10/2026
 
 [AV-116](psicohistoria/AV116_USGS_MAGNITUDE_SEMANTICS.md) sigue el umbral nominal hasta la intensidad RJ en una revisión cuyo rótulo coincide con 1.06.1876. La tolerancia 0,05 del conteo histórico no se resta en esa cadena futura. Cinco originales por revisión archivados y hashes Git verificados; no hay atestación del binario ni score. SIS-02 PARCIAL/NO. Publicación y registro canónico se verifican por separado.
