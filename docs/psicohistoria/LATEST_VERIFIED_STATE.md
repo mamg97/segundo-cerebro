@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-120 · contrato macro exploratorio · 23/10/2026
+
+[AV-120](AV120_MACRO_EXPLORATORY_PROTOCOL.md) fija calendario trimestral, etiqueta a seis meses del mes base, logística L2 y frecuencia histórica. Siete pruebas sintéticas pasan. Publicar esta versión antes de calcular resultados reales; sin emisión ni aprobación de gates. MAC-01/02/03 PARCIAL/NO.
+
+---
+
 ## PSICOHISTORIA — AV-119 · selector diario ALFRED · 23/10/2026
 
 [AV-119](AV119_ALFRED_ASOF_SELECTOR.md) valida 335 intervalos y 189 meses y reconstruye 724 celdas de cuatro cortes oficiales. Nueve pruebas sintéticas pasan; separa no publicado, ausente y disponible. Resolución diaria, sin atestación intradía ni predicción; MAC-02 PARCIAL/NO. Próximo: contrato del experimento antes de entrenar. Publicación y registro canónico se verifican por separado.
