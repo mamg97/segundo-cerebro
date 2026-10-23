@@ -206,9 +206,9 @@ export function safeAuditExecutableFailureCode(error) {
 // emit untrusted check labels, DOM values, URLs or exception messages.
 // Location is comparable only within the same audited commit SHA.
 export function safeAuditCallsiteCode(stack) {
-  for (const frame of String(stack || "").split("\\n")) {
-    if (/\\bat (?:fail|assertCheck)\\s*\\(/.test(frame)) continue;
-    const match = frame.match(/\\bweb-audit\\.mjs:(\\d{1,6}):(\\d{1,4})\\)?(?:\\s|$)/);
+  for (const frame of String(stack || "").split("\n")) {
+    if (/\bat (?:fail|assertCheck)\s*\(/.test(frame)) continue;
+    const match = frame.match(/\bweb-audit\.mjs:(\d{1,6}):(\d{1,4})\)?(?:\s|$)/);
     if (!match) continue;
     const line = Number(match[1]);
     const column = Number(match[2]);
