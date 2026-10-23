@@ -3783,6 +3783,8 @@ La línea tecnológica [AV-099](psicohistoria/AV099_BTOS_TECH_SOURCE_FEASIBILITY
 
 El [piloto AV-100](psicohistoria/AV100_BLS_RELEASE_DOM_PILOT.md) lee cinco tasas de páginas BLS archivadas y conserva capturas DOM completas fuera de Git con SHA. No demuestra los bytes de primera publicación; MAC-02 sigue PARCIAL/NO y aún no hay backtest.
 
+[AV-106](psicohistoria/AV106_BLS_RELEASE_DATE_TABLE_SCOPE.md) acota el `.xls` histórico de fechas BLS enlazado por la Fed de Filadelfia a 1966–2010: 539 fechas, diciembre de 2010 vacío, dos incidencias anotadas y 2010 tentativo. No cubre los cinco meses del piloto AV-100. La siguiente tarea macro es evidencia de fecha y primera versión para meses posteriores a 2010; MAC-02 PARCIAL/NO.
+
 [AV-101](psicohistoria/AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) recupera versiones OAF superseded y el conjunto de sismos M≥5 sin filtro de producto. La primera ventana empieza antes de la actualización del producto en tres versiones estudiadas; SIS-02 continúa PARCIAL/NO y no se ha calculado habilidad.
 
 Adenda USGS 23/10: una versión posterior del mismo evento comienza su ventana 47 min 55 s después de la actualización, pero su captura independiente llegó después del final. El [análisis AV-101](psicohistoria/AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) acota el siguiente ensayo a capturar un producto antes de comenzar su ventana, con catálogo y outcome fijados. SIS-02 sigue PARCIAL/NO, sin score.

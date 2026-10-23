@@ -1,5 +1,9 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-106 · cobertura de la tabla histórica de fechas BLS
+
+[AV-106](AV106_BLS_RELEASE_DATE_TABLE_SCOPE.md) verifica que el `.xls` histórico enlazado por la Fed de Filadelfia cubre 1966–2010 (539 fechas, diciembre de 2010 vacío), con dos incidencias anotadas y 2010 marcado tentativo. No cubre ninguno de los cinco meses del piloto AV-100 (2011–2026); no establece el reloj `as-of` de esas observaciones. `MAC-02` PARCIAL/NO, sin score.
+
 ## AV-103 · deriva del instrumento BTOS
 
 [AV-103](AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) conserva el nuevo suplemento SI del directorio oficial y registra que el enlace AI anterior ahora devuelve 404. La numeración de los cuestionarios actuales no se corresponde directamente con IDs del libro nacional; tampoco prueba el instrumento de `202621`. `TEC-02` PARCIAL/NO, sin pronóstico.
