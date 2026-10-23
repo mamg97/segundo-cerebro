@@ -1,5 +1,9 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-108 · reloj de recogida HTOPS
+
+[AV-108](AV108_HTOPS_FIELDWORK_CLOCK.md) verifica que las olas HTOPS de marzo y julio de 2026 recogieron respuestas del 13–30/03 y 15/07–03/08, respectivamente. La ola de julio cruza de mes; un corte prospectivo debe preceder al inicio de campo y seguir faltando la primera publicación de los resultados. `SOC-02` PARCIAL/NO.
+
 ## AV-107 · procedencia de WPP 2024 para EE. UU.
 
 [AV-107](AV107_WPP_US_SOURCE_LINEAGE.md) archiva el anexo ONU de fuentes WPP 2024 y verifica que su estimación estadounidense incorpora censos hasta 2020 y estimaciones oficiales hasta 2022. Hay dependencia de la familia de fuentes Census, sin prueba de uso del archivo Vintage 2023 concreto; de facto/residente sigue sin armonizar. `DEM-02` PARCIAL/NO.
