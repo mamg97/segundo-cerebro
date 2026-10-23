@@ -5,7 +5,7 @@ import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mj
 import { createAuditImageReadGate } from "./audit-image-read-gate.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
 import { settleAuditDiagnostics } from "./audit-bounded-settle.mjs";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditImageProbeCode, safeAuditConsoleLocationCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -51,6 +51,7 @@ const ignoredNetworkAborts = [];
 const private502DiagnosticsPending = [];
 const private502DiagnosticCounts = new Map();
 const browserErrors = [];
+const browserErrorOrigins = new Map();
 const resourceConsoleErrors = [];
 const recoveredSourcePaths = new Set();
 const deferredApiFailures = new Map();
@@ -175,7 +176,11 @@ page.on("console", (message) => {
   if (message.type() !== "error") return;
   const text = message.text().slice(0, 240);
   if (/^Failed to load resource:/i.test(text)) resourceConsoleErrors.push(text);
-  else browserErrors.push("console:" + text);
+  else {
+    browserErrors.push("console:" + text);
+    const originCode = safeAuditConsoleLocationCode(message.location()?.url, auditOrigin);
+    browserErrorOrigins.set(originCode, (browserErrorOrigins.get(originCode) || 0) + 1);
+  }
 });
 page.on("request", (request) => {
   if (request.url().startsWith(auditOrigin) &&
@@ -1078,6 +1083,18 @@ async function auditVisualSnapshot(label) {
       `Visual ${label} · imágenes pendientes validadas por contenido`,
       `${recoveredImageCount} img · fetch + decode correctos`
     );
+  }
+  if (verifiedBrokenImages.length) {
+    const classes = new Map();
+    const width = Number(report.viewport?.width || 0);
+    const viewportCode = width <= 600 ? "MOBILE" : width <= 1100 ? "TABLET" : "DESKTOP";
+    for (const item of verifiedBrokenImages) {
+      const code = viewportCode + "_" + safeAuditImageProbeCode(imageProbeBySource.get(item.src), item.src);
+      classes.set(code, (classes.get(code) || 0) + 1);
+    }
+    for (const [code, count] of [...classes].sort((a, b) => a[0].localeCompare(b[0]))) {
+      console.error("[AUDIT_VISUAL_IMAGE_DIAG] " + code + " count=" + count);
+    }
   }
   assertCheck(
     verifiedBrokenImages.length === 0,
@@ -3854,6 +3871,9 @@ try {
     for (const [code, count] of [...families].sort((a, b) => a[0].localeCompare(b[0]))) {
       console.error("[AUDIT_BROWSER_DIAG] " + code + " count=" + count);
     }
+  }
+  for (const [code, count] of [...browserErrorOrigins].sort((a, b) => a[0].localeCompare(b[0]))) {
+    console.error("[AUDIT_BROWSER_ORIGIN_DIAG] " + code + " count=" + count);
   }
   assertCheck(browserErrors.length === 0, "Sin errores JavaScript/console", browserErrors.length ? browserErrors.slice(0, 3).join(" | ") : "");
 } catch (error) {
