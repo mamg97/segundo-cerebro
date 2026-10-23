@@ -1,5 +1,9 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-111 · conflicto textual BTOS V4
+
+[AV-111](AV111_BTOS_V4_WORDING_CONFLICT.md) compara el DOCX OMB y el apéndice Census, ambos rotulados V4/Cycle 2/AI revisado 23/07/2025: uno limita el uso a producción de bienes/servicios y el otro usa cualquier función. El rótulo no identifica un instrumento administrado; `TEC-02` PARCIAL/NO.
+
 ## AV-110 · secuencia OMB de instrumentos BTOS
 
 [AV-110](AV110_BTOS_OMB_INSTRUMENT_SEQUENCE.md) archiva expedientes y DOCX oficiales OMB: V4 AI aprobado en agosto de 2025 y V5 SI en octubre de 2026, después del campo `202621`. Esta secuencia no identifica el cuestionario administrado en esa ola; falta una versión intermedia posterior al cambio de noviembre de 2025. `TEC-02` PARCIAL/NO.

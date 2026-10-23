@@ -3801,6 +3801,8 @@ Adenda USGS 23/10: una versión posterior del mismo evento comienza su ventana 4
 
 [AV-110](psicohistoria/AV110_BTOS_OMB_INSTRUMENT_SEQUENCE.md) fija la secuencia oficial de expedientes OMB: V4 AI aprobado 28/08/2025 y V5 SI aprobado 19/10/2026, después de acabar el campo `202621`. Ambos DOCX y fichas completas archivados privadamente con SHA. No se ha identificado el instrumento administrado en `202621`; buscar la versión intermedia posterior al cambio de noviembre de 2025. TEC-02 PARCIAL/NO.
 
+[AV-111](psicohistoria/AV111_BTOS_V4_WORDING_CONFLICT.md) detecta que el DOCX OMB V4 y el apéndice Census con idéntico rótulo de revisión de julio de 2025 muestran redacciones distintas de la pregunta de uso actual. Identificar contenido y despliegue, no fiarse del título; TEC-02 PARCIAL/NO.
+
 Adenda BTOS 23/10: el apéndice A del working paper Census `CES-WP-26-25` reproduce el suplemento AI V4 revisado en julio de 2025. PDF completo y SHA archivados privadamente; [AV-103](psicohistoria/AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) explica el alcance. Próximo paso: vincular instrumentos administrados con cada periodo y reconstruir primeras publicaciones de `National.xlsx`. TEC-02 sigue PARCIAL/NO, sin emisión.
 
 ---
