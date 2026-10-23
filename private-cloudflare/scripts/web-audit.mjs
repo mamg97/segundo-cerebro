@@ -2015,16 +2015,23 @@ try {
   });
   assertCheck(pinnedActions, "Home · Actualizar permanece fijo junto a los demás botones al desplazarse");
 
-  const menuSecondCard = await page.evaluate(() => {
+  // The weekly menu was deliberately moved below Agenda, outside the compact
+  // summary grid. Check the current layout contract, not the obsolete second-card slot.
+  const menuAfterAgenda = await page.evaluate(() => {
     const summary = document.querySelector(".daily-overview-grid");
-    const first = summary?.querySelector(":scope > #home-health-card");
-    const second = summary?.querySelector(":scope > #home-weekly-menu-panel");
+    const menu = document.querySelector("#home-weekly-menu-panel");
+    const agenda = document.querySelector("#agenda-overview");
+    const footer = document.querySelector("footer");
+    const health = summary?.querySelector(":scope > #home-health-card");
     const pantry = summary?.querySelector(":scope > #home-pantry-card");
-    return Boolean(first && second && pantry && first.nextElementSibling === second &&
-      second.nextElementSibling === pantry &&
-      getComputedStyle(second).gridColumnStart === "1");
+    const objects = summary?.querySelector(":scope > #home-objects-card");
+    return Boolean(summary && menu && agenda && footer && health && pantry && objects &&
+      !summary.contains(menu) &&
+      health.nextElementSibling === pantry && pantry.nextElementSibling === objects &&
+      (agenda.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+      (menu.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING));
   });
-  assertCheck(menuSecondCard, "Home · menú ocupa el segundo cuadro tras resumen de consumos");
+  assertCheck(menuAfterAgenda, "Home · menú semanal tras Agenda y fuera de las tarjetas resumen");
 
 
   // A brand-new Chromium session must receive content-fingerprinted JS/CSS,
@@ -2259,8 +2266,22 @@ try {
     assertCheck(availableActionRows === editableMenuItems.length,
       "Home · recetas y alimentos planificados ofrecen confirmar consumo",
       `previstos=${editableMenuItems.length} acciones=${availableActionRows}`);
-    assertCheck(await page.locator("#home-weekly-menu-content [data-home-menu-change]").count() === editableMenuItems.length,
-      "Home · todo alimento o receta planificada ofrece selector para cambiar");
+    // Confirmed meals are intentionally editable too, but must never expose
+    // a second "consume" action. Match every canonical editable source row.
+    const correctableMenuItems = [...sourceByDate.values()].flat().filter(item =>
+      Boolean(item?.recipeId) !== Boolean(item?.foodId) &&
+      Number.isSafeInteger(item.sourceRow) && item.sourceRow > 1 &&
+      /^(planificado|pendiente|consumid[oa]|hech[oa]|completad[oa]|done|completed)$/.test(
+        String(item.status || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()) &&
+      (!item.itemRole || ["receta","acompanante"].includes(
+        String(item.itemRole).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())));
+    const changeRows = await page.locator("#home-weekly-menu-content [data-home-menu-change]")
+      .evaluateAll(nodes => nodes.map(node => Number(node.dataset.homeMenuChange)));
+    const expectedChangeRows = correctableMenuItems.map(item => item.sourceRow);
+    assertCheck(changeRows.length === expectedChangeRows.length &&
+      new Set(changeRows).size === changeRows.length &&
+      expectedChangeRows.every(row => changeRows.includes(row)),
+      "Home · planificados y consumidos corregibles conservan su selector");
     if (editableMenuItems.length > 0) {
       const change = page.locator("#home-weekly-menu-content [data-home-menu-change]").first();
       await change.click();
@@ -2548,8 +2569,21 @@ try {
     legacyMomentRows.length ? legacyMomentRows.map((item) => `${item.date}:${item.moment}`).join(", ") : "sin momentos legacy"
   );
 
-  const homeDayCount = await page.locator("#home-weekly-menu-content .home-weekly-menu-table-day[data-menu-date]").count();
-  assertCheck(homeDayCount === dayGroups.length, "Home representa todos los días del menú", `UI=${homeDayCount} API=${dayGroups.length}`);
+  // Home renders all seven weekdays even when the source has no rows for
+  // some days. Check unique consecutive dates and source coverage, not
+  // equality between seven UI columns and non-empty canonical groups.
+  const homeDates = await page.locator("#home-weekly-menu-content .home-weekly-menu-table-day[data-menu-date]")
+    .evaluateAll(nodes => nodes.map(node => node.dataset.menuDate));
+  const homeDateSet = new Set(homeDates);
+  const consecutiveDays = homeDates.every((date, index) => {
+    const parsed = Date.parse(date + "T12:00:00Z");
+    if (!Number.isFinite(parsed)) return false;
+    return index === 0 || parsed - Date.parse(homeDates[index - 1] + "T12:00:00Z") === 86400000;
+  });
+  assertCheck(homeDates.length === 7 && homeDateSet.size === 7 && consecutiveDays &&
+    dayGroups.every(group => homeDateSet.has(group.date)),
+    "Home representa los siete días y todas las fechas canónicas del menú",
+    `UI=${homeDates.length} API=${dayGroups.length}`);
 
   const homeMomentLabels = await page.locator("#home-weekly-menu-content .home-weekly-menu-row-label span").allTextContents();
   const legacyUiMoments = homeMomentLabels.filter((label) => /^(postre|snack|cierre)\b/.test(menuMomentKey(label)));
@@ -2623,12 +2657,12 @@ try {
   const expectedNavIds = [
     "area-general", "area-career", "area-finance", "area-calendar",
     "area-partner", "area-family", "area-health", "area-objects",
-    "area-wealth", "area-projects"
+    "area-wealth", "area-projects", "area-travels", "area-hobbies"
   ];
   const missingNavIds = expectedNavIds.filter((id) => !navIds.includes(id));
   const unexpectedNavIds = navIds.filter((id) => !expectedNavIds.includes(id));
   assertCheck(navIds.length === expectedNavIds.length, "Navegación superior muestra solo áreas principales", `${navIds.length}/${expectedNavIds.length}`);
-  assertCheck(missingNavIds.length === 0, "Navegación conserva áreas principales canónicas", missingNavIds.length ? missingNavIds.join(", ") : "10/10");
+  assertCheck(missingNavIds.length === 0, "Navegación conserva áreas principales canónicas", missingNavIds.length ? missingNavIds.join(", ") : "12/12");
   assertCheck(unexpectedNavIds.length === 0, "Navegación superior sin subapartados", unexpectedNavIds.length ? unexpectedNavIds.join(", ") : "sin subapartados");
   assertCheck(await page.locator(".nav-subnav, .nav-link-child").count() === 0, "Navegación no renderiza enlaces secundarios");
 
