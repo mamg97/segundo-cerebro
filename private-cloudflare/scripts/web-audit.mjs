@@ -5,7 +5,7 @@ import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mj
 import { createAuditImageReadGate } from "./audit-image-read-gate.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
 import { settleAuditDiagnostics } from "./audit-bounded-settle.mjs";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -67,6 +67,7 @@ function fail(name, detail = "") {
   console.error(safeAuditLog("FAIL", checks.length, name, detail));
   const diagnostic=safeAuditDiagnosticCode(name);
   if (diagnostic !== "CHECK_UNMAPPED") console.error("[AUDIT_DIAG] " + diagnostic);
+  else console.error("[AUDIT_SOURCE] " + safeAuditCallsiteCode(new Error().stack));
 }
 
 function info(name, detail = "") {

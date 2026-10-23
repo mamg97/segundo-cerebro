@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 
 const auditor = fs.readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
 
@@ -172,4 +172,21 @@ test("visual overlap diagnostics classify structural elements without user data"
   assert.match(auditor, /\[AUDIT_VISUAL_OVERLAP_DIAG\]/);
   assert.match(auditor, /safeAuditVisualOverlapCode\(overlap\)/);
   assert.doesNotMatch(auditor, /\[AUDIT_VISUAL_OVERLAP_DIAG\].*report\.overlaps/);
+});
+
+
+test("unmapped failed checks expose only source location within the same SHA", () => {
+  const stack = [
+    "Error: private token=abc person@example.com",
+    "    at fail (file:///tmp/secret/web-audit.mjs:67:21)",
+    "    at assertCheck (file:///tmp/secret/web-audit.mjs:78:9)",
+    "    at auditNutrition (file:///tmp/secret/web-audit.mjs:1285:17)",
+    "    at async run (file:///tmp/secret/another-file.mjs:2:2)"
+  ].join("\n");
+  assert.equal(safeAuditCallsiteCode(stack), "AUDIT_SOURCE_L01285_C017");
+  assert.equal(safeAuditCallsiteCode("Error: private@example.com token=123"), "AUDIT_SOURCE_UNKNOWN");
+  assert.equal(safeAuditCallsiteCode("at run (file:///tmp/web-audit.mjs:999999:99)"), "AUDIT_SOURCE_UNKNOWN");
+  assert.match(auditor, /safeAuditCallsiteCode\(new Error\(\)\.stack\)/);
+  assert.match(auditor, /\[AUDIT_SOURCE\]/);
+  assert.doesNotMatch(safeAuditCallsiteCode(stack), /example|secret|token|private/i);
 });

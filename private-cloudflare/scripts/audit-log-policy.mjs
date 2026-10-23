@@ -201,3 +201,19 @@ export function safeAuditExecutableFailureCode(error) {
   if (error?.name === "ReferenceError") return "EXEC_REFERENCE_ERROR";
   return "EXEC_OTHER";
 }
+
+// Fallback for unmapped checks: identify the static source callsite, never
+// emit untrusted check labels, DOM values, URLs or exception messages.
+// Location is comparable only within the same audited commit SHA.
+export function safeAuditCallsiteCode(stack) {
+  for (const frame of String(stack || "").split("\n")) {
+    if (/\bat (?:fail|assertCheck)\s*\(/.test(frame)) continue;
+    const match = frame.match(/\bweb-audit\.mjs:(\d{1,6}):(\d{1,4})\)?(?:\s|$)/);
+    if (!match) continue;
+    const line = Number(match[1]);
+    const column = Number(match[2]);
+    if (line < 1 || line > 100000 || column < 1 || column > 1000) continue;
+    return `AUDIT_SOURCE_L${String(line).padStart(5, "0")}_C${String(column).padStart(3, "0")}`;
+  }
+  return "AUDIT_SOURCE_UNKNOWN";
+}
