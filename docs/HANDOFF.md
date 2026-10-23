@@ -3791,6 +3791,8 @@ Adenda USGS 23/10: una versión posterior del mismo evento comienza su ventana 4
 
 [AV-102](psicohistoria/AV102_WPP_CENSUS_US_POPULATION_SCOPE.md) incorpora el Census Vintage 2023 al contraste demográfico con WPP 2022/2024. La población de facto ONU y la residente Census no son el mismo target; DEM-02 continúa PARCIAL/NO, sin score.
 
+[AV-107](psicohistoria/AV107_WPP_US_SOURCE_LINEAGE.md) conserva el anexo ONU de fuentes WPP 2024: para Estados Unidos se usan censos hasta 2020 y estimaciones oficiales hasta 2022. La familia de fuentes se solapa con Census, sin prueba de que WPP incorpore el fichero Vintage 2023 específico. Quedan por armonizar territorio/de facto/residente y fijar primera publicación antes de evaluar; DEM-02 PARCIAL/NO.
+
 [AV-103](psicohistoria/AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) conserva el suplemento SI actual de BTOS y documenta la sustitución del enlace AI anterior. No se infiere el cuestionario administrado en `202621` a partir de PDFs actuales ni de IDs del libro; TEC-02 PARCIAL/NO.
 
 Adenda BTOS 23/10: el apéndice A del working paper Census `CES-WP-26-25` reproduce el suplemento AI V4 revisado en julio de 2025. PDF completo y SHA archivados privadamente; [AV-103](psicohistoria/AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) explica el alcance. Próximo paso: vincular instrumentos administrados con cada periodo y reconstruir primeras publicaciones de `National.xlsx`. TEC-02 sigue PARCIAL/NO, sin emisión.
