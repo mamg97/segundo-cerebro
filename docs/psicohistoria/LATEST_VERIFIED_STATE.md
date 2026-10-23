@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-118 · revisiones RUC/ALFRED · 23/10/2026
+
+[AV-118](AV118_RUC_INITIAL_RELEASE_COMPARISON.md) compara 186 meses: cuatro primeras apariciones RUC difieren de la publicación inicial ALFRED en 0,1 puntos. Una ausencia común y dos meses fuera de RUC se conservan separados. Tres pruebas sintéticas y ensayo real; no se puntúan predicciones. MAC-02 PARCIAL/NO. Publicación y registro canónico se verifican por separado.
+
+---
+
 ## PSICOHISTORIA — AV-117 · primeras publicaciones ALFRED · 23/10/2026
 
 [AV-117](AV117_ALFRED_INITIAL_RELEASES.md) recupera 189 meses iniciales de UNRATE: 188 tasas y una ausencia conservada. Los cinco casos BLS del piloto coinciden en fecha y tasa. Auditor local y seis pruebas sintéticas; originales privados. El reloj tiene resolución diaria, sin prueba intradía ni bytes BLS iniciales. MAC-02 PARCIAL/NO, sin score. Cierre de PR y registro privado se verifican por separado.
