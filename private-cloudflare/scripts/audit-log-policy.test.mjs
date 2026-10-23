@@ -190,3 +190,26 @@ test("unmapped failed checks expose only source location within the same SHA", (
   assert.match(auditor, /\[AUDIT_SOURCE\]/);
   assert.doesNotMatch(safeAuditCallsiteCode(stack), /example|secret|token|private/i);
 });
+
+
+test("production audit tracks current Home menu, seven-day matrix and canonical top-level navigation", () => {
+  const app = fs.readFileSync(new URL("../../app/app.js", import.meta.url), "utf8");
+  const html = fs.readFileSync(new URL("../../app/index.html", import.meta.url), "utf8");
+  const auditOrder = auditor.match(/const expectedNavIds = \[([\s\S]*?)\];/)?.[1]
+    ?.match(/"area-[^"]+"/g)?.map(value => JSON.parse(value));
+  const appOrder = app.match(/const canonicalOrder = \[([\s\S]*?)\];/)?.[1]
+    ?.match(/"area-[^"]+"/g)?.map(value => JSON.parse(value));
+  assert.ok(auditOrder?.length >= 10 && appOrder?.length >= 10);
+  assert.deepEqual(auditOrder, appOrder);
+  assert.match(auditor, /const menuAfterAgenda =/);
+  assert.doesNotMatch(auditor, /menuSecondCard/);
+  assert.match(html, /id="home-weekly-menu-panel"/);
+  assert.ok(html.indexOf('id="home-weekly-menu-panel"') > html.indexOf('id="agenda-overview"'));
+  assert.match(auditor, /homeDates\.length === 7/);
+  assert.match(auditor, /dayGroups\.every\(group => homeDateSet\.has\(group\.date\)\)/);
+  assert.match(app, /Array\.from\(\{ length: 7 \}/);
+  assert.match(auditor, /const correctableMenuItems =/);
+  assert.match(auditor, /expectedChangeRows\.every\(row => changeRows\.includes\(row\)\)/);
+  assert.match(app, /const canEdit = !readOnly && sourceId && \(planned \|\| consumed\)/);
+  assert.match(auditor, /availableActionRows === editableMenuItems\.length/);
+});
