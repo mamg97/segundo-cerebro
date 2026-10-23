@@ -4,6 +4,8 @@
 
 [AV-103](AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) conserva el nuevo suplemento SI del directorio oficial y registra que el enlace AI anterior ahora devuelve 404. La numeración de los cuestionarios actuales no se corresponde directamente con IDs del libro nacional; tampoco prueba el instrumento de `202621`. `TEC-02` PARCIAL/NO, sin pronóstico.
 
+Adenda del 23/10: un [working paper oficial de Census](https://www2.census.gov/library/working-papers/2026/adrm/ces/CES-WP-26-25.pdf) reproduce en su apéndice A el suplemento AI V4 revisado en julio de 2025. Se archivó el PDF completo fuera de Git con SHA y se documentaron sus preguntas 23, 24 y 33 en AV-103. Es un testigo histórico, sin prueba de administración en `202621` ni serie `as-of`; no cambia el gate.
+
 ---
 
 ## AV-102 · contraste WPP–Census sin score
