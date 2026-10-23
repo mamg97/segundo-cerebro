@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditImageProbeCode, safeAuditConsoleLocationCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 
 const auditor = fs.readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
 
@@ -62,6 +62,26 @@ test("diagnostic labels are fixed allowlisted codes with no private identifiers"
     safeAuditNetworkFailureCode("http502:/api/objects/look/id-privado-123/image")
   ].join(" ");
   assert.equal(/(secreta|privado-123|example.com)/.test(texts),false);
+});
+
+test("remaining image and console failures expose only bounded diagnostic families", () => {
+  assert.equal(safeAuditImageProbeCode(null, ""), "NO_SOURCE");
+  assert.equal(safeAuditImageProbeCode({ status: 0, error: "person@example.com" }, "/private/123"), "TRANSPORT_FAILURE");
+  assert.equal(safeAuditImageProbeCode({ status: 502, error: "Bearer secret" }, "/private/123"), "HTTP_5XX");
+  assert.equal(safeAuditImageProbeCode({ status: 403 }, "/private/123"), "HTTP_4XX");
+  assert.equal(safeAuditImageProbeCode({ status: 200, contentType: "text/html", decoded: false }, "/private/123"), "INVALID_CONTENT_TYPE");
+  assert.equal(safeAuditImageProbeCode({ status: 200, contentType: "image/jpeg", decoded: false }, "/private/123"), "DECODE_FAILED");
+  const origin = "https://private.invalid";
+  assert.equal(safeAuditConsoleLocationCode("https://private.invalid/app/app.js?token=secret", origin), "APP_ASSET");
+  assert.equal(safeAuditConsoleLocationCode("https://private.invalid/api/private-record-123", origin), "API");
+  assert.equal(safeAuditConsoleLocationCode("https://other.invalid/person@example.com", origin), "EXTERNAL");
+  assert.equal(safeAuditConsoleLocationCode("not a url", origin), "NO_LOCATION");
+  assert.match(auditor, /\\[AUDIT_VISUAL_IMAGE_DIAG\\]/);
+  assert.match(auditor, /\\[AUDIT_BROWSER_ORIGIN_DIAG\\]/);
+  for (const output of [
+    safeAuditImageProbeCode({ status: 502, error: "secret" }, "/private/123"),
+    safeAuditConsoleLocationCode("https://private.invalid/app/app.js?token=secret", origin)
+  ]) assert.doesNotMatch(output, /secret|private|token|123/);
 });
 
 test("recipe photo audits share the strict decoded-image probe with visual checks", () => {
