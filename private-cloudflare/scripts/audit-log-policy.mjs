@@ -177,6 +177,34 @@ export function safeAuditBrowserFailureCode(entry) {
 }
 
 
+// A failed image probe must remain a failed check. Only these finite, content-free
+// classifications are allowed in public Actions logs (never src, error or bytes).
+export function safeAuditImageProbeCode(probe, src) {
+  if (!String(src || "").trim()) return "NO_SOURCE";
+  const status = Number(probe?.status || 0);
+  if (status >= 500 && status < 600) return "HTTP_5XX";
+  if (status >= 400 && status < 500) return "HTTP_4XX";
+  if (status !== 200) return status === 0 ? "TRANSPORT_FAILURE" : "HTTP_OTHER";
+  if (!/^image\\//i.test(String(probe?.contentType || ""))) return "INVALID_CONTENT_TYPE";
+  if (!probe?.decoded) return "DECODE_FAILED";
+  return "UNKNOWN";
+}
+
+// Only an allowlisted origin family reaches public logs. The input URL,
+// including any query, path identifiers or tokens, is never returned.
+export function safeAuditConsoleLocationCode(sourceUrl, appOrigin) {
+  if (!sourceUrl) return "NO_LOCATION";
+  try {
+    const source = new URL(sourceUrl);
+    if (source.origin !== new URL(appOrigin).origin) return "EXTERNAL";
+    if (/^\\/(?:app|assets)\\//.test(source.pathname)) return "APP_ASSET";
+    if (/^\\/api\\//.test(source.pathname)) return "API";
+    return "SAME_ORIGIN_OTHER";
+  } catch {
+    return "NO_LOCATION";
+  }
+}
+
 // Finance DOM diagnostics consume only booleans: never log a bank account identifier.
 export function safeAuditFinanceStructureCode(flags) {
   if (!flags || typeof flags !== "object") return "FINANCE_DOM_UNKNOWN";
