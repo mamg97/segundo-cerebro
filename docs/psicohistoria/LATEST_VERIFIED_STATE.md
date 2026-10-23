@@ -18,6 +18,8 @@ Adenda del 23/10: un [working paper oficial de Census](https://www2.census.gov/l
 
 [AV-101](AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) recupera 27 versiones OAF de un evento, conserva tres JSON tempranos con SHA y compara 167 sismos M≥5 con 11 productos OAF en septiembre 2026. En las tres versiones estudiadas la primera ventana ya había comenzado antes de actualizarse el producto; no hay evaluación prospectiva válida. `SIS-02` PARCIAL/NO, sin score ni pronóstico propio.
 
+Adenda del 23/10: la versión OAF posterior del mismo evento sí tiene una primera ventana que comienza unos 48 minutos después de `updateTime`, pero su captura independiente se hizo después de acabar la ventana. Se documenta la oportunidad de un futuro protocolo de captura temprana; `SIS-02` sigue PARCIAL/NO.
+
 ---
 
 ## AV-100 · piloto BLS de cinco meses
