@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-123 · procedencia espacial OAF · 24/10/2026
+
+[AV-123](psicohistoria/AV123_USGS_REGION_PROVENANCE.md) sigue región de búsqueda hasta su presentación redondeada. Cuatro originales verificados; centro mostrado desplazado 6,96 m y epicentro a 4,43 km en el par archivado. Profundidad acreditada como filtro histórico, no contrato futuro. SIS-02 PARCIAL/NO; sin outcomes ni score.
+
+---
+
 ## PSICOHISTORIA — AV-122 · reloj USGS OAF · 23/10/2026
 
 [AV-122](psicohistoria/AV122_USGS_TEMPORAL_WINDOW.md) vincula la probabilidad con timeStart/timeEnd publicados y contrasta 16 ventanas de cuatro archivos. creationTime difiere del inicio; no usarlo como sustituto. Regla de borde discreto y contrato completo pendientes; SIS-02 PARCIAL/NO, sin desenlaces ni score.
