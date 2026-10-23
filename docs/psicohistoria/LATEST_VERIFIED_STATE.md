@@ -1,5 +1,9 @@
 # PSICOHISTORIA — Estado científico verificado · 23/10/2026
 
+## AV-107 · procedencia de WPP 2024 para EE. UU.
+
+[AV-107](AV107_WPP_US_SOURCE_LINEAGE.md) archiva el anexo ONU de fuentes WPP 2024 y verifica que su estimación estadounidense incorpora censos hasta 2020 y estimaciones oficiales hasta 2022. Hay dependencia de la familia de fuentes Census, sin prueba de uso del archivo Vintage 2023 concreto; de facto/residente sigue sin armonizar. `DEM-02` PARCIAL/NO.
+
 ## AV-106 · cobertura de la tabla histórica de fechas BLS
 
 [AV-106](AV106_BLS_RELEASE_DATE_TABLE_SCOPE.md) verifica que el `.xls` histórico enlazado por la Fed de Filadelfia cubre 1966–2010 (539 fechas, diciembre de 2010 vacío), con dos incidencias anotadas y 2010 marcado tentativo. No cubre ninguno de los cinco meses del piloto AV-100 (2011–2026); no establece el reloj `as-of` de esas observaciones. `MAC-02` PARCIAL/NO, sin score.

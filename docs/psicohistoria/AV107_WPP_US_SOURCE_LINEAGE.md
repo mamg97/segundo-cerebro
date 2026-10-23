@@ -1,0 +1,11 @@
+# AV-107 — Procedencia declarada de WPP 2024 para Estados Unidos
+
+23/10/2026. Continuación de [AV-102](AV102_WPP_CENSUS_US_POPULATION_SCOPE.md), sin score ni pronóstico nuevo.
+
+El anexo oficial [WPP 2024, Data Sources](https://population.un.org/wpp/assets/Excel%20Files/4_Metadata/WPP2024_Data_Sources.pdf), entrada **United States of America** (página PDF 276), declara que la población total y su distribución por edad y sexo se estimaron de forma coherente con los censos estadounidenses de 1960 a 2020, ajustes de cobertura y edad, **estimaciones oficiales hasta 2022**, estimaciones internacionales usadas hasta 2021 y tendencias posteriores de fecundidad, mortalidad y migración. El PDF completo observado se conservó fuera de Git en `source-archive/un-wpp-vintages-2026-10-22/`, 1.761.020 bytes, SHA-256 `a5ca8731476ec8b592fa99c86701d52deafdd9ebc8e476da82f7ba00ffff91ab`.
+
+La [metodología Census Vintage 2023](https://www2.census.gov/programs-surveys/popest/technical-documentation/methodology/2020-2023/methods-statement-v2023.pdf) describe su estimación residente como una actualización de la base censal 2020 mediante nacimientos, defunciones y migración. Por tanto, WPP y Census **no son fuentes estadísticas completamente independientes**: comparten como mínimo la familia de evidencia censal y demográfica estadounidense. El anexo ONU no identifica que WPP 2024 usara precisamente el archivo `NST-EST2023-POP.xlsx` ni el valor Census Vintage 2023 del 01/07/2023. No imputar esa dependencia específica.
+
+En la comparación de [AV-102](AV102_WPP_CENSUS_US_POPULATION_SCOPE.md), WPP 2022 se publicó antes de la estimación Census Vintage 2023; una comparación con esa estimación posterior puede evaluar una proyección congelada **solo después** de armonizar población de facto/residente, territorio y fecha exacta del corte. La comunidad de fuentes anteriores limita la interpretación como validación externa independiente. WPP 2024 es una revisión posterior, no un forecast emitido para ese contraste. `DEM-02` sigue `PARCIAL`, `criterio_superado=NO`.
+
+Siguiente paso: comprobar definiciones territoriales y si existe una transformación defendible de residente a de facto, y fijar un desenlace de primera publicación con su vintage conservado antes de cualquier evaluación.
