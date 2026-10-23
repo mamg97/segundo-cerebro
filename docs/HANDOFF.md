@@ -3785,6 +3785,8 @@ El [piloto AV-100](psicohistoria/AV100_BLS_RELEASE_DOM_PILOT.md) lee cinco tasas
 
 [AV-101](psicohistoria/AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) recupera versiones OAF superseded y el conjunto de sismos M≥5 sin filtro de producto. La primera ventana empieza antes de la actualización del producto en tres versiones estudiadas; SIS-02 continúa PARCIAL/NO y no se ha calculado habilidad.
 
+Adenda USGS 23/10: una versión posterior del mismo evento comienza su ventana 47 min 55 s después de la actualización, pero su captura independiente llegó después del final. El [análisis AV-101](psicohistoria/AV101_USGS_OAF_VERSIONS_AND_DENOMINATOR.md) acota el siguiente ensayo a capturar un producto antes de comenzar su ventana, con catálogo y outcome fijados. SIS-02 sigue PARCIAL/NO, sin score.
+
 [AV-102](psicohistoria/AV102_WPP_CENSUS_US_POPULATION_SCOPE.md) incorpora el Census Vintage 2023 al contraste demográfico con WPP 2022/2024. La población de facto ONU y la residente Census no son el mismo target; DEM-02 continúa PARCIAL/NO, sin score.
 
 [AV-103](psicohistoria/AV103_BTOS_LIVE_INSTRUMENT_DRIFT.md) conserva el suplemento SI actual de BTOS y documenta la sustitución del enlace AI anterior. No se infiere el cuestionario administrado en `202621` a partir de PDFs actuales ni de IDs del libro; TEC-02 PARCIAL/NO.
