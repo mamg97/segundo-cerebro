@@ -479,9 +479,11 @@ Home usa `photoUrl` de `Recetas` incorporado al mismo `batchGet` del menú liger
 El hash de `app.js` en el HTML garantiza una recarga fresca, pero una pestaña SPA abierta no vuelve a solicitar HTML. El nuevo guard privado comprueba de forma pasiva al recuperar foco/visibilidad o volver de back-forward cache y limita peticiones a una cada 120 s por pestaña activa. Solo consulta el HTML ya protegido por Cloudflare Access (sin consulta de contenido personal, sin temporizador recurrente). Una versión diferente recarga la página si no hay edición en curso; cuando hay entrada modificada, un diálogo o foco de formulario muestra aviso con botón de recarga y respeta el trabajo. HTML de login/SSO no válido, estado offline y errores no deben causar bucles. La primera recarga de una pestaña que preceda al guard sigue siendo manual. Chromium comprueba que el guard está instalado y la versión DOM coincide con el entrypoint.
 
 
-### Home · menú segundo cuadro y tarjetas verticales (15/10/2026)
+### Home · menú semanal al final de Home (contrato vigente, 23/10/2026)
 
-El menú semanal se presenta como segundo hijo de `daily-overview-grid` tras `#home-health-card` y antes de Despensa/Objetos; ocupa todas las columnas del grid sin alterar la fuente de datos. En cada fila de receta el orden geométrico es foto 16:9 completa → nombre legible a ancho de columna → macros → acciones. La auditoría read-only verifica orden DOM y disposición real en desktop y móvil, además de conservar las comprobaciones de identidad/decodificación de fotos y controles de edición sin escrituras.
+El menú semanal se presenta a ancho completo **después de Agenda y fuera de** `daily-overview-grid`, antes del footer. El grid compacto contiene Salud, Despensa y Objetos. La matriz del menú representa siempre los **siete días** de la semana, incluso si la fuente canónica solo tiene filas para algunos. Cada fecha canónica presente debe aparecer en la matriz. En cada fila de receta se mantiene foto 16:9 completa → nombre legible → macros → acciones. Las filas planificadas permiten confirmar consumo y cambiar; las consumidas pueden corregirse, pero no consumirse de nuevo. La auditoría read-only compara las acciones con los `sourceRow` autorizados sin efectuar escrituras.
+
+La navegación principal contiene las **doce** áreas canónicas, incluidas Viajes y Hobbies, tal como las define `app/app.js`; no se consideran subapartados. Las pruebas del auditor deben concordar con el frontend y sus contratos de navegación, sin silenciar discrepancias. El antiguo contrato de «menú como segundo cuadro» quedó sustituido por el diseño a ancho completo.
 
 
 ### Home · Actualizar fijo y reparación de derivadas de receta (15/10/2026)
