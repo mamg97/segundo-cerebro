@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-121 · ensayo macro negativo · 23/10/2026
+
+[AV-121](AV121_MACRO_EXPLORATORY_RESULTS.md) ejecuta el contrato publicado AV120: 27 casos, cuatro eventos; Brier 0,162164 frente a 0,138304, habilidad −17,25 %. No demuestra ventaja. Comprobación separada de variables/etiquetas, entrenamiento y métricas; conserva exclusiones y resultado sin ajustes. MAC-03/04 PARCIAL/NO, sin emisión.
+
+---
+
 ## PSICOHISTORIA — AV-120 · contrato macro exploratorio · 23/10/2026
 
 [AV-120](AV120_MACRO_EXPLORATORY_PROTOCOL.md) fija calendario trimestral, etiqueta a seis meses del mes base, logística L2 y frecuencia histórica. Siete pruebas sintéticas pasan. Publicar esta versión antes de calcular resultados reales; sin emisión ni aprobación de gates. MAC-01/02/03 PARCIAL/NO.
