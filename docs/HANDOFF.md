@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-132 · contrato mensual ejecutable · 24/10/2026
+
+[AV132](psicohistoria/AV132_MONTHLY_EXECUTABLE_PROTOCOL.md) congela el ensayo de admisión mensual antes de calcular resultados: 2019enero–2026septiembre, umbral0,2pp, baseobjetivo−2, comparadores frecuencia/persistencia y candidato momento. Siete pruebas sintéticas; sin ejecución real ni emisión. MAC-01/03 PARCIAL/NO. Próximo: publicar/fusionar contrato, ejecutar una vez las fuentes privadas fijadas y contrastar; si no vence a ambos baselines, descartar v1 sin retocar. AV131 ya publicado en PR #827, CI correcta y Sheet escrito/releído.
+
+---
+
 ## PSICOHISTORIA — AV-131 · prioridad de piloto mensual · 24/10/2026
 
 [AV131](psicohistoria/AV131_MONTHLY_PILOT_AND_LEDGER_CLOCK.md) fija un plan público previo al cálculo para un piloto mensual separado de macro v1: primer objetivo candidato noviembre2026, resolución BLS prevista04/12/2026. No emitido; puertas de fuente, evaluación y sello pendientes. Corrige caducidad accidental del ledger sin permitir altas retroactivas; 18 pruebas prospectivas pasan, dos regresiones nuevas. Próximo: generador/contrato ejecutable mensual y validación de admisión antes del corte candidato26/10; HTOPS queda pospuesto. Ningún gate científico aprobado ni escritura en PsicoPredicciones.
