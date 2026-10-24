@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-128 · componentes Census · 24/10/2026
+
+[AV-128](psicohistoria/AV128_CENSUS_COMPONENT_DIAGNOSTIC.md) reconcilia tres diferencias de crecimiento AV127 con nacimientos, defunciones, migración y residuos. Migración internacional aporta−3,37/−3,69millones en los casos primarios, compensada parcialmente por otras diferencias; no atribución causal. Siete pruebas sintéticas,21aportaciones/sumas contrastadas, cuatro originales/hash privados. DEM-03/04 PARCIAL/NO; v1 intacto. Próximo: metodología de revisiones o línea independiente.
+
+---
+
 ## PSICOHISTORIA — AV-127 · ensayo Census residente · 24/10/2026
 
 [AV-127](psicohistoria/AV127_CENSUS_RESIDENT_RESULTS.md) ejecuta el contrato AV126 ya publicado. Errores −3,63/−3,77 millones en objetivos2024/2025; menores que constante y lineal en ambos horizontes. Once pruebas sintéticas y54valores contrastados con lectura/aritmética independientes. Resultados descriptivos, referencias revisables y un origen; DEM-03/04 PARCIAL/NO. Conservar v1 y separar cualquier análisis posterior de componentes; sin emisión.
