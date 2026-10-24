@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import datetime as dt
+from unittest.mock import patch
 from prospective_draft_ledger import SCHEMA, append_draft, scan
 
 
@@ -32,6 +34,42 @@ def draft(id="SYNTHETIC-FORECAST-001", entry="SYNTHETIC-ENTRY-001", supersedes=N
 
 
 class LedgerTests(unittest.TestCase):
+    def test_historical_draft_remains_readable_and_chain_extendable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)/"private-ledger"
+            first = append_draft(root, draft())
+            frozen = {p.name:p.read_bytes() for p in (root/"entries").iterdir()}
+            class Later(dt.datetime):
+                @classmethod
+                def now(cls, tz=None):
+                    return cls(2029, 1, 1, tzinfo=dt.timezone.utc)
+            with patch("prospective_draft_ledger.dt.datetime", Later):
+                self.assertEqual(scan(root)[0]["sha256"], first["sha256"])
+                # New backdated drafts stay forbidden, even though old reads work.
+                with self.assertRaises(ValueError):
+                    append_draft(root, draft(entry="SYNTHETIC-ENTRY-002"))
+                newer = draft(entry="SYNTHETIC-ENTRY-003", supersedes=first["sha256"])
+                newer["payload"]["issuedAt"] = "2029-02-01T12:00:00+00:00"
+                append_draft(root, newer)
+                self.assertEqual(len(scan(root)), 2)
+            for name, raw in frozen.items():
+                self.assertEqual((root/"entries"/name).read_bytes(), raw)
+
+    def test_rehashed_invalid_recording_time_is_rejected(self):
+        from prospective_draft_ledger import canonical
+        for value in (None, "invalid", "2028-12-02T00:00:00+00:00", "2099-01-01T00:00:00+00:00"):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)/"private-ledger"
+                append_draft(root, draft())
+                path = next((root/"entries").iterdir())
+                record = json.loads(path.read_bytes())
+                record["recordedLocallyAtUtc"] = value
+                raw = canonical(record)
+                path.unlink()
+                (root/"entries"/f"00000001-{hashlib.sha256(raw).hexdigest()}.json").write_bytes(raw)
+                with self.assertRaises((ValueError, TypeError)):
+                    scan(root)
+
     def test_create_only_and_chain(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)/"private-ledger"

@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-131 · prioridad de piloto mensual · 24/10/2026
+
+[AV131](psicohistoria/AV131_MONTHLY_PILOT_AND_LEDGER_CLOCK.md) fija un plan público previo al cálculo para un piloto mensual separado de macro v1: primer objetivo candidato noviembre2026, resolución BLS prevista04/12/2026. No emitido; puertas de fuente, evaluación y sello pendientes. Corrige caducidad accidental del ledger sin permitir altas retroactivas; 18 pruebas prospectivas pasan, dos regresiones nuevas. Próximo: generador/contrato ejecutable mensual y validación de admisión antes del corte candidato26/10; HTOPS queda pospuesto. Ningún gate científico aprobado ni escritura en PsicoPredicciones.
+
+---
+
 ## PSICOHISTORIA — AV-130 · incertidumbre social HTOPS · 24/10/2026
 
 [AV-130](psicohistoria/AV130_HTOPS_AGGREGATE_SE_BOUNDS.md) calcula límites exteriores de SE para Always+Usually de marzo:0,355655–0,983062pp bajo denominador fijo. Cuatro pruebas analíticas y contraste Decimal; hashes originales revalidados. No es intervalo de prevalencia ni varianza puntual. SOC-02/03 PARCIAL/NO. Próximo: pesos replicados/microdato para la covarianza; conservar bloqueo del reloj prospectivo.

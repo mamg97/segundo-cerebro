@@ -35,7 +35,7 @@ def private_root(path):
     return base
 
 
-def valid_draft(draft):
+def valid_draft(draft, *, recorded_at=None):
     if not isinstance(draft,dict) or set(draft)!={"schema","kind","entryId","payload",
         "sourceAvailabilityVerified","independentSealVerified","prospectiveEligible",
         "supersedesEntrySha256","resolutionProtocolSha256"}:
@@ -63,7 +63,11 @@ def valid_draft(draft):
     if any(not isinstance(payload.get(k),str) or not HEX.fullmatch(payload[k])
            for k in ("codeSha256","dataSha256","modelProtocolSha256")):
         raise ValueError("Code, dataset and model protocol must have SHA256 identity")
-    if utc(payload["issuedAt"])<=dt.datetime.now(dt.timezone.utc):
+    # New entries must still be future-dated. Historical reads instead check
+    # the persisted local recording instant; it is not an independent seal.
+    reference = (dt.datetime.now(dt.timezone.utc) if recorded_at is None
+                 else utc(recorded_at))
+    if utc(payload["issuedAt"])<=reference:
         raise ValueError("Cannot prepare a would-be prospective issuance after its declared issue time")
     if set(draft).intersection({"outcome","brier","score"}):
         raise ValueError("Draft cannot be scored")
@@ -93,7 +97,12 @@ def scan(path):
         record=json.loads(raw)
         if canonical(record)!=raw or record.get("schema")!=SCHEMA or record.get("sequence")!=index or record.get("previousSha256")!=previous:
             raise ValueError("Ledger chain or canonicalization mismatch")
-        valid_draft(record["draft"])
+        recorded_at = record.get("recordedLocallyAtUtc")
+        if not isinstance(recorded_at, str) or record.get("localTimeIsIndependentSeal") is not False:
+            raise ValueError("Missing local recording time or invalid seal claim")
+        if utc(recorded_at) > dt.datetime.now(dt.timezone.utc):
+            raise ValueError("Local recording time is in the future")
+        valid_draft(record["draft"], recorded_at=recorded_at)
         item=record["draft"]
         if item["entryId"] in ids:
             raise ValueError("Duplicate immutable entry id")
@@ -124,6 +133,7 @@ def append_draft(path,draft):
         if parent is not None and parent not in {row["sha256"] for row in chain}:
             raise ValueError("Amendment parent not present")
         now=dt.datetime.now(dt.timezone.utc).isoformat()
+        valid_draft(draft, recorded_at=now)
         record={"schema":SCHEMA,"sequence":len(chain)+1,
                 "previousSha256":chain[-1]["sha256"] if chain else "0"*64,
                 "recordedLocallyAtUtc":now,"localTimeIsIndependentSeal":False,
