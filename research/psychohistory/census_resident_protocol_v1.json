@@ -1,0 +1,116 @@
+{
+  "schema": "census-resident-retrospective-protocol-v1",
+  "scope": "Exploratory retrospective comparison of official Census 2023 main-series national resident population projections with fixed later estimates; separate from WPP.",
+  "origin_publication_date": "2023-11-09",
+  "projection_base_date": "2022-07-01",
+  "universe": "National resident population of 50 states and District of Columbia; July 1; main series; total population.",
+  "targets": [
+    {
+      "date": "2024-07-01",
+      "primary_reference": "NST-EST2024-POP.xlsx"
+    },
+    {
+      "date": "2025-07-01",
+      "primary_reference": "NST-EST2025-POP.xlsx"
+    }
+  ],
+  "revision_sensitivity": {
+    "target_date": "2024-07-01",
+    "reference": "NST-EST2025-POP.xlsx",
+    "choose_best_reference": false
+  },
+  "baselines": {
+    "input": "NST-EST2022-POP.xlsx",
+    "constant": "P_2022",
+    "linear": "P_2022 + (target_year - 2022) * (P_2022 - P_2021)",
+    "use_post_origin_vintage": false
+  },
+  "units": {
+    "projection": "thousands of persons; multiply raw numeric Decimal by 1000",
+    "reference": "persons; validate table metadata before extraction",
+    "rounding": "Preserve raw stored decimal precision. Do not infer numeric precision from Excel display formatting."
+  },
+  "metrics": [
+    "signed error F_y - E_y",
+    "absolute error abs(F_y - E_y)",
+    "percentage error 100*(F_y - E_y)/E_y"
+  ],
+  "metrics_scope": "Per target, projection and both baselines; descriptive mean absolute error across the two primary targets. Horizons share one origin and are dependent. Sensitivity stays separate.",
+  "base_decomposition": "F_y-E_y,V = (F_2022-E_2022,V) + ((F_y-F_2022)-(E_y,V-E_2022,V))",
+  "base_decomposition_limit": "Algebraic base difference includes revision and any projection-table precision effects; not causal attribution.",
+  "inputs": [
+    {
+      "file": "np2023-t1.xlsx",
+      "sha256": "244345cf31944b1b7a7faf7dc0af171a245cf3e8cf03475ef6fd086ed31c4d4e",
+      "bytes": 31263
+    },
+    {
+      "file": "NST-EST2022-POP.xlsx",
+      "sha256": "17c84129cf97ca024214a0b117809eff33e764114cc35feaeb7d6231f6a1c95c",
+      "bytes": 14314
+    },
+    {
+      "file": "NST-EST2024-POP.xlsx",
+      "sha256": "4a98cd464d3f9e122e74b47b38f1584e78e9077f4b36be1cabf7a79ab5942852",
+      "bytes": 15507
+    },
+    {
+      "file": "NST-EST2025-POP.xlsx",
+      "sha256": "20a556d397a46b484dcc78785482a16d06dbf9159e67971fa69b1244b09c7559",
+      "bytes": 16635
+    }
+  ],
+  "limitations": [
+    "Retrieved current historical files, not attested first-day bytes.",
+    "Census estimates are revisable reference estimates, not independent true population.",
+    "Prior research informed this adapted retrospective design; no confirmatory preregistration claim.",
+    "Two dependent horizons do not establish general skill.",
+    "No scenario selection, tuning, calibration, significance test, probabilities, own forecast issuance or WPP harmonization."
+  ],
+  "cell_mapping": {
+    "np2023-t1.xlsx": {
+      "sheet": "Main series",
+      "year_column": "A",
+      "population_column": "B",
+      "2022": "B8",
+      "2024": "B10",
+      "2025": "B11"
+    },
+    "NST-EST2022-POP.xlsx": {
+      "sheet": "NST-EST2022-POP",
+      "geography": "A5=United States",
+      "2021": "D5",
+      "2022": "E5"
+    },
+    "NST-EST2024-POP.xlsx": {
+      "sheet": "NST-EST2024-POP",
+      "geography": "A5=United States",
+      "2022": "E5",
+      "2024": "G5"
+    },
+    "NST-EST2025-POP.xlsx": {
+      "sheet": "NST-EST2025-POP",
+      "geography": "A5=United States",
+      "2022": "E5",
+      "2024": "G5",
+      "2025": "H5"
+    }
+  },
+  "cell_mapping_validation": "Coordinates observed from raw XML labels. Runner must verify workbook sheet relationship, labels, units, uniqueness and input hashes; coordinates alone are insufficient.",
+  "id": "census-resident-exploratory-v1",
+  "forecast_issued": false,
+  "confirmatory": false,
+  "arithmetic": {
+    "type": "Decimal",
+    "precision": 28,
+    "reporting": "Decimal strings, no intermediate integer rounding; signed percentage error, not proportion."
+  },
+  "missing_policy": "Abort on missing, duplicate, nonfinite, nonpositive or unexpected source cells, dates, metadata, input hashes, units or sheet relationships. No imputation or substitutions.",
+  "selection_policy": "Only main-series total national resident population; no alternative migration scenarios or later target years.",
+  "input_urls": {
+    "np2023-t1.xlsx": "https://www2.census.gov/programs-surveys/popproj/tables/2023/2023-summary-tables/np2023-t1.xlsx",
+    "NST-EST2022-POP.xlsx": "https://www2.census.gov/programs-surveys/popest/tables/2020-2022/state/totals/NST-EST2022-POP.xlsx",
+    "NST-EST2024-POP.xlsx": "https://www2.census.gov/programs-surveys/popest/tables/2020-2024/state/totals/NST-EST2024-POP.xlsx",
+    "NST-EST2025-POP.xlsx": "https://www2.census.gov/programs-surveys/popest/tables/2020-2025/state/totals/NST-EST2025-POP.xlsx"
+  }
+}
