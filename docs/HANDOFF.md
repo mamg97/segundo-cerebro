@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-138 · comprobación mensual conjunta · 24/10/2026
+
+[AV138](psicohistoria/AV138_MONTHLY_PREFLIGHT.md): preflight de contrato exacto, fuente/forecast sellados, cálculo y ventana del26. Separa plazo previsto del instante externo; diez pruebas nuevas y siete OpenSSL anteriores pasan. No registro ni emisión real; MAC05 PARCIAL/NO. Próximo: transición append-only, recuperación/idempotencia e inscripción canónica. AV137 PR833 fusionada, CI y Sheet escritos/releídos; la fuente real y preparación privada están conservadas.
+
+---
+
 ## PSICOHISTORIA — AV-137 · fuente sellada antes del corte · 24/10/2026
 
 [AV137](psicohistoria/AV137_MONTHLY_SOURCE_PRECOMMITMENT.md): original ALFRED descargado por HTTPS, auditado y huella sellada externamente antes del corte; prueba AV135 de nonce/ancla/política/CRL correcta. Preparación privada de noviembre tras PR #832 fusionada; contraste CSV/Fraction confirma 58 pares y 2 exclusiones. Sin emisión, MAC02/03/05 PARCIAL/NO. Próximo: transición append-only con hora efectiva, evidencia completa e idempotencia; emisión solo dentro de ventana del26 y con gates. AV136 y MAC01/03 ya escritos/releídos en Sheet; CI832 SUCCESS.
