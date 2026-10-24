@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-125 · alternativa demográfica residente · 24/10/2026
+
+[AV-125](AV125_CENSUS_RESIDENT_EVALUATION_PATH.md) conserva seis originales Census y verifica universo/base de proyecciones2023. Julio2023 precede a su publicación; futuros objetivos deben ser posteriores al09/11/2023. Ruta Census→Census candidata, con revisión de bases y dependencia explícitas; no resuelve ni sustituye el contraste WPP. DEM-02 PARCIAL/NO, sin score.
+
+---
+
 ## PSICOHISTORIA — AV-124 · diagnóstico espacial OAF · 24/10/2026
 
 [AV-124](AV124_USGS_SPATIAL_DIAGNOSTIC.md) implementa comparación geométrica con borde explícito y seis pruebas sintéticas. Cuatro puntos hipotéticos procesados en CLI; no eventos observados ni desenlaces. SIS-03 PARCIAL/NO; autenticación,profundidad y contrato prospectivo siguen separados.
