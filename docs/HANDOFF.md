@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-139 · diario pendiente y borrador privado · 24/10/2026
+
+[AV139](psicohistoria/AV139_MONTHLY_PENDING_JOURNAL.md): registro local bloqueado/atómico/idempotente con recuperación; ocho pruebas nuevas + diez de preflight. Borrador privado real en ledger, fuentes/código/contrato/compromiso y TSQ guardados; solicitud sin enviar. Estado pendiente, sin alta canónica ni emisión. MAC05 PARCIAL/NO. Próximo: paso final de inscripción y evidencia de hora efectiva; respetar ventana y cuota semanal. AV138 PR834 fusionada, CI y Sheet escritos/releídos.
+
+---
+
 ## PSICOHISTORIA — AV-138 · comprobación mensual conjunta · 24/10/2026
 
 [AV138](psicohistoria/AV138_MONTHLY_PREFLIGHT.md): preflight de contrato exacto, fuente/forecast sellados, cálculo y ventana del26. Separa plazo previsto del instante externo; diez pruebas nuevas y siete OpenSSL anteriores pasan. No registro ni emisión real; MAC05 PARCIAL/NO. Próximo: transición append-only, recuperación/idempotencia e inscripción canónica. AV137 PR833 fusionada, CI y Sheet escritos/releídos; la fuente real y preparación privada están conservadas.
