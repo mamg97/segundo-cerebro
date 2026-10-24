@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-130 · incertidumbre social HTOPS · 24/10/2026
+
+[AV-130](psicohistoria/AV130_HTOPS_AGGREGATE_SE_BOUNDS.md) calcula límites exteriores de SE para Always+Usually de marzo:0,355655–0,983062pp bajo denominador fijo. Cuatro pruebas analíticas y contraste Decimal; hashes originales revalidados. No es intervalo de prevalencia ni varianza puntual. SOC-02/03 PARCIAL/NO. Próximo: pesos replicados/microdato para la covarianza; conservar bloqueo del reloj prospectivo.
+
+---
+
 ## PSICOHISTORIA — AV-129 · revisiones Census · 24/10/2026
 
 [AV-129](psicohistoria/AV129_CENSUS_REFERENCE_REVISIONS.md) contextualiza cambios metodológicos V2024/V2025 y reconcilia la sensibilidad2024: +107.191personas en error firmado, de las que21.017corresponden a diferencia de base y86.174a crecimiento. Las notas V2025 recuperadas están actualizadas en mayo2026; no se atribuyen sus bytes a enero. Tres originales/hash privados; sin causalidad ni nuevos scores. DEM-02/04 PARCIAL/NO. Conservar v1 y continuar otra línea o diseñar una ampliación explícita.
