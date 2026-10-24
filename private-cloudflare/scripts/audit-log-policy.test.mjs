@@ -66,7 +66,14 @@ test("diagnostic labels are fixed allowlisted codes with no private identifiers"
 
 test("remaining image and console failures expose only bounded diagnostic families", () => {
   assert.equal(safeAuditImageProbeCode(null, ""), "NO_SOURCE");
-  assert.equal(safeAuditImageProbeCode({ status: 0, error: "person@example.com" }, "/private/123"), "TRANSPORT_FAILURE");
+  assert.equal(safeAuditImageProbeCode({ status: 0, error: "person@example.com" }, "/private/123"), "OTHER_TRANSPORT_OTHER");
+  assert.equal(safeAuditImageProbeCode({ status: 0, error: "AbortError" }, "https://private.invalid/api/objects/look/id-privado/image"), "LOOK_IMAGE_TRANSPORT_TIMEOUT");
+  assert.equal(safeAuditImageProbeCode({ status: 0, error: "TypeError" }, "https://private.invalid/api/objects/id-privado/image/thumbnail"), "OBJECTS_IMAGE_TRANSPORT_FETCH_TYPEERROR");
+  assert.equal(safeAuditImageProbeCode({ status: 0, error: "NetworkError" }, "/api/health/recipes/id-privado/image"), "RECIPE_IMAGE_TRANSPORT_NETWORK_ERROR");
+  for (const code of [
+    safeAuditImageProbeCode({ status: 0, error: "AbortError" }, "https://private.invalid/api/objects/look/id-privado/image?token=secret"),
+    safeAuditImageProbeCode({ status: 0, error: "TypeError" }, "/api/objects/id-privado/image/processed")
+  ]) assert.doesNotMatch(code, /privado|private|token|secret/);
   assert.equal(safeAuditImageProbeCode({ status: 502, error: "Bearer secret" }, "/private/123"), "HTTP_5XX");
   assert.equal(safeAuditImageProbeCode({ status: 403 }, "/private/123"), "HTTP_4XX");
   assert.equal(safeAuditImageProbeCode({ status: 200, contentType: "text/html", decoded: false }, "/private/123"), "INVALID_CONTENT_TYPE");
