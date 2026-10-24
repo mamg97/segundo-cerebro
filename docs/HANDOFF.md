@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-135 · recibo y ancla integrados · 24/10/2026
+
+[AV135](psicohistoria/AV135_PINNED_RECEIPT_VERIFIER.md): nuevo verificador offline con raíz/catálogo fijados, nonce obligatorio y CRL sobre el firmante CMS del mismo recibo. Wrapper enlazado a ledger/compromiso; siete pruebas nuevas y dieciocho previas correctas, más recibo externo sintético AV134 validado por el nuevo CLI. Fuente/emisión/evaluación permanecen bloqueadas; MAC05 PARCIAL/NO. Publicación/CI y sincronización Sheet pendientes al preparar este commit. Próximo: contrato adaptado de referencia mensual y captura antes del corte; no retocar el candidato descartado AV133.
+
+---
+
 ## PSICOHISTORIA — AV-134 · ancla temporal externa contrastada · 24/10/2026
 
 [AV134](psicohistoria/AV134_INDEPENDENT_TIMESTAMP_ANCHOR.md): recibo DigiCert real solo sintético, raízG4 extraída del bundlePEM y huella contrastada con catálogoApple actual. Dos positivos y tres negativos correctos; cadena timestampsign y CRL vigentes verificados. Fuentes/binarios/informe privados. MAC-05 PARCIAL/NO, sin emisión ni cambios de flags. Próximo: integrar ancla/revocación en compromiso real y preparar referencia mensual adaptada; candidato AV133 descartado sin retoques. AV133 PR #829 fusionada y Sheet escrito/releído.
