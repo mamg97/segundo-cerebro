@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-124 · diagnóstico espacial OAF · 24/10/2026
+
+[AV-124](AV124_USGS_SPATIAL_DIAGNOSTIC.md) implementa comparación geométrica con borde explícito y seis pruebas sintéticas. Cuatro puntos hipotéticos procesados en CLI; no eventos observados ni desenlaces. SIS-03 PARCIAL/NO; autenticación,profundidad y contrato prospectivo siguen separados.
+
+---
+
 ## PSICOHISTORIA — AV-123 · procedencia espacial OAF · 24/10/2026
 
 [AV-123](AV123_USGS_REGION_PROVENANCE.md) sigue región de búsqueda hasta su presentación redondeada. Cuatro originales verificados; centro mostrado desplazado 6,96 m y epicentro a 4,43 km en el par archivado. Profundidad acreditada como filtro histórico, no contrato futuro. SIS-02 PARCIAL/NO; sin outcomes ni score.
