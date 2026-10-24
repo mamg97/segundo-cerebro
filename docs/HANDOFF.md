@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-127 · ensayo Census residente · 24/10/2026
+
+[AV-127](psicohistoria/AV127_CENSUS_RESIDENT_RESULTS.md) ejecuta el contrato AV126 ya publicado. Errores −3,63/−3,77 millones en objetivos2024/2025; menores que constante y lineal en ambos horizontes. Once pruebas sintéticas y54valores contrastados con lectura/aritmética independientes. Resultados descriptivos, referencias revisables y un origen; DEM-03/04 PARCIAL/NO. Conservar v1 y separar cualquier análisis posterior de componentes; sin emisión.
+
+---
+
 ## PSICOHISTORIA — AV-126 · contrato Census residente · 24/10/2026
 
 [AV-126](psicohistoria/AV126_CENSUS_RESIDENT_PROTOCOL.md) fija antes del cálculo los objetivos julio2024/2025, vintages de referencia, dos comparadores V2022, métricas y descomposición de revisión de base. Cuatro originales fijados por SHA; sin errores calculados. Ensayo retrospectivo exploratorio, separado de WPP, DEM-01/02 PARCIAL/NO. Próximo: publicar contrato, implementar/pruebas sintéticas y ejecutar con las fuentes conservadas.
