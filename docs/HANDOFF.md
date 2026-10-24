@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-126 · contrato Census residente · 24/10/2026
+
+[AV-126](psicohistoria/AV126_CENSUS_RESIDENT_PROTOCOL.md) fija antes del cálculo los objetivos julio2024/2025, vintages de referencia, dos comparadores V2022, métricas y descomposición de revisión de base. Cuatro originales fijados por SHA; sin errores calculados. Ensayo retrospectivo exploratorio, separado de WPP, DEM-01/02 PARCIAL/NO. Próximo: publicar contrato, implementar/pruebas sintéticas y ejecutar con las fuentes conservadas.
+
+---
+
 ## PSICOHISTORIA — AV-125 · alternativa demográfica residente · 24/10/2026
 
 [AV-125](psicohistoria/AV125_CENSUS_RESIDENT_EVALUATION_PATH.md) conserva seis originales Census y verifica universo/base de proyecciones2023. Julio2023 precede a su publicación; futuros objetivos deben ser posteriores al09/11/2023. Ruta Census→Census candidata, con revisión de bases y dependencia explícitas; no resuelve ni sustituye el contraste WPP. DEM-02 PARCIAL/NO, sin score.
