@@ -184,7 +184,25 @@ export function safeAuditImageProbeCode(probe, src) {
   const status = Number(probe?.status || 0);
   if (status >= 500 && status < 600) return "HTTP_5XX";
   if (status >= 400 && status < 500) return "HTTP_4XX";
-  if (status !== 200) return status === 0 ? "TRANSPORT_FAILURE" : "HTTP_OTHER";
+  if (status === 0) {
+    // Transport errors can be caused by timeouts, CORS/fetch rejection or
+    // other browser failures. Classify only fixed families, never emit src.
+    const reason = String(probe?.error || "");
+    const cause = reason === "AbortError" ? "TIMEOUT"
+      : reason === "TypeError" ? "FETCH_TYPEERROR"
+        : reason === "NetworkError" ? "NETWORK_ERROR" : "OTHER";
+    let family = "OTHER";
+    try {
+      const path = new URL(src, "https://audit.invalid").pathname;
+      if (/^\/api\/objects\/look\/[^/]+\/image$/.test(path)) family = "LOOK_IMAGE";
+      else if (/^\/api\/objects\/[^/]+\/image\/(?:original|processed|thumbnail)$/.test(path)) family = "OBJECTS_IMAGE";
+      else if (/^\/api\/health\/recipes\/[^/]+\/image$/.test(path)) family = "RECIPE_IMAGE";
+    } catch {
+      // Malformed source remains a failed transport check.
+    }
+    return family + "_TRANSPORT_" + cause;
+  }
+  if (status !== 200) return "HTTP_OTHER";
   if (!/^image\//i.test(String(probe?.contentType || ""))) return "INVALID_CONTENT_TYPE";
   if (!probe?.decoded) return "DECODE_FAILED";
   return "UNKNOWN";
