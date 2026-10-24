@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-129 · revisiones Census · 24/10/2026
+
+[AV-129](psicohistoria/AV129_CENSUS_REFERENCE_REVISIONS.md) contextualiza cambios metodológicos V2024/V2025 y reconcilia la sensibilidad2024: +107.191personas en error firmado, de las que21.017corresponden a diferencia de base y86.174a crecimiento. Las notas V2025 recuperadas están actualizadas en mayo2026; no se atribuyen sus bytes a enero. Tres originales/hash privados; sin causalidad ni nuevos scores. DEM-02/04 PARCIAL/NO. Conservar v1 y continuar otra línea o diseñar una ampliación explícita.
+
+---
+
 ## PSICOHISTORIA — AV-128 · componentes Census · 24/10/2026
 
 [AV-128](psicohistoria/AV128_CENSUS_COMPONENT_DIAGNOSTIC.md) reconcilia tres diferencias de crecimiento AV127 con nacimientos, defunciones, migración y residuos. Migración internacional aporta−3,37/−3,69millones en los casos primarios, compensada parcialmente por otras diferencias; no atribución causal. Siete pruebas sintéticas,21aportaciones/sumas contrastadas, cuatro originales/hash privados. DEM-03/04 PARCIAL/NO; v1 intacto. Próximo: metodología de revisiones o línea independiente.
