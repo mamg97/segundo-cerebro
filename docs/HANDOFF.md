@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-134 · ancla temporal externa contrastada · 24/10/2026
+
+[AV134](psicohistoria/AV134_INDEPENDENT_TIMESTAMP_ANCHOR.md): recibo DigiCert real solo sintético, raízG4 extraída del bundlePEM y huella contrastada con catálogoApple actual. Dos positivos y tres negativos correctos; cadena timestampsign y CRL vigentes verificados. Fuentes/binarios/informe privados. MAC-05 PARCIAL/NO, sin emisión ni cambios de flags. Próximo: integrar ancla/revocación en compromiso real y preparar referencia mensual adaptada; candidato AV133 descartado sin retoques. AV133 PR #829 fusionada y Sheet escrito/releído.
+
+---
+
 ## PSICOHISTORIA — AV-133 · candidato mensual descartado · 24/10/2026
 
 [AV133](psicohistoria/AV133_MONTHLY_ADMISSION_RESULTS.md): ensayo AV132 ejecutado tras PR #828 fusionada. 93objetivos/89puntuables/16eventos; Brier candidato0,188252 vsfrecuencia0,154253 ypersistencia0,179775. Falla admisión, no emitir ni retocar esta versión. Contraste independiente CSV/Fraction PASS (93orígenes,5385diferencias,270probabilidades,89etiquetas). Siguiente: contrato explícitamente adaptado para referencia de frecuencia y resolver sello/fuente; no buscar otro ganador. MAC-03/04 PARCIAL/NO, cero emisiones.
