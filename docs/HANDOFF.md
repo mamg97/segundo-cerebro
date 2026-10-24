@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-137 · fuente sellada antes del corte · 24/10/2026
+
+[AV137](psicohistoria/AV137_MONTHLY_SOURCE_PRECOMMITMENT.md): original ALFRED descargado por HTTPS, auditado y huella sellada externamente antes del corte; prueba AV135 de nonce/ancla/política/CRL correcta. Preparación privada de noviembre tras PR #832 fusionada; contraste CSV/Fraction confirma 58 pares y 2 exclusiones. Sin emisión, MAC02/03/05 PARCIAL/NO. Próximo: transición append-only con hora efectiva, evidencia completa e idempotencia; emisión solo dentro de ventana del26 y con gates. AV136 y MAC01/03 ya escritos/releídos en Sheet; CI832 SUCCESS.
+
+---
+
 ## PSICOHISTORIA — AV-136 · referencia mensual adaptada · 24/10/2026
 
 [AV136](psicohistoria/AV136_MONTHLY_REFERENCE_CONTRACT.md) congela la referencia de frecuencia tras conocer AV133, sin retocar el candidato descartado. Cohorte12meses, beta(1,1), ausencia de lag de momento ya no excluye un origen; cambios declarados. Ventana26 00–12UTC con hora real, captura/resolución/omisiones fijadas. Seis pruebas nuevas + siete previas; sin cálculo real ni emisión en este avance. MAC01/03 PARCIAL/NO. Próximo tras publicar: captura y cálculo privado, sello/registro; no abrir otra familia.
