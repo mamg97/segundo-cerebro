@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV-133 · candidato mensual descartado · 24/10/2026
+
+[AV133](psicohistoria/AV133_MONTHLY_ADMISSION_RESULTS.md): ensayo AV132 ejecutado tras PR #828 fusionada. 93objetivos/89puntuables/16eventos; Brier candidato0,188252 vsfrecuencia0,154253 ypersistencia0,179775. Falla admisión, no emitir ni retocar esta versión. Contraste independiente CSV/Fraction PASS (93orígenes,5385diferencias,270probabilidades,89etiquetas). Siguiente: contrato explícitamente adaptado para referencia de frecuencia y resolver sello/fuente; no buscar otro ganador. MAC-03/04 PARCIAL/NO, cero emisiones.
+
+---
+
 ## PSICOHISTORIA — AV-132 · contrato mensual ejecutable · 24/10/2026
 
 [AV132](psicohistoria/AV132_MONTHLY_EXECUTABLE_PROTOCOL.md) congela el ensayo de admisión mensual antes de calcular resultados: 2019enero–2026septiembre, umbral0,2pp, baseobjetivo−2, comparadores frecuencia/persistencia y candidato momento. Siete pruebas sintéticas; sin ejecución real ni emisión. MAC-01/03 PARCIAL/NO. Próximo: publicar/fusionar contrato, ejecutar una vez las fuentes privadas fijadas y contrastar; si no vence a ambos baselines, descartar v1 sin retocar. AV131 ya publicado en PR #827, CI correcta y Sheet escrito/releído.
