@@ -74,7 +74,7 @@ class IndependentTimestampTests(unittest.TestCase):
         (cls.base / "tsa.cnf").write_text(
             "[tsa]\ndefault_tsa = test\n[test]\nserial = tsa.serial\nsigner_cert = tsa.pem\n"
             "certs = tsa.pem\nsigner_key = tsa.key\nsigner_digest = sha256\n"
-            "default_policy = 1.2.3.4.1\ndigests = sha256\naccuracy = secs:1\n"
+            "default_policy = 1.3.6.1.4.1.55555.7.1\ndigests = sha256\naccuracy = secs:1\n"
             "ordering = yes\ntsa_name = yes\ness_cert_id_chain = no\n")
         (cls.base / "tsa.serial").write_text("01\n")
         cls.openssl("ts", "-reply", "-config", "tsa.cnf", "-queryfile", "bundle/request.tsq", "-out", "receipt")
@@ -99,7 +99,7 @@ class IndependentTimestampTests(unittest.TestCase):
 
     def setUp(self):
         pins = patch.multiple(gate, ROOT_DER_SHA256=self.root_hash,
-                              CATALOG_SHA256=self.catalog_hash, POLICY_OID="1.2.3.4.1")
+                              CATALOG_SHA256=self.catalog_hash, POLICY_OID="1.3.6.1.4.1.55555.7.1")
         pins.start()
         self.addCleanup(pins.stop)
 
