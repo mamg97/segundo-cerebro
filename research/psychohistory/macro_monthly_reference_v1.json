@@ -1,0 +1,67 @@
+{
+  "id": "macro-monthly-frequency-prospective-v1",
+  "status": "PROTOCOL_ONLY_NOT_ISSUED",
+  "selection": "adapted_after_AV133_known_results_not_confirmatory",
+  "supersedes_failed_candidate": false,
+  "future_target_start": "2026-11-01",
+  "future_target_end": "2027-10-01",
+  "event": "first_BLS_SA_national_UNRATE_target_minus_base_fixed_at_issuance_gte_threshold",
+  "horizon_months_from_base": 2,
+  "event_threshold_pp": "0.2",
+  "candidate_end_months": 60,
+  "minimum_pairs": 48,
+  "method": "beta_1_1_two_month_change_frequency",
+  "comparator": "persistence_zero_probability",
+  "missing_policy": "omit_pairs_with_missing_endpoints_no_imputation",
+  "momentum_lag_required": false,
+  "change_from_admission": "no momentum exclusion: independent frequency reference, changed coverage declared; no new backtest",
+  "vintage_day": 25,
+  "vintage_end_utc": "23:59:59",
+  "issue_day": 26,
+  "issuance_window_start_utc": "00:00:00",
+  "issuance_deadline_utc": "12:00:00",
+  "issuance_time_policy": "actual independently evidenced registration within window; never call planned deadline actual issuedAt",
+  "missed_issue_policy": "append omission for that month; no replacement, backdating or later same-month issue",
+  "sources": {
+    "history": "official ALFRED UNRATE realtime archive captured and externally committed before cut; latest observed reference month must equal target minus two months",
+    "base": "archived seasonally adjusted civilian national unemployment rate, percent age16plus, fixed at issue",
+    "capture": "HTTPS official source, original bytes and hash, release metadata and acquisition provenance private; no invented historical availability"
+  },
+  "resolution": {
+    "source": "first BLS Employment Situation household survey national seasonally adjusted unemployment rate",
+    "capture_deadline_hours_after_actual_release": 48,
+    "late_capture": "MISSING_INITIAL unless independent immutable first-edition evidence is established; never substitute current revised data",
+    "missing_release": "retain unresolved until actual initial release, record delay; never impute event=0",
+    "corrections": "first published number is primary outcome; corrected and revised results separate sensitivity, no overwrite",
+    "base_revisions": "retain issued base even if later revised"
+  },
+  "issuance_gates": [
+    "frozen_protocol_and_code",
+    "official_source_capture_before_cut",
+    "exact_private_draft_hashes",
+    "independent_receipt_nonce_policy_and_current_CRL",
+    "private_append_only_registration_with_actual_time",
+    "canonical_prediction_record_reread"
+  ],
+  "review": {
+    "after_targets": 12,
+    "minimum_resolved": 10,
+    "minimum_each_outcome": 2,
+    "minimum_relative_brier_improvement_vs_persistence": "0.10",
+    "reports": [
+      "all_12_coverage_and_omissions",
+      "paired_Brier",
+      "event_count",
+      "individual_errors",
+      "calibration_descriptive_only"
+    ],
+    "zero_comparator_brier": "no_relative_skill_defined_and_no_pass",
+    "interpretation": "preliminary pilot only; no general predictive usefulness or decision recommendation from 12 targets",
+    "no_optional_stopping": true,
+    "no_parameter_tuning_during_cohort": true
+  },
+  "forecast_issued": false,
+  "predictive_skill_demonstrated": false,
+  "source_capture_start_day": 19,
+  "source_start": "2011-01-01"
+}

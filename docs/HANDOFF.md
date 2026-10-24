@@ -1,6 +1,12 @@
+## PSICOHISTORIA — AV-136 · referencia mensual adaptada · 24/10/2026
+
+[AV136](psicohistoria/AV136_MONTHLY_REFERENCE_CONTRACT.md) congela la referencia de frecuencia tras conocer AV133, sin retocar el candidato descartado. Cohorte12meses, beta(1,1), ausencia de lag de momento ya no excluye un origen; cambios declarados. Ventana26 00–12UTC con hora real, captura/resolución/omisiones fijadas. Seis pruebas nuevas + siete previas; sin cálculo real ni emisión en este avance. MAC01/03 PARCIAL/NO. Próximo tras publicar: captura y cálculo privado, sello/registro; no abrir otra familia.
+
+---
+
 ## PSICOHISTORIA — AV-135 · recibo y ancla integrados · 24/10/2026
 
-[AV135](psicohistoria/AV135_PINNED_RECEIPT_VERIFIER.md): nuevo verificador offline con raíz/catálogo fijados, nonce obligatorio y CRL sobre el firmante CMS del mismo recibo. Wrapper enlazado a ledger/compromiso; siete pruebas nuevas y dieciocho previas correctas, más recibo externo sintético AV134 validado por el nuevo CLI. Fuente/emisión/evaluación permanecen bloqueadas; MAC05 PARCIAL/NO. Publicación/CI y sincronización Sheet pendientes al preparar este commit. Próximo: contrato adaptado de referencia mensual y captura antes del corte; no retocar el candidato descartado AV133.
+[AV135](psicohistoria/AV135_PINNED_RECEIPT_VERIFIER.md): nuevo verificador offline con raíz/catálogo fijados, nonce obligatorio y CRL sobre el firmante CMS del mismo recibo. Wrapper enlazado a ledger/compromiso; siete pruebas nuevas y dieciocho previas correctas, más recibo externo sintético AV134 validado por el nuevo CLI. Fuente/emisión/evaluación permanecen bloqueadas; MAC05 PARCIAL/NO. PR #831 fusionada, CI privacidad40106301558/motores40106301570 SUCCESS; AV135 y MAC05 escritos/releídos en Sheet. Próximo: contrato adaptado de referencia mensual y captura antes del corte; no retocar el candidato descartado AV133.
 
 ---
 
