@@ -208,6 +208,22 @@ export function safeAuditImageProbeCode(probe, src) {
   return "UNKNOWN";
 }
 
+// Classify failed image sources without emitting URLs, paths, hosts or IDs.
+// This is diagnostic only: it must never turn a failed image into a pass.
+export function safeAuditImageSourceClass(src, appOrigin) {
+  const raw = String(src || "").trim();
+  if (!raw) return "NO_SOURCE";
+  try {
+    const origin = new URL(appOrigin);
+    const target = new URL(raw, origin);
+    if (target.protocol === "data:" || target.protocol === "blob:") return "INLINE";
+    if (target.protocol !== "http:" && target.protocol !== "https:") return "NON_HTTP";
+    return target.origin === origin.origin ? "SAME_ORIGIN" : "CROSS_ORIGIN";
+  } catch {
+    return "INVALID";
+  }
+}
+
 // Only an allowlisted origin family reaches public logs. The input URL,
 // including any query, path identifiers or tokens, is never returned.
 export function safeAuditConsoleLocationCode(sourceUrl, appOrigin) {
