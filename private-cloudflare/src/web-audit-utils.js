@@ -8,7 +8,7 @@ export const normalizeAuditValue = (value) => String(value || "")
 // Date-only UTC arithmetic avoids locale/DST drift at Monday rollover.
 // An empty canonical menu still has seven real dates in the Home matrix.
 export function auditWeekDates(dateKey) {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(dateKey || ""))) return [];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateKey || ""))) return [];
   const date = new Date(dateKey + "T12:00:00Z");
   if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== dateKey) return [];
   date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
