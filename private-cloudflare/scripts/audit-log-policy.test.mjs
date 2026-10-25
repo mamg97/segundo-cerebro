@@ -263,3 +263,21 @@ test("failed-image source diagnostics preserve privacy and never bypass strict c
   assert.equal(auditor.includes("safeAuditImageSourceClass(item.src, auditOrigin)"), true);
   assert.equal(auditor.includes("verifiedBrokenImages.length === 0"), true);
 });
+
+
+test("lazy external image warmup does not weaken strict visual failure gates", () => {
+  const start = auditor.indexOf("async function auditVisualSnapshot(label)");
+  const report = auditor.indexOf("const report = await page.evaluate", start);
+  assert.ok(start > 0 && report > start);
+  assert.equal(auditor.slice(start, report).includes("await settleVisibleLazyExternalImages()"), true);
+  assert.equal(auditor.includes('image.loading = "eager"'), true);
+  assert.equal(auditor.includes("image.decode()"), true);
+  assert.equal(auditor.includes('slice(0, 24)'), true);
+  assert.equal(auditor.includes("[AUDIT_LAZY_EXTERNAL_DIAG] candidates="), true);
+  assert.equal(auditor.includes("verifiedBrokenImages.length === 0"), true);
+  assert.equal(auditor.includes("safeAuditImageProbeCode(imageProbeBySource.get(item.src), item.src)"), true);
+  // Never expose an image source or URL in the new diagnostic.
+  const diagnostic = auditor.split("\n").find((line) => line.includes('console.log("[AUDIT_LAZY_EXTERNAL_DIAG]'));
+  assert.ok(diagnostic);
+  assert.doesNotMatch(diagnostic, /src|url|item\.name|image\.src/i);
+});
