@@ -5,7 +5,7 @@ import { createAuditImmutableImageCache } from "./audit-immutable-image-cache.mj
 import { createAuditImageReadGate } from "./audit-image-read-gate.mjs";
 import { safePrivate502Origin } from "../src/private-502-origin.js";
 import { settleAuditDiagnostics } from "./audit-bounded-settle.mjs";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditImageProbeCode, safeAuditConsoleLocationCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditImageProbeCode, safeAuditImageSourceClass, safeAuditConsoleLocationCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
   canonicalMenuMoment,
@@ -1094,6 +1094,18 @@ async function auditVisualSnapshot(label) {
     }
     for (const [code, count] of [...classes].sort((a, b) => a[0].localeCompare(b[0]))) {
       console.error("[AUDIT_VISUAL_IMAGE_DIAG] " + code + " count=" + count);
+    }
+    // Distinguish cross-origin fetch/CORS from private Worker failures and
+    // DOM loads still pending. Emit only fixed buckets, never source URLs.
+    const sourceClasses = new Map();
+    for (const item of verifiedBrokenImages) {
+      const family = safeAuditImageSourceClass(item.src, auditOrigin);
+      const domState = item.complete ? "DOM_COMPLETE_NO_PIXELS" : "DOM_INCOMPLETE";
+      const code = viewportCode + "_" + family + "_" + domState;
+      sourceClasses.set(code, (sourceClasses.get(code) || 0) + 1);
+    }
+    for (const [code, count] of [...sourceClasses].sort((a, b) => a[0].localeCompare(b[0]))) {
+      console.error("[AUDIT_VISUAL_IMAGE_SOURCE_DIAG] " + code + " count=" + count);
     }
   }
   assertCheck(
