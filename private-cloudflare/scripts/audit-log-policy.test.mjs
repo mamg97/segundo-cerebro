@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditImageProbeCode, safeAuditConsoleLocationCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
+import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditImageProbeCode, safeAuditImageSourceClass, safeAuditConsoleLocationCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 
 const auditor = fs.readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
 
@@ -239,4 +239,27 @@ test("production audit tracks current Home menu, seven-day matrix and canonical 
   assert.match(auditor, /expectedChangeRows\.every\(row => changeRows\.includes\(row\)\)/);
   assert.match(app, /const canEdit = !readOnly && sourceId && \(planned \|\| consumed\)/);
   assert.match(auditor, /availableActionRows === editableMenuItems\.length/);
+});
+
+
+test("failed-image source diagnostics preserve privacy and never bypass strict checks", () => {
+  const app = "https://private.example.invalid";
+  const cases = [
+    ["/api/objects/look/secret-123/image?token=hidden", "SAME_ORIGIN"],
+    ["https://private.example.invalid/app/photo.png?email=person@example.com", "SAME_ORIGIN"],
+    ["https://external.example.invalid/photo.png?token=hidden", "CROSS_ORIGIN"],
+    ["data:image/png;base64,AAAA", "INLINE"],
+    ["blob:https://private.example.invalid/secret-123", "INLINE"],
+    ["javascript:alert(1)", "NON_HTTP"],
+    ["", "NO_SOURCE"],
+    ["http://[invalid", "INVALID"]
+  ];
+  for (const [source, expected] of cases) {
+    const code = safeAuditImageSourceClass(source, app);
+    assert.equal(code, expected);
+    assert.doesNotMatch(code, /secret|token|email|person|example|invalid/i);
+  }
+  assert.match(auditor, /\[AUDIT_VISUAL_IMAGE_SOURCE_DIAG\]/);
+  assert.match(auditor, /safeAuditImageSourceClass\(item\.src, auditOrigin\)/);
+  assert.match(auditor, /verifiedBrokenImages\.length === 0/);
 });
