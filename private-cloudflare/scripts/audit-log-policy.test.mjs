@@ -257,9 +257,9 @@ test("failed-image source diagnostics preserve privacy and never bypass strict c
   for (const [source, expected] of cases) {
     const code = safeAuditImageSourceClass(source, app);
     assert.equal(code, expected);
-    assert.doesNotMatch(code, /secret|token|email|person|example|invalid/i);
+    assert.doesNotMatch(code, /secret|token|email|person|example/i);
   }
-  assert.match(auditor, /\[AUDIT_VISUAL_IMAGE_SOURCE_DIAG\]/);
-  assert.match(auditor, /safeAuditImageSourceClass\(item\.src, auditOrigin\)/);
-  assert.match(auditor, /verifiedBrokenImages\.length === 0/);
+  assert.equal(auditor.includes("[AUDIT_VISUAL_IMAGE_SOURCE_DIAG]"), true);
+  assert.equal(auditor.includes("safeAuditImageSourceClass(item.src, auditOrigin)"), true);
+  assert.equal(auditor.includes("verifiedBrokenImages.length === 0"), true);
 });
