@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  auditWeekDates,
   canonicalMenuMoment,
   classifyRequestFailure,
   hiddenMenuStatus,
@@ -12,6 +13,21 @@ import {
   visibleMenuRow
 } from "./web-audit-utils.js";
 import { evaluateMidasWorkflowRuns } from "./midas-health.js";
+
+test("audit validates all seven dates for an empty canonical week across Monday, DST and year boundaries", () => {
+  assert.deepEqual(auditWeekDates("2026-10-26"), [
+    "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29",
+    "2026-10-30", "2026-10-31", "2026-11-01"
+  ]);
+  assert.deepEqual(auditWeekDates("2026-10-25").slice(0, 2), ["2026-10-19", "2026-10-20"]);
+  assert.deepEqual(auditWeekDates("2027-01-01"), [
+    "2026-12-28", "2026-12-29", "2026-12-30", "2026-12-31",
+    "2027-01-01", "2027-01-02", "2027-01-03"
+  ]);
+  for (const invalid of ["", "2026-02-30", "2026-10-26T00:00:00Z"]) {
+    assert.deepEqual(auditWeekDates(invalid), []);
+  }
+});
 
 test("hidden menu states stay hidden", () => {
   for (const status of ["omitido","retirada","cancelado","cancelled","skipped"]) {
