@@ -8,6 +8,7 @@ import { settleAuditDiagnostics } from "./audit-bounded-settle.mjs";
 import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditImageProbeCode, safeAuditImageSourceClass, safeAuditConsoleLocationCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
 import {
+  auditWeekDates,
   canonicalMenuMoment,
   classifyRequestFailure,
   hiddenMenuStatus,
@@ -1678,8 +1679,16 @@ async function auditResponsiveVisualLayout(navIds) {
     assertCheck(gymWeekLayout, profile.name + " · Home presenta semana real de Gym sin overflow");
 
     if (profile.name === "desktop" || profile.name === "mobile") {
-      const recipeLayout = await page.locator("#home-weekly-menu-content .home-weekly-menu-recipe-link")
-        .first().evaluate((button) => {
+      const recipeLinks = page.locator("#home-weekly-menu-content .home-weekly-menu-recipe-link");
+      if (await recipeLinks.count() === 0) {
+        // No recipe can have photo geometry in a genuinely empty week. Still
+        // verify the seven-day matrix and absence of orphan recipe actions.
+        const dayCount = await page.locator("#home-weekly-menu-content .home-weekly-menu-table-day").count();
+        const orphanRecipeActions = await page.locator("#home-weekly-menu-content [data-home-menu-recipe-open]").count();
+        assertCheck(dayCount === 7 && orphanRecipeActions === 0,
+          profile.name + " · menú sin recetas conserva siete días y no inventa enlaces");
+      } else {
+        const recipeLayout = await recipeLinks.first().evaluate((button) => {
           const image = button.querySelector(".home-menu-recipe-thumb")?.getBoundingClientRect();
           const name = button.querySelector(".home-menu-recipe-title")?.getBoundingClientRect();
           const tile = button.closest(".weekly-menu-group-item");
@@ -1691,7 +1700,8 @@ async function auditResponsiveVisualLayout(navIds) {
             copy.width > image.width * .75 &&
             getComputedStyle(button).flexDirection === "column");
         }).catch(() => false);
-      assertCheck(recipeLayout, profile.name + " · menú muestra foto sobre nombre y macros sin estrechar texto");
+        assertCheck(recipeLayout, profile.name + " · menú muestra foto sobre nombre y macros sin estrechar texto");
+      }
     }
     if (profile.name === "mobile") {
       await auditMobileWealthDialog();
@@ -2148,15 +2158,25 @@ try {
       compared += 1;
       if (!matched) missing += 1;
     }
-    assertCheck(compared > 0 && missing === 0,
+    const expectedWeekDates = auditWeekDates(liveMenuProbe.body?.date || nutrition.body?.date);
+    const renderedWeekDates = await page.locator("#home-weekly-menu-content .home-weekly-menu-table-day")
+      .evaluateAll(nodes => nodes.map(node => node.dataset.menuDate || ""));
+    assertCheck(expectedWeekDates.length === 7 &&
+      JSON.stringify(renderedWeekDates) === JSON.stringify(expectedWeekDates),
+      "Menú Home conserva las siete fechas canónicas, incluso sin comidas",
+      `dias_fuente=${expectedWeekDates.length} dias_ui=${renderedWeekDates.length}`);
+    const orphanRows = liveVisible.length === 0
+      ? await page.locator("#home-weekly-menu-content [data-menu-source-row]").count()
+      : 0;
+    assertCheck(compared === liveVisible.length && missing === 0 && orphanRows === 0,
       "Menú Home conserva todas las filas leídas directamente de Sheets",
-      `filas_comprobadas=${compared} faltantes=${missing}`);
+      `filas_comprobadas=${compared} faltantes=${missing} huerfanas=${orphanRows}`);
 
     // Source-to-DOM numeric contract: every visible planned component must
     // contribute to the Home daily kcal/protein header. In particular, a
     // newly added yogurt or breakfast may not silently disappear from totals.
     // Only row counts and equality diagnostics are logged, never food or macros.
-    const sourceByDate = new Map();
+    const sourceByDate = new Map(expectedWeekDates.map(day => [day, []]));
     for (const item of liveVisible) {
       if (!sourceByDate.has(item.date)) sourceByDate.set(item.date, []);
       sourceByDate.get(item.date).push(item);

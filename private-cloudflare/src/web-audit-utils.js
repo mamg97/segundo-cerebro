@@ -5,6 +5,20 @@ export const normalizeAuditValue = (value) => String(value || "")
   .replace(/\s+/g, " ")
   .toLowerCase();
 
+// Date-only UTC arithmetic avoids locale/DST drift at Monday rollover.
+// An empty canonical menu still has seven real dates in the Home matrix.
+export function auditWeekDates(dateKey) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateKey || ""))) return [];
+  const date = new Date(dateKey + "T12:00:00Z");
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== dateKey) return [];
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(date);
+    day.setUTCDate(date.getUTCDate() + index);
+    return day.toISOString().slice(0, 10);
+  });
+}
+
 export const hiddenMenuStatus = (status) =>
   /^(omitid[oa]|retirad[oa]|cancelad[oa]|cancelled|skipped)$/.test(normalizeAuditValue(status));
 
