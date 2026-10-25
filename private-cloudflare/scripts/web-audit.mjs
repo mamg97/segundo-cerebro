@@ -800,7 +800,45 @@ const VISUAL_PROFILES = [
   { name: "mobile", width: 390, height: 844, wardrobeColumns: 2 }
 ];
 
+// Chromium does not request below-fold <img loading="lazy"> resources until
+// scrolling. The structural visibility probe includes those images, so warm
+// a bounded set of CSS-visible external lazy images before judging their load.
+// This changes only the audit browser; failed/undecoded images still fail.
+async function settleVisibleLazyExternalImages() {
+  const result = await page.evaluate(async () => {
+    const candidates = [...document.querySelectorAll('img[loading="lazy"]')].filter((image) => {
+      if (image.complete) return false;
+      const src = image.getAttribute("src");
+      if (!src) return false;
+      try {
+        const target = new URL(src, document.baseURI);
+        if (!["http:", "https:"].includes(target.protocol) || target.origin === location.origin) return false;
+      } catch { return false; }
+      const style = getComputedStyle(image);
+      const rect = image.getBoundingClientRect();
+      return style.display !== "none" && style.visibility !== "hidden" &&
+        Number(style.opacity) !== 0 && rect.width > 1 && rect.height > 1;
+    }).slice(0, 24);
+    for (const image of candidates) image.loading = "eager";
+    const loaded = await Promise.all(candidates.map((image) => new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(false), 5000);
+      try {
+        image.decode().then(() => {
+          clearTimeout(timer);
+          resolve(image.complete && image.naturalWidth > 0 && image.naturalHeight > 0);
+        }, () => { clearTimeout(timer); resolve(false); });
+      } catch { clearTimeout(timer); resolve(false); }
+    })));
+    return { candidates: candidates.length, loaded: loaded.filter(Boolean).length };
+  });
+  if (result.candidates) {
+    // Fixed keys and bounded counts only. Never emit external URLs or labels.
+    console.log("[AUDIT_LAZY_EXTERNAL_DIAG] candidates=" + result.candidates + " loaded=" + result.loaded);
+  }
+}
+
 async function auditVisualSnapshot(label) {
+  await settleVisibleLazyExternalImages();
   const report = await page.evaluate(() => {
     const visible = (element) => {
       if (!(element instanceof Element)) return false;
