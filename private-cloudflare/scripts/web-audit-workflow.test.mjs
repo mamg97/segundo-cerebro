@@ -20,3 +20,14 @@ test("nutrition preflight failure cannot suppress Chromium or turn audit green",
   assert.match(failureStep, /run: exit 1/);
   assert.match(workflow.slice(browser, failureGate), /run: node scripts\/web-audit\.mjs/);
 });
+
+
+test("Chromium job has a bounded budget for slow external Playwright dependencies", () => {
+  const auditJob = workflow.split(/^  audit:\\s*$/m)[1];
+  assert.ok(auditJob, "audit job must exist");
+  const minutes = Number(auditJob.match(/^    timeout-minutes: (\\d+)$/m)?.[1]);
+  assert.ok(Number.isInteger(minutes) && minutes >= 20 && minutes <= 30,
+    "allow slow Ubuntu mirrors without permitting unbounded runner consumption");
+  assert.match(auditJob, /npx playwright install --with-deps chromium/);
+  assert.match(auditJob, /run: node scripts\\/web-audit\\.mjs/);
+});
