@@ -9,6 +9,7 @@ test('private progress adapter bounds requests, minimizes fields and fails expli
       let calls=0;
       globalThis.fetch=async url=>{
         calls++;
+        if(new URL(url).searchParams.has('fields'))return Response.json({sheets:[{properties:{title:'PsicoPredicciones',gridProperties:{rowCount:300,columnCount:13}}}]});
         const ranges=new URL(url).searchParams.getAll('ranges');
         if(ranges[0]==='PsicoFases!A1:L300'){
           assert.deepEqual(ranges,['PsicoFases!A1:L300','PsicoAvances!A1:L499']);

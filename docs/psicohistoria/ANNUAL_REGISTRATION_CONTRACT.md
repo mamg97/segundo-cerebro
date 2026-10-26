@@ -19,8 +19,10 @@ Sheets, no contacta una TSA y no convierte un JSON local en una emisión.
    `as_of` es la captura actual de la fuente; las features siguen limitadas a2025.
 4. Ampliar previamente la capacidad de la tabla privada y del lector si resulta
    insuficiente. Conservar cada fila existente; una ampliación no emite nada.
-   El lector actual limita a300filas: NO iniciar la inscripción anual hasta
-   adaptar y verificar su capacidad para toda la cohorte.
+   El lector consulta el tamaño declarado y lee la tabla completa hasta un
+   máximo5000filas; capacidad desconocida, excedida o llena exige revisión y
+   no devuelve un prefijo silencioso. La tabla privada debe tener margen antes
+   de iniciar la inscripción anual. Comprobar despliegue y datos preservados.
 
 ## Evidencia temporal y publicación
 
@@ -60,3 +62,7 @@ sintética. No hay emisión anual real ni pruebas de habilidad por este código.
 Los JSON del conector no son autoautenticantes: el auditor rechaza lecturas
 incompatibles, pero no puede inferir por sus bytes si el operador pidió el rango
 completo. Se exige observar y conservar esa llamada. No publicar evidencia privada.
+
+Lectura privada: tres pruebas de adaptador comprueban1177registros sintéticos,
+última fila, cero probabilístico, resultado ausente, caché y rechazo de
+capacidad llena/desconocida/excesiva. La ampliación física no es emisión.

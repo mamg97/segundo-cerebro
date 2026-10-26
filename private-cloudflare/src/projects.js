@@ -136,13 +136,25 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
   const token = await getGoogleAccessToken(env);
   const id = await resolveId(env, token);
   if (!id) return { status:"source-pending", milestones:[], kpis:[], experiments:[], predictions:[] };
+  // Read the complete declared prediction grid, never an arbitrary prefix.
+  // Metadata and values share the existing on-demand cache; no polling added.
+  const metadataUrl="https://sheets.googleapis.com/v4/spreadsheets/"+encodeURIComponent(id)+
+    "?fields=sheets(properties(title,gridProperties(rowCount,columnCount)))";
+  const metadataResponse=await googleReadFetch(metadataUrl,{headers:{Authorization:"Bearer "+token}});
+  if(!metadataResponse.ok)throw new Error("PREDICTION_GRID_UNAVAILABLE");
+  const predictionTabs=((await metadataResponse.json())?.sheets||[])
+    .filter(s=>s?.properties?.title==="PsicoPredicciones");
+  const grid=predictionTabs[0]?.properties?.gridProperties;
+  if(predictionTabs.length!==1||!Number.isInteger(grid?.rowCount)||grid.rowCount<1||
+     grid.rowCount>5000||grid.columnCount!==13)throw new Error("PREDICTION_GRID_REVIEW_REQUIRED");
   const ranges = [
     "PsicoHitos!A1:J300",
     "PsicoKPIs!A1:K300",
     "PsicoExperimentos!A1:L300",
-    "PsicoPredicciones!A1:M300"
+    "PsicoPredicciones!A1:M"+grid.rowCount
   ];
   const sets = await sheetsBatchGet(id, ranges, token);
+  if((sets[3]?.values||[]).length>=grid.rowCount)throw new Error("PREDICTION_GRID_FULL_REVIEW_REQUIRED");
   const [milestones, kpis, experiments, predictions] = sets.map((s) => table(s?.values || []));
   let progress={status:"unavailable",phases:[],advances:[]};
   try {
