@@ -19,6 +19,23 @@ export function auditWeekDates(dateKey) {
   });
 }
 
+
+// Compare row signatures as multisets, not sets: identical repeated rows are
+// still distinct canonical entries and must not disappear from parity checks.
+export function auditMultisetDifferenceCount(leftSignatures, rightSignatures) {
+  const available = new Map();
+  for (const signature of rightSignatures) {
+    available.set(signature, (available.get(signature) || 0) + 1);
+  }
+  let missing = 0;
+  for (const signature of leftSignatures) {
+    const count = available.get(signature) || 0;
+    if (count > 0) available.set(signature, count - 1);
+    else missing += 1;
+  }
+  return missing;
+}
+
 export const hiddenMenuStatus = (status) =>
   /^(omitid[oa]|retirad[oa]|cancelad[oa]|cancelled|skipped)$/.test(normalizeAuditValue(status));
 
