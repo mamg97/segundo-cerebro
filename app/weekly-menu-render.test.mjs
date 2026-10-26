@@ -11,7 +11,7 @@ assert.match(app, /function renderWeeklyMenuMealGroup\(items\)/);
 assert.match(menuPanel, /const mealGroups = groupWeeklyMenuItemsByMoment\(day\.items\)/);
 assert.match(menuPanel, /renderWeeklyMenuMealGroup\(group\.items\)/);
 assert.doesNotMatch(menuPanel, /day\.items\.map\(\(item\) => renderWeeklyMenuMeal\(item\)\)/);
-assert.match(menuPanel, /mealGroups\.length} toma/);
+assert.match(menuPanel, /incompleteLog \? "Sin balance fiable" : mealGroups\.length \+ " toma"/);
 assert.match(app, /nutritionStatus === "pending-confirmation"/);
 assert.match(app, /no se inventan macros/);
 

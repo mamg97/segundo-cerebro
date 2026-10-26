@@ -5101,6 +5101,13 @@ function weeklyMenuModel(data) {
   const kcalTarget = objective.kcal == null ? null : Number(objective.kcal);
   const proteinTarget = objective.protein == null ? null : Number(objective.protein);
   const groups = new Map();
+  const noticeByDate = new Map();
+  for (const notice of Array.isArray(data?.menuDayNotices) ? data.menuDayNotices : []) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(notice?.date || "")) || notice?.status !== "SIN_DATOS") continue;
+    noticeByDate.set(notice.date, notice);
+  }
+  // An incomplete day without recorded meals must still appear in the weekly view.
+  for (const date of noticeByDate.keys()) groups.set(date, []);
 
   for (const row of rows) {
     if (!groups.has(row.date)) groups.set(row.date, []);
@@ -5146,6 +5153,7 @@ function weeklyMenuModel(data) {
       const proteinPct = nutritionComplete && Number.isFinite(proteinTarget) && proteinTarget > 0 ? Math.round((protein / proteinTarget) * 100) : null;
       return {
         date,
+        notice: noticeByDate.get(date) || null,
         items,
         kcal,
         protein,
@@ -5863,7 +5871,7 @@ function renderMenuPanel(data, options = {}) {
   }
   healthMenuViewData = data;
   const model = weeklyMenuModel(data);
-  if (!model.rows.length) {
+  if (!model.days.length) {
     panel.innerHTML = `
       ${menuWeekNavigationMarkup(healthMenuSelectedWeek)}
       ${renderMenuMasterLinks()}
@@ -5897,33 +5905,38 @@ function renderMenuPanel(data, options = {}) {
         const targetLine = weeklyMenuTargetLine(day, model);
         const mealGroups = groupWeeklyMenuItemsByMoment(day.items);
         const display = weeklyMenuDayDisplayTotals(day, model);
+        const incompleteLog = day.notice?.status === "SIN_DATOS";
         return `
-          <section class="weekly-menu-day weekly-menu-day-rich ${isToday ? "is-today" : ""}">
+          <section class="weekly-menu-day weekly-menu-day-rich ${isToday ? "is-today" : ""} ${incompleteLog ? "has-incomplete-log" : ""}">
             <details class="weekly-menu-day-collapse">
               <summary class="weekly-menu-day-summary">
                 <span class="weekly-menu-day-summary-heading">
                   <strong>${escapeHtml(weeklyMenuDayLabel(day.date, { long: true }))}</strong>
-                  <small>${display.hasConsumed
+                  <small>${incompleteLog ? "Registro incompleto · día sin evaluación" : display.hasConsumed
                     ? (day.hasPendingPlan ? "Consumo confirmado · plan pendiente" : "Consumo confirmado")
                     : (isToday ? "Hoy · sin consumo confirmado" : "Planificado · sin consumo confirmado")}</small>
                 </span>
                 <span class="weekly-menu-day-summary-facts">
-                  <span>${escapeHtml(formatKcal(display.kcal))} / ${model.kcalTarget === null ? "—" : escapeHtml(formatKcal(model.kcalTarget))}</span>
-                  <span>P ${escapeHtml(formatMacro(display.protein))} / ${model.proteinTarget === null ? "—" : escapeHtml(formatMacro(model.proteinTarget))}</span>
-                  <small>${mealGroups.length} toma${mealGroups.length === 1 ? "" : "s"}</small>
+                  <span>${incompleteLog ? (display.hasConsumed ? "Subtotal: " + escapeHtml(formatKcal(display.kcal)) : "— kcal") : escapeHtml(formatKcal(display.kcal)) + " / " + (model.kcalTarget === null ? "—" : escapeHtml(formatKcal(model.kcalTarget)))}</span>
+                  <span>${incompleteLog ? (display.hasConsumed ? "P " + escapeHtml(formatMacro(display.protein)) + " registradas" : "P —") : "P " + escapeHtml(formatMacro(display.protein)) + " / " + (model.proteinTarget === null ? "—" : escapeHtml(formatMacro(model.proteinTarget)))}</span>
+                  <small>${incompleteLog ? "Sin balance fiable" : mealGroups.length + " toma" + (mealGroups.length === 1 ? "" : "s")}</small>
                 </span>
               </summary>
 
-              <div class="weekly-menu-day-progress">
+              ${incompleteLog ? `<aside class="weekly-menu-coverage-warning" role="note">
+                <strong>Registro nutricional incompleto</strong>
+                <p>${escapeHtml(day.notice.reason || "No se dispone de información suficiente para evaluar este día.")}</p>
+                <small>Los consumos anotados son parciales. No se imputan cero calorías ni se considera un incumplimiento.</small>
+              </aside>` : `<div class="weekly-menu-day-progress">
                 ${renderWeeklyMenuProgress("Calorías", display.kcal, model.kcalTarget, display.kcalPct, "kcal", !day.consumedNutritionComplete)}
                 ${renderWeeklyMenuProgress("Proteína", display.protein, model.proteinTarget, display.proteinPct, "protein", !day.consumedNutritionComplete)}
-              </div>
+              </div>`}
 
               <div class="weekly-menu-meal-list">
-                ${mealGroups.map((group) => renderWeeklyMenuMealGroup(group.items)).join("")}
+                ${mealGroups.length ? mealGroups.map((group) => renderWeeklyMenuMealGroup(group.items)).join("") : (incompleteLog ? '<p class="weekly-menu-coverage-empty">No hay ingestas cuantificadas para este día.</p>' : "")}
               </div>
 
-              ${day.hasPendingPlan
+              ${incompleteLog ? "" : day.hasPendingPlan
                 ? `<footer>Consumo confirmado: ${escapeHtml(formatKcal(display.kcal))} · ${escapeHtml(formatMacro(display.protein))}. Plan previsto: ${escapeHtml(formatKcal(day.kcal))} · ${escapeHtml(formatMacro(day.protein))}.${!day.nutritionComplete && targetLine ? " " + escapeHtml(targetLine) : ""}</footer>`
                 : (targetLine ? `<footer>${escapeHtml(targetLine)}</footer>` : "")}
             </details>
@@ -6603,10 +6616,15 @@ function renderHomeWeeklyMenuDayHeader(day, model) {
           <strong>${escapeHtml(weeklyMenuDayLabel(day.date))}</strong>
         </div>
       </header>
-      <div class="home-weekly-menu-progress">
-        ${renderHomeWeeklyMenuPlanBar("kcal", day.consumedKcal, day.kcal, model.kcalTarget, !day.nutritionComplete, !day.consumedNutritionComplete)}
-        ${renderHomeWeeklyMenuPlanBar("protein", day.consumedProtein, day.protein, model.proteinTarget, !day.nutritionComplete, !day.consumedNutritionComplete)}
-      </div>
+      ${day.notice?.status === "SIN_DATOS"
+        ? `<div class="home-weekly-menu-coverage-warning" title="${escapeHtml(day.notice.reason || "Registro incompleto")}">
+             <strong>Registro incompleto</strong>
+             <small>${day.hasConsumed ? "Subtotal: " + escapeHtml(formatKcal(day.consumedKcal)) : "Sin datos cuantificados"}</small>
+           </div>`
+        : `<div class="home-weekly-menu-progress">
+             ${renderHomeWeeklyMenuPlanBar("kcal", day.consumedKcal, day.kcal, model.kcalTarget, !day.nutritionComplete, !day.consumedNutritionComplete)}
+             ${renderHomeWeeklyMenuPlanBar("protein", day.consumedProtein, day.protein, model.proteinTarget, !day.nutritionComplete, !day.consumedNutritionComplete)}
+           </div>`}
     </div>`;
 }
 
