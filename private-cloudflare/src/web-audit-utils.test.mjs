@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   auditWeekDates,
+  auditMultisetDifferenceCount,
   canonicalMenuMoment,
   classifyRequestFailure,
   hiddenMenuStatus,
@@ -27,6 +28,18 @@ test("audit validates all seven dates for an empty canonical week across Monday,
   for (const invalid of ["", "2026-02-30", "2026-10-26T00:00:00Z"]) {
     assert.deepEqual(auditWeekDates(invalid), []);
   }
+});
+
+
+test("nutrition parity retains duplicate row multiplicities instead of collapsing them", () => {
+  const light = ["date|meal|recipe:a", "date|meal|recipe:a", "date|meal|food:b"];
+  const full = ["date|meal|food:b", "date|meal|recipe:a"];
+  assert.equal(auditMultisetDifferenceCount(light, full), 1);
+  assert.equal(auditMultisetDifferenceCount(full, light), 0);
+  assert.equal(auditMultisetDifferenceCount(["a", "b"], ["b", "a"]), 0);
+  assert.equal(auditMultisetDifferenceCount(["a", "b"], ["a", "c"]), 1);
+  assert.equal(auditMultisetDifferenceCount(["a", "c"], ["a", "b"]), 1);
+  assert.equal(auditMultisetDifferenceCount([], []), 0);
 });
 
 test("hidden menu states stay hidden", () => {
