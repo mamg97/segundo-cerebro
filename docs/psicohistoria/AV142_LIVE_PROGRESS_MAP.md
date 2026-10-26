@@ -22,3 +22,13 @@ se registran por separado, no quedan acreditadas por este documento.
 Dirección visual: conservar tema oscuro y tipografía del laboratorio;
 matriz compacta por áreas, etapas con etiqueta y detalle progresivo mediante
 controles nativos de teclado. Lectura en escritorio y columnas apiladas móvil.
+
+## Revisión integrada antes de publicar
+
+101 pruebas locales del adaptador y módulos de investigación correctas.
+Se corrigieron dos comprobaciones de versión estática obsoletas. El adaptador
+rechaza esquema ausente y respuestas denegadas, minimiza campos y reutiliza caché.
+Vista integrada contra copia privada actual de fases, avances, hitos y predicción: recuentos y fecha coinciden.
+Escritorio y viewport móvil revisados; detalle nativo abre correctamente y el
+ancho del documento coincide con viewport medido433px, sin desbordamiento global.
+No se usó la copia local como prueba del endpoint desplegado. Pendiente CI/producción.
