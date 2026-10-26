@@ -31,3 +31,46 @@ test("Chromium job has a bounded budget for slow external Playwright dependencie
   assert.ok(auditJob.includes("npx playwright install --with-deps chromium"));
   assert.ok(auditJob.includes("run: node scripts/web-audit.mjs"));
 });
+
+import { isExternalAuditImageSource, isVerifiedAuditVisualImage } from "./audit-visual-image-policy.mjs";
+
+test("cross-origin images require browser load, decode and positive dimensions", () => {
+  const origin = "https://private.example.invalid";
+  const external = "https://images.example.invalid/products/fixture.jpg";
+  assert.equal(isExternalAuditImageSource(external, origin), true);
+  assert.equal(isExternalAuditImageSource("/api/health/recipes/fixture/image", origin), false);
+  assert.equal(isExternalAuditImageSource("data:image/png;base64,AAAA", origin), false);
+  assert.equal(isVerifiedAuditVisualImage({
+    ok: true, decoded: true, verification: "BROWSER_IMAGE_LOAD",
+    status: 0, width: 160, height: 90
+  }, external, origin), true);
+  for (const probe of [
+    { ok: false, decoded: false, verification: "BROWSER_IMAGE_LOAD", width: 0, height: 0 },
+    { ok: true, decoded: false, verification: "BROWSER_IMAGE_LOAD", width: 160, height: 90 },
+    { ok: true, decoded: true, verification: "BROWSER_IMAGE_LOAD", width: 0, height: 90 },
+    { ok: true, decoded: true, status: 200, contentType: "image/jpeg", width: 160, height: 90 }
+  ]) assert.equal(isVerifiedAuditVisualImage(probe, external, origin), false);
+});
+
+test("private images cannot pass via browser-only external image probe", () => {
+  const origin = "https://private.example.invalid";
+  const privateSrc = "/api/health/recipes/fixture/image";
+  const good = { ok: true, status: 200, contentType: "image/jpeg", decoded: true };
+  assert.equal(isVerifiedAuditVisualImage(good, privateSrc, origin), true);
+  assert.equal(isVerifiedAuditVisualImage({ ...good, status: 502 }, privateSrc, origin), false);
+  assert.equal(isVerifiedAuditVisualImage({ ...good, status: 206 }, privateSrc, origin), false);
+  assert.equal(isVerifiedAuditVisualImage({ ...good, contentType: "text/html" }, privateSrc, origin), false);
+  assert.equal(isVerifiedAuditVisualImage({ ...good, decoded: false }, privateSrc, origin), false);
+  assert.equal(isVerifiedAuditVisualImage({
+    ok: true, decoded: true, verification: "BROWSER_IMAGE_LOAD", width: 200, height: 100
+  }, privateSrc, origin), false);
+});
+
+test("visual image probe uses real browser decode only for external resources", () => {
+  const source = readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
+  assert.match(source, /isVerifiedAuditVisualImage\(probe, item\.src, auditOrigin\)/);
+  assert.match(source, /new Image\(\)/);
+  assert.match(source, /await image\.decode\(\)/);
+  assert.match(source, /verification: "BROWSER_IMAGE_LOAD"/);
+  assert.match(source, /credentials: "same-origin"/);
+});
