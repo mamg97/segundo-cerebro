@@ -144,6 +144,17 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
   ];
   const sets = await sheetsBatchGet(id, ranges, token);
   const [milestones, kpis, experiments, predictions] = sets.map((s) => table(s?.values || []));
+  let progress={status:"unavailable",phases:[],advances:[]};
+  try {
+    const rows=await sheetsBatchGet(id,["PsicoFases!A1:L300","PsicoAvances!A1:L499"],token);
+    const phaseValues=rows[0]?.values||[],advanceValues=rows[1]?.values||[];
+    if(!['fase_id','dominio','estado','criterio_superado'].every(k=>phaseValues[0]?.includes(k))||
+       !['avance_id','fecha'].every(k=>advanceValues[0]?.includes(k)))throw new Error('PROGRESS_SCHEMA');
+    const phaseFields=['fase_id','dominio','fase_madurez','estado','criterio_superado','resultado_acreditado','bloqueo','proxima_accion'];
+    progress={status:"ok",
+      phases:table(phaseValues).filter(p=>p.fase_id&&p.dominio).map(p=>Object.fromEntries(phaseFields.map(k=>[k,String(p[k]??'')]))),
+      advances:table(advanceValues).filter(a=>a.avance_id).map(a=>({fecha:String(a.fecha??'')}))};
+  } catch { /* Explicit unavailable state; never fake zero progress. */ }
   let agenda={events:[],sourceStatus:"UNAVAILABLE",forecastCount:0};
   try {
     const paired=await sheetsBatchGet(id,["PsicoAgendaEventos!A1:K150","PsicoAgendaFuentes!A1:K150"],token);
@@ -157,6 +168,7 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
   const result = {
     status:"ok-live",
     agenda,
+    progress,
     milestones:milestones.filter(x=>x.hito_id && /^V[1-4]$/.test(x.vertiente)).map(x=>({
       id:String(x.hito_id), track:String(x.vertiente), title:String(x.titulo||""),
       phase:String(x.fase||""), status:String(x.estado||"PENDIENTE"),

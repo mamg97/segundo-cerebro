@@ -51,7 +51,7 @@ export function renderResearchBriefing(lab,now=new Date()){
     {num:"01",title:"Datos",sub:"Edición observada",kind:"done"},
     {num:"02",title:"Modelos",sub:f.shadow?"Cohorte experimental":"Sin cohorte verificable",kind:f.shadow?"done":"pending"},
     {num:"03",title:"Emitir",sub:f.issued>0?"Registro existente; verificar sello":"Falta sello y fecha verificable",kind:"pending"},
-    {num:"04",title:"Evaluar",sub:f.resolved>0?"Consultar resultados":"Después de conocer 2027",kind:f.resolved>0?"done":"pending"}
+    {num:"04",title:"Evaluar",sub:f.resolved>0?"Consultar resultados":"Según el horizonte de cada objetivo",kind:f.resolved>0?"done":"pending"}
   ];
   const tips=[
     {label:"PRIORIDAD 1",title:"Congelar las predicciones",body:f.before?
@@ -67,7 +67,7 @@ export function renderResearchBriefing(lab,now=new Date()){
   ];
   return '<section class="brief-hub" aria-label="Resumen ejecutivo del laboratorio">'+
     '<div class="brief-top"><div><span class="brief-kicker">PSICOHISTORIA / EN 10 SEGUNDOS</span>'+
-    '<h2>Qué sabemos. Qué falta. Qué sigue.</h2>'+
+    '<h2>Qué sabemos. Qué falta. Qué sigue.</h2><p>Exploración geopolítica anual: estos plazos corresponden a la cohorte 2027.</p>'+
     '<p>De los datos históricos a predicciones que puedan comprobarse.</p></div>'+
     chip(f.shadow?"Exploración disponible":"Fuente experimental pendiente",f.shadow?"ready":"muted")+
     '</div>'+

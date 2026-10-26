@@ -1,10 +1,11 @@
+import {renderResearchProgress} from './research-progress.mjs?v=0.5.30';
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {LAB_VIEWS,labGroupForView,labDefaultView} from './research-lab-navigation.mjs?v=0.5.26';
 import {mountLaboratoryGlossary} from './research-tooltip.mjs?v=0.5.28';
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.29';
 import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
 import {renderIdeaNetwork} from './research-ideas.mjs?v=0.5.20';
-import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.18';
+import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.30';
 import {mountInlineShadow2027} from './research-shadow2027-inline.mjs?v=0.5.17';
 import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
@@ -246,7 +247,7 @@ function operations(){
 }
 function roadmap(){
   const ms=milestones().filter(m=>milestoneFilter==="TODOS"||m.track===milestoneFilter);
-  return heading("DEL DISEÑO A LA PRODUCCIÓN","Hoja de ruta verificable","No se da por terminada una etapa sin evidencia")+
+  return renderResearchProgress(state.lab)+heading("DEL DISEÑO A LA PRODUCCIÓN","Hoja de ruta verificable","No se da por terminada una etapa sin evidencia")+
     '<div class="filter-row"><button data-filter="TODOS" class="'+(milestoneFilter==="TODOS"?'active':'')+'">Todas</button>'+
     TRACKS.map(t=>'<button data-filter="'+t.id+'" class="'+(milestoneFilter===t.id?'active':'')+'">'+t.id+'</button>').join("")+'</div>'+
     '<section class="panel"><div class="milestones">'+ms.map(m=>'<div><span class="eyebrow">'+esc(m.track)+' / '+esc(m.id)+'</span>'+milestoneRow(m)+'</div>').join("")+'</div></section>';
@@ -269,7 +270,7 @@ function render(){
   disposeShadow();
   disposeVideo();
   header();metrics();
-  root.innerHTML=activeView==="brief"?renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="brief"?renderResearchProgress(state.lab)+renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
   const group=labGroupForView(activeView);
   const subtabs=document.getElementById('lab-subtabs');
   subtabs.hidden=group==='brief';

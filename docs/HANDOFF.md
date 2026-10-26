@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV142 · mapa de progreso vivo
+
+Implementado panel por dominios desde fases/avances canónicos privados, estados explícitos y próxima comprobación. Quince pruebas locales correctas. Pendiente CI, despliegue y verificación de producción al preparar este commit. No nueva predicción ni gate científico. Continuar después con triaje geopolítico y preparación de siguientes ventanas; esperar BLS no detiene otras líneas.
+
+---
+
 ## PSICOHISTORIA — AV141 · primera emisión experimental · 26/10/2026
 
 [AV141](psicohistoria/AV141_FIRST_PROSPECTIVE_REGISTRATION.md): consentimiento explícito recibido; compromiso, escritura canónica única, relectura y evidencia temporal verificados dentro de ventana. Una emisión experimental y cero resultados resueltos. La inscripción queda acotada por dos sellos, sin atribuir al proveedor una atestación criptográfica del instante exacto. Originales privados preservados. MAC05 cierra solo primera emisión; cohorte y evaluación pendientes, sin utilidad demostrada. Los bloques inferiores conservan estados históricos.
