@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Registro anual en desarrollo · 26/10/2026
+
+AV143–145 cerraron mapa v0.5.30 y triaje; PR841 desplegada y producción privada verificada. Primera emisión macro conservada; cero emisiones geopolíticas. Nuevo contrato [registro anual](psicohistoria/ANNUAL_REGISTRATION_CONTRACT.md) y auditor `annual_publication.py`: plan íntegro, diff de tabla y cinco recibos independientes, sin aprobación del origen por JSON ni escritura automática.33pruebas locales y tres del adaptador pasan; lector dinámico completo hasta5000filas, sin truncado silencioso. Publicación/CI y sincronización canónica pendientes en esta revisión.
+
+Siguiente: cerrar CI/publicación, ampliar lector/capacidad canónica antes de cualquier inscripción anual, preparar evidencia privada y ejecutar sólo con todos los gates y autorización de destino vigente. No volver a backtests ni esperar BLS para continuar otras líneas. Los bloques inferiores son históricos.
+
+---
+
 ## PSICOHISTORIA — AV142 · mapa de progreso vivo
 
 Implementado panel por dominios desde fases/avances canónicos privados, estados explícitos y próxima comprobación. Quince pruebas locales correctas. Pendiente CI, despliegue y verificación de producción al preparar este commit. No nueva predicción ni gate científico. Continuar después con triaje geopolítico y preparación de siguientes ventanas; esperar BLS no detiene otras líneas.
