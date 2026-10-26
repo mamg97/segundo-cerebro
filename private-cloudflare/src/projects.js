@@ -144,6 +144,11 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
   ];
   const sets = await sheetsBatchGet(id, ranges, token);
   const [milestones, kpis, experiments, predictions] = sets.map((s) => table(s?.values || []));
+  let progress={status:"unavailable",phases:[],advances:[]};
+  try {
+    const rows=await sheetsBatchGet(id,["PsicoFases!A1:L300","PsicoAvances!A1:L499"],token);
+    progress={status:"ok",phases:table(rows[0]?.values||[]),advances:table(rows[1]?.values||[])};
+  } catch { /* Explicit unavailable state; never fake zero progress. */ }
   let agenda={events:[],sourceStatus:"UNAVAILABLE",forecastCount:0};
   try {
     const paired=await sheetsBatchGet(id,["PsicoAgendaEventos!A1:K150","PsicoAgendaFuentes!A1:K150"],token);
@@ -157,6 +162,7 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
   const result = {
     status:"ok-live",
     agenda,
+    progress,
     milestones:milestones.filter(x=>x.hito_id && /^V[1-4]$/.test(x.vertiente)).map(x=>({
       id:String(x.hito_id), track:String(x.vertiente), title:String(x.titulo||""),
       phase:String(x.fase||""), status:String(x.estado||"PENDIENTE"),
