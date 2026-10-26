@@ -17,6 +17,7 @@ import { serveObjectsLookSheetPreview } from "./look-sheet-media.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { menuConsumedFallbackForDate } from "./nutrition-history-fallback.js";
+import { menuDayNoticesFromSheet } from "./menu-day-notices.js";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, listWeeklyMenuFoods, MenuEditError } from "./weekly-menu-actions.js";
 import { mutateRecipe, RecipeEditError } from "./recipe-editor.js";
@@ -2984,7 +2985,7 @@ async function fetchWeeklyMenuLight(env, options = {}) {
     return null;
   });
   // Recipe photos still resolve through the authenticated same-origin route.
-  const ranges = ["MenuSemanal!A1:R2000", "Objetivos!A1:H500", "Recetas!A1:Q1000"];
+  const ranges = ["MenuSemanal!A1:R2000", "Objetivos!A1:H500", "Recetas!A1:Q1000", "AdherenciaManual!A1:E1000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -3038,6 +3039,7 @@ async function fetchWeeklyMenuLight(env, options = {}) {
   const mondayOffset = (selectedDate.getDay() + 6) % 7;
   const weekStart = healthAddDays(date, -mondayOffset);
   const weekEnd = healthAddDays(weekStart, 6);
+  const menuDayNotices = menuDayNoticesFromSheet(valueRanges[3]?.values || [], weekStart, weekEnd);
   const photoUrls = menuRecipePhotoUrls(parseTableRows(valueRanges[2]?.values || []));
   const companionProducts = await companionProductsPromise;
   const weeklyMenu = prepareWeeklyMenuRows(
@@ -3059,6 +3061,7 @@ async function fetchWeeklyMenuLight(env, options = {}) {
       weekEnd,
       objective,
       weeklyMenu,
+      menuDayNotices,
       source: { kind: "google-sheet", title: "SEGUNDO CEREBRO - SALUD", sheet: "MenuSemanal" }
     }
   };
@@ -3084,7 +3087,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
         return null;
       })
     : Promise.resolve(null);
-  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:R2000", "Recetas!A1:Q1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000", "RecuperacionDiariaApple!A1:S2000"];
+  const ranges = ["Comidas!A1:K2000", "Registro!A1:N6000", "Objetivos!A1:H500", "EnergiaDiaria!A1:M2000", "ObjetivosActividad!A1:R500", "MedicionesCorporales!A1:N2000", "ObjetivosProgreso!A1:P1000", "MenuSemanal!A1:R2000", "Recetas!A1:Q1000", "IngredientesReceta!A1:L5000", "PasosReceta!A1:J2000", "RecuperacionDiariaApple!A1:S2000", "AdherenciaManual!A1:E1000"];
   const params = new URLSearchParams();
   for (const range of ranges) params.append("ranges", range);
   params.set("majorDimension", "ROWS");
@@ -3442,6 +3445,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
   const mondayOffset = (selectedDate.getDay() + 6) % 7;
   const weekStart = healthAddDays(date, -mondayOffset);
   const weekEnd = healthAddDays(weekStart, 6);
+  const menuDayNotices = menuDayNoticesFromSheet(valueRanges[12]?.values || [], weekStart, weekEnd);
   const weeklyMenu = prepareWeeklyMenuRows(
     weeklyMenuRows.filter((item) => item.date >= weekStart && item.date <= weekEnd),
     {
@@ -3575,6 +3579,7 @@ async function fetchHealthNutritionSummary(env, options = {}) {
     history,
     progressObjectives,
     weeklyMenu,
+    menuDayNotices,
     source: {
       kind: "google-sheet",
       title: "SEGUNDO CEREBRO - SALUD"
