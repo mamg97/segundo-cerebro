@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV140 · permiso de sello pendiente · 26/10/2026
+
+[AV140](psicohistoria/AV140_ISSUANCE_PERMISSION_AND_MILESTONES.md): ventana abierta y cuota disponible; revisión automática deniega enviar huella/nonce del borrador sin consentimiento específico del destino. Solicitud no enviada, cero emisión. Pregunta al propietario pendiente; no reintentar por otra vía. Originales conservados; inscripción final sin verificar. MAC05 bloqueada/NO tras registro canónico; si termina ventana sin alta válida, omisión sin backdating. Informe privado de hitos/ritmo preparado, sin equiparar actividad técnica con utilidad. No nueva investigación ni cambio de protocolo.
+
+---
+
 ## PSICOHISTORIA — AV-139 · diario pendiente y borrador privado · 24/10/2026
 
 [AV139](psicohistoria/AV139_MONTHLY_PENDING_JOURNAL.md): registro local bloqueado/atómico/idempotente con recuperación; ocho pruebas nuevas + diez de preflight. Borrador privado real en ledger, fuentes/código/contrato/compromiso y TSQ guardados; solicitud sin enviar. Estado pendiente, sin alta canónica ni emisión. MAC05 PARCIAL/NO. Próximo: paso final de inscripción y evidencia de hora efectiva; respetar ventana y cuota semanal. AV138 PR834 fusionada, CI y Sheet escritos/releídos.
