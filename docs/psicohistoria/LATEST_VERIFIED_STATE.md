@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV141 · primera emisión experimental · 26/10/2026
+
+[AV141](AV141_FIRST_PROSPECTIVE_REGISTRATION.md): consentimiento explícito recibido; compromiso, escritura canónica única, relectura y evidencia temporal verificados dentro de ventana. Una emisión experimental y cero resultados resueltos. La inscripción queda acotada por dos sellos, sin atribuir al proveedor una atestación criptográfica del instante exacto. Originales privados preservados. MAC05 cierra solo primera emisión; cohorte y evaluación pendientes, sin utilidad demostrada. Los bloques inferiores conservan estados históricos.
+
+---
+
 ## PSICOHISTORIA — AV-125 · alternativa demográfica residente · 24/10/2026
 
 [AV-125](AV125_CENSUS_RESIDENT_EVALUATION_PATH.md) conserva seis originales Census y verifica universo/base de proyecciones2023. Julio2023 precede a su publicación; futuros objetivos deben ser posteriores al09/11/2023. Ruta Census→Census candidata, con revisión de bases y dependencia explícitas; no resuelve ni sustituye el contraste WPP. DEM-02 PARCIAL/NO, sin score.

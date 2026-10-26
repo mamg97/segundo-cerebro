@@ -1,3 +1,9 @@
+## PSICOHISTORIA — AV141 · primera emisión experimental · 26/10/2026
+
+[AV141](psicohistoria/AV141_FIRST_PROSPECTIVE_REGISTRATION.md): consentimiento explícito recibido; compromiso, escritura canónica única, relectura y evidencia temporal verificados dentro de ventana. Una emisión experimental y cero resultados resueltos. La inscripción queda acotada por dos sellos, sin atribuir al proveedor una atestación criptográfica del instante exacto. Originales privados preservados. MAC05 cierra solo primera emisión; cohorte y evaluación pendientes, sin utilidad demostrada. Los bloques inferiores conservan estados históricos.
+
+---
+
 ## PSICOHISTORIA — AV140 · permiso de sello pendiente · 26/10/2026
 
 [AV140](psicohistoria/AV140_ISSUANCE_PERMISSION_AND_MILESTONES.md): ventana abierta y cuota disponible; revisión automática deniega enviar huella/nonce del borrador sin consentimiento específico del destino. Solicitud no enviada, cero emisión. Pregunta al propietario pendiente; no reintentar por otra vía. Originales conservados; inscripción final sin verificar. MAC05 bloqueada/NO tras registro canónico; si termina ventana sin alta válida, omisión sin backdating. Informe privado de hitos/ritmo preparado, sin equiparar actividad técnica con utilidad. No nueva investigación ni cambio de protocolo.
