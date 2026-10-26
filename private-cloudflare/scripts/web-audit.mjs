@@ -7,6 +7,7 @@ import { safePrivate502Origin } from "../src/private-502-origin.js";
 import { settleAuditDiagnostics } from "./audit-bounded-settle.mjs";
 import { safeAuditLog, safeAuditDiagnosticCode, safeAuditCallsiteCode, safeAuditNetworkFailureCode, safeAuditBrowserFailureCode, safeAuditImageProbeCode, safeAuditImageSourceClass, safeAuditConsoleLocationCode, safeAuditFinanceStructureCode, safeAuditExecutableFailureCode, safeAuditVisualOverlapCode } from "./audit-log-policy.mjs";
 import { createAuditOidcTokenProvider } from "./audit-oidc-renewal.mjs";
+import { isVerifiedAuditVisualImage } from "./audit-visual-image-policy.mjs";
 import {
   auditWeekDates,
   canonicalMenuMoment,
@@ -277,6 +278,49 @@ async function probeVisualImage(src) {
   const timeouts = [6000, 15000];
   for (let attempt = 0; attempt < timeouts.length; attempt += 1) {
     result = await page.evaluate(async ({ target, timeoutMs, attemptNumber }) => {
+      // Cross-origin <img> loads do not require CORS; fetch() does.
+      // Probe the actual browser decode without weakening same-origin HTTP checks.
+      // A failed load, decode, zero dimension or timeout remains a failure.
+      let targetUrl = null;
+      try { targetUrl = new URL(target, document.baseURI); } catch { /* fetch below will fail */ }
+      if (targetUrl && ["http:", "https:"].includes(targetUrl.protocol) &&
+          targetUrl.origin !== location.origin) {
+        return await new Promise((resolve) => {
+          const image = new Image();
+          image.referrerPolicy = "no-referrer";
+          image.decoding = "async";
+          let settled = false;
+          const finish = (value) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            image.onload = null;
+            image.onerror = null;
+            resolve({ status: 0, contentType: "", bytes: 0,
+              verification: "BROWSER_IMAGE_LOAD", attempts: attemptNumber, ...value });
+          };
+          const timer = setTimeout(() => finish({
+            ok: false, decoded: false, width: 0, height: 0, error: "AbortError"
+          }), timeoutMs);
+          image.onload = async () => {
+            try {
+              await image.decode();
+              const width = Number(image.naturalWidth || 0);
+              const height = Number(image.naturalHeight || 0);
+              const decoded = width > 0 && height > 0;
+              finish({ ok: decoded, decoded, width, height,
+                error: decoded ? "" : "ImageDimensionsInvalid" });
+            } catch {
+              finish({ ok: false, decoded: false, width: 0, height: 0,
+                error: "ImageDecodeError" });
+            }
+          };
+          image.onerror = () => finish({
+            ok: false, decoded: false, width: 0, height: 0, error: "ImageError"
+          });
+          image.src = targetUrl.href;
+        });
+      }
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -1114,7 +1158,7 @@ async function auditVisualSnapshot(label) {
   }
   const verifiedBrokenImages = report.brokenImages.filter((item) => {
     const probe = imageProbeBySource.get(item.src);
-    return !(probe?.ok && /^image\//i.test(probe.contentType || "") && probe.decoded);
+    return !isVerifiedAuditVisualImage(probe, item.src, auditOrigin);
   });
   const recoveredImageCount = report.brokenImages.length - verifiedBrokenImages.length;
   if (recoveredImageCount > 0) {
