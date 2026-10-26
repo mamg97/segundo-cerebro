@@ -1,3 +1,4 @@
+import { auditMultisetDifferenceCount } from "../src/web-audit-utils.js";
 // Read-only, authenticated production diagnostic. No names, macro values,
 // product identifiers, credentials or personal data are logged.
 const origin = process.env.AUDIT_BASE_URL;
@@ -55,10 +56,10 @@ report("LIGHT", light);
 try {
   const full = await fetchApi("/api/nutrition?date=" + date + "&refresh=1");
   report("FULL", full);
-  const ls = new Map(light.weeklyMenu.map((row) => [signature(row), (true)]));
-  const fs = new Map(full.weeklyMenu.map((row) => [signature(row), (true)]));
-  const lightOnly = [...ls.keys()].filter((key) => !fs.has(key)).length;
-  const fullOnly = [...fs.keys()].filter((key) => !ls.has(key)).length;
+  const lightSignatures = light.weeklyMenu.map(signature);
+  const fullSignatures = full.weeklyMenu.map(signature);
+  const lightOnly = auditMultisetDifferenceCount(lightSignatures, fullSignatures);
+  const fullOnly = auditMultisetDifferenceCount(fullSignatures, lightSignatures);
   console.log("[NUTRITION_PARITY] compare lightOnly=" + lightOnly + " fullOnly=" + fullOnly);
   if (lightOnly || fullOnly) process.exitCode = 2;
 } catch (error) {
