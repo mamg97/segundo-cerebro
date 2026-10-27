@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Revisiones HTOPS · 27/10/2026
+
+[Notas de revisión](psicohistoria/AV150_HTOPS_REVISIONS.md) recuperadas y archivadas con hashes: marzo corrige pesos por controles fuera del universo; julio retira una tabla de transporte sin afectar PUF. Contrato privado de primera edición preparado; aún no hay ola futura admitida ni pronóstico HTOPS. SOC02/03 siguen PARCIAL/NO. Sincronización AV150 pendiente de publicación de esta revisión.
+
+PR852 integrada con cinco CI SUCCESS;103pruebas UI locales correctas. El resumen deriva emisión anual de cohorte completa y fase canónica, sin confundir macro ni habilidad. Verificación de despliegue y web final se registra en checkpoint/canónico al completarse. Siguiente: localizar calendario e instrumento de una ola aún futura; no repetir inscripción anual ni varianza.
+
+---
+
 ## PSICOHISTORIA — Resumen de cohorte registrada · 27/10/2026
 
 PR849 y PR850 integradas; AV147/148 y fases canónicas releídos. Anual emitida y varianza HTOPS reproducida; no repetir originales ni cálculos. Chrome autenticado confirma filas presentes, pero el resumen y observatorio mantenían textos de emisión pendiente. Corrección genérica en preparación: requiere cohorte completa, fechas coherentes y MAD-05 COMPLETADA/SI para presentar inscripción acreditada por el registro; no verifica firmas en el navegador ni afirma habilidad. Una macro aislada, duplicados, datos parciales o fase ausente fallan cerrado. Cabecera distingue filas de predicción de resultados independientes. Pruebas locales20 correctas; CI, publicación y comprobación final pendientes.
