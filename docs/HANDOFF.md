@@ -1,3 +1,18 @@
+## PSICOHISTORIA — Cohorte anual emitida · 27/10/2026
+
+[AV147](psicohistoria/AV147_ANNUAL_REGISTRATION.md): inscripción anual única y
+relectura completa verificadas; cinco recibos y acta privada de origen observado.
+MAD-05 COMPLETADA/SI y MAD-06 NO_INICIADA/NO escritos y releídos. Primera macro
+intacta, sin desenlaces ni habilidad demostrada. Intento anterior interrumpido
+preservado; fecha nueva efectiva, sin backdating. No repetir escritura anual.
+
+PR846 integrada y desplegada, capacidad canónica ampliada y lectura íntegra.
+La verificación visual posterior a la emisión está pendiente por sesión Access
+caducada. Seguir HTOPS sin esperar desenlaces; conservar preparación de diciembre
+y seguimiento BLS separados. Los bloques siguientes son históricos.
+
+---
+
 ## PSICOHISTORIA — Registro anual en desarrollo · 26/10/2026
 
 AV143–145 cerraron mapa v0.5.30 y triaje; PR841 desplegada y producción privada verificada. Primera emisión macro conservada; cero emisiones geopolíticas. Nuevo contrato [registro anual](psicohistoria/ANNUAL_REGISTRATION_CONTRACT.md) y auditor `annual_publication.py`: plan íntegro, diff de tabla y cinco recibos independientes, sin aprobación del origen por JSON ni escritura automática.33pruebas locales y tres del adaptador pasan; lector dinámico completo hasta5000filas, sin truncado silencioso. Publicación/CI y sincronización canónica pendientes en esta revisión.
