@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Reloj previsto HTOPS noviembre · 27/10/2026
+
+[AV151](psicohistoria/AV151_HTOPS_NOVEMBER_PLANNED_CLOCK.md) identifica28oct como despliegue previsto; no inicio efectivo. Cuestionario noviembre contiene soledad; solicitud AI/SI aún recibida en OIRA. Julio demuestra discrepancia entre fecha planificada y campo real. Noviembre NO ADMITIDO: faltan corte efectivo y protocolo completo anterior al campo; no emitir ni backdatear. SOC02 PARCIAL/NO. Fuentes y huellas privadas verificadas; publicación/sincronización de este avance pendientes al preparar el commit.
+
+PR852/853 y AV149/150 cerrados; web privada v0.5.31 verificada. No rehacer emisión anual, macro ni varianza. Siguiente: admisión real de ola futura y cierre del contrato antes del campo, o incidencia/omisión explícita. Esperar desenlaces no bloquea otras líneas autorizadas.
+
+---
+
 ## PSICOHISTORIA — Revisiones HTOPS · 27/10/2026
 
 [Notas de revisión](psicohistoria/AV150_HTOPS_REVISIONS.md) recuperadas y archivadas con hashes: marzo corrige pesos por controles fuera del universo; julio retira una tabla de transporte sin afectar PUF. Contrato privado de primera edición preparado; aún no hay ola futura admitida ni pronóstico HTOPS. SOC02/03 siguen PARCIAL/NO. Sincronización AV150 pendiente de publicación de esta revisión.
