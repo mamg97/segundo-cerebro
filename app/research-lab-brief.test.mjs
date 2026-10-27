@@ -111,3 +111,20 @@ test("laboratory uses the full viewport while preserving mobile and chart layout
   assert.doesNotMatch(css,/\.app-frame\{max-width:1540px/);
   assert.doesNotMatch(css,/@import|url\(https?:/);
 });
+
+const annualFixture=()=>({progress:{status:'ok',phases:[{fase_id:'MAD-05',estado:'COMPLETADA',criterio_superado:'SI'}]},predictions:Array.from({length:196},(_,country)=>Array.from({length:6},(_,model)=>({id:`synthetic-${country}-${model}`,region:`synthetic-country-${country}`,modelVersion:`ucdp261-2027-synthetic-${model}`,horizon:'Calendar year 2027',status:'EMITIDA_EXPERIMENTAL',probability:0.2,issuedAt:'2026-10-27',asOf:'2026-10-26'}))).flat()});
+test('complete registered cohort changes next action without claiming skill, including after deadline',()=>{
+  for(const now of [before,new Date('2027-02-01')]){
+    const html=renderResearchBriefing(lab(annualFixture()),now);
+    assert.match(html,/Evaluar la cohorte 2027/);
+    assert.match(html,/Preservar la cohorte emitida/);
+    assert.doesNotMatch(html,/Congelar las predicciones|Emisión antes de 2027|El plazo de emisión anterior/);
+    assert.match(html,/todavía no validado/);
+  }
+});
+test('phase alone, unrelated macro, duplicates, partial grid, invalid chronology and stale phase fail closed',()=>{
+  const variants=[x=>x.predictions.pop(),x=>x.predictions[1]=x.predictions[0],x=>x.predictions[0].issuedAt='2027-01-01',x=>x.predictions[0].asOf='2026-12-01',x=>x.progress.phases[0].criterio_superado='NO',x=>x.progress.status='error',x=>x.predictions=[{id:'synthetic-macro',status:'EMITIDA_EXPERIMENTAL'}],x=>x.predictions=[]];
+  for(const mutate of variants){const x=annualFixture();mutate(x);assert.equal(briefingFacts(lab(x),before).annualRecorded,false);}
+});
+
+test('resolved annual rows keep the historical registration state',()=>{const x=annualFixture();x.predictions.forEach(p=>p.status='RESUELTA');assert.equal(briefingFacts(lab(x),before).annualRecorded,true);});

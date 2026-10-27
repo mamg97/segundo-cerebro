@@ -3,9 +3,9 @@ import {renderResearchProgress} from './research-progress.mjs?v=0.5.30';
 import {LAB_VIEWS,labGroupForView,labDefaultView} from './research-lab-navigation.mjs?v=0.5.26';
 import {mountLaboratoryGlossary} from './research-tooltip.mjs?v=0.5.28';
 import {mountFutureExplorer} from './research-futures.mjs?v=0.5.29';
-import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.17';
+import {shadow2027Section} from './research-shadow2027.mjs?v=0.5.31';
 import {renderIdeaNetwork} from './research-ideas.mjs?v=0.5.20';
-import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.30';
+import {briefingFacts,renderResearchBriefing} from './research-lab-brief.mjs?v=0.5.31';
 import {mountInlineShadow2027} from './research-shadow2027-inline.mjs?v=0.5.17';
 import {isResearchScore} from './research-lab-metrics.mjs?v=0.5.7';
 import {mountNeural} from './research-neural.mjs?v=0.3.0';
@@ -130,7 +130,7 @@ function metrics(){
   const data=[
     ["PAÍSES 2027",f.shadow?String(f.countryCount):"—",f.shadow?"ranking experimental disponible":"Sin cohorte válida"],
     ["MODELOS",f.shadow?String(f.modelCount):"—",f.shadow?"comparación experimental":"Sin verificación"],
-    ["EMISIONES",String(f.issued),"registradas; no equivale a habilidad"],
+    ["PREDICCIONES",String(f.issued),"filas registradas; no son resultados independientes"],
     ["EVALUADAS",String(f.resolved),"resueltas prospectivas"]
   ];
   document.getElementById("headline-metrics").innerHTML=data.map(x=>'<article class="metric"><small>'+esc(x[0])+'</small><strong>'+esc(x[1])+'</strong><em>'+esc(x[2])+'</em></article>').join("");
@@ -270,7 +270,7 @@ function render(){
   disposeShadow();
   disposeVideo();
   header();metrics();
-  root.innerHTML=activeView==="brief"?renderResearchProgress(state.lab)+renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="brief"?renderResearchProgress(state.lab)+renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions,state.lab.progress):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
   const group=labGroupForView(activeView);
   const subtabs=document.getElementById('lab-subtabs');
   subtabs.hidden=group==='brief';

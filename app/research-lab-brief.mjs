@@ -1,6 +1,6 @@
 // AV-061: first-screen research briefing, based ONLY on private lab metadata.
 // No country-level probabilities, private URLs or synthetic forecasts in Git.
-import {approvedPrivateRankingLink} from "./research-shadow2027.mjs";
+import {approvedPrivateRankingLink,annual2027Registration} from "./research-shadow2027.mjs";
 
 const escapeHtml = input => String(input??"").replace(/[&<>"']/g,
  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -22,7 +22,7 @@ export function briefingFacts(lab,now=new Date()){
   const time=now instanceof Date&&Number.isFinite(now.getTime())?now.getTime():Date.now();
   const before= time<deadline.getTime();
   const remaining=before?Math.ceil((deadline.getTime()-time)/86400000):0;
-  return {shadow,issued:actual,resolved:evaluated,before,remaining,
+  return {annualRecorded:annual2027Registration(predictions,lab?.progress).recorded,shadow,issued:actual,resolved:evaluated,before,remaining,
     canShowShadow:shadow,forecastCount:shadow?1176:0,countryCount:shadow?196:0,
     modelCount:shadow?6:0,deadline:dayString(deadline)};
 }
@@ -50,15 +50,17 @@ export function renderResearchBriefing(lab,now=new Date()){
   const stepItems=[
     {num:"01",title:"Datos",sub:"Edición observada",kind:"done"},
     {num:"02",title:"Modelos",sub:f.shadow?"Cohorte experimental":"Sin cohorte verificable",kind:f.shadow?"done":"pending"},
-    {num:"03",title:"Emitir",sub:f.issued>0?"Registro existente; verificar sello":"Falta sello y fecha verificable",kind:"pending"},
+    {num:"03",title:"Emitir",sub:f.annualRecorded?"Emisión acreditada en el registro":f.issued>0?"Registro existente; verificar cohorte":"Falta sello y fecha verificable",kind:f.annualRecorded?"done":"pending"},
     {num:"04",title:"Evaluar",sub:f.resolved>0?"Consultar resultados":"Según el horizonte de cada objetivo",kind:f.resolved>0?"done":"pending"}
   ];
   const tips=[
-    {label:"PRIORIDAD 1",title:"Congelar las predicciones",body:f.before?
+    {label:"PRIORIDAD 1",title:f.annualRecorded?"Preservar la cohorte emitida":"Congelar las predicciones",body:f.annualRecorded?
+      "Conservar las probabilidades originales y esperar los resultados del año completo; no ajustar la emisión después de observarlos.":f.before?
       "Objetivo antes del 1 ene 2027; exige sello externo y fuente as-of. No hay garantía hasta superar las pruebas.":
       "El plazo de emisión anterior a 2027 ya pasó. No atribuir retroactivamente validez prospectiva.",
       kind:"decision"},
-    {label:"BLOQUEO",title:"Demostrar que no hubo filtración temporal",body:
+    {label:f.annualRecorded?"PENDIENTE":"BLOQUEO",title:f.annualRecorded?"Observar y evaluar 2027":"Demostrar que no hubo filtración temporal",body:f.annualRecorded?
+      "Faltan los resultados oficiales de 2027 y la comparación con las referencias. La inscripción no demuestra habilidad.":
       "Hay que acreditar qué datos estaban disponibles cuando se formuló cada predicción.",
       kind:"warning"},
     {label:"DECISIÓN ESTRATÉGICA",title:"Separar presencia de nuevos conflictos",body:
@@ -76,8 +78,8 @@ export function renderResearchBriefing(lab,now=new Date()){
     '<p>Ver un riesgo no significa que sepamos anticiparlo. '+escapeHtml(issuedText)+
     ' · '+escapeHtml(String(f.resolved))+' resultados prospectivos evaluables.</p></div></div>'+
     '<div class="brief-summary-grid">'+availability+
-    card("◷","PRÓXIMA PUERTA",f.before?"Emisión antes de 2027":"Emisión 2027 no acreditada",
-      f.before?f.remaining+" días hasta el 1 ene 2027 · condicionado a superar verificaciones.":
+    card("◷","PRÓXIMA PUERTA",f.annualRecorded?"Evaluar la cohorte 2027":f.before?"Emisión antes de 2027":"Emisión 2027 no acreditada",
+      f.annualRecorded?"Emisión acreditada en el registro. Evaluación desde 2028, cuando exista la fuente oficial completa.":f.before?f.remaining+" días hasta el 1 ene 2027 · condicionado a superar verificaciones.":
       "Sin sello anterior al periodo, las estimaciones no son prospectivas.","focus")+
     prospective+'</div>'+
     '<section class="brief-process" aria-label="Fases del experimento"><div class="brief-section-head">'+
@@ -99,7 +101,7 @@ export function renderResearchBriefing(lab,now=new Date()){
     '</p></article>').join("")+'</div></section>'+
     '<details class="brief-method"><summary>¿Cuándo serán útiles de verdad? <span aria-hidden="true">⌄</span></summary>'+
     '<div><p><strong>Ahora:</strong> sirven para explorar riesgos relativos, no para tomar decisiones de seguridad o inversión.</p>'+
-    '<p><strong>Antes del 1 ene 2027:</strong> podemos intentar una emisión sellada, pero solo si quedan acreditadas las fuentes, el universo y el timestamp independiente.</p>'+
+    (f.annualRecorded?'<p><strong>Emisión registrada:</strong> conservar los originales y evaluar cuando existan los resultados oficiales del año completo.</p>':'<p><strong>Antes del 1 ene 2027:</strong> podemos intentar una emisión sellada, pero solo si quedan acreditadas las fuentes, el universo y el timestamp independiente.</p>')+
     '<p><strong>En 2028 (orientativo):</strong> podríamos medir la exactitud de 2027 cuando se publique la fuente completa. Publicación y validación aún no garantizadas.</p>'+
     '<p><strong>Alertas de nuevos conflictos a corto plazo:</strong> sin fecha científica, requieren experimentos mensuales separados y comparación con referencias externas.</p>'+
     '<p><strong>Objetivo actual:</strong> '+escapeHtml(POLICY.target)+'. '+escapeHtml(POLICY.notTarget)+'</p></div>'+

@@ -19,7 +19,7 @@ test('authorized registry record supplies a link but no model probabilities', ()
   assert.equal(approvedPrivateRankingLink([fixture()]),safeUrl);
   const html=shadow2027Section([fixture()],[]);
   assert.match(html,/Abrir ranking privado 2027/);
-  assert.match(html,/NO EMITIDO/);
+  assert.match(html,/EMISIÓN NO ACREDITADA/);
   assert.match(html,/No representa inicio de guerra/);
   assert.match(html,/rel="noopener noreferrer"/);
   assert.match(html,/Filas de PsicoPredicciones/);
