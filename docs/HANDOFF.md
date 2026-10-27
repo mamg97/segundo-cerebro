@@ -1,3 +1,19 @@
+## PSICOHISTORIA — Varianza HTOPS reproducida · 27/10/2026
+
+[AV148](psicohistoria/AV148_HTOPS_REPLICATE_VARIANCE.md): PUF actual, diccionario y
+80 pesos replicados unidos sin pérdidas. Marginales y sus errores estándar
+reproducidos al redondeo publicado; covarianza agregada ya identificada.
+Módulo SDR y siete pruebas analíticas correctas. No forecast ni habilidad;
+SOC-02/03 deben conservar PARCIAL/NO. Al preparar esta revisión faltan CI y
+sincronización canónica del avance; no confundir con cierre publicado.
+
+Siguiente: cerrar esa sincronización y resolver primera versión/regla de
+revisiones y objetivo futuro. PR849 integrada con CI de privacidad correcta;
+emisión anual AV147 preservada. Comprobación visual posterior aún pendiente
+por acceso privado. No repetir inscripciones ni backtests cerrados.
+
+---
+
 ## PSICOHISTORIA — Cohorte anual emitida · 27/10/2026
 
 [AV147](psicohistoria/AV147_ANNUAL_REGISTRATION.md): inscripción anual única y
