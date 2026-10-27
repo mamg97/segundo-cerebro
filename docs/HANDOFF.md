@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Resumen de cohorte registrada · 27/10/2026
+
+PR849 y PR850 integradas; AV147/148 y fases canónicas releídos. Anual emitida y varianza HTOPS reproducida; no repetir originales ni cálculos. Chrome autenticado confirma filas presentes, pero el resumen y observatorio mantenían textos de emisión pendiente. Corrección genérica en preparación: requiere cohorte completa, fechas coherentes y MAD-05 COMPLETADA/SI para presentar inscripción acreditada por el registro; no verifica firmas en el navegador ni afirma habilidad. Una macro aislada, duplicados, datos parciales o fase ausente fallan cerrado. Cabecera distingue filas de predicción de resultados independientes. Pruebas locales20 correctas; CI, publicación y comprobación final pendientes.
+
+Siguiente: cerrar verificación visual y después HTOPS primeras versiones/regla de revisiones. Esperar resultados no bloquea investigación. Los párrafos inferiores conservan antecedentes y estados anteriores.
+
+---
+
 ## PSICOHISTORIA — Varianza HTOPS reproducida · 27/10/2026
 
 [AV148](psicohistoria/AV148_HTOPS_REPLICATE_VARIANCE.md): PUF actual, diccionario y
