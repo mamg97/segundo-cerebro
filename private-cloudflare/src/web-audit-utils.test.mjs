@@ -7,6 +7,8 @@ import {
   classifyRequestFailure,
   hiddenMenuStatus,
   logicalMenuKey,
+  midasAuditIssueLabel,
+  normalizeAuditValue,
   menuDisplayTotals,
   confirmedMenuTotals,
   qualityStep,
@@ -14,6 +16,18 @@ import {
   visibleMenuRow
 } from "./web-audit-utils.js";
 import { evaluateMidasWorkflowRuns } from "./midas-health.js";
+
+test("MIDAS daily workflow failure remains visible using the actual private UI label", () => {
+  const displayLabel = "Weekly ML diario";
+  assert.equal(midasAuditIssueLabel("MIDAS Weekly ML daily paper"), "weekly ml diario");
+  assert.equal(normalizeAuditValue(midasAuditIssueLabel("MIDAS Weekly ML daily paper")),
+    normalizeAuditValue(displayLabel));
+  assert.equal(midasAuditIssueLabel("MIDAS weekly ML paper"), "weekly ml");
+  assert.equal(midasAuditIssueLabel("MIDAS Buy The Dip paper"), "buy the dip");
+  assert.equal(midasAuditIssueLabel("MIDAS capital cycle paper"), "capital cycle");
+  assert.equal(midasAuditIssueLabel("MIDAS TFG corrected paper"), "tfg corregido");
+  assert.equal(midasAuditIssueLabel("MIDAS unknown workflow"), "MIDAS unknown workflow");
+});
 
 test("audit validates all seven dates for an empty canonical week across Monday, DST and year boundaries", () => {
   assert.deepEqual(auditWeekDates("2026-10-26"), [
