@@ -1,0 +1,24 @@
+{
+  "hypothesis": "Continuous weekly-claims dynamics can improve the next unpublished weekly claims release versus last available value and 4-week average.",
+  "target": "first ALFRED value of next Saturday week; nowcast of unpublished release, not future layoffs",
+  "issue": "Wednesday, cut preceding Tuesday; reject labels with first-available date <= issue day",
+  "features": [
+    "log(last/mean52weeks)",
+    "log(last/previous_week)"
+  ],
+  "model": "ridge conditional mean of next first-release log change; train-only scaling, mean-loss penalty1, unpenalized intercept",
+  "train": "last156calendarweeks; minimum104origins with label available by cut; freeze features/base at historical origin",
+  "comparison": "paired RMS log error and mean absolute log error vs persistence and4weekmean",
+  "acceptance": "RMS log error at least5percent lower than BOTH comparators; separate future experiment required",
+  "test": "2019-01-01 through2026-09-30",
+  "retuning": "none; no hyperparameter search, keep pandemic and missing exclusions",
+  "confirmatory": false,
+  "forecast_issued": false,
+  "id": "weekly-claims-nowcast-v1",
+  "claims_sha256": "8b4114d7f7af89d0d88c8cb7ff51e6c639318d4cf1c38880c89f7d94f5135c1d",
+  "test_start": "2019-01-01",
+  "test_end": "2026-09-30",
+  "training_weeks": 156,
+  "minimum_training": 104,
+  "ridge_mean_loss": 1.0
+}
