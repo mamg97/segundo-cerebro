@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Señal externa ICSA · 28/10/2026
+
+[AV153](psicohistoria/AV153_MACRO_CLAIMS_SIGNAL.md): protocolo/código publicados antes de evaluar.90casos/16eventos, Brier0,155183 vs0,151562 y0,152789, persistencia0,177778. DESCARTADO, sin buscar otro umbral.6pruebas temporales y contraste independienteCSV/Fraction PASS. Sólo5casos de tensión: límite descriptivo, no permiso para afinar. Fuentes y resultados privados preservados; ninguna emisión. CI/publicación/sincronización canónica pendientes de este cierre.
+
+AV152/PR856 integrada y canónico releído. Prioridad: experimentos completos, sin microPR de controles; futuras hipótesis deben aportar valor distinto y fijarse antes de evaluar. Mantener originales macro/anual y seguimientos19nov/4dic; control ambas cuotas antes de fases y máximo60s.
+
+---
+
 ## PSICOHISTORIA — Ciclo macro condicionado · 28/10/2026
 
 [AV152](psicohistoria/AV152_MACRO_CONDITIONAL_FREQUENCY.md): fórmula publicada antes de ejecutar;89casos/16eventos; Brier0,159181 vs frecuencia0,154140 y persistencia0,179775. Candidato descartado por regla prefijada, sin retuning. Seis pruebas y contraste independiente CSV/Fraction correctos. Fuentes/resultados completos privados; historia reutilizada, sin confirmación ni emisión. MAC03/04 siguen PARCIAL/NO. CI/publicación y sincronización canónica pendientes al preparar este cierre.
