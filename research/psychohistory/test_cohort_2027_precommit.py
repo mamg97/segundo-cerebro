@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from cohort_2027_precommit import prepare, verify_bundle
+from cohort_2027_precommit import prepare, verify_bundle, _query_imprint
 from test_issue_2027_preflight import imaginary_report
 
 
@@ -77,6 +77,21 @@ class CohortPrecommitTests(unittest.TestCase):
         evidence_file.write_text(json.dumps(evidence, sort_keys=True) + "\n")
         with self.assertRaisesRegex(ValueError, "query imprint does not bind"):
             verify_bundle(self.candidate, self.bundle)
+
+    def test_query_imprint_preserves_trailing_nul_bytes(self):
+        # Find a tiny invented input whose SHA256 ends in NUL. Human OpenSSL
+        # dumps may abbreviate this byte; the DER OCTET STRING must retain it.
+        number = next(i for i in range(10000)
+                      if hashlib.sha256(str(i).encode()).digest().endswith(b'\x00'))
+        content = str(number).encode()
+        source = self.root / "SYNTHETIC-NUL.bin"
+        source.write_bytes(content)
+        query = self.root / "query.tsq"
+        subprocess.run(["openssl", "ts", "-query", "-data", str(source), "-sha256",
+                        "-cert", "-out", str(query)], check=True, capture_output=True)
+        self.assertEqual(_query_imprint(query.read_bytes()), hashlib.sha256(content).digest())
+        for raw in (query.read_bytes()[:-1], query.read_bytes()+b'\x00', b'\x30\x80'):
+            with self.assertRaises(ValueError): _query_imprint(raw)
 
     def test_draft_cannot_be_created_from_legacy_wrapper_or_under_git(self):
         wrong = imaginary_report(canonical=False)

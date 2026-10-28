@@ -10,7 +10,7 @@ y ausencias; fórmula, parámetros, fechas y criterios permanecen iguales.
 
 ALFRED JTSJOR: Rate, mensual, ajustada estacionalmente. Archivo privado:
 188meses ene2011–ago2026,641intervalos,189vintages seleccionados. SHA256:
-`73922929d881fb694a905448f8cb1b6880f301ec2063af77285ac7d78b1b47ed082f`.
+`73922929d881fb694a905448f8cb1a622b7e6ace943f7a989c336a9842f9ebd8`.
 Las tasas admiten decimales0–100; no son miles enteros de PAYEMS.
 
 Corte25del mes anterior al objetivo y emisión hipotética26. La base UNRATE
