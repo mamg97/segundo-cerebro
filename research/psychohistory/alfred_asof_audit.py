@@ -33,7 +33,7 @@ def rate(value):
     return str(number)
 
 
-def read_export(raw, digest, member, output_format):
+def read_export(raw, digest, member, output_format, *, series_id="UNRATE", units="Percent"):
     if len(raw) > 5_000_000 or not re.fullmatch(r"[0-9a-f]{64}", digest) or hashlib.sha256(raw).hexdigest() != digest:
         raise ValueError("archive integrity or size failure")
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
@@ -44,9 +44,9 @@ def read_export(raw, digest, member, output_format):
             raise ValueError("oversized archive member")
         readme = archive.read("README.txt").decode("utf-8-sig")
         lines = readme.splitlines()
-        if "Series ID: UNRATE" not in lines or "Output Format: " + output_format not in lines:
+        if "Series ID: " + series_id not in lines or "Output Format: " + output_format not in lines:
             raise ValueError("wrong series or format")
-        for label, value in [("Units", "Percent"), ("Frequency", "Monthly"), ("Seasonal Adjustment", "Seasonally Adjusted")]:
+        for label, value in [("Units", units), ("Frequency", "Monthly"), ("Seasonal Adjustment", "Seasonally Adjusted")]:
             if not re.search(r"(?m)^" + label + r"\s*\n" + value + r"\s+\d{4}-\d{2}-\d{2}", readme):
                 raise ValueError("unexpected units, frequency or adjustment")
         created = re.findall(r"(?m)^File Created: (\d{4}-\d{2}-\d{2}) ", readme)
