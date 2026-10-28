@@ -1,0 +1,32 @@
+{
+  "id": "weekly-icsa-reference-policy-v1",
+  "pilot_id": "weekly-icsa-reference-pilot-v1",
+  "first_target_week": "2026-10-24",
+  "target_count": 12,
+  "event_threshold": 10000,
+  "training_calendar_weeks": 156,
+  "minimum_training_cases": 104,
+  "training_clock": "Historical Wednesday origins with Tuesday features; first ALFRED labels available by the live issue date only; preserve historical-origin base values",
+  "frequency_prior_alpha": 1,
+  "frequency_prior_beta": 1,
+  "models": [
+    "frequency",
+    "persistence"
+  ],
+  "persistence_probability": 0,
+  "issue_offset_days_from_target": 4,
+  "issue_window_start_hour_utc": 0,
+  "issue_window_end_hour_utc": 12,
+  "source": "Live official ALFRED ICSA ZIP, Number, Seasonally Adjusted, Weekly Ending Saturday; capture on actual issue UTC date",
+  "outcome": "First official DOL advance seasonally adjusted initial claims for target Saturday; compare with live frozen base +10000; preserve revisions separately",
+  "same_day_release": "omit conservatively; do not infer intraday availability from ALFRED daily vintages",
+  "resolution_capture_limit_hours": 48,
+  "minimum_resolved_targets": 10,
+  "minimum_each_outcome": 2,
+  "minimum_relative_brier_improvement": "0.10",
+  "omissions": "No replacement, extension, backdating or altered parameters; preserve every preparation and partial write",
+  "timestamps": "Two RFC3161 receipts per valid issuance: salted commitment before canonical write and observation after full readback; both inside issuance window",
+  "prospective_issuance_authorized_by_code": false,
+  "predictive_skill_demonstrated": false,
+  "issued_at_field": "Observed UTC registration-request timestamp assigned after precommit; actual canonical registration is bounded separately by verified pre/post receipts"
+}
