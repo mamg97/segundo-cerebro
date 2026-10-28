@@ -1,3 +1,19 @@
+# Psicohistoria — lector DOL de resolución semanal · 28/10/2026
+
+`dol_weekly_release.py` cruza narrativa advanceSA con tabla InitialClaimsSA,
+fecha objetivo/embargo, semanas previas y diferencia frente a revisión. Falla
+ante ambigüedad/formato distinto; distingue hora nominal y release efectivo.
+CLI privada con SHA exacto, PDFplumber y output exclusivo; composición con
+umbral original/48h sigue candidata sin emisión ni admisión.7tests nuevos y
+17dependientes PASS. CLI real contrastada con PDF oficial22oct/target17oct y
+revisión visual páginas1/4; sólo prueba del lector, sin score ni nueva emisión.
+Ver `DOL_WEEKLY_FIRST_RELEASE_READER.md`. Nunca resolver24oct omitido.
+
+PR869 evaluador anual integrada c880900e;39tests y2CI SUCCESS. AV162/canónico
+releídos;2027sigue sin resultados. No reemitir ni modificar fuentes/compromisos.
+
+---
+
 # Psicohistoria — evaluador anual preparado, sin resolver2027 · 28/10/2026
 
 `annual_evaluation.py` verifica el plan original contra candidato/compromiso,
