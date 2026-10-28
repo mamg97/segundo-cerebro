@@ -1,3 +1,15 @@
+## Actualización28oct2026: importación real disponible
+
+La edición oficial ofrecida sigue siendo fatalities003_2026_08_t01. Se han
+importado y contrastado6876filas/191países; consulta privada noviembre–enero,
+573filas, leads3/4/5 y tabla filtrablePsicoVIEWS. El adaptador admite el campo
+country observado sin alterar originales. Ver [primera importación real](VIEWS_FIRST_REAL_INTAKE.md).
+No son pronósticos nuestros ni información actualizada a octubre. Los bloques
+inferiores describen el estado histórico18oct; la cohorte anual propia ya está
+emitida desde27oct, pero aún sin resultados2027ni habilidad demostrada.
+
+---
+
 # PSICOHISTORIA — Predicciones mensuales externas y nueva frontera de utilidad
 
 **18/10/2026 · F1 conflictos · V2 modelos/benchmarks · estado: sin validación propia de alertas mensuales.**

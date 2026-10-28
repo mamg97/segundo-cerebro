@@ -11,6 +11,8 @@ import argparse
 import csv
 from datetime import date
 import hashlib
+import io
+import os
 import json
 import math
 from pathlib import Path
@@ -63,17 +65,27 @@ def load(source, release, *, expected_sha256):
     if not isinstance(expected_sha256, str) or not re.fullmatch("[a-f0-9]{64}", expected_sha256):
         raise ValueError("Exact externally downloaded CSV SHA256 must be pinned")
     path = private_file(source)
-    raw_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    raw = path.read_bytes()
+    raw_hash = hashlib.sha256(raw).hexdigest()
     if raw_hash != expected_sha256:
         raise ValueError("Original VIEWS release bytes failed pinned SHA256")
     result = []
-    countries = {}
+    countries, gw_owners, iso_owners, calendar_ids, ordinal_dates = {}, {}, {}, {}, {}
     observed = set()
-    with path.open(newline="", encoding="utf-8-sig") as f:
+    with io.StringIO(raw.decode("utf-8-sig"), newline="") as f:
         reader = csv.DictReader(f)
-        if reader.fieldnames is None or not set(REQUIRED).issubset(reader.fieldnames):
+        headers = reader.fieldnames
+        label_columns = [key for key in ("name", "country") if headers and key in headers]
+        if (not headers or len(headers) != len(set(headers)) or len(label_columns) != 1 or
+                not (set(REQUIRED)-{"name"}).issubset(headers)):
             raise ValueError("Unexpected country-month VIEWS CSV schema")
+        label_column = label_columns[0]  # Official CSV uses country; old fixtures used name.
         for row in reader:
+            if None in row or any(v is None for v in row.values()):
+                raise ValueError("Ragged VIEWS CSV record")
+            if any(not re.fullmatch(r"[0-9]+", row[key])
+                   for key in ("country_id", "gwcode", "month_id", "year", "month")):
+                raise ValueError("Integer identities/calendar fields required")
             try:
                 cid = int(row["country_id"])
                 gw = int(row["gwcode"])
@@ -90,7 +102,7 @@ def load(source, release, *, expected_sha256):
                     math.isfinite(mean) and math.isfinite(dich) and math.isfinite(ln) and
                     mean >= 0 and 0 <= dich <= 1 and ln >= 0):
                 raise ValueError("Nonfinite or out-of-bounds VIEWS prediction")
-            isoab, name = (row["isoab"] or "").strip(), (row["name"] or "").strip()
+            isoab, name = (row["isoab"] or "").strip(), (row[label_column] or "").strip()
             if not re.fullmatch(r"[A-Z]{3}", isoab) or not name or len(name) > 150:
                 raise ValueError("Invalid country label")
             lead = (year - yr) * 12 + month - mo
@@ -102,7 +114,16 @@ def load(source, release, *, expected_sha256):
             observed.add(pair)
             if cid in countries and countries[cid] != (gw, isoab, name):
                 raise ValueError("Country changed GW/ISO identifiers within one release")
+            if (gw in gw_owners and gw_owners[gw] != cid or
+                    isoab in iso_owners and iso_owners[isoab] != cid):
+                raise ValueError("GW/ISO must identify one country within a release")
+            ym = (year, month)
+            if (ym in calendar_ids and calendar_ids[ym] != month_id or
+                    month_id in ordinal_dates and ordinal_dates[month_id] != ym):
+                raise ValueError("Month identity disagrees across countries/dates")
             countries[cid] = (gw, isoab, name)
+            gw_owners[gw], iso_owners[isoab] = cid, cid
+            calendar_ids[ym], ordinal_dates[month_id] = month_id, ym
             result.append({
                 "country_id":cid,"gwcode":gw,"isoab":isoab,"name":name,
                 "month_id":month_id,"year":year,"month":month,
@@ -111,6 +132,9 @@ def load(source, release, *, expected_sha256):
             })
     if not result:
         raise ValueError("Empty VIEWS country-month input")
+    ordered_ids = [calendar_ids[key] for key in sorted(calendar_ids)]
+    if any(b != a+1 for a,b in zip(ordered_ids, ordered_ids[1:])):
+        raise ValueError("Nonconsecutive VIEWS month ordinals")
     # Require every identified country's full 36-month sequence; no partial
     # sums masquerading as comprehensive 3-month horizons.
     by_country = {}
@@ -128,6 +152,8 @@ def summarize_months(rows, release, *, asof_month, next_n=3):
     probabilities of any conflict in a window are NOT additive or independent.
     """
     rel_year,rel_month = parse_release(release)
+    if type(next_n) is not int or not 1 <= next_n <= 12:
+        raise ValueError("Use an integer number of future calendar months")
     if not re.fullmatch(r"20\d{2}-(0[1-9]|1[0-2])", asof_month):
         raise ValueError("Use YYYY-MM as the observer's calendar month")
     ay,am = map(int,asof_month.split("-"))
@@ -182,7 +208,8 @@ def summarize_months(rows, release, *, asof_month, next_n=3):
 
 def write_private_csv(rows, destination, columns):
     p=private_file(destination,new=True)
-    with p.open("x", newline="", encoding="utf-8-sig") as file:
+    with os.fdopen(os.open(p, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600),
+                   "w", newline="", encoding="utf-8-sig") as file:
         wr=csv.DictWriter(file,fieldnames=columns)
         wr.writeheader()
         wr.writerows(rows)

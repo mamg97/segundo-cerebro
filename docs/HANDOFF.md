@@ -1,3 +1,35 @@
+# Psicohistoria — acceso a VIEWS desde el laboratorio · 28/10/2026
+
+Laboratorio0.5.34 añade en Inicio/Evidencia un acceso desde metadatos privados
+a PsicoVIEWS, con191países, ventana noviembre–enero y corteago2026visibles.
+Origen externo explícito: ninguna emisión, modelo validado o score propio.
+Enlace sóloGoogleSheets HTTPS, sin IDprivado hardcodeado.149testsUI/adaptadores
+PASS; local1280/433pxsin overflow. Ocho pruebas Python del intake pasan y
+contraste rawCSV/Decimal573filas exacto. EsperarCI/despliegue y comprobarfuente
+real antes de afirmar producción0.5.34. Las probabilidades reales sólo privadas.
+
+PR872 calendario ya publicado0.5.33, despliegue40753118080SUCCESS y Chrome real
+1680pxverifica7hitos/1177predicciones/0evaluadas. AV164/V4-03 escritos/releídos;
+captura research-calendar-20261028/production-calendar.png. No móvil físico.
+
+---
+
+# Psicohistoria — VIEWS real importado, referencia externa · 28/10/2026
+
+Primera ejecución real del importador VIEWS: CSVoficial6876filas/191países/36meses,
+consulta573filas noviembre–enero, datos hastaago2026, leads3/4/5. Alias estricto
+country/name y controlesCSV/identidad/mes reforzados;8tests PASS. ContrasteCSV/
+Decimal independiente exacto. Vista privadaPsicoVIEWS191países/2292celdas escrita
+/releída con filtros, porcentajes y origen externo explícito. No copiar datos,
+probabilidades o IDs reales al repo; no sumar probabilidades, unir al roster
+anual por nombre ni atribuir skill propio. Ver VIEWS_FIRST_REAL_INTAKE.md.
+
+CalendarioPR872 integrado bd3fb4d2 tras cincoCI SUCCESS; correcciones equivalentes
+de main preservadas al resolver conflictos. Fuente privadaPsicoCalendario con
+sietehitos. Comprobar despliegue/Chrome antes de afirmar publicación0.5.33.
+
+---
+
 # Psicohistoria — calendario privado de hitos · 28/10/2026
 
 Laboratorio0.5.33: Inicio/Mapa muestran planificación desde PsicoCalendario
