@@ -1,4 +1,5 @@
-import {renderResearchProgress} from './research-progress.mjs?v=0.5.30';
+import {renderResearchSchedule} from './research-schedule.mjs?v=0.5.33';
+import {renderResearchProgress} from './research-progress.mjs?v=0.5.33';
 import {renderPairedEvaluations} from './research-paired-evaluations.mjs?v=0.5.32';
 // Private, data-driven research dashboard. Simulations are explicitly separated.
 import {LAB_VIEWS,labGroupForView,labDefaultView} from './research-lab-navigation.mjs?v=0.5.26';
@@ -248,7 +249,7 @@ function operations(){
 }
 function roadmap(){
   const ms=milestones().filter(m=>milestoneFilter==="TODOS"||m.track===milestoneFilter);
-  return renderResearchProgress(state.lab)+heading("DEL DISEÑO A LA PRODUCCIÓN","Hoja de ruta verificable","No se da por terminada una etapa sin evidencia")+
+  return renderResearchSchedule(state.lab)+renderResearchProgress(state.lab)+heading("DEL DISEÑO A LA PRODUCCIÓN","Hoja de ruta verificable","No se da por terminada una etapa sin evidencia")+
     '<div class="filter-row"><button data-filter="TODOS" class="'+(milestoneFilter==="TODOS"?'active':'')+'">Todas</button>'+
     TRACKS.map(t=>'<button data-filter="'+t.id+'" class="'+(milestoneFilter===t.id?'active':'')+'">'+t.id+'</button>').join("")+'</div>'+
     '<section class="panel"><div class="milestones">'+ms.map(m=>'<div><span class="eyebrow">'+esc(m.track)+' / '+esc(m.id)+'</span>'+milestoneRow(m)+'</div>').join("")+'</div></section>';
@@ -271,7 +272,7 @@ function render(){
   disposeShadow();
   disposeVideo();
   header();metrics();
-  root.innerHTML=activeView==="brief"?renderPairedEvaluations(state.lab,{limit:3})+renderResearchProgress(state.lab)+renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions,state.lab.progress):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="brief"?renderResearchSchedule(state.lab)+renderPairedEvaluations(state.lab,{limit:3})+renderResearchProgress(state.lab)+renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions,state.lab.progress):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
   const group=labGroupForView(activeView);
   const subtabs=document.getElementById('lab-subtabs');
   subtabs.hidden=group==='brief';
