@@ -54,7 +54,7 @@ test("private recipe images are read before inherited Google Drive photos",()=>{
 
 test("after recipe photo edit the home menu invalidates cached photo references and reloads",()=>{
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
- const first=app.indexOf("async function refreshRecipeCatalog()");
+ const first=app.indexOf("async function refreshRecipeCatalog(expected=null)");
  const second=app.indexOf("function renderRecipeDetail(",first);
  assert.ok(first>=0 && second>first);
  const code=app.slice(first,second);
