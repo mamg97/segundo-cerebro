@@ -117,5 +117,6 @@ test("calendar is immediately after save and before progress, not below Gym libr
   assert.match(planView, /renderGymPlanReference\(plan\)[\s\S]*?renderGymMonthCalendar\(sessions, plan\)/);
   const outerPanel = app.slice(app.indexOf("function renderGymPanel(data)"), app.indexOf("function setGymPanelView(view)"));
   assert.doesNotMatch(outerPanel, /renderGymMonthCalendar/, "calendar must not live after the library panel");
-  assert.match(app, /renderGymPanel\(await refresh\.json\(\)\)/);
+  assert.match(app, /if\(data\?\.ok===true\)\{renderGymPanel\(data\);return;\}/);
+  assert.match(app, /Entrenamiento guardado ✓\. El calendario se actualizará al recargar/);
 });
