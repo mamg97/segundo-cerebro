@@ -24,6 +24,7 @@ import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
 import { renderHealthDayBalance } from "./health-daily-balance.js?v=0.44.1";
+import { nutritionMacroProvenance, nutritionMacroVisibleNote } from "./nutrition-macro-provenance.mjs?v=0.1.0";
 import { menuWeekMonday, menuShiftWeek, menuWeekRangeLabel } from "./menu-week-history.js?v=0.44.12";
 import { reconcileHomeMenuPhotos } from "./home-menu-photo-resolver.mjs?v=0.1.0";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
@@ -5494,6 +5495,11 @@ function renderWeeklyMenuStructureWarning(items) {
   return `<small class="weekly-menu-sync-note is-warning" role="status">Plan sin validar: ${escapeHtml(details.join(". "))}</small>`;
 }
 
+function nutritionMacroSourceMarkup(item) {
+  const source = nutritionMacroProvenance(item);
+  return `<small class="nutrition-macro-source is-${escapeHtml(source.kind)}" title="Procedencia de los valores nutricionales: ${escapeHtml(source.label)}">${escapeHtml(source.label)}</small>`;
+}
+
 function renderWeeklyMenuMeal(item, compact = false, showMoment = true) {
   const kcal = item.kcal == null ? "— kcal" : formatKcal(item.kcal);
   const protein = item.protein == null ? "P —" : `P ${formatMacro(item.protein)}`;
@@ -5511,13 +5517,14 @@ function renderWeeklyMenuMeal(item, compact = false, showMoment = true) {
             <p>${[
               quantity,
               item.gymSession ? escapeHtml(item.gymSession) : "",
-              item.note ? escapeHtml(item.note) : ""
+              item.note ? escapeHtml(nutritionMacroVisibleNote(item.note)) : ""
             ].filter(Boolean).join(" · ")}</p>` : ""}
           ${!compact ? renderWeeklyMenuStructureWarning(item) : ""}
         </div>
         <div class="weekly-menu-meal-macros">
           <b>${kcal}</b>
           <span>${protein}</span>
+          ${nutritionMacroSourceMarkup(item)}
         </div>
       </div>
       ${compact ? "" : renderWeeklyMenuIngredients(item)}
@@ -5543,6 +5550,7 @@ function renderWeeklyMenuGroupItems(rows, compact = false) {
             <div class="weekly-menu-group-item-macros">
               <b>${kcal}</b>
               <span>${protein}</span>
+          ${nutritionMacroSourceMarkup(item)}
             </div>
           </div>`;
       }).join("")}
@@ -6114,6 +6122,7 @@ function renderHomeWeeklyMenuMatrixCell(items, readOnly = false, date = "", mome
             <div class="weekly-menu-group-item-macros">
               <b>${kcal}</b>
               <span>${protein}</span>
+          ${nutritionMacroSourceMarkup(item)}
             </div>
             ${canEdit ? `<div class="home-menu-item-actions">
               ${planned ? `<button type="button" data-home-menu-consume="${item.sourceRow}" aria-label="Marcar ${escapeHtml(item.name)} como consumida">✓ Consumida</button>`

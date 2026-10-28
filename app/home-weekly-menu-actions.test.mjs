@@ -15,6 +15,8 @@ assert.ok(from>0 && to>from && projectionStart>0 && projectionEnd>projectionStar
 const sandbox={
   escapeHtml:s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"),
   formatKcal:n=>`${n} kcal`,formatMacro:n=>`${n} g`,
+  // Home renderer is evaluated in isolation; provenance module is tested separately.
+  nutritionMacroSourceMarkup:()=>'<small class="nutrition-macro-source">Origen por verificar</small>',
   weeklyMenuItemIsConsumed:r=>r.status==="consumido",
   normalizeWeeklyMenuMoment:s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(),
   Number
