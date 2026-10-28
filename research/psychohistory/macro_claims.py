@@ -80,12 +80,12 @@ def metrics(rows):
     return out
 
 
-def run(claims,periods,labels,p,scorer=score):
+def run(claims,periods,labels,p,scorer=score,signal_provider=signal_at):
     cases=[];outputs=[]
     for t in initial.month_range(date.fromisoformat(p['training_origins_start']),date.fromisoformat(p['test_end'])):
         target=t.isoformat();month=shift_month(target,-1);cut=month[:8]+str(p['cut_day']);issue=month[:8]+str(p['issue_day'])
         snapshot={x['reference_month']:x['rate_percent'] for x in asof.select(periods,cut) if x['status']=='AVAILABLE'}
-        base=shift_month(target,-2);sig=signal_at(claims,cut,p)
+        base=shift_month(target,-2);sig=signal_provider(claims,cut,p)
         row=dict(target_month=target,cut=cut,signal=sig,status='MISSING_FEATURE')
         label=labels.get(target)
         if label and label['alfred_realtime_start_date']<=issue:raise ValueError('Future target already known')

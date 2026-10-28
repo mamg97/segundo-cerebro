@@ -1,3 +1,17 @@
+## Psicohistoria — señal independiente PAYEMS cerrada (28/10/2026)
+
+AV158: contrato previo3f198808a40d3d5f7cc665a4e43217cd8e14c188;
+PAYEMS oficial189meses/1707intervalos, hash7cf7f71c93002ca56e47c80b1b6880f301ec2063af77285ac7d78b1b47ed082f.
+90casos/16eventos: Brier0,153863270 vs0,151494912/0,152789108.
+Descartado, no retuning. Cinco pruebas nuevas y26con dependencias PASS;
+CSV/Fraction/Newton182orígenes/90ajustes PASS. Informe/contraste privados
+macro-payrolls-20261028/, fuente source-archive/alfred-payems-2026-10-28/.
+Ver AV158_PAYROLLS_SIGNAL.md. Integración/CI/canónico se confirman al cerrar.
+No emisiones, no promoción de fases. Tres nuevos modelos AV156–158 cerrados
+sin ganador; preservar negativos y piloto semanal4nov/seguimientos19nov/4dic.
+
+---
+
 ## MIDAS — auditor de fuente OHLC común · 28/10/2026
 
 Integración de solo lectura de `dashboard.market_data`: cobertura del universo
