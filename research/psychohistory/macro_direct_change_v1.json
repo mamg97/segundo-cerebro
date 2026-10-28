@@ -1,0 +1,37 @@
+{
+  "id": "macro-direct-unemployment-change-v1",
+  "hypothesis": "Real-time claims movement and known unemployment trend can improve a direct numeric forecast of the first-released unemployment rate two months beyond the latest known base, without binarizing the outcome.",
+  "claims_sha256": "8b4114d7f7af89d0d88c8cb7ff51e6c639318d4cf1c38880c89f7d94f5135c1d",
+  "unrate_realtime_sha256": "e062befc437536d15e0604b3cffb34ff851851e9f5f9cd82ba1ebf8748d5c30b",
+  "unrate_initial_sha256": "d5f90cacdb89b99bac8292363e3a359c9e135eee30f7b6eabb61c4aebc70a90d",
+  "training_origins_start": "2011-03-01",
+  "test_start": "2019-01-01",
+  "test_end": "2026-09-01",
+  "cut_day": 25,
+  "issue_day": 26,
+  "horizon_months_from_base": 2,
+  "claims_signal_threshold_ratio": "1.10",
+  "claims_window_weeks": 4,
+  "maximum_week_age_days": 14,
+  "minimum_training_cases": 48,
+  "training_window_calendar_months": 60,
+  "training_clock": "historical-origin frozen claims features and base UNRATE; labels initially available by current cut only",
+  "baselines": [
+    "zero_change_persistence",
+    "mean_past_frozen_target_change"
+  ],
+  "missing_policy": "exclude from all compared scores; no imputation, no nonconsecutive weeks, no revised-current-history substitution",
+  "confirmatory": false,
+  "history_previously_inspected": true,
+  "forecast_issued": false,
+  "target": "Initial ALFRED UNRATE percentage minus the as-of known base two observation-months earlier, in percentage points; target level is base plus predicted change.",
+  "features": [
+    "as-of UNRATE(base) minus as-of UNRATE(base-2months)",
+    "log(average latest4 known weekly ICSA / average preceding4weeks)"
+  ],
+  "model": "Two-feature ridge linear regression of numeric change; training-only centering/population standard deviation, zero standard deviation replaced by1. Mean squared error + 1*sum squared standardized slopes; unpenalized intercept. No clipping of predicted level or change.",
+  "ridge_mean_loss": 1,
+  "acceptance": "Paired RMSE at least5percent below BOTH references AND paired MAE no greater than persistence; exploratory screen only, no automatic prospective admission.",
+  "reporting": "All eligible months including pandemic; RMSE and MAE in percentage points; annual breakdown descriptive only, no choosing years.",
+  "retuning": "none; numeric-target follow-up after failed binary forms and weekly nowcast; history already known, adaptive exploratory experiment. No parameter, feature, horizon or subset search."
+}

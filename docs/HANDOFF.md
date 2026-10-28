@@ -1,3 +1,17 @@
+## Psicohistoria — pronóstico numérico UNRATE descartado (28/10/2026)
+
+AV157: fórmula previa59351f31a455ff23c711c06cc4f009f26feddf3b;
+89casos, RMSE2,071630083 vs persistencia1,671774943/media1,702353557;
+MAE0,650186292 vs0,557303371/0,588585150. Descartado sin retuning ni
+selección de años. Cinco pruebas nuevas+seis dependencias y contraste privado
+CSV/Fraction/Gauss181orígenes/89sistemas PASS. Informe/contraste privados
+macro-direct-change-20261028/. Ver AV157_DIRECT_UNEMPLOYMENT_CHANGE.md.
+Cierre PR/CI y canónico se confirman al integrar. Próxima candidata requiere
+señal adicional independiente, no variar fórmulas para salvar negativos.
+Piloto semanal4nov, mensual19nov/BLS4dic y anual preservados.
+
+---
+
 ## Psicohistoria — señal mensual ICSA continua cerrada (28/10/2026)
 
 AV156: contrato previo a7ebed2147e3f78f0b7594613411484665282dfd;
