@@ -647,7 +647,7 @@ async function refreshApp(){
       refreshStateScope("objects")
     ]);
     const calendar=await refreshCalendarView({ force: true });
-    const extras=await Promise.allSettled([renderHomeHealthCard(),loadHomeWeeklyMenu()]);
+    const extras=await Promise.allSettled([renderHomeHealthCard(),loadHomeWeeklyMenu(null,{force:true})]);
     let bankOk=true;
     const financeDialog=document.querySelector("#detail-dialog.budget-dialog[open]");
     if(financeDialog&&canReadPrivateFinanceBankWorkspace()){
