@@ -18,6 +18,7 @@ import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
 import { canonicalWeeklyMenuMoment, prepareWeeklyMenuRows } from "./weekly-menu.js";
 import { menuConsumedFallbackForDate } from "./nutrition-history-fallback.js";
 import { menuDayNoticesFromSheet } from "./menu-day-notices.js";
+import { fetchMenuGoogleRanges } from "./menu-google-retry.js";
 import { menuRecipePhotoUrls } from "./weekly-menu-images.js";
 import { editWeeklyMenu, listWeeklyMenuRecipes, listWeeklyMenuFoods, MenuEditError } from "./weekly-menu-actions.js";
 import { mutateRecipe, RecipeEditError } from "./recipe-editor.js";
@@ -2992,9 +2993,7 @@ async function fetchWeeklyMenuLight(env, options = {}) {
   params.set("valueRenderOption", "UNFORMATTED_VALUE");
 
   const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.HEALTH_SHEET_ID)}/values:batchGet?${params.toString()}`;
-  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
-  if (!response.ok) throw new Error(`HEALTH_MENU_SHEETS_${response.status}`);
-
+  const response = await fetchMenuGoogleRanges(endpoint, token);
   const payload = await response.json();
   const valueRanges = payload.valueRanges || [];
 

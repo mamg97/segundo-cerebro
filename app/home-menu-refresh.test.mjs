@@ -21,3 +21,10 @@ test("mobile feedback identifies failed sources",()=>{
  assert.match(nav,/Sin actualizar: /);
  assert.match(nav,/result\?\.failed/);
 });
+
+test("secondary weekly menu read is fresh and rejects stale and incorrect weeks",()=>{
+ assert.match(app,/HOME_WEEKLY_FULL_INVALID/);
+ assert.match(app,/recovered.status==="ok-stale"/);
+ assert.match(app,/&refresh=1/);
+ assert.match(app,/homeWeeklyMenuLastVerifiedSerial=requestSerial/);
+});

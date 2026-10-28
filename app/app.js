@@ -1955,7 +1955,36 @@ async function readHomeWeeklyMenuUnshared(primaryData = null, options = {}) {
     }
   }
   if (requestSerial !== homeWeeklyMenuRequestSerial || selectedHomeMenuWeek() !== selected) return false;
-  const failureCode=String(lastError?.message || "UNAVAILABLE");
+  // When the lightweight endpoint has failed twice, try the independent
+  // complete nutrition read. A forced read must NEVER accept a stale snapshot.
+  let fullReadError=null;
+  try{
+    const response=await fetch("/api/nutrition?date="+encodeURIComponent(date)+"&refresh=1",{
+      headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"
+    });
+    if(!response.ok)throw new Error("HOME_WEEKLY_FULL_"+response.status);
+    const recovered=await response.json();
+    if(!recovered?.ok||recovered.status==="ok-stale"||
+       !Array.isArray(recovered.weeklyMenu)||
+       menuWeekMonday(recovered.weekStart||recovered.date||"")!==selected){
+      throw new Error("HOME_WEEKLY_FULL_INVALID");
+    }
+    if(requestSerial!==homeWeeklyMenuRequestSerial||selectedHomeMenuWeek()!==selected)return false;
+    if(Array.isArray(primaryData?.recipes))
+      recovered.weeklyMenu=reconcileHomeMenuPhotos(recovered.weeklyMenu,primaryData.recipes);
+    homeWeeklyMenuWeekCache.set(selected,{data:recovered,expiresAt:Date.now()+HOME_WEEK_CACHE_MS});
+    while(homeWeeklyMenuWeekCache.size>12)
+      homeWeeklyMenuWeekCache.delete(homeWeeklyMenuWeekCache.keys().next().value);
+    homeWeeklyMenuLastVerifiedSerial=requestSerial;
+    homeWeeklyMenuRenderedWeek=selected;
+    renderHomeWeeklyMenu(recovered,selected);
+    renderHomeWeeklyMenuNavigation("Menú recuperado desde Nutrición.");
+    return true;
+  }catch(error){
+    fullReadError=error;
+    console.warn("Home weekly menu fallback unavailable",String(error?.message||"FULL_READ_FAILED"));
+  }
+  const failureCode=String(lastError?.message||fullReadError?.message||"UNAVAILABLE");
   console.warn("Home weekly menu read unavailable",failureCode);
   if(homeWeeklyMenuRenderedWeek===selected){
     const tail=failureCode.slice(-3);

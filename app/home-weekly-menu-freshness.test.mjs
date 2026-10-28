@@ -58,7 +58,8 @@ test("Home loads fresh Sheets rows instead of a cached full-nutrition snapshot",
 test("if both direct reads fail, Home never presents stale fallback totals as verified", async () => {
   const h = harness(async () => ({ ok:false, status:503 }));
   assert.equal(await h.context.loadHomeWeeklyMenu(stale), false);
-  assert.equal(h.calls.length, 2);
+  assert.equal(h.calls.length, 3);
+  assert.equal(h.calls[2][0], "/api/nutrition?date=2026-06-02&refresh=1");
   assert.equal(h.rendered, null);
   assert.equal(h.unavailable, true);
 });
@@ -112,7 +113,30 @@ test("an older delayed Sheets response cannot replace a later successful respons
 test("invalid JSON is rejected, never replaced by older summary", async () => {
   const h = harness(async () => ({ ok:true, json:async () => ({ ok:true }) }));
   assert.equal(await h.context.loadHomeWeeklyMenu(stale), false);
-  assert.equal(h.calls.length,2);
+  assert.equal(h.calls.length,3);
   assert.equal(h.rendered,null);
   assert.equal(h.unavailable,true);
+});
+
+test("fallback reads fresh complete nutrition if the lightweight menu is unavailable",async()=>{
+ const h=harness(async url=>url.startsWith("/api/nutrition?")?
+  {ok:true,json:async()=>({...fresh,status:"ok"})}:{ok:false,status:502});
+ assert.equal(await h.context.loadHomeWeeklyMenu(stale,{force:true}),true);
+ assert.equal(h.calls.length,3);
+ assert.equal(h.rendered.weeklyMenu.length,3);
+ assert.match(h.calls.at(-1)[0], /refresh=1/);
+ assert.equal(h.unavailable,false);
+});
+test("a stale fallback cannot be reported as a successful refresh",async()=>{
+ const h=harness(async url=>url.startsWith("/api/nutrition?")?
+  {ok:true,json:async()=>({...fresh,status:"ok-stale"})}:{ok:false,status:502});
+ assert.equal(await h.context.loadHomeWeeklyMenu(stale,{force:true}),false);
+ assert.equal(h.renders.length,0);
+ assert.equal(h.unavailable,true);
+});
+test("a fallback for a different week is rejected",async()=>{
+ const h=harness(async url=>url.startsWith("/api/nutrition?")?
+  {ok:true,json:async()=>({...fresh,weekStart:"2026-05-25",status:"ok"})}:{ok:false,status:502});
+ assert.equal(await h.context.loadHomeWeeklyMenu(stale,{force:true}),false);
+ assert.equal(h.renders.length,0);
 });
