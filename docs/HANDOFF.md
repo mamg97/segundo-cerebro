@@ -1,3 +1,19 @@
+# Psicohistoria — VIEWS real importado, referencia externa · 28/10/2026
+
+Primera ejecución real del importador VIEWS: CSVoficial6876filas/191países/36meses,
+consulta573filas noviembre–enero, datos hastaago2026, leads3/4/5. Alias estricto
+country/name y controlesCSV/identidad/mes reforzados;8tests PASS. ContrasteCSV/
+Decimal independiente exacto. Vista privadaPsicoVIEWS191países/2292celdas escrita
+/releída con filtros, porcentajes y origen externo explícito. No copiar datos,
+probabilidades o IDs reales al repo; no sumar probabilidades, unir al roster
+anual por nombre ni atribuir skill propio. Ver VIEWS_FIRST_REAL_INTAKE.md.
+
+CalendarioPR872 integrado bd3fb4d2 tras cincoCI SUCCESS; correcciones equivalentes
+de main preservadas al resolver conflictos. Fuente privadaPsicoCalendario con
+sietehitos. Comprobar despliegue/Chrome antes de afirmar publicación0.5.33.
+
+---
+
 # Psicohistoria — calendario privado de hitos · 28/10/2026
 
 Laboratorio0.5.33: Inicio/Mapa muestran planificación desde PsicoCalendario

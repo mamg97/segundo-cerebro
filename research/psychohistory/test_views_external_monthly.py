@@ -70,6 +70,42 @@ class VIEWSExternalMonthlyTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self._load()
 
+    def test_official_country_header_alias_and_ambiguous_headers(self):
+        for row in self.data:
+            row['country']=row.pop('name')
+        self._write()
+        self.assertEqual(len(self._load()),72)
+        for row in self.data:
+            row['name']=row['country']
+        self._write()
+        with self.assertRaisesRegex(ValueError,'schema'):self._load()
+        for row in self.data:row.pop('name')
+        self._write()
+        raw=self.path.read_text();self.path.write_text(raw.replace('country_id,','country_id,country_id,',1))
+        with self.assertRaisesRegex(ValueError,'schema'):self._load()
+
+    def test_cross_country_identity_month_ordinal_and_ragged_rows_rejected(self):
+        for kind in ('gw','iso','ordinal','nonconsecutive','ragged','integer'):
+            self.data=fake_rows()
+            if kind=='gw':
+                for row in self.data[36:]:row['gwcode']=self.data[0]['gwcode']
+            if kind=='iso':
+                for row in self.data[36:]:row['isoab']=self.data[0]['isoab']
+            if kind=='ordinal':self.data[0]['month_id']+=1
+            if kind=='nonconsecutive':
+                for row in self.data:
+                    if row['month_id']>=570:row['month_id']+=1
+            if kind=='integer':self.data[0]['country_id']='41.0'
+            self._write()
+            if kind=='ragged':self.path.write_text(self.path.read_text()+'orphan,record\n')
+            with self.subTest(kind=kind),self.assertRaises(ValueError):self._load()
+
+    def test_window_count_must_be_integer(self):
+        data=self._load()
+        for value in (True,1.5,0,13):
+            with self.subTest(value=value),self.assertRaises(ValueError):
+                summarize_months(data,'fatalities003_2026_08_t01',asof_month='2026-10',next_n=value)
+
     def test_reject_unpinned_sha_and_unsupported_release(self):
         with self.assertRaisesRegex(ValueError,"pinned SHA256"):
             load(self.path,"fatalities003_2026_08_t01",expected_sha256="0"*64)
