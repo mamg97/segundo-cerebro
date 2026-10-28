@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Piloto semanal reutilizable · 28/10/2026
+
+[AV155](psicohistoria/AV155_WEEKLY_REFERENCE_OMISSION.md): objetivo24oct OMITTED por cuota y cierre de ventana, sinTSR ni alta.1177filas previas preservadas; no resolver borrador. Preparador, auditor de relectura e intervalos y resolución candidata disponibles con11pruebas nuevas (23con dependencias correctas). No contactan servicios ni acreditan emisión por sísolos. Ayudante privado de sellado impide solicitudes para omisiones, limita24intentos y no reintenta entregas inciertas.
+
+Seguimiento semanal creado para4nov09Madrid/08UTC, objetivo31oct; comprobar calendario real. Autorización12semanas persistida; no volver a pedirla. Ver [runbook](psicohistoria/WEEKLY_REFERENCE_RUNBOOK.md). Primera inscripción semanal aún no verificada. Integración/canónico de este avance se completan al cerrar laPR. AV152–154 y PR856–858 ya integradas, tres candidatos descartados, sin reoptimización. Mensual19nov/BLS4dic separados; macro/anual originales inmutables. Coordinador global queda PAUSEDsincola tras reanudación.
+
+---
+
 ## PSICOHISTORIA — Nowcast semanal · 28/10/2026
 
 [AV154](psicohistoria/AV154_WEEKLY_CLAIMS_NOWCAST.md):381casos, RMSlog0,160920 vs persistencia0,149748/media4semanas0,198271. Ridge DESCARTADO por regla previa, sin retuning.6pruebas y contraste independiente por eliminación gaussiana381predicciones PASS. CI/publicación/canónico pendientes al preparar este cierre. Historia retrospectiva, ninguna emisión.
