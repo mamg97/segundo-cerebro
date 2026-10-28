@@ -109,7 +109,12 @@ export function initializeMobileNavigation({navigateTo,onRefresh:refreshHandler}
   feedback.hidden=false;feedback.textContent="Actualizando datos…";
   try{
     const result=await onRefresh?.();
-    feedback.textContent=result?.ok===true?"Datos actualizados":"Actualización parcial o fallida";
+    if(result?.ok===true){
+      feedback.textContent="Datos actualizados";
+    }else{
+      const failed=Array.isArray(result?.failed)?result.failed.slice(0,3).join(", "):"";
+      feedback.textContent=failed?"Sin actualizar: "+failed:"Actualización parcial o fallida";
+    }
   }catch(error){feedback.textContent="No se pudo actualizar";}
   finally{
     refreshBusy=false;button.disabled=false;button.classList.remove("is-refreshing");

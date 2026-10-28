@@ -647,7 +647,7 @@ async function refreshApp(){
       refreshStateScope("objects")
     ]);
     const calendar=await refreshCalendarView({ force: true });
-    const extras=await Promise.allSettled([renderHomeHealthCard(),loadHomeWeeklyMenu()]);
+    const extras=await Promise.allSettled([renderHomeHealthCard(),loadHomeWeeklyMenu(null,{force:true})]);
     let bankOk=true;
     const financeDialog=document.querySelector("#detail-dialog.budget-dialog[open]");
     if(financeDialog&&canReadPrivateFinanceBankWorkspace()){
@@ -667,9 +667,14 @@ async function refreshApp(){
       }
     }
     renderMode();
-    return {ok:results.every(x=>x.ok===true) && bankOk &&
-      calendar.status!=="failed"&&calendar.status!=="partial"&&
-      extras.every(x=>x.status==="fulfilled")};
+    const failed=results.filter(x=>x.ok!==true).map(x=>({
+      finance:"Finanzas",habits:"Hábitos",pantry:"Despensa",objects:"Objetos"
+    })[x.scope]||x.scope);
+    if(!bankOk)failed.push("Cuentas bancarias");
+    if(calendar.status==="failed"||calendar.status==="partial")failed.push("Agenda");
+    if(extras[0].status!=="fulfilled")failed.push("Salud");
+    if(extras[1].status!=="fulfilled"||extras[1].value!==true)failed.push("Menú semanal");
+    return {ok:failed.length===0,failed};
   }catch(error){
     console.warn("Refresh failed","REFRESH_UNAVAILABLE");
     return {ok:false};
@@ -1808,6 +1813,7 @@ function renderHomeHabitsCard() {
 // snapshot must not overwrite an updated menu when a concurrent read fails.
 let homeWeeklyMenuRequestSerial = 0;
 let homeWeeklyMenuLastVerifiedSerial = 0;
+let homeWeeklyMenuInFlight = null;
 // null means follow the current local calendar week across midnight/Sundays.
 let homeWeeklyMenuSelectedWeek = null;
 let homeWeeklyMenuRenderedWeek = null;
@@ -1875,7 +1881,23 @@ async function goToHomeMenuWeek(date) {
   return loaded;
 }
 
-async function loadHomeWeeklyMenu(primaryData = null, options = {}) {
+function loadHomeWeeklyMenu(primaryData = null, options = {}) {
+  const week=selectedHomeMenuWeek();
+  const pending=homeWeeklyMenuInFlight;
+  // A Home render and the nutrition card often request the same week
+  // concurrently. Reuse the pending promise rather than invalidating it.
+  // A forced post-edit reload supersedes a non-forced pending read.
+  if(pending && pending.week===week && (!options.force || pending.force))
+    return pending.promise;
+  const promise=readHomeWeeklyMenuUnshared(primaryData,options);
+  const current={week,force:!!options.force,promise};
+  homeWeeklyMenuInFlight=current;
+  void promise.finally(()=>{
+    if(homeWeeklyMenuInFlight===current)homeWeeklyMenuInFlight=null;
+  }).catch(()=>{});
+  return promise;
+}
+async function readHomeWeeklyMenuUnshared(primaryData = null, options = {}) {
   const current = currentHomeMenuWeek();
   const selected = selectedHomeMenuWeek();
   if (!selected || !current) return false;
@@ -1884,11 +1906,14 @@ async function loadHomeWeeklyMenu(primaryData = null, options = {}) {
   if (!options.navigation && selected !== current) return true;
   const requestSerial = ++homeWeeklyMenuRequestSerial;
   const cached = homeWeeklyMenuWeekCache.get(selected);
-  if (options.navigation && !options.force && cached && cached.expiresAt > Date.now()) {
-    if (requestSerial === homeWeeklyMenuRequestSerial && selectedHomeMenuWeek() === selected) {
-      homeWeeklyMenuRenderedWeek = selected;
-      renderHomeWeeklyMenu(cached.data, selected);
-      homeWeeklyMenuLastVerifiedSerial = requestSerial;
+  if (!options.force && cached && cached.expiresAt > Date.now() &&
+      (options.navigation || homeWeeklyMenuRenderedWeek===selected)) {
+    if(requestSerial===homeWeeklyMenuRequestSerial && selectedHomeMenuWeek()===selected){
+      homeWeeklyMenuLastVerifiedSerial=requestSerial;
+      if(options.navigation){
+        homeWeeklyMenuRenderedWeek=selected;
+        renderHomeWeeklyMenu(cached.data,selected);
+      }
     }
     return true;
   }
@@ -1930,14 +1955,18 @@ async function loadHomeWeeklyMenu(primaryData = null, options = {}) {
     }
   }
   if (requestSerial !== homeWeeklyMenuRequestSerial || selectedHomeMenuWeek() !== selected) return false;
-  console.warn("Home weekly menu read unavailable", String(lastError?.message || "UNAVAILABLE"));
-  if (homeWeeklyMenuRenderedWeek === selected) {
-    renderHomeWeeklyMenuNavigation("No se ha podido actualizar. Se mantiene la última consulta.", true);
-  } else if (homeWeeklyMenuRenderedWeek === null) {
+  const failureCode=String(lastError?.message || "UNAVAILABLE");
+  console.warn("Home weekly menu read unavailable",failureCode);
+  if(homeWeeklyMenuRenderedWeek===selected){
+    const tail=failureCode.slice(-3);
+    const reason=failureCode.startsWith("HOME_WEEKLY_MENU_") && /^[45][0-9]{2}$/.test(tail)
+      ?"HTTP "+tail:failureCode.includes("INVALID_WEEK")?"respuesta incoherente":"error de conexión";
+    renderHomeWeeklyMenuNavigation("No se ha podido actualizar ("+reason+"). Se mantiene la última consulta.",true);
+  }else if(homeWeeklyMenuRenderedWeek===null){
     renderHomeWeeklyMenuUnavailable();
   }
-  // A refresh failure does not invalidate an already verified view of this week.
-  return homeWeeklyMenuRenderedWeek === selected;
+  // Old data may remain visible; it does not mean the current refresh succeeded.
+  return false;
 }
 async function renderHomeNutritionCard() {
   const consumedNode = document.querySelector("#home-kcal-consumed");
