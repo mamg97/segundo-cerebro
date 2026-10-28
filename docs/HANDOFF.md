@@ -1,3 +1,19 @@
+# Psicohistoria — calendario privado de hitos · 28/10/2026
+
+Laboratorio0.5.33: Inicio/Mapa muestran planificación desde PsicoCalendario
+privado, con condiciones por paso, fechas Madrid, meses, horizonte anual sin
+fecha y mercados aplazados. No confundir fechas con automatización ejecutada,
+emisión o utilidad: una fecha vencida exige revisión, nunca éxito automático.
+147tests PASS; siete hitos escritos/releídos. Local1280/433pxsin overflow.
+Comprobar CI/despliegue y Chrome con fuente real antes de afirmar producción.
+Ver `RESEARCH_CALENDAR_UI.md`. Predicciones/inscripciones originales intactas.
+
+PR870 lector DOL integrada c7496bc5;24tests,2CI SUCCESS y contrastePDFreal
+anterior al piloto. AV163 escrito/releído. Seguimiento4nov conserva fecha/alcance,
+con instrucción de usar lector y verificar primera edición/origen por separado.
+
+---
+
 # Psicohistoria — lector DOL de resolución semanal · 28/10/2026
 
 `dol_weekly_release.py` cruza narrativa advanceSA con tabla InitialClaimsSA,

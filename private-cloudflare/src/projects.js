@@ -167,6 +167,14 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
       phases:table(phaseValues).filter(p=>p.fase_id&&p.dominio).map(p=>Object.fromEntries(phaseFields.map(k=>[k,String(p[k]??'')]))),
       advances:table(advanceValues).filter(a=>a.avance_id).map(a=>({fecha:String(a.fecha??'')}))};
   } catch { /* Explicit unavailable state; never fake zero progress. */ }
+  let schedule={status:"unavailable",entries:[]};
+  try {
+    const saved=await sheetsBatchGet(id,["PsicoCalendario!A1:L100"],token);
+    const values=saved[0]?.values||[];
+    const fields=['plan_id','dominio','titulo','fecha_utc','precision_fecha','tipo','condicion','limite_interpretacion','estado','actualizado','evidencia_url'];
+    if(!fields.every(k=>values[0]?.includes(k))||values.length>=100)throw new Error('SCHEDULE_SCHEMA');
+    schedule={status:"ok",entries:table(values).filter(p=>p.plan_id).map(p=>Object.fromEntries(fields.map(k=>[k,String(p[k]??'')])))};
+  } catch { /* Planning unavailable must not erase predictions or progress. */ }
   let agenda={events:[],sourceStatus:"UNAVAILABLE",forecastCount:0};
   try {
     const paired=await sheetsBatchGet(id,["PsicoAgendaEventos!A1:K150","PsicoAgendaFuentes!A1:K150"],token);
@@ -180,6 +188,7 @@ export async function fetchPsychohistoryLab(env, getGoogleAccessToken) {
   const result = {
     status:"ok-live",
     agenda,
+    schedule,
     progress,
     milestones:milestones.filter(x=>x.hito_id && /^V[1-4]$/.test(x.vertiente)).map(x=>({
       id:String(x.hito_id), track:String(x.vertiente), title:String(x.titulo||""),
