@@ -30,6 +30,12 @@ reentrenamiento, score, TSA ni filas en PsicoPredicciones.
 
 ## Consulta disponible
 
+Inicio y Evidencia del laboratorio ofrecen un acceso a la tabla privada, con
+191países, ventana consultada y corte de entrada visibles antes de abrirla.
+El enlace se toma del registro privado, nunca de un IDpublicado en el código;
+el componente rechaza metadatos ambiguos y destinos ajenos a GoogleSheets.
+No añade resultados o modelos propios a los contadores del laboratorio.
+
 La vista privada `PsicoVIEWS` presenta un país por fila, filtros nativos, tres
 probabilidades mensuales y tres predicciones puntuales de fallecidos. Identifica
 edición, corte de entrada, fuente y origen externo. Se verificaron por relectura

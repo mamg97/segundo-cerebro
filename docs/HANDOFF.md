@@ -1,3 +1,19 @@
+# Psicohistoria — acceso a VIEWS desde el laboratorio · 28/10/2026
+
+Laboratorio0.5.34 añade en Inicio/Evidencia un acceso desde metadatos privados
+a PsicoVIEWS, con191países, ventana noviembre–enero y corteago2026visibles.
+Origen externo explícito: ninguna emisión, modelo validado o score propio.
+Enlace sóloGoogleSheets HTTPS, sin IDprivado hardcodeado.149testsUI/adaptadores
+PASS; local1280/433pxsin overflow. Ocho pruebas Python del intake pasan y
+contraste rawCSV/Decimal573filas exacto. EsperarCI/despliegue y comprobarfuente
+real antes de afirmar producción0.5.34. Las probabilidades reales sólo privadas.
+
+PR872 calendario ya publicado0.5.33, despliegue40753118080SUCCESS y Chrome real
+1680pxverifica7hitos/1177predicciones/0evaluadas. AV164/V4-03 escritos/releídos;
+captura research-calendar-20261028/production-calendar.png. No móvil físico.
+
+---
+
 # Psicohistoria — VIEWS real importado, referencia externa · 28/10/2026
 
 Primera ejecución real del importador VIEWS: CSVoficial6876filas/191países/36meses,
