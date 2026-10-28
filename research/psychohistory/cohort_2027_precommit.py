@@ -132,6 +132,44 @@ def prepare(source_path, bundle_path):
     return audit
 
 
+def _query_imprint(raw):
+    """Read exact OCTET STRING bytes, not OpenSSL's lossy human hex dump.
+
+    Some OpenSSL versions abbreviate trailing zero bytes as <SPACES/NULS>.
+    OpenSSL still parses the whole query and checks SHA256/nonce/certReq above;
+    this bounded DER traversal only locates the original message imprint.
+    """
+    def elements(data):
+        result = []
+        offset = 0
+        while offset < len(data):
+            if offset + 2 > len(data):
+                raise ValueError("Truncated query DER")
+            tag, size = data[offset], data[offset+1]
+            offset += 2
+            if size & 128:
+                n = size & 127
+                if not 1 <= n <= 4 or offset+n > len(data):
+                    raise ValueError("Invalid query DER length")
+                size = int.from_bytes(data[offset:offset+n], 'big')
+                offset += n
+            if offset+size > len(data):
+                raise ValueError("Truncated query DER value")
+            result.append((tag, data[offset:offset+size]))
+            offset += size
+        return result
+    outer = elements(raw)
+    if len(outer) != 1 or outer[0][0] != 0x30:
+        raise ValueError("Expected one DER query sequence")
+    query = elements(outer[0][1])
+    if len(query) < 2 or query[0] != (2, b'\x01') or query[1][0] != 0x30:
+        raise ValueError("Expected RFC3161 query version and imprint")
+    imprint = elements(query[1][1])
+    if len(imprint) != 2 or imprint[0][0] != 0x30 or imprint[1][0] != 4 or len(imprint[1][1]) != 32:
+        raise ValueError("Expected SHA256 OCTET STRING imprint")
+    return imprint[1][1]
+
+
 def verify_bundle(source_path, bundle_path):
     source, report, policy, protocol = checked_candidate(source_path)
     bundle = Path(bundle_path).absolute()
@@ -174,14 +212,7 @@ def verify_bundle(source_path, bundle_path):
             "Nonce: " not in text or "Certificate required: yes" not in text or
             "Message data:" not in text or "Policy OID:" not in text):
         raise ValueError("RFC3161 query must use SHA256, nonce and certReq")
-    imprint_dump = text.split("Message data:", 1)[1].split("Policy OID:", 1)[0]
-    values = []
-    for line in imprint_dump.splitlines():
-        if " - " not in line:
-            continue
-        hex_part = line.split(" - ", 1)[1].split("   ", 1)[0]
-        values.extend(re.findall(r"(?i)\b[0-9a-f]{2}\b", hex_part))
-    if bytes.fromhex("".join(values)) != hashlib.sha256(signed).digest():
+    if _query_imprint((bundle / "request.tsq").read_bytes()) != hashlib.sha256(signed).digest():
         raise ValueError("RFC3161 query imprint does not bind the actual commitment")
     return {
         "schema": SCHEMA,

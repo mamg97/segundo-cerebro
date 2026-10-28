@@ -1,3 +1,24 @@
+# Psicohistoria — evaluador anual preparado, sin resolver2027 · 28/10/2026
+
+`annual_evaluation.py` verifica el plan original contra candidato/compromiso,
+cruza exactamente196países con un archivo anual futuro fijado por SHA y calcula
+los seis modelos en el mismo subconjunto. Ausentes/NA quedan explícitos,
+ninguna imputación;1176probabilidades no son1176casos independientes.
+Brier principal v2_logistic–frequency, skill indefinido si baseline0,
+secundarias existentes y bootstrap de países sólo descriptivo. CLI privada
+sin sobrescritura, red, escrituras Sheets ni admisión automática. No hay
+resultados2027. Ver `ANNUAL_EVALUATION_READINESS.md`.
+
+El ensayo sintético reprodujo un fallo previo de lectura de TSQ: OpenSSL
+abrevia bytes nulos finales en su volcado textual. El validador ahora lee el
+OCTET STRING DER original; conserva todos los gates de hash/nonce/certReq y
+no modifica compromisos, solicitudes ni recibos reales. Regresión determinista.
+Además se corrige sólo el SHA transcrito en AV161; archivo e informe originales
+ya tenían el SHA correcto y no se recalcula JOLTS. PR868 integrada6289dc1d,
+ambos CI SUCCESS y canónico/Chrome productivo verificados.
+
+---
+
 ## Psicohistoria — JOLTS evaluado y descartado (28/10/2026)
 
 AV161: contrato previo a3e4c200, dos aclaraciones textuales antes del cálculo
