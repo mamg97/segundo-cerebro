@@ -28874,3 +28874,27 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
   line-height: 1.3;
 }
 .home-weekly-menu-coverage-warning small { margin-top: .2rem; }
+
+
+/* Compact nutrition-source label; never confuse a plated-food photo with
+   a photographed nutrition label or an independently measured recipe. */
+.nutrition-macro-source {
+  display: inline-block;
+  max-width: 100%;
+  margin-top: 3px;
+  padding: 1px 5px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: 500;
+  text-align: center;
+  white-space: normal;
+  color: var(--ink-soft, #6b7280);
+}
+.nutrition-macro-source.is-photo,
+.nutrition-macro-source.is-estimate,
+.nutrition-macro-source.is-pending {
+  font-style: italic;
+}
+.nutrition-macro-source.is-pending { opacity: .85; }
