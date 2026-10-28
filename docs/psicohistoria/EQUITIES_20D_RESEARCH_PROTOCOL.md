@@ -1,4 +1,12 @@
-## Estado de prioridad revisado · 18/10/2026
+## Prioridad reabierta · 29/10/2026
+
+El propietario prioriza expresamente riesgo bursátil a20sesiones y revoca el
+aplazamiento para este alcance. Reutilizar el piloto; primera evaluación real
+según [contrato previo](EQUITIES_REAL_MARKET_FIRST_STUDY.md). El objetivo de
+mercado agregado/retorno total se distingue de una cotización ajustada deETF.
+El bloque siguiente conserva la decisión histórica superada, no la prioridad.
+
+## Estado de prioridad histórico · 18/10/2026
 
 **APLAZADO POR DECISIÓN DE INVESTIGACIÓN.** Esta línea es una aplicación
 eventual del método PSICOHISTORIA, no una prioridad del laboratorio.

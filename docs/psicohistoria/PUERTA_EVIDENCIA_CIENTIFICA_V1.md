@@ -85,6 +85,13 @@ inestabilidad temporal y falsas declaraciones prospectivas.
 
 ## Repriorización F1B bolsa
 
+**Actualización 29/10/2026:** el propietario reabre expresamente riesgo
+bursátil a 20 sesiones y lo prioriza. El aplazamiento siguiente es histórico,
+superado para ese alcance. Continúan las exigencias de fuente, comparación
+temporal y evidencia prospectiva; la reapertura no autoriza órdenes ni MIDAS.
+Primera unidad según [contrato previo](EQUITIES_REAL_MARKET_FIRST_STUDY.md)
+y [resultado de estudio](AV166_EQUITIES_FIRST_REAL_STUDY.md).
+
 `research/psychohistory/equities_drawdown_research.py` se conserva
 como prototipo sintético sin datos reales, trading ni costes, pero
 queda marcado `PARKED` hasta que exista un modelo central con
