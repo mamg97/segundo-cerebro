@@ -1,3 +1,18 @@
+## Psicohistoria — señal mensual ICSA continua cerrada (28/10/2026)
+
+AV156: contrato previo a7ebed2147e3f78f0b7594613411484665282dfd;
+90casos/16eventos, Brier0,151413172 contra0,151561715/0,152789108.
+Mejora0,098%/0,901%, menor que5%: candidato descartado, sin retuning ni emisión.
+Seis pruebas nuevas+seis dependencias PASS; CSV/Fraction y Newton independiente
+reconstruyen184orígenes/90ajustes. Informe y contraste privados preservados.
+Ver docs/psicohistoria/AV156_CONTINUOUS_CLAIMS.md. Cierre PR/CI y canónico se
+confirman al integrar; no promover MAC03/04 por reproducir un negativo.
+Piloto semanal sigue4nov08UTC, objetivo31oct;24octomitido. Referencias/permiso,
+mensual19nov/BLS4dic y cohorte anual inmutables. Esperar una fecha no obliga
+parar otras unidades autorizadas. Control cuota5h/semana antes de continuar.
+
+---
+
 ## PSICOHISTORIA — Piloto semanal reutilizable · 28/10/2026
 
 [AV155](psicohistoria/AV155_WEEKLY_REFERENCE_OMISSION.md): objetivo24oct OMITTED por cuota y cierre de ventana, sinTSR ni alta.1177filas previas preservadas; no resolver borrador. Preparador, auditor de relectura e intervalos y resolución candidata disponibles con11pruebas nuevas (23con dependencias correctas). No contactan servicios ni acreditan emisión por sísolos. Ayudante privado de sellado impide solicitudes para omisiones, limita24intentos y no reintenta entregas inciertas.

@@ -80,7 +80,7 @@ def metrics(rows):
     return out
 
 
-def run(claims,periods,labels,p):
+def run(claims,periods,labels,p,scorer=score):
     cases=[];outputs=[]
     for t in initial.month_range(date.fromisoformat(p['training_origins_start']),date.fromisoformat(p['test_end'])):
         target=t.isoformat();month=shift_month(target,-1);cut=month[:8]+str(p['cut_day']);issue=month[:8]+str(p['issue_day'])
@@ -95,7 +95,7 @@ def run(claims,periods,labels,p):
         if target>=p['test_start']:
             out=dict(row)
             if row['status']=='ELIGIBLE':
-                fit=score(cases,row,p)
+                fit=scorer(cases,row,p)
                 changes=[]
                 for offset in range(-59,1):
                     end=shift_month(base,offset);start=shift_month(end,-2)
