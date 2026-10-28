@@ -1,3 +1,25 @@
+## Psicohistoria — estado al cerrar la fase JOLTS (28/10/2026)
+
+AV155–160 terminados y canónico releído. PR865merge8e386549142d6fef4b54faffa3836719db44697c:
+web0.5.32publicada,5CIydeploy40694494869SUCCESS;108pruebas UI.
+Chrome privado Inicio/Evidencia comprobados con3últimos/5comparaciones y
+RMSlog separado en tabla.1177filas previas y0resultados futuros conservados.
+Móvil local433pxsin overflow; no afirmar dispositivo físico o viewport móvil
+productivo (el override no se aplicó a la pestaña original). Sin nuevo skill.
+Piloto semanal adelanta4nov00:05UTC dentro de00–12UTC para margen de cuota;
+objetivo31oct,autorización12semanas/24RFC3161vigente.19nov/4dic separados.
+
+Siguiente unidad en borrador: protocolo JOLTS publicadoa3e4c200a5d20cf001cb901557e11ebd858fbe3b
+antes de captura; fuenteJTSJOR188meses/641intervalos archivada privadamente,
+SHA73922929d881fb694a905448f8cb1a622b7e6ace943f7a989c336a9842f9ebd8.
+macro_jolts.py y4pruebas de señal/reloj/escala/entrenamiento PASS; falta
+adversarial del archivo,CLI,ejecución y contraste independiente. No score ni
+emisión, no AV161 hasta cerrar experimento completo. No recalcular negativos.
+Protocolo exige corte JOLTS objetivo−3 y UNRATEbaseobjetivo−2, dos relojes.
+Guardar rama parcial y continuar desde checkpoint privado según cuota global.
+
+---
+
 ## Psicohistoria — comparaciones visuales desde registro privado (28/10/2026)
 
 AV159: nueva lectura genérica `psychohistory.paired-evaluation.v1` en
