@@ -1,3 +1,24 @@
+## MIDAS — auditor de fuente OHLC común · 28/10/2026
+
+Integración de solo lectura de `dashboard.market_data`: cobertura del universo
+congelado, ausencias, antigüedad, hashes base/efectivo y seis consumidores (24
+libros). La UI privada distingue cobertura parcial, motor y origen manual o
+programado. No añade tablas D1, nuevos cron, servicios de pago ni datos privados
+al repositorio público MIDAS.
+
+El auditor relee `market_data/source_health.json` público y calcula SHA-256 de
+los snapshots/revisiones; comprueba enlaces, fechas y adiciones solo a ausencias.
+La última cadena manual conocida no certifica la siguiente programada. Mantener
+issue MIDAS #58 abierta hasta verificar un ciclo natural completo y esta lectura
+en producción. Las incidencias de workflows históricos conservan su semántica.
+
+Validación local: 995 pruebas correctas, build correcto y hash de captura real
+verificado independientemente (491/504, 24 libros al 27/10). CI/despliegue y
+lectura privada de producción pendientes al preparar la PR; no certificar
+continuidad automática por la prueba manual.
+
+---
+
 ## Psicohistoria — señal mensual ICSA continua cerrada (28/10/2026)
 
 AV156: contrato previo a7ebed2147e3f78f0b7594613411484665282dfd;
