@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Nowcast semanal · 28/10/2026
+
+[AV154](psicohistoria/AV154_WEEKLY_CLAIMS_NOWCAST.md):381casos, RMSlog0,160920 vs persistencia0,149748/media4semanas0,198271. Ridge DESCARTADO por regla previa, sin retuning.6pruebas y contraste independiente por eliminación gaussiana381predicciones PASS. CI/publicación/canónico pendientes al preparar este cierre. Historia retrospectiva, ninguna emisión.
+
+AV152/PR856 y AV153/PR857 cerrados. Próxima unidad útil: piloto semanal explícito de referencias, contrato y captura actuales, para observar resultados antes que el piloto mensual; no promover candidatos negativos. Preservar macro/anual y seguimientos19nov/4dic; cuota compartida comprobada antes de fases y cada60s.
+
+---
+
 ## PSICOHISTORIA — Señal externa ICSA · 28/10/2026
 
 [AV153](psicohistoria/AV153_MACRO_CLAIMS_SIGNAL.md): protocolo/código publicados antes de evaluar.90casos/16eventos, Brier0,155183 vs0,151562 y0,152789, persistencia0,177778. DESCARTADO, sin buscar otro umbral.6pruebas temporales y contraste independienteCSV/Fraction PASS. Sólo5casos de tensión: límite descriptivo, no permiso para afinar. Fuentes y resultados privados preservados; ninguna emisión. CI/publicación/sincronización canónica pendientes de este cierre.
