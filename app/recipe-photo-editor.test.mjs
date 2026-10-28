@@ -54,11 +54,21 @@ test("private recipe images are read before inherited Google Drive photos",()=>{
 
 test("after recipe photo edit the home menu invalidates cached photo references and reloads",()=>{
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
- const first=app.indexOf("async function refreshRecipeCatalog()");
+ const first=app.indexOf("async function refreshRecipeCatalog(expected=null)");
  const second=app.indexOf("function renderRecipeDetail(",first);
  assert.ok(first>=0 && second>first);
  const code=app.slice(first,second);
  assert.match(code,/homeWeeklyMenuWeekCache\.clear\(\)/);
  assert.match(code,/await loadHomeWeeklyMenu\(updated, \{ navigation: true, force: true \}\)/);
  assert.match(code,/renderRecipesPanel\(updated\)/);
+});
+
+test("new recipe photos are read back before the edit form reports completion",()=>{
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ const ui=readFileSync(new URL("./recipe-editor-ui.mjs",import.meta.url),"utf8");
+ assert.match(app,/if\(expected\.photoUpdated\)/);
+ assert.match(app,/throw new Error\("RECIPE_PHOTO_NOT_READABLE"\)/);
+ assert.match(ui,/const saved=await writeRecipeAction\(payload,photo\)/);
+ assert.match(ui,/await onSaved\(saved\)/);
+ assert.match(ui,/No vuelvas a guardar: recarga el catálogo/);
 });
