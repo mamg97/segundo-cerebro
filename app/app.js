@@ -7829,7 +7829,7 @@ function renderGymPlanView(data) {
       <div class="gym-session-footer">
         <label>
           <span>Fecha</span>
-          <input id="gym-session-date" type="date" value="${new Date().toISOString().slice(0, 10)}" required>
+          <input id="gym-session-date" type="date" value="${localDateKey()}" required>
         </label>
         <label class="gym-notes-field">
           <span>Notas del entrenamiento</span>
@@ -8606,58 +8606,87 @@ function renderMobilePickerOptions(currentValue, min, max, step, options = {}) {
   return rows.join("");
 }
 
+let gymSaveAttempt=null;
+let gymLastConfirmedPayload=null;
+function gymSaveStatusMessage(code,status) {
+  if(code==="GYM_TEMPORARILY_PAUSED")return "El entrenamiento está marcado como pausado en Salud. No se ha guardado; revisa el objetivo semanal.";
+  if(code==="INVALID_GYM_SESSION"||code==="EMPTY_GYM_SESSION")return "Revisa la fecha y los ejercicios realizados. No se ha guardado.";
+  if(code==="GYM_DB_WRITE_FAILED"||code==="GYM_DB_UNAVAILABLE"||code==="GYM_DB_READ_FAILED")return "Error de la base privada del gimnasio ("+code+"). No se ha confirmado el guardado; puedes reintentar sin duplicar la sesión.";
+  if(code==="INVALID_GYM_REQUEST_ID")return "Error del identificador de guardado. Actualiza la aplicación antes de reintentar.";
+  if(code==="NETWORK_ERROR"||code==="INVALID_RESPONSE")return "La conexión se interrumpió. No sabemos si se guardó: reintenta con el mismo identificador para evitar duplicados.";
+  return "No se ha podido confirmar el guardado ("+String(code||"HTTP_"+status).slice(0,70)+"). Conserva los datos y reintenta.";
+}
 async function saveGymSessionFromForm(planById) {
   const dayId = document.querySelector("#gym-day-id")?.value;
   const day = planById.get(dayId);
   if (!day) return;
-
   const status = document.querySelector("#gym-save-status");
+  const button = document.querySelector("#gym-session-form .gym-save-button");
+  if(button?.disabled)return;
   const sessionDate = document.querySelector("#gym-session-date")?.value;
   const notes = document.querySelector("#gym-session-notes")?.value || "";
   const rows = [...document.querySelectorAll(".gym-exercise-row")];
-  // Targets are prefilled for convenience. Only explicitly confirmed exercises are actual training.
-  const performedRows = rows.filter((row) => row.querySelector(".gym-input-done")?.checked);
+  const performedRows = rows.filter(row => row.querySelector(".gym-input-done")?.checked);
   if (!performedRows.length) {
-    if (status) status.textContent = "Marca como realizado al menos un ejercicio antes de guardar.";
+    if(status) status.textContent="Marca como realizado al menos un ejercicio antes de guardar.";
     return;
   }
-
-  const entries = performedRows.map((row) => {
-    const exercise = day.exercises.find((item) => item.id === row.dataset.exerciseId);
+  const entries=performedRows.map(row=>{
+    const exercise=day.exercises.find(item=>item.id===row.dataset.exerciseId);
     return {
-      exerciseId: row.dataset.exerciseId,
-      exerciseName: exercise?.name || row.dataset.exerciseId,
-      setsDone: row.querySelector(".gym-input-sets")?.value || null,
-      repsDone: row.querySelector(".gym-input-reps")?.value || "",
-      loadValue: row.querySelector(".gym-input-load")?.value || null,
-      loadUnit: exercise?.loadUnit || "kg",
-      notes: row.querySelector(".gym-input-note")?.value || ""
+      exerciseId:row.dataset.exerciseId,
+      exerciseName:exercise?.name||row.dataset.exerciseId,
+      setsDone:row.querySelector(".gym-input-sets")?.value||null,
+      repsDone:row.querySelector(".gym-input-reps")?.value||"",
+      loadValue:row.querySelector(".gym-input-load")?.value||null,
+      loadUnit:exercise?.loadUnit||"kg",
+      notes:row.querySelector(".gym-input-note")?.value||""
     };
   });
-
-  if (status) status.textContent = "Guardando…";
-
+  const payload={sessionDate,dayId:day.id,dayTitle:day.title,notes,entries};
+  const key=JSON.stringify(payload);
+  if(key===gymLastConfirmedPayload){
+    if(status)status.textContent="Este entrenamiento ya se ha guardado. Consulta el calendario antes de volver a registrarlo.";
+    return;
+  }
+  if(!gymSaveAttempt||gymSaveAttempt.key!==key)
+    gymSaveAttempt={key,requestId:crypto.randomUUID()};
+  const requestId=gymSaveAttempt.requestId;
+  if(button)button.disabled=true;
+  if(status)status.textContent="Guardando…";
   try {
-    const response = await fetch("/api/gym/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({
-        sessionDate,
-        dayId: day.id,
-        dayTitle: day.title,
-        notes,
-        entries
-      })
+    const response=await fetch("/api/gym/session",{
+      method:"POST",
+      credentials:"same-origin",
+      cache:"no-store",
+      headers:{"Content-Type":"application/json",Accept:"application/json"},
+      body:JSON.stringify({...payload,clientRequestId:requestId})
     });
-    const payload = await response.json();
-    if (!response.ok || !payload.ok) throw new Error(payload.code || `GYM_SAVE_${response.status}`);
-
-    if (status) status.textContent = "Entrenamiento guardado ✓";
-    const refresh = await fetch("/api/gym", { headers: { Accept: "application/json" } });
-    if (refresh.ok) renderGymPanel(await refresh.json());
-  } catch (error) {
-    if (status) status.textContent = "No se ha podido guardar. Inténtalo de nuevo.";
-    console.warn("Gym save failed", error);
+    const result=await response.json().catch(()=>({code:"INVALID_RESPONSE"}));
+    if(!response.ok||result.ok!==true){
+      const code=String(result.code||"HTTP_"+response.status);
+      const error=new Error(code);error.status=response.status;throw error;
+    }
+    gymLastConfirmedPayload=key;
+    gymSaveAttempt=null;
+    if(status)status.textContent=result.alreadySaved?"Entrenamiento ya registrado ✓":"Entrenamiento guardado ✓";
+    // Read failure after a 201 is NOT a write failure and must not prompt a duplicate.
+    try{
+      const refresh=await fetch("/api/gym",{headers:{Accept:"application/json"},cache:"no-store"});
+      if(refresh.ok){
+        const data=await refresh.json();
+        if(data?.ok===true){renderGymPanel(data);return;}
+      }
+      if(status)status.textContent="Entrenamiento guardado ✓. El calendario se actualizará al recargar.";
+    }catch(error){
+      if(status)status.textContent="Entrenamiento guardado ✓. Sin conexión para actualizar el calendario.";
+    }
+  }catch(error){
+    const code=String(error?.message||"NETWORK_ERROR");
+    if(status)status.textContent=gymSaveStatusMessage(code,error?.status);
+    console.warn("Gym save failed",code.slice(0,75));
+  }finally{
+    if(button?.isConnected)button.disabled=false;
   }
 }
 

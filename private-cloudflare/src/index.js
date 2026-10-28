@@ -4280,84 +4280,84 @@ async function fetchGymHistory(env, { weekStart = null } = {}) {
 }
 
 async function saveGymSession(request, env) {
-  await ensureGymTables(env);
+  if(!env.DB)return json({ok:false,code:"GYM_DB_UNAVAILABLE"},503);
   let payload;
-  try {
-    payload = await request.json();
-  } catch {
-    return json({ ok: false, code: "INVALID_JSON" }, 400);
-  }
-
-  const sessionDate = String(payload?.sessionDate || "").trim();
-  const dayId = String(payload?.dayId || "").trim();
-  const dayTitle = String(payload?.dayTitle || "").trim();
-  const notes = String(payload?.notes || "").trim().slice(0, 1000);
-  const entries = Array.isArray(payload?.entries) ? payload.entries : [];
-
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(sessionDate) || !dayId || !entries.length) {
-    return json({ ok: false, code: "INVALID_GYM_SESSION" }, 400);
-  }
-
-  if (hasHealthGoogleConfig(env)) {
-    try {
-      const health = await fetchHealthNutritionSummary(env, { date: sessionDate });
-      if (toNumber(health.value?.activityObjective?.strengthSessionsWeek) === 0) {
-        return json({
-          ok: false,
-          code: "GYM_TEMPORARILY_PAUSED",
-          reason: health.value?.activityObjective?.note || null
-        }, 409);
-      }
-    } catch (error) {
-      console.warn("Gym pause validation unavailable", String(error?.message || error));
+  try{payload=await request.json();}
+  catch{return json({ok:false,code:"INVALID_JSON"},400);}
+  const sessionDate=String(payload?.sessionDate||"").trim();
+  const dayId=String(payload?.dayId||"").trim();
+  const dayTitle=String(payload?.dayTitle||"").trim().slice(0,160);
+  const notes=String(payload?.notes||"").trim().slice(0,1000);
+  const entries=Array.isArray(payload?.entries)?payload.entries:[];
+  const clientRequestId=String(payload?.clientRequestId||"").trim();
+  if(clientRequestId&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientRequestId))
+    return json({ok:false,code:"INVALID_GYM_REQUEST_ID"},400);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(sessionDate)||!dayId||!entries.length)
+    return json({ok:false,code:"INVALID_GYM_SESSION"},400);
+  // Read after a failed client response: a successful atomic D1 batch must never
+  // create a second workout when the same request is retried.
+  const existingSession=async()=>{
+    if(!clientRequestId)return null;
+    return await env.DB.prepare(
+      "SELECT id, session_date, day_id FROM gym_sessions WHERE id = ? LIMIT 1"
+    ).bind(clientRequestId).first();
+  };
+  try{
+    const existing=await existingSession();
+    if(existing){
+      if(existing.session_date!==sessionDate||existing.day_id!==dayId)
+        return json({ok:false,code:"GYM_REQUEST_CONFLICT"},409);
+      return json({ok:true,sessionId:clientRequestId,alreadySaved:true},200);
     }
+  }catch(error){
+    console.warn("Gym idempotency read failed",String(error?.name||"D1_ERROR"));
+    return json({ok:false,code:"GYM_DB_READ_FAILED"},503);
   }
-
-  const cleanEntries = entries
-    .map((entry) => ({
-      exerciseId: String(entry?.exerciseId || "").trim(),
-      exerciseName: String(entry?.exerciseName || "").trim().slice(0, 160),
-      setsDone: toNumber(entry?.setsDone),
-      repsDone: String(entry?.repsDone ?? "").trim().slice(0, 80),
-      loadValue: toNumber(entry?.loadValue),
-      loadUnit: String(entry?.loadUnit || "").trim().slice(0, 40),
-      notes: String(entry?.notes || "").trim().slice(0, 500)
-    }))
-    .filter((entry) => entry.exerciseId && entry.exerciseName);
-
-  if (!cleanEntries.length) return json({ ok: false, code: "EMPTY_GYM_SESSION" }, 400);
-
-  const sessionId = crypto.randomUUID();
-  const statements = [
-    env.DB.prepare(`
-      INSERT INTO gym_sessions (id, session_date, day_id, day_title, notes)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(sessionId, sessionDate, dayId, dayTitle || dayId, notes || null)
+  if(hasHealthGoogleConfig(env)){
+    try{
+      const health=await fetchHealthNutritionSummary(env,{date:sessionDate});
+      if(toNumber(health.value?.activityObjective?.strengthSessionsWeek)===0)
+        return json({ok:false,code:"GYM_TEMPORARILY_PAUSED",reason:health.value?.activityObjective?.note||null},409);
+    }catch(error){console.warn("Gym pause validation unavailable",String(error?.name||"ERROR"));}
+  }
+  const cleanEntries=entries.map(entry=>({
+    exerciseId:String(entry?.exerciseId||"").trim(),
+    exerciseName:String(entry?.exerciseName||"").trim().slice(0,160),
+    setsDone:toNumber(entry?.setsDone),
+    repsDone:String(entry?.repsDone??"").trim().slice(0,80),
+    loadValue:toNumber(entry?.loadValue),
+    loadUnit:String(entry?.loadUnit||"").trim().slice(0,40),
+    notes:String(entry?.notes||"").trim().slice(0,500)
+  })).filter(entry=>entry.exerciseId&&entry.exerciseName);
+  if(!cleanEntries.length)return json({ok:false,code:"EMPTY_GYM_SESSION"},400);
+  const sessionId=clientRequestId||crypto.randomUUID();
+  const statements=[
+    env.DB.prepare("INSERT INTO gym_sessions (id, session_date, day_id, day_title, notes) VALUES (?, ?, ?, ?, ?)")
+      .bind(sessionId,sessionDate,dayId,dayTitle||dayId,notes||null)
   ];
-
-  for (const entry of cleanEntries) {
-    statements.push(
-      env.DB.prepare(`
-        INSERT INTO gym_entries (
-          session_id, exercise_id, exercise_name, sets_done, reps_done, load_value, load_unit, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        sessionId,
-        entry.exerciseId,
-        entry.exerciseName,
-        entry.setsDone,
-        entry.repsDone || null,
-        entry.loadValue,
-        entry.loadUnit || null,
-        entry.notes || null
-      )
-    );
+  for(const entry of cleanEntries){
+    statements.push(env.DB.prepare(
+      "INSERT INTO gym_entries (session_id, exercise_id, exercise_name, sets_done, reps_done, load_value, load_unit, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    ).bind(sessionId,entry.exerciseId,entry.exerciseName,entry.setsDone,
+       entry.repsDone||null,entry.loadValue,entry.loadUnit||null,entry.notes||null));
   }
-
-  await env.DB.batch(statements);
-  return json({ ok: true, sessionId }, 201);
+  try{
+    // The tables are provisioned by migration 0009 and already used by GET.
+    // No DDL/INDEX statements in the critical write path.
+    await env.DB.batch(statements);
+    return json({ok:true,sessionId},201);
+  }catch(error){
+    // If network/read replication races after commit, check the same request ID.
+    // Never report a definite failure when the row may already exist.
+    try{
+      const found=await existingSession();
+      if(found&&found.session_date===sessionDate&&found.day_id===dayId)
+        return json({ok:true,sessionId:found.id,alreadySaved:true},200);
+    }catch{}
+    console.warn("Gym session D1 write failed",String(error?.name||"D1_ERROR"));
+    return json({ok:false,code:"GYM_DB_WRITE_FAILED"},503);
+  }
 }
-
 
 async function deleteGymSession(sessionId, env) {
   await ensureGymTables(env);
