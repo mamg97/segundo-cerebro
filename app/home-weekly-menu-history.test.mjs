@@ -37,7 +37,9 @@ test("home navigation uses canonical selected-week endpoint and rejects stale re
   assert.match(app, /homeWeeklyMenuWeekCache\.set\(selected,/);
   assert.match(app, /HOME_WEEK_CACHE_MS = 5 \* 60_000/);
   assert.match(app, /if \(!options.navigation && selected !== current\) return true/);
-  assert.match(app, /if \(options.navigation && !options.force && cached && cached.expiresAt > Date.now\(\)\)/);
+  // Cache now also protects ordinary rerenders; force still bypasses it.
+  // Behavioral coverage lives in home-menu-refresh.test.mjs.
+  assert.match(app, /!options.force && cached && cached.expiresAt > Date.now\(\)/);
   assert.match(app, /homeWeeklyMenuSelectedWeek = priorSelection/);
 });
 

@@ -84,9 +84,9 @@ test("a later failed request cannot overwrite an earlier successful Sheets menu"
     return {ok:false,status:502};
   });
   assert.equal(await h.context.loadHomeWeeklyMenu(stale), true);
-  const second = h.context.loadHomeWeeklyMenu(stale);
+  const second = h.context.loadHomeWeeklyMenu(stale, {force:true});
   resolveFailure({ok:false,status:502});
-  assert.equal(await second,true);
+  assert.equal(await second,false, "failed forced refresh must not report cached data as remote success");
   assert.equal(h.unavailable,false);
   assert.equal(h.rendered.weeklyMenu.length,3);
   assert.equal(h.renders.length,1);
@@ -102,7 +102,7 @@ test("an older delayed Sheets response cannot replace a later successful respons
     return {ok:true,json:async()=>fresh};
   });
   const first=h.context.loadHomeWeeklyMenu();
-  assert.equal(await h.context.loadHomeWeeklyMenu(),true);
+  assert.equal(await h.context.loadHomeWeeklyMenu(null, {force:true}),true);
   resolveOlder({ok:true,json:async()=>older});
   assert.equal(await first,false, "superseded request must not report accepted data");
   assert.equal(h.renders.length,1);
