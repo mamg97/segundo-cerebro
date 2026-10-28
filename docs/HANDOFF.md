@@ -1,3 +1,20 @@
+## Psicohistoria — JOLTS evaluado y descartado (28/10/2026)
+
+AV161: contrato previo a3e4c200, dos aclaraciones textuales antes del cálculo
+en e303498b, sin cambios numéricos.90casos/16eventos, Brier0,145534412 frente a
+0,151494912/0,152789108; mejora3,934%/4,748%inferior al5%: DESCARTADO.
+Siete pruebas/28con dependencias PASS; rawCSV/Fraction/Newton181orígenes,
+91ajustes/90scores coinciden. Informe privado macro-jolts-20261028/.
+Ver AV161_JOLTS_SIGNAL.md. CI/PR/canónico se confirman al cerrar.
+No rescatar años2022–24ni retocar escala/lag/lambda. No emisión nueva.
+
+Coordinación reanudada:0%5h/30%semana al comienzo; registryresumed ysincola,
+coordinador PAUSED tras reintento exitoso de un timeout de revisión automática.
+Seguimientos4nov00:05UTC/19nov/4dic separados; macro/anual inmutables.
+Continuar siguiente unidad útil completa, sin esperar noviembre para desarrollar.
+
+---
+
 ## Psicohistoria — estado al cerrar la fase JOLTS (28/10/2026)
 
 AV155–160 terminados y canónico releído. PR865merge8e386549142d6fef4b54faffa3836719db44697c:

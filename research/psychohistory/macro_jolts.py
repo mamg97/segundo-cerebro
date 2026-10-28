@@ -1,13 +1,21 @@
-"""Draft JOLTS engine for the frozen adaptive experiment; no network or issuance."""
+"""JOLTS engine for the frozen adaptive experiment; no network or issuance."""
+import argparse
 from collections import OrderedDict
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
 from decimal import Decimal
 from fractions import Fraction
+import hashlib
+import json
+from pathlib import Path
 
 import alfred_asof_audit as asof
 import alfred_initial_release_audit as initial
 from macro_continuous_claims import fit, sigmoid
 from macro_retrospective import shift_month
+import macro_claims
+
+HERE = Path(__file__).resolve().parent
+PROTOCOL = HERE / 'macro_jolts_v1.json'
 
 
 def jolts_archive(raw, digest, start, end):
@@ -80,3 +88,36 @@ def score(train, case, p):
     return dict(result, probability=sigmoid(result['offset'] + result['coefficient']*x),
                 baseline_probability=float(baseline), baseline_fraction=str(baseline),
                 feature=x, training_n=len(chosen), training_targets=[r['target_month'] for r in chosen])
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ['jolts', 'realtime', 'initial', 'output']:
+        parser.add_argument('--' + name, required=True, type=Path)
+    parser.add_argument('--protocol-sha256', required=True)
+    parser.add_argument('--jolts-sha256', required=True)
+    args = parser.parse_args()
+    raw = PROTOCOL.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != args.protocol_sha256:
+        raise ValueError('Frozen protocol hash required')
+    if args.output.resolve().is_relative_to(HERE.parents[1]) or args.output.is_symlink():
+        raise ValueError('Private output required')
+    p = json.loads(raw)
+    jolts = jolts_archive(args.jolts.read_bytes(), args.jolts_sha256, p['jolts_start'], p['jolts_end'])
+    periods = asof.audit(args.realtime.read_bytes(), p['unrate_realtime_sha256'], '2011-01-01', '2026-09-01')
+    labels = initial.audit(args.initial.read_bytes(), p['unrate_initial_sha256'], '2011-01-01', '2026-09-01')
+    result = macro_claims.run(jolts, periods,
+        {x['reference_month']: x for x in labels['observations']}, p, scorer=score, signal_provider=signal_at)
+    result.update(protocol_sha256=args.protocol_sha256, jolts_sha256=args.jolts_sha256,
+                  executed_at_utc=datetime.now(timezone.utc).isoformat(), adaptive_followup=True,
+                  jolts_month_count=jolts['month_count'], jolts_interval_count=jolts['interval_count'],
+                  code_sha256={n: hashlib.sha256((HERE/n).read_bytes()).hexdigest()
+                  for n in ['macro_jolts.py', 'macro_continuous_claims.py', 'macro_claims.py',
+                            'macro_retrospective.py', 'alfred_asof_audit.py', 'alfred_initial_release_audit.py']})
+    with args.output.open('x') as f:
+        json.dump(result, f, indent=2, allow_nan=False)
+    print(json.dumps(result['metrics']))
+
+
+if __name__ == '__main__':
+    main()
