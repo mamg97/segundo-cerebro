@@ -5,6 +5,19 @@ export const normalizeAuditValue = (value) => String(value || "")
   .replace(/\s+/g, " ")
   .toLowerCase();
 
+// Match the private MIDAS runtime panel's display labels when checking that
+// a *real* failed workflow is visible. Never change the workflow health verdict.
+export function midasAuditIssueLabel(name) {
+  return String(name || "")
+    .replace("MIDAS paper comparison", "estrategias diarias")
+    .replace("MIDAS TFM shadow forecasts", "tfm diario")
+    .replace("MIDAS capital cycle paper", "capital cycle")
+    .replace("MIDAS Buy The Dip paper", "buy the dip")
+    .replace("MIDAS Weekly ML daily paper", "weekly ml diario")
+    .replace("MIDAS weekly ML paper", "weekly ml")
+    .replace("MIDAS TFG corrected paper", "tfg corregido");
+}
+
 // Date-only UTC arithmetic avoids locale/DST drift at Monday rollover.
 // An empty canonical menu still has seven real dates in the Home matrix.
 export function auditWeekDates(dateKey) {
