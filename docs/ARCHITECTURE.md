@@ -501,6 +501,23 @@ Desde el 28/09/2026, el mismo workflow conserva la curva histórica del genétic
 
 El rendimiento heredado representa lo registrado por el simulador original: sus operaciones se contabilizaban al mismo cierre que generaba la señal. La UI lo identifica como simulación histórica con limitación metodológica, no como rendimiento ejecutado por bróker ni como una cartera directamente comparable con las nuevas. USD y EUR no se agregan ni se ordenan como una liga común. Si falta el extracto privado, la fila conserva fecha y rentabilidad ausentes.
 
+### Fuente OHLC común y auditoría independiente
+
+`dashboard.market_data` proyecta la telemetría pública XNYS: sesión, cobertura
+503 + SPY, ausencias, antigüedad UTC, hash base y efectivo, revisiones y estado de
+los seis consumidores. El Worker valida campos y contadores y los entrega en la
+misma lectura bajo demanda; no replica barras en D1 ni altera el diario privado.
+La tarjeta `Fuente común OHLC` separa calidad de fuente y ejecución del motor.
+La indicación de ejecución programada procede de la telemetría y no sustituye
+la comprobación independiente de GitHub Actions.
+
+El auditor existente relee la salud pública y verifica los bytes de base y cadena
+de revisiones mediante SHA-256. Conserva los lexemas numéricos del JSON Python,
+rechaza enlaces rotos, sobrescrituras, fechas incoherentes y acciones corporativas
+introducidas por una revisión sin contrato propio. No envía tokens privados a
+GitHub ni añade polling. Los workflows programados siguen contrastándose con su
+cadencia; una recuperación manual no borra un fallo programado.
+
 ### Laboratorio visual MIDAS
 
 La app privada presenta además un laboratorio visual animado. La animación **no genera ni interpola rentabilidad**: dibuja exclusivamente las curvas de patrimonio ficticio ya registradas en los diarios de cada estrategia. El punto final y el color se derivan del último valor observado; cuando solo existe una sesión se muestra un estado de espera en vez de inventar una curva.

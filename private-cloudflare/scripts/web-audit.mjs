@@ -23,6 +23,7 @@ import {
   visibleMenuRow
 } from "../src/web-audit-utils.js";
 import { evaluateMidasWorkflowRuns } from "../src/midas-health.js";
+import { normalizeMidasSourceHealth, verifyMidasSourceBytes } from "../src/midas-market-data-health.js";
 import { validLegacyMidasCohort } from "../src/midas-legacy-cohort-health.js";
 
 const baseUrl = (process.env.AUDIT_BASE_URL || "https://segundo-cerebro-web-audit.mamg97.workers.dev").replace(/\/$/, "");
@@ -452,6 +453,34 @@ async function auditMidasCompetition() {
     "MIDAS · API y dashboard", `HTTP ${midas.status}`);
   if (!(midas.ok && midas.body?.ok === true && Array.isArray(midas.body?.dashboard?.tracks))) return;
 
+  // Independent public read: never send the private audit token to GitHub.
+  let source = null;
+  try {
+    const response = await fetch("https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/market_data/source_health.json", {
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!response.ok) throw new Error("SOURCE_HTTP_FAILURE");
+    source = normalizeMidasSourceHealth(await response.json());
+    assertCheck(source.source_ok, "MIDAS · fuente común vigente");
+    const verified = await verifyMidasSourceBytes(source);
+    assertCheck(verified.ok, "MIDAS · hash independiente de snapshot y revisiones", verified.code || "verified_bytes");
+    const commonTracks = midas.body.dashboard.tracks.filter(row => row.classic_sp500_cohort ||
+      ["weekly_ml_demo", "timesfm_demo", "timesfm_daily_demo", "capital_cycle_demo", "buy_the_dip_demo"].includes(row.group));
+    assertCheck(source.consumers_ok && commonTracks.length === 24 &&
+      commonTracks.every(row => row.last_session === source.expected_session),
+      "MIDAS · seis consumidores y 24 libros fechados");
+    const projected = midas.body.dashboard.market_data;
+    assertCheck(projected?.status === "available" && projected.effective_sha256 === source.effective_sha256 &&
+      JSON.stringify(projected.coverage) === JSON.stringify(source.coverage) &&
+      JSON.stringify(projected.consumers) === JSON.stringify(source.consumers) &&
+      projected.run_id === source.run_id && projected.trigger_event === source.trigger_event,
+      "MIDAS · API conserva cobertura y ejecución de la fuente");
+    // Manual recovery is useful proof, but cannot certify the scheduled cycle.
+    info("MIDAS · origen de la última prueba", source.scheduled_proof ? "schedule" : "workflow_dispatch");
+  } catch {
+    fail("MIDAS · fuente común vigente", "SOURCE_READ_FAILED");
+  }
+
   const tracks = midas.body.dashboard.tracks;
   // Since the S&P 500 migration there are two distinct classic cohorts:
   // nine original 8-stock archives and nine new 503-symbol S&P 500 forward books.
@@ -512,6 +541,12 @@ async function auditMidasCompetition() {
     }, null, { timeout: 8000 }).catch(() => {});
     const runtimeText = normalizeAuditValue(await page.locator(".midas-runtime-health").textContent().catch(() => ""));
     assertCheck(Boolean(runtimeText), "MIDAS · panel visible de salud operativa");
+    const sourcePanel = page.locator(".midas-source-health");
+    const sourceText = await sourcePanel.textContent().catch(() => "");
+    assertCheck(Boolean(source?.expected_session) && sourceText.includes(source.expected_session) &&
+      sourceText.includes(`${source.coverage?.observed}/${source.coverage?.requested}`) &&
+      sourceText.includes(source.effective_sha256) && source.missing_symbols.every(symbol => sourceText.includes(symbol)),
+      "MIDAS · UI expone fecha cobertura ausencias y hash");
     for (const issue of health.issues) {
       const label = midasAuditIssueLabel(issue.name);
       assertCheck(runtimeText.includes(normalizeAuditValue(label)), `MIDAS · UI expone incidencia ${label}`);
