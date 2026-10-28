@@ -25,7 +25,7 @@ import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
 import { renderHealthDayBalance } from "./health-daily-balance.js?v=0.44.1";
 import { menuWeekMonday, menuShiftWeek, menuWeekRangeLabel } from "./menu-week-history.js?v=0.44.12";
-import { reconcileHomeMenuPhotos } from "./home-menu-photo-resolver.mjs?v=0.1.0";
+import { reconcileHomeMenuPhotos } from "./home-menu-photo-resolver.mjs?v=0.1.1";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
 import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.24";
 import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.12";
@@ -6750,18 +6750,34 @@ function recipeMacrosLabel(recipe) {
 
 const recipeIngredientClickControllers = new WeakMap();
 
-async function refreshRecipeCatalog() {
+async function refreshRecipeCatalog(expected=null) {
   const response = await fetch("/api/nutrition?date=" + encodeURIComponent(localDateKey()) + "&refresh=1", {
     headers: { Accept: "application/json" }, cache: "no-store", credentials: "same-origin"
   });
   if (!response.ok) throw new Error("RECIPE_REFRESH_FAILED");
   const updated = await response.json();
   if (!Array.isArray(updated.recipes)) throw new Error("RECIPE_REFRESH_INVALID");
+  // A successful POST is not proof that the new image is visible on readback.
+  // Confirm the exact immutable recipe version before replacing the editor.
+  if(expected?.recipeId){
+    const saved=updated.recipes.find(item=>String(item.id)===String(expected.recipeId));
+    if(!saved)throw new Error("RECIPE_VERSION_NOT_VERIFIED");
+    if(expected.photoUpdated){
+      const prefix="/api/health/recipes/"+encodeURIComponent(expected.recipeId)+"/image?v=";
+      if(!String(saved.photoUrl||"").startsWith(prefix))throw new Error("RECIPE_PHOTO_NOT_VERIFIED");
+      const check=await fetch(saved.photoUrl,{
+        headers:{Accept:"image/*"},cache:"no-store",credentials:"same-origin"
+      });
+      if(!check.ok||!String(check.headers.get("Content-Type")||"").startsWith("image/"))
+        throw new Error("RECIPE_PHOTO_NOT_READABLE");
+    }
+  }
   renderRecipesPanel(updated);
   // Photo edits create a new immutable recipe ID. The menu may retain the old
   // recipe_id but must re-read its display-only photo fallback immediately.
   homeWeeklyMenuWeekCache.clear();
   await loadHomeWeeklyMenu(updated, { navigation: true, force: true });
+  return updated;
 }
 
 function renderRecipeDetail(panel, data, recipe, options = {}) {

@@ -17,6 +17,7 @@ export function reconcileHomeMenuPhotos(menu,recipes){
  }
  const active=catalog.filter(x=>normalize(x?.status)==="activa"&&allowedPhoto(x?.photoUrl));
  active.sort((a,b)=>clean(b?.updatedAt).localeCompare(clean(a?.updatedAt)));
+ const resolvedAncestors=new Set();
  for(const recipe of active){
   const photo=clean(recipe.photoUrl),name=normalize(recipe.name);
   let id=clean(recipe.id);
@@ -24,12 +25,17 @@ export function reconcileHomeMenuPhotos(menu,recipes){
    id=id.replace(revSuffix,"");
    const ancestor=byId.get(id);
    if(!ancestor||normalize(ancestor.name)!==name)break;
-   if(!result.has(id))result.set(id,photo);
+   if(!resolvedAncestors.has(id)){
+    result.set(id,photo);
+    resolvedAncestors.add(id);
+   }
   }
  }
  return entries.map(item=>{
-  if(!item?.recipeId||allowedPhoto(item.photoUrl))return item;
+  if(!item?.recipeId)return item;
   const photo=result.get(clean(item.recipeId));
-  return photo?{...item,photoUrl:photo}:item;
+  // The menu API may have returned an old but still-valid URL. Use the
+  // active successor's image instead of preserving a stale historical photo.
+  return photo&&photo!==item.photoUrl?{...item,photoUrl:photo}:item;
  });
 }

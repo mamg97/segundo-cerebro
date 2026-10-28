@@ -41,7 +41,7 @@ test("an existing menu recipe without photo uses its newest active version as th
  assert.match(map.get("rec-cafe-v1"),/rec-cafe-v1-rev-53809d18-2a7\/image\?v=/);
  assert.ok(!JSON.stringify([...map]).includes("private_version"));
 });
-test("historical photo is preferred; unrelated recipes never gain another dish's picture",()=>{
+test("current active photo overrides old menu photo; unrelated dishes remain unchanged",()=>{
  const rows=[
   {recipe_id:"dish",nombre:"Dish",foto_drive_file_id:"historical",foto_updated_at:"old"},
   {recipe_id:"dish-rev-aabbccdd-111",nombre:"Dish",estado_receta:"activa",foto_drive_file_id:"new",foto_updated_at:"new"},
@@ -52,7 +52,7 @@ test("historical photo is preferred; unrelated recipes never gain another dish's
   {recipe_id:"recipe-v10-rev-aabbccdd-111",nombre:"Recipe",estado_receta:"activa",foto_drive_file_id:"wrong"}
  ];
  const map=menuRecipePhotoUrls(rows);
- assert.match(map.get("dish"),/\/dish\/image\?v=old$/);
+ assert.match(map.get("dish"),/\/dish-rev-aabbccdd-111\/image\?v=new$/);
  assert.equal(map.has("other"),false);
  assert.equal(map.has("unrelated"),false);
  assert.equal(map.has("recipe-v1"),false);
@@ -67,7 +67,7 @@ test("latest active revision supplies photo; archived versions are not inherited
  ];
  const map=menuRecipePhotoUrls(rows);
  assert.match(map.get("a"),/a-rev-11111111-aaa-rev-22222222-bbb/);
- assert.match(map.get("a-rev-11111111-aaa"),/a-rev-11111111-aaa\/image\?v=/); // archived version keeps its own image
+ assert.match(map.get("a-rev-11111111-aaa"),/a-rev-11111111-aaa-rev-22222222-bbb\/image\?v=/); // menu uses active image, archived record still immutable
  assert.equal(map.has("b"),false);
 });
 test("menu UI uses canonical photoUrl and does not mutate historical nutrition",()=>{
@@ -76,4 +76,15 @@ test("menu UI uses canonical photoUrl and does not mutate historical nutrition",
  assert.match(serverSource,/photoUrl: item.recipeId \? photoUrls.get\(String\(item.recipeId\).trim\(\)\) \|\| null : null/);
  assert.match(appSource,/const photoUrl = String\(item.photoUrl \|\| ""\)/);
  assert.doesNotMatch(readFileSync(new URL("./weekly-menu-images.js",import.meta.url),"utf8"),/MenuSemanal!|Registro!|UPDATE |INSERT /);
+});
+
+test("newest active fork wins; menu macros and recipe ID remain immutable",()=>{
+ const rows=[
+  {recipe_id:"coffee",nombre:"Café solo doble",foto_drive_file_id:"old",foto_updated_at:"2026-10-20",estado_receta:"sustituida"},
+  {recipe_id:"coffee-rev-11111111-aaa",nombre:"Café solo doble",foto_drive_file_id:"newer",foto_updated_at:"2026-10-28",updated_at:"2026-10-28",estado_receta:"activa"},
+  {recipe_id:"coffee-rev-22222222-bbb",nombre:"Café solo doble",foto_drive_file_id:"older",foto_updated_at:"2026-10-26",updated_at:"2026-10-26",estado_receta:"activa"}
+ ];
+ const map=menuRecipePhotoUrls(rows);
+ assert.match(map.get("coffee"),/coffee-rev-11111111-aaa\/image\?v=2026-10-28/);
+ assert.match(map.get("coffee-rev-22222222-bbb"),/coffee-rev-22222222-bbb\/image/);
 });

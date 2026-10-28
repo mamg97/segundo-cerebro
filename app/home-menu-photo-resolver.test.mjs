@@ -14,11 +14,12 @@ test("real Oct 22 café photo survives immutable recipe edit while meal macros s
  assert.equal(actual.status,"consumido");
  assert.equal(old.photoUrl,null);
 });
-test("no title-only matching or historical photo overwrite",()=>{
+test("no title-only matching; old menu photo yields to the active revision",()=>{
  const menu=[{recipeId:"unrelated-cafe",name:"Café solo doble"}, {recipeId:previous.id,photoUrl:"/api/health/recipes/rec-cafe-solo-doble-v1/image?v=original"}];
  const rows=reconcileHomeMenuPhotos(menu,[previous,latest]);
  assert.equal(rows[0].photoUrl,undefined);
- assert.equal(rows[1].photoUrl,menu[1].photoUrl);
+ assert.equal(rows[1].photoUrl,latest.photoUrl);
+ assert.equal(rows[1].recipeId,menu[1].recipeId);
 });
 test("only active explicit descendants with valid private URLs may supply missing photos",()=>{
  const menu=[{recipeId:previous.id,kcal:4}];
@@ -33,7 +34,18 @@ test("only active explicit descendants with valid private URLs may supply missin
 });
 test("photo editing passes refreshed recipe catalogue into forced Home reload",()=>{
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
- assert.match(app,/import \{ reconcileHomeMenuPhotos \} from "\.\/home-menu-photo-resolver\.mjs\?v=0\.1\.0"/);
+ assert.match(app,/import \{ reconcileHomeMenuPhotos \} from "\.\/home-menu-photo-resolver\.mjs\?v=0\.1\.1"/);
  assert.match(app,/data\.weeklyMenu=reconcileHomeMenuPhotos\(data\.weeklyMenu,primaryData\.recipes\)/);
  assert.match(app,/await loadHomeWeeklyMenu\(updated, \{ navigation: true, force: true \}\)/);
+});
+
+test("newest active coffee image replaces stale photo on an old menu entry",()=>{
+ const newer={...latest,id:previous.id+"-rev-aaaaaaaa-111",updatedAt:"2026-10-28T10:00:00Z",
+  photoUrl:"/api/health/recipes/"+previous.id+"-rev-aaaaaaaa-111/image?v=2026-10-28T10%3A00%3A00Z"};
+ const old={...previous,photoUrl:"/api/health/recipes/"+previous.id+"/image?v=old",status:"sustituida"};
+ const consumed={recipeId:previous.id,kcal:4,protein:0.4,photoUrl:old.photoUrl};
+ const [after]=reconcileHomeMenuPhotos([consumed],[old,latest,newer]);
+ assert.equal(after.photoUrl,newer.photoUrl);
+ assert.equal(after.kcal,4);assert.equal(after.protein,0.4);
+ assert.equal(after.recipeId,previous.id);
 });

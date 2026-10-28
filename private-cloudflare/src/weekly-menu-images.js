@@ -29,6 +29,7 @@ export function menuRecipePhotoUrls(recipeRows) {
     comparableName(row?.estado_receta) === "activa" && ownUrl(row));
   successors.sort((a, b) =>
     trim(b?.updated_at).localeCompare(trim(a?.updated_at)));
+  const resolvedAncestors = new Set();
   for (const successor of successors) {
     const id = trim(successor.recipe_id), photo = ownUrl(successor);
     const name = comparableName(successor.nombre);
@@ -42,9 +43,13 @@ export function menuRecipePhotoUrls(recipeRows) {
       current = current.slice(0, idx);
       const ancestor = byId.get(current);
       if (!ancestor || comparableName(ancestor.nombre) !== name) break;
-      // Historical photo, when present, always wins. Otherwise newest active
-      // successor with the same recipe name supplies a display-only thumbnail.
-      if (!urls.has(current)) urls.set(current, photo);
+      // Menu entries retain their historical IDs/macros, but their thumbnail
+      // follows the newest ACTIVE revision, even when that ancestor has a photo.
+      // Never let an older active fork overwrite a newer successor.
+      if (!resolvedAncestors.has(current)) {
+        urls.set(current, photo);
+        resolvedAncestors.add(current);
+      }
     }
   }
   return urls;

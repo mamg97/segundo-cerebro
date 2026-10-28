@@ -142,8 +142,16 @@ export function renderRecipeEditor(panel,recipe,{onBack,onSaved}){
       status.textContent=chosenPhoto?"Preparando fotografía…":"Guardando nueva versión…";
       const photo=chosenPhoto?await prepareRecipePhoto(chosenPhoto):null;
       status.textContent="Guardando nueva versión"+(photo?" y fotografía":"")+"…";
-      await writeRecipeAction(payload,photo);
-      status.textContent="Actualizando recetario…";await onSaved();
+      const saved=await writeRecipeAction(payload,photo);
+      status.textContent="Verificando la versión guardada y su foto…";
+      try{await onSaved(saved);}catch(error){
+        // The write may have succeeded. Do not retry the POST: that could
+        // create duplicate revisions or trigger a version conflict.
+        status.textContent="La nueva versión se ha guardado, pero no se ha podido verificar la foto o actualizar el recetario ("+
+          String(error?.message||"LECTURA_FALLIDA")+"). No vuelvas a guardar: recarga el catálogo para comprobar el resultado.";
+        button.disabled=true;
+        return;
+      }
       restore();
     }catch(error){status.textContent="No se pudo guardar: "+String(error?.message||"ERROR");button.disabled=false;}
   });
