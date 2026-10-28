@@ -1,3 +1,18 @@
+# Psicohistoria — prioridad bursátil reabierta · 29/10/2026
+
+El propietario revoca el aplazamiento F1B y prioriza riesgo a 20 sesiones.
+AV166 cierra primera evaluación real de mercado agregado/retorno total según
+contrato publicado antes de la descarga. Candidato descartado por filtro fijo;
+comparadores y periodos se conservan, sin retuning. Quince pruebas locales y
+contraste independiente desde CSV/NumPy correctos. Informe íntegro privado.
+Ver AV166_EQUITIES_FIRST_REAL_STUDY.md. Esperar CI e integración y sincronizar
+canónico antes de declarar cierre publicado. No datos reales al repositorio,
+no emisiones bursátiles ni modelo admitido; fuente revisada y retrasada.
+Agenda parcial conservada como secundaria. Seguimientos4nov/19nov/4dic y
+originales macro/anual intactos. Producción anterior0.5.34/PR873 ya verificada.
+
+---
+
 # Psicohistoria — acceso a VIEWS desde el laboratorio · 28/10/2026
 
 Laboratorio0.5.34 añade en Inicio/Evidencia un acceso desde metadatos privados
