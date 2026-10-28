@@ -1,4 +1,5 @@
 import { evaluateMidasWorkflowRuns } from "./midas-health.js";
+import { normalizeMidasSourceHealth } from "./midas-market-data-health.js";
 
 const DASHBOARD_URL = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/strategy_state/dashboard.json";
 const WEEKLY_BOOTSTRAP_URL = "https://raw.githubusercontent.com/mamg97/midas-paper-lab/main/weekly_ml_bootstrap_state/bootstrap_2026-09-25.json";
@@ -73,7 +74,7 @@ function riskMetricsFromHistory(points) {
   };
 }
 
-function normalizeDashboard(data) {
+function normalizeDashboard(data, now = Date.now()) {
   if (data?.schema_version !== 1 || !Array.isArray(data.tracks) || data.tracks.length > 100 ||
       !Number.isFinite(Date.parse(data.generated_at_utc))) {
     throw new Error("MIDAS_INVALID_DASHBOARD");
@@ -123,7 +124,11 @@ function normalizeDashboard(data) {
     };
   });
   if (new Set(tracks.map((row) => row.id)).size !== tracks.length) throw new Error("MIDAS_DUPLICATE_TRACK");
-  return { schema_version: 1, generated_at_utc: data.generated_at_utc, tracks };
+  const common = tracks.filter(row => row.classic_sp500_cohort ||
+    ["weekly_ml_demo", "timesfm_demo", "timesfm_daily_demo", "capital_cycle_demo", "buy_the_dip_demo"].includes(row.group));
+  const observedSession = common.map(row => row.last_session).filter(Boolean).sort().at(-1) || null;
+  return { schema_version: 1, generated_at_utc: data.generated_at_utc, tracks,
+    market_data: normalizeMidasSourceHealth(data.market_data, now, observedSession) };
 }
 
 export async function fetchMidasDashboard(fetcher = fetch, now = Date.now()) {
@@ -136,7 +141,7 @@ export async function fetchMidasDashboard(fetcher = fetch, now = Date.now()) {
       signal: controller.signal
     });
     if (!response.ok) throw new Error(`MIDAS_HTTP_${response.status}`);
-    const dashboard = normalizeDashboard(await response.json());
+    const dashboard = normalizeDashboard(await response.json(), now);
     cached = dashboard;
     cachedAt = now;
     return { dashboard, stale: false };

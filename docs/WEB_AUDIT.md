@@ -107,6 +107,11 @@ Como mínimo:
 - Salud → Resumen → Adherencia: no debe existir pestaña superior independiente; el bloque compacto mensual debe mostrar adherencia/cobertura, estados y racha, y `Ver mes completo` debe desplegar calendario + detalle diario dentro del mismo Resumen;
 - APIs privadas clave de Despensa, Proyectos y Delta/Finanzas;
 - **MIDAS Competition Health**:
+  - fuente común XNYS vigente y cobertura coherente (503 congelados + SPY), con ausencias explícitas;
+  - SHA-256 independiente del snapshot base y revisiones enlazadas, sin sobrescribir barras observadas;
+  - seis consumidores, 24 libros y fechas/carteras en espera auditados por separado de la fuente;
+  - paridad de la proyección `/api/midas` con la salud pública y presencia visible de fecha, cobertura, ausencias y hash;
+  - el origen manual no certifica el ciclo automático ni elimina incidencias previas de `schedule`;
   - `/api/midas` responde y conserva los diarios esperados;
   - las nueve estrategias diarias mantienen sesión registrada;
   - el genético prospectivo privado está enlazado y fechado; una campaña nueva puede permanecer `programada_sin_diario` solo hasta su `first_session_due_at` explícito, nunca indefinidamente;

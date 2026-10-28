@@ -727,6 +727,16 @@ Reglas:
 
 ## MIDAS · proyección externa de solo lectura
 
+`dashboard.market_data` es una proyección efímera de
+`midas.xnys_source_health.v1`. Incluye `source_ok`, `consumers_ok`, `overall`,
+`scheduled_proof` (declaración del productor), `hash_verification`,
+`expected_session`, hashes, `revision_hashes`, fechas UTC, `run_id`, `coverage`,
+`missing_symbols` y contadores por consumidor. `unavailable`/`invalid` nunca se
+interpretan como éxito. El hash servido se etiqueta `producer_reported`; solo
+el auditor de bytes produce `verified_bytes`. No contiene cuentas, patrimonio
+real, posiciones privadas ni una copia persistida del histórico OHLC.
+
+
 `GET /api/midas` devuelve el `dashboard.json` público normalizado: `generated_at_utc`, `stale` y `tracks[]` con `id`, `label`, `group`, `status`, `first_session`, `last_session`, `currency`, `last_equity`, `day_return_pct`, `return_pct` y `note`. El porcentaje diario compara los dos últimos valores de patrimonio ficticio del diario; es `null` si aún no hay dos cierres. Los porcentajes de campañas con fechas, mercados o divisas distintos no son directamente comparables. Segundo Cerebro no persiste esas filas en D1.
 
 

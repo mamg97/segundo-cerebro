@@ -1,4 +1,5 @@
 import "./vendor/thinking-orbs/register.js";
+import { renderMidasSourceHealth } from "./midas-source-health.mjs?v=0.1.0";
 import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=0.44.63";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
@@ -10075,6 +10076,7 @@ function renderMidasReport(dashboard, stale, research = null, lab = null) {
 
     <section class="midas-workspace-panel active" data-midas-panel="competition" role="tabpanel">
       <div data-midas-competition-list>
+        ${renderMidasSourceHealth(dashboard?.market_data)}
         ${renderMidasExecutionHealth(lab?.competitionHealth, dashboard)}
         <p class="midas-caveat">Capital ficticio y operaciones simuladas. La comparación principal sigue rentabilidad acumulada y riesgo realizado. Cada estrategia conserva sus propios plazos y reglas; pulsa una fila para consultar su detalle completo.</p>
         ${renderMidasVisualLab(dashboard, lab)}

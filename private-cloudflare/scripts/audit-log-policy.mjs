@@ -21,6 +21,11 @@ export function safeAuditLog(kind, ordinal, untrustedName, _untrustedDetail) {
 // These identifiers are literal source-code check descriptions, never DOM/API values.
 // Only known, fixed labels may become diagnostic codes in public Actions logs.
 const knownFailureCodes = new Map([
+  ["MIDAS · fuente común vigente", "MIDAS_SOURCE_CURRENT"],
+  ["MIDAS · hash independiente de snapshot y revisiones", "MIDAS_SOURCE_HASH"],
+  ["MIDAS · seis consumidores y 24 libros fechados", "MIDAS_SOURCE_DIARIES"],
+  ["MIDAS · API conserva cobertura y ejecución de la fuente", "MIDAS_SOURCE_PROJECTION"],
+  ["MIDAS · UI expone fecha cobertura ausencias y hash", "MIDAS_SOURCE_UI"],
   ["Home · motivo de pausa Gym breve", "HOME_GYM_PAUSE"],
   ["Home · Peso coincide con última medición real", "HOME_WEIGHT_PARITY"],
   ["Home · Peso muestra fuente y fecha de medición", "HOME_WEIGHT_FRESHNESS"],
