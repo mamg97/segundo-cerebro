@@ -14,6 +14,7 @@ import {
   classifyRequestFailure,
   hiddenMenuStatus,
   logicalMenuKey,
+  midasAuditIssueLabel,
   menuDisplayTotals,
   confirmedMenuTotals,
   normalizeAuditValue,
@@ -512,13 +513,7 @@ async function auditMidasCompetition() {
     const runtimeText = normalizeAuditValue(await page.locator(".midas-runtime-health").textContent().catch(() => ""));
     assertCheck(Boolean(runtimeText), "MIDAS · panel visible de salud operativa");
     for (const issue of health.issues) {
-      const label = issue.name
-        .replace("MIDAS paper comparison", "estrategias diarias")
-        .replace("MIDAS TFM shadow forecasts", "tfm diario")
-        .replace("MIDAS capital cycle paper", "capital cycle")
-        .replace("MIDAS Buy The Dip paper", "buy the dip")
-        .replace("MIDAS weekly ML paper", "weekly ml")
-        .replace("MIDAS TFG corrected paper", "tfg corregido");
+      const label = midasAuditIssueLabel(issue.name);
       assertCheck(runtimeText.includes(normalizeAuditValue(label)), `MIDAS · UI expone incidencia ${label}`);
     }
 
