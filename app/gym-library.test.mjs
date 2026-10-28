@@ -293,6 +293,7 @@ test("Gym saves only exercise rows explicitly marked as performed, never all pre
         return rows;
       }
     },
+    crypto: { randomUUID: () => "763df55c-7ef0-43a8-a56f-942d2d4b43d0" },
     planById: new Map([["push", { id: "push", title: "Ejemplo", exercises: [
       { id: "real", name: "Press de ejemplo", loadUnit: "kg/lado" },
       { id: "unperformed", name: "Otro ejercicio", loadUnit: "kg/lado" }
@@ -304,7 +305,7 @@ test("Gym saves only exercise rows explicitly marked as performed, never all pre
       return { ok: true, json: async () => ({ ok: true }) };
     }
   });
-  vm.runInContext(app.slice(begin, end), context);
+  vm.runInContext("let gymSaveAttempt=null; let gymLastConfirmedPayload=null;\n"+app.slice(begin, end), context);
   await vm.runInContext("saveGymSessionFromForm(planById)", context);
   assert.match(status.textContent, /Marca como realizado/);
   assert.equal(calls.length, 0, "No exercises marked means no write");
