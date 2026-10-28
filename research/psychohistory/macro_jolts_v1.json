@@ -13,14 +13,14 @@
   "minimum_training_cases": 48,
   "training_window_calendar_months": 60,
   "model": "sigmoid(logit(b)+beta*x); b=(past_target_events+1)/(past_target_cases+2); x=clip((JTSJOR(latest-3months)-JTSJOR(latest))/0.5,-3,3); beta>=0 minimizes SUM historical Bernoulli negative log likelihood + beta^2/2, offset logit(b) fixed.",
-  "training_clock": "historical-origin frozen claims features and base UNRATE; labels initially available by current cut only",
+  "training_clock": "historical-origin frozen JOLTS rate features and as-of base UNRATE; initial labels available by the current cut only",
   "baselines": [
     "past_target_beta_1_1_frequency",
     "operational_60_pair_UNRATE_change_beta_1_1",
     "persistence_zero"
   ],
   "acceptance": "at least5percent lower paired Brier than BOTH frequency baselines and strictly lower than persistence; exploratory screen only, never automatic prospective admission",
-  "missing_policy": "exclude from all compared scores; no imputation, no nonconsecutive weeks, no revised-current-history substitution",
+  "missing_policy": "exclude from all paired scores when required monthly endpoints or current reference are missing; no imputation or revised-current-history substitution",
   "confirmatory": false,
   "history_previously_inspected": true,
   "forecast_issued": false,
