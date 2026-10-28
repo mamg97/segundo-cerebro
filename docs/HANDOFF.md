@@ -1,3 +1,11 @@
+## PSICOHISTORIA — Ciclo macro condicionado · 28/10/2026
+
+[AV152](psicohistoria/AV152_MACRO_CONDITIONAL_FREQUENCY.md): fórmula publicada antes de ejecutar;89casos/16eventos; Brier0,159181 vs frecuencia0,154140 y persistencia0,179775. Candidato descartado por regla prefijada, sin retuning. Seis pruebas y contraste independiente CSV/Fraction correctos. Fuentes/resultados completos privados; historia reutilizada, sin confirmación ni emisión. MAC03/04 siguen PARCIAL/NO. CI/publicación y sincronización canónica pendientes al preparar este cierre.
+
+Pausa humana revocada expresamente28oct. Seguimientos19nov/4dic restaurados; coordinador PAUSED sin cola. Nueva prioridad: experimentos completos y un cierre agrupado. Próxima señal candidata: solicitudes iniciales de subsidio; comprobar vintages/cobertura de forma acotada antes de contrato. No rehacer macro negativa, varianza ni emisión anual; originales prospectivos preservados.
+
+---
+
 ## PSICOHISTORIA — Reloj previsto HTOPS noviembre · 27/10/2026
 
 [AV151](psicohistoria/AV151_HTOPS_NOVEMBER_PLANNED_CLOCK.md) identifica28oct como despliegue previsto; no inicio efectivo. Cuestionario noviembre contiene soledad; solicitud AI/SI aún recibida en OIRA. Julio demuestra discrepancia entre fecha planificada y campo real. Noviembre NO ADMITIDO: faltan corte efectivo y protocolo completo anterior al campo; no emitir ni backdatear. SOC02 PARCIAL/NO. Fuentes y huellas privadas verificadas; publicación/sincronización de este avance pendientes al preparar el commit.
