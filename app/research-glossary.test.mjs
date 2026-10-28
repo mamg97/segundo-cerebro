@@ -40,7 +40,7 @@ test('popover supports mouse, touch, keyboard, safe text nodes and clipping prot
 test('single glossary mounted globally, local CSS and current cache version',()=>{
  assert.match(app,/mountLaboratoryGlossary\(root\)/);
  assert.match(html,/research-tooltips\.css\?v=0\.5\.28/);
- assert.match(html,/research-lab\.js\?v=0\.5\.31/);
- assert.match(html,/v0\.5\.31/);
+ assert.match(html,/research-lab\.js\?v=0\.5\.32/);
+ assert.match(html,/v0\.5\.32/);
  assert.doesNotMatch(html,/style\s*=/i);
 });

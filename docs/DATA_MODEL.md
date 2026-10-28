@@ -802,3 +802,15 @@ El sobre privado opcional `psychohistory.onset.summary.v1` guarda únicamente ag
 ### PsicoExperimentos.notas: casebook de positivos UCDP Onset v0.5.4
 
 `psychohistory.onset.casebook.v1` es un sobre opcional y **privado** con los país-año observados con `onset1=1` en el test 2016–2024. Se añade como una sola fila con `estado=RETROSPECTIVO_EXPLORATORIO`, referencia a Drive y JSON `notas`. Campos: edición 25.1, objetivo `onset1`, tipos `intrastate_country/interstate_country`, `sourceSha256` por tipo, flags de as-of y sellado siempre false, lag=2, modelos `global_frequency/country_shrinkage`, corte Y−2, y array de `cases` con país, año, etiqueta observada y ambas probabilidades retrospectivas. La UI cruza cada año y total con los dos sobres `psychohistory.onset.summary.v1`; si no coinciden, no se muestra. El report completo continúa en el Drive privado; el público recibe solamente código genérico.
+
+### PsicoExperimentos.notas: comparación pareada de errores
+
+Contrato opcional `psychohistory.paired-evaluation.v1` para ensayos históricos:
+`runType=adaptive_historical_screen`, `forecastIssued=false`,
+`skillDemonstrated=false`, `n`, `decision` (`rejected|screen_passed`),
+`criterion` y de una a tres `references` con `label/value`. Métrica/valor y
+baseline siguen en las columnas existentes; baseline debe coincidir con la
+primera referencia. Brier entre0y1; RMSE no negativo en puntos porcentuales.
+La web dibuja cada ensayo en su propia escala y no compara muestras entre sí.
+Una decisión de filtro no es admisión prospectiva ni atestación de procedencia.
+No nuevas tablas, escrituras desde frontend, polling ni datos reales en Git.

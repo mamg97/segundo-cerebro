@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - "app/research-progress*"
+      - "app/research-paired-evaluations*"
       - "app/research-lab-brief.mjs"
       - "app/research-ideas.mjs"
       - "app/research-ideas.test.mjs"
@@ -45,6 +46,7 @@ on:
     branches: [main]
     paths:
       - "app/research-progress*"
+      - "app/research-paired-evaluations*"
       - "app/research-lab-brief.mjs"
       - "app/research-ideas.mjs"
       - "app/research-ideas.test.mjs"
@@ -84,6 +86,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check app/research-lab.js
+          node --check app/research-paired-evaluations.mjs
           node --check app/research-glossary.mjs
           node --check app/research-tooltip.mjs
           node --check app/research-lab-navigation.mjs
@@ -98,5 +101,5 @@ jobs:
           node --check app/research-video-studio.mjs
           node --check app/research-lab-brief.mjs
           node --check app/research-ideas.mjs
-          node --test app/research-progress.test.mjs research/psychohistory/audit_future_asof_eligibility.test.mjs research/psychohistory/audit_future_first_passage_bootstrap.test.mjs research/psychohistory/audit_future_first_passage.test.mjs research/psychohistory/audit_future_regime_changes.test.mjs app/research-futures-diagnostics.test.mjs app/research-glossary.test.mjs app/research-lab-navigation.test.mjs app/research-futures-toolbar.test.mjs app/research-futures-questions.test.mjs app/research-futures.test.mjs app/research-futures-trees.test.mjs app/research-ideas.test.mjs app/research-lab-brief.test.mjs app/research-video-studio.test.mjs app/research-lab.test.mjs app/research-shadow2027.test.mjs app/research-shadow2027-inline.test.mjs app/research-onset.test.mjs
+          node --test app/research-paired-evaluations.test.mjs app/research-progress.test.mjs research/psychohistory/audit_future_asof_eligibility.test.mjs research/psychohistory/audit_future_first_passage_bootstrap.test.mjs research/psychohistory/audit_future_first_passage.test.mjs research/psychohistory/audit_future_regime_changes.test.mjs app/research-futures-diagnostics.test.mjs app/research-glossary.test.mjs app/research-lab-navigation.test.mjs app/research-futures-toolbar.test.mjs app/research-futures-questions.test.mjs app/research-futures.test.mjs app/research-futures-trees.test.mjs app/research-ideas.test.mjs app/research-lab-brief.test.mjs app/research-video-studio.test.mjs app/research-lab.test.mjs app/research-shadow2027.test.mjs app/research-shadow2027-inline.test.mjs app/research-onset.test.mjs
           echo "The 2027 cohort is private; tests use only fictional IDs and never fetch country probabilities."

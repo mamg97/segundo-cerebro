@@ -1,3 +1,23 @@
+## Psicohistoria — comparaciones visuales desde registro privado (28/10/2026)
+
+AV159: nueva lectura genérica `psychohistory.paired-evaluation.v1` en
+PsicoExperimentos.notas; tres ensayos AV156–158 escritos/releídos con sus
+valores/referencias reales, sin tocar emisiones. Inicio muestra últimos3y
+Evidencia todos: barras, n, unidades, criterio y decisión. JSON consistente no
+se presenta como procedencia acreditada ni filtro como habilidad futura.
+Sin backend, nuevas tablas, polling o coste. v0.5.32conJS/CSSversionados.
+Cinco pruebas nuevas/26laboratorio ybuild PASS; comprobación integrada local
+Inicio/Evidencia, escritorio/433pxsin overflow. Suite local amplia falla por
+Photon no instalado y test ajeno con%20en ruta; esperar CI Linux antes merge.
+Ver PAIRED_EVALUATION_DISPLAY.md. PR/CI/despliegue/producción y AV159canónico
+se confirman al cerrar; no confundir el render local parcial con estado real.
+
+AV156/861,AV157/862yAV158/864integradas;MAC03/04 PARCIAL/NOyavances
+escritos/releídos. No nuevos modelos admitidos ni predicciones semanales.
+Piloto4nov/seguimientos19nov/4dic y originales preservados.
+
+---
+
 ## Psicohistoria — señal independiente PAYEMS cerrada (28/10/2026)
 
 AV158: contrato previo3f198808a40d3d5f7cc665a4e43217cd8e14c188;
