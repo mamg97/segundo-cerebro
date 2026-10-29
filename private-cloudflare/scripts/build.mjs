@@ -26,7 +26,7 @@ html = html
   )
   .replace(
     /<script type="module" src="\.\/app\.js(?:\?v=[^"]+)?"><\/script>/,
-    (scriptTag) => `<script src="../private-config.js"></script>\n    ${scriptTag}`
+    (scriptTag) => `<script src="../private-config.js"></script>\n    <script src="./startup-watchdog.js"></script>\n    ${scriptTag}`
   );
 
 // Revisions track actual JS/CSS contents; stale browser caches cannot reuse
