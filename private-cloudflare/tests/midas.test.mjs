@@ -221,7 +221,7 @@ test("OIDC signature and workflow claims gate the private snapshot", async () =>
   const now = 1_800_000_000_000;
   const claims = { iss: "https://token.actions.githubusercontent.com",
     aud: "segundo-cerebro-midas-legacy-ingest", repository: "mamg97/midas-paper-lab", repository_id: "1392125585",
-    repository_owner: "mamg97", repository_owner_id: "110605707", sub: "repo:mamg97/midas-paper-lab:ref:refs/heads/main",
+    repository_owner: "mamg97", repository_owner_id: "110605707", sub: "repo:mamg97@110605707/midas-paper-lab@1392125585:ref:refs/heads/main",
     ref: "refs/heads/main", workflow_ref: "mamg97/midas-paper-lab/.github/workflows/genetic_sp500.yml@refs/heads/main",
     event_name: "schedule", run_id: "123", iat: now / 1000 - 30, exp: now / 1000 + 300 };
   const sign = async (payload) => {

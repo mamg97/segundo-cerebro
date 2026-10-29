@@ -33,7 +33,7 @@ export async function verifyGitHubOidc(token, fetcher = fetch, now = Date.now())
         claims.repository !== "mamg97/midas-paper-lab" ||
         String(claims.repository_id) !== "1392125585" ||
         claims.repository_owner !== "mamg97" || String(claims.repository_owner_id) !== "110605707" ||
-        claims.sub !== "repo:mamg97/midas-paper-lab:ref:refs/heads/main" ||
+        claims.sub !== "repo:mamg97@110605707/midas-paper-lab@1392125585:ref:refs/heads/main" ||
         claims.ref !== "refs/heads/main" || claims.workflow_ref !== WORKFLOW_REF ||
         !["schedule", "workflow_dispatch"].includes(claims.event_name) ||
         !Number.isInteger(claims.iat) || !Number.isInteger(claims.exp) ||

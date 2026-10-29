@@ -26,3 +26,13 @@ schedule and enable the public schedule. Verify the subsequent natural run.
 Standard public `ubuntu-latest` compute is free under GitHub's published Actions
 billing terms. No paid infrastructure, credentials in code, public application
 access, account upgrades or payment-method changes are introduced.
+
+
+## Immutable OIDC subject
+
+Live repository settings report use_immutable_subject=true. The exact main subject
+therefore includes the already-pinned owner and repository IDs. The receiver must
+match that immutable form; the older name-only subject is rejected. This is a trust
+policy correction, not a switch back to mutable identities. No GitHub OIDC setting
+or authentication protection is weakened. See the GitHub OIDC reference:
+https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims
