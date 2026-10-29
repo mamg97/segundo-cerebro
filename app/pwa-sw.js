@@ -16,7 +16,7 @@ function allowedStaticRequest(request) {
   if (url.origin !== self.location.origin) return false;
   // Do not cache /api, /private-config.js, Access, or HTML navigation documents.
   if (!url.pathname.startsWith("/app/") || !STATIC_FILE.test(url.pathname)) return false;
-  if (url.pathname === "/app/pwa-sw.js") return false;
+  if (url.pathname === "/app/pwa-sw.js" || url.pathname === "/app/startup-watchdog.js") return false;
   return [...url.searchParams.keys()].every((key) => key === "v");
 }
 
@@ -72,8 +72,9 @@ self.addEventListener("fetch", (event) => {
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const url = new URL(request.url);
-    // Unversioned JavaScript must revalidate to avoid mixing two releases.
-    const networkFirst = /\.m?js$/i.test(url.pathname) && !url.searchParams.has("v");
+    // JavaScript is always network-first to prevent Safari mixing modules from
+    // different deployments when an old SW still controls the current page.
+    const networkFirst = /\.m?js$/i.test(url.pathname);
     const cached = await cache.match(request);
     if (cached && !networkFirst) return cached;
     try {
@@ -81,6 +82,9 @@ self.addEventListener("fetch", (event) => {
       if (validStaticResponse(request, response)) {
         event.waitUntil(rememberStatic(request, response));
       }
+      // Login challenges must not masquerade as JavaScript modules. A previously
+      // validated *public code* copy is safe as fallback; private APIs still bypass SW.
+      if (networkFirst && cached && !validStaticResponse(request, response)) return cached;
       return response;
     } catch (error) {
       if (cached) return cached;
