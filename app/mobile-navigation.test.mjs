@@ -1,19 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {MOBILE_AREAS,mobileSections,mobileCurrentLabel,mobileRememberedRoute} from "./mobile-navigation.mjs";
-import {hrefForArea,routeFromHash} from "./area-routes.mjs";
+import {MOBILE_AREAS,mobileSections,mobileCurrentLabel,mobileRememberedRoute,MOBILE_QUICK_ACCESS} from "./mobile-navigation.mjs";
+import {hrefForArea,hrefForPantryTab,routeFromHash} from "./area-routes.mjs";
 const parse=hash=>routeFromHash(hash);
 test("mobile primary dock has five areas and More holds all remaining areas",()=>{
  assert.deepEqual(MOBILE_AREAS.slice(0,5).map(x=>x[0]),["area-general","area-finance","area-calendar","area-health","area-partner"]);
- assert.equal(MOBILE_AREAS.length,12);
- assert.equal(new Set(MOBILE_AREAS.map(x=>x[0])).size,12);
+ assert.equal(MOBILE_AREAS.length,13);
+ assert.equal(new Set(MOBILE_AREAS.map(x=>x[0])).size,13);
+ assert.ok(MOBILE_AREAS.some(x=>x[0]==="area-pantry"&&x[1]==="Despensa"));
  for(const x of MOBILE_AREAS)assert.equal(parse(hrefForArea(x[0])).areaId,x[0]);
 });
 test("context selector only offers actually implemented and shareable sections",()=>{
  assert.deepEqual(mobileSections(parse("#/pareja")).map(x=>x.href),["#/pareja","#/pareja/boda"]);
  assert.deepEqual(mobileSections(parse("#/salud")).map(x=>x.href),["#/salud/overview","#/salud/medical","#/salud/vision","#/salud/gym","#/salud/nutrition","#/salud/recipes","#/salud/menu"]);
  assert.deepEqual(mobileSections(parse("#/hobbies")).map(x=>x.href),["#/hobbies/peliculas","#/hobbies/series","#/hobbies/libros","#/hobbies/vinos","#/hobbies/rutas-moto"]);
+ assert.deepEqual(mobileSections(parse("#/despensa")).map(x=>x.href),["#/despensa/inventario","#/despensa/compra","#/despensa/tickets"]);
  for(const id of MOBILE_AREAS.map(x=>x[0])){
   for(const section of mobileSections(parse(hrefForArea(id))))assert.ok(parse(section.href),"Invalid "+section.href);
  }
@@ -23,6 +25,7 @@ test("header and dock reflect the current deep link",()=>{
  assert.equal(mobileCurrentLabel(parse("#/salud/nutrition"),"#/salud/nutrition").section,"Nutrición");
  assert.equal(mobileCurrentLabel(parse("#/hobbies/libros"),"#/hobbies/libros").tab,"more");
  assert.equal(mobileCurrentLabel(parse("#/agenda"),"#/agenda").tab,"area-calendar");
+ assert.equal(mobileCurrentLabel(parse("#/despensa/compra"),"#/despensa/compra").section,"Lista de la compra");
 });
 test("remembered last section is constrained to same area",()=>{
  assert.equal(mobileRememberedRoute("area-partner",{"area-partner":"#/pareja/boda"}),"#/pareja/boda");
@@ -39,7 +42,7 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
  assert.match(app,/syncMobileNavigation\(route,hash\)/);
  assert.match(app,/routedHealthTabId/);
  assert.match(app,/hrefForHealthTab/);
- assert.match(index,/mobile-navigation\.css\?v=0\.1\.4/);
+ assert.match(index,/mobile-navigation\.css\?v=0\.1\.5/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(min-width:761px\)/);
  assert.match(css,/env\(safe-area-inset-bottom/);
@@ -84,7 +87,7 @@ test("mobile refresh shows one circular arrow rather than two opposing arrows",(
  assert.doesNotMatch(icon,/M4 17v-5h5|M20 7v5h-5/);
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
- assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.3/);
+ assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.5/);
  assert.match(index,/app\.js\?v=0\.44\.\d+/);
 });
 
@@ -111,4 +114,24 @@ test("mobile wealth modal retains its inset width instead of secondary fullscree
  assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)::before\{/);
  assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)>#close-dialog\{/);
  assert.match(base,/\.detail-dialog\.wealth-dialog\s*\{[\s\S]*?width: calc\(100% - 20px\)/);
+});
+
+test("mobile More exposes real quick access links and Despensa, not merely decorative tiles",()=>{
+ assert.deepEqual(MOBILE_QUICK_ACCESS.map(x=>[x.label,x.href]),[
+  ["Gym","#/salud/gym"],["Lista de la compra","#/despensa/compra"]
+ ]);
+ const nav=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
+ const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ assert.match(nav,/Accesos rápidos/);
+ assert.match(nav,/data-mobile-route/);
+ assert.match(nav,/MOBILE_AREAS\.map/);
+ assert.match(css,/\.mobile-sheet-shortcuts\{display:grid/);
+ assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(index,/href="#\/salud\/gym"/);
+ assert.match(index,/href="#\/despensa\/compra"/);
+ assert.match(app,/routedPantryTabId/);
+ assert.match(app,/openPantryDetail\(routedPantryTabId==="compra"\?"shopping"/);
+ assert.deepEqual(routeFromHash(hrefForPantryTab("compra")),{areaId:"area-pantry",detailId:"compra"});
 });
