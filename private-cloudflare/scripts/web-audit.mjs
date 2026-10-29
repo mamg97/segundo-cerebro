@@ -2817,7 +2817,7 @@ try {
   );
   const expectedNavIds = [
     "area-general", "area-career", "area-finance", "area-calendar",
-    "area-partner", "area-family", "area-health", "area-objects",
+    "area-partner", "area-family", "area-health", "area-pantry", "area-objects",
     "area-wealth", "area-projects", "area-travels", "area-hobbies"
   ];
   const missingNavIds = expectedNavIds.filter((id) => !navIds.includes(id));
