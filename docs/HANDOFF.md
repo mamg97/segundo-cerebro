@@ -1,3 +1,14 @@
+# MIDAS original genetic migration · 2026-10-29
+
+Prepared exact public-workflow OIDC authentication, immutable historical-prefix
+checks, idempotent same-ledger republication and atomic append validation.
+Canonical trading remains simulated and separate from real personal finances.
+Migration is not complete until a genuine public session, private ingestion and
+the next natural schedule have been verified. Preserve the existing three cohorts.
+See docs/MIDAS_GENETIC_MIGRATION.md for the controlled handover and evidence gates.
+
+---
+
 # Psicohistoria — transferencia bursátil y calendario · 29/10/2026
 
 Prioridad activa: riesgo bursátil a20sesiones. Archivo previo y web privados
