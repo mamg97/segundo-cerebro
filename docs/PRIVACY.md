@@ -39,6 +39,7 @@ La clasificación no autoriza por sí sola el almacenamiento.
 - Cloudflare Access protege la superficie interactiva antes de exponer datos.
 - `/api/state` y respuestas privadas usan políticas de no caché cuando corresponde.
 - El frontend privado debe enviar cabeceras de seguridad y `noindex`.
+- **PWA privada:** el Service Worker guarda de manera persistente **únicamente archivos estáticos públicos** (código, CSS, iconos, fuentes) de `/app/`; quedan excluidos HTML, Cloudflare Access, cualquier ruta `/api/`, `private-config.js`, cookies, respuestas autenticadas, imágenes de usuario y cualquier dato privado de Salud, Familia o Finanzas. No utiliza IndexedDB/localStorage para datos personales. La copia de interfaz no habilita lectura offline de datos privados ni sustituye la autenticación. El registro ocurre solo en el build privado, no en GitHub Pages.
 - Los secretos de Google, iCloud y Health ingest se configuran fuera de Git.
 - Los directorios de build, configuración privada y `.private/` permanecen excluidos del repositorio cuando contienen material sensible.
 

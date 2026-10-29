@@ -43,6 +43,10 @@ La aplicación privada activa el modo `private-remote` y obtiene el estado desde
 
 El arranque puede componer `GET /api/state` para obtener una instantánea coherente de Home, pero las actualizaciones ordinarias no recargan toda la aplicación. El botón global usa **refresco incremental por dominio** mediante `GET /api/state?scope=finance|habits|pantry|objects|calendar`; Salud y Menú usan sus endpoints dedicados. Cada respuesta actualiza únicamente su bloque y los workspaces de detalle continúan cargándose bajo demanda. Este particionado aísla fallos y presupuesto CPU por petición, requisito importante para permanecer en Workers Free.
 
+### Inicio móvil y PWA privada
+
+El build privado incorpora un manifiesto instalable y registra `/app/pwa-sw.js`, versionado por fingerprint del bundle. La caché persistente está restringida a archivos estáticos de código, estilos, iconos y fuentes del repositorio público, bajo `/app/`. Las navegaciones HTML, Cloudflare Access, `/api/*`, `private-config.js`, datos personales y archivos privados no son interceptados ni persistidos; `GET /app/` continúa requiriendo red y autenticación. En cada versión se eliminan las cachés estáticas anteriores. Mientras la app está visible, comprueba a los 5 minutos si procede solicitar el refresco incremental existente; se inhibe si hay diálogos, edición activa, falta de conexión o un refresco en curso. Al volver a primer plano se comprueba si el plazo ha vencido. No existe sincronización en segundo plano con la app cerrada ni duplicación de fuentes canónicas.
+
 ## Coordinador y estado común
 
 El Coordinador interpreta la intención del usuario y combina información entre áreas. Los módulos aportan reglas de dominio, pero no mantienen memorias independientes.

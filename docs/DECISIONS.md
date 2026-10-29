@@ -44,7 +44,7 @@ Este documento registra decisiones duraderas. El detalle histórico adicional pe
 
 - **Estado:** aceptada
 - **Fecha:** 2026-09-22
-- **Decisión:** diseñar para Mac, iPhone e iPad y mantener compatibilidad conceptual con una futura PWA.
+- **Decisión:** diseñar para Mac, iPhone e iPad. La aplicación privada incorpora PWA instalable con un Service Worker limitado al código y recursos estáticos públicos de `/app/`; no guarda HTML, respuestas API, credenciales, fotografías privadas ni estado personal en caché persistente. El refresco visible a los cinco minutos reutiliza el botón incremental actual, sin cron ni costes añadidos. La demo pública permanece sin registro PWA. La navegación inicial y la autenticación siguen requiriendo red.
 
 ## D-006 — Árbol operativo como transparencia
 
