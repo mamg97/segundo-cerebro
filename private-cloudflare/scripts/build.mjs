@@ -31,11 +31,30 @@ html = html
 
 // Revisions track actual JS/CSS contents; stale browser caches cannot reuse
 // the previous release just because an editor forgot to bump ?v= in index.html.
+const appRevision = fingerprintStaticAsset(await readFile(resolve(dist, "app", "app.js")));
+const stylesRevision = fingerprintStaticAsset(await readFile(resolve(dist, "app", "styles.css")));
+const registerSource = await readFile(resolve(dist, "app", "pwa-register.mjs"), "utf8");
+const swPath = resolve(dist, "app", "pwa-sw.js");
+const swSource = await readFile(swPath, "utf8");
+const releaseRevision = fingerprintStaticAsset(
+  [appRevision, stylesRevision, registerSource, swSource].join(":")
+);
 html = stampStaticEntrypoints(html, {
-  "app.js": fingerprintStaticAsset(await readFile(resolve(dist, "app", "app.js"))),
-  "styles.css": fingerprintStaticAsset(await readFile(resolve(dist, "app", "styles.css")))
+  "app.js": appRevision,
+  "styles.css": stylesRevision
 });
 
+// Only the private authenticated deployment is installable. GitHub Pages remains a demo.
+html = html.replace("</head>", `  <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="SEGUN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script type="module" src="./pwa-register.mjs?v=${releaseRevision}"></script>
+  </head>`);
+await writeFile(swPath, swSource
+  .replaceAll("__BUILD_REVISION__", releaseRevision)
+  .replaceAll("__APP_REVISION__", appRevision)
+  .replaceAll("__STYLE_REVISION__", stylesRevision), "utf8");
 await writeFile(indexPath, html, "utf8");
 await writeFile(
   resolve(dist, "private-config.js"),
