@@ -6252,7 +6252,9 @@ function homeMenuEditPayload(item, action, newRecipeId = null, newServings = nul
     ...(["add","add-food"].includes(action) ? {} : {
       sourceRow: item.sourceRow,
       ...(item.recipeId ? {recipeId:item.recipeId} : {foodId:item.foodId}),
-      name: item.name, updatedAt: item.updatedAt || ""
+      // The server compares against the exact MenuSemanal row name, not the
+      // Pantry-enriched display label shown in the editor.
+      name: item.sourceName ?? item.name, updatedAt: item.updatedAt || ""
     }),
     ...(["add-food","replace-food"].includes(action)
       ? {newFoodId:String(newRecipeId||"").replace(/^food:/,"")}
