@@ -865,8 +865,9 @@ async function init() {
   }
   observeVerifiedFinanceBankSection();
   initDemoMode();
-  document.documentElement.dataset.segunBoot = "ready";
-  window.dispatchEvent(new Event("segun:ready"));
+  const ready = globalThis.__SECOND_BRAIN_REMOTE__ !== true || privateModeKind === "remote";
+  document.documentElement.dataset.segunBoot = ready ? "ready" : "degraded";
+  window.dispatchEvent(new Event(ready ? "segun:ready" : "segun:boot-failed"));
 }
 
 async function loadLocalPrivateState() {
