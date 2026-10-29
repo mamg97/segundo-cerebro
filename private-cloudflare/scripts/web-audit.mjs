@@ -3882,7 +3882,10 @@ try {
         await productDetail.isVisible().catch(() => false),
         "Menú · alimento abre ficha real de Despensa"
       );
-      const backToMenu = page.locator('[data-health-panel="menu"] #pantry-back');
+      // A failed product fetch leaves a recoverable error panel with its own Back
+      // control. Keep the product-detail FAIL, but restore the menu before
+      // checking independent week-navigation assertions (no cascading false FAIL).
+      const backToMenu = page.locator('[data-health-panel="menu"] #pantry-back, [data-health-panel="menu"] [data-menu-product-back]');
       if (await backToMenu.count()) {
         await backToMenu.click();
         await page.waitForTimeout(100);
