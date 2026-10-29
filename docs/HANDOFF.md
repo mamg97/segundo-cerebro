@@ -12,8 +12,8 @@ terminada con muestra insuficiente y sin superar ambos requisitos contra
 frecuencias. Contraste independiente confirma todos los cálculos. No modelo
 admitido, riesgoactual ni emisión. SP500_TRANSFER_CLOSEOUT.md detalla límites.
 Reportes numéricos/originales privados locales; no nuevos uploads de informes.
-Pruebas nuevas y mercado relacionadas correctas; CI/integración y registro
-canónico de este avance pendientes hasta comprobarlos. Preservar estudios
+PR885 integrada; CI científica y privacidad correctas. Avance nuevo y fases
+canónicas actualizados y releídos; Chrome y Sheet nativo verificados. Preservar estudios
 French previos: otro target, no confirmación independiente.
 
 Siguiente: captura prospectiva y contrato de evaluación; preparar referencias
