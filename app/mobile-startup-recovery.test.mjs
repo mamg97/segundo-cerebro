@@ -26,7 +26,9 @@ test("failed /api/state cannot silently declare the private page ready", () => {
 });
 
 test("Safari never prefers old JS cache and SW does not prewarm large scripts", () => {
-  assert.match(sw, /const networkFirst = \/\\\.m\?js\$\/i\.test\(url\.pathname\)/);
+  assert.match(sw, /const networkFirst = /);
+  assert.match(sw, /networkFirst && cached/);
+  assert.doesNotMatch(sw, /networkFirst = .*searchParams\.has/);
   assert.match(sw, /startup-watchdog\.js/);
   assert.doesNotMatch(sw, /PREWARM/);
   assert.doesNotMatch(sw, /Promise\.allSettled/);
