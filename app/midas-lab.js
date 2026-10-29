@@ -251,7 +251,7 @@ function algorithmMeta(item) {
     ? item.activity_tickers : fallbackTickers).filter(Boolean);
   const staleWeeklyBuyLabel = item.group === "weekly_ml_demo" && !item.bootstrap &&
     /compras? para próxima apertura/i.test(String(item.activity_label || ""));
-  const activityLabel = privateGenetic ? "Actividad privada · detalle no disponible" : staleWeeklyBuyLabel
+  const activityLabel = privateGenetic ? "Detalle de actividad no enlazado" : staleWeeklyBuyLabel
     ? (activityTickers.length || Number(item.pending_orders_count) || 0) +
         " señales congeladas · liquidación semanal pendiente"
     : (item.activity_label ||
@@ -259,7 +259,7 @@ function algorithmMeta(item) {
         ? fallbackTickers.length + (fallbackTickers.length === 1 ? " posición" : " posiciones")
         : item.status === "demo_con_diario" ? "Actividad sin detalle disponible" : "Esperando actividad"));
   const status = item.bootstrap ? "Bootstrap técnico" :
-    (privateGenetic ? "Diario privado · actividad no enlazada" :
+    (privateGenetic ? "Resumen de cartera simulada" :
       hasUnsettledWeeklySignal ? "Señal sin liquidar" : awaitingFirstWeeklySettlement ? "Pendiente de primera liquidación" :
       historicalWeekly ? "Resultado de liquidación semanal" : statusLabel(item.status));
   const drawdown = typeof item.max_drawdown_pct === "number" && Number.isFinite(item.max_drawdown_pct)
