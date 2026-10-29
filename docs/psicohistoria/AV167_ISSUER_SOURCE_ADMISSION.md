@@ -19,7 +19,7 @@ sólo produce un diagnóstico matemático: no supera el gate de metadatos.
 
 La comparación con seis plazos de la ficha mensual también falla la tolerancia
 prefijada en parte de los plazos. No se amplía esa tolerancia ni se cambia
-reinvención, fecha o fórmula para forzar concordancia. La diferencia puede
+reinversión, fecha o fórmula para forzar concordancia. La diferencia puede
 depender de metodología del emisor; la causa todavía no está acreditada.
 
 Nueve pruebas ficticias y CLI privada exclusiva correctas. Un lector
