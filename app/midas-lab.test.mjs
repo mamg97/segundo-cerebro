@@ -181,7 +181,7 @@ test("legacy genetic is catalog-only, private forward never masquerades as cash"
   assert.match(html, /Detalle de actividad no enlazado/);
   assert.doesNotMatch(html, /Sin compras · en efectivo/);
   const detail = renderMidasAlgorithmDetail(dashboard, null, "genetic_sp500_forward");
-  assert.match(detail, /actividad no enlazada/);
+  assert.match(detail, /Resumen de cartera simulada/);
   assert.match(detail, /Detalle de actividad no enlazado/);
 });
 
