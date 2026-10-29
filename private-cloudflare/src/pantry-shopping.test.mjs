@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {readFileSync} from "node:fs";
 import { buildPayload } from "./pantry.js";
 
 test("shopping payload exposes exact household alias and canonical product URL", () => {
