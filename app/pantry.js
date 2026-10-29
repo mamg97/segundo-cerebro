@@ -486,11 +486,21 @@ function renderWorkspace(payload, initialView = "inventory") {
       });
       const data=await response.json().catch(()=>({}));
       if(!response.ok||!data.ok)throw Error(data.code||"SHOPPING_ACTION_FAILED");
-      const fresh=await fetchPantryPayload({attempts:2});
-      renderWorkspace(fresh,"shopping");
+      // A successful write must never be reported as failed just because the
+      // subsequent view refresh times out (otherwise retries create duplicates).
+      let viewUpdated=true;
+      try{
+        const fresh=await fetchPantryPayload({attempts:2});
+        renderWorkspace(fresh,"shopping");
+      }catch(error){viewUpdated=false;}
       const node=document.querySelector("#dialog-body [data-shopping-status]");
       if(node)node.textContent=data.alreadyListed
-        ?"Este producto ya figura en la lista.":"Despensa y lista actualizadas. Sincronización con iPhone pendiente del agente del Mac.";
+        ?"Este producto ya figura en la lista.":
+        data.inventoryReviewRequired
+          ?"Añadido a la compra. Hay varios lotes en inventario: cantidades conservadas, pendientes de revisar.":
+        viewUpdated
+          ?"Producto añadido. Inventario actualizado; sincronización con iPhone pendiente del Mac.":
+          "Producto guardado correctamente; recarga la lista para ver el cambio.";
     }catch(error){
       statusMessage("No se pudo actualizar. "+String(error?.message||"Reintenta"),true);
     }finally{busy.value=false;}

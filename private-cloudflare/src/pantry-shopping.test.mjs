@@ -85,3 +85,33 @@ test("kilogram quantity permits a transparent computed estimated cost", () => {
   ]);
   assert.equal(payload.shoppingList[0].estimatedCost,3.1500000000000004);
 });
+
+test("multiple purchases of a canonical product retain independent inventory lots",async()=>{
+ const {resolveInventoryLots,ShoppingActionError}=await import("./pantry-shopping-actions.js");
+ const rows=[
+  {row:132,data:{inventario_id:"inv-first-purchase",producto_id:"sku-protein-drink",cantidad_aprox:657}},
+  {row:170,data:{inventario_id:"inv-second-purchase",producto_id:"sku-protein-drink",cantidad_aprox:1}},
+  {row:190,data:{inventario_id:"other",producto_id:"sku-another"}}
+ ];
+ const result=resolveInventoryLots(rows,"sku-protein-drink");
+ assert.deepEqual(result.rows,[132,170]);
+ assert.equal(result.lotCount,2);
+ assert.equal(result.row.row,132);
+ assert.equal(rows[0].data.cantidad_aprox,657);
+ assert.equal(rows[1].data.cantidad_aprox,1);
+ assert.deepEqual(resolveInventoryLots(rows,"sku-another").rows,[190]);
+ assert.equal(resolveInventoryLots(rows,"sku-new").lotCount,0);
+ assert.throws(()=>resolveInventoryLots([
+  {row:2,data:{producto_id:"sku-protein-drink",inventario_id:"same"}},
+  {row:3,data:{producto_id:"sku-protein-drink",inventario_id:"same"}}
+ ],"sku-protein-drink"),error=>error instanceof ShoppingActionError&&error.code==="INVENTORY_DUPLICATE_LOT_ID");
+});
+test("multi-lot shopping action never overwrites a random historical lot",()=>{
+ const source=readFileSync(new URL("./pantry-shopping-actions.js",import.meta.url),"utf8");
+ assert.match(source,/if\(match\.lotCount>1\)/);
+ assert.match(source,/inventoryReviewRequired:true/);
+ assert.match(source,/const inventory=await setInventoryAvailability/);
+ const ui=readFileSync(new URL("../../app/pantry.js",import.meta.url),"utf8");
+ assert.match(ui,/data\.inventoryReviewRequired/);
+ assert.match(ui,/Producto guardado correctamente; recarga la lista/);
+});

@@ -80,14 +80,28 @@ function updatedShoppingRecord(previous,now,patch){
   return {...previous,...patch,updated_at:now,segundo_cerebro_modified_at:now,
     sync_status:"pending",sync_error:""};
 }
+export function resolveInventoryLots(inventoryRows,productId){
+  const matches=inventoryRows.filter(x=>String(x.data?.producto_id||"")===String(productId));
+  if(matches.length>1){
+    const ids=matches.map(x=>String(x.data?.inventario_id||"").trim());
+    if(ids.some(id=>!id)||new Set(ids).size!==ids.length)fail("INVENTORY_DUPLICATE_LOT_ID",409);
+  }
+  return {row:matches[0]||null,lotCount:matches.length,rows:matches.map(x=>x.row)};
+}
 export async function setInventoryAvailability(env,auth,product,{available,now}){
   const token=await auth(env),spreadsheetId=await resolvePantrySpreadsheetId(env,auth);
   const [values]=await readBatch(spreadsheetId,token,["Inventario!A1:M2000"]);
   const header=(values[0]||[]).map(x=>String(x??""));
   if(!headersNeeded.every(x=>header.includes(x)))fail("INVENTORY_SCHEMA_UNSUPPORTED");
-  const matches=records(values).filter(x=>x.data.producto_id===product.id);
-  if(matches.length>1)fail("INVENTORY_PRODUCT_AMBIGUOUS");
-  const r=matches[0],row=r?.row||Math.max(2,values.length+1);
+  const match=resolveInventoryLots(records(values),product.id);
+  // Multiple inventory rows with *distinct lot IDs* are legitimate purchases.
+  // Shopping demand is product-scoped, but stock updates are lot-scoped:
+  // never choose one lot arbitrarily or erase a historical lot's quantity.
+  if(match.lotCount>1){
+    return {inventoryRows:match.rows,stockStatus:"unchanged",
+      inventoryReviewRequired:true,reason:"MULTIPLE_INVENTORY_LOTS"};
+  }
+  const r=match.row,row=r?.row||Math.max(2,values.length+1);
   if(row>2000)fail("INVENTORY_SHEET_CAPACITY",409);
   const current=r?.data||{};
   const oldQuantity=current.cantidad_aprox;
@@ -128,7 +142,7 @@ export async function performShoppingAction(request,env,auth){
     if(active) return {ok:true,action:"add",alreadyListed:true,productId:id};
     // The user has explicitly said stock is missing. This is stronger than
     // a stale inventory observation, and records no fictitious quantity.
-    await setInventoryAvailability(env,auth,product,{available:false,now:date});
+    const inventory=await setInventoryAvailability(env,auth,product,{available:false,now:date});
     const old=sheet.rows.filter(row=>row.record.producto_id===id &&
       ["CANCELADO","COMPRADO","REVISAR"].includes(String(row.record.estado||"").toUpperCase()));
     const record=old.length===1?
@@ -144,6 +158,7 @@ export async function performShoppingAction(request,env,auth){
     if(old.length===1)await updatePantryShoppingRow(sheet,old[0].rowNumber,record);
     else await appendPantryShoppingRow(sheet,record);
     return {ok:true,action:"add",productId:id,alreadyListed:false,
+      inventoryReviewRequired:inventory.inventoryReviewRequired===true,
       appleSync:"pending_macos_bridge"};
   }
   if(!active)fail("ACTIVE_SHOPPING_ROW_NOT_FOUND",409);
@@ -151,12 +166,14 @@ export async function performShoppingAction(request,env,auth){
     fail("SHOPPING_ROW_CHANGED",409);
   // "Ya está en despensa" is not a purchase: CANCELADO completes the linked
   // Apple reminder when the Mac agent next runs. Do not mark COMPRADO.
-  await setInventoryAvailability(env,auth,product,{available:true,now:date});
+  const inventory=await setInventoryAvailability(env,auth,product,{available:true,now:date});
   await updatePantryShoppingRow(sheet,active.rowNumber,
     updatedShoppingRecord(active.record,date,{estado:"CANCELADO",producto_id:product.id,
       motivo:"Disponible en despensa (confirmación explícita)",
       fuente:"web-inventory-confirmation"}));
-  return {ok:true,action:"available",productId:id,appleSync:"pending_macos_bridge"};
+  return {ok:true,action:"available",productId:id,
+    inventoryReviewRequired:inventory.inventoryReviewRequired===true,
+    appleSync:"pending_macos_bridge"};
 }
 export async function reconcileMenuShopping(env,auth,{today,limit=12}={}){
   if(!env.HEALTH_SHEET_ID)fail("HEALTH_NOT_CONFIGURED",503);
