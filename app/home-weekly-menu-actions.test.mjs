@@ -198,3 +198,24 @@ test("Añadir always stays visible for occupied and consumed meals; companion mo
   assert.match(app,/isAdd && alreadyHasPrimary/);
   assert.match(app,/alreadyHasPrimary && !roleSelect\?\.value/);
 });
+
+
+test("editing a Pantry-renamed food sends the source Sheet name, not the display alias", () => {
+  const renamed = {
+    ...item,
+    recipeId: null, foodId: "food-example",
+    name: "Yogur muestra · 250 g (½ tarro)",
+    sourceName: "Yogur muestra +Proteínas · 250 g",
+    itemRole: "acompanante", companionType: "yogur"
+  };
+  const replace = sandbox.homeMenuEditPayload(renamed, "replace-food", "food-coco", 2, "yogur");
+  assert.equal(replace.name, renamed.sourceName);
+  assert.equal(replace.foodId, renamed.foodId);
+  assert.equal(replace.newFoodId, "food-coco");
+  assert.equal(replace.sourceRow, renamed.sourceRow);
+  assert.equal(replace.updatedAt, renamed.updatedAt);
+  const consume = sandbox.homeMenuEditPayload(renamed, "consume");
+  assert.equal(consume.name, renamed.sourceName);
+  const legacy = sandbox.homeMenuEditPayload({...renamed,sourceName:undefined}, "consume");
+  assert.equal(legacy.name, renamed.name);
+});

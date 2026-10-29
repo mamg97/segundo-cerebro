@@ -88,3 +88,19 @@ test("missing product metadata and non-yogurt foods are never guessed or renamed
   const fruit = { ...unmatched, companionType: "fruta", name: "Plátano" };
   assert.equal(companionMenuDisplayName(fruit, products.get("small-natural")), "Plátano");
 });
+
+
+test("Pantry display alias does not replace the canonical menu name needed for edits", () => {
+  const raw = {
+    ...menu("jar-natural", 250, "g", "Yogur natural de prueba · tarro 250 g"),
+    sourceRow: 12, updatedAt: "2026-01-19T09:00:00Z"
+  };
+  const [display] = prepareWeeklyMenuRows([raw], { pantryProductById: products });
+  assert.equal(display.name, "Yogur proteico natural · 250 g (½ tarro)");
+  assert.equal(display.sourceName, raw.name);
+  assert.equal(display.sourceRow, 12);
+  assert.equal(display.updatedAt, raw.updatedAt);
+  // Further UI hydration must not replace the authoritative name.
+  const [again] = prepareWeeklyMenuRows([display], { pantryProductById: products });
+  assert.equal(again.sourceName, raw.name);
+});

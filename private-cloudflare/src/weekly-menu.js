@@ -184,6 +184,9 @@ export function prepareWeeklyMenuRows(rows, options = {}) {
     const hydrated = {
       ...item,
       moment: canonicalWeeklyMenuMoment(item),
+      // Keep the exact Sheet name for optimistic edits. Display labels may be
+      // enriched by Pantry (portion, format, etc.) and are not the row identity.
+      sourceName: item.sourceName ?? item.name ?? "",
       name: companionMenuDisplayName(item, pantryProduct),
       pantryProductId: pantryProduct?.id || null,
       // Product photos are sourced from the private Pantry catalog, never guessed from menu names.
