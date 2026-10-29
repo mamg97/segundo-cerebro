@@ -1,3 +1,21 @@
+# Psicohistoria — fuente diaria del emisor auditada · 29/10/2026
+
+AV166/PR875 integrada decfbe1a: primer estudio bursátil real y contraste
+independiente cerrados, candidato descartado. No repetir ni ajustar parámetros.
+AV167 lector NAV/distribuciones y contraste con ficha completados localmente:
+fuente SOURCE_METADATA_AND_PERFORMANCE_BLOCKED, sin corregir original o aumentar
+tolerancia previa. Nueve pruebas y CLI privada correctas; lector independiente
+reproduce filas y seis diferencias. Ver AV167_ISSUER_SOURCE_ADMISSION.md.
+Canónico/archivo Drive AV166 pendientes de autorización específica tras rechazo
+de revisión automática; preguntar una sola vez ya hecho, no eludir. AV167
+pendiente de sincronización; no afirmar publicado hasta CI e integración.
+Siguiente unidad independiente: distribución de pérdidas a20sesiones, con
+contrato antes de ejecutar; no rescatar logística negativa ni fabricar riesgo
+actual desde una fuente retrasada. Originales macro/anual y seguimientos
+4nov/19nov/4dic intactos; agenda secundaria conservada.
+
+---
+
 # Psicohistoria — prioridad bursátil reabierta · 29/10/2026
 
 El propietario revoca el aplazamiento F1B y prioriza riesgo a 20 sesiones.
