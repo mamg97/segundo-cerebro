@@ -9,11 +9,14 @@ export const HOBBY_CATEGORIES=Object.freeze([
 const hobbyIds=new Set(HOBBY_CATEGORIES.map(item=>item.id));
 export const HEALTH_SECTION_IDS=Object.freeze(["overview","medical","vision","gym","nutrition","recipes","menu"]);
 const healthSectionIds=new Set(HEALTH_SECTION_IDS);
+export const PANTRY_SECTION_IDS=Object.freeze(["inventario","compra","tickets"]);
+const pantrySectionIds=new Set(PANTRY_SECTION_IDS);
 const routes=[
  ["area-general","inicio"],["area-career","carrera"],["area-finance","finanzas"],
  ["area-calendar","agenda"],["area-partner","pareja"],["area-family","familia"],
  ["area-health","salud"],["area-objects","objetos"],["area-wealth","patrimonio"],
- ["area-projects","proyectos"],["area-travels","viajes"],["area-hobbies","hobbies"]
+ ["area-projects","proyectos"],["area-travels","viajes"],["area-hobbies","hobbies"],
+ ["area-pantry","despensa"]
 ];
 const areaToSlug=new Map(routes),slugToArea=new Map(routes.map(([a,s])=>[s,a]));
 export function hrefForArea(areaId){return "#/"+(areaToSlug.get(areaId)||"inicio")}
@@ -24,13 +27,14 @@ export function routeFromHash(hash){
   const areaId=slugToArea.get(parts[0]);
   if(!areaId || parts.length>2)return null;
   if(parts.length===2){
-    if(areaId!=="area-travels"&&areaId!=="area-hobbies"&&areaId!=="area-partner"&&areaId!=="area-health")return null;
+    if(areaId!=="area-travels"&&areaId!=="area-hobbies"&&areaId!=="area-partner"&&areaId!=="area-health"&&areaId!=="area-pantry")return null;
     try{
       const id=decodeURIComponent(parts[1]);
       if(!id||id.length>500||id.includes("/")||id.includes("\\")||id.includes("\0"))return null;
       if(areaId==="area-hobbies"&&!hobbyIds.has(id))return null;
       if(areaId==="area-partner"&&id!=="boda")return null;
       if(areaId==="area-health"&&!healthSectionIds.has(id))return null;
+      if(areaId==="area-pantry"&&!pantrySectionIds.has(id))return null;
       return {areaId,detailId:id};
     }catch{return null}
   }
@@ -43,4 +47,5 @@ export function hrefForTravel(id){
 export function hrefForHobby(id){return hobbyIds.has(id)?"#/hobbies/"+id:hrefForArea("area-hobbies")}
 export function hrefForWedding(){return "#/pareja/boda"}
 export function hrefForHealthTab(tab){return healthSectionIds.has(tab)?"#/salud/"+tab:hrefForArea("area-health")}
+export function hrefForPantryTab(tab){return pantrySectionIds.has(tab)?"#/despensa/"+tab:hrefForArea("area-pantry")}
 export function isNamedArea(areaId){return areaToSlug.has(areaId)}

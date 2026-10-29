@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,hrefForHealthTab,HEALTH_SECTION_IDS,routeFromHash} from "./area-routes.mjs";
+import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,hrefForHealthTab,HEALTH_SECTION_IDS,hrefForPantryTab,PANTRY_SECTION_IDS,routeFromHash} from "./area-routes.mjs";
 
 test("main areas have independent, stable URLs and a home route",()=>{
   assert.equal(hrefForArea("area-general"),"#/inicio");
-  for(const id of ["area-career","area-finance","area-calendar","area-partner","area-family","area-health","area-objects","area-wealth","area-projects","area-travels","area-hobbies"]){
+  for(const id of ["area-career","area-finance","area-calendar","area-partner","area-family","area-health","area-objects","area-wealth","area-projects","area-travels","area-hobbies","area-pantry"]){
     const route=routeFromHash(hrefForArea(id));
     assert.equal(route.areaId,id);
     assert.equal(route.detailId,null);
@@ -82,4 +82,20 @@ test("health subroutes are shareable and deny invalid sections",()=>{
  assert.equal(routeFromHash("#/salud/unknown"),null);
  assert.equal(routeFromHash("#/salud/%2f"),null);
  assert.equal(hrefForHealthTab("invalid"),"#/salud");
+});
+
+test("Despensa and its shopping-list subroute are directly addressable without bypassing Access",()=>{
+ assert.equal(hrefForArea("area-pantry"),"#/despensa");
+ assert.deepEqual(PANTRY_SECTION_IDS,["inventario","compra","tickets"]);
+ for(const tab of PANTRY_SECTION_IDS){
+   assert.deepEqual(routeFromHash(hrefForPantryTab(tab)),{areaId:"area-pantry",detailId:tab});
+ }
+ for(const invalid of ["#/despensa/mis-datos","#/despensa/%","#/despensa/%2f","#/despensa/compra/extra"]){
+   assert.equal(routeFromHash(invalid),null);
+ }
+ assert.equal(hrefForPantryTab("invalid"),"#/despensa");
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ assert.match(app,/routedPantryTabId=route\.areaId==="area-pantry"/);
+ assert.match(app,/hrefForPantryTab\(tab\)/);
+ assert.match(app,/openPantryDetail\(routedPantryTabId==="compra"\?"shopping"/);
 });

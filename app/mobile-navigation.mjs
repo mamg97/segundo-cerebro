@@ -1,8 +1,8 @@
-import {hrefForArea,hrefForHealthTab,hrefForHobby,hrefForWedding,routeFromHash,HOBBY_CATEGORIES} from "./area-routes.mjs?v=0.1.3";
+import {hrefForArea,hrefForHealthTab,hrefForHobby,hrefForWedding,hrefForPantryTab,routeFromHash,HOBBY_CATEGORIES} from "./area-routes.mjs?v=0.1.5";
 export const MOBILE_AREAS=Object.freeze([
  ["area-general","Inicio","home"],["area-finance","Finanzas","wallet"],["area-calendar","Agenda","calendar"],
  ["area-health","Salud","heart"],["area-partner","Pareja","users"],["area-career","Carrera","briefcase"],
- ["area-family","Familia","users"],["area-objects","Objetos","box"],["area-wealth","Patrimonio","chart"],
+ ["area-family","Familia","users"],["area-pantry","Despensa","pantry"],["area-objects","Objetos","box"],["area-wealth","Patrimonio","chart"],
  ["area-projects","Proyectos","box"],["area-travels","Viajes","plane"],["area-hobbies","Hobbies","book"]
 ]);
 const PRIMARY=MOBILE_AREAS.slice(0,5).map(x=>x[0]);
@@ -17,19 +17,27 @@ const PATHS={
  box:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 7v10l9 5 9-5V7m-9 5v10"/>',
  chart:'<path d="M3 20h18M5 17l5-5 4 3 5-9"/>',
  plane:'<path d="M21 3 3 10l8 3 3 8 7-18ZM11 13 21 3"/>',
+ pantry:'<path d="M3 5h18v15H3zM3 10h18M8 10v10M16 10v10"/>',
+ dumbbell:'<path d="M6.5 6.5l11 11M4 9l5-5m-7 8 4-4m9 9 5-5m-3 9 4-4"/>',
+ shopping:'<circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2l3 13h13l2-9H5"/>',
  book:'<path d="M12 6c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v15"/>',
  down:'<path d="m6 9 6 6 6-6"/>',
  refresh:'<path d="M21 11a9 9 0 1 1-2.2-5.8L21 8"/><path d="M21 3v5h-5"/>'
 };
 const ico=name=>'<svg aria-hidden="true" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">'+(PATHS[name]||PATHS.grid)+'</svg>';
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+export const MOBILE_QUICK_ACCESS=Object.freeze([
+ {label:"Gym",icon:"dumbbell",href:hrefForHealthTab("gym")},
+ {label:"Lista de la compra",icon:"shopping",href:hrefForPantryTab("compra")}
+]);
 const HEALTH=Object.freeze([["Resumen","overview"],["Médicos","medical"],["Visión","vision"],["Gimnasio","gym"],["Nutrición","nutrition"],["Recetas","recipes"],["Menú","menu"]].map(([label,tab])=>({label,href:hrefForHealthTab(tab)})));
 const OTHER={
  "area-health":HEALTH,
  "area-partner":[{label:"Resumen",href:"#/pareja"},{label:"Boda",href:hrefForWedding()}],
  "area-finance":[{label:"Cuentas y presupuesto",href:"#/finanzas"},{label:"Patrimonio",href:"#/patrimonio"}],
  "area-hobbies":[{label:"Películas",href:hrefForHobby("peliculas")},...HOBBY_CATEGORIES.filter(x=>x.id!=="peliculas").map(x=>({label:x.title,href:hrefForHobby(x.id)}))],
- "area-travels":[{label:"Todos los viajes",href:"#/viajes"}]
+ "area-travels":[{label:"Todos los viajes",href:"#/viajes"}],
+ "area-pantry":[{label:"Inventario",href:hrefForPantryTab("inventario")},{label:"Lista de la compra",href:hrefForPantryTab("compra")},{label:"Tickets",href:hrefForPantryTab("tickets")}]
 };
 export function mobileSections(route){
  const area=route?.areaId||"area-general";
@@ -64,7 +72,9 @@ function renderSheet(){
    '<a href="'+x.href+'" data-mobile-route="'+x.href+'"'+(x.href===hash?' aria-current="page"':'')+'>'+safe(x.label)+'<span aria-hidden="true">'+(x.href===hash?'✓':'›')+'</span></a>').join("")+'</div>';
  }else{
   dom("mobile-sheet-heading").textContent="Todos los apartados";
-  node.innerHTML='<div class="mobile-sheet-grid">'+MOBILE_AREAS.map(([id,label,icon])=>
+  node.innerHTML='<div class="mobile-quick-section"><h3>Accesos rápidos</h3><div class="mobile-sheet-shortcuts">'+MOBILE_QUICK_ACCESS.map(x=>
+   '<a href="'+x.href+'" data-mobile-route="'+x.href+'">'+ico(x.icon)+'<span>'+safe(x.label)+'</span></a>').join("")+'</div></div>'+
+   '<div class="mobile-sheet-grid">'+MOBILE_AREAS.map(([id,label,icon])=>
    '<a href="'+hrefForArea(id)+'" data-mobile-other="'+id+'"'+(route.areaId===id?' aria-current="page"':'')+'>'+ico(icon)+'<span>'+safe(label)+'</span></a>').join("")+'</div>';
  }
 }
