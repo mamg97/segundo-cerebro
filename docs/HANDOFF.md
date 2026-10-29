@@ -1,3 +1,18 @@
+# Psicohistoria — comparación gráfica de pérdidas · 29/10/2026
+
+AV169/PR878 integrada1592852f con CI de motores y privacidad correctas.
+Método de pago reconcilia plazos originales; no admite globalmente fuente ni
+corrige incidencia histórica. AV166/168 negativos preservados.
+Nueva capacidad v0.5.35: notas privadas de distribución de pérdidas muestran
+ambos umbrales, error, superaciones y criterio conjunto. Datos reales fuera de
+Git; validación sintética y vista local privada escritorio/móvil. Ver contrato
+LOSS_DISTRIBUTION_VIEW.md. Falta comprobar CI/integración y despliegue privado.
+Canónico/archivo Drive siguen pendientes de respuesta a permiso específico:
+no afirmar resultados nuevos visibles en producción ni eludir auto-review.
+Mantener prioridad bursátil y seguimientos4nov/19nov/4dic; no nuevas emisiones.
+
+---
+
 # Psicohistoria — método NAV por fecha de pago · 29/10/2026
 
 AV169 recupera prospecto emisor26ene2026 y reconcilia los seis plazos de la
