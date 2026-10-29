@@ -1,28 +1,25 @@
-# Psicohistoria — archivo privado y resultados sincronizados · 29/10/2026
+# Psicohistoria — transferencia bursátil y calendario · 29/10/2026
 
-El propietario autorizó el lote de tres informes y sus resúmenes privados.
-Archivo en Drive principal verificado mediante descarga autenticada idéntica;
-propiedad y acceso privado confirmados. No publicar aquí su identificador,
-probabilidades ni enlaces privados. El rechazo anterior de archivo está resuelto.
+Prioridad activa: riesgo bursátil a20sesiones. Archivo previo y web privados
+verificados; autorización de aquel lote cumplida, no repetir subidas ni permisos.
+Nuevo contraste S&P500precio/VIX: contrato ca2cd161 previo a descarga; primera
+igualdad de calendarios bloqueó antes de calcular. Enmienda cdc34180 previa a
+scores separa sesiones cash de observaciones VIX en festivos, sin tocar modelos,
+fechas, umbrales ni originales. Ver SP500_CALENDAR_AMENDMENT.md.
 
-Siete avances y tres experimentos añadidos al registro privado; fases bursátiles,
-hito visual y calendario actualizados. Se releen exactamente los valores escritos,
-links y validaciones. Chrome producción v0.5.35 muestra las tres comparaciones
-en Inicio/Evidencia, sus decisiones y límites. Continúan las emisiones existentes
-sin añadir pronósticos bursátiles ni resultados prospectivos. PR881 integrada;
-CI científica y privacidad correctas. No repetir los estudios cerrados.
+Calendario NYSE2016–2026 acotado, fuentes y motor verificados; transferencia
+terminada con muestra insuficiente y sin superar ambos requisitos contra
+frecuencias. Contraste independiente confirma todos los cálculos. No modelo
+admitido, riesgoactual ni emisión. SP500_TRANSFER_CLOSEOUT.md detalla límites.
+Reportes numéricos/originales privados locales; no nuevos uploads de informes.
+Pruebas nuevas y mercado relacionadas correctas; CI/integración y registro
+canónico de este avance pendientes hasta comprobarlos. Preservar estudios
+French previos: otro target, no confirmación independiente.
 
-La auditoría de fuentes distingue madurez de horizonte y disponibilidad de edición.
-Ver MARKET_SOURCE_AVAILABILITY.md: índice anual y archivo diario FIZ de 2024
-no acreditan una cuadrícula histórica diaria de ediciones CIZ. No se calcularon
-nuevos scores ni se admitió el candidato. Una captura presente podría servir a
-un piloto futuro con sus propios gates; no exigir reconstruir toda la historia
-para esa posibilidad, ni confundirlo con validación histórica as-of.
-
-Siguiente: contrato de objeto/inputs contemporáneos y disponibilidad para riesgo
-bursátil a 20 sesiones. La prioridad sigue activa. Esperar resultados macro no
-bloquea otras líneas autorizadas. Mantener seguimientos semanal, mensual y BLS
-separados; originales macro/anual inmutables. CAT completada; MIDAS reservado.
+Siguiente: captura prospectiva y contrato de evaluación; preparar referencias
+sin presentar el candidato como admitido. Continuar unidades autorizadas mientras
+haya cuota. Seguimientos4nov/19nov/4dic separados, macro/anual intactos,
+CATcompleted, MIDASreservado. No correos, resets, compras ni nuevos chats.
 
 ---
 
