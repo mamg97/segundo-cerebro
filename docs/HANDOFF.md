@@ -1,3 +1,20 @@
+# Psicohistoria — método NAV por fecha de pago · 29/10/2026
+
+AV169 recupera prospecto emisor26ene2026 y reconcilia los seis plazos de la
+ficha con la tolerancia original mediante ledger de derechos y reinversión
+al pago. AV167 ex-NAV queda conservado, sin ampliar tolerancia ni corregir
+origen. Siete pruebas nuevas/16con intake y contraste independiente exacto.
+No fuente admitida globalmente: incidencia2006 sigue y bloquea su periodo;
+no precios ajustados, riesgo actual, modelo validado o nueva emisión.
+AV168/PR877 integrada a2290d7f; negativos y fuentes anteriores inmutables.
+Canónico/archivo Drive siguen pendientes de permiso específico tras autoreview,
+pregunta enviada sin respuesta. No afirmar sincronización ni eludir rechazo.
+Después cerrar CI/integraciónAV169 y mejorar comparación visual del ensayo
+para mostrar error y cobertura juntos, sin seleccionar el cuantil favorable.
+Mantener prioridad bursátil y seguimientos4nov/19nov/4dic separados.
+
+---
+
 # Psicohistoria — distribución de pérdidas evaluada · 29/10/2026
 
 AV168 concluye simulación histórica filtrada de pérdidas a20cierres con contrato

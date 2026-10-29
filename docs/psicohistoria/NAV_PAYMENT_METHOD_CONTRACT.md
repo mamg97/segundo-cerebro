@@ -1,7 +1,7 @@
 # Retorno NAV por periodo y reinversión en pago
 
 29/10/2026. Evidencia nueva: prospecto SPY fechado26ene2026, recuperado por
-el visor del emisor; página26 de96, nota(c) de Financial Highlights: reinversión
+el visor del emisor; página26 de96, nota(b) de Financial Highlights: reinversión
 en NAV de las respectivas fechas de pago. Página8 explica una aproximación
 de final de año cuando el pago de enero todavía no había ocurrido.
 
