@@ -27,7 +27,7 @@ import { renderHealthDayBalance } from "./health-daily-balance.js?v=0.44.1";
 import { menuWeekMonday, menuShiftWeek, menuWeekRangeLabel } from "./menu-week-history.js?v=0.44.12";
 import { reconcileHomeMenuPhotos } from "./home-menu-photo-resolver.mjs?v=0.1.1";
 import { progressRingMarkup, updateProgressRing } from "./progress-ring.js?v=0.33.8";
-import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.24";
+import { renderMidasAlgorithmDetail, renderMidasVisualLab, bindMidasLabSorting } from "./midas-lab.js?v=0.40.25";
 import { midasCagrNumber, midasDisplayValuation, midasThesisMethodLabel, bindMidasResearchSorting } from "./midas-thesis-table.js?v=0.41.12";
 
 let state = mockState;
@@ -9890,7 +9890,7 @@ const MIDAS_STATUS = {
   demo_con_diario: "Demo con diario",
   programada_sin_diario: "Programada, sin sesión",
   pendiente_modelo: "Modelo pendiente",
-  sin_diario_disponible: "Diario privado no enlazado",
+  sin_diario_disponible: "Resumen no enlazado",
   diario_heredado_observado: "Simulación histórica registrada",
   weekly_settled_demo: "Liquidación semanal observada",
   weekly_awaiting_first_settlement: "Primera liquidación pendiente",
@@ -10065,7 +10065,7 @@ function renderMidasExecutionHealth(health, dashboard) {
     missing_due_run: "Ejecución ausente",
     unverified: "Sin verificación operativa",
     retired: "Archivada · fuera de competición",
-    snapshot_published: "Diario privado enlazado"
+    snapshot_published: "Resumen privado enlazado"
   };
   const rows = workflowRows.map((row) => ({
     label: row.name
@@ -10095,7 +10095,7 @@ function renderMidasExecutionHealth(health, dashboard) {
     state: genetic?.last_session ? "snapshot_published" : "missing_due_run",
     ok: genetic?.last_session ? null : false,
     detail: genetic?.last_session
-      ? "Patrimonio privado publicado hasta " + genetic.last_session + "; esta tarjeta no comprueba el entrenamiento ni las operaciones"
+      ? "Valoración simulada publicada hasta " + genetic.last_session + "; esta tarjeta no comprueba el entrenamiento ni las operaciones"
       : "Snapshot prospectivo ausente; la ejecución GitHub no se valida aquí",
     timestamp: null, run: null
   });
@@ -10170,7 +10170,7 @@ function renderMidasCatalog(dashboard) {
             : "";
         return `<section class="midas-group"><h3>${title}</h3>${groupNote}${renderMidasRows(groupRows)}</section>`;
       }).join("")}
-      <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>.${originalGenetic?.status === "diario_heredado_observado" ? " La cifra del genético original procede de un extracto validado de su diario privado; no se publican posiciones ni operaciones." : " La estrategia genética original mantiene su diario privado, aún no enlazado."}</p>
+      <p class="midas-source">Fuente: <a href="https://github.com/mamg97/midas-paper-lab/blob/main/strategy_state/dashboard.md" target="_blank" rel="noopener noreferrer">diario público MIDAS</a>.${originalGenetic?.status === "diario_heredado_observado" ? " La curva del genético original procede de un resumen validado de su diario simulado público; el capital es ficticio." : " El resumen del genético original aún no está enlazado."}</p>
     </div>`;
 }
 

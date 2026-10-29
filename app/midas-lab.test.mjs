@@ -178,11 +178,11 @@ test("legacy genetic is catalog-only, private forward never masquerades as cash"
   const html = renderMidasVisualLab(dashboard);
   assert.doesNotMatch(html, /Genético histórico/);
   assert.match(html, /Genético corregido/);
-  assert.match(html, /Actividad privada · detalle no disponible/);
+  assert.match(html, /Detalle de actividad no enlazado/);
   assert.doesNotMatch(html, /Sin compras · en efectivo/);
   const detail = renderMidasAlgorithmDetail(dashboard, null, "genetic_sp500_forward");
   assert.match(detail, /actividad no enlazada/);
-  assert.match(detail, /Actividad privada/);
+  assert.match(detail, /Detalle de actividad no enlazado/);
 });
 
 test("interrupted private genetic campaign is archived, not double-ranked", () => {

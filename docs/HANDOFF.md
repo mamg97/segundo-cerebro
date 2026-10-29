@@ -1,3 +1,17 @@
+# MIDAS genetic — public ingestion verified · 2026-10-29
+
+Public publish_only run40890648095 attempt2 confirmed all three simulated equity
+summaries through the exact immutable OIDC producer after deploy40891327443.
+The private UI was reloaded and confirmed13 active observations through28oct.
+Copy now distinguishes the public simulated diary from the private D1 summary;
+activity detail remains unavailable rather than being described as private holdings.
+The module URL is revised to avoid cached old copy. No calculation or API changes.
+Full training40886140326 is still running; a new public paper session and natural
+schedule remain separate pending gates. Preserve the private fallback and both
+frozen cohorts. This is not a completed operational handover.
+
+---
+
 # MIDAS genetic — immutable OIDC subject · 2026-10-29
 
 Live publication returned401 because this new public repository uses GitHub's
