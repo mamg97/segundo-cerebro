@@ -830,6 +830,7 @@ function ensureDerivedAreas() {
 }
 
 async function init() {
+  document.documentElement.dataset.segunBoot = "loading";
   initTheme();
   initSystemOrbResponsiveSize();
   await loadLocalPrivateState();
@@ -864,6 +865,8 @@ async function init() {
   }
   observeVerifiedFinanceBankSection();
   initDemoMode();
+  document.documentElement.dataset.segunBoot = "ready";
+  window.dispatchEvent(new Event("segun:ready"));
 }
 
 async function loadLocalPrivateState() {
@@ -1638,7 +1641,12 @@ function renderHomeGymSummary(healthData, gymData) {
 }
 
 async function renderHomeHealthCard() {
-  renderHomeHealthHabitsSummary();
+  try {
+    renderHomeHealthHabitsSummary();
+  } catch {
+    // A malformed progress ring must not prevent independent Health API reads.
+    setHomeHealthMetric("home-health-habits-main", "home-health-habits-detail", "—", "Hábitos no disponibles");
+  }
 
   if (privateModeKind !== "remote") {
     for (const key of ["kcal", "protein", "gym", "weight"]) {
@@ -12389,6 +12397,10 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
 }
 
-init();
+init().catch(() => {
+  // A JS/UI bootstrap failure must never leave an indefinite loading shell.
+  document.documentElement.dataset.segunBoot = "failed";
+  window.dispatchEvent(new Event("segun:boot-failed"));
+});
 installPrivateAppFreshnessGuard();
 
