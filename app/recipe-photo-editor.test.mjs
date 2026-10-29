@@ -72,3 +72,15 @@ test("new recipe photos are read back before the edit form reports completion",(
  assert.match(ui,/await onSaved\(saved\)/);
  assert.match(ui,/No vuelvas a guardar: recarga el catálogo/);
 });
+
+test("photo save verifies exact JPEG bytes and shows the active new version",()=>{
+ const ui=readFileSync(new URL("./recipe-editor-ui.mjs",import.meta.url),"utf8");
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ assert.match(ui,/const photoSha256=photo\?await recipePhotoSha256\(photo\):null/);
+ assert.match(ui,/return \{\.\.\.j,photoVerificationRequired:Boolean\(photo\),photoSha256\}/);
+ assert.match(app,/expected\.photoVerificationRequired && \(!expected\.photoUpdated \|\| !expected\.photoSha256\)/);
+ assert.match(app,/crypto\.subtle\.digest\("SHA-256",await check\.arrayBuffer\(\)\)/);
+ assert.match(app,/actual!==expected\.photoSha256/);
+ assert.match(app,/renderRecipeDetail\(panel,updated,verified\)/);
+ assert.match(readFileSync(new URL("./index.html",import.meta.url),"utf8"),/app\.js\?v=0\.44\.91/);
+});

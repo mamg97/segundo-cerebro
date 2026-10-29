@@ -3,7 +3,7 @@ import { renderMidasSourceHealth } from "./midas-source-health.mjs?v=0.1.0";
 import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=0.44.63";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
-import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.60";
+import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.61";
 import { resolveRecipeIngredientButton } from "./recipe-ingredient-click-guard.mjs?v=0.1.0";
 import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.57";
 import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
@@ -6791,6 +6791,8 @@ async function refreshRecipeCatalog(expected=null) {
   if(expected?.recipeId){
     const saved=updated.recipes.find(item=>String(item.id)===String(expected.recipeId));
     if(!saved)throw new Error("RECIPE_VERSION_NOT_VERIFIED");
+    if(expected.photoVerificationRequired && (!expected.photoUpdated || !expected.photoSha256))
+      throw new Error("RECIPE_PHOTO_NOT_ACKNOWLEDGED");
     if(expected.photoUpdated){
       const prefix="/api/health/recipes/"+encodeURIComponent(expected.recipeId)+"/image?v=";
       if(!String(saved.photoUrl||"").startsWith(prefix))throw new Error("RECIPE_PHOTO_NOT_VERIFIED");
@@ -6799,6 +6801,12 @@ async function refreshRecipeCatalog(expected=null) {
       });
       if(!check.ok||!String(check.headers.get("Content-Type")||"").startsWith("image/"))
         throw new Error("RECIPE_PHOTO_NOT_READABLE");
+      if(expected.photoSha256){
+        if(!globalThis.crypto?.subtle?.digest)throw new Error("RECIPE_PHOTO_VERIFICATION_UNAVAILABLE");
+        const digest=await crypto.subtle.digest("SHA-256",await check.arrayBuffer());
+        const actual=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+        if(actual!==expected.photoSha256)throw new Error("RECIPE_PHOTO_CONTENT_MISMATCH");
+      }
     }
   }
   renderRecipesPanel(updated);
@@ -6806,6 +6814,11 @@ async function refreshRecipeCatalog(expected=null) {
   // recipe_id but must re-read its display-only photo fallback immediately.
   homeWeeklyMenuWeekCache.clear();
   await loadHomeWeeklyMenu(updated, { navigation: true, force: true });
+  if(expected?.recipeId){
+    const verified=updated.recipes.find(item=>String(item.id)===String(expected.recipeId));
+    const panel=document.querySelector("#recipes-panel");
+    if(verified&&panel)renderRecipeDetail(panel,updated,verified);
+  }
   return updated;
 }
 

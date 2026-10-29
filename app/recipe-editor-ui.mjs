@@ -17,7 +17,16 @@ export function editorPayload(recipe,form){
     steps:lines(get("steps"),4).map(v=>({instruction:v[0],timeMinutes:num(v[1]),temperature:v[2]||"",utensil:v[3]||""}))
   };
 }
+export async function recipePhotoSha256(photo){
+ if(!globalThis.crypto?.subtle?.digest)throw Error("RECIPE_PHOTO_VERIFICATION_UNAVAILABLE");
+ const bytes=await photo.arrayBuffer();
+ return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes)))
+  .map(b=>b.toString(16).padStart(2,"0")).join("");
+}
 export async function writeRecipeAction(payload,photo=null){
+  // Calculate before POST. A write response is insufficient proof that the
+  // same image will be served back from the immutable recipe version.
+  const photoSha256=photo?await recipePhotoSha256(photo):null;
   const data=photo?new FormData():null;
   if(data){data.set("payload",JSON.stringify(payload));data.set("photo",photo,"receta.jpg");}
   const r=await fetch("/api/nutrition/recipes/edit",{
@@ -26,7 +35,7 @@ export async function writeRecipeAction(payload,photo=null){
   });
   const j=await r.json().catch(()=>({}));
   if(!r.ok||!j.ok)throw Error(j.code||"RECIPE_SAVE_FAILED");
-  return j;
+  return {...j,photoVerificationRequired:Boolean(photo),photoSha256};
 }
 
 // Gallery/camera uploads are reduced in-browser and re-encoded to drop EXIF/GPS.
