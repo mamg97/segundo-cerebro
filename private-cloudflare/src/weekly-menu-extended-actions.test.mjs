@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {planMenuAddition,planConsumedRegisterCorrection,MenuSlotError} from "./weekly-menu-extended-actions.js";
+import {planMenuAddition,planMenuFoodReplacement,planConsumedRegisterCorrection,MenuSlotError} from "./weekly-menu-extended-actions.js";
 import {planMenuSheetEdits,recipeAlternatives,editWeeklyMenu} from "./weekly-menu-actions.js";
 import {readFileSync} from "node:fs";
 
@@ -143,4 +143,34 @@ test("menu reconciliation reads the actual bounded ingredient grid and preserves
   assert.match(service,/familyNames\?\.\[0\]/);
   assert.match(css,/Dense, legible iPhone Home weekly menu/);
   assert.match(css,/\.home-weekly-menu-table-cell \.home-menu-add-action/);
+});
+
+
+test("a planned companion replacement accepts the exact source name despite a different displayed title", () => {
+  const rawName = "Yogur de prueba formato grande 250 g";
+  const displayName = "Yogur ficticio · 250 g (½ tarro)";
+  const source = ["2026-01-12","2026-01-15","Media mañana","","food-natural",
+    rawName,250,"g","planificado",130,25,7.75,1.25,"","",
+    "2026-01-14T08:00:00Z","acompanante","yogur"];
+  const foods = [{
+    id:"food-coco",name:"Yogur ficticio coco",companionType:"yogur",
+    serving:1,unit:"vasito de 120 g",kcalPerServing:73,
+    proteinPerServing:10,carbsPerServing:6,fatPerServing:1
+  }];
+  const payload = {action:"replace-food",sourceRow:2,date:"2026-01-15",
+    moment:"Media mañana",foodId:"food-natural",name:rawName,
+    updatedAt:"2026-01-14T08:00:00Z",newFoodId:"food-coco",newServings:2};
+  const changes = Object.fromEntries(planMenuFoodReplacement(
+    [menuHeader,source],payload,foods,"2026-01-15T10:00:00Z"
+  ).updates.map(x=>[x.range,x.values[0][0]]));
+  assert.equal(changes["MenuSemanal!E2"],"food-coco");
+  assert.equal(changes["MenuSemanal!G2"],2);
+  assert.equal(changes["MenuSemanal!J2"],146);
+  assert.equal(changes["MenuSemanal!I2"],undefined,"planned state stays planned");
+  assert.throws(()=>planMenuFoodReplacement(
+    [menuHeader,source],{...payload,name:displayName},foods
+  ),e=>e.code==="MENU_EDIT_CONFLICT");
+  assert.throws(()=>planMenuFoodReplacement(
+    [menuHeader,source],{...payload,updatedAt:"stale"},foods
+  ),e=>e.code==="MENU_EDIT_CONFLICT");
 });
