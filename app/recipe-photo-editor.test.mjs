@@ -82,5 +82,5 @@ test("photo save verifies exact JPEG bytes and shows the active new version",()=
  assert.match(app,/crypto\.subtle\.digest\("SHA-256",await check\.arrayBuffer\(\)\)/);
  assert.match(app,/actual!==expected\.photoSha256/);
  assert.match(app,/renderRecipeDetail\(panel,updated,verified\)/);
- assert.match(readFileSync(new URL("./index.html",import.meta.url),"utf8"),/app\.js\?v=0\.44\.92/);
+ assert.match(readFileSync(new URL("./index.html",import.meta.url),"utf8"),/app\.js\?v=0\.44\.93/);
 });
