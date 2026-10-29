@@ -49,12 +49,12 @@ export function installVisibleRefresh({ win = window, doc = document, clock = Da
 export async function registerPrivatePwa({ nav = navigator } = {}) {
   if (!("serviceWorker" in nav)) return false;
   try {
-    const registration = await nav.serviceWorker.register("./pwa-sw.js", {
+    await nav.serviceWorker.register("./pwa-sw.js", {
       scope: "./",
       updateViaCache: "none"
     });
-    // New releases replace the static cache; never persist private API payloads.
-    await registration.update();
+    // Registration checks updates on navigation; avoid an immediate redundant
+    // network request while the authenticated dashboard is still bootstrapping.
     return true;
   } catch {
     // Supported browsers continue without PWA; do not interrupt the app.
