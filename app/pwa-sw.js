@@ -2,12 +2,6 @@
 const CACHE_PREFIX = "segun-public-static-";
 const CACHE_NAME = CACHE_PREFIX + "__BUILD_REVISION__";
 const MAX_STATIC_ITEMS = 180;
-const PREWARM = [
-  "/app/app.js?v=__APP_REVISION__",
-  "/app/styles.css?v=__STYLE_REVISION__",
-  "/app/brain-logo.png",
-  "/app/pwa-icon.svg"
-];
 const STATIC_FILE = /\.(?:js|mjs|css|png|jpe?g|svg|webp|ico|woff2?)$/i;
 
 function allowedStaticRequest(request) {
@@ -45,15 +39,9 @@ async function rememberStatic(request, response) {
 }
 
 self.addEventListener("install", (event) => {
-  event.waitUntil((async () => {
-    // Optional: a prefetch failure cannot block the app or Worker installation.
-    await Promise.allSettled(PREWARM.map(async (url) => {
-      const request = new Request(url, { credentials: "same-origin", cache: "no-store" });
-      const response = await fetch(request);
-      await rememberStatic(request, response);
-    }));
-    await self.skipWaiting();
-  })());
+  // No precaching: the extra concurrent downloads could starve /api/state
+  // on a slow iPhone connection. Cache safe static assets only when requested.
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {
