@@ -1,3 +1,22 @@
+# Psicohistoria — captura recuperable y comparador desplegado · 29/10/2026
+
+PR879 integrada b7d424ef y deploy privado40794604064SUCCESS. Producción Chrome
+carga v0.5.35, loader yCSS nuevos sin errores; resultados reales nuevos aún
+pendientes del permiso de archivo/resumen. No confundir código con datos.
+Ver LOSS_DISTRIBUTION_VIEW.md; 106regresiones y pruebas locales escritorio/móvil.
+AV169/PR878 integrada1592852f, método NAV reconciliado sin admitir fuente global.
+
+Nueva capacidad captura on-demand issuer_observation.py reutiliza intake:
+originales privados create-only, hashes observados, tiempos locales y manifiesto
+completo/incompleto. Cinco pruebas y CLI con fuente pública correctos. No
+cron, TSA, upload o forecast; captura local no acredita as-of independiente.
+Ver ISSUER_LOCAL_OBSERVATION.md. Falta CI/integración de esta unidad.
+Permiso Drive/resumen pendiente tras auto-review, sin reiterar ni eludirlo.
+Originales y negativos anteriores intactos; no repetirlos por cerrar una PR.
+Prioridad bursátil20sesiones; seguimientos4nov/19nov/4dic separados intactos.
+
+---
+
 # Psicohistoria — comparación gráfica de pérdidas · 29/10/2026
 
 AV169/PR878 integrada1592852f con CI de motores y privacidad correctas.
