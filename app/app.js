@@ -18,8 +18,8 @@ import { openProjectsDetail } from "./projects.js?v=0.37.2";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
 import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.3";
-import { hrefForArea, hrefForHealthTab, routeFromHash } from "./area-routes.mjs?v=0.1.3";
-import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.3";
+import { hrefForArea, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.5";
+import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.5";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -980,10 +980,10 @@ function renderDate() {
 function renderNavigation() {
   const nav = document.querySelector("#area-nav");
   const metaAreas = new Set(["area-loops", "area-goals"]);
-  const childIds = new Set(["area-events", "area-parents", "area-habits", "area-pantry"]);
+  const childIds = new Set(["area-events", "area-parents", "area-habits"]);
   const canonicalOrder = [
     "area-general", "area-career", "area-finance", "area-calendar",
-    "area-partner", "area-family", "area-health", "area-objects",
+    "area-partner", "area-family", "area-health", "area-pantry", "area-objects",
     "area-wealth", "area-projects", "area-travels", "area-hobbies"
   ];
   const orderRank = new Map(canonicalOrder.map((id, index) => [id, index]));
@@ -11996,6 +11996,7 @@ let routedTravelDetailId=null;
 let routedHobbyId=null;
 let routedPartnerId=null;
 let routedHealthTabId=null;
+let routedPantryTabId=null;
 let ignoreRouteCloseEvents=0;
 let restoreCalendarSection=null;
 let activeAreaHash=null;
@@ -12023,6 +12024,18 @@ function setupAreaRoutes(){
   });
   window.addEventListener("area-route-synced",()=>{activeAreaHash=window.location.hash});
   dialog.addEventListener("click",event=>{
+    const pantryTab=event.target.closest("[data-pantry-view]");
+    if(pantryTab && routeFromHash(window.location.hash)?.areaId==="area-pantry"){
+      const tab={inventory:"inventario",shopping:"compra",tickets:"tickets"}[pantryTab.dataset.pantryView];
+      if(tab){
+        const target=hrefForPantryTab(tab);
+        if(window.location.hash!==target){
+          history.replaceState(null,"",target);
+          activeAreaHash=target;
+          syncMobileNavigation(routeFromHash(target),target);
+        }
+      }
+    }
     const tab=event.target.closest("[data-health-tab]");
     if(!tab||!document.body.classList.contains("route-area-active"))return;
     if(routeFromHash(window.location.hash)?.areaId!=="area-health")return;
@@ -12081,6 +12094,7 @@ function applyAreaRoute(){
   routedHobbyId=route.areaId==="area-hobbies"?(route.detailId||null):null;
   routedPartnerId=route.areaId==="area-partner"?(route.detailId||null):null;
   routedHealthTabId=route.areaId==="area-health"?(route.detailId||null):null;
+  routedPantryTabId=route.areaId==="area-pantry"?(route.detailId||null):null;
   syncMobileNavigation(route,hash);
   document.querySelectorAll("[data-nav-area-id]").forEach(el=>{
     const active=el.dataset.navAreaId===route.areaId;
@@ -12151,7 +12165,7 @@ function openArea(areaId) {
     return;
   }
   if (areaId === "area-pantry") {
-    openPantryDetail();
+    void openPantryDetail(routedPantryTabId==="compra"?"shopping":routedPantryTabId||"inventory");
     return;
   }
   if (areaId === "area-objects") {
