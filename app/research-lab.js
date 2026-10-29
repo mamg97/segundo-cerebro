@@ -1,3 +1,4 @@
+import {renderLossDistributions} from './research-loss-distribution.mjs?v=0.5.35';
 import {renderExternalReferences} from './research-external-references.mjs?v=0.5.34';
 import {renderResearchSchedule} from './research-schedule.mjs?v=0.5.33';
 import {renderResearchProgress} from './research-progress.mjs?v=0.5.33';
@@ -208,7 +209,7 @@ function chart(){
 function science(){
   const e=state.lab.evaluation||{};
   const rows=(state.lab.experiments||[]).filter(isResearchScore);
-  return renderExternalReferences(state.lab)+renderPairedEvaluations(state.lab)+retrospective()+simulation()+recoverySimulation()+heading("REGISTRO PROSPECTIVO","Evidencia emitida antes del desenlace","Sellado independiente obligatorio")+
+  return renderExternalReferences(state.lab)+renderLossDistributions(state.lab)+renderPairedEvaluations(state.lab)+retrospective()+simulation()+recoverySimulation()+heading("REGISTRO PROSPECTIVO","Evidencia emitida antes del desenlace","Sellado independiente obligatorio")+
     '<div class="two-col">'+
       '<section class="panel"><div class="panel-head"><h3>Calibración prospectiva</h3><span>'+Number(e.resolved||0)+' resueltas válidas</span></div>'+
       '<div class="chart">'+chart()+'</div>'+
@@ -273,7 +274,7 @@ function render(){
   disposeShadow();
   disposeVideo();
   header();metrics();
-  root.innerHTML=activeView==="brief"?renderResearchSchedule(state.lab)+renderExternalReferences(state.lab)+renderPairedEvaluations(state.lab,{limit:3})+renderResearchProgress(state.lab)+renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions,state.lab.progress):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
+  root.innerHTML=activeView==="brief"?renderResearchSchedule(state.lab)+renderExternalReferences(state.lab)+renderLossDistributions(state.lab,{limit:1})+renderPairedEvaluations(state.lab,{limit:3})+renderResearchProgress(state.lab)+renderResearchBriefing(state.lab):activeView==="futures"?'<div id="future-explorer"></div>':activeView==="shadow2027"?shadow2027Section(state.lab.experiments,state.lab.predictions,state.lab.progress):activeView==="overview"?overview():activeView==="ideas"?renderIdeaNetwork(state):activeView==="video"?'<div id="research-video-studio"></div>':activeView==="science"?science():activeView==="operations"?operations():roadmap();
   const group=labGroupForView(activeView);
   const subtabs=document.getElementById('lab-subtabs');
   subtabs.hidden=group==='brief';

@@ -158,7 +158,7 @@ test('versioned source of the Onset chart and historical casebook cannot be stal
   const futures=fs('research-futures.mjs');
   const v='0.5.13';
   const futuresVersion='0.5.29';
-  const uiVersion='0.5.34';
+  const uiVersion='0.5.35';
   assert.ok(view.includes('v'+uiVersion),'html must expose current version');
   assert.ok(loader.includes('research-futures.mjs?v='+futuresVersion),'lab loader must bust futures cache');
   assert.ok(futures.includes('research-onset.mjs?v='+v),'futures must bust onset cache');
