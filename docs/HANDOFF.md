@@ -1,3 +1,19 @@
+# Psicohistoria — distribución de pérdidas evaluada · 29/10/2026
+
+AV168 concluye simulación histórica filtrada de pérdidas a20cierres con contrato
+previo398c81ae. Filtro conjunto de dos cuantiles incumplido: DESCARTADO, sin
+seleccionar el favorable. Siete pruebas y contraste independiente rawCSV/NumPy
+correctos; originales/reportes privados. No riesgoactual, emisión o admisión.
+AV166/PR875 y AV167/PR876 integradas decfbe1a/b1d06e63; estudio logístico
+negativo y fuente NAV/distribuciones bloqueada conservados. No repetirlos.
+Canónico/archivo Drive aún pendientes de permiso específico tras autoreview:
+no eludir rechazo ni dar sincronización por hecha. Pregunta enviada una vez.
+Continuar metodología/fuente actual con evidencia primaria o nueva información;
+no variar parámetros de candidatos negativos. Prioridad bursátil humana vigente,
+agenda secundaria conservada; seguimientos4nov/19nov/4dic y macro/anual intactos.
+
+---
+
 # Psicohistoria — fuente diaria del emisor auditada · 29/10/2026
 
 AV166/PR875 integrada decfbe1a: primer estudio bursátil real y contraste
