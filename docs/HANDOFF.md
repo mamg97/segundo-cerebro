@@ -1,3 +1,14 @@
+# MIDAS genetic — immutable OIDC subject · 2026-10-29
+
+Live publication returned401 because this new public repository uses GitHub's
+immutable subject format. Receiver trust is corrected to its exact owner/repo IDs
+and main ref; name-only and mismatched-ID subjects remain rejected. Signature,
+issuer, audience, workflow, event and lifetime restrictions remain intact. Tests
+pass locally; require CI, deploy and a real publish_only confirmation before calling
+public ingestion verified. Do not rerun the ongoing full training to repair ingest.
+
+---
+
 # MIDAS original genetic migration · 2026-10-29
 
 Prepared exact public-workflow OIDC authentication, immutable historical-prefix

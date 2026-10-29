@@ -10,7 +10,7 @@ const now = Date.now();
 const epoch = Math.floor(now / 1000);
 const claims = { iss: 'https://token.actions.githubusercontent.com', aud: 'segundo-cerebro-midas-legacy-ingest',
   repository: 'mamg97/midas-paper-lab', repository_id: '1392125585', repository_owner: 'mamg97', repository_owner_id: '110605707',
-  sub: 'repo:mamg97/midas-paper-lab:ref:refs/heads/main', ref: 'refs/heads/main',
+  sub: 'repo:mamg97@110605707/midas-paper-lab@1392125585:ref:refs/heads/main', ref: 'refs/heads/main',
   workflow_ref: 'mamg97/midas-paper-lab/.github/workflows/genetic_sp500.yml@refs/heads/main',
   event_name: 'schedule', run_id: '123', iat: epoch - 10, nbf: epoch - 10, exp: epoch + 290 };
 const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -27,6 +27,9 @@ test('only the exact main public workflow can authenticate', async () => {
     { repository: 'mamg97/personal_mamg' }, { repository_owner: 'other' },
     { ref: 'refs/heads/feature' }, { sub: 'repo:mamg97/midas-paper-lab:pull_request' },
     { workflow_ref: 'mamg97/midas-paper-lab/.github/workflows/other.yml@refs/heads/main' },
+    { sub: 'repo:mamg97/midas-paper-lab:ref:refs/heads/main' },
+    { sub: 'repo:mamg97@1/midas-paper-lab@1392125585:ref:refs/heads/main' },
+    { sub: 'repo:mamg97@110605707/midas-paper-lab@1:ref:refs/heads/main' },
     { event_name: 'pull_request' }, { event_name: 'pull_request_target' }, { event_name: 'push' },
     { aud: 'other' }, { iss: 'https://example.invalid' }, { exp: epoch },
     { iat: epoch + 61 }, { exp: epoch + 1000 }, { exp: epoch - 20 }, { nbf: epoch + 61 }
