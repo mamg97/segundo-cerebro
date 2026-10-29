@@ -1,3 +1,23 @@
+# Psicohistoria — contraste VIX prometedor retrospectivo · 29/10/2026
+
+Contrato56c3aabf previo a descarga/cálculo. Candidato único logVIX retrasado
+una sesión supera filtro histórico; no es modelo admitido ni riesgoactual.
+VIX_CONTRAST_CLOSEOUT.md recoge límites: intervalo contra volatilidad realizada
+incluye cero, historia revisada y selección exploratoria sobre muestra conocida.
+Pruebas temporales/integridad y CLI privada correctos; contraste independiente
+rawCSV/NumPy verifica probabilidades, métricas y tres intervalos. Referencias
+originales reutilizadas sin refit, negativos AV166/168 inmutables.
+Falta CI/integración de este contraste. Siguiente preparar contrato prospectivo
+con fuente/target/procedencia/admisión; no emitir o sellar sin scope específico.
+PR880 integrada4123bdb1: captura recuperable de fuentes públicas, cinco pruebas
+más CLI; tiempos locales no equivalen a prueba as-of independiente.
+PR879 deploy privado40794604064 verificado Chromev0.5.35 sin errores.
+Resultado real nuevo y avances todavía NOcanónicos: permiso archivo/resumen
+pendiente tras auto-review, pregunta enviada una vez. No eludir ni afirmar sync.
+Seguimientos4nov/19nov/4dic intactos; cuota global sigue midiendo ambas ventanas.
+
+---
+
 # Psicohistoria — captura recuperable y comparador desplegado · 29/10/2026
 
 PR879 integrada b7d424ef y deploy privado40794604064SUCCESS. Producción Chrome
