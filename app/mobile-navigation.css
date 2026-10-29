@@ -96,7 +96,7 @@
   padding:0!important;margin:0!important;overflow:hidden!important;
   clip-path:inset(50%);white-space:nowrap;border:0!important;
  }
- body.route-area-active #detail-dialog[open]>#close-dialog,
+ /* The shared close control must remain visible on routed mobile views. */
  body.route-area-active #detail-dialog[open]>#copy-area-link{display:none!important}
  body.route-area-active #detail-dialog[open] .wed-floating-add{
   bottom:calc(var(--mobile-dock-height) + 14px + env(safe-area-inset-bottom,0px));
@@ -179,3 +179,94 @@
  @keyframes mobile-sync-spin{to{transform:rotate(360deg)}}
 }
 @media(prefers-reduced-motion:reduce){.mobile-header-action.is-refreshing svg{animation:none}}
+
+/* Mobile secondary panels — persistent, tappable close button independent of scroll.
+   The earlier route styles hid #close-dialog entirely; keep it in its own fixed
+   54px control strip for Gym, Shopping List, Health, Nutrition and all workspaces. */
+@media(max-width:760px){
+ #detail-dialog[open]{
+  box-sizing:border-box!important;
+  position:fixed!important;
+  inset:var(--mobile-toolbar-height) 0 var(--mobile-dock-height) 0!important;
+  width:100vw!important;
+  max-width:none!important;
+  height:calc(100dvh - var(--mobile-toolbar-height) - var(--mobile-dock-height))!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:56px max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))!important;
+  border-radius:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+ }
+ /* Header strip remains stationary even after long scrolling. */
+ #detail-dialog[open]::before{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;height:54px;
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+  z-index:8;
+  pointer-events:none;
+ }
+ #detail-dialog[open]>#close-dialog{
+  position:absolute!important;
+  top:5px!important;
+  right:max(12px,env(safe-area-inset-right))!important;
+  display:grid!important;
+  place-items:center!important;
+  width:44px!important;
+  min-width:44px!important;
+  height:44px!important;
+  min-height:44px!important;
+  padding:0!important;
+  margin:0!important;
+  border:1px solid var(--line)!important;
+  border-radius:12px!important;
+  background:var(--paper)!important;
+  color:var(--ink)!important;
+  font-size:27px!important;
+  line-height:1!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  z-index:12!important;
+  cursor:pointer;
+  touch-action:manipulation;
+ }
+ #detail-dialog[open]>#close-dialog:focus-visible{
+  outline:3px solid var(--blue);
+  outline-offset:2px;
+ }
+ #detail-dialog[open] #dialog-body{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:16px;
+ }
+ /* MIDAS uses its own dialog but must also have a reachable close button. */
+ #midas-dialog[open]{
+  max-height:calc(100dvh - 80px);
+  overflow-y:auto;
+  padding-top:62px!important;
+ }
+ #midas-dialog[open]>#close-midas-dialog{
+  position:sticky;
+  top:0;
+  float:right;
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  margin-top:-50px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  z-index:10;
+ }
+}
