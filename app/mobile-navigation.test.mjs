@@ -39,7 +39,7 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
  assert.match(app,/syncMobileNavigation\(route,hash\)/);
  assert.match(app,/routedHealthTabId/);
  assert.match(app,/hrefForHealthTab/);
- assert.match(index,/mobile-navigation\.css\?v=0\.1\.3/);
+ assert.match(index,/mobile-navigation\.css\?v=0\.1\.4/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(min-width:761px\)/);
  assert.match(css,/env\(safe-area-inset-bottom/);
@@ -54,7 +54,7 @@ test("HTML links to both navigation stylesheets and respects iOS safe areas",()=
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
  assert.match(index,/<link rel="stylesheet" href="\.\/area-routes\.css\?v=0\.1\.4">/);
- assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.3">/);
+ assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.4">/);
  assert.match(css,/--mobile-toolbar-height:calc\(58px \+ env\(safe-area-inset-top,0px\)\)/);
  assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
 });
@@ -93,12 +93,22 @@ test("mobile secondary panels keep a visible, reachable close at any scroll posi
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  assert.doesNotMatch(css,/body\.route-area-active #detail-dialog\[open\]>#close-dialog,\s*body\.route-area-active #detail-dialog\[open\]>#copy-area-link\{display:none!important\}/);
- assert.match(css,/#detail-dialog\[open\]>#close-dialog\{[\s\S]*?display:grid!important/);
- assert.match(css,/#detail-dialog\[open\]>#close-dialog\{[\s\S]*?min-height:44px!important/);
- assert.match(css,/#detail-dialog\[open\]>#close-dialog\{[\s\S]*?z-index:12!important/);
- assert.match(css,/#detail-dialog\[open\]\{[\s\S]*?overflow:hidden!important/);
- assert.match(css,/#detail-dialog\[open\] #dialog-body\{[\s\S]*?overflow-y:auto/);
+ assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)>#close-dialog\{[\s\S]*?display:grid!important/);
+ assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)>#close-dialog\{[\s\S]*?min-height:44px!important/);
+ assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)>#close-dialog\{[\s\S]*?z-index:12!important/);
+ assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)\{[\s\S]*?overflow:hidden!important/);
+ assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\) #dialog-body\{[\s\S]*?overflow-y:auto/);
  assert.match(index,/id="close-dialog"[^>]*aria-label="Cerrar"/);
  assert.match(app,/document\.querySelector\("#close-dialog"\)\.addEventListener\("click", \(\) => dialog\.close\(\)\)/);
  assert.match(css,/#midas-dialog\[open\]>#close-midas-dialog\{/);
+});
+
+
+test("mobile wealth modal retains its inset width instead of secondary fullscreen styling",()=>{
+ const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
+ const base=readFileSync(new URL("./styles.css",import.meta.url),"utf8");
+ assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)\{[\s\S]*?width:100vw!important/);
+ assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)::before\{/);
+ assert.match(css,/#detail-dialog\[open\]:not\(\.wealth-dialog\)>#close-dialog\{/);
+ assert.match(base,/\.detail-dialog\.wealth-dialog\s*\{[\s\S]*?width: calc\(100% - 20px\)/);
 });
