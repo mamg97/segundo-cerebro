@@ -31,6 +31,13 @@ No enviar originales del proveedor a Git o a terceros.
 
 ## Puertas que siguen separadas
 
+La primera lectura encuentra metadatos de pago anteriores al registro en una
+fila histórica. No se corrigen ni se descartan. Se conservan como incidencia
+`SOURCE_METADATA_BLOCKED`: se permite contrastar matemáticamente la proxy
+ex-NAV porque no usa la fecha de pago, pero esa transformación diagnóstica no
+supera el gate de coherencia ni permite scoring o emisión. Los criterios y
+tolerancia de contraste fijados arriba permanecen idénticos.
+
 Integridad XLSX, coherencia de calendario/distribuciones y concordancia con
 retornos publicados son controles distintos. El producto de esta unidad sigue
 siendo CANDIDATE_SOURCE_ONLY: revisiones históricas, acciones corporativas,
