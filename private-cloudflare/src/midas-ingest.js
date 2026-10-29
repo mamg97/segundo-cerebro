@@ -1,6 +1,6 @@
 const ISSUER = "https://token.actions.githubusercontent.com";
 const AUDIENCE = "segundo-cerebro-midas-legacy-ingest";
-const WORKFLOW_REF = "mamg97/personal_mamg/.github/workflows/trading_bot.yml@refs/heads/main";
+const WORKFLOW_REF = "mamg97/midas-paper-lab/.github/workflows/genetic_sp500.yml@refs/heads/main";
 const JWKS_URL = `${ISSUER}/.well-known/jwks`;
 
 function json(body, status = 200) {
@@ -30,11 +30,15 @@ export async function verifyGitHubOidc(token, fetcher = fetch, now = Date.now())
     const epoch = Math.floor(now / 1000);
     if (header.alg !== "RS256" || typeof header.kid !== "string" ||
         claims.iss !== ISSUER || claims.aud !== AUDIENCE ||
-        claims.repository !== "mamg97/personal_mamg" ||
+        claims.repository !== "mamg97/midas-paper-lab" ||
+        String(claims.repository_id) !== "1392125585" ||
+        claims.repository_owner !== "mamg97" || String(claims.repository_owner_id) !== "110605707" ||
+        claims.sub !== "repo:mamg97/midas-paper-lab:ref:refs/heads/main" ||
         claims.ref !== "refs/heads/main" || claims.workflow_ref !== WORKFLOW_REF ||
         !["schedule", "workflow_dispatch"].includes(claims.event_name) ||
         !Number.isInteger(claims.iat) || !Number.isInteger(claims.exp) ||
-        claims.iat > epoch + 60 || claims.exp < epoch || claims.exp - claims.iat > 600 ||
+        claims.iat > epoch + 60 || claims.exp <= epoch || claims.exp <= claims.iat || claims.exp - claims.iat > 600 ||
+        (claims.nbf !== undefined && (!Number.isInteger(claims.nbf) || claims.nbf > epoch + 60)) ||
         !/^\d+$/.test(String(claims.run_id || ""))) return null;
     const response = await fetcher(JWKS_URL, { headers: { Accept: "application/json" } });
     if (!response.ok) return null;
@@ -72,6 +76,7 @@ export function normalizeSnapshot(body, runId) {
   const first = body.equity_history[0][0];
   // The Oct 7 interrupted cohort is immutable and can be ingested only under its
   // explicit archival identity. Reject attempts to relabel another NAV series.
+  if (forward && first !== "2026-10-12") return null;
   if (archivedForward && (first !== "2026-09-29" || previous !== "2026-10-07")) return null;
   if (previous > new Date(Date.now() + 86400000).toISOString().slice(0, 10)) return null;
   return {
@@ -111,19 +116,33 @@ export default {
         strategy_id TEXT PRIMARY KEY, last_session TEXT NOT NULL,
         source_run_id INTEGER NOT NULL, payload TEXT NOT NULL, ingested_at TEXT NOT NULL
       )`).run();
-      const existing = await env.DB.prepare("SELECT last_session, source_run_id FROM midas_legacy_snapshot WHERE strategy_id = ?")
+      const existing = await env.DB.prepare("SELECT last_session, source_run_id, payload FROM midas_legacy_snapshot WHERE strategy_id = ?")
         .bind(snapshot.strategy_id).first();
-      if (existing && (snapshot.last_session < existing.last_session ||
-          (snapshot.last_session === existing.last_session && Number(snapshot.source_run_id) < Number(existing.source_run_id)))) {
-        return json({ ok: false, code: "STALE_SNAPSHOT" }, 409);
+      if (existing) {
+        const prior = JSON.parse(existing.payload);
+        if (snapshot.last_session < existing.last_session) return json({ ok: false, code: "STALE_SNAPSHOT" }, 409);
+        if (snapshot.initial_capital !== prior.initial_capital || snapshot.first_session !== prior.first_session ||
+            snapshot.quality !== prior.quality || !prior.equity_history.every((point, i) =>
+              point[0] === snapshot.equity_history[i]?.[0] && point[1] === snapshot.equity_history[i]?.[1])) {
+          return json({ ok: false, code: "HISTORY_CHANGED" }, 409);
+        }
+        if (snapshot.last_session === existing.last_session) {
+          if (snapshot.ledger_sha256 !== prior.ledger_sha256) return json({ ok: false, code: "SESSION_CONFLICT" }, 409);
+          return json({ ok: true, strategy_id: snapshot.strategy_id, last_session: snapshot.last_session, idempotent: true });
+        }
       }
-      await env.DB.prepare(`INSERT INTO midas_legacy_snapshot
+      // Optimistic comparison makes validation and update atomic even across concurrent runs.
+      // Run IDs from different repositories are not a chronology or a deduplication key.
+      const result = await env.DB.prepare(`INSERT INTO midas_legacy_snapshot
         (strategy_id, last_session, source_run_id, payload, ingested_at) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(strategy_id) DO UPDATE SET last_session = excluded.last_session,
           source_run_id = excluded.source_run_id, payload = excluded.payload,
-          ingested_at = excluded.ingested_at`)
+          ingested_at = excluded.ingested_at
+        WHERE midas_legacy_snapshot.last_session < excluded.last_session
+          AND midas_legacy_snapshot.payload = ?`)
         .bind(snapshot.strategy_id, snapshot.last_session, Number(snapshot.source_run_id),
-              JSON.stringify(snapshot), new Date().toISOString()).run();
+              JSON.stringify(snapshot), new Date().toISOString(), existing?.payload || "").run();
+      if (result.meta?.changes !== 1) return json({ ok: false, code: "CONCURRENT_UPDATE" }, 409);
       return json({ ok: true, strategy_id: snapshot.strategy_id, last_session: snapshot.last_session });
     } catch {
       return json({ ok: false, code: "STORE_FAILED" }, 503);

@@ -220,8 +220,9 @@ test("OIDC signature and workflow claims gate the private snapshot", async () =>
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
   const now = 1_800_000_000_000;
   const claims = { iss: "https://token.actions.githubusercontent.com",
-    aud: "segundo-cerebro-midas-legacy-ingest", repository: "mamg97/personal_mamg",
-    ref: "refs/heads/main", workflow_ref: "mamg97/personal_mamg/.github/workflows/trading_bot.yml@refs/heads/main",
+    aud: "segundo-cerebro-midas-legacy-ingest", repository: "mamg97/midas-paper-lab", repository_id: "1392125585",
+    repository_owner: "mamg97", repository_owner_id: "110605707", sub: "repo:mamg97/midas-paper-lab:ref:refs/heads/main",
+    ref: "refs/heads/main", workflow_ref: "mamg97/midas-paper-lab/.github/workflows/genetic_sp500.yml@refs/heads/main",
     event_name: "schedule", run_id: "123", iat: now / 1000 - 30, exp: now / 1000 + 300 };
   const sign = async (payload) => {
     const signed = `${encode({ alg: "RS256", kid: "test-key" })}.${encode(payload)}`;
@@ -238,8 +239,8 @@ test("OIDC signature and workflow claims gate the private snapshot", async () =>
   assert.equal(normalizeSnapshot(body, "123").last_session, "2026-09-25");
   assert.equal(normalizeSnapshot({ ...body, equity_history: body.equity_history.toReversed() }, "123"), null);
   const prospective = { ...body, strategy_id: "genetic_sp500_forward", quality: "next_open_raw_ohlc_v1",
-    equity_history: [["2026-09-28", 100000]] };
-  assert.equal(normalizeSnapshot(prospective, "123").last_session, "2026-09-28");
+    equity_history: [["2026-10-12", 100000]] };
+  assert.equal(normalizeSnapshot(prospective, "123").last_session, "2026-10-12");
   assert.equal(normalizeSnapshot({ ...prospective, quality: "legacy_same_close_model" }, "123"), null);
   const archive = { ...prospective, strategy_id: "genetic_sp500_forward_archive",
     equity_history: [["2026-09-29", 100000], ["2026-10-07", 101008.0]] };

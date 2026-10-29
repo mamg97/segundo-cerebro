@@ -603,3 +603,16 @@ Motivo: la carrera profesional necesita continuidad estructurada y comparación 
 - **Evaluación:** distinguir explícitamente progreso operativo de evidencia científica. No publicar puntuaciones falsas, no mezclar previsiones retrospectivas y prospectivas y no comparar Brier Skill en muestras distintas. Una predicción futura solo se tratará como sellada cuando exista una evidencia inmutable con fecha verificable; el Sheet actual por sí solo no la ofrece.
 - **Motivo:** desarrollar las cuatro líneas sin infraestructura redundante, con hipótesis falsables, indicadores útiles, coste incremental cero y privacidad.
 
+
+
+## 2026-10-29 · Original genetic workflow migration
+
+The original genetic optimizer is prepared for `mamg97/midas-paper-lab`, separately
+from paper_demo. Its three simulated cohorts retain their original identities.
+The ingest producer is the exact public `genetic_sp500.yml` on main, bound to
+repository/owner IDs, workflow, subject, audience, event and signed token lifetime.
+Repeated identical snapshots do not rewrite D1; existing history cannot change,
+and an optimistic SQL comparison rejects concurrent replacement. Access to the
+private application and its canonical private sources remains unchanged.
+Deployment and actual campaign handover are separate operational gates, recorded
+in docs/MIDAS_GENETIC_MIGRATION.md; prepared code is not proof of a live transfer.
