@@ -184,7 +184,7 @@
    The earlier route styles hid #close-dialog entirely; keep it in its own fixed
    54px control strip for Gym, Shopping List, Health, Nutrition and all workspaces. */
 @media(max-width:760px){
- #detail-dialog[open]{
+ #detail-dialog[open]:not(.wealth-dialog){
   box-sizing:border-box!important;
   position:fixed!important;
   inset:var(--mobile-toolbar-height) 0 var(--mobile-dock-height) 0!important;
@@ -200,7 +200,7 @@
   overflow:hidden!important;
  }
  /* Header strip remains stationary even after long scrolling. */
- #detail-dialog[open]::before{
+ #detail-dialog[open]:not(.wealth-dialog)::before{
   content:"";
   position:absolute;
   top:0;left:0;right:0;height:54px;
@@ -209,7 +209,7 @@
   z-index:8;
   pointer-events:none;
  }
- #detail-dialog[open]>#close-dialog{
+ #detail-dialog[open]:not(.wealth-dialog)>#close-dialog{
   position:absolute!important;
   top:5px!important;
   right:max(12px,env(safe-area-inset-right))!important;
@@ -234,11 +234,11 @@
   cursor:pointer;
   touch-action:manipulation;
  }
- #detail-dialog[open]>#close-dialog:focus-visible{
+ #detail-dialog[open]:not(.wealth-dialog)>#close-dialog:focus-visible{
   outline:3px solid var(--blue);
   outline-offset:2px;
  }
- #detail-dialog[open] #dialog-body{
+ #detail-dialog[open]:not(.wealth-dialog) #dialog-body{
   flex:1 1 auto;
   min-height:0;
   max-height:none;
