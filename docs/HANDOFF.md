@@ -1,3 +1,31 @@
+# Psicohistoria — archivo privado y resultados sincronizados · 29/10/2026
+
+El propietario autorizó el lote de tres informes y sus resúmenes privados.
+Archivo en Drive principal verificado mediante descarga autenticada idéntica;
+propiedad y acceso privado confirmados. No publicar aquí su identificador,
+probabilidades ni enlaces privados. El rechazo anterior de archivo está resuelto.
+
+Siete avances y tres experimentos añadidos al registro privado; fases bursátiles,
+hito visual y calendario actualizados. Se releen exactamente los valores escritos,
+links y validaciones. Chrome producción v0.5.35 muestra las tres comparaciones
+en Inicio/Evidencia, sus decisiones y límites. Continúan las emisiones existentes
+sin añadir pronósticos bursátiles ni resultados prospectivos. PR881 integrada;
+CI científica y privacidad correctas. No repetir los estudios cerrados.
+
+La auditoría de fuentes distingue madurez de horizonte y disponibilidad de edición.
+Ver MARKET_SOURCE_AVAILABILITY.md: índice anual y archivo diario FIZ de 2024
+no acreditan una cuadrícula histórica diaria de ediciones CIZ. No se calcularon
+nuevos scores ni se admitió el candidato. Una captura presente podría servir a
+un piloto futuro con sus propios gates; no exigir reconstruir toda la historia
+para esa posibilidad, ni confundirlo con validación histórica as-of.
+
+Siguiente: contrato de objeto/inputs contemporáneos y disponibilidad para riesgo
+bursátil a 20 sesiones. La prioridad sigue activa. Esperar resultados macro no
+bloquea otras líneas autorizadas. Mantener seguimientos semanal, mensual y BLS
+separados; originales macro/anual inmutables. CAT completada; MIDAS reservado.
+
+---
+
 # Psicohistoria — contraste VIX prometedor retrospectivo · 29/10/2026
 
 Contrato56c3aabf previo a descarga/cálculo. Candidato único logVIX retrasado

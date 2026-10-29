@@ -32,3 +32,11 @@ labels cannot alter an earlier probability. The real private CLI uses three
 pinned inputs and create-only output. No portfolio, orders or paid data.
 
 Primary source: https://www.cboe.com/tradable-products/vix/vix-historical-data
+
+## Storage and provenance update — 29 October 2026
+
+The owner authorized the complete private three-report archive and its canonical
+summaries. Upload, authenticated byte readback, private permissions, canonical
+values and the production interface were verified. The earlier storage decision
+is resolved. Scientific admission remains separate; see
+[Market source availability](MARKET_SOURCE_AVAILABILITY.md).
