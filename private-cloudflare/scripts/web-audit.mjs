@@ -657,7 +657,7 @@ async function auditMidasCompetition() {
     const privateActivity = privateRowCount ? (await privateRow.locator(".midas-lab-col-activity").textContent() || "") : "";
     const privateAssets = privateRowCount ? await privateRow.getAttribute("data-midas-lab-sort-assets") : null;
     assertCheck(legacyInRanking === 0, "MIDAS · genético histórico no compite en el ranking prospectivo");
-    assertCheck(privateRowCount === 1 && /actividad privada/i.test(privateActivity) &&
+    assertCheck(privateRowCount === 1 && /detalle de actividad no enlazado/i.test(privateActivity) &&
       !/sin compras|en efectivo/i.test(privateActivity) && privateAssets === "",
       "MIDAS · snapshot genético privado no se interpreta como efectivo ni filtra tickers",
       privateRowCount === 1 ? privateActivity : "fila prospectiva ausente");
