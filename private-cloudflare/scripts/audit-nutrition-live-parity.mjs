@@ -45,17 +45,13 @@ async function fetchApi(route) {
   if (!data?.ok || !Array.isArray(data.weeklyMenu)) throw new Error("Invalid weekly menu response");
   return data;
 }
-function report(label, data) {
-  const rowCounts = days.map((day) => data.weeklyMenu.filter((row) => row.date === day).length);
-  const planCounts = days.map((day) => data.weeklyMenu.filter((row) => row.date === day && row.status === "planificado").length);
-  console.log("[NUTRITION_PARITY] " + label + " week=" + days[0] + " total=" + data.weeklyMenu.length +
-    " rowsPerDay=" + rowCounts.join(",") + " plannedPerDay=" + planCounts.join(","));
-}
+// Public GitHub Actions logs must not reveal real daily meal activity or
+// planning patterns. Validation and full row-level comparison remain in memory.
 const light = await fetchApi("/api/nutrition/menu?date=" + date);
-report("LIGHT", light);
+console.log("[NUTRITION_PARITY] LIGHT_READ_OK");
 try {
   const full = await fetchApi("/api/nutrition?date=" + date + "&refresh=1");
-  report("FULL", full);
+  console.log("[NUTRITION_PARITY] FULL_READ_OK");
   const lightSignatures = light.weeklyMenu.map(signature);
   const fullSignatures = full.weeklyMenu.map(signature);
   const lightOnly = auditMultisetDifferenceCount(lightSignatures, fullSignatures);
