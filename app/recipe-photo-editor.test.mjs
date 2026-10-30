@@ -11,7 +11,7 @@ test("recipe editor has separate gallery and camera inputs with preview and reve
  assert.match(ui,/data-editor-photo-camera type="file" accept="image\/\*" capture="environment"/);
  assert.match(ui,/data-editor-photo-preview/);
  assert.match(ui,/URL\.revokeObjectURL\(previewUrl\)/);
- assert.match(ui,/chosenPhoto\?await prepareRecipePhoto\(chosenPhoto\)/);
+ assert.match(ui,/await prepareRecipePhoto\(chosenPhoto\|\|originalForRotation,rotation\)/);
  assert.match(ui,/data\.set\("photo",photo,"receta\.jpg"\)/);
  assert.match(ui,/toBlob\(resolve,"image\/jpeg"/);
  assert.match(css,/object-fit:contain/);
