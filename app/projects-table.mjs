@@ -14,6 +14,20 @@ function cellText(value) {
   const raw = String(value || "—");
   return '<span class="project-table-truncate" title="' + escapeHtml(raw) + '">' + escapeHtml(raw) + '</span>';
 }
+function projectWebLink(value) {
+  const raw = String(value || "").trim();
+  if (!/^https:\/\/[^\s"\'<>]+$/i.test(raw)) return '<span class="project-table-muted">—</span>';
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:" || !url.hostname) return '<span class="project-table-muted">—</span>';
+    const label = url.hostname.replace(/^www\./i, "");
+    return '<a class="project-table-web" href="' + escapeHtml(url.href) +
+      '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(url.href) +
+      '" aria-label="Abrir web de ' + escapeHtml(label) + '">' + escapeHtml(label) + ' ↗</a>';
+  } catch {
+    return '<span class="project-table-muted">—</span>';
+  }
+}
 function badge(value, kind) {
   const label = String(value || "PENDIENTE").replaceAll("_", " ");
   const cls = kind === "docs" ? "project-doc-status docs-" : "project-status status-";
@@ -27,10 +41,10 @@ export function projectTableMarkup(projects, catalogue = projects) {
     if (item && item.parentId) childCount.set(item.parentId, (childCount.get(item.parentId) || 0) + 1);
   }
   return '<div class="projects-table-scroll" role="region" aria-label="Tabla de proyectos, desplazamiento horizontal" tabindex="0">' +
-    '<table class="projects-table"><colgroup><col class="col-project"><col class="col-area"><col class="col-type"><col class="col-status"><col class="col-priority"><col class="col-docs"><col class="col-children"><col class="col-next"></colgroup>' +
-    '<thead><tr><th scope="col">Proyecto</th><th scope="col">Área</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col">Prioridad</th><th scope="col">Documentación</th><th scope="col">Subproyectos</th><th scope="col">Siguiente acción</th></tr></thead><tbody>' +
+    '<table class="projects-table"><colgroup><col class="col-project"><col class="col-area"><col class="col-type"><col class="col-status"><col class="col-priority"><col class="col-docs"><col class="col-children"><col class="col-web"><col class="col-next"></colgroup>' +
+    '<thead><tr><th scope="col">Proyecto</th><th scope="col">Área</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col">Prioridad</th><th scope="col">Documentación</th><th scope="col">Subproyectos</th><th scope="col">Web</th><th scope="col">Siguiente acción</th></tr></thead><tbody>' +
     rows.map(project => {
-      const searchable = [project.name, project.alias, project.area, project.type, project.summary, project.priority, project.nextAction]
+      const searchable = [project.name, project.alias, project.area, project.type, project.summary, project.priority, project.nextAction, project.webUrl]
         .concat(project.relatedDomains || []).filter(Boolean).join(" ");
       const name = project.name || "Proyecto sin nombre";
       const nextAction = project.nextAction || "Sin siguiente acción";
@@ -46,6 +60,7 @@ export function projectTableMarkup(projects, catalogue = projects) {
         '<td>' + cellText(project.priority) + '</td>' +
         '<td>' + badge(project.docsStatus, "docs") + '</td>' +
         '<td class="project-table-count">' + children + '</td>' +
+        '<td class="project-table-web-cell">' + projectWebLink(project.webUrl) + '</td>' +
         '<td class="project-table-next">' + cellText(nextAction) + '</td></tr>';
     }).join("") + '</tbody></table></div>';
 }
