@@ -1,3 +1,4 @@
+import { projectTableMarkup } from "./projects-table.mjs?v=0.1.0";
 let currentPayload = null;
 let currentTab = "summary";
 let currentDecisions = [];
@@ -37,19 +38,6 @@ function projectDecisions(project) {
 function empty(title, detail) {
   return '<div class="projects-empty"><strong>'+esc(title)+'</strong>'+(detail?'<p>'+esc(detail)+'</p>':'')+'</div>';
 }
-function projectCard(project, payload, featured) {
-  const children = (payload.projects || []).filter((x) => x.parentId === project.id);
-  const haystack = [project.name, project.alias, project.area, project.type, project.summary].concat(project.relatedDomains || []).filter(Boolean).join(" ").toLocaleLowerCase("es");
-  return '<button class="project-card'+(featured?' featured':'')+'" type="button" data-project-id="'+esc(project.id)+'" data-project-search="'+esc(haystack)+'" data-project-status="'+esc(project.status)+'" data-project-area="'+esc(project.area||'')+'">'+
-    '<span class="project-card-top"><span class="project-area">'+esc(project.area||project.type||"Proyecto")+'</span><span class="project-status status-'+esc(cssToken(project.status))+'">'+esc(words(project.status))+'</span></span>'+
-    '<strong>'+esc(project.name)+'</strong>'+
-    (project.alias?'<small class="project-alias">'+esc(project.alias)+'</small>':'')+
-    '<p>'+esc(project.summary||"Sin resumen")+'</p>'+
-    '<span class="project-card-meta"><span>'+esc(project.type||"Proyecto")+'</span><span class="project-doc-status docs-'+esc(cssToken(project.docsStatus))+'">'+esc(project.docsStatus||"PENDIENTE")+'</span></span>'+
-    (children.length?'<span class="project-children">'+children.length+' subproyecto'+(children.length===1?'':'s')+'</span>':'')+
-    (project.nextAction?'<span class="project-next"><small>Siguiente</small>'+esc(project.nextAction)+'</span>':'')+
-    '</button>';
-}
 function renderSummary(payload) {
   const s = payload.summary || {};
   const projects = payload.projects || [];
@@ -62,7 +50,7 @@ function renderSummary(payload) {
     '<article><span>Revisar</span><strong>'+attention.length+'</strong><small>pausados, pendientes o doc parcial</small></article>'+
     '</div>'+
     '<section class="projects-section"><div class="projects-heading"><div><small>Mapa</small><strong>Proyectos principales</strong></div><button type="button" data-project-tab="all">Ver todos</button></div>'+
-    '<div class="projects-featured-grid">'+(top.length?top.map((p)=>projectCard(p,payload,true)).join(""):empty("No hay proyectos principales",""))+'</div></section>'+
+    (top.length?projectTableMarkup(top,projects):empty("No hay proyectos principales",""))+'</section>'+
     (currentDecisions.length
       ? '<section class="projects-section project-area-decisions"><div class="projects-heading"><div><small>Criterio pendiente</small><strong>Decisiones de Proyectos</strong></div></div><div class="project-relations">'+
         currentDecisions.map(function (decision) {
@@ -79,7 +67,7 @@ function renderAll(payload) {
     '<select id="projects-status"><option value="">Todos los estados</option>'+statuses.map((v)=>'<option>'+esc(v)+'</option>').join("")+'</select>'+
     '<select id="projects-area"><option value="">Todas las áreas</option>'+areas.map((v)=>'<option>'+esc(v)+'</option>').join("")+'</select>'+
     '</section><div class="projects-list-heading"><strong id="projects-count">'+projects.length+' proyectos</strong></div>'+
-    '<div class="projects-grid">'+(projects.length?projects.map((p)=>projectCard(p,payload,false)).join(""):empty("No hay proyectos",""))+'</div>';
+    (projects.length?projectTableMarkup(projects,projects):empty("No hay proyectos",""));
 }
 function renderRelations(payload) {
   const byId = new Map((payload.projects||[]).map((p)=>[p.id,p]));
@@ -146,13 +134,13 @@ function bindWorkspace(payload) {
   body.querySelectorAll("[data-project-tab]").forEach((b)=>b.addEventListener("click",()=>{currentTab=b.dataset.projectTab||"summary";renderWorkspace(payload);}));
   body.querySelectorAll("[data-project-id]").forEach((b)=>b.addEventListener("click",()=>{const p=(payload.projects||[]).find((x)=>x.id===b.dataset.projectId);if(p)renderDetail(p,payload);}));
   const apply = () => {
-    const q = String(body.querySelector("#projects-search")?.value||"").trim().toLocaleLowerCase("es");
+    const q = normalizeText(body.querySelector("#projects-search")?.value||"").trim();
     const status = body.querySelector("#projects-status")?.value||"";
     const area = body.querySelector("#projects-area")?.value||"";
     let count = 0;
-    body.querySelectorAll(".project-card").forEach((card)=>{
-      const show=(!q||String(card.dataset.projectSearch||"").includes(q))&&(!status||card.dataset.projectStatus===status)&&(!area||card.dataset.projectArea===area);
-      card.hidden=!show;if(show)count++;
+    body.querySelectorAll(".project-row").forEach((row)=>{
+      const show=(!q||String(row.dataset.projectSearch||"").includes(q))&&(!status||row.dataset.projectStatus===status)&&(!area||row.dataset.projectArea===area);
+      row.hidden=!show;if(show)count++;
     });
     const out=body.querySelector("#projects-count");if(out)out.textContent=count+(count===1?" proyecto":" proyectos");
   };
