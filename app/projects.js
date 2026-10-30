@@ -1,4 +1,4 @@
-import { projectTableMarkup } from "./projects-table.mjs?v=0.1.0";
+import { projectTableMarkup } from "./projects-table.mjs?v=0.1.1";
 let currentPayload = null;
 let currentTab = "summary";
 let currentDecisions = [];
