@@ -5,7 +5,10 @@ import { readFileSync } from "node:fs";
 const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
 const index = readFileSync(new URL("./index.html", import.meta.url), "utf8");
-const fix = css.slice(css.lastIndexOf("/* 2026-10-16 · Recipe detail ingredients:"));
+// Inspect only the scoped override, not later Home/menu/thumb rules.
+const start=css.lastIndexOf("/* 2026-10-16 · Recipe detail ingredients:");
+const end=css.indexOf("\n\n/*",start);
+const fix=css.slice(start,end<0?undefined:end);
 
 test("every recipe detail shares the same safe ingredient layout", () => {
   assert.match(app, /function renderRecipeDetail\(panel, data, recipe, options = \{\}\)/);
