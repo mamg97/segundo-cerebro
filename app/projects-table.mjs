@@ -16,7 +16,7 @@ function cellText(value) {
 }
 function projectWebLink(value) {
   const raw = String(value || "").trim();
-  if (!/^https:\/\/[^\s]+$/i.test(raw)) return '<span class="project-table-muted">—</span>';
+  if (!/^https:\/\/[^\s"\'<>]+$/i.test(raw)) return '<span class="project-table-muted">—</span>';
   try {
     const url = new URL(raw);
     if (url.protocol !== "https:" || !url.hostname) return '<span class="project-table-muted">—</span>';
