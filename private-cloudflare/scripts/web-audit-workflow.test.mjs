@@ -78,10 +78,10 @@ test("visual image probe uses real browser decode only for external resources", 
 test("nutrition preflight logs only technical results, never private daily meal counts", () => {
   const source = readFileSync(new URL("./audit-nutrition-live-parity.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(source, /rowsPerDay|plannedPerDay|rowCounts|planCounts/);
-  assert.doesNotMatch(source, /console\\.log\\([^\\n]*weeklyMenu\\.length/);
-  assert.match(source, /\\[NUTRITION_PARITY\\] LIGHT_READ_OK/);
-  assert.match(source, /\\[NUTRITION_PARITY\\] FULL_READ_OK/);
-  assert.match(source, /auditMultisetDifferenceCount\\(lightSignatures, fullSignatures\\)/);
-  assert.match(source, /auditMultisetDifferenceCount\\(fullSignatures, lightSignatures\\)/);
-  assert.match(source, /if \\(lightOnly \\|\\| fullOnly\\) process\\.exitCode = 2/);
+  assert.doesNotMatch(source, /console\.log\([^\n]*weeklyMenu\.length/);
+  assert.match(source, /\[NUTRITION_PARITY\] LIGHT_READ_OK/);
+  assert.match(source, /\[NUTRITION_PARITY\] FULL_READ_OK/);
+  assert.match(source, /auditMultisetDifferenceCount\(lightSignatures, fullSignatures\)/);
+  assert.match(source, /auditMultisetDifferenceCount\(fullSignatures, lightSignatures\)/);
+  assert.match(source, /if \(lightOnly \|\| fullOnly\) process\.exitCode = 2/);
 });
