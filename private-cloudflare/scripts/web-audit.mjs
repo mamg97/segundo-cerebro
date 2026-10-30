@@ -2404,7 +2404,7 @@ try {
     assertCheck(thumbRows.length === thumbs.matches,
       "Home · fotos o marcadores corresponden a la receta canónica",
       "recetas=" + thumbRows.length + " coincidencias=" + thumbs.matches);
-    const firstThumb = page.locator("#home-weekly-menu-content .home-menu-recipe-thumb img").first();
+    const firstThumb = page.locator("#home-weekly-menu-content .home-menu-recipe-thumb img:not(.home-menu-thumb-backdrop)").first();
     if (await firstThumb.count()) {
       await firstThumb.scrollIntoViewIfNeeded();
       const decoded = await firstThumb.evaluate(async (img) => {

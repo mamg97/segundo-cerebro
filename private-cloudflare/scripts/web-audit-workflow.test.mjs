@@ -85,3 +85,13 @@ test("nutrition preflight logs only technical results, never private daily meal 
   assert.match(source, /auditMultisetDifferenceCount\(fullSignatures, lightSignatures\)/);
   assert.match(source, /if \(lightOnly \|\| fullOnly\) process\.exitCode = 2/);
 });
+
+test("recipe thumbnail audit decodes the real foreground, never the blurred backdrop", () => {
+  const source = readFileSync(new URL("./web-audit.mjs", import.meta.url), "utf8");
+  const app = readFileSync(new URL("../../app/app.js", import.meta.url), "utf8");
+  assert.match(app, /home-menu-thumb-backdrop/);
+  assert.match(app, /home-menu-thumb-primary/);
+  assert.match(source, /const firstThumb = page\.locator\("#home-weekly-menu-content \.home-menu-recipe-thumb img:not\(\.home-menu-thumb-backdrop\)"\)\.first\(\)/);
+  assert.match(source, /await img\.decode\(\)/);
+  assert.match(source, /getComputedStyle\(img\)\.objectFit === "contain"/);
+});
