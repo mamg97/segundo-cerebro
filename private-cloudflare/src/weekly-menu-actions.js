@@ -1,7 +1,7 @@
 // Authenticated private menu mutations: MenuSemanal and Recetas remain the
 // only authorities. No D1 copy, cache of personal rows or blind append.
 import { canonicalWeeklyMenuMoment, weeklyMenuIdentity } from "./weekly-menu.js";
-import { planMenuAddition, planMenuFoodAddition, planMenuFoodReplacement, manualCompanionOptions, planConsumedRegisterCorrection, MenuSlotError } from "./weekly-menu-extended-actions.js";
+import { planMenuAddition, planMenuFoodAddition, planMenuFoodReplacement, manualCompanionOptions, planConsumedRegisterCorrection, planConsumedRegisterRemoval, MenuSlotError } from "./weekly-menu-extended-actions.js";
 
 const MENU_RANGE = "MenuSemanal!A1:R2000";
 const RECIPES_RANGE = "Recetas!A1:Q1000";
@@ -85,7 +85,7 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
   const byFood = Boolean(payload.foodId) && SAFE_ID_RE.test(payload.foodId);
   if (!DATE_RE.test(payload.date || "") || byRecipe === byFood ||
       !Number.isSafeInteger(payload.sourceRow) || payload.sourceRow < 2 ||
-      payload.sourceRow > 2000 || !["consume", "replace"].includes(payload.action))
+      payload.sourceRow > 2000 || !["consume", "replace", "remove"].includes(payload.action))
     throw new MenuEditError("INVALID_MENU_EDIT");
   const all = table(values);
   const original = all.find(row => row.sourceRow === payload.sourceRow);
@@ -101,7 +101,7 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
   const duplicates = all.filter(row => asIdentity(row.data) === oldIdentity);
   if (lastRow(duplicates)?.sourceRow !== original.sourceRow) throw new MenuEditError("MENU_EDIT_CONFLICT",409);
   const currentStatus = normalize(original.data.estado);
-  const correctingConsumption = currentStatus === "consumido" && payload.action === "replace";
+  const correctingConsumption = currentStatus === "consumido" && ["replace","remove"].includes(payload.action);
   if (!["planificado","pendiente"].includes(currentStatus) && !correctingConsumption)
     throw new MenuEditError("MENU_EDIT_NOT_PLANNED", 409);
   if (correctingConsumption && !registroValues)
@@ -123,6 +123,25 @@ export function planMenuSheetEdits(values, payload, recipes, now = new Date().to
   }
   if (payload.action === "consume") {
     put(original,"estado","consumido");
+    put(original,"updated_at",now);
+  } else if (payload.action === "remove") {
+    // Logical removal: retain immutable recipe, historical facts and source-row identity.
+    // A consumed meal must also be invalidated in Registro, otherwise it remains
+    // counted in daily energy and could reappear in the weekly menu.
+    if (correctingConsumption) {
+      updates.push(...planConsumedRegisterRemoval(registroValues,payload,original.data,now));
+    }
+    for (const row of duplicates) {
+      if (row.sourceRow === original.sourceRow) continue;
+      if (/^(retirad[oa]|omitid[oa]|cancelad[oa])$/.test(normalize(row.data.estado))) continue;
+      put(row,"estado","retirado");put(row,"updated_at",now);
+    }
+    put(original,"estado","retirado");
+    if (headers.includes("nota")) put(original,"nota",
+      "Retirado del menú el "+now+". "+(correctingConsumption
+      ? "El consumo confirmado se ha anulado también en Registro cuando existía un registro inequívoco. "
+      : "La comida no estaba confirmada como consumida. ")+
+      "Origen: "+String(original.data.nombre||"").slice(0,160));
     put(original,"updated_at",now);
   } else {
     const changePortion = payload.newServings !== undefined && payload.newServings !== null;
@@ -237,7 +256,7 @@ export async function editWeeklyMenu(request, env, accessToken, fetchImpl = fetc
   const query = new URLSearchParams({ranges:MENU_RANGE,majorDimension:"ROWS",valueRenderOption:"UNFORMATTED_VALUE"});
   if (["replace","add"].includes(payload.action)) query.append("ranges",RECIPES_RANGE);
   if (["add-food","replace-food"].includes(payload.action)) query.append("ranges",FOODS_RANGE);
-  if (payload.action === "replace") query.append("ranges","Registro!A1:N6000");
+  if (["replace","remove"].includes(payload.action)) query.append("ranges","Registro!A1:N6000");
   const read = await fetchImpl(`${base}/values:batchGet?${query}`,{headers:{Authorization:`Bearer ${token}`}});
   if (!read.ok) throw new MenuEditError("MENU_READ_FAILED",502);
   const ranges = (await read.json()).valueRanges || [];
@@ -247,7 +266,7 @@ export async function editWeeklyMenu(request, env, accessToken, fetchImpl = fetc
   let plan;
   try {
     plan = planMenuSheetEdits(ranges[0]?.values || [],payload,recipeList,new Date().toISOString(),
-      payload.action === "replace" ? (ranges[2]?.values || []) : null);
+      ["replace","remove"].includes(payload.action) ? (ranges[payload.action==="replace" ? 2 : 1]?.values || []) : null);
   } catch (error) {
     if (error instanceof MenuSlotError)
       throw new MenuEditError(error.code,error.status);

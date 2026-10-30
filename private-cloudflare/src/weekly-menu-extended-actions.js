@@ -139,6 +139,40 @@ export function planConsumedRegisterCorrection(values,payload,original,recipe,ma
   return Object.entries(fields).map(([key,val])=>put("Registro",source.sourceRow,head,key,val));
 }
 
+
+/** Invalidates only the exact confirmed Registro row corresponding to a menu item.
+ *  Preserves the entry and its original macros for historical audit.
+ *  Refuses ambiguous legacy/name-only matches and never touches another meal.
+ */
+export function planConsumedRegisterRemoval(values,payload,original,now){
+  const head=(values?.[0]||[]).map(x=>String(x||"").trim());
+  const keys=["fecha","momento","item_id","item_nombre","estado","nota","updated_at"];
+  ensure(keys.every(key=>head.includes(key)),"REGISTRO_SCHEMA_UNSUPPORTED");
+  const oldId=String(original.recipe_id||original.food_id||"");
+  const sameMoment=normalize(canonicalWeeklyMenuMoment({
+    moment:original.momento,name:original.nombre,note:original.nota
+  }));
+  const all=rowTable(values);
+  const matching=all.filter(x=>x.data.fecha===payload.date &&
+    normalize(x.data.item_id)===normalize(oldId) &&
+    momentKey(x.data)===sameMoment && normalize(x.data.estado)==="consumido");
+  ensure(matching.length<=1,"AMBIGUOUS_CONSUMED_REGISTRO");
+  ensure(!all.some(x=>x.data.fecha===payload.date &&
+    !String(x.data.item_id||"").trim() &&
+    normalize(x.data.item_nombre)===normalize(original.nombre) &&
+    momentKey(x.data)===sameMoment && normalize(x.data.estado)==="consumido"),
+    "AMBIGUOUS_CONSUMED_REGISTRO");
+  if(!matching.length)return [];
+  const source=matching[0],note=String(source.data.nota||"");
+  return [
+    put("Registro",source.sourceRow,head,"estado","anulado"),
+    put("Registro",source.sourceRow,head,"nota",
+      "Anulado desde menú semanal el "+now+"; datos originales conservados. "+
+      note.slice(0,450)),
+    put("Registro",source.sourceRow,head,"updated_at",now)
+  ];
+}
+
 /** Presets explicitly opted in for manual side-dish selection in Health/Comidas. */
 export function manualCompanionOptions(values) {
   return rowTable(values)

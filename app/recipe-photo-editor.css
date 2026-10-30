@@ -25,3 +25,12 @@
  .recipe-edit-photo-actions>button{grid-column:1/-1}
  .recipe-edit-form .recipe-edit-actions{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
 }
+
+/* Rotating an existing recipe photo is a real re-encoding, not a CSS-only save. */
+.recipe-edit-photo-preview img{transition:transform .16s ease}
+.recipe-edit-photo-actions [data-editor-photo-rotate]{flex:1 1 120px}
+@media(max-width:760px){
+ .recipe-edit-photo-actions [data-editor-photo-rotate]{grid-column:auto;min-height:46px}
+ .recipe-edit-photo-actions [data-editor-photo-revert]{grid-column:1/-1}
+}
+@media(prefers-reduced-motion:reduce){.recipe-edit-photo-preview img{transition:none}}

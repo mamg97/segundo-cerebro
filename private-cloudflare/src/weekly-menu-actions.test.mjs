@@ -179,3 +179,44 @@ test("historical one-time recipe portions are never silently reused in a new pla
   const historic={...recipes[0],precision:"histórico; porción medida en otra fecha, no usar para nuevas tomas"};
   assert.equal(previewMenuRecipe({cantidad:1,unidad:"ración"},historic).supported,false);
 });
+
+test("remove a planned item without deleting it or changing nutrition macros",()=>{
+ const now="2026-10-30T19:00:00Z";
+ const p=planMenuSheetEdits([header,original],{...payload,action:"remove"},[],now);
+ assert.deepEqual(p.updates.map(u=>[u.range,u.values[0][0]]),[
+  ["MenuSemanal!I2","retirado"],
+  ["MenuSemanal!O2","Retirado del menú el "+now+". La comida no estaba confirmada como consumida. Origen: Receta A"],
+  ["MenuSemanal!P2",now]
+ ]);
+ assert.ok(!p.updates.some(u=>/MenuSemanal![JKLMD]/.test(u.range)));
+});
+test("remove only exact consumed Registro match, preserve original row, reject ambiguity",()=>{
+ const consumed=[...original];consumed[8]="consumido";
+ const regHeader=["fecha","momento","item_id","item_nombre","cantidad","unidad","kcal","proteinas_g","carbohidratos_g","grasas_g","estado","nota","updated_at","fuente"];
+ const reg=["2026-10-15","Comida","r-a","Receta A",1,"ración",430,38,31,17,"consumido","Confirmado","T1",""];
+ const unrelated=["2026-10-15","Cena","r-a","Receta A",1,"ración",430,38,31,17,"consumido","Cena","T1",""];
+ const now="2026-10-30T19:00:00Z";
+ const p=planMenuSheetEdits([header,consumed],{...payload,action:"remove"},[],now,[regHeader,reg,unrelated]);
+ const keys=Object.fromEntries(p.updates.map(u=>[u.range,u.values[0][0]]));
+ assert.equal(keys["MenuSemanal!I2"],"retirado");
+ assert.equal(keys["Registro!K2"],"anulado");
+ assert.match(keys["Registro!L2"],/Confirmado/);
+ assert.ok(!Object.keys(keys).some(k=>/Registro![A-Z]3$/.test(k)));
+ assert.throws(()=>planMenuSheetEdits([header,consumed],{...payload,action:"remove"},[]),e=>e.code==="CONSUMED_REGISTER_REQUIRED");
+ assert.throws(()=>planMenuSheetEdits([header,consumed],{...payload,action:"remove"},[],now,[regHeader,reg,reg]),e=>e.code==="AMBIGUOUS_CONSUMED_REGISTRO");
+});
+test("remove action performs same authenticated read checked write as other edits",async()=>{
+ const regHeader=["fecha","momento","item_id","item_nombre","cantidad","unidad","kcal","proteinas_g","carbohidratos_g","grasas_g","estado","nota","updated_at","fuente"];
+ const requests=[];
+ const fetcher=async(url,opt={})=>{
+  requests.push({url:String(url),method:opt.method||"GET",body:opt.body?JSON.parse(opt.body):null});
+  if(String(url).includes("values:batchGet"))return {ok:true,json:async()=>({valueRanges:[{values:[header,original]},{values:[regHeader]}]})};
+  if(String(url).includes("values:batchUpdate"))return {ok:true,json:async()=>({})};
+  throw Error("INVALID_ENDPOINT");
+ };
+ const result=await editWeeklyMenu({json:async()=>({...payload,action:"remove"})},{HEALTH_SHEET_ID:"PRIVATE_TEST"},async()=>"TEST_TOKEN",fetcher);
+ assert.equal(result.action,"remove");
+ assert.equal(requests.length,2);
+ assert.ok(requests[0].url.includes("Registro%21"));
+ assert.deepEqual(requests[1].body.data.map(x=>x.range),["MenuSemanal!I2","MenuSemanal!O2","MenuSemanal!P2"]);
+});

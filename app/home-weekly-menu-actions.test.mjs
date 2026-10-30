@@ -219,3 +219,30 @@ test("editing a Pantry-renamed food sends the source Sheet name, not the display
   const legacy = sandbox.homeMenuEditPayload({...renamed,sourceName:undefined}, "consume");
   assert.equal(legacy.name, renamed.name);
 });
+
+test("weekly menu offers removal for planned and consumed items without deleting the recipe",()=>{
+ const html=sandbox.renderHomeWeeklyMenuMatrixCell([item]);
+ assert.match(html,/data-home-menu-remove="8"/);
+ assert.match(html,/aria-label="Eliminar Plato A del menú"/);
+ const consumed=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,status:"consumido"}]);
+ assert.match(consumed,/data-home-menu-remove="8"/);
+ const noId=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,recipeId:"",foodId:""}]);
+ assert.doesNotMatch(noId,/data-home-menu-remove/);
+ const payload=sandbox.homeMenuEditPayload(item,"remove");
+ assert.equal(payload.action,"remove");
+ assert.equal(payload.sourceRow,8);
+ assert.ok(!Object.hasOwn(payload,"newRecipeId"));
+ assert.match(app,/submitHomeMenuEdit\(item,"remove"\)/);
+ assert.match(app,/La receta seguirá disponible/);
+ assert.match(app,/se anulará su ingesta registrada/);
+});
+test("menu photo contains complete foreground image and blurred backdrop for portrait thumbnails",()=>{
+ const src="/api/health/recipes/rec-a/image?v=2026-10-30T10%3A00%3A00Z";
+ const html=sandbox.renderHomeWeeklyMenuMatrixCell([{...item,photoUrl:src}]);
+ assert.match(html,/home-menu-thumb-backdrop/);
+ assert.match(html,/home-menu-thumb-primary/);
+ assert.match(html,/src="\/api\/health\/recipes\/rec-a\/image\?v=2026-10-30T10%3A00%3A00Z"/);
+ assert.match(css,/\.home-menu-thumb-backdrop/);
+ assert.match(css,/\.home-menu-thumb-primary/);
+ assert.match(css,/object-fit: contain/);
+});

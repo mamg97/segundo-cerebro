@@ -6157,7 +6157,8 @@ function renderHomeWeeklyMenuMatrixCell(items, readOnly = false, date = "", mome
         // Only same-origin authenticated recipe photos can appear in Home.
         const photoUrl = String(item.photoUrl || "");
         const photo = /^\/api\/health\/recipes\/[^?#]+\/image\?v=/.test(photoUrl)
-          ? `<img src="${escapeHtml(photoUrl)}" width="156" height="88" alt="" loading="lazy" decoding="async">`
+          ? `<img class="home-menu-thumb-backdrop" src="${escapeHtml(photoUrl)}" width="156" height="88" alt="" loading="lazy" decoding="async" aria-hidden="true">
+             <img class="home-menu-thumb-primary" src="${escapeHtml(photoUrl)}" width="156" height="88" alt="" loading="lazy" decoding="async">`
           : '<span class="home-menu-recipe-thumb-missing" aria-hidden="true">Sin foto</span>';
         const title = recipeId
           ? `<button class="weekly-menu-title-link home-weekly-menu-recipe-link" type="button" data-home-menu-recipe-open="${escapeHtml(recipeId)}" aria-label="Ver receta: ${escapeHtml(item.name || "Comida")}">
@@ -6186,6 +6187,7 @@ function renderHomeWeeklyMenuMatrixCell(items, readOnly = false, date = "", mome
               ${planned ? `<button type="button" data-home-menu-consume="${item.sourceRow}" aria-label="Marcar ${escapeHtml(item.name)} como consumida">✓ Consumida</button>`
                 : '<small class="home-menu-consumed-label">✓ Consumida</small>'}
               <button type="button" data-home-menu-change="${item.sourceRow}" aria-label="Cambiar alimento o receta ${escapeHtml(item.name)}">Cambiar</button>
+              <button type="button" class="home-menu-remove-action" data-home-menu-remove="${item.sourceRow}" aria-label="Eliminar ${escapeHtml(item.name)} del menú">Eliminar</button>
             </div>` : consumed ? '<small class="home-menu-consumed-label">✓ Consumida</small>' : ""}
           </div>`;
       }).join("")}
@@ -6552,6 +6554,26 @@ function bindHomeWeeklyMenuEdits(content, data, model) {
         if (button.isConnected) button.disabled = false;
       }
     }));
+  content.querySelectorAll("[data-home-menu-remove]").forEach(button =>
+    button.addEventListener("click",async () => {
+      const item=items.get(button.dataset.homeMenuRemove);
+      if(!item || homeMenuEditPending)return;
+      const consumed=weeklyMenuItemIsConsumed(item);
+      const explanation=consumed
+        ? "Esta comida figura como consumida. Se retirará del menú y se anulará su ingesta registrada cuando sea identificable. ¿Continuar?"
+        : "Se retirará solo esta entrada del menú. La receta seguirá disponible y el resto de días no cambiarán. ¿Continuar?";
+      if(!window.confirm("¿Eliminar «"+String(item.name||"alimento")+"»?\n\n"+explanation))return;
+      button.disabled=true;button.textContent="Eliminando…";
+      try {
+        await submitHomeMenuEdit(item,"remove");
+        homeMenuInlineNotice(content,"Entrada eliminada del menú. Receta conservada.");
+      }catch(error){
+        homeMenuInlineNotice(content,
+          "No se pudo eliminar. La entrada se ha conservado ("+String(error?.message||"ERROR")+").",true);
+      }finally{
+        if(button.isConnected){button.disabled=false;button.textContent="Eliminar";}
+      }
+    }));
   content.querySelectorAll("[data-home-menu-change]").forEach(button =>
     button.addEventListener("click",async () => {
       const item = items.get(button.dataset.homeMenuChange);
@@ -6567,7 +6589,13 @@ function bindHomeWeeklyMenuEdits(content, data, model) {
 }
 function bindHomeWeeklyMenuRecipeLinks(content, data) {
   // Image errors must not break the recipe link or expose external fallbacks.
-  content.querySelectorAll(".home-menu-recipe-thumb img").forEach((img) => {
+  content.querySelectorAll(".home-menu-recipe-thumb img:not(.home-menu-thumb-backdrop)").forEach((img) => {
+    const setAspect=()=> {
+      const holder=img.closest(".home-menu-recipe-thumb");
+      if(holder)holder.classList.toggle("is-portrait",img.naturalHeight>img.naturalWidth);
+    };
+    if(img.complete&&img.naturalWidth)setAspect();
+    else img.addEventListener("load",setAspect,{once:true});
     img.addEventListener("error", () => {
       const holder = img.closest(".home-menu-recipe-thumb");
       if (!holder) return;

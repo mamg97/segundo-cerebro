@@ -16,7 +16,7 @@ test("recipe editor has separate gallery and camera inputs with preview and reve
  assert.match(ui,/toBlob\(resolve,"image\/jpeg"/);
  assert.match(css,/object-fit:contain/);
  assert.match(css,/safe-area-inset-bottom/);
- assert.match(index,/recipe-photo-editor\.css\?v=0\.1\.0/);
+ assert.match(index,/recipe-photo-editor\.css\?v=0\.1\.1/);
 });
 test("image payload requires JPEG/PNG/WebP signature and limited length",()=>{
  assert.equal(MAX_RECIPE_PHOTO,900000);
@@ -82,5 +82,21 @@ test("photo save verifies exact JPEG bytes and shows the active new version",()=
  assert.match(app,/crypto\.subtle\.digest\("SHA-256",await check\.arrayBuffer\(\)\)/);
  assert.match(app,/actual!==expected\.photoSha256/);
  assert.match(app,/renderRecipeDetail\(panel,updated,verified\)/);
- assert.match(readFileSync(new URL("./index.html",import.meta.url),"utf8"),/app\.js\?v=0\.44\.93/);
+ assert.match(readFileSync(new URL("./index.html",import.meta.url),"utf8"),/app\.js\?v=0\.44\.94/);
+});
+
+test("recipe photo can be rotated before saving, including an existing private image",async()=>{
+ const {rotationFrameDimensions}=await import("./recipe-editor-ui.mjs");
+ assert.deepEqual(rotationFrameDimensions(1000,600,0),{turn:0,width:1000,height:600});
+ assert.deepEqual(rotationFrameDimensions(1000,600,90),{turn:90,width:600,height:1000});
+ assert.deepEqual(rotationFrameDimensions(1000,600,-90),{turn:270,width:600,height:1000});
+ assert.deepEqual(rotationFrameDimensions(1000,600,180),{turn:180,width:1000,height:600});
+ assert.throws(()=>rotationFrameDimensions(1000,600,45),/ROTACION_NO_ADMITIDA/);
+ const code=readFileSync(new URL("./recipe-editor-ui.mjs",import.meta.url),"utf8");
+ assert.match(code,/data-editor-photo-rotate="-90"/);
+ assert.match(code,/data-editor-photo-rotate="90"/);
+ assert.match(code,/context\.rotate\(frame\.turn\*Math\.PI\/180\)/);
+ assert.match(code,/await prepareRecipePhoto\(chosenPhoto\|\|originalForRotation,rotation\)/);
+ assert.match(code,/url\.origin!==location\.origin/);
+ assert.match(code,/fetch\(url\.href,\{credentials:"same-origin",cache:"no-store"\}\)/);
 });
