@@ -42,7 +42,7 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
  assert.match(app,/syncMobileNavigation\(route,hash\)/);
  assert.match(app,/routedHealthTabId/);
  assert.match(app,/hrefForHealthTab/);
- assert.match(index,/mobile-navigation\.css\?v=0\.1\.5/);
+ assert.match(index,/mobile-navigation\.css\?v=0\.1\.6/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(min-width:761px\)/);
  assert.match(css,/env\(safe-area-inset-bottom/);
@@ -57,7 +57,7 @@ test("HTML links to both navigation stylesheets and respects iOS safe areas",()=
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
  assert.match(index,/<link rel="stylesheet" href="\.\/area-routes\.css\?v=0\.1\.4">/);
- assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.5">/);
+ assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.6">/);
  assert.match(css,/--mobile-toolbar-height:calc\(58px \+ env\(safe-area-inset-top,0px\)\)/);
  assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
 });
@@ -87,7 +87,7 @@ test("mobile refresh shows one circular arrow rather than two opposing arrows",(
  assert.doesNotMatch(icon,/M4 17v-5h5|M20 7v5h-5/);
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
- assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.5/);
+ assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.6/);
  assert.match(index,/app\.js\?v=0\.44\.\d+/);
 });
 
@@ -116,7 +116,7 @@ test("mobile wealth modal retains its inset width instead of secondary fullscree
  assert.match(base,/\.detail-dialog\.wealth-dialog\s*\{[\s\S]*?width: calc\(100% - 20px\)/);
 });
 
-test("mobile More exposes real quick access links and Despensa, not merely decorative tiles",()=>{
+test("Gym and shopping live in persistent mobile quick dock with valid deep links",()=>{
  assert.deepEqual(MOBILE_QUICK_ACCESS.map(x=>[x.label,x.href]),[
   ["Gym","#/salud/gym"],["Lista de la compra","#/despensa/compra"]
  ]);
@@ -124,13 +124,19 @@ test("mobile More exposes real quick access links and Despensa, not merely decor
  const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
- assert.match(nav,/Accesos rápidos/);
- assert.match(nav,/data-mobile-route/);
- assert.match(nav,/MOBILE_AREAS\.map/);
- assert.match(css,/\.mobile-sheet-shortcuts\{display:grid/);
- assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
- assert.match(index,/href="#\/salud\/gym"/);
- assert.match(index,/href="#\/despensa\/compra"/);
+ assert.match(nav,/id="mobile-quick-dock"/);
+ assert.match(nav,/MOBILE_QUICK_ACCESS\.map/);
+ assert.match(nav,/data-mobile-quick/);
+ assert.match(nav,/dom\("mobile-quick-dock"\)\.addEventListener\("click"/);
+ assert.match(nav,/navigate\(quick\.dataset\.mobileQuick\)/);
+ assert.doesNotMatch(nav,/mobile-sheet-shortcuts/);
+ assert.doesNotMatch(index,/home-quick-accesses/);
+ assert.match(css,/--mobile-dock-height:calc\(var\(--mobile-bottom-height\) \+ var\(--mobile-quick-height\)\)/);
+ assert.match(css,/\.mobile-quick-dock\{/);
+ assert.match(css,/bottom:var\(--mobile-bottom-height\)/);
+ assert.match(css,/\.mobile-quick-dock a\{/);
+ assert.match(css,/@media\(min-width:761px\)/);
+ assert.match(css,/\.mobile-app-header,\.mobile-quick-dock,\.mobile-bottom-nav,\.mobile-navigation-sheet\{display:none!important\}/);
  assert.match(app,/routedPantryTabId/);
  assert.match(app,/openPantryDetail\(routedPantryTabId==="compra"\?"shopping"/);
  assert.deepEqual(routeFromHash(hrefForPantryTab("compra")),{areaId:"area-pantry",detailId:"compra"});
