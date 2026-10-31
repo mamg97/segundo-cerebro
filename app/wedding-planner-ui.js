@@ -221,10 +221,11 @@ function tableFloorPosition(table,index,count,height){
  const columns=Math.min(3,count),rows=Math.ceil(count/columns);
  const fallbackX=100*((index%columns)+0.5)/columns;
  const fallbackY=100*(Math.floor(index/columns)+0.5)/rows;
- const edgeY=185/height*100;
  const x=typeof table.positionX==="number"&&Number.isFinite(table.positionX)?table.positionX:fallbackX;
  const y=typeof table.positionY==="number"&&Number.isFinite(table.positionY)?table.positionY:fallbackY;
- return {x:Math.min(84,Math.max(16,x)),y:Math.min(100-edgeY,Math.max(edgeY,y))};
+ // Never replace a persisted coordinate with a hard-coded 16% boundary.
+ // The mounted canvas applies pixel-accurate bounds using its actual width.
+ return {x:Math.min(100,Math.max(0,x)),y:Math.min(100,Math.max(0,y))};
 }
 export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSeatIndex=null){
  const summary=seatingSummary(guests,tables);
