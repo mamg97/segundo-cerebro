@@ -34,9 +34,9 @@ test("Bodas.net links are direct HTTPS official URLs and never imply live scrapi
 test("guest and table controls include RSVP, dietary notes, seat assignments and editing",()=>{
  const tables=[{id:"00000000-0000-4000-8000-000000000001",name:"Mesa demo",capacity:8,seated:1,shape:"redonda"}];
  const guests=[{id:"00000000-0000-4000-8000-000000000002",name:"Invitado de prueba",groupName:"Amigos",rsvp:"confirmado",menu:"vegetariano",dietaryNotes:"Sin frutos secos",tableId:tables[0].id}];
- assert.match(renderGuests(guests,tables,null,esc),/Sin frutos secos/);
+ assert.match(renderGuests(guests,tables,guests[0].id,esc),/Sin frutos secos/);
  assert.match(renderGuests(guests,tables,"new",esc),/id="wed-guest-form"/);
- assert.match(renderGuests(guests,tables,null,esc),/data-wed-assign-seat/);
+ assert.match(renderGuests(guests,tables,null,esc),/data-wed-edit-guest/);
  assert.match(renderTables(guests,tables,null,esc),/1\/1 confirmados ubicados/);
  assert.match(renderTables(guests,tables,"new",esc),/id="wed-table-form"/);
  assert.match(script,/getJson\("\/api\/wedding\/guests"/);
