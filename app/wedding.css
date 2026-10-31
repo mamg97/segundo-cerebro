@@ -1354,9 +1354,10 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-seat-associated-svg .wed-seat-association-line{
  fill:none;
  stroke:var(--blue,#59a7fc);
- stroke-width:1.1;
- stroke-opacity:.7;
+ stroke-width:1;
+ stroke-opacity:.5;
  stroke-linecap:round;
+ stroke-linejoin:round;
  pointer-events:none;
 }
 .wed-seat-associated-svg .wed-seat-attached-name{
