@@ -13,14 +13,14 @@ import { mockState } from "../core/mock-state.js";
 import { recipeIngredientChoices, recipeCatalogItems } from "./recipe-catalog-filter.mjs?v=0.44.37";
 import { financeAccountWorkspaceIncomplete, financeBankWorkspaceReady, mergeVerifiedFinanceBankWorkspace } from "./finance-workspace-readiness.js?v=0.44.26";
 import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
-import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.63";
+import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.64";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.4";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
 import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.14";
 import { hrefForArea, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.6";
-import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.6";
+import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.7";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
@@ -12303,7 +12303,7 @@ function openArea(areaId) {
     return;
   }
   if (areaId === "area-pantry") {
-    void openPantryDetail(routedPantryTabId==="compra"?"shopping":routedPantryTabId||"inventory");
+    void openPantryDetail(routedPantryTabId==="compra"?"shopping":routedPantryTabId==="tickets"?"tickets":"inventory");
     return;
   }
   if (areaId === "area-objects") {
