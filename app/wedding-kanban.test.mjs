@@ -53,7 +53,7 @@ test("Single refresh stays sticky across views, uses one circular arrow, and ass
  assert.match(css,/\.wed-fixed-actions\{[\s\S]*?position:sticky;top:0/);
  assert.match(css,/\.wed-kanban\{[\s\S]*?overflow-x:auto/);
  assert.doesNotMatch(css,/overflow-y:auto/);
- assert.match(html,/wedding\.css\?v=0\.1\.6/);
- assert.match(html,/app\.js\?v=0\.44\.98/);
- assert.match(app,/wedding\.js\?v=0\.1\.5/);
+ assert.match(html,/wedding\.css\?v=0\.1\.7/);
+ assert.match(html,/app\.js\?v=0\.44\.99/);
+ assert.match(app,/wedding\.js\?v=0\.1\.6/);
 });
