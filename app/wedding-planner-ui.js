@@ -167,7 +167,7 @@ function tableGuestPicker(table,guests,esc){
  const available=guests.filter(g=>!g.tableId&&g.rsvp!=="rechazado")
   .sort((a,b)=>a.name.localeCompare(b.name,"es"));
  const full=guests.filter(g=>g.tableId===table.id).length>=table.capacity;
- return '<section class="wed-table-picker" aria-label="Añadir personas a '+esc(table.name)+'">'+
+ return '<section class="wed-table-picker" data-wed-table-picker="'+esc(table.id)+'" aria-label="Añadir personas a '+esc(table.name)+'">'+
  '<h5>Añadir personas a '+esc(table.name)+'</h5>'+
  '<form data-wed-place-existing="'+esc(table.id)+'" class="wed-table-picker-form">'+
  '<label>Selecciona un invitado de vuestras listas'+
@@ -229,7 +229,7 @@ export function renderTables(guests,tables,editing,esc){
    '<button type="button" data-wed-edit-table="'+esc(t.id)+'">Editar</button></div>'+
    namedSeatDiagram(t,occupants,esc)+
    '<div class="wed-seat-caption">'+confirmedInTable+' confirmados · '+Math.max(0,t.capacity-occupants.length)+' libres</div>'+
-   '<div class="wed-seating-card-actions"><button type="button" data-wed-toggle-table-picker="'+esc(t.id)+'">+ Añadir personas</button></div>'+
+   '<div class="wed-seating-card-actions"><button type="button" data-wed-toggle-table-picker="'+esc(t.id)+'" aria-expanded="false">+ Añadir personas</button></div>'+
    tableGuestPicker(t,guests,esc)+
    '<div class="wed-seating-guests">'+(occupants.length?occupants.map(g=>
     '<div class="wed-seated-guest"><button type="button" data-wed-seat-detail="'+esc(g.id)+'">'+esc(g.name)+'</button>'+
