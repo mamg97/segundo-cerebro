@@ -1,3 +1,4 @@
+import {readSiteTraffic,writeSiteTraffic,TrafficDataError} from "./site-traffic.js";
 import { fetchIcloudCalendarSummary, hasIcloudCalendarConfig } from "./icloud-calendar.js";
 import { fetchGoogleCalendarSummary, hasGoogleCalendarConfig, safeGoogleCalendarErrorCode } from "./google-calendar.js";
 import { mergeCalendarSources } from "./calendar-federation.js";
@@ -6099,6 +6100,37 @@ export default {
       } catch(error) {
         console.warn("Research lab read failed",String(error?.message||"LAB_READ_ERROR").replace(/[A-Za-z0-9_-]{30,}/g,"[redacted]"));
         return json({ok:false,code:"LAB_READ_FAILED"},502);
+      }
+    }
+
+    if (url.pathname === "/api/web-traffic") {
+      if (request.method === "GET") {
+        try {
+          return json({ok:true,...await readSiteTraffic(env,Number(url.searchParams.get("days")||30))});
+        } catch {
+          return json({ok:false,code:"TRAFFIC_DATA_UNAVAILABLE"},503);
+        }
+      }
+      if (request.method !== "POST") return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
+      // Cloudflare Access protects the entire Worker; POST additionally requires
+      // same-origin browser requests and JSON. No third-party browser writes.
+      const origin=request.headers.get("Origin");
+      if(origin!==url.origin || request.headers.get("Sec-Fetch-Site")==="cross-site")
+        return json({ok:false,code:"ORIGIN_DENIED"},403);
+      if(!/^application\/json(?:\s*;|$)/i.test(request.headers.get("Content-Type")||""))
+        return json({ok:false,code:"JSON_REQUIRED"},415);
+      try {
+        const raw=await request.text();
+        if(raw.length>2500)return json({ok:false,code:"PAYLOAD_TOO_LARGE"},413);
+        const body=JSON.parse(raw);
+        const result=await writeSiteTraffic(env,body);
+        return json({ok:true,...result},201);
+      } catch(error) {
+        if(error instanceof TrafficDataError)
+          return json({ok:false,code:error.code},error.status);
+        if(error instanceof SyntaxError)
+          return json({ok:false,code:"INVALID_JSON"},400);
+        return json({ok:false,code:"TRAFFIC_WRITE_FAILED"},503);
       }
     }
 
