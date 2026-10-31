@@ -11426,7 +11426,8 @@ function ensureVerifiedFinanceBankSection(dialog) {
   body.querySelector('[data-finance-workspace-status="unavailable"]')?.remove();
   body.insertAdjacentHTML("beforeend", html);
   initializeAccountTransactionTabs(body);
-  focusRequestedFinanceMovements();
+  // Existing isolated test harnesses evaluate this recovery routine alone.
+  if(typeof focusRequestedFinanceMovements==="function")focusRequestedFinanceMovements();
   return true;
 }
 
