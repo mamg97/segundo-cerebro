@@ -71,3 +71,35 @@ test("personal free confirmed remains distinct when an explicit free amount is r
   assert.equal(result.pendingBreakdown, 30);
   assert.equal(result.rawSegments.find(x => x.kind === "free").amount, 30);
 });
+
+test("overflow charts preserve equal nominal bands and disclose the correct denominator", () => {
+  const quantizer = new Function(
+    extractFunction("quantizeBarSegments", "allocationColorClass") + "return quantizeBarSegments;"
+  )();
+  const proportionalModel = new Function(
+    "numberOrZero", "firstFinite", "allocationColorClass", "quantizeBarSegments",
+    extractFunction("liquidityVisualModel", "visibleLiquidityAccounts") + "return liquidityVisualModel;"
+  )(
+    (value) => Number(value) || 0,
+    (value) => value === null || value === undefined || value === "" ? null : Number(value),
+    (_label, index) => `allocation-${index + 1}`,
+    quantizer
+  );
+  const actual = proportionalModel({
+    id: "shared-test", owner: "Común", balance: 100, free: 0,
+    allocations: [
+      { label: "Reservation A", amount: 25 },
+      { label: "Reservation B", amount: 25 },
+      { label: "Obligation C", amount: 70 }
+    ]
+  });
+  assert.equal(actual.chartOverAllocated, true);
+  assert.equal(actual.chartTotal, 120);
+  assert.equal(actual.excess, 20);
+  assert.equal(actual.segments[0].visibleAmount, 25);
+  assert.equal(actual.segments[1].visibleAmount, 25);
+  assert.equal(actual.segments[0].visiblePct, actual.segments[1].visiblePct);
+  assert.equal(actual.segments.reduce((sum, row) => sum + row.visiblePct, 0), 100);
+  assert.match(extractFunction("renderLiquidityAccounts", "renderWealthAllocation"), /liquidity-legend-meter-fill/);
+  assert.match(css, /\.liquidity-legend-meter\s*\{/);
+});
