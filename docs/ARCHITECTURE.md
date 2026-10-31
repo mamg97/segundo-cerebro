@@ -31,7 +31,13 @@ Un plano horizontal de ancho completo representa las mesas como círculos movibl
 se seleccionan pulsando encima y se trasladan con arrastre de ratón/táctil o
 flechas del teclado. La selección abre debajo las acciones y el listado de nombres.
 Cada mesa dibuja iniciales y nombres abreviados alrededor del círculo; pulsar
-una persona abre su ficha. Las coordenadas porcentuales se guardan en D1
+una persona abre su ficha. El arrastre calcula los desplazamientos a partir del centro porcentual
+existente y el tamaño renderizado del lienzo; no usa `offsetLeft` ni
+`offsetTop` sobre elementos transformados. Al soltar, verifica la respuesta
+de D1 y vuelve a leer las mesas; si falla el guardado, muestra un error.
+Los límites visuales se calculan con las dimensiones reales de la mesa,
+sin alterar automáticamente coordenadas guardadas.
+Las coordenadas porcentuales se guardan en D1
 privado con revisión optimista, sin cambiar la asignación de los invitados. Cada invitado asignado tiene `seat_index` privado (0-based), con unicidad
 por mesa. La migración `0016_wedding_seat_positions.sql` numera de forma
 determinista los invitados antiguos sin modificar su mesa ni RSVP. Los

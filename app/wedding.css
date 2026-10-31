@@ -790,3 +790,11 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 @media(max-width:650px){
  .wed-floor-scroll,.wed-floor-plan{min-height:550px}
 }
+
+.wed-floor-table.is-saving{cursor:progress;pointer-events:none}
+.wed-floor-table.is-saving::after{
+ content:"Guardando posición…";
+ position:absolute;right:8px;top:8px;z-index:11;
+ padding:5px 8px;border-radius:8px;
+ background:var(--blue-soft);color:var(--blue);font-size:11px;font-weight:750;
+}
