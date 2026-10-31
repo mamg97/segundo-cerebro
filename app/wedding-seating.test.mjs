@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {ROUND_CAPACITIES,seatingSummary,suggestWeddingSeating,roundSeats} from "./wedding-seating.js";
-import {renderTables} from "./wedding-planner-ui.js";
+import {renderTables,tableFloorPosition} from "./wedding-planner-ui.js";
 const ui=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
 const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
 const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll('"',"&quot;");
@@ -199,4 +199,38 @@ test("a saved edge or centered point renders unchanged and does not teleport on 
  assert.match(ui,/boundFloorPosition\(\{/);
  assert.match(ui,/stage\.getBoundingClientRect\(\),tileBox=tile\.getBoundingClientRect\(\)/);
  assert.doesNotMatch(ui,/tile\.offsetLeft|tile\.offsetTop/);
+});
+
+test("one presidential table is centered despite invalid legacy drag coordinates",()=>{
+ const broken={id:"table-demo",name:"Mesa ficticia",shape:"presidencial",capacity:6,positionX:0,positionY:0};
+ const untouched=JSON.stringify(broken);
+ assert.deepEqual(tableFloorPosition(broken,0,1),{x:50,y:50});
+ const html=renderTables([], [broken],null,esc,broken.id);
+ assert.match(html,/data-wed-floor-table="table-demo"[^>]*left:50\.000%;top:50\.000%/);
+ assert.match(html,/data-wed-floor-grip/);
+ assert.match(html,/Arrastrar Mesa ficticia/);
+ assert.match(html,/data-wed-center-table="table-demo"/);
+ assert.match(html,/display:block;height:360px;min-height:360px/);
+ assert.equal(JSON.stringify(broken),untouched,"must not silently update persisted D1 coordinates");
+});
+test("compact floor accommodates four tables per row without oversized cards",()=>{
+ const tables=Array.from({length:9},(_,index)=>({
+  id:"demo-"+index,name:"Mesa "+index,capacity:12,shape:"redonda",positionX:null,positionY:null
+ }));
+ assert.deepEqual(tableFloorPosition(tables[0],0,9),{x:12.5,y:100/6});
+ assert.deepEqual(tableFloorPosition(tables[3],3,9),{x:87.5,y:100/6});
+ assert.deepEqual(tableFloorPosition(tables[4],4,9),{x:12.5,y:50});
+ assert.deepEqual(tableFloorPosition(tables[8],8,9),{x:12.5,y:100*2.5/3});
+ const html=renderTables([],tables,null,esc,"demo-0");
+ assert.equal((html.match(/data-wed-floor-table="/g)||[]).length,9);
+ assert.match(html,/height:1080px/);
+ assert.match(css,/width:268px;height:278px/);
+ assert.match(css,/min-width:1180px/);
+ assert.match(ui,/state\.seatingSelectedTableId=table\.id/);
+ assert.match(ui,/positionX:50,positionY:50,revision:table\.revision/);
+});
+test("valid saved manually positioned tables are not recentered on rerender",()=>{
+ const saved={id:"saved",name:"Mesa",shape:"redonda",capacity:8,positionX:66.5,positionY:47.25};
+ assert.deepEqual(tableFloorPosition(saved,0,1),{x:66.5,y:47.25});
+ assert.match(renderTables([], [saved], null,esc),/left:66\.500%;top:47\.250%/);
 });
