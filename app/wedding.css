@@ -690,7 +690,7 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  background:var(--surface);scrollbar-width:thin;
 }
 .wed-floor-plan{
- position:relative;width:100%;min-width:960px;
+ position:relative;width:100%;min-width:1200px;
  background-image:linear-gradient(to right,var(--line) 1px,transparent 1px),
                   linear-gradient(to bottom,var(--line) 1px,transparent 1px);
  background-size:48px 48px;
@@ -698,7 +698,7 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 }
 .wed-floor-table{
  position:absolute;transform:translate(-50%,-50%);
- width:288px;height:304px;padding:6px 0 10px;
+ width:352px;height:368px;padding:6px 0 10px;
  border:2px solid transparent;border-radius:18px;
  background:var(--surface);box-shadow:0 4px 20px #00000012;
  cursor:grab;touch-action:none;user-select:none;
@@ -720,7 +720,7 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  pointer-events:none;
 }
 .wed-floor-table .wed-named-table{
- width:100%;height:280px;aspect-ratio:auto;max-width:none;margin:0;
+ width:100%;height:340px;aspect-ratio:auto;max-width:none;margin:0;
 }
 .wed-floor-table .wed-named-table-center{
  inset:32%;padding:7px;
@@ -731,7 +731,7 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 }
 .wed-floor-table .wed-named-table-center small{font-size:10px}
 .wed-floor-table .wed-named-seat{
- width:64px;min-height:42px;padding:3px 1px;
+ width:67px;min-height:42px;padding:3px 1px;
 }
 .wed-floor-table .wed-seat-name{
  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
@@ -760,7 +760,7 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-seating-details .wed-seat-caption{text-align:left}
 @media(max-width:650px){
  .wed-floor-scroll{border-radius:10px}
- .wed-floor-plan{min-width:960px}
+ .wed-floor-plan{min-width:1200px}
  .wed-seating-details .wed-seating-guests{grid-template-columns:1fr}
  .wed-seating-details .wed-seating-head{gap:8px}
  .wed-seating-details .wed-seating-head strong{flex-basis:100%}
