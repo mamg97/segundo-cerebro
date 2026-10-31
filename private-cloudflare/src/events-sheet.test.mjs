@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildEventsSheetPayload, parseCalendarVisibilityRows, findAbsentIcloudEventRows } from "./events-sheet.js";
+import { buildEventsSheetPayload, parseCalendarVisibilityRows, findAbsentIcloudEventRows, travelIdentityKey, deduplicateTravelRecords } from "./events-sheet.js";
 
 test("buildEventsSheetPayload parses canonical event rows and rules", () => {
   const payload = buildEventsSheetPayload([
@@ -77,4 +77,28 @@ test("never infers a cancellation from fallback, partial, stale or failed iCloud
   ]) {
     assert.deepEqual(findAbsentIcloudEventRows([event], [], { ...healthy, ...overridden }, now), []);
   }
+});
+
+
+test("D1 legacy travel alias resolves to existing destination on the same day", () => {
+  assert.equal(travelIdentityKey("Viaje a Ciudad Ejemplo"),travelIdentityKey("Ciudad Ejemplo"));
+  assert.equal(travelIdentityKey("Viaje a Ciudad Ejemplo · octubre 2026"),"ciudad ejemplo");
+  assert.notEqual(travelIdentityKey("Viaje a Otra Ciudad"),travelIdentityKey("Ciudad Ejemplo"));
+  assert.equal(travelIdentityKey("Viaje nov"),null);
+});
+
+test("travel listing keeps only canonical journey, with its own references and itinerary", () => {
+  const sameDay="2026-11-20T00:00:00+01:00";
+  const legacy={id:"legacy-demo",kind:"travel",title:"Viaje a Ciudad Ejemplo",
+    startsAt:sameDay,sourceProvider:"d1-migration"};
+  const canonical={id:"canonical-demo",kind:"travel",title:"Ciudad Ejemplo",
+    startsAt:sameDay,sourceProvider:"calendar",
+    coverReference:{type:"cover_image",sourceRef:"https://commons.wikimedia.org/wiki/File:Demo.jpg"}};
+  const other={id:"other-demo",kind:"travel",title:"Otra Ciudad",startsAt:sameDay,sourceProvider:"user"};
+  const nextYear={id:"next-year-demo",kind:"travel",title:"Ciudad Ejemplo",
+    startsAt:"2027-11-20T00:00:00+01:00",sourceProvider:"user"};
+  const found=deduplicateTravelRecords([legacy,canonical,other,nextYear]);
+  assert.deepEqual(found.map(x=>x.id),["canonical-demo","other-demo","next-year-demo"]);
+  assert.equal(found[0].coverReference,canonical.coverReference);
+  assert.equal(deduplicateTravelRecords([other,canonical,legacy]).find(x=>x.title==="Ciudad Ejemplo").id,"canonical-demo");
 });
