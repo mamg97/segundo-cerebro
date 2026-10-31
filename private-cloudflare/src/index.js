@@ -13,6 +13,7 @@ import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-so
 import { ensureCurrentFinanceCycle } from "./finance-cycle.mjs";
 import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { isFundedFinanceAllocation, requireFinanceReservationSource } from "./finance-allocation-contract.js";
+import { reconcileCreditReceiptProvisions } from "./finance-credit-reconciliation.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { serveObjectsLookSheetPreview } from "./look-sheet-media.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
@@ -1504,6 +1505,17 @@ async function fetchFinanceSummaryUncached(env) {
   // Cycle rollover safety: a stale Sheet cannot display last month's spending
   // under the newly active cycle. Source remains canonical and unmodified.
   value.monthlyBudget = ensureCurrentFinanceCycle(value.monthlyBudget);
+
+  // Cross-check financing components against the active bank envelopes.
+  // The source remains read-only: never invent a reservation or change a balance.
+  // Return only private scoped results; public logs/audit do not expose amounts.
+  value.creditReceiptReconciliation = reconcileCreditReceiptProvisions({
+    creditAccounts,
+    creditFuture,
+    liquidityAccounts: value.monthlyBudget?.liquidityAccounts || [],
+    periodStart: value.monthlyBudget?.periodStart,
+    periodEnd: value.monthlyBudget?.periodEnd
+  });
 
   financeCache = {
     value,

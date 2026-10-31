@@ -2189,6 +2189,9 @@ function renderBudgetOverview() {
         ${personalNet === null ? "" : `<div><span>Libre Miguel</span><strong>${formatMoney(personalNet, currency)}</strong></div>`}
         ${savingsTarget === null ? "" : `<div><span>Ahorro objetivo</span><strong>${formatMoney(savingsTarget, currency)}</strong></div>`}
       </div>
+      ${finance.creditReceiptReconciliation?.status === "mismatch"
+        ? '<p class="budget-net-note finance-reconciliation-warning" data-finance-reconciliation="mismatch">Financiación: reservas sin conciliar con el calendario previsto. Revisa el apartado de Finanzas.</p>'
+        : ""}
       ${renderHomeLiquidityOverview(monthly.liquidityAccounts, currency)}
     `;
   }
@@ -11613,6 +11616,14 @@ function openBudgetDetail(options = {}) {
         ? '<p class="budget-net-note">El ciclo actual aún no tiene partidas conciliadas en la fuente canónica; las del ciclo anterior se han ocultado para evitar errores.</p>'
         : String(monthly.budgetStatus || "").includes("PROVISIONAL")
           ? '<p class="budget-net-note">Ciclo 20–20 abierto. Los importes presupuestados de referencia son provisionales; los gastos solo corresponden al ciclo vigente.</p>'
+          : ""}
+      ${finance.creditReceiptReconciliation?.status === "mismatch"
+        ? `<p role="alert" class="budget-net-note finance-reconciliation-warning" data-finance-reconciliation="mismatch">
+            <strong>Financiación sin conciliar.</strong> Una o varias cuotas previstas no coinciden con las reservas bancarias.
+            Revisa el desglose antes de considerar completa la distribución del saldo.
+          </p>`
+        : finance.creditReceiptReconciliation?.status === "unverified" && Array.isArray(finance.creditAccounts) && finance.creditAccounts.some((account) => Array.isArray(account.products) && account.products.length > 0 && account.estimatedNextReceipt !== null)
+          ? '<p class="budget-net-note finance-reconciliation-warning" data-finance-reconciliation="unverified">Conciliación de financiación pendiente: falta una fuente para comprobar todas las cuotas.</p>'
           : ""}
       ${accountWorkspaceIncomplete ? '<p class="account-transactions-empty" data-finance-workspace-status="unavailable">Datos bancarios pendientes de recuperar desde la fuente privada. No se muestran cuentas ni movimientos supuestos.</p>' : ""}
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
