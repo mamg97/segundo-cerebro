@@ -103,8 +103,8 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-1"/);
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
- assert.match(html,/Libre/);
- assert.match(html,/class="wed-named-table" role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/Plaza 1 libre/);
+ assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="4" role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
  assert.match(html,/data-wed-place-existing="round1"/);
@@ -274,12 +274,12 @@ test("six assigned guests render in six distinct uniformly spaced circular seats
   seatIndex:i,groupName:"pareja",rsvp:"pendiente"
  }));
  const html=renderTables(guests,[table],null,esc,table.id);
- assert.match(html,/class="wed-named-table-center" data-wed-edit-table="pres-geometry"/);
+ assert.match(html,/class="wed-svg-table" role="button" tabindex="0" data-wed-edit-table="pres-geometry"/);
  assert.match(html,/aria-label="Editar Mesa sintética"/);
- assert.match(html,/class="wed-floor-seat-ring"/);
- assert.equal((html.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
- assert.equal((html.match(/class="wed-named-seat is-filled" data-wed-seat-detail="synthetic-person-/g)||[]).length,6);
- const slots=[...html.matchAll(/class="wed-named-seat is-filled"[^>]+style="position:absolute!important;left:([\d.]+)px!important;top:([\d.]+)px!important;transform:translate\(-50%,-50%\)!important;width:38px!important;height:38px!important/g)]
+ assert.match(html,/class="wed-floor-seat-svg"/);
+ assert.equal((html.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
+ assert.equal((html.match(/class="wed-svg-chair is-filled" role="button" tabindex="0" data-wed-seat-detail="synthetic-person-/g)||[]).length,6);
+ const slots=[...html.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="18" fill="#59a7fc"/g)]
   .map(m=>({x:+m[1],y:+m[2]}));
  assert.equal(slots.length,6);
  assert.equal(new Set(slots.map(p=>p.x+","+p.y)).size,6);
@@ -290,8 +290,8 @@ test("six assigned guests render in six distinct uniformly spaced circular seats
   const delta=(angles[(i+1)%slots.length]-angles[i]+Math.PI*4)%(Math.PI*2);
   assert.ok(Math.abs(delta-Math.PI/3)<.001,"60 degrees between seats");
  }
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-ring \{/);
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-ring > button\.wed-named-seat/);
+ assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg\{/);
+ assert.match(css,/\.wed-floor-seat-svg \.wed-svg-chair/);
  assert.match(css,/pointer-events:none/);
  assert.match(css,/pointer-events:auto/);
  assert.match(ui,/\[data-wed-seat-detail\],\[data-wed-seat-add\],\[data-wed-edit-table\]/);
@@ -299,7 +299,7 @@ test("six assigned guests render in six distinct uniformly spaced circular seats
 test("twelve empty places remain independent clickable circular buttons",()=>{
  const table={id:"table-twelve",name:"Mesa libre",capacity:12,shape:"redonda"};
  const html=renderTables([], [table],null,esc,table.id);
- assert.equal((html.match(/class="wed-named-seat is-empty"/g)||[]).length,12);
+ assert.equal((html.match(/class="wed-svg-chair is-empty"/g)||[]).length,12);
  assert.equal((html.match(/data-wed-seat-index="\d+"/g)||[]).length,12);
  assert.equal((html.match(/data-wed-seat-add="table-twelve"/g)||[]).length,12);
  assert.match(html,/aria-label="Añadir invitado en plaza 1 de Mesa libre"/);
@@ -311,7 +311,7 @@ test("capacity 13 through 30 retains all circles with smaller diameters",()=>{
  for(const [count,diameter] of [[13,30],[18,30],[19,24],[24,24],[25,20],[30,20]]){
   const html=renderTables([], [{id:"synthetic-"+count,name:"Mesa",capacity:count,shape:"redonda"}],null,esc);
   assert.equal((html.match(/data-wed-seat-index="\d+"/g)||[]).length,count);
-  assert.equal((html.match(new RegExp("width:"+diameter+"px!important","g"))||[]).length,count);
+  assert.equal((html.match(new RegExp(' r="'+(diameter/2)+'" fill="#0b1727"',"g"))||[]).length,count);
  }
 });
 test("pending guests keep all occupied seats visible without altering D1",()=>{
@@ -321,13 +321,13 @@ test("pending guests keep all occupied seats visible without altering D1",()=>{
  }));
  const before=JSON.stringify(people);
  const html=renderTables(people,[table],null,esc,"p");
- const diagram=html.slice(html.indexOf('<div class="wed-named-table"'),html.indexOf("</article>"));
- assert.match(diagram,/class="wed-floor-seat-ring"/);
- assert.equal((diagram.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
- assert.equal((diagram.match(/left:[\d.]+px!important;top:[\d.]+px!important/g)||[]).length,6);
+ const diagram=html.slice(html.indexOf('<div class="wed-svg-table-wrap"'),html.indexOf("</article>"));
+ assert.match(diagram,/class="wed-floor-seat-svg"/);
+ assert.equal((diagram.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
+ assert.equal((diagram.match(/<circle cx="[\d.]+" cy="[\d.]+" r="18" fill="#59a7fc"/g)||[]).length,6);
  assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,6);
  assert.equal(JSON.stringify(people),before);
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-ring \{[\s\S]*?position:absolute/);
+ assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg\{/);
 });
 test("top-right plan controls provide one new-table action and a fullscreen exit",()=>{
  const t={id:"d",name:"Demo",capacity:12,shape:"redonda"};
@@ -365,11 +365,11 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  const before=JSON.stringify(guests);
  const markup=renderTables(guests,[table],null,esc,table.id);
  const article=markup.slice(markup.indexOf('<article class="wed-floor-table'),markup.indexOf('</article>'));
- assert.match(article,/<div class="wed-named-table"[^>]*>\s*<button[^>]*class="wed-named-table-center"/);
- assert.match(article,/data-wed-seat-ring-version="3"/);
- assert.equal((article.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
+ assert.match(article,/<div class="wed-svg-table-wrap"[^>]*>\s*<svg class="wed-floor-seat-svg"/);
+ assert.match(article,/data-wed-table-diagram-version="4"/);
+ assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,6);
- assert.match(article,/class="wed-floor-seat-ring"[\s\S]*?<\/div><\/div>\s*$/);
+ assert.match(article,/<\/svg><\/div>\s*$/);
  assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
- assert.match(css,/\.wed-floor-plan \.wed-floor-table > \.wed-named-table > \.wed-floor-seat-ring/);
+ assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg/);
 });
