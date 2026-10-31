@@ -42,6 +42,39 @@ function normalize(value) {
     .trim();
 }
 
+// Used only together with an exact travel start date.
+// Legacy D1 can call a destination "Viaje a <lugar>", while the private
+// canonical event is titled "<lugar>". Aliases must not spawn new journeys.
+export function travelIdentityKey(title) {
+  const name = normalize(title)
+    .replace(/^viaje\s+(?:(?:a|al)\s+)?/, "")
+    .replace(/\s*[·—-]\s*(?:verano|invierno|primavera|otono|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+\d{4}$/, "")
+    .trim();
+  return name.length >= 4 ? name : null;
+}
+
+function travelDuplicateKey(event) {
+  const day = eventDay(event?.startsAt);
+  const destination = travelIdentityKey(event?.title);
+  return normalize(event?.kind) === "travel" && day && destination
+    ? day + "|" + destination : null;
+}
+
+export function deduplicateTravelRecords(events = []) {
+  // Keep the canonical private record in preference to its D1 migration copy.
+  const chosen = new Map();
+  const unkeyed = [];
+  for (const event of events) {
+    const key = travelDuplicateKey(event);
+    if (!key) { unkeyed.push(event); continue; }
+    const current = chosen.get(key);
+    if (!current || (current.sourceProvider === "d1-migration" && event.sourceProvider !== "d1-migration")) {
+      chosen.set(key, event);
+    }
+  }
+  return [...chosen.values(), ...unkeyed];
+}
+
 function list(value) {
   if (value == null || value === "") return [];
   return String(value).split(/[|;]/).map((item) => item.trim()).filter(Boolean);
@@ -424,6 +457,7 @@ export async function fetchEventSheetRecords(env, getGoogleAccessToken, options 
   const source = await fetchEventsSheetSource(env, getGoogleAccessToken);
   const events = filterEvents(source.value?.events || [], options);
   if (options.kind !== "travel") return events;
+  const uniqueEvents = deduplicateTravelRecords(events);
   // Publicly reusable image metadata, joined privately by stable event ID.
   // The main list needs only covers, never unrelated documents or references.
   const covers = new Map();
@@ -437,7 +471,7 @@ export async function fetchEventSheetRecords(env, getGoogleAccessToken, options 
       });
     }
   }
-  return events.map((event) => covers.has(event.id)
+  return uniqueEvents.map((event) => covers.has(event.id)
     ? { ...event, coverReference: covers.get(event.id) }
     : event);
 }
@@ -646,10 +680,10 @@ export async function migrateLegacyEventLedgerToSheet(env, getGoogleAccessToken,
       )
       || existingEvents.find((item) =>
         eventDay(item.startsAt) === day &&
-        normalize(item.kind) === normalize(legacy.kind) &&
         normalize(item.kind) === "travel" &&
-        /^viaje\b/.test(normalize(item.title)) &&
-        /^viaje\b/.test(normalize(legacy.title))
+        normalize(legacy.kind) === "travel" &&
+        travelIdentityKey(item.title) &&
+        travelIdentityKey(item.title) === travelIdentityKey(legacy.title)
       );
 
     if (!target) {
