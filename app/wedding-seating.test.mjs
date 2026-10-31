@@ -104,7 +104,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
  assert.match(html,/Plaza 3 libre/);
- assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="7" role="group"[^>]*aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="8" role="group"[^>]*aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
  assert.match(html,/data-wed-place-existing="round1"/);
@@ -283,9 +283,10 @@ test("six assigned guests render in six distinct uniformly spaced circular seats
   .map(m=>({x:+m[1],y:+m[2]}));
  assert.equal(slots.length,6);
  assert.equal(new Set(slots.map(p=>p.x+","+p.y)).size,6);
- const distances=slots.map(p=>Math.hypot(p.x-320,p.y-150));
+ const centerY=Number(html.match(/viewBox="0 0 640 (\d+)"/)?.[1])/2;
+ const distances=slots.map(p=>Math.hypot(p.x-320,p.y-centerY));
  assert.ok(Math.max(...distances)-Math.min(...distances)<.02,"same distance from table");
- const angles=slots.map(p=>Math.atan2(p.y-150,p.x-320));
+ const angles=slots.map(p=>Math.atan2(p.y-centerY,p.x-320));
  for(let i=0;i<slots.length;i++){
   const delta=(angles[(i+1)%slots.length]-angles[i]+Math.PI*4)%(Math.PI*2);
   assert.ok(Math.abs(delta-Math.PI/3)<.001,"60 degrees between seats");
@@ -366,7 +367,7 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  const markup=renderTables(guests,[table],null,esc,table.id);
  const article=markup.slice(markup.indexOf('<article class="wed-floor-table'),markup.indexOf('</article>'));
  assert.match(article,/<div class="wed-svg-table-wrap"[^>]*>\s*<svg class="wed-floor-seat-svg wed-seat-associated-svg"/);
- assert.match(article,/data-wed-table-diagram-version="7"/);
+ assert.match(article,/data-wed-table-diagram-version="8"/);
  assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,12,"six chairs and six local full-name labels");
  assert.match(article,/<\/svg><\/div>\s*$/);
@@ -487,7 +488,7 @@ test("each full name is attached to its own numbered chair with a non-crossing l
   assert.match(card,new RegExp('data-wed-seat-detail="'+ownPrefix+'0"'));
   assert.doesNotMatch(card,new RegExp('data-wed-seat-detail="'+otherPrefix+'0"'));
   assert.match(card,/viewBox="0 0 640 [\d]+"/);
-  assert.match(card,/data-wed-table-diagram-version="7"/);
+  assert.match(card,/data-wed-table-diagram-version="8"/);
   assert.doesNotMatch(card,/wed-floor-seat-legend|wed-seat-inline-leaders|wed-seat-inline-labels/);
   // All label boxes stay inside the 640px-wide SVG on their own side.
   const boxes=[...card.matchAll(/<rect x="(8|468)" y="([\d.]+)" width="164" height="(\d+)"/g)];
@@ -557,5 +558,43 @@ test("thirty named seats stay inside one expanded SVG and its grid row",()=>{
  for(const x of [8,468]){
   const side=boxes.filter(m=>+m[1]===x).map(m=>({y:+m[2],h:+m[3]}));
   for(let i=1;i<side.length;i++)assert.ok(side[i].y>=side[i-1].y+side[i-1].h+4);
+ }
+});
+
+test("leader lines avoid all other chairs and tabletop at 6, 12, 18 and 30 places",()=>{
+ const distToSegment=(p,a,b)=>{
+  const vx=b.x-a.x,vy=b.y-a.y;
+  const scale=Math.max(0,Math.min(1,((p.x-a.x)*vx+(p.y-a.y)*vy)/(vx*vx+vy*vy)));
+  return Math.hypot(p.x-(a.x+vx*scale),p.y-(a.y+vy*scale));
+ };
+ for(const capacity of [6,12,18,30]){
+  const table={id:"test-"+capacity,name:"Mesa",shape:"redonda",capacity};
+  const guests=Array.from({length:capacity},(_,i)=>({
+   id:"guest-"+i,name:"Nombre con apellidos largos "+i,
+   seatIndex:i,tableId:table.id,rsvp:"confirmado",groupName:"pareja"
+  }));
+  const html=renderTables(guests,[table],null,esc);
+  const chairs=[...html.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="(10|12|15|18)" fill="#59a7fc"/g)]
+   .map(m=>({x:+m[1],y:+m[2],radius:+m[3]}));
+  const lines=[...html.matchAll(/data-wed-line-seat="(\d+)" d="M([^"]+)"/g)]
+   .map(m=>({idx:+m[1],points:m[2].split(" L").map(x=>{
+    const [xx,yy]=x.split(" ").map(Number);return {x:xx,y:yy};
+   })}));
+  const height=Number(html.match(/viewBox="0 0 640 (\d+)"/)?.[1]);
+  assert.equal(chairs.length,capacity);
+  assert.equal(lines.length,capacity);
+  for(const line of lines){
+   assert.equal(line.points.length,5,"radial exit, outer lane and name edge");
+   for(const p of line.points)assert.ok(p.x>=0&&p.x<=640&&p.y>=0&&p.y<=height,"line remains in its table");
+   for(let j=0;j<capacity;j++){
+    if(j===line.idx)continue;
+    for(let k=1;k<line.points.length;k++){
+     const gap=distToSegment(chairs[j],line.points[k-1],line.points[k]);
+     assert.ok(gap>=chairs[j].radius+2,
+      "line "+line.idx+" must not intersect chair "+j+" at capacity "+capacity+" (distance "+gap+")");
+    }
+   }
+  }
+  assert.match(html,/class="wed-seat-association-lines" aria-hidden="true"/);
  }
 });
