@@ -1068,3 +1068,74 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
   right:9px;bottom:8px
  }
 }
+
+/* Wedding floor v5: full guest names are in a numbered two-column key below
+   each SVG table. This is intentional: no intersecting connector lines or
+   absolute-positioned text around the chair circle. */
+.wed-floor-plan{grid-auto-rows:var(--wed-floor-row-height,360px);}
+.wed-floor-plan .wed-floor-table{
+ width:min(100%,380px);height:auto;min-height:335px;
+ display:flex;flex-direction:column;align-items:center;
+ justify-content:flex-start;overflow:visible;
+}
+.wed-floor-plan .wed-floor-table .wed-svg-table-wrap{
+ width:100%;height:auto;max-width:380px;
+ display:flex;flex-direction:column;align-items:center;overflow:visible;
+}
+.wed-floor-plan .wed-floor-table .wed-svg-table-wrap .wed-floor-seat-svg{
+ flex:0 0 268px;width:268px;height:268px;
+}
+.wed-floor-plan .wed-floor-table .wed-floor-grip{
+ top:calc(134px + 37px);left:50%;
+}
+.wed-floor-seat-legend{
+ box-sizing:border-box;width:100%;max-width:380px;
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:5px 7px;padding:8px 5px 4px;
+ align-content:start;align-items:start;pointer-events:auto;
+}
+.wed-floor-seat-legend-item{
+ display:flex;align-items:flex-start;gap:5px;
+ min-width:0;width:100%;min-height:24px;
+ margin:0;padding:3px 4px;box-sizing:border-box;
+ background:var(--surface);color:var(--ink);
+ border:1px solid var(--line);border-radius:7px;
+ font:inherit;font-size:10px;line-height:1.25;
+ text-align:left;cursor:pointer;white-space:normal;
+}
+.wed-floor-seat-legend-item:hover,.wed-floor-seat-legend-item:focus-visible{
+ border-color:var(--blue);background:var(--blue-soft);
+ outline:1px solid var(--blue);outline-offset:1px;
+}
+.wed-floor-seat-number{
+ box-sizing:border-box;display:inline-grid;place-items:center;
+ flex:0 0 18px;min-width:18px;height:18px;
+ border-radius:50%;background:var(--blue);color:#fff;
+ font-size:9px;font-weight:850;font-variant-numeric:tabular-nums;
+}
+.wed-floor-seat-full-name{
+ flex:1;min-width:0;overflow-wrap:anywhere;word-break:normal;
+ white-space:normal;font-size:10px;font-weight:650;
+}
+.wed-table-picker [data-wed-guest-search]{
+ min-width:0;width:100%;height:39px;padding:7px 9px;
+ font:inherit;font-size:12px;color:var(--ink);
+ background:var(--surface);border:1px solid var(--line);
+ border-radius:8px;
+}
+.wed-table-picker .wed-guest-search-status{
+ align-self:center;font-size:10px;color:var(--ink-soft);
+}
+.wed-table-picker-form:has([data-wed-guest-search]){
+ grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto;
+}
+.wed-floor-save-status{font-size:11px;color:var(--ink-soft);}
+.wed-floor-save-status[role="alert"]{color:#f4b55e;}
+@media(max-width:850px){
+ .wed-table-picker-form:has([data-wed-guest-search]){grid-template-columns:1fr 1fr;}
+ .wed-table-picker-form:has([data-wed-guest-search])>.wed-primary{width:100%;}
+}
+@media(max-width:520px){
+ .wed-table-picker-form:has([data-wed-guest-search]){grid-template-columns:1fr;}
+ .wed-floor-seat-full-name{font-size:10px;}
+}
