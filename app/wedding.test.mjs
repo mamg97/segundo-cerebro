@@ -22,7 +22,7 @@ test("budget math does not double count paid and excluded entries",()=>{
 test("wedding has private API and responsive separate stylesheet",()=>{
  const app=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
- assert.match(app,/wedding\.css\?v=0\.2\.6/);
+ assert.match(app,/wedding\.css\?v=0\.2\.7/);
  assert.match(style,/\.wed-grid/);
  assert.doesNotMatch(style,/overflow-y:auto/);
 });
