@@ -67,8 +67,8 @@ Existe además una tarea horaria externa de ChatGPT como defensa frente a una ca
 
 - su horario está configurado como **exacto** cada hora al **minuto 45** en `Europe/Madrid`; no depende del emisor `schedule` de GitHub; si han pasado al menos **75 minutos** sin auditoría real y no hay otra ejecución en curso ni en cola, puede recuperar **una sola** ejecución ausente por incidencia del **mismo** workflow `Audit production web`, sin relanzamientos repetidos;
 - no crea ni mantiene un segundo workflow horario;
-- si la recuperación termina verde antes de los 90 minutos, no notifica;
-- al alcanzar 90 minutos sin auditoría completa correcta, o si el relanzamiento falla, genera alerta con la causa clasificada;
+- si se recupera la cobertura real antes de los 90 minutos sin novedad funcional material, no notifica; un Chromium fallido mantiene el estado funcional ROJO;
+- al alcanzar 90 minutos sin auditoría real, o si falla la única recuperación permitida, genera alerta con la causa clasificada;
 - nunca modifica datos privados ni producción: solo relanza el control read-only y diagnostica.
 
 Esta tarea externa complementa el cron primario/respaldo porque ambos cron siguen dependiendo del mismo scheduler de GitHub.
