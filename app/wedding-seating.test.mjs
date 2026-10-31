@@ -356,3 +356,20 @@ test("empty floor still offers accessible new-table action",()=>{
  assert.match(html,/data-wed-floor-expand/);
  assert.match(html,/Todavía no hay mesas/);
 });
+
+test("presidential seat crown is a descendant of the round table, not an offset sibling",()=>{
+ const table={id:"pres-coordinates",name:"Presidencial",shape:"presidencial",capacity:6};
+ const guests=Array.from({length:6},(_,i)=>({
+  id:"person-"+i,name:"Persona "+i,tableId:table.id,seatIndex:i,groupName:"pareja",rsvp:"confirmado"
+ }));
+ const before=JSON.stringify(guests);
+ const markup=renderTables(guests,[table],null,esc,table.id);
+ const article=markup.slice(markup.indexOf('<article class="wed-floor-table'),markup.indexOf('</article>'));
+ assert.match(article,/<div class="wed-named-table"[^>]*>\s*<button[^>]*class="wed-named-table-center"/);
+ assert.match(article,/data-wed-seat-ring-version="3"/);
+ assert.equal((article.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
+ assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,6);
+ assert.match(article,/class="wed-floor-seat-ring"[\s\S]*?<\/div><\/div>\s*$/);
+ assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table > \.wed-named-table > \.wed-floor-seat-ring/);
+});
