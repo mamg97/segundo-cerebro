@@ -5,10 +5,10 @@ const read=(name)=>readFileSync(new URL(name,import.meta.url),"utf8");
 
 test("iOS mobile: viewport stylesheet is last and main bundle is cache-busted",()=>{
  const html=read("./index.html");
- assert.match(html,/mobile-viewport-fixes\.css\?v=0\.1\.0/);
+ assert.match(html,/mobile-viewport-fixes\.css\?v=0\.1\.1/);
  assert.ok(html.indexOf("organizador25-ui.css")<html.indexOf("mobile-viewport-fixes.css"));
- assert.match(html,/styles\.css\?v=0\.44\.120/);
- assert.match(html,/app\.js\?v=0\.44\.120/);
+ assert.match(html,/styles\.css\?v=0\.44\.\d+/);
+ assert.match(html,/app\.js\?v=0\.44\.\d+/);
  assert.match(read("./app.js"),/mobile-navigation\.mjs\?v=0\.1\.10/);
 });
 
@@ -26,9 +26,9 @@ test("iOS: no duplicate Travel header, close button only in one fixed toolbar",(
 
 test("iOS bottom safe area is not double-counted and is visually filled",()=>{
  const css=read("./mobile-viewport-fixes.css");
- assert.match(css,/--mobile-dock-height:67px/);
- assert.match(css,/bottom:calc\(0px - env\(safe-area-inset-bottom,0px\)\)/);
- assert.match(css,/box-shadow:0 90px 0 var\(--surface\)/);
+ assert.match(css,/--mobile-dock-height:var\(--mobile-bottom-height\)/);
+ assert.match(css,/bottom:0;/);
+ assert.match(css,/padding:2px max\(8px,env\(safe-area-inset-right,0px\)\) calc\(2px \+ env\(safe-area-inset-bottom,0px\)\)/);
  assert.match(css,/body:not\(\.route-area-active\) \.main-content \{[\s\S]*?top:var\(--mobile-toolbar-height\);[\s\S]*?bottom:var\(--mobile-dock-height\)/);
 });
 

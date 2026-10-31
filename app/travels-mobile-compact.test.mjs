@@ -7,7 +7,7 @@ const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
 const timetable=readFileSync(new URL("./travel-timetable.js",import.meta.url),"utf8");
 
 test("compact Viajes styles load after other styles without changing desktop",()=>{
- assert.match(index,/organizador25-ui\.css\?v=0\.1\.1[\s\S]*travels-mobile-compact\.css\?v=0\.1\.0/);
+ assert.match(index,/organizador25-ui\.css\?v=0\.1\.1[\s\S]*travels-mobile-compact\.css\?v=0\.1\.1/);
  assert.match(compact,/@media \(max-width:760px\) \{/);
  assert.doesNotMatch(compact,/(?:Krakowskie|Mayordomo|Asturias|Warszawa|Cangas)/);
 });
@@ -29,9 +29,13 @@ test("dashboard uses four compact metrics, five visible anchors and reduced map 
  assert.match(compact,/flex:0 0 min\(44vw,190px\)/);
 });
 
-test("phone shell keeps iOS safe-area and avoids a redundant close strip",()=>{
- assert.match(compact,/--mobile-bottom-height:calc\(58px \+ env\(safe-area-inset-bottom,0px\)\)/);
- assert.match(compact,/calc\(var\(--mobile-toolbar-height\) \+ 1px\)/);
- assert.match(compact,/height:40px/);
- assert.match(compact,/min-height:34px!important/);
+test("phone shell is owned by viewport CSS, travel density cannot overwrite it",()=>{
+ const viewport=readFileSync(new URL("./mobile-viewport-fixes.css",import.meta.url),"utf8");
+ assert.match(viewport,/--mobile-bottom-height:calc\(58px \+ env\(safe-area-inset-bottom,0px\)\)/);
+ assert.match(viewport,/--mobile-dock-height:var\(--mobile-bottom-height\)/);
+ assert.match(viewport,/#detail-dialog\.travels-dialog\[open\]::before/);
+ assert.match(viewport,/>#close-dialog,/);
+ assert.doesNotMatch(compact,/--mobile-bottom-height|\.mobile-bottom-nav|padding:42px 10px 0!important/);
+ assert.doesNotMatch(compact,/body\.route-area-active #detail-dialog\.travels-dialog\[open\]::before/);
+ assert.match(index,/mobile-viewport-fixes\.css\?v=0\.1\.1[\s\S]*travels-mobile-compact\.css\?v=0\.1\.1/);
 });

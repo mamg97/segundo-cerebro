@@ -4,14 +4,33 @@
   :root {
     /* iOS reserves an external gesture inset. Keep tappable dock content above it,
        and paint the same dock background throughout the inset. */
-    --mobile-dock-height:67px;
+    --mobile-bottom-height:calc(58px + env(safe-area-inset-bottom,0px));
+    --mobile-dock-height:var(--mobile-bottom-height);
   }
   html,body {overscroll-behavior-y:none}
+  html {background:var(--surface)}
+  body {background:var(--surface)}
   .mobile-bottom-nav {
-    bottom:calc(0px - env(safe-area-inset-bottom,0px));
+    position:fixed;
+    bottom:0;
     box-sizing:border-box;
-    box-shadow:0 90px 0 var(--surface),0 -4px 20px rgba(0,0,0,.13);
+    height:var(--mobile-bottom-height);
+    padding:2px max(8px,env(safe-area-inset-right,0px)) calc(2px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));
+    background:var(--surface);
+    box-shadow:0 -4px 20px rgba(0,0,0,.13);
   }
+  .mobile-bottom-nav > a,.mobile-bottom-nav > button {
+    height:100%;
+    min-height:0;
+    max-height:54px;
+    margin:0 1px;
+    padding:3px 0;
+    gap:1px;
+    line-height:1.15;
+  }
+  .mobile-bottom-nav svg{width:21px;height:21px;flex-basis:21px}
+  .mobile-bottom-nav :is(a,button) span{font-size:10px}
+
   /* Avoid allocating the bottom safe area twice in the Home/route scrollport. */
   body:not(.route-area-active) .main-content {
     top:var(--mobile-toolbar-height);

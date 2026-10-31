@@ -36,7 +36,7 @@ test("unsafe editing state prevents unsolicited reload", () => {
 test("remote app checks revisions on visibility/focus without periodic polling", () => {
   const app = readFileSync(new URL("./app.js",import.meta.url),"utf8");
   const css = readFileSync(new URL("./styles.css",import.meta.url),"utf8");
-  assert.match(app,/import \{ installPrivateAppFreshnessGuard \} from "\.\/frontend-freshness\.mjs\?v=0\.44\.35";/);
+  assert.match(app,/import \{ installPrivateAppFreshnessGuard \} from "\.\/frontend-freshness\.mjs\?v=0\.44\.36";/);
   assert.match(app,/installPrivateAppFreshnessGuard\(\);/);
   const source = readFileSync(new URL("./frontend-freshness.mjs",import.meta.url),"utf8");
   assert.match(source,/window\.addEventListener\("focus"/);
@@ -52,7 +52,7 @@ test("update notice is reachable inside a modal and manual refresh checks code f
  assert.equal(privateUpdateNoticeHost({querySelector:()=>dialog,body}),dialog);
  assert.equal(privateUpdateNoticeHost({querySelector:()=>null,body}),body);
  const source=readFileSync(new URL("./frontend-freshness.mjs",import.meta.url),"utf8");
- assert.match(source,/#refresh-app, #desktop-area-refresh, #wed-main-refresh/);
+ assert.match(source,/#refresh-app, #desktop-area-refresh, #wed-main-refresh, #mobile-refresh-action/);
  assert.match(source,/void checkFreshness\(true\)/);
  assert.match(source,/privateUpdateNoticeHost\(document\)\.append\(notice\)/);
  assert.match(source,/document\.addEventListener\("close"/);

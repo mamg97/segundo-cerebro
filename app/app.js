@@ -1,7 +1,7 @@
 import "./vendor/thinking-orbs/register.js";
 import { renderMidasSourceHealth } from "./midas-source-health.mjs?v=0.1.0";
 import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=0.44.63";
-import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.35";
+import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.36";
 import { createFinanceForegroundRefresh } from "./finance-foreground-refresh.mjs?v=0.44.103";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
 import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.62";
