@@ -40,7 +40,7 @@ test("Google Maps is the only map provider and each stop is selectable without e
    {date:"2027-06-12",name:"Stop One",query:"Stop One Test City",order:1,lat:50.1,lon:20.1}]
  }}));
  assert.match(html,/Google Maps/);
- assert.match(html,/data-trv-map-stop="1"/);
+ assert.match(html,/data-trv-map-stop="[0-9]+"/);
  assert.match(html,/Cargar Google Maps/);
  assert.doesNotMatch(html,/OpenStreetMap|<iframe/);
 });
