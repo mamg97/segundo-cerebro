@@ -486,6 +486,7 @@ test("full guest names stay inside each table with no crossing lines or floating
   assert.match(card,/data-wed-table-diagram-version="6"/);
  }
  assert.match(css,/Wedding floor v7: deliberately NO connection lines/);
+ assert.doesNotMatch(css,/\.wed-seat-inline-leaders|\.wed-seat-inline-labels|\.wed-seat-inline-label\{/);
  assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-legend\{/);
  assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-svg-table-wrap > \.wed-floor-seat-svg\{/);
  assert.equal(JSON.stringify(guests),before,"rendering may not mutate guest assignments");
