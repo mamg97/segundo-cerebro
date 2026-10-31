@@ -28942,3 +28942,26 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
    min-height:32px;padding:4px 2px;font-size:8.5px;
  }
 }
+
+/* Recipe detail photos follow their intrinsic orientation instead of forcing
+   every asset into the catalog's 16:9 thumbnail frame. Landscape photographs
+   can fill the available width; portrait images remain intact unless the user
+   explicitly chooses a 4:3 crop in the editor. */
+.recipe-detail-card>.recipe-detail-photo{
+ display:flex;align-items:center;justify-content:center;min-width:0;
+ width:100%;height:auto;max-height:none;aspect-ratio:auto;
+ background:var(--paper);
+}
+.recipe-detail-card>.recipe-detail-photo>img{
+ display:block;width:auto;height:auto;min-width:0;min-height:0;
+ max-width:100%;max-height:min(80vh,760px);object-fit:contain;
+}
+@media(max-width:760px){
+ .recipe-detail-card>.recipe-detail-photo>img{max-height:70vh}
+}
+
+/* Landscape photos (including newly cropped 4:3) use the entire detail width.
+   Contain/portrait mode stays lossless and limited in height. */
+.recipe-detail-card>.recipe-detail-photo.is-landscape>img{
+ width:100%;height:auto;max-height:min(80vh,760px);object-fit:contain;
+}

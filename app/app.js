@@ -4,7 +4,7 @@ import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
 import { createFinanceForegroundRefresh } from "./finance-foreground-refresh.mjs?v=0.44.103";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
-import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.61";
+import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.62";
 import { resolveRecipeIngredientButton } from "./recipe-ingredient-click-guard.mjs?v=0.1.0";
 import { renderHomeGymWeek } from "./gym-week-summary.mjs?v=0.44.57";
 import { loadGymProgressPhotos } from "./gym-progress-photos.mjs?v=0.44.49";
@@ -6973,6 +6973,18 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
     </article>
   `;
 
+  // Images with genuine landscape dimensions fill the detail width.
+  // Portrait originals remain complete until the user opts into a crop.
+  const detailPhoto=panel.querySelector(".recipe-detail-photo > img");
+  if(detailPhoto){
+    const syncRecipePhotoLayout=()=>{
+      if(!detailPhoto.naturalWidth||!detailPhoto.naturalHeight)return;
+      const landscape=detailPhoto.naturalWidth/detailPhoto.naturalHeight>=1.2;
+      detailPhoto.parentElement?.classList.toggle("is-landscape",landscape);
+    };
+    if(detailPhoto.complete)syncRecipePhotoLayout();
+    else detailPhoto.addEventListener("load",syncRecipePhotoLayout,{once:true});
+  }
   panel.querySelector("[data-recipes-back]")?.addEventListener("click", onBack);
   panel.querySelector("[data-recipe-edit]")?.addEventListener("click", () => {
     // The ingredient handler belongs to the detail view, not the editor.

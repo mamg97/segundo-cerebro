@@ -11,12 +11,12 @@ test("recipe editor has separate gallery and camera inputs with preview and reve
  assert.match(ui,/data-editor-photo-camera type="file" accept="image\/\*" capture="environment"/);
  assert.match(ui,/data-editor-photo-preview/);
  assert.match(ui,/URL\.revokeObjectURL\(previewUrl\)/);
- assert.match(ui,/await prepareRecipePhoto\(chosenPhoto\|\|originalForRotation,rotation\)/);
+ assert.match(ui,/await prepareRecipePhoto\(chosenPhoto\|\|originalForRotation,rotation,framing,cropPosition\)/);
  assert.match(ui,/data\.set\("photo",photo,"receta\.jpg"\)/);
  assert.match(ui,/toBlob\(resolve,"image\/jpeg"/);
  assert.match(css,/object-fit:contain/);
  assert.match(css,/safe-area-inset-bottom/);
- assert.match(index,/recipe-photo-editor\.css\?v=0\.1\.1/);
+ assert.match(index,/recipe-photo-editor\.css\?v=0\.1\.2/);
 });
 test("image payload requires JPEG/PNG/WebP signature and limited length",()=>{
  assert.equal(MAX_RECIPE_PHOTO,900000);
@@ -95,8 +95,50 @@ test("recipe photo can be rotated before saving, including an existing private i
  const code=readFileSync(new URL("./recipe-editor-ui.mjs",import.meta.url),"utf8");
  assert.match(code,/data-editor-photo-rotate="-90"/);
  assert.match(code,/data-editor-photo-rotate="90"/);
- assert.match(code,/context\.rotate\(frame\.turn\*Math\.PI\/180\)/);
- assert.match(code,/await prepareRecipePhoto\(chosenPhoto\|\|originalForRotation,rotation\)/);
+ assert.match(code,/ctx\.rotate\(frame\.turn\*Math\.PI\/180\)/);
+ assert.match(code,/await prepareRecipePhoto\(chosenPhoto\|\|originalForRotation,rotation,framing,cropPosition\)/);
  assert.match(code,/url\.origin!==location\.origin/);
  assert.match(code,/fetch\(url\.href,\{credentials:"same-origin",cache:"no-store"\}\)/);
+});
+
+test("horizontal framing crops only when selected and respects orientation",async()=>{
+ const {recipePhotoCropWindow}=await import("./recipe-editor-ui.mjs");
+ const portrait=recipePhotoCropWindow(900,1600,0,"horizontal",50);
+ assert.equal(portrait.turn,0);
+ assert.equal(portrait.cropWidth,900);
+ assert.equal(portrait.cropHeight,675);
+ assert.equal(portrait.left,0);
+ assert.equal(portrait.top,462.5);
+ assert.equal(recipePhotoCropWindow(900,1600,0,"horizontal",0).top,0);
+ assert.equal(recipePhotoCropWindow(900,1600,0,"horizontal",100).top,925);
+ const rotated=recipePhotoCropWindow(900,1600,90,"horizontal",50);
+ assert.equal(rotated.width,1600);
+ assert.equal(rotated.height,900);
+ assert.equal(rotated.cropWidth,1200);
+ assert.equal(rotated.cropHeight,900);
+ assert.equal(rotated.left,200);
+ const landscape=recipePhotoCropWindow(1600,900,0,"original",50);
+ assert.equal(landscape.cropWidth,1600);
+ assert.equal(landscape.cropHeight,900);
+ assert.throws(()=>recipePhotoCropWindow(900,1600,0,"cutout",50),/ENCUADRE_NO_ADMITIDO/);
+ assert.throws(()=>recipePhotoCropWindow(900,1600,0,"horizontal",-1),/POSICION_DE_ENCUADRE_INVALIDA/);
+});
+test("detail honors original aspect and editor previews real 4:3 crop",()=>{
+ const styles=readFileSync(new URL("./styles.css",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./recipe-photo-editor.css",import.meta.url),"utf8");
+ const editor=readFileSync(new URL("./recipe-editor-ui.mjs",import.meta.url),"utf8");
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ assert.match(styles,/\.recipe-detail-card>\.recipe-detail-photo\{[\s\S]*?aspect-ratio:auto/);
+ assert.match(styles,/\.recipe-detail-card>\.recipe-detail-photo>img\{[\s\S]*?max-width:100%;max-height:min\(80vh,760px\)/);
+ assert.match(css,/\.recipe-edit-photo-preview\.is-horizontal\{aspect-ratio:4\/3\}/);
+ assert.match(editor,/data-editor-photo-frame aria-pressed="false"/);
+ assert.match(editor,/data-editor-photo-position/);
+ assert.match(editor,/drawRecipePhotoFrame\(ctx,img/);
+ assert.match(editor,/drawRecipePhotoFrame\(context,source/);
+ assert.match(editor,/if\(!chosenPhoto&&\(rotation\|\|framing!=="original"\)\)/);
+ assert.match(editor,/const saved=await writeRecipeAction\(payload,photo\)/);
+ assert.match(app,/recipe-editor-ui\.mjs\?v=0\.44\.62/);
+ assert.match(app,/detailPhoto\.naturalWidth\/detailPhoto\.naturalHeight>=1\.2/);
+ assert.match(app,/classList\.toggle\("is-landscape",landscape\)/);
+ assert.match(styles,/\.recipe-detail-card>\.recipe-detail-photo\.is-landscape>img\{[\s\S]*?width:100%/);
 });
