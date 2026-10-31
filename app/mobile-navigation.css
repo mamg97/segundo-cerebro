@@ -1,44 +1,10 @@
-/* Mobile-native navigation for Segundo Cerebro; desktop untouched. */
-/* Direct domain shortcuts on Home and inside the mobile 'Más' sheet. */
-.home-quick-accesses {
- display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 18px;
-}
-.home-quick-accesses-label {
- font-size:11px;font-weight:800;letter-spacing:.01em;color:var(--ink-soft);
- margin-right:4px;
-}
-.home-quick-accesses a {
- display:inline-flex;align-items:center;justify-content:center;gap:7px;
- min-height:42px;padding:8px 14px;border:1px solid var(--line);
- border-radius:12px;background:var(--paper);color:var(--ink);
- text-decoration:none;font-size:12px;font-weight:800;
-}
-.home-quick-accesses a:focus-visible,.mobile-sheet-shortcuts a:focus-visible {
- outline:2px solid var(--blue);outline-offset:2px;
-}
-.home-quick-accesses a:active,.mobile-sheet-shortcuts a:active{transform:scale(.98)}
-@media (max-width:760px) {
- .home-quick-accesses {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:6px 0 14px}
- .home-quick-accesses-label {grid-column:1 / -1}
- .home-quick-accesses a {min-width:0;padding:9px 7px;min-height:45px;font-size:12px}
- .mobile-quick-section{margin-bottom:16px}
- .mobile-quick-section h3{margin:0 0 8px 3px;font-size:12px;font-weight:800;color:var(--ink-soft)}
- .mobile-sheet-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
- .mobile-sheet-shortcuts a{
-  display:flex;align-items:center;justify-content:center;gap:8px;min-height:58px;
-  min-width:0;padding:8px;border:1px solid var(--line);border-radius:12px;
-  background:var(--paper);color:var(--ink);font-size:12px;font-weight:800;
-  text-align:center;text-decoration:none;
- }
- .mobile-sheet-shortcuts svg{flex:0 0 21px;width:21px;height:21px;color:var(--blue)}
- .mobile-sheet-shortcuts span{min-width:0;overflow-wrap:anywhere}
-}
-
-.mobile-app-header,.mobile-bottom-nav,.mobile-navigation-sheet{display:none}
+.mobile-app-header,.mobile-quick-dock,.mobile-bottom-nav,.mobile-navigation-sheet{display:none}
 @media(max-width:760px){
  :root{
   --mobile-toolbar-height:calc(58px + env(safe-area-inset-top,0px));
-  --mobile-dock-height:calc(67px + env(safe-area-inset-bottom,0px));
+  --mobile-bottom-height:calc(67px + env(safe-area-inset-bottom,0px));
+  --mobile-quick-height:50px;
+  --mobile-dock-height:calc(var(--mobile-bottom-height) + var(--mobile-quick-height));
   --route-nav-height:var(--mobile-toolbar-height);
  }
  body .sidebar,body.route-area-active .sidebar{display:none!important}
@@ -65,10 +31,29 @@
   display:grid;place-items:center;flex:0 0 45px;height:45px;
   border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);cursor:pointer
  }
+ .mobile-quick-dock{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;
+  position:fixed;left:0;right:0;bottom:var(--mobile-bottom-height);z-index:5501;
+  height:var(--mobile-quick-height);gap:8px;
+  padding:3px max(12px,env(safe-area-inset-right)) 3px max(12px,env(safe-area-inset-left));
+  border-top:1px solid var(--line);background:var(--surface);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+ }
+ .mobile-quick-dock a{
+  display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;
+  height:44px;padding:5px 9px;border:1px solid var(--line);border-radius:11px;
+  background:var(--paper);color:var(--ink);text-decoration:none;
+  font-size:11px;font-weight:800;touch-action:manipulation;
+ }
+ .mobile-quick-dock svg{width:18px;height:18px;flex:0 0 18px}
+ .mobile-quick-dock a span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .mobile-quick-dock a.is-current{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
+ .mobile-quick-dock a:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+ .mobile-quick-dock a:active{transform:scale(.98)}
  .mobile-bottom-nav{
   display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:stretch;
   position:fixed;left:0;right:0;bottom:0;z-index:5501;
-  height:var(--mobile-dock-height);
+  height:var(--mobile-bottom-height);
   padding:4px max(8px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left));
   border-top:1px solid var(--line);
   background:var(--surface);
@@ -144,7 +129,7 @@
  .mobile-sheet-grid a{font-size:11px}
 }
 @media(min-width:761px){
- .mobile-app-header,.mobile-bottom-nav,.mobile-navigation-sheet{display:none!important}
+ .mobile-app-header,.mobile-quick-dock,.mobile-bottom-nav,.mobile-navigation-sheet{display:none!important}
 }
 
 /* Compact liquidity summary only on phones: horizontal bars, no fixed 258px

@@ -57,6 +57,8 @@ const dom=(id)=>document.getElementById(id);
 function markup(){return '<div id="mobile-app-header" class="mobile-app-header">'+
  '<button id="mobile-context-trigger" class="mobile-context-trigger" type="button" aria-haspopup="dialog" aria-expanded="false"><span><small id="mobile-context-area">Inicio</small><strong id="mobile-context-label">Inicio</strong></span>'+ico("down")+'</button>'+
  '<button id="mobile-refresh-action" class="mobile-header-action" type="button" aria-label="Actualizar datos" aria-busy="false">'+ico("refresh")+'</button><span class="mobile-refresh-feedback" id="mobile-refresh-feedback" role="status" aria-live="polite" hidden></span></div>'+
+ '<nav id="mobile-quick-dock" class="mobile-quick-dock" aria-label="Accesos rápidos permanentes">'+MOBILE_QUICK_ACCESS.map(x=>
+ '<a href="'+x.href+'" data-mobile-quick="'+x.href+'" aria-label="Abrir '+safe(x.label)+'">'+ico(x.icon)+'<span>'+safe(x.label)+'</span></a>').join("")+'</nav>'+
  '<nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Navegación móvil">'+MOBILE_AREAS.slice(0,5).map(([id,label,icon])=>
  '<a href="'+hrefForArea(id)+'" data-mobile-main="'+id+'">'+ico(icon)+'<span>'+label+'</span></a>').join("")+
  '<button id="mobile-more-trigger" type="button" aria-expanded="false">'+ico("grid")+'<span>Más</span></button></nav>'+
@@ -72,9 +74,7 @@ function renderSheet(){
    '<a href="'+x.href+'" data-mobile-route="'+x.href+'"'+(x.href===hash?' aria-current="page"':'')+'>'+safe(x.label)+'<span aria-hidden="true">'+(x.href===hash?'✓':'›')+'</span></a>').join("")+'</div>';
  }else{
   dom("mobile-sheet-heading").textContent="Todos los apartados";
-  node.innerHTML='<div class="mobile-quick-section"><h3>Accesos rápidos</h3><div class="mobile-sheet-shortcuts">'+MOBILE_QUICK_ACCESS.map(x=>
-   '<a href="'+x.href+'" data-mobile-route="'+x.href+'">'+ico(x.icon)+'<span>'+safe(x.label)+'</span></a>').join("")+'</div></div>'+
-   '<div class="mobile-sheet-grid">'+MOBILE_AREAS.map(([id,label,icon])=>
+  node.innerHTML='<div class="mobile-sheet-grid">'+MOBILE_AREAS.map(([id,label,icon])=>
    '<a href="'+hrefForArea(id)+'" data-mobile-other="'+id+'"'+(route.areaId===id?' aria-current="page"':'')+'>'+ico(icon)+'<span>'+safe(label)+'</span></a>').join("")+'</div>';
  }
 }
@@ -101,6 +101,10 @@ export function syncMobileNavigation(nextRoute,nextHash){
  if(dom("mobile-context-label"))dom("mobile-context-label").textContent=label.section;
  document.querySelectorAll("[data-mobile-main]").forEach(el=>{
   const chosen=el.dataset.mobileMain===route.areaId;el.classList.toggle("is-current",chosen);
+  if(chosen)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current");
+ });
+ document.querySelectorAll("[data-mobile-quick]").forEach(el=>{
+  const chosen=el.dataset.mobileQuick===hash;el.classList.toggle("is-current",chosen);
   if(chosen)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current");
  });
  dom("mobile-more-trigger")?.classList.toggle("is-current",label.tab==="more");
@@ -131,6 +135,10 @@ export function initializeMobileNavigation({navigateTo,onRefresh:refreshHandler}
     button.setAttribute("aria-busy","false");
     refreshFeedbackTimer=setTimeout(()=>{feedback.hidden=true;},4500);
   }
+ });
+ dom("mobile-quick-dock").addEventListener("click",e=>{
+  const quick=e.target.closest("[data-mobile-quick]");if(!quick)return;
+  e.preventDefault();navigate(quick.dataset.mobileQuick);
  });
  dom("mobile-bottom-nav").addEventListener("click",e=>{
   const area=e.target.closest("[data-mobile-main]");if(area){e.preventDefault();navigate(mobileRememberedRoute(area.dataset.mobileMain,historyByArea));}
