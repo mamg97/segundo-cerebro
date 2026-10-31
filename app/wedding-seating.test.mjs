@@ -49,7 +49,7 @@ test("zero confirmations still shows saved table preview, not fabricated proposa
  const html=renderTables(guests,tables,null,esc);
  assert.match(html,/0\/0 confirmados ubicados/);
  assert.match(html,/En cuanto marquéis invitados como confirmados/);
- assert.match(html,/6 plazas, 0 ocupadas/);
+ assert.match(html,/Presidencial: 0 de 6 plazas ocupadas/);
  assert.match(html,/4<\/strong><span>Opcionales/);
 });
 test("real seating occupancy uses all assigned guests; preset does not overwrite saved capacity",()=>{
@@ -78,4 +78,52 @@ test("diagrams are responsive and simulated scenarios never mutate D1",()=>{
  assert.doesNotMatch(readFileSync(new URL("./wedding-seating.js",import.meta.url),"utf8"),/fetch\(|getJson\(|INSERT INTO|UPDATE wedding_tables/);
  assert.equal(roundSeats(30,30).length,30);
  assert.equal(roundSeats(8,0).filter(x=>x.occupied).length,0);
+});
+
+test("new tables default to round 12 and existing presidential remains 6",()=>{
+ const newHtml=renderTables([],[], "new",esc);
+ assert.match(newHtml,/data-wed-table-new="true"/);
+ assert.match(newHtml,/name="capacity" id="wed-table-capacity"[^>]+value="12"/);
+ assert.match(newHtml,/<option value="redonda" selected>/);
+ const presidency={id:"pres",name:"Presidencial",shape:"presidencial",capacity:6};
+ const existing=renderTables([],[presidency],"pres",esc);
+ assert.match(existing,/name="capacity" id="wed-table-capacity"[^>]+value="6"/);
+ assert.match(existing,/data-wed-table-new="false"/);
+ assert.match(ui,/event\.target\.value==="presidencial"\?"6":"12"/);
+ assert.equal(suggestWeddingSeating(create(36),[])[0].capacity,12);
+});
+test("actual assigned guests appear around the circle with clickable names",()=>{
+ const tables=[{id:"round1",name:"Mesa de pruebas",shape:"redonda",capacity:12}];
+ const guests=[
+  {id:"person-1",name:"Elena del Valle",groupName:"pareja",rsvp:"pendiente",tableId:"round1"},
+  {id:"person-2",name:"Álvaro Otero",groupName:"padres_miguel",rsvp:"confirmado",tableId:"round1"},
+  {id:"person-3",name:"Sin asiento",groupName:"pareja",rsvp:"pendiente",tableId:null}
+ ];
+ const html=renderTables(guests,tables,null,esc);
+ assert.match(html,/data-wed-seat-detail="person-1"/);
+ assert.match(html,/data-wed-seat-detail="person-2"/);
+ assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
+ assert.match(html,/Libre/);
+ assert.match(html,/role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/data-wed-unseat-guest="person-1"/);
+ assert.match(html,/data-wed-toggle-table-picker="round1"/);
+ assert.match(html,/data-wed-place-existing="round1"/);
+ assert.match(html,/data-wed-add-table-guest="round1"/);
+ assert.match(html,/value="person-3"/);
+ assert.doesNotMatch(html,/data-wed-seat-detail="person-3"/);
+ assert.match(css,/\.wed-named-table\{/);
+ assert.match(css,/\.wed-named-seat\.is-filled/);
+ assert.match(css,/\.wed-table-picker\.is-open\{display:grid\}/);
+});
+test("table-persons actions reuse canonical guest API and preserve every guest field",()=>{
+ assert.match(ui,/function changeGuestTable\(guest,tableId\)/);
+ assert.match(ui,/tableId,revision:guest\.revision/);
+ assert.match(ui,/data-wed-place-existing/);
+ assert.match(ui,/data-wed-add-table-guest/);
+ assert.match(ui,/data-wed-unseat-guest/);
+ assert.match(ui,/data-wed-seat-detail/);
+ assert.match(ui,/rsvp:"pendiente",menu:"",tableId/);
+ assert.match(ui,/if\(!guest\|\|guest\.tableId\|\|guest\.rsvp==="rechazado"/);
+ assert.match(ui,/focusTableId:tableId/);
+ assert.match(ui,/form\?\.dataset\.wedTableNew!=="true"/);
 });

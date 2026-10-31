@@ -16,6 +16,29 @@ Módulos especializados
 Fuentes propietarias y persistencia privada
 ```
 
+## Boda: nombres alrededor de las mesas y asignación directa
+
+La pestaña Mesas permite sentar a una persona desde la tarjeta de su
+mesa con «+ Añadir»: seleccionar un invitado sin mesa o crear una persona
+nueva indicando su lista familiar. Los nuevos registros nacen con RSVP
+pendiente; los rechazados no aparecen como asignables. Para liberar una
+plaza se actualiza solo `tableId=null`, sin eliminar la ficha. Cada
+asignación se realiza mediante el PATCH autenticado existente de
+`/api/wedding/guests/:id`, aportando todos los campos vigentes y la
+`revision` optimista. Crear invitados utiliza el POST privado. D1
+comprueba capacidad y conflictos de revisión.
+
+Las mesas reales muestran un círculo con inicial y nombre abreviado en
+cada silla, y la lista de nombres completos debajo. Pulsar un nombre
+abre su ficha. El orden visual se deriva alfabéticamente de los invitados
+asignados: **no se guarda número de silla**, por lo que el diagrama
+no representa todavía una colocación física numerada permanente.
+
+Por defecto, crear una mesa nueva ofrece forma redonda y 12 plazas;
+seleccionar `presidencial` en un alta nueva cambia el aforo inicial
+a 6. Las capacidades guardadas anteriormente no se alteran, y editar
+una mesa no fuerza el nuevo valor. Sigue permitido elegir de 1 a 30.
+
 ## Boda: distribución visual y capacidad de mesas
 
 La pestaña Mesas lee de D1 privado `wedding_guests` y `wedding_tables`

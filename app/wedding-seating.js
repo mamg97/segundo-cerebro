@@ -26,8 +26,10 @@ export function suggestWeddingSeating(guests=[],tables=[]){
  });
  const seen=new Set();
  return options.filter(o=>{const key=[o.rounds,o.seats].join(":");if(seen.has(key))return false;seen.add(key);return true;})
-  .sort((a,b)=>a.free-b.free||a.tableCount-b.tableCount||
-    Math.abs(a.capacity-8)-Math.abs(b.capacity-8));
+  // Twelve-place rounds are the default; other sizes remain available alternatives.
+  .sort((a,b)=>(b.capacity===12)-(a.capacity===12)||
+    a.free-b.free||a.tableCount-b.tableCount||
+    Math.abs(a.capacity-12)-Math.abs(b.capacity-12));
 }
 export function roundSeats(capacity,occupied=0){
  const count=Math.max(0,Math.min(30,Number(capacity)||0));
