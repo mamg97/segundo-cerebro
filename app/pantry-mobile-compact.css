@@ -182,4 +182,52 @@
     gap: 2px;
     font-size: 11px;
   }
+  /* Close belongs on the tabs row, not a separate 54px empty strip. */
+  body.route-area-active #detail-dialog.pantry-dialog[open]:not(.wealth-dialog)::before {
+    display: none !important;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-topbar {
+    box-sizing: border-box;
+    min-height: 44px;
+    padding-right: 52px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] > #close-dialog {
+    top: 8px !important;
+    right: 12px !important;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] [data-pantry-panel][hidden] {
+    display: none !important;
+  }
+  /* Catalogue access stays available in Inventory; the shopping view uses the full row. */
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shell:has([data-pantry-panel="shopping"]:not([hidden])) .master-source-link {
+    display: none !important;
+  }
+  /* If there is no photo, don't waste horizontal room on a blank picture. */
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link:has(>.pantry-product-thumb[data-photo="pending"]) {
+    grid-template-columns: minmax(0,1fr) auto;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link > .pantry-product-thumb[data-photo="pending"] {
+    display: none;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link:has(>.pantry-product-thumb[data-photo="pending"]) > .pantry-shopping-info {
+    grid-column: 1;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link:has(>.pantry-product-thumb[data-photo="pending"]) > .pantry-shopping-price {
+    grid-column: 2;
+  }
+  /* Confirm stock is one clear 44px action; the full aria-label remains in the markup. */
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-list-item .pantry-confirm-inventory {
+    width: 44px;
+    max-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    font-size: 0;
+    line-height: 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-list-item .pantry-confirm-inventory::after {
+    content: "✓";
+    font-size: 20px;
+    line-height: 1;
+  }
 }
