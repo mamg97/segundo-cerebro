@@ -16,6 +16,28 @@ Módulos especializados
 Fuentes propietarias y persistencia privada
 ```
 
+## Boda: distribución visual y capacidad de mesas
+
+La pestaña Mesas lee de D1 privado `wedding_guests` y `wedding_tables`
+sin tablas paralelas. El módulo puro `app/wedding-seating.js` calcula
+confirmados de las listas definitivas, excluyendo personas rechazadas,
+pendientes y la lista opcional; distingue confirmados ubicados,
+plazas reales ocupadas (también asignaciones pendientes), aforo disponible
+y confirmados sin mesa. Las tarjetas de mesas existentes muestran
+plazas alrededor de mesas redondas, rectangulares o presidenciales.
+
+Se calculan configuraciones orientativas con mesas redondas de 6, 8,
+10 y 12 plazas. Si existe mesa presidencial se toma su primera
+capacidad guardada como referencia; cada opción indica mesas,
+asientos y sobrante. Son simulaciones de capacidad, **no**
+una asignación por afinidad ni un cambio de datos. No persisten,
+no crean mesas y nunca modifican invitados. Crear/editar mesas
+usa la API D1 autenticada con `revision` y el rango 1-30;
+botones rápidos eligen capacidades habituales y el campo sigue
+admitiendo cualquier valor válido. «Asignar mesa» abre la ficha
+del invitado para decidir explícitamente. Los planes se recalculan
+tras recargar los datos confirmados desde D1.
+
 ## Boda: exportación Excel por apartado
 
 Cada pestaña Kanban, Agenda, Proveedores, Invitados, Mesas, Presupuesto,

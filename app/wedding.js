@@ -1,7 +1,7 @@
 // Private wedding collaboration view. No embedded personal records.
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.3";
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.4";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
-import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.1";
+import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.2";
 export const WEDDING_TYPES=[
  ["all","Todo","✦"],["finca","Fincas","🏛"],["catering","Catering","🍽"],
  ["decoracion","Decoración e ideas","✿"],["fotografia","Foto y vídeo","📷"],
@@ -405,9 +405,25 @@ function bindPlannerActions(area){
   const guest=state.guests.find(x=>x.id===btn.dataset.wedDeleteGuest);
   if(guest&&window.confirm("¿Eliminar este invitado?"))void plannerMutation(()=>getJson("/api/wedding/guests/"+encodeURIComponent(guest.id),"DELETE",{revision:guest.revision}));
  }));
+ area.querySelectorAll("[data-wed-seat-guest]").forEach(btn=>btn.addEventListener("click",()=>{
+  state.view="invitados";state.guestEditing=btn.dataset.wedSeatGuest;
+  state.tableEditing=null;show();
+  area.querySelector("#wed-guest-form select[name=tableId]")?.focus({preventScroll:true});
+ }));
  area.querySelector("[data-wed-new-table]")?.addEventListener("click",()=>{state.tableEditing="new";show();});
  area.querySelectorAll("[data-wed-edit-table]").forEach(btn=>btn.addEventListener("click",()=>{state.tableEditing=btn.dataset.wedEditTable;show();}));
  area.querySelector("[data-wed-cancel-table]")?.addEventListener("click",()=>{state.tableEditing=null;show();});
+ const capacityInput=area.querySelector("#wed-table-capacity");
+ const capacityButtons=[...area.querySelectorAll("[data-wed-capacity]")];
+ function syncCapacityButtons(){
+  capacityButtons.forEach(button=>button.setAttribute("aria-pressed",String(Number(button.dataset.wedCapacity)===Number(capacityInput?.value))));
+ }
+ capacityButtons.forEach(button=>button.addEventListener("click",()=>{
+  if(!capacityInput)return;
+  capacityInput.value=button.dataset.wedCapacity;
+  syncCapacityButtons();capacityInput.focus({preventScroll:true});
+ }));
+ capacityInput?.addEventListener("input",syncCapacityButtons);
  area.querySelector("#wed-table-form")?.addEventListener("submit",event=>{
   event.preventDefault();if(state.busy)return;
   const existing=state.tables.find(x=>x.id===state.tableEditing),payload=tablePayload(event.currentTarget);
