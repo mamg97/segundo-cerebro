@@ -1390,3 +1390,29 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  pointer-events:none;
 }
 .wed-seat-associated-svg .wed-seat-attached-labels{isolation:isolate}
+
+
+/* Wedding floor v10: fixed logical workspace for ALL views (normal/fullscreen).
+   D1 continues storing x/y as fractions of this complete work area.
+   Expanding the modal NEVER changes the coordinate system. */
+.wed-floor-scroll {
+ overflow-x:auto !important;
+ overflow-y:auto !important;
+ overscroll-behavior:contain;
+ scrollbar-width:thin;
+}
+.wed-floor-plan[data-wed-floor-plan] {
+ box-sizing:border-box;
+ width:100%;
+ min-width:max(3600px,calc(var(--wed-floor-columns,1)*780px)) !important;
+ min-height:2200px !important;
+ align-content:space-evenly;
+ cursor:grab;
+}
+.wed-floor-plan[data-wed-floor-plan].is-panning {
+ cursor:grabbing;
+}
+.wed-fullscreen-dialog > .wed-floor-shell.is-expanded .wed-floor-scroll {
+ overflow-x:auto !important;
+ overflow-y:auto !important;
+}
