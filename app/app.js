@@ -16,10 +16,10 @@ import { initDemoMode, toggleDemoMode } from "./demo-mode.js?v=0.25.0";
 import { openPantryDetail, pantryAreaFromState, renderHomePantryCard, configurePantryViewMemory } from "./pantry.js?v=0.44.64";
 import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configureObjectsViewMemory } from "./objects.js?v=0.44.26";
 import { openProjectsDetail } from "./projects.js?v=0.37.4";
-import { openTravelsDetail } from "./travels.js?v=0.3.0";
+import { openTravelsDetail } from "./travels.js?v=0.3.1";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
 import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.17";
-import { hrefForArea, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.6";
+import { hrefForArea, hrefForWedding, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.6";
 import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.7";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
@@ -762,6 +762,13 @@ function initSystemOrbResponsiveSize() {
 
 function ensureDerivedAreas() {
   if (!Array.isArray(state.areas)) state.areas = [];
+  // Mantener el área técnica y sus datos; Boda es el único destino visible.
+  const partnerArea = state.areas.find((area) => area.id === "area-partner");
+  if (partnerArea) {
+    partnerArea.title = "Boda";
+    partnerArea.shortTitle = "Boda";
+    partnerArea.summary = "Organización de la boda, invitados, mesas y preparativos.";
+  }
   // Viajes es una vista privada de Eventos, no un almacén paralelo ni una categoría de Home.
   if (privateModeKind === "remote" && !state.areas.some((area) => area.id === "area-travels")) {
     state.areas.push({
@@ -1044,8 +1051,8 @@ function renderNavigation() {
 
   nav.innerHTML = parents.map((area, index) => `
     <div class="nav-group" data-nav-group="${escapeHtml(area.id)}">
-      <a class="nav-link nav-link-parent nav-tone-${escapeHtml(area.tone || "blue")} ${index === 0 ? "active" : ""}" href="${hrefForArea(area.id)}" data-nav-area-id="${area.id}">
-        ${escapeHtml(area.shortTitle)}
+      <a class="nav-link nav-link-parent nav-tone-${escapeHtml(area.tone || "blue")} ${index === 0 ? "active" : ""}" href="${area.id === "area-partner" ? hrefForWedding() : hrefForArea(area.id)}" data-nav-area-id="${area.id}">
+        ${escapeHtml(area.id === "area-partner" ? "Boda" : area.shortTitle)}
       </a>
     </div>`
   ).join("");
@@ -12136,7 +12143,7 @@ function bindInteractions() {
     menuButton?.setAttribute("aria-expanded", "false");
     const areaId=link.dataset.navAreaId;
     if(!areaId)return;
-    const target=hrefForArea(areaId);
+    const target=areaId==="area-partner"?hrefForWedding():hrefForArea(areaId);
     if(window.location.hash!==target)history.pushState(null,"",target);
     applyAreaRoute();
   }));
@@ -12273,7 +12280,7 @@ function openNavigationArea(areaId) {
 }
 
 function openArea(areaId) {
-  if (areaId === "area-partner" && routedPartnerId === "boda") {
+  if (areaId === "area-partner") {
     openWeddingDetail(privateModeKind === "remote");
     return;
   }
