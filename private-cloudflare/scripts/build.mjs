@@ -81,7 +81,6 @@ html = stampStaticEntrypoints(html, {
 html = html.replace("</head>", `  <link rel="manifest" href="./manifest.webmanifest">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="SEGUN">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script type="module" src="./pwa-register.mjs?v=${releaseRevision}"></script>
   </head>`);
 await writeFile(swPath, swSource

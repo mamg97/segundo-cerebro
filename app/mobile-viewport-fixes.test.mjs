@@ -43,3 +43,29 @@ test("travel gallery and opened itinerary compact without modifying desktop",()=
  assert.match(css,/\.trv-intro,[\s\S]*?display:none!important/);
  assert.doesNotMatch(css,/@media\s*\(min-width:/);
 });
+
+
+test("iOS standalone removes deprecated black-translucent shell and matches nav paint",()=>{
+ const build=read("../private-cloudflare/scripts/build.mjs");
+ const meta=read("./index.html");
+ const manifest=JSON.parse(read("./manifest.webmanifest"));
+ const pwa=read("./pwa-register.mjs");
+ assert.doesNotMatch(build,/apple-mobile-web-app-status-bar-style.*black-translucent/);
+ assert.match(build,/apple-mobile-web-app-capable/);
+ assert.match(meta,/<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/);
+ assert.match(meta,/<meta name="theme-color" content="#0b1728">/);
+ assert.equal(manifest.theme_color,"#0b1728");
+ assert.equal(manifest.background_color,"#0b1728");
+ assert.match(pwa,/installPrivateShellTheme\(\)/);
+ assert.match(pwa,/attributeFilter: \["data-theme"\]/);
+});
+
+test("iOS mobile Home has three compact Health metrics per row and 2 by 2 pantry",()=>{
+ const css=read("./mobile-viewport-fixes.css");
+ assert.match(css,/#home-health-card \.home-health-metrics \{[\s\S]*?grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(css,/#home-health-card \.home-health-metric \{[\s\S]*?min-height:65px/);
+ assert.match(css,/#home-health-card \.home-health-links \{[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+ assert.match(css,/#home-pantry-card \.pantry-home-grid \{[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(css,/#home-pantry-card \.pantry-home-grid > span \{[\s\S]*?grid-column:auto/);
+ assert.doesNotMatch(css,/display:none!important;.*home-health|home-health-metric[^\n]*display:none/);
+});

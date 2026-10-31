@@ -46,6 +46,23 @@ export function installVisibleRefresh({ win = window, doc = document, clock = Da
   doc.addEventListener("visibilitychange", check);
 }
 
+// iOS paints any non-layout standalone PWA bottom strip from the page's
+// theme-color, not from a fixed navigation element. Keep it in sync with
+// the real dock colour, even if the user switches light/dark mode.
+export function privateShellThemeColor(theme) {
+  return theme === "light" ? "#ffffff" : "#0b1728";
+}
+export function installPrivateShellTheme({ doc = document, Observer = globalThis.MutationObserver } = {}) {
+  const meta = doc.querySelector('meta[name="theme-color"]');
+  if (!meta) return null;
+  const sync = () => meta.setAttribute("content", privateShellThemeColor(doc.documentElement.dataset.theme));
+  sync();
+  if (typeof Observer !== "function") return null;
+  const observer = new Observer(sync);
+  observer.observe(doc.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  return observer;
+}
+
 export async function registerPrivatePwa({ nav = navigator } = {}) {
   if (!("serviceWorker" in nav)) return false;
   try {
@@ -65,6 +82,7 @@ export async function registerPrivatePwa({ nav = navigator } = {}) {
 if (typeof window !== "undefined" && globalThis.__SECOND_BRAIN_REMOTE__ === true) {
   const start = () => {
     installVisibleRefresh();
+    installPrivateShellTheme();
     void registerPrivatePwa();
   };
   if (document.readyState === "loading") {
