@@ -564,7 +564,8 @@ test("thirty named seats stay inside one expanded SVG and its grid row",()=>{
 test("leader lines avoid all other chairs and tabletop at 6, 12, 18 and 30 places",()=>{
  const distToSegment=(p,a,b)=>{
   const vx=b.x-a.x,vy=b.y-a.y;
-  const scale=Math.max(0,Math.min(1,((p.x-a.x)*vx+(p.y-a.y)*vy)/(vx*vx+vy*vy)));
+  const lengthSquared=vx*vx+vy*vy;
+  const scale=lengthSquared?Math.max(0,Math.min(1,((p.x-a.x)*vx+(p.y-a.y)*vy)/lengthSquared)):0;
   return Math.hypot(p.x-(a.x+vx*scale),p.y-(a.y+vy*scale));
  };
  for(const capacity of [6,12,18,30]){
