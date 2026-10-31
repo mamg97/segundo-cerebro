@@ -187,12 +187,45 @@ function namedSeatDiagram(table,occupants,esc){
    '" font-size="'+(total>18?10:13)+'" font-weight="800">'+esc(label)+'</text>'+
    '</g>';
  }).join("");
+ // Full names are pinned in sorted left/right rails, connected to their chairs.
+ // We order by vertical seat position and reserve a minimum row height, which
+ // prevents both text collisions and crossing connectors at 6–30 places.
+ const placed=seats.flatMap((guest,index)=>{
+  if(!guest)return [];
+  const angle=-Math.PI/2+(2*Math.PI*index/total);
+  const x=134+orbitRadius*Math.cos(angle),y=134+orbitRadius*Math.sin(angle);
+  return [{guest,index,x,y,side:x<133.9?"left":"right"}];
+ });
+ const sides=["left","right"].map(side=>placed.filter(p=>p.side===side).sort((a,b)=>a.y-b.y));
+ const railHeight=Math.max(268,Math.max(...sides.map(arr=>arr.length))*32+12);
+ const offsetY=(railHeight-268)/2;
+ const rails=[],leaders=[];
+ for(const [sideIndex,items] of sides.entries()){
+  const side=sideIndex===0?"left":"right";
+  let prev=-25;
+  for(const item of items){
+   const top=Math.max(6,prev+31,Math.min(railHeight-26,offsetY+item.y-12));
+   prev=top;
+   const endX=side==="left"?164:456;
+   const x=176+item.x, y=offsetY+item.y;
+   leaders.push('<path d="M'+x.toFixed(2)+' '+y.toFixed(2)+' L'+endX+' '+(top+12).toFixed(2)+
+    '" stroke="currentColor" stroke-width="1" fill="none"/>');
+   rails.push('<button type="button" class="wed-seat-inline-label is-'+side+
+    '" data-wed-seat-detail="'+esc(item.guest.id)+'" aria-label="Plaza '+(item.index+1)+
+    ': '+esc(item.guest.name)+'" style="top:'+top.toFixed(2)+'px" title="'+esc(item.guest.name)+'">'+
+    '<b>'+(item.index+1)+'</b><span>'+esc(item.guest.name)+'</span></button>');
+  }
+ }
+ const pinnedNames=rails.length?
+  '<svg class="wed-seat-inline-leaders" viewBox="0 0 620 '+railHeight+
+  '" width="620" height="'+railHeight+'" aria-hidden="true">'+leaders.join("")+'</svg>'+
+  '<div class="wed-seat-inline-labels" style="height:'+railHeight+'px">'+rails.join("")+'</div>':"";
  const legend=seats.map((guest,index)=>guest?
   '<button type="button" class="wed-floor-seat-legend-item" data-wed-seat-detail="'+esc(guest.id)+'" '+
   'title="Editar '+esc(guest.name)+'" aria-label="Plaza '+(index+1)+': '+esc(guest.name)+'">'+
   '<span class="wed-floor-seat-number">'+(index+1)+'</span>'+
   '<span class="wed-floor-seat-full-name">'+esc(guest.name)+'</span></button>':"").filter(Boolean).join("");
- return '<div class="wed-svg-table-wrap" data-wed-table-diagram-version="4" role="group" '+
+ return '<div class="wed-svg-table-wrap" data-wed-table-diagram-version="5" role="group" style="--wed-rail-height:'+railHeight+'px;--wed-diagram-top:'+offsetY+'px" '+
   'aria-label="'+esc(table.name)+': '+ordered.length+' de '+total+' plazas ocupadas">'+
   '<svg class="wed-floor-seat-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268 268" '+
    'width="268" height="268" aria-label="Mesa redonda con '+total+' asientos" style="display:block;width:268px;height:268px;max-width:none;overflow:visible">'+
@@ -202,7 +235,7 @@ function namedSeatDiagram(table,occupants,esc){
    '<circle cx="134" cy="134" r="66" fill="#0c1c31" stroke="#59a7fc" stroke-width="2.5"/>'+
    nameLines+
    '<text class="wed-svg-table-capacity" x="134" y="'+(secondLine?159:152)+'" text-anchor="middle">'+ordered.length+'/'+total+' plazas</text>'+
-   '</g>'+labels+'</svg>'+(legend?'<div class="wed-floor-seat-legend" role="group" aria-label="Nombres completos de '+esc(table.name)+'">'+legend+'</div>':'')+'</div>';
+   '</g>'+labels+'</svg>'+pinnedNames+(legend?'<div class="wed-floor-seat-legend" role="group" aria-label="Nombres completos de '+esc(table.name)+'">'+legend+'</div>':'')+'</div>';
 }
 function tableGuestPicker(table,guests,esc,chosenSeatIndex=null){
  const available=guests.filter(g=>!g.tableId&&g.rsvp!=="rechazado")
@@ -271,7 +304,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  const columns=Math.min(4,Math.max(1,tables.length));
  const rows=Math.max(1,Math.ceil(tables.length/columns));
  const maxOccupied=Math.max(0,...tables.map(t=>guests.filter(g=>g.tableId===t.id).length));
- const rowHeight=Math.max(360,300+Math.ceil(maxOccupied/2)*38);
+ const rowHeight=Math.max(360,Math.ceil(Math.max(0,maxOccupied-12)/2)*32+380);
  const height=rows*rowHeight;
  const dynamicRowHeight=rowHeight>360?'--wed-floor-row-height:'+rowHeight+'px;':'';
  return '<section class="wed-planner-panel wed-seating-workspace">'+
