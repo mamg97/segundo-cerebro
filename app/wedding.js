@@ -404,7 +404,7 @@ function setWeddingFloorExpanded(expanded){
  const stage=shell.querySelector("[data-wed-floor-plan]");
  if(stage)requestAnimationFrame(()=>stage.dispatchEvent(new Event("wed-floor-recalibrate")));
 }
-document.addEventListener("keydown",event=>{
+if(typeof document!=="undefined")document.addEventListener("keydown",event=>{
  if(event.key!=="Escape"||!state.seatingFloorExpanded||!active())return;
  event.preventDefault();event.stopImmediatePropagation();
  setWeddingFloorExpanded(false);
