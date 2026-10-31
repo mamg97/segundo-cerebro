@@ -62,7 +62,7 @@ export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,boo
         '<p class="trv-map-note">Línea entre puntos = secuencia orientativa, no camino por las calles. Las horas propuestas no son reservas.</p>'+mapLists:"")+
       '<p class="trv-map-footer">'+(external?'<a href="'+escapeText(external)+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Ver alojamiento en Google Maps ↗</a>':"")+
       '<span>Datos de ubicaciones guardados en Eventos.</span></p>':
-      '<div class="trv-muted">Todavía no hay alojamiento ni ubicaciones registrados en Eventos.</div>')+'</section>';
+      '<div class="trv-muted">Aún no consta un alojamiento ni ubicaciones en Eventos.</div>')+'</section>';
   const plan='<section class="trv-panel trv-dash-planning" id="trv-dash-plan"><div class="trv-panel-head"><h3>▤ Planning horario</h3><small>Horas × días · Confirmado / Pendiente / Propuesta</small></div>'+travelScheduleMarkup(groups,dayLabel)+
      '<p class="trv-footnote">Los bloques pendientes y orientativos no son reservas confirmadas. Las horas proceden de Eventos.</p></section>';
   const percent=b.percent;
