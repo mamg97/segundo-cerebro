@@ -55,6 +55,15 @@ y se elimina al borrar una mesa vacía. No se asignan asientos a quienes
 han rechazado asistir. Los datos de contacto y alimentación son
 personales/confidenciales y solo se consultan en API privada.
 
+La distribución visual calcula propuestas transitorias usando
+invitados confirmados de grupos definitivos. Los opcionales no
+incrementan el objetivo de asientos. Una plaza realmente
+ocupada corresponde a cualquier invitado con `table_id`, incluso
+con RSVP pendiente; el aforo real no se basa solo en confirmados.
+La capacidad puede elegirse con presets 6/8/10/12 o manualmente
+dentro de `capacity [1..30]`. Las simulaciones nunca actualizan
+`wedding_guests` ni `wedding_tables`.
+
 `wedding_tables`: `id, name, capacity [1..30], shape
 [redonda|rectangular|presidencial], revision, updated_at, updated_by`.
 La vista muestra capacidad/ocupación sin inventar distribuciones.
