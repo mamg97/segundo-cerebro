@@ -32,7 +32,7 @@ test("top navbar remains independently available in every route, no authorizatio
   assert.match(css,/body\.route-area-active \.sidebar\s*\{[\s\S]*?position:fixed/);
   assert.match(css,/z-index:5000/);
   assert.match(index,/id="copy-area-link"/);
-  assert.match(index,/href="\.\/area-routes\.css\?v=0\.1\.4"/);
+  assert.match(index,/href="\.\/area-routes\.css\?v=0\.1\.5"/);
   assert.doesNotMatch(index,/Cloudflare-Access-Jwt-Assertion|client_secret|private_token/);
 });
 
