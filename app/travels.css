@@ -291,3 +291,10 @@
 .trv-map-stop-num{display:grid;place-items:center;flex:0 0 23px;height:23px;border:1px solid #d3e1ec;border-radius:50%;background:#f2f7fb;color:#1e5b87;font-size:11px;font-weight:800}
 .trv-map-stop-group li small{flex:none;font-size:9px;color:var(--ink-soft,#7c8791)}
 @media(max-width:620px){.trv-map-stop-group ol{grid-template-columns:minmax(0,1fr)}.trv-map-info{max-width:calc(100% - 100px)}.trv-map-day-tabs button{padding:6px 10px;min-height:32px}}
+
+/* Saved lists stay in private Events; this is only a generic external action. */
+.trv-saved-google-list{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 12px;padding:9px 12px;margin:0 0 10px;border-radius:11px;background:var(--blue-soft);border:1px solid var(--line);color:var(--blue);text-decoration:none;overflow-wrap:anywhere}
+.trv-saved-google-list strong{font-size:12px;font-weight:850}
+.trv-saved-google-list small{font-size:10px;color:var(--ink-soft)}
+.trv-saved-google-list:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+@media(max-width:760px){.trv-saved-google-list{padding:7px 9px;margin-bottom:8px;border-radius:9px}.trv-saved-google-list strong{font-size:11px}}
