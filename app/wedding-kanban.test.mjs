@@ -59,5 +59,5 @@ test("Wedding refresh lives in the non-scrolling dialog header with correct asse
  assert.doesNotMatch(css,/overflow-y:auto/);
  assert.match(html,/wedding\.css\?v=0\.2\.2/);
  assert.match(html,/app\.js\?v=\d+\.\d+\.\d+/);
- assert.match(app,/wedding\.js\?v=0\.1\.10/);
+ assert.match(app,/wedding\.js\?v=0\.1\.11/);
 });
