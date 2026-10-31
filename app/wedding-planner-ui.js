@@ -56,12 +56,25 @@ export function renderProviders(items,esc){
  '<div class="wed-planner-empty">No hay proveedores guardados todavía. Consultad Bodas.net y pegad el enlace de cada ficha en una tarjeta de Segundo Cerebro.</div>')+
  '<p class="wed-planner-foot">Las opiniones, fotografías, disponibilidad y precios publicados corresponden a Bodas.net; no se copian ni actualizan automáticamente.</p></section>';
 }
+
+export const WEDDING_GUEST_GROUPS=[
+ ["pareja","Invitados Andrea y Miguel"],
+ ["padres_miguel","Invitados padres Miguel"],
+ ["padres_andrea","Invitados padres Andrea"]
+];
+export function guestGroupId(groupName){
+ return WEDDING_GUEST_GROUPS.some(([id])=>id===groupName)?groupName:null;
+}
 function guestForm(item,tables,esc){
  const current=item||{},editing=!!item;
- return '<form class="wed-guest-form" id="wed-guest-form"><h4>'+(editing?"Editar invitado":"Añadir invitado")+'</h4>'+
+ const legacy=current.groupName&&!guestGroupId(current.groupName)?
+  '<option value="'+esc(current.groupName)+'" selected>Sin clasificar · '+esc(current.groupName)+'</option>':"";
+ return '<form class="wed-guest-form wed-guest-detail" id="wed-guest-form"><div class="wed-guest-detail-heading"><h4>'+(editing?"Ficha de invitado":"Añadir invitado")+'</h4>'+
+ '<button type="button" data-wed-cancel-guest aria-label="Cerrar ficha de invitado">✕ Cerrar</button></div>'+
  '<div class="wed-planner-fields">'+
  '<label>Nombre *<input name="name" required maxlength="180" value="'+esc(current.name||"")+'"></label>'+
- '<label>Grupo<input name="groupName" maxlength="90" placeholder="Familia, amigos…" value="'+esc(current.groupName||"")+'"></label>'+
+ '<label>Lista<select name="groupName" required>'+legacy+
+ WEDDING_GUEST_GROUPS.map(([id,name])=>'<option value="'+id+'" '+(current.groupName===id?"selected":"")+'>'+esc(name)+'</option>').join("")+'</select></label>'+
  '<label>Asistencia<select name="rsvp">'+option(RSVP,current.rsvp||"pendiente",esc)+'</select></label>'+
  '<label>Menú<select name="menu">'+option(MENUS,current.menu||"",esc)+'</select></label>'+
  '<label>Mesa<select name="tableId"><option value="">Sin asignar</option>'+tables.map(t=>'<option value="'+esc(t.id)+'" '+(current.tableId===t.id?"selected":"")+'>'+esc(t.name)+' · '+t.seated+'/'+t.capacity+'</option>').join("")+'</select></label>'+
@@ -69,23 +82,37 @@ function guestForm(item,tables,esc){
  '<label>Teléfono<input name="phone" type="tel" maxlength="40" value="'+esc(current.phone||"")+'"></label>'+
  '<label class="wide">Alergias o necesidades alimentarias<textarea name="dietaryNotes" maxlength="500" rows="2">'+esc(current.dietaryNotes||"")+'</textarea></label>'+
  '<label class="wide">Notas<textarea name="notes" maxlength="1000" rows="2">'+esc(current.notes||"")+'</textarea></label></div>'+
- '<div class="wed-planner-form-actions"><button type="submit" class="wed-primary">Guardar invitado</button><button type="button" data-wed-cancel-guest>Cancelar</button>'+
- (editing?'<button type="button" data-wed-delete-guest="'+esc(current.id)+'">Eliminar</button>':"")+'</div></form>';
+ '<div class="wed-planner-form-actions"><button type="submit" class="wed-primary">Guardar cambios</button>'+
+ (editing?'<button type="button" data-wed-delete-guest="'+esc(current.id)+'">Eliminar invitado</button>':"")+'</div></form>';
+}
+function compactGuestRow(guest,esc){
+ const info=guest.rsvp==="confirmado"?"Confirmado":guest.rsvp==="rechazado"?"No asiste":"";
+ return '<li class="wed-guest-name-row"><button type="button" data-wed-edit-guest="'+esc(guest.id)+'" aria-label="Abrir ficha de '+esc(guest.name)+'">'+
+ '<span class="wed-guest-name">'+esc(guest.name)+'</span>'+
+ (info?'<span class="wed-guest-rsvp" data-rsvp="'+esc(guest.rsvp)+'">'+info+'</span>':"")+
+ '<span class="wed-guest-chevron" aria-hidden="true">›</span></button></li>';
 }
 export function renderGuests(guests,tables,editing,esc){
- const accepted=guests.filter(g=>g.rsvp==="confirmado").length,declined=guests.filter(g=>g.rsvp==="rechazado").length;
- const unseated=guests.filter(g=>g.rsvp==="confirmado"&&!g.tableId).length;
- return '<section class="wed-planner-panel"><div class="wed-planner-heading"><div><h3>Lista de invitados</h3><small>'+guests.length+' invitados · '+accepted+' confirmados · '+declined+' no asisten · '+unseated+' sin mesa</small></div>'+
- '<button type="button" class="wed-primary" data-wed-new-guest>+ Invitado</button></div>'+
- (editing?guestForm(editing==="new"?null:guests.find(g=>g.id===editing),tables,esc):"")+
- (guests.length?'<div class="wed-guest-scroll"><table class="wed-guest-table"><thead><tr><th>Nombre y grupo</th><th>Asistencia</th><th>Menú</th><th>Mesa</th><th>Notas alimentarias</th><th></th></tr></thead><tbody>'+
- guests.map(g=>'<tr><td><strong>'+esc(g.name)+'</strong><small>'+esc(g.groupName||"Sin grupo")+'</small></td>'+
- '<td>'+esc(pick(RSVP,g.rsvp))+'</td><td>'+esc(pick(MENUS,g.menu))+'</td>'+
- '<td><select data-wed-assign-seat="'+esc(g.id)+'" aria-label="Mesa de '+esc(g.name)+'" '+(g.rsvp==="rechazado"?"disabled":"")+'><option value="">Sin mesa</option>'+
- tables.map(t=>'<option value="'+esc(t.id)+'" '+(g.tableId===t.id?"selected":"")+'>'+esc(t.name)+' ('+t.seated+'/'+t.capacity+')</option>').join("")+'</select></td>'+
- '<td>'+esc(g.dietaryNotes||"—")+'</td><td><button data-wed-edit-guest="'+esc(g.id)+'" type="button">Editar</button></td></tr>').join("")+'</tbody></table></div>':
- '<div class="wed-planner-empty">Aún no hay invitados registrados.</div>')+
- '<p class="wed-planner-foot">La lista es privada y compartida entre usuarios autorizados. Las confirmaciones desde la web pública de Bodas.net no se sincronizan automáticamente.</p></section>';
+ const accepted=guests.filter(g=>g.rsvp==="confirmado").length;
+ const legacy=guests.filter(g=>!guestGroupId(g.groupName));
+ const current=editing&&editing!=="new"?guests.find(g=>g.id===editing):null;
+ return '<section class="wed-planner-panel wed-guest-board"><div class="wed-planner-heading"><div>'+
+ '<h3>Lista de invitados</h3><small>'+guests.length+' nombres · '+accepted+' confirmados · pulsa un nombre para completar sus datos</small></div></div>'+
+ (editing?guestForm(current,tables,esc):"")+
+ '<div class="wed-guest-columns">'+WEDDING_GUEST_GROUPS.map(([id,title])=>{
+  const people=guests.filter(g=>g.groupName===id);
+  return '<section class="wed-guest-column" aria-label="'+esc(title)+'"><div class="wed-guest-column-head"><h4>'+esc(title)+'</h4>'+
+  '<span>'+people.length+'</span></div>'+
+  '<ul class="wed-guest-names">'+(people.length?people.map(g=>compactGuestRow(g,esc)).join(""):
+   '<li class="wed-guest-blank">Todavía no hay nombres</li>')+'</ul>'+
+  '<form class="wed-guest-quick-add" data-wed-quick-add="'+id+'"><label class="wed-sr-only" for="wed-guest-input-'+id+'">Nombre para '+esc(title)+'</label>'+
+  '<input id="wed-guest-input-'+id+'" name="name" maxlength="180" autocomplete="off" required placeholder="Escribe un nombre…" aria-label="Nombre para '+esc(title)+'">'+
+  '<button type="submit" aria-label="Añadir a '+esc(title)+'">+ Añadir</button></form></section>';
+ }).join("")+'</div>'+
+ (legacy.length?'<div class="wed-guest-unclassified"><div><strong>'+legacy.length+' sin clasificar</strong>'+
+ '<small>Ya estaban guardados con otros grupos. Pulsa cada nombre para elegir una de las tres listas, sin perder información.</small></div>'+
+ '<ul class="wed-guest-names">'+legacy.map(g=>compactGuestRow(g,esc)).join("")+'</ul></div>':"")+
+ '<p class="wed-planner-foot">Para añadir invitados basta con escribir su nombre y pulsar «Añadir» o Intro. Los detalles son opcionales y se guardan al abrir su ficha. Esta información es privada.</p></section>';
 }
 function tableForm(item,esc){
  const t=item||{};
