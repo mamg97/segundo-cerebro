@@ -104,7 +104,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
  assert.match(html,/Plaza 3 libre/);
- assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="4" role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="5" role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
  assert.match(html,/data-wed-place-existing="round1"/);
@@ -325,7 +325,7 @@ test("pending guests keep all occupied seats visible without altering D1",()=>{
  assert.match(diagram,/class="wed-floor-seat-svg"/);
  assert.equal((diagram.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((diagram.match(/<circle cx="[\d.]+" cy="[\d.]+" r="18" fill="#59a7fc"/g)||[]).length,6);
- assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,12,"six SVG chairs and six full-name labels");
+ assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,18,"six chairs, six near-seat labels and six fallback legend buttons");
  assert.equal(JSON.stringify(people),before);
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg\{/);
 });
@@ -346,7 +346,7 @@ test("top-right plan controls provide one new-table action and a fullscreen exit
  assert.match(code,/event\.key!=="Escape"/);
  assert.match(code,/event\.stopImmediatePropagation\(\)/);
  assert.match(code,/stage\.dispatchEvent\(new Event\("wed-floor-recalibrate"\)\)/);
- assert.match(code,/state\.seatingFloorExpanded=false;state\.tableEditing="new"/);
+ assert.match(code,/function openNewWeddingTableModal\(\)/);
  assert.match(css,/\.wed-floor-shell\.is-expanded\{[\s\S]*?position:fixed;inset:0/);
  assert.match(css,/\.wed-floor-shell\.is-expanded \.wed-floor-scroll\{[\s\S]*?overflow:auto/);
 });
@@ -366,7 +366,7 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  const markup=renderTables(guests,[table],null,esc,table.id);
  const article=markup.slice(markup.indexOf('<article class="wed-floor-table'),markup.indexOf('</article>'));
  assert.match(article,/<div class="wed-svg-table-wrap"[^>]*>\s*<svg class="wed-floor-seat-svg"/);
- assert.match(article,/data-wed-table-diagram-version="4"/);
+ assert.match(article,/data-wed-table-diagram-version="5"/);
  assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,12,"six chairs and six matching legend buttons");
  assert.match(article,/<\/svg><div class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
@@ -433,4 +433,54 @@ test("dragging and centering save D1 positions without rebuilding expanded floor
  assert.match(ui,/tile\.dataset\.wedSaving="true"/);
  assert.match(ui,/tile\.classList\.remove\("is-saving"\)/);
  assert.match(css,/\.wed-floor-plan\{grid-auto-rows:var\(--wed-floor-row-height,360px\)/);
+});
+
+test("new-table action opens a visible modal with validation and API persistence",()=>{
+ assert.match(ui,/function openNewWeddingTableModal\(\)/);
+ assert.match(ui,/modal\.className="wed-new-table-dialog"/);
+ assert.match(ui,/modal\.appendChild\(form\)/);
+ assert.match(ui,/modal\.showModal\(\)/);
+ assert.match(ui,/getJson\("\/api\/wedding\/tables","POST",payload\)/);
+ assert.match(ui,/notice\.textContent=errorMsg\(error\)/);
+ assert.match(css,/\.wed-new-table-dialog\{/);
+ const html=renderTables([], [{id:"x",name:"Existente",shape:"redonda",capacity:12}], "new",esc);
+ assert.match(html,/id="wed-table-form"/);
+ assert.match(html,/name="name" maxlength="180" required/);
+});
+test("free chair opens nearby filtered choices without closing fullscreen",()=>{
+ assert.match(ui,/function openWeddingSeatPicker\(anchor,tableId,seatIndex\)/);
+ assert.match(ui,/const eligible=state\.guests\.filter\(g=>!g\.tableId&&g\.rsvp!=="rechazado"\)/);
+ assert.match(ui,/panel\.style\.left=x\+"px";panel\.style\.top=y\+"px"/);
+ assert.match(ui,/input\.addEventListener\("input",render\)/);
+ assert.match(ui,/words\.every\(w=>fold\(g\.name\)\.includes\(w\)\)/);
+ assert.match(ui,/await changeGuestTable\(live,tableId,seatIndex\)/);
+ assert.match(ui,/if\(expanded&&active\(\)\)setWeddingFloorExpanded\(true\)/);
+ assert.match(css,/\.wed-seat-popover\{/);
+});
+test("near-seat names have numbered non-crossing leader rails",()=>{
+ const table={id:"rail",name:"Mesa",capacity:12,shape:"redonda"};
+ const guests=Array.from({length:12},(_,i)=>({
+  id:"g"+i,name:"Invitado de nombre compuesto "+i,seatIndex:i,
+  tableId:table.id,rsvp:"confirmado",groupName:"pareja"
+ }));
+ const previous=JSON.stringify(guests);
+ const html=renderTables(guests,[table],null,esc,table.id);
+ const article=html.slice(html.indexOf('<article class="wed-floor-table'),html.indexOf("</article>"));
+ assert.match(article,/class="wed-seat-inline-leaders"/);
+ assert.match(article,/class="wed-seat-inline-labels"/);
+ assert.equal((article.match(/class="wed-seat-inline-label is-/g)||[]).length,12);
+ assert.equal((article.match(/<path d="M/g)||[]).length,12);
+ for(const name of guests.map(g=>g.name))assert.match(article,new RegExp(name));
+ assert.match(css,/\.wed-seat-inline-label\.is-left\{left:0\}/);
+ assert.match(css,/\.wed-seat-inline-label\.is-right\{left:456px\}/);
+ assert.equal(JSON.stringify(guests),previous);
+});
+test("zoom in, out, 100 percent and fit keep floor scroll and coordinates",()=>{
+ const html=renderTables([], [{id:"z",name:"Zoom",shape:"redonda",capacity:12}],null,esc,"z");
+ for(const marker of ["data-wed-zoom-in","data-wed-zoom-out","data-wed-zoom-reset","data-wed-zoom-fit"])assert.match(html,new RegExp(marker));
+ assert.match(ui,/state\.seatingFloorZoom=Math\.max\(\.5,Math\.min\(1\.6/);
+ assert.match(ui,/stage\.style\.zoom=String\(state\.seatingFloorZoom\)/);
+ assert.match(ui,/stage\.dispatchEvent\(new Event\("wed-floor-recalibrate"\)\)/);
+ assert.match(css,/min-width:max\(1180px,calc\(var\(--wed-floor-columns,1\)\*630px\)\)/);
+ assert.match(css,/\.wed-floor-scroll\{[\s\S]*?overflow-x:auto;overflow-y:auto/);
 });
