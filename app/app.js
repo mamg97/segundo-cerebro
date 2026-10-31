@@ -19,7 +19,7 @@ import { openProjectsDetail } from "./projects.js?v=0.37.4";
 import { openTravelsDetail } from "./travels.js?v=0.3.5";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
 import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.21";
-import { hrefForArea, hrefForWedding, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.6";
+import { hrefForArea, hrefForWedding, hrefForHealthTab, hrefForPantryTab, hrefForWebTraffic, routeFromHash } from "./area-routes.mjs?v=0.1.6";
 import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.10";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
@@ -12156,6 +12156,7 @@ let routedHobbyId=null;
 let routedPartnerId=null;
 let routedHealthTabId=null;
 let routedPantryTabId=null;
+let routedProjectsDetailId=null;
 let ignoreRouteCloseEvents=0;
 let restoreCalendarSection=null;
 let activeAreaHash=null;
@@ -12183,6 +12184,15 @@ function setupAreaRoutes(){
   });
   window.addEventListener("area-route-synced",()=>{activeAreaHash=window.location.hash});
   dialog.addEventListener("click",event=>{
+    const projectTab=event.target.closest("[data-project-tab]");
+    if(projectTab && routeFromHash(window.location.hash)?.areaId==="area-projects"){
+      const target=projectTab.dataset.projectTab==="traffic"?hrefForWebTraffic():hrefForArea("area-projects");
+      if(window.location.hash!==target){
+        history.replaceState(null,"",target);
+        activeAreaHash=target;
+        syncMobileNavigation(routeFromHash(target),target);
+      }
+    }
     const pantryTab=event.target.closest("[data-pantry-view]");
     if(pantryTab && routeFromHash(window.location.hash)?.areaId==="area-pantry"){
       const tab={inventory:"inventario",shopping:"compra",tickets:"tickets"}[pantryTab.dataset.pantryView];
@@ -12256,6 +12266,7 @@ function applyAreaRoute(){
   routedPartnerId=route.areaId==="area-partner"?(route.detailId||null):null;
   routedHealthTabId=route.areaId==="area-health"?(route.detailId||null):null;
   routedPantryTabId=route.areaId==="area-pantry"?(route.detailId||null):null;
+  routedProjectsDetailId=route.areaId==="area-projects"?(route.detailId||null):null;
   syncMobileNavigation(route,hash);
   document.querySelectorAll("[data-nav-area-id]").forEach(el=>{
     const active=el.dataset.navAreaId===route.areaId;
@@ -12338,7 +12349,7 @@ function openArea(areaId) {
     return;
   }
   if (areaId === "area-projects" && privateModeKind === "remote") {
-    openProjectsDetail(state.decisions, openMidasDialog);
+    openProjectsDetail(state.decisions, openMidasDialog, routedProjectsDetailId==="trafico-web"?"traffic":"summary");
     return;
   }
   const area = areaById.get(areaId);

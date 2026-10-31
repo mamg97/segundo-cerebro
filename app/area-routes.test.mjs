@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,hrefForHealthTab,HEALTH_SECTION_IDS,hrefForPantryTab,PANTRY_SECTION_IDS,hrefForFinanceMovements,routeFromHash} from "./area-routes.mjs";
+import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,hrefForHealthTab,HEALTH_SECTION_IDS,hrefForPantryTab,PANTRY_SECTION_IDS,hrefForFinanceMovements,hrefForWebTraffic,routeFromHash} from "./area-routes.mjs";
 
 test("main areas have independent, stable URLs and a home route",()=>{
   assert.equal(hrefForArea("area-general"),"#/inicio");
@@ -118,4 +118,11 @@ test("Home liquidity movements link has a restricted shareable Finance route",()
  assert.ok((app.match(/focusRequestedFinanceMovements\(\);/g)||[]).length>=3,"Initial, full and late bank views focus the section");
  assert.match(app,/fetch\("\/api\/finance\/accounts"/);
  assert.match(css,/\.account-transactions-section\{scroll-margin-top:16px\}/);
+});
+
+test("private web traffic has one restricted, shareable projects subroute",()=>{
+ assert.equal(hrefForWebTraffic(),"#/proyectos/trafico-web");
+ assert.deepEqual(routeFromHash(hrefForWebTraffic()),{areaId:"area-projects",detailId:"trafico-web"});
+ assert.equal(routeFromHash("#/proyectos/private"),null);
+ assert.equal(routeFromHash("#/proyectos/trafico-web/extra"),null);
 });
