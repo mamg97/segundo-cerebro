@@ -135,7 +135,7 @@ test("reopening detail modals uses payload memory and never blanks a previously 
   assert.match(app,/pantryDetailMemory\.invalidate\(\)/);
   assert.match(app,/objectsDetailMemory\.invalidate\(\)/);
   assert.match(objects,/if\(cached\) renderWorkspace\(cached\)/);
-  assert.match(pantry,/if\(cached\) renderWorkspace\(cached, initialView\)/);
+  assert.match(pantry,/if\(cached\) renderWorkspace\(cached, requestedView\)/);
   assert.match(objects,/objectsViewMemory\?\.remember\(updated\)/);
 });
 
