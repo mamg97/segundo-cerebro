@@ -1,4 +1,4 @@
-import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.2.0";
+import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.3.0";
 import { hrefForTravel, hrefForArea } from "./area-routes.mjs?v=0.1.0";
 // Viajes: vista privada sobre el ledger canónico de Eventos.
 // La fuente de viajes y hechos es /api/events; Finanzas mantiene la autoridad del dinero.
@@ -14,7 +14,7 @@ function summaryParts(value) {
 
 export function parseTravelDetail(payload) {
   const facts = Array.isArray(payload && payload.facts) ? payload.facts : [];
-  const groups = { flights: [], bookings: [], days: [], slots: [], tasks: [], notes: [], accommodation: [], destination: [] };
+  const groups = { flights: [], bookings: [], days: [], slots: [], points: [], tasks: [], notes: [], accommodation: [], destination: [] };
   const latestTaskStates = new Map();
   for (const fact of facts) {
     const parts = summaryParts(fact.summary);
@@ -32,6 +32,12 @@ export function parseTravelDetail(payload) {
     else if (prefix === "RESERVA") groups.bookings.push({ key: rest[0], text: rest.slice(1).join(" · "), fact });
     else if (prefix === "PLAN_DIA") groups.days.push({ date: rest[0], text: rest.slice(1).join(" · "), fact });
     else if (prefix === "PLAN_HORA" && rest.length >= 5) groups.slots.push({ date: rest[0], time: rest[1], status: rest[2], category: rest[3], text: rest.slice(4).join(" | "), fact });
+    else if (prefix === "MAPA_PUNTO" && rest.length >= 7) {
+      const lat=Number(rest[5]), lon=Number(rest[6]);
+      if (Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat)<=85 && Math.abs(lon)<=180 && rest[2] && rest[3]) {
+        groups.points.push({ date: rest[0], order: Number(rest[1]) || 0, name: rest[2], query: rest[3], status: rest[4], lat, lon, fact });
+      }
+    }
     else if (prefix === "TAREA") {
       groups.tasks.push({
         key: rest[0], status: latestTaskStates.get(rest[0]) || rest[1],
@@ -41,6 +47,10 @@ export function parseTravelDetail(payload) {
       groups.notes.push({ type: prefix, text: rest.join(" | "), fact });
     }
   }
+  // Facts are append-only: later versions supersede the displayed day/time, not history.
+  groups.days = [...new Map(groups.days.map(d=>[d.date,d])).values()];
+  groups.slots = [...new Map(groups.slots.map(slot=>[slot.date+"|"+slot.time,slot])).values()];
+  groups.points = [...new Map(groups.points.map(p=>[p.date+"|"+p.name,p])).values()];
   groups.days.sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
   groups.slots.sort((a, b) => (a.date+" "+a.time).localeCompare(b.date+" "+b.time));
   return groups;
