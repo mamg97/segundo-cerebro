@@ -67,6 +67,23 @@ function chooseShoppingRow(rows,id,providedId=null,shoppingName=null){
   if(selected.length>1)fail("AMBIGUOUS_SHOPPING_ROWS");
   return selected[0]||null;
 }
+export function selectShoppingMutationRow(rows,{productId="",externalId="",shoppingName="",updatedAt="",unlinkedOnly=false}={}){
+  const id=String(productId||""),external=String(externalId||""),name=String(shoppingName||"");
+  if(!external&&!id)fail("SHOPPING_ROW_ID_REQUIRED",400);
+  const matches=rows.filter(row=>{
+    const v=row.record||{};
+    if(String(v.estado||"").toUpperCase()!=="COMPRAR")return false;
+    if(external&&String(v.external_id||"")!==external)return false;
+    if(name&&normalizePantryProductName(v.nombre)!==normalizePantryProductName(name))return false;
+    if(unlinkedOnly&&String(v.producto_id||"").trim())return false;
+    if(!external&&id&&String(v.producto_id||"")!==id)return false;
+    return true;
+  });
+  if(matches.length!==1)fail(matches.length?"AMBIGUOUS_SHOPPING_ROWS":"ACTIVE_SHOPPING_ROW_NOT_FOUND",409);
+  if(!updatedAt||String(matches[0].record.updated_at||"")!==String(updatedAt))
+    fail("SHOPPING_ROW_CHANGED",409);
+  return matches[0];
+}
 function shoppingRecord(product,id,now,{source,reason,quantity=null,unit=""}={}){
   return {
     producto_id:product.id,nombre:product.familyNames?.[0] || product.menuDisplayName || product.name,estado:"COMPRAR",prioridad:"alta",
@@ -125,13 +142,38 @@ export async function performShoppingAction(request,env,auth){
   let payload;
   try{payload=await request.json();}catch{fail("INVALID_JSON",400);}
   const action=String(payload?.action||"");
-  if(!["add","available"].includes(action))fail("INVALID_SHOPPING_ACTION",400);
+  if(!["add","available","remove","link"].includes(action))fail("INVALID_SHOPPING_ACTION",400);
   const id=String(payload?.productId||"");
-  if(!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(id))fail("INVALID_PRODUCT_ID",400);
+  if(action!=="remove"&&!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(id))
+    fail("INVALID_PRODUCT_ID",400);
+  const sheet=await readPantryShoppingSheet(env,auth);
+  if(action==="remove"||action==="link"){
+    const active=selectShoppingMutationRow(sheet.rows,{
+      productId:id,externalId:payload.externalId,shoppingName:payload.shoppingName,
+      updatedAt:payload.updatedAt,unlinkedOnly:action==="link"
+    });
+    const date=nowIso();
+    if(action==="remove"){
+      await updatePantryShoppingRow(sheet,active.rowNumber,updatedShoppingRecord(active.record,date,{
+        estado:"CANCELADO",motivo:"Eliminado explícitamente de la lista",
+        fuente:"web-shopping-remove"
+      }));
+      invalidatePantryCache();
+      return {ok:true,action:"remove",appleSync:"pending_macos_bridge"};
+    }
+    const pantry=await fetchPantrySummary(env,auth);
+    if(!pantry.value)fail("PANTRY_UNAVAILABLE",503);
+    checkedProduct(pantry.value,id);
+    await updatePantryShoppingRow(sheet,active.rowNumber,updatedShoppingRecord(active.record,date,{
+      producto_id:id,fuente:"web-explicit-product-link",
+      motivo:active.record.motivo||"Producto vinculado manualmente"
+    }));
+    invalidatePantryCache();
+    return {ok:true,action:"link",productId:id,appleSync:"pending_macos_bridge"};
+  }
   const pantry=await fetchPantrySummary(env,auth);
   if(!pantry.value)fail("PANTRY_UNAVAILABLE",503);
   const product=checkedProduct(pantry.value,id);
-  const sheet=await readPantryShoppingSheet(env,auth);
   const active=chooseShoppingRow(sheet.rows,id,payload.externalId||null,
     action==="available"?String(payload.shoppingName||""):null);
   const date=nowIso();
