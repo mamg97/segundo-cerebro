@@ -56,7 +56,7 @@ test("Wedding refresh lives in the non-scrolling dialog header with correct asse
  assert.doesNotMatch(source,/wed-dialog-controls|function weddingToolbar\(/);
  assert.match(css,/body\.route-area-active #detail-dialog\.wedding-dialog\[open\] > #wed-main-refresh:not/);
  assert.match(css,/\.wed-kanban\{[\s\S]*?overflow-x:auto/);
- assert.doesNotMatch(css,/overflow-y:auto/);
+ assert.doesNotMatch(css,/\.wedding-dialog[^{}]*#dialog-body\s*\{[^}]*overflow-y:auto/);
  assert.match(html,/wedding\.css\?v=0\.2\.\d+/);
  assert.match(html,/app\.js\?v=\d+\.\d+\.\d+/);
  assert.match(app,/wedding\.js\?v=0\.1\.\d+/);

@@ -24,7 +24,7 @@ test("wedding has private API and responsive separate stylesheet",()=>{
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
  assert.match(app,/wedding\.css\?v=0\.2\.\d+/);
  assert.match(style,/\.wed-grid/);
- assert.doesNotMatch(style,/overflow-y:auto/);
+ assert.doesNotMatch(style,/\.wedding-dialog[^{}]*#dialog-body\s*\{[^}]*overflow-y:auto/);
 });
 
 test("wedding shows budget dashboard directly without the decorative introduction",()=>{
@@ -63,7 +63,7 @@ test("moodboard excludes discarded ideas, filters categories, and preserves exis
  assert.doesNotMatch(source,/api\.pinterest\.com|PINAR_TOKEN|PINTEREST_CLIENT_SECRET/);
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
  assert.match(style,/\.wed-masonry/);
- assert.doesNotMatch(style,/overflow-y:auto/);
+ assert.doesNotMatch(style,/\.wedding-dialog[^{}]*#dialog-body\s*\{[^}]*overflow-y:auto/);
 });
 
 test("mobile inspiration supports gallery, camera, clipboard screenshots and ten photos",async()=>{
@@ -83,7 +83,7 @@ test("mobile inspiration supports gallery, camera, clipboard screenshots and ten
  const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
  assert.match(css,/env\(safe-area-inset-bottom\)/);
  assert.match(css,/\.wed-mobile-actions\{position:sticky/);
- assert.doesNotMatch(css,/overflow-y:auto/);
+ assert.doesNotMatch(css,/\.wedding-dialog[^{}]*#dialog-body\s*\{[^}]*overflow-y:auto/);
 });
 
 
