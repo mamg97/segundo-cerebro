@@ -287,7 +287,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<div class="wed-floor-shell'+(floorExpanded?' is-expanded':'')+'" data-wed-floor-shell>'+
  '<div class="wed-seating-block-title wed-floor-heading"><div class="wed-floor-title">'+
  '<h4 id="wed-floor-title">Plano de mesas</h4>'+
- '<small>Pulsa una plaza o una persona para editar · Arrastra desde «Mover»</small></div>'+
+ '<small>Asientos numerados · Nombres completos debajo · Arrastra «Mover»</small></div>'+
  '<div class="wed-floor-actions">'+
  (selected?'<button class="wed-floor-reset" type="button" data-wed-center-table="'+esc(selected.id)+'" title="Dejar la mesa seleccionada en el centro">Centrar mesa</button>':'')+
  '<button type="button" class="wed-floor-icon" data-wed-new-table title="Nueva mesa" aria-label="Nueva mesa">+</button>'+
