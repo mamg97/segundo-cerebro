@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 
 const workflow = readFileSync(new URL("../../.github/workflows/web-audit.yml", import.meta.url), "utf8");
 
@@ -94,4 +95,24 @@ test("recipe thumbnail audit decodes the real foreground, never the blurred back
   assert.match(source, /const firstThumb = page\.locator\("#home-weekly-menu-content \.home-menu-recipe-thumb img:not\(\.home-menu-thumb-backdrop\)"\)\.first\(\)/);
   assert.match(source, /await img\.decode\(\)/);
   assert.match(source, /getComputedStyle\(img\)\.objectFit === "contain"/);
+});
+
+
+test("backup slot recognizes completed failed Chromium without masking short aborts", () => {
+  const start = workflow.indexOf("function completedChromiumAudit(");
+  const end = workflow.indexOf("\n          async function main()", start);
+  assert.ok(start >= 0 && end > start, "cadence decision helper must be in the workflow");
+  const fn = runInNewContext(
+    workflow.slice(start, end) + "\ncompletedChromiumAudit"
+  );
+  const full = { conclusion: "failure", started_at: "2026-10-30T23:13:30Z",
+    completed_at: "2026-10-30T23:17:27Z" };
+  assert.equal(fn({ status: "completed" }, full), true);
+  assert.equal(fn({ status: "completed" }, { ...full, completed_at: "2026-10-30T23:13:40Z" }), false);
+  assert.equal(fn({ status: "completed" }, { conclusion: "failure" }), false);
+  assert.equal(fn({ status: "completed" }, { conclusion: "skipped" }), false);
+  assert.equal(fn({ status: "completed" }, { conclusion: "success" }), true);
+  assert.equal(fn({ status: "in_progress" }, full), false);
+  assert.equal(fn({ status: "cancelled" }, full), false);
+  assert.ok(workflow.includes("if (completedChromiumAudit(run, chromiumStep))"));
 });
