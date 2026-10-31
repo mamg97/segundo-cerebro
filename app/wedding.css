@@ -372,7 +372,7 @@ body.route-area-active #detail-dialog.wedding-dialog[open] #dialog-body > .wed-v
 /* Wedding guests: three name-first shared lists. Details stay behind each name. */
 .wed-guest-board{gap:10px}
 .wed-guest-columns{
- display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
  gap:12px;align-items:start;min-width:0;
 }
 .wed-guest-column{
@@ -424,6 +424,9 @@ body.route-area-active #detail-dialog.wedding-dialog[open] #dialog-body > .wed-v
 .wed-guest-unclassified strong{font-size:12px}
 .wed-guest-unclassified small{font-size:11px;color:var(--ink-soft)}
 .wed-guest-unclassified ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+@media(max-width:1150px) and (min-width:761px){
+ .wed-guest-columns{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
 @media(max-width:900px){
  .wed-guest-columns{gap:7px}
  .wed-guest-column{padding:8px}
