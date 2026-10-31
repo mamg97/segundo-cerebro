@@ -532,3 +532,30 @@ test("newly created table is selected and scrolled into view after save",()=>{
  assert.match(ui,/state\.seatingSelectedTableId=newId;show\(\)/);
  assert.match(ui,/tile\?\.scrollIntoView\(\{block:"center",inline:"nearest",behavior:"smooth"\}\)/);
 });
+
+test("thirty named seats stay inside one expanded SVG and its grid row",()=>{
+ const capacity=30;
+ const table={id:"thirty",name:"Mesa de treinta",capacity,shape:"redonda"};
+ const guests=Array.from({length:capacity},(_,i)=>({
+  id:"guest-"+i,name:"Nombre compuesto de invitado número "+i,seatIndex:i,
+  tableId:table.id,rsvp:"confirmado",groupName:"pareja"
+ }));
+ const html=renderTables(guests,[table],null,esc,table.id);
+ const card=html.slice(html.indexOf('<article class="wed-floor-table'),html.indexOf("</article>"));
+ assert.equal((card.match(/class="wed-svg-chair is-filled"/g)||[]).length,capacity);
+ assert.equal((card.match(/class="wed-seat-attached-name"/g)||[]).length,capacity);
+ assert.equal((card.match(/data-wed-line-seat="/g)||[]).length,capacity);
+ const size=card.match(/viewBox="0 0 640 (\d+)"/);
+ assert.ok(size);
+ const svgHeight=+size[1];
+ const rowHeight=+(html.match(/--wed-floor-row-height:(\d+)px/)||[])[1];
+ assert.ok(svgHeight>300,"30 labels require expanded table height");
+ assert.ok(rowHeight>=svgHeight+48,"grid row encloses labels without collision");
+ const boxes=[...card.matchAll(/<rect x="(8|468)" y="([\d.]+)" width="164" height="(\d+)"/g)];
+ assert.equal(boxes.length,capacity);
+ for(const box of boxes)assert.ok(+box[2]>=0&&+box[2]+(+box[3])<=svgHeight);
+ for(const x of [8,468]){
+  const side=boxes.filter(m=>+m[1]===x).map(m=>({y:+m[2],h:+m[3]}));
+  for(let i=1;i<side.length;i++)assert.ok(side[i].y>=side[i-1].y+side[i-1].h+4);
+ }
+});
