@@ -82,3 +82,17 @@ Añadir nuevas filas al Sheet, no editar el JS para cambiar el viaje.
 - El frontend conserva un solo marco visual para módulos sin duplicar datos ni crear rutas de backend. Si se comparte una URL con alguien sin acceso autorizado, deberá obtener primero el permiso de Cloudflare Access.
 - Evento es la categoría por defecto. Solo una decisión explícita del usuario promueve un registro a `kind=travel`. El mero título de iCloud/Google no lo hace; la sincronización preserva la clasificación manual en Eventos.
 - Cambios operativos de clasificación se aplican únicamente al Sheet canónico privado, no se codifican nombres/destinos reales en GitHub.
+
+
+## Recorridos geográficos coordinados con agenda (octubre 2026)
+
+- Se añaden hechos privados append-only de tipo LUGAR, con forma:
+  MAPA_PUNTO | YYYY-MM-DD|OPCIONAL|ALOJAMIENTO | orden | etiqueta | consulta_geográfica | CONFIRMADO|PENDIENTE|PROPUESTA|OPCIONAL | latitud | longitud.
+- Las fechas identifican días turísticos; ALOJAMIENTO es el ancla común y OPCIONAL reúne los lugares que no deben saturar el programa base. Los puntos concretos y sus coordenadas están exclusivamente en la pestaña privada EventoHechos; ningún destino real queda escrito en el repositorio.
+- La representación filtra marcadores por día, mantiene el orden de las paradas y enlaza tramos peatonales a Google Maps. Los enlaces se dividen cuando hay muchas paradas, respetando tres waypoints intermedios como máximo por tramo para navegadores móviles.
+- El trazado discontinuo entre marcadores es solo una guía visual de secuencia y NO representa rutas reales por calles; la navegación real pertenece al servicio externo.
+- El mapa cartográfico usa teselas de OpenStreetMap solo después de un clic de consentimiento. Se identifica su fuente y se mantiene la atribución obligatoria; el proveedor puede recibir la IP y el área visualizada tras ese clic. Los datos privados no se envían al proveedor por ninguna API de geocodificación.
+- PLAN_DIA y PLAN_HORA conservan histórico de hechos; al mostrar la ficha se toma la versión más reciente de cada fecha o fecha/hora, para que una propuesta obsoleta no duplique actividades.
+- Los puntos son referencias del recorrido, no acreditan entradas, horarios ni reservas. Las reservas CONFIRMADAS y las propuestas PENDIENTES se mantienen diferenciadas.
+- Si no hay hechos MAPA_PUNTO, permanece el mapa de alojamiento de Google bajo consentimiento, de modo que viajes antiguos conservan su comportamiento.
+- Validación: node --test app/travels.test.mjs app/travels-dashboard.test.mjs app/travel-multipoint-map.test.mjs.
