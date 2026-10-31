@@ -55,6 +55,17 @@ y se elimina al borrar una mesa vacía. No se asignan asientos a quienes
 han rechazado asistir. Los datos de contacto y alimentación son
 personales/confidenciales y solo se consultan en API privada.
 
+La pantalla de Mesas asigna personas mediante el `table_id`
+preexistente de `wedding_guests`. No añade tablas, duplicados
+ni columnas para asientos. Las etiquetas alrededor de una mesa
+siguen un orden visual alfabético, no un número de asiento persistente.
+Altas de mesas nuevas: `redonda / 12` plazas por defecto;
+al elegir `presidencial` el aforo inicial pasa a 6. La elección
+de forma no cambia la capacidad de mesas ya guardadas.
+Una persona nueva creada desde una mesa se guarda en su grupo con
+RSVP `pendiente`; asignar y desasignar conserva los demás campos y
+su revisión optimista.
+
 La distribución visual calcula propuestas transitorias usando
 invitados confirmados de grupos definitivos. Los opcionales no
 incrementan el objetivo de asientos. Una plaza realmente
