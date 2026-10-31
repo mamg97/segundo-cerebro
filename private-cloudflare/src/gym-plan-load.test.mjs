@@ -24,5 +24,5 @@ test("Worker applies locale parsing only to the finance-derived Gym plan", () =>
   const source = readFileSync(new URL("./index.js", import.meta.url), "utf8");
   assert.match(source, /import \{ parseGymPlanLoadValue \} from "\.\/gym-plan-load\.js";/);
   assert.match(source, /loadValue: parseGymPlanLoadValue\(item\.load_value\)/);
-  assert.match(source, /loadValue: toNumber\(entry\?\.loadValue\)/);
+  assert.match(source, /loadValue:\s*toNumber\(entry\?\.loadValue\)/);
 });
