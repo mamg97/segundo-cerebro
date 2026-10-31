@@ -148,53 +148,56 @@ function tableForm(item,esc){
 // relative to the table footprint, independent of generic button layout/CSS.
 // Canonical seatIndex determines the chair identity; existing assignments stay intact.
 function namedSeatDiagram(table,occupants,esc){
+ // SVG contains the tabletop AND every seat in ONE immutable viewBox.
+ // This avoids percentage positioning, inherited button styles and clipping.
+ // The rendering never writes to D1 or changes canonical guest seatIndex.
  const total=Math.max(1,Math.min(30,Number(table.capacity)||12));
- const byName=[...occupants].sort((a,b)=>a.name.localeCompare(b.name,"es")||String(a.id).localeCompare(String(b.id)));
- const occupantsBySeat=Array(total).fill(null),unplaced=[];
- for(const guest of byName){
+ const ordered=[...occupants].sort((a,b)=>a.name.localeCompare(b.name,"es")||String(a.id).localeCompare(String(b.id)));
+ const seats=Array(total).fill(null),unplaced=[];
+ for(const guest of ordered){
   const i=guest.seatIndex;
-  if(Number.isInteger(i)&&i>=0&&i<total&&!occupantsBySeat[i])occupantsBySeat[i]=guest;
+  if(Number.isInteger(i)&&i>=0&&i<total&&!seats[i])seats[i]=guest;
   else unplaced.push(guest);
  }
- for(const guest of unplaced){
-  const next=occupantsBySeat.indexOf(null);
-  if(next!==-1)occupantsBySeat[next]=guest;
- }
- const shortName=name=>{
-  const parts=name.trim().split(/\s+/);
-  return parts.length>1?parts[0]+" "+parts[parts.length-1].slice(0,1)+".":parts[0];
- };
- const diameter=total<=12?38:total<=18?30:total<=24?24:20;
- const orbitRadius=104; // All six presidential chairs are placed on one concentric 268px footprint.
- const angleStep=2*Math.PI/total;
- const circles=Array.from({length:total},(_,index)=>{
-  const guest=occupantsBySeat[index];
-  const angle=-Math.PI/2+index*angleStep;
-  const left=(134+orbitRadius*Math.cos(angle)).toFixed(2);
-  const top=(134+orbitRadius*Math.sin(angle)).toFixed(2);
-  // Inline pixel geometry prevents legacy percent-based positioning and global
-  // styles from moving assigned seats outside their own tabletop.
-  const position='position:absolute!important;left:'+left+'px!important;top:'+top+
-   'px!important;transform:translate(-50%,-50%)!important;'+
-   'width:'+diameter+'px!important;height:'+diameter+'px!important;'+
-   'display:flex!important;border-radius:50%!important;pointer-events:auto';
-  if(!guest)return '<button type="button" class="wed-named-seat is-empty" data-wed-seat-add="'+esc(table.id)+'" '+
-   'data-wed-seat-index="'+index+'" style="'+position+'" title="Plaza '+(index+1)+' libre · Añadir invitado" '+
-   'aria-label="Añadir invitado en plaza '+(index+1)+' de '+esc(table.name)+'">'+
-   '<span class="wed-seat-avatar" aria-hidden="true">+</span><span class="wed-seat-name" aria-hidden="true">Libre</span></button>';
-  return '<button type="button" class="wed-named-seat is-filled" data-wed-seat-detail="'+esc(guest.id)+
-   '" style="'+position+'" title="'+esc(guest.name)+'" aria-label="Editar '+esc(guest.name)+'">'+
-   '<span class="wed-seat-avatar" aria-hidden="true">'+esc(guest.name.trim().slice(0,1).toLocaleUpperCase("es"))+'</span>'+
-   '<span class="wed-seat-name" aria-hidden="true">'+esc(shortName(guest.name))+'</span></button>';
+ for(const guest of unplaced){const i=seats.indexOf(null);if(i!==-1)seats[i]=guest;}
+ const chairRadius=total<=12?18:total<=18?15:total<=24?12:10;
+ const orbitRadius=103;
+ const centerName=String(table.name||"Mesa").trim();
+ const words=centerName.split(/\s+/);
+ const firstLine=words.length===1?centerName:words.slice(0,Math.ceil(words.length/2)).join(" ");
+ const secondLine=words.length===1?"":words.slice(Math.ceil(words.length/2)).join(" ");
+ const nameLines='<text class="wed-svg-table-label" x="134" y="'+(secondLine?126:133)+'" text-anchor="middle">'+esc(firstLine.slice(0,23))+'</text>'+
+  (secondLine?'<text class="wed-svg-table-label" x="134" y="143" text-anchor="middle">'+esc(secondLine.slice(0,23))+'</text>':'');
+ const labels=Array.from({length:total},(_,index)=>{
+  const guest=seats[index];
+  const angle=-Math.PI/2+(2*Math.PI*index/total);
+  const x=(134+orbitRadius*Math.cos(angle)).toFixed(2);
+  const y=(134+orbitRadius*Math.sin(angle)).toFixed(2);
+  const label=guest?guest.name.trim().charAt(0).toLocaleUpperCase("es"):"+";
+  const action=guest?'data-wed-seat-detail="'+esc(guest.id)+'"':
+   'data-wed-seat-add="'+esc(table.id)+'" data-wed-seat-index="'+index+'"';
+  const accessible=guest?"Editar "+guest.name:"Añadir invitado en plaza "+(index+1)+" de "+table.name;
+  const caption=guest?guest.name:"Plaza "+(index+1)+" libre";
+  return '<g class="wed-svg-chair '+(guest?'is-filled':'is-empty')+'" role="button" tabindex="0" '+action+
+   ' aria-label="'+esc(accessible)+'">'+
+   '<title>'+esc(caption)+'</title>'+
+   '<circle cx="'+x+'" cy="'+y+'" r="'+chairRadius+'" fill="'+(guest?'#59a7fc':'#0b1727')+
+   '" stroke="#59a7fc" stroke-width="2"/>'+
+   '<text x="'+x+'" y="'+y+'" dy="0.34em" text-anchor="middle" fill="'+(guest?'#ffffff':'#59a7fc')+
+   '" font-size="'+(total>18?10:13)+'" font-weight="800">'+esc(label)+'</text>'+
+   '</g>';
  }).join("");
- return '<div class="wed-named-table" role="group" aria-label="'+esc(table.name)+
- ': '+byName.length+' de '+total+' plazas ocupadas" style="position:relative!important;width:268px!important;height:268px!important;overflow:visible!important">'+
- '<button type="button" class="wed-named-table-center" data-wed-edit-table="'+esc(table.id)+
- '" aria-label="Editar '+esc(table.name)+'" title="Editar '+esc(table.name)+'">'+
- '<strong>'+esc(table.name)+'</strong><small>'+byName.length+'/'+total+' plazas</small></button>'+
- '<div class="wed-floor-seat-ring" data-wed-seat-ring-version="3" role="group" aria-label="Plazas de '+esc(table.name)+'" '+
- 'style="position:absolute!important;left:0!important;top:0!important;width:268px!important;height:268px!important;overflow:visible!important;pointer-events:none">'+
- circles+'</div></div>';
+ return '<div class="wed-svg-table-wrap" data-wed-table-diagram-version="4" role="group" '+
+  'aria-label="'+esc(table.name)+': '+ordered.length+' de '+total+' plazas ocupadas">'+
+  '<svg class="wed-floor-seat-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268 268" '+
+   'width="268" height="268" aria-label="Mesa redonda con '+total+' asientos" style="display:block;width:268px;height:268px;max-width:none;overflow:visible">'+
+   '<g class="wed-svg-table" role="button" tabindex="0" data-wed-edit-table="'+esc(table.id)+
+   '" aria-label="Editar '+esc(table.name)+'">'+
+   '<title>Editar '+esc(table.name)+'</title>'+
+   '<circle cx="134" cy="134" r="66" fill="#0c1c31" stroke="#59a7fc" stroke-width="2.5"/>'+
+   nameLines+
+   '<text class="wed-svg-table-capacity" x="134" y="'+(secondLine?159:152)+'" text-anchor="middle">'+ordered.length+'/'+total+' plazas</text>'+
+   '</g>'+labels+'</svg></div>';
 }
 function tableGuestPicker(table,guests,esc,chosenSeatIndex=null){
  const available=guests.filter(g=>!g.tableId&&g.rsvp!=="rechazado")
