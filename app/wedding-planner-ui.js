@@ -226,10 +226,10 @@ export function renderTables(guests,tables,editing,esc){
   const confirmedInTable=occupants.filter(g=>g.rsvp==="confirmado"&&g.groupName!=="opcionales").length;
   return '<article class="wed-seating-card"><div class="wed-seating-head"><strong>'+esc(t.name)+'</strong>'+
    '<span>'+esc(pick(SHAPES,t.shape))+' · '+occupants.length+'/'+t.capacity+'</span>'+
+   '<button type="button" data-wed-toggle-table-picker="'+esc(t.id)+'" aria-expanded="false">+ Añadir</button>'+
    '<button type="button" data-wed-edit-table="'+esc(t.id)+'">Editar</button></div>'+
    namedSeatDiagram(t,occupants,esc)+
    '<div class="wed-seat-caption">'+confirmedInTable+' confirmados · '+Math.max(0,t.capacity-occupants.length)+' libres</div>'+
-   '<div class="wed-seating-card-actions"><button type="button" data-wed-toggle-table-picker="'+esc(t.id)+'" aria-expanded="false">+ Añadir personas</button></div>'+
    tableGuestPicker(t,guests,esc)+
    '<div class="wed-seating-guests">'+(occupants.length?occupants.map(g=>
     '<div class="wed-seated-guest"><button type="button" data-wed-seat-detail="'+esc(g.id)+'">'+esc(g.name)+'</button>'+
