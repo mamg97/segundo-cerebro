@@ -368,7 +368,7 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  assert.match(article,/<div class="wed-svg-table-wrap"[^>]*>\s*<svg class="wed-floor-seat-svg"/);
  assert.match(article,/data-wed-table-diagram-version="4"/);
  assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
- assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,6);
+ assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,12,"six chairs and six matching legend buttons");
  assert.match(article,/<\/svg><div class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
  assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg/);
