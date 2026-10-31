@@ -1,7 +1,7 @@
 import {hrefForArea,hrefForHealthTab,hrefForHobby,hrefForWedding,hrefForPantryTab,routeFromHash,HOBBY_CATEGORIES} from "./area-routes.mjs?v=0.1.5";
 export const MOBILE_AREAS=Object.freeze([
  ["area-general","Inicio","home"],["area-finance","Finanzas","wallet"],["area-calendar","Agenda","calendar"],
- ["area-health","Salud","heart"],["area-partner","Pareja","users"],["area-career","Carrera","briefcase"],
+ ["area-health","Salud","heart"],["area-partner","Boda","heart"],["area-career","Carrera","briefcase"],
  ["area-family","Familia","users"],["area-pantry","Despensa","pantry"],["area-objects","Objetos","box"],["area-wealth","Patrimonio","chart"],
  ["area-projects","Proyectos","box"],["area-travels","Viajes","plane"],["area-hobbies","Hobbies","book"]
 ]);
@@ -33,7 +33,7 @@ export const MOBILE_QUICK_ACCESS=Object.freeze([
 const HEALTH=Object.freeze([["Resumen","overview"],["Médicos","medical"],["Visión","vision"],["Gimnasio","gym"],["Nutrición","nutrition"],["Recetas","recipes"],["Menú","menu"]].map(([label,tab])=>({label,href:hrefForHealthTab(tab)})));
 const OTHER={
  "area-health":HEALTH,
- "area-partner":[{label:"Resumen",href:"#/pareja"},{label:"Boda",href:hrefForWedding()}],
+ "area-partner":[{label:"Boda",href:hrefForWedding()}],
  "area-finance":[{label:"Cuentas y presupuesto",href:"#/finanzas"},{label:"Patrimonio",href:"#/patrimonio"}],
  "area-hobbies":[{label:"Películas",href:hrefForHobby("peliculas")},...HOBBY_CATEGORIES.filter(x=>x.id!=="peliculas").map(x=>({label:x.title,href:hrefForHobby(x.id)}))],
  "area-travels":[{label:"Todos los viajes",href:"#/viajes"}],
@@ -49,6 +49,7 @@ export function mobileCurrentLabel(route,hash){
 }
 export function mobileRememberedRoute(id,cache){
  if(!MOBILE_AREAS.some(x=>x[0]===id))return "#/inicio";
+ if(id==="area-partner")return hrefForWedding();
  const v=cache?.[id];return v&&routeFromHash(v)?.areaId===id?v:hrefForArea(id);
 }
 let go,onRefresh,refreshBusy=false,refreshFeedbackTimer=null,route={areaId:"area-general",detailId:null},hash="#/inicio",mode="",trigger=null;
@@ -60,7 +61,7 @@ function markup(){return '<div id="mobile-app-header" class="mobile-app-header">
  '<nav id="mobile-quick-dock" class="mobile-quick-dock" aria-label="Accesos rápidos permanentes">'+MOBILE_QUICK_ACCESS.map(x=>
  '<a href="'+x.href+'" data-mobile-quick="'+x.href+'" aria-label="Abrir '+safe(x.label)+'">'+ico(x.icon)+'<span>'+safe(x.label)+'</span></a>').join("")+'</nav>'+
  '<nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Navegación móvil">'+MOBILE_AREAS.slice(0,5).map(([id,label,icon])=>
- '<a href="'+hrefForArea(id)+'" data-mobile-main="'+id+'">'+ico(icon)+'<span>'+label+'</span></a>').join("")+
+ '<a href="'+(id==="area-partner"?hrefForWedding():hrefForArea(id))+'" data-mobile-main="'+id+'">'+ico(icon)+'<span>'+label+'</span></a>').join("")+
  '<button id="mobile-more-trigger" type="button" aria-expanded="false">'+ico("grid")+'<span>Más</span></button></nav>'+
  '<div id="mobile-navigation-sheet" class="mobile-navigation-sheet" hidden><button class="mobile-sheet-backdrop" data-mobile-dismiss aria-label="Cerrar menú"></button>'+
  '<section class="mobile-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="mobile-sheet-heading" tabindex="-1">'+

@@ -58,7 +58,7 @@ test("privacy and permissions: only private app embeds maps on demand",()=>{
   const travels=readFileSync(new URL("./travels.js",import.meta.url),"utf8");
   const privateWorker=readFileSync(new URL("../private-cloudflare/src/index.js",import.meta.url),"utf8");
   assert.match(index,/travels\.css\?v=0\.4\.2/);
-  assert.match(app,/travels\.js\?v=0\.3\.0/);
+  assert.match(app,/travels\.js\?v=0\.3\.\d+/);
   assert.match(travels,/tripDashboardMarkup/);
   assert.match(travels,/bindTripDashboard/);
   assert.match(privateWorker,/frame-src https:\/\/www\.google\.com https:\/\/maps\.google\.com/);

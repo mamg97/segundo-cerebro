@@ -102,16 +102,50 @@ function tripCaption(event, detail) {
   const dest = parsed.destination[0];
   return dest ? dest.text.split(" · ")[0] : event.title;
 }
+// Fondos urbanos reutilizables, sin datos personales ni identificadores privados.
+const CITY_COVERS = [
+  {
+    match: /\b(?:varsovia|warsaw|warszawa)\b/i,
+    url: "https://commons.wikimedia.org/wiki/Special:FilePath/Old_Town_Market_Square,_2026,_Warsaw,_Poland.jpg?width=960",
+    source: "https://commons.wikimedia.org/wiki/File:Old_Town_Market_Square,_2026,_Warsaw,_Poland.jpg",
+    city: "Warsaw",
+    author: "Igor123121"
+  },
+  {
+    match: /\bmarbella\b/i,
+    url: "https://commons.wikimedia.org/wiki/Special:FilePath/Marbella_Old_Town.jpg?width=960",
+    source: "https://commons.wikimedia.org/wiki/File:Marbella_Old_Town.jpg",
+    city: "Marbella",
+    author: "Tina207"
+  }
+];
+function coverForCity(text) {
+  return CITY_COVERS.find((cover) => cover.match.test(String(text || ""))) || null;
+}
+function travelPhotoCredits(events) {
+  const credits = new Map();
+  events.forEach((event) => {
+    const cover = coverForCity(tripCaption(event, state.details.get(event.id)));
+    if (cover) credits.set(cover.city, cover);
+  });
+  if (!credits.size) return "";
+  const links = [...credits.values()].map((cover) =>
+    '<a href="' + escapeText(cover.source) + '" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">' +
+      escapeText(cover.city) + ' · ' + escapeText(cover.author) + '</a>').join(" · ");
+  return '<p class="trv-photo-credits">Fotografías: ' + links +
+    ' · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">CC BY 4.0</a></p>';
+}
 function card(event) {
   const detail = state.details.get(event.id);
   const subtitle = tripCaption(event, detail);
-  const status = String(event.status || "");
-  const closed = ["CERRADO", "CANCELADO"].includes(status);
-  return '<button type="button" class="trv-card" data-trv-open="' + escapeText(event.id) + '">' +
-    '<span class="trv-card-top"><span>' + (closed ? "VIAJE ANTERIOR" : "PRÓXIMO VIAJE") + '</span><span>↗</span></span>' +
-    '<strong>' + escapeText(subtitle) + '</strong>' +
-    '<small>' + escapeText(dateLabel(event.startsAt)) + '</small>' +
-    '<span class="trv-status">' + escapeText(status === "CERRADO" ? "Finalizado" : status === "CANCELADO" ? "Cancelado" : status === "PENDIENTE" ? "Pendiente" : "Confirmado") + '</span>' +
+  const cover = coverForCity(subtitle);
+  const image = cover
+    ? '<img class="trv-card-photo" src="' + escapeText(cover.url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
+    : "";
+  return '<button type="button" class="trv-card trv-city-tile" data-trv-open="' + escapeText(event.id) + '" aria-label="Abrir viaje: ' + escapeText(subtitle) + '">' +
+    image +
+    '<span class="trv-card-details"><strong>' + escapeText(subtitle) + '</strong>' +
+    '<small>' + escapeText(dateLabel(event.startsAt)) + '</small></span>' +
     '</button>';
 }
 function renderList() {
@@ -122,7 +156,7 @@ function renderList() {
     '<p class="trv-intro">Tus viajes y escapadas en un solo lugar. Cada ficha reúne reservas, planificación, tareas y enlaces, conectada al registro privado de Eventos.</p>' +
     (upcoming.length ? '<h3 class="trv-label">Próximos</h3><div class="trv-grid">' + upcoming.map(card).join("") + "</div>" : '<p class="trv-muted">Sin viajes próximos registrados.</p>') +
     (previous.length ? '<h3 class="trv-label">Histórico</h3><div class="trv-grid">' + previous.map(card).join("") + "</div>" : "") +
-    '<p class="trv-footnote">Fuente: Eventos · Los importes oficiales permanecen en Finanzas. No se muestran datos reales en la demo pública.</p></div>';
+    '<p class="trv-footnote">Fuente: Eventos · Los importes oficiales permanecen en Finanzas. No se muestran datos reales en la demo pública.</p>' + travelPhotoCredits(state.trips) + '</div>';
   body().innerHTML = html;
   body().querySelectorAll("[data-trv-open]").forEach((button) => button.addEventListener("click", () => {
     const id=button.dataset.trvOpen;
