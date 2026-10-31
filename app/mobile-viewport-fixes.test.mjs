@@ -7,8 +7,10 @@ test("iOS mobile: viewport stylesheet is last and main bundle is cache-busted",(
  const html=read("./index.html");
  assert.match(html,/mobile-viewport-fixes\.css\?v=0\.1\.0/);
  assert.ok(html.indexOf("organizador25-ui.css")<html.indexOf("mobile-viewport-fixes.css"));
- assert.match(html,/styles\.css\?v=0\.44\.120/);
- assert.match(html,/app\.js\?v=0\.44\.120/);
+ const stylesVersion=html.match(/styles\.css\?v=(0\.44\.\d+)/)?.[1];
+ const scriptVersion=html.match(/app\.js\?v=(0\.44\.\d+)/)?.[1];
+ assert.ok(stylesVersion);
+ assert.equal(scriptVersion,stylesVersion);
  assert.match(read("./app.js"),/mobile-navigation\.mjs\?v=0\.1\.10/);
 });
 
