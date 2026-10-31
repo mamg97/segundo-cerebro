@@ -173,7 +173,7 @@ function tableGuestPicker(table,guests,esc){
  '<label>Selecciona un invitado de vuestras listas'+
  '<select name="guestId" required '+(!available.length||full?'disabled':'')+'>'+
  '<option value="">Elige un nombre…</option>'+available.map(g=>
- '<option value="'+esc(g.id)+'">'+esc(g.name)+' · '+esc(g.groupName||"Sin clasificar")+'</option>').join("")+
+ '<option value="'+esc(g.id)+'">'+esc(g.name)+' · '+esc(WEDDING_GUEST_GROUPS.find(([key])=>key===g.groupName)?.[1]||g.groupName||"Sin clasificar")+'</option>').join("")+
  '</select></label>'+
  '<button type="submit" class="wed-primary" '+(!available.length||full?'disabled':'')+'>Sentar en esta mesa</button></form>'+
  (!available.length?'<p>Los invitados ya están asignados o aún no hay nombres disponibles.</p>':'')+
