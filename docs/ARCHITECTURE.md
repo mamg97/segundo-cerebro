@@ -16,6 +16,20 @@ Módulos especializados
 Fuentes propietarias y persistencia privada
 ```
 
+## Boda compartida: tablero Kanban
+
+La ruta privada `#/pareja/boda` muestra por defecto un Kanban sobre los
+mismos elementos de `wedding_items` de Cloudflare D1, protegidos por Access.
+Se conservan las vistas de Inspiración y Planificación/presupuesto, fotos,
+enlaces y edición existente. Las columnas representan los estados validados
+por `private-cloudflare/src/wedding-store.js`; no se ha creado una segunda
+fuente ni una tabla paralela. En ordenador las tarjetas pueden arrastrarse;
+en móvil se puede elegir el destino con un selector. El cambio utiliza el
+`PATCH /api/wedding/items/:id` privado con `revision` para detectar escrituras
+concurrentes y relee el estado del servidor. Un refresco sticky en la cabecera
+del espacio vuelve a consultar D1 sin recargar toda la aplicación. El acceso
+compartido requiere que cada participante esté autorizado por Cloudflare Access.
+
 ## Superficies
 
 ### Demo pública
