@@ -279,7 +279,7 @@ test("six seats form a uniform circular crown around an editable round tabletop"
  assert.equal((html.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
  assert.equal((html.match(/class="wed-named-seat is-filled" data-wed-seat-detail="synthetic-person-/g)||[]).length,6);
  assert.equal((html.match(/--wed-seat-diameter:38px/g)||[]).length,6);
- const placements=[...html.matchAll(/class="wed-named-seat is-filled"[^>]+style="left:([\d.]+)%;top:([\d.]+)%;--wed-seat-diameter:38px"/g)]
+ const placements=[...html.matchAll(/class="wed-named-seat is-filled"[^>]+style="position:absolute;display:flex;left:([\d.]+)%;top:([\d.]+)%;transform:translate\(-50%,-50%\);z-index:4;--wed-seat-diameter:38px"/g)]
   .map(m=>({x:+m[1],y:+m[2]}));
  assert.equal(placements.length,6);
  const radii=placements.map(p=>Math.hypot(p.x-50,p.y-50));
@@ -314,4 +314,47 @@ test("seat circles shrink for legacy capacities above twelve without changing th
   assert.equal((html.match(/data-wed-seat-index="\d+"/g)||[]).length,count);
   assert.equal((html.match(new RegExp("--wed-seat-diameter:"+diameter+"px","g"))||[]).length,count);
  }
+});
+
+test("six occupied seats have their own anchored circles, even with all names pending",()=>{
+ const table={id:"p",name:"Presidencial ficticia",shape:"presidencial",capacity:6};
+ const people=Array.from({length:6},(_,i)=>({
+  id:"fake-"+i,name:"Invitado "+i,groupName:"pareja",rsvp:"pendiente",tableId:"p",seatIndex:i
+ }));
+ const html=renderTables(people,[table],null,esc,"p");
+ const diagram=html.slice(html.indexOf('<div class="wed-named-table"'),html.indexOf("</article>"));
+ assert.match(diagram,/style="position:relative;width:100%;height:100%;overflow:visible"/);
+ assert.equal((diagram.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
+ assert.equal((diagram.match(/style="position:absolute;display:flex;left:/g)||[]).length,6);
+ assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,6);
+ assert.equal((diagram.match(/--wed-seat-diameter:38px/g)||[]).length,6);
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-named-table button\.wed-named-seat\{[\s\S]*?position:absolute/);
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-named-table\{[\s\S]*?overflow:visible/);
+});
+test("top-right plan controls provide one new-table action and a fullscreen exit",()=>{
+ const t={id:"d",name:"Demo",capacity:12,shape:"redonda"};
+ const normal=renderTables([], [t],null,esc,"d",null,false);
+ const expanded=renderTables([], [t],null,esc,"d",null,true);
+ assert.equal((normal.match(/data-wed-new-table/g)||[]).length,1);
+ assert.match(normal,/class="wed-floor-actions"/);
+ assert.match(normal,/data-wed-floor-expand aria-expanded="false"/);
+ assert.match(normal,/aria-label="Ampliar plano a pantalla completa"/);
+ assert.match(expanded,/class="wed-floor-shell is-expanded" data-wed-floor-shell/);
+ assert.match(expanded,/data-wed-floor-expand aria-expanded="true"/);
+ assert.match(expanded,/aria-label="Cerrar pantalla completa"/);
+ assert.match(expanded,/title="Cerrar pantalla completa"/);
+ const code=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ assert.match(code,/setWeddingFloorExpanded\(!state\.seatingFloorExpanded\)/);
+ assert.match(code,/event\.key!=="Escape"/);
+ assert.match(code,/event\.stopImmediatePropagation\(\)/);
+ assert.match(code,/stage\.dispatchEvent\(new Event\("wed-floor-recalibrate"\)\)/);
+ assert.match(code,/state\.seatingFloorExpanded=false;state\.tableEditing="new"/);
+ assert.match(css,/\.wed-floor-shell\.is-expanded\{[\s\S]*?position:fixed;inset:0/);
+ assert.match(css,/\.wed-floor-shell\.is-expanded \.wed-floor-scroll\{[\s\S]*?overflow:auto/);
+});
+test("empty floor still offers accessible new-table action",()=>{
+ const html=renderTables([],[],null,esc);
+ assert.match(html,/data-wed-new-table/);
+ assert.match(html,/data-wed-floor-expand/);
+ assert.match(html,/Todavía no hay mesas/);
 });
