@@ -31,20 +31,32 @@ export function safeToReloadFrontend({ dirty = false, dialogOpen = false, editin
   return !dirty && !dialogOpen && !editing;
 }
 
-function showPrivateAppUpdateNotice() {
-  if (document.querySelector("[data-private-app-update]")) return;
-  const notice = document.createElement("aside");
+// A modal dialog lives in the browser's top layer. An update banner placed
+// only on document.body would be invisible and unclickable behind it.
+export function privateUpdateNoticeHost(doc) {
+  return doc.querySelector("dialog[open]") || doc.body;
+}
+function showPrivateAppUpdateNotice({confirmDiscard=false}={}) {
+  let notice=document.querySelector("[data-private-app-update]");
+  if(notice){
+    privateUpdateNoticeHost(document).append(notice);
+    return;
+  }
+  notice = document.createElement("aside");
   notice.className = "private-app-update-notice";
   notice.dataset.privateAppUpdate = "available";
   notice.setAttribute("role", "status");
   const message = document.createElement("span");
-  message.textContent = "Hay una versión nueva de Segundo Cerebro.";
+  message.textContent = "Hay una versión nueva de Segundo Cerebro. Recarga la página para ver la nueva interfaz (no solo los datos).";
   const button = document.createElement("button");
   button.type = "button";
-  button.textContent = "Actualizar página";
-  button.addEventListener("click", () => window.location.reload());
+  button.textContent = "Cargar versión nueva";
+  button.addEventListener("click", () => {
+    if(confirmDiscard&&!window.confirm("Hay datos que podrían estar sin guardar. ¿Cargar la nueva versión y descartar lo no guardado?"))return;
+    window.location.reload();
+  });
   notice.append(message, button);
-  document.body.append(notice);
+  privateUpdateNoticeHost(document).append(notice);
 }
 
 export function installPrivateAppFreshnessGuard() {
@@ -95,7 +107,7 @@ export function installPrivateAppFreshnessGuard() {
       })) {
         window.location.reload();
       } else {
-        showPrivateAppUpdateNotice();
+        showPrivateAppUpdateNotice({confirmDiscard:dirtyInput||Boolean(editing)});
       }
     } catch {
       // Offline or temporary Access/network failure: retain the usable UI.
@@ -112,4 +124,17 @@ export function installPrivateAppFreshnessGuard() {
   window.addEventListener("pageshow", (event) => {
     if (event.persisted) void checkFreshness(true); // Back-forward cache restoration.
   });
+  // Explicit data refresh must also check the *code* version. This is how
+  // a long-lived Boda dialog immediately discovers new deploys.
+  document.addEventListener("click", (event) => {
+    if(event.target?.closest?.("#refresh-app, #desktop-area-refresh, #wed-main-refresh")) {
+      void checkFreshness(true);
+    }
+  }, true);
+  // Keep the warning reachable after the user closes an editing dialog.
+  document.addEventListener("close", (event) => {
+    if(!event.target?.matches?.("dialog"))return;
+    const notice=event.target.querySelector("[data-private-app-update]");
+    if(notice)document.body.append(notice);
+  }, true);
 }
