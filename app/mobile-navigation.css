@@ -344,3 +344,5 @@
  .mobile-catalog-group summary:focus-visible,
  .mobile-catalog-links :is(a,button):focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 }
+
+/* Deployment sync: mobile toolbar and unified dock must ship as one tested bundle. */
