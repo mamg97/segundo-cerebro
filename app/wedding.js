@@ -6,12 +6,12 @@ export const WEDDING_TYPES=[
  ["vestuario","Vestuario","♧"],["invitados","Invitados","♙"],
  ["ideas","Otras ideas","✧"],["tareas","Tareas","✓"],["otros","Otros","⋯"]
 ];
-const STATUSES=[["idea","Idea"],["pendiente","Pendiente"],["contactado","Contactado"],["presupuestado","Presupuesto recibido"],["reservado","Reservado"],["confirmado","Confirmado"],["descartado","Descartado"],["hecho","Hecho"]];
+const STATUSES=[["idea","Idea"],["pendiente","Pendiente"],["contactado","Contactado"],["presupuestado","Presupuesto recibido"],["reservado","Reservado"],["confirmado","Confirmado"],["hecho","Hecho"],["descartado","Descartado"]];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"inspiracion",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:""};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:""};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -68,8 +68,9 @@ export function inspirationItems(items,filter="all",search=""){
 }
 function viewTabs(){
  return '<nav class="wed-view-tabs" aria-label="Secciones de boda">'+
-  '<button type="button" data-wed-view="inspiracion" aria-pressed="'+(state.view==="inspiracion")+'">✦ Inspiración</button>'+
-  '<button type="button" data-wed-view="planificacion" aria-pressed="'+(state.view==="planificacion")+'">☷ Planificación y presupuesto</button>'+
+ '<button type="button" data-wed-view="kanban" aria-pressed="'+(state.view==="kanban")+'">☷ Kanban</button>'+
+ '<button type="button" data-wed-view="inspiracion" aria-pressed="'+(state.view==="inspiracion")+'">✦ Inspiración</button>'+
+ '<button type="button" data-wed-view="planificacion" aria-pressed="'+(state.view==="planificacion")+'">▤ Planificación y presupuesto</button>'+
  '</nav>';
 }
 function inspirationCard(item){
@@ -103,7 +104,7 @@ function inspirationHome(){
  '<button class="wed-primary" type="button" id="wed-add-pin">+ Guardar idea</button></div>'+
  '<div class="wed-inspo-guide"><strong>De Pinterest a vuestro tablero:</strong> Copiar enlace del pin → Guardar idea → Pegar el enlace. Podéis adjuntar una foto de referencia desde el móvil.</div>'+
  '<div class="wed-inspo-controls"><label>Buscar ideas<input type="search" id="wed-inspo-search" value="'+esc(state.inspirationSearch)+'" placeholder="Flores, finca, decoración…"></label>'+
- '<button id="wed-inspo-refresh" type="button">↻ Actualizar</button></div>'+
+ '</div>'+
  '<nav class="wed-inspo-filters" aria-label="Categorías de inspiración">'+INSPIRATION_CATEGORIES.map(category=>{
   const item=WEDDING_TYPES.find(x=>x[0]===category);
   return '<button type="button" data-wed-inspo-filter="'+category+'" aria-pressed="'+(state.inspirationFilter===category)+'">'+esc(item?.[1]||category)+'</button>';
@@ -114,8 +115,64 @@ function inspirationHome(){
  '</div>';
 }
 
+// Existing private D1 data and optimistic revisions remain the single source of truth.
+export function filteredWeddingItems(items,category="all",search=""){
+ const term=String(search||"").trim().toLocaleLowerCase("es");
+ return items.filter(item=>(category==="all"||item.category===category)&&
+  (!term||[item.title,item.description,item.provider,typeName(item.category)].join(" ").toLocaleLowerCase("es").includes(term)));
+}
+function sortWeddingItems(items,order){
+ const result=[...items];
+ if(order==="budget")return result.sort((a,b)=>(b.contractedCents??b.estimateCents??-1)-(a.contractedCents??a.estimateCents??-1));
+ if(order==="deadline")return result.sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
+ return result.sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+}
+function kanbanCard(item){
+ const amount=item.contractedCents!=null?eur(item.contractedCents):item.estimateCents!=null?eur(item.estimateCents):"";
+ const url=item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer" class="wed-kanban-link" aria-label="Abrir enlace de '+esc(item.title)+'">↗ Enlace</a>':"";
+ const picture=item.photoUrl?'<img loading="lazy" alt="" class="wed-kanban-thumb" src="'+esc(item.photoUrl)+'?v='+encodeURIComponent(item.updatedAt||"1")+'">':"";
+ return '<article class="wed-kanban-card" draggable="true" data-wed-drag="'+esc(item.id)+'">'+
+  '<div class="wed-kanban-card-main">'+picture+'<div class="wed-kanban-card-title"><small>'+esc(typeName(item.category))+'</small><strong>'+esc(item.title)+'</strong>'+
+  (item.provider?'<span>'+esc(item.provider)+'</span>':"")+'</div></div>'+
+  '<div class="wed-kanban-meta">'+(amount?'<span>'+amount+'</span>':"")+
+  (item.dueDate?'<span>📅 '+esc(item.dueDate)+'</span>':"")+'</div>'+
+  '<div class="wed-kanban-actions">'+url+'<button type="button" data-wed-edit="'+esc(item.id)+'">Editar</button>'+
+  '<label class="wed-kanban-move">Mover a <select data-wed-move="'+esc(item.id)+'" aria-label="Mover '+esc(item.title)+' a otra columna">'+
+   STATUSES.map(([key,name])=>'<option value="'+key+'" '+(item.status===key?"selected":"")+'>'+esc(name)+'</option>').join("")+
+  '</select></label></div></article>';
+}
+function kanbanBoard(){
+ const all=sortWeddingItems(filteredWeddingItems(state.items,state.filter,state.search),state.sort);
+ return '<div class="wed-kanban" id="wed-kanban-board" aria-label="Tablero Kanban de Boda">'+STATUSES.map(([status,label])=>{
+  const selected=all.filter(i=>i.status===status);
+  return '<section class="wed-kanban-column" data-wed-column="'+status+'" aria-label="'+esc(label)+', '+selected.length+' elementos">'+
+    '<header class="wed-kanban-column-head"><strong>'+esc(label)+'</strong><span>'+selected.length+'</span>'+
+    '<button type="button" data-wed-add-status="'+status+'" aria-label="Añadir elemento a '+esc(label)+'">+</button></header>'+
+    '<div class="wed-kanban-column-cards">'+(selected.length?selected.map(kanbanCard).join(""):
+      '<div class="wed-kanban-empty">Arrastra una tarjeta aquí o pulsa +</div>')+'</div></section>';
+ }).join("")+'</div>';
+}
+function kanbanHome(){
+ const n=weddingTotals(state.items);
+ return '<div class="wed-workspace wed-kanban-workspace">'+viewTabs()+
+  '<div class="wed-toolbar"><div><h3>Organización de la boda</h3><small>'+n.total+' elementos activos · compartido entre participantes autorizados</small></div>'+
+  '<button type="button" class="wed-primary" id="wed-new">+ Añadir tarjeta</button></div>'+
+  '<div class="wed-controls"><label class="wed-search"><span>Buscar</span><input type="search" id="wed-search" value="'+esc(state.search)+'" placeholder="Proveedores, tareas, ideas…"></label>'+
+  '<label class="wed-sort">Ordenar <select id="wed-sort"><option value="recent" '+(state.sort==="recent"?"selected":"")+'>Actualización</option>'+
+  '<option value="deadline" '+(state.sort==="deadline"?"selected":"")+'>Fecha clave</option>'+
+  '<option value="budget" '+(state.sort==="budget"?"selected":"")+'>Presupuesto</option></select></label></div>'+
+  '<nav class="wed-filters" aria-label="Filtrar tarjetas por categoría">'+WEDDING_TYPES.map(([id,label,icon])=>
+   '<button type="button" data-wed-filter="'+id+'" aria-pressed="'+(state.filter===id)+'">'+icon+' '+esc(label)+'</button>').join("")+'</nav>'+
+  '<p class="wed-kanban-hint">Arrastra tarjetas entre columnas en ordenador o usa «Mover a» desde el móvil. Los cambios se guardan en el espacio compartido.</p>'+
+  '<div id="wed-results">'+kanbanBoard()+'</div></div>';
+}
+function refreshBar(){
+ return '<div class="wed-fixed-actions"><button type="button" id="wed-main-refresh" aria-label="Actualizar Boda" title="Actualizar Boda">'+
+  '<span aria-hidden="true">↻</span><span>Actualizar</span></button></div>';
+}
 function home(){
  if(state.view==="inspiracion")return inspirationHome();
+ if(state.view==="kanban")return kanbanHome();
  const n=weddingTotals(state.items);
  return '<div class="wed-workspace">'+viewTabs()+
    '<div class="wed-stats"><div><small>Elementos activos</small><strong>'+n.total+'</strong></div>'+
@@ -125,7 +182,7 @@ function home(){
    '<div class="wed-toolbar"><div><h3>Tablero de boda</h3><small>'+n.ideas+' ideas · '+n.confirmed+' reservados o confirmados</small></div>'+
    '<button type="button" class="wed-primary" id="wed-new">+ Añadir elemento</button></div>'+
    '<div class="wed-controls"><label class="wed-search"><span>Buscar</span><input id="wed-search" type="search" placeholder="Buscar fincas, ideas, proveedores…" value="'+esc(state.search)+'"></label>'+
-   '<button type="button" id="wed-refresh">↻ Actualizar</button></div>'+
+   '</div>'+
    '<nav class="wed-filters" aria-label="Filtrar tipo de elemento">'+WEDDING_TYPES.map(([id,label,icon])=>'<button type="button" data-wed-filter="'+id+'" aria-pressed="'+(state.filter===id)+'">'+icon+' '+esc(label)+'</button>').join("")+'</nav>'+
    '<div id="wed-results">'+cards()+'</div>'+
    '<p class="wed-note">El presupuesto planificado usa el importe contratado cuando existe, o la estimación en su defecto. «Pagado» se muestra por separado, sin sumarlo dos veces.</p>'+
@@ -136,12 +193,12 @@ function editor(){
  if(state.ideaMode&&state.editing==="new")return quickEditor();
  const original=state.editing&&state.editing!=="new"?state.items.find(x=>x.id===state.editing):null;
  const inspirationMode=state.ideaMode&&!original;
- return '<div class="wed-editor-wrap"><button id="wed-back" class="wed-back" type="button">← Volver a '+(state.view==="inspiracion"?"Inspiración":"Planificación")+'</button>'+
+ return '<div class="wed-editor-wrap"><button id="wed-back" class="wed-back" type="button">← Volver a '+(state.view==="inspiracion"?"Inspiración":state.view==="kanban"?"Kanban":"Planificación")+'</button>'+
   '<div class="wed-editor"><h3>'+(original?"Editar elemento":inspirationMode?"Guardar idea de inspiración":"Añadir a la boda")+'</h3>'+
   '<p>'+(inspirationMode?"Pega el enlace de Pinterest (si lo tienes), añade notas y adjunta una imagen de referencia.":"Podréis modificar estos datos desde cualquiera de vuestras sesiones autorizadas.")+'</p>'+
   '<form id="wed-form"><div class="wed-form-grid">'+
   '<label>Categoría<select name="category" required>'+WEDDING_TYPES.filter(x=>x[0]!=="all").map(x=>'<option value="'+x[0]+'" '+((original?.category||"ideas")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
-  '<label>Estado<select name="status" required>'+STATUSES.map(x=>'<option value="'+x[0]+'" '+((original?.status||"idea")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
+  '<label>Estado<select name="status" required>'+STATUSES.map(x=>'<option value="'+x[0]+'" '+((original?.status||state.draftStatus||"idea")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
   '<label class="wide">Nombre o idea *<input type="text" name="title" maxlength="180" required value="'+esc(original?.title||"")+'" placeholder="Ej. Visitar finca…"></label>'+
   '<label class="wide">Descripción y notas<textarea name="description" rows="4" maxlength="4000" placeholder="Detalles, pros y contras, preguntas pendientes…">'+esc(original?.description||"")+'</textarea></label>'+
   '<label>Proveedor / contacto<input name="provider" maxlength="180" value="'+esc(original?.provider||"")+'" placeholder="Nombre del proveedor"></label>'+
@@ -158,7 +215,7 @@ function editor(){
 function show(){
  if(!active())return;
  const area=document.querySelector("#dialog-body");
- area.innerHTML=state.editing?editor():home();
+ area.innerHTML=refreshBar()+(state.editing?editor():home());
  if(state.error){const notice=document.createElement("div");notice.className="wed-alert";notice.role="alert";notice.textContent=state.error;area.prepend(notice);}
  bind(area);
 }
@@ -348,7 +405,7 @@ function bind(area){
  area.querySelector("#wed-add-pin")?.addEventListener("click",startIdea);
  area.querySelector("#wed-floating-add")?.addEventListener("click",startIdea);
  area.querySelector("#wed-first-pin")?.addEventListener("click",startIdea);
- area.querySelector("#wed-inspo-refresh")?.addEventListener("click",()=>{state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
+ area.querySelector("#wed-main-refresh")?.addEventListener("click",()=>{if(state.busy||state.quickBusy)return;if(state.editing&&!window.confirm("¿Actualizar y descartar los cambios no guardados?"))return;state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
  area.querySelectorAll("[data-wed-inspo-filter]").forEach(button=>button.addEventListener("click",()=>{
   state.inspirationFilter=button.dataset.wedInspoFilter;state.error="";show();
  }));
@@ -356,11 +413,12 @@ function bind(area){
   state.inspirationSearch=event.target.value;
   const target=area.querySelector("#wed-inspo-results");if(target){target.innerHTML=inspirationCards();bindCards(target);bindEmptyInspiration(target);}
  });
- area.querySelector("#wed-new")?.addEventListener("click",()=>{state.editing="new";state.ideaMode=false;state.error="";show();});
+ area.querySelector("#wed-new")?.addEventListener("click",()=>{state.draftStatus="idea";state.editing="new";state.ideaMode=false;state.error="";show();});
+
  area.querySelector("#wed-back")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;state.error="";show();});
  area.querySelector("#wed-cancel")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;state.error="";show();});
- area.querySelector("#wed-refresh")?.addEventListener("click",()=>{state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
- area.querySelector("#wed-search")?.addEventListener("input",e=>{state.search=e.target.value;const target=area.querySelector("#wed-results");if(target){target.innerHTML=cards();bindCards(target);}});
+ area.querySelector("#wed-sort")?.addEventListener("change",e=>{state.sort=e.target.value;const target=area.querySelector("#wed-results");if(target){target.innerHTML=kanbanBoard();bindCards(target);}});
+ area.querySelector("#wed-search")?.addEventListener("input",e=>{state.search=e.target.value;const target=area.querySelector("#wed-results");if(target){target.innerHTML=state.view==="kanban"?kanbanBoard():cards();bindCards(target);}});
  area.querySelectorAll("[data-wed-filter]").forEach(btn=>btn.addEventListener("click",()=>{state.filter=btn.dataset.wedFilter;state.error="";show();}));
  bindCards(area);
  bindEmptyInspiration(area);
@@ -390,13 +448,42 @@ function bind(area){
 function bindEmptyInspiration(root){
  root.querySelector("#wed-first-pin")?.addEventListener("click",startIdea);
 }
-function bindCards(root){root.querySelectorAll("[data-wed-edit]").forEach(btn=>btn.addEventListener("click",()=>{state.editing=btn.dataset.wedEdit;state.ideaMode=false;state.error="";show();}));}
+async function moveCard(id,status){
+ if(state.busy||!STATUSES.some(entry=>entry[0]===status))return;
+ const item=state.items.find(entry=>entry.id===id);
+ if(!item||item.status===status)return;
+ await mutate(()=>getJson("/api/wedding/items/"+encodeURIComponent(id),"PATCH",{
+  category:item.category,status,title:item.title,description:item.description||"",
+  provider:item.provider||"",url:item.url||"",dueDate:item.dueDate||"",
+  estimateCents:item.estimateCents??null,contractedCents:item.contractedCents??null,
+  paidCents:item.paidCents??0,revision:item.revision
+ }));
+}
+function bindCards(root){
+ root.querySelectorAll("[data-wed-add-status]").forEach(btn=>btn.addEventListener("click",()=>{state.draftStatus=btn.dataset.wedAddStatus;state.editing="new";state.ideaMode=false;state.error="";show();}));
+ root.querySelectorAll("[data-wed-edit]").forEach(btn=>btn.addEventListener("click",()=>{state.editing=btn.dataset.wedEdit;state.ideaMode=false;state.error="";show();}));
+ root.querySelectorAll("[data-wed-move]").forEach(select=>select.addEventListener("change",()=>void moveCard(select.dataset.wedMove,select.value)));
+ root.querySelectorAll("[data-wed-drag]").forEach(card=>card.addEventListener("dragstart",event=>{
+  if(state.busy){event.preventDefault();return;}
+  event.dataTransfer.effectAllowed="move";
+  event.dataTransfer.setData("text/plain",card.dataset.wedDrag);
+ }));
+ root.querySelectorAll("[data-wed-column]").forEach(column=>{
+  column.addEventListener("dragover",event=>{if(state.busy)return;event.preventDefault();event.dataTransfer.dropEffect="move";});
+  column.addEventListener("drop",event=>{
+   event.preventDefault();column.classList.remove("wed-drop-target");
+   void moveCard(event.dataTransfer.getData("text/plain"),column.dataset.wedColumn);
+  });
+  column.addEventListener("dragenter",event=>{if(event.dataTransfer.types.includes("text/plain"))column.classList.add("wed-drop-target");});
+  column.addEventListener("dragleave",event=>{if(!column.contains(event.relatedTarget))column.classList.remove("wed-drop-target");});
+ });
+}
 export function openWeddingDetail(remote){
  const dialog=document.querySelector("#detail-dialog"),body=document.querySelector("#dialog-body");if(!dialog||!body)return;
  document.querySelector("#dialog-context").textContent="Pareja · proyecto compartido";
  document.querySelector("#dialog-title").textContent="Boda";
  dialog.classList.add("wedding-dialog");
- clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="inspiracion";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;
+ clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();
  if(!remote){body.innerHTML='<div class="wed-locked"><h3>Boda</h3><p>Este apartado permite añadir ideas, presupuestos y fotos en la versión privada de Segundo Cerebro.</p></div>';return;}

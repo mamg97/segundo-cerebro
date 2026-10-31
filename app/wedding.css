@@ -174,3 +174,92 @@
   word-break:normal;
  }
 }
+
+/* Wedding Kanban: status columns from the existing private store; no extra data cache. */
+.wed-fixed-actions{
+ position:-webkit-sticky;position:sticky;top:0;z-index:30;
+ display:flex;justify-content:flex-end;align-items:center;
+ min-height:48px;margin:0 0 9px;padding:5px 72px 5px 8px;
+ border-bottom:1px solid var(--line);background:var(--paper);
+}
+.wed-fixed-actions button{
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ border:1px solid var(--line);border-radius:10px;min-height:38px;
+ padding:7px 13px;background:var(--surface);color:var(--ink);font:inherit;
+ font-size:12px;font-weight:800;cursor:pointer;
+}
+.wed-fixed-actions button span:first-child{font-size:22px;line-height:1;color:var(--blue)}
+.wed-fixed-actions button:hover,.wed-fixed-actions button:focus-visible{border-color:var(--blue)}
+.wed-kanban-workspace{max-width:none}
+.wed-kanban-workspace .wed-toolbar{margin-bottom:8px}
+.wed-kanban-hint{font-size:11px;color:var(--ink-soft);margin:8px 0 12px}
+.wed-sort{display:grid;gap:5px;min-width:160px;font-size:11px;font-weight:750;color:var(--ink-soft)}
+.wed-sort select{
+ min-height:41px;padding:8px 10px;border:1px solid var(--line);
+ border-radius:9px;background:var(--paper);color:var(--ink);font:inherit;font-size:12px
+}
+.wed-kanban{
+ display:grid;grid-auto-flow:column;grid-auto-columns:minmax(245px,290px);
+ gap:12px;align-items:start;overflow-x:auto;overscroll-behavior-x:contain;
+ scroll-snap-type:x proximity;scrollbar-width:thin;
+ padding:3px 3px 17px;
+}
+.wed-kanban-column{
+ min-width:0;scroll-snap-align:start;border:1px solid var(--line);
+ border-radius:13px;background:var(--surface);padding:9px;
+}
+.wed-kanban-column-head{
+ display:flex;align-items:center;gap:8px;min-height:36px;
+ padding:3px 4px 9px;border-bottom:1px solid var(--line);
+}
+.wed-kanban-column-head strong{flex:1;font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+.wed-kanban-column-head span{
+ min-width:23px;padding:3px 5px;text-align:center;border-radius:999px;
+ background:var(--paper);color:var(--ink-soft);font-size:11px;font-weight:800;
+}
+.wed-kanban-column-head button{
+ width:29px;height:29px;border:1px solid var(--line);border-radius:9px;
+ background:var(--paper);color:var(--blue);font-size:18px;cursor:pointer;
+}
+.wed-kanban-column-cards{display:grid;align-content:start;gap:9px;padding-top:9px;min-height:55px}
+.wed-kanban-card{
+ display:grid;gap:9px;border:1px solid var(--line);border-radius:10px;
+ background:var(--paper);padding:10px;min-width:0;cursor:grab;
+}
+.wed-kanban-card:active{cursor:grabbing}
+.wed-kanban-card:focus-within{border-color:var(--blue)}
+.wed-kanban-card-main{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.wed-kanban-thumb{
+ width:48px;height:48px;flex:0 0 48px;object-fit:contain;
+ border:1px solid var(--line);border-radius:7px;background:var(--surface);
+}
+.wed-kanban-card-title{display:grid;gap:4px;min-width:0;flex:1;overflow-wrap:anywhere}
+.wed-kanban-card-title small{font-size:10px;color:var(--blue);font-weight:800}
+.wed-kanban-card-title strong{font-size:13px;line-height:1.3}
+.wed-kanban-card-title span{font-size:11px;color:var(--ink-soft)}
+.wed-kanban-meta{display:flex;flex-wrap:wrap;gap:5px}
+.wed-kanban-meta span{
+ padding:4px 6px;border:1px solid var(--line);border-radius:6px;
+ font-size:10px;color:var(--ink-soft);font-variant-numeric:tabular-nums;
+}
+.wed-kanban-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.wed-kanban-actions button,.wed-kanban-link{
+ border:0;background:none;padding:5px 1px;color:var(--blue);
+ font:inherit;font-size:11px;font-weight:800;text-decoration:none;cursor:pointer;
+}
+.wed-kanban-move{display:grid;gap:3px;margin-left:auto;color:var(--ink-soft);font-size:10px}
+.wed-kanban-move select{
+ max-width:125px;min-height:30px;padding:4px;border:1px solid var(--line);
+ border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;font-size:10px;
+}
+.wed-kanban-empty{font-size:11px;color:var(--ink-soft);padding:12px 5px;line-height:1.45}
+.wed-kanban-column.wed-drop-target{outline:2px dashed var(--blue);outline-offset:-3px;background:var(--blue-soft)}
+@media(max-width:650px){
+ .wed-fixed-actions{min-height:41px;padding-right:53px}
+ .wed-fixed-actions button{min-height:34px;padding:5px 10px}
+ .wed-kanban{grid-auto-columns:minmax(230px,82vw);gap:9px}
+ .wed-kanban-workspace .wed-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(115px,140px);align-items:end}
+ .wed-sort{min-width:0}
+ .wed-kanban-hint{margin:6px 0 10px}
+ .wed-kanban-workspace .wed-toolbar h3{font-size:19px}
+}
