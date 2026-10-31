@@ -50,6 +50,19 @@ jobs:
           const eventName = process.env.EVENT_NAME || "";
           const schedule = process.env.EVENT_SCHEDULE || "";
 
+          // A failed Chromium audit can still be a completed real audit. The
+          // backup slot must not repeat it just to turn an expected red CI green.
+          // Short failures remain eligible for a recovery attempt.
+          function completedChromiumAudit(run, chromiumStep) {
+            if (run.status !== "completed") return false;
+            if (chromiumStep?.conclusion === "success") return true;
+            if (chromiumStep?.conclusion !== "failure") return false;
+            const started = Date.parse(chromiumStep.started_at || "");
+            const finished = Date.parse(chromiumStep.completed_at || "");
+            return Number.isFinite(started) && Number.isFinite(finished) &&
+              finished - started >= 120_000;
+          }
+
           async function main() {
             if (eventName !== "schedule" || schedule === "17 * * * *") {
               fs.appendFileSync(output, "run_audit=true\n");
@@ -104,7 +117,7 @@ jobs:
                   continue;
                 }
 
-                if (run.conclusion === "success" && chromiumStep?.conclusion === "success") {
+                if (completedChromiumAudit(run, chromiumStep)) {
                   fullAuditCovered = true;
                   break;
                 }
