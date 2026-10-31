@@ -24,7 +24,8 @@ test("a shopping item displays only its matching canonical product image", () =>
   assert.match(markup, /class="pantry-shopping-info"/);
   assert.match(markup, /producto familiar/);
   assert.match(markup, /2 paquetes/);
-  assert.match(markup, /state-comprar/);
+  assert.doesNotMatch(markup, /class="purchase-state/);
+  assert.match(markup, /class="pantry-confirm-icon"/);
   assert.match(markup, /tienda\.mercadona\.es\/product\/9999/);
 });
 
@@ -68,7 +69,9 @@ test("mobile layout has thumbnail, title, state and price without hiding content
   const app = await readFile(new URL("./pantry.js", import.meta.url), "utf8");
   assert.match(css, /\.pantry-shopping-row\.is-link > \.pantry-product-thumb/);
   assert.match(css, /\.pantry-shopping-row\.is-link > \.pantry-shopping-info/);
-  assert.match(css, /\.pantry-shopping-row\.is-link > \.purchase-state/);
+  const mobile = await readFile(new URL("./mobile-navigation.css", import.meta.url), "utf8");
+  assert.match(mobile, /grid-template-columns:minmax\(0,1fr\) 44px/);
+  assert.match(mobile, /\.pantry-confirm-label\{display:none\}/);
   assert.match(css, /\.pantry-shopping-row\.is-link > \.pantry-shopping-price/);
   assert.match(css, /grid-template-columns:\s*44px minmax\(0, 1fr\) auto/);
   assert.match(app, /body\.querySelectorAll\("\.pantry-product-thumb img"\)/);
