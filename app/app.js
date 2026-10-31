@@ -4572,6 +4572,19 @@ function bindHabitInteractions() {
       const previousLevel = Number(before?.summary?.level?.level || 1);
       const beforeAllDone = Number(before?.summary?.total || 0) > 0 && Number(before?.summary?.done || 0) === Number(before?.summary?.total || 0);
       habitHaptic(Boolean(beforeHabit?.done));
+      // Reflect the tap in the card immediately; server response remains authoritative.
+      // Do not update global XP/streak counters until the write is confirmed.
+      const originalCheck = button.querySelector(".habit-check")?.textContent || "";
+      const originalCount = button.querySelector(".habit-count")?.textContent || "";
+      const wasDone = button.classList.contains("done");
+      const target = Math.max(1, Number(beforeHabit?.target || beforeHabit?.timesPerDay || 1));
+      const optimisticCount = wasDone ? Math.max(0, previousCount - 1) : Math.min(target, previousCount + 1);
+      button.classList.toggle("done", optimisticCount >= target);
+      const check = button.querySelector(".habit-check");
+      const count = button.querySelector(".habit-count");
+      if (check) check.textContent = optimisticCount >= target ? "✓" : (beforeHabit?.icon || originalCheck);
+      if (count) count.textContent = optimisticCount + "/" + target;
+      button.setAttribute("aria-busy", "true");
       button.disabled = true;
       button.classList.add("saving");
       try {
@@ -4598,6 +4611,11 @@ function bindHabitInteractions() {
           showHabitLevelUp(nextLevel);
         }
       } catch (error) {
+        // Undo the visual prediction if persistence fails.
+        button.classList.toggle("done", wasDone);
+        if (check) check.textContent = originalCheck;
+        if (count) count.textContent = originalCount;
+        button.removeAttribute("aria-busy");
         button.disabled = false;
         button.classList.remove("saving");
         console.warn("Habit toggle failed", error);
