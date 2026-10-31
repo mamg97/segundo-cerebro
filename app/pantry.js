@@ -312,7 +312,17 @@ export function pantryShoppingRowMarkup(item, currency = "EUR") {
         '" data-shopping-external="' + escapeHtml(item.externalId || "") +
         '" data-shopping-updated="' + escapeHtml(item.updatedAt || "") +
         '" aria-label="Ya está en despensa: ' + escapeHtml(displayName) +
-        '">✓ En casa</button></article>';
+        '">✓ En casa</button>' +
+      '<button type="button" class="pantry-shopping-remove" data-shopping-remove="' +
+        escapeHtml(item.externalId || "") + '" data-shopping-product-id="' + escapeHtml(item.productId || "") +
+        '" data-shopping-name="' + escapeHtml(item.name || "") +
+        '" data-shopping-updated="' + escapeHtml(item.updatedAt || "") +
+        '" aria-label="Eliminar de la lista: ' + escapeHtml(displayName) + '" title="Quitar de la lista">✕</button>' +
+      (!item.productId ? '<button type="button" class="pantry-shopping-link" data-shopping-link="' +
+        escapeHtml(item.externalId || "") + '" data-shopping-name="' + escapeHtml(item.name || "") +
+        '" data-shopping-updated="' + escapeHtml(item.updatedAt || "") +
+        '" aria-label="Vincular producto y precio de ' + escapeHtml(displayName) + '">Vincular precio</button>' : '') +
+      '</article>';
   }
 
 function renderWorkspace(payload, initialView = "inventory") {
@@ -499,7 +509,11 @@ function renderWorkspace(payload, initialView = "inventory") {
         renderWorkspace(fresh,"shopping");
       }catch(error){viewUpdated=false;}
       const node=document.querySelector("#dialog-body [data-shopping-status]");
-      if(node)node.textContent=data.alreadyListed
+      if(node)node.textContent=data.action==="remove"
+        ?"Eliminado de la lista; inventario intacto.":
+        data.action==="link"
+          ?"Producto vinculado a su historial de precios.":
+        data.alreadyListed
         ?"Este producto ya figura en la lista.":
         data.inventoryReviewRequired
           ?"Añadido a la compra. Hay varios lotes en inventario: cantidades conservadas, pendientes de revisar.":
@@ -535,6 +549,49 @@ function renderWorkspace(payload, initialView = "inventory") {
       quantity:form.elements.namedItem("quantity")?.value||null,
       unit:form.elements.namedItem("unit")?.value||""});
   });
+  body.querySelectorAll("[data-shopping-remove]").forEach(button=>
+    button.addEventListener("click",()=>{
+      if(busy.value)return;
+      const name=button.dataset.shoppingName||"producto";
+      if(!window.confirm('¿Quitar «'+name+'» de la lista? No cambia el inventario ni registra una compra.'))return;
+      void pantryAction({action:"remove",productId:button.dataset.shoppingProductId||"",
+        externalId:button.dataset.shoppingRemove||"",shoppingName:name,
+        updatedAt:button.dataset.shoppingUpdated||""});
+    }));
+  body.querySelectorAll("[data-shopping-link]").forEach(button=>
+    button.addEventListener("click",()=>{
+      if(busy.value)return;
+      const dialog=document.createElement("dialog");
+      dialog.className="pantry-shopping-product-picker";
+      const name=button.dataset.shoppingName||"Producto";
+      dialog.innerHTML='<form method="dialog"><h3>Vincular precio</h3>'+
+        '<p>Selecciona el producto exacto para «'+escapeHtml(name)+'». No se modificará la cantidad.</p>'+
+        '<input data-shopping-link-search type="search" placeholder="Buscar producto..." autocomplete="off">'+
+        '<select required aria-label="Producto exacto">'+productChoices+'</select>'+
+        '<div><button type="button" data-shopping-link-confirm>Vincular</button>'+
+        '<button type="submit">Cancelar</button></div></form>';
+      document.body.append(dialog);
+      const select=dialog.querySelector("select");
+      const search=dialog.querySelector("[data-shopping-link-search]");
+      search.addEventListener("input",()=>{
+        const options=productSearch(search.value);
+        select.innerHTML='<option value="">Elige producto exacto</option>'+
+          options.slice(0,100).map(p=>'<option value="'+escapeHtml(p.id)+'">'+escapeHtml(p.name)+'</option>').join("");
+      });
+      dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+      dialog.querySelector("[data-shopping-link-confirm]").addEventListener("click",()=>{
+        if(!select.value)return;
+        const product=registeredProducts.find(p=>p.id===select.value);
+        if(!product||!window.confirm('¿Confirmas que «'+name+'» corresponde a «'+product.name+'»?'))return;
+        dialog.close();
+        void pantryAction({action:"link",productId:product.id,
+          externalId:button.dataset.shoppingLink||"",shoppingName:name,
+          updatedAt:button.dataset.shoppingUpdated||""});
+      });
+      dialog.showModal();
+      search.value=name;search.dispatchEvent(new Event("input"));
+      search.focus();
+    }));
   body.querySelectorAll("[data-shopping-available]").forEach(button=>
     button.addEventListener("click",()=>{
       if(busy.value)return;
