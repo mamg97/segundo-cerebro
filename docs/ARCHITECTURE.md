@@ -30,8 +30,16 @@ comprueba capacidad y conflictos de revisión.
 Un plano horizontal de ancho completo representa las mesas como círculos movibles;
 se seleccionan pulsando encima y se trasladan con arrastre de ratón/táctil o
 flechas del teclado. La selección abre debajo las acciones y el listado de nombres.
-Cada mesa dibuja iniciales y nombres abreviados alrededor del círculo; pulsar
-una persona abre su ficha. El plano se dibuja como una cuadrícula CSS con una celda centrada por mesa, incluso cuando JavaScript no se ejecuta; se elimina el anclaje absoluto `left/top` que dejaba la presidencial parcialmente fuera del lienzo.
+La mesa aparece únicamente como un tablero circular (sin tarjeta cuadrada
+ni marco visible) y cada silla es un círculo individual sobre una corona
+radial, con ángulos equidistantes en 360°. La mesa central es un botón
+que abre el editor de mesa; cada persona ocupada es un botón que abre
+su ficha editable; cada plaza vacía abre el selector para esa silla.
+Se muestran iniciales en el círculo y el nombre abreviado al pasar el
+cursor o enfocar con teclado. Las mesas de 6 y 12 usan asientos de 38px;
+para capacidades de 13 a 30 se reduce el diámetro para evitar solapes.
+El rectángulo de 268px utilizado para el layout es transparente, no
+una tarjeta visible. El plano se dibuja como una cuadrícula CSS con una celda centrada por mesa, incluso cuando JavaScript no se ejecuta; se elimina el anclaje absoluto `left/top` que dejaba la presidencial parcialmente fuera del lienzo.
 El arrastre calcula la traslación en píxeles respecto al centro medido de su celda (`translate3d`), a partir de las coordenadas porcentuales guardadas en D1, sin usar `offsetLeft` ni `offsetTop`. Las sillas continúan siendo botones vinculados a índices privados. Al soltar, verifica la respuesta
 de D1 y vuelve a leer las mesas; si falla el guardado, muestra un error.
 Los límites visuales se calculan con las dimensiones reales de la mesa,
