@@ -15,7 +15,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,seatingOpenTableId:null,seatingSelectedTableId:null,seatingTargetSeatIndex:null,draftCategory:"ideas",exporting:false};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,seatingOpenTableId:null,seatingSelectedTableId:null,seatingTargetSeatIndex:null,seatingFloorExpanded:false,draftCategory:"ideas",exporting:false};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -203,7 +203,7 @@ function home(){
  if(state.view==="invitados"||state.view==="mesas"){
   const contents=!state.plannerLoaded?'<div class="wed-loading">Cargando información privada…</div>':
    state.view==="invitados"?renderGuests(state.guests,state.tables,state.guestEditing,esc):
-   renderTables(state.guests,state.tables,state.tableEditing,esc,state.seatingSelectedTableId,state.seatingTargetSeatIndex);
+   renderTables(state.guests,state.tables,state.tableEditing,esc,state.seatingSelectedTableId,state.seatingTargetSeatIndex,state.seatingFloorExpanded);
   return '<div class="wed-workspace">'+contents+'</div>';
  }
  const n=weddingTotals(state.items);
@@ -298,6 +298,7 @@ async function downloadWeddingSheet(){
 }
 function show(){
  if(!active())return;
+ if(state.view!=="mesas"||state.tableEditing)state.seatingFloorExpanded=false;
  const area=document.querySelector("#dialog-body");
  area.innerHTML='<div class="wed-view-actions">'+viewTabs()+
  '<button type="button" id="wed-download-sheet" title="Descargar un Excel con todos los datos de esta sección" '+(state.exporting?'disabled':'')+'>'+
@@ -386,6 +387,29 @@ function tablePayload(form){
 // Tables always occupy a centered CSS grid cell in the no-JS baseline.
 // Movement uses a pixel translation from that measured cell center, never
 // absolute left/top percentages (which left older tables off the canvas).
+// An in-dialog fixed overlay, so the map can occupy the window even when
+// Fullscreen API permissions or mobile browser chrome prevent native fullscreen.
+function setWeddingFloorExpanded(expanded){
+ state.seatingFloorExpanded=Boolean(expanded);
+ const shell=document.querySelector("[data-wed-floor-shell]");
+ if(!shell)return;
+ shell.classList.toggle("is-expanded",state.seatingFloorExpanded);
+ const btn=shell.querySelector("[data-wed-floor-expand]");
+ if(btn){
+  const label=state.seatingFloorExpanded?"Cerrar pantalla completa":"Ampliar plano a pantalla completa";
+  btn.textContent=state.seatingFloorExpanded?"×":"⛶";
+  btn.setAttribute("aria-expanded",String(state.seatingFloorExpanded));
+  btn.setAttribute("aria-label",label);btn.title=label;
+ }
+ const stage=shell.querySelector("[data-wed-floor-plan]");
+ if(stage)requestAnimationFrame(()=>stage.dispatchEvent(new Event("wed-floor-recalibrate")));
+}
+document.addEventListener("keydown",event=>{
+ if(event.key!=="Escape"||!state.seatingFloorExpanded||!active())return;
+ event.preventDefault();event.stopImmediatePropagation();
+ setWeddingFloorExpanded(false);
+ document.querySelector("[data-wed-floor-expand]")?.focus({preventScroll:true});
+},true);
 function bindWeddingFloorPlan(area){
  const stage=area.querySelector("[data-wed-floor-plan]");
  if(!stage)return;
@@ -430,6 +454,7 @@ function bindWeddingFloorPlan(area){
   };
   calibrate();
   requestAnimationFrame(calibrate);
+  stage.addEventListener("wed-floor-recalibrate",calibrate);
   const persist=point=>{
    const table=state.tables.find(t=>t.id===id);
    if(!table||state.busy)return;
@@ -583,6 +608,7 @@ function bindPlannerActions(area){
   const table=state.tables.find(t=>t.id===tableId);
   if(!table||!Number.isInteger(index)||index<0||index>=table.capacity)return;
   state.seatingSelectedTableId=tableId;state.seatingTargetSeatIndex=index;state.seatingOpenTableId=tableId;
+  state.seatingFloorExpanded=false;
   show();
   const panel=document.querySelector('[data-wed-table-picker="'+tableId+'"]');
   panel?.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -597,7 +623,12 @@ function bindPlannerActions(area){
   if(guest&&guest.tableId)void plannerMutation(()=>changeGuestTable(guest,null),{preserveScroll:true});
  }));
  bindWeddingFloorPlan(area);
- area.querySelector("[data-wed-new-table]")?.addEventListener("click",()=>{state.tableEditing="new";show();});
+ area.querySelector("[data-wed-floor-expand]")?.addEventListener("click",()=>{
+  setWeddingFloorExpanded(!state.seatingFloorExpanded);
+ });
+ area.querySelector("[data-wed-new-table]")?.addEventListener("click",()=>{
+  state.seatingFloorExpanded=false;state.tableEditing="new";show();
+ });
  area.querySelectorAll("[data-wed-center-table]").forEach(btn=>btn.addEventListener("click",()=>{
   const table=state.tables.find(t=>t.id===btn.dataset.wedCenterTable);
   if(!table||state.busy)return;
@@ -613,6 +644,7 @@ function bindPlannerActions(area){
   event.stopPropagation();
   if(state.busy)return;
   state.seatingSelectedTableId=btn.dataset.wedEditTable;
+  state.seatingFloorExpanded=false;
   state.tableEditing=btn.dataset.wedEditTable;
   show();
  }));
@@ -949,7 +981,7 @@ export function openWeddingDetail(remote){
   refreshButton.hidden=!remote;
   refreshButton.onclick=()=>void refreshWedding();
  }
- clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;state.seatingSelectedTableId=null;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;
+ clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;state.seatingSelectedTableId=null;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;state.seatingFloorExpanded=false;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();
  if(!remote){body.innerHTML='<div class="wed-locked"><h3>Boda</h3><p>Este apartado permite añadir ideas, presupuestos y fotos en la versión privada de Segundo Cerebro.</p></div>';return;}
