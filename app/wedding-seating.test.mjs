@@ -103,7 +103,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-1"/);
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
- assert.match(html,/Plaza 1 libre/);
+ assert.match(html,/Plaza 3 libre/);
  assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="4" role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
