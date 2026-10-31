@@ -1535,3 +1535,35 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  stroke-width:4;
  filter:drop-shadow(0 0 3px var(--blue,#59a7fc));
 }
+
+
+/* Wedding floor v12 — stable world coordinates across zoom / OS / fullscreen.
+   CSS zoom scales the viewport presentation only. It must not change
+   layout width/height, grid cell centers, or normalized D1 coordinates.
+   At 20% a 3600px canvas still supplies 720px of vertical scroll content. */
+.wed-floor-plan[data-wed-floor-plan],
+.wed-fullscreen-dialog > .wed-floor-shell .wed-floor-plan[data-wed-floor-plan] {
+ box-sizing:border-box;
+ display:grid;
+ width:max(3600px,calc(var(--wed-floor-columns,4)*780px)) !important;
+ min-width:max(3600px,calc(var(--wed-floor-columns,4)*780px)) !important;
+ max-width:none;
+ height:max(3600px,calc(var(--wed-floor-rows,1)*var(--wed-floor-row-height,390px) + 320px)) !important;
+ min-height:max(3600px,calc(var(--wed-floor-rows,1)*var(--wed-floor-row-height,390px) + 320px)) !important;
+ align-content:space-evenly;
+ grid-auto-rows:var(--wed-floor-row-height,390px);
+}
+.wed-floor-scroll,
+.wed-fullscreen-dialog > .wed-floor-shell .wed-floor-scroll {
+ overflow-x:auto !important;
+ overflow-y:auto !important;
+ overscroll-behavior:contain;
+ touch-action:pan-x pan-y;
+}
+.wed-floor-plan[data-wed-floor-plan] {
+ touch-action:none;
+}
+.wed-floor-plan[data-wed-floor-plan].is-panning {
+ cursor:grabbing;
+ user-select:none;
+}
