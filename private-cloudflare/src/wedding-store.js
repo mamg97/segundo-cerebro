@@ -1,6 +1,7 @@
 // Wedding records belong exclusively to private D1; no personal data is embedded here.
 export const WEDDING_CATEGORIES=["finca","catering","decoracion","fotografia","musica","invitaciones","vestuario","invitados","ideas","tareas","otros"];
 export const WEDDING_STATUSES=["idea","pendiente","contactado","presupuestado","reservado","confirmado","descartado","hecho"];
+const ASSIGNEES=new Set(["","miguel","andrea","otro"]);
 const CATS=new Set(WEDDING_CATEGORIES),STATES=new Set(WEDDING_STATUSES),ID=/^[a-f0-9-]{36}$/i,MAX_PHOTO=900000;
 export class WeddingError extends Error{constructor(code,status=400){super(code);this.code=code;this.status=status;}}
 const reply=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
@@ -12,13 +13,19 @@ export function validateWeddingItem(o){
  if(!CATS.has(category)||!STATES.has(status)||!title)throw new WeddingError("INVALID_ITEM");
  const url=bound(o.url,600);if(url){let parsed;try{parsed=new URL(url)}catch{throw new WeddingError("INVALID_URL")}if(parsed.protocol!=="https:")throw new WeddingError("INVALID_URL");}
  const dueDate=bound(o.dueDate,10);if(dueDate&&!/^\d{4}-\d\d-\d\d$/.test(dueDate))throw new WeddingError("INVALID_DATE");
+ const assigneeKind=bound(o.assigneeKind,16),assigneeName=bound(o.assigneeName,80);
+ if(!ASSIGNEES.has(assigneeKind))throw new WeddingError("INVALID_ASSIGNEE");
+ if((assigneeKind==="otro"&&!assigneeName)||(assigneeKind!=="otro"&&assigneeName))
+  throw new WeddingError("INVALID_ASSIGNEE_NAME");
  const p={category,status,title,description:bound(o.description,4000),provider:bound(o.provider),url,dueDate:dueDate||null,
+  assigneeKind,assigneeName,
   estimateCents:money(o.estimateCents),contractedCents:money(o.contractedCents),paidCents:money(o.paidCents)??0};
  if(p.contractedCents!==null&&p.paidCents>p.contractedCents)throw new WeddingError("PAID_EXCEEDS_CONTRACTED");return p;
 }
 const SELECT="SELECT i.*,EXISTS(SELECT 1 FROM wedding_photos p WHERE p.item_id=i.id) AS has_photo FROM wedding_items i";
 const row=r=>({id:r.id,category:r.category,status:r.status,title:r.title,description:r.description||"",provider:r.provider||"",url:r.url||"",
  estimateCents:r.estimate_cents,contractedCents:r.contracted_cents,paidCents:r.paid_cents,dueDate:r.due_date,
+ assigneeKind:r.assignee_kind||"",assigneeName:r.assignee_name||"",
  revision:r.revision,createdBy:r.created_by,updatedBy:r.updated_by,createdAt:r.created_at,updatedAt:r.updated_at,
  photoUrl:r.has_photo?"/api/wedding/items/"+r.id+"/photo":null});
 const get=async(db,id)=>{const r=await db.prepare(SELECT+" WHERE i.id=?").bind(id).first();return r?row(r):null;};
@@ -50,8 +57,8 @@ export async function handleWeddingRequest(request,env){
    }
    if(method!=="POST")throw new WeddingError("METHOD_NOT_ALLOWED",405);
    const p=validateWeddingItem(await jsonInput(request)),id=crypto.randomUUID(),now=new Date().toISOString();
-   await db.prepare("INSERT INTO wedding_items(id,category,status,title,description,provider,url,estimate_cents,contracted_cents,paid_cents,due_date,created_by,updated_by,created_at,updated_at,revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)")
-    .bind(id,p.category,p.status,p.title,p.description,p.provider,p.url,p.estimateCents,p.contractedCents,p.paidCents,p.dueDate,actor,actor,now,now).run();
+   await db.prepare("INSERT INTO wedding_items(id,category,status,title,description,provider,url,estimate_cents,contracted_cents,paid_cents,due_date,assignee_kind,assignee_name,created_by,updated_by,created_at,updated_at,revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)")
+    .bind(id,p.category,p.status,p.title,p.description,p.provider,p.url,p.estimateCents,p.contractedCents,p.paidCents,p.dueDate,p.assigneeKind,p.assigneeName,actor,actor,now,now).run();
    return reply({ok:true,item:await get(db,id)},201);
   }
   const m=path.match(/^\/api\/wedding\/items\/([^/]+)(\/photo)?$/);
@@ -60,9 +67,18 @@ export async function handleWeddingRequest(request,env){
   if(!m[2]){
    if(method==="GET"){const x=await get(db,id);if(!x)throw new WeddingError("NOT_FOUND",404);return reply({ok:true,item:x});}
    if(method==="PATCH"){
-    const data=await jsonInput(request),revision=rev(data.revision),p=validateWeddingItem(data),now=new Date().toISOString();
-    const result=await db.prepare("UPDATE wedding_items SET category=?,status=?,title=?,description=?,provider=?,url=?,estimate_cents=?,contracted_cents=?,paid_cents=?,due_date=?,updated_by=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?")
-      .bind(p.category,p.status,p.title,p.description,p.provider,p.url,p.estimateCents,p.contractedCents,p.paidCents,p.dueDate,actor,now,id,revision).run();
+    const data=await jsonInput(request),revision=rev(data.revision);
+    // A stale client may not know about assignees. Keep the current assignment,
+    // rather than wiping it when the client only moves a status.
+    if(!Object.hasOwn(data,"assigneeKind")&&!Object.hasOwn(data,"assigneeName")){
+     const current=await get(db,id);
+     if(!current)throw new WeddingError("NOT_FOUND",404);
+     data.assigneeKind=current.assigneeKind;
+     data.assigneeName=current.assigneeName;
+    }
+    const p=validateWeddingItem(data),now=new Date().toISOString();
+    const result=await db.prepare("UPDATE wedding_items SET category=?,status=?,title=?,description=?,provider=?,url=?,estimate_cents=?,contracted_cents=?,paid_cents=?,due_date=?,assignee_kind=?,assignee_name=?,updated_by=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?")
+      .bind(p.category,p.status,p.title,p.description,p.provider,p.url,p.estimateCents,p.contractedCents,p.paidCents,p.dueDate,p.assigneeKind,p.assigneeName,actor,now,id,revision).run();
     if(!result.meta?.changes)throw new WeddingError("REVISION_CONFLICT",409);
     return reply({ok:true,item:await get(db,id)});
    }
