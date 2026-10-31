@@ -103,7 +103,7 @@ function inspirationCards(){
 }
 function inspirationHome(){
  const count=inspirationItems(state.items).length;
- return '<div class="wed-workspace wed-inspiration">'+viewTabs()+
+ return '<div class="wed-workspace wed-inspiration">'+
  '<div class="wed-inspo-head"><div><h3>Inspiración</h3><small>'+count+' ideas guardadas · fotos y enlaces</small></div>'+
  '<button class="wed-primary" type="button" id="wed-add-pin">+ Guardar idea</button></div>'+
  '<div class="wed-inspo-guide"><strong>De Pinterest a vuestro tablero:</strong> Copiar enlace del pin → Guardar idea → Pegar el enlace. Podéis adjuntar una foto de referencia desde el móvil.</div>'+
@@ -159,7 +159,7 @@ function kanbanBoard(){
 }
 function kanbanHome(){
  const n=weddingTotals(state.items);
- return '<div class="wed-workspace wed-kanban-workspace">'+viewTabs()+
+ return '<div class="wed-workspace wed-kanban-workspace">'+
   '<div class="wed-toolbar"><div><h3>Organización de la boda</h3><small>'+n.total+' elementos activos · compartido entre participantes autorizados</small></div>'+
   '<button type="button" class="wed-primary" id="wed-new">+ Añadir tarjeta</button></div>'+
   '<div class="wed-controls"><label class="wed-search"><span>Buscar</span><input type="search" id="wed-search" value="'+esc(state.search)+'" placeholder="Proveedores, tareas, ideas…"></label>'+
@@ -171,24 +171,25 @@ function kanbanHome(){
   '<p class="wed-kanban-hint">Arrastra tarjetas entre columnas en ordenador o usa «Mover a» desde el móvil. Los cambios se guardan en el espacio compartido.</p>'+
   '<div id="wed-results">'+kanbanBoard()+'</div></div>';
 }
-function refreshBar(){
- return '<div class="wed-fixed-actions"><button type="button" id="wed-main-refresh" aria-label="Actualizar Boda" title="Actualizar Boda">'+
-  '<span aria-hidden="true">↻</span><span>Actualizar</span></button></div>';
+function weddingToolbar(){
+ return '<div class="wed-dialog-controls">'+viewTabs()+
+ '<button type="button" id="wed-main-refresh" aria-label="Actualizar Boda" title="Actualizar datos de Boda" class="wed-main-refresh">'+
+ '<span aria-hidden="true">↻</span><span class="wed-refresh-label">Actualizar</span></button></div>';
 }
 function home(){
  if(state.view==="inspiracion")return inspirationHome();
  if(state.view==="kanban")return kanbanHome();
- if(state.view==="agenda")return '<div class="wed-workspace">'+viewTabs()+renderAgenda(state.items,esc)+'</div>';
- if(state.view==="proveedores")return '<div class="wed-workspace">'+viewTabs()+renderProviders(state.items,esc)+'</div>';
- if(state.view==="bodasnet")return '<div class="wed-workspace">'+viewTabs()+renderBodasDirectory(esc)+'</div>';
+ if(state.view==="agenda")return '<div class="wed-workspace">'+renderAgenda(state.items,esc)+'</div>';
+ if(state.view==="proveedores")return '<div class="wed-workspace">'+renderProviders(state.items,esc)+'</div>';
+ if(state.view==="bodasnet")return '<div class="wed-workspace">'+renderBodasDirectory(esc)+'</div>';
  if(state.view==="invitados"||state.view==="mesas"){
   const contents=!state.plannerLoaded?'<div class="wed-loading">Cargando información privada…</div>':
    state.view==="invitados"?renderGuests(state.guests,state.tables,state.guestEditing,esc):
    renderTables(state.guests,state.tables,state.tableEditing,esc);
-  return '<div class="wed-workspace">'+viewTabs()+contents+'</div>';
+  return '<div class="wed-workspace">'+contents+'</div>';
  }
  const n=weddingTotals(state.items);
- return '<div class="wed-workspace">'+viewTabs()+
+ return '<div class="wed-workspace">'+
    '<div class="wed-stats"><div><small>Elementos activos</small><strong>'+n.total+'</strong></div>'+
    '<div><small>Presupuesto planificado</small><strong>'+eur(n.planned)+'</strong></div>'+
    '<div><small>Contratado</small><strong>'+eur(n.committed)+'</strong></div>'+
@@ -235,7 +236,7 @@ function editor(){
 function show(){
  if(!active())return;
  const area=document.querySelector("#dialog-body");
- area.innerHTML=refreshBar()+(state.editing?editor():home());
+ area.innerHTML=weddingToolbar()+(state.editing?editor():home());
  if(state.error){const notice=document.createElement("div");notice.className="wed-alert";notice.role="alert";notice.textContent=state.error;area.prepend(notice);}
  bind(area);
 }
@@ -503,6 +504,7 @@ function startIdea(){
 function bind(area){
  if(area.querySelector("#wed-mobile-form"))bindMobileForm(area);
  area.querySelectorAll("[data-wed-view]").forEach(button=>button.addEventListener("click",()=>{
+  if(state.editing&&!window.confirm("¿Cambiar de sección y descartar los cambios no guardados?"))return;
   clearQuickFiles();state.view=button.dataset.wedView;state.editing=null;state.error="";show();
   if(["invitados","mesas"].includes(state.view)&&!state.plannerLoaded)void loadPlanner();
  }));
