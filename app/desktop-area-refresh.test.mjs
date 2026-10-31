@@ -43,7 +43,7 @@ test("wedding refresh logic and mobile navigation remain intact",()=>{
  const mobile=read("mobile-navigation.css"),mobileJs=read("mobile-navigation.mjs");
  assert.match(js,/weddingButton\.click\(\)/);
  assert.match(routes,/wedding-dialog\[open\] > #wed-main-refresh:not\(\[hidden\]\)/);
- assert.match(routes,/@media\(max-width:760px\)/);
+ assert.match(routes,/@media\s*\(max-width:760px\)/);
  assert.match(mobile,/body \.sidebar,body\.route-area-active \.sidebar\{display:none!important\}/);
  assert.match(mobileJs,/id="mobile-refresh-action"/);
  assert.doesNotMatch(css,/@media \(max-width:/);
