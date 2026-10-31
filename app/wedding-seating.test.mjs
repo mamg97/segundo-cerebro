@@ -266,3 +266,52 @@ test("CSS grid is the fallback when the floor drag script cannot execute",()=>{
  assert.match(ui,/tile\.style\.transform="translate3d\("/);
  assert.match(ui,/moveFloorPosition\(drag\.start,dx,dy,dimensions\(\)\)/);
 });
+
+test("six seats form a uniform circular crown around an editable round tabletop",()=>{
+ const table={id:"pres-geometry",name:"Mesa sintética",capacity:6,shape:"presidencial"};
+ const guests=Array.from({length:6},(_,i)=>({
+  id:"synthetic-person-"+i,name:"Persona "+i,tableId:table.id,
+  seatIndex:i,groupName:"pareja",rsvp:"pendiente"
+ }));
+ const html=renderTables(guests,[table],null,esc,table.id);
+ assert.match(html,/class="wed-named-table-center" data-wed-edit-table="pres-geometry"/);
+ assert.match(html,/aria-label="Editar Mesa sintética"/);
+ assert.equal((html.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
+ assert.equal((html.match(/data-wed-seat-detail="synthetic-person-/g)||[]).length,6);
+ assert.equal((html.match(/--wed-seat-diameter:38px/g)||[]).length,6);
+ const placements=[...html.matchAll(/class="wed-named-seat is-filled"[^>]+style="left:([\d.]+)%;top:([\d.]+)%;--wed-seat-diameter:38px"/g)]
+  .map(m=>({x:+m[1],y:+m[2]}));
+ assert.equal(placements.length,6);
+ const radii=placements.map(p=>Math.hypot(p.x-50,p.y-50));
+ assert.ok(Math.max(...radii)-Math.min(...radii)<.02,"all seats have the same orbit radius");
+ const angles=placements.map(p=>Math.atan2(p.y-50,p.x-50));
+ const steps=angles.map((angle,i)=>{
+  const next=angles[(i+1)%angles.length];
+  return ((next-angle+Math.PI*4)%(Math.PI*2));
+ });
+ for(const delta of steps)assert.ok(Math.abs(delta-Math.PI/3)<.001,"uniform angle between chairs");
+ assert.match(css,/\.wed-floor-table\{[\s\S]*?border:0;border-radius:0;background:transparent;box-shadow:none/);
+ assert.match(css,/\.wed-floor-table \.wed-named-seat\{[\s\S]*?border-radius:50%/);
+ assert.match(css,/\.wed-floor-table \.wed-named-table-center\{[\s\S]*?border-radius:50%/);
+ assert.match(ui,/\[data-wed-seat-detail\],\[data-wed-seat-add\],\[data-wed-edit-table\]/);
+ assert.match(ui,/state\.tableEditing=btn\.dataset\.wedEditTable/);
+});
+test("twelve round seats have no square cards and every empty position stays actionable",()=>{
+ const table={id:"table-twelve",name:"Mesa libre",capacity:12,shape:"redonda"};
+ const html=renderTables([], [table],null,esc,table.id);
+ assert.equal((html.match(/class="wed-named-seat is-empty"/g)||[]).length,12);
+ assert.equal((html.match(/data-wed-seat-index="\d+"/g)||[]).length,12);
+ assert.equal((html.match(/data-wed-seat-add="table-twelve"/g)||[]).length,12);
+ assert.match(html,/aria-label="Añadir invitado en plaza 1 de Mesa libre"/);
+ assert.match(html,/data-wed-floor-grip/);
+ assert.doesNotMatch(html,/wed-floor-occupancy/);
+ assert.match(css,/\.wed-floor-table\.is-selected\{border:0;box-shadow:none\}/);
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-named-seat\.is-empty\{/);
+});
+test("seat circles shrink for legacy capacities above twelve without changing the seat count",()=>{
+ for(const [count,diameter] of [[13,30],[18,30],[19,24],[24,24],[25,20],[30,20]]){
+  const html=renderTables([], [{id:"synthetic-"+count,name:"Mesa",capacity:count,shape:"redonda"}],null,esc);
+  assert.equal((html.match(/data-wed-seat-index="\d+"/g)||[]).length,count);
+  assert.equal((html.match(new RegExp("--wed-seat-diameter:"+diameter+"px","g"))||[]).length,count);
+ }
+});
