@@ -45,7 +45,34 @@ export function rotationFrameDimensions(width,height,degrees=0){
  if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)throw Error("FOTO_INVALIDA");
  return {turn,width:turn%180===0?width:height,height:turn%180===0?height:width};
 }
-export async function prepareRecipePhoto(file,degrees=0){
+// The horizontal frame removes blank/baked padding only on explicit request.
+// Cropping operates in *rotated* image coordinates, so Rotate + Frame stay correct.
+export function recipePhotoCropWindow(width,height,degrees=0,framing="original",position=50){
+ const frame=rotationFrameDimensions(width,height,degrees);
+ if(!["original","horizontal"].includes(framing))throw Error("ENCUADRE_NO_ADMITIDO");
+ const offset=Number(position);
+ if(!Number.isFinite(offset)||offset<0||offset>100)throw Error("POSICION_DE_ENCUADRE_INVALIDA");
+ if(framing==="original")return {...frame,left:0,top:0,cropWidth:frame.width,cropHeight:frame.height};
+ const target=4/3,aspect=frame.width/frame.height;
+ const cropWidth=aspect>target?frame.height*target:frame.width;
+ const cropHeight=aspect>target?frame.height:frame.width/target;
+ return {...frame,
+  left:(frame.width-cropWidth)*offset/100,
+  top:(frame.height-cropHeight)*offset/100,
+  cropWidth,cropHeight};
+}
+function drawRecipePhotoFrame(ctx,source,width,height,frame,canvasWidth,canvasHeight){
+ const factor=Math.min(canvasWidth/frame.cropWidth,canvasHeight/frame.cropHeight);
+ ctx.fillStyle="#fff";ctx.fillRect(0,0,canvasWidth,canvasHeight);
+ ctx.save();
+ ctx.translate(canvasWidth/2,canvasHeight/2);
+ ctx.scale(factor,factor);
+ ctx.translate(frame.width/2-frame.left-frame.cropWidth/2,frame.height/2-frame.top-frame.cropHeight/2);
+ ctx.rotate(frame.turn*Math.PI/180);
+ ctx.drawImage(source,-width/2,-height/2,width,height);
+ ctx.restore();
+}
+export async function prepareRecipePhoto(file,degrees=0,framing="original",position=50){
  if(!file)return null;
  if(!file.type?.startsWith("image/")&&!/\.(heic|heif)$/i.test(file.name))throw Error("FORMATO_IMAGEN_NO_ADMITIDO");
  let image=null,source=null,revoke=null;
@@ -59,18 +86,15 @@ export async function prepareRecipePhoto(file,degrees=0){
    await new Promise((resolve,reject)=>{source.onload=resolve;source.onerror=()=>reject(Error("FOTO_NO_COMPATIBLE"));source.src=url;});
   }
   const width=source.width||source.naturalWidth,height=source.height||source.naturalHeight;
-  const frame=rotationFrameDimensions(width,height,degrees);
+  const frame=recipePhotoCropWindow(width,height,degrees,framing,position);
   for(let longest=1500;longest>=600;longest-=150){
-   const factor=Math.min(1,longest/Math.max(frame.width,frame.height));
+   const factor=Math.min(1,longest/Math.max(frame.cropWidth,frame.cropHeight));
    const canvas=document.createElement("canvas");
-   canvas.width=Math.max(1,Math.round(frame.width*factor));
-   canvas.height=Math.max(1,Math.round(frame.height*factor));
+   canvas.width=Math.max(1,Math.round(frame.cropWidth*factor));
+   canvas.height=Math.max(1,Math.round(frame.cropHeight*factor));
    const context=canvas.getContext("2d");
    if(!context)throw Error("NO_SE_PUEDE_PROCESAR_FOTO");
-   context.fillStyle="#fff";context.fillRect(0,0,canvas.width,canvas.height);
-   context.translate(canvas.width/2,canvas.height/2);
-   context.rotate(frame.turn*Math.PI/180);
-   context.drawImage(source,-width*factor/2,-height*factor/2,width*factor,height*factor);
+   drawRecipePhotoFrame(context,source,width,height,frame,canvas.width,canvas.height);
    for(const quality of [.86,.75,.62,.48]){
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));
     if(blob&&blob.size<=850000)return new File([blob],"receta.jpg",{type:"image/jpeg"});
@@ -103,9 +127,15 @@ export function renderRecipeEditor(panel,recipe,{onBack,onSaved}){
           <label class="recipe-edit-photo-button">◎ Hacer foto<input data-editor-photo-camera type="file" accept="image/*" capture="environment"></label>
           <button type="button" data-editor-photo-rotate="-90" aria-label="Girar fotografía 90 grados a la izquierda">↶ Girar izquierda</button>
           <button type="button" data-editor-photo-rotate="90" aria-label="Girar fotografía 90 grados a la derecha">↷ Girar derecha</button>
+          <button type="button" data-editor-photo-frame aria-pressed="false">▣ Encuadre horizontal 4:3</button>
           <button type="button" data-editor-photo-revert hidden>Restaurar foto anterior</button>
         </div>
-        <small>Gira la fotografía hasta verla horizontal o vertical correctamente. Se creará una nueva versión sin modificar la original. Se admite HEIC si el navegador puede convertirlo.</small>
+        <label class="recipe-edit-photo-position" data-editor-photo-position-wrap hidden>Desplazar encuadre
+          <input type="range" data-editor-photo-position min="0" max="100" step="1" value="50" aria-label="Desplazar recorte hacia el extremo de la imagen">
+        </label>
+        <div class="recipe-edit-photo-actions recipe-edit-photo-actions-placeholder" hidden>
+        </div>
+        <small>Gira si está de lado. Para fotos verticales con bandas borrosas, elige «Encuadre horizontal 4:3» y ajusta el recorte hasta que se vea el plato completo. Se guardará una nueva versión; la original se conserva. HEIC sujeto a compatibilidad del navegador.</small>
       </section>
       <div class="recipe-edit-fields">
         <label>Nombre<input name="name" maxlength="160" required value="${esc(recipe.name)}"></label>
@@ -124,30 +154,68 @@ export function renderRecipeEditor(panel,recipe,{onBack,onSaved}){
       <p class="recipe-edit-error" data-editor-message role="status" aria-live="polite"></p>
       <div class="recipe-edit-actions"><button type="button" data-editor-cancel>Cancelar</button><button type="submit" data-editor-submit>Guardar nueva versión</button></div>
     </form>`;
-  let chosenPhoto=null,previewUrl=null,rotation=0;
+  let chosenPhoto=null,previewUrl=null,rotation=0,framing="original",cropPosition=50;
   const photoBox=panel.querySelector("[data-editor-photo-preview]");
-  const updateRotationPreview=()=>{
-    const img=photoBox.querySelector("img");
-    if(img)img.style.transform="rotate("+rotation+"deg)";
-    photoBox.dataset.rotation=String(rotation);
-  };
+  const frameButton=panel.querySelector("[data-editor-photo-frame]");
+  const positionWrap=panel.querySelector("[data-editor-photo-position-wrap]");
+  const positionSlider=panel.querySelector("[data-editor-photo-position]");
   const revert=panel.querySelector("[data-editor-photo-revert]");
+  function updateRotationPreview(){
+    const img=photoBox.querySelector("img");
+    const existingCanvas=photoBox.querySelector("canvas");
+    if(!img){existingCanvas?.remove();return;}
+    photoBox.dataset.rotation=String(rotation);
+    photoBox.classList.toggle("is-horizontal",framing==="horizontal");
+    frameButton?.setAttribute("aria-pressed",String(framing==="horizontal"));
+    positionWrap.hidden=framing!=="horizontal";
+    if(!img.complete||!img.naturalWidth||!img.naturalHeight){
+      img.addEventListener("load",updateRotationPreview,{once:true});
+      return;
+    }
+    const frame=recipePhotoCropWindow(img.naturalWidth,img.naturalHeight,rotation,framing,cropPosition);
+    const canvas=existingCanvas||document.createElement("canvas");
+    const factor=Math.min(1,900/Math.max(frame.cropWidth,frame.cropHeight));
+    canvas.width=Math.max(1,Math.round(frame.cropWidth*factor));
+    canvas.height=Math.max(1,Math.round(frame.cropHeight*factor));
+    const ctx=canvas.getContext("2d");
+    if(!ctx)return;
+    try{
+      drawRecipePhotoFrame(ctx,img,img.naturalWidth,img.naturalHeight,frame,canvas.width,canvas.height);
+      img.hidden=true;
+      if(!existingCanvas)photoBox.append(canvas);
+    }catch(error){
+      canvas.remove();img.hidden=false;
+      console.warn("Recipe photo preview unavailable",error);
+    }
+  }
   const restore=()=>{
     if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}
-    chosenPhoto=null;rotation=0;
+    chosenPhoto=null;rotation=0;framing="original";cropPosition=50;
+    positionSlider.value="50";
     photoBox.innerHTML=recipe.photoUrl?'<img src="'+esc(recipe.photoUrl)+'" alt="Fotografía actual">':'<span>Esta receta no tiene foto</span>';
     updateRotationPreview();
     revert.hidden=true;
   };
+  updateRotationPreview();
   const back=()=>{restore();onBack();};
   panel.querySelector("[data-editor-back]")?.addEventListener("click",back);
   panel.querySelector("[data-editor-cancel]")?.addEventListener("click",back);
   revert?.addEventListener("click",restore);
+  frameButton?.addEventListener("click",()=>{
+    if(!photoBox.querySelector("img"))return;
+    framing=framing==="horizontal"?"original":"horizontal";
+    updateRotationPreview();
+    revert.hidden=rotation===0&&!chosenPhoto&&framing==="original";
+  });
+  positionSlider?.addEventListener("input",()=>{
+    cropPosition=Number(positionSlider.value);
+    updateRotationPreview();
+  });
   panel.querySelectorAll("[data-editor-photo-rotate]").forEach(button=>button.addEventListener("click",()=>{
     if(!photoBox.querySelector("img"))return;
     rotation=(rotation+Number(button.dataset.editorPhotoRotate)+360)%360;
     updateRotationPreview();
-    revert.hidden=rotation===0&&!chosenPhoto;
+    revert.hidden=rotation===0&&!chosenPhoto&&framing==="original";
   }));
   for(const selector of ["[data-editor-photo-gallery]","[data-editor-photo-camera]"]){
     panel.querySelector(selector)?.addEventListener("change",event=>{
@@ -171,9 +239,9 @@ export function renderRecipeEditor(panel,recipe,{onBack,onSaved}){
       const payload=editorPayload(recipe,form);
       if(!payload.name||!payload.category)throw Error("NOMBRE_Y_CATEGORIA_OBLIGATORIOS");
       button.disabled=true;
-      status.textContent=chosenPhoto||rotation?"Preparando fotografía…":"Guardando nueva versión…";
+      status.textContent=chosenPhoto||rotation||framing!=="original"?"Preparando fotografía…":"Guardando nueva versión…";
       let originalForRotation=null;
-      if(!chosenPhoto&&rotation){
+      if(!chosenPhoto&&(rotation||framing!=="original")){
         // Re-encode the current private image; no external image hosts or raw photo URLs.
         const url=new URL(String(recipe.photoUrl||""),location.origin);
         if(url.origin!==location.origin||!/^\/api\/health\/recipes\/[^/]+\/image$/.test(url.pathname))
@@ -184,7 +252,7 @@ export function renderRecipeEditor(panel,recipe,{onBack,onSaved}){
         originalForRotation=new File([blob],"foto-original",{type:blob.type});
       }
       const photo=chosenPhoto||originalForRotation
-        ?await prepareRecipePhoto(chosenPhoto||originalForRotation,rotation):null;
+        ?await prepareRecipePhoto(chosenPhoto||originalForRotation,rotation,framing,cropPosition):null;
       status.textContent="Guardando nueva versión"+(photo?" y fotografía":"")+"…";
       const saved=await writeRecipeAction(payload,photo);
       status.textContent="Verificando la versión guardada y su foto…";
