@@ -3,8 +3,7 @@
  :root{
   --mobile-toolbar-height:calc(58px + env(safe-area-inset-top,0px));
   --mobile-bottom-height:calc(67px + env(safe-area-inset-bottom,0px));
-  --mobile-quick-height:50px;
-  --mobile-dock-height:calc(var(--mobile-bottom-height) + var(--mobile-quick-height));
+  --mobile-dock-height:var(--mobile-bottom-height);
   --route-nav-height:var(--mobile-toolbar-height);
  }
  body .sidebar,body.route-area-active .sidebar{display:none!important}
@@ -31,25 +30,6 @@
   display:grid;place-items:center;flex:0 0 45px;height:45px;
   border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);cursor:pointer
  }
- .mobile-quick-dock{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;
-  position:fixed;left:0;right:0;bottom:var(--mobile-bottom-height);z-index:5501;
-  height:var(--mobile-quick-height);gap:8px;
-  padding:3px max(12px,env(safe-area-inset-right)) 3px max(12px,env(safe-area-inset-left));
-  border-top:1px solid var(--line);background:var(--surface);
-  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
- }
- .mobile-quick-dock a{
-  display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;
-  height:44px;padding:5px 9px;border:1px solid var(--line);border-radius:11px;
-  background:var(--paper);color:var(--ink);text-decoration:none;
-  font-size:11px;font-weight:800;touch-action:manipulation;
- }
- .mobile-quick-dock svg{width:18px;height:18px;flex:0 0 18px}
- .mobile-quick-dock a span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
- .mobile-quick-dock a.is-current{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
- .mobile-quick-dock a:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
- .mobile-quick-dock a:active{transform:scale(.98)}
  .mobile-bottom-nav{
   display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:stretch;
   position:fixed;left:0;right:0;bottom:0;z-index:5501;
@@ -289,4 +269,78 @@
   color:var(--ink);
   z-index:10;
  }
+}
+
+/* A single bottom bar; the Home scroller starts below the header.
+   Scrolling under a fixed translucent toolbar caused the clipped Salud card. */
+@media(max-width:760px){
+ html:has(> body:not(.route-area-active)){overflow-y:hidden;overscroll-behavior-y:none}
+ body:not(.route-area-active){height:100dvh;overflow:hidden}
+ body:not(.route-area-active) .main-content{
+  box-sizing:border-box;
+  position:fixed;
+  inset:var(--mobile-toolbar-height) 0 var(--mobile-dock-height) 0;
+  height:auto;
+  width:100%;
+  min-height:0;
+  max-height:none;
+  padding:12px max(12px,env(safe-area-inset-right)) 20px max(12px,env(safe-area-inset-left));
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-top:12px;
+ }
+ .mobile-bottom-nav>a,.mobile-bottom-nav>button{touch-action:manipulation}
+ .mobile-bottom-nav [data-mobile-shortcut]{overflow:hidden}
+ .mobile-bottom-nav [data-mobile-shortcut] span{max-width:100%;font-size:10px}
+ .mobile-shortcuts-configure,.mobile-shortcuts-reset,.mobile-sheet-back{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  width:100%;min-height:44px;border:1px solid var(--line);
+  background:var(--blue-soft);color:var(--blue);border-radius:12px;
+  font:inherit;font-size:13px;font-weight:800;cursor:pointer;margin:0 0 12px;
+ }
+ .mobile-shortcuts-reset,.mobile-sheet-back{
+  background:var(--paper);color:var(--ink);margin:12px 0 0;
+ }
+ .mobile-sheet-back{margin:0 0 12px}
+ .mobile-sheet-help{font-size:12px;line-height:1.45;color:var(--ink-soft);margin:0 3px 12px}
+ .mobile-shortcuts-editor{display:grid;gap:7px}
+ .mobile-shortcuts-editor button{
+  display:flex;align-items:center;gap:10px;min-width:0;width:100%;
+  min-height:58px;padding:10px 12px;border:1px solid var(--line);
+  border-radius:13px;background:var(--paper);color:var(--ink);font:inherit;
+  text-align:left;cursor:pointer;
+ }
+ .mobile-shortcuts-editor button>strong{
+  display:grid;place-items:center;width:27px;height:27px;flex:0 0 27px;
+  border-radius:8px;background:var(--blue-soft);color:var(--blue);font-size:12px;
+ }
+ .mobile-shortcuts-editor button svg{width:22px;height:22px;flex:0 0 22px}
+ .mobile-shortcuts-editor button span:nth-last-child(2){font-size:13px;font-weight:800;min-width:0;flex:1}
+ .mobile-shortcuts-editor button span:last-child{font-size:11px;color:var(--blue);white-space:nowrap}
+ .mobile-catalog{display:grid;gap:8px}
+ .mobile-catalog-group{border:1px solid var(--line);background:var(--paper);border-radius:13px;overflow:hidden}
+ .mobile-catalog-group>summary{
+  list-style:none;display:flex;align-items:center;gap:10px;
+  min-height:49px;padding:9px 13px;cursor:pointer;font-size:13px;font-weight:800;
+ }
+ .mobile-catalog-group>summary::-webkit-details-marker{display:none}
+ .mobile-catalog-group>summary svg{width:20px;height:20px;flex:0 0 20px;color:var(--blue)}
+ .mobile-catalog-group>summary span{flex:1;min-width:0}
+ .mobile-catalog-group>summary svg:last-child{width:16px;height:16px;color:var(--ink-soft)}
+ .mobile-catalog-group[open]>summary svg:last-child{transform:rotate(180deg)}
+ .mobile-catalog-links{display:grid;gap:1px;padding:0 6px 7px}
+ .mobile-catalog-links :is(a,button){
+  display:flex;gap:9px;align-items:center;width:100%;
+  min-height:44px;padding:9px 12px;border:0;border-radius:9px;
+  background:var(--surface);color:var(--ink);text-align:left;
+  text-decoration:none;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+ }
+ .mobile-catalog-links :is(a,button) svg{width:17px;height:17px;flex:0 0 17px;color:var(--blue)}
+ .mobile-catalog-links :is(a,button):active{background:var(--blue-soft)}
+ .mobile-shortcuts-configure:focus-visible,
+ .mobile-shortcuts-editor button:focus-visible,
+ .mobile-catalog-group summary:focus-visible,
+ .mobile-catalog-links :is(a,button):focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 }

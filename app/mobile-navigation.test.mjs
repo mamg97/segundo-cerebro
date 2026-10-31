@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {MOBILE_AREAS,mobileSections,mobileCurrentLabel,mobileRememberedRoute,MOBILE_QUICK_ACCESS} from "./mobile-navigation.mjs";
+import {MOBILE_AREAS,mobileSections,mobileCurrentLabel,mobileRememberedRoute,MOBILE_DEFAULT_SHORTCUTS,MOBILE_SHORTCUT_GROUPS,normalizeMobileShortcuts,swapMobileShortcut} from "./mobile-navigation.mjs";
 import {hrefForArea,hrefForPantryTab,routeFromHash} from "./area-routes.mjs";
 const parse=hash=>routeFromHash(hash);
 test("mobile primary dock has five areas and More holds all remaining areas",()=>{
@@ -45,7 +45,7 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
  assert.match(app,/syncMobileNavigation\(route,hash\)/);
  assert.match(app,/routedHealthTabId/);
  assert.match(app,/hrefForHealthTab/);
- assert.match(index,/mobile-navigation\.css\?v=0\.1\.6/);
+ assert.match(index,/mobile-navigation\.css\?v=0\.1\.7/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(min-width:761px\)/);
  assert.match(css,/env\(safe-area-inset-bottom/);
@@ -60,7 +60,7 @@ test("HTML links to both navigation stylesheets and respects iOS safe areas",()=
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
  assert.match(index,/<link rel="stylesheet" href="\.\/area-routes\.css\?v=0\.1\.6">/);
- assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.6">/);
+ assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.7">/);
  assert.match(css,/--mobile-toolbar-height:calc\(58px \+ env\(safe-area-inset-top,0px\)\)/);
  assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
 });
@@ -90,7 +90,7 @@ test("mobile refresh shows one circular arrow rather than two opposing arrows",(
  assert.doesNotMatch(icon,/M4 17v-5h5|M20 7v5h-5/);
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
- assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.7/);
+ assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.8/);
  assert.match(index,/app\.js\?v=0\.44\.\d+/);
 });
 
@@ -119,32 +119,57 @@ test("mobile wealth modal retains its inset width instead of secondary fullscree
  assert.match(base,/\.detail-dialog\.wealth-dialog\s*\{[\s\S]*?width: calc\(100% - 20px\)/);
 });
 
-test("Gym and shopping live in persistent mobile quick dock with valid deep links",()=>{
- assert.deepEqual(MOBILE_QUICK_ACCESS.map(x=>[x.label,x.href]),[
-  ["Gym","#/salud/gym"],["Lista de la compra","#/despensa/compra"]
- ]);
+test("mobile has a single dock: Inicio + four configurable slots + Más",()=>{
+ assert.deepEqual(MOBILE_DEFAULT_SHORTCUTS,["#/finanzas","#/pareja/boda","#/salud/gym","#/salud/menu"]);
  const nav=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
  const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
- const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
- assert.match(nav,/id="mobile-quick-dock"/);
- assert.match(nav,/MOBILE_QUICK_ACCESS\.map/);
- assert.match(nav,/data-mobile-quick/);
- assert.match(nav,/dom\("mobile-quick-dock"\)\.addEventListener\("click"/);
- assert.match(nav,/navigate\(quick\.dataset\.mobileQuick\)/);
- assert.doesNotMatch(nav,/mobile-sheet-shortcuts/);
- assert.doesNotMatch(index,/home-quick-accesses/);
- assert.match(css,/--mobile-dock-height:calc\(var\(--mobile-bottom-height\) \+ var\(--mobile-quick-height\)\)/);
- assert.match(css,/\.mobile-quick-dock\{/);
- assert.match(css,/bottom:var\(--mobile-bottom-height\)/);
- assert.match(css,/\.mobile-quick-dock a\{/);
- assert.match(css,/@media\(min-width:761px\)/);
- assert.match(css,/\.mobile-app-header,\.mobile-quick-dock,\.mobile-bottom-nav,\.mobile-navigation-sheet\{display:none!important\}/);
- assert.match(app,/routedPantryTabId/);
- assert.match(app,/openPantryDetail\(routedPantryTabId==="compra"\?"shopping"/);
+ assert.match(nav,/id="mobile-bottom-nav"/);
+ assert.match(nav,/selectedShortcuts\.map\(shortcutMarkup\)/);
+ assert.match(nav,/data-mobile-shortcut/);
+ assert.match(nav,/data-mobile-select-shortcut/);
+ assert.match(nav,/data-mobile-customize/);
+ assert.match(nav,/SHORTCUT_STORAGE_KEY/);
+ assert.match(nav,/localStorage\.setItem/);
+ assert.doesNotMatch(nav,/id="mobile-quick-dock"/);
+ assert.match(css,/--mobile-dock-height:var\(--mobile-bottom-height\)/);
+ assert.doesNotMatch(css,/\.mobile-quick-dock\{/);
+ assert.match(css,/\.mobile-bottom-nav\{/);
+ assert.match(css,/\.mobile-catalog-group>summary/);
+ assert.match(index,/mobile-navigation\.css\?v=0\.1\.7/);
  assert.deepEqual(routeFromHash(hrefForPantryTab("compra")),{areaId:"area-pantry",detailId:"compra"});
 });
 
+test("catalog exposes real blocks and subblocks, with user preferences safely whitelisted",()=>{
+ const hrefs=MOBILE_SHORTCUT_GROUPS.flatMap(g=>g.links.map(x=>x.href));
+ for(const href of hrefs)assert.ok(routeFromHash(href),href);
+ assert.ok(hrefs.includes("#/salud/menu"),"weekly menu can be pinned");
+ assert.ok(hrefs.includes("#/despensa/compra"),"shopping list can be pinned");
+ assert.ok(hrefs.includes("#/pareja/boda"),"wedding can be pinned");
+ assert.ok(hrefs.includes("#/finanzas/movimientos"),"finance movements can be pinned");
+ assert.deepEqual(normalizeMobileShortcuts(null),MOBILE_DEFAULT_SHORTCUTS);
+ assert.deepEqual(normalizeMobileShortcuts(["#/salud/menu","#/salud/menu","#/invalid"]),
+  ["#/salud/menu","#/finanzas","#/pareja/boda","#/salud/gym"]);
+ assert.deepEqual(normalizeMobileShortcuts(["#/salud/gym","#/salud/menu","#/despensa/compra","#/viajes","#/finanzas"]),
+  ["#/salud/gym","#/salud/menu","#/despensa/compra","#/viajes"]);
+ const switched=swapMobileShortcut([...MOBILE_DEFAULT_SHORTCUTS],0,"#/salud/menu");
+ assert.deepEqual(switched,["#/salud/menu","#/pareja/boda","#/salud/gym","#/finanzas"]);
+ assert.deepEqual(swapMobileShortcut(MOBILE_DEFAULT_SHORTCUTS,2,"#/despensa/compra"),
+  ["#/finanzas","#/pareja/boda","#/despensa/compra","#/salud/menu"]);
+ assert.deepEqual(swapMobileShortcut(MOBILE_DEFAULT_SHORTCUTS,1,"#/foo"),MOBILE_DEFAULT_SHORTCUTS);
+});
+
+test("Boda uses the diamond ring icon rather than heart, Home scroll is clipped below toolbar",()=>{
+ const nav=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
+ assert.match(nav,/\["area-partner","Boda","ring"\]/);
+ assert.match(nav,/ring:'<path/);
+ assert.ok(MOBILE_SHORTCUT_GROUPS.some(g=>g.areaId==="area-partner"&&g.icon==="ring"));
+ assert.match(css,/body:not\(\.route-area-active\) \.main-content\{/);
+ assert.match(css,/inset:var\(--mobile-toolbar-height\) 0 var\(--mobile-dock-height\) 0/);
+ assert.match(css,/overflow-y:auto/);
+ assert.match(css,/body:not\(\.route-area-active\)\{height:100dvh;overflow:hidden\}/);
+});
 test("Gym quick access uses a recognisable, symmetric dumbbell rather than crossed lines",()=>{
   const nav=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
   const path=nav.match(/dumbbell:'([^']+)'/)?.[1]||"";
