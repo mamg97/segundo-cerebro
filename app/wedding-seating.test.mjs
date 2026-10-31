@@ -197,7 +197,7 @@ test("a saved edge or centered point renders unchanged and does not teleport on 
  assert.match(result,/left:14\.667%;top:50\.000%/);
  assert.doesNotMatch(result,/left:16\.000%/);
  assert.match(ui,/boundFloorPosition\(\{/);
- assert.match(ui,/stage\.getBoundingClientRect\(\),tileBox=tile\.getBoundingClientRect\(\)/);
+ assert.match(ui,/const stageRect=stage\.getBoundingClientRect\(\)/);
  assert.doesNotMatch(ui,/tile\.offsetLeft|tile\.offsetTop/);
 });
 
