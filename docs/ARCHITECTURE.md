@@ -37,9 +37,12 @@ que abre el editor de mesa; cada persona ocupada es un botón que abre
 su ficha editable; cada plaza vacía abre el selector para esa silla.
 Se muestran iniciales en el círculo y el nombre abreviado al pasar el
 cursor o enfocar con teclado.
-La corona fuerza el posicionamiento absoluto respecto a su propio círculo
-contenedor para evitar que reglas CSS generales de botones descoloquen u oculten
-plazas. No depende del RSVP: todo invitado asignado se representa aunque
+La corona se renderiza en una capa propia, independiente del botón de mesa,
+con seis (o capacidad configurada) asientos anclados en píxeles a un lienzo
+de 268×268; sus posiciones siguen intervalos angulares de 360°/capacidad.
+Cada botón tiene geometría individual y sigue respondiendo al teclado.
+Esto evita que el contenedor interno o CSS genérico descoloquen u oculten
+las plazas. No depende del RSVP: todo invitado asignado se representa aunque
 su asistencia esté pendiente. El plano integra un único botón «+ Nueva mesa»
 arriba a la derecha y otro de pantalla completa con cierre por Escape;
 en ese modo la cuadrícula conserva arrastre y edición, y vuelve a calibrar
