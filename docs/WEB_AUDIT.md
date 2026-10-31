@@ -44,19 +44,19 @@ No modifica fuentes privadas ni corrige datos para conseguir un test verde.
 El mismo workflow tiene cuatro vías de entrada:
 
 1. **horaria primaria:** minuto 17 de cada hora;
-2. **respaldo de scheduler:** minuto 42 de cada hora; ejecuta Chromium salvo que una ejecución reciente tenga el step real de navegador en curso o completado correctamente;
+2. **respaldo de scheduler:** minuto 42 de cada hora; ejecuta Chromium salvo que una ejecución reciente tenga el paso real de navegador en curso o completado, con `success` o con `failure` tras al menos 120 segundos de ejecución real. Un fallo temprano no cubre la ventana;
 3. **post-deploy:** después de `Deploy private Cloudflare app` cuando ese deploy termina en `success`;
 4. **manual:** `workflow_dispatch`.
 
 El respaldo no es un segundo workflow. Es una segunda oportunidad del mismo `Audit production web` para reducir el riesgo de eventos `schedule` retrasados o descartados por GitHub Actions.
 
-Un run de respaldo puede terminar correctamente sin ejecutar Chromium cuando verifica que una auditoría completa ya está cubierta. Un heartbeat, un workflow verde con Chromium omitido o una ejecución fallida no suprimen el respaldo. Para saber si hubo una auditoría completa correcta hay que comprobar que el step **Navigate and audit production** terminó en `success`, no basta con mirar solo la conclusión global del workflow.
+Un run de respaldo puede terminar correctamente sin ejecutar Chromium cuando verifica que una auditoría real ya está cubierta. Ni un heartbeat ni un workflow verde con Chromium omitido cuentan como cobertura. El paso **Navigate and audit production** debe haber terminado en `success` o en `failure` después de al menos 120 segundos de ejecución real; este último caso **cubre la cadencia pero mantiene ROJO el resultado funcional**. Una caída temprana del navegador no cubre la cadencia. La conclusión global del workflow por sí sola no basta.
 
 ## Umbral de vigilancia
 
 La vigilancia se considera degradada cuando:
 
-- no existe una auditoría **completa** correcta en los últimos **90 minutos**;
+- no existe una auditoría **real** con Chromium ejecutado (éxito o fallo funcional tras al menos 120 segundos) en los últimos **90 minutos**;
 - y no hay una auditoría completa actualmente `queued` o `in_progress`.
 
 El watcher externo de ChatGPT debe usar este criterio y no contar como auditoría completa un heartbeat de respaldo cuyo step de Chromium haya quedado `skipped`.
@@ -65,10 +65,10 @@ El watcher externo de ChatGPT debe usar este criterio y no contar como auditorí
 
 Existe además una tarea horaria externa de ChatGPT como defensa frente a una caída del emisor `schedule` de GitHub:
 
-- su horario está configurado como **exacto** cada hora al **minuto 45** en `Europe/Madrid`; no depende del emisor `schedule` de GitHub; si han pasado al menos **75 minutos** sin auditoría completa correcta y no hay otra completa en curso, relanza manualmente el job de auditoría completa más reciente del **mismo** workflow `Audit production web`;
+- su horario está configurado como **exacto** cada hora al **minuto 45** en `Europe/Madrid`; no depende del emisor `schedule` de GitHub; si han pasado al menos **75 minutos** sin auditoría real y no hay otra ejecución en curso ni en cola, puede recuperar **una sola** ejecución ausente por incidencia del **mismo** workflow `Audit production web`, sin relanzamientos repetidos;
 - no crea ni mantiene un segundo workflow horario;
-- si la recuperación termina verde antes de los 90 minutos, no notifica;
-- al alcanzar 90 minutos sin auditoría completa correcta, o si el relanzamiento falla, genera alerta con la causa clasificada;
+- si se recupera la cobertura real antes de los 90 minutos sin novedad funcional material, no notifica; un Chromium fallido mantiene el estado funcional ROJO;
+- al alcanzar 90 minutos sin auditoría real, o si falla la única recuperación permitida, genera alerta con la causa clasificada;
 - nunca modifica datos privados ni producción: solo relanza el control read-only y diagnostica.
 
 Esta tarea externa complementa el cron primario/respaldo porque ambos cron siguen dependiendo del mismo scheduler de GitHub.
