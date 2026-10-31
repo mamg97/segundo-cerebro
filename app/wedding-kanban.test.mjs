@@ -51,12 +51,13 @@ test("Wedding refresh lives in the non-scrolling dialog header with correct asse
  assert.match(header,/id="wed-main-refresh"/);
  assert.match(header,/id="copy-area-link"/);
  assert.match(source,/async function refreshWedding\(/);
- assert.match(source,/area\.innerHTML=viewTabs\(\)\+\(state\.editing\?editor\(\):home\(\)\)/);
+ assert.match(source,/id="wed-download-sheet"/);
+ assert.match(source,/state\.editing\?editor\(\):home\(\)/);
  assert.doesNotMatch(source,/wed-dialog-controls|function weddingToolbar\(/);
  assert.match(css,/body\.route-area-active #detail-dialog\.wedding-dialog\[open\] > #wed-main-refresh:not/);
  assert.match(css,/\.wed-kanban\{[\s\S]*?overflow-x:auto/);
  assert.doesNotMatch(css,/overflow-y:auto/);
- assert.match(html,/wedding\.css\?v=0\.1\.9/);
+ assert.match(html,/wedding\.css\?v=0\.2\.0/);
  assert.match(html,/app\.js\?v=\d+\.\d+\.\d+/);
- assert.match(app,/wedding\.js\?v=0\.1\.8/);
+ assert.match(app,/wedding\.js\?v=0\.1\.9/);
 });

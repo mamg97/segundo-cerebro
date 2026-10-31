@@ -37,7 +37,8 @@ test("refresh belongs to the persistent Boda header beside Share, not scrollable
  const html=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  assert.match(source,/async function refreshWedding\(/);
- assert.match(source,/area\.innerHTML=viewTabs\(\)\+\(state\.editing\?editor\(\):home\(\)\)/);
+ assert.match(source,/id="wed-download-sheet"/);
+ assert.match(source,/state\.editing\?editor\(\):home\(\)/);
  assert.doesNotMatch(source,/function weddingToolbar\(|wed-dialog-controls/);
  const start=html.indexOf('<dialog id="detail-dialog"');
  const finish=html.indexOf('<div id="dialog-body"',start);

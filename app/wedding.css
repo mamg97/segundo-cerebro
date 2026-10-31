@@ -440,3 +440,28 @@ body.route-area-active #detail-dialog.wedding-dialog[open] #dialog-body > .wed-v
  .wed-guest-quick-add{flex-direction:row}
  .wed-guest-unclassified ul{grid-template-columns:1fr}
 }
+
+/* Persistent per-section Excel action: one button with current-tab semantics. */
+body.route-area-active #detail-dialog.wedding-dialog[open] #dialog-body>.wed-view-actions{
+ position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:8px;
+ background:var(--surface);border-bottom:1px solid var(--line);
+ min-width:0;width:100%;margin-bottom:16px;padding:2px 0;
+}
+body.route-area-active #detail-dialog.wedding-dialog[open] .wed-view-actions>.wed-view-tabs{
+ position:static;top:auto;flex:1 1 auto;min-width:0;max-width:100%;
+ display:flex;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+ scrollbar-width:thin;white-space:nowrap;margin:0;border-bottom:0;
+}
+.wedding-dialog #wed-download-sheet{
+ display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+ flex:0 0 auto;min-height:37px;min-width:125px;padding:7px 10px;
+ border:1px solid var(--line);border-radius:9px;
+ background:var(--paper);color:var(--blue);font:inherit;font-size:11px;
+ font-weight:850;cursor:pointer;
+}
+.wedding-dialog #wed-download-sheet:hover,.wedding-dialog #wed-download-sheet:focus-visible{border-color:var(--blue)}
+.wedding-dialog #wed-download-sheet:disabled{opacity:.65;cursor:wait}
+@media(max-width:760px){
+ body.route-area-active #detail-dialog.wedding-dialog[open] #dialog-body>.wed-view-actions{gap:4px}
+ .wedding-dialog #wed-download-sheet{min-height:35px;min-width:0;padding:6px 8px;font-size:10px}
+}
