@@ -19,7 +19,7 @@ import { openProjectsDetail } from "./projects.js?v=0.37.4";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
 import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.12";
-import { hrefForArea, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.5";
+import { hrefForArea, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.6";
 import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.6";
 import { openCareerDetail } from "./career.js?v=0.43.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
@@ -11426,6 +11426,7 @@ function ensureVerifiedFinanceBankSection(dialog) {
   body.querySelector('[data-finance-workspace-status="unavailable"]')?.remove();
   body.insertAdjacentHTML("beforeend", html);
   initializeAccountTransactionTabs(body);
+  focusRequestedFinanceMovements();
   return true;
 }
 
@@ -11483,6 +11484,21 @@ function refreshFinanceAccountWorkspace(dialog, { replaceMissingView = false } =
   }).finally(() => { financeBudgetRefreshInFlight = false; });
 }
 
+// A shareable deep link into the already authenticated Finance workspace.
+// It never reads, copies, persists or logs bank records.
+function focusRequestedFinanceMovements(){
+  const route=routeFromHash(window.location.hash);
+  if(route?.areaId!=="area-finance"||route.detailId!=="movimientos")return;
+  const section=document.querySelector("#detail-dialog #dialog-body .account-transactions-section");
+  if(!section)return; // Canonical bank API may still be loading; rerun after verified render.
+  window.requestAnimationFrame(()=>{
+    const current=routeFromHash(window.location.hash);
+    if(current?.areaId!=="area-finance"||current.detailId!=="movimientos"||!section.isConnected)return;
+    if(!document.querySelector("#detail-dialog")?.classList.contains("budget-dialog"))return;
+    section.scrollIntoView({behavior:"auto",block:"start"});
+  });
+}
+
 function openBudgetDetail(options = {}) {
   if (globalThis.__SECOND_BRAIN_REMOTE__ === true &&
       privateModeKind !== "remote" && privateModeKind !== "local" &&
@@ -11527,6 +11543,7 @@ function openBudgetDetail(options = {}) {
       : '<p class="account-transactions-empty">La fuente bancaria se ha consultado correctamente, pero no contiene cuentas ni movimientos.</p>';
     initializeAccountTransactionTabs(document.querySelector("#dialog-body"));
     if (!dialog.open) dialog.showModal();
+    focusRequestedFinanceMovements();
     return;
   }
   if (!monthly || (!hasAccountRows && !hasLiquidityRows && !hasBudgetRows && !bankCatalog.length)) {
@@ -11586,6 +11603,7 @@ function openBudgetDetail(options = {}) {
   });
   initializeAccountTransactionTabs(document.querySelector("#dialog-body"));
   if (!dialog.open) dialog.showModal();
+  focusRequestedFinanceMovements();
   // Budget categories can be available even when optional bank ranges were
   // missing. Previously this path rendered without ever requesting recovery.
   if (bankReadNeedsVerification && !options.skipRefresh && !financeBudgetRefreshInFlight) {

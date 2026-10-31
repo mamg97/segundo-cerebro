@@ -9,7 +9,7 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.44.109">
+    <link rel="stylesheet" href="./styles.css?v=0.44.110">
     <link rel="stylesheet" href="./vision.css?v=0.44.0">
     <link rel="stylesheet" href="./gym-month-calendar.css?v=0.44.48">
     <link rel="stylesheet" href="./gym-progress-photos.css?v=0.44.49">
@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="./wedding.css?v=0.2.3">
     <link rel="stylesheet" href="./projects-table.css?v=0.1.1">
     <link rel="stylesheet" href="./desktop-unified-header.css?v=0.1.1">
-    <script type="module" src="./app.js?v=0.44.109"></script>
+    <script type="module" src="./app.js?v=0.44.110"></script>
     <script type="module" src="./finance-personal-compact.js?v=0.1.0"></script>
   </head>
   <body>
@@ -220,7 +220,10 @@
               </div>
               <div class="budget-heading-actions">
                 <span id="budget-period" class="count-pill">Sin datos</span>
-                <button id="show-budget-detail" class="text-action" type="button">Ver presupuesto</button>
+                <div class="budget-heading-links">
+                  <button id="show-budget-detail" class="text-action" type="button">Ver presupuesto</button>
+                  <a id="show-account-movements" class="text-action" href="#/finanzas/movimientos" aria-label="Ver movimientos de las cuentas bancarias">Ver movimientos</a>
+                </div>
               </div>
             </div>
             <div id="budget-summary" class="budget-summary"></div>
