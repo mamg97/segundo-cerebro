@@ -190,3 +190,13 @@ test("one existing table always renders a nonempty floor, regardless of confirma
  assert.equal((html.match(/data-wed-seat-add="president-demo"/g)||[]).length,0);
  assert.match(html,/0 confirmados · 0 libres/);
 });
+
+test("a saved edge or centered point renders unchanged and does not teleport on reload",()=>{
+ const table={id:"floor-example",name:"Mesa sintética",capacity:6,shape:"presidencial",positionX:14.667,positionY:50};
+ const result=renderTables([], [table],null,esc,table.id);
+ assert.match(result,/left:14\.667%;top:50\.000%/);
+ assert.doesNotMatch(result,/left:16\.000%/);
+ assert.match(ui,/boundFloorPosition\(\{/);
+ assert.match(ui,/stage\.getBoundingClientRect\(\),tileBox=tile\.getBoundingClientRect\(\)/);
+ assert.doesNotMatch(ui,/tile\.offsetLeft|tile\.offsetTop/);
+});
