@@ -16,6 +16,19 @@ Módulos especializados
 Fuentes propietarias y persistencia privada
 ```
 
+## Boda: listas rápidas de invitados
+
+La vista Invitados presenta tres listas de nombres: pareja, padres de
+Miguel y padres de Andrea. Cada lista permite introducir sucesivamente
+nombres por un formulario de un solo campo conectado con el POST
+autenticado de `/api/wedding/guests`. Pulsar el nombre abre su ficha
+privada de asistencia, menú, alergias y mesa; los cambios mantienen
+las revisiones optimistas D1 existentes. Los nombres previamente
+guardados en grupos diferentes se muestran como «Sin clasificar»
+para clasificación explícita, sin asignación familiar automática.
+En móvil se navega horizontalmente entre las tres columnas.
+No hay cambios de esquema, endpoint, cuotas ni fuente canónica.
+
 ## Boda: herramientas nativas y referencias oficiales de Bodas.net
 
 La vista privada `#/pareja/boda` expone Kanban, Agenda, Proveedores,
