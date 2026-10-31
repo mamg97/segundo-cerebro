@@ -147,7 +147,7 @@ test("single full-width floor canvas selects a table and shows guests around it"
  assert.match(css,/overflow-x:auto/);
  assert.match(ui,/setPointerCapture/);
  assert.match(ui,/pointercancel/);
- assert.match(ui,/positionX,positionY,revision:table\.revision/);
+ assert.match(ui,/positionX:point\.x,positionY:point\.y,revision:table\.revision/);
 });
 test("legacy tables without positions receive deterministic visual geometry without writes",()=>{
  const tables=Array.from({length:4},(_,i)=>({id:"table"+i,name:"Mesa "+i,shape:"redonda",capacity:12}));
