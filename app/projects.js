@@ -1,3 +1,4 @@
+import { renderSiteTraffic } from "./site-traffic.mjs?v=0.1.0";
 import { projectTableMarkup } from "./projects-table.mjs?v=0.1.1";
 let currentPayload = null;
 let currentTab = "summary";
@@ -81,15 +82,17 @@ function renderRelations(payload) {
 function renderWorkspace(payload) {
   currentPayload = payload;
   const body = document.querySelector("#dialog-body");
-  const content = currentTab === "all" ? renderAll(payload) : currentTab === "relations" ? renderRelations(payload) : renderSummary(payload);
+  const content = currentTab === "traffic" ? '<section id="site-traffic-root" aria-label="Analítica privada de webs">Cargando…</section>' : currentTab === "all" ? renderAll(payload) : currentTab === "relations" ? renderRelations(payload) : renderSummary(payload);
   body.innerHTML = '<div class="projects-shell">'+
     '<header class="projects-hero"><div><small>Registro privado canónico</small><strong>Proyectos</strong><p>Estado, documentación, repositorios, relaciones y siguientes acciones en un único sitio.</p></div><span>'+Number(payload.summary?.active||0)+' activos</span></header>'+
     '<nav class="projects-tabs" aria-label="Secciones de Proyectos">'+
     '<button class="'+(currentTab==="summary"?'active':'')+'" data-project-tab="summary" type="button">Resumen</button>'+
     '<button class="'+(currentTab==="all"?'active':'')+'" data-project-tab="all" type="button">Todos</button>'+
     '<button class="'+(currentTab==="relations"?'active':'')+'" data-project-tab="relations" type="button">Relaciones</button>'+
+    '<button class="'+(currentTab==="traffic"?'active':'')+'" data-project-tab="traffic" type="button">Tráfico web</button>'+
     '</nav><div>'+content+'</div></div>';
   bindWorkspace(payload);
+  if (currentTab === "traffic") void renderSiteTraffic(body.querySelector("#site-traffic-root"));
 }
 function renderDetail(project, payload) {
   const body = document.querySelector("#dialog-body");
