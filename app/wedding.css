@@ -993,3 +993,78 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-floor-plan .wed-floor-table > .wed-named-table > .wed-floor-seat-ring > button.wed-named-seat:focus-visible {
   z-index:25;
 }
+
+/* SVG seating and top-layer fullscreen v4.
+   The chair positions are SVG coordinates: no inherited offsets, clipping
+   from nested buttons, or 2D transforms can displace individual chairs. */
+.wed-floor-table .wed-svg-table-wrap{
+ display:block;position:relative;width:268px;height:268px;max-width:none;
+ margin:0;padding:0;box-sizing:border-box;overflow:visible;
+}
+.wed-floor-table .wed-floor-seat-svg{
+ display:block;width:268px;height:268px;max-width:none;
+ overflow:visible;touch-action:manipulation;user-select:none;
+}
+.wed-floor-seat-svg .wed-svg-chair,
+.wed-floor-seat-svg .wed-svg-table{cursor:pointer;outline:none}
+.wed-floor-seat-svg .wed-svg-chair circle{transition:stroke-width .12s,filter .12s}
+.wed-floor-seat-svg .wed-svg-chair.is-filled circle{fill:var(--blue,#59a7fc);stroke:var(--blue,#59a7fc)}
+.wed-floor-seat-svg .wed-svg-chair.is-empty circle{fill:var(--paper,#0b1727);stroke:var(--blue,#59a7fc);stroke-dasharray:4 3}
+.wed-floor-seat-svg .wed-svg-chair.is-empty text{fill:var(--blue,#59a7fc)}
+.wed-floor-seat-svg .wed-svg-chair:focus-visible circle,
+.wed-floor-seat-svg .wed-svg-chair:hover circle,
+.wed-floor-seat-svg .wed-svg-table:focus-visible circle,
+.wed-floor-seat-svg .wed-svg-table:hover circle{
+ stroke-width:4;filter:drop-shadow(0 0 3px var(--blue,#59a7fc))
+}
+.wed-floor-seat-svg .wed-svg-table-label{
+ fill:var(--ink,#f7fbff);font-weight:750;font-size:11px;
+ pointer-events:none;
+}
+.wed-floor-seat-svg .wed-svg-table-capacity{
+ fill:var(--ink-soft,#b6c5d8);font-weight:550;font-size:9px;
+ pointer-events:none;
+}
+.wed-fullscreen-dialog{
+ box-sizing:border-box;position:fixed;inset:0;
+ width:100vw;height:100dvh;max-width:100vw;max-height:100dvh;
+ margin:0;padding:0;border:0;border-radius:0;
+ overflow:hidden;background:var(--paper,#07101d);color:var(--ink,#f7fbff);
+}
+.wed-fullscreen-dialog::backdrop{background:rgba(0,0,0,.7)}
+.wed-fullscreen-dialog > .wed-floor-shell.is-expanded{
+ position:relative!important;inset:auto!important;z-index:auto!important;
+ display:flex;flex-direction:column;box-sizing:border-box;
+ width:100%;height:100%;min-height:0;max-height:100%;
+ margin:0;padding:12px 18px 56px;overflow:hidden;
+ border:0;box-shadow:none!important;
+}
+.wed-fullscreen-dialog > .wed-floor-shell .wed-floor-heading{
+ flex:0 0 auto;position:relative;z-index:2;
+}
+.wed-fullscreen-dialog > .wed-floor-shell .wed-floor-scroll{
+ flex:1 1 auto;min-height:0!important;height:auto!important;
+ overflow:auto;overscroll-behavior:contain;
+}
+.wed-fullscreen-dialog > .wed-floor-shell .wed-floor-plan{
+ min-height:100%!important;height:auto!important;
+}
+.wed-fullscreen-dialog > .wed-floor-emergency-close{
+ position:fixed;right:16px;bottom:12px;z-index:100;
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:38px;padding:8px 16px;
+ font:inherit;font-size:12px;font-weight:800;
+ color:var(--ink,#fff);background:var(--surface,#15243a);
+ border:2px solid var(--blue,#59a7fc);border-radius:10px;cursor:pointer;
+}
+.wed-fullscreen-dialog > .wed-floor-emergency-close:focus-visible{
+ outline:3px solid var(--blue,#59a7fc);outline-offset:2px
+}
+@media(max-width:650px){
+ .wed-fullscreen-dialog > .wed-floor-shell.is-expanded{
+  padding:8px 8px 57px
+ }
+ .wed-fullscreen-dialog > .wed-floor-emergency-close{
+  right:9px;bottom:8px
+ }
+}
