@@ -468,3 +468,107 @@ body.route-area-active #detail-dialog.wedding-dialog[open] .wed-view-actions>.we
  body.route-area-active #detail-dialog.wedding-dialog[open] #dialog-body>.wed-view-actions{gap:4px}
  .wedding-dialog #wed-download-sheet{min-height:35px;min-width:0;padding:6px 8px;font-size:10px}
 }
+
+/* Seating planning: responsive occupancy, real table drawings and read-only scenarios. */
+.wed-seating-workspace{gap:15px}
+.wed-seating-summary{
+ display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;
+}
+.wed-seating-metric{
+ display:grid;gap:5px;min-width:0;padding:10px 12px;
+ border:1px solid var(--line);border-radius:10px;background:var(--surface);
+}
+.wed-seating-metric strong{font-size:23px;font-weight:850;line-height:1.1;font-variant-numeric:tabular-nums}
+.wed-seating-metric span{font-size:11px;color:var(--ink-soft)}
+.wed-seating-block{display:grid;gap:12px;min-width:0}
+.wed-seating-block-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px}
+.wed-seating-block-title h4{font-size:17px;margin:0}
+.wed-seating-block-title small{color:var(--ink-soft);font-size:11px}
+.wed-seating-options{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:9px;
+}
+.wed-seating-option{
+ display:grid;grid-template-rows:auto minmax(75px,1fr) auto auto;
+ gap:8px;min-width:0;padding:12px;border:1px solid var(--line);
+ border-radius:12px;background:var(--surface);
+}
+.wed-seating-option>header{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-between;align-items:center}
+.wed-seating-option>header strong{font-size:12px}
+.wed-seating-option>header span{font-size:11px;color:var(--blue);font-weight:800}
+.wed-seating-option-visual{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:9px;min-width:0}
+.wed-seating-mini-unit{display:grid;justify-items:center;gap:3px}
+.wed-seating-mini-unit small{font-size:9px;color:var(--ink-soft)}
+.wed-extra-tables{font-size:11px;color:var(--ink-soft)}
+.wed-seating-option-meta{display:flex;flex-wrap:wrap;gap:5px;font-size:11px}
+.wed-seating-option-meta span,.wed-seating-option-meta strong{
+ padding:5px 6px;border-radius:6px;background:var(--paper);
+}
+.wed-seating-option>p{margin:0;font-size:10px;color:var(--ink-soft);line-height:1.5}
+.wed-seat-diagram{
+ position:relative;width:154px;height:154px;
+ margin:0 auto;isolation:isolate;flex:0 0 auto;
+}
+.wed-seat-center{
+ position:absolute;inset:24%;z-index:0;
+ display:flex;align-items:center;justify-content:center;flex-direction:column;
+ border:2px solid var(--line);border-radius:50%;
+ background:var(--paper);color:var(--ink);text-align:center;
+}
+.wed-seat-center strong{font-size:21px;line-height:1.1}
+.wed-seat-center small{font-size:9px;color:var(--ink-soft)}
+.wed-seat-presidencial{border-radius:12px;transform:scaleX(1.25)}
+.wed-seat-rectangular{border-radius:8px}
+.wed-seat-dot{
+ position:absolute;z-index:2;display:block;width:10px;height:10px;
+ border:1px solid var(--blue);border-radius:50%;
+ background:var(--surface);transform:translate(-50%,-50%);
+}
+.wed-seat-dot.is-occupied{background:var(--blue)}
+.wed-seat-diagram-mini{width:69px;height:69px;margin:0}
+.wed-seat-diagram-mini .wed-seat-center{inset:25%;border-width:1px}
+.wed-seat-diagram-mini .wed-seat-center strong{font-size:12px}
+.wed-seat-diagram-mini .wed-seat-center small{font-size:7px}
+.wed-seat-diagram-mini .wed-seat-dot{width:6px;height:6px;border-width:1px}
+.wed-seating-workspace .wed-seating-grid{
+ grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start;
+}
+.wed-seating-workspace .wed-seating-card{display:grid;gap:10px;min-height:0}
+.wed-seat-caption{text-align:center;font-size:11px;color:var(--ink-soft)}
+.wed-unseated-list{display:flex;flex-wrap:wrap;gap:7px}
+.wed-unseated-list button{
+ display:flex;align-items:center;gap:8px;min-height:36px;
+ padding:7px 10px;border:1px solid var(--line);border-radius:9px;
+ background:var(--surface);color:var(--ink);font:inherit;font-size:11px;
+ cursor:pointer;
+}
+.wed-unseated-list button span{color:var(--blue);font-weight:800}
+.wed-unseated-list button:hover{border-color:var(--blue)}
+.wed-capacity-preset{display:grid;gap:7px}
+.wed-capacity-preset>span{font-size:11px;font-weight:800}
+.wed-capacity-preset>div{display:flex;gap:7px;flex-wrap:wrap}
+.wed-capacity-preset button{
+ padding:7px 13px;border:1px solid var(--line);border-radius:8px;
+ font:inherit;font-size:12px;font-weight:800;cursor:pointer;
+ color:var(--ink);background:var(--paper);
+}
+.wed-capacity-preset button[aria-pressed="true"]{
+ border-color:var(--blue);background:var(--blue-soft);color:var(--blue);
+}
+.wed-capacity-preset>small{color:var(--ink-soft);font-size:11px}
+@media(max-width:1100px){
+ .wed-seating-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .wed-seating-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wed-seating-workspace .wed-seating-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ .wed-seating-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .wed-seating-metric{padding:9px 7px}
+ .wed-seating-metric strong{font-size:19px}
+ .wed-seating-metric span{font-size:10px}
+ .wed-seating-options{grid-template-columns:1fr}
+ .wed-seating-workspace .wed-seating-grid{grid-template-columns:1fr}
+ .wed-seating-option{grid-template-rows:auto auto auto auto}
+ .wed-seat-diagram{width:135px;height:135px}
+ .wed-seat-diagram-mini{width:69px;height:69px}
+ .wed-seat-diagram-mini .wed-seat-center strong{font-size:12px}
+}
