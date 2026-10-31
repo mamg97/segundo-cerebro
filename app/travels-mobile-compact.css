@@ -1,3 +1,5 @@
+/* Regression guard: a wide planning table must scroll inside its own box,
+   never dictate the width of the travel dashboard or the whole mobile page. */
 /* Private travel workspaces: phone-first density, true shrink-to-fit grid tracks.
    Shared navigation is adjusted only at mobile widths. No trip data in CSS. */
 @media (max-width:760px) {
