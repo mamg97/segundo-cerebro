@@ -56,7 +56,7 @@ export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,boo
       (address?'<div class="trv-dash-address"><span aria-hidden="true">⌖</span><p>'+escapeText(address)+'</p></div>':"")+
       mapTabs+
       '<div class="trv-map-canvas" data-trv-map-canvas><div class="trv-map-intro"><span class="trv-map-pin">⌖</span><strong>'+(hasPoints?"Rutas del viaje, por días":"El alojamiento, en el mapa")+'</strong>'+
-      '<p>'+(hasPoints?"Para mostrar calles y puntos se cargarán mapas de OpenStreetMap. La conexión solo se realizará si eliges cargar el mapa.":"Google Maps solo recibirá la dirección si decides cargarlo.")+'</p>'+
+      '<p>'+(hasPoints?"Para mostrar calles y puntos se cargarán mapas de OpenStreetMap. La conexión solo se realizará si eliges cargar el mapa.":"Tu dirección solo se compartirá con Google si decides cargarlo.")+'</p>'+
       '<button type="button" data-trv-show-map>'+(hasPoints?"Cargar mapa con paradas":"Mostrar mapa interactivo")+'</button></div></div>'+
       (hasPoints?'<div class="trv-map-routes" data-trv-map-routes></div>'+
         '<p class="trv-map-note">Línea entre puntos = secuencia orientativa, no camino por las calles. Las horas propuestas no son reservas.</p>'+mapLists:"")+
