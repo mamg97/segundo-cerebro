@@ -22,6 +22,16 @@
   }
   .mobile-context-trigger.is-single-section {cursor:default}
   .mobile-context-trigger.is-single-section svg {display:none}
+  .mobile-catalog-single {
+    box-sizing:border-box;display:flex;align-items:center;gap:10px;
+    width:100%;min-height:46px;padding:9px 13px;
+    border:1px solid var(--line);border-radius:13px;
+    background:var(--paper);color:var(--ink);
+    text-align:left;text-decoration:none;font:inherit;
+    font-size:13px;font-weight:800;cursor:pointer;
+  }
+  .mobile-catalog-single svg {width:20px;height:20px;flex:0 0 20px;color:var(--blue)}
+  .mobile-catalog-single:focus-visible {outline:2px solid var(--blue);outline-offset:2px}
 
   /* The travel panel is one scrolling viewport, not an 800px-wide child grid. */
   body.route-area-active #detail-dialog.travels-dialog[open] {
