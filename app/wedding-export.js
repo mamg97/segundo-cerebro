@@ -1,6 +1,6 @@
 // Zero-dependency, client-side OOXML workbook export. Never uploads private data.
 // Excel-compatible .xlsx with uncompressed ZIP entries and text-only cells (no formulas).
-import {BODAS_LINKS,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.5";
+import {BODAS_LINKS,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.6";
 export const WEDDING_EXPORT_TABS={
  kanban:"Kanban",agenda:"Agenda",proveedores:"Proveedores",invitados:"Invitados",
  mesas:"Mesas",planificacion:"Presupuesto",inspiracion:"Inspiración",bodasnet:"Bodas.net"
@@ -65,8 +65,8 @@ export function buildWeddingExport(view,{items=[],guests=[],tables=[]},{origin="
  }
  if(view==="mesas"){
   sheets=[
-   sheet("Mesas",["ID","Mesa","Capacidad","Forma","Ocupación","Revisión","Actualizado"],tables.map(t=>[
-    t.id,t.name,t.capacity,t.shape,guests.filter(g=>g.tableId===t.id).length,t.revision,date(t.updatedAt)
+   sheet("Mesas",["ID","Mesa","Capacidad","Forma","Ocupación","Posición X (%)","Posición Y (%)","Revisión","Actualizado"],tables.map(t=>[
+    t.id,t.name,t.capacity,t.shape,guests.filter(g=>g.tableId===t.id).length,t.positionX??"",t.positionY??"",t.revision,date(t.updatedAt)
    ])),
    sheet("Distribución",SEATING_HEADERS,seatingRows(tables,guests)),
    sheet("Sin mesa",GUEST_HEADERS,guests.filter(g=>!g.tableId).map(g=>guest(g,tables)))

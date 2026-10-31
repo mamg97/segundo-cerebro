@@ -35,3 +35,19 @@ test("new entities live exclusively in versioned private D1 migration and Worker
  assert.match(migration,/ON DELETE SET NULL/);
  assert.match(worker,/handleWeddingPlannerRequest\(request, env\)/);
 });
+
+test("floor plan coordinates are paired, bounded, and private",()=>{
+ const valid=validateTable({name:"Mesa sintética",capacity:12,shape:"redonda",positionX:45.125,positionY:67});
+ assert.equal(valid.positionX,45.125);assert.equal(valid.positionY,67);
+ const legacy=validateTable({name:"Mesa antigua",capacity:6,shape:"presidencial"});
+ assert.equal(legacy.positionX,null);assert.equal(legacy.positionY,null);
+ for(const pair of [[-1,50],[101,50],[50,Infinity],[50,null],[null,50],["25",30]]){
+  assert.throws(()=>validateTable({name:"Mesa sintética",capacity:8,positionX:pair[0],positionY:pair[1]}));
+ }
+ const migration=readFileSync(new URL("../migrations/0015_wedding_table_positions.sql",import.meta.url),"utf8");
+ assert.match(migration,/ALTER TABLE wedding_tables ADD COLUMN position_x/);
+ assert.match(migration,/ALTER TABLE wedding_tables ADD COLUMN position_y/);
+ const source=readFileSync(new URL("./wedding-planner-store.js",import.meta.url),"utf8");
+ assert.match(source,/position_x=COALESCE\(\?,position_x\)/);
+ assert.match(source,/revision=revision\+1/);
+});

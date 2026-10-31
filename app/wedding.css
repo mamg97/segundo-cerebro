@@ -680,3 +680,88 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-seating-head [data-wed-toggle-table-picker][aria-expanded="true"]{
  background:var(--blue);color:#fff;
 }
+
+/* Wedding floor plan: a real full-width canvas, not independent narrow table cards.
+   Personal names come from authenticated D1 responses only. */
+.wed-floor-section{width:100%;min-width:0}
+.wed-floor-scroll{
+ width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;
+ border:1px solid var(--line);border-radius:14px;
+ background:var(--surface);scrollbar-width:thin;
+}
+.wed-floor-plan{
+ position:relative;width:100%;min-width:1200px;
+ background-image:linear-gradient(to right,var(--line) 1px,transparent 1px),
+                  linear-gradient(to bottom,var(--line) 1px,transparent 1px);
+ background-size:48px 48px;
+ background-color:var(--paper);
+}
+.wed-floor-table{
+ position:absolute;transform:translate(-50%,-50%);
+ width:352px;height:368px;padding:6px 0 10px;
+ border:2px solid transparent;border-radius:18px;
+ background:var(--surface);box-shadow:0 4px 20px #00000012;
+ cursor:grab;touch-action:none;user-select:none;
+ transition:border-color .12s,box-shadow .12s;
+}
+.wed-floor-table:hover,.wed-floor-table:focus-visible{
+ border-color:var(--blue);outline:0;
+}
+.wed-floor-table.is-selected{
+ border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);
+}
+.wed-floor-table.is-dragging{
+ cursor:grabbing;z-index:10;box-shadow:0 10px 28px #00000028;
+ transition:none;
+}
+.wed-floor-grip{
+ position:absolute;top:5px;left:50%;transform:translateX(-50%);
+ color:var(--ink-soft);font-size:10px;font-weight:750;white-space:nowrap;
+ pointer-events:none;
+}
+.wed-floor-table .wed-named-table{
+ width:100%;height:340px;aspect-ratio:auto;max-width:none;margin:0;
+}
+.wed-floor-table .wed-named-table-center{
+ inset:32%;padding:7px;
+ border-radius:50%;background:var(--surface);
+}
+.wed-floor-table .wed-named-table-center strong{
+ font-size:13px;line-height:1.16;overflow-wrap:anywhere;
+}
+.wed-floor-table .wed-named-table-center small{font-size:10px}
+.wed-floor-table .wed-named-seat{
+ width:67px;min-height:42px;padding:3px 1px;
+}
+.wed-floor-table .wed-seat-name{
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ width:100%;white-space:normal;overflow:hidden;
+ overflow-wrap:anywhere;text-overflow:ellipsis;
+ font-size:10px;line-height:1.15;
+}
+.wed-floor-table .wed-named-seat.is-filled{
+ background:var(--surface);border-color:var(--line);
+}
+.wed-floor-table .wed-named-seat.is-empty{opacity:.55}
+.wed-floor-table .wed-named-seat.is-empty .wed-seat-name{display:none}
+.wed-floor-occupancy{
+ position:absolute;left:0;right:0;bottom:5px;
+ text-align:center;color:var(--ink-soft);font-size:10px;
+ pointer-events:none;
+}
+.wed-seating-details{width:100%;display:grid;gap:12px}
+.wed-seating-details .wed-seating-head{margin-bottom:0}
+.wed-seating-details .wed-seating-head strong{font-size:16px}
+.wed-seating-details .wed-seating-guests{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+ gap:7px;
+}
+.wed-seating-details .wed-seated-guest{min-width:0}
+.wed-seating-details .wed-seat-caption{text-align:left}
+@media(max-width:650px){
+ .wed-floor-scroll{border-radius:10px}
+ .wed-floor-plan{min-width:1200px}
+ .wed-seating-details .wed-seating-guests{grid-template-columns:1fr}
+ .wed-seating-details .wed-seating-head{gap:8px}
+ .wed-seating-details .wed-seating-head strong{flex-basis:100%}
+}

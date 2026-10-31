@@ -23,11 +23,18 @@ export function validateTable(x){
  if(!x||Array.isArray(x)||typeof x!=="object")throw new PlannerError("INVALID_ITEM");
  const name=field(x.name),capacity=Number(x.capacity),shape=field(x.shape||"redonda",16);
  if(!name||!Number.isInteger(capacity)||capacity<1||capacity>30||!SHAPES.has(shape))throw new PlannerError("INVALID_ITEM");
- return {name,capacity,shape};
+ const absent=x.positionX===undefined&&x.positionY===undefined;
+ const cleared=x.positionX===null&&x.positionY===null;
+ if(!absent&&!cleared&&(!Number.isFinite(x.positionX)||!Number.isFinite(x.positionY)||
+  x.positionX<0||x.positionX>100||x.positionY<0||x.positionY>100))throw new PlannerError("INVALID_POSITION");
+ if(!absent&&!cleared&&(x.positionX===null||x.positionY===null))throw new PlannerError("INVALID_POSITION");
+ return {name,capacity,shape,positionX:absent||cleared?null:x.positionX,positionY:absent||cleared?null:x.positionY};
 }
 const guestRow=x=>({id:x.id,name:x.name,groupName:x.group_name,rsvp:x.rsvp,menu:x.menu,dietaryNotes:x.dietary_notes,
  email:x.email,phone:x.phone,notes:x.notes,tableId:x.table_id,revision:x.revision,updatedAt:x.updated_at,updatedBy:x.updated_by});
-const tableRow=x=>({id:x.id,name:x.name,capacity:x.capacity,shape:x.shape,revision:x.revision,updatedAt:x.updated_at,updatedBy:x.updated_by,seated:x.seated||0});
+const tableRow=x=>({id:x.id,name:x.name,capacity:x.capacity,shape:x.shape,
+ positionX:x.position_x??null,positionY:x.position_y??null,
+ revision:x.revision,updatedAt:x.updated_at,updatedBy:x.updated_by,seated:x.seated||0});
 const guestSelect="SELECT * FROM wedding_guests";
 const tableSelect="SELECT t.*, (SELECT COUNT(*) FROM wedding_guests g WHERE g.table_id=t.id) AS seated FROM wedding_tables t";
 async function parse(request){
@@ -87,8 +94,8 @@ export async function handleWeddingPlannerRequest(request,env){
     await db.prepare("INSERT INTO wedding_guests(id,name,group_name,rsvp,menu,dietary_notes,email,phone,notes,table_id,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
      .bind(guid,item.name,item.groupName,item.rsvp,item.menu,item.dietaryNotes,item.email,item.phone,item.notes,item.tableId,now,actor).run();
    }else{
-    await db.prepare("INSERT INTO wedding_tables(id,name,capacity,shape,updated_at,updated_by) VALUES(?,?,?,?,?,?)")
-     .bind(guid,item.name,item.capacity,item.shape,now,actor).run();
+    await db.prepare("INSERT INTO wedding_tables(id,name,capacity,shape,position_x,position_y,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?)")
+     .bind(guid,item.name,item.capacity,item.shape,item.positionX,item.positionY,now,actor).run();
    }
    const result=await db.prepare(select+" WHERE "+(guests?"id":"t.id")+"=?").bind(guid).first();
    return json({ok:true,item:row(result)},201);
@@ -104,8 +111,8 @@ export async function handleWeddingPlannerRequest(request,env){
    const result=guests?
     await db.prepare("UPDATE wedding_guests SET name=?,group_name=?,rsvp=?,menu=?,dietary_notes=?,email=?,phone=?,notes=?,table_id=?,revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
      .bind(item.name,item.groupName,item.rsvp,item.menu,item.dietaryNotes,item.email,item.phone,item.notes,item.tableId,now,actor,id,revision).run():
-    await db.prepare("UPDATE wedding_tables SET name=?,capacity=?,shape=?,revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
-     .bind(item.name,item.capacity,item.shape,now,actor,id,revision).run();
+    await db.prepare("UPDATE wedding_tables SET name=?,capacity=?,shape=?,position_x=COALESCE(?,position_x),position_y=COALESCE(?,position_y),revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
+     .bind(item.name,item.capacity,item.shape,item.positionX,item.positionY,now,actor,id,revision).run();
    if(!result.meta?.changes)throw new PlannerError("REVISION_CONFLICT",409);
    const updated=await db.prepare(select+" WHERE "+(guests?"id":"t.id")+"=?").bind(id).first();
    return json({ok:true,item:row(updated)});
