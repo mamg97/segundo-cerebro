@@ -32,3 +32,14 @@ export function stampStaticEntrypoints(html, revisions) {
   }
   return rewritten;
 }
+
+
+// Re-stamp every local JS module edge for a coherent release. Otherwise a
+// fingerprinted app.js may still import stale Safari/PWA-cached child modules.
+export function stampModuleImportRevisions(source, revision) {
+  if (!/^[a-f0-9]{16}$/.test(revision)) throw new Error("MODULE_REVISION_MISSING");
+  return String(source).replace(
+    /(\b(?:from\s*|import\s*(?:\(\s*)?)["'])(\.{1,2}\/[^"'?#\s]+\.m?js)(?:\?v=[^"'#\s]*)?(["'])/g,
+    (_, prefix, asset, quote) => prefix + asset + "?v=" + revision + quote
+  );
+}

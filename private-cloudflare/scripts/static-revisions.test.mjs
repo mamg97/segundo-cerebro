@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fingerprintStaticAsset, fingerprintFrontendAssets, stampStaticEntrypoints } from "./static-revisions.mjs";
+import { fingerprintStaticAsset, fingerprintFrontendAssets, stampStaticEntrypoints, stampModuleImportRevisions } from "./static-revisions.mjs";
 
 test("asset changes always produce a distinct URL without a manual version bump", () => {
   const html = '<link rel="stylesheet" href="./styles.css?v=0.44.32"><script type="module" src="./app.js?v=0.44.32"></script>';
@@ -45,4 +45,23 @@ test("all CSS entrypoint URLs are fingerprinted automatically, including Boda",(
  assert.match(out,/wedding\.css\?v=3333333333333333/);
  assert.doesNotMatch(out,/wedding\.css\?v=0\.2\.5/);
  assert.throws(()=>stampStaticEntrypoints(html,{"app.js":"1111111111111111","styles.css":"2222222222222222"}),/STATIC_REVISION_MISSING/);
+});
+
+
+test("iOS private release stamps the entire local module graph, not just app.js", () => {
+  const rev="0123456789abcdef";
+  const source=[
+    'import {x} from "./mobile-navigation.mjs?v=0.1.10";',
+    'import "./startup.mjs";',
+    'const m=import("../core/shared.js?v=0.44.2");',
+    'import {y} from "external-package";'
+  ].join("\n");
+  const stamped=stampModuleImportRevisions(source,rev);
+  assert.match(stamped,/mobile-navigation\.mjs\?v=0123456789abcdef/);
+  assert.match(stamped,/startup\.mjs\?v=0123456789abcdef/);
+  assert.match(stamped,/\.\.\/core\/shared\.js\?v=0123456789abcdef/);
+  assert.match(stamped,/from "external-package"/);
+  assert.ok(!stamped.includes("v=0.1.10"));
+  assert.equal(stampModuleImportRevisions(stamped,rev),stamped);
+  assert.throws(()=>stampModuleImportRevisions(source,"0.1.1"),/MODULE_REVISION_MISSING/);
 });

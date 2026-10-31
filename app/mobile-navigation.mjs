@@ -32,6 +32,17 @@ export const MOBILE_DEFAULT_SHORTCUTS=Object.freeze([
  "#/finanzas",hrefForWedding(),hrefForHealthTab("gym"),hrefForHealthTab("menu")
 ]);
 const SHORTCUT_STORAGE_KEY="segun.mobile.shortcuts.v1";
+
+// Only a public frontend fingerprint is displayed; no private user data.
+export function mobileReleaseFromScript(source){
+  const revision=String(source||"").match(/[?&]v=([0-9a-f]{16})(?=&|$)/)?.[1];
+  return revision?revision.slice(0,8):"sin identificar";
+}
+function currentMobileRelease(){
+  const source=document.querySelector('script[type="module"][src*="app.js"]')?.getAttribute("src");
+  return mobileReleaseFromScript(source);
+}
+
 // El catálogo deriva exclusivamente de rutas disponibles, nunca de contenido privado.
 const HEALTH=Object.freeze([["Resumen","overview"],["Médicos","medical"],["Visión","vision"],["Gimnasio","gym"],["Nutrición","nutrition"],["Recetas","recipes"],["Menú semanal","menu"]].map(([label,tab])=>({label,href:hrefForHealthTab(tab)})));
 const OTHER={
@@ -180,7 +191,8 @@ function renderSheet(){
   node.innerHTML='<button type="button" class="mobile-sheet-back" data-mobile-back>‹ Volver a personalizar</button>'+catalogMarkup(true);
  }else{
   dom("mobile-sheet-heading").textContent="Bloques y apartados";
-  node.innerHTML='<button type="button" class="mobile-shortcuts-configure" data-mobile-customize>Personalizar barra inferior</button>'+catalogMarkup(false);
+  node.innerHTML='<button type="button" class="mobile-shortcuts-configure" data-mobile-customize>Personalizar barra inferior</button>'+catalogMarkup(false)+
+     '<div class="mobile-release-panel"><small>Interfaz · '+safe(currentMobileRelease())+'</small><button type="button" data-mobile-force-update>Cargar última versión</button></div>';
  }
 }
 function openSheet(type,target){
@@ -216,6 +228,29 @@ export function syncMobileNavigation(nextRoute,nextHash){
  syncBottomBarState();
  if(mode)renderSheet();
 }
+// User-triggered code refresh. Preserve cookies, localStorage, route and private
+// backed-up data; only discard this app's static asset caches and SW.
+async function reloadMobileInterface(){
+  if(!window.confirm("Se recargará la interfaz. Guarda antes cualquier cambio que no hayas confirmado. ¿Continuar?"))return;
+  const button=dom("mobile-navigation-sheet")?.querySelector("[data-mobile-force-update]");
+  if(button){button.disabled=true;button.textContent="Recargando interfaz…";}
+  try{
+    if("serviceWorker" in navigator){
+      const registrations=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.filter(reg=>new URL(reg.scope).pathname==="/app/").map(reg=>reg.unregister()));
+    }
+    if("caches" in window){
+      const names=await caches.keys();
+      await Promise.all(names.filter(name=>name.startsWith("segun-public-static-")).map(name=>caches.delete(name)));
+    }
+  }catch{
+    // A blocked cache API must not prevent a normal cache-busted navigation.
+  }
+  const next=new URL(window.location.href);
+  next.searchParams.set("segun_reload",String(Date.now()));
+  window.location.replace(next.href);
+}
+
 export function initializeMobileNavigation({navigateTo,onRefresh:refreshHandler}){
  go=navigateTo;onRefresh=refreshHandler;if(dom("mobile-app-header"))return;
  selectedShortcuts=loadMobileShortcuts();
@@ -255,6 +290,7 @@ export function initializeMobileNavigation({navigateTo,onRefresh:refreshHandler}
  });
  dom("mobile-navigation-sheet").addEventListener("click",e=>{
   if(e.target.closest("[data-mobile-dismiss],#mobile-sheet-close")){closeSheet();return;}
+   if(e.target.closest("[data-mobile-force-update]")){e.preventDefault();void reloadMobileInterface();return;}
   const link=e.target.closest("[data-mobile-route]");if(link){e.preventDefault();navigate(link.dataset.mobileRoute);return;}
   const customize=e.target.closest("[data-mobile-customize]");
   if(customize){e.preventDefault();mode="customize";renderSheet();return;}

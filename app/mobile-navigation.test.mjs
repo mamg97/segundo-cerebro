@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {MOBILE_AREAS,mobileSections,mobileHasSectionChoices,mobileCurrentLabel,mobileRememberedRoute,MOBILE_DEFAULT_SHORTCUTS,MOBILE_SHORTCUT_GROUPS,normalizeMobileShortcuts,swapMobileShortcut} from "./mobile-navigation.mjs";
+import {MOBILE_AREAS,mobileSections,mobileHasSectionChoices,mobileCurrentLabel,mobileRememberedRoute,MOBILE_DEFAULT_SHORTCUTS,MOBILE_SHORTCUT_GROUPS,normalizeMobileShortcuts,swapMobileShortcut,mobileReleaseFromScript} from "./mobile-navigation.mjs";
 import {hrefForArea,hrefForPantryTab,routeFromHash} from "./area-routes.mjs";
 const parse=hash=>routeFromHash(hash);
 test("mobile primary dock has five areas and More holds all remaining areas",()=>{
@@ -189,4 +189,20 @@ test("one-subsection areas navigate directly without a redundant dropdown",()=>{
  assert.match(nav,/group\.links\.length===1/);
  assert.match(nav,/context\.disabled=!hasChoices/);
  assert.match(nav,/mobile-catalog-single/);
+});
+
+
+test("mobile exposes a traceable frontend fingerprint and a safe full-interface reload",()=>{
+ assert.equal(mobileReleaseFromScript("./app.js?v=0123456789abcdef"),"01234567");
+ assert.equal(mobileReleaseFromScript("./app.js?v=0.44.122"),"sin identificar");
+ const nav=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
+ assert.match(nav,/data-mobile-force-update/);
+ assert.match(nav,/getRegistrations\(\)/);
+ assert.match(nav,/segun-public-static-/);
+ assert.match(nav,/new URL\(window\.location\.href\)/);
+ assert.match(nav,/next\.searchParams\.set\("segun_reload"/);
+ assert.match(nav,/window\.confirm\(/);
+ assert.doesNotMatch(nav,/localStorage\.clear\(|localStorage\.removeItem\(/);
+ assert.match(css,/\.mobile-release-panel\{/);
 });

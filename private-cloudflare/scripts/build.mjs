@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { fingerprintFrontendAssets, fingerprintStaticAsset, stampStaticEntrypoints } from "./static-revisions.mjs";
+import { fingerprintFrontendAssets, fingerprintStaticAsset, stampStaticEntrypoints, stampModuleImportRevisions } from "./static-revisions.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const workerRoot = resolve(here, "..");
@@ -53,6 +53,16 @@ const publicCode = [
   ...await collectPublicFrontend(resolve(dist, "core"), "core")
 ];
 const appRevision = fingerprintFrontendAssets(publicCode);
+// Version every relative JS import in the distributed module graph with the
+// same frontend fingerprint. Versioning only app.js is insufficient on iOS:
+// child imports with fixed ?v=0.1.x can survive a newly deployed app.js.
+for (const [path] of publicCode) {
+  if (!/\.m?js$/.test(path)) continue;
+  const full = resolve(dist, path);
+  const original = await readFile(full, "utf8");
+  const stamped = stampModuleImportRevisions(original, appRevision);
+  if (stamped !== original) await writeFile(full, stamped, "utf8");
+}
 const stylesRevision = fingerprintStaticAsset(await readFile(resolve(dist, "app", "styles.css")));
 const cssRevisions = Object.fromEntries(publicCode
   .filter(([path]) => /^app\/[^/]+\.css$/.test(path))
