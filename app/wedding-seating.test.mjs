@@ -173,7 +173,7 @@ test("each physically free chair is a clickable index, while occupied indexes re
  assert.doesNotMatch(html,/data-wed-seat-index="1"/);
  assert.match(html,/Añadir personas a Mesa sintética · Plaza 3/);
  assert.match(html,/data-wed-seat-detail="synthetic-a"/);
- assert.match(html,/data-wed-floor-plan data-wed-table-count="1" style="display:grid;--wed-floor-columns:1;--wed-floor-row-height:390px;height:390px;min-height:390px"/);
+ assert.match(html,/data-wed-floor-plan data-wed-table-count="1" style="display:grid;--wed-floor-columns:1;--wed-floor-row-height:390px;--wed-floor-rows:1;--wed-canvas-width:3600px;--wed-canvas-height:3600px;height:390px;min-height:390px"/);
  assert.match(html,/class="wed-floor-scroll"[^>]+height:390px;min-height:390px/);
  assert.match(ui,/openWeddingSeatPicker\(button,tableId,index\)/);
  assert.match(ui,/seatIndex:state\.seatingTargetSeatIndex/);
@@ -210,7 +210,7 @@ test("one presidential table is centered despite invalid legacy drag coordinates
  assert.match(html,/data-wed-floor-grip/);
  assert.match(html,/Arrastrar Mesa ficticia/);
  assert.match(html,/data-wed-center-table="table-demo"/);
- assert.match(html,/display:grid;--wed-floor-columns:1;--wed-floor-row-height:390px;height:390px;min-height:390px/);
+ assert.match(html,/display:grid;--wed-floor-columns:1;--wed-floor-row-height:390px;--wed-floor-rows:1;--wed-canvas-width:3600px;--wed-canvas-height:3600px;height:390px;min-height:390px/);
  assert.equal(JSON.stringify(broken),untouched,"must not silently update persisted D1 coordinates");
 });
 test("compact floor accommodates four tables per row without oversized cards",()=>{
@@ -521,7 +521,7 @@ test("zoom in, out, 100 percent and fit keep floor scroll and coordinates",()=>{
  const html=renderTables([], [{id:"z",name:"Zoom",shape:"redonda",capacity:12}],null,esc,"z");
  for(const marker of ["data-wed-zoom-in","data-wed-zoom-out","data-wed-zoom-reset","data-wed-zoom-fit"])assert.match(html,new RegExp(marker));
  assert.match(ui,/state\.seatingFloorZoom=Math\.max\(\.2,Math\.min\(1\.6/);
- assert.match(ui,/stage\.style\.zoom=String\(state\.seatingFloorZoom\)/);
+ assert.match(ui,/stage\.style\.zoom=String\(zoom\)/);
  assert.match(ui,/stage\.dispatchEvent\(new Event\("wed-floor-recalibrate"\)\)/);
  assert.match(css,/min-width:max\(1180px,calc\(var\(--wed-floor-columns,1\)\*420px\)\)/);
  assert.match(css,/\.wed-floor-scroll\{[\s\S]*?overflow-x:auto;overflow-y:auto/);
