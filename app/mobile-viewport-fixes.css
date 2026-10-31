@@ -1,0 +1,138 @@
+/* Mobile viewport contract: one header, one bottom dock, one scroller.
+ * Scope only to phones; desktop and other dialogs keep their established layout. */
+@media (max-width:760px) {
+  :root {
+    /* iOS reserves an external gesture inset. Keep tappable dock content above it,
+       and paint the same dock background throughout the inset. */
+    --mobile-dock-height:67px;
+  }
+  html,body {overscroll-behavior-y:none}
+  .mobile-bottom-nav {
+    bottom:calc(0px - env(safe-area-inset-bottom,0px));
+    box-sizing:border-box;
+    box-shadow:0 90px 0 var(--surface),0 -4px 20px rgba(0,0,0,.13);
+  }
+  /* Avoid allocating the bottom safe area twice in the Home/route scrollport. */
+  body:not(.route-area-active) .main-content {
+    top:var(--mobile-toolbar-height);
+    bottom:var(--mobile-dock-height);
+    height:auto;
+    padding-top:12px;
+    scroll-padding-top:12px;
+  }
+  .mobile-route-back{
+    flex:0 0 40px;
+    width:40px;
+    height:40px;
+    border-radius:12px;
+    font-size:27px;
+    line-height:1;
+    background:var(--paper);
+  }
+  .mobile-route-back[hidden]{display:none!important}
+  /* Travel uses the single permanent mobile header. Do not render a second
+     54px bar, duplicate title or floating close button above the content. */
+  body.route-area-active #detail-dialog.travels-dialog[open]{
+    inset:var(--mobile-toolbar-height) 0 var(--mobile-dock-height) 0!important;
+    height:calc(100dvh - var(--mobile-toolbar-height) - var(--mobile-dock-height))!important;
+    width:100%!important;
+    min-width:0;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0 max(10px,env(safe-area-inset-right)) 0 max(10px,env(safe-area-inset-left))!important;
+    overflow:hidden!important;
+  }
+  body.route-area-active #detail-dialog.travels-dialog[open]::before{
+    content:none!important;
+    display:none!important;
+  }
+  body.route-area-active #detail-dialog.travels-dialog[open]>#close-dialog,
+  body.route-area-active #detail-dialog.travels-dialog[open]>#dialog-title,
+  body.route-area-active #detail-dialog.travels-dialog[open]>#dialog-context{
+    display:none!important;
+  }
+  body.route-area-active #detail-dialog.travels-dialog[open] #dialog-body{
+    box-sizing:border-box;
+    flex:1 1 auto;
+    width:100%!important;
+    max-width:100%;
+    min-width:0;
+    min-height:0;
+    margin:0!important;
+    padding:12px 0 18px!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    scrollbar-gutter:auto;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  /* Compact horizontal tiles: show 2+ journeys on narrow phones. */
+  #detail-dialog.travels-dialog[open] .trv-grid.trv-horizontal-gallery{
+    display:flex!important;
+    flex-flow:row nowrap!important;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    gap:9px!important;
+    padding:2px 1px 10px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scroll-snap-type:x proximity;
+  }
+  #detail-dialog.travels-dialog[open] .trv-grid.trv-horizontal-gallery > .trv-card.trv-city-tile{
+    box-sizing:border-box;
+    flex:0 0 clamp(132px,40vw,170px)!important;
+    width:clamp(132px,40vw,170px)!important;
+    max-width:none!important;
+    min-width:0!important;
+    min-height:0!important;
+    aspect-ratio:1/1;
+    padding:12px!important;
+    border-radius:13px!important;
+  }
+  #detail-dialog.travels-dialog[open] .trv-city-tile .trv-card-details{gap:5px}
+  #detail-dialog.travels-dialog[open] .trv-city-tile .trv-card-details strong{
+    font-size:clamp(16px,4.1vw,21px)!important;
+    line-height:1.08;
+  }
+  #detail-dialog.travels-dialog[open] .trv-city-tile .trv-card-details small{
+    font-size:10px!important;
+    line-height:1.25;
+  }
+  #detail-dialog.travels-dialog[open] .trv-intro,
+  #detail-dialog.travels-dialog[open] .trv-footnote{
+    display:none!important;
+  }
+  #detail-dialog.travels-dialog[open] .trv-photo-credits{
+    margin:10px 2px 0;
+    font-size:10px;
+    line-height:1.4;
+  }
+  /* The opened itinerary is also one compact column at mobile widths. */
+  #detail-dialog.travels-dialog[open] .trv-dashboard{
+    min-width:0;
+    width:100%;
+    gap:10px;
+  }
+  #detail-dialog.travels-dialog[open] .trv-dash-lead,
+  #detail-dialog.travels-dialog[open] .trv-dash-details{
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:10px;
+  }
+  #detail-dialog.travels-dialog[open] .trv-hero,
+  #detail-dialog.travels-dialog[open] .trv-panel{padding:12px!important;border-radius:13px}
+  #detail-dialog.travels-dialog[open] .trv-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #detail-dialog.travels-dialog[open] .trv-map-canvas,
+  #detail-dialog.travels-dialog[open] .trv-map-intro{min-height:210px!important}
+  #detail-dialog.travels-dialog[open] .trv-map-canvas iframe{height:210px!important}
+  #detail-dialog.travels-dialog[open] .trv-day-nav button{
+    min-width:110px!important;
+    padding:9px!important;
+    font-size:11px;
+  }
+  #detail-dialog.travels-dialog[open] .trv-timetable-scroll{
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+  }
+}
