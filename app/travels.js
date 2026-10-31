@@ -107,10 +107,13 @@ function setDialog(title, context) {
   if (!dialog.open) dialog.showModal();
   return dialog;
 }
-function tripCaption(event, detail) {
-  const parsed = parseTravelDetail(detail || {});
-  const dest = parsed.destination[0];
-  return dest ? dest.text.split(" · ")[0] : event.title;
+export function tripCaption(event, detail) {
+  // The canonical title describes the place; trip dates live in startsAt/endsAt.
+  // Tolerate legacy date suffixes while the private ledger refreshes.
+  const title = String(event?.title || "").replace(/\s*[·—-]\s*(?:verano|invierno|primavera|otoño|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+\d{4}\s*$/i,"").trim();
+  if (title && !/^viaje(?:\s+\S+)?$/i.test(title)) return title;
+  const destination = parseTravelDetail(detail || {}).destination[0]?.text?.split(" · ")[0]?.trim();
+  return destination || title || "Viaje";
 }
 // Fondos urbanos reutilizables, sin datos personales ni identificadores privados.
 const CITY_COVERS = [
@@ -146,25 +149,59 @@ const CITY_COVERS = [
 export function coverForCity(text) {
   return CITY_COVERS.find((cover) => cover.match.test(String(text || ""))) || null;
 }
+// Cover source and attribution are owned by private EventoRefs (cover_image).
+// Only Commons file pages are allowed; refuse redirects, unknown hosts and inline URLs.
+export function coverFromReference(ref) {
+  if (!ref || (ref.type || ref.refType || ref.ref_type) !== "cover_image" ||
+      ref.sourceProvider !== "wikimedia_commons") return null;
+  try {
+    const source = new URL(String(ref.sourceRef || ""));
+    if (source.protocol !== "https:" || source.hostname !== "commons.wikimedia.org" ||
+        source.port || source.username || source.password || source.search || source.hash ||
+        !source.pathname.startsWith("/wiki/File:")) return null;
+    const file = decodeURIComponent(source.pathname.slice("/wiki/File:".length));
+    if (file.length > 220 || file.includes("/") || file.includes("\\") ||
+        !/^[^\x00-\x1f?#]+\.(?:jpe?g|png|webp)$/i.test(file)) return null;
+    return {
+      file,
+      source: source.href,
+      credit: String(ref.label || "Wikimedia Commons").slice(0,180)
+    };
+  } catch { return null; }
+}
+export function coverForTravel(event, detail) {
+  const refs = Array.isArray(detail?.references) ? detail.references : [];
+  const fromDetail = refs.map(coverFromReference).find(Boolean);
+  return fromDetail || coverFromReference(event?.coverReference) ||
+    coverForCity(tripCaption(event,detail));
+}
+function coverImageUrl(cover, width) {
+  if (!cover) return "";
+  return cover.file
+    ? "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(cover.file) + "?width=" + width
+    : cover.url;
+}
+function coverCredit(cover) {
+  return cover?.credit || [cover?.author,cover?.license].filter(Boolean).join(" · ");
+}
 function travelPhotoCredits(events) {
   const credits = new Map();
   events.forEach((event) => {
-    const cover = coverForCity(tripCaption(event, state.details.get(event.id)));
-    if (cover) credits.set(cover.city, cover);
+    const cover = coverForTravel(event, state.details.get(event.id));
+    if (cover) credits.set(cover.source, cover);
   });
   if (!credits.size) return "";
   const links = [...credits.values()].map((cover) =>
     '<a href="' + escapeText(cover.source) + '" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">' +
-      escapeText(cover.city) + ' · ' + escapeText(cover.author) + '</a> ' +
-    '<a href="' + escapeText(cover.licenseUrl) + '" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">(' + escapeText(cover.license) + ')</a>').join(" · ");
+      escapeText(coverCredit(cover)) + '</a>').join(" · ");
   return '<p class="trv-photo-credits">Fotografías: ' + links + '</p>';
 }
 function card(event) {
   const detail = state.details.get(event.id);
   const subtitle = tripCaption(event, detail);
-  const cover = coverForCity(subtitle);
+  const cover = coverForTravel(event,detail);
   const image = cover
-    ? '<img class="trv-card-photo" src="' + escapeText(cover.url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
+    ? '<img class="trv-card-photo" src="' + escapeText(coverImageUrl(cover,800)) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
     : "";
   return '<button type="button" class="trv-card trv-city-tile" data-trv-open="' + escapeText(event.id) + '" aria-label="Abrir viaje: ' + escapeText(subtitle) + '">' +
     image +
@@ -192,6 +229,8 @@ function renderList() {
     travelPhotoCredits(ordered) +
     '</div>';
   body().innerHTML=html;
+  body().querySelectorAll(".trv-card-photo").forEach((image) =>
+    image.addEventListener("error", () => image.remove(), { once: true }));
   body().querySelectorAll("[data-trv-open]").forEach((button) => button.addEventListener("click", () => {
     const id=button.dataset.trvOpen;
     if(!id)return;
@@ -253,11 +292,19 @@ function renderDetail(payload) {
   const event = payload.event, groups = parseTravelDetail(payload);
   const destination = tripCaption(event, payload);
   setDialog(destination, "Viajes · ficha de viaje");
-  const hero = '<div class="trv-hero trv-dashboard-hero"><button type="button" class="trv-back" data-trv-back>← Todos los viajes</button>' +
+  const cover = coverForTravel(event,payload);
+  const heroPhoto = cover ? '<img class="trv-hero-photo" src="' + escapeText(coverImageUrl(cover,1600)) +
+    '" alt="" decoding="async" referrerpolicy="no-referrer">' : "";
+  const photoCredit = cover ? '<a class="trv-hero-credit" href="' + escapeText(cover.source) +
+    '" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Foto representativa: ' +
+    escapeText(coverCredit(cover)) + '</a>' : "";
+  const hero = '<div class="trv-hero trv-dashboard-hero' + (cover ? ' trv-hero--has-cover' : '') + '">' +
+    heroPhoto + '<div class="trv-hero-copy"><button type="button" class="trv-back" data-trv-back>← Todos los viajes</button>' +
     '<span class="trv-kicker">✦ EXPEDIENTE DE VIAJE</span><h2>' + escapeText(destination) + '</h2>' +
     '<p>' + escapeText(event.summary || "Planificación del viaje") + '</p><div class="trv-dates">' +
     '<span>🗓 ' + escapeText(dateLabel(event.startsAt)) + '</span>' +
-    '<span>' + escapeText(event.status || "CONFIRMADO") + '</span></div></div>';
+    '<span>' + escapeText(event.status || "CONFIRMADO") + '</span></div>' +
+    photoCredit + '</div></div>';
   const flights = section("Vuelos",items(groups.flights,"Sin vuelos asociados."),"Reservas de transporte");
   const lodging = section("Alojamiento",items(groups.accommodation.map((r) => ({key:"Estancia",text:r.text})),"Alojamiento por añadir"),"Llegada y acceso");
   const bookings = section("Reservas y pagos programados",items(groups.bookings,"Sin reservas registradas."),"Verifica los cargos en Finanzas");
@@ -275,6 +322,8 @@ function renderDetail(payload) {
     dayLabel: dateLabel
   });
   bindTripDashboard({ root: body(), groups, dayLabel: dateLabel });
+  body().querySelector(".trv-hero-photo")?.addEventListener("error", (event) =>
+    event.currentTarget.remove(), { once: true });
   body().querySelector("[data-trv-back]")?.addEventListener("click",()=>{
     if(document.body.classList.contains("route-area-active")){
       history.pushState(null,"",hrefForArea("area-travels"));

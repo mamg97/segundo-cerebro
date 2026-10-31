@@ -422,7 +422,24 @@ function filterEvents(events, options = {}) {
 
 export async function fetchEventSheetRecords(env, getGoogleAccessToken, options = {}) {
   const source = await fetchEventsSheetSource(env, getGoogleAccessToken);
-  return filterEvents(source.value?.events || [], options);
+  const events = filterEvents(source.value?.events || [], options);
+  if (options.kind !== "travel") return events;
+  // Publicly reusable image metadata, joined privately by stable event ID.
+  // The main list needs only covers, never unrelated documents or references.
+  const covers = new Map();
+  for (const ref of source.value?.references || []) {
+    if (ref?.type === "cover_image" && ref.eventId && ref.sourceProvider === "wikimedia_commons") {
+      covers.set(ref.eventId, {
+        type: ref.type,
+        sourceProvider: ref.sourceProvider,
+        sourceRef: ref.sourceRef,
+        label: ref.label
+      });
+    }
+  }
+  return events.map((event) => covers.has(event.id)
+    ? { ...event, coverReference: covers.get(event.id) }
+    : event);
 }
 
 export async function fetchEventSheetHomeSummary(env, getGoogleAccessToken) {

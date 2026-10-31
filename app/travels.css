@@ -302,3 +302,50 @@
 .trv-saved-google-list small{font-size:10px;color:var(--ink-soft)}
 .trv-saved-google-list:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 @media(max-width:760px){.trv-saved-google-list{padding:7px 9px;margin-bottom:8px;border-radius:9px}.trv-saved-google-list strong{font-size:11px}}
+
+
+/* Travel covers: imagery is supplied by the private Events reference ledger. */
+.trv-city-tile {
+  position:relative;isolation:isolate;overflow:hidden;
+  justify-content:flex-end;align-items:stretch;padding:0;
+  background:linear-gradient(150deg,#173556,#437b8f);color:#fff;
+  aspect-ratio:5 / 4;min-height:170px;
+}
+.trv-city-tile .trv-card-photo {
+  position:absolute;inset:0;display:block;width:100%;height:100%;
+  object-fit:cover;object-position:center;z-index:-2;pointer-events:none;
+}
+.trv-city-tile::after {
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(7,20,36,0) 28%,rgba(5,18,36,.38) 54%,rgba(5,18,36,.92) 100%);
+}
+.trv-city-tile .trv-card-details {
+  display:flex;flex-direction:column;gap:5px;
+  padding:20px 17px 16px;position:relative;z-index:1;max-width:100%;
+  text-shadow:0 1px 8px rgba(0,0,0,.28);
+}
+.trv-city-tile .trv-card-details strong {color:#fff;font-size:clamp(19px,2vw,25px);line-height:1.12;overflow-wrap:anywhere}
+.trv-city-tile .trv-card-details small {color:rgba(255,255,255,.92);font-size:12px}
+.trv-dashboard-hero.trv-hero--has-cover {
+  min-height:clamp(250px,29vw,390px);
+  background:linear-gradient(140deg,#123451,#255f79);
+}
+.trv-hero--has-cover .trv-hero-photo {
+  position:absolute;inset:0;display:block;width:100%;height:100%;
+  object-fit:cover;object-position:center;z-index:-2;pointer-events:none;
+}
+.trv-dashboard-hero.trv-hero--has-cover::before {
+  content:"";position:absolute;inset:0;width:auto;height:auto;
+  transform:none;border:0;border-radius:0;z-index:-1;
+  background:linear-gradient(95deg,rgba(3,16,32,.87) 0%,rgba(3,16,32,.64) 52%,rgba(3,16,32,.16) 100%);
+}
+.trv-dashboard-hero.trv-hero--has-cover::after {display:none}
+.trv-hero-copy {position:relative;z-index:1;max-width:min(100%,760px)}
+.trv-dashboard-hero .trv-hero-copy h2 {max-width:100%}
+.trv-hero-credit {
+  display:inline-block;margin-top:15px;max-width:100%;
+  font-size:10px;line-height:1.45;color:#fff;
+  opacity:.83;text-decoration:underline;text-underline-offset:2px;
+  overflow-wrap:anywhere;
+}
+.trv-hero-credit:hover,.trv-hero-credit:focus-visible{opacity:1}
