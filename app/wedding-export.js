@@ -1,6 +1,6 @@
 // Zero-dependency, client-side OOXML workbook export. Never uploads private data.
 // Excel-compatible .xlsx with uncompressed ZIP entries and text-only cells (no formulas).
-import {BODAS_LINKS,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.6";
+import {BODAS_LINKS,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.7";
 export const WEDDING_EXPORT_TABS={
  kanban:"Kanban",agenda:"Agenda",proveedores:"Proveedores",invitados:"Invitados",
  mesas:"Mesas",planificacion:"Presupuesto",inspiracion:"Inspiración",bodasnet:"Bodas.net"
@@ -19,14 +19,14 @@ const card=(i,origin)=>[i.id,i.category,i.status,i.title,i.description,i.provide
  i.assigneeKind||"",i.dueDate||"",euro(i.estimateCents),euro(i.contractedCents),euro(i.paidCents),
  i.url||"",safeUrl(i.photoUrl,origin),date(i.createdAt),date(i.updatedAt),i.createdBy,i.updatedBy,i.revision];
 const cards=(name,items,origin)=>sheet(name,CARD_HEADERS,items.map(i=>card(i,origin)));
-const GUEST_HEADERS=["ID","Nombre","Lista","Asistencia","Menú","Alergias / dieta","Correo","Teléfono","Notas","Mesa","ID mesa","Revisión","Actualizado","Actualizado por"];
+const GUEST_HEADERS=["ID","Nombre","Lista","Asistencia","Menú","Alergias / dieta","Correo","Teléfono","Notas","Mesa","ID mesa","Asiento","Revisión","Actualizado","Actualizado por"];
 const guest=(g,tables)=>[g.id,g.name,g.groupName,g.rsvp,g.menu,g.dietaryNotes,g.email,g.phone,g.notes,
- tables.find(t=>t.id===g.tableId)?.name||"",g.tableId||"",g.revision,date(g.updatedAt),g.updatedBy];
-const SEATING_HEADERS=["Mesa","Capacidad","Formato","Ocupación actual","ID mesa","Invitado","Asistencia","Menú","Alergias / dieta","ID invitado"];
+ tables.find(t=>t.id===g.tableId)?.name||"",g.tableId||"",g.seatIndex===null||g.seatIndex===undefined?"":g.seatIndex+1,g.revision,date(g.updatedAt),g.updatedBy];
+const SEATING_HEADERS=["Mesa","Capacidad","Formato","Ocupación actual","ID mesa","Invitado","Asistencia","Menú","Alergias / dieta","ID invitado","Asiento"];
 const seatingRows=(tables,guests)=>tables.flatMap(t=>{
  const attendees=guests.filter(g=>g.tableId===t.id);
- return attendees.length?attendees.map(g=>[t.name,t.capacity,t.shape,attendees.length,t.id,g.name,g.rsvp,g.menu,g.dietaryNotes,g.id]):
- [[t.name,t.capacity,t.shape,0,t.id,"","","","",""]];
+ return attendees.length?attendees.map(g=>[t.name,t.capacity,t.shape,attendees.length,t.id,g.name,g.rsvp,g.menu,g.dietaryNotes,g.id,g.seatIndex===null||g.seatIndex===undefined?"":g.seatIndex+1]):
+ [[t.name,t.capacity,t.shape,0,t.id,"","","","","",""]];
 });
 const EXPORT_LIMIT=20000;
 export function buildWeddingExport(view,{items=[],guests=[],tables=[]},{origin="",now=new Date()}={}){
