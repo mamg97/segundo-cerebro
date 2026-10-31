@@ -19,7 +19,8 @@ const items=[
 const guests=[
  {id:"g1",name:"Persona A",groupName:"pareja",rsvp:"confirmado",tableId:"t1",dietaryNotes:"Sin gluten",email:"a@example.test"},
  {id:"g2",name:"Persona B",groupName:"padres_andrea",rsvp:"pendiente",tableId:null},
- {id:"g3",name:"Persona C",groupName:"grupo antiguo",rsvp:"pendiente",tableId:null}
+ {id:"g3",name:"Persona C",groupName:"grupo antiguo",rsvp:"pendiente",tableId:null},
+ {id:"g4",name:"Persona D",groupName:"opcionales",rsvp:"pendiente",tableId:null}
 ];
 const tables=[{id:"t1",name:"Mesa 1",capacity:8,shape:"redonda",revision:1}];
 const ctx={origin:"https://segundo.example",now};
@@ -57,14 +58,15 @@ test("all 8 wedding tabs produce a real XLSX with separate workbook sheets",()=>
   assert.match(parts.get("xl/worksheets/sheet1.xml"),/t="inlineStr"/);
  }
 });
-test("guest workbook separates 3 families and legacy group, preserving full details",()=>{
+test("guest workbook separates four groups including optionals and legacy, preserving full details",()=>{
  const model=buildWeddingExport("invitados",data,ctx);
  assert.deepEqual(model.sheets.map(x=>x.name),[
   "Todos","Invitados Andrea y Miguel","Invitados padres Miguel",
-  "Invitados padres Andrea","Sin clasificar","Información"]);
- assert.equal(model.sheets[0].records.length,3);
+  "Invitados padres Andrea","Invitados opcionales","Sin clasificar","Información"]);
+ assert.equal(model.sheets[0].records.length,4);
  assert.equal(model.sheets[2].records.length,0);
  assert.equal(model.sheets[4].records.length,1);
+ assert.equal(model.sheets[5].records.length,1);
  const parts=zipFiles(createWeddingXlsx(model.sheets));
  assert.match(parts.get("xl/worksheets/sheet1.xml"),/Sin gluten/);
  assert.match(parts.get("xl/worksheets/sheet1.xml"),/a@example.test/);

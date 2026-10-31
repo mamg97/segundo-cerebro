@@ -6,25 +6,28 @@ const ui=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
 const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
 const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll('"',"&quot;");
 
-test("exactly three guest lists are distinct and legacy groups are not silently reassigned",()=>{
+test("four guest lists include optionals and keep legacy guests intact",()=>{
  assert.deepEqual(WEDDING_GUEST_GROUPS,[
   ["pareja","Invitados Andrea y Miguel"],
   ["padres_miguel","Invitados padres Miguel"],
-  ["padres_andrea","Invitados padres Andrea"]
+  ["padres_andrea","Invitados padres Andrea"],
+  ["opcionales","Invitados opcionales"]
  ]);
  assert.equal(guestGroupId("padres_miguel"),"padres_miguel");
+ assert.equal(guestGroupId("opcionales"),"opcionales");
  assert.equal(guestGroupId("Familia antigua"),null);
  const guests=[
   {id:"a",name:"Persona A",groupName:"pareja",rsvp:"pendiente"},
   {id:"b",name:"Persona B",groupName:"padres_miguel",rsvp:"confirmado"},
   {id:"c",name:"Persona C",groupName:"padres_andrea",rsvp:"rechazado"},
-  {id:"d",name:"Persona D",groupName:"Familia antigua",rsvp:"pendiente",dietaryNotes:"Datos privados"}
+  {id:"d",name:"Persona D",groupName:"Familia antigua",rsvp:"pendiente",dietaryNotes:"Datos privados"},
+  {id:"e",name:"Persona E",groupName:"opcionales",rsvp:"pendiente"}
  ];
  const html=renderGuests(guests,[],null,esc);
- assert.equal((html.match(/class="wed-guest-column"/g)||[]).length,3);
- assert.equal((html.match(/data-wed-quick-add="/g)||[]).length,3);
+ assert.equal((html.match(/class="wed-guest-column"/g)||[]).length,4);
+ assert.equal((html.match(/data-wed-quick-add="/g)||[]).length,4);
  assert.match(html,/1 sin clasificar/);
- assert.match(html,/Persona A/);assert.match(html,/Persona B/);assert.match(html,/Persona C/);assert.match(html,/Persona D/);
+ assert.match(html,/Persona A/);assert.match(html,/Persona B/);assert.match(html,/Persona C/);assert.match(html,/Persona D/);assert.match(html,/Persona E/);
  assert.doesNotMatch(html,/Datos privados/);
  assert.match(renderGuests(guests,[],"d",esc),/Datos privados/);
  assert.match(renderGuests(guests,[],"d",esc),/Sin clasificar · Familia antigua/);
@@ -55,6 +58,19 @@ test("clicking a name opens edit form and preserves RSVP, diet, seating and cont
  assert.match(ui,/data-wed-edit-guest/);
  assert.match(ui,/revision:existing\.revision/);
  assert.match(css,/\.wed-guest-columns\{/);
- assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
  assert.match(css,/grid-auto-columns:minmax\(235px,85vw\)/);
+});
+
+test("optional guest can be moved to any established list without changing their details",()=>{
+ const optional={id:"optional-1",name:"Persona opcional ficticia",groupName:"opcionales",
+  rsvp:"pendiente",menu:"vegetariano",dietaryNotes:"Ejemplo ficticio",notes:"Pendiente de decidir"};
+ const html=renderGuests([optional],[],optional.id,esc);
+ assert.match(html,/<option value="opcionales" selected>Invitados opcionales<\/option>/);
+ assert.match(html,/value="pareja"/);
+ assert.match(html,/value="padres_miguel"/);
+ assert.match(html,/value="padres_andrea"/);
+ assert.match(html,/Ejemplo ficticio/);
+ assert.match(ui,/revision:existing\.revision/);
+ assert.match(ui,/WEDDING_GUEST_GROUPS\.some\(\(\[id\]\)=>id===groupName\)/);
 });
