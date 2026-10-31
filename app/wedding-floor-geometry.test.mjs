@@ -46,3 +46,29 @@ test("drag handler verifies API write and avoids offset-based coordinates",()=>{
  assert.match(script,/pointercancel/);
  assert.match(script,/setPointerCapture/);
 });
+
+test("expanded wedding work surface allows distant table placement without changing data schema",()=>{
+ const old={stageWidth:1980,stageHeight:390,tableWidth:640,tableHeight:330};
+ const large={stageWidth:3600,stageHeight:2200,tableWidth:640,tableHeight:330};
+ const start={x:50,y:50};
+ const before=moveFloorPosition(start,0,780,old);
+ const after=moveFloorPosition(start,0,780,large);
+ assert.ok(before.y<60,"short canvas previously prevented movement far downward");
+ assert.ok(after.y>80,"expanded canvas permits movement far downward");
+ assert.deepEqual(moveFloorPosition(start,850,0,large),{x:73.611,y:50});
+ assert.deepEqual(boundFloorPosition({...large,x:80,y:80}),{x:80,y:80});
+ const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
+ assert.match(css,/Wedding floor v10: fixed logical workspace/);
+ assert.match(css,/min-width:max\(3600px,calc\(var\(--wed-floor-columns,1\)\*780px\)\)/);
+ assert.match(css,/min-height:2200px !important/);
+ assert.match(css,/overflow-y:auto !important/);
+ const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ assert.match(source,/function stepAutoPan/); // renamed below if used
+ assert.match(source,/scroll\.scrollLeft\+=sx;scroll\.scrollTop\+=sy/);
+ assert.match(source,/startStageLeft:rect\.left,startStageTop:rect\.top/);
+ assert.match(source,/drag\.startStageLeft-rect\.left/);
+ assert.match(source,/100\*zoom/);
+ assert.match(source,/viewport\.scrollLeft\+=tr\.left/);
+ assert.match(source,/cancelAnimationFrame\(complete\.panFrame\)/);
+ assert.doesNotMatch(source,/const zoom=Math\.max\(\.5,Math\.min\(1\.6/);
+});
