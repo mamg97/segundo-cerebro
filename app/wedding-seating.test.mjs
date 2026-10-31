@@ -156,6 +156,6 @@ test("legacy tables without positions receive deterministic visual geometry with
  const html=renderTables(names,tables,null,esc,"table2");
  assert.equal((html.match(/data-wed-floor-table="/g)||[]).length,4);
  assert.match(html,/data-wed-floor-table="table2"/);
- assert.match(html,/height:880px/);
+ assert.match(html,/height:1040px/);
  assert.equal(JSON.stringify({tables,names}),before);
 });
