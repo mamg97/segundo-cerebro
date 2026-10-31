@@ -51,3 +51,22 @@ test("floor plan coordinates are paired, bounded, and private",()=>{
  assert.match(source,/position_x=COALESCE\(\?,position_x\)/);
  assert.match(source,/revision=revision\+1/);
 });
+
+test("seat indexes must be integral, bounded, and refer to a real assigned table",()=>{
+ const id="00000000-0000-4000-8000-000000000000";
+ const base={name:"Persona sintética",groupName:"pareja",rsvp:"pendiente",tableId:id};
+ assert.equal(validateGuest({...base,seatIndex:0}).seatIndex,0);
+ assert.equal(validateGuest({...base,seatIndex:29}).seatIndex,29);
+ assert.equal(validateGuest(base).seatIndex,undefined);
+ for(const seatIndex of [-1,30,2.5,"0",NaN,Infinity])
+  assert.throws(()=>validateGuest({...base,seatIndex}),{message:"INVALID_SEAT"});
+ assert.throws(()=>validateGuest({...base,tableId:null,seatIndex:0}),{message:"INVALID_SEAT"});
+ const migration=readFileSync(new URL("../migrations/0016_wedding_seat_positions.sql",import.meta.url),"utf8");
+ assert.match(migration,/ALTER TABLE wedding_guests ADD COLUMN seat_index/);
+ assert.match(migration,/CREATE UNIQUE INDEX IF NOT EXISTS idx_wedding_guest_seat/);
+ assert.match(migration,/WHERE guest\.table_id IS NOT NULL/);
+ const code=readFileSync(new URL("./wedding-planner-store.js",import.meta.url),"utf8");
+ assert.match(code,/async function resolveSeat/);
+ assert.match(code,/throw new PlannerError\("SEAT_TAKEN",409\)/);
+ assert.match(code,/seat_index=\?/);
+});
