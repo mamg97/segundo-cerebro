@@ -365,7 +365,10 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
   weddingSeatLayout(t,guests.filter(g=>g.tableId===t.id)).height));
  const rowHeight=Math.max(390,maxDiagramHeight+48);
  const height=rows*rowHeight;
- const dynamicRowHeight='--wed-floor-row-height:'+rowHeight+'px;--wed-floor-rows:'+rows+';';
+ const canvasWidth=Math.max(3600,columns*780);
+ const canvasHeight=Math.max(3600,rows*rowHeight+320);
+ const dynamicRowHeight='--wed-floor-row-height:'+rowHeight+'px;--wed-floor-rows:'+rows+
+  ';--wed-canvas-width:'+canvasWidth+'px;--wed-canvas-height:'+canvasHeight+'px;';
  return '<section class="wed-planner-panel wed-seating-workspace">'+
  '<div class="wed-planner-heading"><div><h3>Organizador de mesas</h3>'+
  '<small>'+summary.seated+'/'+summary.confirmed+' confirmados ubicados · '+summary.tables+' mesas creadas</small></div>'+
