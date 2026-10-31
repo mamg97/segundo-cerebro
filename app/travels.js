@@ -1,4 +1,4 @@
-import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.3.0";
+import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.3.1";
 import { hrefForTravel, hrefForArea } from "./area-routes.mjs?v=0.1.0";
 // Viajes: vista privada sobre el ledger canónico de Eventos.
 // La fuente de viajes y hechos es /api/events; Finanzas mantiene la autoridad del dinero.
