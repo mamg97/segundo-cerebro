@@ -137,7 +137,7 @@ test("single full-width floor canvas selects a table and shows guests around it"
  const html=renderTables(guests,tables,null,esc,"mesa-demo");
  assert.match(html,/data-wed-floor-plan/);
  assert.match(html,/data-wed-floor-table="mesa-demo"/);
- assert.match(html,/left:67\.500%;top:58\.250%/);
+ assert.match(html,/data-wed-position-x="67\.500" data-wed-position-y="58\.250"/);
  assert.match(html,/wed-floor-table is-selected/);
  assert.match(html,/data-wed-selected-details="mesa-demo"/);
  assert.match(html,/Lucía Ejemplo/);
@@ -173,7 +173,7 @@ test("each physically free chair is a clickable index, while occupied indexes re
  assert.doesNotMatch(html,/data-wed-seat-index="1"/);
  assert.match(html,/Añadir personas a Mesa sintética · Plaza 3/);
  assert.match(html,/data-wed-seat-detail="synthetic-a"/);
- assert.match(html,/data-wed-floor-plan style="display:block;height:360px;min-height:360px"/);
+ assert.match(html,/data-wed-floor-plan data-wed-table-count="1" style="display:grid;--wed-floor-columns:1;height:360px;min-height:360px"/);
  assert.match(html,/class="wed-floor-scroll"[^>]+height:360px;min-height:360px/);
  assert.match(ui,/state\.seatingTargetSeatIndex=index/);
  assert.match(ui,/seatIndex:state\.seatingTargetSeatIndex/);
@@ -194,10 +194,10 @@ test("one existing table always renders a nonempty floor, regardless of confirma
 test("a saved edge or centered point renders unchanged and does not teleport on reload",()=>{
  const table={id:"floor-example",name:"Mesa sintética",capacity:6,shape:"presidencial",positionX:14.667,positionY:50};
  const result=renderTables([], [table],null,esc,table.id);
- assert.match(result,/left:14\.667%;top:50\.000%/);
- assert.doesNotMatch(result,/left:16\.000%/);
+ assert.match(result,/data-wed-position-x="14\.667" data-wed-position-y="50\.000"/);
+ assert.doesNotMatch(result,/data-wed-position-x="16\.000"/);
  assert.match(ui,/boundFloorPosition\(\{/);
- assert.match(ui,/const stageRect=stage\.getBoundingClientRect\(\)/);
+ assert.match(ui,/const card=tile\.getBoundingClientRect\(\),floor=stage\.getBoundingClientRect\(\)/);
  assert.doesNotMatch(ui,/tile\.offsetLeft|tile\.offsetTop/);
 });
 
@@ -206,11 +206,11 @@ test("one presidential table is centered despite invalid legacy drag coordinates
  const untouched=JSON.stringify(broken);
  assert.deepEqual(tableFloorPosition(broken,0,1),{x:50,y:50});
  const html=renderTables([], [broken],null,esc,broken.id);
- assert.match(html,/data-wed-floor-table="table-demo"[^>]*left:50\.000%;top:50\.000%/);
+ assert.match(html,/data-wed-floor-table="table-demo" data-wed-position-x="50\.000" data-wed-position-y="50\.000"/);
  assert.match(html,/data-wed-floor-grip/);
  assert.match(html,/Arrastrar Mesa ficticia/);
  assert.match(html,/data-wed-center-table="table-demo"/);
- assert.match(html,/display:block;height:360px;min-height:360px/);
+ assert.match(html,/display:grid;--wed-floor-columns:1;height:360px;min-height:360px/);
  assert.equal(JSON.stringify(broken),untouched,"must not silently update persisted D1 coordinates");
 });
 test("compact floor accommodates four tables per row without oversized cards",()=>{
@@ -232,7 +232,7 @@ test("compact floor accommodates four tables per row without oversized cards",()
 test("valid saved manually positioned tables are not recentered on rerender",()=>{
  const saved={id:"saved",name:"Mesa",shape:"redonda",capacity:8,positionX:66.5,positionY:47.25};
  assert.deepEqual(tableFloorPosition(saved,0,1),{x:66.5,y:47.25});
- assert.match(renderTables([], [saved], null,esc),/left:66\.500%;top:47\.250%/);
+ assert.match(renderTables([], [saved], null,esc),/data-wed-position-x="66\.500" data-wed-position-y="47\.250"/);
 });
 
 test("all earlier unverified persisted positions are ignored without changing D1",()=>{
@@ -241,17 +241,28 @@ test("all earlier unverified persisted positions are ignored without changing D1
  assert.deepEqual(tableFloorPosition(old,0,1),{x:50,y:50});
  assert.equal(JSON.stringify(old),before);
  const markup=renderTables([], [old],null,esc,old.id);
- assert.match(markup,/data-wed-floor-table="legacy"[^>]*left:50\.000%;top:50\.000%/);
+ assert.match(markup,/data-wed-floor-table="legacy" data-wed-position-x="50\.000" data-wed-position-y="50\.000"/);
  assert.match(markup,/wed-floor-reset/);
  assert.match(markup,/data-wed-center-table="legacy"/);
 });
 test("a verified center or moved position is honored after refresh",()=>{
  const table={id:"fixed",name:"Mesa prueba",shape:"redonda",capacity:12,positionX:62.25,positionY:54.125,positionVerified:true};
  assert.deepEqual(tableFloorPosition(table,0,1),{x:62.25,y:54.125});
- assert.match(renderTables([], [table],null,esc),/left:62\.250%;top:54\.125%/);
+ assert.match(renderTables([], [table],null,esc),/data-wed-position-x="62\.250" data-wed-position-y="54\.125"/);
  const frontend=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
- assert.match(frontend,/const repairVisibleBounds=/);
- assert.match(frontend,/overlapX<painted\.width\*\.8/);
- assert.match(frontend,/requestAnimationFrame\(repairVisibleBounds\)/);
- assert.match(frontend,/tile\.style\.position="absolute"/);
+ assert.match(frontend,/const calibrate=/);
+ assert.match(frontend,/tile\.style\.transform="none"/);
+ assert.match(frontend,/requestAnimationFrame\(calibrate\)/);
+ assert.match(frontend,/tile\.style\.position="relative"/);
+});
+
+test("CSS grid is the fallback when the floor drag script cannot execute",()=>{
+ const html=renderTables([], [{id:"one",name:"Presidencial",capacity:6,shape:"presidencial"}], null,esc);
+ assert.match(html,/data-wed-table-count="1"/);
+ assert.match(html,/style="position:relative;left:auto;top:auto;transform:none"/);
+ assert.match(css,/\.wed-floor-plan\{[\s\S]*?display:grid;grid-template-columns/);
+ assert.match(css,/\.wed-floor-table\{[\s\S]*?position:relative;transform:none;left:auto;top:auto;place-self:center/);
+ assert.doesNotMatch(html,/style="left:50\.000%;top:50\.000%"/);
+ assert.match(ui,/tile\.style\.transform="translate3d\("/);
+ assert.match(ui,/moveFloorPosition\(drag\.start,dx,dy,dimensions\(\)\)/);
 });
