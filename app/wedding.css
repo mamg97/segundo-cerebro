@@ -973,3 +973,23 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 /* Keep icon controls at the right edge of the floor header in both views. */
 .wed-floor-heading .wed-floor-actions{margin-left:auto;justify-content:flex-end;}
 .wed-floor-shell.is-expanded .wed-floor-actions{position:sticky;right:0;z-index:40;}
+
+/* Wedding floor seating v3: one coordinate space for the round tabletop and
+   its independent clickable chair crowns. Keeps all original D1 guest assignments. */
+.wed-floor-plan .wed-floor-table > .wed-named-table {
+  display:block;position:relative;width:268px;height:268px;
+  overflow:visible;isolation:isolate;box-sizing:border-box;
+}
+.wed-floor-plan .wed-floor-table > .wed-named-table > .wed-floor-seat-ring {
+  position:absolute;left:0;top:0;inset:0;width:268px;height:268px;
+  display:block;overflow:visible;z-index:4;pointer-events:none;
+}
+.wed-floor-plan .wed-floor-table > .wed-named-table > .wed-floor-seat-ring > button.wed-named-seat {
+  position:absolute;display:flex;visibility:visible;opacity:1;
+  box-sizing:border-box;min-width:0;min-height:0;max-width:none;max-height:none;
+  flex:0 0 auto;overflow:visible;pointer-events:auto;
+  border-radius:50%;z-index:5;
+}
+.wed-floor-plan .wed-floor-table > .wed-named-table > .wed-floor-seat-ring > button.wed-named-seat:focus-visible {
+  z-index:25;
+}
