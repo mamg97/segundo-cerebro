@@ -189,7 +189,7 @@ function weddingSeatLayout(table,occupants){
  const height=Math.max(330,Math.ceil(Math.max(sideHeight(sides.left),sideHeight(sides.right))+44));
  return {capacity,ordered,seats,positions,sides,height,centerY:height/2};
 }
-function namedSeatDiagram(table,occupants,esc){
+export function namedSeatDiagram(table,occupants,esc){
  const layout=weddingSeatLayout(table,occupants);
  const {capacity,ordered,positions,sides,height,centerY}=layout;
  const radius=capacity<=12?18:capacity<=18?15:capacity<=24?12:10;
