@@ -222,7 +222,10 @@ page.on("response", (response) => {
   // Correlate only 5xx source families and allowlisted diagnostic codes.
   // Neither response bodies nor private asset paths enter Actions logs.
   const family = /^\/api\/objects\/(?:look\/[^/]+\/image|[^/]+\/image\/(?:original|processed|thumbnail))$/.test(path)
-    ? "OBJECTS_IMAGE" : path === "/api/health/overview" ? "HEALTH_OVERVIEW" : null;
+    ? "OBJECTS_IMAGE" : path === "/api/health/overview" ? "HEALTH_OVERVIEW"
+    : path === "/api/health/history" ? "HEALTH_HISTORY"
+    : path === "/api/health/appointments" ? "HEALTH_APPOINTMENTS"
+    : /^\/api\/gym(?:\/|$)/.test(path) ? "GYM" : null;
   if (!family) return;
   const pending = (async () => {
     const contentType = String(response.headers()["content-type"] || "");

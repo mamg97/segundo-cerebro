@@ -65,3 +65,18 @@ test("new Service Binding runtime signature categories are safely allowlisted", 
     code: "AUDIT_GATEWAY_UPSTREAM_FAILED", diagnostic: "TOKEN_PRIVATE_IDENTIFIER"
   }), "AUDIT_GATEWAY_UPSTREAM_FAILED");
 });
+
+test("Health, appointments and Gym 5xx expose only fixed origin codes", () => {
+  assert.match(audit, /path === "\/api\/health\/history" \? "HEALTH_HISTORY"/);
+  assert.match(audit, /path === "\/api\/health\/appointments" \? "HEALTH_APPOINTMENTS"/);
+  assert.match(audit, /"GYM" : null/);
+  for (const code of ["HEALTH_HISTORY_READ_FAILED", "GYM_WEEK_READ_FAILED",
+    "GYM_LIBRARY_UPSTREAM_FAILED", "ICLOUD_UNKNOWN", "ICLOUD_LIVE_TIMEOUT",
+    "ICLOUD_CALDAV_502", "ICLOUD_CALDAV_503"]) {
+    assert.equal(safePrivate502Origin("application/json", { code }), code);
+  }
+  assert.equal(safePrivate502Origin("application/json", {
+    code: "ICLOUD_CALDAV_503_PRIVATE_IDENTIFIER"
+  }), "JSON_UNCLASSIFIED_5XX");
+  assert.equal(safePrivate502Origin("text/html", { code: "HEALTH_HISTORY_READ_FAILED" }), "NON_JSON_5XX");
+});
