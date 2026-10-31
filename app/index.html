@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="./hobbies.css?v=0.1.6">
     <link rel="stylesheet" href="./wedding.css?v=0.2.2">
     <link rel="stylesheet" href="./projects-table.css?v=0.1.1">
+    <link rel="stylesheet" href="./desktop-unified-header.css?v=0.1.0">
     <script type="module" src="./app.js?v=0.44.107"></script>
     <script type="module" src="./finance-personal-compact.js?v=0.1.0"></script>
   </head>
@@ -35,17 +36,12 @@
         </a>
 
         <nav id="area-nav" class="area-nav" aria-label="Áreas"></nav>
-        <button id="desktop-area-refresh" class="refresh-app" type="button" aria-label="Actualizar datos" title="Actualizar la vista actual" data-demo-unmasked="true"><span class="refresh-app-icon" aria-hidden="true">↻</span><span class="refresh-app-label">Actualizar</span></button>
-
-      </aside>
-
-      <main id="main-content" class="main-content">
         <header class="topbar">
           <div class="topbar-context">
             <thinking-orb
               id="system-orb"
               state="idle"
-              size="58"
+              size="40"
               theme="auto"
               variant="classic"
               speed="3.6"
@@ -57,6 +53,7 @@
             </div>
           </div>
           <div class="top-actions">
+            <button id="desktop-area-refresh" class="refresh-app" type="button" aria-label="Actualizar datos" title="Actualizar la vista actual" data-demo-unmasked="true"><span class="refresh-app-icon" aria-hidden="true">↻</span><span class="refresh-app-label">Actualizar</span></button>
             <button id="refresh-app" class="refresh-app" type="button" aria-label="Actualizar Segundo Cerebro" title="Actualizar datos visibles sin recargar toda la aplicación" data-demo-unmasked="true">
               <span class="refresh-app-icon" aria-hidden="true">↻</span>
               <span class="refresh-app-label">Actualizar</span>
@@ -70,6 +67,10 @@
             </button>
           </div>
         </header>
+      </aside>
+
+      <main id="main-content" class="main-content">
+
 
         <span id="overview" class="overview-anchor" aria-hidden="true"></span>
 
