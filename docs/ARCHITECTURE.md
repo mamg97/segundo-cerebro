@@ -35,6 +35,19 @@ de proveedores ni importación de confirmaciones desde su web. La creación
 de una web pública de invitados y sus RSVP se delega a Bodas.net hasta
 diseñar y aprobar por separado un flujo público con privacidad propia.
 
+## Boda: responsable y refresco de navegación
+
+Las tareas y tarjetas guardan su responsable explícito dentro de
+`wedding_items` en D1 privado. El formulario permite dejarlo sin
+asignar, elegir a Miguel o Andrea, o escribir el nombre de otra persona.
+La Agenda y el Kanban leen el mismo campo y lo conservan al cambiar
+el estado. Las tarjetas se arrastran en escritorio desde el título,
+que actúa como asa, hacia otra columna; el selector de estado también
+funciona en móvil. Un control de refresco permanece pegado a la
+fila principal de pestañas de Boda incluso al editar un elemento:
+no se añade una segunda barra al contenido. No se crea una fuente
+de datos adicional ni se publican nombres personales.
+
 ## Boda compartida: tablero Kanban
 
 La ruta privada `#/pareja/boda` muestra por defecto un Kanban sobre los
