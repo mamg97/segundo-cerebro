@@ -137,20 +137,37 @@
   .trv-grid > .trv-city-tile:hover {transform:none}
 }
 
-/* Viajes: chronological order remains in DOM; layout wraps, never scrolls sideways.
-   3 columns on roomy containers, 2 if narrower, 1 only on tiny containers. */
+/* Viajes: five compact photo cards per full-width row; no sideways scroll.
+   Container breakpoints adapt the number of cards to their actual usable width. */
 .trv-wrap{container-type:inline-size}
 .trv-grid.trv-responsive-gallery{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:clamp(9px,1.5vw,16px);
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:clamp(7px,.75vw,12px);
   width:100%;max-width:100%;min-width:0;
   padding:2px 0 10px;
   overflow:visible;
 }
 .trv-grid.trv-responsive-gallery > .trv-card.trv-city-tile{
   width:100%;max-width:100%;min-width:0;
-  min-height:0;aspect-ratio:1 / 1;
+  min-height:0;aspect-ratio:5 / 4;
+  padding:0;border-radius:14px;
+}
+.trv-grid.trv-responsive-gallery > .trv-city-tile .trv-card-details{
+  padding:clamp(10px,1vw,15px);gap:4px;
+}
+.trv-grid.trv-responsive-gallery > .trv-city-tile .trv-card-details strong{
+  font-size:clamp(15px,1.35vw,21px);
+  line-height:1.12;
+}
+.trv-grid.trv-responsive-gallery > .trv-city-tile .trv-card-details small{
+  font-size:11px;line-height:1.3;
+}
+@container (max-width:1200px){
+  .trv-grid.trv-responsive-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@container (max-width:920px){
+  .trv-grid.trv-responsive-gallery{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @container (max-width:680px){
   .trv-grid.trv-responsive-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}

@@ -8,10 +8,10 @@ test("Dinero de este mes: presupuesto y movimientos tienen el mismo selector, co
  assert.match(index,/id="show-budget-detail" class="text-action"/);
  assert.match(index,/id="show-account-movements" class="text-action" href="#\/finanzas\/movimientos"/);
  assert.match(css,/:is\(#show-budget-detail,#show-account-movements\)/);
- assert.match(index,/organizador25-ui\.css\?v=0\.1\.1/);
+ assert.match(index,/organizador25-ui\.css\?v=0\.1\.2/);
 });
 
-test("Viajes: tarjetas 1:1, título y fecha sobre foto sin badges ni estados",()=>{
+test("Viajes: tarjetas compactas con título y fecha sobre foto, sin badges ni estados",()=>{
  const travels=read("./travels.js"),css=read("./organizador25-ui.css");
  const card=travels.slice(travels.indexOf("function card(event)"),travels.indexOf("function renderList()"));
  assert.match(card,/trv-city-tile/);
@@ -27,8 +27,12 @@ test("Viajes: tarjetas 1:1, título y fecha sobre foto sin badges ni estados",()
  assert.doesNotMatch(gallery,/<h3 class="trv-label">/);
  assert.match(gallery,/sortTripsNewestFirst\(state\.trips\)/);
  assert.match(css,/\.trv-grid\.trv-responsive-gallery\{[\s\S]*?display:grid;/);
- assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(css,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+ assert.match(css,/@container \(max-width:1200px\)/);
+ assert.match(css,/@container \(max-width:920px\)/);
  assert.match(css,/@container \(max-width:680px\)/);
+ assert.match(css,/aspect-ratio:5 \/ 4/);
+ assert.match(css,/padding:0;border-radius:14px/);
  assert.match(css,/@container \(max-width:290px\)/);
  assert.doesNotMatch(css,/trv-horizontal-gallery|flex-flow:row nowrap/);
  assert.match(travels,/Kapitel/);
