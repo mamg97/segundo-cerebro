@@ -304,7 +304,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  const columns=Math.min(4,Math.max(1,tables.length));
  const rows=Math.max(1,Math.ceil(tables.length/columns));
  const maxOccupied=Math.max(0,...tables.map(t=>guests.filter(g=>g.tableId===t.id).length));
- const rowHeight=Math.max(360,Math.ceil(Math.max(0,maxOccupied-12)/2)*32+380);
+ const rowHeight=Math.max(360,Math.ceil(Math.max(0,maxOccupied-12)/2)*32+360);
  const height=rows*rowHeight;
  const dynamicRowHeight=rowHeight>360?'--wed-floor-row-height:'+rowHeight+'px;':'';
  return '<section class="wed-planner-panel wed-seating-workspace">'+
