@@ -1416,3 +1416,114 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  overflow-x:auto !important;
  overflow-y:auto !important;
 }
+
+
+/* Wedding table inspector v11: editable specifications without leaving the
+   canvas, inside the same top-layer dialog when fullscreen is active. */
+.wed-table-inspector{
+ position:fixed;
+ z-index:2147483005;
+ inset:10px 10px 10px auto;
+ width:min(365px,calc(100vw - 20px));
+ max-width:calc(100vw - 20px);
+ max-height:calc(100dvh - 20px);
+ box-sizing:border-box;
+ display:flex;
+ flex-direction:column;
+ gap:14px;
+ padding:18px;
+ border:1px solid var(--line,#30455b);
+ border-radius:14px;
+ background:var(--surface,#0d1c30);
+ color:var(--ink,#f4f8fc);
+ box-shadow:0 16px 60px rgba(0,0,0,.60);
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ scrollbar-width:thin;
+}
+.wed-inspector-header{
+ display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+ padding-bottom:12px;border-bottom:1px solid var(--line,#30455b);
+}
+.wed-inspector-header small{
+ display:block;margin-bottom:3px;color:var(--ink-soft,#94a7c0);
+ font-size:10px;letter-spacing:.02em;
+}
+.wed-inspector-header h3{
+ margin:0;font-size:20px;line-height:1.25;overflow-wrap:anywhere;
+}
+.wed-inspector-header [data-wed-inspector-close]{
+ flex:0 0 32px;display:grid;place-items:center;
+ height:32px;border:1px solid var(--line,#30455b);
+ border-radius:8px;background:var(--paper,#091525);
+ color:var(--ink,#f4f8fc);font:inherit;font-size:19px;cursor:pointer;
+}
+.wed-inspector-form{display:grid;gap:12px;}
+.wed-inspector-form > label{
+ display:grid;gap:5px;font-size:11px;font-weight:750;
+ color:var(--ink-soft,#afc2d8);
+}
+.wed-inspector-form input,.wed-inspector-form select{
+ width:100%;min-width:0;height:37px;box-sizing:border-box;
+ border:1px solid var(--line,#30455b);border-radius:8px;
+ padding:6px 9px;font:inherit;font-size:12px;
+ background:var(--paper,#091525);color:var(--ink,#f4f8fc);
+}
+.wed-inspector-form input:focus-visible,
+.wed-inspector-form select:focus-visible{
+ outline:2px solid var(--blue,#59a7fc);outline-offset:1px;
+}
+.wed-inspector-capacity{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:9px;font-size:11px;color:var(--ink,#f4f8fc);
+}
+.wed-inspector-capacity button{
+ flex:0 0 32px;width:32px;height:32px;
+ display:grid;place-items:center;
+ border:1px solid var(--blue,#59a7fc);border-radius:8px;
+ background:var(--blue-soft,#152d48);
+ color:var(--blue,#59a7fc);
+ font:inherit;font-size:20px;cursor:pointer;
+}
+.wed-inspector-help{
+ color:var(--ink-soft,#afc2d8);font-size:10px;line-height:1.45;
+}
+.wed-inspector-feedback{
+ min-height:0;margin:0;
+ color:var(--blue,#59a7fc);font-size:11px;line-height:1.45;
+}
+.wed-inspector-feedback[role="alert"]{color:#f3b76c}
+.wed-inspector-form .wed-primary{
+ min-height:38px;border-radius:8px;font-size:12px;font-weight:800;
+}
+.wed-inspector-guests{
+ padding-top:12px;border-top:1px solid var(--line,#30455b);
+}
+.wed-inspector-guests h4{margin:0 0 9px;font-size:12px}
+.wed-inspector-guests ul{
+ list-style:none;margin:0;padding:0;
+ display:grid;gap:6px;
+}
+.wed-inspector-guests li{
+ display:flex;align-items:flex-start;justify-content:space-between;
+ gap:10px;padding:7px 9px;
+ border:1px solid var(--line,#30455b);border-radius:7px;
+ background:var(--paper,#091525);
+}
+.wed-inspector-guests li span{
+ flex:0 0 auto;font-size:10px;color:var(--ink-soft,#afc2d8);
+}
+.wed-inspector-guests li strong{
+ font-size:10px;text-align:right;overflow-wrap:anywhere;
+}
+.wed-inspector-guests p{color:var(--ink-soft,#afc2d8);font-size:11px}
+@media(max-width:540px){
+ .wed-table-inspector{
+  inset:auto 0 0 0;
+  width:100vw;max-width:100vw;
+  max-height:min(82dvh,750px);
+  padding:13px 15px 20px;
+  border-radius:16px 16px 0 0;
+ }
+ .wed-inspector-header h3{font-size:17px}
+}
