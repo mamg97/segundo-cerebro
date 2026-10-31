@@ -138,4 +138,7 @@ test("detail honors original aspect and editor previews real 4:3 crop",()=>{
  assert.match(editor,/if\(!chosenPhoto&&\(rotation\|\|framing!=="original"\)\)/);
  assert.match(editor,/const saved=await writeRecipeAction\(payload,photo\)/);
  assert.match(app,/recipe-editor-ui\.mjs\?v=0\.44\.62/);
+ assert.match(app,/detailPhoto\.naturalWidth\/detailPhoto\.naturalHeight>=1\.2/);
+ assert.match(app,/classList\.toggle\("is-landscape",landscape\)/);
+ assert.match(styles,/\.recipe-detail-card>\.recipe-detail-photo\.is-landscape>img\{[\s\S]*?width:100%/);
 });
