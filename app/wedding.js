@@ -1,5 +1,5 @@
 // Private wedding collaboration view. No embedded personal records.
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory} from "./wedding-planner-ui.js?v=0.1.1";
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory} from "./wedding-planner-ui.js?v=0.1.2";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 export const WEDDING_TYPES=[
  ["all","Todo","✦"],["finca","Fincas","🏛"],["catering","Catering","🍽"],
