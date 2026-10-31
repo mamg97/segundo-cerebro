@@ -290,3 +290,116 @@
   z-index:10;
  }
 }
+
+
+/* Pantry: one compact shopping surface on mobile; inventory and tickets remain intact. */
+.pantry-tab-compact { display:none; }
+.pantry-shopping-title { margin:0 0 10px; font-size:14px; line-height:1.25; }
+.pantry-confirm-inventory { display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+.pantry-shell [data-pantry-panel][hidden] { display:none!important; }
+
+@media(max-width:760px){
+  /* Move the existing 44px close control onto the tabs row, removing its empty strip. */
+  body.route-area-active #detail-dialog.pantry-dialog[open]:not(.wealth-dialog){
+    padding-top:8px!important;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open]:not(.wealth-dialog)::before{
+    display:none!important;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open]:not(.wealth-dialog)>#close-dialog{
+    top:8px!important;
+  }
+  .pantry-dialog .pantry-shell{gap:8px}
+  .pantry-dialog .pantry-topbar{
+    box-sizing:border-box;display:flex;flex-direction:row;flex-wrap:wrap;
+    align-items:center;gap:5px;min-height:44px;margin:0;padding-right:52px;
+  }
+  .pantry-dialog .pantry-topbar .pantry-view-nav{
+    box-sizing:border-box;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    flex:1 1 100%;width:100%;min-width:0;gap:2px;padding:2px;
+    border-radius:11px;overflow:hidden;
+  }
+  .pantry-dialog .pantry-view-nav button{
+    display:flex;justify-content:center;gap:4px;min-width:0;
+    padding:9px 3px;border-radius:8px;font-size:11px;white-space:nowrap;
+  }
+  .pantry-dialog .pantry-view-nav button span{min-width:17px;height:17px;padding:0 3px}
+  .pantry-dialog .pantry-tab-full{display:none}
+  .pantry-dialog .pantry-tab-compact{display:inline}
+  .pantry-dialog .pantry-topbar .master-source-link{
+    order:2;padding:6px 9px;
+  }
+  .pantry-dialog .pantry-shell[data-pantry-active-view="shopping"] .master-source-link,
+  .pantry-dialog .pantry-shell[data-pantry-active-view="tickets"] .master-source-link{
+    display:none;
+  }
+  .pantry-dialog .pantry-shopping-section{
+    padding:8px 10px;border-radius:12px;
+  }
+  .pantry-dialog .pantry-shopping-title{display:none}
+  .pantry-dialog .pantry-shopping-list{gap:0}
+  .pantry-dialog .pantry-shopping-list-item{
+    box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 44px;
+    align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--line);
+  }
+  .pantry-dialog .pantry-shopping-list-item > .pantry-shopping-row.is-link{
+    box-sizing:border-box;display:grid;grid-template-columns:36px minmax(0,1fr) auto;
+    align-items:center;column-gap:7px;row-gap:0;min-width:0;
+    width:100%;padding:3px 0;border-top:0;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link > .pantry-product-thumb{
+    grid-column:1;grid-row:1;width:36px;height:36px;
+    border-radius:8px;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link > .pantry-shopping-info{
+    grid-column:2;grid-row:1;min-width:0;gap:2px;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link .pantry-shopping-info strong{
+    font-size:12px;line-height:1.25;overflow-wrap:anywhere;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link .pantry-shopping-info > span{
+    font-size:10px;line-height:1.2;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link .pantry-shopping-canonical{display:none}
+  .pantry-dialog .pantry-shopping-row.is-link > .pantry-shopping-price{
+    grid-column:3;grid-row:1;min-width:0;max-width:74px;align-self:center;
+    font-size:10px;text-align:right;white-space:normal;overflow-wrap:anywhere;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link:has(>.pantry-product-thumb[data-photo="pending"]){
+    grid-template-columns:minmax(0,1fr) auto;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link > .pantry-product-thumb[data-photo="pending"]{
+    display:none;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link:has(>.pantry-product-thumb[data-photo="pending"]) > .pantry-shopping-info{
+    grid-column:1;
+  }
+  .pantry-dialog .pantry-shopping-row.is-link:has(>.pantry-product-thumb[data-photo="pending"]) > .pantry-shopping-price{
+    grid-column:2;
+  }
+  .pantry-dialog .pantry-shopping-list-item .pantry-confirm-inventory{
+    box-sizing:border-box;display:grid;place-items:center;justify-self:end;
+    width:44px;min-width:44px;height:44px;min-height:44px;
+    padding:0;border-radius:10px;color:var(--mint);
+  }
+  .pantry-dialog .pantry-confirm-icon{font-size:20px;line-height:1}
+  .pantry-dialog .pantry-confirm-label{display:none}
+  .pantry-dialog .pantry-shopping-review{
+    gap:6px;margin-top:8px;padding-top:8px;
+  }
+  .pantry-dialog .pantry-shopping-review > strong{font-size:12px}
+  .pantry-dialog .pantry-review-item{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;gap:7px;padding:5px 8px;min-width:0;
+    border-radius:9px;
+  }
+  .pantry-dialog .pantry-review-item span{
+    min-width:0;font-size:11px;line-height:1.25;overflow-wrap:anywhere;
+  }
+  .pantry-dialog .pantry-review-item button{
+    min-height:36px;padding:6px 9px;white-space:nowrap;font-size:11px;
+  }
+  .pantry-dialog .pantry-shopping-actions-footer{gap:7px;padding:9px 0}
+  .pantry-dialog .pantry-shopping-add-toggle{min-height:40px;padding:7px 10px}
+  .pantry-dialog .pantry-shopping-total{gap:8px;padding-top:9px}
+}
