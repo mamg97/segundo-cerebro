@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 
 const compact=readFileSync(new URL("./travels-mobile-compact.css",import.meta.url),"utf8");
 const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
-const html=readFileSync(new URL("./travels-dashboard.js",import.meta.url),"utf8");
+const timetable=readFileSync(new URL("./travel-timetable.js",import.meta.url),"utf8");
 
 test("compact Viajes styles load after other styles without changing desktop",()=>{
  assert.match(index,/organizador25-ui\.css\?v=0\.1\.1[\s\S]*travels-mobile-compact\.css\?v=0\.1\.0/);
@@ -19,7 +19,7 @@ test("travel grid children may shrink and the timetable scroll stays local",()=>
  assert.match(compact,/\.trv-timetable-scroll \{/);
  assert.match(compact,/overflow-x:auto;overflow-y:hidden/);
  assert.match(compact,/overflow-x:hidden;overflow-y:auto/);
- assert.match(html,/class="trv-timetable"/);
+ assert.match(timetable,/trv-timetable/);
 });
 
 test("dashboard uses four compact metrics, five visible anchors and reduced map height",()=>{
