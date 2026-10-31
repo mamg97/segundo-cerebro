@@ -46,4 +46,3 @@
 .recipe-edit-photo-actions [data-editor-photo-frame][aria-pressed="true"]{
  border-color:var(--blue);color:var(--blue);background:var(--blue-soft)
 }
-.recipe-edit-photo-actions-placeholder{display:none!important}
