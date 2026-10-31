@@ -26,13 +26,17 @@ test("failed /api/state cannot silently declare the private page ready", () => {
 });
 
 test("Safari never prefers old JS cache and SW does not prewarm large scripts", () => {
-  assert.match(sw, /const networkFirst = /);
-  assert.match(sw, /networkFirst && cached/);
-  assert.doesNotMatch(sw, /networkFirst = .*searchParams\.has/);
+  assert.match(sw, /m\?js\|css/);
+  assert.doesNotMatch(sw, /networkFirst/);
+  assert.match(sw, /if \(!allowedStaticRequest\(request\)\) return/);
   assert.match(sw, /startup-watchdog\.js/);
   assert.doesNotMatch(sw, /PREWARM/);
   assert.doesNotMatch(sw, /Promise\.allSettled/);
   assert.doesNotMatch(register, /registration\.update\(/);
   assert.match(sw, /request\.mode === "navigate"/);
   assert.match(sw, /url\.pathname\.startsWith\("\/app\/"\)/);
+  assert.match(boot, /searchParams\.has\("segun_reload"\)/);
+  assert.match(boot, /navigator\.onLine !== false/);
+  assert.match(boot, /Promise\.race/);
+  assert.match(boot, /void recoverOnce\(\)/);
 });

@@ -36,3 +36,28 @@ test("auto-refresh is 5-minute, visible, online, and edit-safe", () => {
   }
   assert.match(readFileSync(new URL("./pwa-register.mjs", import.meta.url), "utf8"), /button\.click\(\)/);
 });
+
+
+test("iOS PWA bypasses modules and styles and caches only benign static media", () => {
+  // This is the actual predicate exported from the service worker source, not
+  // a manually copied interpretation of its filtering rules.
+  const listeners = new Map();
+  const mockedSelf = {
+    location: { origin: "https://app.example.test" },
+    addEventListener: (name, handler) => listeners.set(name, handler)
+  };
+  const allowed = new Function("self", "URL", sw + "\nreturn allowedStaticRequest;")(mockedSelf, URL);
+  const request = (path, mode = "cors") => ({
+    url: "https://app.example.test" + path, method: "GET", mode
+  });
+  for (const path of ["/app/app.js", "/app/module.mjs?v=1", "/app/styles.css?v=1",
+    "/app/pwa-sw.js", "/app/startup-watchdog.js", "/api/state",
+    "/app/private-config.js", "/app/index.html"]) {
+    assert.equal(allowed(request(path)), false, path + " must bypass SW");
+  }
+  assert.equal(allowed(request("/app/icon.svg?v=123")), true);
+  assert.equal(allowed(request("/app/font.woff2?v=123")), true);
+  assert.equal(allowed(request("/app/icon.svg?session=secret")), false);
+  assert.equal(allowed(request("/app/icon.svg", "navigate")), false);
+  assert.equal(listeners.has("fetch"), true);
+});
