@@ -743,7 +743,7 @@ function syncSystemOrbResponsiveSize() {
   const orb = document.querySelector("#system-orb");
   if (!orb) return;
   const mobile = window.matchMedia("(max-width: 760px)").matches;
-  const nextSize = mobile ? "46" : "58";
+  const nextSize = mobile ? "46" : "64";
   if (orb.getAttribute("size") !== nextSize) orb.setAttribute("size", nextSize);
 }
 
