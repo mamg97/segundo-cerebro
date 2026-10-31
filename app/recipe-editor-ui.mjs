@@ -133,8 +133,6 @@ export function renderRecipeEditor(panel,recipe,{onBack,onSaved}){
         <label class="recipe-edit-photo-position" data-editor-photo-position-wrap hidden>Desplazar encuadre
           <input type="range" data-editor-photo-position min="0" max="100" step="1" value="50" aria-label="Desplazar recorte hacia el extremo de la imagen">
         </label>
-        <div class="recipe-edit-photo-actions recipe-edit-photo-actions-placeholder" hidden>
-        </div>
         <small>Gira si está de lado. Para fotos verticales con bandas borrosas, elige «Encuadre horizontal 4:3» y ajusta el recorte hasta que se vea el plato completo. Se guardará una nueva versión; la original se conserva. HEIC sujeto a compatibilidad del navegador.</small>
       </section>
       <div class="recipe-edit-fields">
@@ -174,6 +172,8 @@ export function renderRecipeEditor(panel,recipe,{onBack,onSaved}){
     }
     const frame=recipePhotoCropWindow(img.naturalWidth,img.naturalHeight,rotation,framing,cropPosition);
     const canvas=existingCanvas||document.createElement("canvas");
+    canvas.setAttribute("role","img");
+    canvas.setAttribute("aria-label","Vista previa del encuadre de "+String(recipe.name||"receta"));
     const factor=Math.min(1,900/Math.max(frame.cropWidth,frame.cropHeight));
     canvas.width=Math.max(1,Math.round(frame.cropWidth*factor));
     canvas.height=Math.max(1,Math.round(frame.cropHeight*factor));
