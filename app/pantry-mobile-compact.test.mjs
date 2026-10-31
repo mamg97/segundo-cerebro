@@ -41,6 +41,7 @@ test("mobile Pantry is compact while retaining inventory, tickets, source link a
   assert.match(css,/\.pantry-shopping-list-item \.pantry-confirm-inventory/);
   assert.match(css,/min-height: 40px/);
   assert.match(css,/\.pantry-shopping-review/);
+  assert.match(css,/#detail-dialog\.pantry-dialog\[open\]:not\(\.wealth-dialog\) \{[\s\S]*?padding-top: 8px !important/);
   assert.match(css,/#detail-dialog\.pantry-dialog\[open\]:not\(\.wealth-dialog\)::before/);
   assert.match(css,/\.pantry-shopping-list-item \.pantry-confirm-inventory::after/);
   assert.match(css,/\.pantry-shopping-row\.is-link:has\(>\.pantry-product-thumb\[data-photo="pending"\]\)/);
