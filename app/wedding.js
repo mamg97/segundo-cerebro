@@ -918,6 +918,7 @@ function bindPlannerActions(area){
   event.preventDefault();if(state.busy)return;
   const form=event.currentTarget;
   const existing=state.tables.find(x=>x.id===state.tableEditing),payload=tablePayload(form);
+  const previousIds=new Set(state.tables.map(table=>table.id));
   const submit=form.querySelector('[type="submit"]');
   if(!payload.name||!Number.isInteger(payload.capacity)||payload.capacity<1||payload.capacity>30)return;
   state.busy=true;
@@ -930,6 +931,18 @@ function bindPlannerActions(area){
     if(response.item?.id)state.seatingSelectedTableId=response.item.id;
     state.tableEditing=null;state.error="";state.plannerLoaded=false;
     await loadPlanner();
+    if(!existing&&active()){
+     const added=state.tables.find(table=>!previousIds.has(table.id));
+     const newId=response.item?.id||added?.id;
+     if(newId){
+      if(state.seatingSelectedTableId!==newId){state.seatingSelectedTableId=newId;show();}
+      requestAnimationFrame(()=>{
+       const tile=[...document.querySelectorAll("[data-wed-floor-table]")]
+        .find(element=>element.dataset.wedFloorTable===newId);
+       tile?.scrollIntoView({block:"center",inline:"nearest",behavior:"smooth"});
+      });
+     }
+    }
    }catch(error){
     const notice=form.querySelector("[data-wed-table-error]")||document.createElement("p");
     notice.dataset.wedTableError="true";notice.role="alert";
