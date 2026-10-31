@@ -34,6 +34,16 @@ servicio alimentan la comparativa de proveedores. `url` puede enlazar
 una ficha HTTPS de Bodas.net: es una referencia, nunca una copia
 sincronizada. Los importes no se duplican al cambiar de vista.
 
+La interfaz de invitados representa `group_name` como una de tres listas
+operativas: `pareja` («Invitados Andrea y Miguel»),
+`padres_miguel` («Invitados padres Miguel») o
+`padres_andrea` («Invitados padres Andrea»). Crear un invitado solo
+requiere su nombre: `rsvp=pendiente` y los demás campos vacíos.
+Las fichas permiten completar datos opcionales. Los grupos históricos
+que no coincidan con estos identificadores permanecen intactos en un
+apartado de «Sin clasificar», hasta su reasignación expresa. No se
+infieren familiares ni se migra/reescribe información privada.
+
 `wedding_guests` (D1 privado, `0013_wedding_planner.sql`):
 `id, name, group_name, rsvp [pendiente|confirmado|rechazado], menu,
 dietary_notes, email, phone, notes, table_id, revision, updated_at,
