@@ -1,6 +1,7 @@
 // Private wedding collaboration view. No embedded personal records.
 import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory} from "./wedding-planner-ui.js?v=0.1.2";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
+import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.0";
 export const WEDDING_TYPES=[
  ["all","Todo","✦"],["finca","Fincas","🏛"],["catering","Catering","🍽"],
  ["decoracion","Decoración e ideas","✿"],["fotografia","Foto y vídeo","📷"],
@@ -13,7 +14,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,draftCategory:"ideas"};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,draftCategory:"ideas",exporting:false};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -249,10 +250,57 @@ function editor(){
   (original?'<button class="wed-danger" id="wed-delete" type="button">Eliminar elemento</button>':'')+
   '<button type="button" id="wed-cancel">Cancelar</button></div></form></div></div>';
 }
+// Download the current section from authenticated private D1, not from UI filters.
+async function fetchWeddingExportRows(kind){
+ const all=[];
+ for(let offset=0;offset<=20000;offset+=500){
+  const page=await getJson("/api/wedding/"+kind+"?export=1&offset="+offset);
+  if(!Array.isArray(page.items)||page.items.length>500)throw new Error("EXPORT_INCOMPLETE");
+  all.push(...page.items);
+  if(!page.hasMore)return all;
+  if(page.items.length!==500||all.length>=20000)throw new Error("EXPORT_INCOMPLETE");
+ }
+ throw new Error("EXPORT_INCOMPLETE");
+}
+async function downloadWeddingSheet(){
+ if(!active()||state.exporting)return;
+ if(state.editing&&!window.confirm("Los cambios sin guardar no se incluirán en el Excel. ¿Continuar?"))return;
+ const view=state.view;
+ if(["invitados","mesas"].includes(view)&&!window.confirm("Este Excel incluye nombres, contacto y posibles datos alimentarios de invitados. ¿Descargarlo para compartirlo solo con personas autorizadas?"))return;
+ const button=document.querySelector("#wed-download-sheet");
+ state.exporting=true;
+ if(button){button.disabled=true;button.textContent="Preparando Excel…";}
+ try{
+  const needPlanner=["invitados","mesas"].includes(view);
+  const [items,guests,tables]=await Promise.all([
+   view==="bodasnet"||needPlanner?Promise.resolve([]):fetchWeddingExportRows("items"),
+   needPlanner?fetchWeddingExportRows("guests"):Promise.resolve([]),
+   needPlanner?fetchWeddingExportRows("tables"):Promise.resolve([])
+  ]);
+  if(!active()||state.view!==view)return;
+  const workbook=buildWeddingExport(view,{items,guests,tables},{origin:window.location.origin});
+  const buffer=createWeddingXlsx(workbook.sheets);
+  const blob=new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");link.href=url;link.download=workbook.filename;
+  document.body.appendChild(link);
+  link.click();link.remove();
+  window.setTimeout(()=>URL.revokeObjectURL(url),60000);
+ }catch(error){
+  state.error="No se ha podido generar el Excel completo. No se descargará una copia parcial. "+(error.message==="EXPORT_INCOMPLETE"?"La consulta ha superado el límite seguro de exportación.":"Reintenta desde esta sección.");
+  if(active())show();
+ }finally{
+  state.exporting=false;
+  const current=document.querySelector("#wed-download-sheet");
+  if(current){current.disabled=false;current.textContent="↓ Descargar Sheet";}
+ }
+}
 function show(){
  if(!active())return;
  const area=document.querySelector("#dialog-body");
- area.innerHTML=viewTabs()+(state.editing?editor():home());
+ area.innerHTML='<div class="wed-view-actions">'+viewTabs()+
+ '<button type="button" id="wed-download-sheet" title="Descargar un Excel con todos los datos de esta sección" '+(state.exporting?'disabled':'')+'>'+
+ (state.exporting?'Preparando Excel…':'↓ Descargar Sheet')+'</button></div>'+(state.editing?editor():home());
  if(state.error){const notice=document.createElement("div");notice.className="wed-alert";notice.role="alert";notice.textContent=state.error;area.prepend(notice);}
  bind(area);
 }
@@ -540,6 +588,7 @@ function startIdea(){
  clearQuickFiles();state.view="inspiracion";state.ideaMode=true;state.editing="new";state.error="";show();
 }
 function bind(area){
+ area.querySelector("#wed-download-sheet")?.addEventListener("click",()=>void downloadWeddingSheet());
  if(area.querySelector("#wed-mobile-form"))bindMobileForm(area);
  area.querySelectorAll("[data-wed-view]").forEach(button=>button.addEventListener("click",()=>{
   if(state.editing&&!window.confirm("¿Cambiar de sección y descartar los cambios no guardados?"))return;
