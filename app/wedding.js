@@ -594,20 +594,20 @@ function bindWeddingFloorPlan(area){
  const scroll=shell?.querySelector(".wed-floor-scroll");
  const zoomLabel=shell?.querySelector("[data-wed-zoom-reset]");
  const applyZoom=()=>{
-  const zoom=Math.max(.5,Math.min(1.6,Number(state.seatingFloorZoom)||1));
+  const zoom=Math.max(.2,Math.min(1.6,Number(state.seatingFloorZoom)||1));
   state.seatingFloorZoom=Math.round(zoom*10)/10;
   stage.style.zoom=String(state.seatingFloorZoom);
   if(zoomLabel)zoomLabel.textContent=Math.round(state.seatingFloorZoom*100)+"%";
   requestAnimationFrame(()=>stage.dispatchEvent(new Event("wed-floor-recalibrate")));
  };
- const zoomChange=delta=>{state.seatingFloorZoom=Math.max(.5,Math.min(1.6,Math.round((state.seatingFloorZoom+delta)*10)/10));applyZoom();};
+ const zoomChange=delta=>{state.seatingFloorZoom=Math.max(.2,Math.min(1.6,Math.round((state.seatingFloorZoom+delta)*10)/10));applyZoom();};
  shell?.querySelector("[data-wed-zoom-in]")?.addEventListener("click",()=>zoomChange(.1));
  shell?.querySelector("[data-wed-zoom-out]")?.addEventListener("click",()=>zoomChange(-.1));
  zoomLabel?.addEventListener("click",()=>{state.seatingFloorZoom=1;applyZoom();});
  shell?.querySelector("[data-wed-zoom-fit]")?.addEventListener("click",()=>{
   const natural=stage.getBoundingClientRect().width/(Number(state.seatingFloorZoom)||1);
   const available=scroll?.clientWidth||natural;
-  state.seatingFloorZoom=Math.max(.5,Math.min(1.6,Math.floor(available/natural*10)/10));
+  state.seatingFloorZoom=Math.max(.2,Math.min(1.6,Math.floor(available/natural*10)/10));
   applyZoom();
   if(scroll){scroll.scrollLeft=0;scroll.scrollTop=0;}
  });
@@ -660,8 +660,11 @@ function bindWeddingFloorPlan(area){
    const bounded=boundFloorPosition({...dims,x:point.x,y:point.y});
    if(!bounded)return;
    current=bounded;
-   const dx=(current.x-origin.x)*dims.stageWidth/100;
-   const dy=(current.y-origin.y)*dims.stageHeight/100;
+   // getBoundingClientRect already includes CSS zoom; transform coordinates
+   // do NOT. Divide by zoom to keep the chair under the pointer at 20–160%.
+   const zoom=Number(state.seatingFloorZoom)||1;
+   const dx=(current.x-origin.x)*dims.stageWidth/(100*zoom);
+   const dy=(current.y-origin.y)*dims.stageHeight/(100*zoom);
    tile.style.position="relative";
    tile.style.left="auto";tile.style.top="auto";
    tile.style.transform="translate3d("+dx.toFixed(2)+"px,"+dy.toFixed(2)+"px,0)";
