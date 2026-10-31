@@ -450,6 +450,14 @@ function bindWeddingFloorPlan(area){
   if(state.seatingSelectedTableId===id)return;
   const top=area.scrollTop;
   state.seatingSelectedTableId=id;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;
+  if(weddingFloorPortal){
+   stage.querySelectorAll("[data-wed-floor-table]").forEach(tile=>{
+    tile.classList.toggle("is-selected",tile.dataset.wedFloorTable===id);
+   });
+   const centerButton=weddingFloorPortal.shell.querySelector(".wed-floor-heading [data-wed-center-table]");
+   if(centerButton)centerButton.dataset.wedCenterTable=id;
+   return; // Selecting must never dismantle the expanded modal.
+  }
   show();area.scrollTop=top;
  };
  stage.querySelectorAll("[data-wed-floor-table]").forEach(tile=>{
@@ -488,12 +496,16 @@ function bindWeddingFloorPlan(area){
   calibrate();
   requestAnimationFrame(calibrate);
   stage.addEventListener("wed-floor-recalibrate",calibrate);
-  const persist=point=>{
+  const persist=async(point,rollback=current)=>{
    const table=state.tables.find(t=>t.id===id);
-   if(!table||state.busy)return;
+   if(!table||state.busy||state.plannerBusy||tile.dataset.wedSaving==="true")return;
+   const previous=rollback?{...rollback}:null;
    state.seatingSelectedTableId=id;
+   tile.dataset.wedSaving="true";
    tile.classList.add("is-saving");tile.setAttribute("aria-busy","true");
-   void plannerMutation(async()=>{
+   const status=stage.closest("[data-wed-floor-shell]")?.querySelector("[data-wed-floor-save-status]");
+   if(status){status.textContent="Guardando posición…";status.removeAttribute("role");}
+   try{
     const saved=await getJson("/api/wedding/tables/"+encodeURIComponent(id),"PATCH",{
      name:table.name,capacity:table.capacity,shape:table.shape,
      positionX:point.x,positionY:point.y,revision:table.revision
@@ -501,10 +513,29 @@ function bindWeddingFloorPlan(area){
     if(!Number.isFinite(saved.item?.positionX)||!Number.isFinite(saved.item?.positionY)||
        Math.abs(saved.item.positionX-point.x)>.01||
        Math.abs(saved.item.positionY-point.y)>.01)throw new Error("POSITION_NOT_SAVED");
-   },{preserveScroll:true});
+    Object.assign(table,saved.item); // Use the latest D1 revision on every subsequent movement.
+    tile.dataset.wedPositionX=saved.item.positionX.toFixed(3);
+    tile.dataset.wedPositionY=saved.item.positionY.toFixed(3);
+    if(status)status.textContent="Posición guardada";
+    // Do not call show()/loadPlanner(): replacing the DOM closes the fullscreen portal.
+   }catch(error){
+    if(previous)position(previous);
+    state.error=errorMsg(error);
+    if(status){status.textContent=state.error;status.setAttribute("role","alert");}
+   }finally{
+    delete tile.dataset.wedSaving;
+    tile.classList.remove("is-saving");
+    tile.removeAttribute("aria-busy");
+   }
   };
+  tile.addEventListener("wed-floor-center",()=>{
+   if(state.busy||tile.dataset.wedSaving==="true")return;
+   const previous=current?{...current}:null;
+   const next={x:50,y:50};
+   position(next);void persist(next,previous);
+  });
   tile.addEventListener("pointerdown",event=>{
-   if(state.busy||state.plannerBusy||event.button!==0||
+   if(state.busy||state.plannerBusy||tile.dataset.wedSaving==="true"||event.button!==0||
       event.target.closest("[data-wed-seat-detail],[data-wed-seat-add],[data-wed-edit-table]"))return;
    if(!current)calibrate();
    if(!current)return;
@@ -525,7 +556,7 @@ function bindWeddingFloorPlan(area){
    const complete=drag;drag=null;tile.classList.remove("is-dragging");
    if(complete.moved){
     suppressClick=true;window.setTimeout(()=>{suppressClick=false;},0);
-    persist(complete.previous);
+    void persist(complete.previous,complete.start);
    }else select(id);
   });
   tile.addEventListener("pointercancel",()=>{
@@ -542,12 +573,13 @@ function bindWeddingFloorPlan(area){
    if(event.key==="Enter"||event.key===" "){event.preventDefault();select(id);return;}
    const step=event.shiftKey?5:1;
    const moves={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]};
-   const delta=moves[event.key];if(!delta||state.busy||!current)return;
+   const delta=moves[event.key];if(!delta||state.busy||tile.dataset.wedSaving==="true"||!current)return;
    event.preventDefault();
+   const previous={...current};
    const next=boundFloorPosition({...dimensions(),
     x:current.x+delta[0],y:current.y+delta[1]});
    if(!next)return;
-   position(next);persist(next);
+   position(next);void persist(next,previous);
   });
  });
 }
