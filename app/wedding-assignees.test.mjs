@@ -44,3 +44,14 @@ test("wedding refresh is inside sticky main section navigation, including editor
  assert.match(css,/\.wedding-dialog \.wed-main-refresh\{/);
  assert.match(source,/clearQuickFiles\(\);state\.view=button\.dataset\.wedView/);
 });
+
+test("Kanban moves cards by grabbing title, not controls on the whole card",()=>{
+ assert.match(source,/class="wed-kanban-drag-handle" draggable="true" data-wed-drag=/);
+ assert.match(source,/data-wed-card/);
+ assert.match(source,/event\.dataTransfer\.setData\("text\/plain",handle\.dataset\.wedDrag\)/);
+ assert.match(source,/column\.addEventListener\("drop"/);
+ assert.match(source,/board\.scrollLeft\+=18/);
+ assert.doesNotMatch(source,/class="wed-kanban-card" draggable="true"/);
+ assert.match(css,/\.wed-kanban-drag-handle\{/);
+ assert.match(css,/\.wed-kanban-card\.wed-dragging\{/);
+});
