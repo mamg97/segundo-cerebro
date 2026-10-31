@@ -699,6 +699,43 @@ const refreshFinanceOnForeground = createFinanceForegroundRefresh({
 window.addEventListener("focus", () => { void refreshFinanceOnForeground(); });
 document.addEventListener("visibilitychange", () => { void refreshFinanceOnForeground(); });
 
+// Desktop route control is outside the scrollable content; it uses the same data
+// refresh pipeline as Home and reopens the active module to revalidate its own API.
+let desktopAreaRefreshBusy=false;
+async function refreshDesktopArea(){
+  const button=document.querySelector("#desktop-area-refresh");
+  const requestedHash=window.location.hash||"#/inicio";
+  const route=routeFromHash(requestedHash);
+  if(!button||button.hidden||desktopAreaRefreshBusy||!route||route.areaId==="area-general")return;
+  if(route.areaId==="area-partner"&&route.detailId==="boda"){
+    // Preserve Boda's existing edit-confirmation and private reload behavior.
+    const weddingButton=document.querySelector("#wed-main-refresh");
+    if(weddingButton&&!weddingButton.hidden&&!weddingButton.disabled)weddingButton.click();
+    return;
+  }
+  desktopAreaRefreshBusy=true;
+  button.disabled=true;
+  button.classList.add("is-refreshing");
+  button.setAttribute("aria-busy","true");
+  button.setAttribute("aria-label","Actualizando apartado");
+  try{
+    const result=await refreshApp();
+    // An in-flight refresh must never reopen a section after navigating elsewhere.
+    if(window.location.hash!==requestedHash||!document.body.classList.contains("route-area-active"))return;
+    openArea(route.areaId);
+    button.title=result?.ok===true?"Datos actualizados":"Actualización parcial: comprueba los datos visibles";
+  }catch(error){
+    console.warn("Unable to refresh current area",error);
+    button.title="No se pudo completar la actualización";
+  }finally{
+    desktopAreaRefreshBusy=false;
+    button.disabled=false;
+    button.classList.remove("is-refreshing");
+    button.setAttribute("aria-busy","false");
+    button.setAttribute("aria-label","Actualizar apartado actual");
+  }
+}
+
 let orbMediaQuery = null;
 
 function syncSystemOrbResponsiveSize() {
@@ -943,9 +980,6 @@ function renderMode() {
   const remote = privateModeKind === "remote";
   document.querySelector("#show-midas-detail")?.toggleAttribute("hidden", globalThis.__SECOND_BRAIN_REMOTE__ !== true);
 
-  const remoteUnavailable = globalThis.__SECOND_BRAIN_REMOTE__ === true && !remote && Boolean(remoteStateLoadError);
-  document.querySelector("#privacy-mode-title").textContent = remote ? "Modo privado remoto" : local ? "Modo local privado" : remoteUnavailable ? "Modo privado" : "Modo demo";
-  document.querySelector("#privacy-mode-detail").textContent = remote ? "Protegido por autenticación" : local ? "No se publica en GitHub" : remoteUnavailable ? "Conexión temporalmente no disponible" : "Solo datos ficticios";
   document.querySelector("#data-mode-badge")?.replaceChildren(remote ? "Estado personal privado" : local ? "Estado personal local" : "Entorno mock");
   document.querySelector("#profile-button")?.setAttribute("aria-label", privateMode ? "Perfil privado" : "Perfil ficticio");
   document.querySelector("#query-submit")?.setAttribute("aria-label", privateMode ? "Consultar estado privado" : "Consultar datos ficticios");
@@ -12001,6 +12035,7 @@ function bindInteractions() {
   document.querySelector("#theme-toggle")?.addEventListener("click", toggleTheme);
   document.querySelector("#demo-mode-toggle")?.addEventListener("click", toggleDemoMode);
   document.querySelector("#refresh-app")?.addEventListener("click", refreshApp);
+  document.querySelector("#desktop-area-refresh")?.addEventListener("click", () => void refreshDesktopArea());
   document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
@@ -12144,6 +12179,8 @@ function applyAreaRoute(){
   });
   const home=route.areaId==="area-general";
   document.body.classList.toggle("route-area-active",!home);
+  const desktopRefresh=document.querySelector("#desktop-area-refresh");
+  if(desktopRefresh)desktopRefresh.hidden=home;
   const copy=document.querySelector("#copy-area-link");
   if(copy)copy.hidden=home;
   if(home){window.scrollTo({top:0,behavior:"instant"});return}
