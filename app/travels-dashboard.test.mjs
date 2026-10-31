@@ -80,7 +80,7 @@ test("privacy and permissions: only private app embeds maps on demand",()=>{
 
 test("private saved Google Maps list renders a direct link without leaking locations or embedding it",()=>{
  const demoUrl="https://www.google.com/maps/@/data=!4m3!11m2!2sFAKEDEMO123!3e3";
- const refs=[{refType:"map_list",sourceRef:demoUrl,label:"Ejemplo privado (11 sitios)"}];
+ const refs=[{type:"map_list",sourceRef:demoUrl,label:"Ejemplo privado (11 sitios)"}];
  assert.equal(travelSavedMapsList(refs).url,demoUrl);
  const html=tripDashboardMarkup(sample({references:refs}));
  assert.match(html,/trv-saved-google-list/);
