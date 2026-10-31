@@ -373,3 +373,16 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg/);
 });
+
+test("fullscreen is a separate top-layer dialog with two independent ways to escape",()=>{
+ assert.match(ui,/modal\.showModal\(\)/);
+ assert.match(ui,/modal\.addEventListener\("cancel"/);
+ assert.match(ui,/emergency\.addEventListener\("click"/);
+ assert.match(ui,/emergency\.setAttribute\("aria-label","Cerrar plano ampliado"\)/);
+ assert.match(ui,/if\(weddingFloorPortal\)setWeddingFloorExpanded\(false\)/);
+ assert.match(ui,/if\(anchor\.parentNode\)anchor\.parentNode\.replaceChild\(live,anchor\)/);
+ assert.match(css,/\.wed-fullscreen-dialog\{/);
+ assert.match(css,/\.wed-fullscreen-dialog > \.wed-floor-emergency-close/);
+ assert.match(ui,/\.wed-floor-seat-svg \[role=button\]/);
+ assert.match(ui,/new MouseEvent\("click",\{bubbles:true,cancelable:true\}\)/);
+});
