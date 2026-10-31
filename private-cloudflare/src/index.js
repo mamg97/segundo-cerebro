@@ -26,6 +26,7 @@ import { serveRecipeVersionPhoto, RecipePhotoError } from "./recipe-photo-store.
 import { fetchProjectsSummary, fetchPsychohistoryLab, hasProjectsGoogleConfig } from "./projects.js";
 import { verifyPsychoAccess } from "./research-shadow2027-auth.js";
 import { handleWeddingRequest } from "./wedding-store.js";
+import { handleWeddingPlannerRequest } from "./wedding-planner-store.js";
 import { handleHobbiesRequest } from "./hobbies-sheet.js";
 import { fetchPrivate2027Ranking } from "./research-shadow2027-private.js";
 import { prospectiveSummary } from "./research-evaluation.js";
@@ -5125,6 +5126,10 @@ export default {
 
     if (url.pathname === "/api/wedding/items" || url.pathname.startsWith("/api/wedding/items/")) {
       return withSecurityHeaders(await handleWeddingRequest(request, env));
+    }
+
+    if (/^\/api\/wedding\/(guests|tables)(\/|$)/.test(url.pathname)) {
+      return withSecurityHeaders(await handleWeddingPlannerRequest(request, env));
     }
 
     if (url.pathname === "/") {
