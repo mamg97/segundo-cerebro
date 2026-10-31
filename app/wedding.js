@@ -347,7 +347,7 @@ async function plannerMutation(action,{focusGroup=null,preserveScroll=false,focu
    if(scroll)scroll.scrollTop=oldTop;
    if(focusGroup)document.querySelector('[data-wed-quick-add="'+focusGroup+'"] input[name="name"]')?.focus({preventScroll:true});
    if(focusTableId){
-    const selector=focusTableNew?'input[name="name"]':'select[name="guestId"]';
+    const selector=focusTableNew?'input[name="name"]':'[data-wed-guest-search]';
     [...document.querySelectorAll("[data-wed-table-picker]")].find(panel=>
      panel.dataset.wedTablePicker===focusTableId)?.querySelector(selector)?.focus({preventScroll:true});
    }
@@ -641,10 +641,39 @@ function bindPlannerActions(area){
   const panel=card?.querySelector(".wed-table-picker");
   if(panel)panel.classList.toggle("is-open",state.seatingOpenTableId===id);
   button.setAttribute("aria-expanded",String(state.seatingOpenTableId===id));
-  if(state.seatingOpenTableId===id)panel?.querySelector("select[name=guestId]")?.focus({preventScroll:true});
+  if(state.seatingOpenTableId===id)(panel?.querySelector("[data-wed-guest-search]:not(:disabled)")||
+   panel?.querySelector("select[name=guestId]:not(:disabled)"))?.focus({preventScroll:true});
  }));
  area.querySelectorAll(".wed-table-picker").forEach(panel=>{
   panel.classList.toggle("is-open",state.seatingOpenTableId===panel.dataset.wedTablePicker);
+ });
+ // Filter the existing private guest options by name without making any new
+ // requests; already seated guests are excluded a second time by canonical ID.
+ area.querySelectorAll("[data-wed-place-existing]").forEach(form=>{
+  const search=form.querySelector("[data-wed-guest-search]");
+  const select=form.querySelector('select[name="guestId"]');
+  if(!search||!select)return;
+  const tableId=form.dataset.wedPlaceExisting;
+  const available=[...select.options].filter(option=>option.value).filter(option=>{
+   const guest=state.guests.find(g=>g.id===option.value);
+   return guest&&!guest.tableId&&guest.rsvp!=="rechazado"&&
+    !state.guests.some(other=>other.id===guest.id&&Boolean(other.tableId));
+  }).map(option=>({id:option.value,label:option.textContent||""}));
+  const status=form.querySelector("[data-wed-guest-search-status]");
+  const submit=form.querySelector('button[type="submit"]');
+  const fold=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es").trim();
+  const refresh=()=>{
+   const terms=fold(search.value).split(/\s+/).filter(Boolean);
+   const matches=available.filter(item=>terms.every(word=>fold(item.label).includes(word)));
+   const before=select.value;
+   select.replaceChildren(new Option("Elige un nombre…",""),...matches.map(item=>new Option(item.label,item.id)));
+   select.value=matches.some(item=>item.id===before)?before:"";
+   select.disabled=!matches.length;
+   if(submit)submit.disabled=!matches.length;
+   if(status)status.textContent=matches.length?matches.length+" invitados disponibles":("Sin coincidencias entre invitados sin mesa");
+  };
+  search.addEventListener("input",refresh);
+  refresh();
  });
  area.querySelectorAll("[data-wed-place-existing]").forEach(form=>form.addEventListener("submit",event=>{
   event.preventDefault();if(state.busy)return;
@@ -677,7 +706,8 @@ function bindPlannerActions(area){
   show();
   const panel=document.querySelector('[data-wed-table-picker="'+tableId+'"]');
   panel?.scrollIntoView({behavior:"smooth",block:"nearest"});
-  (panel?.querySelector('select[name="guestId"]:not(:disabled)')||
+  (panel?.querySelector('[data-wed-guest-search]:not(:disabled)')||
+   panel?.querySelector('select[name="guestId"]:not(:disabled)')||
    panel?.querySelector('input[name="name"]:not(:disabled)'))?.focus({preventScroll:true});
  }));
  // SVG chair and tabletop groups are native, focusable controls.
@@ -706,6 +736,10 @@ function bindPlannerActions(area){
   const table=state.tables.find(t=>t.id===btn.dataset.wedCenterTable);
   if(!table||state.busy)return;
   state.seatingSelectedTableId=table.id;
+  if(weddingFloorPortal){
+   const tile=[...weddingFloorPortal.shell.querySelectorAll("[data-wed-floor-table]")].find(item=>item.dataset.wedFloorTable===table.id);
+   if(tile){tile.dispatchEvent(new Event("wed-floor-center"));return;}
+  }
   void plannerMutation(()=>getJson("/api/wedding/tables/"+encodeURIComponent(table.id),"PATCH",{
    name:table.name,capacity:table.capacity,shape:table.shape,
    positionX:50,positionY:50,revision:table.revision
