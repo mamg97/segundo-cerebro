@@ -447,7 +447,7 @@ function bindWeddingFloorPlan(area){
   };
   tile.addEventListener("pointerdown",event=>{
    if(state.busy||state.plannerBusy||event.button!==0||
-      event.target.closest("[data-wed-seat-detail],[data-wed-seat-add]"))return;
+      event.target.closest("[data-wed-seat-detail],[data-wed-seat-add],[data-wed-edit-table]"))return;
    if(!current)calibrate();
    if(!current)return;
    drag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,
@@ -475,7 +475,7 @@ function bindWeddingFloorPlan(area){
    position(drag.start);drag=null;tile.classList.remove("is-dragging");
   });
   tile.addEventListener("click",event=>{
-   if(event.target.closest("[data-wed-seat-detail],[data-wed-seat-add]"))return;
+   if(event.target.closest("[data-wed-seat-detail],[data-wed-seat-add],[data-wed-edit-table]"))return;
    if(suppressClick){suppressClick=false;return;}
    select(id);
   });
@@ -607,7 +607,15 @@ function bindPlannerActions(area){
    positionX:50,positionY:50,revision:table.revision
   }),{preserveScroll:true});
  }));
- area.querySelectorAll("[data-wed-edit-table]").forEach(btn=>btn.addEventListener("click",()=>{state.tableEditing=btn.dataset.wedEditTable;show();}));
+ area.querySelectorAll("[data-wed-edit-table]").forEach(btn=>btn.addEventListener("click",event=>{
+  // The circular tabletop edits the table; the outer transparent drag footprint
+  // must never intercept that click or replace the intended editor.
+  event.stopPropagation();
+  if(state.busy)return;
+  state.seatingSelectedTableId=btn.dataset.wedEditTable;
+  state.tableEditing=btn.dataset.wedEditTable;
+  show();
+ }));
  area.querySelector("[data-wed-cancel-table]")?.addEventListener("click",()=>{state.tableEditing=null;show();});
  const capacityInput=area.querySelector("#wed-table-capacity");
  const capacityButtons=[...area.querySelectorAll("[data-wed-capacity]")];
