@@ -208,7 +208,7 @@ function tableFloorPosition(table,index,count,height){
  const columns=Math.min(3,count),rows=Math.ceil(count/columns);
  const fallbackX=100*((index%columns)+0.5)/columns;
  const fallbackY=100*(Math.floor(index/columns)+0.5)/rows;
- const edgeY=150/height*100;
+ const edgeY=185/height*100;
  const x=typeof table.positionX==="number"&&Number.isFinite(table.positionX)?table.positionX:fallbackX;
  const y=typeof table.positionY==="number"&&Number.isFinite(table.positionY)?table.positionY:fallbackY;
  return {x:Math.min(84,Math.max(16,x)),y:Math.min(100-edgeY,Math.max(edgeY,y))};
@@ -219,7 +219,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null){
  const selected=tables.find(t=>t.id===selectedId)||tables[0]||null;
  const selectedGuests=selected?guests.filter(g=>g.tableId===selected.id):[];
  const rows=Math.max(1,Math.ceil(tables.length/3));
- const height=rows*440;
+ const height=Math.max(660,rows*520);
  return '<section class="wed-planner-panel wed-seating-workspace">'+
  '<div class="wed-planner-heading"><div><h3>Organizador de mesas</h3>'+
  '<small>'+summary.seated+'/'+summary.confirmed+' confirmados ubicados · '+summary.tables+' mesas creadas</small></div>'+
