@@ -484,3 +484,10 @@ test("zoom in, out, 100 percent and fit keep floor scroll and coordinates",()=>{
  assert.match(css,/min-width:max\(1180px,calc\(var\(--wed-floor-columns,1\)\*630px\)\)/);
  assert.match(css,/\.wed-floor-scroll\{[\s\S]*?overflow-x:auto;overflow-y:auto/);
 });
+
+test("newly created table is selected and scrolled into view after save",()=>{
+ assert.match(ui,/const previousIds=new Set\(state\.tables\.map\(table=>table\.id\)\)/);
+ assert.match(ui,/const added=state\.tables\.find\(table=>!previousIds\.has\(table\.id\)\)/);
+ assert.match(ui,/state\.seatingSelectedTableId=newId;show\(\)/);
+ assert.match(ui,/tile\?\.scrollIntoView\(\{block:"center",inline:"nearest",behavior:"smooth"\}\)/);
+});
