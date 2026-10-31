@@ -8,7 +8,7 @@ export const WEDDING_EXPORT_TABS={
 const text=(v)=>String(v??"");
 const euro=(c)=>c===null||c===undefined?"":{currency:c/100};
 const date=(v)=>text(v).replace("T"," ").replace(/\.\d{3}Z$/," UTC");
-const clean=(v)=>text(v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF]/g,"�");
+const clean=(v)=>text(v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"�");
 const xml=(v)=>clean(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
 const colName=(n)=>{let s="";for(let x=n+1;x>0;x=Math.floor((x-1)/26))s=String.fromCharCode(65+(x-1)%26)+s;return s;};
 const sheet=(name,headers,records)=>({name,headers,records});
