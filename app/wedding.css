@@ -807,3 +807,9 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-floor-grip:active,.wed-floor-table.is-dragging .wed-floor-grip{cursor:grabbing}
 .wed-floor-table .wed-seat-avatar{width:21px;height:21px;font-size:9px}
 .wed-floor-table .wed-named-table-center small{font-size:9px}
+
+/* Explicit rescue control above the map; available even if a legacy card is clipped. */
+.wed-floor-reset{flex-shrink:0;border:1px solid var(--blue);border-radius:8px;
+ background:var(--blue-soft);color:var(--blue);min-height:34px;
+ padding:6px 11px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.wed-floor-reset:hover,.wed-floor-reset:focus-visible{outline:2px solid var(--blue);outline-offset:2px}

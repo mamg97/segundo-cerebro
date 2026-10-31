@@ -76,6 +76,15 @@ Una persona nueva creada desde una mesa se guarda en su grupo con
 RSVP `pendiente`; asignar y desasignar conserva los demás campos y
 su revisión optimista.
 
+La migración `0017_wedding_layout_verified.sql` añade
+`wedding_tables.position_verified` con valor inicial 0, sin eliminar ni
+modificar posiciones previas. El frontend considera no fiables las
+coordenadas históricas hasta el primer movimiento o «Centrar mesa» hecho
+con el cliente corregido. Entonces el PATCH marca el registro como
+verificado y conserva las nuevas coordenadas en posteriores lecturas.
+El cálculo inicial usa únicamente una distribución visual central/
+multimesa y nunca sobrescribe una mesa al leerla.
+
 La distribución visual calcula propuestas transitorias usando
 invitados confirmados de grupos definitivos. Los opcionales no
 incrementan el objetivo de asientos. Una plaza realmente

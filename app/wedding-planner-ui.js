@@ -224,7 +224,11 @@ export function tableFloorPosition(table,index,count){
  const fallbackX=100*((index%columns)+0.5)/columns;
  const fallbackY=100*(Math.floor(index/columns)+0.5)/rows;
  const x=table.positionX,y=table.positionY;
- const valid=typeof x==="number"&&Number.isFinite(x)&&
+ // A legacy client may have saved a wrong center and still returned success.
+ // positionVerified=false is set for all pre-migration tables. Only an explicit
+ // drag or Center action in the fixed client upgrades that layout record.
+ const valid=table.positionVerified!==false&&
+  typeof x==="number"&&Number.isFinite(x)&&
   typeof y==="number"&&Number.isFinite(y)&&x>2&&x<98&&y>2&&y<98;
  return valid?{x,y}:{x:fallbackX,y:fallbackY};
 }
@@ -245,7 +249,8 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  metric("Pendientes",summary.pending)+metric("Opcionales",summary.optional)+'</div>'+
  (editing?tableForm(editing==="new"?null:tables.find(t=>t.id===editing),esc):"")+
  '<section class="wed-seating-block wed-floor-section"><div class="wed-seating-block-title"><h4>Plano de mesas</h4>'+
- '<small>Pulsa una silla libre para asignarla · Arrastra desde «Mover»</small></div>'+
+ '<small>Pulsa una silla libre para asignarla · Arrastra desde «Mover»</small>'+
+ (selected?'<button class="wed-floor-reset" type="button" data-wed-center-table="'+esc(selected.id)+'" title="Dejar la mesa seleccionada en el centro">Centrar mesa</button>':'')+'</div>'+
  (tables.length?'<div class="wed-floor-scroll" tabindex="0" style="display:block;height:'+height+'px;min-height:'+height+'px" aria-label="Plano de mesas; desplázate horizontalmente si es necesario">'+
  '<div class="wed-floor-plan" data-wed-floor-plan style="display:block;height:'+height+'px;min-height:'+height+'px">'+
  tables.map((t,index)=>{

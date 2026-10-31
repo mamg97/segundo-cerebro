@@ -37,6 +37,7 @@ const guestRow=x=>({id:x.id,name:x.name,groupName:x.group_name,rsvp:x.rsvp,menu:
  email:x.email,phone:x.phone,notes:x.notes,tableId:x.table_id,seatIndex:x.seat_index??null,revision:x.revision,updatedAt:x.updated_at,updatedBy:x.updated_by});
 const tableRow=x=>({id:x.id,name:x.name,capacity:x.capacity,shape:x.shape,
  positionX:x.position_x??null,positionY:x.position_y??null,
+ positionVerified:x.position_verified===1,
  revision:x.revision,updatedAt:x.updated_at,updatedBy:x.updated_by,seated:x.seated||0});
 const guestSelect="SELECT * FROM wedding_guests";
 const tableSelect="SELECT t.*, (SELECT COUNT(*) FROM wedding_guests g WHERE g.table_id=t.id) AS seated FROM wedding_tables t";
@@ -123,8 +124,9 @@ export async function handleWeddingPlannerRequest(request,env){
     await guestWrite(db.prepare("INSERT INTO wedding_guests(id,name,group_name,rsvp,menu,dietary_notes,email,phone,notes,table_id,seat_index,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
      .bind(guid,item.name,item.groupName,item.rsvp,item.menu,item.dietaryNotes,item.email,item.phone,item.notes,item.tableId,seatIndex,now,actor));
    }else{
-    await db.prepare("INSERT INTO wedding_tables(id,name,capacity,shape,position_x,position_y,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?)")
-     .bind(guid,item.name,item.capacity,item.shape,item.positionX,item.positionY,now,actor).run();
+    await db.prepare("INSERT INTO wedding_tables(id,name,capacity,shape,position_x,position_y,position_verified,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?,?)")
+     .bind(guid,item.name,item.capacity,item.shape,item.positionX,item.positionY,
+      item.positionX!==null&&item.positionY!==null?1:0,now,actor).run();
    }
    const result=await db.prepare(select+" WHERE "+(guests?"id":"t.id")+"=?").bind(guid).first();
    return json({ok:true,item:row(result)},201);
@@ -149,8 +151,8 @@ export async function handleWeddingPlannerRequest(request,env){
    const result=guests?
     await guestWrite(db.prepare("UPDATE wedding_guests SET name=?,group_name=?,rsvp=?,menu=?,dietary_notes=?,email=?,phone=?,notes=?,table_id=?,seat_index=?,revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
      .bind(item.name,item.groupName,item.rsvp,item.menu,item.dietaryNotes,item.email,item.phone,item.notes,item.tableId,seatIndex,now,actor,id,revision)):
-    await db.prepare("UPDATE wedding_tables SET name=?,capacity=?,shape=?,position_x=COALESCE(?,position_x),position_y=COALESCE(?,position_y),revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
-     .bind(item.name,item.capacity,item.shape,item.positionX,item.positionY,now,actor,id,revision).run();
+    await db.prepare("UPDATE wedding_tables SET name=?,capacity=?,shape=?,position_x=COALESCE(?,position_x),position_y=COALESCE(?,position_y),position_verified=CASE WHEN ? IS NOT NULL AND ? IS NOT NULL THEN 1 ELSE position_verified END,revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
+     .bind(item.name,item.capacity,item.shape,item.positionX,item.positionY,item.positionX,item.positionY,now,actor,id,revision).run();
    if(!result.meta?.changes)throw new PlannerError("REVISION_CONFLICT",409);
    const updated=await db.prepare(select+" WHERE "+(guests?"id":"t.id")+"=?").bind(id).first();
    return json({ok:true,item:row(updated)});

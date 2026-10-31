@@ -197,7 +197,7 @@ test("a saved edge or centered point renders unchanged and does not teleport on 
  assert.match(result,/left:14\.667%;top:50\.000%/);
  assert.doesNotMatch(result,/left:16\.000%/);
  assert.match(ui,/boundFloorPosition\(\{/);
- assert.match(ui,/stage\.getBoundingClientRect\(\),tileBox=tile\.getBoundingClientRect\(\)/);
+ assert.match(ui,/const stageRect=stage\.getBoundingClientRect\(\)/);
  assert.doesNotMatch(ui,/tile\.offsetLeft|tile\.offsetTop/);
 });
 
@@ -233,4 +233,25 @@ test("valid saved manually positioned tables are not recentered on rerender",()=
  const saved={id:"saved",name:"Mesa",shape:"redonda",capacity:8,positionX:66.5,positionY:47.25};
  assert.deepEqual(tableFloorPosition(saved,0,1),{x:66.5,y:47.25});
  assert.match(renderTables([], [saved], null,esc),/left:66\.500%;top:47\.250%/);
+});
+
+test("all earlier unverified persisted positions are ignored without changing D1",()=>{
+ const old={id:"legacy",name:"Mesa presidencial",shape:"presidencial",capacity:6,positionX:15.123,positionY:33.455,positionVerified:false};
+ const before=JSON.stringify(old);
+ assert.deepEqual(tableFloorPosition(old,0,1),{x:50,y:50});
+ assert.equal(JSON.stringify(old),before);
+ const markup=renderTables([], [old],null,esc,old.id);
+ assert.match(markup,/data-wed-floor-table="legacy"[^>]*left:50\.000%;top:50\.000%/);
+ assert.match(markup,/wed-floor-reset/);
+ assert.match(markup,/data-wed-center-table="legacy"/);
+});
+test("a verified center or moved position is honored after refresh",()=>{
+ const table={id:"fixed",name:"Mesa prueba",shape:"redonda",capacity:12,positionX:62.25,positionY:54.125,positionVerified:true};
+ assert.deepEqual(tableFloorPosition(table,0,1),{x:62.25,y:54.125});
+ assert.match(renderTables([], [table],null,esc),/left:62\.250%;top:54\.125%/);
+ const frontend=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ assert.match(frontend,/const repairVisibleBounds=/);
+ assert.match(frontend,/overlapX<painted\.width\*\.8/);
+ assert.match(frontend,/requestAnimationFrame\(repairVisibleBounds\)/);
+ assert.match(frontend,/tile\.style\.position="absolute"/);
 });

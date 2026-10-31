@@ -1,6 +1,6 @@
 // Private wedding collaboration view. No embedded personal records.
 import {boundFloorPosition,floorDragStart,floorDragUpdate} from "./wedding-floor-geometry.mjs?v=0.1.0";
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.9";
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.10";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.3";
 export const WEDDING_TYPES=[
@@ -397,17 +397,36 @@ function bindWeddingFloorPlan(area){
   let drag=null,suppressClick=false;
   const position=(point)=>{
    if(!point)return;
+   // Do not depend on stale or overridden CSS to position the draggable card.
+   tile.style.position="absolute";
+   tile.style.transform="translate(-50%,-50%)";
    tile.style.left=point.x.toFixed(3)+"%";
    tile.style.top=point.y.toFixed(3)+"%";
   };
-  // Normalize stored coordinates after the actual canvas/tile have layout.
-  // This is display-only: old positions are not silently written to D1.
-  const stageBox=stage.getBoundingClientRect(),tileBox=tile.getBoundingClientRect();
-  position(boundFloorPosition({
-   x:Number.parseFloat(tile.style.left),y:Number.parseFloat(tile.style.top),
-   stageWidth:stageBox.width,stageHeight:stageBox.height,
-   tableWidth:tileBox.width,tableHeight:tileBox.height
-  }));
+  // Reconcile layout with the actual DOM bounds, not just saved percentages.
+  // Never write on mount; only explicit user actions persist a new position.
+  const repairVisibleBounds=()=>{
+   if(!tile.isConnected||drag)return;
+   const stageRect=stage.getBoundingClientRect();
+   const cardRect=tile.getBoundingClientRect();
+   const initial=boundFloorPosition({
+    x:Number.parseFloat(tile.style.left),y:Number.parseFloat(tile.style.top),
+    stageWidth:stageRect.width,stageHeight:stageRect.height,
+    tableWidth:cardRect.width,tableHeight:cardRect.height
+   });
+   if(!initial)return;
+   position(initial);
+   const painted=tile.getBoundingClientRect();
+   // Legacy misaligned CSS (e.g. a different positioning parent) may leave
+   // most of the table outside the actual canvas. Center it visibly.
+   const overlapX=Math.max(0,Math.min(painted.right,stageRect.right)-Math.max(painted.left,stageRect.left));
+   const overlapY=Math.max(0,Math.min(painted.bottom,stageRect.bottom)-Math.max(painted.top,stageRect.top));
+   if(overlapX<painted.width*.8||overlapY<painted.height*.8){
+    position({x:50,y:50});
+   }
+  };
+  repairVisibleBounds();
+  requestAnimationFrame(repairVisibleBounds);
   const persist=point=>{
    const table=state.tables.find(t=>t.id===id);
    if(!table||state.busy)return;

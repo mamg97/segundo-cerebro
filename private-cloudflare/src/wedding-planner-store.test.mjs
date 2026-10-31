@@ -70,3 +70,14 @@ test("seat indexes must be integral, bounded, and refer to a real assigned table
  assert.match(code,/throw new PlannerError\("SEAT_TAKEN",409\)/);
  assert.match(code,/seat_index=\?/);
 });
+
+test("migration marks legacy floor positions unverified until an explicit modern drag",()=>{
+ const migration=readFileSync(new URL("../migrations/0017_wedding_layout_verified.sql",import.meta.url),"utf8");
+ assert.match(migration,/ALTER TABLE wedding_tables ADD COLUMN position_verified/);
+ assert.match(migration,/DEFAULT 0/);
+ assert.doesNotMatch(migration,/UPDATE wedding_guests|DELETE FROM wedding/);
+ const source=readFileSync(new URL("./wedding-planner-store.js",import.meta.url),"utf8");
+ assert.match(source,/positionVerified:x\.position_verified===1/);
+ assert.match(source,/position_verified=CASE WHEN \? IS NOT NULL AND \? IS NOT NULL THEN 1 ELSE position_verified END/);
+ assert.match(source,/position_x=COALESCE\(\?,position_x\)/);
+});
