@@ -135,8 +135,11 @@ function kanbanCard(item){
  const amount=item.contractedCents!=null?eur(item.contractedCents):item.estimateCents!=null?eur(item.estimateCents):"";
  const url=item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer" class="wed-kanban-link" aria-label="Abrir enlace de '+esc(item.title)+'">↗ Enlace</a>':"";
  const picture=item.photoUrl?'<img loading="lazy" alt="" class="wed-kanban-thumb" src="'+esc(item.photoUrl)+'?v='+encodeURIComponent(item.updatedAt||"1")+'">':"";
- return '<article class="wed-kanban-card" draggable="true" data-wed-drag="'+esc(item.id)+'">'+
-  '<div class="wed-kanban-card-main">'+picture+'<div class="wed-kanban-card-title"><small>'+esc(typeName(item.category))+'</small><strong>'+esc(item.title)+'</strong>'+
+ return '<article class="wed-kanban-card" data-wed-card="'+esc(item.id)+'">'+
+  '<div class="wed-kanban-card-main">'+picture+'<div class="wed-kanban-card-title"><small>'+esc(typeName(item.category))+'</small>'+
+  '<strong class="wed-kanban-drag-handle" draggable="true" data-wed-drag="'+esc(item.id)+'" tabindex="0" '+
+  'aria-label="Arrastrar '+esc(item.title)+' a otra columna, o usar las flechas para cambiar de estado" '+
+  'title="Arrastra el título para mover la tarjeta">⠿ '+esc(item.title)+'</strong>'+
   (item.provider?'<span>'+esc(item.provider)+'</span>':"")+'</div></div>'+
   '<div class="wed-kanban-meta">'+(amount?'<span>'+amount+'</span>':"")+
   (item.dueDate?'<span>📅 '+esc(item.dueDate)+'</span>':"")+
@@ -579,20 +582,53 @@ function bindCards(root){
  root.querySelectorAll("[data-wed-add-status]").forEach(btn=>btn.addEventListener("click",()=>{state.draftStatus=btn.dataset.wedAddStatus;state.draftCategory="ideas";state.editing="new";state.ideaMode=false;state.error="";show();}));
  root.querySelectorAll("[data-wed-edit]").forEach(btn=>btn.addEventListener("click",()=>{state.editing=btn.dataset.wedEdit;state.ideaMode=false;state.error="";show();}));
  root.querySelectorAll("[data-wed-move]").forEach(select=>select.addEventListener("change",()=>void moveCard(select.dataset.wedMove,select.value)));
- root.querySelectorAll("[data-wed-drag]").forEach(card=>card.addEventListener("dragstart",event=>{
-  if(state.busy){event.preventDefault();return;}
-  event.dataTransfer.effectAllowed="move";
-  event.dataTransfer.setData("text/plain",card.dataset.wedDrag);
- }));
- root.querySelectorAll("[data-wed-column]").forEach(column=>{
-  column.addEventListener("dragover",event=>{if(state.busy)return;event.preventDefault();event.dataTransfer.dropEffect="move";});
-  column.addEventListener("drop",event=>{
-   event.preventDefault();column.classList.remove("wed-drop-target");
-   void moveCard(event.dataTransfer.getData("text/plain"),column.dataset.wedColumn);
+ const board=root.querySelector("#wed-kanban-board");
+ const clearDrag=()=>{
+  board?.querySelectorAll(".wed-drop-target,.wed-dragging").forEach(el=>el.classList.remove("wed-drop-target","wed-dragging"));
+ };
+ root.querySelectorAll("[data-wed-drag]").forEach(handle=>{
+  handle.addEventListener("dragstart",event=>{
+   if(state.busy||!event.dataTransfer){event.preventDefault();return;}
+   clearDrag();
+   const card=handle.closest("[data-wed-card]");
+   if(card)card.classList.add("wed-dragging");
+   event.dataTransfer.effectAllowed="move";
+   event.dataTransfer.setData("text/plain",handle.dataset.wedDrag);
   });
-  column.addEventListener("dragenter",event=>{if(event.dataTransfer.types.includes("text/plain"))column.classList.add("wed-drop-target");});
-  column.addEventListener("dragleave",event=>{if(!column.contains(event.relatedTarget))column.classList.remove("wed-drop-target");});
+  handle.addEventListener("dragend",clearDrag);
+  handle.addEventListener("keydown",event=>{
+   if(state.busy||!["ArrowLeft","ArrowRight"].includes(event.key))return;
+   const item=state.items.find(x=>x.id===handle.dataset.wedDrag);
+   const index=STATUSES.findIndex(x=>x[0]===item?.status);
+   const next=index+(event.key==="ArrowRight"?1:-1);
+   if(index<0||next<0||next>=STATUSES.length)return;
+   event.preventDefault();
+   void moveCard(item.id,STATUSES[next][0]);
+  });
  });
+ root.querySelectorAll("[data-wed-column]").forEach(column=>{
+  column.addEventListener("dragover",event=>{
+   if(state.busy||!event.dataTransfer?.types.includes("text/plain"))return;
+   event.preventDefault();
+   event.dataTransfer.dropEffect="move";
+   board?.querySelectorAll(".wed-drop-target").forEach(el=>{if(el!==column)el.classList.remove("wed-drop-target");});
+   column.classList.add("wed-drop-target");
+   if(board){
+    const rect=board.getBoundingClientRect(),edge=45;
+    if(event.clientX>rect.right-edge)board.scrollLeft+=18;
+    else if(event.clientX<rect.left+edge)board.scrollLeft-=18;
+   }
+  });
+  column.addEventListener("drop",event=>{
+   if(state.busy||!event.dataTransfer)return;
+   event.preventDefault();
+   const id=event.dataTransfer.getData("text/plain");
+   clearDrag();
+   if(!state.items.some(item=>item.id===id))return;
+   void moveCard(id,column.dataset.wedColumn);
+  });
+ });
+
 }
 export function openWeddingDetail(remote){
  const dialog=document.querySelector("#detail-dialog"),body=document.querySelector("#dialog-body");if(!dialog||!body)return;
