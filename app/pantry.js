@@ -4,10 +4,8 @@ let pantryActiveView = "inventory";
 export function configurePantryViewMemory(memory) { pantryViewMemory = memory; }
 
 // A deep link takes precedence over an older panel when async data arrives.
-function requestedPantryView(fallback = "inventory") {
-  const match = /^#\/despensa(?:\/(inventario|compra|tickets))?$/.exec(
-    typeof window === "undefined" ? "" : window.location.hash
-  );
+export function requestedPantryView(fallback = "inventory", hash = typeof window === "undefined" ? "" : window.location.hash) {
+  const match = /^#\/despensa(?:\/(inventario|compra|tickets))?$/.exec(hash);
   if (match) return ({ inventario: "inventory", compra: "shopping", tickets: "tickets" })[match[1]] || "inventory";
   return ["inventory", "shopping", "tickets"].includes(fallback) ? fallback : "inventory";
 }
