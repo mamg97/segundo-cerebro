@@ -1,5 +1,5 @@
 import { travelScheduleMarkup } from "./travel-timetable.js?v=0.1.0";
-import { travelMapPoints, travelMapDays, travelMapVisible, bindTravelMap } from "./travel-multipoint-map.js?v=0.1.1";
+import { travelMapPoints, travelMapDays, travelMapVisible, bindTravelMap } from "./travel-multipoint-map.js?v=0.2.0";
 // Generic travel dashboard: no trip-specific details or private coordinates in the public repository.
 const escapeText=value=>String(value==null?"":value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 const money=value=>{
@@ -48,20 +48,20 @@ export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,boo
     const selected=travelMapVisible(mapPoints,date).filter(p=>p.date!=="ALOJAMIENTO");
     const name=date==="TODOS"?"Todas las jornadas":date==="OPCIONAL"?"Alternativas no incluidas":escapeText(dayLabel(date));
     return '<div class="trv-map-stop-group" data-trv-map-list="'+escapeText(date)+'"'+(date!==initialDay?' hidden':"")+'>'+
-      '<strong>'+name+'</strong><ol>'+selected.map((p,i)=>'<li><span class="trv-map-stop-num">'+(i+1)+'</span><a href="'+escapeText(tripMapLink(p.query,"external"))+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">'+escapeText(p.name)+'</a><small>'+escapeText(p.status==="CONFIRMADO"?"Confirmado":p.status==="PENDIENTE"?"Pendiente":p.status==="OPCIONAL"?"Alternativa":"Propuesta")+'</small></li>').join("")+'</ol></div>';
+      '<strong>'+name+'</strong><ol>'+selected.map((p,i)=>'<li><span class="trv-map-stop-num">'+(i+1)+'</span><button type="button" class="trv-map-stop-select" data-trv-map-stop="'+mapPoints.indexOf(p)+'" aria-pressed="false" title="Mostrar este lugar en Google Maps">'+escapeText(p.name)+'</button><a class="trv-map-stop-external" href="'+escapeText(tripMapLink(p.query,"external"))+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" aria-label="Abrir '+escapeText(p.name)+' en Google Maps">↗</a><small>'+escapeText(p.status==="CONFIRMADO"?"Confirmado":p.status==="PENDIENTE"?"Pendiente":p.status==="OPCIONAL"?"Alternativa":"Propuesta")+'</small></li>').join("")+'</ol></div>';
   }).join("")+'</div>':"";
   const map='<section class="trv-panel trv-dash-map-section" id="trv-dash-map">'+
-    '<div class="trv-panel-head"><h3>⌖ '+(hasPoints?"Mapa del recorrido":"Dónde está el alojamiento")+'</h3><small>'+(hasPoints?"Paradas y orden por día":"Mapa bajo demanda")+'</small></div>'+
+    '<div class="trv-panel-head"><h3>⌖ '+(hasPoints?"Mapa · Google Maps":"Alojamiento · Google Maps")+'</h3><small>'+(hasPoints?"Paradas por día · Google Maps":"Mapa bajo demanda")+'</small></div>'+
     (address||hasPoints?
       (address?'<div class="trv-dash-address"><span aria-hidden="true">⌖</span><p>'+escapeText(address)+'</p></div>':"")+
       mapTabs+
-      '<div class="trv-map-canvas" data-trv-map-canvas><div class="trv-map-intro"><span class="trv-map-pin">⌖</span><strong>'+(hasPoints?"Rutas del viaje, por días":"El alojamiento, en el mapa")+'</strong>'+
-      '<p>'+(hasPoints?"Para mostrar calles y puntos se cargarán mapas de OpenStreetMap. La conexión solo se realizará si eliges cargar el mapa.":"Tu dirección solo se compartirá con Google si decides cargarlo.")+'</p>'+
-      '<button type="button" data-trv-show-map>'+(hasPoints?"Cargar mapa con paradas":"Mostrar mapa interactivo")+'</button></div></div>'+
+      '<div class="trv-map-canvas" data-trv-map-canvas><div class="trv-map-intro"><span class="trv-map-pin">⌖</span><strong>'+(hasPoints?"Google Maps · puntos del viaje":"El alojamiento en Google Maps")+'</strong>'+
+      '<p>'+(hasPoints?"La ubicación solo se compartirá con Google Maps cuando pulses cargar. Elige una parada para verla; la ruta completa se abre en Maps.":"Tu dirección solo se compartirá con Google Maps si decides cargarlo.")+'</p>'+
+      '<button type="button" data-trv-show-map>'+(hasPoints?"Cargar Google Maps":"Mostrar Google Maps")+'</button></div></div>'+
       (hasPoints?'<div class="trv-map-routes" data-trv-map-routes></div>'+
-        '<p class="trv-map-note">Línea entre puntos = secuencia orientativa, no camino por las calles. Las horas propuestas no son reservas.</p>'+mapLists:"")+
+        '<p class="trv-map-note">Pulsa una parada para centrar Google Maps. El enlace de ruta abre todas las paradas del día en Google Maps. Los horarios propuestos no son reservas.</p>'+mapLists:"")+
       '<p class="trv-map-footer">'+(external?'<a href="'+escapeText(external)+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Ver alojamiento en Google Maps ↗</a>':"")+
-      '<span>Datos de ubicaciones guardados en Eventos.</span></p>':
+      '<span>Lugares privados en Eventos · cartografía de Google Maps.</span></p>':
       '<div class="trv-muted">Aún no consta un alojamiento ni ubicaciones en Eventos.</div>')+'</section>';
   const plan='<section class="trv-panel trv-dash-planning" id="trv-dash-plan"><div class="trv-panel-head"><h3>▤ Planning horario</h3><small>Horas × días · Confirmado / Pendiente / Propuesta</small></div>'+travelScheduleMarkup(groups,dayLabel)+
      '<p class="trv-footnote">Los bloques pendientes y orientativos no son reservas confirmadas. Las horas proceden de Eventos.</p></section>';
