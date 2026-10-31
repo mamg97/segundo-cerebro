@@ -224,7 +224,7 @@ test("compact floor accommodates four tables per row without oversized cards",()
  const html=renderTables([],tables,null,esc,"demo-0");
  assert.equal((html.match(/data-wed-floor-table="/g)||[]).length,9);
  assert.match(html,/height:1080px/);
- assert.match(css,/width:268px;height:278px/);
+ assert.match(css,/width:268px;height:268px/);
  assert.match(css,/min-width:1180px/);
  assert.match(ui,/state\.seatingSelectedTableId=table\.id/);
  assert.match(ui,/positionX:50,positionY:50,revision:table\.revision/);
@@ -277,7 +277,7 @@ test("six seats form a uniform circular crown around an editable round tabletop"
  assert.match(html,/class="wed-named-table-center" data-wed-edit-table="pres-geometry"/);
  assert.match(html,/aria-label="Editar Mesa sintética"/);
  assert.equal((html.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
- assert.equal((html.match(/data-wed-seat-detail="synthetic-person-/g)||[]).length,6);
+ assert.equal((html.match(/class="wed-named-seat is-filled" data-wed-seat-detail="synthetic-person-/g)||[]).length,6);
  assert.equal((html.match(/--wed-seat-diameter:38px/g)||[]).length,6);
  const placements=[...html.matchAll(/class="wed-named-seat is-filled"[^>]+style="left:([\d.]+)%;top:([\d.]+)%;--wed-seat-diameter:38px"/g)]
   .map(m=>({x:+m[1],y:+m[2]}));
