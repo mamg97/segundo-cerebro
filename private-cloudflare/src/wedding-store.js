@@ -52,6 +52,15 @@ export async function handleWeddingRequest(request,env){
   if(method!=="GET"&&request.headers.get("Origin")!==url.origin)throw new WeddingError("INVALID_ORIGIN",403);
   if(path==="/api/wedding/items"){
    if(method==="GET"){
+    // Explicit paginated export: cannot silently truncate past the UI's 500 rows.
+    if(url.searchParams.get("export")==="1"){
+     const raw=url.searchParams.get("offset")||"0";
+     if(!/^(0|[1-9]\\d{0,5})$/.test(raw)||Number(raw)>20000)throw new WeddingError("INVALID_EXPORT_OFFSET");
+     const offset=Number(raw);
+     const result=await db.prepare(SELECT+" ORDER BY i.updated_at DESC,i.id DESC LIMIT 501 OFFSET ?").bind(offset).all();
+     const data=result.results||[];
+     return reply({ok:true,viewer:actor,items:data.slice(0,500).map(row),hasMore:data.length>500});
+    }
     const res=await db.prepare(SELECT+" ORDER BY i.updated_at DESC LIMIT 500").all();
     return reply({ok:true,viewer:actor,items:(res.results||[]).map(row)});
    }
