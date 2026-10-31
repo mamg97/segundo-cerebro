@@ -159,3 +159,34 @@ test("legacy tables without positions receive deterministic visual geometry with
  assert.match(html,/height:1040px/);
  assert.equal(JSON.stringify({tables,names}),before);
 });
+
+test("each physically free chair is a clickable index, while occupied indexes remain stable",()=>{
+ const table={id:"synthetic-table",name:"Mesa sintética",capacity:6,shape:"presidencial"};
+ const people=[
+  {id:"synthetic-a",name:"Ana Ejemplo",tableId:table.id,rsvp:"pendiente",groupName:"pareja",seatIndex:4},
+  {id:"synthetic-b",name:"Bruno Ensayo",tableId:table.id,rsvp:"confirmado",groupName:"pareja",seatIndex:1}
+ ];
+ const html=renderTables(people,[table],null,esc,table.id,2);
+ assert.equal((html.match(/data-wed-seat-add="synthetic-table"/g)||[]).length,4);
+ assert.match(html,/data-wed-seat-index="2"/);
+ assert.doesNotMatch(html,/data-wed-seat-index="4"/);
+ assert.doesNotMatch(html,/data-wed-seat-index="1"/);
+ assert.match(html,/Añadir personas a Mesa sintética · Plaza 3/);
+ assert.match(html,/data-wed-seat-detail="synthetic-a"/);
+ assert.match(html,/data-wed-floor-plan style="display:block;height:550px;min-height:550px"/);
+ assert.match(html,/class="wed-floor-scroll"[^>]+height:550px;min-height:550px/);
+ assert.match(ui,/state\.seatingTargetSeatIndex=index/);
+ assert.match(ui,/seatIndex:state\.seatingTargetSeatIndex/);
+ assert.match(css,/\.wed-floor-scroll\{[\s\S]*?min-height:550px/);
+});
+test("one existing table always renders a nonempty floor, regardless of confirmation status",()=>{
+ const table={id:"president-demo",name:"Presidencial ficticia",capacity:6,shape:"presidencial"};
+ const people=Array.from({length:6},(_,i)=>({
+  id:"guest"+i,name:"Prueba "+i,groupName:"pareja",rsvp:"pendiente",tableId:table.id,seatIndex:i
+ }));
+ const html=renderTables(people,[table],null,esc,table.id);
+ assert.equal((html.match(/data-wed-floor-table="president-demo"/g)||[]).length,1);
+ assert.match(html,/6\/6 plazas/);
+ assert.equal((html.match(/data-wed-seat-add="president-demo"/g)||[]).length,0);
+ assert.match(html,/0 confirmados · 0 libres/);
+});
