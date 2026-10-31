@@ -1,7 +1,7 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { fingerprintStaticAsset, stampStaticEntrypoints } from "./static-revisions.mjs";
+import { fingerprintFrontendAssets, fingerprintStaticAsset, stampStaticEntrypoints } from "./static-revisions.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const workerRoot = resolve(here, "..");
@@ -29,10 +29,34 @@ html = html
     (scriptTag) => `<script src="../private-config.js"></script>\n    <script src="./startup-watchdog.js"></script>\n    ${scriptTag}`
   );
 
-// Revisions track actual JS/CSS contents; stale browser caches cannot reuse
-// the previous release just because an editor forgot to bump ?v= in index.html.
-const appRevision = fingerprintStaticAsset(await readFile(resolve(dist, "app", "app.js")));
+// The public frontend is a module graph. Changing wedding.js or its styles must
+// change the entrypoint revision even when app.js itself remains unchanged.
+// Include only built static code (never private inputs or user-specific state).
+async function collectPublicFrontend(root, prefix) {
+  const collected = [];
+  async function walk(dir, name) {
+    for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a,b) => a.name.localeCompare(b.name, "en"))) {
+      const full = resolve(dir, entry.name), relative = name + "/" + entry.name;
+      if (entry.isDirectory()) {
+        await walk(full, relative);
+      } else if (entry.isFile() && /\.(?:js|mjs|css)$/.test(entry.name) &&
+                 !/\.test\.(?:js|mjs)$/.test(entry.name)) {
+        collected.push([relative, await readFile(full)]);
+      }
+    }
+  }
+  await walk(root, prefix);
+  return collected;
+}
+const publicCode = [
+  ...await collectPublicFrontend(resolve(dist, "app"), "app"),
+  ...await collectPublicFrontend(resolve(dist, "core"), "core")
+];
+const appRevision = fingerprintFrontendAssets(publicCode);
 const stylesRevision = fingerprintStaticAsset(await readFile(resolve(dist, "app", "styles.css")));
+const cssRevisions = Object.fromEntries(publicCode
+  .filter(([path]) => /^app\/[^/]+\.css$/.test(path))
+  .map(([path, bytes]) => [path.slice(4), fingerprintStaticAsset(bytes)]));
 const registerSource = await readFile(resolve(dist, "app", "pwa-register.mjs"), "utf8");
 const swPath = resolve(dist, "app", "pwa-sw.js");
 const swSource = await readFile(swPath, "utf8");
@@ -40,8 +64,7 @@ const releaseRevision = fingerprintStaticAsset(
   [appRevision, stylesRevision, registerSource, swSource].join(":")
 );
 html = stampStaticEntrypoints(html, {
-  "app.js": appRevision,
-  "styles.css": stylesRevision
+  ...cssRevisions, "app.js": appRevision, "styles.css": stylesRevision
 });
 
 // Only the private authenticated deployment is installable. GitHub Pages remains a demo.
