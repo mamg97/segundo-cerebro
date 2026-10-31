@@ -57,7 +57,11 @@ personales/confidenciales y solo se consultan en API privada.
 
 La pantalla de Mesas asigna personas mediante el `table_id`
 preexistente de `wedding_guests`. No añade tablas, duplicados
-ni columnas para asientos. Las etiquetas alrededor de una mesa
+ni columnas para asientos. La migración `0015_wedding_table_positions.sql`
+añade solo `position_x` y `position_y` opcionales en `wedding_tables`;
+son porcentajes numéricos [0..100] del centro de la mesa en el plano.
+Una pareja nula representa una mesa heredada aún no posicionada;
+la UI muestra una distribución automática sin escribirla. Las etiquetas alrededor de una mesa
 siguen un orden visual alfabético, no un número de asiento persistente.
 Altas de mesas nuevas: `redonda / 12` plazas por defecto;
 al elegir `presidencial` el aforo inicial pasa a 6. La elección
@@ -76,8 +80,11 @@ dentro de `capacity [1..30]`. Las simulaciones nunca actualizan
 `wedding_guests` ni `wedding_tables`.
 
 `wedding_tables`: `id, name, capacity [1..30], shape
-[redonda|rectangular|presidencial], revision, updated_at, updated_by`.
-La vista muestra capacidad/ocupación sin inventar distribuciones.
+[redonda|rectangular|presidencial], position_x, position_y, revision,
+updated_at, updated_by`. El PATCH autenticado usa `revision` y conserva
+las posiciones actuales si el cliente antiguo omite sus campos.
+El plano muestra ubicación y ocupación reales, pero no asigna asientos físicos
+con número ni inventa confirmaciones.
 No hay integración automática de RSVP, email ni web pública.
 
 ## Campos comunes
