@@ -63,6 +63,14 @@ export async function handleWeddingPlannerRequest(request,env){
   const guests=kind==="guests",table=guests?"wedding_guests":"wedding_tables";
   const select=guests?guestSelect:tableSelect,row=guests?guestRow:tableRow;
   if(!id&&method==="GET"){
+   // Paginate all private records for explicit user-triggered Excel export.
+   if(url.searchParams.get("export")==="1"){
+    const raw=url.searchParams.get("offset")||"0";
+    if(!/^(0|[1-9]\\d{0,5})$/.test(raw)||Number(raw)>20000)throw new PlannerError("INVALID_EXPORT_OFFSET");
+    const result=await db.prepare(select+" ORDER BY "+(guests?"name COLLATE NOCASE,id":"t.name COLLATE NOCASE,t.id")+" LIMIT 501 OFFSET ?").bind(Number(raw)).all();
+    const data=result.results||[];
+    return json({ok:true,items:data.slice(0,500).map(row),hasMore:data.length>500});
+   }
    const result=await db.prepare(select+" ORDER BY "+(guests?"name COLLATE NOCASE":"name COLLATE NOCASE")+" LIMIT 1000").all();
    return json({ok:true,items:(result.results||[]).map(row)});
   }
