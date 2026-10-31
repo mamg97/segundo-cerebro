@@ -4577,7 +4577,7 @@ function bindHabitInteractions() {
       const originalCheck = button.querySelector(".habit-check")?.textContent || "";
       const originalCount = button.querySelector(".habit-count")?.textContent || "";
       const wasDone = button.classList.contains("done");
-      const target = Math.max(1, Number(beforeHabit?.timesPerDay || 1));
+      const target = Math.max(1, Number(beforeHabit?.target || beforeHabit?.timesPerDay || 1));
       const optimisticCount = wasDone ? Math.max(0, previousCount - 1) : Math.min(target, previousCount + 1);
       button.classList.toggle("done", optimisticCount >= target);
       const check = button.querySelector(".habit-check");
