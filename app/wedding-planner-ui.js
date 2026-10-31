@@ -60,7 +60,8 @@ export function renderProviders(items,esc){
 export const WEDDING_GUEST_GROUPS=[
  ["pareja","Invitados Andrea y Miguel"],
  ["padres_miguel","Invitados padres Miguel"],
- ["padres_andrea","Invitados padres Andrea"]
+ ["padres_andrea","Invitados padres Andrea"],
+ ["opcionales","Invitados opcionales"]
 ];
 export function guestGroupId(groupName){
  return WEDDING_GUEST_GROUPS.some(([id])=>id===groupName)?groupName:null;
@@ -94,10 +95,11 @@ function compactGuestRow(guest,esc){
 }
 export function renderGuests(guests,tables,editing,esc){
  const accepted=guests.filter(g=>g.rsvp==="confirmado").length;
+ const optional=guests.filter(g=>g.groupName==="opcionales").length;
  const legacy=guests.filter(g=>!guestGroupId(g.groupName));
  const current=editing&&editing!=="new"?guests.find(g=>g.id===editing):null;
  return '<section class="wed-planner-panel wed-guest-board"><div class="wed-planner-heading"><div>'+
- '<h3>Lista de invitados</h3><small>'+guests.length+' nombres · '+accepted+' confirmados · pulsa un nombre para completar sus datos</small></div></div>'+
+ '<h3>Lista de invitados</h3><small>'+guests.length+' nombres · '+optional+' opcionales · '+accepted+' confirmados · pulsa un nombre para completar sus datos</small></div></div>'+
  (editing?guestForm(current,tables,esc):"")+
  '<div class="wed-guest-columns">'+WEDDING_GUEST_GROUPS.map(([id,title])=>{
   const people=guests.filter(g=>g.groupName===id);
@@ -110,9 +112,9 @@ export function renderGuests(guests,tables,editing,esc){
    '<li class="wed-guest-blank">Todavía no hay nombres</li>')+'</ul></section>';
  }).join("")+'</div>'+
  (legacy.length?'<div class="wed-guest-unclassified"><div><strong>'+legacy.length+' sin clasificar</strong>'+
- '<small>Ya estaban guardados con otros grupos. Pulsa cada nombre para elegir una de las tres listas, sin perder información.</small></div>'+
+ '<small>Ya estaban guardados con otros grupos. Pulsa cada nombre para elegir una de las cuatro listas, sin perder información.</small></div>'+
  '<ul class="wed-guest-names">'+legacy.map(g=>compactGuestRow(g,esc)).join("")+'</ul></div>':"")+
- '<p class="wed-planner-foot">Para añadir invitados basta con escribir su nombre y pulsar «Añadir» o Intro. Los detalles son opcionales y se guardan al abrir su ficha. Esta información es privada.</p></section>';
+ '<p class="wed-planner-foot">Añade un nombre con «Añadir» o Intro. La lista de opcionales sirve para personas todavía por decidir; puedes moverlas a otra lista desde su ficha. Esta información es privada.</p></section>';
 }
 function tableForm(item,esc){
  const t=item||{};
