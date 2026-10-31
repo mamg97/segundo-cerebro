@@ -8,7 +8,7 @@ const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
 const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
 const html=readFileSync(new URL("./index.html",import.meta.url),"utf8");
 
-test("Kanban preserves D1 entries and filters by type and accent-insensitive normal search",()=>{
+test("Kanban preserves D1 entries and filters by category and Spanish text",()=>{
  const items=[
   {id:"one",status:"idea",category:"finca",title:"Jardines de ejemplo",provider:"Proveedor A"},
   {id:"two",status:"pendiente",category:"tareas",title:"Llamar a proveedor",description:"Consulta"},
