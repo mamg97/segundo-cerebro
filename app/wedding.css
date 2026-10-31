@@ -1545,11 +1545,11 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-fullscreen-dialog > .wed-floor-shell .wed-floor-plan[data-wed-floor-plan] {
  box-sizing:border-box;
  display:grid;
- width:max(3600px,calc(var(--wed-floor-columns,4)*780px)) !important;
- min-width:max(3600px,calc(var(--wed-floor-columns,4)*780px)) !important;
+ width:var(--wed-canvas-width,3600px) !important;
+ min-width:var(--wed-canvas-width,3600px) !important;
  max-width:none;
- height:max(3600px,calc(var(--wed-floor-rows,1)*var(--wed-floor-row-height,390px) + 320px)) !important;
- min-height:max(3600px,calc(var(--wed-floor-rows,1)*var(--wed-floor-row-height,390px) + 320px)) !important;
+ height:var(--wed-canvas-height,3600px) !important;
+ min-height:var(--wed-canvas-height,3600px) !important;
  align-content:space-evenly;
  grid-auto-rows:var(--wed-floor-row-height,390px);
 }
