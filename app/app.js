@@ -12115,8 +12115,10 @@ function applyAreaRoute(){
     "travels-dialog","wealth-dialog","health-dialog","habits-dialog",
     "budget-dialog","parents-dialog","electricity-dialog","pantry-dialog",
     "objects-dialog","projects-dialog","events-workspace-dialog",
-    "event-detail-dialog","important-events-dialog","hobbies-dialog"
+    "event-detail-dialog","important-events-dialog","hobbies-dialog","wedding-dialog"
   );
+  const weddingRefresh=document.querySelector("#wed-main-refresh");
+  if(weddingRefresh)weddingRefresh.hidden=true;
   restoreAgendaPortal();
   routedTravelDetailId=route.areaId==="area-travels"?(route.detailId||null):null;
   routedHobbyId=route.areaId==="area-hobbies"?(route.detailId||null):null;
