@@ -177,26 +177,40 @@
 
 /* Wedding Kanban: status columns from the existing private store; no extra data cache. */
 .wedding-dialog #dialog-body{min-width:0}
-.wedding-dialog .wed-dialog-controls{
- position:-webkit-sticky;position:sticky;top:0;z-index:35;
- display:flex;align-items:center;gap:10px;
- width:100%;box-sizing:border-box;min-width:0;
- margin:0 0 16px;padding:4px 0;
- border-bottom:1px solid var(--line);background:var(--surface);
-}
-.wedding-dialog .wed-dialog-controls .wed-view-tabs{
- display:flex;align-items:center;flex:1 1 auto;flex-wrap:nowrap;
- min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;
- scrollbar-width:thin;white-space:nowrap;margin:0;border-bottom:0;
-}
-.wedding-dialog .wed-main-refresh{
- flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;
- min-height:38px;padding:7px 12px;border:1px solid var(--line);
+/* Boda: header actions live outside the only scrolling region (#dialog-body). */
+#wed-main-refresh[hidden]{display:none!important}
+body.route-area-active #detail-dialog.wedding-dialog[open] > #wed-main-refresh:not([hidden]){
+ position:absolute;top:13px;right:260px;z-index:9;
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-height:42px;padding:8px 12px;border:1px solid var(--line);
  border-radius:10px;background:var(--paper);color:var(--ink);
  font:inherit;font-size:12px;font-weight:800;cursor:pointer;
 }
-.wedding-dialog .wed-main-refresh:hover,.wedding-dialog .wed-main-refresh:focus-visible{border-color:var(--blue)}
-.wedding-dialog .wed-main-refresh span:first-child{font-size:21px;line-height:1;color:var(--blue)}
+#detail-dialog.wedding-dialog #wed-main-refresh span:first-child{
+ color:var(--blue);font-size:21px;line-height:1
+}
+#detail-dialog.wedding-dialog #wed-main-refresh:disabled{opacity:.6;cursor:wait}
+#detail-dialog.wedding-dialog #wed-main-refresh:hover,
+#detail-dialog.wedding-dialog #wed-main-refresh:focus-visible{border-color:var(--blue)}
+body.route-area-active #detail-dialog.wedding-dialog[open] #dialog-body > .wed-view-tabs{
+ position:sticky;top:0;z-index:5;display:flex;
+ width:100%;min-width:0;max-width:100%;
+ flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+ scrollbar-width:thin;white-space:nowrap;
+ margin:0 0 16px;background:var(--surface);
+}
+@media(max-width:900px) and (min-width:761px){
+ body.route-area-active #detail-dialog.wedding-dialog[open] > #wed-main-refresh:not([hidden]){
+  right:245px;
+ }
+}
+@media(max-width:760px){
+ body.route-area-active #detail-dialog.wedding-dialog[open] > #wed-main-refresh:not([hidden]){
+  top:5px;right:64px;min-width:44px;height:44px;min-height:44px;
+  padding:5px 7px;
+ }
+ #detail-dialog.wedding-dialog #wed-main-refresh .wed-refresh-label{display:none}
+}
 .wed-kanban-workspace{max-width:none}
 .wed-kanban-workspace .wed-toolbar{margin-bottom:8px}
 .wed-kanban-hint{font-size:11px;color:var(--ink-soft);margin:8px 0 12px}
@@ -272,9 +286,6 @@
 .wed-kanban-empty{font-size:11px;color:var(--ink-soft);padding:12px 5px;line-height:1.45}
 .wed-kanban-column.wed-drop-target{outline:2px dashed var(--blue);outline-offset:-3px;background:var(--blue-soft)}
 @media(max-width:650px){
- .wedding-dialog .wed-dialog-controls{gap:5px;padding:3px 0}
- .wedding-dialog .wed-main-refresh{min-height:36px;min-width:38px;justify-content:center;padding:6px 8px}
- .wedding-dialog .wed-main-refresh .wed-refresh-label{display:none}
  .wed-kanban{grid-auto-columns:minmax(230px,82vw);gap:9px}
  .wed-kanban-workspace .wed-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(115px,140px);align-items:end}
  .wed-sort{min-width:0}

@@ -42,7 +42,7 @@ function cards(){
     '<div class="wed-item-content"><div class="wed-item-kicker"><span>'+esc(typeName(i.category))+'</span><span class="wed-status" data-status="'+esc(i.status)+'">'+esc(statusName(i.status))+'</span></div>'+
     '<h4>'+esc(i.title)+'</h4>'+(i.provider?'<p class="wed-provider">'+esc(i.provider)+'</p>':'')+
     (i.description?'<p class="wed-description">'+esc(i.description)+'</p>':'')+
-    '<div class="wed-item-meta">'+cost+(i.paidCents?'<span>Pagado · '+eur(i.paidCents)+'</span>':'')+(i.dueDate?'<span>Fecha · '+esc(i.dueDate)+'</span>':'')+(i.assigneeKind||i.category==="tareas"?'<span class="wed-assignee">Responsable · '+esc(weddingAssigneeLabel(i))+'</span>':'')+'</div>'+
+    '<div class="wed-item-meta">'+cost+(i.paidCents?'<span>Pagado · '+eur(i.paidCents)+'</span>':'')+(i.dueDate?'<span>Fecha · '+esc(i.dueDate)+'</span>':'')+'<span class="wed-assignee">Responsable: '+esc(weddingAssigneeLabel(i))+'</span>'+'</div>'+
     '<div class="wed-item-actions">'+safeLink+'<button type="button" data-wed-edit="'+esc(i.id)+'">Editar</button></div>'+
     '<small class="wed-author">Actualizado por '+esc(i.updatedBy||"Participante")+'</small></div></article>';
  }).join("")+'</div>';
@@ -143,7 +143,7 @@ function kanbanCard(item){
   (item.provider?'<span>'+esc(item.provider)+'</span>':"")+'</div></div>'+
   '<div class="wed-kanban-meta">'+(amount?'<span>'+amount+'</span>':"")+
   (item.dueDate?'<span>📅 '+esc(item.dueDate)+'</span>':"")+
-  (item.assigneeKind||item.category==="tareas"?'<span class="wed-assignee">👤 '+esc(weddingAssigneeLabel(item))+'</span>':"")+'</div>'+
+  '<span class="wed-assignee" aria-label="Responsable: '+esc(weddingAssigneeLabel(item))+'">👤 Responsable: '+esc(weddingAssigneeLabel(item))+'</span>'+'</div>'+
   '<div class="wed-kanban-actions">'+url+'<button type="button" data-wed-edit="'+esc(item.id)+'">Editar</button>'+
   '<label class="wed-kanban-move">Mover a <select data-wed-move="'+esc(item.id)+'" aria-label="Mover '+esc(item.title)+' a otra columna">'+
    STATUSES.map(([key,name])=>'<option value="'+key+'" '+(item.status===key?"selected":"")+'>'+esc(name)+'</option>').join("")+
@@ -174,10 +174,23 @@ function kanbanHome(){
   '<p class="wed-kanban-hint">Arrastra tarjetas entre columnas en ordenador o usa «Mover a» desde el móvil. Los cambios se guardan en el espacio compartido.</p>'+
   '<div id="wed-results">'+kanbanBoard()+'</div></div>';
 }
-function weddingToolbar(){
- return '<div class="wed-dialog-controls">'+viewTabs()+
- '<button type="button" id="wed-main-refresh" aria-label="Actualizar Boda" title="Actualizar datos de Boda" class="wed-main-refresh">'+
- '<span aria-hidden="true">↻</span><span class="wed-refresh-label">Actualizar</span></button></div>';
+// The refresh action lives in the non-scrolling dialog header, not in #dialog-body.
+async function refreshWedding(){
+ const button=document.querySelector("#wed-main-refresh");
+ if(!active()||state.busy||state.quickBusy||state.refreshing)return;
+ if(state.editing&&!window.confirm("¿Actualizar y descartar los cambios no guardados?"))return;
+ state.refreshing=true;
+ if(button){button.disabled=true;button.setAttribute("aria-busy","true");}
+ try{
+  state.error="";
+  await load();
+ }catch(error){
+  state.error=errorMsg(error);
+  if(active())show();
+ }finally{
+  state.refreshing=false;
+  if(button){button.disabled=false;button.setAttribute("aria-busy","false");}
+ }
 }
 function home(){
  if(state.view==="inspiracion")return inspirationHome();
@@ -239,7 +252,7 @@ function editor(){
 function show(){
  if(!active())return;
  const area=document.querySelector("#dialog-body");
- area.innerHTML=weddingToolbar()+(state.editing?editor():home());
+ area.innerHTML=viewTabs()+(state.editing?editor():home());
  if(state.error){const notice=document.createElement("div");notice.className="wed-alert";notice.role="alert";notice.textContent=state.error;area.prepend(notice);}
  bind(area);
 }
@@ -514,7 +527,6 @@ function bind(area){
  area.querySelector("#wed-add-pin")?.addEventListener("click",startIdea);
  area.querySelector("#wed-floating-add")?.addEventListener("click",startIdea);
  area.querySelector("#wed-first-pin")?.addEventListener("click",startIdea);
- area.querySelector("#wed-main-refresh")?.addEventListener("click",()=>{if(state.busy||state.quickBusy)return;if(state.editing&&!window.confirm("¿Actualizar y descartar los cambios no guardados?"))return;state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
  area.querySelectorAll("[data-wed-inspo-filter]").forEach(button=>button.addEventListener("click",()=>{
   state.inspirationFilter=button.dataset.wedInspoFilter;state.error="";show();
  }));
@@ -635,6 +647,11 @@ export function openWeddingDetail(remote){
  document.querySelector("#dialog-context").textContent="Pareja · proyecto compartido";
  document.querySelector("#dialog-title").textContent="Boda";
  dialog.classList.add("wedding-dialog");
+ const refreshButton=dialog.querySelector("#wed-main-refresh");
+ if(refreshButton){
+  refreshButton.hidden=!remote;
+  refreshButton.onclick=()=>void refreshWedding();
+ }
  clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();

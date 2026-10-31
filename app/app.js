@@ -17,7 +17,7 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configu
 import { openProjectsDetail } from "./projects.js?v=0.37.4";
 import { openTravelsDetail } from "./travels.js?v=0.3.0";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
-import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.6";
+import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.7";
 import { hrefForArea, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.5";
 import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.5";
 import { openCareerDetail } from "./career.js?v=0.43.0";
@@ -12115,8 +12115,10 @@ function applyAreaRoute(){
     "travels-dialog","wealth-dialog","health-dialog","habits-dialog",
     "budget-dialog","parents-dialog","electricity-dialog","pantry-dialog",
     "objects-dialog","projects-dialog","events-workspace-dialog",
-    "event-detail-dialog","important-events-dialog","hobbies-dialog"
+    "event-detail-dialog","important-events-dialog","hobbies-dialog","wedding-dialog"
   );
+  const weddingRefresh=document.querySelector("#wed-main-refresh");
+  if(weddingRefresh)weddingRefresh.hidden=true;
   restoreAgendaPortal();
   routedTravelDetailId=route.areaId==="area-travels"?(route.detailId||null):null;
   routedHobbyId=route.areaId==="area-hobbies"?(route.detailId||null):null;

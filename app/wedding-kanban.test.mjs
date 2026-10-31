@@ -46,16 +46,17 @@ test("Moving a card writes through existing D1 PATCH with revision and full fiel
  assert.match(source,/sendPhoto\(item\.createdId,item\.file\)/);
 });
 
-test("Single refresh stays sticky across views, uses one circular arrow, and assets are versioned",()=>{
- assert.match(source,/function weddingToolbar\(/);
- assert.match(source,/id="wed-main-refresh"/);
- assert.match(source,/weddingToolbar\(\)\+\(state\.editing\?editor\(\):home\(\)\)/);
- assert.match(source,/\x27<div class="wed-dialog-controls">\x27\+viewTabs\(\)/);
- assert.doesNotMatch(source,/wed-inspo-refresh|#wed-refresh/);
- assert.match(css,/\.wedding-dialog \.wed-dialog-controls\{[\s\S]*?position:sticky;top:0/);
+test("Wedding refresh lives in the non-scrolling dialog header with correct asset versions",()=>{
+ const header=html.slice(html.indexOf('<dialog id="detail-dialog"'),html.indexOf('<div id="dialog-body"'));
+ assert.match(header,/id="wed-main-refresh"/);
+ assert.match(header,/id="copy-area-link"/);
+ assert.match(source,/async function refreshWedding\(/);
+ assert.match(source,/area\.innerHTML=viewTabs\(\)\+\(state\.editing\?editor\(\):home\(\)\)/);
+ assert.doesNotMatch(source,/wed-dialog-controls|function weddingToolbar\(/);
+ assert.match(css,/body\.route-area-active #detail-dialog\.wedding-dialog\[open\] > #wed-main-refresh:not/);
  assert.match(css,/\.wed-kanban\{[\s\S]*?overflow-x:auto/);
  assert.doesNotMatch(css,/overflow-y:auto/);
- assert.match(html,/wedding\.css\?v=0\.1\.7/);
- assert.match(html,/app\.js\?v=0\.44\.99/);
- assert.match(app,/wedding\.js\?v=0\.1\.6/);
+ assert.match(html,/wedding\.css\?v=0\.1\.8/);
+ assert.match(html,/app\.js\?v=0\.44\.100/);
+ assert.match(app,/wedding\.js\?v=0\.1\.7/);
 });

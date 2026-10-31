@@ -43,9 +43,7 @@ asignar, elegir a Miguel o Andrea, o escribir el nombre de otra persona.
 La Agenda y el Kanban leen el mismo campo y lo conservan al cambiar
 el estado. Las tarjetas se arrastran en escritorio desde el título,
 que actúa como asa, hacia otra columna; el selector de estado también
-funciona en móvil. Un control de refresco permanece pegado a la
-fila principal de pestañas de Boda incluso al editar un elemento:
-no se añade una segunda barra al contenido. No se crea una fuente
+funciona en móvil. El botón de refresco está fuera del área desplazable, en la cabecera fija de Boda, junto a «Compartir enlace» y «Cerrar»; se oculta al salir de Boda. Solo existe un control, también durante la edición. Las pestañas siguen dentro de la zona de contenido. Todas las tarjetas muestran siempre un responsable, incluido «Sin asignar», independientemente de su categoría. No se crea una fuente
 de datos adicional ni se publican nombres personales.
 
 ## Boda compartida: tablero Kanban
