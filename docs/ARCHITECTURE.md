@@ -16,6 +16,35 @@ Módulos especializados
 Fuentes propietarias y persistencia privada
 ```
 
+## Boda: exportación Excel por apartado
+
+Cada pestaña Kanban, Agenda, Proveedores, Invitados, Mesas, Presupuesto,
+Inspiración y Bodas.net muestra el control `Descargar Sheet`. Genera en
+el navegador un Excel OOXML `.xlsx` con los datos completos consultados
+desde la API privada autenticada, sin subirlos a un tercero ni alterar D1.
+Las consultas `?export=1&offset=...` paginan registros de tarjetas,
+invitados y mesas (500 por petición) sin utilizar filtros UI ni las vistas
+limitadas a 500/1000 filas. Ante un fallo o sobrepasar límites, se cancela
+la descarga para evitar copias parciales que parezcan válidas.
+
+La exportación de Invitados ofrece una hoja para cada una de las tres
+familias, otra de registros históricos sin clasificar y un resumen
+conjunto. Mesas incluye distribución y personas sin mesa; Presupuesto
+contiene resumen de importes y partidas. Se conservan identificadores,
+revisiones, responsables, observaciones y referencias originales.
+La vista incluye una hoja Información con fecha, alcance y límites.
+Los campos que empiezan con signos de fórmula se guardan como texto
+literal (sin ejecución). Antes de exportar datos alimentarios o de
+contacto se pide confirmación explícita.
+
+**Importante:** una descarga manual no es una copia de seguridad
+automática ni una sincronización con Google Sheets. Las fotografías no
+van embebidas en el `.xlsx`; solo se exportan sus enlaces privados,
+que requieren Cloudflare Access. Para recuperación íntegra siguen
+siendo necesarios respaldos independientes de D1 y de imágenes, con
+restauración probada. El archivo generado es de libre compartición
+solo por decisión de la persona que lo descarga.
+
 ## Boda: listas rápidas de invitados
 
 La vista Invitados presenta tres listas de nombres: pareja, padres de
