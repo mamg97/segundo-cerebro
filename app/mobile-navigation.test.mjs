@@ -87,7 +87,7 @@ test("mobile refresh shows one circular arrow rather than two opposing arrows",(
  assert.doesNotMatch(icon,/M4 17v-5h5|M20 7v5h-5/);
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
- assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.6/);
+ assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.7/);
  assert.match(index,/app\.js\?v=0\.44\.\d+/);
 });
 
@@ -140,4 +140,14 @@ test("Gym and shopping live in persistent mobile quick dock with valid deep link
  assert.match(app,/routedPantryTabId/);
  assert.match(app,/openPantryDetail\(routedPantryTabId==="compra"\?"shopping"/);
  assert.deepEqual(routeFromHash(hrefForPantryTab("compra")),{areaId:"area-pantry",detailId:"compra"});
+});
+
+test("Gym quick access uses a recognisable, symmetric dumbbell rather than crossed lines",()=>{
+  const nav=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
+  const path=nav.match(/dumbbell:'([^']+)'/)?.[1]||"";
+  assert.match(path,/m6\.5 6\.5 11 11/);
+  assert.match(path,/M18 22l4-4/);
+  assert.match(path,/M2 6l4-4/);
+  assert.match(path,/M3 10l7-7/);
+  assert.match(path,/M14 21l7-7/);
 });

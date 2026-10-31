@@ -18,7 +18,7 @@ const PATHS={
  chart:'<path d="M3 20h18M5 17l5-5 4 3 5-9"/>',
  plane:'<path d="M21 3 3 10l8 3 3 8 7-18ZM11 13 21 3"/>',
  pantry:'<path d="M3 5h18v15H3zM3 10h18M8 10v10M16 10v10"/>',
- dumbbell:'<path d="M6.5 6.5l11 11M4 9l5-5m-7 8 4-4m9 9 5-5m-3 9 4-4"/>',
+ dumbbell:'<path d="m6.5 6.5 11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M3 10l7-7M14 21l7-7"/>',
  shopping:'<circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2l3 13h13l2-9H5"/>',
  book:'<path d="M12 6c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v15"/>',
  down:'<path d="m6 9 6 6 6-6"/>',
