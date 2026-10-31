@@ -33,6 +33,17 @@ test("dashboard never loads third party iframe automatically; consent click is e
   assert.match(html,/id="trv-dash-budget"/);
   assert.match(html,/class="trv-timetable"/);
 });
+test("Google Maps is the only map provider and each stop is selectable without eager loading",()=>{
+ const html=tripDashboardMarkup(sample({groups:{
+  accommodation:[{text:"Sample lodging, City"}],days:[{date:"2027-06-12",text:"Sample visit"}],tasks:[],
+  points:[{date:"ALOJAMIENTO",name:"Lodging",query:"Sample lodging",order:0,lat:50,lon:20},
+   {date:"2027-06-12",name:"Stop One",query:"Stop One Test City",order:1,lat:50.1,lon:20.1}]
+ }}));
+ assert.match(html,/Google Maps/);
+ assert.match(html,/data-trv-map-stop="1"/);
+ assert.match(html,/Cargar Google Maps/);
+ assert.doesNotMatch(html,/OpenStreetMap|<iframe/);
+});
 test("budget progression represents provisioning, not paid invoices",()=>{
   assert.deepEqual(tripBudgetStatus({totalBudget:800,reserved:300,needed:500}),
     {total:800,reserved:300,needed:500,percent:38});
@@ -57,7 +68,7 @@ test("privacy and permissions: only private app embeds maps on demand",()=>{
   const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
   const travels=readFileSync(new URL("./travels.js",import.meta.url),"utf8");
   const privateWorker=readFileSync(new URL("../private-cloudflare/src/index.js",import.meta.url),"utf8");
-  assert.match(index,/travels\.css\?v=0\.4\.3/);
+  assert.match(index,/travels\.css\?v=0\.4\.4/);
   assert.match(app,/travels\.js\?v=0\.3\.\d+/);
   assert.match(travels,/tripDashboardMarkup/);
   assert.match(travels,/bindTripDashboard/);
