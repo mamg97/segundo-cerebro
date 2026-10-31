@@ -41,5 +41,5 @@ test("privacy badge is removed, authentication and mobile refresh remain",()=>{
  assert.match(js,/privateModeKind = "remote"/);
  assert.match(js,/credentials: "same-origin"/);
  assert.match(html,/id="refresh-app"/);
- assert.match(mobile,/id=\\"mobile-refresh-action\\"/);
+ assert.match(mobile,/id="mobile-refresh-action"/);
 });
