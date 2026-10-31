@@ -1561,7 +1561,8 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  touch-action:pan-x pan-y;
 }
 .wed-floor-plan[data-wed-floor-plan] {
- touch-action:none;
+ /* Mouse dragging is handled by pointer capture; fingers retain native 2D panning. */
+ touch-action:pan-x pan-y;
 }
 .wed-floor-plan[data-wed-floor-plan].is-panning {
  cursor:grabbing;
