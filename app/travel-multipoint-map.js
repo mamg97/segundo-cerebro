@@ -1,5 +1,5 @@
-// Shared travel-map renderer. Places, dates and coordinates only come from private Events.
-// Third-party map tiles are requested exclusively after user consent.
+// Shared travel-map renderer. Places and dates come exclusively from private Events.
+// Google Maps embeds are created only after explicit consent.
 const DAY=/^\d{4}-\d{2}-\d{2}$/;
 const bounded=(x,min,max)=>Math.max(min,Math.min(max,x));
 export function travelMapPoints(groups){
@@ -47,139 +47,90 @@ export function travelRouteUrls(points,day,lodgingAddress){
   }
   return legs;
 }
-function projection(point,z){
-  const lat=bounded(point.lat,-85,85)*Math.PI/180;
-  const scale=256*(2**z);
-  return {x:(point.lon+180)/360*scale,y:(1-Math.asinh(Math.tan(lat))/Math.PI)/2*scale};
+// Google Maps is the only cartographic provider. No API keys, geolocation or
+// remote loads until the person explicitly enables the embedded map.
+export function travelGoogleMapEmbedUrl(query){
+  if(typeof query!=="string"||!query.trim())return null;
+  return "https://maps.google.com/maps?q="+encodeURIComponent(query.trim().slice(0,240))+"&z=13&output=embed";
 }
-function fitMap(points,width,height,zoomOverride){
-  const fit=()=>{
-    for(let zoom=16;zoom>=10;zoom--){
-      const a=points.map(p=>projection(p,zoom));
-      const x=a.map(p=>p.x),y=a.map(p=>p.y);
-      if(Math.max(...x)-Math.min(...x)<=width-100&&Math.max(...y)-Math.min(...y)<=height-100)return zoom;
-    }
-    return 10;
-  };
-  const z=bounded(zoomOverride||fit(),10,18);
-  const a=points.map(p=>projection(p,z));
-  return {zoom:z,x:(Math.min(...a.map(p=>p.x))+Math.max(...a.map(p=>p.x)))/2,
-    y:(Math.min(...a.map(p=>p.y))+Math.max(...a.map(p=>p.y)))/2};
-}
-function el(tag,cls,text){
+function el(tag,cls,txt){
   const n=document.createElement(tag);
   if(cls)n.className=cls;
-  if(text!=null)n.textContent=String(text);
+  if(txt!=null)n.textContent=String(txt);
   return n;
 }
 export function bindTravelMap({root,groups,address,mapLink,dayLabel}){
-  const points=travelMapPoints(groups), days=travelMapDays(groups);
+  const points=travelMapPoints(groups),days=travelMapDays(groups);
   if(!points.length)return;
   const mapHolder=root.querySelector("[data-trv-map-canvas]");
   const openButton=root.querySelector("[data-trv-show-map]");
   const routeBox=root.querySelector("[data-trv-map-routes]");
-  const routeGroups=Array.from(root.querySelectorAll("[data-trv-map-list]"));
-  const tabs=Array.from(root.querySelectorAll("[data-trv-map-day]"));
-  let day=days[0]||"TODOS",consented=false,zoomOverride=null,panX=0,panY=0;
+  const routeGroups=[...root.querySelectorAll("[data-trv-map-list]")];
+  const tabs=[...root.querySelectorAll("[data-trv-map-day]")];
+  const stopButtons=[...root.querySelectorAll("[data-trv-map-stop]")];
+  let day=days[0]||"TODOS",consented=false,focused=null;
+
+  function visible(){
+    return travelMapVisible(points,day);
+  }
+  function currentPoint(){
+    const all=visible();
+    if(focused&&all.includes(focused))return focused;
+    return all.find(p=>p.date===day)||all.find(p=>p.date!=="ALOJAMIENTO")||all[0]||null;
+  }
   function updateUi(){
-    tabs.forEach(b=>{const yes=b.dataset.trvMapDay===day;b.setAttribute("aria-pressed",String(yes));b.classList.toggle("is-active",yes)});
+    tabs.forEach(button=>{
+      const active=button.dataset.trvMapDay===day;
+      button.setAttribute("aria-pressed",String(active));
+      button.classList.toggle("is-active",active);
+    });
     routeGroups.forEach(group=>{group.hidden=group.dataset.trvMapList!==day;});
-    if(routeBox){
-      routeBox.replaceChildren();
-      const urls=travelRouteUrls(points,day,address);
-      const routeLabel=travelRouteMode(points,day)==="driving"?"en coche":"a pie";
-      urls.forEach((url,i)=>{
-        const a=el("a","trv-map-route-link",urls.length===1?"Abrir recorrido "+routeLabel+" en Google Maps":"Recorrido "+routeLabel+" · tramo "+(i+1)+"/"+urls.length);
-        a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.referrerPolicy="no-referrer";
-        routeBox.append(a);
-      });
-    }
+    const current=currentPoint();
+    stopButtons.forEach(button=>{
+      const active=Number(button.dataset.trvMapStop)===points.indexOf(current);
+      button.setAttribute("aria-pressed",String(active));
+      button.classList.toggle("is-active",active);
+    });
+    if(!routeBox)return;
+    routeBox.replaceChildren();
+    const urls=travelRouteUrls(points,day,address);
+    const mode=travelRouteMode(points,day)==="driving"?"en coche":"a pie";
+    urls.forEach((url,i)=>{
+      const label=urls.length===1?"Abrir ruta "+mode+" en Google Maps":
+        "Abrir ruta "+mode+" · tramo "+(i+1)+"/"+urls.length;
+      const link=el("a","trv-map-route-link",label);
+      link.href=url;link.target="_blank";link.rel="noopener noreferrer";link.referrerPolicy="no-referrer";
+      routeBox.append(link);
+    });
   }
   function render(){
     if(!consented||!mapHolder)return;
-    const shown=travelMapVisible(points,day);
-    if(!shown.length)return;
-    const width=Math.max(320,Math.round(mapHolder.clientWidth||650));
-    const height=Math.max(285,Math.round(mapHolder.clientHeight||340));
-    const view=fitMap(shown,width,height,zoomOverride);
-    const size=2**view.zoom, x0=view.x-width/2+panX,y0=view.y-height/2+panY;
-    const frag=document.createDocumentFragment(),layer=el("div","trv-map-tiles");
-    const minX=Math.floor(x0/256),maxX=Math.ceil((x0+width)/256);
-    const minY=Math.floor(y0/256),maxY=Math.ceil((y0+height)/256);
-    for(let tileX=minX;tileX<=maxX;tileX++)for(let tileY=minY;tileY<=maxY;tileY++){
-      if(tileY<0||tileY>=size)continue;
-      const tile=el("img","trv-map-tile");
-      tile.alt="";tile.loading="lazy";tile.decoding="async";
-      tile.referrerPolicy="strict-origin-when-cross-origin";
-      tile.src="https://tile.openstreetmap.org/"+view.zoom+"/"+((tileX%size+size)%size)+"/"+tileY+".png";
-      tile.style.left=Math.round(tileX*256-x0)+"px";tile.style.top=Math.round(tileY*256-y0)+"px";
-      layer.append(tile);
-    }
-    frag.append(layer);
-    if(DAY.test(day)){
-      const actual=shown.filter(p=>p.date===day).sort((a,b)=>a.order-b.order);
-      if(actual.length>1){
-        const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-        svg.classList.add("trv-map-route-svg");svg.setAttribute("viewBox","0 0 "+width+" "+height);
-        svg.setAttribute("aria-hidden","true");
-        const poly=document.createElementNS("http://www.w3.org/2000/svg","polyline");
-        poly.setAttribute("points",actual.map(p=>{const q=projection(p,view.zoom);return Math.round(q.x-x0)+","+Math.round(q.y-y0)}).join(" "));
-        poly.setAttribute("fill","none");poly.setAttribute("stroke","#0a527b");poly.setAttribute("stroke-width","3.5");
-        poly.setAttribute("stroke-dasharray","6 5");poly.setAttribute("stroke-linecap","round");
-        svg.append(poly);frag.append(svg);
-      }
-    }
-    const listForDay=shown.filter(p=>p.date===day);
-    for(const point of shown){
-      const p=projection(point,view.zoom);
-      const pin=el("button","trv-map-marker"+(point.date==="ALOJAMIENTO"?" is-lodging":""),point.date==="ALOJAMIENTO"?"⌂":DAY.test(day)?String(listForDay.indexOf(point)+1):"•");
-      pin.type="button";pin.style.left=Math.round(p.x-x0)+"px";pin.style.top=Math.round(p.y-y0)+"px";
-      pin.title=point.name;pin.setAttribute("aria-label","Ver "+point.name);
-      pin.addEventListener("click",()=>{
-        const info=mapHolder.querySelector("[data-trv-map-info]");
-        if(!info)return;
-        info.replaceChildren(el("strong","",point.name));
-        const a=el("a","","Ver ubicación ↗");a.href=mapLink(point.query,"external");
-        a.target="_blank";a.rel="noopener noreferrer";a.referrerPolicy="no-referrer";
-        info.append(a);
-      });
-      frag.append(pin);
-    }
-    const controls=el("div","trv-map-zoom");
-    for(const [label,delta] of [["+",1],["−",-1]]){
-      const btn=el("button","",label);btn.type="button";btn.setAttribute("aria-label",delta>0?"Ampliar mapa":"Alejar mapa");
-      btn.addEventListener("click",()=>{zoomOverride=bounded(view.zoom+delta,10,18);panX=0;panY=0;render()});
-      controls.append(btn);
-    }
-    frag.append(controls);
-    const attribution=el("a","trv-map-attribution","© OpenStreetMap contributors");
-    attribution.href="https://www.openstreetmap.org/copyright";attribution.target="_blank";attribution.rel="noopener noreferrer";
-    frag.append(attribution);
-    const info=el("div","trv-map-info");
-    info.setAttribute("data-trv-map-info","");
-    info.append(el("span","","Pulsa un número para abrir su ubicación"));
-    frag.append(info);
-    mapHolder.replaceChildren(frag);
+    const point=currentPoint();
+    if(!point)return;
+    const src=travelGoogleMapEmbedUrl(point.query);
+    if(!src)return;
+    const frame=el("iframe","trv-google-map-frame");
+    frame.title="Google Maps · "+point.name;
+    frame.src=src;frame.loading="lazy";frame.referrerPolicy="no-referrer";
+    frame.allowFullscreen=true;
+    const info=el("div","trv-google-map-info");
+    info.append(el("span","","Google Maps · "+point.name));
+    const link=el("a","","Abrir lugar ↗");
+    link.href=mapLink(point.query,"external");
+    link.target="_blank";link.rel="noopener noreferrer";link.referrerPolicy="no-referrer";
+    info.append(link);
+    mapHolder.replaceChildren(frame,info);
+    mapHolder.classList.add("trv-map-loaded");
+    updateUi();
   }
   tabs.forEach(button=>button.addEventListener("click",()=>{
-    day=button.dataset.trvMapDay;zoomOverride=null;panX=0;panY=0;updateUi();render();
+    day=button.dataset.trvMapDay;focused=null;updateUi();render();
   }));
-  if(openButton)openButton.addEventListener("click",()=>{
-    if(!mapHolder)return;consented=true;mapHolder.classList.add("trv-map-loaded");render();
-  });
-  // Drag the viewport with a pointer: do not interfere with marker buttons or zoom controls.
-  let drag=null;
-  mapHolder?.addEventListener("pointerdown",e=>{
-    if(!consented||e.target.closest("button,a"))return;
-    drag={x:e.clientX,y:e.clientY,pointer:e.pointerId};
-    mapHolder.setPointerCapture?.(e.pointerId);
-  });
-  mapHolder?.addEventListener("pointerup",e=>{
-    if(!drag||drag.pointer!==e.pointerId)return;
-    const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
-    if(Math.hypot(dx,dy)>4){panX-=dx;panY-=dy;render();}
-    drag=null;mapHolder.releasePointerCapture?.(e.pointerId);
-  });
-  mapHolder?.addEventListener("pointercancel",()=>{drag=null});
+  stopButtons.forEach(button=>button.addEventListener("click",()=>{
+    const i=Number(button.dataset.trvMapStop);
+    if(!Number.isSafeInteger(i)||!points[i]||!visible().includes(points[i]))return;
+    focused=points[i];updateUi();render();
+  }));
+  openButton?.addEventListener("click",()=>{consented=true;render()});
   updateUi();
 }
