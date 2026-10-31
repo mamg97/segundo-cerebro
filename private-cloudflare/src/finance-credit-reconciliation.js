@@ -1,8 +1,7 @@
 // Financial reconciliation guard: private source data in, bounded derived checks out.
 // Do not persist account figures in code or log any amounts in public CI.
-const cents = (value) => Number.isFinite(Number(value))
-  ? Math.round(Number(value) * 100)
-  : null;
+const cents = (value) => value === null || value === undefined || value === ""
+  ? null : Number.isFinite(Number(value)) ? Math.round(Number(value) * 100) : null;
 
 const activeKind = (value) => /^eci[_-]/i.test(String(value || "").trim());
 const dateKey = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ""))
