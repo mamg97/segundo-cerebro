@@ -289,6 +289,11 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<h4 id="wed-floor-title">Plano de mesas</h4>'+
  '<small>Asientos numerados · Nombres completos debajo · Arrastra «Mover»</small></div>'+
  '<div class="wed-floor-actions">'+
+ '<div class="wed-floor-zoom" role="group" aria-label="Zoom del plano">'+
+ '<button type="button" data-wed-zoom-out aria-label="Reducir plano" title="Alejar">−</button>'+
+ '<button type="button" data-wed-zoom-reset aria-label="Restablecer escala al 100%" title="100%">100%</button>'+
+ '<button type="button" data-wed-zoom-in aria-label="Ampliar plano" title="Acercar">+</button>'+
+ '<button type="button" data-wed-zoom-fit title="Ajustar todas las mesas al ancho">Ajustar</button></div>'+
  (selected?'<button class="wed-floor-reset" type="button" data-wed-center-table="'+esc(selected.id)+'" title="Dejar la mesa seleccionada en el centro">Centrar mesa</button>':'')+
  '<button type="button" class="wed-floor-icon" data-wed-new-table title="Nueva mesa" aria-label="Nueva mesa">+</button>'+
  '<button type="button" class="wed-floor-icon" data-wed-floor-expand aria-expanded="'+(floorExpanded?'true':'false')+
