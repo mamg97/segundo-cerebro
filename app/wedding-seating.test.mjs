@@ -104,7 +104,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
  assert.match(html,/Libre/);
- assert.match(html,/role="group" style="position:relative;width:100%;height:100%;overflow:visible" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/class="wed-named-table" role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
  assert.match(html,/data-wed-place-existing="round1"/);
@@ -267,7 +267,7 @@ test("CSS grid is the fallback when the floor drag script cannot execute",()=>{
  assert.match(ui,/moveFloorPosition\(drag\.start,dx,dy,dimensions\(\)\)/);
 });
 
-test("six seats form a uniform circular crown around an editable round tabletop",()=>{
+test("six assigned guests render in six distinct uniformly spaced circular seats",()=>{
  const table={id:"pres-geometry",name:"Mesa sintética",capacity:6,shape:"presidencial"};
  const guests=Array.from({length:6},(_,i)=>({
   id:"synthetic-person-"+i,name:"Persona "+i,tableId:table.id,
@@ -276,27 +276,27 @@ test("six seats form a uniform circular crown around an editable round tabletop"
  const html=renderTables(guests,[table],null,esc,table.id);
  assert.match(html,/class="wed-named-table-center" data-wed-edit-table="pres-geometry"/);
  assert.match(html,/aria-label="Editar Mesa sintética"/);
+ assert.match(html,/class="wed-floor-seat-ring"/);
  assert.equal((html.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
  assert.equal((html.match(/class="wed-named-seat is-filled" data-wed-seat-detail="synthetic-person-/g)||[]).length,6);
- assert.equal((html.match(/--wed-seat-diameter:38px/g)||[]).length,6);
- const placements=[...html.matchAll(/class="wed-named-seat is-filled"[^>]+style="position:absolute;display:flex;left:([\d.]+)%;top:([\d.]+)%;transform:translate\(-50%,-50%\);z-index:4;--wed-seat-diameter:38px"/g)]
+ const slots=[...html.matchAll(/class="wed-named-seat is-filled"[^>]+style="position:absolute!important;left:([\d.]+)px!important;top:([\d.]+)px!important;transform:translate\(-50%,-50%\)!important;width:38px!important;height:38px!important/g)]
   .map(m=>({x:+m[1],y:+m[2]}));
- assert.equal(placements.length,6);
- const radii=placements.map(p=>Math.hypot(p.x-50,p.y-50));
- assert.ok(Math.max(...radii)-Math.min(...radii)<.02,"all seats have the same orbit radius");
- const angles=placements.map(p=>Math.atan2(p.y-50,p.x-50));
- const steps=angles.map((angle,i)=>{
-  const next=angles[(i+1)%angles.length];
-  return ((next-angle+Math.PI*4)%(Math.PI*2));
- });
- for(const delta of steps)assert.ok(Math.abs(delta-Math.PI/3)<.001,"uniform angle between chairs");
- assert.match(css,/\.wed-floor-table\{[\s\S]*?border:0;border-radius:0;background:transparent;box-shadow:none/);
- assert.match(css,/\.wed-floor-table \.wed-named-seat\{[\s\S]*?border-radius:50%/);
- assert.match(css,/\.wed-floor-table \.wed-named-table-center\{[\s\S]*?border-radius:50%/);
+ assert.equal(slots.length,6);
+ assert.equal(new Set(slots.map(p=>p.x+","+p.y)).size,6);
+ const distances=slots.map(p=>Math.hypot(p.x-134,p.y-134));
+ assert.ok(Math.max(...distances)-Math.min(...distances)<.02,"same distance from table");
+ const angles=slots.map(p=>Math.atan2(p.y-134,p.x-134));
+ for(let i=0;i<slots.length;i++){
+  const delta=(angles[(i+1)%slots.length]-angles[i]+Math.PI*4)%(Math.PI*2);
+  assert.ok(Math.abs(delta-Math.PI/3)<.001,"60 degrees between seats");
+ }
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-ring \{/);
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-ring > button\.wed-named-seat/);
+ assert.match(css,/pointer-events:none/);
+ assert.match(css,/pointer-events:auto/);
  assert.match(ui,/\[data-wed-seat-detail\],\[data-wed-seat-add\],\[data-wed-edit-table\]/);
- assert.match(ui,/state\.tableEditing=btn\.dataset\.wedEditTable/);
 });
-test("twelve round seats have no square cards and every empty position stays actionable",()=>{
+test("twelve empty places remain independent clickable circular buttons",()=>{
  const table={id:"table-twelve",name:"Mesa libre",capacity:12,shape:"redonda"};
  const html=renderTables([], [table],null,esc,table.id);
  assert.equal((html.match(/class="wed-named-seat is-empty"/g)||[]).length,12);
@@ -306,30 +306,28 @@ test("twelve round seats have no square cards and every empty position stays act
  assert.match(html,/data-wed-floor-grip/);
  assert.doesNotMatch(html,/wed-floor-occupancy/);
  assert.match(css,/\.wed-floor-table\.is-selected\{border:0;box-shadow:none\}/);
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-named-seat\.is-empty\{/);
 });
-test("seat circles shrink for legacy capacities above twelve without changing the seat count",()=>{
+test("capacity 13 through 30 retains all circles with smaller diameters",()=>{
  for(const [count,diameter] of [[13,30],[18,30],[19,24],[24,24],[25,20],[30,20]]){
   const html=renderTables([], [{id:"synthetic-"+count,name:"Mesa",capacity:count,shape:"redonda"}],null,esc);
   assert.equal((html.match(/data-wed-seat-index="\d+"/g)||[]).length,count);
-  assert.equal((html.match(new RegExp("--wed-seat-diameter:"+diameter+"px","g"))||[]).length,count);
+  assert.equal((html.match(new RegExp("width:"+diameter+"px!important","g"))||[]).length,count);
  }
 });
-
-test("six occupied seats have their own anchored circles, even with all names pending",()=>{
+test("pending guests keep all occupied seats visible without altering D1",()=>{
  const table={id:"p",name:"Presidencial ficticia",shape:"presidencial",capacity:6};
  const people=Array.from({length:6},(_,i)=>({
   id:"fake-"+i,name:"Invitado "+i,groupName:"pareja",rsvp:"pendiente",tableId:"p",seatIndex:i
  }));
+ const before=JSON.stringify(people);
  const html=renderTables(people,[table],null,esc,"p");
  const diagram=html.slice(html.indexOf('<div class="wed-named-table"'),html.indexOf("</article>"));
- assert.match(diagram,/style="position:relative;width:100%;height:100%;overflow:visible"/);
+ assert.match(diagram,/class="wed-floor-seat-ring"/);
  assert.equal((diagram.match(/class="wed-named-seat is-filled"/g)||[]).length,6);
- assert.equal((diagram.match(/style="position:absolute;display:flex;left:/g)||[]).length,6);
+ assert.equal((diagram.match(/left:[\d.]+px!important;top:[\d.]+px!important/g)||[]).length,6);
  assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,6);
- assert.equal((diagram.match(/--wed-seat-diameter:38px/g)||[]).length,6);
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-named-table button\.wed-named-seat\{[\s\S]*?position:absolute/);
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-named-table\{[\s\S]*?overflow:visible/);
+ assert.equal(JSON.stringify(people),before);
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-ring \{[\s\S]*?position:absolute/);
 });
 test("top-right plan controls provide one new-table action and a fullscreen exit",()=>{
  const t={id:"d",name:"Demo",capacity:12,shape:"redonda"};

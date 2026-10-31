@@ -928,3 +928,48 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  .wed-floor-icon{width:36px;height:36px;flex-basis:36px}
  .wed-floor-title small{font-size:10px}
 }
+
+/* Independent chair orbit: a full ring of assigned/empty seats, no card/square.
+   Every clickable circle is anchored to a 268px tabletop footprint, not to
+   a floating dialog or a percentage-sized nested button container. */
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring {
+ position:absolute;inset:0;width:268px;height:268px;
+ display:block;overflow:visible;pointer-events:none;
+ z-index:4;
+}
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat {
+ position:absolute;box-sizing:border-box;
+ display:flex;flex-direction:row;align-items:center;justify-content:center;
+ flex:none;min-width:0;min-height:0;max-width:none;
+ margin:0;padding:0;border-radius:50%;
+ pointer-events:auto;isolation:isolate;
+}
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat.is-filled {
+ background:var(--blue);border:1.5px solid var(--blue);color:#fff;
+}
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat.is-empty {
+ background:var(--surface);border:1.5px dashed var(--blue);color:var(--blue);
+}
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat:focus-visible,
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat:hover {
+ outline:2px solid var(--blue);outline-offset:2px;z-index:15;
+}
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat .wed-seat-avatar {
+ display:flex;align-items:center;justify-content:center;
+ width:100%;height:100%;border:0;background:transparent;border-radius:50%;
+ color:inherit;
+}
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat .wed-seat-name {
+ display:none;position:absolute;top:calc(100% + 5px);left:50%;
+ width:max-content;max-width:120px;transform:translateX(-50%);
+ padding:4px 6px;border:1px solid var(--line);border-radius:7px;
+ background:var(--paper);color:var(--ink);font-size:10px;
+ white-space:normal;pointer-events:none;
+}
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat:hover .wed-seat-name,
+.wed-floor-plan .wed-floor-table .wed-floor-seat-ring > button.wed-named-seat:focus-visible .wed-seat-name {
+ display:block;
+}
+/* Keep icon controls at the right edge of the floor header in both views. */
+.wed-floor-heading .wed-floor-actions{margin-left:auto;justify-content:flex-end;}
+.wed-floor-shell.is-expanded .wed-floor-actions{position:sticky;right:0;z-index:40;}
