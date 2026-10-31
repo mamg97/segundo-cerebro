@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {travelMapPoints,travelMapDays,travelMapVisible,travelRouteUrls,travelRouteMode} from "./travel-multipoint-map.js";
+import {travelMapPoints,travelMapDays,travelMapVisible,travelRouteUrls,travelRouteMode,travelGoogleMapEmbedUrl} from "./travel-multipoint-map.js";
 
 const make=(date,order,name)=>({date,order,name,query:name+" Test City",status:"PROPUESTA",lat:50+order/10000,lon:20});
 test("Travel map draws lodging and ordered stops, keeping alternatives separate",()=>{
@@ -35,4 +35,13 @@ test("Day routes switch to car for distant regional stops and retain walking dow
  assert.equal(travelRouteMode(rural,day),"driving");
  assert.equal(new URL(travelRouteUrls(rural,day,"Lodging Test City")[0]).searchParams.get("travelmode"),"driving");
  assert.equal(travelRouteMode(rural,"OPCIONAL"),"walking");
+});
+
+test("Google Maps embeds are constructed from private points only after click, without paid keys or OSM",()=>{
+ assert.equal(travelGoogleMapEmbedUrl(null),null);
+ assert.equal(travelGoogleMapEmbedUrl(" "),null);
+ const url=travelGoogleMapEmbedUrl("Sample Lake, Example City");
+ assert.equal(new URL(url).origin,"https://maps.google.com");
+ assert.equal(new URL(url).searchParams.get("q"),"Sample Lake, Example City");
+ assert.equal(new URL(url).searchParams.get("output"),"embed");
 });
