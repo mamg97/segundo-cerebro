@@ -104,7 +104,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
  assert.match(html,/Plaza 3 libre/);
- assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="5" role="group"[^>]*aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="6" role="group"[^>]*aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
  assert.match(html,/data-wed-place-existing="round1"/);
@@ -156,7 +156,7 @@ test("legacy tables without positions receive deterministic visual geometry with
  const html=renderTables(names,tables,null,esc,"table2");
  assert.equal((html.match(/data-wed-floor-table="/g)||[]).length,4);
  assert.match(html,/data-wed-floor-table="table2"/);
- assert.match(html,/height:360px/);
+ assert.match(html,/height:390px/);
  assert.equal(JSON.stringify({tables,names}),before);
 });
 
@@ -173,8 +173,8 @@ test("each physically free chair is a clickable index, while occupied indexes re
  assert.doesNotMatch(html,/data-wed-seat-index="1"/);
  assert.match(html,/Añadir personas a Mesa sintética · Plaza 3/);
  assert.match(html,/data-wed-seat-detail="synthetic-a"/);
- assert.match(html,/data-wed-floor-plan data-wed-table-count="1" style="display:grid;--wed-floor-columns:1;height:360px;min-height:360px"/);
- assert.match(html,/class="wed-floor-scroll"[^>]+height:360px;min-height:360px/);
+ assert.match(html,/data-wed-floor-plan data-wed-table-count="1" style="display:grid;--wed-floor-columns:1;--wed-floor-row-height:390px;height:390px;min-height:390px"/);
+ assert.match(html,/class="wed-floor-scroll"[^>]+height:390px;min-height:390px/);
  assert.match(ui,/openWeddingSeatPicker\(button,tableId,index\)/);
  assert.match(ui,/seatIndex:state\.seatingTargetSeatIndex/);
  assert.match(css,/\.wed-floor-scroll\{[\s\S]*?min-height:360px/);
@@ -210,7 +210,7 @@ test("one presidential table is centered despite invalid legacy drag coordinates
  assert.match(html,/data-wed-floor-grip/);
  assert.match(html,/Arrastrar Mesa ficticia/);
  assert.match(html,/data-wed-center-table="table-demo"/);
- assert.match(html,/display:grid;--wed-floor-columns:1;height:360px;min-height:360px/);
+ assert.match(html,/display:grid;--wed-floor-columns:1;--wed-floor-row-height:390px;height:390px;min-height:390px/);
  assert.equal(JSON.stringify(broken),untouched,"must not silently update persisted D1 coordinates");
 });
 test("compact floor accommodates four tables per row without oversized cards",()=>{
@@ -223,7 +223,7 @@ test("compact floor accommodates four tables per row without oversized cards",()
  assert.deepEqual(tableFloorPosition(tables[8],8,9),{x:12.5,y:100*2.5/3});
  const html=renderTables([],tables,null,esc,"demo-0");
  assert.equal((html.match(/data-wed-floor-table="/g)||[]).length,9);
- assert.match(html,/height:1080px/);
+ assert.match(html,/height:1170px/);
  assert.match(css,/width:268px;height:268px/);
  assert.match(css,/min-width:1180px/);
  assert.match(ui,/state\.seatingSelectedTableId=table\.id/);
@@ -325,7 +325,7 @@ test("pending guests keep all occupied seats visible without altering D1",()=>{
  assert.match(diagram,/class="wed-floor-seat-svg"/);
  assert.equal((diagram.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((diagram.match(/<circle cx="[\d.]+" cy="[\d.]+" r="18" fill="#59a7fc"/g)||[]).length,6);
- assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,18,"six chairs, six near-seat labels and six fallback legend buttons");
+ assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,12,"six chairs and six numbered full-name labels");
  assert.equal(JSON.stringify(people),before);
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg\{/);
 });
@@ -366,10 +366,10 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  const markup=renderTables(guests,[table],null,esc,table.id);
  const article=markup.slice(markup.indexOf('<article class="wed-floor-table'),markup.indexOf('</article>'));
  assert.match(article,/<div class="wed-svg-table-wrap"[^>]*>\s*<svg class="wed-floor-seat-svg"/);
- assert.match(article,/data-wed-table-diagram-version="5"/);
+ assert.match(article,/data-wed-table-diagram-version="6"/);
  assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
- assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,18,"six chairs, six lateral labels and six fallback names");
- assert.match(article,/<\/svg>[\s\S]*?class="wed-seat-inline-leaders"[\s\S]*?class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
+ assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,12,"six chairs and six local full-name labels");
+ assert.match(article,/<\/svg><div class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
  assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg/);
 });
@@ -457,23 +457,38 @@ test("free chair opens nearby filtered choices without closing fullscreen",()=>{
  assert.match(ui,/if\(expanded&&active\(\)\)setWeddingFloorExpanded\(true\)/);
  assert.match(css,/\.wed-seat-popover\{/);
 });
-test("near-seat names have numbered non-crossing leader rails",()=>{
- const table={id:"rail",name:"Mesa",capacity:12,shape:"redonda"};
- const guests=Array.from({length:12},(_,i)=>({
-  id:"g"+i,name:"Invitado de nombre compuesto "+i,seatIndex:i,
-  tableId:table.id,rsvp:"confirmado",groupName:"pareja"
- }));
- const previous=JSON.stringify(guests);
- const html=renderTables(guests,[table],null,esc,table.id);
- const article=html.slice(html.indexOf('<article class="wed-floor-table'),html.indexOf("</article>"));
- assert.match(article,/class="wed-seat-inline-leaders"/);
- assert.match(article,/class="wed-seat-inline-labels"/);
- assert.equal((article.match(/class="wed-seat-inline-label is-/g)||[]).length,12);
- assert.equal((article.match(/<path d="M/g)||[]).length,12);
- for(const name of guests.map(g=>g.name))assert.match(article,new RegExp(name));
- assert.match(css,/\.wed-seat-inline-label\.is-left\{left:0\}/);
- assert.match(css,/\.wed-seat-inline-label\.is-right\{left:456px\}/);
- assert.equal(JSON.stringify(guests),previous);
+test("full guest names stay inside each table with no crossing lines or floating rails",()=>{
+ const tables=[
+  {id:"rail-a",name:"Mesa Presidencial",capacity:6,shape:"presidencial"},
+  {id:"rail-b",name:"Mesa Familiar",capacity:12,shape:"redonda"}
+ ];
+ const guests=[...Array.from({length:6},(_,i)=>({
+  id:"a"+i,name:"Nombre presidencial compuesto "+i,seatIndex:i,
+  tableId:"rail-a",rsvp:"confirmado",groupName:"pareja"
+ })),...Array.from({length:12},(_,i)=>({
+  id:"b"+i,name:"Nombre familiar compuesto "+i,seatIndex:i,
+  tableId:"rail-b",rsvp:"confirmado",groupName:"pareja"
+ }))];
+ const before=JSON.stringify(guests);
+ const html=renderTables(guests,tables,null,esc,"rail-a");
+ const cards=[...html.matchAll(/<article class="wed-floor-table[\s\S]*?<\/article>/g)].map(m=>m[0]);
+ assert.equal(cards.length,2);
+ for(const [index,card] of cards.entries()){
+  const expected=index===0?6:12;
+  const ownPrefix=index===0?"a":"b";
+  const otherPrefix=index===0?"b":"a";
+  assert.equal((card.match(/class="wed-svg-chair is-filled"/g)||[]).length,expected);
+  assert.equal((card.match(/class="wed-floor-seat-legend-item"/g)||[]).length,expected);
+  assert.equal((card.match(/data-wed-seat-detail="/g)||[]).length,expected*2);
+  assert.match(card,new RegExp('data-wed-seat-detail="'+ownPrefix+'0"'));
+  assert.doesNotMatch(card,new RegExp('data-wed-seat-detail="'+otherPrefix+'0"'));
+  assert.doesNotMatch(card,/wed-seat-inline-leaders|wed-seat-inline-labels|<path d=/);
+  assert.match(card,/data-wed-table-diagram-version="6"/);
+ }
+ assert.match(css,/Wedding floor v7: deliberately NO connection lines/);
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-legend\{/);
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-svg-table-wrap > \.wed-floor-seat-svg\{/);
+ assert.equal(JSON.stringify(guests),before,"rendering may not mutate guest assignments");
 });
 test("zoom in, out, 100 percent and fit keep floor scroll and coordinates",()=>{
  const html=renderTables([], [{id:"z",name:"Zoom",shape:"redonda",capacity:12}],null,esc,"z");
@@ -481,7 +496,7 @@ test("zoom in, out, 100 percent and fit keep floor scroll and coordinates",()=>{
  assert.match(ui,/state\.seatingFloorZoom=Math\.max\(\.5,Math\.min\(1\.6/);
  assert.match(ui,/stage\.style\.zoom=String\(state\.seatingFloorZoom\)/);
  assert.match(ui,/stage\.dispatchEvent\(new Event\("wed-floor-recalibrate"\)\)/);
- assert.match(css,/min-width:max\(1180px,calc\(var\(--wed-floor-columns,1\)\*630px\)\)/);
+ assert.match(css,/min-width:max\(1180px,calc\(var\(--wed-floor-columns,1\)\*420px\)\)/);
  assert.match(css,/\.wed-floor-scroll\{[\s\S]*?overflow-x:auto;overflow-y:auto/);
 });
 
