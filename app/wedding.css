@@ -1527,3 +1527,11 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  }
  .wed-inspector-header h3{font-size:17px}
 }
+
+/* Rectangular and round table centers share keyboard and hover feedback. */
+.wed-seat-associated-svg .wed-svg-table:hover rect,
+.wed-seat-associated-svg .wed-svg-table:focus-visible rect{
+ stroke:var(--blue,#59a7fc);
+ stroke-width:4;
+ filter:drop-shadow(0 0 3px var(--blue,#59a7fc));
+}
