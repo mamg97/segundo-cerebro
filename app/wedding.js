@@ -299,6 +299,8 @@ async function downloadWeddingSheet(){
 function show(){
  if(!active())return;
  if(weddingFloorPortal)setWeddingFloorExpanded(false);
+ closeWeddingSeatPopover();
+ closeWeddingTableModal();
  if(state.view!=="mesas"||state.tableEditing)state.seatingFloorExpanded=false;
  const area=document.querySelector("#dialog-body");
  area.innerHTML='<div class="wed-view-actions">'+viewTabs()+
@@ -392,6 +394,48 @@ function tablePayload(form){
 // pointer listeners, keyboard handling and private D1-backed selected guests.
 // No fixed overlay is left trapped in the parent wedding dialog stacking context.
 let weddingFloorPortal=null;
+let weddingTableModal=null;
+let weddingSeatPopover=null;
+function closeWeddingSeatPopover(){
+ if(!weddingSeatPopover)return;
+ const {element,outside}=weddingSeatPopover;
+ document.removeEventListener("pointerdown",outside,true);
+ element.remove();
+ weddingSeatPopover=null;
+}
+function closeWeddingTableModal(){
+ if(!weddingTableModal)return;
+ const modal=weddingTableModal;
+ weddingTableModal=null;
+ if(modal.open)modal.close();
+ modal.remove();
+}
+function openNewWeddingTableModal(){
+ closeWeddingSeatPopover();
+ state.tableEditing="new";
+ state.seatingFloorExpanded=false;
+ show();
+ const form=document.querySelector("#wed-table-form");
+ if(!form)return;
+ const modal=document.createElement("dialog");
+ modal.className="wed-new-table-dialog";
+ modal.setAttribute("aria-label","Crear nueva mesa");
+ modal.appendChild(form);
+ document.body.appendChild(modal);
+ weddingTableModal=modal;
+ modal.addEventListener("cancel",event=>{
+  event.preventDefault();
+  state.tableEditing=null;show();
+ });
+ try{modal.showModal();}
+ catch(error){
+  // Form is still reachable in the page if the browser denies another modal.
+  weddingTableModal=null;modal.remove();
+  document.querySelector(".wed-seating-workspace")?.prepend(form);
+  form.scrollIntoView({block:"center",behavior:"instant"});
+ }
+ form.querySelector('input[name="name"]')?.focus({preventScroll:true});
+}
 function setWeddingFloorExpanded(expanded){
  const shell=weddingFloorPortal?.shell||document.querySelector("[data-wed-floor-shell]");
  if(!shell){state.seatingFloorExpanded=false;return;}
@@ -438,7 +482,12 @@ function setWeddingFloorExpanded(expanded){
  if(stage)requestAnimationFrame(()=>stage.dispatchEvent(new Event("wed-floor-recalibrate")));
 }
 if(typeof document!=="undefined")document.addEventListener("keydown",event=>{
- if(event.key!=="Escape"||!state.seatingFloorExpanded||!active())return;
+ if(event.key!=="Escape"||!active())return;
+ if(weddingSeatPopover){
+  event.preventDefault();event.stopImmediatePropagation();
+  closeWeddingSeatPopover();return;
+ }
+ if(!state.seatingFloorExpanded)return;
  event.preventDefault();event.stopImmediatePropagation();
  setWeddingFloorExpanded(false);
  document.querySelector("[data-wed-floor-expand]")?.focus({preventScroll:true});
@@ -729,9 +778,7 @@ function bindPlannerActions(area){
  area.querySelector("[data-wed-floor-expand]")?.addEventListener("click",()=>{
   setWeddingFloorExpanded(!state.seatingFloorExpanded);
  });
- area.querySelector("[data-wed-new-table]")?.addEventListener("click",()=>{
-  state.seatingFloorExpanded=false;state.tableEditing="new";show();
- });
+ area.querySelector("[data-wed-new-table]")?.addEventListener("click",()=>openNewWeddingTableModal());
  area.querySelectorAll("[data-wed-center-table]").forEach(btn=>btn.addEventListener("click",()=>{
   const table=state.tables.find(t=>t.id===btn.dataset.wedCenterTable);
   if(!table||state.busy)return;
@@ -775,10 +822,30 @@ function bindPlannerActions(area){
  });
  area.querySelector("#wed-table-form")?.addEventListener("submit",event=>{
   event.preventDefault();if(state.busy)return;
-  const existing=state.tables.find(x=>x.id===state.tableEditing),payload=tablePayload(event.currentTarget);
-  void plannerMutation(()=>existing?
-   getJson("/api/wedding/tables/"+encodeURIComponent(existing.id),"PATCH",{...payload,revision:existing.revision}):
-   getJson("/api/wedding/tables","POST",payload));
+  const form=event.currentTarget;
+  const existing=state.tables.find(x=>x.id===state.tableEditing),payload=tablePayload(form);
+  const submit=form.querySelector('[type="submit"]');
+  if(!payload.name||!Number.isInteger(payload.capacity)||payload.capacity<1||payload.capacity>30)return;
+  state.busy=true;
+  if(submit){submit.disabled=true;submit.textContent="Guardando mesa…";}
+  void (async()=>{
+   try{
+    const response=await (existing?
+     getJson("/api/wedding/tables/"+encodeURIComponent(existing.id),"PATCH",{...payload,revision:existing.revision}):
+     getJson("/api/wedding/tables","POST",payload));
+    if(response.item?.id)state.seatingSelectedTableId=response.item.id;
+    state.tableEditing=null;state.error="";state.plannerLoaded=false;
+    await loadPlanner();
+   }catch(error){
+    const notice=form.querySelector("[data-wed-table-error]")||document.createElement("p");
+    notice.dataset.wedTableError="true";notice.role="alert";
+    notice.textContent=errorMsg(error);
+    form.appendChild(notice);
+   }finally{
+    state.busy=false;
+    if(submit.isConnected){submit.disabled=false;submit.textContent="Guardar mesa";}
+   }
+  })();
  });
  area.querySelectorAll("[data-wed-delete-table]").forEach(btn=>btn.addEventListener("click",()=>{
   const table=state.tables.find(x=>x.id===btn.dataset.wedDeleteTable);
