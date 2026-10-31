@@ -115,6 +115,16 @@ function tripCaption(event, detail) {
 // Fondos urbanos reutilizables, sin datos personales ni identificadores privados.
 const CITY_COVERS = [
   {
+    // Generic regional artwork only: never a photograph claimed to be from a private trip.
+    match: /\basturias\b/i,
+    url: "https://commons.wikimedia.org/wiki/Special:FilePath/Enol.jpg?width=960",
+    source: "https://commons.wikimedia.org/wiki/File:Enol.jpg",
+    city: "Lago Enol · Asturias",
+    author: "Rodelar",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/"
+  },
+  {
     match: /\b(?:varsovia|warsaw|warszawa)\b/i,
     url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Warszawa_Rynek_Starego_Miasta_%28dron1%29.jpg/1280px-Warszawa_Rynek_Starego_Miasta_%28dron1%29.jpg",
     source: "https://commons.wikimedia.org/wiki/File:Warszawa_Rynek_Starego_Miasta_(dron1).jpg",
