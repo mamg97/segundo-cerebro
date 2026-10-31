@@ -104,7 +104,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
  assert.match(html,/Plaza 3 libre/);
- assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="6" role="group"[^>]*aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="7" role="group"[^>]*aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
  assert.match(html,/data-wed-place-existing="round1"/);
@@ -276,16 +276,16 @@ test("six assigned guests render in six distinct uniformly spaced circular seats
  const html=renderTables(guests,[table],null,esc,table.id);
  assert.match(html,/class="wed-svg-table" role="button" tabindex="0" data-wed-edit-table="pres-geometry"/);
  assert.match(html,/aria-label="Editar Mesa sintética"/);
- assert.match(html,/class="wed-floor-seat-svg"/);
+ assert.match(html,/class="wed-floor-seat-svg wed-seat-associated-svg"/);
  assert.equal((html.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((html.match(/class="wed-svg-chair is-filled" role="button" tabindex="0" data-wed-seat-detail="synthetic-person-/g)||[]).length,6);
  const slots=[...html.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="18" fill="#59a7fc"/g)]
   .map(m=>({x:+m[1],y:+m[2]}));
  assert.equal(slots.length,6);
  assert.equal(new Set(slots.map(p=>p.x+","+p.y)).size,6);
- const distances=slots.map(p=>Math.hypot(p.x-134,p.y-134));
+ const distances=slots.map(p=>Math.hypot(p.x-320,p.y-150));
  assert.ok(Math.max(...distances)-Math.min(...distances)<.02,"same distance from table");
- const angles=slots.map(p=>Math.atan2(p.y-134,p.x-134));
+ const angles=slots.map(p=>Math.atan2(p.y-150,p.x-320));
  for(let i=0;i<slots.length;i++){
   const delta=(angles[(i+1)%slots.length]-angles[i]+Math.PI*4)%(Math.PI*2);
   assert.ok(Math.abs(delta-Math.PI/3)<.001,"60 degrees between seats");
@@ -322,7 +322,7 @@ test("pending guests keep all occupied seats visible without altering D1",()=>{
  const before=JSON.stringify(people);
  const html=renderTables(people,[table],null,esc,"p");
  const diagram=html.slice(html.indexOf('<div class="wed-svg-table-wrap"'),html.indexOf("</article>"));
- assert.match(diagram,/class="wed-floor-seat-svg"/);
+ assert.match(diagram,/class="wed-floor-seat-svg wed-seat-associated-svg"/);
  assert.equal((diagram.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((diagram.match(/<circle cx="[\d.]+" cy="[\d.]+" r="18" fill="#59a7fc"/g)||[]).length,6);
  assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,12,"six chairs and six numbered full-name labels");
@@ -365,11 +365,11 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  const before=JSON.stringify(guests);
  const markup=renderTables(guests,[table],null,esc,table.id);
  const article=markup.slice(markup.indexOf('<article class="wed-floor-table'),markup.indexOf('</article>'));
- assert.match(article,/<div class="wed-svg-table-wrap"[^>]*>\s*<svg class="wed-floor-seat-svg"/);
- assert.match(article,/data-wed-table-diagram-version="6"/);
+ assert.match(article,/<div class="wed-svg-table-wrap"[^>]*>\s*<svg class="wed-floor-seat-svg wed-seat-associated-svg"/);
+ assert.match(article,/data-wed-table-diagram-version="7"/);
  assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,12,"six chairs and six local full-name labels");
- assert.match(article,/<\/svg><div class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
+ assert.match(article,/<\/svg><\/div>\s*$/);
  assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg/);
 });
@@ -396,15 +396,15 @@ test("full names stay readable in a numbered non-overlapping table legend",()=>{
  const before=JSON.stringify(people);
  const markup=renderTables(people,[table],null,esc,table.id);
  const floor=markup.slice(markup.indexOf('<article class="wed-floor-table'),markup.indexOf("</article>"));
- assert.match(floor,/class="wed-floor-seat-legend"/);
- assert.match(floor,/>María del Carmen Hernández López</);
- assert.match(floor,/>José Antonio Fernández Domínguez</);
+ assert.match(floor,/class="wed-seat-attached-labels"/);
+ assert.match(floor,/title>María del Carmen Hernández López<\/title>/);
+ assert.match(floor,/title>José Antonio Fernández Domínguez<\/title>/);
  assert.match(floor,/aria-label="Plaza 5: María del Carmen Hernández López"/);
  assert.match(floor,/aria-label="Plaza 2: José Antonio Fernández Domínguez"/);
  assert.match(floor,/data-wed-seat-detail="alpha"/);
  assert.match(floor,/data-wed-seat-detail="beta"/);
- assert.match(css,/\.wed-floor-seat-legend\{[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
- assert.match(css,/\.wed-floor-seat-full-name\{[\s\S]*?overflow-wrap:anywhere/);
+ assert.match(css,/\.wed-seat-associated-svg \.wed-seat-attached-text\{/);
+ assert.match(css,/\.wed-seat-associated-svg \.wed-seat-association-line\{/);
  assert.equal(JSON.stringify(people),before,"no D1 assignment changes");
 });
 test("search only offers free guests and uses typed name matching",()=>{
@@ -457,18 +457,21 @@ test("free chair opens nearby filtered choices without closing fullscreen",()=>{
  assert.match(ui,/if\(expanded&&active\(\)\)setWeddingFloorExpanded\(true\)/);
  assert.match(css,/\.wed-seat-popover\{/);
 });
-test("full guest names stay inside each table with no crossing lines or floating rails",()=>{
+test("each full name is attached to its own numbered chair with a non-crossing line",()=>{
  const tables=[
   {id:"rail-a",name:"Mesa Presidencial",capacity:6,shape:"presidencial"},
   {id:"rail-b",name:"Mesa Familiar",capacity:12,shape:"redonda"}
  ];
- const guests=[...Array.from({length:6},(_,i)=>({
-  id:"a"+i,name:"Nombre presidencial compuesto "+i,seatIndex:i,
-  tableId:"rail-a",rsvp:"confirmado",groupName:"pareja"
- })),...Array.from({length:12},(_,i)=>({
-  id:"b"+i,name:"Nombre familiar compuesto "+i,seatIndex:i,
-  tableId:"rail-b",rsvp:"confirmado",groupName:"pareja"
- }))];
+ const guests=[
+  ...Array.from({length:6},(_,i)=>({
+   id:"a"+i,name:"Nombre presidencial compuesto "+i,seatIndex:i,
+   tableId:"rail-a",rsvp:"confirmado",groupName:"pareja"
+  })),
+  ...Array.from({length:12},(_,i)=>({
+   id:"b"+i,name:"Nombre familiar compuesto "+i,seatIndex:i,
+   tableId:"rail-b",rsvp:"confirmado",groupName:"pareja"
+  }))
+ ];
  const before=JSON.stringify(guests);
  const html=renderTables(guests,tables,null,esc,"rail-a");
  const cards=[...html.matchAll(/<article class="wed-floor-table[\s\S]*?<\/article>/g)].map(m=>m[0]);
@@ -478,18 +481,40 @@ test("full guest names stay inside each table with no crossing lines or floating
   const ownPrefix=index===0?"a":"b";
   const otherPrefix=index===0?"b":"a";
   assert.equal((card.match(/class="wed-svg-chair is-filled"/g)||[]).length,expected);
-  assert.equal((card.match(/class="wed-floor-seat-legend-item"/g)||[]).length,expected);
+  assert.equal((card.match(/class="wed-seat-attached-name"/g)||[]).length,expected);
+  assert.equal((card.match(/data-wed-line-seat="/g)||[]).length,expected);
   assert.equal((card.match(/data-wed-seat-detail="/g)||[]).length,expected*2);
   assert.match(card,new RegExp('data-wed-seat-detail="'+ownPrefix+'0"'));
   assert.doesNotMatch(card,new RegExp('data-wed-seat-detail="'+otherPrefix+'0"'));
-  assert.doesNotMatch(card,/wed-seat-inline-leaders|wed-seat-inline-labels|<path d=/);
-  assert.match(card,/data-wed-table-diagram-version="6"/);
+  assert.match(card,/viewBox="0 0 640 [\d]+"/);
+  assert.match(card,/data-wed-table-diagram-version="7"/);
+  assert.doesNotMatch(card,/wed-floor-seat-legend|wed-seat-inline-leaders|wed-seat-inline-labels/);
+  // All label boxes stay inside the 640px-wide SVG on their own side.
+  const boxes=[...card.matchAll(/<rect x="(8|468)" y="([\d.]+)" width="164" height="(\d+)"/g)];
+  assert.equal(boxes.length,expected);
+  for(const box of boxes){
+   const x=+box[1],y=+box[2],h=+box[3];
+   assert.ok(x>=0&&x+164<=640);
+   assert.ok(y>=0&&h>0);
+  }
+  for(const x of [8,468]){
+   const rows=boxes.filter(m=>+m[1]===x).map(m=>({y:+m[2],h:+m[3]}));
+   for(let i=1;i<rows.length;i++)assert.ok(rows[i].y>=rows[i-1].y+rows[i-1].h+4,"labels do not overlap");
+  }
  }
- assert.match(css,/Wedding floor v7: deliberately NO connection lines/);
- assert.doesNotMatch(css,/\.wed-seat-inline-leaders|\.wed-seat-inline-labels|\.wed-seat-inline-label\{/);
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-legend\{/);
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-svg-table-wrap > \.wed-floor-seat-svg\{/);
- assert.equal(JSON.stringify(guests),before,"rendering may not mutate guest assignments");
+ assert.match(css,/min-width:max\(1180px,calc\(var\(--wed-floor-columns,1\)\*660px\)\)/);
+ assert.match(css,/\.wed-seat-associated-svg \.wed-seat-association-line\{/);
+ assert.equal(JSON.stringify(guests),before,"rendering must not mutate D1 assignments");
+});
+test("long names wrap entirely and labels expand within their own table",()=>{
+ const table={id:"long",name:"Mesa",capacity:12,shape:"redonda"};
+ const full="María de los Ángeles Fernández de la Vega Mayordomo Gragera";
+ const people=[{id:"p1",name:full,seatIndex:2,tableId:"long",rsvp:"confirmado",groupName:"pareja"}];
+ const markup=renderTables(people,[table],null,esc);
+ assert.match(markup,/María de los Ángeles Fernández de la Vega Mayordomo Gragera/);
+ assert.match(markup,/class="wed-seat-attached-name"/);
+ assert.match(markup,/class="wed-seat-association-line"/);
+ assert.equal((markup.match(/class="wed-seat-attached-text"/g)||[]).length>=3,true);
 });
 test("zoom in, out, 100 percent and fit keep floor scroll and coordinates",()=>{
  const html=renderTables([], [{id:"z",name:"Zoom",shape:"redonda",capacity:12}],null,esc,"z");
