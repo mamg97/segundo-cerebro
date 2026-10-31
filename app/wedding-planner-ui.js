@@ -165,14 +165,17 @@ function namedSeatDiagram(table,occupants,esc){
  // The perimeter is long enough for twelve 38px chairs. Scale smoothly for
  // the existing API's optional 13–30 seat capacities, avoiding overlap.
  const diameter=total<=12?38:total<=18?30:total<=24?24:20;
- return '<div class="wed-named-table" role="group" aria-label="'+esc(table.name)+': '+byName.length+' de '+total+' plazas ocupadas">'+
+ return '<div class="wed-named-table" role="group" style="position:relative;width:100%;height:100%;overflow:visible" aria-label="'+esc(table.name)+': '+byName.length+' de '+total+' plazas ocupadas">'+
  '<button type="button" class="wed-named-table-center" data-wed-edit-table="'+esc(table.id)+
  '" aria-label="Editar '+esc(table.name)+'" title="Editar '+esc(table.name)+'">'+
  '<strong>'+esc(table.name)+'</strong><small>'+byName.length+'/'+total+' plazas</small></button>'+
  seats.map((seat,index)=>{
   const guest=occupantsBySeat[index];
   const left=(50+(seat.x-50)*0.88).toFixed(2),top=(50+(seat.y-50)*0.88).toFixed(2);
-  const position='left:'+left+'%;top:'+top+'%;--wed-seat-diameter:'+diameter+'px';
+  // Inline positioning makes every seat independent of generic button rules.
+  // The named-table itself is its containing block, even in nested dialogs.
+  const position='position:absolute;display:flex;left:'+left+'%;top:'+top+
+   '%;transform:translate(-50%,-50%);z-index:4;--wed-seat-diameter:'+diameter+'px';
   if(!guest)return '<button type="button" class="wed-named-seat is-empty" data-wed-seat-add="'+esc(table.id)+'" '+
    'data-wed-seat-index="'+index+'" style="'+position+'" title="Plaza '+(index+1)+' libre · Añadir invitado" '+
    'aria-label="Añadir invitado en plaza '+(index+1)+' de '+esc(table.name)+'">'+
@@ -241,7 +244,7 @@ export function tableFloorPosition(table,index,count){
   typeof y==="number"&&Number.isFinite(y)&&x>2&&x<98&&y>2&&y<98;
  return valid?{x,y}:{x:fallbackX,y:fallbackY};
 }
-export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSeatIndex=null){
+export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSeatIndex=null,floorExpanded=false){
  const summary=seatingSummary(guests,tables);
  const options=suggestWeddingSeating(guests,tables);
  const selected=tables.find(t=>t.id===selectedId)||tables[0]||null;
@@ -252,15 +255,24 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  return '<section class="wed-planner-panel wed-seating-workspace">'+
  '<div class="wed-planner-heading"><div><h3>Organizador de mesas</h3>'+
  '<small>'+summary.seated+'/'+summary.confirmed+' confirmados ubicados · '+summary.tables+' mesas creadas</small></div>'+
- '<button type="button" class="wed-primary" data-wed-new-table>+ Nueva mesa</button></div>'+
+ '</div>'+
  '<div class="wed-seating-summary" aria-label="Resumen de distribución">'+
  metric("Confirmados",summary.confirmed)+metric("Sin mesa",summary.unseated.length)+
  metric("Plazas creadas",summary.seats)+metric("Plazas libres",summary.free)+
  metric("Pendientes",summary.pending)+metric("Opcionales",summary.optional)+'</div>'+
  (editing?tableForm(editing==="new"?null:tables.find(t=>t.id===editing),esc):"")+
- '<section class="wed-seating-block wed-floor-section"><div class="wed-seating-block-title"><h4>Plano de mesas</h4>'+
- '<small>Pulsa una silla libre para asignarla · Arrastra desde «Mover»</small>'+
- (selected?'<button class="wed-floor-reset" type="button" data-wed-center-table="'+esc(selected.id)+'" title="Dejar la mesa seleccionada en el centro">Centrar mesa</button>':'')+'</div>'+
+ '<section class="wed-seating-block wed-floor-section">'+
+ '<div class="wed-floor-shell'+(floorExpanded?' is-expanded':'')+'" data-wed-floor-shell>'+
+ '<div class="wed-seating-block-title wed-floor-heading"><div class="wed-floor-title">'+
+ '<h4 id="wed-floor-title">Plano de mesas</h4>'+
+ '<small>Pulsa una plaza o una persona para editar · Arrastra desde «Mover»</small></div>'+
+ '<div class="wed-floor-actions">'+
+ (selected?'<button class="wed-floor-reset" type="button" data-wed-center-table="'+esc(selected.id)+'" title="Dejar la mesa seleccionada en el centro">Centrar mesa</button>':'')+
+ '<button type="button" class="wed-floor-icon" data-wed-new-table title="Nueva mesa" aria-label="Nueva mesa">+</button>'+
+ '<button type="button" class="wed-floor-icon" data-wed-floor-expand aria-expanded="'+(floorExpanded?'true':'false')+
+ '" title="'+(floorExpanded?'Cerrar pantalla completa':'Ver plano a pantalla completa')+
+ '" aria-label="'+(floorExpanded?'Cerrar pantalla completa':'Ampliar plano a pantalla completa')+
+ '">'+(floorExpanded?'×':'⛶')+'</button></div></div>'+
  (tables.length?'<div class="wed-floor-scroll" tabindex="0" style="display:block;height:'+height+'px;min-height:'+height+'px" aria-label="Plano de mesas; desplázate horizontalmente si es necesario">'+
  '<div class="wed-floor-plan" data-wed-floor-plan data-wed-table-count="'+tables.length+'" style="display:grid;--wed-floor-columns:'+columns+';height:'+height+'px;min-height:'+height+'px">'+
  tables.map((t,index)=>{
@@ -273,8 +285,9 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
    namedSeatDiagram(t,occupants,esc)+
    '</article>';
  }).join("")+'</div></div>'+
- '<p class="wed-planner-foot">Arrastra la mesa desde «Mover». La posición se guarda entre sesiones; pulsa una silla libre para asignar un invitado.</p>':
- '<p class="wed-planner-empty">Todavía no hay mesas. Pulsa «Nueva mesa» para crear la primera.</p>')+
+ '<p class="wed-planner-foot">La distribución y los asientos se guardan de forma privada. Pulsa una silla libre para asignar un invitado.</p>':
+ '<p class="wed-planner-empty">Todavía no hay mesas. Pulsa + para crear la primera.</p>')+
+ '</div>'+
  (selected?'<article class="wed-seating-card wed-seating-details" data-wed-selected-details="'+esc(selected.id)+'">'+
  '<div class="wed-seating-head"><strong>'+esc(selected.name)+'</strong>'+
  '<span>'+esc(pick(SHAPES,selected.shape))+' · '+selectedGuests.length+'/'+selected.capacity+'</span>'+

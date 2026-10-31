@@ -18,7 +18,7 @@ import { openObjectsDetail, objectsAreaFromState, renderHomeObjectsCard, configu
 import { openProjectsDetail } from "./projects.js?v=0.37.4";
 import { openTravelsDetail } from "./travels.js?v=0.3.3";
 import { openHobbiesDetail } from "./hobbies.js?v=0.1.6";
-import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.19";
+import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.20";
 import { hrefForArea, hrefForWedding, hrefForHealthTab, hrefForPantryTab, routeFromHash } from "./area-routes.mjs?v=0.1.6";
 import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.8";
 import { openCareerDetail } from "./career.js?v=0.43.0";
