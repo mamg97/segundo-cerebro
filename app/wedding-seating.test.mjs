@@ -369,7 +369,7 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  assert.match(article,/data-wed-table-diagram-version="5"/);
  assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,18,"six chairs, six lateral labels and six fallback names");
- assert.match(article,/<\/svg><div class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
+ assert.match(article,/<\/svg>[\s\S]*?class="wed-seat-inline-leaders"[\s\S]*?class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
  assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg/);
 });
