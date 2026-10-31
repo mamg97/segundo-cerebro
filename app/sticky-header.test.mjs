@@ -5,25 +5,38 @@ import { readFileSync } from "node:fs";
 const app = readFileSync(new URL("./app.js",import.meta.url),"utf8");
 const styles = readFileSync(new URL("./styles.css",import.meta.url),"utf8");
 const html = readFileSync(new URL("./index.html",import.meta.url),"utf8");
+const desktop = readFileSync(new URL("./desktop-unified-header.css",import.meta.url),"utf8");
 
-test("global navigation and action toolbar use stacked sticky positioning", () => {
-  assert.match(styles,/\.topbar\s*\{\s*position: -webkit-sticky;\s*position: sticky;/);
-  assert.match(styles,/top: var\(--sc-fixed-navigation-height, 55px\)/);
-  assert.match(styles,/:root\s*\{\s*--sc-fixed-navigation-height:\s*55px;\s*\}/);
-  assert.match(styles,/@media screen and \(max-width: 760px\)\s*\{\s*:root\s*\{\s*--sc-fixed-navigation-height:\s*83px;\s*\}/);
-  assert.match(styles,/#refresh-app\.refresh-app\s*\{\s*position: static !important;/);
+test("desktop has one sticky header and no stacked action toolbar",()=>{
+ const aside=html.slice(html.indexOf('<aside class="sidebar"'),html.indexOf("</aside>"));
+ const main=html.slice(html.indexOf('<main id="main-content"'),html.indexOf('id="overview"'));
+ assert.match(aside,/<header class="topbar">/);
+ assert.doesNotMatch(main,/<header class="topbar">/);
+ assert.match(desktop,/@media \(min-width: 761px\)/);
+ assert.match(desktop,/\.app-shell > \.sidebar > \.topbar \{[\s\S]*?position: static/);
+ assert.match(desktop,/grid-template-columns: auto minmax\(0, 1fr\) auto/);
+ assert.match(desktop,/--sc-desktop-unified-header-height: 64px/);
+ assert.match(styles,/\.sidebar\s*\{[\s\S]*?position:\s*sticky/);
 });
-
-test("refresh remains next to Demo and Theme and mobile loses independent floating button", () => {
-  const tag = html.slice(html.indexOf('<header class="topbar">'),html.indexOf('</header>',html.indexOf('<header class="topbar">')));
-  assert.ok(tag.indexOf('id="refresh-app"') < tag.indexOf('id="demo-mode-toggle"'));
-  assert.ok(tag.indexOf('id="demo-mode-toggle"') < tag.indexOf('id="theme-toggle"'));
-  assert.match(styles,/\.topbar \.top-actions\s*\{\s*display:\s*flex;\s*flex:\s*0 0 auto;/);
-  assert.doesNotMatch(app,/installStickyTopbar|style\.setProperty\("--sc-fixed-navigation-height"/);
+test("refresh, orb, greeting, Demo and Theme keep the existing ids and events",()=>{
+ const header=html.slice(html.indexOf('<header class="topbar">'),html.indexOf("</header>",html.indexOf('<header class="topbar">')));
+ const ids=["system-orb","greeting","current-date","desktop-area-refresh","refresh-app","demo-mode-toggle","theme-toggle"];
+ for(const id of ids)assert.match(header,new RegExp('id="'+id+'"'));
+ assert.ok(header.indexOf('id="desktop-area-refresh"')<header.indexOf('id="demo-mode-toggle"'));
+ assert.match(desktop,/#system-orb \{/);
+ assert.match(app,/toggleTheme/);
+ assert.match(app,/toggleDemoMode/);
+ assert.doesNotMatch(app,/installStickyTopbar|style\.setProperty\("--sc-fixed-navigation-height"/);
 });
-
-test("recipe photos display with contain and remain above labels",()=>{
-  assert.match(styles,/\.home-weekly-menu-table-cell \.home-menu-recipe-thumb img\s*\{[^}]*object-fit:\s*contain;/);
-  assert.match(styles,/\.recipe-photo img\s*\{[^}]*object-fit:\s*contain;/);
-  assert.match(styles,/\.home-weekly-menu-table-cell \.home-weekly-menu-recipe-link\s*\{[^}]*flex-direction:\s*column;/);
+test("mobile retains its dedicated toolbar and normal scroll offsets",()=>{
+ const mobile=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
+ assert.match(mobile,/@media\(max-width:760px\)/);
+ assert.match(mobile,/\.mobile-app-header\{/);
+ assert.match(mobile,/body \.main-content>\.topbar\{display:none\}/);
+ assert.doesNotMatch(desktop,/@media \(max-width:760px\)/);
+});
+test("recipe photos stay contained above their labels",()=>{
+ assert.match(styles,/\.home-weekly-menu-table-cell \.home-menu-recipe-thumb img\s*\{[^}]*object-fit:\s*contain;/);
+ assert.match(styles,/\.recipe-photo img\s*\{[^}]*object-fit:\s*contain;/);
+ assert.match(styles,/\.home-weekly-menu-table-cell \.home-weekly-menu-recipe-link\s*\{[^}]*flex-direction:\s*column;/);
 });
