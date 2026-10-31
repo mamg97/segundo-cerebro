@@ -176,20 +176,27 @@
 }
 
 /* Wedding Kanban: status columns from the existing private store; no extra data cache. */
-.wed-fixed-actions{
- position:-webkit-sticky;position:sticky;top:0;z-index:30;
- display:flex;justify-content:flex-end;align-items:center;
- min-height:48px;margin:0 0 9px;padding:5px 72px 5px 8px;
- border-bottom:1px solid var(--line);background:var(--paper);
+.wedding-dialog #dialog-body{min-width:0}
+.wedding-dialog .wed-dialog-controls{
+ position:-webkit-sticky;position:sticky;top:0;z-index:35;
+ display:flex;align-items:center;gap:10px;
+ width:100%;box-sizing:border-box;min-width:0;
+ margin:0 0 16px;padding:4px 0;
+ border-bottom:1px solid var(--line);background:var(--surface);
 }
-.wed-fixed-actions button{
- display:inline-flex;align-items:center;justify-content:center;gap:8px;
- border:1px solid var(--line);border-radius:10px;min-height:38px;
- padding:7px 13px;background:var(--surface);color:var(--ink);font:inherit;
- font-size:12px;font-weight:800;cursor:pointer;
+.wedding-dialog .wed-dialog-controls .wed-view-tabs{
+ display:flex;align-items:center;flex:1 1 auto;flex-wrap:nowrap;
+ min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;
+ scrollbar-width:thin;white-space:nowrap;margin:0;border-bottom:0;
 }
-.wed-fixed-actions button span:first-child{font-size:22px;line-height:1;color:var(--blue)}
-.wed-fixed-actions button:hover,.wed-fixed-actions button:focus-visible{border-color:var(--blue)}
+.wedding-dialog .wed-main-refresh{
+ flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;
+ min-height:38px;padding:7px 12px;border:1px solid var(--line);
+ border-radius:10px;background:var(--paper);color:var(--ink);
+ font:inherit;font-size:12px;font-weight:800;cursor:pointer;
+}
+.wedding-dialog .wed-main-refresh:hover,.wedding-dialog .wed-main-refresh:focus-visible{border-color:var(--blue)}
+.wedding-dialog .wed-main-refresh span:first-child{font-size:21px;line-height:1;color:var(--blue)}
 .wed-kanban-workspace{max-width:none}
 .wed-kanban-workspace .wed-toolbar{margin-bottom:8px}
 .wed-kanban-hint{font-size:11px;color:var(--ink-soft);margin:8px 0 12px}
@@ -224,9 +231,19 @@
 .wed-kanban-column-cards{display:grid;align-content:start;gap:9px;padding-top:9px;min-height:55px}
 .wed-kanban-card{
  display:grid;gap:9px;border:1px solid var(--line);border-radius:10px;
- background:var(--paper);padding:10px;min-width:0;cursor:grab;
+ background:var(--paper);padding:10px;min-width:0;cursor:default;
 }
-.wed-kanban-card:active{cursor:grabbing}
+.wed-kanban-card.wed-dragging{opacity:.5;border-style:dashed;border-color:var(--blue)}
+.wed-kanban-drag-handle{
+ display:block;padding:3px 2px;margin:-3px -2px;
+ cursor:grab;user-select:none;-webkit-user-select:none;
+ touch-action:pan-y;color:var(--ink);
+}
+.wed-kanban-drag-handle:active{cursor:grabbing}
+.wed-kanban-drag-handle:hover,.wed-kanban-drag-handle:focus-visible{
+ color:var(--blue);text-decoration:underline;text-decoration-thickness:1px;
+ outline-offset:3px;
+}
 .wed-kanban-card:focus-within{border-color:var(--blue)}
 .wed-kanban-card-main{display:flex;align-items:flex-start;gap:9px;min-width:0}
 .wed-kanban-thumb{
@@ -255,8 +272,9 @@
 .wed-kanban-empty{font-size:11px;color:var(--ink-soft);padding:12px 5px;line-height:1.45}
 .wed-kanban-column.wed-drop-target{outline:2px dashed var(--blue);outline-offset:-3px;background:var(--blue-soft)}
 @media(max-width:650px){
- .wed-fixed-actions{min-height:41px;padding-right:53px}
- .wed-fixed-actions button{min-height:34px;padding:5px 10px}
+ .wedding-dialog .wed-dialog-controls{gap:5px;padding:3px 0}
+ .wedding-dialog .wed-main-refresh{min-height:36px;min-width:38px;justify-content:center;padding:6px 8px}
+ .wedding-dialog .wed-main-refresh .wed-refresh-label{display:none}
  .wed-kanban{grid-auto-columns:minmax(230px,82vw);gap:9px}
  .wed-kanban-workspace .wed-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(115px,140px);align-items:end}
  .wed-sort{min-width:0}
@@ -330,4 +348,12 @@
  .wed-guest-form{padding:12px}
  .wed-task-row{grid-template-columns:28px minmax(0,1fr) auto;padding:8px}
  .wed-task-check{width:27px;height:27px}
+}
+
+/* Optional Kanban/task assignment: compact badges and accessible conditional input. */
+.wed-form-grid [hidden]{display:none!important}
+.wed-kanban-meta .wed-assignee,
+.wed-item-meta .wed-assignee{
+ color:var(--blue);background:var(--blue-soft);border-color:var(--blue);
+ font-size:10px;font-weight:800;overflow-wrap:anywhere;
 }

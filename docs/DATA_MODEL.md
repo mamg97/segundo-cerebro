@@ -14,6 +14,17 @@ Sin ampliar columnas canónicas: `PsicoExperimentos.notas` admite `psychohistory
 - Sensibilidad explícita en todas las entidades.
 - Campos pequeños y útiles; ampliar solo ante casos reales.
 
+## Boda: responsable de tareas y tarjetas
+
+La entidad privada `wedding_items` añade mediante
+`0014_wedding_assignee.sql` dos columnas opcionales:
+`assignee_kind` (vacío = sin asignar, `miguel`, `andrea`, `otro`) y
+`assignee_name` (solo si `assignee_kind=otro`, máximo 80 caracteres).
+La migración no rellena responsables históricos ni los deduce del título.
+Crear, editar y cambiar estado conservan ambos campos; las escrituras
+mantienen `revision` para detectar cambios simultáneos.
+Los nombres de terceras personas se guardan exclusivamente en D1 privado.
+
 ## BODA — colaboración privada
 
 `wedding_items` sigue siendo la entidad de ideas, tareas, proveedores y

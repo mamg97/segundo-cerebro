@@ -47,13 +47,15 @@ test("Moving a card writes through existing D1 PATCH with revision and full fiel
 });
 
 test("Single refresh stays sticky across views, uses one circular arrow, and assets are versioned",()=>{
- assert.match(source,/function refreshBar\(/);
+ assert.match(source,/function weddingToolbar\(/);
  assert.match(source,/id="wed-main-refresh"/);
+ assert.match(source,/weddingToolbar\(\)\+\(state\.editing\?editor\(\):home\(\)\)/);
+ assert.match(source,/\x27<div class="wed-dialog-controls">\x27\+viewTabs\(\)/);
  assert.doesNotMatch(source,/wed-inspo-refresh|#wed-refresh/);
- assert.match(css,/\.wed-fixed-actions\{[\s\S]*?position:sticky;top:0/);
+ assert.match(css,/\.wedding-dialog \.wed-dialog-controls\{[\s\S]*?position:sticky;top:0/);
  assert.match(css,/\.wed-kanban\{[\s\S]*?overflow-x:auto/);
  assert.doesNotMatch(css,/overflow-y:auto/);
- assert.match(html,/wedding\.css\?v=0\.1\.6/);
- assert.match(html,/app\.js\?v=0\.44\.98/);
- assert.match(app,/wedding\.js\?v=0\.1\.5/);
+ assert.match(html,/wedding\.css\?v=0\.1\.7/);
+ assert.match(html,/app\.js\?v=0\.44\.99/);
+ assert.match(app,/wedding\.js\?v=0\.1\.6/);
 });

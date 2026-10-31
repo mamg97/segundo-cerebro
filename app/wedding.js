@@ -1,5 +1,6 @@
 // Private wedding collaboration view. No embedded personal records.
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory} from "./wedding-planner-ui.js?v=0.1.0";
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory} from "./wedding-planner-ui.js?v=0.1.1";
+import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 export const WEDDING_TYPES=[
  ["all","Todo","✦"],["finca","Fincas","🏛"],["catering","Catering","🍽"],
  ["decoracion","Decoración e ideas","✿"],["fotografia","Foto y vídeo","📷"],
@@ -31,7 +32,7 @@ export function weddingTotals(items){
 function cards(){
  const search=state.search.toLocaleLowerCase("es");
  const list=state.items.filter(i=>(state.filter==="all"||i.category===state.filter)&&
-   (!search||[i.title,i.description,i.provider,i.category].join(" ").toLocaleLowerCase("es").includes(search)));
+   (!search||[i.title,i.description,i.provider,i.category,weddingAssigneeLabel(i)].join(" ").toLocaleLowerCase("es").includes(search)));
  if(!list.length)return '<div class="wed-zero"><strong>Aún no hay elementos en esta vista</strong><p>Puedes añadir una idea, una finca o un presupuesto para empezar.</p></div>';
  return '<div class="wed-grid">'+list.map(i=>{
   const cost=i.contractedCents!=null?'<span>Contratado · '+eur(i.contractedCents)+'</span>':i.estimateCents!=null?'<span>Estimado · '+eur(i.estimateCents)+'</span>':'';
@@ -41,7 +42,7 @@ function cards(){
     '<div class="wed-item-content"><div class="wed-item-kicker"><span>'+esc(typeName(i.category))+'</span><span class="wed-status" data-status="'+esc(i.status)+'">'+esc(statusName(i.status))+'</span></div>'+
     '<h4>'+esc(i.title)+'</h4>'+(i.provider?'<p class="wed-provider">'+esc(i.provider)+'</p>':'')+
     (i.description?'<p class="wed-description">'+esc(i.description)+'</p>':'')+
-    '<div class="wed-item-meta">'+cost+(i.paidCents?'<span>Pagado · '+eur(i.paidCents)+'</span>':'')+(i.dueDate?'<span>Fecha · '+esc(i.dueDate)+'</span>':'')+'</div>'+
+    '<div class="wed-item-meta">'+cost+(i.paidCents?'<span>Pagado · '+eur(i.paidCents)+'</span>':'')+(i.dueDate?'<span>Fecha · '+esc(i.dueDate)+'</span>':'')+(i.assigneeKind||i.category==="tareas"?'<span class="wed-assignee">Responsable · '+esc(weddingAssigneeLabel(i))+'</span>':'')+'</div>'+
     '<div class="wed-item-actions">'+safeLink+'<button type="button" data-wed-edit="'+esc(i.id)+'">Editar</button></div>'+
     '<small class="wed-author">Actualizado por '+esc(i.updatedBy||"Participante")+'</small></div></article>';
  }).join("")+'</div>';
@@ -63,7 +64,7 @@ export function inspirationItems(items,filter="all",search=""){
   if(item.status==="descartado"||!INSPIRATION_CATEGORIES.includes(item.category))return false;
   if(!item.photoUrl&&!item.url&&item.status!=="idea")return false;
   if(filter!=="all"&&item.category!==filter)return false;
-  if(normalized&&![item.title,item.description,item.provider,typeName(item.category)].join(" ").toLocaleLowerCase("es").includes(normalized))return false;
+  if(normalized&&![item.title,item.description,item.provider,typeName(item.category),weddingAssigneeLabel(item)].join(" ").toLocaleLowerCase("es").includes(normalized))return false;
   return true;
  });
 }
@@ -102,7 +103,7 @@ function inspirationCards(){
 }
 function inspirationHome(){
  const count=inspirationItems(state.items).length;
- return '<div class="wed-workspace wed-inspiration">'+viewTabs()+
+ return '<div class="wed-workspace wed-inspiration">'+
  '<div class="wed-inspo-head"><div><h3>Inspiración</h3><small>'+count+' ideas guardadas · fotos y enlaces</small></div>'+
  '<button class="wed-primary" type="button" id="wed-add-pin">+ Guardar idea</button></div>'+
  '<div class="wed-inspo-guide"><strong>De Pinterest a vuestro tablero:</strong> Copiar enlace del pin → Guardar idea → Pegar el enlace. Podéis adjuntar una foto de referencia desde el móvil.</div>'+
@@ -122,7 +123,7 @@ function inspirationHome(){
 export function filteredWeddingItems(items,category="all",search=""){
  const term=String(search||"").trim().toLocaleLowerCase("es");
  return items.filter(item=>(category==="all"||item.category===category)&&
-  (!term||[item.title,item.description,item.provider,typeName(item.category)].join(" ").toLocaleLowerCase("es").includes(term)));
+  (!term||[item.title,item.description,item.provider,typeName(item.category),weddingAssigneeLabel(item)].join(" ").toLocaleLowerCase("es").includes(term)));
 }
 function sortWeddingItems(items,order){
  const result=[...items];
@@ -134,11 +135,15 @@ function kanbanCard(item){
  const amount=item.contractedCents!=null?eur(item.contractedCents):item.estimateCents!=null?eur(item.estimateCents):"";
  const url=item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer" class="wed-kanban-link" aria-label="Abrir enlace de '+esc(item.title)+'">↗ Enlace</a>':"";
  const picture=item.photoUrl?'<img loading="lazy" alt="" class="wed-kanban-thumb" src="'+esc(item.photoUrl)+'?v='+encodeURIComponent(item.updatedAt||"1")+'">':"";
- return '<article class="wed-kanban-card" draggable="true" data-wed-drag="'+esc(item.id)+'">'+
-  '<div class="wed-kanban-card-main">'+picture+'<div class="wed-kanban-card-title"><small>'+esc(typeName(item.category))+'</small><strong>'+esc(item.title)+'</strong>'+
+ return '<article class="wed-kanban-card" data-wed-card="'+esc(item.id)+'">'+
+  '<div class="wed-kanban-card-main">'+picture+'<div class="wed-kanban-card-title"><small>'+esc(typeName(item.category))+'</small>'+
+  '<strong class="wed-kanban-drag-handle" draggable="true" data-wed-drag="'+esc(item.id)+'" tabindex="0" '+
+  'aria-label="Arrastrar '+esc(item.title)+' a otra columna, o usar las flechas para cambiar de estado" '+
+  'title="Arrastra el título para mover la tarjeta">⠿ '+esc(item.title)+'</strong>'+
   (item.provider?'<span>'+esc(item.provider)+'</span>':"")+'</div></div>'+
   '<div class="wed-kanban-meta">'+(amount?'<span>'+amount+'</span>':"")+
-  (item.dueDate?'<span>📅 '+esc(item.dueDate)+'</span>':"")+'</div>'+
+  (item.dueDate?'<span>📅 '+esc(item.dueDate)+'</span>':"")+
+  (item.assigneeKind||item.category==="tareas"?'<span class="wed-assignee">👤 '+esc(weddingAssigneeLabel(item))+'</span>':"")+'</div>'+
   '<div class="wed-kanban-actions">'+url+'<button type="button" data-wed-edit="'+esc(item.id)+'">Editar</button>'+
   '<label class="wed-kanban-move">Mover a <select data-wed-move="'+esc(item.id)+'" aria-label="Mover '+esc(item.title)+' a otra columna">'+
    STATUSES.map(([key,name])=>'<option value="'+key+'" '+(item.status===key?"selected":"")+'>'+esc(name)+'</option>').join("")+
@@ -157,7 +162,7 @@ function kanbanBoard(){
 }
 function kanbanHome(){
  const n=weddingTotals(state.items);
- return '<div class="wed-workspace wed-kanban-workspace">'+viewTabs()+
+ return '<div class="wed-workspace wed-kanban-workspace">'+
   '<div class="wed-toolbar"><div><h3>Organización de la boda</h3><small>'+n.total+' elementos activos · compartido entre participantes autorizados</small></div>'+
   '<button type="button" class="wed-primary" id="wed-new">+ Añadir tarjeta</button></div>'+
   '<div class="wed-controls"><label class="wed-search"><span>Buscar</span><input type="search" id="wed-search" value="'+esc(state.search)+'" placeholder="Proveedores, tareas, ideas…"></label>'+
@@ -169,24 +174,25 @@ function kanbanHome(){
   '<p class="wed-kanban-hint">Arrastra tarjetas entre columnas en ordenador o usa «Mover a» desde el móvil. Los cambios se guardan en el espacio compartido.</p>'+
   '<div id="wed-results">'+kanbanBoard()+'</div></div>';
 }
-function refreshBar(){
- return '<div class="wed-fixed-actions"><button type="button" id="wed-main-refresh" aria-label="Actualizar Boda" title="Actualizar Boda">'+
-  '<span aria-hidden="true">↻</span><span>Actualizar</span></button></div>';
+function weddingToolbar(){
+ return '<div class="wed-dialog-controls">'+viewTabs()+
+ '<button type="button" id="wed-main-refresh" aria-label="Actualizar Boda" title="Actualizar datos de Boda" class="wed-main-refresh">'+
+ '<span aria-hidden="true">↻</span><span class="wed-refresh-label">Actualizar</span></button></div>';
 }
 function home(){
  if(state.view==="inspiracion")return inspirationHome();
  if(state.view==="kanban")return kanbanHome();
- if(state.view==="agenda")return '<div class="wed-workspace">'+viewTabs()+renderAgenda(state.items,esc)+'</div>';
- if(state.view==="proveedores")return '<div class="wed-workspace">'+viewTabs()+renderProviders(state.items,esc)+'</div>';
- if(state.view==="bodasnet")return '<div class="wed-workspace">'+viewTabs()+renderBodasDirectory(esc)+'</div>';
+ if(state.view==="agenda")return '<div class="wed-workspace">'+renderAgenda(state.items,esc)+'</div>';
+ if(state.view==="proveedores")return '<div class="wed-workspace">'+renderProviders(state.items,esc)+'</div>';
+ if(state.view==="bodasnet")return '<div class="wed-workspace">'+renderBodasDirectory(esc)+'</div>';
  if(state.view==="invitados"||state.view==="mesas"){
   const contents=!state.plannerLoaded?'<div class="wed-loading">Cargando información privada…</div>':
    state.view==="invitados"?renderGuests(state.guests,state.tables,state.guestEditing,esc):
    renderTables(state.guests,state.tables,state.tableEditing,esc);
-  return '<div class="wed-workspace">'+viewTabs()+contents+'</div>';
+  return '<div class="wed-workspace">'+contents+'</div>';
  }
  const n=weddingTotals(state.items);
- return '<div class="wed-workspace">'+viewTabs()+
+ return '<div class="wed-workspace">'+
    '<div class="wed-stats"><div><small>Elementos activos</small><strong>'+n.total+'</strong></div>'+
    '<div><small>Presupuesto planificado</small><strong>'+eur(n.planned)+'</strong></div>'+
    '<div><small>Contratado</small><strong>'+eur(n.committed)+'</strong></div>'+
@@ -211,6 +217,12 @@ function editor(){
   '<form id="wed-form"><div class="wed-form-grid">'+
   '<label>Categoría<select name="category" required>'+WEDDING_TYPES.filter(x=>x[0]!=="all").map(x=>'<option value="'+x[0]+'" '+((original?.category||state.draftCategory||"ideas")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
   '<label>Estado<select name="status" required>'+STATUSES.map(x=>'<option value="'+x[0]+'" '+((original?.status||state.draftStatus||"idea")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
+  '<label>Responsable<select name="assigneeKind" id="wed-assignee-kind">'+
+   WEDDING_ASSIGNEES.map(([key,label])=>'<option value="'+key+'" '+((original?.assigneeKind||"")===key?"selected":"")+'>'+esc(label)+'</option>').join("")+
+  '</select></label>'+
+  '<label id="wed-assignee-other-wrap" '+(original?.assigneeKind==="otro"?"":"hidden")+'>'+
+   'Nombre de la otra persona<input type="text" name="assigneeName" id="wed-assignee-name" maxlength="80" '+
+   (original?.assigneeKind==="otro"?"required":"")+' value="'+esc(original?.assigneeName||"")+'" placeholder="Escribe su nombre"></label>'+
   '<label class="wide">Nombre o idea *<input type="text" name="title" maxlength="180" required value="'+esc(original?.title||"")+'" placeholder="Ej. Visitar finca…"></label>'+
   '<label class="wide">Descripción y notas<textarea name="description" rows="4" maxlength="4000" placeholder="Detalles, pros y contras, preguntas pendientes…">'+esc(original?.description||"")+'</textarea></label>'+
   '<label>Proveedor / contacto<input name="provider" maxlength="180" value="'+esc(original?.provider||"")+'" placeholder="Nombre del proveedor"></label>'+
@@ -227,7 +239,7 @@ function editor(){
 function show(){
  if(!active())return;
  const area=document.querySelector("#dialog-body");
- area.innerHTML=refreshBar()+(state.editing?editor():home());
+ area.innerHTML=weddingToolbar()+(state.editing?editor():home());
  if(state.error){const notice=document.createElement("div");notice.className="wed-alert";notice.role="alert";notice.textContent=state.error;area.prepend(notice);}
  bind(area);
 }
@@ -427,7 +439,7 @@ async function optimizedPhoto(file){
  }finally{image.close();}
 }
 function quickItemPayload(fields,title){
- return {category:fields.get("category")||"ideas",status:"idea",title,
+ return {category:fields.get("category")||"ideas",status:"idea",title,assigneeKind:"",assigneeName:"",
   description:String(fields.get("description")||"").trim(),url:String(fields.get("url")||"").trim(),
   provider:"",estimateCents:null,contractedCents:null,paidCents:0,dueDate:""};
 }
@@ -495,6 +507,7 @@ function startIdea(){
 function bind(area){
  if(area.querySelector("#wed-mobile-form"))bindMobileForm(area);
  area.querySelectorAll("[data-wed-view]").forEach(button=>button.addEventListener("click",()=>{
+  if(state.editing&&!window.confirm("¿Cambiar de sección y descartar los cambios no guardados?"))return;
   clearQuickFiles();state.view=button.dataset.wedView;state.editing=null;state.error="";show();
   if(["invitados","mesas"].includes(state.view)&&!state.plannerLoaded)void loadPlanner();
  }));
@@ -519,10 +532,19 @@ function bind(area){
  bindCards(area);
  bindEmptyInspiration(area);
  bindPlannerActions(area);
+ const assigneeChoice=area.querySelector("#wed-assignee-kind");
+ const otherWrap=area.querySelector("#wed-assignee-other-wrap");
+ const otherInput=area.querySelector("#wed-assignee-name");
+ assigneeChoice?.addEventListener("change",()=>{
+  const isOther=assigneeChoice.value==="otro";
+  if(otherWrap)otherWrap.hidden=!isOther;
+  if(otherInput){otherInput.required=isOther;if(!isOther)otherInput.value="";}
+ });
  area.querySelector("#wed-form")?.addEventListener("submit",event=>{
   event.preventDefault();
   const form=event.currentTarget,data=new FormData(form),original=state.items.find(i=>i.id===state.editing),photo=form.elements.photo?.files?.[0];
   const payload={category:data.get("category"),title:data.get("title"),description:data.get("description"),status:data.get("status"),provider:data.get("provider"),url:data.get("url"),dueDate:data.get("dueDate"),
+   assigneeKind:data.get("assigneeKind")||"",assigneeName:data.get("assigneeKind")==="otro"?String(data.get("assigneeName")||"").trim():"",
    estimateCents:cents(data,"estimateCents"),contractedCents:cents(data,"contractedCents"),paidCents:cents(data,"paidCents")??0};
   if(["estimateCents","contractedCents","paidCents"].some(k=>Number.isNaN(payload[k]))){state.error="Importes no válidos.";show();return;}
   if(payload.contractedCents!==null&&payload.paidCents>payload.contractedCents){state.error="Lo pagado no puede superar lo contratado.";show();return;}
@@ -553,27 +575,60 @@ async function moveCard(id,status){
   category:item.category,status,title:item.title,description:item.description||"",
   provider:item.provider||"",url:item.url||"",dueDate:item.dueDate||"",
   estimateCents:item.estimateCents??null,contractedCents:item.contractedCents??null,
-  paidCents:item.paidCents??0,revision:item.revision
+  paidCents:item.paidCents??0,assigneeKind:item.assigneeKind||"",assigneeName:item.assigneeName||"",revision:item.revision
  }));
 }
 function bindCards(root){
  root.querySelectorAll("[data-wed-add-status]").forEach(btn=>btn.addEventListener("click",()=>{state.draftStatus=btn.dataset.wedAddStatus;state.draftCategory="ideas";state.editing="new";state.ideaMode=false;state.error="";show();}));
  root.querySelectorAll("[data-wed-edit]").forEach(btn=>btn.addEventListener("click",()=>{state.editing=btn.dataset.wedEdit;state.ideaMode=false;state.error="";show();}));
  root.querySelectorAll("[data-wed-move]").forEach(select=>select.addEventListener("change",()=>void moveCard(select.dataset.wedMove,select.value)));
- root.querySelectorAll("[data-wed-drag]").forEach(card=>card.addEventListener("dragstart",event=>{
-  if(state.busy){event.preventDefault();return;}
-  event.dataTransfer.effectAllowed="move";
-  event.dataTransfer.setData("text/plain",card.dataset.wedDrag);
- }));
- root.querySelectorAll("[data-wed-column]").forEach(column=>{
-  column.addEventListener("dragover",event=>{if(state.busy)return;event.preventDefault();event.dataTransfer.dropEffect="move";});
-  column.addEventListener("drop",event=>{
-   event.preventDefault();column.classList.remove("wed-drop-target");
-   void moveCard(event.dataTransfer.getData("text/plain"),column.dataset.wedColumn);
+ const board=root.querySelector("#wed-kanban-board");
+ const clearDrag=()=>{
+  board?.querySelectorAll(".wed-drop-target,.wed-dragging").forEach(el=>el.classList.remove("wed-drop-target","wed-dragging"));
+ };
+ root.querySelectorAll("[data-wed-drag]").forEach(handle=>{
+  handle.addEventListener("dragstart",event=>{
+   if(state.busy||!event.dataTransfer){event.preventDefault();return;}
+   clearDrag();
+   const card=handle.closest("[data-wed-card]");
+   if(card)card.classList.add("wed-dragging");
+   event.dataTransfer.effectAllowed="move";
+   event.dataTransfer.setData("text/plain",handle.dataset.wedDrag);
   });
-  column.addEventListener("dragenter",event=>{if(event.dataTransfer.types.includes("text/plain"))column.classList.add("wed-drop-target");});
-  column.addEventListener("dragleave",event=>{if(!column.contains(event.relatedTarget))column.classList.remove("wed-drop-target");});
+  handle.addEventListener("dragend",clearDrag);
+  handle.addEventListener("keydown",event=>{
+   if(state.busy||!["ArrowLeft","ArrowRight"].includes(event.key))return;
+   const item=state.items.find(x=>x.id===handle.dataset.wedDrag);
+   const index=STATUSES.findIndex(x=>x[0]===item?.status);
+   const next=index+(event.key==="ArrowRight"?1:-1);
+   if(index<0||next<0||next>=STATUSES.length)return;
+   event.preventDefault();
+   void moveCard(item.id,STATUSES[next][0]);
+  });
  });
+ root.querySelectorAll("[data-wed-column]").forEach(column=>{
+  column.addEventListener("dragover",event=>{
+   if(state.busy||!event.dataTransfer?.types.includes("text/plain"))return;
+   event.preventDefault();
+   event.dataTransfer.dropEffect="move";
+   board?.querySelectorAll(".wed-drop-target").forEach(el=>{if(el!==column)el.classList.remove("wed-drop-target");});
+   column.classList.add("wed-drop-target");
+   if(board){
+    const rect=board.getBoundingClientRect(),edge=45;
+    if(event.clientX>rect.right-edge)board.scrollLeft+=18;
+    else if(event.clientX<rect.left+edge)board.scrollLeft-=18;
+   }
+  });
+  column.addEventListener("drop",event=>{
+   if(state.busy||!event.dataTransfer)return;
+   event.preventDefault();
+   const id=event.dataTransfer.getData("text/plain");
+   clearDrag();
+   if(!state.items.some(item=>item.id===id))return;
+   void moveCard(id,column.dataset.wedColumn);
+  });
+ });
+
 }
 export function openWeddingDetail(remote){
  const dialog=document.querySelector("#detail-dialog"),body=document.querySelector("#dialog-body");if(!dialog||!body)return;
