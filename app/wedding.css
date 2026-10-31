@@ -331,3 +331,11 @@
  .wed-task-row{grid-template-columns:28px minmax(0,1fr) auto;padding:8px}
  .wed-task-check{width:27px;height:27px}
 }
+
+/* Optional Kanban/task assignment: compact badges and accessible conditional input. */
+.wed-form-grid [hidden]{display:none!important}
+.wed-kanban-meta .wed-assignee,
+.wed-item-meta .wed-assignee{
+ color:var(--blue);background:var(--blue-soft);border-color:var(--blue);
+ font-size:10px;font-weight:800;overflow-wrap:anywhere;
+}
