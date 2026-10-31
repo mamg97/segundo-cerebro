@@ -33,7 +33,7 @@ export const MOBILE_DEFAULT_SHORTCUTS=Object.freeze([
 ]);
 const SHORTCUT_STORAGE_KEY="segun.mobile.shortcuts.v1";
 // El catálogo deriva exclusivamente de rutas disponibles, nunca de contenido privado.
-const HEALTH=Object.freeze([["Resumen","overview"],["Médicos","medical"],["Visión","vision"],["Gimnasio","gym"],["Nutrición","nutrition"],["Recetas","recipes"],["Menú","menu"]].map(([label,tab])=>({label,href:hrefForHealthTab(tab)})));
+const HEALTH=Object.freeze([["Resumen","overview"],["Médicos","medical"],["Visión","vision"],["Gimnasio","gym"],["Nutrición","nutrition"],["Recetas","recipes"],["Menú semanal","menu"]].map(([label,tab])=>({label,href:hrefForHealthTab(tab)})));
 const OTHER={
  "area-health":HEALTH,
  "area-partner":[{label:"Boda",href:hrefForWedding()}],
@@ -96,7 +96,7 @@ function storeMobileShortcuts(next){
 function shortcutMarkup(href,index){
   const item=SHORTCUT_LINKS.get(href);
   if(!item)return "";
-  return '<a href="'+safe(href)+'" data-mobile-shortcut="'+safe(href)+'" data-mobile-slot="'+index+'" aria-label="Abrir '+safe(item.label)+'">'+ico(item.icon)+'<span>'+safe(item.label)+'</span></a>';
+  return '<a href="'+safe(href)+'" data-mobile-shortcut="'+safe(href)+'" data-mobile-slot="'+index+'" aria-label="Abrir '+safe(item.label)+'">'+ico(item.icon)+'<span>'+safe(item.label==="Menú semanal"?"Menú":item.label)+'</span></a>';
 }
 function renderBottomBar(){
   const node=dom("mobile-bottom-nav");if(!node)return;
@@ -185,7 +185,7 @@ function closeSheet(){
  dom("mobile-more-trigger")?.setAttribute("aria-expanded","false");
  if(trigger?.isConnected)trigger.focus({preventScroll:true});trigger=null;
 }
-function navigate(target){if(!routeFromHash(target))return;closeSheet();go?.(target);}
+function navigate(target){if(!routeFromHash(target))return;closeSheet();if(target==="#/inicio")dom("main-content")?.scrollTo({top:0,behavior:"instant"});go?.(target);}
 export function syncMobileNavigation(nextRoute,nextHash){
  if(!nextRoute)return;
  route=nextRoute;hash=nextHash||"#/inicio";
