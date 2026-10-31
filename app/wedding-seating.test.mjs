@@ -520,7 +520,7 @@ test("long names wrap entirely and labels expand within their own table",()=>{
 test("zoom in, out, 100 percent and fit keep floor scroll and coordinates",()=>{
  const html=renderTables([], [{id:"z",name:"Zoom",shape:"redonda",capacity:12}],null,esc,"z");
  for(const marker of ["data-wed-zoom-in","data-wed-zoom-out","data-wed-zoom-reset","data-wed-zoom-fit"])assert.match(html,new RegExp(marker));
- assert.match(ui,/state\.seatingFloorZoom=Math\.max\(\.5,Math\.min\(1\.6/);
+ assert.match(ui,/state\.seatingFloorZoom=Math\.max\(\.2,Math\.min\(1\.6/);
  assert.match(ui,/stage\.style\.zoom=String\(state\.seatingFloorZoom\)/);
  assert.match(ui,/stage\.dispatchEvent\(new Event\("wed-floor-recalibrate"\)\)/);
  assert.match(css,/min-width:max\(1180px,calc\(var\(--wed-floor-columns,1\)\*420px\)\)/);
