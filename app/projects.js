@@ -149,7 +149,7 @@ function bindWorkspace(payload) {
   };
   ["#projects-search","#projects-status","#projects-area"].forEach((sel)=>{body.querySelector(sel)?.addEventListener("input",apply);body.querySelector(sel)?.addEventListener("change",apply);});
 }
-export async function openProjectsDetail(decisions, onOpenMidasReport = null) {
+export async function openProjectsDetail(decisions, onOpenMidasReport = null, initialTab = "summary") {
   currentDecisions = (Array.isArray(decisions) ? decisions : []).filter(function (item) { return item && item.status === "open" && item.areaId === "area-projects"; });
   openMidasReport = typeof onOpenMidasReport === "function" ? onOpenMidasReport : null;
   const dialog = document.querySelector("#detail-dialog");
@@ -163,7 +163,7 @@ export async function openProjectsDetail(decisions, onOpenMidasReport = null) {
   try {
     const response = await fetch("/api/projects",{headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"});
     if(!response.ok) throw new Error("PROJECTS_"+response.status);
-    currentTab="summary";
+    currentTab=initialTab==="traffic"?"traffic":"summary";
     renderWorkspace(await response.json());
   } catch(error) {
     console.warn("Projects load failed",error);
