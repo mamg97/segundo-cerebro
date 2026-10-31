@@ -18,8 +18,7 @@ Fuentes propietarias y persistencia privada
 
 ## Boda: nombres alrededor de las mesas y asignación directa
 
-La pestaña Mesas permite sentar a una persona desde la tarjeta de su
-mesa con «+ Añadir»: seleccionar un invitado sin mesa o crear una persona
+La pestaña Mesas permite seleccionar una mesa en el plano y usar «+ Añadir invitados»: elegir un invitado sin mesa o crear una persona
 nueva indicando su lista familiar. Los nuevos registros nacen con RSVP
 pendiente; los rechazados no aparecen como asignables. Para liberar una
 plaza se actualiza solo `tableId=null`, sin eliminar la ficha. Cada
@@ -28,9 +27,12 @@ asignación se realiza mediante el PATCH autenticado existente de
 `revision` optimista. Crear invitados utiliza el POST privado. D1
 comprueba capacidad y conflictos de revisión.
 
-Las mesas reales muestran un círculo con inicial y nombre abreviado en
-cada silla, y la lista de nombres completos debajo. Pulsar un nombre
-abre su ficha. El orden visual se deriva alfabéticamente de los invitados
+Un plano horizontal de ancho completo representa las mesas como círculos movibles;
+se seleccionan pulsando encima y se trasladan con arrastre de ratón/táctil o
+flechas del teclado. La selección abre debajo las acciones y el listado de nombres.
+Cada mesa dibuja iniciales y nombres abreviados alrededor del círculo; pulsar
+una persona abre su ficha. Las coordenadas porcentuales se guardan en D1
+privado con revisión optimista, sin cambiar la asignación de los invitados. El orden visual se deriva alfabéticamente de los invitados
 asignados: **no se guarda número de silla**, por lo que el diagrama
 no representa todavía una colocación física numerada permanente.
 
@@ -47,7 +49,9 @@ confirmados de las listas definitivas, excluyendo personas rechazadas,
 pendientes y la lista opcional; distingue confirmados ubicados,
 plazas reales ocupadas (también asignaciones pendientes), aforo disponible
 y confirmados sin mesa. Las tarjetas de mesas existentes muestran
-plazas alrededor de mesas redondas, rectangulares o presidenciales.
+plazas alrededor de mesas redondas, rectangulares o presidenciales,
+en un plano común de ancho completo. Las mesas antiguas sin coordenadas
+reciben un punto inicial visual, sin reescribir su estado.
 
 Se calculan configuraciones orientativas con mesas redondas de 6, 8,
 10 y 12 plazas. Si existe mesa presidencial se toma su primera
