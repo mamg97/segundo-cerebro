@@ -1298,3 +1298,94 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-floor-plan .wed-floor-table .wed-floor-seat-number{
  flex:0 0 18px;
 }
+
+
+/* Wedding seat associations v8: circle, lines and complete adjacent names
+   are ONE SVG inside a 640px table. Never float elements across grid cells. */
+.wed-floor-plan{
+ min-width:max(1180px,calc(var(--wed-floor-columns,1)*660px));
+ grid-auto-rows:var(--wed-floor-row-height,390px);
+}
+.wed-floor-plan .wed-floor-table{
+ box-sizing:border-box;
+ position:relative;
+ width:640px;
+ height:auto;
+ min-height:0;
+ max-width:none;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ padding:0;
+ overflow:visible;
+ place-self:center;
+}
+.wed-floor-plan .wed-floor-table .wed-svg-table-wrap{
+ box-sizing:border-box;
+ position:relative;
+ display:block;
+ width:640px;
+ height:auto;
+ min-height:0;
+ max-width:none;
+ margin:0;
+ padding:0;
+ overflow:visible;
+}
+.wed-floor-plan .wed-floor-table .wed-svg-table-wrap > .wed-floor-seat-svg.wed-seat-associated-svg{
+ position:relative;
+ top:auto;
+ left:auto;
+ display:block;
+ width:640px;
+ height:auto;
+ max-width:none;
+ flex:none;
+ margin:0;
+ overflow:visible;
+}
+.wed-floor-plan .wed-floor-table .wed-floor-grip{
+ top:calc(50% + 35px);
+ left:50%;
+ transform:translateX(-50%);
+ z-index:8;
+}
+.wed-seat-associated-svg .wed-seat-association-line{
+ fill:none;
+ stroke:var(--blue,#59a7fc);
+ stroke-width:1.1;
+ stroke-opacity:.7;
+ stroke-linecap:round;
+ pointer-events:none;
+}
+.wed-seat-associated-svg .wed-seat-attached-name{
+ cursor:pointer;
+ outline:0;
+}
+.wed-seat-associated-svg .wed-seat-attached-name rect{
+ fill:var(--surface,#0c1c31);
+ stroke:var(--line,#27415c);
+ stroke-width:1;
+}
+.wed-seat-associated-svg .wed-seat-attached-name:hover rect,
+.wed-seat-associated-svg .wed-seat-attached-name:focus-visible rect{
+ stroke:var(--blue,#59a7fc);
+ stroke-width:2;
+}
+.wed-seat-associated-svg .wed-seat-attached-number{
+ fill:var(--blue,#59a7fc);
+}
+.wed-seat-associated-svg .wed-seat-attached-index{
+ fill:white;
+ font-size:9px;
+ font-weight:800;
+ pointer-events:none;
+}
+.wed-seat-associated-svg .wed-seat-attached-text{
+ fill:var(--ink,#f7fbff);
+ font-size:10px;
+ font-weight:650;
+ pointer-events:none;
+}
+.wed-seat-associated-svg .wed-seat-attached-labels{isolation:isolate}
