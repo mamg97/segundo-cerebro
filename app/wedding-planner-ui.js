@@ -198,9 +198,12 @@ export function namedSeatDiagram(table,occupants,esc){
  const first=nameParts.length===1?centerName:nameParts.slice(0,Math.ceil(nameParts.length/2)).join(" ");
  const second=nameParts.length===1?"":nameParts.slice(Math.ceil(nameParts.length/2)).join(" ");
  const cx=320,cy=centerY;
+ const surface=table.shape==="rectangular"?
+  '<rect x="'+(cx-69)+'" y="'+(cy-48)+'" width="138" height="96" rx="15" fill="#0c1c31" stroke="#59a7fc" stroke-width="2.5"/>':
+  '<circle cx="'+cx+'" cy="'+cy+'" r="66" fill="#0c1c31" stroke="#59a7fc" stroke-width="2.5"/>';
  const tabletop='<g class="wed-svg-table" role="button" tabindex="0" data-wed-edit-table="'+esc(table.id)+
   '" aria-label="Editar '+esc(table.name)+'"><title>Editar '+esc(table.name)+'</title>'+
-  '<circle cx="'+cx+'" cy="'+cy+'" r="66" fill="#0c1c31" stroke="#59a7fc" stroke-width="2.5"/>'+
+  surface+
   '<text class="wed-svg-table-label" x="'+cx+'" y="'+(cy-(second?7:1))+'" text-anchor="middle">'+esc(first.slice(0,23))+'</text>'+
   (second?'<text class="wed-svg-table-label" x="'+cx+'" y="'+(cy+10)+'" text-anchor="middle">'+esc(second.slice(0,23))+'</text>':"")+
   '<text class="wed-svg-table-capacity" x="'+cx+'" y="'+(cy+(second?26:18))+'" text-anchor="middle">'+
