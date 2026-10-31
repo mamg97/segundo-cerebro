@@ -1,5 +1,5 @@
 // Private wedding collaboration view. No embedded personal records.
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.6";
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.7";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.2";
 export const WEDDING_TYPES=[
@@ -14,7 +14,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,seatingOpenTableId:null,seatingSelectedTableId:null,draftCategory:"ideas",exporting:false};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,seatingOpenTableId:null,seatingSelectedTableId:null,seatingTargetSeatIndex:null,draftCategory:"ideas",exporting:false};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -202,7 +202,7 @@ function home(){
  if(state.view==="invitados"||state.view==="mesas"){
   const contents=!state.plannerLoaded?'<div class="wed-loading">Cargando información privada…</div>':
    state.view==="invitados"?renderGuests(state.guests,state.tables,state.guestEditing,esc):
-   renderTables(state.guests,state.tables,state.tableEditing,esc,state.seatingSelectedTableId);
+   renderTables(state.guests,state.tables,state.tableEditing,esc,state.seatingSelectedTableId,state.seatingTargetSeatIndex);
   return '<div class="wed-workspace">'+contents+'</div>';
  }
  const n=weddingTotals(state.items);
@@ -333,7 +333,7 @@ async function plannerMutation(action,{focusGroup=null,preserveScroll=false,focu
  const scroll=document.querySelector("#dialog-body"),oldTop=scroll?.scrollTop||0;
  state.busy=true;
  try{
-  await action();state.guestEditing=null;state.tableEditing=null;state.plannerLoaded=false;
+  await action();state.guestEditing=null;state.tableEditing=null;state.seatingTargetSeatIndex=null;state.plannerLoaded=false;
   state.error="";await loadPlanner();
  }catch(error){
   state.error=errorMsg(error);state.plannerLoaded=false;await loadPlanner();
@@ -352,11 +352,12 @@ async function plannerMutation(action,{focusGroup=null,preserveScroll=false,focu
  }
 }
 // Preserve the existing guest record and optimistic D1 revision on every table move.
-function changeGuestTable(guest,tableId){
+function changeGuestTable(guest,tableId,seatIndex=undefined){
  return getJson("/api/wedding/guests/"+encodeURIComponent(guest.id),"PATCH",{
   name:guest.name,groupName:guest.groupName,rsvp:guest.rsvp,menu:guest.menu,
   dietaryNotes:guest.dietaryNotes,email:guest.email,phone:guest.phone,notes:guest.notes,
-  tableId,revision:guest.revision
+  tableId,revision:guest.revision,
+  ...(seatIndex===undefined?{}:{seatIndex})
  });
 }
 function openSeatedGuest(id,area){
@@ -385,7 +386,7 @@ function bindWeddingFloorPlan(area){
  const select=id=>{
   if(state.seatingSelectedTableId===id)return;
   const scroll=area,top=scroll.scrollTop;
-  state.seatingSelectedTableId=id;state.seatingOpenTableId=null;
+  state.seatingSelectedTableId=id;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;
   show();scroll.scrollTop=top;
  };
  stage.querySelectorAll("[data-wed-floor-table]").forEach(tile=>{
@@ -403,7 +404,7 @@ function bindWeddingFloorPlan(area){
   };
   tile.addEventListener("pointerdown",event=>{
    if(state.busy||state.plannerBusy||event.button!==0||
-      event.target.closest("[data-wed-seat-detail]"))return;
+      event.target.closest("[data-wed-seat-detail],[data-wed-seat-add]"))return;
    drag={id:event.pointerId,startX:event.clientX,startY:event.clientY,
     x:tile.offsetLeft,y:tile.offsetTop,originalLeft:tile.style.left,
     originalTop:tile.style.top,moved:false};
@@ -433,7 +434,7 @@ function bindWeddingFloorPlan(area){
    drag=null;tile.classList.remove("is-dragging");
   });
   tile.addEventListener("click",event=>{
-   if(event.target.closest("[data-wed-seat-detail]"))return;
+   if(event.target.closest("[data-wed-seat-detail],[data-wed-seat-add]"))return;
    if(suppressClick){suppressClick=false;return;}
    select(id);
   });
@@ -507,6 +508,7 @@ function bindPlannerActions(area){
  area.querySelectorAll("[data-wed-toggle-table-picker]").forEach(button=>button.addEventListener("click",()=>{
   const id=button.dataset.wedToggleTablePicker;
   state.seatingOpenTableId=state.seatingOpenTableId===id?null:id;
+  state.seatingTargetSeatIndex=null;
   const card=button.closest(".wed-seating-card");
   const panel=card?.querySelector(".wed-table-picker");
   if(panel)panel.classList.toggle("is-open",state.seatingOpenTableId===id);
@@ -522,7 +524,7 @@ function bindPlannerActions(area){
   const guestId=String(new FormData(form).get("guestId")||"");
   const guest=state.guests.find(g=>g.id===guestId);
   if(!guest||guest.tableId||guest.rsvp==="rechazado"||!state.tables.some(t=>t.id===tableId))return;
-  void plannerMutation(()=>changeGuestTable(guest,tableId),{preserveScroll:true,focusTableId:tableId});
+  void plannerMutation(()=>changeGuestTable(guest,tableId,state.seatingTargetSeatIndex??undefined),{preserveScroll:true,focusTableId:tableId});
  }));
  area.querySelectorAll("[data-wed-add-table-guest]").forEach(form=>form.addEventListener("submit",event=>{
   event.preventDefault();if(state.busy)return;
@@ -532,8 +534,22 @@ function bindPlannerActions(area){
      !WEDDING_GUEST_GROUPS.some(([id])=>id===groupName))return;
   void plannerMutation(()=>getJson("/api/wedding/guests","POST",{
    name,groupName,rsvp:"pendiente",menu:"",tableId,
-   dietaryNotes:"",email:"",phone:"",notes:""
+   dietaryNotes:"",email:"",phone:"",notes:"",
+   ...(Number.isInteger(state.seatingTargetSeatIndex)?{seatIndex:state.seatingTargetSeatIndex}:{})
   }),{preserveScroll:true,focusTableId:tableId,focusTableNew:true});
+ }));
+ // Selecting a free chair opens the existing private picker at that exact index.
+ area.querySelectorAll("[data-wed-seat-add]").forEach(button=>button.addEventListener("click",event=>{
+  event.stopPropagation();if(state.busy)return;
+  const tableId=button.dataset.wedSeatAdd,index=Number(button.dataset.wedSeatIndex);
+  const table=state.tables.find(t=>t.id===tableId);
+  if(!table||!Number.isInteger(index)||index<0||index>=table.capacity)return;
+  state.seatingSelectedTableId=tableId;state.seatingTargetSeatIndex=index;state.seatingOpenTableId=tableId;
+  show();
+  const panel=document.querySelector('[data-wed-table-picker="'+tableId+'"]');
+  panel?.scrollIntoView({behavior:"smooth",block:"nearest"});
+  (panel?.querySelector('select[name="guestId"]:not(:disabled)')||
+   panel?.querySelector('input[name="name"]:not(:disabled)'))?.focus({preventScroll:true});
  }));
  area.querySelectorAll("[data-wed-seat-detail]").forEach(button=>button.addEventListener("click",()=>{
   openSeatedGuest(button.dataset.wedSeatDetail,area);
@@ -878,7 +894,7 @@ export function openWeddingDetail(remote){
   refreshButton.hidden=!remote;
   refreshButton.onclick=()=>void refreshWedding();
  }
- clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;state.seatingSelectedTableId=null;state.seatingOpenTableId=null;
+ clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;state.seatingSelectedTableId=null;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();
  if(!remote){body.innerHTML='<div class="wed-locked"><h3>Boda</h3><p>Este apartado permite añadir ideas, presupuestos y fotos en la versión privada de Segundo Cerebro.</p></div>';return;}
