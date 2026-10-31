@@ -325,7 +325,7 @@ test("pending guests keep all occupied seats visible without altering D1",()=>{
  assert.match(diagram,/class="wed-floor-seat-svg"/);
  assert.equal((diagram.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((diagram.match(/<circle cx="[\d.]+" cy="[\d.]+" r="18" fill="#59a7fc"/g)||[]).length,6);
- assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,6);
+ assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,12,"six SVG chairs and six full-name labels");
  assert.equal(JSON.stringify(people),before);
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg\{/);
 });
@@ -369,7 +369,7 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  assert.match(article,/data-wed-table-diagram-version="4"/);
  assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
  assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,6);
- assert.match(article,/<\/svg><\/div>\s*$/);
+ assert.match(article,/<\/svg><div class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
  assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg/);
 });
@@ -385,4 +385,52 @@ test("fullscreen is a separate top-layer dialog with two independent ways to esc
  assert.match(css,/\.wed-fullscreen-dialog > \.wed-floor-emergency-close/);
  assert.match(ui,/\.wed-floor-seat-svg \[role=button\]/);
  assert.match(ui,/new MouseEvent\("click",\{bubbles:true,cancelable:true\}\)/);
+});
+
+test("full names stay readable in a numbered non-overlapping table legend",()=>{
+ const table={id:"names-table",name:"Mesa completa",shape:"redonda",capacity:6};
+ const people=[
+  {id:"alpha",name:"María del Carmen Hernández López",seatIndex:4,rsvp:"confirmado",tableId:table.id,groupName:"pareja"},
+  {id:"beta",name:"José Antonio Fernández Domínguez",seatIndex:1,rsvp:"pendiente",tableId:table.id,groupName:"pareja"}
+ ];
+ const before=JSON.stringify(people);
+ const markup=renderTables(people,[table],null,esc,table.id);
+ const floor=markup.slice(markup.indexOf('<article class="wed-floor-table'),markup.indexOf("</article>"));
+ assert.match(floor,/class="wed-floor-seat-legend"/);
+ assert.match(floor,/>María del Carmen Hernández López</);
+ assert.match(floor,/>José Antonio Fernández Domínguez</);
+ assert.match(floor,/aria-label="Plaza 5: María del Carmen Hernández López"/);
+ assert.match(floor,/aria-label="Plaza 2: José Antonio Fernández Domínguez"/);
+ assert.match(floor,/data-wed-seat-detail="alpha"/);
+ assert.match(floor,/data-wed-seat-detail="beta"/);
+ assert.match(css,/\.wed-floor-seat-legend\{[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(css,/\.wed-floor-seat-full-name\{[\s\S]*?overflow-wrap:anywhere/);
+ assert.equal(JSON.stringify(people),before,"no D1 assignment changes");
+});
+test("search only offers free guests and uses typed name matching",()=>{
+ const table={id:"first",name:"Primera",capacity:12,shape:"redonda"};
+ const other={id:"second",name:"Segunda",capacity:12,shape:"redonda"};
+ const people=[
+  {id:"free",name:"Álvaro de la Fuente",tableId:null,rsvp:"pendiente",groupName:"pareja"},
+  {id:"taken",name:"Daniel Pérez Sánchez",tableId:"second",rsvp:"pendiente",groupName:"pareja"}
+ ];
+ const html=renderTables(people,[table,other],null,esc,"first");
+ const picker=html.slice(html.indexOf('<form data-wed-place-existing="first"'),html.indexOf("</form>",html.indexOf('<form data-wed-place-existing="first"')));
+ assert.match(picker,/data-wed-guest-search/);
+ assert.match(picker,/value="free"/);
+ assert.doesNotMatch(picker,/value="taken"/);
+ assert.match(picker,/data-wed-guest-search-status aria-live="polite"/);
+ assert.match(ui,/search\.addEventListener\("input",refresh\)/);
+ assert.match(ui,/terms\.every\(word=>fold\(item\.label\)\.includes\(word\)\)/);
+ assert.match(ui,/!guest\.tableId&&guest\.rsvp!=="rechazado"/);
+});
+test("dragging and centering save D1 positions without rebuilding expanded floor",()=>{
+ assert.match(ui,/const persist=async\(point,rollback=current\)=>/);
+ assert.match(ui,/Object\.assign\(table,saved\.item\)/);
+ assert.match(ui,/void persist\(complete\.previous,complete\.start\)/);
+ assert.match(ui,/tile\.addEventListener\("wed-floor-center"/);
+ assert.match(ui,/if\(weddingFloorPortal\)\{[\s\S]*?tile\.dispatchEvent\(new Event\("wed-floor-center"\)\)/);
+ assert.match(ui,/tile\.dataset\.wedSaving="true"/);
+ assert.match(ui,/tile\.classList\.remove\("is-saving"\)/);
+ assert.match(css,/\.wed-floor-plan\{grid-auto-rows:var\(--wed-floor-row-height,360px\)/);
 });
