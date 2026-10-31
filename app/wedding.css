@@ -685,14 +685,14 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
    Personal names come from authenticated D1 responses only. */
 .wed-floor-section{width:100%;min-width:0}
 .wed-floor-scroll{
- display:block;min-height:550px;
+ display:block;min-height:360px;
  width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;
  border:1px solid var(--line);border-radius:14px;
  background:var(--surface);scrollbar-width:thin;
 }
 .wed-floor-plan{
- display:block;min-height:550px;
- position:relative;width:100%;min-width:1200px;
+ display:block;min-height:360px;
+ position:relative;width:100%;min-width:1180px;
  background-image:linear-gradient(to right,var(--line) 1px,transparent 1px),
                   linear-gradient(to bottom,var(--line) 1px,transparent 1px);
  background-size:48px 48px;
@@ -700,7 +700,7 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 }
 .wed-floor-table{
  position:absolute;transform:translate(-50%,-50%);
- width:352px;height:368px;padding:6px 0 10px;
+ box-sizing:border-box;width:268px;height:278px;padding:8px 0 10px;
  border:2px solid transparent;border-radius:18px;
  background:var(--surface);box-shadow:0 4px 20px #00000012;
  cursor:grab;touch-action:none;user-select:none;
@@ -717,29 +717,31 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  transition:none;
 }
 .wed-floor-grip{
- position:absolute;top:5px;left:50%;transform:translateX(-50%);
- color:var(--ink-soft);font-size:10px;font-weight:750;white-space:nowrap;
- pointer-events:none;
+ position:absolute;top:3px;left:50%;transform:translateX(-50%);
+ z-index:8;min-height:26px;padding:3px 10px;
+ color:var(--blue);font:inherit;font-size:10px;font-weight:750;white-space:nowrap;
+ border:1px solid var(--line);border-radius:7px;background:var(--paper);
+ cursor:grab;touch-action:none;
 }
 .wed-floor-table .wed-named-table{
- width:100%;height:340px;aspect-ratio:auto;max-width:none;margin:0;
+ width:100%;height:248px;aspect-ratio:auto;max-width:none;margin:0;
 }
 .wed-floor-table .wed-named-table-center{
- inset:32%;padding:7px;
+ inset:28%;padding:5px;
  border-radius:50%;background:var(--surface);
 }
 .wed-floor-table .wed-named-table-center strong{
- font-size:13px;line-height:1.16;overflow-wrap:anywhere;
+ font-size:11px;line-height:1.16;overflow-wrap:anywhere;
 }
 .wed-floor-table .wed-named-table-center small{font-size:10px}
 .wed-floor-table .wed-named-seat{
- width:67px;min-height:42px;padding:3px 1px;
+ width:50px;min-height:39px;padding:2px 1px;
 }
 .wed-floor-table .wed-seat-name{
  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
  width:100%;white-space:normal;overflow:hidden;
  overflow-wrap:anywhere;text-overflow:ellipsis;
- font-size:10px;line-height:1.15;
+ font-size:9px;line-height:1.1;
 }
 .wed-floor-table .wed-named-seat.is-filled{
  background:var(--surface);border-color:var(--line);
@@ -762,7 +764,7 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-seating-details .wed-seat-caption{text-align:left}
 @media(max-width:650px){
  .wed-floor-scroll{border-radius:10px}
- .wed-floor-plan{min-width:1200px}
+ .wed-floor-plan{min-width:1180px}
  .wed-seating-details .wed-seating-guests{grid-template-columns:1fr}
  .wed-seating-details .wed-seating-head{gap:8px}
  .wed-seating-details .wed-seating-head strong{flex-basis:100%}
@@ -786,9 +788,9 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 .wed-floor-table .wed-named-seat.is-empty:focus-visible .wed-seat-name{
  display:block;font-size:9px;
 }
-.wed-floor-plan:empty{min-height:550px}
+.wed-floor-plan:empty{min-height:360px}
 @media(max-width:650px){
- .wed-floor-scroll,.wed-floor-plan{min-height:550px}
+ .wed-floor-scroll,.wed-floor-plan{min-height:360px}
 }
 
 .wed-floor-table.is-saving{cursor:progress;pointer-events:none}
@@ -798,3 +800,10 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  padding:5px 8px;border-radius:8px;
  background:var(--blue-soft);color:var(--blue);font-size:11px;font-weight:750;
 }
+
+/* The drag control remains reachable even when every chair is occupied. */
+.wed-floor-table .wed-named-seat{max-width:50px}
+.wed-floor-grip:hover,.wed-floor-grip:focus-visible{background:var(--blue-soft);border-color:var(--blue);outline-offset:2px}
+.wed-floor-grip:active,.wed-floor-table.is-dragging .wed-floor-grip{cursor:grabbing}
+.wed-floor-table .wed-seat-avatar{width:21px;height:21px;font-size:9px}
+.wed-floor-table .wed-named-table-center small{font-size:9px}
