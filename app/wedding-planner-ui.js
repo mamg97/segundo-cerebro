@@ -186,7 +186,7 @@ function weddingSeatLayout(table,occupants){
   right:positions.filter(p=>p.guest&&p.side==="right").sort((a,b)=>a.y-b.y)
  };
  const sideHeight=list=>list.reduce((sum,p)=>sum+p.labelHeight,0)+Math.max(0,list.length-1)*5;
- const height=Math.max(300,Math.ceil(Math.max(sideHeight(sides.left),sideHeight(sides.right))+24));
+ const height=Math.max(330,Math.ceil(Math.max(sideHeight(sides.left),sideHeight(sides.right))+44));
  return {capacity,ordered,seats,positions,sides,height,centerY:height/2};
 }
 function namedSeatDiagram(table,occupants,esc){
@@ -220,30 +220,70 @@ function namedSeatDiagram(table,occupants,esc){
    '" font-weight="800">'+esc(guest?String(p.index+1):"+")+'</text></g>';
  }).join("");
  const paths=[],labels=[];
+ // First clear the 103px chair orbit radially, then use one protected
+ // left/right corridor. Direct diagonal lines are forbidden: they could
+ // cut across other chairs when the name columns have different y positions.
+ const radialDistance=150;
+ const corridorX={left:183,right:457};
+ const outerEdge={left:172,right:468};
+ const nearSideX={left:8,right:468};
+ const rounded=n=>Number(n.toFixed(2)).toString();
  for(const side of ["left","right"]){
-  const list=sides[side],total=list.reduce((n,p)=>n+p.labelHeight,0)+Math.max(0,list.length-1)*5;
-  let top=(height-total)/2;
-  for(const p of list){
-   const left=side==="left"?8:468, edge=side==="left"?174:466;
-   const middle=top+p.labelHeight/2,sourceY=cy+p.y;
-   const sourceX=p.x+(side==="left"?-radius:radius);
-   // Strict ascending y ranks on each side => no crossed connectors.
+  const list=sides[side];
+  // Keep labels as close as possible to their own chair. Respect their real
+  // line-wrapped height and a five-pixel gap instead of re-centering the list.
+  const gap=5;
+  const allocated=list.map(p=>{
+   const ideal=cy+p.y-p.labelHeight/2;
+   return {p,top:ideal};
+  });
+  for(let i=0;i<allocated.length;i++){
+   const previous=allocated[i-1];
+   if(previous)allocated[i].top=Math.max(allocated[i].top,previous.top+previous.p.labelHeight+gap);
+  }
+  if(allocated.length){
+   const last=allocated[allocated.length-1];
+   const excess=Math.max(0,last.top+last.p.labelHeight-(height-12));
+   for(const item of allocated)item.top-=excess;
+   if(allocated[0].top<12){
+    const shift=12-allocated[0].top;
+    for(const item of allocated)item.top+=shift;
+   }
+  }
+  for(const {p,top} of allocated){
+   const boxX=nearSideX[side],edge=outerEdge[side];
+   const middle=top+p.labelHeight/2;
+   const theta=-Math.PI/2+2*Math.PI*p.index/capacity;
+   const cos=Math.cos(theta),sin=Math.sin(theta);
+   const sourceX=320+(103+radius+3)*cos;
+   const sourceY=cy+(103+radius+3)*sin;
+   const outwardX=320+radialDistance*cos;
+   const outwardY=cy+radialDistance*sin;
+   const protectedX=corridorX[side];
+   // The radial segment never enters any other chair, and the outer
+   // corridor stays >=14px beyond all chair edges even for 12 seats.
+   const route=[
+    [sourceX,sourceY],
+    [outwardX,outwardY],
+    [protectedX,outwardY],
+    [protectedX,middle],
+    [edge,middle]
+   ].map(([x,y])=>rounded(x)+' '+rounded(y)).join(' L');
    paths.push('<path class="wed-seat-association-line" data-wed-line-seat="'+p.index+
-    '" d="M'+sourceX.toFixed(2)+' '+sourceY.toFixed(2)+' L'+edge+' '+middle.toFixed(2)+'"/>');
+    '" d="M'+route+'"/>');
    labels.push('<g class="wed-seat-attached-name" role="button" tabindex="0" data-wed-seat-detail="'+
     esc(p.guest.id)+'" aria-label="Plaza '+(p.index+1)+': '+esc(p.guest.name)+'">'+
-    '<title>'+esc(p.guest.name)+'</title><rect x="'+left+'" y="'+top.toFixed(2)+
+    '<title>'+esc(p.guest.name)+'</title><rect x="'+boxX+'" y="'+rounded(top)+
     '" width="164" height="'+p.labelHeight+'" rx="7"/>'+
-    '<circle class="wed-seat-attached-number" cx="'+(left+13)+'" cy="'+middle.toFixed(2)+'" r="9"/>'+
-    '<text class="wed-seat-attached-index" x="'+(left+13)+'" y="'+(middle+3).toFixed(2)+
+    '<circle class="wed-seat-attached-number" cx="'+(boxX+13)+'" cy="'+rounded(middle)+'" r="9"/>'+
+    '<text class="wed-seat-attached-index" x="'+(boxX+13)+'" y="'+rounded(middle+3)+
     '" text-anchor="middle">'+(p.index+1)+'</text>'+
-    p.lines.map((line,i)=>'<text class="wed-seat-attached-text" x="'+(left+27)+
-      '" y="'+(top+(p.labelHeight-p.lines.length*11)/2+9+i*11).toFixed(2)+'">'+esc(line)+'</text>').join("")+
+    p.lines.map((line,i)=>'<text class="wed-seat-attached-text" x="'+(boxX+27)+
+      '" y="'+rounded(top+(p.labelHeight-p.lines.length*11)/2+9+i*11)+'">'+esc(line)+'</text>').join("")+
     '</g>');
-   top+=p.labelHeight+5;
   }
  }
- return '<div class="wed-svg-table-wrap" data-wed-table-diagram-version="7" role="group" '+
+ return '<div class="wed-svg-table-wrap" data-wed-table-diagram-version="8" role="group" '+
   'aria-label="'+esc(table.name)+': '+ordered.length+' de '+capacity+' plazas ocupadas">'+
   '<svg class="wed-floor-seat-svg wed-seat-associated-svg" xmlns="http://www.w3.org/2000/svg" '+
   'viewBox="0 0 640 '+height+'" width="640" height="'+height+
