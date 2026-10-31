@@ -716,6 +716,7 @@ function setWeddingFloorExpanded(expanded){
    event.preventDefault();setWeddingFloorExpanded(false);
   });
  }else if(!expanded&&weddingFloorPortal){
+  closeWeddingTableInspector();
   const {modal,anchor,shell:live}=weddingFloorPortal;
   weddingFloorPortal=null;
   if(modal.open)modal.close();
@@ -936,7 +937,7 @@ function bindWeddingFloorPlan(area){
   };
   tile.addEventListener("pointerdown",event=>{
    if(state.busy||state.plannerBusy||tile.dataset.wedSaving==="true"||event.button!==0||
-      event.target.closest("[data-wed-seat-detail],[data-wed-seat-add],[data-wed-edit-table]"))return;
+      !event.target.closest("[data-wed-floor-grip]"))return;
    if(!current)calibrate();
    if(!current)return;
    const rect=stage.getBoundingClientRect();
