@@ -1,5 +1,5 @@
 import { travelScheduleMarkup } from "./travel-timetable.js?v=0.1.0";
-import { travelMapPoints, travelMapDays, travelMapVisible, bindTravelMap } from "./travel-multipoint-map.js?v=0.1.0";
+import { travelMapPoints, travelMapDays, travelMapVisible, bindTravelMap } from "./travel-multipoint-map.js?v=0.1.1";
 // Generic travel dashboard: no trip-specific details or private coordinates in the public repository.
 const escapeText=value=>String(value==null?"":value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 const money=value=>{
