@@ -558,7 +558,23 @@ function setWeddingFloorExpanded(expanded){
   btn.setAttribute("aria-label",label);btn.title=label;
  }
  const stage=shell.querySelector("[data-wed-floor-plan]");
- if(stage)requestAnimationFrame(()=>stage.dispatchEvent(new Event("wed-floor-recalibrate")));
+ if(stage)requestAnimationFrame(()=>{
+  stage.dispatchEvent(new Event("wed-floor-recalibrate"));
+  if(state.seatingFloorExpanded){
+   // Expanding moves the same canvas into the top layer. Reveal the selected
+   // table rather than showing an empty corner of the larger workspace.
+   requestAnimationFrame(()=>{
+    const viewport=shell.querySelector(".wed-floor-scroll");
+    const selected=[...stage.querySelectorAll("[data-wed-floor-table]")].find(tile=>
+     tile.dataset.wedFloorTable===state.seatingSelectedTableId)||
+     stage.querySelector("[data-wed-floor-table]");
+    if(!viewport||!selected)return;
+    const sr=viewport.getBoundingClientRect(),tr=selected.getBoundingClientRect();
+    viewport.scrollLeft+=tr.left+tr.width/2-(sr.left+sr.width/2);
+    viewport.scrollTop+=tr.top+tr.height/2-(sr.top+sr.height/2);
+   });
+  }
+ });
 }
 if(typeof document!=="undefined")document.addEventListener("keydown",event=>{
  if(event.key!=="Escape"||!active())return;
@@ -596,6 +612,26 @@ function bindWeddingFloorPlan(area){
   if(scroll){scroll.scrollLeft=0;scroll.scrollTop=0;}
  });
  applyZoom();
+ // Pan across empty grid space with a mouse. On phones and trackpads, native
+ // two-axis scrolling remains enabled; table drag handles are unaffected.
+ let backgroundPan=null;
+ stage.addEventListener("pointerdown",event=>{
+  if(event.pointerType!=="mouse"||event.button!==0||event.target!==stage||!scroll)return;
+  backgroundPan={id:event.pointerId,x:event.clientX,y:event.clientY};
+  stage.classList.add("is-panning");
+  stage.setPointerCapture(event.pointerId);
+ });
+ stage.addEventListener("pointermove",event=>{
+  if(!backgroundPan||backgroundPan.id!==event.pointerId||!scroll)return;
+  scroll.scrollLeft-=event.clientX-backgroundPan.x;
+  scroll.scrollTop-=event.clientY-backgroundPan.y;
+  backgroundPan.x=event.clientX;backgroundPan.y=event.clientY;
+ });
+ const finishBackgroundPan=()=>{
+  backgroundPan=null;stage.classList.remove("is-panning");
+ };
+ stage.addEventListener("pointerup",finishBackgroundPan);
+ stage.addEventListener("pointercancel",finishBackgroundPan);
  const select=id=>{
   if(state.seatingSelectedTableId===id)return;
   const top=area.scrollTop;
@@ -684,26 +720,62 @@ function bindWeddingFloorPlan(area){
    const next={x:50,y:50};
    position(next);void persist(next,previous);
   });
+  // Keep dragging while the viewport scrolls. Pointer/client movement alone is
+  // insufficient: scrolling also moves the world under the pointer.
+  const updateDrag=()=>{
+   if(!drag)return;
+   const rect=stage.getBoundingClientRect();
+   const dx=drag.pointerX-drag.startX+(drag.startStageLeft-rect.left);
+   const dy=drag.pointerY-drag.startY+(drag.startStageTop-rect.top);
+   if(!drag.moved&&Math.hypot(dx,dy)<6)return;
+   const next=moveFloorPosition(drag.start,dx,dy,dimensions());
+   if(!next)return;
+   drag.moved=true;drag.previous=next;
+   tile.classList.add("is-dragging");
+   position(next);
+  };
+  const stepAutoPan=()=>{
+   if(!drag)return;
+   if(scroll&&drag.moved){
+    const rect=scroll.getBoundingClientRect(),edge=64;
+    const speed=(value,lo,hi)=>{
+     if(value<lo+edge)return -Math.min(25,Math.max(0,(lo+edge-value)*.4));
+     if(value>hi-edge)return Math.min(25,Math.max(0,(value-(hi-edge))*.4));
+     return 0;
+    };
+    const sx=speed(drag.pointerX,rect.left,rect.right);
+    const sy=speed(drag.pointerY,rect.top,rect.bottom);
+    if(sx||sy){
+     const beforeX=scroll.scrollLeft,beforeY=scroll.scrollTop;
+     scroll.scrollLeft+=sx;scroll.scrollTop+=sy;
+     if(scroll.scrollLeft!==beforeX||scroll.scrollTop!==beforeY)updateDrag();
+    }
+   }
+   drag.panFrame=requestAnimationFrame(stepAutoPan);
+  };
   tile.addEventListener("pointerdown",event=>{
    if(state.busy||state.plannerBusy||tile.dataset.wedSaving==="true"||event.button!==0||
       event.target.closest("[data-wed-seat-detail],[data-wed-seat-add],[data-wed-edit-table]"))return;
    if(!current)calibrate();
    if(!current)return;
+   const rect=stage.getBoundingClientRect();
    drag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,
-    start:{...current},previous:{...current},moved:false};
+    pointerX:event.clientX,pointerY:event.clientY,
+    startStageLeft:rect.left,startStageTop:rect.top,
+    start:{...current},previous:{...current},moved:false,panFrame:null};
    tile.setPointerCapture(event.pointerId);
+   drag.panFrame=requestAnimationFrame(stepAutoPan);
   });
   tile.addEventListener("pointermove",event=>{
    if(!drag||event.pointerId!==drag.pointerId)return;
-   const dx=event.clientX-drag.startX,dy=event.clientY-drag.startY;
-   if(!drag.moved&&Math.hypot(dx,dy)<6)return;
-   const next=moveFloorPosition(drag.start,dx,dy,dimensions());
-   if(!next)return;
-   drag.moved=true;drag.previous=next;tile.classList.add("is-dragging");position(next);
+   drag.pointerX=event.clientX;drag.pointerY=event.clientY;
+   updateDrag();
   });
   tile.addEventListener("pointerup",event=>{
    if(!drag||event.pointerId!==drag.pointerId)return;
-   const complete=drag;drag=null;tile.classList.remove("is-dragging");
+   const complete=drag;drag=null;
+   if(complete.panFrame!==null)cancelAnimationFrame(complete.panFrame);
+   tile.classList.remove("is-dragging");
    if(complete.moved){
     suppressClick=true;window.setTimeout(()=>{suppressClick=false;},0);
     void persist(complete.previous,complete.start);
@@ -711,7 +783,10 @@ function bindWeddingFloorPlan(area){
   });
   tile.addEventListener("pointercancel",()=>{
    if(!drag)return;
-   position(drag.start);drag=null;tile.classList.remove("is-dragging");
+   const complete=drag;drag=null;
+   if(complete.panFrame!==null)cancelAnimationFrame(complete.panFrame);
+   position(complete.start);
+   tile.classList.remove("is-dragging");
   });
   tile.addEventListener("click",event=>{
    if(event.target.closest("[data-wed-seat-detail],[data-wed-seat-add],[data-wed-edit-table]"))return;
