@@ -368,3 +368,75 @@ body.route-area-active #detail-dialog.wedding-dialog[open] #dialog-body > .wed-v
  color:var(--blue);background:var(--blue-soft);border-color:var(--blue);
  font-size:10px;font-weight:800;overflow-wrap:anywhere;
 }
+
+/* Wedding guests: three name-first shared lists. Details stay behind each name. */
+.wed-guest-board{gap:10px}
+.wed-guest-columns{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:12px;align-items:start;min-width:0;
+}
+.wed-guest-column{
+ min-width:0;display:flex;flex-direction:column;gap:7px;
+ border:1px solid var(--line);border-radius:12px;
+ padding:10px;background:var(--surface);
+}
+.wed-guest-column-head{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ min-height:42px;border-bottom:1px solid var(--line);
+ padding:2px 3px 9px;
+}
+.wed-guest-column-head h4{font-size:13px;line-height:1.25;margin:0;overflow-wrap:anywhere}
+.wed-guest-column-head>span{flex:0 0 auto;padding:4px 8px;border-radius:12px;background:var(--paper);font-size:11px;font-weight:800;color:var(--blue)}
+.wed-guest-names{list-style:none;display:grid;gap:4px;padding:0;margin:0}
+.wed-guest-name-row button{
+ display:flex;align-items:center;gap:8px;width:100%;min-height:39px;
+ padding:8px 9px;text-align:left;border:1px solid transparent;border-radius:8px;
+ background:var(--paper);color:var(--ink);cursor:pointer;font:inherit;
+}
+.wed-guest-name-row button:hover,.wed-guest-name-row button:focus-visible{border-color:var(--blue);background:var(--blue-soft)}
+.wed-guest-name{font-size:12px;font-weight:750;overflow-wrap:anywhere;min-width:0;flex:1}
+.wed-guest-rsvp{font-size:10px;color:var(--ink-soft);white-space:nowrap}
+.wed-guest-rsvp[data-rsvp="confirmado"]{color:#2a977f}
+.wed-guest-rsvp[data-rsvp="rechazado"]{color:#cd6c64}
+.wed-guest-chevron{font-size:19px;line-height:1;color:var(--blue)}
+.wed-guest-blank{padding:10px 6px;font-size:11px;color:var(--ink-soft)}
+.wed-guest-quick-add{display:flex;align-items:stretch;gap:6px;margin-top:5px;min-width:0}
+.wed-guest-quick-add input{
+ flex:1;min-width:0;min-height:39px;
+ background:var(--paper);color:var(--ink);border:1px solid var(--line);
+ border-radius:8px;padding:9px;font:inherit;font-size:12px
+}
+.wed-guest-quick-add button{
+ flex:0 0 auto;min-height:39px;border:0;border-radius:8px;
+ padding:8px 10px;background:var(--blue);color:#fff;font:inherit;
+ font-size:11px;font-weight:800;cursor:pointer
+}
+.wed-guest-quick-add button:hover{filter:brightness(1.1)}
+.wed-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.wed-guest-detail{margin:3px 0 12px}
+.wed-guest-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wed-guest-detail-heading button{font:inherit;font-size:11px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:7px 10px;border-radius:8px;cursor:pointer}
+.wed-guest-unclassified{
+ display:grid;gap:8px;padding:10px 13px;border:1px dashed var(--line);
+ background:var(--paper);border-radius:10px;
+}
+.wed-guest-unclassified>div{display:grid;gap:3px}
+.wed-guest-unclassified strong{font-size:12px}
+.wed-guest-unclassified small{font-size:11px;color:var(--ink-soft)}
+.wed-guest-unclassified ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+@media(max-width:900px){
+ .wed-guest-columns{gap:7px}
+ .wed-guest-column{padding:8px}
+ .wed-guest-quick-add{flex-direction:column}
+}
+@media(max-width:760px){
+ .wed-guest-columns{
+  display:grid;grid-template-columns:none;grid-auto-flow:column;
+  grid-auto-columns:minmax(235px,85vw);gap:9px;
+  overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;
+  overscroll-behavior-x:contain;padding-bottom:12px
+ }
+ .wed-guest-column{scroll-snap-align:start}
+ .wed-guest-quick-add{flex-direction:row}
+ .wed-guest-unclassified ul{grid-template-columns:1fr}
+}
