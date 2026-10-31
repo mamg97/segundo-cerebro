@@ -112,24 +112,24 @@ body.route-area-active #detail-dialog[open] #agenda-overview{
  }
 }
 
-/* Desktop workspaces: one fixed refresh action directly before Share and Close.
-   Mobile uses its existing independent header refresh. Auth remains unchanged. */
-#desktop-area-refresh[hidden]{display:none!important}
+/* Desktop refresh is part of the permanent navigation row, not the view header.
+   The underlying actions remain the same; navigation stays horizontally scrollable. */
 @media (min-width:761px){
- body.route-area-active #detail-dialog[open] > #desktop-area-refresh:not([hidden]){
-  position:absolute;top:13px;right:238px;z-index:9;
-  display:inline-flex;align-items:center;justify-content:center;
-  min-height:42px;height:42px;padding:0 12px;
-  border-radius:10px;white-space:nowrap;font-size:12px;
+ .sidebar{grid-template-columns:auto minmax(0,1fr) auto}
+ .sidebar > #desktop-area-refresh{
+  display:inline-flex;flex:0 0 auto;
+  align-items:center;justify-content:center;
+  min-height:38px;padding:0 12px;
+  border-radius:10px;white-space:nowrap;
+  font-size:12px;font-weight:800;
  }
- body.route-area-active #detail-dialog[open] > :is(#dialog-context,#dialog-title){
-  padding-right:max(350px,27vw);
- }
- /* Boda's specialized refresh remains callable but not duplicated visually. */
+ .sidebar > #desktop-area-refresh .refresh-app-icon{font-size:20px}
+ .topbar > .top-actions > #refresh-app{display:none!important}
+ /* Boda keeps its specialized data refresh and edit confirmation handler. */
  body.route-area-active #detail-dialog.wedding-dialog[open] > #wed-main-refresh:not([hidden]){
   display:none!important;
  }
 }
 @media (max-width:760px){
- #desktop-area-refresh{display:none!important}
+ .sidebar > #desktop-area-refresh{display:none!important}
 }
