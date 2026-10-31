@@ -1,4 +1,5 @@
 // Wedding planner native tools and explicit outbound Bodas.net references.
+import {weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 // No scraping, partner API, embeds, personal records or external requests.
 export const BODAS_LINKS=[
  ["Organizador Bodas.net","https://www.bodas.net/organizador-bodas","Planificador original y funciones de Bodas.net"],
@@ -36,7 +37,7 @@ export function renderAgenda(items,esc){
  (tasks.length?'<div class="wed-task-list">'+tasks.map(t=>
   '<article class="wed-task-row"><button type="button" class="wed-task-check" data-wed-task-toggle="'+esc(t.id)+'" aria-label="'+(t.status==="hecho"?"Reabrir":"Completar")+' '+esc(t.title)+'" aria-pressed="'+(t.status==="hecho")+'">'+(t.status==="hecho"?"✓":"○")+'</button>'+
   '<div><strong class="'+(t.status==="hecho"?"wed-done":"")+'">'+esc(t.title)+'</strong>'+
-  '<small>'+(t.dueDate?'Vence: '+esc(t.dueDate)+' · ':'')+esc(t.description||"")+'</small></div>'+
+  '<small>'+'Responsable: '+esc(weddingAssigneeLabel(t))+(t.dueDate?' · Vence: '+esc(t.dueDate):"")+(t.description?' · '+esc(t.description):"")+'</small></div>'+
   '<button type="button" data-wed-edit="'+esc(t.id)+'">Editar</button></article>').join("")+'</div>':
   '<div class="wed-planner-empty">Todavía no habéis registrado tareas. Podéis empezar con las próximas gestiones de la boda.</div>')+
  '<p class="wed-planner-foot">La agenda comparte las mismas tarjetas de tipo «Tareas» del Kanban, sin duplicaciones.</p></section>';
