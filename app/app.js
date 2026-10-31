@@ -6973,6 +6973,18 @@ function renderRecipeDetail(panel, data, recipe, options = {}) {
     </article>
   `;
 
+  // Images with genuine landscape dimensions fill the detail width.
+  // Portrait originals remain complete until the user opts into a crop.
+  const detailPhoto=panel.querySelector(".recipe-detail-photo > img");
+  if(detailPhoto){
+    const syncRecipePhotoLayout=()=>{
+      if(!detailPhoto.naturalWidth||!detailPhoto.naturalHeight)return;
+      const landscape=detailPhoto.naturalWidth/detailPhoto.naturalHeight>=1.2;
+      detailPhoto.parentElement?.classList.toggle("is-landscape",landscape);
+    };
+    if(detailPhoto.complete)syncRecipePhotoLayout();
+    else detailPhoto.addEventListener("load",syncRecipePhotoLayout,{once:true});
+  }
   panel.querySelector("[data-recipes-back]")?.addEventListener("click", onBack);
   panel.querySelector("[data-recipe-edit]")?.addEventListener("click", () => {
     // The ingredient handler belongs to the detail view, not the editor.
