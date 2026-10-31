@@ -706,7 +706,7 @@ async function refreshDesktopArea(){
   const button=document.querySelector("#desktop-area-refresh");
   const requestedHash=window.location.hash||"#/inicio";
   const route=routeFromHash(requestedHash);
-  if(!button||button.hidden||desktopAreaRefreshBusy||!route||route.areaId==="area-general")return;
+  if(!button||button.hidden||desktopAreaRefreshBusy||!route)return;
   if(route.areaId==="area-partner"&&route.detailId==="boda"){
     // Preserve Boda's existing edit-confirmation and private reload behavior.
     const weddingButton=document.querySelector("#wed-main-refresh");
@@ -721,6 +721,7 @@ async function refreshDesktopArea(){
   try{
     const result=await refreshApp();
     // An in-flight refresh must never reopen a section after navigating elsewhere.
+    if(route.areaId==="area-general")return;
     if(window.location.hash!==requestedHash||!document.body.classList.contains("route-area-active"))return;
     openArea(route.areaId);
     button.title=result?.ok===true?"Datos actualizados":"Actualización parcial: comprueba los datos visibles";
@@ -12179,8 +12180,6 @@ function applyAreaRoute(){
   });
   const home=route.areaId==="area-general";
   document.body.classList.toggle("route-area-active",!home);
-  const desktopRefresh=document.querySelector("#desktop-area-refresh");
-  if(desktopRefresh)desktopRefresh.hidden=home;
   const copy=document.querySelector("#copy-area-link");
   if(copy)copy.hidden=home;
   if(home){window.scrollTo({top:0,behavior:"instant"});return}

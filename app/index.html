@@ -9,20 +9,20 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.44.104">
+    <link rel="stylesheet" href="./styles.css?v=0.44.105">
     <link rel="stylesheet" href="./vision.css?v=0.44.0">
     <link rel="stylesheet" href="./gym-month-calendar.css?v=0.44.48">
     <link rel="stylesheet" href="./gym-progress-photos.css?v=0.44.49">
     <link rel="stylesheet" href="./gym-week-summary.css?v=0.44.57">
     <link rel="stylesheet" href="./objects-packing.css?v=0.1.0">
     <link rel="stylesheet" href="./travels.css?v=0.4.2">
-    <link rel="stylesheet" href="./area-routes.css?v=0.1.5">
+    <link rel="stylesheet" href="./area-routes.css?v=0.1.6">
     <link rel="stylesheet" href="./mobile-navigation.css?v=0.1.6">
     <link rel="stylesheet" href="./recipe-photo-editor.css?v=0.1.1">
     <link rel="stylesheet" href="./hobbies.css?v=0.1.6">
     <link rel="stylesheet" href="./wedding.css?v=0.2.0">
     <link rel="stylesheet" href="./projects-table.css?v=0.1.1">
-    <script type="module" src="./app.js?v=0.44.104"></script>
+    <script type="module" src="./app.js?v=0.44.105"></script>
     <script type="module" src="./finance-personal-compact.js?v=0.1.0"></script>
   </head>
   <body>
@@ -35,6 +35,7 @@
         </a>
 
         <nav id="area-nav" class="area-nav" aria-label="Áreas"></nav>
+        <button id="desktop-area-refresh" class="refresh-app" type="button" aria-label="Actualizar datos" title="Actualizar la vista actual" data-demo-unmasked="true"><span class="refresh-app-icon" aria-hidden="true">↻</span><span class="refresh-app-label">Actualizar</span></button>
 
       </aside>
 
@@ -332,7 +333,6 @@
     <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="dialog-title">
       <button id="close-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
       <button id="wed-main-refresh" class="wed-main-refresh" type="button" hidden aria-label="Actualizar Boda" title="Actualizar datos de Boda"><span aria-hidden="true">↻</span><span class="wed-refresh-label">Actualizar</span></button>
-      <button id="desktop-area-refresh" class="refresh-app" type="button" hidden aria-label="Actualizar apartado actual" title="Actualizar los datos de este apartado" data-demo-unmasked="true"><span class="refresh-app-icon" aria-hidden="true">↻</span><span class="refresh-app-label">Actualizar</span></button>
       <button id="copy-area-link" type="button" hidden title="Copia la dirección de esta vista privada">Compartir enlace</button>
       <p id="dialog-context" class="context-label"></p>
       <h2 id="dialog-title"></h2>
