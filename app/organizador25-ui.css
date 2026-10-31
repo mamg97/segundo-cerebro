@@ -136,3 +136,34 @@
   .trv-grid > .trv-city-tile,.trv-city-tile .trv-card-photo {transition:none}
   .trv-grid > .trv-city-tile:hover {transform:none}
 }
+
+/* Viajes, vista cronológica única: las tarjetas se disponen siempre en horizontal. */
+.trv-grid.trv-horizontal-gallery {
+  display:flex;
+  flex-flow:row nowrap;
+  align-items:stretch;
+  justify-content:flex-start;
+  width:100%;
+  max-width:100%;
+  gap:16px;
+  padding:2px 2px 14px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  overscroll-behavior-inline:contain;
+  scroll-snap-type:x proximity;
+  scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch;
+}
+.trv-grid.trv-horizontal-gallery > .trv-card.trv-city-tile {
+  flex:0 0 clamp(230px,24vw,300px);
+  width:clamp(230px,24vw,300px);
+  max-width:calc(100vw - 60px);
+  scroll-snap-align:start;
+}
+@media(max-width:600px) {
+  .trv-grid.trv-horizontal-gallery {gap:12px;padding-bottom:12px}
+  .trv-grid.trv-horizontal-gallery > .trv-card.trv-city-tile {
+    flex-basis:min(72vw,285px);
+    width:min(72vw,285px);
+  }
+}

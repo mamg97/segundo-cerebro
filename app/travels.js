@@ -106,17 +106,21 @@ function tripCaption(event, detail) {
 const CITY_COVERS = [
   {
     match: /\b(?:varsovia|warsaw|warszawa)\b/i,
-    url: "https://commons.wikimedia.org/wiki/Special:FilePath/Old_Town_Market_Square,_2026,_Warsaw,_Poland.jpg?width=960",
-    source: "https://commons.wikimedia.org/wiki/File:Old_Town_Market_Square,_2026,_Warsaw,_Poland.jpg",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Warszawa_Rynek_Starego_Miasta_%28dron1%29.jpg/1280px-Warszawa_Rynek_Starego_Miasta_%28dron1%29.jpg",
+    source: "https://commons.wikimedia.org/wiki/File:Warszawa_Rynek_Starego_Miasta_(dron1).jpg",
     city: "Warsaw",
-    author: "Igor123121"
+    author: "Kapitel",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0/"
   },
   {
     match: /\bmarbella\b/i,
     url: "https://commons.wikimedia.org/wiki/Special:FilePath/Marbella_Old_Town.jpg?width=960",
     source: "https://commons.wikimedia.org/wiki/File:Marbella_Old_Town.jpg",
     city: "Marbella",
-    author: "Tina207"
+    author: "Tina207",
+    license: "CC BY 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/"
   }
 ];
 function coverForCity(text) {
@@ -131,9 +135,9 @@ function travelPhotoCredits(events) {
   if (!credits.size) return "";
   const links = [...credits.values()].map((cover) =>
     '<a href="' + escapeText(cover.source) + '" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">' +
-      escapeText(cover.city) + ' · ' + escapeText(cover.author) + '</a>').join(" · ");
-  return '<p class="trv-photo-credits">Fotografías: ' + links +
-    ' · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">CC BY 4.0</a></p>';
+      escapeText(cover.city) + ' · ' + escapeText(cover.author) + '</a> ' +
+    '<a href="' + escapeText(cover.licenseUrl) + '" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">(' + escapeText(cover.license) + ')</a>').join(" · ");
+  return '<p class="trv-photo-credits">Fotografías: ' + links + '</p>';
 }
 function card(event) {
   const detail = state.details.get(event.id);
@@ -148,16 +152,26 @@ function card(event) {
     '<small>' + escapeText(dateLabel(event.startsAt)) + '</small></span>' +
     '</button>';
 }
+export function sortTripsNewestFirst(trips) {
+  const timestamp=(event)=>{
+    const parsed=Date.parse(event?.startsAt || "");
+    return Number.isFinite(parsed) ? parsed : -Infinity;
+  };
+  return [...(Array.isArray(trips) ? trips : [])].sort((a,b)=>timestamp(b)-timestamp(a));
+}
 function renderList() {
-  setDialog("Viajes", "Viajes · próximos e histórico");
-  const upcoming = state.trips.filter((event) => !["CERRADO", "CANCELADO"].includes(event.status));
-  const previous = state.trips.filter((event) => ["CERRADO", "CANCELADO"].includes(event.status));
-  const html = '<div class="trv-wrap">' +
+  setDialog("Viajes", "Viajes · cronológico");
+  const ordered=sortTripsNewestFirst(state.trips);
+  const gallery=ordered.length
+    ? '<div class="trv-grid trv-horizontal-gallery" role="group" aria-label="Viajes ordenados del más reciente al más antiguo">' + ordered.map(card).join("") + '</div>'
+    : '<p class="trv-muted">Todavía no hay viajes registrados.</p>';
+  const html='<div class="trv-wrap">' +
     '<p class="trv-intro">Tus viajes y escapadas en un solo lugar. Cada ficha reúne reservas, planificación, tareas y enlaces, conectada al registro privado de Eventos.</p>' +
-    (upcoming.length ? '<h3 class="trv-label">Próximos</h3><div class="trv-grid">' + upcoming.map(card).join("") + "</div>" : '<p class="trv-muted">Sin viajes próximos registrados.</p>') +
-    (previous.length ? '<h3 class="trv-label">Histórico</h3><div class="trv-grid">' + previous.map(card).join("") + "</div>" : "") +
-    '<p class="trv-footnote">Fuente: Eventos · Los importes oficiales permanecen en Finanzas. No se muestran datos reales en la demo pública.</p>' + travelPhotoCredits(state.trips) + '</div>';
-  body().innerHTML = html;
+    gallery +
+    '<p class="trv-footnote">Fuente: Eventos · Los importes oficiales permanecen en Finanzas. No se muestran datos reales en la demo pública.</p>' +
+    travelPhotoCredits(ordered) +
+    '</div>';
+  body().innerHTML=html;
   body().querySelectorAll("[data-trv-open]").forEach((button) => button.addEventListener("click", () => {
     const id=button.dataset.trvOpen;
     if(!id)return;
@@ -317,12 +331,11 @@ export async function openTravelsDetail(financeSummary, mode, initialTripId=null
     const data=await getJson("/api/events?scope=all&kind=travel");
     if(requestId!==travelRequestSequence || !travelViewActive())return;
     state.trips=Array.isArray(data.events)?data.events:[];
-    const now=Date.now();
-    state.trips.sort((a,b)=>{
-      const aPast=["CERRADO","CANCELADO"].includes(a.status),bPast=["CERRADO","CANCELADO"].includes(b.status);
-      return aPast!==bPast?(aPast?1:-1):aPast?Date.parse(b.startsAt)-Date.parse(a.startsAt):Date.parse(a.startsAt)-Date.parse(b.startsAt);
-    });
-    const upcoming=state.trips.filter((t)=>!["CERRADO","CANCELADO"].includes(t.status)).slice(0,4);
+    state.trips=sortTripsNewestFirst(state.trips);
+    // Solo precargar el viaje próximo más cercano para recuperar su destino;
+    // el orden visible sigue siendo estrictamente descendente por fecha.
+    const upcoming=state.trips.filter((t)=>!["CERRADO","CANCELADO"].includes(t.status))
+      .sort((a,b)=>Date.parse(a.startsAt)-Date.parse(b.startsAt)).slice(0,1);
     if(upcoming.length){
       const first=await getJson("/api/events/"+encodeURIComponent(upcoming[0].id));
       if(requestId!==travelRequestSequence || !travelViewActive())return;
