@@ -71,3 +71,12 @@ test("private Worker and Finance UI both consume the reconciliation result", () 
   assert.match(app, /creditReceiptReconciliation/);
   assert.match(app, /finance-reconciliation-warning/);
 });
+
+test("null amounts remain unverified, never silently converted to zero", () => {
+  const missingEstimate = fixture();
+  missingEstimate.creditAccounts[0].estimatedNextReceipt = null;
+  assert.equal(reconcileCreditReceiptProvisions(missingEstimate).status, "unverified");
+  const missingPart = fixture();
+  missingPart.creditFuture[0].grossAmount = null;
+  assert.equal(reconcileCreditReceiptProvisions(missingPart).status, "unverified");
+});
