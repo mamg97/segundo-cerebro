@@ -146,16 +146,28 @@ function namedSeatDiagram(table,occupants,esc){
  const total=Math.max(1,Math.min(30,Number(table.capacity)||12));
  const byName=[...occupants].sort((a,b)=>a.name.localeCompare(b.name,"es")||String(a.id).localeCompare(String(b.id)));
  const seats=roundSeats(total,byName.length);
+ const occupantsBySeat=Array(total).fill(null),unplaced=[];
+ for(const guest of byName){
+  const i=guest.seatIndex;
+  if(Number.isInteger(i)&&i>=0&&i<total&&!occupantsBySeat[i])occupantsBySeat[i]=guest;
+  else unplaced.push(guest);
+ }
+ for(const guest of unplaced){
+  const next=occupantsBySeat.indexOf(null);
+  if(next!==-1)occupantsBySeat[next]=guest;
+ }
  const shortName=name=>{const tokens=name.trim().split(/\s+/);return tokens.length>1?tokens[0]+" "+tokens[tokens.length-1].slice(0,1)+".":tokens[0];};
  const title=table.shape==="presidencial"?"Presidencial":table.shape==="rectangular"?"Rectangular":"Redonda";
  return '<div class="wed-named-table" role="group" aria-label="'+esc(table.name)+': '+byName.length+' de '+total+' plazas ocupadas">'+
  '<div class="wed-named-table-center"><strong>'+esc(table.name)+'</strong><small>'+title+' · '+total+' plazas</small></div>'+
  seats.map((seat,index)=>{
-  const guest=byName[index];
+  const guest=occupantsBySeat[index];
   const left=(50+(seat.x-50)*0.91).toFixed(2),top=(50+(seat.y-50)*0.91).toFixed(2);
   const position='left:'+left+'%;top:'+top+'%';
-  if(!guest)return '<div class="wed-named-seat is-empty" style="'+position+'" aria-label="Plaza '+(index+1)+' libre">'+
-   '<span class="wed-seat-avatar" aria-hidden="true">+</span><span class="wed-seat-name">Libre</span></div>';
+  if(!guest)return '<button type="button" class="wed-named-seat is-empty" data-wed-seat-add="'+esc(table.id)+'" '+
+   'data-wed-seat-index="'+index+'" style="'+position+'" title="Añadir invitado en plaza '+(index+1)+'" '+
+   'aria-label="Añadir invitado en plaza '+(index+1)+' de '+esc(table.name)+'">'+
+   '<span class="wed-seat-avatar" aria-hidden="true">+</span><span class="wed-seat-name">Libre</span></button>';
   const initial=guest.name.trim().slice(0,1).toLocaleUpperCase("es");
   return '<button type="button" class="wed-named-seat is-filled" data-wed-seat-detail="'+esc(guest.id)+
    '" style="'+position+'" title="'+esc(guest.name)+'" aria-label="Abrir ficha de '+esc(guest.name)+'">'+
@@ -163,12 +175,13 @@ function namedSeatDiagram(table,occupants,esc){
    '<span class="wed-seat-name">'+esc(shortName(guest.name))+'</span></button>';
  }).join("")+'</div>';
 }
-function tableGuestPicker(table,guests,esc){
+function tableGuestPicker(table,guests,esc,chosenSeatIndex=null){
  const available=guests.filter(g=>!g.tableId&&g.rsvp!=="rechazado")
   .sort((a,b)=>a.name.localeCompare(b.name,"es"));
  const full=guests.filter(g=>g.tableId===table.id).length>=table.capacity;
  return '<section class="wed-table-picker" data-wed-table-picker="'+esc(table.id)+'" aria-label="Añadir personas a '+esc(table.name)+'">'+
- '<h5>Añadir personas a '+esc(table.name)+'</h5>'+
+ '<h5>Añadir personas a '+esc(table.name)+
+ (Number.isInteger(chosenSeatIndex)?' · Plaza '+(chosenSeatIndex+1):'')+'</h5>'+
  '<form data-wed-place-existing="'+esc(table.id)+'" class="wed-table-picker-form">'+
  '<label>Selecciona un invitado de vuestras listas'+
  '<select name="guestId" required '+(!available.length||full?'disabled':'')+'>'+
@@ -213,13 +226,13 @@ function tableFloorPosition(table,index,count,height){
  const y=typeof table.positionY==="number"&&Number.isFinite(table.positionY)?table.positionY:fallbackY;
  return {x:Math.min(84,Math.max(16,x)),y:Math.min(100-edgeY,Math.max(edgeY,y))};
 }
-export function renderTables(guests,tables,editing,esc,selectedId=null){
+export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSeatIndex=null){
  const summary=seatingSummary(guests,tables);
  const options=suggestWeddingSeating(guests,tables);
  const selected=tables.find(t=>t.id===selectedId)||tables[0]||null;
  const selectedGuests=selected?guests.filter(g=>g.tableId===selected.id):[];
  const rows=Math.max(1,Math.ceil(tables.length/3));
- const height=Math.max(660,rows*520);
+ const height=Math.max(550,rows*520);
  return '<section class="wed-planner-panel wed-seating-workspace">'+
  '<div class="wed-planner-heading"><div><h3>Organizador de mesas</h3>'+
  '<small>'+summary.seated+'/'+summary.confirmed+' confirmados ubicados · '+summary.tables+' mesas creadas</small></div>'+
@@ -230,9 +243,9 @@ export function renderTables(guests,tables,editing,esc,selectedId=null){
  metric("Pendientes",summary.pending)+metric("Opcionales",summary.optional)+'</div>'+
  (editing?tableForm(editing==="new"?null:tables.find(t=>t.id===editing),esc):"")+
  '<section class="wed-seating-block wed-floor-section"><div class="wed-seating-block-title"><h4>Plano de mesas</h4>'+
- '<small>Selecciona una mesa para editar sus invitados · Arrastra para moverla</small></div>'+
- (tables.length?'<div class="wed-floor-scroll" tabindex="0" aria-label="Plano de mesas; desplázate horizontalmente si es necesario">'+
- '<div class="wed-floor-plan" data-wed-floor-plan style="height:'+height+'px">'+
+ '<small>Pulsa + para sentar a alguien · Arrastra una mesa para moverla</small></div>'+
+ (tables.length?'<div class="wed-floor-scroll" tabindex="0" style="display:block;height:'+height+'px;min-height:'+height+'px" aria-label="Plano de mesas; desplázate horizontalmente si es necesario">'+
+ '<div class="wed-floor-plan" data-wed-floor-plan style="display:block;height:'+height+'px;min-height:'+height+'px">'+
  tables.map((t,index)=>{
   const occupants=guests.filter(g=>g.tableId===t.id);
   const pos=tableFloorPosition(t,index,tables.length,height);
@@ -243,7 +256,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null){
    namedSeatDiagram(t,occupants,esc)+
    '<span class="wed-floor-occupancy">'+occupants.length+'/'+t.capacity+' plazas</span></article>';
  }).join("")+'</div></div>'+
- '<p class="wed-planner-foot">El plano ocupa todo el ancho disponible. Los movimientos se guardan en privado; en pantallas estrechas puedes desplazarte horizontalmente. Las plazas alrededor de cada mesa representan ocupación, no un orden de sillas definitivo.</p>':
+ '<p class="wed-planner-foot">El plano ocupa todo el ancho disponible. Los movimientos se guardan en privado; en pantallas estrechas puedes desplazarte horizontalmente. Pulsa una silla libre para elegir el invitado; los asientos se mantienen en su posición.</p>':
  '<p class="wed-planner-empty">Todavía no hay mesas. Pulsa «Nueva mesa» para crear la primera.</p>')+
  (selected?'<article class="wed-seating-card wed-seating-details" data-wed-selected-details="'+esc(selected.id)+'">'+
  '<div class="wed-seating-head"><strong>'+esc(selected.name)+'</strong>'+
@@ -252,7 +265,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null){
  '<button type="button" data-wed-edit-table="'+esc(selected.id)+'">Editar mesa</button></div>'+
  '<div class="wed-seat-caption">'+selectedGuests.filter(g=>g.rsvp==="confirmado"&&g.groupName!=="opcionales").length+
  ' confirmados · '+Math.max(0,selected.capacity-selectedGuests.length)+' libres</div>'+
- tableGuestPicker(selected,guests,esc)+
+ tableGuestPicker(selected,guests,esc,chosenSeatIndex)+
  '<div class="wed-seating-guests">'+(selectedGuests.length?selectedGuests.map(g=>
  '<div class="wed-seated-guest"><button type="button" data-wed-seat-detail="'+esc(g.id)+'">'+esc(g.name)+'</button>'+
  '<button type="button" data-wed-unseat-guest="'+esc(g.id)+'" title="Quitar de esta mesa">Quitar</button></div>').join(""):

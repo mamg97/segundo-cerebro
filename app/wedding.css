@@ -685,11 +685,13 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
    Personal names come from authenticated D1 responses only. */
 .wed-floor-section{width:100%;min-width:0}
 .wed-floor-scroll{
+ display:block;min-height:550px;
  width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;
  border:1px solid var(--line);border-radius:14px;
  background:var(--surface);scrollbar-width:thin;
 }
 .wed-floor-plan{
+ display:block;min-height:550px;
  position:relative;width:100%;min-width:1200px;
  background-image:linear-gradient(to right,var(--line) 1px,transparent 1px),
                   linear-gradient(to bottom,var(--line) 1px,transparent 1px);
@@ -764,4 +766,27 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  .wed-seating-details .wed-seating-guests{grid-template-columns:1fr}
  .wed-seating-details .wed-seating-head{gap:8px}
  .wed-seating-details .wed-seating-head strong{flex-basis:100%}
+}
+
+/* Chairs are actual buttons, not inert dots. */
+.wed-floor-table .wed-named-seat.is-empty{
+ cursor:pointer;opacity:1;
+ border:1px dashed var(--line);background:var(--surface);
+}
+.wed-floor-table .wed-named-seat.is-empty .wed-seat-avatar{
+ color:var(--blue);border-color:var(--blue);
+ background:var(--blue-soft);font-size:17px;
+}
+.wed-floor-table .wed-named-seat.is-empty:hover,
+.wed-floor-table .wed-named-seat.is-empty:focus-visible{
+ z-index:9;outline:2px solid var(--blue);outline-offset:2px;
+ background:var(--blue-soft);
+}
+.wed-floor-table .wed-named-seat.is-empty:hover .wed-seat-name,
+.wed-floor-table .wed-named-seat.is-empty:focus-visible .wed-seat-name{
+ display:block;font-size:9px;
+}
+.wed-floor-plan:empty{min-height:550px}
+@media(max-width:650px){
+ .wed-floor-scroll,.wed-floor-plan{min-height:550px}
 }

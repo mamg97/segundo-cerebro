@@ -32,9 +32,12 @@ se seleccionan pulsando encima y se trasladan con arrastre de ratón/táctil o
 flechas del teclado. La selección abre debajo las acciones y el listado de nombres.
 Cada mesa dibuja iniciales y nombres abreviados alrededor del círculo; pulsar
 una persona abre su ficha. Las coordenadas porcentuales se guardan en D1
-privado con revisión optimista, sin cambiar la asignación de los invitados. El orden visual se deriva alfabéticamente de los invitados
-asignados: **no se guarda número de silla**, por lo que el diagrama
-no representa todavía una colocación física numerada permanente.
+privado con revisión optimista, sin cambiar la asignación de los invitados. Cada invitado asignado tiene `seat_index` privado (0-based), con unicidad
+por mesa. La migración `0016_wedding_seat_positions.sql` numera de forma
+determinista los invitados antiguos sin modificar su mesa ni RSVP. Los
+asientos libres son botones: pulsarlos abre el selector para esa plaza;
+el servidor comprueba aforo, posición y concurrencia antes de persistir.
+El plano tiene altura explícita incluso cuando existe una sola mesa.
 
 Por defecto, crear una mesa nueva ofrece forma redonda y 12 plazas;
 seleccionar `presidencial` en un alta nueva cambia el aforo inicial

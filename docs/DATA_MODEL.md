@@ -57,12 +57,18 @@ personales/confidenciales y solo se consultan en API privada.
 
 La pantalla de Mesas asigna personas mediante el `table_id`
 preexistente de `wedding_guests`. No añade tablas, duplicados
-ni columnas para asientos. La migración `0015_wedding_table_positions.sql`
+ni tablas duplicadas. La migración `0016_wedding_seat_positions.sql`
+añade `wedding_guests.seat_index` [0..29] opcional y un índice único
+por `(table_id,seat_index)` para impedir dobles ocupaciones, incluso en
+sesiones concurrentes. La migración numera las ocupaciones anteriores
+sin cambiar invitado, mesa, asistencia ni otros atributos.
+La migración `0015_wedding_table_positions.sql`
 añade solo `position_x` y `position_y` opcionales en `wedding_tables`;
 son porcentajes numéricos [0..100] del centro de la mesa en el plano.
 Una pareja nula representa una mesa heredada aún no posicionada;
-la UI muestra una distribución automática sin escribirla. Las etiquetas alrededor de una mesa
-siguen un orden visual alfabético, no un número de asiento persistente.
+la UI muestra una distribución automática sin escribirla. Las etiquetas aparecen en el asiento persistido; pulsar una plaza vacía
+abre el alta o asignación de un invitado existente en ese número.
+Las lecturas antiguas sin índice todavía usan asignación visual determinista.
 Altas de mesas nuevas: `redonda / 12` plazas por defecto;
 al elegir `presidencial` el aforo inicial pasa a 6. La elección
 de forma no cambia la capacidad de mesas ya guardadas.
