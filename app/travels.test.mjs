@@ -55,3 +55,22 @@ test("viajes: galería única ordenada por fecha descendente sin depender del es
   assert.deepEqual(sorted.map(x=>x.id),["future","recent","old","unparseable"]);
   assert.equal(trips[0].id,"old","no mutar el listado canónico");
 });
+
+test("Travel facts: newer day/hour overrides earlier proposals; map points remain private facts",()=>{
+  const fake=s=>({summary:s});
+  const result=parseTravelDetail({facts:[
+    fake("PLAN_DIA | 2027-02-02 | Paseo antiguo"),
+    fake("PLAN_HORA | 2027-02-02 | 14:00 | PROPUESTA | VISITA | Antigua"),
+    fake("PLAN_DIA | 2027-02-02 | Paseo corregido"),
+    fake("PLAN_HORA | 2027-02-02 | 14:00 | PROPUESTA | VISITA | Corregida"),
+    fake("MAPA_PUNTO | 2027-02-02 | 10 | Plaza de ejemplo | Plaza Test City | PROPUESTA | 52.123 | 21.456"),
+    fake("MAPA_PUNTO | OPCIONAL | 50 | Museo alternativo | Museo Test City | OPCIONAL | 52.12 | 21.45")
+  ]});
+  assert.equal(result.days.length,1);
+  assert.match(result.days[0].text,/corregido/);
+  assert.equal(result.slots.length,1);
+  assert.equal(result.slots[0].text,"Corregida");
+  assert.equal(result.points.length,2);
+  assert.equal(result.points[0].lat,52.123);
+  assert.equal(result.points[1].date,"OPCIONAL");
+});
