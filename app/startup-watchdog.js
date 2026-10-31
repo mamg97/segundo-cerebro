@@ -8,6 +8,42 @@
   let recovering = false;
   const TIMEOUT_MS = 20_000;
 
+  async function recoverOnce(button = null) {
+    if (recovering) return;
+    recovering = true;
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Recuperando…";
+    }
+    // A query marker survives Safari's hard reload, preventing an infinite
+    // reload loop even when private mode blocks sessionStorage.
+    const next = new URL(location.href);
+    next.searchParams.set("segun_reload", String(Date.now()));
+    try {
+      const clearStaleController = (async () => {
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.filter(r => new URL(r.scope).pathname === "/app/")
+            .map(r => r.unregister()));
+        }
+        if ("caches" in window) {
+          const names = await caches.keys();
+          await Promise.all(names.filter(name => name.startsWith("segun-public-static-"))
+            .map(name => caches.delete(name)));
+        }
+      })();
+      // Some iOS WebKit storage operations can stall indefinitely. Reload
+      // rather than leave the user stuck at a disabled recovery button.
+      await Promise.race([
+        clearStaleController,
+        new Promise(resolve => window.setTimeout(resolve, 2500))
+      ]);
+    } catch {
+      // Login/network errors do not prevent a cache-busted navigation.
+    }
+    location.replace(next.href);
+  }
+
   function showNotice() {
     if (notice || document.documentElement.dataset.segunBoot === "ready") return;
     if (!document.body) return;
@@ -30,29 +66,7 @@
     button.type = "button";
     button.textContent = "Recuperar conexión";
     button.style.cssText = "padding:9px 14px;border:0;border-radius:8px;color:#07101d;background:#f4a340;font:600 14px system-ui";
-    button.addEventListener("click", async () => {
-      if (recovering) return;
-      recovering = true;
-      button.disabled = true;
-      button.textContent = "Recuperando…";
-      try {
-        if ("serviceWorker" in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.filter(r => new URL(r.scope).pathname === "/app/")
-            .map(r => r.unregister()));
-        }
-        if ("caches" in window) {
-          const names = await caches.keys();
-          await Promise.all(names.filter(name => name.startsWith("segun-public-static-"))
-            .map(name => caches.delete(name)));
-        }
-      } catch {
-        // A blocked local cache API must not prevent a normal retry.
-      }
-      const next = new URL(location.href);
-      next.searchParams.set("segun_reload", String(Date.now()));
-      location.replace(next.href);
-    });
+    button.addEventListener("click", () => { void recoverOnce(button); });
     notice.append(title, detail, button);
     document.body.prepend(notice);
   }
@@ -62,6 +76,14 @@
   });
   window.addEventListener("segun:boot-failed", showNotice);
   window.setTimeout(() => {
-    if (document.documentElement.dataset.segunBoot !== "ready") showNotice();
+    if (document.documentElement.dataset.segunBoot === "ready") return;
+    // First failed startup: self-repair only the public static caches.
+    // Second failure: show the button so the Access/session issue is visible.
+    if (!new URL(location.href).searchParams.has("segun_reload") &&
+        navigator.onLine !== false) {
+      void recoverOnce();
+    } else {
+      showNotice();
+    }
   }, TIMEOUT_MS);
 })();
