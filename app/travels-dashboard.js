@@ -22,7 +22,7 @@ export function tripMapLink(address,mode="embed"){
 export function travelSavedMapsList(references){
   if(!Array.isArray(references))return null;
   for(const ref of references){
-    if(!ref||!["map_list","google_maps_list"].includes(ref.refType||ref.ref_type))continue;
+    if(!ref||!["map_list","google_maps_list"].includes(ref.refType||ref.ref_type||ref.type))continue;
     const raw=ref.sourceRef||ref.source_ref;
     if(typeof raw!=="string"||raw.length>2048)continue;
     try{
