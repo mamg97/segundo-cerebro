@@ -21,6 +21,8 @@ test("PLAN_HORA facts produce chronological rows with hour on left and days as c
   assert.ok(grid.times.indexOf("10:00")<grid.times.indexOf("20:45"));
   const html=travelScheduleMarkup(groups,date=>date);
   assert.match(html,/<th scope="col" class="trv-time-axis">Hora<\/th>/);
+  assert.match(html,/<colgroup><col class="trv-time-col"><col class="trv-day-col"><col class="trv-day-col"><\/colgroup>/);
+  assert.match(html,/Desliza la tabla para ver los demás días/);
   assert.match(html,/<th scope="row" class="trv-time-axis">20:45<\/th>/);
   assert.match(html,/Paseo por reservar/);
   assert.match(html,/data-state="PENDIENTE"/);

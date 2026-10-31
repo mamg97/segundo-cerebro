@@ -23,6 +23,7 @@ export function travelScheduleMarkup(groups,dayLabel) {
   if(!model.days.length)return '<p class="trv-muted">Todavía no hay jornadas planificadas en Eventos.</p>';
   const titles='<tr><th scope="col" class="trv-time-axis">Hora</th>'+model.days.map((d,i)=>
     '<th scope="col"><span>DÍA '+(i+1)+'</span><strong>'+e(dayLabel(d.date))+'</strong></th>').join("")+'</tr>';
+  const columns='<colgroup><col class="trv-time-col">'+model.days.map(()=>'<col class="trv-day-col">').join("")+'</colgroup>';
   const rows=model.times.map(time=>'<tr class="'+(model.days.some(day=>(model.cells.get(day.date+"|"+time)||[]).length>0)?"trv-time-row-active":"trv-time-row-empty")+'"><th scope="row" class="trv-time-axis">'+e(time)+'</th>'+model.days.map(day=>{
     const items=model.cells.get(day.date+"|"+time)||[];
     return '<td>'+ (items.length?items.map(slot=>{
@@ -34,6 +35,7 @@ export function travelScheduleMarkup(groups,dayLabel) {
   const unassigned=model.days.map(day=>day.text?
     '<article><strong>'+e(dayLabel(day.date))+'</strong><p>'+e(day.text)+'</p></article>':"").join("");
   return '<div class="trv-timetable-scroll" tabindex="0" role="region" aria-label="Planning horario por días; desplázate horizontalmente si es necesario">'+
-    '<table class="trv-timetable"><thead>'+titles+'</thead><tbody>'+rows+'</tbody></table></div>'+
+    '<table class="trv-timetable">'+columns+'<thead>'+titles+'</thead><tbody>'+rows+'</tbody></table></div>'+
+    (model.days.length>1?'<p class="trv-timetable-hint">Desliza la tabla para ver los demás días →</p>':"")+
     (unassigned?'<details class="trv-time-notes"><summary>Ver las notas completas por día</summary><div>'+unassigned+'</div></details>':"");
 }

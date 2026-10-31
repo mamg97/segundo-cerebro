@@ -49,16 +49,14 @@
     font-size:10px;line-height:1.35;margin:8px 0 0;overflow-wrap:anywhere;
   }
   .detail-dialog.travels-dialog .trv-wrap > .trv-footnote {font-size:10px;margin:8px 0 0}
-  /* Two square cards are visible in the horizontal gallery on a phone. */
-  .detail-dialog.travels-dialog .trv-grid.trv-horizontal-gallery {
-    display:flex;flex-flow:row nowrap;gap:9px;
+  /* Wrapped square cards: two across on phones; no sideways gallery. */
+  .detail-dialog.travels-dialog .trv-grid.trv-responsive-gallery {
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
     min-width:0;max-width:100%;width:100%;
-    padding:1px 1px 7px;overflow-x:auto;overflow-y:hidden;
-    scroll-snap-type:x proximity;
+    padding:1px 0 7px;overflow:visible;
   }
-  .detail-dialog.travels-dialog .trv-grid.trv-horizontal-gallery > .trv-card.trv-city-tile {
-    flex:0 0 min(44vw,190px);width:min(44vw,190px);
-    max-width:none;min-width:0;
+  .detail-dialog.travels-dialog .trv-grid.trv-responsive-gallery > .trv-card.trv-city-tile {
+    width:100%;max-width:100%;min-width:0;
     aspect-ratio:1 / 1;min-height:0;
     padding:10px;border-radius:13px;
   }
@@ -116,8 +114,9 @@
   .detail-dialog.travels-dialog .trv-dash-nav {
     display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
     gap:4px;min-width:0;max-width:100%;width:100%;
-    overflow:visible;white-space:normal;padding:4px 0;
-    position:sticky;top:0;border-radius:8px;
+    overflow:visible;white-space:normal;padding:5px 2px;
+    position:sticky;top:0;z-index:5;border-radius:8px;
+    background:var(--surface);
   }
   .detail-dialog.travels-dialog .trv-dash-nav button {
     box-sizing:border-box;min-width:0;max-width:100%;
@@ -192,10 +191,47 @@
     overflow-x:auto;overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
   }
+  /* Keep the time column visible and fit one entire readable day on iPhone.
+     Additional days scroll inside the timetable, not across the dashboard. */
   .detail-dialog.travels-dialog .trv-timetable {
-    width:max-content;min-width:740px;
+    width:max-content;min-width:0;table-layout:fixed;
+    -webkit-text-size-adjust:100%;text-size-adjust:100%;
   }
-  .detail-dialog.travels-dialog .trv-timetable tbody td {min-width:130px}
+  .detail-dialog.travels-dialog .trv-timetable col.trv-time-col {width:56px}
+  .detail-dialog.travels-dialog .trv-timetable col.trv-day-col {
+    width:clamp(216px,calc(100vw - 126px),380px);
+  }
+  .detail-dialog.travels-dialog .trv-timetable .trv-time-axis {
+    width:56px;min-width:56px;max-width:56px;
+    padding-inline:4px;font-size:11px;white-space:nowrap;
+  }
+  .detail-dialog.travels-dialog .trv-timetable thead th:not(.trv-time-axis) {
+    padding:8px 9px;overflow-wrap:anywhere;
+  }
+  .detail-dialog.travels-dialog .trv-timetable thead th>strong {
+    font-size:12px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;
+  }
+  .detail-dialog.travels-dialog .trv-timetable tbody td {
+    width:clamp(216px,calc(100vw - 126px),380px);
+    min-width:0;max-width:none;padding:4px;
+  }
+  .detail-dialog.travels-dialog .trv-time-activity {
+    box-sizing:border-box;display:grid;width:100%;min-width:0;max-width:100%;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"category" "description" "status";
+    row-gap:3px;padding:7px 8px;overflow-wrap:anywhere;
+  }
+  .detail-dialog.travels-dialog .trv-time-activity strong {
+    min-width:0;max-width:100%;font-size:12px;line-height:1.35;
+    white-space:normal;overflow-wrap:anywhere;word-break:normal;
+  }
+  .detail-dialog.travels-dialog .trv-time-activity small {
+    white-space:normal;overflow-wrap:anywhere;
+  }
+  .detail-dialog.travels-dialog .trv-timetable-hint {
+    display:block;font-size:10px;color:var(--ink-soft);
+    margin:6px 2px 0;line-height:1.3;
+  }
   .detail-dialog.travels-dialog .trv-time-notes {padding:9px 10px}
   .detail-dialog.travels-dialog .trv-row {padding:9px 10px;gap:3px}
   .detail-dialog.travels-dialog .trv-task {padding:9px 10px;gap:5px}
@@ -207,4 +243,10 @@
   .detail-dialog.travels-dialog .trv-stats > div {padding:9px}
   .detail-dialog.travels-dialog .trv-budget-meter {padding:10px;margin-bottom:8px}
   .detail-dialog.travels-dialog .trv-dashboard [id^="trv-dash-"] {scroll-margin-top:49px}
+}
+
+@media(max-width:340px){
+  .detail-dialog.travels-dialog .trv-grid.trv-responsive-gallery {
+    grid-template-columns:minmax(0,1fr);
+  }
 }

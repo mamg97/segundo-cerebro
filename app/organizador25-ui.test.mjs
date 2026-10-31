@@ -23,12 +23,14 @@ test("Viajes: tarjetas 1:1, título y fecha sobre foto sin badges ni estados",()
  assert.match(travels,/travelPhotoCredits\(ordered\)/);
  assert.match(travels,/CC BY 4\.0/);
  const gallery=travels.slice(travels.indexOf("function renderList()"),travels.indexOf("function section("));
- assert.match(gallery,/trv-horizontal-gallery/);
+ assert.match(gallery,/trv-responsive-gallery/);
  assert.doesNotMatch(gallery,/<h3 class="trv-label">/);
  assert.match(gallery,/sortTripsNewestFirst\(state\.trips\)/);
- assert.match(css,/\.trv-grid\.trv-horizontal-gallery \{[\s\S]*?display:flex;/);
- assert.match(css,/flex-flow:row nowrap/);
- assert.match(css,/overflow-x:auto/);
+ assert.match(css,/\.trv-grid\.trv-responsive-gallery\{[\s\S]*?display:grid;/);
+ assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(css,/@container \(max-width:680px\)/);
+ assert.match(css,/@container \(max-width:290px\)/);
+ assert.doesNotMatch(css,/trv-horizontal-gallery|flex-flow:row nowrap/);
  assert.match(travels,/Kapitel/);
  assert.match(travels,/CC BY-SA 4\.0/);
 });

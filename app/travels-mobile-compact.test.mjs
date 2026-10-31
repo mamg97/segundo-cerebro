@@ -26,7 +26,10 @@ test("dashboard uses four compact metrics, five visible anchors and reduced map 
  assert.match(compact,/repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(compact,/repeat\(5,minmax\(0,1fr\)\)/);
  assert.match(compact,/min-height:190px!important/);
- assert.match(compact,/flex:0 0 min\(44vw,190px\)/);
+ assert.match(compact,/\.trv-grid\.trv-responsive-gallery \{/);
+ assert.match(compact,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(compact,/padding:1px 0 7px;overflow:visible/);
+ assert.doesNotMatch(compact,/trv-horizontal-gallery|scroll-snap-type:x/);
 });
 
 test("phone shell is owned by viewport CSS; travel density cannot override it",()=>{
@@ -37,4 +40,17 @@ test("phone shell is owned by viewport CSS; travel density cannot override it",(
  assert.match(viewport,/>#close-dialog,/);
  assert.doesNotMatch(compact,/--mobile-bottom-height|\.mobile-bottom-nav|padding:42px 10px 0!important/);
  assert.doesNotMatch(compact,/body\.route-area-active #detail-dialog\.travels-dialog\[open\]::before/);
+});
+
+
+test("mobile itinerary has one readable day width, wrapped activities and a local horizontal scroll",()=>{
+ assert.match(timetable,/class="trv-day-col"/);
+ assert.match(timetable,/class="trv-time-col"/);
+ assert.match(compact,/width:clamp\(216px,calc\(100vw - 126px\),380px\)/);
+ assert.match(compact,/\.trv-timetable \{[\s\S]*?width:max-content;min-width:0;table-layout:fixed/);
+ assert.match(compact,/grid-template-areas:"category" "description" "status"/);
+ assert.match(compact,/white-space:normal;overflow-wrap:anywhere;word-break:normal/);
+ assert.match(compact,/-webkit-text-size-adjust:100%/);
+ assert.doesNotMatch(compact,/min-width:740px/);
+ assert.match(compact,/position:sticky;top:0;z-index:5;[\s\S]*?background:var\(--surface\)/);
 });

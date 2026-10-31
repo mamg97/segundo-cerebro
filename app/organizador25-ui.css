@@ -137,33 +137,30 @@
   .trv-grid > .trv-city-tile:hover {transform:none}
 }
 
-/* Viajes, vista cronológica única: las tarjetas se disponen siempre en horizontal. */
-.trv-grid.trv-horizontal-gallery {
-  display:flex;
-  flex-flow:row nowrap;
-  align-items:stretch;
-  justify-content:flex-start;
-  width:100%;
-  max-width:100%;
-  gap:16px;
-  padding:2px 2px 14px;
-  overflow-x:auto;
-  overflow-y:hidden;
-  overscroll-behavior-inline:contain;
-  scroll-snap-type:x proximity;
-  scrollbar-width:thin;
-  -webkit-overflow-scrolling:touch;
+/* Viajes: chronological order remains in DOM; layout wraps, never scrolls sideways.
+   3 columns on roomy containers, 2 if narrower, 1 only on tiny containers. */
+.trv-wrap{container-type:inline-size}
+.trv-grid.trv-responsive-gallery{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(9px,1.5vw,16px);
+  width:100%;max-width:100%;min-width:0;
+  padding:2px 0 10px;
+  overflow:visible;
 }
-.trv-grid.trv-horizontal-gallery > .trv-card.trv-city-tile {
-  flex:0 0 clamp(230px,24vw,300px);
-  width:clamp(230px,24vw,300px);
-  max-width:calc(100vw - 60px);
-  scroll-snap-align:start;
+.trv-grid.trv-responsive-gallery > .trv-card.trv-city-tile{
+  width:100%;max-width:100%;min-width:0;
+  min-height:0;aspect-ratio:1 / 1;
 }
-@media(max-width:600px) {
-  .trv-grid.trv-horizontal-gallery {gap:12px;padding-bottom:12px}
-  .trv-grid.trv-horizontal-gallery > .trv-card.trv-city-tile {
-    flex-basis:min(72vw,285px);
-    width:min(72vw,285px);
-  }
+@container (max-width:680px){
+  .trv-grid.trv-responsive-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@container (max-width:290px){
+  .trv-grid.trv-responsive-gallery{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:760px){
+  .trv-grid.trv-responsive-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:340px){
+  .trv-grid.trv-responsive-gallery{grid-template-columns:minmax(0,1fr)}
 }

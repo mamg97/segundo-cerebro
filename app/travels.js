@@ -183,7 +183,7 @@ function renderList() {
   setDialog("Viajes", "Viajes · cronológico");
   const ordered=sortTripsNewestFirst(state.trips);
   const gallery=ordered.length
-    ? '<div class="trv-grid trv-horizontal-gallery" role="group" aria-label="Viajes ordenados del más reciente al más antiguo">' + ordered.map(card).join("") + '</div>'
+    ? '<div class="trv-grid trv-responsive-gallery" role="group" aria-label="Viajes ordenados del más reciente al más antiguo">' + ordered.map(card).join("") + '</div>'
     : '<p class="trv-muted">Todavía no hay viajes registrados.</p>';
   const html='<div class="trv-wrap">' +
     '<p class="trv-intro">Tus viajes y escapadas en un solo lugar. Cada ficha reúne reservas, planificación, tareas y enlaces, conectada al registro privado de Eventos.</p>' +

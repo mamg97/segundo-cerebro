@@ -36,8 +36,8 @@ test("iOS bottom safe area is not double-counted and is visually filled",()=>{
 
 test("travel gallery and opened itinerary compact without modifying desktop",()=>{
  const css=read("./mobile-viewport-fixes.css");
- assert.match(css,/flex:0 0 clamp\(132px,40vw,170px\)!important/);
- assert.match(css,/aspect-ratio:1\/1/);
+ assert.doesNotMatch(css,/trv-horizontal-gallery/);
+ assert.match(read("./travels-mobile-compact.css"),/trv-grid\.trv-responsive-gallery/);
  assert.match(css,/\.trv-map-canvas iframe\{height:210px!important\}/);
  assert.match(css,/\.trv-dash-lead,[\s\S]*?grid-template-columns:minmax\(0,1fr\)!important/);
  assert.match(css,/\.trv-intro,[\s\S]*?display:none!important/);

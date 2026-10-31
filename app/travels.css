@@ -232,7 +232,9 @@
 
 /* Itinerario horario: horas verticales, días horizontales. */
 .trv-timetable-scroll{width:100%;max-width:100%;overflow-x:auto;max-height:none;border:1px solid var(--line);border-radius:14px;overscroll-behavior:contain;scrollbar-width:thin}
-.trv-timetable{width:100%;min-width:810px;border-collapse:separate;border-spacing:0;table-layout:fixed;color:var(--ink);font-variant-numeric:tabular-nums}
+.trv-timetable{width:100%;min-width:810px;border-collapse:separate;border-spacing:0;table-layout:fixed;color:var(--ink);font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.trv-timetable col.trv-time-col{width:72px}
+.trv-timetable col.trv-day-col{width:240px}
 .trv-timetable thead th{position:sticky;top:0;z-index:2;text-align:left;padding:9px 10px;background:var(--surface);border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top}
 .trv-timetable thead th>span{display:block;color:var(--blue);font-size:9px;font-weight:850;letter-spacing:.09em}
 .trv-timetable thead th>strong{display:block;margin-top:3px;font-size:12px;font-weight:850;text-transform:capitalize;line-height:1.25}
@@ -248,6 +250,8 @@
 .trv-time-empty{display:block;text-align:center;padding:2px 0;line-height:1;min-height:10px;font-size:10px;color:var(--ink-soft);opacity:.28}
 .trv-time-activity{border:1px solid var(--line);border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:8px;padding:6px 8px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"category status" "description description";column-gap:8px;row-gap:3px;align-items:start;min-height:0}
 .trv-time-activity+.trv-time-activity{margin-top:4px}
+.trv-time-activity,.trv-time-activity strong{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.trv-timetable-hint{display:none}
 .trv-time-activity[data-state="PENDIENTE"]{border-left-color:#d69f4a;background:color-mix(in srgb,var(--surface) 90%,#e0a852)}
 .trv-time-activity[data-state="PROPUESTA"]{border-left-color:#8a97ab;background:var(--surface)}
 .trv-time-activity strong{grid-area:description;font-size:12px;font-weight:750;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
