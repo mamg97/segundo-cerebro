@@ -1,4 +1,5 @@
 // Private wedding collaboration view. No embedded personal records.
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory} from "./wedding-planner-ui.js?v=0.1.0";
 export const WEDDING_TYPES=[
  ["all","Todo","✦"],["finca","Fincas","🏛"],["catering","Catering","🍽"],
  ["decoracion","Decoración e ideas","✿"],["fotografia","Foto y vídeo","📷"],
@@ -11,7 +12,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:""};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,draftCategory:"ideas"};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -67,11 +68,13 @@ export function inspirationItems(items,filter="all",search=""){
  });
 }
 function viewTabs(){
- return '<nav class="wed-view-tabs" aria-label="Secciones de boda">'+
- '<button type="button" data-wed-view="kanban" aria-pressed="'+(state.view==="kanban")+'">☷ Kanban</button>'+
- '<button type="button" data-wed-view="inspiracion" aria-pressed="'+(state.view==="inspiracion")+'">✦ Inspiración</button>'+
- '<button type="button" data-wed-view="planificacion" aria-pressed="'+(state.view==="planificacion")+'">▤ Planificación y presupuesto</button>'+
- '</nav>';
+ const tabs=[
+ ["kanban","Kanban"],["agenda","Agenda"],["proveedores","Proveedores"],
+ ["invitados","Invitados"],["mesas","Mesas"],["planificacion","Presupuesto"],
+ ["inspiracion","Inspiración"],["bodasnet","Bodas.net ↗"]
+ ];
+ return '<nav class="wed-view-tabs" aria-label="Herramientas de boda">'+tabs.map(([id,label])=>
+  '<button type="button" data-wed-view="'+id+'" aria-pressed="'+(state.view===id)+'">'+label+'</button>').join("")+'</nav>';
 }
 function inspirationCard(item){
  const pinterest=isPinterestLink(item.url);
@@ -173,6 +176,15 @@ function refreshBar(){
 function home(){
  if(state.view==="inspiracion")return inspirationHome();
  if(state.view==="kanban")return kanbanHome();
+ if(state.view==="agenda")return '<div class="wed-workspace">'+viewTabs()+renderAgenda(state.items,esc)+'</div>';
+ if(state.view==="proveedores")return '<div class="wed-workspace">'+viewTabs()+renderProviders(state.items,esc)+'</div>';
+ if(state.view==="bodasnet")return '<div class="wed-workspace">'+viewTabs()+renderBodasDirectory(esc)+'</div>';
+ if(state.view==="invitados"||state.view==="mesas"){
+  const contents=!state.plannerLoaded?'<div class="wed-loading">Cargando información privada…</div>':
+   state.view==="invitados"?renderGuests(state.guests,state.tables,state.guestEditing,esc):
+   renderTables(state.guests,state.tables,state.tableEditing,esc);
+  return '<div class="wed-workspace">'+viewTabs()+contents+'</div>';
+ }
  const n=weddingTotals(state.items);
  return '<div class="wed-workspace">'+viewTabs()+
    '<div class="wed-stats"><div><small>Elementos activos</small><strong>'+n.total+'</strong></div>'+
@@ -197,7 +209,7 @@ function editor(){
   '<div class="wed-editor"><h3>'+(original?"Editar elemento":inspirationMode?"Guardar idea de inspiración":"Añadir a la boda")+'</h3>'+
   '<p>'+(inspirationMode?"Pega el enlace de Pinterest (si lo tienes), añade notas y adjunta una imagen de referencia.":"Podréis modificar estos datos desde cualquiera de vuestras sesiones autorizadas.")+'</p>'+
   '<form id="wed-form"><div class="wed-form-grid">'+
-  '<label>Categoría<select name="category" required>'+WEDDING_TYPES.filter(x=>x[0]!=="all").map(x=>'<option value="'+x[0]+'" '+((original?.category||"ideas")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
+  '<label>Categoría<select name="category" required>'+WEDDING_TYPES.filter(x=>x[0]!=="all").map(x=>'<option value="'+x[0]+'" '+((original?.category||state.draftCategory||"ideas")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
   '<label>Estado<select name="status" required>'+STATUSES.map(x=>'<option value="'+x[0]+'" '+((original?.status||state.draftStatus||"idea")===x[0]?"selected":"")+'>'+esc(x[1])+'</option>').join("")+'</select></label>'+
   '<label class="wide">Nombre o idea *<input type="text" name="title" maxlength="180" required value="'+esc(original?.title||"")+'" placeholder="Ej. Visitar finca…"></label>'+
   '<label class="wide">Descripción y notas<textarea name="description" rows="4" maxlength="4000" placeholder="Detalles, pros y contras, preguntas pendientes…">'+esc(original?.description||"")+'</textarea></label>'+
@@ -222,13 +234,96 @@ function show(){
 function errorMsg(e){
  if(e.status===409)return "Este elemento ha cambiado desde que lo abriste. He actualizado los datos para evitar sobrescribir los cambios de la otra persona.";
  const dict={ACCESS_REQUIRED:"Acceso denegado. Es necesario iniciar sesión con una cuenta autorizada por Cloudflare Access.",STORAGE_UNAVAILABLE:"La base de datos no está disponible.",
-   INVALID_ORIGIN:"La sesión no permite guardar cambios.",INVALID_ITEM:"Revisa los campos obligatorios.",PAID_EXCEEDS_CONTRACTED:"Lo pagado no puede superar lo contratado.",INVALID_IMAGE:"El archivo no es una imagen admitida.",IMAGE_TOO_LARGE:"La fotografía es demasiado grande."};
+   INVALID_ORIGIN:"La sesión no permite guardar cambios.",INVALID_ITEM:"Revisa los campos obligatorios.",PAID_EXCEEDS_CONTRACTED:"Lo pagado no puede superar lo contratado.",INVALID_IMAGE:"El archivo no es una imagen admitida.",IMAGE_TOO_LARGE:"La fotografía es demasiado grande.",TABLE_FULL:"La mesa está completa.",TABLE_HAS_GUESTS:"Vacía la mesa antes de eliminarla.",CAPACITY_BELOW_SEATED:"La capacidad no puede ser inferior a los invitados asignados.",REVISION_CONFLICT:"Los datos han cambiado en otra sesión. Se han actualizado para evitar sobrescribirlos.",DECLINED_SEATING:"No se puede asignar mesa a alguien que no asistirá.",INVALID_ITEM:"Revisa los datos del formulario.",STORAGE_UNAVAILABLE:"No se ha podido acceder al almacén privado."};
  return dict[e.message]||"No se pudo completar la operación ("+e.message+").";
 }
 async function load(){
  const data=await getJson("/api/wedding/items");
  if(!active())return;
- state.items=data.items||[];state.viewer=data.viewer||"";state.loaded=true;state.error="";show();
+ state.items=data.items||[];state.viewer=data.viewer||"";state.loaded=true;state.error="";
+ if(["invitados","mesas"].includes(state.view))await loadPlanner();else show();
+}
+async function loadPlanner(){
+ if(state.plannerBusy)return;
+ state.plannerBusy=true;
+ try{
+  const [guests,tables]=await Promise.all([getJson("/api/wedding/guests"),getJson("/api/wedding/tables")]);
+  if(!active())return;
+  state.guests=guests.items||[];state.tables=tables.items||[];
+  state.plannerLoaded=true;state.error="";
+ }catch(error){state.error=errorMsg(error);}
+ finally{state.plannerBusy=false;if(active())show();}
+}
+async function plannerMutation(action){
+ if(state.busy)return;
+ state.busy=true;
+ try{
+  await action();state.guestEditing=null;state.tableEditing=null;state.plannerLoaded=false;
+  state.error="";await loadPlanner();
+ }catch(error){
+  state.error=errorMsg(error);state.plannerLoaded=false;await loadPlanner();
+  state.error=errorMsg(error);show();
+ }finally{state.busy=false;}
+}
+function guestPayload(form){
+ const data=new FormData(form);
+ return {name:String(data.get("name")||"").trim(),groupName:String(data.get("groupName")||"").trim(),
+  rsvp:String(data.get("rsvp")||"pendiente"),menu:String(data.get("menu")||""),
+  tableId:String(data.get("tableId")||"")||null,
+  dietaryNotes:String(data.get("dietaryNotes")||"").trim(),email:String(data.get("email")||"").trim(),
+  phone:String(data.get("phone")||"").trim(),notes:String(data.get("notes")||"").trim()};
+}
+function tablePayload(form){
+ const data=new FormData(form);
+ return {name:String(data.get("name")||"").trim(),capacity:Number(data.get("capacity")),shape:String(data.get("shape")||"redonda")};
+}
+function bindPlannerActions(area){
+ area.querySelector("[data-wed-add-task]")?.addEventListener("click",()=>{
+  state.draftCategory="tareas";state.draftStatus="pendiente";state.editing="new";show();
+ });
+ area.querySelectorAll("[data-wed-task-toggle]").forEach(btn=>btn.addEventListener("click",()=>{
+  const item=state.items.find(x=>x.id===btn.dataset.wedTaskToggle);
+  if(item)void moveCard(item.id,item.status==="hecho"?"pendiente":"hecho");
+ }));
+ area.querySelector("[data-wed-new-provider]")?.addEventListener("click",()=>{
+  state.draftCategory="finca";state.draftStatus="idea";state.editing="new";show();
+ });
+ area.querySelector("[data-wed-new-guest]")?.addEventListener("click",()=>{state.guestEditing="new";show();});
+ area.querySelectorAll("[data-wed-edit-guest]").forEach(btn=>btn.addEventListener("click",()=>{state.guestEditing=btn.dataset.wedEditGuest;show();}));
+ area.querySelector("[data-wed-cancel-guest]")?.addEventListener("click",()=>{state.guestEditing=null;show();});
+ area.querySelector("#wed-guest-form")?.addEventListener("submit",event=>{
+  event.preventDefault();if(state.busy)return;
+  const existing=state.guests.find(x=>x.id===state.guestEditing),payload=guestPayload(event.currentTarget);
+  void plannerMutation(()=>existing?
+   getJson("/api/wedding/guests/"+encodeURIComponent(existing.id),"PATCH",{...payload,revision:existing.revision}):
+   getJson("/api/wedding/guests","POST",payload));
+ });
+ area.querySelectorAll("[data-wed-assign-seat]").forEach(select=>select.addEventListener("change",()=>{
+  const guest=state.guests.find(x=>x.id===select.dataset.wedAssignSeat);
+  if(guest)void plannerMutation(()=>getJson("/api/wedding/guests/"+encodeURIComponent(guest.id),"PATCH",{
+   name:guest.name,groupName:guest.groupName,rsvp:guest.rsvp,menu:guest.menu,
+   dietaryNotes:guest.dietaryNotes,email:guest.email,phone:guest.phone,notes:guest.notes,
+   tableId:select.value||null,revision:guest.revision
+  }));
+ }));
+ area.querySelectorAll("[data-wed-delete-guest]").forEach(btn=>btn.addEventListener("click",()=>{
+  const guest=state.guests.find(x=>x.id===btn.dataset.wedDeleteGuest);
+  if(guest&&window.confirm("¿Eliminar este invitado?"))void plannerMutation(()=>getJson("/api/wedding/guests/"+encodeURIComponent(guest.id),"DELETE",{revision:guest.revision}));
+ }));
+ area.querySelector("[data-wed-new-table]")?.addEventListener("click",()=>{state.tableEditing="new";show();});
+ area.querySelectorAll("[data-wed-edit-table]").forEach(btn=>btn.addEventListener("click",()=>{state.tableEditing=btn.dataset.wedEditTable;show();}));
+ area.querySelector("[data-wed-cancel-table]")?.addEventListener("click",()=>{state.tableEditing=null;show();});
+ area.querySelector("#wed-table-form")?.addEventListener("submit",event=>{
+  event.preventDefault();if(state.busy)return;
+  const existing=state.tables.find(x=>x.id===state.tableEditing),payload=tablePayload(event.currentTarget);
+  void plannerMutation(()=>existing?
+   getJson("/api/wedding/tables/"+encodeURIComponent(existing.id),"PATCH",{...payload,revision:existing.revision}):
+   getJson("/api/wedding/tables","POST",payload));
+ });
+ area.querySelectorAll("[data-wed-delete-table]").forEach(btn=>btn.addEventListener("click",()=>{
+  const table=state.tables.find(x=>x.id===btn.dataset.wedDeleteTable);
+  if(table&&window.confirm("¿Eliminar esta mesa vacía?"))void plannerMutation(()=>getJson("/api/wedding/tables/"+encodeURIComponent(table.id),"DELETE",{revision:table.revision}));
+ }));
 }
 async function mutate(action){
  if(state.busy)return;state.busy=true;
@@ -401,6 +496,7 @@ function bind(area){
  if(area.querySelector("#wed-mobile-form"))bindMobileForm(area);
  area.querySelectorAll("[data-wed-view]").forEach(button=>button.addEventListener("click",()=>{
   clearQuickFiles();state.view=button.dataset.wedView;state.editing=null;state.error="";show();
+  if(["invitados","mesas"].includes(state.view)&&!state.plannerLoaded)void loadPlanner();
  }));
  area.querySelector("#wed-add-pin")?.addEventListener("click",startIdea);
  area.querySelector("#wed-floating-add")?.addEventListener("click",startIdea);
@@ -413,7 +509,7 @@ function bind(area){
   state.inspirationSearch=event.target.value;
   const target=area.querySelector("#wed-inspo-results");if(target){target.innerHTML=inspirationCards();bindCards(target);bindEmptyInspiration(target);}
  });
- area.querySelector("#wed-new")?.addEventListener("click",()=>{state.draftStatus="idea";state.editing="new";state.ideaMode=false;state.error="";show();});
+ area.querySelector("#wed-new")?.addEventListener("click",()=>{state.draftStatus="idea";state.draftCategory="ideas";state.editing="new";state.ideaMode=false;state.error="";show();});
 
  area.querySelector("#wed-back")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;state.error="";show();});
  area.querySelector("#wed-cancel")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;state.error="";show();});
@@ -422,6 +518,7 @@ function bind(area){
  area.querySelectorAll("[data-wed-filter]").forEach(btn=>btn.addEventListener("click",()=>{state.filter=btn.dataset.wedFilter;state.error="";show();}));
  bindCards(area);
  bindEmptyInspiration(area);
+ bindPlannerActions(area);
  area.querySelector("#wed-form")?.addEventListener("submit",event=>{
   event.preventDefault();
   const form=event.currentTarget,data=new FormData(form),original=state.items.find(i=>i.id===state.editing),photo=form.elements.photo?.files?.[0];
@@ -460,7 +557,7 @@ async function moveCard(id,status){
  }));
 }
 function bindCards(root){
- root.querySelectorAll("[data-wed-add-status]").forEach(btn=>btn.addEventListener("click",()=>{state.draftStatus=btn.dataset.wedAddStatus;state.editing="new";state.ideaMode=false;state.error="";show();}));
+ root.querySelectorAll("[data-wed-add-status]").forEach(btn=>btn.addEventListener("click",()=>{state.draftStatus=btn.dataset.wedAddStatus;state.draftCategory="ideas";state.editing="new";state.ideaMode=false;state.error="";show();}));
  root.querySelectorAll("[data-wed-edit]").forEach(btn=>btn.addEventListener("click",()=>{state.editing=btn.dataset.wedEdit;state.ideaMode=false;state.error="";show();}));
  root.querySelectorAll("[data-wed-move]").forEach(select=>select.addEventListener("change",()=>void moveCard(select.dataset.wedMove,select.value)));
  root.querySelectorAll("[data-wed-drag]").forEach(card=>card.addEventListener("dragstart",event=>{
@@ -483,7 +580,7 @@ export function openWeddingDetail(remote){
  document.querySelector("#dialog-context").textContent="Pareja · proyecto compartido";
  document.querySelector("#dialog-title").textContent="Boda";
  dialog.classList.add("wedding-dialog");
- clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;
+ clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();
  if(!remote){body.innerHTML='<div class="wed-locked"><h3>Boda</h3><p>Este apartado permite añadir ideas, presupuestos y fotos en la versión privada de Segundo Cerebro.</p></div>';return;}
