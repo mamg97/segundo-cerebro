@@ -63,7 +63,7 @@ test("expanded wedding work surface allows distant table placement without chang
  assert.match(css,/min-height:2200px !important/);
  assert.match(css,/overflow-y:auto !important/);
  const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
- assert.match(source,/function stepAutoPan/); // renamed below if used
+ assert.match(source,/const stepAutoPan=\(\)=>/);
  assert.match(source,/scroll\.scrollLeft\+=sx;scroll\.scrollTop\+=sy/);
  assert.match(source,/startStageLeft:rect\.left,startStageTop:rect\.top/);
  assert.match(source,/drag\.startStageLeft-rect\.left/);
