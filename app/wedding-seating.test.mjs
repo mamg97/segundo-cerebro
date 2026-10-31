@@ -104,7 +104,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
  assert.match(html,/Plaza 3 libre/);
- assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="5" role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/class="wed-svg-table-wrap" data-wed-table-diagram-version="5" role="group"[^>]*aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
  assert.match(html,/data-wed-place-existing="round1"/);
@@ -175,7 +175,7 @@ test("each physically free chair is a clickable index, while occupied indexes re
  assert.match(html,/data-wed-seat-detail="synthetic-a"/);
  assert.match(html,/data-wed-floor-plan data-wed-table-count="1" style="display:grid;--wed-floor-columns:1;height:360px;min-height:360px"/);
  assert.match(html,/class="wed-floor-scroll"[^>]+height:360px;min-height:360px/);
- assert.match(ui,/state\.seatingTargetSeatIndex=index/);
+ assert.match(ui,/openWeddingSeatPicker\(button,tableId,index\)/);
  assert.match(ui,/seatIndex:state\.seatingTargetSeatIndex/);
  assert.match(css,/\.wed-floor-scroll\{[\s\S]*?min-height:360px/);
 });
@@ -368,7 +368,7 @@ test("presidential seat crown is a descendant of the round table, not an offset 
  assert.match(article,/<div class="wed-svg-table-wrap"[^>]*>\s*<svg class="wed-floor-seat-svg"/);
  assert.match(article,/data-wed-table-diagram-version="5"/);
  assert.equal((article.match(/class="wed-svg-chair is-filled"/g)||[]).length,6);
- assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,12,"six chairs and six matching legend buttons");
+ assert.equal((article.match(/data-wed-seat-detail="person-/g)||[]).length,18,"six chairs, six lateral labels and six fallback names");
  assert.match(article,/<\/svg><div class="wed-floor-seat-legend"[\s\S]*?<\/div><\/div>\s*$/);
  assert.equal(JSON.stringify(guests),before,"the view must never change saved D1 guest assignments");
  assert.match(css,/\.wed-floor-table \.wed-floor-seat-svg/);
