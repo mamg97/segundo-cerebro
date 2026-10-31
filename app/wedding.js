@@ -436,6 +436,85 @@ function openNewWeddingTableModal(){
  }
  form.querySelector('input[name="name"]')?.focus({preventScroll:true});
 }
+// A chair-click picker stays next to the clicked SVG seat in either modal.
+// Only canonical unseated guests are eligible, including accent-insensitive search.
+function openWeddingSeatPicker(anchor,tableId,seatIndex){
+ closeWeddingSeatPopover();
+ const table=state.tables.find(item=>item.id===tableId);
+ if(!table||state.busy)return;
+ const eligible=state.guests.filter(g=>!g.tableId&&g.rsvp!=="rechazado")
+  .sort((a,b)=>a.name.localeCompare(b.name,"es"));
+ const host=weddingFloorPortal?.modal||document.querySelector("#detail-dialog");
+ if(!host)return;
+ const panel=document.createElement("section");
+ panel.className="wed-seat-popover";
+ panel.setAttribute("role","dialog");
+ panel.setAttribute("aria-label","Asignar persona a plaza "+(seatIndex+1));
+ panel.innerHTML='<div class="wed-seat-popover-head"><strong>'+esc(table.name)+' · Plaza '+(seatIndex+1)+'</strong>'+
+  '<button type="button" data-wed-seat-popup-close aria-label="Cerrar selector">×</button></div>'+
+  '<input type="search" data-wed-seat-popup-search autocomplete="off" placeholder="Escribe nombre o apellidos…" aria-label="Filtrar invitados disponibles">'+
+  '<div class="wed-seat-popover-results" role="listbox" aria-label="Invitados sin mesa"></div>'+
+  '<button type="button" class="wed-seat-popover-new" data-wed-seat-popup-new>+ Crear invitado nuevo</button>'+
+  '<small data-wed-seat-popup-message aria-live="polite">'+eligible.length+' personas disponibles</small>';
+ host.appendChild(panel);
+ const rect=anchor.getBoundingClientRect(),width=320;
+ const preferRight=rect.right+width+14<=window.innerWidth;
+ const x=preferRight?rect.right+8:Math.max(8,rect.left-width-8);
+ const y=Math.min(Math.max(8,rect.top),Math.max(8,window.innerHeight-340));
+ panel.style.left=x+"px";panel.style.top=y+"px";
+ const outside=event=>{
+  if(panel.contains(event.target)||anchor.contains(event.target))return;
+  closeWeddingSeatPopover();
+ };
+ weddingSeatPopover={element:panel,outside};
+ document.addEventListener("pointerdown",outside,true);
+ panel.querySelector("[data-wed-seat-popup-close]")?.addEventListener("click",closeWeddingSeatPopover);
+ const input=panel.querySelector("[data-wed-seat-popup-search]");
+ const list=panel.querySelector(".wed-seat-popover-results");
+ const message=panel.querySelector("[data-wed-seat-popup-message]");
+ const fold=v=>String(v||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLocaleLowerCase("es").trim();
+ let placing=false;
+ const render=()=>{
+  const words=fold(input.value).split(/\\s+/).filter(Boolean);
+  const filtered=eligible.filter(g=>words.every(w=>fold(g.name).includes(w)));
+  list.replaceChildren();
+  for(const guest of filtered.slice(0,40)){
+   const button=document.createElement("button");
+   button.type="button";button.className="wed-seat-popover-option";
+   button.setAttribute("role","option");button.dataset.wedGuestId=guest.id;
+   button.textContent=guest.name;
+   button.addEventListener("click",async()=>{
+    if(placing||state.busy||guest.tableId)return;
+    const live=state.guests.find(g=>g.id===guest.id);
+    if(!live||live.tableId||live.rsvp==="rechazado")return;
+    placing=true;message.textContent="Guardando asignación…";
+    const expanded=Boolean(weddingFloorPortal);
+    try{
+     await changeGuestTable(live,tableId,seatIndex);
+     state.seatingSelectedTableId=tableId;state.seatingTargetSeatIndex=null;
+     closeWeddingSeatPopover();
+     await loadPlanner();
+     if(expanded&&active())setWeddingFloorExpanded(true);
+    }catch(error){
+     placing=false;
+     if(panel.isConnected){message.textContent=errorMsg(error);message.setAttribute("role","alert");}
+    }
+   });
+   list.appendChild(button);
+  }
+  message.textContent=filtered.length?(filtered.length+" coincidencias"+(filtered.length>40?" · muestra las primeras 40":"")):"Ninguna coincidencia sin mesa";
+ };
+ input.addEventListener("input",render);render();input.focus({preventScroll:true});
+ panel.querySelector("[data-wed-seat-popup-new]")?.addEventListener("click",()=>{
+  closeWeddingSeatPopover();
+  state.seatingSelectedTableId=tableId;
+  state.seatingTargetSeatIndex=seatIndex;state.seatingOpenTableId=tableId;
+  state.seatingFloorExpanded=false;show();
+  const picker=document.querySelector('[data-wed-table-picker="'+CSS.escape(tableId)+'"]');
+  picker?.scrollIntoView({block:"center",behavior:"smooth"});
+  picker?.querySelector('input[name="name"]')?.focus({preventScroll:true});
+ });
+}
 function setWeddingFloorExpanded(expanded){
  const shell=weddingFloorPortal?.shell||document.querySelector("[data-wed-floor-shell]");
  if(!shell){state.seatingFloorExpanded=false;return;}
@@ -744,20 +823,13 @@ function bindPlannerActions(area){
    ...(Number.isInteger(state.seatingTargetSeatIndex)?{seatIndex:state.seatingTargetSeatIndex}:{})
   }),{preserveScroll:true,focusTableId:tableId,focusTableNew:true});
  }));
- // Selecting a free chair opens the existing private picker at that exact index.
+ // Clicking an empty chair shows a searchable choice anchored next to that chair.
  area.querySelectorAll("[data-wed-seat-add]").forEach(button=>button.addEventListener("click",event=>{
   event.stopPropagation();if(state.busy)return;
   const tableId=button.dataset.wedSeatAdd,index=Number(button.dataset.wedSeatIndex);
   const table=state.tables.find(t=>t.id===tableId);
   if(!table||!Number.isInteger(index)||index<0||index>=table.capacity)return;
-  state.seatingSelectedTableId=tableId;state.seatingTargetSeatIndex=index;state.seatingOpenTableId=tableId;
-  state.seatingFloorExpanded=false;
-  show();
-  const panel=document.querySelector('[data-wed-table-picker="'+tableId+'"]');
-  panel?.scrollIntoView({behavior:"smooth",block:"nearest"});
-  (panel?.querySelector('[data-wed-guest-search]:not(:disabled)')||
-   panel?.querySelector('select[name="guestId"]:not(:disabled)')||
-   panel?.querySelector('input[name="name"]:not(:disabled)'))?.focus({preventScroll:true});
+  openWeddingSeatPicker(button,tableId,index);
  }));
  // SVG chair and tabletop groups are native, focusable controls.
  // Keyboard Enter/Space triggers exactly the same private actions as a click.
