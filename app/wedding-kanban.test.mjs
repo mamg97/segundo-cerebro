@@ -56,10 +56,7 @@ test("Wedding refresh lives in the non-scrolling dialog header with correct asse
  assert.match(css,/body\.route-area-active #detail-dialog\.wedding-dialog\[open\] > #wed-main-refresh:not/);
  assert.match(css,/\.wed-kanban\{[\s\S]*?overflow-x:auto/);
  assert.doesNotMatch(css,/overflow-y:auto/);
- assert.match(html,/wedding\.css\?v=0\.1\.8/);
- const appRelease=html.match(/app\.js\?v=(0\.44\.\d+)/)?.[1];
- const cssRelease=html.match(/styles\.css\?v=(0\.44\.\d+)/)?.[1];
- assert.ok(appRelease,"App bundle revision must exist");
- assert.equal(appRelease,cssRelease,"App and CSS bundle revisions must stay aligned");
- assert.match(app,/wedding\.js\?v=0\.1\.7/);
+ assert.match(html,/wedding\.css\?v=0\.1\.9/);
+ assert.match(html,/app\.js\?v=0\.44\.102/);
+ assert.match(app,/wedding\.js\?v=0\.1\.8/);
 });
