@@ -6292,6 +6292,15 @@ async function openHomeWeeklyMenuRecipe(data, recipeId) {
 
   if (!recipe) throw new Error("HOME_RECIPE_NOT_FOUND");
 
+  if(document.querySelector("#detail-dialog")?.classList.contains("home-menu-dialog")){
+    const active=document.querySelector("#detail-dialog");
+    active.close();
+    returnHomeWeeklyMenuPortal();
+    active.classList.remove("home-menu-dialog");
+    history.replaceState(null,"",hrefForHealthTab("recipes"));
+    activeAreaHash=window.location.hash;
+    syncMobileNavigation(routeFromHash(activeAreaHash),activeAreaHash);
+  }
   openHealthDetail({ skipNutritionLoad: true });
   document.querySelector('[data-health-tab="recipes"]')?.click();
   const recipesPanel = document.querySelector("#recipes-panel");
@@ -12083,6 +12092,10 @@ function bindInteractions() {
   document.querySelector("#close-midas-dialog")?.addEventListener("click", () => document.querySelector("#midas-dialog")?.close());
   document.querySelector("#show-event-history")?.addEventListener("click", () => void openEventsWorkspaceInline("history"));
   const openHealthTabFromHome = (tab) => {
+    if(tab==="menu"){
+      window.location.hash=hrefForHealthTab("menu");
+      return;
+    }
     openHealthDetail();
     document.querySelector(`[data-health-tab="${tab}"]`)?.click();
   };
@@ -12102,7 +12115,6 @@ function bindInteractions() {
       healthMenuViewData = null;
     }
     openHealthTabFromHome("menu");
-    if (week !== currentHomeMenuWeek()) void loadHistoricalMenuWeek(week);
   });
   document.querySelector("#home-pantry-open")?.addEventListener("click", () => openPantryDetail("inventory"));
   document.querySelector("#home-pantry-inventory")?.addEventListener("click", () => openPantryDetail("inventory"));
@@ -12243,6 +12255,33 @@ function openAgendaRoute(){
   dialog.showModal();
   void refreshCalendarView();
 }
+// Move the canonical photo-rich editable menu node, not a cloned renderer.
+// A stable marker returns it to Home when leaving the independent menu route.
+let restoreHomeWeeklyMenuPortal=null;
+function returnHomeWeeklyMenuPortal(){
+  if(!restoreHomeWeeklyMenuPortal)return;
+  const restore=restoreHomeWeeklyMenuPortal;
+  restoreHomeWeeklyMenuPortal=null;
+  restore();
+}
+function openHomeWeeklyMenuRoute(){
+  const panel=document.querySelector("#home-weekly-menu-panel");
+  const dialog=document.querySelector("#detail-dialog");
+  const body=document.querySelector("#dialog-body");
+  if(!panel||!dialog||!body)return;
+  returnHomeWeeklyMenuPortal();
+  const marker=document.createComment("home-weekly-menu-slot");
+  panel.before(marker);
+  restoreHomeWeeklyMenuPortal=()=>{if(marker.isConnected)marker.replaceWith(panel);};
+  dialog.classList.add("home-menu-dialog");
+  document.querySelector("#dialog-context").textContent="Nutrición · menú editable";
+  document.querySelector("#dialog-title").textContent="Menú semanal";
+  body.replaceChildren(panel);
+  panel.hidden=false;
+  dialog.showModal();
+  void loadHomeWeeklyMenu(null,{navigation:true});
+}
+
 function applyAreaRoute(){
   const hash=window.location.hash||"#/inicio";
   if(hash===activeAreaHash)return;
@@ -12255,12 +12294,13 @@ function applyAreaRoute(){
   dialog.classList.remove(
     "travels-dialog","wealth-dialog","health-dialog","habits-dialog",
     "budget-dialog","parents-dialog","electricity-dialog","pantry-dialog",
-    "objects-dialog","projects-dialog","events-workspace-dialog",
+    "objects-dialog","projects-dialog","home-menu-dialog","events-workspace-dialog",
     "event-detail-dialog","important-events-dialog","hobbies-dialog","wedding-dialog"
   );
   const weddingRefresh=document.querySelector("#wed-main-refresh");
   if(weddingRefresh)weddingRefresh.hidden=true;
   restoreAgendaPortal();
+  returnHomeWeeklyMenuPortal();
   routedTravelDetailId=route.areaId==="area-travels"?(route.detailId||null):null;
   routedHobbyId=route.areaId==="area-hobbies"?(route.detailId||null):null;
   routedPartnerId=route.areaId==="area-partner"?(route.detailId||null):null;
@@ -12323,6 +12363,10 @@ function openArea(areaId) {
   }
   if (areaId === "area-wealth") {
     openWealthDetail();
+    return;
+  }
+  if (areaId === "area-health" && routedHealthTabId === "menu") {
+    openHomeWeeklyMenuRoute();
     return;
   }
   if (areaId === "area-health") {
