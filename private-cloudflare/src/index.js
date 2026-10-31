@@ -12,6 +12,7 @@ import { createSingleFlight } from "./single-flight.js";
 import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-source.js";
 import { ensureCurrentFinanceCycle } from "./finance-cycle.mjs";
 import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
+import { isFundedFinanceAllocation, requireFinanceReservationSource } from "./finance-allocation-contract.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { serveObjectsLookSheetPreview } from "./look-sheet-media.js";
 import { isObjectsBridgeAuthenticated } from "./objects-bridge-auth.js";
@@ -871,6 +872,8 @@ async function fetchFinanceSummaryUncached(env) {
     missingTabFallback: fetchOptionalFinanceRows
   });
 
+  requireFinanceReservationSource(accountRows, accountAllocationRows);
+
   let electricityRows = [];
   try {
     const electricityParams = new URLSearchParams({
@@ -998,11 +1001,7 @@ async function fetchFinanceSummaryUncached(env) {
         cycleNote: item.cycle_note || null
       };
     })
-    .filter((item) => {
-      const status = String(item.status || "active").trim().toLowerCase();
-      const terminal = new Set(["cancelled", "canceled", "released", "executed", "paid", "closed", "completed"]);
-      return item.accountId && item.amount !== null && !terminal.has(status);
-    });
+    .filter((item) => isFundedFinanceAllocation(item));
 
   const liquidityAccounts = parseTableRows(accountRows)
     .map((item) => {

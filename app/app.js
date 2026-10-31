@@ -2,6 +2,7 @@ import "./vendor/thinking-orbs/register.js";
 import { renderMidasSourceHealth } from "./midas-source-health.mjs?v=0.1.0";
 import { canonicalImportantEventDate } from "./important-events-canonical.mjs?v=0.44.63";
 import { installPrivateAppFreshnessGuard } from "./frontend-freshness.mjs?v=0.44.34";
+import { createFinanceForegroundRefresh } from "./finance-foreground-refresh.mjs?v=0.44.103";
 import { renderGymMonthCalendar } from "./gym-month-calendar.mjs?v=0.44.48";
 import { renderRecipeEditor, deleteRecipeFromCatalog } from "./recipe-editor-ui.mjs?v=0.44.61";
 import { resolveRecipeIngredientButton } from "./recipe-ingredient-click-guard.mjs?v=0.1.0";
@@ -687,6 +688,16 @@ async function refreshApp(){
     }
   }
 }
+
+// A page left open across a Sheet edit must re-read canonical finance on return.
+const refreshFinanceOnForeground = createFinanceForegroundRefresh({
+  refresh: () => refreshStateScope("finance"),
+  isRemote: () => privateModeKind === "remote",
+  isReady: () => Boolean(state.financeSummary?.monthlyBudget),
+  isVisible: () => document.visibilityState === "visible"
+});
+window.addEventListener("focus", () => { void refreshFinanceOnForeground(); });
+document.addEventListener("visibilitychange", () => { void refreshFinanceOnForeground(); });
 
 let orbMediaQuery = null;
 
