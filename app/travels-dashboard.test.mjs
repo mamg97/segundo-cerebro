@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { lodgingMapAddress, tripMapLink, tripBudgetStatus, tripDashboardMarkup } from "./travels-dashboard.js";
+import { lodgingMapAddress, tripMapLink, tripBudgetStatus, tripDashboardMarkup, travelSavedMapsList } from "./travels-dashboard.js";
 
 function sample(overrides={}) {
   return {
@@ -76,4 +76,20 @@ test("privacy and permissions: only private app embeds maps on demand",()=>{
   for(const src of [travels,readFileSync(new URL("./travels-dashboard.js",import.meta.url),"utf8")]){
     assert.doesNotMatch(src,/Krakowskie|Varsovia|HMWWFRMBXW|G3CYMZ/);
   }
+});
+
+test("private saved Google Maps list renders a direct link without leaking locations or embedding it",()=>{
+ const demoUrl="https://www.google.com/maps/@/data=!4m3!11m2!2sFAKEDEMO123!3e3";
+ const refs=[{refType:"map_list",sourceRef:demoUrl,label:"Ejemplo privado (11 sitios)"}];
+ assert.equal(travelSavedMapsList(refs).url,demoUrl);
+ const html=tripDashboardMarkup(sample({references:refs}));
+ assert.match(html,/trv-saved-google-list/);
+ assert.match(html,/Abrir mi lista guardada en Google Maps/);
+ assert.match(html,/Ejemplo privado \(11 sitios\)/);
+ assert.doesNotMatch(html,/<iframe|OpenStreetMap/);
+ for(const url of ["javascript:alert(1)","http://www.google.com/maps/",
+   "https://www.google.com.evil.example/maps","https://www.google.com/redirect?target=/maps"]){
+   assert.equal(travelSavedMapsList([{refType:"map_list",sourceRef:url}]),null);
+ }
+ assert.equal(travelSavedMapsList([{refType:"booking",sourceRef:demoUrl}]),null);
 });
