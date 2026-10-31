@@ -1,5 +1,5 @@
 // Private wedding collaboration view. No embedded personal records.
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.5";
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.6";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.2";
 export const WEDDING_TYPES=[
@@ -14,7 +14,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,seatingOpenTableId:null,draftCategory:"ideas",exporting:false};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,seatingOpenTableId:null,seatingSelectedTableId:null,draftCategory:"ideas",exporting:false};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -202,7 +202,7 @@ function home(){
  if(state.view==="invitados"||state.view==="mesas"){
   const contents=!state.plannerLoaded?'<div class="wed-loading">Cargando información privada…</div>':
    state.view==="invitados"?renderGuests(state.guests,state.tables,state.guestEditing,esc):
-   renderTables(state.guests,state.tables,state.tableEditing,esc);
+   renderTables(state.guests,state.tables,state.tableEditing,esc,state.seatingSelectedTableId);
   return '<div class="wed-workspace">'+contents+'</div>';
  }
  const n=weddingTotals(state.items);
@@ -323,6 +323,7 @@ async function loadPlanner(){
   const [guests,tables]=await Promise.all([getJson("/api/wedding/guests"),getJson("/api/wedding/tables")]);
   if(!active())return;
   state.guests=guests.items||[];state.tables=tables.items||[];
+  if(!state.tables.some(t=>t.id===state.seatingSelectedTableId))state.seatingSelectedTableId=state.tables[0]?.id||null;
   state.plannerLoaded=true;state.error="";
  }catch(error){state.error=errorMsg(error);}
  finally{state.plannerBusy=false;if(active())show();}
@@ -376,6 +377,82 @@ function guestPayload(form){
 function tablePayload(form){
  const data=new FormData(form);
  return {name:String(data.get("name")||"").trim(),capacity:Number(data.get("capacity")),shape:String(data.get("shape")||"redonda")};
+}
+// Drag the actual table figure, with pointer capture and normalized D1 coordinates.
+function bindWeddingFloorPlan(area){
+ const stage=area.querySelector("[data-wed-floor-plan]");
+ if(!stage)return;
+ const select=id=>{
+  if(state.seatingSelectedTableId===id)return;
+  const scroll=area,top=scroll.scrollTop;
+  state.seatingSelectedTableId=id;state.seatingOpenTableId=null;
+  show();scroll.scrollTop=top;
+ };
+ stage.querySelectorAll("[data-wed-floor-table]").forEach(tile=>{
+  const id=tile.dataset.wedFloorTable;
+  let drag=null,suppressClick=false;
+  const persist=()=>{
+   const table=state.tables.find(t=>t.id===id);
+   if(!table||state.busy)return;
+   state.seatingSelectedTableId=id;
+   const positionX=Number.parseFloat(tile.style.left),positionY=Number.parseFloat(tile.style.top);
+   void plannerMutation(()=>getJson("/api/wedding/tables/"+encodeURIComponent(id),"PATCH",{
+    name:table.name,capacity:table.capacity,shape:table.shape,
+    positionX,positionY,revision:table.revision
+   }),{preserveScroll:true});
+  };
+  tile.addEventListener("pointerdown",event=>{
+   if(state.busy||state.plannerBusy||event.button!==0||
+      event.target.closest("[data-wed-seat-detail]"))return;
+   drag={id:event.pointerId,startX:event.clientX,startY:event.clientY,
+    x:tile.offsetLeft,y:tile.offsetTop,originalLeft:tile.style.left,
+    originalTop:tile.style.top,moved:false};
+   tile.setPointerCapture(event.pointerId);
+  });
+  tile.addEventListener("pointermove",event=>{
+   if(!drag||event.pointerId!==drag.id)return;
+   const dx=event.clientX-drag.startX,dy=event.clientY-drag.startY;
+   if(!drag.moved&&Math.hypot(dx,dy)<6)return;
+   drag.moved=true;tile.classList.add("is-dragging");
+   const x=Math.max(tile.offsetWidth/2,Math.min(stage.clientWidth-tile.offsetWidth/2,drag.x+dx));
+   const y=Math.max(tile.offsetHeight/2,Math.min(stage.clientHeight-tile.offsetHeight/2,drag.y+dy));
+   tile.style.left=(x/stage.clientWidth*100).toFixed(3)+"%";
+   tile.style.top=(y/stage.clientHeight*100).toFixed(3)+"%";
+  });
+  tile.addEventListener("pointerup",event=>{
+   if(!drag||event.pointerId!==drag.id)return;
+   const moved=drag.moved;drag=null;tile.classList.remove("is-dragging");
+   if(moved){
+    suppressClick=true;window.setTimeout(()=>{suppressClick=false;},0);
+    persist();
+   }else select(id);
+  });
+  tile.addEventListener("pointercancel",()=>{
+   if(!drag)return;
+   tile.style.left=drag.originalLeft;tile.style.top=drag.originalTop;
+   drag=null;tile.classList.remove("is-dragging");
+  });
+  tile.addEventListener("click",event=>{
+   if(event.target.closest("[data-wed-seat-detail]"))return;
+   if(suppressClick){suppressClick=false;return;}
+   select(id);
+  });
+  tile.addEventListener("keydown",event=>{
+   if(event.target!==tile)return;
+   if(event.key==="Enter"||event.key===" "){
+    event.preventDefault();select(id);return;
+   }
+   const step=event.shiftKey?5:1;
+   const moves={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]};
+   const delta=moves[event.key];if(!delta||state.busy)return;
+   event.preventDefault();
+   const minX=tile.offsetWidth/(2*stage.clientWidth)*100;
+   const minY=tile.offsetHeight/(2*stage.clientHeight)*100;
+   tile.style.left=Math.max(minX,Math.min(100-minX,Number.parseFloat(tile.style.left)+delta[0])).toFixed(3)+"%";
+   tile.style.top=Math.max(minY,Math.min(100-minY,Number.parseFloat(tile.style.top)+delta[1])).toFixed(3)+"%";
+   persist();
+  });
+ });
 }
 function bindPlannerActions(area){
  area.querySelector("[data-wed-add-task]")?.addEventListener("click",()=>{
@@ -465,6 +542,7 @@ function bindPlannerActions(area){
   const guest=state.guests.find(g=>g.id===button.dataset.wedUnseatGuest);
   if(guest&&guest.tableId)void plannerMutation(()=>changeGuestTable(guest,null),{preserveScroll:true});
  }));
+ bindWeddingFloorPlan(area);
  area.querySelector("[data-wed-new-table]")?.addEventListener("click",()=>{state.tableEditing="new";show();});
  area.querySelectorAll("[data-wed-edit-table]").forEach(btn=>btn.addEventListener("click",()=>{state.tableEditing=btn.dataset.wedEditTable;show();}));
  area.querySelector("[data-wed-cancel-table]")?.addEventListener("click",()=>{state.tableEditing=null;show();});
@@ -800,7 +878,7 @@ export function openWeddingDetail(remote){
   refreshButton.hidden=!remote;
   refreshButton.onclick=()=>void refreshWedding();
  }
- clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;
+ clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;state.seatingSelectedTableId=null;state.seatingOpenTableId=null;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();
  if(!remote){body.innerHTML='<div class="wed-locked"><h3>Boda</h3><p>Este apartado permite añadir ideas, presupuestos y fotos en la versión privada de Segundo Cerebro.</p></div>';return;}
