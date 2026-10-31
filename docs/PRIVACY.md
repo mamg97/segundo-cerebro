@@ -14,6 +14,9 @@ identidad Access y verifica el origen de mutaciones.
 Las fichas HTTPS de Bodas.net se abren mediante enlaces externos y
 sin enviar datos personales del registro. No existe sincronización
 entre la lista privada y la plataforma externa.
+Las coordenadas del plano de mesas también se guardan exclusivamente
+en `wedding_tables` de D1 privado y nunca en almacenamiento local
+persistente ni en la demostración pública.
 
 ## Datos prohibidos en Git
 
