@@ -1,5 +1,5 @@
 // Private wedding collaboration view. No embedded personal records.
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory} from "./wedding-planner-ui.js?v=0.1.2";
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.3";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.0";
 export const WEDDING_TYPES=[
@@ -373,7 +373,7 @@ function bindPlannerActions(area){
   if(state.busy)return;
   const name=String(new FormData(form).get("name")||"").trim();
   const groupName=form.dataset.wedQuickAdd;
-  if(!name||!["pareja","padres_miguel","padres_andrea"].includes(groupName))return;
+  if(!name||!WEDDING_GUEST_GROUPS.some(([id])=>id===groupName))return;
   void plannerMutation(()=>getJson("/api/wedding/guests","POST",{
    name,groupName,rsvp:"pendiente",menu:"",tableId:null,
    dietaryNotes:"",email:"",phone:"",notes:""
