@@ -264,6 +264,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<div class="wed-seating-head"><strong>'+esc(selected.name)+'</strong>'+
  '<span>'+esc(pick(SHAPES,selected.shape))+' · '+selectedGuests.length+'/'+selected.capacity+'</span>'+
  '<button type="button" data-wed-toggle-table-picker="'+esc(selected.id)+'" aria-expanded="false">+ Añadir invitados</button>'+
+ '<button type="button" data-wed-center-table="'+esc(selected.id)+'" title="Guardar la mesa en el centro del plano">Centrar mesa</button>'+
  '<button type="button" data-wed-edit-table="'+esc(selected.id)+'">Editar mesa</button></div>'+
  '<div class="wed-seat-caption">'+selectedGuests.filter(g=>g.rsvp==="confirmado"&&g.groupName!=="opcionales").length+
  ' confirmados · '+Math.max(0,selected.capacity-selectedGuests.length)+' libres</div>'+
