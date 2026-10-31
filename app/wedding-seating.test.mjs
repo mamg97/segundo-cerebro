@@ -156,7 +156,7 @@ test("legacy tables without positions receive deterministic visual geometry with
  const html=renderTables(names,tables,null,esc,"table2");
  assert.equal((html.match(/data-wed-floor-table="/g)||[]).length,4);
  assert.match(html,/data-wed-floor-table="table2"/);
- assert.match(html,/height:1040px/);
+ assert.match(html,/height:360px/);
  assert.equal(JSON.stringify({tables,names}),before);
 });
 
@@ -173,11 +173,11 @@ test("each physically free chair is a clickable index, while occupied indexes re
  assert.doesNotMatch(html,/data-wed-seat-index="1"/);
  assert.match(html,/Añadir personas a Mesa sintética · Plaza 3/);
  assert.match(html,/data-wed-seat-detail="synthetic-a"/);
- assert.match(html,/data-wed-floor-plan style="display:block;height:550px;min-height:550px"/);
- assert.match(html,/class="wed-floor-scroll"[^>]+height:550px;min-height:550px/);
+ assert.match(html,/data-wed-floor-plan style="display:block;height:360px;min-height:360px"/);
+ assert.match(html,/class="wed-floor-scroll"[^>]+height:360px;min-height:360px/);
  assert.match(ui,/state\.seatingTargetSeatIndex=index/);
  assert.match(ui,/seatIndex:state\.seatingTargetSeatIndex/);
- assert.match(css,/\.wed-floor-scroll\{[\s\S]*?min-height:550px/);
+ assert.match(css,/\.wed-floor-scroll\{[\s\S]*?min-height:360px/);
 });
 test("one existing table always renders a nonempty floor, regardless of confirmation status",()=>{
  const table={id:"president-demo",name:"Presidencial ficticia",capacity:6,shape:"presidencial"};
