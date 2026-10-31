@@ -402,7 +402,7 @@ function renderWorkspace(payload, initialView = "inventory") {
       '<div class="pantry-topbar">' +
         '<nav class="pantry-view-nav" role="tablist" aria-label="Vistas de Despensa">' +
           '<button type="button" data-pantry-view="inventory" role="tab">Inventario</button>' +
-          '<button type="button" data-pantry-view="shopping" role="tab">🛒 Lista de la compra <span>' + Number(summary.pendingPurchaseCount || shopping.length || 0) + '</span></button>' +
+          '<button type="button" data-pantry-view="shopping" role="tab" aria-label="Lista de la compra"><b class="pantry-tab-full">🛒 Lista de la compra</b><b class="pantry-tab-compact">Compra</b><span>' + Number(summary.pendingPurchaseCount || shopping.length || 0) + '</span></button>' +
           '<button type="button" data-pantry-view="tickets" role="tab">Tickets <span>' + Number(payload.ticketSummary?.count || recentTickets.length || 0) + '</span></button>' +
         '</nav>' +
         '<a class="master-source-link" href="/api/source-link?target=pantry-products" target="_blank" rel="noopener noreferrer">Maestro de productos ↗</a>' +
