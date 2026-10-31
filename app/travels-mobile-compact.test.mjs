@@ -7,7 +7,7 @@ const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
 const timetable=readFileSync(new URL("./travel-timetable.js",import.meta.url),"utf8");
 
 test("compact Viajes styles load after other styles without changing desktop",()=>{
- assert.match(index,/organizador25-ui\.css\?v=0\.1\.1[\s\S]*travels-mobile-compact\.css\?v=0\.1\.0/);
+ assert.match(index,/organizador25-ui\.css\?v=0\.1\.1[\s\S]*travels-mobile-compact\.css\?v=0\.1\.1/);
  assert.match(compact,/@media \(max-width:760px\) \{/);
  assert.doesNotMatch(compact,/(?:Krakowskie|Mayordomo|Asturias|Warszawa|Cangas)/);
 });

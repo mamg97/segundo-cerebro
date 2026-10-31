@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseTravelDetail,sortTripsNewestFirst,coverForCity } from "./travels.js";
+import { parseTravelDetail,sortTripsNewestFirst,coverForCity,coverFromReference,coverForTravel,tripCaption } from "./travels.js";
 
 test("viajes: datos y tareas proceden de EventoHechos, no de datos incrustados", () => {
   const parsed = parseTravelDetail({ facts: [
@@ -85,4 +85,37 @@ test("Travel gallery uses a licensed regional cover when a trip's destination is
  assert.equal(coverForCity("Varsovia").city,"Warsaw");
  assert.equal(coverForCity("Marbella").city,"Marbella");
  assert.equal(coverForCity("Ciudad de Prueba"),null);
+});
+
+
+test("destination names come from the canonical title and never append a year",()=>{
+  const event={title:"Ciudad Modelo · verano 2025"};
+  assert.equal(tripCaption(event), "Ciudad Modelo");
+  assert.equal(tripCaption({title:"Ciudad Nueva"}), "Ciudad Nueva");
+  assert.equal(tripCaption({title:"Viaje nov"},{facts:[{summary:"DESTINO | Ciudad Ficticia · País Ficticio"}]}),"Ciudad Ficticia");
+});
+
+test("travel photo comes from private cover_image reference with safe Commons source and credit",()=>{
+  const ref={type:"cover_image",sourceProvider:"wikimedia_commons",
+    sourceRef:"https://commons.wikimedia.org/wiki/File:Ciudad_Modelo.jpg",
+    label:"Autor de ejemplo · CC BY 4.0"};
+  const cover=coverFromReference(ref);
+  assert.equal(cover.file,"Ciudad_Modelo.jpg");
+  assert.equal(cover.credit,"Autor de ejemplo · CC BY 4.0");
+  assert.deepEqual(coverForTravel({title:"Ciudad Modelo",coverReference:ref}),cover);
+  assert.deepEqual(coverForTravel({title:"Ciudad Modelo"},{references:[ref]}),cover);
+  for(const sourceRef of [
+    "javascript:alert(1)",
+    "https://commons.wikimedia.org.evil.invalid/wiki/File:Demo.jpg",
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Demo.jpg",
+    "http://commons.wikimedia.org/wiki/File:Demo.jpg",
+    "https://commons.wikimedia.org/wiki/File:Demo.svg",
+    "https://commons.wikimedia.org/wiki/File:Demo.jpg?redirect=https://evil.invalid",
+    "https://commons.wikimedia.org/wiki/File:Demo%2Fprivate.jpg"
+  ])assert.equal(coverFromReference({...ref,sourceRef}),null);
+  assert.equal(coverFromReference({...ref,type:"ticket"}),null);
+  const code=readFileSync(new URL("./travels.js",import.meta.url),"utf8");
+  assert.match(code,/trv-hero-photo/);
+  assert.match(code,/trv-card-photo/);
+  assert.match(code,/coverReference/);
 });

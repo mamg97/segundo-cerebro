@@ -98,3 +98,12 @@ Añadir nuevas filas al Sheet, no editar el JS para cambiar el viaje.
 - Los puntos son referencias del recorrido, no acreditan entradas, horarios ni reservas. Las reservas CONFIRMADAS y las propuestas PENDIENTES se mantienen diferenciadas.
 - Si no hay hechos MAPA_PUNTO, permanece el mapa de alojamiento de Google bajo consentimiento, de modo que viajes antiguos conservan su comportamiento.
 - Validación: node --test app/travels.test.mjs app/travels-dashboard.test.mjs app/travel-multipoint-map.test.mjs.
+
+
+## Portadas por destino y nombres canónicos (octubre 2026)
+- `Eventos.title` conserva únicamente el nombre del lugar o conjunto de destinos; las fechas corresponden a `starts_at` y `ends_at`, no al título. La vista utiliza primero el título canónico y recurre a `DESTINO` solo para los registros heredados con alias genéricos.
+- La fotografía de cada viaje vive en el Sheet privado `EventoRefs`, con `ref_type=cover_image`, `source_provider=wikimedia_commons`, `source_ref=https://commons.wikimedia.org/wiki/File:<archivo>`, `label=<autor> · <licencia>`. No se fija ningún destino real o histórico privado en código.
+- `GET /api/events?scope=all&kind=travel` añade exclusivamente `coverReference` a cada evento cuando exista. Ninguna otra referencia ni documento del viaje se expone en esa lista. `GET /api/events/:id` ya devuelve todas las referencias del viaje.
+- El frontend solo acepta páginas `File:` de Wikimedia Commons mediante HTTPS, extensión de imagen admitida y sin parámetros/credenciales; genera una URL `Special:FilePath` para foto de tarjeta o cabecera. Reutiliza la misma fuente para ambas superficies, con autor y licencia enlazados a la ficha de Commons.
+- Las fotos son **representativas del destino**: nunca se presentan como fotografías personales realizadas durante el viaje. Si falla una imagen se conserva la cabecera con degradado y el texto visible.
+- Se mantiene la galería ordenada por fechas descendentes y la cabecera responsive a pantalla completa; no se cargan mapas externos sin permiso. El código del repositorio continúa sin datos privados reales.
