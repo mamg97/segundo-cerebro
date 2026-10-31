@@ -734,7 +734,8 @@ function setWeddingFloorExpanded(expanded){
  }
  const stage=shell.querySelector("[data-wed-floor-plan]");
  if(stage)requestAnimationFrame(()=>{
-  stage.dispatchEvent(new Event("wed-floor-recalibrate"));
+  // Same canvas, same normalized coordinates. Recalibration here causes
+  // apparent drift after changing the viewport size or entering fullscreen.
   if(state.seatingFloorExpanded){
    // Expanding moves the same canvas into the top layer. Reveal the selected
    // table rather than showing an empty corner of the larger workspace.
@@ -772,12 +773,23 @@ function bindWeddingFloorPlan(area){
  const shell=stage.closest("[data-wed-floor-shell]");
  const scroll=shell?.querySelector(".wed-floor-scroll");
  const zoomLabel=shell?.querySelector("[data-wed-zoom-reset]");
- const applyZoom=()=>{
-  const zoom=Math.max(.2,Math.min(1.6,Number(state.seatingFloorZoom)||1));
-  state.seatingFloorZoom=Math.round(zoom*10)/10;
-  stage.style.zoom=String(state.seatingFloorZoom);
-  if(zoomLabel)zoomLabel.textContent=Math.round(state.seatingFloorZoom*100)+"%";
-  requestAnimationFrame(()=>stage.dispatchEvent(new Event("wed-floor-recalibrate")));
+ // The stage has immutable logical dimensions. Zoom only changes visual scale.
+ // Never recalibrate table origins here: doing so reflows/repositions tables
+ // differently between 30% and 40%, especially across browsers/OS.
+ const applyZoom=(keepViewportCenter=true)=>{
+  const previous=Number(stage.dataset.wedAppliedZoom)||1;
+  const zoom=Math.round(Math.max(.2,Math.min(1.6,Number(state.seatingFloorZoom)||1))*10)/10;
+  const width=scroll?.clientWidth||0,height=scroll?.clientHeight||0;
+  const worldX=scroll?(scroll.scrollLeft+width/2)/previous:0;
+  const worldY=scroll?(scroll.scrollTop+height/2)/previous:0;
+  state.seatingFloorZoom=zoom;
+  stage.style.zoom=String(zoom);
+  stage.dataset.wedAppliedZoom=String(zoom);
+  if(zoomLabel)zoomLabel.textContent=Math.round(zoom*100)+"%";
+  if(keepViewportCenter&&scroll){
+   scroll.scrollLeft=worldX*zoom-width/2;
+   scroll.scrollTop=worldY*zoom-height/2;
+  }
  };
  const zoomChange=delta=>{state.seatingFloorZoom=Math.max(.2,Math.min(1.6,Math.round((state.seatingFloorZoom+delta)*10)/10));applyZoom();};
  shell?.querySelector("[data-wed-zoom-in]")?.addEventListener("click",()=>zoomChange(.1));
@@ -788,22 +800,24 @@ function bindWeddingFloorPlan(area){
   const available=scroll?.clientWidth||natural;
   state.seatingFloorZoom=Math.max(.2,Math.min(1.6,Math.floor(available/natural*10)/10));
   applyZoom();
-  if(scroll){scroll.scrollLeft=0;scroll.scrollTop=0;}
  });
- applyZoom();
+ applyZoom(false);
  // Pan across empty grid space with a mouse. On phones and trackpads, native
  // two-axis scrolling remains enabled; table drag handles are unaffected.
  let backgroundPan=null;
  stage.addEventListener("pointerdown",event=>{
-  if(event.pointerType!=="mouse"||event.button!==0||event.target!==stage||!scroll)return;
+  if(event.pointerType!=="mouse"||event.button!==0||!scroll||
+     event.target.closest("[data-wed-floor-table],button,input,select,a"))return;
   backgroundPan={id:event.pointerId,x:event.clientX,y:event.clientY};
   stage.classList.add("is-panning");
   stage.setPointerCapture(event.pointerId);
  });
  stage.addEventListener("pointermove",event=>{
   if(!backgroundPan||backgroundPan.id!==event.pointerId||!scroll)return;
-  scroll.scrollLeft-=event.clientX-backgroundPan.x;
-  scroll.scrollTop-=event.clientY-backgroundPan.y;
+  const dx=event.clientX-backgroundPan.x;
+  const dy=event.clientY-backgroundPan.y;
+  scroll.scrollLeft-=dx;
+  scroll.scrollTop-=dy;
   backgroundPan.x=event.clientX;backgroundPan.y=event.clientY;
  });
  const finishBackgroundPan=()=>{
