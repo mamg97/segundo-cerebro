@@ -652,3 +652,48 @@ test("rectangular table has a visibly rectangular tabletop while preserving seat
  assert.equal((part.match(/class="wed-svg-chair is-/g)||[]).length,8);
  assert.match(part,/Invitado uno/);
 });
+
+test("changing zoom cannot reflow the canvas or disperse saved table positions",()=>{
+ const tables=[
+  {id:"test-a",name:"Mesa A",capacity:6,shape:"redonda",positionX:21.5,positionY:61.2},
+  {id:"test-b",name:"Mesa B",capacity:12,shape:"redonda",positionX:75.9,positionY:26.1}
+ ];
+ const guests=[];
+ const markup=renderTables(guests,tables,null,esc,tables[0].id);
+ assert.match(markup,/--wed-canvas-width:3600px/);
+ assert.match(markup,/--wed-canvas-height:3600px/);
+ assert.match(markup,/--wed-floor-rows:1;/);
+ assert.match(css,/Wedding floor v12 — stable world coordinates/);
+ assert.match(css,/width:var\(--wed-canvas-width,3600px\) !important/);
+ assert.match(css,/height:var\(--wed-canvas-height,3600px\) !important/);
+ assert.match(css,/min-height:var\(--wed-canvas-height,3600px\) !important/);
+ assert.match(ui,/stage\.dataset\.wedAppliedZoom=String\(zoom\)/);
+ assert.match(ui,/const worldY=scroll\?\(scroll\.scrollTop\+height\/2\)\/previous:0/);
+ assert.match(ui,/scroll\.scrollTop=worldY\*zoom-height\/2/);
+ // At 30% and 40%, the distance between two world coordinates must differ
+ // only by the expected uniform scaling ratio, not by responsive reflow.
+ for(const zoom of [.3,.4]){
+  const size=3600*zoom;
+  const dx=(tables[1].positionX-tables[0].positionX)/100*size;
+  const dy=(tables[1].positionY-tables[0].positionY)/100*size;
+  assert.ok(Math.abs(dx/zoom-1958.4)<.0001);
+  assert.ok(Math.abs(dy/zoom+1263.6)<.0001);
+ }
+ assert.deepEqual(tables.map(t=>[t.positionX,t.positionY]),[[21.5,61.2],[75.9,26.1]]);
+});
+test("background hand panning remains possible vertically at 30 percent",()=>{
+ const stageHeight=3600,viewportHeight=690,zoom=.3;
+ assert.ok(stageHeight*zoom>viewportHeight+300,"there must be meaningful vertical overflow");
+ assert.match(css,/overflow-y:auto !important/);
+ assert.match(css,/touch-action:pan-x pan-y/);
+ assert.match(ui,/scroll\.scrollLeft-=dx/);
+ assert.match(ui,/scroll\.scrollTop-=dy/);
+ assert.match(ui,/stage\.setPointerCapture\(event\.pointerId\)/);
+ assert.match(ui,/!scroll\|\|\s*event\.target\.closest\("\[data-wed-floor-table\],button,input,select,a"\)/);
+ // Recalibrating grid cell origins during zoom was the regression.
+ const start=ui.indexOf("const applyZoom=");
+ const finish=ui.indexOf("const zoomChange=",start);
+ const implementation=ui.slice(start,finish);
+ assert.ok(start>=0&&finish>start);
+ assert.doesNotMatch(implementation,/wed-floor-recalibrate|tile\.style\.transform="none"/);
+});
