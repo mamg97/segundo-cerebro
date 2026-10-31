@@ -1,0 +1,185 @@
+/* Mobile-only Pantry shopping density. Keep Inventory, Tickets and desktop unchanged. */
+@media (max-width: 760px) {
+  body.route-area-active #detail-dialog.pantry-dialog[open] #dialog-body { padding-top: 0; }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shell {
+    gap: 9px;
+    min-width: 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-topbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-view-nav {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    gap: 2px;
+    padding: 3px;
+    overflow: hidden;
+    border-radius: 11px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-view-nav button {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 40px;
+    padding: 6px 3px;
+    border-radius: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-view-nav button span {
+    min-width: 17px;
+    height: 17px;
+    padding: 0 3px;
+    font-size: 10px;
+  }
+  /* The product catalogue stays accessible without a second full-width row. */
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-topbar .master-source-link {
+    box-sizing: border-box;
+    flex: 0 0 38px;
+    align-self: center;
+    width: 38px;
+    min-height: 40px;
+    padding: 0;
+    border-radius: 10px;
+    font-size: 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-topbar .master-source-link::after {
+    content: "↗";
+    font-size: 21px;
+    line-height: 1;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] [data-pantry-panel="shopping"] {
+    min-height: 0;
+    padding: 8px 10px 10px;
+    border-radius: 12px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] [data-pantry-panel="shopping"] > .pantry-section-heading {
+    display: none;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-list {
+    gap: 0;
+    min-width: 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-list-item {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    padding: 4px 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-list-item > .pantry-shopping-row.is-link {
+    display: grid;
+    grid-template-columns: 34px minmax(0,1fr) auto;
+    align-items: center;
+    grid-column: 1;
+    gap: 7px;
+    min-width: 0;
+    min-height: 43px;
+    padding: 3px 0;
+    border: 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link > .pantry-product-thumb {
+    grid-column: 1;
+    grid-row: 1;
+    width: 34px;
+    height: 34px;
+    border-radius: 7px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link > .pantry-shopping-info {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 2px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-info strong {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-info > span {
+    font-size: 10px;
+    line-height: 1.1;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-canonical {
+    display: none;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link > .purchase-state {
+    display: none;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link > .pantry-shopping-price {
+    grid-column: 3;
+    grid-row: 1;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link .pantry-product-thumb-placeholder {
+    font-size: 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-row.is-link .pantry-product-thumb-placeholder::after {
+    content: "—";
+    font-size: 16px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-list-item .pantry-confirm-inventory {
+    grid-column: 2;
+    align-self: center;
+    justify-self: end;
+    width: auto;
+    min-height: 40px;
+    max-width: 84px;
+    margin: 0;
+    padding: 5px 7px;
+    border-radius: 8px;
+    font-size: 10px;
+    line-height: 1.1;
+    white-space: normal;
+    text-align: center;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-review {
+    gap: 5px;
+    margin-top: 7px;
+    padding-top: 8px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-review > strong {
+    font-size: 12px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-review-item {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 5px 6px;
+    border-radius: 8px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-review-item span {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-review-item button {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-actions-footer {
+    gap: 7px;
+    padding: 8px 0;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-total {
+    gap: 8px;
+    padding-top: 8px;
+    font-size: 10px;
+  }
+  body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shopping-total strong {
+    gap: 2px;
+    font-size: 11px;
+  }
+}
