@@ -10707,6 +10707,11 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
   const provisionalFree = isCommon ? 0 : pendingBreakdown;
   const personalAdjustment = Math.max(0, internalFree - free);
   const excess = Math.max(0, committed + retained - balance);
+  // When commitments exceed cash, compare every item against the same
+  // total commitments. Sequentially clipping to the bank balance produced
+  // misleading unequal-looking bands and hid obligations without funding.
+  const chartTotal = Math.max(balance, committed + retained);
+  const chartOverAllocated = excess > 0.01;
   const availableAfterHolds = Math.max(0, balance - retained);
   const rawSegments = [
     ...(retained > 0 ? [{
@@ -10751,9 +10756,11 @@ function liquidityVisualModel(account, fallbackCurrency = "EUR") {
     internalFree,
     personalAdjustment,
     excess,
+    chartTotal,
+    chartOverAllocated,
     availableAfterHolds,
     rawSegments,
-    segments: quantizeBarSegments(rawSegments, balance)
+    segments: quantizeBarSegments(rawSegments, chartTotal)
   };
 }
 
@@ -10800,7 +10807,7 @@ function renderHomeLiquidityOverview(accounts, fallbackCurrency = "EUR") {
                 <strong>${formatMoney(model.availableAfterHolds, model.currency)}</strong>
               </div>
               <div class="home-liquidity-account-body">
-                <div class="home-liquidity-bar" role="img" aria-label="${escapeHtml(shortName)}: ${escapeHtml(formatMoney(model.availableAfterHolds, model.currency))} disponibles en el banco; saldo total ${escapeHtml(formatMoney(model.balance, model.currency))}">
+                <div class="home-liquidity-bar" role="img" aria-label="${escapeHtml(shortName)}: ${escapeHtml(formatMoney(model.availableAfterHolds, model.currency))} disponibles en el banco; ${model.chartOverAllocated ? "barra proporcional a los compromisos" : "barra proporcional al saldo bancario"}; saldo total ${escapeHtml(formatMoney(model.balance, model.currency))}">
                   ${model.segments.map((segment) => `
                     <div class="home-liquidity-segment ${segment.className} ${segment.pctClass}"
                          title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, model.currency))}"></div>
@@ -10951,7 +10958,7 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
           <p class="context-label">Liquidez por cuenta</p>
           <h3>Cómo está distribuido el dinero de cada cuenta</h3>
         </div>
-        <span>${periodLabel ? `Ciclo ${escapeHtml(periodLabel)} · ` : ""}100% de cada barra = saldo actual real</span>
+        <span>${periodLabel ? `Ciclo ${escapeHtml(periodLabel)} · ` : ""}La escala indica el saldo, o el total comprometido si lo supera</span>
       </div>
       <div class="liquidity-account-list">
         ${orderedAccounts.map((account) => {
@@ -10969,6 +10976,8 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
             internalFree,
             personalAdjustment,
             excess,
+            chartTotal,
+            chartOverAllocated,
             availableAfterHolds,
             rawSegments,
             segments
@@ -11007,26 +11016,29 @@ function renderLiquidityAccounts(accounts, fallbackCurrency = "EUR", periodLabel
                 </svg>
 
                 <div class="liquidity-bar-wrap">
-                  <div class="liquidity-stacked-bar-2d" role="img" aria-label="${escapeHtml(account.name || "Cuenta")}: distribución de ${escapeHtml(formatMoney(balance, currency))}">
+                  <div class="liquidity-stacked-bar-2d" role="img" aria-label="${escapeHtml(account.name || "Cuenta")}: distribución de ${escapeHtml(formatMoney(chartTotal, currency))} ${chartOverAllocated ? "en compromisos, de los que el saldo bancario cubre solo una parte" : "de saldo bancario"}">
                     ${segments.map((segment) => `
                       <div class="liquidity-bar-segment-2d ${segment.className} ${segment.pctClass}" title="${escapeHtml(segment.label)} · ${escapeHtml(formatMoney(segment.amount, currency))}"></div>
                     `).join("")}
                   </div>
-                  <small class="liquidity-bar-caption">Saldo real = 100%</small>
+                  <small class="liquidity-bar-caption">${chartOverAllocated
+                    ? `100% = compromisos; saldo cubierto ${((balance / chartTotal) * 100).toLocaleString("es-ES", { maximumFractionDigits: 1 })}%`
+                    : "100% = saldo bancario"}</small>
                 </div>
 
                 <div class="liquidity-account-legend ${leaderCountClass}">
                   ${leaderLayout.map((segment) => {
-                    const pct = balance > 0 ? (segment.amount / balance) * 100 : 0;
+                    const pct = chartTotal > 0 ? (segment.amount / chartTotal) * 100 : 0;
                     const chargeLabel = liquidityChargeLabel(segment);
                     return `
-                      <div class="liquidity-legend-row ${segment.visiblePct > 0 ? "" : "is-outside-balance"}">
+                      <div class="liquidity-legend-row ${segment.visibleAmount > 0 ? "" : "is-outside-balance"}">
                         <i class="${segment.className}"></i>
                         <span>
                           <em>${escapeHtml(segment.label)}</em>
-                          <small>${segment.visiblePct > 0
-                            ? pct.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "% del saldo"
-                            : "Pendiente del ciclo · aún no cubierto por el saldo actual"}</small>
+                          <small>${segment.visibleAmount > 0
+                            ? pct.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + (chartOverAllocated ? "% de compromisos" : "% del saldo")
+                            : "Importe sin representación disponible"}</small>
+                          <span class="liquidity-legend-meter" aria-hidden="true"><span class="liquidity-legend-meter-fill ${segment.className} ${segment.pctClass}"></span></span>
                         </span>
                         <span class="liquidity-legend-value">
                           <b>${formatMoney(segment.amount, currency)}</b>

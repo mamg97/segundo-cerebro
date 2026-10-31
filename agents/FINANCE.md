@@ -35,6 +35,8 @@ Para inversiones y ahorro:
 - No considerar un ciclo cerrado mientras presupuesto, movimientos y saldos reales no sean explicables entre sí.
 - Para partidas variables del mes, reservar margen para los compromisos que quedan; no asumir que todo el presupuesto está disponible el primer día.
 - Cualquier discrepancia numérica debe quedar identificada y explicada, aunque sea pequeña.
+- **Política de imputación Uber / Transporte:** todos los cargos por trayectos Uber (incluidos viajes vinculados a bodas, cursos u otros eventos) pertenecen a la partida presupuestaria «Transporte», independientemente de la cuenta bancaria pagadora o de cómo se liquide Tricount. El gasto conserva su pagador y su reparto real, que pueden seguir pendientes de acreditar. Los bloqueos Uber en tarjeta son «comprometido» y solo pasan a «gastado» cuando se asienta el cargo definitivo; jamás contabilizar retención y adeudo como dos gastos. Una transferencia interna o reembolso Tricount no constituye un segundo gasto de transporte.
+- La clasificación por proveedor no debe falsear la naturaleza del servicio: «Uber Eats» es un pedido de comida, no un trayecto, y debe distinguirse expresamente al revisar su imputación.
 
 ## Privacidad
 
