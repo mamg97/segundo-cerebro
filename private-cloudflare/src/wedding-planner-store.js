@@ -15,9 +15,12 @@ export function validateGuest(x){
   email=field(x.email,254),phone=field(x.phone,40);
  if(!name||!RSVPS.has(rsvp)||!MENUS.has(menu))throw new PlannerError("INVALID_ITEM");
  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new PlannerError("INVALID_EMAIL");
- const tableId=x.tableId?uuid(x.tableId):null;
+ const tableId=x.tableId?uuid(x.tableId):null,seatIndex=x.seatIndex;
  if(rsvp==="rechazado"&&tableId)throw new PlannerError("DECLINED_SEATING");
- return {name,groupName,rsvp,menu,dietaryNotes,notes,email,phone,tableId};
+ if(seatIndex!==undefined&&seatIndex!==null&&(!Number.isInteger(seatIndex)||seatIndex<0||seatIndex>29))
+  throw new PlannerError("INVALID_SEAT");
+ if(seatIndex!==undefined&&seatIndex!==null&&!tableId)throw new PlannerError("INVALID_SEAT");
+ return {name,groupName,rsvp,menu,dietaryNotes,notes,email,phone,tableId,seatIndex};
 }
 export function validateTable(x){
  if(!x||Array.isArray(x)||typeof x!=="object")throw new PlannerError("INVALID_ITEM");
@@ -31,7 +34,7 @@ export function validateTable(x){
  return {name,capacity,shape,positionX:absent||cleared?null:x.positionX,positionY:absent||cleared?null:x.positionY};
 }
 const guestRow=x=>({id:x.id,name:x.name,groupName:x.group_name,rsvp:x.rsvp,menu:x.menu,dietaryNotes:x.dietary_notes,
- email:x.email,phone:x.phone,notes:x.notes,tableId:x.table_id,revision:x.revision,updatedAt:x.updated_at,updatedBy:x.updated_by});
+ email:x.email,phone:x.phone,notes:x.notes,tableId:x.table_id,seatIndex:x.seat_index??null,revision:x.revision,updatedAt:x.updated_at,updatedBy:x.updated_by});
 const tableRow=x=>({id:x.id,name:x.name,capacity:x.capacity,shape:x.shape,
  positionX:x.position_x??null,positionY:x.position_y??null,
  revision:x.revision,updatedAt:x.updated_at,updatedBy:x.updated_by,seated:x.seated||0});
@@ -57,6 +60,31 @@ async function capacityCheck(db,tableId,exceptId=null){
  if(!t)throw new PlannerError("TABLE_NOT_FOUND",404);
  const used=await db.prepare("SELECT COUNT(*) AS n FROM wedding_guests WHERE table_id=? AND id!=?").bind(tableId,exceptId||"").first();
  if(Number(used?.n||0)>=t.capacity)throw new PlannerError("TABLE_FULL",409);
+}
+// Seat assignment is canonical. A missing index chooses the first genuinely
+// empty chair; an explicit index must be within capacity and unoccupied.
+async function resolveSeat(db,tableId,seatIndex,exceptId=null){
+ if(!tableId)return null;
+ const t=await db.prepare("SELECT capacity FROM wedding_tables WHERE id=?").bind(tableId).first();
+ if(!t)throw new PlannerError("TABLE_NOT_FOUND",404);
+ const records=await db.prepare("SELECT seat_index FROM wedding_guests WHERE table_id=? AND id!=? AND seat_index IS NOT NULL")
+  .bind(tableId,exceptId||"").all();
+ const occupied=new Set((records.results||[]).map(r=>Number(r.seat_index)));
+ if(seatIndex!==undefined&&seatIndex!==null){
+  if(seatIndex>=t.capacity)throw new PlannerError("INVALID_SEAT");
+  if(occupied.has(seatIndex))throw new PlannerError("SEAT_TAKEN",409);
+  return seatIndex;
+ }
+ for(let i=0;i<t.capacity;i++)if(!occupied.has(i))return i;
+ throw new PlannerError("TABLE_FULL",409);
+}
+async function guestWrite(statement){
+ try{return await statement.run();}
+ catch(error){
+  if(/UNIQUE constraint failed|SQLITE_CONSTRAINT/i.test(String(error?.message||"")))
+   throw new PlannerError("SEAT_TAKEN",409);
+  throw error;
+ }
 }
 export async function handleWeddingPlannerRequest(request,env){
  try{
@@ -89,10 +117,11 @@ export async function handleWeddingPlannerRequest(request,env){
   if(!id&&method==="POST"){
    const body=await parse(request),item=guests?validateGuest(body):validateTable(body);
    if(guests)await capacityCheck(db,item.tableId);
+   const seatIndex=guests?await resolveSeat(db,item.tableId,item.seatIndex):null;
    const guid=crypto.randomUUID(),now=new Date().toISOString();
    if(guests){
-    await db.prepare("INSERT INTO wedding_guests(id,name,group_name,rsvp,menu,dietary_notes,email,phone,notes,table_id,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
-     .bind(guid,item.name,item.groupName,item.rsvp,item.menu,item.dietaryNotes,item.email,item.phone,item.notes,item.tableId,now,actor).run();
+    await guestWrite(db.prepare("INSERT INTO wedding_guests(id,name,group_name,rsvp,menu,dietary_notes,email,phone,notes,table_id,seat_index,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+     .bind(guid,item.name,item.groupName,item.rsvp,item.menu,item.dietaryNotes,item.email,item.phone,item.notes,item.tableId,seatIndex,now,actor));
    }else{
     await db.prepare("INSERT INTO wedding_tables(id,name,capacity,shape,position_x,position_y,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?)")
      .bind(guid,item.name,item.capacity,item.shape,item.positionX,item.positionY,now,actor).run();
@@ -106,11 +135,20 @@ export async function handleWeddingPlannerRequest(request,env){
    else{
     const count=await db.prepare("SELECT COUNT(*) AS n FROM wedding_guests WHERE table_id=?").bind(id).first();
     if(Number(count?.n||0)>item.capacity)throw new PlannerError("CAPACITY_BELOW_SEATED",409);
+    const invalid=await db.prepare("SELECT 1 AS invalid FROM wedding_guests WHERE table_id=? AND seat_index>=? LIMIT 1").bind(id,item.capacity).first();
+    if(invalid)throw new PlannerError("CAPACITY_BELOW_SEATED",409);
+   }
+   let seatIndex=null;
+   if(guests){
+    const current=await db.prepare("SELECT table_id,seat_index FROM wedding_guests WHERE id=? AND revision=?").bind(id,revision).first();
+    if(!current)throw new PlannerError("REVISION_CONFLICT",409);
+    const requested=item.seatIndex===undefined&&current.table_id===item.tableId?current.seat_index:item.seatIndex;
+    seatIndex=await resolveSeat(db,item.tableId,requested,id);
    }
    const now=new Date().toISOString();
    const result=guests?
-    await db.prepare("UPDATE wedding_guests SET name=?,group_name=?,rsvp=?,menu=?,dietary_notes=?,email=?,phone=?,notes=?,table_id=?,revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
-     .bind(item.name,item.groupName,item.rsvp,item.menu,item.dietaryNotes,item.email,item.phone,item.notes,item.tableId,now,actor,id,revision).run():
+    await guestWrite(db.prepare("UPDATE wedding_guests SET name=?,group_name=?,rsvp=?,menu=?,dietary_notes=?,email=?,phone=?,notes=?,table_id=?,seat_index=?,revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
+     .bind(item.name,item.groupName,item.rsvp,item.menu,item.dietaryNotes,item.email,item.phone,item.notes,item.tableId,seatIndex,now,actor,id,revision)):
     await db.prepare("UPDATE wedding_tables SET name=?,capacity=?,shape=?,position_x=COALESCE(?,position_x),position_y=COALESCE(?,position_y),revision=revision+1,updated_at=?,updated_by=? WHERE id=? AND revision=?")
      .bind(item.name,item.capacity,item.shape,item.positionX,item.positionY,now,actor,id,revision).run();
    if(!result.meta?.changes)throw new PlannerError("REVISION_CONFLICT",409);
