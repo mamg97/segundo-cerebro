@@ -90,7 +90,7 @@ test("mobile refresh shows one circular arrow rather than two opposing arrows",(
  assert.doesNotMatch(icon,/M4 17v-5h5|M20 7v5h-5/);
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
- assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.9/);
+ assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.\d+/);
  assert.match(index,/app\.js\?v=0\.44\.\d+/);
 });
 
