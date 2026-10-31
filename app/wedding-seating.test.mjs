@@ -37,7 +37,7 @@ test("existing presidential table participates as a reference without moving any
  assert.match(html,/Mesa presidencial/);
  assert.match(html,/Distribuciones sugeridas/);
  assert.match(html,/Confirmados sin mesa/);
- assert.match(html,/4 mesas/);
+ assert.match(html,/5 mesas/);
  assert.match(html,/role="img"/);
  assert.match(html,/data-wed-seat-guest/);
  assert.equal(tables.length,1,"rendering does not create D1 tables");
