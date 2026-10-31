@@ -165,7 +165,7 @@ function namedSeatDiagram(table,occupants,esc){
   return parts.length>1?parts[0]+" "+parts[parts.length-1].slice(0,1)+".":parts[0];
  };
  const diameter=total<=12?38:total<=18?30:total<=24?24:20;
- const orbitRadius=104; // 268px footprint: 134px center, radial chairs inside it.
+ const orbitRadius=104; // All six presidential chairs are placed on one concentric 268px footprint.
  const angleStep=2*Math.PI/total;
  const circles=Array.from({length:total},(_,index)=>{
   const guest=occupantsBySeat[index];
@@ -183,18 +183,18 @@ function namedSeatDiagram(table,occupants,esc){
    'aria-label="Añadir invitado en plaza '+(index+1)+' de '+esc(table.name)+'">'+
    '<span class="wed-seat-avatar" aria-hidden="true">+</span><span class="wed-seat-name" aria-hidden="true">Libre</span></button>';
   return '<button type="button" class="wed-named-seat is-filled" data-wed-seat-detail="'+esc(guest.id)+
-   '" style="'+position+'" title="'+esc(guest.name)+'" aria-label="Editar '+esc(guest.name)+'">'+
+   '" data-wed-seat-index="'+index+'" style="'+position+'" title="'+esc(guest.name)+'" aria-label="Editar '+esc(guest.name)+'">'+
    '<span class="wed-seat-avatar" aria-hidden="true">'+esc(guest.name.trim().slice(0,1).toLocaleUpperCase("es"))+'</span>'+
    '<span class="wed-seat-name" aria-hidden="true">'+esc(shortName(guest.name))+'</span></button>';
  }).join("");
- return '<div class="wed-named-table" role="group" aria-label="'+esc(table.name)+
+ return '<div class="wed-named-table" role="group" style="position:relative!important;width:268px!important;height:268px!important;overflow:visible!important" aria-label="'+esc(table.name)+
  ': '+byName.length+' de '+total+' plazas ocupadas">'+
  '<button type="button" class="wed-named-table-center" data-wed-edit-table="'+esc(table.id)+
  '" aria-label="Editar '+esc(table.name)+'" title="Editar '+esc(table.name)+'">'+
- '<strong>'+esc(table.name)+'</strong><small>'+byName.length+'/'+total+' plazas</small></button></div>'+
- '<div class="wed-floor-seat-ring" role="group" aria-label="Plazas de '+esc(table.name)+'" '+
- 'style="position:absolute;inset:0;width:268px;height:268px;overflow:visible;pointer-events:none">'+
- circles+'</div>';
+ '<strong>'+esc(table.name)+'</strong><small>'+byName.length+'/'+total+' plazas</small></button>'+
+ '<div class="wed-floor-seat-ring" data-wed-seat-ring-version="3" role="group" aria-label="Plazas de '+esc(table.name)+'" '+
+ 'style="position:absolute!important;left:0!important;top:0!important;width:268px!important;height:268px!important;overflow:visible!important;pointer-events:none">'+
+ circles+'</div></div>';
 }
 function tableGuestPicker(table,guests,esc,chosenSeatIndex=null){
  const available=guests.filter(g=>!g.tableId&&g.rsvp!=="rechazado")
