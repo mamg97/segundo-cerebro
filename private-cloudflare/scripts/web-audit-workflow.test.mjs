@@ -114,5 +114,5 @@ test("backup slot recognizes completed failed Chromium without masking short abo
   assert.equal(fn({ status: "completed" }, { conclusion: "success" }), true);
   assert.equal(fn({ status: "in_progress" }, full), false);
   assert.equal(fn({ status: "cancelled" }, full), false);
-  assert.match(workflow, /if \\(completedChromiumAudit\\(run, chromiumStep\\)\\)/);
+  assert.ok(workflow.includes("if (completedChromiumAudit(run, chromiumStep))"));
 });
