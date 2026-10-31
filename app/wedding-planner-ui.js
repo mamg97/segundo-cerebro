@@ -162,7 +162,7 @@ function namedSeatDiagram(table,occupants,esc){
  '<div class="wed-named-table-center"><strong>'+esc(table.name)+'</strong><small>'+title+' · '+total+' plazas</small></div>'+
  seats.map((seat,index)=>{
   const guest=occupantsBySeat[index];
-  const left=(50+(seat.x-50)*0.91).toFixed(2),top=(50+(seat.y-50)*0.91).toFixed(2);
+  const left=(50+(seat.x-50)*0.79).toFixed(2),top=(50+(seat.y-50)*0.79).toFixed(2);
   const position='left:'+left+'%;top:'+top+'%';
   if(!guest)return '<button type="button" class="wed-named-seat is-empty" data-wed-seat-add="'+esc(table.id)+'" '+
    'data-wed-seat-index="'+index+'" style="'+position+'" title="Añadir invitado en plaza '+(index+1)+'" '+
@@ -215,25 +215,26 @@ function layoutPreview(option,index){
  '<span>'+option.seats+' plazas</span><span>'+option.free+' libres</span></div>'+
  '<p>Configuración orientativa para '+option.confirmed+' confirmados; no asigna ni modifica mesas.</p></article>';
 }
-// Positions are percentages of a full-width private canvas. Unplaced legacy tables
-// receive a deterministic visual default; no guest or table is written on read.
-function tableFloorPosition(table,index,count,height){
- const columns=Math.min(3,count),rows=Math.ceil(count/columns);
+// Legacy broken drag sessions could save (0,0), leaving the entire card
+// outside the visible floor. Treat unusable edge coordinates as not placed.
+// Valid user positions remain unchanged; merely rendering never writes to D1.
+export function tableFloorPosition(table,index,count){
+ const columns=Math.min(4,Math.max(1,count));
+ const rows=Math.ceil(count/columns);
  const fallbackX=100*((index%columns)+0.5)/columns;
  const fallbackY=100*(Math.floor(index/columns)+0.5)/rows;
- const x=typeof table.positionX==="number"&&Number.isFinite(table.positionX)?table.positionX:fallbackX;
- const y=typeof table.positionY==="number"&&Number.isFinite(table.positionY)?table.positionY:fallbackY;
- // Never replace a persisted coordinate with a hard-coded 16% boundary.
- // The mounted canvas applies pixel-accurate bounds using its actual width.
- return {x:Math.min(100,Math.max(0,x)),y:Math.min(100,Math.max(0,y))};
+ const x=table.positionX,y=table.positionY;
+ const valid=typeof x==="number"&&Number.isFinite(x)&&
+  typeof y==="number"&&Number.isFinite(y)&&x>2&&x<98&&y>2&&y<98;
+ return valid?{x,y}:{x:fallbackX,y:fallbackY};
 }
 export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSeatIndex=null){
  const summary=seatingSummary(guests,tables);
  const options=suggestWeddingSeating(guests,tables);
  const selected=tables.find(t=>t.id===selectedId)||tables[0]||null;
  const selectedGuests=selected?guests.filter(g=>g.tableId===selected.id):[];
- const rows=Math.max(1,Math.ceil(tables.length/3));
- const height=Math.max(550,rows*520);
+ const rows=Math.max(1,Math.ceil(tables.length/4));
+ const height=rows*360;
  return '<section class="wed-planner-panel wed-seating-workspace">'+
  '<div class="wed-planner-heading"><div><h3>Organizador de mesas</h3>'+
  '<small>'+summary.seated+'/'+summary.confirmed+' confirmados ubicados · '+summary.tables+' mesas creadas</small></div>'+
@@ -244,25 +245,26 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  metric("Pendientes",summary.pending)+metric("Opcionales",summary.optional)+'</div>'+
  (editing?tableForm(editing==="new"?null:tables.find(t=>t.id===editing),esc):"")+
  '<section class="wed-seating-block wed-floor-section"><div class="wed-seating-block-title"><h4>Plano de mesas</h4>'+
- '<small>Pulsa + para sentar a alguien · Arrastra una mesa para moverla</small></div>'+
+ '<small>Pulsa una silla libre para asignarla · Arrastra desde «Mover»</small></div>'+
  (tables.length?'<div class="wed-floor-scroll" tabindex="0" style="display:block;height:'+height+'px;min-height:'+height+'px" aria-label="Plano de mesas; desplázate horizontalmente si es necesario">'+
  '<div class="wed-floor-plan" data-wed-floor-plan style="display:block;height:'+height+'px;min-height:'+height+'px">'+
  tables.map((t,index)=>{
   const occupants=guests.filter(g=>g.tableId===t.id);
-  const pos=tableFloorPosition(t,index,tables.length,height);
+  const pos=tableFloorPosition(t,index,tables.length);
   return '<article class="wed-floor-table'+(selected?.id===t.id?' is-selected':'')+
    '" data-wed-floor-table="'+esc(t.id)+'" tabindex="0" style="left:'+pos.x.toFixed(3)+'%;top:'+pos.y.toFixed(3)+'%" '+
    'aria-label="'+esc(t.name)+': '+occupants.length+' de '+t.capacity+' plazas. Pulsa para seleccionar; arrastra para mover">'+
-   '<span class="wed-floor-grip" aria-hidden="true">⠿ Mover</span>'+
+   '<button type="button" class="wed-floor-grip" data-wed-floor-grip aria-label="Arrastrar '+esc(t.name)+'" title="Mantén pulsado y arrastra para mover">⠿ Mover</button>'+
    namedSeatDiagram(t,occupants,esc)+
    '<span class="wed-floor-occupancy">'+occupants.length+'/'+t.capacity+' plazas</span></article>';
  }).join("")+'</div></div>'+
- '<p class="wed-planner-foot">El plano ocupa todo el ancho disponible. Los movimientos se guardan en privado; en pantallas estrechas puedes desplazarte horizontalmente. Pulsa una silla libre para elegir el invitado; los asientos se mantienen en su posición.</p>':
+ '<p class="wed-planner-foot">Arrastra la mesa desde «Mover». La posición se guarda entre sesiones; pulsa una silla libre para asignar un invitado.</p>':
  '<p class="wed-planner-empty">Todavía no hay mesas. Pulsa «Nueva mesa» para crear la primera.</p>')+
  (selected?'<article class="wed-seating-card wed-seating-details" data-wed-selected-details="'+esc(selected.id)+'">'+
  '<div class="wed-seating-head"><strong>'+esc(selected.name)+'</strong>'+
  '<span>'+esc(pick(SHAPES,selected.shape))+' · '+selectedGuests.length+'/'+selected.capacity+'</span>'+
  '<button type="button" data-wed-toggle-table-picker="'+esc(selected.id)+'" aria-expanded="false">+ Añadir invitados</button>'+
+ '<button type="button" data-wed-center-table="'+esc(selected.id)+'" title="Guardar la mesa en el centro del plano">Centrar mesa</button>'+
  '<button type="button" data-wed-edit-table="'+esc(selected.id)+'">Editar mesa</button></div>'+
  '<div class="wed-seat-caption">'+selectedGuests.filter(g=>g.rsvp==="confirmado"&&g.groupName!=="opcionales").length+
  ' confirmados · '+Math.max(0,selected.capacity-selectedGuests.length)+' libres</div>'+
