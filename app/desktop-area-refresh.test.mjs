@@ -9,10 +9,12 @@ test("desktop header is a single navigation surface with refresh, orb and existi
  const head=aside.slice(aside.indexOf('<header class="topbar">'));
  assert.match(aside,/id="area-nav"/);
  assert.doesNotMatch(main,/class="topbar"/);
+ assert.ok(aside.indexOf('id="system-orb"')<aside.indexOf('id="area-nav"'));
  assert.ok(aside.indexOf('id="area-nav"')<aside.indexOf('<header class="topbar">'));
+ assert.doesNotMatch(aside,/class="brand-mark"/);
  for(const id of ["system-orb","greeting","current-date","desktop-area-refresh","refresh-app","demo-mode-toggle","theme-toggle"]){
   assert.equal((html.match(new RegExp('id="'+id+'"',"g"))||[]).length,1,"Duplicate/missing "+id);
-  assert.ok(head.includes('id="'+id+'"'),"Control not in header: "+id);
+  if(id!=="system-orb")assert.ok(head.includes('id="'+id+'"'),"Control not in header: "+id);
  }
  assert.ok(head.indexOf('id="desktop-area-refresh"')<head.indexOf('id="demo-mode-toggle"'));
  assert.ok(head.indexOf('id="demo-mode-toggle"')<head.indexOf('id="theme-toggle"'));
@@ -20,7 +22,10 @@ test("desktop header is a single navigation surface with refresh, orb and existi
  assert.match(css,/\.app-shell > \.sidebar > \.topbar \{/);
  assert.match(css,/position: static/);
  assert.match(css,/\.sidebar > \.area-nav \{[\s\S]*?overflow-x: auto/);
- assert.match(css,/\.sidebar > \.topbar #system-orb \{[\s\S]*?pointer-events: auto/);
+ assert.match(css,/\.desktop-brand-group #system-orb \{[\s\S]*?pointer-events: auto/);
+ assert.match(css,/\.desktop-brand-group #system-orb > canvas \{[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important/);
+ assert.doesNotMatch(css,/\.sidebar > \.topbar #system-orb/);
+ assert.match(js,/const nextSize = mobile \? "46" : "64"/);
  assert.match(css,/--sc-desktop-unified-header-height: 64px/);
  assert.match(css,/body\.route-area-active \.app-shell > \.sidebar \{/);
  assert.match(js,/desktop-area-refresh"\)\?\.addEventListener\("click"/);

@@ -20,10 +20,38 @@
     gap: 7px;
     white-space: nowrap;
   }
-  body .app-shell > .sidebar .brand-mark {
-    width: 31px;
-    height: 31px;
-    flex-basis: 31px;
+  body .app-shell > .sidebar .desktop-brand-group {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    gap: 5px;
+    overflow: hidden;
+  }
+  body .app-shell > .sidebar .desktop-brand-group #system-orb {
+    display: block !important;
+    position: relative;
+    inset: auto;
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    flex: 0 0 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  /* The web component sets canvas width/height inline at 64px.
+     Without overriding that intrinsic canvas size, it overflows the 40px slot. */
+  body .app-shell > .sidebar .desktop-brand-group #system-orb > canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
   }
   body .app-shell > .sidebar .brand strong { font-size: 12px; }
   body .app-shell > .sidebar .brand small { font-size: 9px; }
@@ -77,27 +105,17 @@
   body .app-shell > .sidebar > .topbar .topbar-context {
     display: flex;
     flex: 0 0 auto;
-    gap: 6px;
+    gap: 0;
     align-items: center;
     min-width: 0;
-    max-width: 174px;
-    overflow: visible;
-  }
-  body .app-shell > .sidebar > .topbar #system-orb {
-    display: block !important;
-    position: relative;
-    inset: auto;
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
-    opacity: 1;
-    pointer-events: auto;
+    max-width: 145px;
+    overflow: hidden;
   }
   body .app-shell > .sidebar > .topbar .day-context {
     display: grid;
     gap: 1px;
     min-width: 0;
-    max-width: 128px;
+    max-width: 145px;
     margin: 0;
   }
   body .app-shell > .sidebar > .topbar .day-context p {
@@ -105,11 +123,16 @@
     font-size: 10px;
     line-height: 1.15;
     font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   body .app-shell > .sidebar > .topbar .day-context time {
     display: block;
-    max-width: 128px;
-    white-space: normal;
+    max-width: 145px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 9px;
     line-height: 1.2;
   }
@@ -180,6 +203,7 @@
   body .app-shell > .sidebar .brand {
     gap: 5px;
   }
+  body .app-shell > .sidebar .desktop-brand-group { gap: 3px; }
   body .app-shell > .sidebar .brand strong { font-size: 11px; }
   body .app-shell > .sidebar .brand small { font-size: 8px; }
   body .app-shell > .sidebar > .area-nav .nav-link {
@@ -188,13 +212,15 @@
     font-size: 10px;
   }
   body .app-shell > .sidebar > .topbar { gap: 5px; }
-  body .app-shell > .sidebar > .topbar .topbar-context { gap: 4px; max-width: 135px; }
-  body .app-shell > .sidebar > .topbar #system-orb {
-    width: 32px;
-    height: 32px;
-    flex-basis: 32px;
+  body .app-shell > .sidebar > .topbar .topbar-context { gap: 0; max-width: 108px; }
+  body .app-shell > .sidebar .desktop-brand-group #system-orb {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    flex-basis: 34px;
   }
-  body .app-shell > .sidebar > .topbar .day-context { max-width: 98px; }
+  body .app-shell > .sidebar > .topbar .day-context { max-width: 108px; }
   body .app-shell > .sidebar > .topbar .day-context p { font-size: 9px; }
   body .app-shell > .sidebar > .topbar .day-context time { font-size: 8px; }
   body .app-shell > .sidebar > .topbar .top-actions { gap: 4px; }

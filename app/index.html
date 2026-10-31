@@ -9,7 +9,7 @@
     <link rel="shortcut icon" type="image/png" href="./brain-logo.png?v=0.12.2">
     <link rel="apple-touch-icon" href="./brain-logo.png?v=0.12.2">
     <title>Segundo Cerebro — v0.1.1</title>
-    <link rel="stylesheet" href="./styles.css?v=0.44.108">
+    <link rel="stylesheet" href="./styles.css?v=0.44.109">
     <link rel="stylesheet" href="./vision.css?v=0.44.0">
     <link rel="stylesheet" href="./gym-month-calendar.css?v=0.44.48">
     <link rel="stylesheet" href="./gym-progress-photos.css?v=0.44.49">
@@ -22,31 +22,32 @@
     <link rel="stylesheet" href="./hobbies.css?v=0.1.6">
     <link rel="stylesheet" href="./wedding.css?v=0.2.3">
     <link rel="stylesheet" href="./projects-table.css?v=0.1.1">
-    <link rel="stylesheet" href="./desktop-unified-header.css?v=0.1.0">
-    <script type="module" src="./app.js?v=0.44.108"></script>
+    <link rel="stylesheet" href="./desktop-unified-header.css?v=0.1.1">
+    <script type="module" src="./app.js?v=0.44.109"></script>
     <script type="module" src="./finance-personal-compact.js?v=0.1.0"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Navegación principal">
-        <a class="brand" href="#/inicio" aria-label="Segundo Cerebro, inicio">
-          <img class="brand-mark" src="./brain-logo.png?v=0.12.2" alt="" aria-hidden="true">
-          <span><strong>Segundo</strong><small>Cerebro</small></span>
-        </a>
+        <div class="desktop-brand-group">
+          <thinking-orb
+            id="system-orb"
+            state="idle"
+            size="64"
+            theme="auto"
+            variant="classic"
+            speed="3.6"
+            role="img"
+          ></thinking-orb>
+          <a class="brand" href="#/inicio" aria-label="Segundo Cerebro, inicio">
+            <span><strong>Segundo</strong><small>Cerebro</small></span>
+          </a>
+        </div>
 
         <nav id="area-nav" class="area-nav" aria-label="Áreas"></nav>
         <header class="topbar">
           <div class="topbar-context">
-            <thinking-orb
-              id="system-orb"
-              state="idle"
-              size="40"
-              theme="auto"
-              variant="classic"
-              speed="3.6"
-              role="img"
-            ></thinking-orb>
             <div class="day-context">
               <p id="greeting">Buenos días</p>
               <time id="current-date"></time>

@@ -19,11 +19,14 @@ test("desktop has one sticky header and no stacked action toolbar",()=>{
  assert.match(styles,/\.sidebar\s*\{[\s\S]*?position:\s*sticky/);
 });
 test("refresh, orb, greeting, Demo and Theme keep the existing ids and events",()=>{
+ const sidebar=html.slice(html.indexOf('<aside class="sidebar"'),html.indexOf('</aside>'));
  const header=html.slice(html.indexOf('<header class="topbar">'),html.indexOf("</header>",html.indexOf('<header class="topbar">')));
  const ids=["system-orb","greeting","current-date","desktop-area-refresh","refresh-app","demo-mode-toggle","theme-toggle"];
- for(const id of ids)assert.match(header,new RegExp('id="'+id+'"'));
+ for(const id of ids)assert.match(sidebar,new RegExp('id="'+id+'"'));
+ assert.ok(sidebar.indexOf('id="system-orb"')<sidebar.indexOf('id="area-nav"'));
  assert.ok(header.indexOf('id="desktop-area-refresh"')<header.indexOf('id="demo-mode-toggle"'));
- assert.match(desktop,/#system-orb \{/);
+ assert.match(desktop,/\.desktop-brand-group #system-orb \{/);
+ assert.match(desktop,/#system-orb > canvas \{/);
  assert.match(app,/toggleTheme/);
  assert.match(app,/toggleDemoMode/);
  assert.doesNotMatch(app,/installStickyTopbar|style\.setProperty\("--sc-fixed-navigation-height"/);
