@@ -13,6 +13,22 @@ export function travelMapDays(groups){
 export function travelMapVisible(points,day){
   return points.filter(p=>p.date==="ALOJAMIENTO"|| (day==="TODOS" ? DAY.test(p.date) : p.date===day)).sort((a,b)=>a.date==="ALOJAMIENTO"?-1:b.date==="ALOJAMIENTO"?1:0);
 }
+// Large, geographically separated day stops need road directions; compact urban trips remain walkable.
+// Only private map coordinates already supplied to this generic renderer are considered.
+function geoDistanceKm(a,b){
+  const rad=Math.PI/180,dLat=(b.lat-a.lat)*rad,dLon=(b.lon-a.lon)*rad;
+  const q=Math.sin(dLat/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLon/2)**2;
+  return 6371*2*Math.asin(Math.min(1,Math.sqrt(q)));
+}
+export function travelRouteMode(points,day){
+  if(!DAY.test(day))return "walking";
+  const stops=points.filter(p=>p.date===day).sort((a,b)=>a.order-b.order);
+  const lodging=points.find(p=>p.date==="ALOJAMIENTO");
+  const route=lodging?[lodging,...stops]:stops;
+  if(route.length<2)return "walking";
+  return route.some((point,i)=>i>0&&[point,route[i-1]].every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon))&&geoDistanceKm(route[i-1],point)>8)
+    ?"driving":"walking";
+}
 export function travelRouteUrls(points,day,lodgingAddress){
   if(!DAY.test(day))return [];
   const stops=points.filter(p=>p.date===day).sort((a,b)=>a.order-b.order);
@@ -25,7 +41,7 @@ export function travelRouteUrls(points,day,lodgingAddress){
     const origin=start===0?(lodgingAddress||chunk[0].query):stops[start-1].query;
     const destination=chunk.at(-1).query;
     const middle=(start===0&&!lodgingAddress?chunk.slice(1,-1):chunk.slice(0,-1)).map(p=>p.query);
-    const params=new URLSearchParams({api:"1",origin,destination,travelmode:"walking"});
+    const params=new URLSearchParams({api:"1",origin,destination,travelmode:travelRouteMode(points,day)});
     if(middle.length)params.set("waypoints",middle.slice(0,3).join("|"));
     legs.push("https://www.google.com/maps/dir/?"+params.toString());
   }
@@ -71,8 +87,9 @@ export function bindTravelMap({root,groups,address,mapLink,dayLabel}){
     if(routeBox){
       routeBox.replaceChildren();
       const urls=travelRouteUrls(points,day,address);
+      const routeLabel=travelRouteMode(points,day)==="driving"?"en coche":"a pie";
       urls.forEach((url,i)=>{
-        const a=el("a","trv-map-route-link",urls.length===1?"Abrir recorrido a pie en Google Maps":"Recorrido a pie · tramo "+(i+1)+"/"+urls.length);
+        const a=el("a","trv-map-route-link",urls.length===1?"Abrir recorrido "+routeLabel+" en Google Maps":"Recorrido "+routeLabel+" · tramo "+(i+1)+"/"+urls.length);
         a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.referrerPolicy="no-referrer";
         routeBox.append(a);
       });
