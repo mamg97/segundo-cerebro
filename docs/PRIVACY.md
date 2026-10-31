@@ -4,6 +4,17 @@
 
 GitHub contiene únicamente código, documentación técnica, licencias y datos ficticios. Los datos personales reales permanecen en fuentes privadas y en la infraestructura protegida cuando su persistencia es necesaria.
 
+## Boda: invitados y proveedores
+
+Los nombres, correos, teléfonos, notas alimentarias y mesas de invitados
+solo se almacenan en Cloudflare D1 bajo Cloudflare Access, nunca en
+GitHub, GitHub Pages, HTML público, logs, cachés persistentes ni URLs
+compartibles. Toda API nueva de Boda falla de forma segura sin
+identidad Access y verifica el origen de mutaciones.
+Las fichas HTTPS de Bodas.net se abren mediante enlaces externos y
+sin enviar datos personales del registro. No existe sincronización
+entre la lista privada y la plataforma externa.
+
 ## Datos prohibidos en Git
 
 - Emails o mensajes reales.
