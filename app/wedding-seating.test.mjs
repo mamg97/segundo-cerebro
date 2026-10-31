@@ -104,7 +104,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(html,/data-wed-seat-detail="person-2"/);
  assert.match(html,/Elena del Valle/);assert.match(html,/Álvaro Otero/);
  assert.match(html,/Libre/);
- assert.match(html,/role="group" style="position:relative;width:100%;height:100%;overflow:visible" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
+ assert.match(html,/class="wed-named-table" role="group" aria-label="Mesa de pruebas: 2 de 12 plazas ocupadas"/);
  assert.match(html,/data-wed-unseat-guest="person-1"/);
  assert.match(html,/data-wed-toggle-table-picker="round1"/);
  assert.match(html,/data-wed-place-existing="round1"/);
@@ -327,7 +327,7 @@ test("pending guests keep all occupied seats visible without altering D1",()=>{
  assert.equal((diagram.match(/left:[\d.]+px!important;top:[\d.]+px!important/g)||[]).length,6);
  assert.equal((diagram.match(/data-wed-seat-detail="fake-/g)||[]).length,6);
  assert.equal(JSON.stringify(people),before);
- assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-ring\{[\s\S]*?position:absolute/);
+ assert.match(css,/\.wed-floor-plan \.wed-floor-table \.wed-floor-seat-ring \{[\s\S]*?position:absolute/);
 });
 test("top-right plan controls provide one new-table action and a fullscreen exit",()=>{
  const t={id:"d",name:"Demo",capacity:12,shape:"redonda"};
