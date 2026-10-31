@@ -17,7 +17,7 @@ test("agenda and vendor views reuse existing wedding items rather than duplicate
  assert.deepEqual(weddingTaskItems(items).map(i=>i.id),["t","d"]);
  assert.deepEqual(weddingProviderItems(items).map(i=>i.id),["p"]);
  assert.match(renderAgenda(items,esc),/1 de 2 completadas/);
- assert.match(renderProviders(items,esc),/2.000,00/);
+ assert.match(renderProviders(items,esc),/2000,00/);
  assert.match(script,/state\.view==="agenda"/);
  assert.match(script,/state\.view==="proveedores"/);
 });
