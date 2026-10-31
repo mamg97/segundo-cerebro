@@ -17,6 +17,24 @@ export function tripMapLink(address,mode="embed"){
     "https://www.google.com/maps/search/?api=1&query="+encoded:
     "https://maps.google.com/maps?q="+encoded+"&z=16&output=embed";
 }
+// A saved Google Maps list is supplied by the private Events reference sheet.
+// It is a link back to the owner's Google account, not permission to read its contents.
+export function travelSavedMapsList(references){
+  if(!Array.isArray(references))return null;
+  for(const ref of references){
+    if(!ref||!["map_list","google_maps_list"].includes(ref.refType||ref.ref_type))continue;
+    const raw=ref.sourceRef||ref.source_ref;
+    if(typeof raw!=="string"||raw.length>2048)continue;
+    try{
+      const url=new URL(raw);
+      if(url.protocol!=="https:"||url.username||url.password||url.port)continue;
+      if(!["www.google.com","google.com","maps.google.com"].includes(url.hostname))continue;
+      if(!/^\/maps(?:\/|$)/.test(url.pathname))continue;
+      return {url:url.href,label:typeof ref.label==="string"?ref.label.slice(0,140):"Mi lista de Google Maps"};
+    }catch{}
+  }
+  return null;
+}
 export function tripBudgetStatus(budget){
   if(!budget)return {percent:null,reserved:null,total:null,needed:null};
   const n=(v)=>v==null||v===""?null:Number(v);
@@ -26,12 +44,13 @@ export function tripBudgetStatus(budget){
   return {total:validTotal,reserved:validReserved,needed:needed!==null&&Number.isFinite(needed)&&needed>=0?needed:null,
     percent:validTotal!==null&&validReserved!==null?Math.min(100,Math.max(0,Math.round(validReserved/validTotal*100))):null};
 }
-export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,bookings,budgetSection,tasksSection,refsSection,extrasSection,dayLabel}){
+export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,bookings,budgetSection,tasksSection,refsSection,extrasSection,references,dayLabel}){
   const tasks=groups.tasks||[],days=groups.days||[];
   const done=tasks.filter(t=>t.status==="COMPLETADA").length,pending=tasks.length-done;
   const b=tripBudgetStatus(financeItem);
   const metric=(icon,title,value)=>'<article class="trv-dash-metric"><span>'+icon+'</span><small>'+escapeText(title)+'</small><strong>'+escapeText(value)+'</strong></article>';
   const metrics='<div class="trv-dash-metrics">'+metric("▤","Días organizados",days.length)+metric("✓","Preparativos",done+" / "+tasks.length)+metric("⌛","Tareas pendientes",pending)+metric("€","Fondos asignados",money(b.reserved))+'</div>';
+  const savedList=travelSavedMapsList(references);
   const address=lodgingMapAddress(groups),external=tripMapLink(address,"external");
   const mapPoints=travelMapPoints(groups),mapDays=travelMapDays(groups);
   const hasPoints=mapPoints.length>0,initialDay=mapDays[0]||"TODOS";
@@ -50,8 +69,12 @@ export function tripDashboardMarkup({hero,groups,financeItem,flights,lodging,boo
     return '<div class="trv-map-stop-group" data-trv-map-list="'+escapeText(date)+'"'+(date!==initialDay?' hidden':"")+'>'+
       '<strong>'+name+'</strong><ol>'+selected.map((p,i)=>'<li><span class="trv-map-stop-num">'+(i+1)+'</span><button type="button" class="trv-map-stop-select" data-trv-map-stop="'+mapPoints.indexOf(p)+'" aria-pressed="false" title="Mostrar este lugar en Google Maps">'+escapeText(p.name)+'</button><a class="trv-map-stop-external" href="'+escapeText(tripMapLink(p.query,"external"))+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" aria-label="Abrir '+escapeText(p.name)+' en Google Maps">↗</a><small>'+escapeText(p.status==="CONFIRMADO"?"Confirmado":p.status==="PENDIENTE"?"Pendiente":p.status==="OPCIONAL"?"Alternativa":"Propuesta")+'</small></li>').join("")+'</ol></div>';
   }).join("")+'</div>':"";
+  const savedListLink=savedList?
+    '<a class="trv-saved-google-list" href="'+escapeText(savedList.url)+'" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">'+
+    '<strong>↗ Abrir mi lista guardada en Google Maps</strong><small>'+escapeText(savedList.label)+'</small></a>':"";
   const map='<section class="trv-panel trv-dash-map-section" id="trv-dash-map">'+
     '<div class="trv-panel-head"><h3>⌖ '+(hasPoints?"Mapa · Google Maps":"Alojamiento · Google Maps")+'</h3><small>'+(hasPoints?"Paradas por día · Google Maps":"Mapa bajo demanda")+'</small></div>'+
+    savedListLink+
     (address||hasPoints?
       (address?'<div class="trv-dash-address"><span aria-hidden="true">⌖</span><p>'+escapeText(address)+'</p></div>':"")+
       mapTabs+
