@@ -1,6 +1,6 @@
 // Private wedding collaboration view. No embedded personal records.
 import {boundFloorPosition,moveFloorPosition} from "./wedding-floor-geometry.mjs?v=0.1.1";
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.21";
+import {renderAgenda,renderProviders,renderGuests,renderTables,namedSeatDiagram,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.21";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.3";
 export const WEDDING_TYPES=[
@@ -299,6 +299,7 @@ async function downloadWeddingSheet(){
 function show(){
  if(!active())return;
  if(weddingFloorPortal)setWeddingFloorExpanded(false);
+ closeWeddingTableInspector();
  closeWeddingSeatPopover();
  closeWeddingTableModal();
  if(state.view!=="mesas"||state.tableEditing)state.seatingFloorExpanded=false;
@@ -311,7 +312,7 @@ function show(){
 }
 function errorMsg(e){
  if(e.status===409)return "Este elemento ha cambiado desde que lo abriste. He actualizado los datos para evitar sobrescribir los cambios de la otra persona.";
- const dict={ACCESS_REQUIRED:"Acceso denegado. Es necesario iniciar sesión con una cuenta autorizada por Cloudflare Access.",STORAGE_UNAVAILABLE:"La base de datos no está disponible.",
+ const dict={TABLE_UPDATE_NOT_VERIFIED:"El servidor no confirma el cambio de capacidad. No se ha marcado como guardado. Revisa la configuración del servidor.",ACCESS_REQUIRED:"Acceso denegado. Es necesario iniciar sesión con una cuenta autorizada por Cloudflare Access.",STORAGE_UNAVAILABLE:"La base de datos no está disponible.",
    INVALID_ORIGIN:"La sesión no permite guardar cambios.",INVALID_ITEM:"Revisa los campos obligatorios.",PAID_EXCEEDS_CONTRACTED:"Lo pagado no puede superar lo contratado.",INVALID_IMAGE:"El archivo no es una imagen admitida.",IMAGE_TOO_LARGE:"La fotografía es demasiado grande.",TABLE_FULL:"La mesa está completa.",TABLE_HAS_GUESTS:"Vacía la mesa antes de eliminarla.",CAPACITY_BELOW_SEATED:"La capacidad no puede ser inferior a los invitados asignados.",REVISION_CONFLICT:"Los datos han cambiado en otra sesión. Se han actualizado para evitar sobrescribirlos.",DECLINED_SEATING:"No se puede asignar mesa a alguien que no asistirá.",INVALID_ITEM:"Revisa los datos del formulario.",STORAGE_UNAVAILABLE:"No se ha podido acceder al almacén privado.",POSITION_NOT_SAVED:"No se guardó la nueva posición de la mesa. Vuelve a intentarlo."};
  return dict[e.message]||"No se pudo completar la operación ("+e.message+").";
 }
@@ -396,6 +397,7 @@ function tablePayload(form){
 let weddingFloorPortal=null;
 let weddingTableModal=null;
 let weddingSeatPopover=null;
+let weddingTableInspector=null;
 function closeWeddingSeatPopover(){
  if(!weddingSeatPopover)return;
  const {element,outside}=weddingSeatPopover;
@@ -409,6 +411,178 @@ function closeWeddingTableModal(){
  weddingTableModal=null;
  if(modal.open)modal.close();
  modal.remove();
+}
+// A non-destructive side inspector: edit the live table without rebuilding
+// the expanded floor or claiming success before D1 confirms the new capacity.
+function closeWeddingTableInspector(){
+ if(!weddingTableInspector)return;
+ weddingTableInspector.remove();
+ weddingTableInspector=null;
+}
+function updateWeddingTableFigure(table){
+ const shell=weddingFloorPortal?.shell||document.querySelector("[data-wed-floor-shell]");
+ const stage=shell?.querySelector("[data-wed-floor-plan]");
+ if(!stage)return;
+ const tile=[...stage.querySelectorAll("[data-wed-floor-table]")]
+  .find(item=>item.dataset.wedFloorTable===table.id);
+ if(!tile)return;
+ const occupants=state.guests.filter(guest=>guest.tableId===table.id);
+ const wrap=document.createElement("div");
+ wrap.innerHTML=namedSeatDiagram(table,occupants,esc);
+ const newFigure=wrap.firstElementChild;
+ const oldFigure=tile.querySelector(".wed-svg-table-wrap");
+ if(!oldFigure||!newFigure)return;
+ oldFigure.replaceWith(newFigure);
+ tile.setAttribute("aria-label",table.name+": "+occupants.length+" de "+table.capacity+" plazas");
+ const grip=tile.querySelector("[data-wed-floor-grip]");
+ if(grip){grip.setAttribute("aria-label","Arrastrar "+table.name);grip.title="Arrastrar "+table.name;}
+ // Bind only this newly created SVG; other tables keep their existing listeners.
+ newFigure.querySelectorAll("[data-wed-edit-table]").forEach(button=>button.addEventListener("click",event=>{
+  event.stopPropagation();openWeddingTableInspector(table.id);
+ }));
+ newFigure.querySelectorAll("[data-wed-seat-add]").forEach(button=>button.addEventListener("click",event=>{
+  event.stopPropagation();
+  const index=Number(button.dataset.wedSeatIndex);
+  if(Number.isInteger(index)&&index>=0&&index<table.capacity)
+   openWeddingSeatPicker(button,table.id,index);
+ }));
+ newFigure.querySelectorAll("[data-wed-seat-detail]").forEach(button=>button.addEventListener("click",event=>{
+  event.stopPropagation();openSeatedGuest(button.dataset.wedSeatDetail,document.querySelector("#dialog-body"));
+ }));
+ newFigure.querySelectorAll(".wed-floor-seat-svg [role=button]").forEach(control=>{
+  control.addEventListener("keydown",event=>{
+   if(event.key!=="Enter"&&event.key!==" ")return;
+   event.preventDefault();event.stopPropagation();
+   control.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true}));
+  });
+ });
+ // The floor canvas is unchanged: its normalized x/y and scroll remain intact.
+ // Only a larger SVG needs a taller grid row, never a layout reset.
+ const heights=[...stage.querySelectorAll(".wed-floor-seat-svg")].map(svg=>
+  svg.viewBox?.baseVal?.height||300);
+ const rowHeight=Math.max(390,...heights.map(h=>h+48));
+ const columns=Number.parseInt(getComputedStyle(stage).getPropertyValue("--wed-floor-columns"),10)||1;
+ const rows=Math.max(1,Math.ceil(state.tables.length/columns));
+ stage.style.setProperty("--wed-floor-row-height",rowHeight+"px");
+ stage.style.height=Math.max(2200,rows*rowHeight)+"px";
+ const summary=document.querySelector(".wed-seating-summary");
+ if(summary){
+  const metrics=summary.querySelectorAll(".wed-seating-metric strong");
+  const total=state.tables.reduce((sum,item)=>sum+Number(item.capacity||0),0);
+  const filled=state.guests.filter(guest=>guest.tableId).length;
+  if(metrics[2])metrics[2].textContent=String(total);
+  if(metrics[3])metrics[3].textContent=String(Math.max(0,total-filled));
+ }
+ const details=document.querySelector("[data-wed-selected-details]");
+ if(details?.dataset.wedSelectedDetails===table.id){
+  const heading=details.querySelector(".wed-seating-head strong");
+  const subtitle=details.querySelector(".wed-seating-head span");
+  const free=details.querySelector(".wed-seat-caption");
+  if(heading)heading.textContent=table.name;
+  if(subtitle)subtitle.textContent=({redonda:"Redonda",rectangular:"Rectangular",presidencial:"Presidencial"}[table.shape]||table.shape)+" · "+occupants.length+"/"+table.capacity;
+  if(free)free.textContent=Math.max(0,table.capacity-occupants.length)+" plazas libres";
+ }
+ requestAnimationFrame(()=>stage.dispatchEvent(new Event("wed-floor-recalibrate")));
+}
+function openWeddingTableInspector(id){
+ if(state.busy)return;
+ const table=state.tables.find(item=>item.id===id);
+ if(!table)return;
+ closeWeddingSeatPopover();
+ closeWeddingTableInspector();
+ const host=weddingFloorPortal?.modal||document.querySelector("#detail-dialog");
+ if(!host)return;
+ state.seatingSelectedTableId=id;
+ const floor=weddingFloorPortal?.shell||document.querySelector("[data-wed-floor-shell]");
+ floor?.querySelectorAll("[data-wed-floor-table]").forEach(tile=>
+  tile.classList.toggle("is-selected",tile.dataset.wedFloorTable===id));
+ const centerButton=floor?.querySelector(".wed-floor-heading [data-wed-center-table]");
+ if(centerButton)centerButton.dataset.wedCenterTable=id;
+ const guests=state.guests.filter(guest=>guest.tableId===id)
+  .sort((a,b)=>(a.seatIndex??99)-(b.seatIndex??99)||a.name.localeCompare(b.name,"es"));
+ const lastSeat=guests.reduce((max,guest)=>Math.max(max,Number.isInteger(guest.seatIndex)?guest.seatIndex+1:0),0);
+ const minimum=Math.max(1,guests.length,lastSeat);
+ const options=[["redonda","Redonda"],["rectangular","Rectangular"],["presidencial","Presidencial"]];
+ const panel=document.createElement("aside");
+ panel.className="wed-table-inspector";
+ panel.setAttribute("role","dialog");
+ panel.setAttribute("aria-modal","false");
+ panel.setAttribute("aria-label","Especificaciones de "+table.name);
+ panel.innerHTML='<header class="wed-inspector-header"><div><small>Plano · Mesa seleccionada</small><h3>'+
+  esc(table.name)+'</h3></div><button type="button" data-wed-inspector-close aria-label="Cerrar edición de mesa">×</button></header>'+
+  '<form data-wed-inspector-form class="wed-inspector-form">'+
+  '<label>Nombre de la mesa<input name="name" maxlength="180" required value="'+esc(table.name)+'"></label>'+
+  '<label>Tipo de mesa<select name="shape">'+options.map(([value,label])=>
+   '<option value="'+value+'" '+(value===table.shape?'selected':'')+'>'+label+'</option>').join("")+'</select></label>'+
+  '<label>Número de plazas<input name="capacity" type="number" step="1" min="'+minimum+
+   '" max="30" required value="'+table.capacity+'"></label>'+
+  '<div class="wed-inspector-capacity"><button type="button" data-wed-inspector-less aria-label="Reducir plazas">−</button>'+
+  '<span>'+guests.length+' ocupadas · <b data-wed-inspector-free>'+Math.max(0,table.capacity-guests.length)+
+  '</b> libres</span><button type="button" data-wed-inspector-more aria-label="Añadir plaza">+</button></div>'+
+  '<small class="wed-inspector-help">Capacidad de 1 a 30. '+(minimum>1?
+   'Mínimo '+minimum+' para conservar las plazas ya asignadas.':'')+'</small>'+
+  '<p class="wed-inspector-feedback" data-wed-inspector-feedback aria-live="polite"></p>'+
+  '<button type="submit" class="wed-primary">Guardar cambios</button></form>'+
+  '<section class="wed-inspector-guests"><h4>Comensales ('+guests.length+'/'+table.capacity+
+  ')</h4>'+(guests.length?'<ul>'+guests.map(guest=>'<li><span>'+
+   (Number.isInteger(guest.seatIndex)?'Plaza '+(guest.seatIndex+1):'Sin plaza fija')+
+   '</span><strong>'+esc(guest.name)+'</strong></li>').join("")+'</ul>':
+   '<p>No hay comensales asignados.</p>')+'</section>';
+ host.appendChild(panel);weddingTableInspector=panel;
+ panel.querySelector("[data-wed-inspector-close]")?.addEventListener("click",closeWeddingTableInspector);
+ const form=panel.querySelector("[data-wed-inspector-form]");
+ const capacity=form.elements.namedItem("capacity");
+ const free=panel.querySelector("[data-wed-inspector-free]");
+ const sync=()=>{const number=Number(capacity.value);free.textContent=String(Math.max(0,number-guests.length));};
+ capacity.addEventListener("input",sync);
+ panel.querySelector("[data-wed-inspector-less]")?.addEventListener("click",()=>{
+  capacity.value=String(Math.max(minimum,Number(capacity.value||table.capacity)-1));sync();
+ });
+ panel.querySelector("[data-wed-inspector-more]")?.addEventListener("click",()=>{
+  capacity.value=String(Math.min(30,Number(capacity.value||table.capacity)+1));sync();
+ });
+ form.addEventListener("submit",event=>{
+  event.preventDefault();
+  if(state.busy||!form.reportValidity())return;
+  const latest=state.tables.find(item=>item.id===id);
+  if(!latest)return;
+  const payload=tablePayload(form);
+  const feedback=panel.querySelector("[data-wed-inspector-feedback]");
+  const save=form.querySelector('[type="submit"]');
+  if(!payload.name||!Number.isInteger(payload.capacity)||payload.capacity<minimum||payload.capacity>30){
+   feedback.textContent="Revisa las plazas y los campos obligatorios.";feedback.setAttribute("role","alert");
+   return;
+  }
+  state.busy=true;save.disabled=true;save.textContent="Guardando…";
+  feedback.textContent="Verificando los cambios en la base de datos…";
+  feedback.removeAttribute("role");
+  void (async()=>{
+   try{
+    await getJson("/api/wedding/tables/"+encodeURIComponent(id),"PATCH",{
+     ...payload,revision:latest.revision
+    });
+    const persisted=await getJson("/api/wedding/tables");
+    const confirmed=(persisted.items||[]).find(item=>item.id===id);
+    if(!confirmed||confirmed.name!==payload.name||confirmed.shape!==payload.shape||
+       Number(confirmed.capacity)!==payload.capacity)throw new Error("TABLE_UPDATE_NOT_VERIFIED");
+    state.tables=persisted.items;
+    updateWeddingTableFigure(confirmed);
+    const heading=panel.querySelector(".wed-inspector-header h3");
+    if(heading)heading.textContent=confirmed.name;
+    panel.querySelector(".wed-inspector-guests h4").textContent=
+     "Comensales ("+guests.length+"/"+confirmed.capacity+")";
+    feedback.textContent="Guardado y comprobado: "+confirmed.capacity+" plazas.";
+    panel.removeAttribute("aria-busy");
+   }catch(error){
+    feedback.textContent=errorMsg(error);
+    feedback.setAttribute("role","alert");
+   }finally{
+    state.busy=false;
+    if(panel.isConnected){save.disabled=false;save.textContent="Guardar cambios";}
+   }
+  })();
+ });
+ panel.querySelector('input[name="capacity"]')?.focus({preventScroll:true});
 }
 function openNewWeddingTableModal(){
  closeWeddingSeatPopover();
@@ -581,6 +755,10 @@ if(typeof document!=="undefined")document.addEventListener("keydown",event=>{
  if(weddingSeatPopover){
   event.preventDefault();event.stopImmediatePropagation();
   closeWeddingSeatPopover();return;
+ }
+ if(weddingTableInspector){
+  event.preventDefault();event.stopImmediatePropagation();
+  closeWeddingTableInspector();return;
  }
  if(!state.seatingFloorExpanded)return;
  event.preventDefault();event.stopImmediatePropagation();
@@ -794,11 +972,12 @@ function bindWeddingFloorPlan(area){
   tile.addEventListener("click",event=>{
    if(event.target.closest("[data-wed-seat-detail],[data-wed-seat-add],[data-wed-edit-table]"))return;
    if(suppressClick){suppressClick=false;return;}
-   select(id);
+   if(event.target.closest("[data-wed-floor-grip]")){select(id);return;}
+   openWeddingTableInspector(id);
   });
   tile.addEventListener("keydown",event=>{
    if(event.target!==tile)return;
-   if(event.key==="Enter"||event.key===" "){event.preventDefault();select(id);return;}
+   if(event.key==="Enter"||event.key===" "){event.preventDefault();openWeddingTableInspector(id);return;}
    const step=event.shiftKey?5:1;
    const moves={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]};
    const delta=moves[event.key];if(!delta||state.busy||tile.dataset.wedSaving==="true"||!current)return;
@@ -965,14 +1144,8 @@ function bindPlannerActions(area){
   }),{preserveScroll:true});
  }));
  area.querySelectorAll("[data-wed-edit-table]").forEach(btn=>btn.addEventListener("click",event=>{
-  // The circular tabletop edits the table; the outer transparent drag footprint
-  // must never intercept that click or replace the intended editor.
   event.stopPropagation();
-  if(state.busy)return;
-  state.seatingSelectedTableId=btn.dataset.wedEditTable;
-  state.seatingFloorExpanded=false;
-  state.tableEditing=btn.dataset.wedEditTable;
-  show();
+  openWeddingTableInspector(btn.dataset.wedEditTable);
  }));
  area.querySelector("[data-wed-cancel-table]")?.addEventListener("click",()=>{state.tableEditing=null;show();});
  const capacityInput=area.querySelector("#wed-table-capacity");
