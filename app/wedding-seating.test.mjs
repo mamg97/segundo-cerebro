@@ -116,7 +116,7 @@ test("actual assigned guests appear around the circle with clickable names",()=>
  assert.match(css,/\.wed-table-picker\.is-open\{display:grid\}/);
 });
 test("table-persons actions reuse canonical guest API and preserve every guest field",()=>{
- assert.match(ui,/function changeGuestTable\(guest,tableId\)/);
+ assert.match(ui,/function changeGuestTable\(guest,tableId,seatIndex=undefined\)/);
  assert.match(ui,/tableId,revision:guest\.revision/);
  assert.match(ui,/data-wed-place-existing/);
  assert.match(ui,/data-wed-add-table-guest/);
