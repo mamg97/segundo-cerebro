@@ -67,7 +67,8 @@ export function installPrivateAppFreshnessGuard() {
   if (!current) return;
   document.documentElement.dataset.privateFrontendRevision = current;
 
-  let lastCheck = Date.now();
+  // Compare immediately on the first foreground resume, even after short iOS suspensions.
+  let lastCheck = 0;
   let inFlight = false;
   let updateDetected = false;
   let dirtyInput = false;
@@ -127,7 +128,7 @@ export function installPrivateAppFreshnessGuard() {
   // Explicit data refresh must also check the *code* version. This is how
   // a long-lived Boda dialog immediately discovers new deploys.
   document.addEventListener("click", (event) => {
-    if(event.target?.closest?.("#refresh-app, #desktop-area-refresh, #wed-main-refresh")) {
+    if(event.target?.closest?.("#refresh-app, #desktop-area-refresh, #wed-main-refresh, #mobile-refresh-action")) {
       void checkFreshness(true);
     }
   }, true);
