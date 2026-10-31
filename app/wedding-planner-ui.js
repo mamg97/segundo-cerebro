@@ -294,7 +294,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<button type="button" class="wed-floor-icon" data-wed-floor-expand aria-expanded="'+(floorExpanded?'true':'false')+
  '" title="'+(floorExpanded?'Cerrar pantalla completa':'Ver plano a pantalla completa')+
  '" aria-label="'+(floorExpanded?'Cerrar pantalla completa':'Ampliar plano a pantalla completa')+
- '">'+(floorExpanded?'×':'⛶')+'</button></div></div>'+
+ '">'+(floorExpanded?'×':'⛶')+'</button></div></div>'+ '<small class="wed-floor-save-status" data-wed-floor-save-status aria-live="polite"></small>'+
  (tables.length?'<div class="wed-floor-scroll" tabindex="0" style="display:block;height:'+height+'px;min-height:'+height+'px" aria-label="Plano de mesas; desplázate horizontalmente si es necesario">'+
  '<div class="wed-floor-plan" data-wed-floor-plan data-wed-table-count="'+tables.length+'" style="display:grid;--wed-floor-columns:'+columns+';'+dynamicRowHeight+'height:'+height+'px;min-height:'+height+'px">'+
  tables.map((t,index)=>{
