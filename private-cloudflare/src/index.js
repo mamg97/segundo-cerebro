@@ -34,6 +34,7 @@ import { researchUcdpEvidenceResponse } from "./research-ucdp-evidence.mjs";
 import { parseFutureCatalogs, FUTURE_MODELS, suggestedIllustrativeCountry } from "./research-futures-engine.mjs";
 import { fetchCareerSummary, hasCareerGoogleConfig } from "./career.js";
 import { fetchHealthAdherence } from "./adherence.js";
+import { parseGymPlanLoadValue } from "./gym-plan-load.js";
 import { readVision, saveVision, recordVisionReplacement } from "./vision.js";
 import { listGymPhotos, readGymPhoto, saveGymPhotoSeries, deleteGymPhotoSeries, GymPhotoError } from "./gym-photos.js";
 import { fetchMidasDashboard, addPrivateGeneticDiary, fetchMidasResearch, fetchMidasWeeklyBootstrap, fetchMidasWorkflowHealth } from "./midas.js";
@@ -1402,7 +1403,7 @@ async function fetchFinanceSummaryUncached(env) {
       exerciseName: item.exercise_name || null,
       setsTarget: toNumber(item.sets_target),
       repsTarget: item.reps_target == null ? null : String(item.reps_target),
-      loadValue: toNumber(item.load_value),
+      loadValue: parseGymPlanLoadValue(item.load_value),
       loadUnit: item.load_unit || null,
       loadNote: item.load_note || null,
       coachingNote: item.coaching_note || null
