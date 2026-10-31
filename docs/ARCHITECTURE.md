@@ -36,7 +36,15 @@ radial, con ángulos equidistantes en 360°. La mesa central es un botón
 que abre el editor de mesa; cada persona ocupada es un botón que abre
 su ficha editable; cada plaza vacía abre el selector para esa silla.
 Se muestran iniciales en el círculo y el nombre abreviado al pasar el
-cursor o enfocar con teclado. Las mesas de 6 y 12 usan asientos de 38px;
+cursor o enfocar con teclado.
+La corona fuerza el posicionamiento absoluto respecto a su propio círculo
+contenedor para evitar que reglas CSS generales de botones descoloquen u oculten
+plazas. No depende del RSVP: todo invitado asignado se representa aunque
+su asistencia esté pendiente. El plano integra un único botón «+ Nueva mesa»
+arriba a la derecha y otro de pantalla completa con cierre por Escape;
+en ese modo la cuadrícula conserva arrastre y edición, y vuelve a calibrar
+las coordenadas al cambiar el tamaño del lienzo. Abrir un editor cierra
+el modo ampliado sin cambiar invitados ni datos persistidos. Las mesas de 6 y 12 usan asientos de 38px;
 para capacidades de 13 a 30 se reduce el diámetro para evitar solapes.
 El rectángulo de 268px utilizado para el layout es transparente, no
 una tarjeta visible. El plano se dibuja como una cuadrícula CSS con una celda centrada por mesa, incluso cuando JavaScript no se ejecuta; se elimina el anclaje absoluto `left/top` que dejaba la presidencial parcialmente fuera del lienzo.
