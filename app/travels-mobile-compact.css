@@ -3,25 +3,8 @@
 /* Private travel workspaces: phone-first density, true shrink-to-fit grid tracks.
    Shared navigation is adjusted only at mobile widths. No trip data in CSS. */
 @media (max-width:760px) {
-  /* Preserve the iOS home-indicator safe zone without wasting another row. */
-  :root { --mobile-bottom-height:calc(58px + env(safe-area-inset-bottom,0px)); }
-  .mobile-bottom-nav {
-    box-sizing:border-box;
-    padding-top:2px;
-    padding-bottom:calc(2px + env(safe-area-inset-bottom,0px));
-    align-items:stretch;
-  }
-  .mobile-bottom-nav > a,.mobile-bottom-nav > button {
-    height:100%;min-height:0;max-height:54px;
-    margin:0 1px;padding:3px 0;gap:1px;line-height:1.15;
-  }
-  .mobile-bottom-nav svg {width:21px;height:21px;flex-basis:21px}
-  .mobile-bottom-nav :is(a,button) span {font-size:10px}
-  /* One-pixel separation prevents the dialog border painting over the toolbar. */
-  body.route-area-active #detail-dialog[open]:not(.wealth-dialog) {
-    inset:calc(var(--mobile-toolbar-height) + 1px) 0 var(--mobile-dock-height) 0!important;
-    height:calc(100dvh - var(--mobile-toolbar-height) - var(--mobile-dock-height) - 1px)!important;
-  }
+  /* Navigation chrome and iOS safe-area geometry are owned by mobile-viewport-fixes.css.
+     This stylesheet changes ONLY the density of content inside a travel workspace. */
   .mobile-context-trigger.is-single-section {cursor:default}
   .mobile-context-trigger.is-single-section svg {display:none}
   .mobile-catalog-single {
@@ -35,18 +18,7 @@
   .mobile-catalog-single svg {width:20px;height:20px;flex:0 0 20px;color:var(--blue)}
   .mobile-catalog-single:focus-visible {outline:2px solid var(--blue);outline-offset:2px}
 
-  /* The travel panel is one scrolling viewport, not an 800px-wide child grid. */
-  body.route-area-active #detail-dialog.travels-dialog[open] {
-    padding:42px 10px 0!important;
-    min-width:0;overflow:hidden;
-  }
-  body.route-area-active #detail-dialog.travels-dialog[open]::before {height:40px}
-  body.route-area-active #detail-dialog.travels-dialog[open] > #close-dialog {
-    width:34px!important;min-width:34px!important;
-    height:34px!important;min-height:34px!important;
-    top:3px!important;right:10px!important;
-    font-size:22px!important;border-radius:9px!important;
-  }
+  /* The only scrolling pane starts immediately below the shared header. */
   body.route-area-active #detail-dialog.travels-dialog[open] #dialog-body {
     width:100%;max-width:100%;min-width:0;
     flex:1 1 auto;overflow-x:hidden;overflow-y:auto;
