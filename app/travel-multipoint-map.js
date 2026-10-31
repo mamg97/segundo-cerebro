@@ -11,7 +11,7 @@ export function travelMapDays(groups){
   return [...new Set(travelMapPoints(groups).map(p=>p.date).filter(d=>DAY.test(d)))].sort();
 }
 export function travelMapVisible(points,day){
-  return points.filter(p=>p.date==="ALOJAMIENTO"|| (day==="TODOS" ? DAY.test(p.date) : p.date===day));
+  return points.filter(p=>p.date==="ALOJAMIENTO"|| (day==="TODOS" ? DAY.test(p.date) : p.date===day)).sort((a,b)=>a.date==="ALOJAMIENTO"?-1:b.date==="ALOJAMIENTO"?1:0);
 }
 export function travelRouteUrls(points,day,lodgingAddress){
   if(!DAY.test(day))return [];
