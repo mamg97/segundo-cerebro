@@ -400,6 +400,14 @@ function bindWeddingFloorPlan(area){
    tile.style.left=point.x.toFixed(3)+"%";
    tile.style.top=point.y.toFixed(3)+"%";
   };
+  // Normalize stored coordinates after the actual canvas/tile have layout.
+  // This is display-only: old positions are not silently written to D1.
+  const stageBox=stage.getBoundingClientRect(),tileBox=tile.getBoundingClientRect();
+  position(boundFloorPosition({
+   x:Number.parseFloat(tile.style.left),y:Number.parseFloat(tile.style.top),
+   stageWidth:stageBox.width,stageHeight:stageBox.height,
+   tableWidth:tileBox.width,tableHeight:tileBox.height
+  }));
   const persist=point=>{
    const table=state.tables.find(t=>t.id===id);
    if(!table||state.busy)return;
