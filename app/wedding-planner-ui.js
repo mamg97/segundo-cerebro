@@ -146,7 +146,7 @@ function namedSeatDiagram(table,occupants,esc){
  const total=Math.max(1,Math.min(30,Number(table.capacity)||12));
  const byName=[...occupants].sort((a,b)=>a.name.localeCompare(b.name,"es")||String(a.id).localeCompare(String(b.id)));
  const seats=roundSeats(total,byName.length);
- const shortName=name=>{const tokens=name.trim().split(/\\s+/);return tokens.length>1?tokens[0]+" "+tokens[tokens.length-1].slice(0,1)+".":tokens[0];};
+ const shortName=name=>{const tokens=name.trim().split(/\s+/);return tokens.length>1?tokens[0]+" "+tokens[tokens.length-1].slice(0,1)+".":tokens[0];};
  const title=table.shape==="presidencial"?"Presidencial":table.shape==="rectangular"?"Rectangular":"Redonda";
  return '<div class="wed-named-table" role="group" aria-label="'+esc(table.name)+': '+byName.length+' de '+total+' plazas ocupadas">'+
  '<div class="wed-named-table-center"><strong>'+esc(table.name)+'</strong><small>'+title+' · '+total+' plazas</small></div>'+
