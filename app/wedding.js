@@ -298,6 +298,7 @@ async function downloadWeddingSheet(){
 }
 function show(){
  if(!active())return;
+ if(weddingFloorPortal)setWeddingFloorExpanded(false);
  if(state.view!=="mesas"||state.tableEditing)state.seatingFloorExpanded=false;
  const area=document.querySelector("#dialog-body");
  area.innerHTML='<div class="wed-view-actions">'+viewTabs()+
@@ -387,12 +388,44 @@ function tablePayload(form){
 // Tables always occupy a centered CSS grid cell in the no-JS baseline.
 // Movement uses a pixel translation from that measured cell center, never
 // absolute left/top percentages (which left older tables off the canvas).
-// An in-dialog fixed overlay, so the map can occupy the window even when
-// Fullscreen API permissions or mobile browser chrome prevent native fullscreen.
+// Native top-layer dialog: moving the original live DOM (not cloning) preserves
+// pointer listeners, keyboard handling and private D1-backed selected guests.
+// No fixed overlay is left trapped in the parent wedding dialog stacking context.
+let weddingFloorPortal=null;
 function setWeddingFloorExpanded(expanded){
- state.seatingFloorExpanded=Boolean(expanded);
- const shell=document.querySelector("[data-wed-floor-shell]");
- if(!shell)return;
+ const shell=weddingFloorPortal?.shell||document.querySelector("[data-wed-floor-shell]");
+ if(!shell){state.seatingFloorExpanded=false;return;}
+ if(expanded&&!weddingFloorPortal){
+  const anchor=document.createComment("wedding-floor-return-anchor");
+  const parent=shell.parentNode;
+  parent.replaceChild(anchor,shell);
+  const modal=document.createElement("dialog");
+  modal.className="wed-fullscreen-dialog";
+  modal.setAttribute("aria-label","Plano de mesas ampliado");
+  const emergency=document.createElement("button");
+  emergency.type="button";emergency.className="wed-floor-emergency-close";
+  emergency.textContent="✕ Cerrar plano";
+  emergency.setAttribute("aria-label","Cerrar plano ampliado");
+  emergency.addEventListener("click",()=>setWeddingFloorExpanded(false));
+  modal.appendChild(shell);modal.appendChild(emergency);
+  document.body.appendChild(modal);
+  try{modal.showModal();}
+  catch(error){
+   if(anchor.parentNode)anchor.parentNode.replaceChild(shell,anchor);
+   modal.remove();state.seatingFloorExpanded=false;return;
+  }
+  weddingFloorPortal={modal,anchor,shell};
+  modal.addEventListener("cancel",event=>{
+   event.preventDefault();setWeddingFloorExpanded(false);
+  });
+ }else if(!expanded&&weddingFloorPortal){
+  const {modal,anchor,shell:live}=weddingFloorPortal;
+  weddingFloorPortal=null;
+  if(modal.open)modal.close();
+  if(anchor.parentNode)anchor.parentNode.replaceChild(live,anchor);
+  modal.remove();
+ }
+ state.seatingFloorExpanded=Boolean(expanded&&weddingFloorPortal);
  shell.classList.toggle("is-expanded",state.seatingFloorExpanded);
  const btn=shell.querySelector("[data-wed-floor-expand]");
  if(btn){
@@ -615,6 +648,14 @@ function bindPlannerActions(area){
   (panel?.querySelector('select[name="guestId"]:not(:disabled)')||
    panel?.querySelector('input[name="name"]:not(:disabled)'))?.focus({preventScroll:true});
  }));
+ // SVG chair and tabletop groups are native, focusable controls.
+ // Keyboard Enter/Space triggers exactly the same private actions as a click.
+ area.querySelectorAll(".wed-floor-seat-svg [role=button]").forEach(control=>{
+  control.addEventListener("keydown",event=>{
+   if(event.key!=="Enter"&&event.key!==" ")return;
+   event.preventDefault();event.stopPropagation();control.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true}));
+  });
+ });
  area.querySelectorAll("[data-wed-seat-detail]").forEach(button=>button.addEventListener("click",()=>{
   openSeatedGuest(button.dataset.wedSeatDetail,area);
  }));
