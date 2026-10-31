@@ -1,4 +1,5 @@
 // Private wedding collaboration view. No embedded personal records.
+import {boundFloorPosition,floorDragStart,floorDragUpdate} from "./wedding-floor-geometry.mjs?v=0.1.0";
 import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.7";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.3";
@@ -307,7 +308,7 @@ function show(){
 function errorMsg(e){
  if(e.status===409)return "Este elemento ha cambiado desde que lo abriste. He actualizado los datos para evitar sobrescribir los cambios de la otra persona.";
  const dict={ACCESS_REQUIRED:"Acceso denegado. Es necesario iniciar sesión con una cuenta autorizada por Cloudflare Access.",STORAGE_UNAVAILABLE:"La base de datos no está disponible.",
-   INVALID_ORIGIN:"La sesión no permite guardar cambios.",INVALID_ITEM:"Revisa los campos obligatorios.",PAID_EXCEEDS_CONTRACTED:"Lo pagado no puede superar lo contratado.",INVALID_IMAGE:"El archivo no es una imagen admitida.",IMAGE_TOO_LARGE:"La fotografía es demasiado grande.",TABLE_FULL:"La mesa está completa.",TABLE_HAS_GUESTS:"Vacía la mesa antes de eliminarla.",CAPACITY_BELOW_SEATED:"La capacidad no puede ser inferior a los invitados asignados.",REVISION_CONFLICT:"Los datos han cambiado en otra sesión. Se han actualizado para evitar sobrescribirlos.",DECLINED_SEATING:"No se puede asignar mesa a alguien que no asistirá.",INVALID_ITEM:"Revisa los datos del formulario.",STORAGE_UNAVAILABLE:"No se ha podido acceder al almacén privado."};
+   INVALID_ORIGIN:"La sesión no permite guardar cambios.",INVALID_ITEM:"Revisa los campos obligatorios.",PAID_EXCEEDS_CONTRACTED:"Lo pagado no puede superar lo contratado.",INVALID_IMAGE:"El archivo no es una imagen admitida.",IMAGE_TOO_LARGE:"La fotografía es demasiado grande.",TABLE_FULL:"La mesa está completa.",TABLE_HAS_GUESTS:"Vacía la mesa antes de eliminarla.",CAPACITY_BELOW_SEATED:"La capacidad no puede ser inferior a los invitados asignados.",REVISION_CONFLICT:"Los datos han cambiado en otra sesión. Se han actualizado para evitar sobrescribirlos.",DECLINED_SEATING:"No se puede asignar mesa a alguien que no asistirá.",INVALID_ITEM:"Revisa los datos del formulario.",STORAGE_UNAVAILABLE:"No se ha podido acceder al almacén privado.",POSITION_NOT_SAVED:"No se guardó la nueva posición de la mesa. Vuelve a intentarlo."};
  return dict[e.message]||"No se pudo completar la operación ("+e.message+").";
 }
 async function load(){
@@ -380,6 +381,8 @@ function tablePayload(form){
  return {name:String(data.get("name")||"").trim(),capacity:Number(data.get("capacity")),shape:String(data.get("shape")||"redonda")};
 }
 // Drag the actual table figure, with pointer capture and normalized D1 coordinates.
+// Pointer deltas are applied to the saved CSS center (%) rather than
+// offsetLeft/offsetTop, which differ for transformed absolute elements.
 function bindWeddingFloorPlan(area){
  const stage=area.querySelector("[data-wed-floor-plan]");
  if(!stage)return;
@@ -392,46 +395,57 @@ function bindWeddingFloorPlan(area){
  stage.querySelectorAll("[data-wed-floor-table]").forEach(tile=>{
   const id=tile.dataset.wedFloorTable;
   let drag=null,suppressClick=false;
-  const persist=()=>{
+  const position=(point)=>{
+   if(!point)return;
+   tile.style.left=point.x.toFixed(3)+"%";
+   tile.style.top=point.y.toFixed(3)+"%";
+  };
+  const persist=point=>{
    const table=state.tables.find(t=>t.id===id);
    if(!table||state.busy)return;
    state.seatingSelectedTableId=id;
-   const positionX=Number.parseFloat(tile.style.left),positionY=Number.parseFloat(tile.style.top);
-   void plannerMutation(()=>getJson("/api/wedding/tables/"+encodeURIComponent(id),"PATCH",{
-    name:table.name,capacity:table.capacity,shape:table.shape,
-    positionX,positionY,revision:table.revision
-   }),{preserveScroll:true});
+   tile.classList.add("is-saving");
+   tile.setAttribute("aria-busy","true");
+   void plannerMutation(async ()=>{
+    const saved=await getJson("/api/wedding/tables/"+encodeURIComponent(id),"PATCH",{
+     name:table.name,capacity:table.capacity,shape:table.shape,
+     positionX:point.x,positionY:point.y,revision:table.revision
+    });
+    // Fail visibly on any API acknowledgement that does not persist the point.
+    if(Math.abs(saved.item?.positionX-point.x)>0.01||
+       Math.abs(saved.item?.positionY-point.y)>0.01||
+       !Number.isFinite(saved.item?.positionX)||!Number.isFinite(saved.item?.positionY)){
+      throw new Error("POSITION_NOT_SAVED");
+    }
+   },{preserveScroll:true});
   };
   tile.addEventListener("pointerdown",event=>{
    if(state.busy||state.plannerBusy||event.button!==0||
       event.target.closest("[data-wed-seat-detail],[data-wed-seat-add]"))return;
-   drag={id:event.pointerId,startX:event.clientX,startY:event.clientY,
-    x:tile.offsetLeft,y:tile.offsetTop,originalLeft:tile.style.left,
-    originalTop:tile.style.top,moved:false};
+   drag=floorDragStart(tile,stage,event);
+   if(!drag)return;
    tile.setPointerCapture(event.pointerId);
   });
   tile.addEventListener("pointermove",event=>{
-   if(!drag||event.pointerId!==drag.id)return;
-   const dx=event.clientX-drag.startX,dy=event.clientY-drag.startY;
+   if(!drag||event.pointerId!==drag.pointerId)return;
+   const dx=event.clientX-drag.startClientX,dy=event.clientY-drag.startClientY;
    if(!drag.moved&&Math.hypot(dx,dy)<6)return;
-   drag.moved=true;tile.classList.add("is-dragging");
-   const x=Math.max(tile.offsetWidth/2,Math.min(stage.clientWidth-tile.offsetWidth/2,drag.x+dx));
-   const y=Math.max(tile.offsetHeight/2,Math.min(stage.clientHeight-tile.offsetHeight/2,drag.y+dy));
-   tile.style.left=(x/stage.clientWidth*100).toFixed(3)+"%";
-   tile.style.top=(y/stage.clientHeight*100).toFixed(3)+"%";
+   const next=floorDragUpdate(drag,event);
+   if(!next)return;
+   drag.moved=true;drag.previous=next;
+   tile.classList.add("is-dragging");position(next);
   });
   tile.addEventListener("pointerup",event=>{
-   if(!drag||event.pointerId!==drag.id)return;
-   const moved=drag.moved;drag=null;tile.classList.remove("is-dragging");
-   if(moved){
+   if(!drag||event.pointerId!==drag.pointerId)return;
+   const completed=drag;drag=null;tile.classList.remove("is-dragging");
+   if(completed.moved){
     suppressClick=true;window.setTimeout(()=>{suppressClick=false;},0);
-    persist();
+    persist(completed.previous);
    }else select(id);
   });
   tile.addEventListener("pointercancel",()=>{
    if(!drag)return;
-   tile.style.left=drag.originalLeft;tile.style.top=drag.originalTop;
-   drag=null;tile.classList.remove("is-dragging");
+   position(drag.start);drag=null;tile.classList.remove("is-dragging");
   });
   tile.addEventListener("click",event=>{
    if(event.target.closest("[data-wed-seat-detail],[data-wed-seat-add]"))return;
@@ -447,11 +461,15 @@ function bindWeddingFloorPlan(area){
    const moves={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]};
    const delta=moves[event.key];if(!delta||state.busy)return;
    event.preventDefault();
-   const minX=tile.offsetWidth/(2*stage.clientWidth)*100;
-   const minY=tile.offsetHeight/(2*stage.clientHeight)*100;
-   tile.style.left=Math.max(minX,Math.min(100-minX,Number.parseFloat(tile.style.left)+delta[0])).toFixed(3)+"%";
-   tile.style.top=Math.max(minY,Math.min(100-minY,Number.parseFloat(tile.style.top)+delta[1])).toFixed(3)+"%";
-   persist();
+   const stageRect=stage.getBoundingClientRect(),tileRect=tile.getBoundingClientRect();
+   const next=boundFloorPosition({
+    x:Number.parseFloat(tile.style.left)+delta[0],
+    y:Number.parseFloat(tile.style.top)+delta[1],
+    stageWidth:stageRect.width,stageHeight:stageRect.height,
+    tableWidth:tileRect.width,tableHeight:tileRect.height
+   });
+   if(!next)return;
+   position(next);persist(next);
   });
  });
 }
