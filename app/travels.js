@@ -1,4 +1,4 @@
-import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.3.2";
+import { tripDashboardMarkup, bindTripDashboard } from "./travels-dashboard.js?v=0.3.3";
 import { hrefForTravel, hrefForArea } from "./area-routes.mjs?v=0.1.0";
 // Viajes: vista privada sobre el ledger canónico de Eventos.
 // La fuente de viajes y hechos es /api/events; Finanzas mantiene la autoridad del dinero.
@@ -261,7 +261,7 @@ function renderDetail(payload) {
   body().innerHTML = tripDashboardMarkup({
     hero, groups, financeItem: budgetItem, flights, lodging, bookings,
     budgetSection: financeSection(event), tasksSection: tasksSection(groups,event.id),
-    refsSection: referencesSection(payload.references), extrasSection: extras,
+    refsSection: referencesSection(payload.references), extrasSection: extras, references:payload.references,
     dayLabel: dateLabel
   });
   bindTripDashboard({ root: body(), groups, dayLabel: dateLabel });
