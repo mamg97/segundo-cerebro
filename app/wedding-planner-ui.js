@@ -103,11 +103,11 @@ export function renderGuests(guests,tables,editing,esc){
   const people=guests.filter(g=>g.groupName===id);
   return '<section class="wed-guest-column" aria-label="'+esc(title)+'"><div class="wed-guest-column-head"><h4>'+esc(title)+'</h4>'+
   '<span>'+people.length+'</span></div>'+
-  '<ul class="wed-guest-names">'+(people.length?people.map(g=>compactGuestRow(g,esc)).join(""):
-   '<li class="wed-guest-blank">Todavía no hay nombres</li>')+'</ul>'+
   '<form class="wed-guest-quick-add" data-wed-quick-add="'+id+'"><label class="wed-sr-only" for="wed-guest-input-'+id+'">Nombre para '+esc(title)+'</label>'+
   '<input id="wed-guest-input-'+id+'" name="name" maxlength="180" autocomplete="off" required placeholder="Escribe un nombre…" aria-label="Nombre para '+esc(title)+'">'+
-  '<button type="submit" aria-label="Añadir a '+esc(title)+'">+ Añadir</button></form></section>';
+  '<button type="submit" aria-label="Añadir a '+esc(title)+'">+ Añadir</button></form>'+
+  '<ul class="wed-guest-names">'+(people.length?people.map(g=>compactGuestRow(g,esc)).join(""):
+   '<li class="wed-guest-blank">Todavía no hay nombres</li>')+'</ul></section>';
  }).join("")+'</div>'+
  (legacy.length?'<div class="wed-guest-unclassified"><div><strong>'+legacy.length+' sin clasificar</strong>'+
  '<small>Ya estaban guardados con otros grupos. Pulsa cada nombre para elegir una de las tres listas, sin perder información.</small></div>'+
