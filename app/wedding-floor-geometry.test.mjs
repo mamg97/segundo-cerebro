@@ -38,8 +38,8 @@ test("boundary clamps are centered and scale to actual table size",()=>{
 });
 test("drag handler verifies API write and avoids offset-based coordinates",()=>{
  const script=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
- assert.match(script,/floorDragStart\(tile,stage,event\)/);
- assert.match(script,/floorDragUpdate\(drag,event\)/);
+ assert.match(script,/tile\.style\.transform="none"/);
+ assert.match(script,/moveFloorPosition\(drag\.start,dx,dy,dimensions\(\)\)/);
  assert.match(script,/positionX:point\.x,positionY:point\.y/);
  assert.match(script,/POSITION_NOT_SAVED/);
  assert.doesNotMatch(script,/tile\.offsetLeft|tile\.offsetTop/);

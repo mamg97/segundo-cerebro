@@ -31,9 +31,8 @@ Un plano horizontal de ancho completo representa las mesas como círculos movibl
 se seleccionan pulsando encima y se trasladan con arrastre de ratón/táctil o
 flechas del teclado. La selección abre debajo las acciones y el listado de nombres.
 Cada mesa dibuja iniciales y nombres abreviados alrededor del círculo; pulsar
-una persona abre su ficha. El arrastre calcula los desplazamientos a partir del centro porcentual
-existente y el tamaño renderizado del lienzo; no usa `offsetLeft` ni
-`offsetTop` sobre elementos transformados. Al soltar, verifica la respuesta
+una persona abre su ficha. El plano se dibuja como una cuadrícula CSS con una celda centrada por mesa, incluso cuando JavaScript no se ejecuta; se elimina el anclaje absoluto `left/top` que dejaba la presidencial parcialmente fuera del lienzo.
+El arrastre calcula la traslación en píxeles respecto al centro medido de su celda (`translate3d`), a partir de las coordenadas porcentuales guardadas en D1, sin usar `offsetLeft` ni `offsetTop`. Las sillas continúan siendo botones vinculados a índices privados. Al soltar, verifica la respuesta
 de D1 y vuelve a leer las mesas; si falla el guardado, muestra un error.
 Los límites visuales se calculan con las dimensiones reales de la mesa,
 sin alterar automáticamente coordenadas guardadas.

@@ -237,7 +237,8 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  const options=suggestWeddingSeating(guests,tables);
  const selected=tables.find(t=>t.id===selectedId)||tables[0]||null;
  const selectedGuests=selected?guests.filter(g=>g.tableId===selected.id):[];
- const rows=Math.max(1,Math.ceil(tables.length/4));
+ const columns=Math.min(4,Math.max(1,tables.length));
+ const rows=Math.max(1,Math.ceil(tables.length/columns));
  const height=rows*360;
  return '<section class="wed-planner-panel wed-seating-workspace">'+
  '<div class="wed-planner-heading"><div><h3>Organizador de mesas</h3>'+
@@ -252,12 +253,12 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<small>Pulsa una silla libre para asignarla · Arrastra desde «Mover»</small>'+
  (selected?'<button class="wed-floor-reset" type="button" data-wed-center-table="'+esc(selected.id)+'" title="Dejar la mesa seleccionada en el centro">Centrar mesa</button>':'')+'</div>'+
  (tables.length?'<div class="wed-floor-scroll" tabindex="0" style="display:block;height:'+height+'px;min-height:'+height+'px" aria-label="Plano de mesas; desplázate horizontalmente si es necesario">'+
- '<div class="wed-floor-plan" data-wed-floor-plan style="display:block;height:'+height+'px;min-height:'+height+'px">'+
+ '<div class="wed-floor-plan" data-wed-floor-plan data-wed-table-count="'+tables.length+'" style="display:grid;--wed-floor-columns:'+columns+';height:'+height+'px;min-height:'+height+'px">'+
  tables.map((t,index)=>{
   const occupants=guests.filter(g=>g.tableId===t.id);
   const pos=tableFloorPosition(t,index,tables.length);
   return '<article class="wed-floor-table'+(selected?.id===t.id?' is-selected':'')+
-   '" data-wed-floor-table="'+esc(t.id)+'" tabindex="0" style="left:'+pos.x.toFixed(3)+'%;top:'+pos.y.toFixed(3)+'%" '+
+   '" data-wed-floor-table="'+esc(t.id)+'" data-wed-position-x="'+pos.x.toFixed(3)+'" data-wed-position-y="'+pos.y.toFixed(3)+'" tabindex="0" style="position:relative;left:auto;top:auto;transform:none" '+
    'aria-label="'+esc(t.name)+': '+occupants.length+' de '+t.capacity+' plazas. Pulsa para seleccionar; arrastra para mover">'+
    '<button type="button" class="wed-floor-grip" data-wed-floor-grip aria-label="Arrastrar '+esc(t.name)+'" title="Mantén pulsado y arrastra para mover">⠿ Mover</button>'+
    namedSeatDiagram(t,occupants,esc)+

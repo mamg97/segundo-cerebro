@@ -1,6 +1,6 @@
 // Private wedding collaboration view. No embedded personal records.
-import {boundFloorPosition,floorDragStart,floorDragUpdate} from "./wedding-floor-geometry.mjs?v=0.1.0";
-import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.10";
+import {boundFloorPosition,moveFloorPosition} from "./wedding-floor-geometry.mjs?v=0.1.1";
+import {renderAgenda,renderProviders,renderGuests,renderTables,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.11";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.3";
 export const WEDDING_TYPES=[
@@ -383,91 +383,91 @@ function tablePayload(form){
 // Drag the actual table figure, with pointer capture and normalized D1 coordinates.
 // Pointer deltas are applied to the saved CSS center (%) rather than
 // offsetLeft/offsetTop, which differ for transformed absolute elements.
+// Tables always occupy a centered CSS grid cell in the no-JS baseline.
+// Movement uses a pixel translation from that measured cell center, never
+// absolute left/top percentages (which left older tables off the canvas).
 function bindWeddingFloorPlan(area){
  const stage=area.querySelector("[data-wed-floor-plan]");
  if(!stage)return;
  const select=id=>{
   if(state.seatingSelectedTableId===id)return;
-  const scroll=area,top=scroll.scrollTop;
+  const top=area.scrollTop;
   state.seatingSelectedTableId=id;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;
-  show();scroll.scrollTop=top;
+  show();area.scrollTop=top;
  };
  stage.querySelectorAll("[data-wed-floor-table]").forEach(tile=>{
   const id=tile.dataset.wedFloorTable;
-  let drag=null,suppressClick=false;
-  const position=(point)=>{
-   if(!point)return;
-   // Do not depend on stale or overridden CSS to position the draggable card.
-   tile.style.position="absolute";
-   tile.style.transform="translate(-50%,-50%)";
-   tile.style.left=point.x.toFixed(3)+"%";
-   tile.style.top=point.y.toFixed(3)+"%";
+  let drag=null,suppressClick=false,origin=null,current=null;
+  const dimensions=()=>{
+   const stageRect=stage.getBoundingClientRect(),tileRect=tile.getBoundingClientRect();
+   return {stageWidth:stageRect.width,stageHeight:stageRect.height,
+    tableWidth:tileRect.width,tableHeight:tileRect.height};
   };
-  // Reconcile layout with the actual DOM bounds, not just saved percentages.
-  // Never write on mount; only explicit user actions persist a new position.
-  const repairVisibleBounds=()=>{
+  const position=point=>{
+   if(!point||!origin)return;
+   const dims=dimensions();
+   const bounded=boundFloorPosition({...dims,x:point.x,y:point.y});
+   if(!bounded)return;
+   current=bounded;
+   const dx=(current.x-origin.x)*dims.stageWidth/100;
+   const dy=(current.y-origin.y)*dims.stageHeight/100;
+   tile.style.position="relative";
+   tile.style.left="auto";tile.style.top="auto";
+   tile.style.transform="translate3d("+dx.toFixed(2)+"px,"+dy.toFixed(2)+"px,0)";
+  };
+  const calibrate=()=>{
    if(!tile.isConnected||drag)return;
-   const stageRect=stage.getBoundingClientRect();
-   const cardRect=tile.getBoundingClientRect();
-   const initial=boundFloorPosition({
-    x:Number.parseFloat(tile.style.left),y:Number.parseFloat(tile.style.top),
-    stageWidth:stageRect.width,stageHeight:stageRect.height,
-    tableWidth:cardRect.width,tableHeight:cardRect.height
-   });
-   if(!initial)return;
-   position(initial);
-   const painted=tile.getBoundingClientRect();
-   // Legacy misaligned CSS (e.g. a different positioning parent) may leave
-   // most of the table outside the actual canvas. Center it visibly.
-   const overlapX=Math.max(0,Math.min(painted.right,stageRect.right)-Math.max(painted.left,stageRect.left));
-   const overlapY=Math.max(0,Math.min(painted.bottom,stageRect.bottom)-Math.max(painted.top,stageRect.top));
-   if(overlapX<painted.width*.8||overlapY<painted.height*.8){
-    position({x:50,y:50});
-   }
+   tile.style.transform="none";
+   const card=tile.getBoundingClientRect(),floor=stage.getBoundingClientRect();
+   if(!floor.width||!floor.height||!card.width||!card.height)return;
+   origin={x:((card.left+card.width/2-floor.left)/floor.width)*100,
+    y:((card.top+card.height/2-floor.top)/floor.height)*100};
+   const desired=current||{
+    x:Number.parseFloat(tile.dataset.wedPositionX),
+    y:Number.parseFloat(tile.dataset.wedPositionY)
+   };
+   position(desired);
   };
-  repairVisibleBounds();
-  requestAnimationFrame(repairVisibleBounds);
+  calibrate();
+  requestAnimationFrame(calibrate);
   const persist=point=>{
    const table=state.tables.find(t=>t.id===id);
    if(!table||state.busy)return;
    state.seatingSelectedTableId=id;
-   tile.classList.add("is-saving");
-   tile.setAttribute("aria-busy","true");
-   void plannerMutation(async ()=>{
+   tile.classList.add("is-saving");tile.setAttribute("aria-busy","true");
+   void plannerMutation(async()=>{
     const saved=await getJson("/api/wedding/tables/"+encodeURIComponent(id),"PATCH",{
      name:table.name,capacity:table.capacity,shape:table.shape,
      positionX:point.x,positionY:point.y,revision:table.revision
     });
-    // Fail visibly on any API acknowledgement that does not persist the point.
-    if(Math.abs(saved.item?.positionX-point.x)>0.01||
-       Math.abs(saved.item?.positionY-point.y)>0.01||
-       !Number.isFinite(saved.item?.positionX)||!Number.isFinite(saved.item?.positionY)){
-      throw new Error("POSITION_NOT_SAVED");
-    }
+    if(!Number.isFinite(saved.item?.positionX)||!Number.isFinite(saved.item?.positionY)||
+       Math.abs(saved.item.positionX-point.x)>.01||
+       Math.abs(saved.item.positionY-point.y)>.01)throw new Error("POSITION_NOT_SAVED");
    },{preserveScroll:true});
   };
   tile.addEventListener("pointerdown",event=>{
    if(state.busy||state.plannerBusy||event.button!==0||
       event.target.closest("[data-wed-seat-detail],[data-wed-seat-add]"))return;
-   drag=floorDragStart(tile,stage,event);
-   if(!drag)return;
+   if(!current)calibrate();
+   if(!current)return;
+   drag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,
+    start:{...current},previous:{...current},moved:false};
    tile.setPointerCapture(event.pointerId);
   });
   tile.addEventListener("pointermove",event=>{
    if(!drag||event.pointerId!==drag.pointerId)return;
-   const dx=event.clientX-drag.startClientX,dy=event.clientY-drag.startClientY;
+   const dx=event.clientX-drag.startX,dy=event.clientY-drag.startY;
    if(!drag.moved&&Math.hypot(dx,dy)<6)return;
-   const next=floorDragUpdate(drag,event);
+   const next=moveFloorPosition(drag.start,dx,dy,dimensions());
    if(!next)return;
-   drag.moved=true;drag.previous=next;
-   tile.classList.add("is-dragging");position(next);
+   drag.moved=true;drag.previous=next;tile.classList.add("is-dragging");position(next);
   });
   tile.addEventListener("pointerup",event=>{
    if(!drag||event.pointerId!==drag.pointerId)return;
-   const completed=drag;drag=null;tile.classList.remove("is-dragging");
-   if(completed.moved){
+   const complete=drag;drag=null;tile.classList.remove("is-dragging");
+   if(complete.moved){
     suppressClick=true;window.setTimeout(()=>{suppressClick=false;},0);
-    persist(completed.previous);
+    persist(complete.previous);
    }else select(id);
   });
   tile.addEventListener("pointercancel",()=>{
@@ -481,20 +481,13 @@ function bindWeddingFloorPlan(area){
   });
   tile.addEventListener("keydown",event=>{
    if(event.target!==tile)return;
-   if(event.key==="Enter"||event.key===" "){
-    event.preventDefault();select(id);return;
-   }
+   if(event.key==="Enter"||event.key===" "){event.preventDefault();select(id);return;}
    const step=event.shiftKey?5:1;
    const moves={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]};
-   const delta=moves[event.key];if(!delta||state.busy)return;
+   const delta=moves[event.key];if(!delta||state.busy||!current)return;
    event.preventDefault();
-   const stageRect=stage.getBoundingClientRect(),tileRect=tile.getBoundingClientRect();
-   const next=boundFloorPosition({
-    x:Number.parseFloat(tile.style.left)+delta[0],
-    y:Number.parseFloat(tile.style.top)+delta[1],
-    stageWidth:stageRect.width,stageHeight:stageRect.height,
-    tableWidth:tileRect.width,tableHeight:tileRect.height
-   });
+   const next=boundFloorPosition({...dimensions(),
+    x:current.x+delta[0],y:current.y+delta[1]});
    if(!next)return;
    position(next);persist(next);
   });
