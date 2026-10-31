@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseTravelDetail,sortTripsNewestFirst } from "./travels.js";
+import { parseTravelDetail,sortTripsNewestFirst,coverForCity } from "./travels.js";
 
 test("viajes: datos y tareas proceden de EventoHechos, no de datos incrustados", () => {
   const parsed = parseTravelDetail({ facts: [
@@ -73,4 +73,16 @@ test("Travel facts: newer day/hour overrides earlier proposals; map points remai
   assert.equal(result.points.length,2);
   assert.equal(result.points[0].lat,52.123);
   assert.equal(result.points[1].date,"OPCIONAL");
+});
+
+test("Travel gallery uses a licensed regional cover when a trip's destination is Asturias",()=>{
+ const cover=coverForCity("Asturias oriental");
+ assert.ok(cover);
+ assert.match(cover.url,/commons\.wikimedia\.org\/wiki\/Special:FilePath\/Enol\.jpg\?width=960/);
+ assert.equal(cover.author,"Rodelar");
+ assert.equal(cover.license,"CC BY-SA 3.0");
+ assert.match(cover.source,/commons\.wikimedia\.org\/wiki\/File:Enol\.jpg/);
+ assert.equal(coverForCity("Varsovia").city,"Warsaw");
+ assert.equal(coverForCity("Marbella").city,"Marbella");
+ assert.equal(coverForCity("Ciudad de Prueba"),null);
 });
