@@ -142,6 +142,8 @@ function tableForm(item,esc){
  (item?'<button type="button" data-wed-delete-table="'+esc(item.id)+'">Eliminar</button>':"")+'</div></form>';
 }
 // Stable, illustrative order; persisted assignment is the table ID, not a seat number.
+// One circular tabletop with a uniform radial crown of clickable circular seats.
+// This is a view only; seatIndex in D1 remains the canonical chair identity.
 function namedSeatDiagram(table,occupants,esc){
  const total=Math.max(1,Math.min(30,Number(table.capacity)||12));
  const byName=[...occupants].sort((a,b)=>a.name.localeCompare(b.name,"es")||String(a.id).localeCompare(String(b.id)));
@@ -156,23 +158,30 @@ function namedSeatDiagram(table,occupants,esc){
   const next=occupantsBySeat.indexOf(null);
   if(next!==-1)occupantsBySeat[next]=guest;
  }
- const shortName=name=>{const tokens=name.trim().split(/\s+/);return tokens.length>1?tokens[0]+" "+tokens[tokens.length-1].slice(0,1)+".":tokens[0];};
- const title=table.shape==="presidencial"?"Presidencial":table.shape==="rectangular"?"Rectangular":"Redonda";
+ const shortName=name=>{
+  const tokens=name.trim().split(/\s+/);
+  return tokens.length>1?tokens[0]+" "+tokens[tokens.length-1].slice(0,1)+".":tokens[0];
+ };
+ // The perimeter is long enough for twelve 38px chairs. Scale smoothly for
+ // the existing API's optional 13–30 seat capacities, avoiding overlap.
+ const diameter=total<=12?38:total<=18?30:total<=24?24:20;
  return '<div class="wed-named-table" role="group" aria-label="'+esc(table.name)+': '+byName.length+' de '+total+' plazas ocupadas">'+
- '<div class="wed-named-table-center"><strong>'+esc(table.name)+'</strong><small>'+title+' · '+total+' plazas</small></div>'+
+ '<button type="button" class="wed-named-table-center" data-wed-edit-table="'+esc(table.id)+
+ '" aria-label="Editar '+esc(table.name)+'" title="Editar '+esc(table.name)+'">'+
+ '<strong>'+esc(table.name)+'</strong><small>'+byName.length+'/'+total+' plazas</small></button>'+
  seats.map((seat,index)=>{
   const guest=occupantsBySeat[index];
-  const left=(50+(seat.x-50)*0.79).toFixed(2),top=(50+(seat.y-50)*0.79).toFixed(2);
-  const position='left:'+left+'%;top:'+top+'%';
+  const left=(50+(seat.x-50)*0.88).toFixed(2),top=(50+(seat.y-50)*0.88).toFixed(2);
+  const position='left:'+left+'%;top:'+top+'%;--wed-seat-diameter:'+diameter+'px';
   if(!guest)return '<button type="button" class="wed-named-seat is-empty" data-wed-seat-add="'+esc(table.id)+'" '+
-   'data-wed-seat-index="'+index+'" style="'+position+'" title="Añadir invitado en plaza '+(index+1)+'" '+
+   'data-wed-seat-index="'+index+'" style="'+position+'" title="Plaza '+(index+1)+' libre · Añadir invitado" '+
    'aria-label="Añadir invitado en plaza '+(index+1)+' de '+esc(table.name)+'">'+
-   '<span class="wed-seat-avatar" aria-hidden="true">+</span><span class="wed-seat-name">Libre</span></button>';
+   '<span class="wed-seat-avatar" aria-hidden="true">+</span><span class="wed-seat-name" aria-hidden="true">Libre</span></button>';
   const initial=guest.name.trim().slice(0,1).toLocaleUpperCase("es");
   return '<button type="button" class="wed-named-seat is-filled" data-wed-seat-detail="'+esc(guest.id)+
-   '" style="'+position+'" title="'+esc(guest.name)+'" aria-label="Abrir ficha de '+esc(guest.name)+'">'+
+   '" style="'+position+'" title="'+esc(guest.name)+'" aria-label="Editar '+esc(guest.name)+'">'+
    '<span class="wed-seat-avatar" aria-hidden="true">'+esc(initial)+'</span>'+
-   '<span class="wed-seat-name">'+esc(shortName(guest.name))+'</span></button>';
+   '<span class="wed-seat-name" aria-hidden="true">'+esc(shortName(guest.name))+'</span></button>';
  }).join("")+'</div>';
 }
 function tableGuestPicker(table,guests,esc,chosenSeatIndex=null){
@@ -262,7 +271,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
    'aria-label="'+esc(t.name)+': '+occupants.length+' de '+t.capacity+' plazas. Pulsa para seleccionar; arrastra para mover">'+
    '<button type="button" class="wed-floor-grip" data-wed-floor-grip aria-label="Arrastrar '+esc(t.name)+'" title="Mantén pulsado y arrastra para mover">⠿ Mover</button>'+
    namedSeatDiagram(t,occupants,esc)+
-   '<span class="wed-floor-occupancy">'+occupants.length+'/'+t.capacity+' plazas</span></article>';
+   '</article>';
  }).join("")+'</div></div>'+
  '<p class="wed-planner-foot">Arrastra la mesa desde «Mover». La posición se guarda entre sesiones; pulsa una silla libre para asignar un invitado.</p>':
  '<p class="wed-planner-empty">Todavía no hay mesas. Pulsa «Nueva mesa» para crear la primera.</p>')+
