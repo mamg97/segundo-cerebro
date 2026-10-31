@@ -123,9 +123,11 @@ export function mobileSections(route){
  const area=route?.areaId||"area-general";
  return OTHER[area]||[{label:MOBILE_AREAS.find(x=>x[0]===area)?.[1]||"Inicio",href:hrefForArea(area)}];
 }
+export function mobileHasSectionChoices(route){return mobileSections(route).length>1;}
 export function mobileCurrentLabel(route,hash){
  const area=MOBILE_AREAS.find(x=>x[0]===route?.areaId)||MOBILE_AREAS[0];
- return {area:area[1],section:mobileSections(route).find(x=>x.href===hash)?.label||(route?.detailId||area[1]),tab:PRIMARY.includes(area[0])?area[0]:"more"};
+ const sections=mobileSections(route);
+ return {area:area[1],section:sections.length===1?area[1]:(sections.find(x=>x.href===hash)?.label||(route?.detailId||area[1])),tab:PRIMARY.includes(area[0])?area[0]:"more"};
 }
 export function mobileRememberedRoute(id,cache){
  if(!MOBILE_AREAS.some(x=>x[0]===id))return "#/inicio";
@@ -144,12 +146,20 @@ function markup(){return '<div id="mobile-app-header" class="mobile-app-header">
  '<div class="mobile-sheet-handle" aria-hidden="true"></div><div class="mobile-sheet-heading"><h2 id="mobile-sheet-heading">Apartados</h2><button id="mobile-sheet-close" type="button" aria-label="Cerrar">×</button></div>'+
  '<div id="mobile-sheet-options"></div></section></div>';}
 function catalogMarkup(choice=false){
- return '<div class="mobile-catalog">'+MOBILE_SHORTCUT_GROUPS.map(group=>
-   '<details class="mobile-catalog-group"><summary>'+ico(group.icon)+'<span>'+safe(group.label)+'</span>'+ico("down")+'</summary>'+
-   '<div class="mobile-catalog-links">'+group.links.map(link=>choice
+ return '<div class="mobile-catalog">'+MOBILE_SHORTCUT_GROUPS.map(group=>{
+   // A single actual destination is a direct action, never a redundant accordion.
+   if(group.links.length===1){
+     const link=group.links[0],name=safe(group.label);
+     return choice
+       ?'<button class="mobile-catalog-single" type="button" data-mobile-select-shortcut="'+safe(link.href)+'">'+ico(group.icon)+'<span>'+name+'</span></button>'
+       :'<a class="mobile-catalog-single" href="'+safe(link.href)+'" data-mobile-route="'+safe(link.href)+'">'+ico(group.icon)+'<span>'+name+'</span></a>';
+   }
+   return '<details class="mobile-catalog-group"><summary>'+ico(group.icon)+'<span>'+safe(group.label)+'</span>'+ico("down")+'</summary>'+
+    '<div class="mobile-catalog-links">'+group.links.map(link=>choice
       ?'<button type="button" data-mobile-select-shortcut="'+safe(link.href)+'">'+ico(link.icon)+'<span>'+safe(link.label)+'</span></button>'
       :'<a href="'+safe(link.href)+'" data-mobile-route="'+safe(link.href)+'">'+ico(link.icon)+'<span>'+safe(link.label)+'</span></a>'
-    ).join("")+'</div></details>').join("")+'</div>';
+    ).join("")+'</div></details>';
+ }).join("")+'</div>';
 }
 function renderSheet(){
  const node=dom("mobile-sheet-options");if(!node)return;
@@ -193,6 +203,13 @@ export function syncMobileNavigation(nextRoute,nextHash){
  const label=mobileCurrentLabel(route,hash);
  if(dom("mobile-context-area"))dom("mobile-context-area").textContent=label.area;
  if(dom("mobile-context-label"))dom("mobile-context-label").textContent=label.section;
+ const context=dom("mobile-context-trigger"),hasChoices=mobileHasSectionChoices(route);
+ if(context){
+   context.disabled=!hasChoices;
+   context.classList.toggle("is-single-section",!hasChoices);
+   if(hasChoices)context.setAttribute("aria-haspopup","dialog");
+   else{context.removeAttribute("aria-haspopup");context.setAttribute("aria-expanded","false");}
+ }
  syncBottomBarState();
  if(mode)renderSheet();
 }
@@ -201,7 +218,7 @@ export function initializeMobileNavigation({navigateTo,onRefresh:refreshHandler}
  selectedShortcuts=loadMobileShortcuts();
  document.body.insertAdjacentHTML("beforeend",markup());
  renderBottomBar();
- dom("mobile-context-trigger").addEventListener("click",e=>openSheet("sections",e.currentTarget));
+ dom("mobile-context-trigger").addEventListener("click",e=>{if(mobileHasSectionChoices(route))openSheet("sections",e.currentTarget)});
  dom("mobile-refresh-action").addEventListener("click",async()=>{
   if(refreshBusy)return;
   const button=dom("mobile-refresh-action"),feedback=dom("mobile-refresh-feedback");
