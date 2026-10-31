@@ -143,7 +143,7 @@ const CITY_COVERS = [
     licenseUrl: "https://creativecommons.org/licenses/by/4.0/"
   }
 ];
-function coverForCity(text) {
+export function coverForCity(text) {
   return CITY_COVERS.find((cover) => cover.match.test(String(text || ""))) || null;
 }
 function travelPhotoCredits(events) {
