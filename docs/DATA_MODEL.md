@@ -14,6 +14,28 @@ Sin ampliar columnas canónicas: `PsicoExperimentos.notas` admite `psychohistory
 - Sensibilidad explícita en todas las entidades.
 - Campos pequeños y útiles; ampliar solo ante casos reales.
 
+## BODA — colaboración privada
+
+`wedding_items` sigue siendo la entidad de ideas, tareas, proveedores y
+presupuesto. Su `category=tareas` constituye la Agenda (estado
+`hecho` = completada), y las tarjetas con `provider` o categoría de
+servicio alimentan la comparativa de proveedores. `url` puede enlazar
+una ficha HTTPS de Bodas.net: es una referencia, nunca una copia
+sincronizada. Los importes no se duplican al cambiar de vista.
+
+`wedding_guests` (D1 privado, `0013_wedding_planner.sql`):
+`id, name, group_name, rsvp [pendiente|confirmado|rechazado], menu,
+dietary_notes, email, phone, notes, table_id, revision, updated_at,
+updated_by`. `table_id` es una referencia a `wedding_tables.id`
+y se elimina al borrar una mesa vacía. No se asignan asientos a quienes
+han rechazado asistir. Los datos de contacto y alimentación son
+personales/confidenciales y solo se consultan en API privada.
+
+`wedding_tables`: `id, name, capacity [1..30], shape
+[redonda|rectangular|presidencial], revision, updated_at, updated_by`.
+La vista muestra capacidad/ocupación sin inventar distribuciones.
+No hay integración automática de RSVP, email ni web pública.
+
 ## Campos comunes
 
 | Campo | Tipo | Descripción |

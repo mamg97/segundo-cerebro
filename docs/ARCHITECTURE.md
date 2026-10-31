@@ -16,6 +16,25 @@ Módulos especializados
 Fuentes propietarias y persistencia privada
 ```
 
+## Boda: herramientas nativas y referencias oficiales de Bodas.net
+
+La vista privada `#/pareja/boda` expone Kanban, Agenda, Proveedores,
+Invitados, Mesas, Presupuesto, Inspiración y enlaces directos a Bodas.net.
+Agenda y Proveedores leen/escriben `wedding_items` sin duplicar tareas ni
+presupuestos. Invitados y Mesas usan `wedding_guests` y `wedding_tables`
+en D1 privado (`0013_wedding_planner.sql`) mediante
+`/api/wedding/guests` y `/api/wedding/tables`, controlados por Cloudflare
+Access, restricciones de origen y revisiones optimistas. Los cambios de
+asistencia, menús, alergias y asientos son privados y no se publican.
+Las mesas comprueban ocupación y capacidad antes de escribir.
+
+Las fichas externas, catálogos de vestidos, reseñas, disponibilidad,
+mensajería y solicitudes de presupuesto siguen en la web de Bodas.net.
+No existe conexión de cuenta, API de sincronización autorizada, scraping
+de proveedores ni importación de confirmaciones desde su web. La creación
+de una web pública de invitados y sus RSVP se delega a Bodas.net hasta
+diseñar y aprobar por separado un flujo público con privacidad propia.
+
 ## Boda compartida: tablero Kanban
 
 La ruta privada `#/pareja/boda` muestra por defecto un Kanban sobre los

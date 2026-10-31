@@ -24,9 +24,9 @@ test("Kanban preserves D1 entries and filters by category and Spanish text",()=>
 test("Kanban is the default shared view and old inspiration and budget tabs remain",()=>{
  assert.match(source,/view:"kanban"/);
  assert.match(source,/state\.view="kanban";state\.draftStatus="idea"/);
- assert.match(source,/data-wed-view="kanban"/);
- assert.match(source,/data-wed-view="inspiracion"/);
- assert.match(source,/data-wed-view="planificacion"/);
+ assert.match(source,/\["kanban","Kanban"\]/);
+ assert.match(source,/\["inspiracion","Inspiración"\]/);
+ assert.match(source,/\["planificacion","Presupuesto"\]/);
  assert.match(source,/function inspirationCards\(/);
  assert.match(source,/function cards\(/);
  assert.match(source,/const all=sortWeddingItems\(filteredWeddingItems\(state\.items,state\.filter,state\.search\)/);
@@ -53,7 +53,7 @@ test("Single refresh stays sticky across views, uses one circular arrow, and ass
  assert.match(css,/\.wed-fixed-actions\{[\s\S]*?position:sticky;top:0/);
  assert.match(css,/\.wed-kanban\{[\s\S]*?overflow-x:auto/);
  assert.doesNotMatch(css,/overflow-y:auto/);
- assert.match(html,/wedding\.css\?v=0\.1\.5/);
- assert.match(html,/app\.js\?v=0\.44\.97/);
- assert.match(app,/wedding\.js\?v=0\.1\.4/);
+ assert.match(html,/wedding\.css\?v=0\.1\.6/);
+ assert.match(html,/app\.js\?v=0\.44\.98/);
+ assert.match(app,/wedding\.js\?v=0\.1\.5/);
 });

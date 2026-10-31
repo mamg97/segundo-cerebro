@@ -263,3 +263,71 @@
  .wed-kanban-hint{margin:6px 0 10px}
  .wed-kanban-workspace .wed-toolbar h3{font-size:19px}
 }
+
+/* Native wedding planning tools: compact, private, responsive. */
+.wedding-dialog .wed-view-tabs{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;scrollbar-width:thin;overscroll-behavior-x:contain;gap:3px}
+.wedding-dialog .wed-view-tabs button{flex:0 0 auto;padding:10px 11px;font-size:12px}
+.wed-planner-panel{display:grid;gap:12px;min-width:0;padding-bottom:25px}
+.wed-planner-panel>h3{margin:2px 0 0;font-size:21px}
+.wed-planner-panel>p{font-size:12px;color:var(--ink-soft);margin:0;line-height:1.5}
+.wed-planner-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:5px}
+.wed-planner-heading h3{font-size:21px;margin:0 0 3px}
+.wed-planner-heading small{font-size:12px;color:var(--ink-soft)}
+.wed-planner-empty{padding:24px 14px;border:1px dashed var(--line);border-radius:12px;font-size:12px;color:var(--ink-soft);background:var(--paper)}
+.wed-task-progress{width:100%;height:8px;accent-color:var(--blue)}
+.wed-task-list{display:grid;gap:7px}
+.wed-task-row{display:grid;grid-template-columns:35px minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.wed-task-row>div{min-width:0;display:grid;gap:3px}
+.wed-task-row strong{font-size:13px;overflow-wrap:anywhere}
+.wed-task-row small{color:var(--ink-soft);font-size:11px;overflow-wrap:anywhere}
+.wed-task-row .wed-done{text-decoration:line-through;opacity:.65}
+.wed-task-check{width:31px;height:31px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--blue);font-size:19px;cursor:pointer}
+.wed-task-row>button:last-child,.wed-provider-table button,.wed-guest-table button,.wed-seating-head button{border:0;background:transparent;font:inherit;font-size:11px;color:var(--blue);font-weight:800;cursor:pointer}
+.wed-planner-foot{font-size:11px!important;color:var(--ink-soft);line-height:1.5;margin-top:3px}
+.wed-provider-directory{display:flex;flex-wrap:wrap;gap:8px;padding:3px 0}
+.wed-provider-directory a{display:block;padding:8px 11px;color:var(--blue);border:1px solid var(--line);border-radius:8px;text-decoration:none;font-size:11px;font-weight:800}
+.wed-provider-scroll,.wed-guest-scroll{max-width:100%;overflow-x:auto;scrollbar-width:thin}
+.wed-provider-table,.wed-guest-table{width:100%;border-collapse:collapse;min-width:720px;text-align:left}
+.wed-provider-table th,.wed-guest-table th{font-size:10px;text-transform:uppercase;color:var(--ink-soft);padding:10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.wed-provider-table td,.wed-guest-table td{padding:10px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:middle}
+.wed-provider-table td:first-child,.wed-guest-table td:first-child{min-width:170px}
+.wed-provider-table td:first-child small,.wed-guest-table td:first-child small{display:block;color:var(--ink-soft);font-size:10px;margin-top:4px}
+.wed-provider-table a{color:var(--blue);text-decoration:none;font-weight:800}
+.wed-guest-table select{font:inherit;font-size:11px;min-height:33px;padding:5px 7px;max-width:180px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+.wed-guest-form{display:grid;gap:15px;padding:17px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.wed-guest-form h4{font-size:17px;margin:0}
+.wed-planner-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.wed-planner-fields label{display:grid;gap:5px;font-size:11px;font-weight:800;min-width:0}
+.wed-planner-fields label.wide{grid-column:1/-1}
+.wed-planner-fields input,.wed-planner-fields select,.wed-planner-fields textarea{min-height:40px;width:100%;max-width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
+.wed-planner-fields textarea{resize:vertical}
+.wed-planner-form-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.wed-planner-form-actions button:not(.wed-primary){padding:10px 14px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);font:inherit;cursor:pointer;font-size:12px}
+.wed-seating-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:10px}
+.wed-seating-card{padding:12px;border:1px solid var(--line);background:var(--surface);border-radius:12px;min-width:0;min-height:92px}
+.wed-seating-head{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+.wed-seating-head strong{flex:1;font-size:14px;overflow-wrap:anywhere}
+.wed-seating-head>span{font-size:10px;color:var(--ink-soft)}
+.wed-seating-guests{display:flex;gap:5px;flex-wrap:wrap}
+.wed-seating-guests span{font-size:11px;padding:5px 7px;border-radius:7px;background:var(--paper);border:1px solid var(--line)}
+.wed-seating-guests small{font-size:11px;color:var(--ink-soft)}
+.wed-external-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.wed-external-card{display:grid;gap:7px;align-content:start;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);text-decoration:none}
+.wed-external-card:hover,.wed-external-card:focus-visible{border-color:var(--blue)}
+.wed-external-card strong{font-size:13px}
+.wed-external-card small{font-size:11px;color:var(--ink-soft);line-height:1.4}
+@media(max-width:900px){.wed-planner-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.wed-seating-grid,.wed-external-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){
+ .wedding-dialog .wed-view-tabs{margin-bottom:12px}
+ .wedding-dialog .wed-view-tabs button{font-size:11px;padding:9px}
+ .wed-planner-heading h3{font-size:18px}
+ .wed-planner-heading .wed-primary{padding:9px 11px;min-height:37px}
+ .wed-planner-fields{grid-template-columns:1fr}
+ .wed-planner-fields label.wide{grid-column:1}
+ .wed-seating-grid,.wed-external-grid{grid-template-columns:1fr}
+ .wed-provider-directory{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .wed-provider-directory a{padding:9px 7px;text-align:center}
+ .wed-guest-form{padding:12px}
+ .wed-task-row{grid-template-columns:28px minmax(0,1fr) auto;padding:8px}
+ .wed-task-check{width:27px;height:27px}
+}

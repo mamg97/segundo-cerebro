@@ -22,7 +22,7 @@ test("budget math does not double count paid and excluded entries",()=>{
 test("wedding has private API and responsive separate stylesheet",()=>{
  const app=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const style=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
- assert.match(app,/wedding\.css\?v=0\.1\.5/);
+ assert.match(app,/wedding\.css\?v=0\.1\.6/);
  assert.match(style,/\.wed-grid/);
  assert.doesNotMatch(style,/overflow-y:auto/);
 });
@@ -56,8 +56,8 @@ test("moodboard excludes discarded ideas, filters categories, and preserves exis
  assert.deepEqual(inspirationItems(items,"catering").map(x=>x.id),["2"]);
  const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
  assert.match(source,/class="wed-masonry"/);
- assert.match(source,/data-wed-view="inspiracion"/);
- assert.match(source,/data-wed-view="planificacion"/);
+ assert.match(source,/\["inspiracion","Inspiración"\]/);
+ assert.match(source,/\["planificacion","Presupuesto"\]/);
  assert.match(source,/sendPhoto\(result\.item\.id,photo\)/);
  assert.match(source,/wed-stats/);
  assert.doesNotMatch(source,/api\.pinterest\.com|PINAR_TOKEN|PINTEREST_CLIENT_SECRET/);
