@@ -20,7 +20,7 @@ test("Viajes: tarjetas 1:1, título y fecha sobre foto sin badges ni estados",()
  assert.doesNotMatch(card,/trv-status|trv-card-top|CONFIRMADO/);
  assert.match(css,/aspect-ratio:1 \/ 1/);
  assert.match(travels,/referrerpolicy="no-referrer"/);
- assert.match(travels,/travelPhotoCredits\(state\.trips\)/);
+ assert.match(travels,/travelPhotoCredits\(ordered\)/);
  assert.match(travels,/CC BY 4\.0/);
  const gallery=travels.slice(travels.indexOf("function renderList()"),travels.indexOf("function section("));
  assert.match(gallery,/trv-horizontal-gallery/);
