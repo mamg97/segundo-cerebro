@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  privateAppRevision, privateAppRevisionFromHtml, safeToReloadFrontend
+  privateAppRevision, privateAppRevisionFromHtml, safeToReloadFrontend, privateUpdateNoticeHost
 } from "./frontend-freshness.mjs";
 
 const VALID = "0123456789abcdef";
@@ -36,7 +36,7 @@ test("unsafe editing state prevents unsolicited reload", () => {
 test("remote app checks revisions on visibility/focus without periodic polling", () => {
   const app = readFileSync(new URL("./app.js",import.meta.url),"utf8");
   const css = readFileSync(new URL("./styles.css",import.meta.url),"utf8");
-  assert.match(app,/import \{ installPrivateAppFreshnessGuard \} from "\.\/frontend-freshness\.mjs\?v=0\.44\.34";/);
+  assert.match(app,/import \{ installPrivateAppFreshnessGuard \} from "\.\/frontend-freshness\.mjs\?v=0\.44\.35";/);
   assert.match(app,/installPrivateAppFreshnessGuard\(\);/);
   const source = readFileSync(new URL("./frontend-freshness.mjs",import.meta.url),"utf8");
   assert.match(source,/window\.addEventListener\("focus"/);
@@ -45,4 +45,16 @@ test("remote app checks revisions on visibility/focus without periodic polling",
   assert.match(source,/cache: "no-store"/);
   assert.doesNotMatch(source,/setInterval\s*\(/);
   assert.match(css,/\.private-app-update-notice/);
+});
+
+test("update notice is reachable inside a modal and manual refresh checks code freshness",()=>{
+ const body={name:"body"},dialog={name:"dialog"};
+ assert.equal(privateUpdateNoticeHost({querySelector:()=>dialog,body}),dialog);
+ assert.equal(privateUpdateNoticeHost({querySelector:()=>null,body}),body);
+ const source=readFileSync(new URL("./frontend-freshness.mjs",import.meta.url),"utf8");
+ assert.match(source,/#refresh-app, #desktop-area-refresh, #wed-main-refresh/);
+ assert.match(source,/void checkFreshness\(true\)/);
+ assert.match(source,/privateUpdateNoticeHost\(document\)\.append\(notice\)/);
+ assert.match(source,/document\.addEventListener\("close"/);
+ assert.match(source,/Cargar versión nueva/);
 });
