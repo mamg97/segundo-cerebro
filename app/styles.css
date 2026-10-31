@@ -28983,3 +28983,27 @@ html[data-theme="light"] .finance-right-stack > .gifts-panel {
 .recipe-detail-card>.recipe-detail-photo.is-landscape>img{
  width:100%;height:auto;max-height:min(80vh,760px);object-fit:contain;
 }
+
+/* Compact Home finance links; routes only update presentation, not canonical data. */
+.money-horizon > .budget-panel .budget-heading-actions{
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;
+ gap:6px 12px;min-width:0;
+}
+.money-horizon > .budget-panel .budget-heading-links{
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;
+ gap:4px 12px;min-width:0;
+}
+.money-horizon > .budget-panel #show-account-movements{
+ display:inline-flex;align-items:center;min-height:28px;
+ text-decoration:underline;text-underline-offset:2px;white-space:nowrap;
+}
+.money-horizon > .budget-panel #show-account-movements:focus-visible{
+ outline:2px solid var(--blue);outline-offset:3px;border-radius:3px;
+}
+.account-transactions-section{scroll-margin-top:16px}
+@media(max-width:760px){
+ .money-horizon > .budget-panel .budget-heading-actions{
+  flex-direction:row;align-items:center;justify-content:flex-end;
+ }
+ .money-horizon > .budget-panel .budget-heading-links{gap:4px 9px}
+}

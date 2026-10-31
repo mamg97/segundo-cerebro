@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,hrefForHealthTab,HEALTH_SECTION_IDS,hrefForPantryTab,PANTRY_SECTION_IDS,routeFromHash} from "./area-routes.mjs";
+import {HOBBY_CATEGORIES,hrefForArea,hrefForHobby,hrefForTravel,hrefForWedding,hrefForHealthTab,HEALTH_SECTION_IDS,hrefForPantryTab,PANTRY_SECTION_IDS,hrefForFinanceMovements,routeFromHash} from "./area-routes.mjs";
 
 test("main areas have independent, stable URLs and a home route",()=>{
   assert.equal(hrefForArea("area-general"),"#/inicio");
@@ -98,4 +98,24 @@ test("Despensa and its shopping-list subroute are directly addressable without b
  assert.match(app,/routedPantryTabId=route\.areaId==="area-pantry"/);
  assert.match(app,/hrefForPantryTab\(tab\)/);
  assert.match(app,/openPantryDetail\(routedPantryTabId==="compra"\?"shopping"/);
+});
+
+test("Home liquidity movements link has a restricted shareable Finance route",()=>{
+ const html=readFileSync(new URL("./index.html",import.meta.url),"utf8");
+ const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
+ const css=readFileSync(new URL("./styles.css",import.meta.url),"utf8");
+ assert.equal(hrefForFinanceMovements(),"#/finanzas/movimientos");
+ assert.deepEqual(routeFromHash(hrefForFinanceMovements()),{areaId:"area-finance",detailId:"movimientos"});
+ for(const invalid of ["#/finanzas/privado","#/finanzas/%2f","#/finanzas/%","#/finanzas/movimientos/otra"]){
+  assert.equal(routeFromHash(invalid),null);
+ }
+ assert.match(html,/id="show-account-movements"[^>]*href="#\/finanzas\/movimientos"/);
+ assert.match(html,/id="show-budget-detail"/);
+ assert.match(app,/if\s*\(areaId === "area-finance"\)\s*\{\s*openBudgetDetail\(\)/);
+ assert.match(app,/function focusRequestedFinanceMovements\(\)/);
+ assert.match(app,/section\.scrollIntoView\(\{behavior:"auto",block:"start"\}\)/);
+ assert.match(app,/if\(!section\)return; \/\/ Canonical bank API may still be loading/);
+ assert.ok((app.match(/focusRequestedFinanceMovements\(\);/g)||[]).length>=3,"Initial, full and late bank views focus the section");
+ assert.match(app,/fetch\("\/api\/finance\/accounts"/);
+ assert.match(css,/\.account-transactions-section\{scroll-margin-top:16px\}/);
 });

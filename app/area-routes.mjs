@@ -27,12 +27,13 @@ export function routeFromHash(hash){
   const areaId=slugToArea.get(parts[0]);
   if(!areaId || parts.length>2)return null;
   if(parts.length===2){
-    if(areaId!=="area-travels"&&areaId!=="area-hobbies"&&areaId!=="area-partner"&&areaId!=="area-health"&&areaId!=="area-pantry")return null;
+    if(areaId!=="area-travels"&&areaId!=="area-hobbies"&&areaId!=="area-partner"&&areaId!=="area-health"&&areaId!=="area-pantry"&&areaId!=="area-finance")return null;
     try{
       const id=decodeURIComponent(parts[1]);
       if(!id||id.length>500||id.includes("/")||id.includes("\\")||id.includes("\0"))return null;
       if(areaId==="area-hobbies"&&!hobbyIds.has(id))return null;
       if(areaId==="area-partner"&&id!=="boda")return null;
+      if(areaId==="area-finance"&&id!=="movimientos")return null;
       if(areaId==="area-health"&&!healthSectionIds.has(id))return null;
       if(areaId==="area-pantry"&&!pantrySectionIds.has(id))return null;
       return {areaId,detailId:id};
@@ -46,6 +47,7 @@ export function hrefForTravel(id){
 }
 export function hrefForHobby(id){return hobbyIds.has(id)?"#/hobbies/"+id:hrefForArea("area-hobbies")}
 export function hrefForWedding(){return "#/pareja/boda"}
+export function hrefForFinanceMovements(){return "#/finanzas/movimientos"}
 export function hrefForHealthTab(tab){return healthSectionIds.has(tab)?"#/salud/"+tab:hrefForArea("area-health")}
 export function hrefForPantryTab(tab){return pantrySectionIds.has(tab)?"#/despensa/"+tab:hrefForArea("area-pantry")}
 export function isNamedArea(areaId){return areaToSlug.has(areaId)}
