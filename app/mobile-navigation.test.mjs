@@ -56,7 +56,7 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
 test("HTML links to both navigation stylesheets and respects iOS safe areas",()=>{
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
- assert.match(index,/<link rel="stylesheet" href="\.\/area-routes\.css\?v=0\.1\.5">/);
+ assert.match(index,/<link rel="stylesheet" href="\.\/area-routes\.css\?v=0\.1\.6">/);
  assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.6">/);
  assert.match(css,/--mobile-toolbar-height:calc\(58px \+ env\(safe-area-inset-top,0px\)\)/);
  assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
