@@ -34,10 +34,13 @@ servicio alimentan la comparativa de proveedores. `url` puede enlazar
 una ficha HTTPS de Bodas.net: es una referencia, nunca una copia
 sincronizada. Los importes no se duplican al cambiar de vista.
 
-La interfaz de invitados representa `group_name` como una de tres listas
+La interfaz de invitados representa `group_name` como una de cuatro listas
 operativas: `pareja` («Invitados Andrea y Miguel»),
-`padres_miguel` («Invitados padres Miguel») o
-`padres_andrea` («Invitados padres Andrea»). Crear un invitado solo
+`padres_miguel` («Invitados padres Miguel»),
+`padres_andrea` («Invitados padres Andrea») u
+`opcionales` («Invitados opcionales»). La última agrupa personas cuya
+invitación aún no se ha decidido; trasladarlas a una lista definitiva
+se hace editando su ficha y no borra sus datos. Crear un invitado solo
 requiere su nombre: `rsvp=pendiente` y los demás campos vacíos.
 Las fichas permiten completar datos opcionales. Los grupos históricos
 que no coincidan con estos identificadores permanecen intactos en un

@@ -1,6 +1,6 @@
 // Zero-dependency, client-side OOXML workbook export. Never uploads private data.
 // Excel-compatible .xlsx with uncompressed ZIP entries and text-only cells (no formulas).
-import {BODAS_LINKS,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.2";
+import {BODAS_LINKS,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.3";
 export const WEDDING_EXPORT_TABS={
  kanban:"Kanban",agenda:"Agenda",proveedores:"Proveedores",invitados:"Invitados",
  mesas:"Mesas",planificacion:"Presupuesto",inspiracion:"Inspiración",bodasnet:"Bodas.net"

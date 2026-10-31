@@ -28,8 +28,8 @@ limitadas a 500/1000 filas. Ante un fallo o sobrepasar límites, se cancela
 la descarga para evitar copias parciales que parezcan válidas.
 
 La exportación de Invitados ofrece una hoja para cada una de las tres
-familias, otra de registros históricos sin clasificar y un resumen
-conjunto. Mesas incluye distribución y personas sin mesa; Presupuesto
+listas familiares, otra para invitados opcionales, otra de registros
+históricos sin clasificar y un resumen conjunto. Mesas incluye distribución y personas sin mesa; Presupuesto
 contiene resumen de importes y partidas. Se conservan identificadores,
 revisiones, responsables, observaciones y referencias originales.
 La vista incluye una hoja Información con fecha, alcance y límites.
@@ -47,15 +47,16 @@ solo por decisión de la persona que lo descarga.
 
 ## Boda: listas rápidas de invitados
 
-La vista Invitados presenta tres listas de nombres: pareja, padres de
-Miguel y padres de Andrea. Cada lista permite introducir sucesivamente
+La vista Invitados presenta cuatro listas de nombres: pareja, padres de
+Miguel, padres de Andrea e invitados opcionales por decidir. Cada lista permite introducir sucesivamente
 nombres por un formulario de un solo campo conectado con el POST
 autenticado de `/api/wedding/guests`. Pulsar el nombre abre su ficha
 privada de asistencia, menú, alergias y mesa; los cambios mantienen
 las revisiones optimistas D1 existentes. Los nombres previamente
 guardados en grupos diferentes se muestran como «Sin clasificar»
 para clasificación explícita, sin asignación familiar automática.
-En móvil se navega horizontalmente entre las tres columnas.
+En móvil se navega horizontalmente entre las cuatro listas; en escritorio
+se muestran cuatro bloques o dos filas de dos según el espacio disponible.
 No hay cambios de esquema, endpoint, cuotas ni fuente canónica.
 
 ## Boda: herramientas nativas y referencias oficiales de Bodas.net
