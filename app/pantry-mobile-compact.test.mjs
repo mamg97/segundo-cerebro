@@ -41,8 +41,11 @@ test("mobile Pantry is compact while retaining inventory, tickets, source link a
   assert.match(css,/\.pantry-shopping-list-item \.pantry-confirm-inventory/);
   assert.match(css,/min-height: 40px/);
   assert.match(css,/\.pantry-shopping-review/);
+  assert.match(css,/#detail-dialog\.pantry-dialog\[open\]:not\(\.wealth-dialog\)::before/);
+  assert.match(css,/\.pantry-shopping-list-item \.pantry-confirm-inventory::after/);
+  assert.match(css,/\.pantry-shopping-row\.is-link:has\(>\.pantry-product-thumb\[data-photo="pending"\]\)/);
   assert.doesNotMatch(css,/@media \(min-width:/);
-  assert.match(page,/pantry-mobile-compact\.css\?v=0\.1\.0/);
+  assert.match(page,/pantry-mobile-compact\.css\?v=0\.1\.1/);
   assert.match(page,/app\.js\?v=0\.44\.111/);
   assert.match(pantry,/data-pantry-view="inventory"/);
   assert.match(pantry,/data-pantry-view="tickets"/);
