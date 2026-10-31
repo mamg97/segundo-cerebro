@@ -28,9 +28,9 @@ test("iOS: no duplicate Travel header, close button only in one fixed toolbar",(
 
 test("iOS bottom safe area is not double-counted and is visually filled",()=>{
  const css=read("./mobile-viewport-fixes.css");
- assert.match(css,/--mobile-dock-height:67px/);
- assert.match(css,/bottom:calc\(0px - env\(safe-area-inset-bottom,0px\)\)/);
- assert.match(css,/box-shadow:0 90px 0 var\(--surface\)/);
+ assert.match(css,/--mobile-dock-height:var\(--mobile-bottom-height\)/);
+ assert.match(css,/bottom:0;/);
+ assert.match(css,/padding:2px max\(8px,env\(safe-area-inset-right,0px\)\) calc\(2px \+ env\(safe-area-inset-bottom,0px\)\)/);
  assert.match(css,/body:not\(\.route-area-active\) \.main-content \{[\s\S]*?top:var\(--mobile-toolbar-height\);[\s\S]*?bottom:var\(--mobile-dock-height\)/);
 });
 
