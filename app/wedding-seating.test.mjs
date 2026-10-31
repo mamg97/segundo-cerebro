@@ -599,3 +599,46 @@ test("leader lines avoid all other chairs and tabletop at 6, 12, 18 and 30 place
   assert.match(html,/class="wed-seat-association-lines" aria-hidden="true"/);
  }
 });
+
+test("inspector verifies persisted capacity and updates only the live table SVG",()=>{
+ assert.match(ui,/function openWeddingTableInspector\(id\)/);
+ assert.match(ui,/className="wed-table-inspector"/);
+ assert.match(ui,/host\.appendChild\(panel\);weddingTableInspector=panel/);
+ assert.match(ui,/function updateWeddingTableFigure\(table\)/);
+ assert.match(ui,/oldFigure\.replaceWith\(newFigure\)/);
+ assert.match(ui,/namedSeatDiagram\(table,occupants,esc\)/);
+ assert.match(ui,/await getJson\("\/api\/wedding\/tables\/"\+encodeURIComponent\(id\),"PATCH"/);
+ assert.match(ui,/const persisted=await getJson\("\/api\/wedding\/tables"\)/);
+ assert.match(ui,/Number\(confirmed\.capacity\)!==payload\.capacity/);
+ assert.match(ui,/throw new Error\("TABLE_UPDATE_NOT_VERIFIED"\)/);
+ assert.match(ui,/state\.tables=persisted\.items/);
+ assert.match(ui,/updateWeddingTableFigure\(confirmed\)/);
+ assert.match(ui,/feedback\.textContent="Guardado y comprobado: "\+confirmed\.capacity\+" plazas\."/);
+ assert.match(ui,/const minimum=Math\.max\(1,guests\.length,lastSeat\)/);
+ assert.match(ui,/state\.seatingSelectedTableId=id/);
+ assert.doesNotMatch(ui,/state\.seatingFloorExpanded=false;\s*state\.tableEditing=btn\.dataset\.wedEditTable;\s*show\(\)/);
+ assert.match(css,/\.wed-table-inspector\{/);
+});
+test("seat count changes visually from six to ten without resetting assignments",()=>{
+ const table={id:"capacity-test",name:"Mesa familiar",shape:"redonda",capacity:6};
+ const guests=Array.from({length:5},(_,i)=>({
+  id:"person-"+i,name:"Invitado "+i,tableId:table.id,seatIndex:i,groupName:"pareja",rsvp:"confirmado"
+ }));
+ const original=JSON.stringify(guests);
+ const six=renderTables(guests,[table],null,esc,table.id);
+ const ten=renderTables(guests,[{...table,capacity:10}],null,esc,table.id);
+ const block=html=>html.slice(html.indexOf('<article class="wed-floor-table'),html.indexOf("</article>"));
+ assert.equal((block(six).match(/class="wed-svg-chair is-/g)||[]).length,6);
+ assert.equal((block(ten).match(/class="wed-svg-chair is-/g)||[]).length,10);
+ assert.equal((block(six).match(/class="wed-svg-chair is-filled"/g)||[]).length,5);
+ assert.equal((block(ten).match(/class="wed-svg-chair is-filled"/g)||[]).length,5);
+ assert.match(block(ten),/5\/10 plazas/);
+ assert.equal(JSON.stringify(guests),original);
+});
+test("table itself opens inspector while drag remains only on Mover control",()=>{
+ assert.match(ui,/openWeddingTableInspector\(btn\.dataset\.wedEditTable\)/);
+ assert.match(ui,/openWeddingTableInspector\(id\)/);
+ assert.match(ui,/!event\.target\.closest\("\[data-wed-floor-grip\]"\)/);
+ assert.match(ui,/if\(weddingTableInspector\)\{[\s\S]*?closeWeddingTableInspector\(\);return;/);
+ assert.match(ui,/if\(!expanded&&weddingFloorPortal\)/);
+});
