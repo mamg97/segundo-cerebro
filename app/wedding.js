@@ -472,10 +472,10 @@ function openWeddingSeatPicker(anchor,tableId,seatIndex){
  const input=panel.querySelector("[data-wed-seat-popup-search]");
  const list=panel.querySelector(".wed-seat-popover-results");
  const message=panel.querySelector("[data-wed-seat-popup-message]");
- const fold=v=>String(v||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLocaleLowerCase("es").trim();
+ const fold=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es").trim();
  let placing=false;
  const render=()=>{
-  const words=fold(input.value).split(/\\s+/).filter(Boolean);
+  const words=fold(input.value).split(/\s+/).filter(Boolean);
   const filtered=eligible.filter(g=>words.every(w=>fold(g.name).includes(w)));
   list.replaceChildren();
   for(const guest of filtered.slice(0,40)){
