@@ -327,7 +327,7 @@ async function loadPlanner(){
  }catch(error){state.error=errorMsg(error);}
  finally{state.plannerBusy=false;if(active())show();}
 }
-async function plannerMutation(action,{focusGroup=null,preserveScroll=false}={}){
+async function plannerMutation(action,{focusGroup=null,preserveScroll=false,focusTableId=null,focusTableNew=false}={}){
  if(state.busy)return;
  const scroll=document.querySelector("#dialog-body"),oldTop=scroll?.scrollTop||0;
  state.busy=true;
@@ -339,9 +339,14 @@ async function plannerMutation(action,{focusGroup=null,preserveScroll=false}={})
   state.error=errorMsg(error);show();
  }finally{
   state.busy=false;
-  if((focusGroup||preserveScroll)&&active()){
+  if((focusGroup||preserveScroll||focusTableId)&&active()){
    if(scroll)scroll.scrollTop=oldTop;
    if(focusGroup)document.querySelector('[data-wed-quick-add="'+focusGroup+'"] input[name="name"]')?.focus({preventScroll:true});
+   if(focusTableId){
+    const selector=focusTableNew?'input[name="name"]':'select[name="guestId"]';
+    [...document.querySelectorAll("[data-wed-table-picker]")].find(panel=>
+     panel.dataset.wedTablePicker===focusTableId)?.querySelector(selector)?.focus({preventScroll:true});
+   }
   }
  }
 }
@@ -440,7 +445,7 @@ function bindPlannerActions(area){
   const guestId=String(new FormData(form).get("guestId")||"");
   const guest=state.guests.find(g=>g.id===guestId);
   if(!guest||guest.tableId||guest.rsvp==="rechazado"||!state.tables.some(t=>t.id===tableId))return;
-  void plannerMutation(()=>changeGuestTable(guest,tableId),{preserveScroll:true});
+  void plannerMutation(()=>changeGuestTable(guest,tableId),{preserveScroll:true,focusTableId:tableId});
  }));
  area.querySelectorAll("[data-wed-add-table-guest]").forEach(form=>form.addEventListener("submit",event=>{
   event.preventDefault();if(state.busy)return;
@@ -451,7 +456,7 @@ function bindPlannerActions(area){
   void plannerMutation(()=>getJson("/api/wedding/guests","POST",{
    name,groupName,rsvp:"pendiente",menu:"",tableId,
    dietaryNotes:"",email:"",phone:"",notes:""
-  }),{preserveScroll:true});
+  }),{preserveScroll:true,focusTableId:tableId,focusTableNew:true});
  }));
  area.querySelectorAll("[data-wed-seat-detail]").forEach(button=>button.addEventListener("click",()=>{
   openSeatedGuest(button.dataset.wedSeatDetail,area);
