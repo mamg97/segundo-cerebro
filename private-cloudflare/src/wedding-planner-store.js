@@ -14,7 +14,7 @@ export function validateGuest(x){
   menu=field(x.menu||"",20),dietaryNotes=field(x.dietaryNotes,500),notes=field(x.notes,1000),
   email=field(x.email,254),phone=field(x.phone,40);
  if(!name||!RSVPS.has(rsvp)||!MENUS.has(menu))throw new PlannerError("INVALID_ITEM");
- if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))throw new PlannerError("INVALID_EMAIL");
+ if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new PlannerError("INVALID_EMAIL");
  const tableId=x.tableId?uuid(x.tableId):null;
  if(rsvp==="rechazado"&&tableId)throw new PlannerError("DECLINED_SEATING");
  return {name,groupName,rsvp,menu,dietaryNotes,notes,email,phone,tableId};
@@ -40,7 +40,7 @@ async function parse(request){
 function actorOf(request){
  const actor=request.headers.get("Cf-Access-Authenticated-User-Email")||"";
  const jwt=request.headers.get("Cf-Access-Jwt-Assertion")||"";
- if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(actor)||actor.length>254||jwt.split(".").length!==3)
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(actor)||actor.length>254||jwt.split(".").length!==3)
   throw new PlannerError("ACCESS_REQUIRED",403);
  return actor.toLowerCase();
 }
@@ -57,7 +57,7 @@ export async function handleWeddingPlannerRequest(request,env){
   if(!db?.prepare)throw new PlannerError("STORAGE_UNAVAILABLE",503);
   const url=new URL(request.url),path=url.pathname,method=request.method;
   if(method!=="GET"&&request.headers.get("Origin")!==url.origin)throw new PlannerError("INVALID_ORIGIN",403);
-  const match=path.match(/^\\/api\\/wedding\\/(guests|tables)(?:\\/([^/]+))?$/);
+  const match=path.match(/^\/api\/wedding\/(guests|tables)(?:\/([^/]+))?$/);
   if(!match)throw new PlannerError("NOT_FOUND",404);
   const kind=match[1],id=match[2]?uuid(decodeURIComponent(match[2])):null;
   const guests=kind==="guests",table=guests?"wedding_guests":"wedding_tables";
