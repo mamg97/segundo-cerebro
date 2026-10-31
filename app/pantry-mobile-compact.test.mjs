@@ -47,7 +47,9 @@ test("mobile Pantry is compact while retaining inventory, tickets, source link a
   assert.match(css,/\.pantry-shopping-row\.is-link:has\(>\.pantry-product-thumb\[data-photo="pending"\]\)/);
   assert.doesNotMatch(css,/@media \(min-width:/);
   assert.match(page,/pantry-mobile-compact\.css\?v=0\.1\.1/);
-  assert.match(page,/app\.js\?v=0\.44\.111/);
+  // The application version advances independently of this Pantry contract.
+  // Assert a valid versioned bundle rather than pinning another domain's revision.
+  assert.match(page,/app\\.js\\?v=\\d+\\.\\d+\\.\\d+/);
   assert.match(pantry,/data-pantry-view="inventory"/);
   assert.match(pantry,/data-pantry-view="tickets"/);
   assert.match(pantry,/Maestro de productos/);
