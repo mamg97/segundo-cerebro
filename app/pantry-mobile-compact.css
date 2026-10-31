@@ -1,5 +1,9 @@
 /* Mobile-only Pantry shopping density. Keep Inventory, Tickets and desktop unchanged. */
 @media (max-width: 760px) {
+  /* Override the legacy 56px close-only strip; the close button shares the tabs row. */
+  body.route-area-active #detail-dialog.pantry-dialog[open]:not(.wealth-dialog) {
+    padding-top: 8px !important;
+  }
   body.route-area-active #detail-dialog.pantry-dialog[open] #dialog-body { padding-top: 0; }
   body.route-area-active #detail-dialog.pantry-dialog[open] .pantry-shell {
     gap: 9px;
