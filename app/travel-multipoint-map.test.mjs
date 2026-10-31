@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {travelMapPoints,travelMapDays,travelMapVisible,travelRouteUrls} from "./travel-multipoint-map.js";
+import {travelMapPoints,travelMapDays,travelMapVisible,travelRouteUrls,travelRouteMode} from "./travel-multipoint-map.js";
 
 const make=(date,order,name)=>({date,order,name,query:name+" Test City",status:"PROPUESTA",lat:50+order/10000,lon:20});
 test("Travel map draws lodging and ordered stops, keeping alternatives separate",()=>{
@@ -23,4 +23,16 @@ test("Google Maps walking directions split mobile itineraries with max 3 interme
 test("Invalid coordinates are discarded and no map points are invented",()=>{
  assert.deepEqual(travelMapPoints({points:[]}),[]);
  assert.equal(travelMapPoints({points:[{...make("2027-02-02",1,"Bad"),lat:Infinity}]}).length,0);
+});
+
+test("Day routes switch to car for distant regional stops and retain walking downtown",()=>{
+ const day="2027-02-02";
+ const lodge={...make("ALOJAMIENTO",0,"Lodging"),lat:50,lon:20};
+ const downtown=[lodge,make(day,1,"Nearby A"),make(day,2,"Nearby B")];
+ assert.equal(travelRouteMode(downtown,day),"walking");
+ assert.equal(new URL(travelRouteUrls(downtown,day,"Lodging Test City")[0]).searchParams.get("travelmode"),"walking");
+ const rural=[lodge,{...make(day,1,"Distant A"),lat:50.4,lon:20.3},{...make(day,2,"Distant B"),lat:50.45,lon:20.35}];
+ assert.equal(travelRouteMode(rural,day),"driving");
+ assert.equal(new URL(travelRouteUrls(rural,day,"Lodging Test City")[0]).searchParams.get("travelmode"),"driving");
+ assert.equal(travelRouteMode(rural,"OPCIONAL"),"walking");
 });
