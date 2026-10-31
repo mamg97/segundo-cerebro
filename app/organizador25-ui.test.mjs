@@ -38,7 +38,7 @@ test("Boda sustituye visualmente Pareja en ambos menús sin migrar ni borrar los
  assert.match(app,/area\.id === "area-partner" \? hrefForWedding\(\) : hrefForArea\(area\.id\)/);
  assert.match(app,/areaId==="area-partner"\?hrefForWedding\(\):hrefForArea\(areaId\)/);
  assert.match(app,/if \(areaId === "area-partner"\) \{\s*openWeddingDetail/);
- assert.match(nav,/\["area-partner","Boda","heart"\]/);
+ assert.match(nav,/\["area-partner","Boda","ring"\]/);
  assert.doesNotMatch(nav,/\["area-partner","Pareja"/);
  assert.match(nav,/"area-partner":\[\{label:"Boda",href:hrefForWedding\(\)\}\]/);
 });
