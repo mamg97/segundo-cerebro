@@ -80,6 +80,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Align source frontend bundle versions before testing
+        run: node scripts/align-source-versions.mjs
+
       - name: Validate JavaScript
         run: |
           node --check ../app/app.js
