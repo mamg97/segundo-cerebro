@@ -42,7 +42,7 @@ test("mobile-only single-scroller layout preserves native desktop and browser hi
  assert.match(app,/syncMobileNavigation\(route,hash\)/);
  assert.match(app,/routedHealthTabId/);
  assert.match(app,/hrefForHealthTab/);
- assert.match(index,/mobile-navigation\.css\?v=0\.1\.6/);
+ assert.match(index,/mobile-navigation\.css\?v=0\.1\.7/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(min-width:761px\)/);
  assert.match(css,/env\(safe-area-inset-bottom/);
@@ -57,7 +57,7 @@ test("HTML links to both navigation stylesheets and respects iOS safe areas",()=
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  const css=readFileSync(new URL("./mobile-navigation.css",import.meta.url),"utf8");
  assert.match(index,/<link rel="stylesheet" href="\.\/area-routes\.css\?v=0\.1\.6">/);
- assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.6">/);
+ assert.match(index,/<link rel="stylesheet" href="\.\/mobile-navigation\.css\?v=0\.1\.7">/);
  assert.match(css,/--mobile-toolbar-height:calc\(58px \+ env\(safe-area-inset-top,0px\)\)/);
  assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
 });
@@ -87,7 +87,7 @@ test("mobile refresh shows one circular arrow rather than two opposing arrows",(
  assert.doesNotMatch(icon,/M4 17v-5h5|M20 7v5h-5/);
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
- assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.6/);
+ assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.7/);
  assert.match(index,/app\.js\?v=0\.44\.\d+/);
 });
 
