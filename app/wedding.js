@@ -405,7 +405,7 @@ function bind(area){
  area.querySelector("#wed-add-pin")?.addEventListener("click",startIdea);
  area.querySelector("#wed-floating-add")?.addEventListener("click",startIdea);
  area.querySelector("#wed-first-pin")?.addEventListener("click",startIdea);
- area.querySelector("#wed-main-refresh")?.addEventListener("click",()=>{if(state.busy||state.quickBusy)return;state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
+ area.querySelector("#wed-main-refresh")?.addEventListener("click",()=>{if(state.busy||state.quickBusy)return;if(state.editing&&!window.confirm("¿Actualizar y descartar los cambios no guardados?"))return;state.error="";void load().catch(e=>{state.error=errorMsg(e);show();});});
  area.querySelectorAll("[data-wed-inspo-filter]").forEach(button=>button.addEventListener("click",()=>{
   state.inspirationFilter=button.dataset.wedInspoFilter;state.error="";show();
  }));
@@ -414,7 +414,7 @@ function bind(area){
   const target=area.querySelector("#wed-inspo-results");if(target){target.innerHTML=inspirationCards();bindCards(target);bindEmptyInspiration(target);}
  });
  area.querySelector("#wed-new")?.addEventListener("click",()=>{state.draftStatus="idea";state.editing="new";state.ideaMode=false;state.error="";show();});
- area.querySelectorAll("[data-wed-add-status]").forEach(btn=>btn.addEventListener("click",()=>{state.draftStatus=btn.dataset.wedAddStatus;state.editing="new";state.ideaMode=false;state.error="";show();}));
+
  area.querySelector("#wed-back")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;state.error="";show();});
  area.querySelector("#wed-cancel")?.addEventListener("click",()=>{clearQuickFiles();state.editing=null;state.ideaMode=false;state.error="";show();});
  area.querySelector("#wed-sort")?.addEventListener("change",e=>{state.sort=e.target.value;const target=area.querySelector("#wed-results");if(target){target.innerHTML=kanbanBoard();bindCards(target);}});
@@ -460,6 +460,7 @@ async function moveCard(id,status){
  }));
 }
 function bindCards(root){
+ root.querySelectorAll("[data-wed-add-status]").forEach(btn=>btn.addEventListener("click",()=>{state.draftStatus=btn.dataset.wedAddStatus;state.editing="new";state.ideaMode=false;state.error="";show();}));
  root.querySelectorAll("[data-wed-edit]").forEach(btn=>btn.addEventListener("click",()=>{state.editing=btn.dataset.wedEdit;state.ideaMode=false;state.error="";show();}));
  root.querySelectorAll("[data-wed-move]").forEach(select=>select.addEventListener("change",()=>void moveCard(select.dataset.wedMove,select.value)));
  root.querySelectorAll("[data-wed-drag]").forEach(card=>card.addEventListener("dragstart",event=>{
