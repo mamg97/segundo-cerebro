@@ -24,9 +24,9 @@ test("Kanban preserves D1 entries and filters by category and Spanish text",()=>
 test("Kanban is the default shared view and old inspiration and budget tabs remain",()=>{
  assert.match(source,/view:"kanban"/);
  assert.match(source,/state\.view="kanban";state\.draftStatus="idea"/);
- assert.match(source,/data-wed-view="kanban"/);
- assert.match(source,/data-wed-view="inspiracion"/);
- assert.match(source,/data-wed-view="planificacion"/);
+ assert.match(source,/\["kanban","Kanban"\]/);
+ assert.match(source,/\["inspiracion","Inspiración"\]/);
+ assert.match(source,/\["planificacion","Presupuesto"\]/);
  assert.match(source,/function inspirationCards\(/);
  assert.match(source,/function cards\(/);
  assert.match(source,/const all=sortWeddingItems\(filteredWeddingItems\(state\.items,state\.filter,state\.search\)/);
