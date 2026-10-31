@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseTravelDetail } from "./travels.js";
+import { parseTravelDetail,sortTripsNewestFirst } from "./travels.js";
 
 test("viajes: datos y tareas proceden de EventoHechos, no de datos incrustados", () => {
   const parsed = parseTravelDetail({ facts: [
@@ -42,4 +42,16 @@ test("viajes: no exponer fixtures personales ni datos reales en Git",()=>{
  assert.match(app,/openTravelsDetail\(state\.financeSummary, privateModeKind, routedTravelDetailId\)/);
  const html=readFileSync(new URL("./index.html",import.meta.url),"utf8");
  assert.match(html,/travels\.css\?v=/);
+});
+
+test("viajes: galería única ordenada por fecha descendente sin depender del estado",()=>{
+  const trips=[
+    {id:"old",startsAt:"2025-06-20T00:00:00Z",status:"CERRADO"},
+    {id:"future",startsAt:"2027-01-08T00:00:00Z",status:"CONFIRMADO"},
+    {id:"recent",startsAt:"2026-09-25T00:00:00Z",status:"CERRADO"},
+    {id:"unparseable",startsAt:"",status:"PENDIENTE"}
+  ];
+  const sorted=sortTripsNewestFirst(trips);
+  assert.deepEqual(sorted.map(x=>x.id),["future","recent","old","unparseable"]);
+  assert.equal(trips[0].id,"old","no mutar el listado canónico");
 });
