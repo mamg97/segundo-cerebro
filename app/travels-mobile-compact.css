@@ -1,0 +1,226 @@
+/* Private travel workspaces: phone-first density, true shrink-to-fit grid tracks.
+   Shared navigation is adjusted only at mobile widths. No trip data in CSS. */
+@media (max-width:760px) {
+  /* Preserve the iOS home-indicator safe zone without wasting another row. */
+  :root { --mobile-bottom-height:calc(58px + env(safe-area-inset-bottom,0px)); }
+  .mobile-bottom-nav {
+    box-sizing:border-box;
+    padding-top:2px;
+    padding-bottom:calc(2px + env(safe-area-inset-bottom,0px));
+    align-items:stretch;
+  }
+  .mobile-bottom-nav > a,.mobile-bottom-nav > button {
+    height:100%;min-height:0;max-height:54px;
+    margin:0 1px;padding:3px 0;gap:1px;line-height:1.15;
+  }
+  .mobile-bottom-nav svg {width:21px;height:21px;flex-basis:21px}
+  .mobile-bottom-nav :is(a,button) span {font-size:10px}
+  /* One-pixel separation prevents the dialog border painting over the toolbar. */
+  body.route-area-active #detail-dialog[open]:not(.wealth-dialog) {
+    inset:calc(var(--mobile-toolbar-height) + 1px) 0 var(--mobile-dock-height) 0!important;
+    height:calc(100dvh - var(--mobile-toolbar-height) - var(--mobile-dock-height) - 1px)!important;
+  }
+  .mobile-context-trigger.is-single-section {cursor:default}
+  .mobile-context-trigger.is-single-section svg {display:none}
+
+  /* The travel panel is one scrolling viewport, not an 800px-wide child grid. */
+  body.route-area-active #detail-dialog.travels-dialog[open] {
+    padding:42px 10px 0!important;
+    min-width:0;overflow:hidden;
+  }
+  body.route-area-active #detail-dialog.travels-dialog[open]::before {height:40px}
+  body.route-area-active #detail-dialog.travels-dialog[open] > #close-dialog {
+    width:34px!important;min-width:34px!important;
+    height:34px!important;min-height:34px!important;
+    top:3px!important;right:10px!important;
+    font-size:22px!important;border-radius:9px!important;
+  }
+  body.route-area-active #detail-dialog.travels-dialog[open] #dialog-body {
+    width:100%;max-width:100%;min-width:0;
+    flex:1 1 auto;overflow-x:hidden;overflow-y:auto;
+    padding:0 0 12px;
+    scroll-padding-top:8px;
+  }
+  .detail-dialog.travels-dialog .trv-wrap,
+  .detail-dialog.travels-dialog .trv-dashboard,
+  .detail-dialog.travels-dialog .trv-dashboard > *,
+  .detail-dialog.travels-dialog .trv-dash-lead > *,
+  .detail-dialog.travels-dialog .trv-dash-details > *,
+  .detail-dialog.travels-dialog .trv-panel {
+    box-sizing:border-box;
+    width:100%;min-width:0;max-width:100%;
+  }
+  .detail-dialog.travels-dialog .trv-dashboard {
+    display:grid;grid-template-columns:minmax(0,1fr);gap:9px;
+  }
+  body.route-area-active #detail-dialog.travels-dialog[open] :is(.trv-dash-lead,.trv-dash-details) {
+    display:grid;grid-template-columns:minmax(0,1fr)!important;gap:9px;
+  }
+  .detail-dialog.travels-dialog .trv-wrap {padding-bottom:10px}
+  .detail-dialog.travels-dialog .trv-intro {
+    margin:4px 0 12px;font-size:12px;line-height:1.35;
+    max-width:100%;
+  }
+  .detail-dialog.travels-dialog .trv-photo-credits {
+    font-size:10px;line-height:1.35;margin:8px 0 0;overflow-wrap:anywhere;
+  }
+  .detail-dialog.travels-dialog .trv-wrap > .trv-footnote {font-size:10px;margin:8px 0 0}
+  /* Two square cards are visible in the horizontal gallery on a phone. */
+  .detail-dialog.travels-dialog .trv-grid.trv-horizontal-gallery {
+    display:flex;flex-flow:row nowrap;gap:9px;
+    min-width:0;max-width:100%;width:100%;
+    padding:1px 1px 7px;overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x proximity;
+  }
+  .detail-dialog.travels-dialog .trv-grid.trv-horizontal-gallery > .trv-card.trv-city-tile {
+    flex:0 0 min(44vw,190px);width:min(44vw,190px);
+    max-width:none;min-width:0;
+    aspect-ratio:1 / 1;min-height:0;
+    padding:10px;border-radius:13px;
+  }
+  .detail-dialog.travels-dialog .trv-grid > .trv-city-tile .trv-card-details {gap:4px}
+  .detail-dialog.travels-dialog .trv-grid > .trv-city-tile .trv-card-details strong {
+    font-size:clamp(16px,4.1vw,20px);line-height:1.08;
+  }
+  .detail-dialog.travels-dialog .trv-grid > .trv-city-tile .trv-card-details small {
+    font-size:10px;line-height:1.25;
+  }
+  /* Dashboard overview: short, legible summary instead of oversized panels. */
+  .detail-dialog.travels-dialog .trv-dashboard-hero {
+    min-height:0;margin:0;padding:13px 14px 12px;border-radius:13px;
+  }
+  .detail-dialog.travels-dialog .trv-dashboard-hero::after {top:26px;right:10px;font-size:42px}
+  .detail-dialog.travels-dialog .trv-hero .trv-back {
+    min-height:32px;padding:5px 10px;margin:0 0 12px;
+    border-radius:9px;font-size:12px;
+  }
+  .detail-dialog.travels-dialog .trv-kicker {
+    font-size:9px;letter-spacing:.11em;margin-bottom:5px;
+  }
+  .detail-dialog.travels-dialog .trv-dashboard-hero h2 {
+    max-width:100%;margin:0 0 6px;
+    font-size:clamp(23px,6vw,29px);line-height:1.08;
+    overflow-wrap:anywhere;
+  }
+  .detail-dialog.travels-dialog .trv-dashboard-hero p {
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+    max-width:100%;overflow:hidden;font-size:12px;line-height:1.35;
+    margin:0 0 10px;
+  }
+  .detail-dialog.travels-dialog .trv-dates {gap:5px}
+  .detail-dialog.travels-dialog .trv-dates span {
+    font-size:10px;padding:5px 7px;border-radius:7px;
+  }
+  .detail-dialog.travels-dialog .trv-dash-metrics {
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
+  }
+  .detail-dialog.travels-dialog .trv-dash-metric {
+    display:grid;grid-template-columns:21px minmax(0,1fr) auto;
+    grid-template-rows:auto;align-items:center;column-gap:5px;
+    min-width:0;min-height:45px;padding:7px 8px;border-radius:11px;
+  }
+  .detail-dialog.travels-dialog .trv-dash-metric > span {
+    grid-row:auto;width:20px;height:20px;font-size:12px;border-radius:6px;
+  }
+  .detail-dialog.travels-dialog .trv-dash-metric small {
+    font-size:10px;line-height:1.13;min-width:0;
+  }
+  .detail-dialog.travels-dialog .trv-dash-metric strong {
+    font-size:15px;line-height:1.15;margin:0;white-space:nowrap;
+  }
+  /* All five anchors fit without a second horizontal scrollbar. */
+  .detail-dialog.travels-dialog .trv-dash-nav {
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:4px;min-width:0;max-width:100%;width:100%;
+    overflow:visible;white-space:normal;padding:4px 0;
+    position:sticky;top:0;border-radius:8px;
+  }
+  .detail-dialog.travels-dialog .trv-dash-nav button {
+    box-sizing:border-box;min-width:0;max-width:100%;
+    min-height:34px;padding:4px 2px;border-radius:9px;
+    font-size:10px;font-weight:750;line-height:1.15;
+    white-space:normal;overflow-wrap:anywhere;text-align:center;
+  }
+  .detail-dialog.travels-dialog .trv-panel {
+    height:auto;padding:11px;margin:0;border-radius:13px;
+  }
+  .detail-dialog.travels-dialog .trv-panel-head {
+    align-items:center;gap:5px;margin:0 0 9px;
+  }
+  .detail-dialog.travels-dialog .trv-panel h3 {
+    font-size:15px;line-height:1.22;
+  }
+  .detail-dialog.travels-dialog .trv-panel-head small {font-size:10px}
+  .detail-dialog.travels-dialog .trv-panel p {font-size:12px;line-height:1.45;margin:6px 0}
+  .detail-dialog.travels-dialog .trv-dash-address {
+    gap:7px;margin:0 0 8px;min-width:0;
+  }
+  .detail-dialog.travels-dialog .trv-dash-address > span {
+    width:26px;height:26px;flex:0 0 26px;
+    font-size:16px;border-radius:8px;
+  }
+  .detail-dialog.travels-dialog .trv-dash-address p {
+    font-size:11px;line-height:1.3;min-width:0;overflow-wrap:anywhere;
+  }
+  .detail-dialog.travels-dialog .trv-map-day-tabs {
+    display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;
+    width:100%;min-width:0;margin:6px 0 8px;
+    scrollbar-width:none;
+  }
+  .detail-dialog.travels-dialog .trv-map-day-tabs button {
+    flex:0 0 auto;min-height:30px;padding:5px 9px;font-size:11px;
+  }
+  .detail-dialog.travels-dialog .trv-map-canvas,
+  .detail-dialog.travels-dialog .trv-map-intro {
+    box-sizing:border-box;width:100%;min-width:0;max-width:100%;
+    min-height:190px!important;
+  }
+  .detail-dialog.travels-dialog .trv-map-canvas iframe {height:205px!important}
+  .detail-dialog.travels-dialog .trv-map-intro {
+    gap:4px;padding:12px;min-height:190px;
+  }
+  .detail-dialog.travels-dialog .trv-map-pin {
+    width:31px;height:31px;font-size:20px;margin-bottom:3px;
+  }
+  .detail-dialog.travels-dialog .trv-map-intro strong {font-size:15px}
+  .detail-dialog.travels-dialog .trv-map-intro p {font-size:11px;line-height:1.25;margin:2px 0}
+  .detail-dialog.travels-dialog .trv-map-intro button {
+    font-size:12px;padding:7px 11px;min-height:34px;max-width:100%;
+  }
+  .detail-dialog.travels-dialog .trv-map-routes {gap:5px;margin-top:7px}
+  .detail-dialog.travels-dialog .trv-map-routes a {
+    font-size:11px;padding:7px 8px;max-width:100%;white-space:normal;
+  }
+  .detail-dialog.travels-dialog .trv-map-stops {padding-top:5px}
+  .detail-dialog.travels-dialog .trv-map-stop-group ol {
+    display:grid;grid-template-columns:minmax(0,1fr);gap:4px;
+  }
+  .detail-dialog.travels-dialog .trv-map-stop-group li {font-size:11px;min-width:0}
+  .detail-dialog.travels-dialog .trv-map-stop-group li a {min-width:0}
+  .detail-dialog.travels-dialog .trv-map-note {font-size:10px!important}
+  .detail-dialog.travels-dialog .trv-day-nav button {min-width:115px;padding:8px 10px}
+  .detail-dialog.travels-dialog .trv-day-plan {min-height:0;padding:10px 12px}
+  .detail-dialog.travels-dialog .trv-day-plan h4 {font-size:16px}
+  .detail-dialog.travels-dialog .trv-day-plan p {font-size:12px}
+  .detail-dialog.travels-dialog .trv-timetable-scroll {
+    display:block;box-sizing:border-box;min-width:0;
+    width:100%;max-width:100%;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+  .detail-dialog.travels-dialog .trv-timetable {
+    width:max-content;min-width:740px;
+  }
+  .detail-dialog.travels-dialog .trv-timetable tbody td {min-width:130px}
+  .detail-dialog.travels-dialog .trv-time-notes {padding:9px 10px}
+  .detail-dialog.travels-dialog .trv-row {padding:9px 10px;gap:3px}
+  .detail-dialog.travels-dialog .trv-task {padding:9px 10px;gap:5px}
+  .detail-dialog.travels-dialog .trv-refs {gap:6px}
+  .detail-dialog.travels-dialog .trv-refs > :is(a,span) {
+    padding:8px 10px;font-size:11px;width:100%;min-width:0;
+  }
+  .detail-dialog.travels-dialog .trv-stats {gap:6px}
+  .detail-dialog.travels-dialog .trv-stats > div {padding:9px}
+  .detail-dialog.travels-dialog .trv-budget-meter {padding:10px;margin-bottom:8px}
+  .detail-dialog.travels-dialog .trv-dashboard [id^="trv-dash-"] {scroll-margin-top:49px}
+}
