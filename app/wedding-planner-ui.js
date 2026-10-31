@@ -173,7 +173,7 @@ function namedSeatDiagram(table,occupants,esc){
   const angle=-Math.PI/2+(2*Math.PI*index/total);
   const x=(134+orbitRadius*Math.cos(angle)).toFixed(2);
   const y=(134+orbitRadius*Math.sin(angle)).toFixed(2);
-  const label=guest?guest.name.trim().charAt(0).toLocaleUpperCase("es"):"+";
+  const label=guest?String(index+1):"+"; // Numeral corresponds to the full-name legend.
   const action=guest?'data-wed-seat-detail="'+esc(guest.id)+'"':
    'data-wed-seat-add="'+esc(table.id)+'" data-wed-seat-index="'+index+'"';
   const accessible=guest?"Editar "+guest.name:"Añadir invitado en plaza "+(index+1)+" de "+table.name;
@@ -187,6 +187,11 @@ function namedSeatDiagram(table,occupants,esc){
    '" font-size="'+(total>18?10:13)+'" font-weight="800">'+esc(label)+'</text>'+
    '</g>';
  }).join("");
+ const legend=seats.map((guest,index)=>guest?
+  '<button type="button" class="wed-floor-seat-legend-item" data-wed-seat-detail="'+esc(guest.id)+'" '+
+  'title="Editar '+esc(guest.name)+'" aria-label="Plaza '+(index+1)+': '+esc(guest.name)+'">'+
+  '<span class="wed-floor-seat-number">'+(index+1)+'</span>'+
+  '<span class="wed-floor-seat-full-name">'+esc(guest.name)+'</span></button>':"").filter(Boolean).join("");
  return '<div class="wed-svg-table-wrap" data-wed-table-diagram-version="4" role="group" '+
   'aria-label="'+esc(table.name)+': '+ordered.length+' de '+total+' plazas ocupadas">'+
   '<svg class="wed-floor-seat-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268 268" '+
@@ -197,7 +202,7 @@ function namedSeatDiagram(table,occupants,esc){
    '<circle cx="134" cy="134" r="66" fill="#0c1c31" stroke="#59a7fc" stroke-width="2.5"/>'+
    nameLines+
    '<text class="wed-svg-table-capacity" x="134" y="'+(secondLine?159:152)+'" text-anchor="middle">'+ordered.length+'/'+total+' plazas</text>'+
-   '</g>'+labels+'</svg></div>';
+   '</g>'+labels+'</svg>'+(legend?'<div class="wed-floor-seat-legend" role="group" aria-label="Nombres completos de '+esc(table.name)+'">'+legend+'</div>':'')+'</div>';
 }
 function tableGuestPicker(table,guests,esc,chosenSeatIndex=null){
  const available=guests.filter(g=>!g.tableId&&g.rsvp!=="rechazado")
@@ -207,11 +212,13 @@ function tableGuestPicker(table,guests,esc,chosenSeatIndex=null){
  '<h5>Añadir personas a '+esc(table.name)+
  (Number.isInteger(chosenSeatIndex)?' · Plaza '+(chosenSeatIndex+1):'')+'</h5>'+
  '<form data-wed-place-existing="'+esc(table.id)+'" class="wed-table-picker-form">'+
+ '<label>Buscar invitado disponible<input type="search" data-wed-guest-search autocomplete="off" placeholder="Escribe nombre o apellidos…" '+(!available.length||full?'disabled':'')+'></label>'+
  '<label>Selecciona un invitado de vuestras listas'+
  '<select name="guestId" required '+(!available.length||full?'disabled':'')+'>'+
  '<option value="">Elige un nombre…</option>'+available.map(g=>
  '<option value="'+esc(g.id)+'">'+esc(g.name)+' · '+esc(WEDDING_GUEST_GROUPS.find(([key])=>key===g.groupName)?.[1]||g.groupName||"Sin clasificar")+'</option>').join("")+
  '</select></label>'+
+ '<small class="wed-guest-search-status" data-wed-guest-search-status aria-live="polite">'+(available.length?available.length+' invitados disponibles':'No hay invitados disponibles')+'</small>'+
  '<button type="submit" class="wed-primary" '+(!available.length||full?'disabled':'')+'>Sentar en esta mesa</button></form>'+
  (!available.length?'<p>Los invitados ya están asignados o aún no hay nombres disponibles.</p>':'')+
  '<form data-wed-add-table-guest="'+esc(table.id)+'" class="wed-table-picker-form">'+
@@ -263,7 +270,10 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  const selectedGuests=selected?guests.filter(g=>g.tableId===selected.id):[];
  const columns=Math.min(4,Math.max(1,tables.length));
  const rows=Math.max(1,Math.ceil(tables.length/columns));
- const height=rows*360;
+ const maxOccupied=Math.max(0,...tables.map(t=>guests.filter(g=>g.tableId===t.id).length));
+ const rowHeight=Math.max(360,300+Math.ceil(maxOccupied/2)*38);
+ const height=rows*rowHeight;
+ const dynamicRowHeight=rowHeight>360?'--wed-floor-row-height:'+rowHeight+'px;':'';
  return '<section class="wed-planner-panel wed-seating-workspace">'+
  '<div class="wed-planner-heading"><div><h3>Organizador de mesas</h3>'+
  '<small>'+summary.seated+'/'+summary.confirmed+' confirmados ubicados · '+summary.tables+' mesas creadas</small></div>'+
@@ -286,7 +296,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '" aria-label="'+(floorExpanded?'Cerrar pantalla completa':'Ampliar plano a pantalla completa')+
  '">'+(floorExpanded?'×':'⛶')+'</button></div></div>'+
  (tables.length?'<div class="wed-floor-scroll" tabindex="0" style="display:block;height:'+height+'px;min-height:'+height+'px" aria-label="Plano de mesas; desplázate horizontalmente si es necesario">'+
- '<div class="wed-floor-plan" data-wed-floor-plan data-wed-table-count="'+tables.length+'" style="display:grid;--wed-floor-columns:'+columns+';height:'+height+'px;min-height:'+height+'px">'+
+ '<div class="wed-floor-plan" data-wed-floor-plan data-wed-table-count="'+tables.length+'" style="display:grid;--wed-floor-columns:'+columns+';'+dynamicRowHeight+'height:'+height+'px;min-height:'+height+'px">'+
  tables.map((t,index)=>{
   const occupants=guests.filter(g=>g.tableId===t.id);
   const pos=tableFloorPosition(t,index,tables.length);
