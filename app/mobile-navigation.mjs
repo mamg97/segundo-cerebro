@@ -139,6 +139,7 @@ const historyByArea={};
 const dom=(id)=>document.getElementById(id);
 function markup(){return '<div id="mobile-app-header" class="mobile-app-header">'+
  '<button id="mobile-context-trigger" class="mobile-context-trigger" type="button" aria-haspopup="dialog" aria-expanded="false"><span><small id="mobile-context-area">Inicio</small><strong id="mobile-context-label">Inicio</strong></span>'+ico("down")+'</button>'+
+ '<button id="mobile-route-back" class="mobile-header-action mobile-route-back" type="button" aria-label="Volver al inicio desde Viajes" hidden>×</button>'+
  '<button id="mobile-refresh-action" class="mobile-header-action" type="button" aria-label="Actualizar datos" aria-busy="false">'+ico("refresh")+'</button><span class="mobile-refresh-feedback" id="mobile-refresh-feedback" role="status" aria-live="polite" hidden></span></div>'+
  '<nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Navegación móvil"></nav>'+
  '<div id="mobile-navigation-sheet" class="mobile-navigation-sheet" hidden><button class="mobile-sheet-backdrop" data-mobile-dismiss aria-label="Cerrar menú"></button>'+
@@ -203,6 +204,8 @@ export function syncMobileNavigation(nextRoute,nextHash){
  const label=mobileCurrentLabel(route,hash);
  if(dom("mobile-context-area"))dom("mobile-context-area").textContent=label.area;
  if(dom("mobile-context-label"))dom("mobile-context-label").textContent=label.section;
+ // El cierre de Viajes vive en la cabecera móvil; no debe aparecer una segunda banda.
+ if(dom("mobile-route-back"))dom("mobile-route-back").hidden=route.areaId!=="area-travels";
  const context=dom("mobile-context-trigger"),hasChoices=mobileHasSectionChoices(route);
  if(context){
    context.disabled=!hasChoices;
@@ -219,6 +222,7 @@ export function initializeMobileNavigation({navigateTo,onRefresh:refreshHandler}
  document.body.insertAdjacentHTML("beforeend",markup());
  renderBottomBar();
  dom("mobile-context-trigger").addEventListener("click",e=>{if(mobileHasSectionChoices(route))openSheet("sections",e.currentTarget)});
+ dom("mobile-route-back").addEventListener("click",()=>navigate("#/inicio"));
  dom("mobile-refresh-action").addEventListener("click",async()=>{
   if(refreshBusy)return;
   const button=dom("mobile-refresh-action"),feedback=dom("mobile-refresh-feedback");
