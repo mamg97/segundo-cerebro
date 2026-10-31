@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {MOBILE_AREAS,mobileSections,mobileCurrentLabel,mobileRememberedRoute,MOBILE_DEFAULT_SHORTCUTS,MOBILE_SHORTCUT_GROUPS,normalizeMobileShortcuts,swapMobileShortcut} from "./mobile-navigation.mjs";
+import {MOBILE_AREAS,mobileSections,mobileHasSectionChoices,mobileCurrentLabel,mobileRememberedRoute,MOBILE_DEFAULT_SHORTCUTS,MOBILE_SHORTCUT_GROUPS,normalizeMobileShortcuts,swapMobileShortcut} from "./mobile-navigation.mjs";
 import {hrefForArea,hrefForPantryTab,routeFromHash} from "./area-routes.mjs";
 const parse=hash=>routeFromHash(hash);
 test("mobile primary dock has five areas and More holds all remaining areas",()=>{
@@ -90,7 +90,7 @@ test("mobile refresh shows one circular arrow rather than two opposing arrows",(
  assert.doesNotMatch(icon,/M4 17v-5h5|M20 7v5h-5/);
  const app=readFileSync(new URL("./app.js",import.meta.url),"utf8");
  const index=readFileSync(new URL("./index.html",import.meta.url),"utf8");
- assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.8/);
+ assert.match(app,/mobile-navigation\.mjs\?v=0\.1\.9/);
  assert.match(index,/app\.js\?v=0\.44\.\d+/);
 });
 
@@ -178,4 +178,15 @@ test("Gym quick access uses a recognisable, symmetric dumbbell rather than cross
   assert.match(path,/M2 6l4-4/);
   assert.match(path,/M3 10l7-7/);
   assert.match(path,/M14 21l7-7/);
+});
+
+test("one-subsection areas navigate directly without a redundant dropdown",()=>{
+ assert.equal(mobileHasSectionChoices(parse("#/viajes")),false);
+ assert.equal(mobileHasSectionChoices(parse("#/pareja/boda")),false);
+ assert.equal(mobileHasSectionChoices(parse("#/salud/menu")),true);
+ assert.equal(mobileCurrentLabel(parse("#/viajes"),"#/viajes").section,"Viajes");
+ const nav=readFileSync(new URL("./mobile-navigation.mjs",import.meta.url),"utf8");
+ assert.match(nav,/group\.links\.length===1/);
+ assert.match(nav,/context\.disabled=!hasChoices/);
+ assert.match(nav,/mobile-catalog-single/);
 });
