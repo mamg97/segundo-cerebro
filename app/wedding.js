@@ -586,6 +586,15 @@ function bindPlannerActions(area){
  }));
  bindWeddingFloorPlan(area);
  area.querySelector("[data-wed-new-table]")?.addEventListener("click",()=>{state.tableEditing="new";show();});
+ area.querySelectorAll("[data-wed-center-table]").forEach(btn=>btn.addEventListener("click",()=>{
+  const table=state.tables.find(t=>t.id===btn.dataset.wedCenterTable);
+  if(!table||state.busy)return;
+  state.seatingSelectedTableId=table.id;
+  void plannerMutation(()=>getJson("/api/wedding/tables/"+encodeURIComponent(table.id),"PATCH",{
+   name:table.name,capacity:table.capacity,shape:table.shape,
+   positionX:50,positionY:50,revision:table.revision
+  }),{preserveScroll:true});
+ }));
  area.querySelectorAll("[data-wed-edit-table]").forEach(btn=>btn.addEventListener("click",()=>{state.tableEditing=btn.dataset.wedEditTable;show();}));
  area.querySelector("[data-wed-cancel-table]")?.addEventListener("click",()=>{state.tableEditing=null;show();});
  const capacityInput=area.querySelector("#wed-table-capacity");
