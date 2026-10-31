@@ -279,8 +279,9 @@ async function loadPlanner(){
  }catch(error){state.error=errorMsg(error);}
  finally{state.plannerBusy=false;if(active())show();}
 }
-async function plannerMutation(action){
+async function plannerMutation(action,{focusGroup=null}={}){
  if(state.busy)return;
+ const scroll=document.querySelector("#dialog-body"),oldTop=scroll?.scrollTop||0;
  state.busy=true;
  try{
   await action();state.guestEditing=null;state.tableEditing=null;state.plannerLoaded=false;
@@ -288,7 +289,13 @@ async function plannerMutation(action){
  }catch(error){
   state.error=errorMsg(error);state.plannerLoaded=false;await loadPlanner();
   state.error=errorMsg(error);show();
- }finally{state.busy=false;}
+ }finally{
+  state.busy=false;
+  if(focusGroup&&active()){
+   if(scroll)scroll.scrollTop=oldTop;
+   document.querySelector('[data-wed-quick-add="'+focusGroup+'"] input[name="name"]')?.focus({preventScroll:true});
+  }
+ }
 }
 function guestPayload(form){
  const data=new FormData(form);
@@ -313,8 +320,23 @@ function bindPlannerActions(area){
  area.querySelector("[data-wed-new-provider]")?.addEventListener("click",()=>{
   state.draftCategory="finca";state.draftStatus="idea";state.editing="new";show();
  });
+ area.querySelectorAll("[data-wed-quick-add]").forEach(form=>form.addEventListener("submit",event=>{
+  event.preventDefault();
+  if(state.busy)return;
+  const name=String(new FormData(form).get("name")||"").trim();
+  const groupName=form.dataset.wedQuickAdd;
+  if(!name||!["pareja","padres_miguel","padres_andrea"].includes(groupName))return;
+  void plannerMutation(()=>getJson("/api/wedding/guests","POST",{
+   name,groupName,rsvp:"pendiente",menu:"",tableId:null,
+   dietaryNotes:"",email:"",phone:"",notes:""
+  }),{focusGroup:groupName});
+ }));
  area.querySelector("[data-wed-new-guest]")?.addEventListener("click",()=>{state.guestEditing="new";show();});
- area.querySelectorAll("[data-wed-edit-guest]").forEach(btn=>btn.addEventListener("click",()=>{state.guestEditing=btn.dataset.wedEditGuest;show();}));
+ area.querySelectorAll("[data-wed-edit-guest]").forEach(btn=>btn.addEventListener("click",()=>{
+  state.guestEditing=btn.dataset.wedEditGuest;show();
+  document.querySelector("#dialog-body")?.scrollTo({top:0,behavior:"instant"});
+  area.querySelector("#wed-guest-form input[name=name]")?.focus({preventScroll:true});
+ }));
  area.querySelector("[data-wed-cancel-guest]")?.addEventListener("click",()=>{state.guestEditing=null;show();});
  area.querySelector("#wed-guest-form")?.addEventListener("submit",event=>{
   event.preventDefault();if(state.busy)return;
