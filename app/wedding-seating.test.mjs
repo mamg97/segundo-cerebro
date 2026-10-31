@@ -642,3 +642,13 @@ test("table itself opens inspector while drag remains only on Mover control",()=
  assert.match(ui,/if\(weddingTableInspector\)\{[\s\S]*?closeWeddingTableInspector\(\);return;/);
  assert.match(ui,/if\(!expanded&&weddingFloorPortal\)/);
 });
+
+test("rectangular table has a visibly rectangular tabletop while preserving seats",()=>{
+ const table={id:"shape-demo",name:"Mesa alargada",shape:"rectangular",capacity:8};
+ const guests=[{id:"g1",name:"Invitado uno",tableId:"shape-demo",seatIndex:0,groupName:"pareja",rsvp:"confirmado"}];
+ const html=renderTables(guests,[table],null,esc,table.id);
+ const part=html.slice(html.indexOf('<article class="wed-floor-table'),html.indexOf('</article>'));
+ assert.match(part,/<rect x="251" y="[\d.]+" width="138" height="96" rx="15" fill="#0c1c31"/);
+ assert.equal((part.match(/class="wed-svg-chair is-/g)||[]).length,8);
+ assert.match(part,/Invitado uno/);
+});
