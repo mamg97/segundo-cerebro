@@ -183,12 +183,12 @@ function namedSeatDiagram(table,occupants,esc){
    'aria-label="Añadir invitado en plaza '+(index+1)+' de '+esc(table.name)+'">'+
    '<span class="wed-seat-avatar" aria-hidden="true">+</span><span class="wed-seat-name" aria-hidden="true">Libre</span></button>';
   return '<button type="button" class="wed-named-seat is-filled" data-wed-seat-detail="'+esc(guest.id)+
-   '" data-wed-seat-index="'+index+'" style="'+position+'" title="'+esc(guest.name)+'" aria-label="Editar '+esc(guest.name)+'">'+
+   '" style="'+position+'" title="'+esc(guest.name)+'" aria-label="Editar '+esc(guest.name)+'">'+
    '<span class="wed-seat-avatar" aria-hidden="true">'+esc(guest.name.trim().slice(0,1).toLocaleUpperCase("es"))+'</span>'+
    '<span class="wed-seat-name" aria-hidden="true">'+esc(shortName(guest.name))+'</span></button>';
  }).join("");
- return '<div class="wed-named-table" role="group" style="position:relative!important;width:268px!important;height:268px!important;overflow:visible!important" aria-label="'+esc(table.name)+
- ': '+byName.length+' de '+total+' plazas ocupadas">'+
+ return '<div class="wed-named-table" role="group" aria-label="'+esc(table.name)+
+ ': '+byName.length+' de '+total+' plazas ocupadas" style="position:relative!important;width:268px!important;height:268px!important;overflow:visible!important">'+
  '<button type="button" class="wed-named-table-center" data-wed-edit-table="'+esc(table.id)+
  '" aria-label="Editar '+esc(table.name)+'" title="Editar '+esc(table.name)+'">'+
  '<strong>'+esc(table.name)+'</strong><small>'+byName.length+'/'+total+' plazas</small></button>'+
