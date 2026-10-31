@@ -111,7 +111,7 @@ test("Home liquidity movements link has a restricted shareable Finance route",()
  }
  assert.match(html,/id="show-account-movements"[^>]*href="#\/finanzas\/movimientos"/);
  assert.match(html,/id="show-budget-detail"/);
- assert.match(app,/if\(areaId === "area-finance"\) \{\s*openBudgetDetail\(\)/);
+ assert.match(app,/if\s*\(areaId === "area-finance"\)\s*\{\s*openBudgetDetail\(\)/);
  assert.match(app,/function focusRequestedFinanceMovements\(\)/);
  assert.match(app,/section\.scrollIntoView\(\{behavior:"auto",block:"start"\}\)/);
  assert.match(app,/if\(!section\)return; \/\/ Canonical bank API may still be loading/);
