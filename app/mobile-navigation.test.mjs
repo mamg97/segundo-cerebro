@@ -7,12 +7,13 @@ const parse=hash=>routeFromHash(hash);
 test("mobile primary dock has five areas and More holds all remaining areas",()=>{
  assert.deepEqual(MOBILE_AREAS.slice(0,5).map(x=>x[0]),["area-general","area-finance","area-calendar","area-health","area-partner"]);
  assert.equal(MOBILE_AREAS.length,13);
+ assert.ok(MOBILE_AREAS.some(x=>x[0]==="area-partner"&&x[1]==="Boda"));
  assert.equal(new Set(MOBILE_AREAS.map(x=>x[0])).size,13);
  assert.ok(MOBILE_AREAS.some(x=>x[0]==="area-pantry"&&x[1]==="Despensa"));
  for(const x of MOBILE_AREAS)assert.equal(parse(hrefForArea(x[0])).areaId,x[0]);
 });
 test("context selector only offers actually implemented and shareable sections",()=>{
- assert.deepEqual(mobileSections(parse("#/pareja")).map(x=>x.href),["#/pareja","#/pareja/boda"]);
+ assert.deepEqual(mobileSections(parse("#/pareja")).map(x=>x.href),["#/pareja/boda"]);
  assert.deepEqual(mobileSections(parse("#/salud")).map(x=>x.href),["#/salud/overview","#/salud/medical","#/salud/vision","#/salud/gym","#/salud/nutrition","#/salud/recipes","#/salud/menu"]);
  assert.deepEqual(mobileSections(parse("#/hobbies")).map(x=>x.href),["#/hobbies/peliculas","#/hobbies/series","#/hobbies/libros","#/hobbies/vinos","#/hobbies/rutas-moto"]);
  assert.deepEqual(mobileSections(parse("#/despensa")).map(x=>x.href),["#/despensa/inventario","#/despensa/compra","#/despensa/tickets"]);
@@ -29,6 +30,8 @@ test("header and dock reflect the current deep link",()=>{
 });
 test("remembered last section is constrained to same area",()=>{
  assert.equal(mobileRememberedRoute("area-partner",{"area-partner":"#/pareja/boda"}),"#/pareja/boda");
+ assert.equal(mobileRememberedRoute("area-partner",{"area-partner":"#/pareja"}),"#/pareja/boda");
+ assert.equal(mobileRememberedRoute("area-partner",{}),"#/pareja/boda");
  assert.equal(mobileRememberedRoute("area-health",{"area-health":"#/pareja/boda"}),"#/salud");
  assert.equal(mobileRememberedRoute("area-health",{"area-health":"#/salud/fake"}),"#/salud");
  assert.equal(mobileRememberedRoute("bad-area",{}),"#/inicio");
