@@ -464,7 +464,9 @@ function updateWeddingTableFigure(table){
  const columns=Number.parseInt(getComputedStyle(stage).getPropertyValue("--wed-floor-columns"),10)||1;
  const rows=Math.max(1,Math.ceil(state.tables.length/columns));
  stage.style.setProperty("--wed-floor-row-height",rowHeight+"px");
- stage.style.height=Math.max(2200,rows*rowHeight)+"px";
+ // Preserve the fixed-size world; only enlarge it if extra tables genuinely
+ // require more logical space, never because the user changed zoom.
+ stage.style.setProperty("--wed-canvas-height",Math.max(3600,rows*rowHeight+320)+"px");
  const summary=document.querySelector(".wed-seating-summary");
  if(summary){
   const metrics=summary.querySelectorAll(".wed-seating-metric strong");
