@@ -15,7 +15,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const eur=x=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:2}).format(x/100);
 const typeName=x=>WEDDING_TYPES.find(z=>z[0]===x)?.[1]||"Otro";
 const statusName=x=>STATUSES.find(z=>z[0]===x)?.[1]||x;
-const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,seatingOpenTableId:null,seatingSelectedTableId:null,seatingTargetSeatIndex:null,seatingFloorExpanded:false,draftCategory:"ideas",exporting:false};
+const state={items:[],filter:"all",search:"",editing:null,mode:false,busy:false,viewer:"",error:"",loaded:false,view:"kanban",draftStatus:"idea",sort:"recent",inspirationFilter:"all",inspirationSearch:"",ideaMode:false,quickFiles:[],quickBusy:false,quickError:"",guests:[],tables:[],plannerLoaded:false,plannerBusy:false,guestEditing:null,tableEditing:null,seatingOpenTableId:null,seatingSelectedTableId:null,seatingTargetSeatIndex:null,seatingFloorExpanded:false,seatingFloorZoom:1,draftCategory:"ideas",exporting:false};
 function active(){return document.querySelector("#detail-dialog")?.open&&window.location.hash==="#/pareja/boda";}
 export function weddingEntryCard(){
  return '<a class="wed-entry" href="#/pareja/boda"><span aria-hidden="true">💍</span><span><strong>Boda</strong><small>Ideas, fincas, catering, fotos y presupuesto compartido</small></span><b aria-hidden="true">↗</b></a>';
@@ -574,6 +574,28 @@ if(typeof document!=="undefined")document.addEventListener("keydown",event=>{
 function bindWeddingFloorPlan(area){
  const stage=area.querySelector("[data-wed-floor-plan]");
  if(!stage)return;
+ const shell=stage.closest("[data-wed-floor-shell]");
+ const scroll=shell?.querySelector(".wed-floor-scroll");
+ const zoomLabel=shell?.querySelector("[data-wed-zoom-reset]");
+ const applyZoom=()=>{
+  const zoom=Math.max(.5,Math.min(1.6,Number(state.seatingFloorZoom)||1));
+  state.seatingFloorZoom=Math.round(zoom*10)/10;
+  stage.style.zoom=String(state.seatingFloorZoom);
+  if(zoomLabel)zoomLabel.textContent=Math.round(state.seatingFloorZoom*100)+"%";
+  requestAnimationFrame(()=>stage.dispatchEvent(new Event("wed-floor-recalibrate")));
+ };
+ const zoomChange=delta=>{state.seatingFloorZoom=Math.max(.5,Math.min(1.6,Math.round((state.seatingFloorZoom+delta)*10)/10));applyZoom();};
+ shell?.querySelector("[data-wed-zoom-in]")?.addEventListener("click",()=>zoomChange(.1));
+ shell?.querySelector("[data-wed-zoom-out]")?.addEventListener("click",()=>zoomChange(-.1));
+ zoomLabel?.addEventListener("click",()=>{state.seatingFloorZoom=1;applyZoom();});
+ shell?.querySelector("[data-wed-zoom-fit]")?.addEventListener("click",()=>{
+  const natural=stage.getBoundingClientRect().width/(Number(state.seatingFloorZoom)||1);
+  const available=scroll?.clientWidth||natural;
+  state.seatingFloorZoom=Math.max(.5,Math.min(1.6,Math.floor(available/natural*10)/10));
+  applyZoom();
+  if(scroll){scroll.scrollLeft=0;scroll.scrollTop=0;}
+ });
+ applyZoom();
  const select=id=>{
   if(state.seatingSelectedTableId===id)return;
   const top=area.scrollTop;
@@ -1227,7 +1249,7 @@ export function openWeddingDetail(remote){
   refreshButton.hidden=!remote;
   refreshButton.onclick=()=>void refreshWedding();
  }
- clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;state.seatingSelectedTableId=null;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;state.seatingFloorExpanded=false;
+ clearQuickFiles();state.editing=null;state.error="";state.mode=remote;state.filter="all";state.search="";state.view="kanban";state.draftStatus="idea";state.sort="recent";state.inspirationFilter="all";state.inspirationSearch="";state.ideaMode=false;state.draftCategory="ideas";state.plannerLoaded=false;state.guestEditing=null;state.tableEditing=null;state.seatingSelectedTableId=null;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;state.seatingFloorExpanded=false;state.seatingFloorZoom=1;
  body.innerHTML='<div class="wed-loading">Cargando espacio de boda…</div>';
  if(!dialog.open)dialog.showModal();
  if(!remote){body.innerHTML='<div class="wed-locked"><h3>Boda</h3><p>Este apartado permite añadir ideas, presupuestos y fotos en la versión privada de Segundo Cerebro.</p></div>';return;}
