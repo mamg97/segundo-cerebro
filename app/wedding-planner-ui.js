@@ -167,7 +167,7 @@ function weddingSeatLayout(table,occupants){
    if(row&&row.length+1+word.length>24){rows.push(row);row="";}
    row=row?row+" "+word:word;
    // Very long unbroken names must stay inside the 165px label.
-   while(row.length>29){rows.push(row.slice(0,29));row=row.slice(29);}
+   while(row.length>24){rows.push(row.slice(0,24));row=row.slice(24);}
   }
   if(row)rows.push(row);
   return rows.length?rows:[""];
@@ -336,7 +336,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<div class="wed-floor-shell'+(floorExpanded?' is-expanded':'')+'" data-wed-floor-shell>'+
  '<div class="wed-seating-block-title wed-floor-heading"><div class="wed-floor-title">'+
  '<h4 id="wed-floor-title">Plano de mesas</h4>'+
- '<small>Asientos numerados · Nombres completos debajo · Arrastra «Mover»</small></div>'+
+ '<small>El nombre aparece junto a su asiento · Arrastra desde «Mover»</small></div>'+
  '<div class="wed-floor-actions">'+
  '<div class="wed-floor-zoom" role="group" aria-label="Zoom del plano">'+
  '<button type="button" data-wed-zoom-out aria-label="Reducir plano" title="Alejar">−</button>'+
