@@ -11622,7 +11622,7 @@ function openBudgetDetail(options = {}) {
             <strong>Financiación sin conciliar.</strong> Una o varias cuotas previstas no coinciden con las reservas bancarias.
             Revisa el desglose antes de considerar completa la distribución del saldo.
           </p>`
-        : finance.creditReceiptReconciliation?.checks?.some((check) => check.status === "unverified")
+        : finance.creditReceiptReconciliation?.status === "unverified" && Array.isArray(finance.creditAccounts) && finance.creditAccounts.some((account) => Array.isArray(account.products) && account.products.length > 0 && account.estimatedNextReceipt !== null)
           ? '<p class="budget-net-note finance-reconciliation-warning" data-finance-reconciliation="unverified">Conciliación de financiación pendiente: falta una fuente para comprobar todas las cuotas.</p>'
           : ""}
       ${accountWorkspaceIncomplete ? '<p class="account-transactions-empty" data-finance-workspace-status="unavailable">Datos bancarios pendientes de recuperar desde la fuente privada. No se muestran cuentas ni movimientos supuestos.</p>' : ""}
