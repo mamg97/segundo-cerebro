@@ -266,19 +266,17 @@
 .trv-map-day-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .trv-map-day-tabs button{font-size:12px;line-height:1.2;cursor:pointer;min-height:34px;border:1px solid var(--line,#d6dce6);border-radius:999px;padding:7px 12px;color:var(--ink,#18324a);background:transparent}
 .trv-map-day-tabs button.is-active,.trv-map-day-tabs button[aria-pressed="true"]{background:var(--blue,#215e98);color:white;border-color:transparent}
-.trv-map-canvas.trv-map-loaded{touch-action:pan-y;cursor:grab;user-select:none}
-.trv-map-canvas.trv-map-loaded:active{cursor:grabbing}
-.trv-map-tiles{position:absolute;inset:0;z-index:1;pointer-events:none;background:#d8e5da}
-.trv-map-tile{position:absolute;width:256px;height:256px;max-width:none;display:block;pointer-events:none}
-.trv-map-route-svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
-.trv-map-marker{position:absolute;z-index:4;transform:translate(-50%,-50%);width:31px;height:31px;border:2px solid white;border-radius:50%;color:white;background:#155e8d;box-shadow:0 1px 6px #1a2d4080;font-weight:800;font-size:13px;display:grid;place-items:center;cursor:pointer;padding:0}
-.trv-map-marker.is-lodging{background:#a46324;width:36px;height:36px;font-size:22px}
-.trv-map-marker:focus-visible{outline:3px solid #ffcf73;outline-offset:2px}
-.trv-map-zoom{position:absolute;z-index:6;right:10px;top:10px;display:grid;gap:5px}
-.trv-map-zoom button{height:34px;width:34px;display:grid;place-items:center;border:1px solid #d1dde7;border-radius:8px;background:white;color:#12334d;font-weight:800;font-size:20px;cursor:pointer}
-.trv-map-attribution{position:absolute;z-index:6;right:5px;bottom:4px;padding:2px 4px;border-radius:3px;background:#fffe;color:#264766;font-size:10px;text-decoration:none}
-.trv-map-info{position:absolute;z-index:6;left:9px;bottom:11px;max-width:calc(100% - 170px);background:#fffffff0;padding:7px 10px;border-radius:8px;box-shadow:0 1px 6px #2f435b30;display:flex;flex-direction:column;gap:2px;color:#12334d;font-size:12px;line-height:1.25}
-.trv-map-info a{color:#125990;text-decoration:underline;font-weight:750}
+/* Google Maps is the map renderer; only local controls and selected-stop labels
+   are layered around the embed. Tiles, fake polylines and OSM gestures are removed. */
+.trv-map-canvas.trv-map-loaded{background:var(--surface)}
+.trv-google-map-frame{display:block;width:100%;height:310px;min-height:205px;border:0}
+.trv-google-map-info{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px;padding:8px 11px;background:var(--surface);font-size:12px;color:var(--ink);min-width:0}
+.trv-google-map-info>span{font-weight:750;overflow-wrap:anywhere;min-width:0}
+.trv-google-map-info>a{color:var(--blue);font-weight:800;text-decoration:none}
+.trv-map-stop-select{font:inherit;font-size:12px;font-weight:750;line-height:1.35;border:0;background:none;text-align:left;color:var(--ink);cursor:pointer;min-width:0;flex:1 1 auto;overflow-wrap:anywhere;padding:4px 0}
+.trv-map-stop-select:hover,.trv-map-stop-select.is-active{color:var(--blue);text-decoration:underline;text-underline-offset:2px}
+.trv-map-stop-select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.trv-map-stop-external{display:inline-flex;flex:0 0 22px;min-width:22px;align-items:center;justify-content:center;font-weight:850;color:var(--blue);text-decoration:none}
 .trv-map-routes{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
 .trv-map-routes a{display:inline-flex;align-items:center;border:1px solid #b8cfe3;border-radius:9px;padding:7px 10px;font-size:12px;font-weight:800;text-decoration:none;color:var(--blue,#1d659c)}
 .trv-map-routes a:hover{background:#e7f1fb}
