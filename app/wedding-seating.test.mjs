@@ -127,3 +127,35 @@ test("table-persons actions reuse canonical guest API and preserve every guest f
  assert.match(ui,/focusTableId:tableId/);
  assert.match(ui,/form\?\.dataset\.wedTableNew!=="true"/);
 });
+
+test("single full-width floor canvas selects a table and shows guests around it",()=>{
+ const tables=[{id:"mesa-demo",name:"Mesa de demostración",shape:"redonda",capacity:12,positionX:67.5,positionY:58.25}];
+ const guests=[
+  {id:"fake1",name:"Lucía Ejemplo",groupName:"pareja",rsvp:"confirmado",tableId:"mesa-demo"},
+  {id:"fake2",name:"Pablo Prueba",groupName:"pareja",rsvp:"pendiente",tableId:"mesa-demo"}
+ ];
+ const html=renderTables(guests,tables,null,esc,"mesa-demo");
+ assert.match(html,/data-wed-floor-plan/);
+ assert.match(html,/data-wed-floor-table="mesa-demo"/);
+ assert.match(html,/left:67\.500%;top:58\.250%/);
+ assert.match(html,/wed-floor-table is-selected/);
+ assert.match(html,/data-wed-selected-details="mesa-demo"/);
+ assert.match(html,/Lucía Ejemplo/);
+ assert.match(html,/data-wed-seat-detail="fake1"/);
+ assert.match(html,/data-wed-unseat-guest="fake2"/);
+ assert.match(css,/\.wed-floor-scroll/);
+ assert.match(css,/overflow-x:auto/);
+ assert.match(ui,/setPointerCapture/);
+ assert.match(ui,/pointercancel/);
+ assert.match(ui,/positionX,positionY,revision:table\.revision/);
+});
+test("legacy tables without positions receive deterministic visual geometry without writes",()=>{
+ const tables=Array.from({length:4},(_,i)=>({id:"table"+i,name:"Mesa "+i,shape:"redonda",capacity:12}));
+ const names=Array.from({length:2},(_,i)=>({id:"synthetic"+i,name:"Persona "+i,groupName:"pareja",rsvp:"pendiente",tableId:"table0"}));
+ const before=JSON.stringify({tables,names});
+ const html=renderTables(names,tables,null,esc,"table2");
+ assert.equal((html.match(/data-wed-floor-table="/g)||[]).length,4);
+ assert.match(html,/data-wed-floor-table="table2"/);
+ assert.match(html,/height:880px/);
+ assert.equal(JSON.stringify({tables,names}),before);
+});
