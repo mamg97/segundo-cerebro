@@ -86,7 +86,7 @@ asignar, elegir a Miguel o Andrea, o escribir el nombre de otra persona.
 La Agenda y el Kanban leen el mismo campo y lo conservan al cambiar
 el estado. Las tarjetas se arrastran en escritorio desde el título,
 que actúa como asa, hacia otra columna; el selector de estado también
-funciona en móvil. El botón de refresco está fuera del área desplazable, en la cabecera fija de Boda, junto a «Compartir enlace» y «Cerrar»; se oculta al salir de Boda. Solo existe un control, también durante la edición. Las pestañas siguen dentro de la zona de contenido. Todas las tarjetas muestran siempre un responsable, incluido «Sin asignar», independientemente de su categoría. No se crea una fuente
+funciona en móvil. En escritorio, el único control visible «Actualizar» está fijado en la barra principal de navegación de áreas, también en Boda, y delega en su refresco especializado (incluida la confirmación si hay edición sin guardar). En móvil se conserva el refresco propio de la cabecera de Boda. No se muestran controles duplicados en una misma vista. Las pestañas siguen dentro de la zona de contenido. Todas las tarjetas muestran siempre un responsable, incluido «Sin asignar», independientemente de su categoría. No se crea una fuente
 de datos adicional ni se publican nombres personales.
 
 ## Boda compartida: tablero Kanban
@@ -99,8 +99,7 @@ por `private-cloudflare/src/wedding-store.js`; no se ha creado una segunda
 fuente ni una tabla paralela. En ordenador las tarjetas pueden arrastrarse;
 en móvil se puede elegir el destino con un selector. El cambio utiliza el
 `PATCH /api/wedding/items/:id` privado con `revision` para detectar escrituras
-concurrentes y relee el estado del servidor. Un refresco sticky en la cabecera
-del espacio vuelve a consultar D1 sin recargar toda la aplicación. El acceso
+concurrentes y relee el estado del servidor. El refresco de Boda, accesible desde la barra principal en escritorio y desde la cabecera propia en móvil, vuelve a consultar D1 sin recargar toda la aplicación. El acceso
 compartido requiere que cada participante esté autorizado por Cloudflare Access.
 
 ## Superficies
