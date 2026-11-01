@@ -49,7 +49,7 @@ test("seat picker is positioned in dialog-local coordinates and clamped on both 
 });
 test("table selection is non-destructive and Safari pointer moves are frame-coalesced",()=>{
  const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
- const select=source.split("const select=id=>{")[1]?.split("stage.querySelectorAll(\"[data-wed-floor-table]\").forEach(tile=>{")[0]||"";
+ const select=source.match(/const select=id=>\\{([\\s\\S]*?)\\n \\};/)?.[1]||"";
  assert.doesNotMatch(select,/show\(\)/);
  assert.match(source,/const scheduleDrag=\(\)=>/);
  assert.match(source,/if\(drag\?\.dimensions\)return drag\.dimensions/);
