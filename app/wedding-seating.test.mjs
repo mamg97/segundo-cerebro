@@ -252,7 +252,7 @@ test("a verified center or moved position is honored after refresh",()=>{
  const frontend=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
  assert.match(frontend,/const calibrate=/);
  assert.match(frontend,/tile\.style\.transform="none"/);
- assert.match(frontend,/requestAnimationFrame\(calibrate\)/);
+ assert.match(frontend,/calibrate\(\);\s*stage\.addEventListener\("wed-floor-recalibrate",calibrate\)/);
  assert.match(frontend,/tile\.style\.position="relative"/);
 });
 
@@ -449,7 +449,8 @@ test("new-table action opens a visible modal with validation and API persistence
 test("free chair opens nearby filtered choices without closing fullscreen",()=>{
  assert.match(ui,/function openWeddingSeatPicker\(anchor,tableId,seatIndex\)/);
  assert.match(ui,/const eligible=state\.guests\.filter\(g=>!g\.tableId&&g\.rsvp!=="rechazado"\)/);
- assert.match(ui,/panel\.style\.left=x\+"px";panel\.style\.top=y\+"px"/);
+ assert.match(ui,/floorPopoverPlacement\(anchor\.getBoundingClientRect\(\),host\.getBoundingClientRect\(\)\)/);
+ assert.match(ui,/panel\.style\.left=\(placement\.left\+host\.scrollLeft\)\+"px"/);
  assert.match(ui,/input\.addEventListener\("input",render\)/);
  assert.match(ui,/words\.every\(w=>fold\(g\.name\)\.includes\(w\)\)/);
  assert.match(ui,/await changeGuestTable\(live,tableId,seatIndex\)/);
