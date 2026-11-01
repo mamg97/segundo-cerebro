@@ -11677,7 +11677,7 @@ function openBudgetDetail(options = {}) {
         <div><span>Libre Andrea</span><strong>${andreaNet === null ? "—" : formatMoney(andreaNet, currency)}</strong></div>
         <div><span>Libre conjunto</span><strong>${jointNet === null ? "—" : formatMoney(jointNet, currency)}</strong></div>
       </div>
-      <p class="budget-net-note">El dinero libre real se determina por cuenta después de retenciones y compromisos. El saldo restante de una categoría significa presupuesto aún sin ejecutar, no dinero libre para gastar.</p>
+      <p class="budget-net-note">Cada barra de gastos compara el gasto ya ejecutado con el presupuesto total de su categoría. Los importes reservados son provisiones todavía pendientes, no gastos realizados. Los extras sin presupuesto se muestran aparte y se compensan al cierre del ciclo.</p>
       ${monthly.pendingCycle
         ? '<p class="budget-net-note">El ciclo actual aún no tiene partidas conciliadas en la fuente canónica; las del ciclo anterior se han ocultado para evitar errores.</p>'
         : String(monthly.budgetStatus || "").includes("PROVISIONAL")
@@ -11692,10 +11692,11 @@ function openBudgetDetail(options = {}) {
           ? '<p class="budget-net-note finance-reconciliation-warning" data-finance-reconciliation="unverified">Conciliación de financiación pendiente: falta una fuente para comprobar todas las cuotas.</p>'
           : ""}
       ${accountWorkspaceIncomplete ? '<p class="account-transactions-empty" data-finance-workspace-status="unavailable">Datos bancarios pendientes de recuperar desde la fuente privada. No se muestran cuentas ni movimientos supuestos.</p>' : ""}
+      ${grouped["Común"].length ? `<div class="budget-groups budget-groups-primary">${renderBudgetGroup("Común", grouped["Común"], currency)}</div>` : ""}
       ${renderLiquidityAccounts(liquidityAccounts, currency, monthly.periodLabel || monthly.period || null)}
       ${bankTabsReady ? renderAccountTransactionsWorkspace(accountTransactions, workspaceAccounts, currency) : ""}
-      ${categories.length ? `<div class="budget-groups">
-        ${groups.map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
+      ${categories.length ? `<div class="budget-groups budget-groups-personal">
+        ${groups.filter((groupName) => groupName !== "Común").map((groupName) => renderBudgetGroup(groupName, grouped[groupName], currency)).join("")}
       </div>` : ""}
       `
     : "<p>No hay partidas presupuestadas ni liquidez por cuenta conectada.</p>";
@@ -11734,7 +11735,7 @@ function renderBudgetGroup(name, items, currency) {
       <div class="budget-group-heading">
         <div>
           <p class="context-label">${escapeHtml(name)}</p>
-          <h3>${name === "Común" ? "Presupuesto compartido" : "Gastos personales"}</h3>
+          <h3>${name === "Común" ? "Gastos realizados frente al presupuesto" : "Gastos personales"}</h3>
         </div>
         <div class="budget-group-totals">
           <span><b>${formatMoney(totals.budgeted, currency)}</b> presupuesto</span>
@@ -11753,15 +11754,24 @@ function renderBudgetGroup(name, items, currency) {
 
 // A dense table for the shared budget; detailed audit notes stay collapsed.
 function renderBudgetCompactTable(items, currency) {
+  // Zero-budget items with real expenses are extras, not fictitious provisions.
+  const budgetedItems = items.filter((item) => numberOrZero(item.budgeted) > 0);
+  const extras = items.filter((item) => numberOrZero(item.budgeted) <= 0 &&
+    (numberOrZero(item.spent) > 0 || numberOrZero(item.committed) > 0));
   return `
     <div class="budget-compact-table" aria-label="Partidas del presupuesto compartido">
       <div class="budget-compact-columns" aria-hidden="true">
-        <span>Partida</span><span>Progreso</span>
+        <span>Partida</span><span>Gastado / previsto</span>
         <span>Presupuesto</span><span>Gastado</span><span>Saldo</span><span></span>
       </div>
       <div class="budget-compact-rows">
-        ${items.map((item) => renderBudgetCompactRow(item, currency)).join("")}
+        ${budgetedItems.map((item) => renderBudgetCompactRow(item, currency)).join("")}
       </div>
+      ${extras.length ? `
+        <div class="budget-compact-extras-heading">Extras · gastos sin presupuesto</div>
+        <div class="budget-compact-rows budget-compact-extras">
+          ${extras.map((item) => renderBudgetCompactRow(item, currency)).join("")}
+        </div>` : ""}
     </div>`;
 }
 
@@ -11772,13 +11782,15 @@ function renderBudgetCompactRow(item, currency) {
   const remaining = Number.isFinite(Number(item.remaining))
     ? Number(item.remaining)
     : budgeted - spent - committed;
-  const used = spent + committed;
-  const ratio = budgeted > 0 ? used / budgeted * 100 : null;
+  // Only executed spending fills the bar. Pending charges and allocations
+  // remain visible as commitments, but never look like spent money.
+  const used = spent;
+  const ratio = budgeted > 0 ? spent / budgeted * 100 : null;
   const percent = ratio === null ? null : Math.round(ratio);
   const overBudget = ratio !== null ? ratio > 100 : used > 0;
   const nearLimit = ratio !== null && ratio >= 85 && ratio <= 100;
   const progressValue = ratio === null ? (used > 0 ? 100 : 0) : Math.min(100, Math.max(0, ratio));
-  const progressText = percent === null ? "Sin partida" : percent + "%";
+  const progressText = percent === null ? (spent > 0 ? "Extra" : "Sin partida") : percent + "%";
   const sourceStatus = String(item.sourceStatus || item.source_status || "").toUpperCase();
   const statusLabel = sourceStatus.includes("PROVISIONAL") || sourceStatus.includes("PENDING")
     ? "Pendiente de conciliar"
@@ -11799,7 +11811,7 @@ function renderBudgetCompactRow(item, currency) {
         <span class="budget-compact-label">${escapeHtml(title)}</span>
         <span class="budget-compact-progress-cell">
           <progress max="100" value="${progressValue}"
-            aria-label="${escapeHtml(title)}: ${percent === null ? "sin presupuesto definido" : percent + "% gastado y comprometido"}">${progressValue}</progress>
+            aria-label="${escapeHtml(title)}: ${percent === null ? "sin presupuesto definido, gasto extra" : percent + "% del presupuesto gastado"}">${progressValue}</progress>
           <span class="budget-compact-percent">${escapeHtml(progressText)}</span>
         </span>
         <span class="budget-compact-amount budget-compact-planned" data-label="Prev.">${formatMoney(budgeted, currency)}</span>
