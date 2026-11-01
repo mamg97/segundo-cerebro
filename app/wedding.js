@@ -681,14 +681,48 @@ function openWeddingSeatPicker(anchor,tableId,seatIndex){
   message.textContent=filtered.length?(filtered.length+" coincidencias"+(filtered.length>40?" · muestra las primeras 40":"")):"Ninguna coincidencia sin mesa";
  };
  input.addEventListener("input",render);render();input.focus({preventScroll:true});
+ // Creating a guest is completely self-contained. The old lower table
+ // card has been removed; the chair picker must not depend on that card.
  panel.querySelector("[data-wed-seat-popup-new]")?.addEventListener("click",()=>{
-  closeWeddingSeatPopover();
-  state.seatingSelectedTableId=tableId;
-  state.seatingTargetSeatIndex=seatIndex;state.seatingOpenTableId=tableId;
-  state.seatingFloorExpanded=false;show();
-  const picker=document.querySelector('[data-wed-table-picker="'+CSS.escape(tableId)+'"]');
-  picker?.scrollIntoView({block:"center",behavior:"smooth"});
-  picker?.querySelector('input[name="name"]')?.focus({preventScroll:true});
+  if(placing||state.busy)return;
+  const previous=panel.querySelector("[data-wed-seat-popup-create]");
+  if(previous){previous.querySelector('input[name="name"]')?.focus();return;}
+  const form=document.createElement("form");
+  form.className="wed-seat-popover-create";
+  form.dataset.wedSeatPopupCreate="true";
+  form.innerHTML='<label>Nombre completo<input name="name" maxlength="180" required placeholder="Nuevo invitado"></label>'+
+   '<label>Lista<select name="groupName">'+WEDDING_GUEST_GROUPS.map(([key,label])=>
+   '<option value="'+esc(key)+'">'+esc(label)+'</option>').join("")+'</select></label>'+
+   '<button type="submit" class="wed-primary">Crear y sentar</button>';
+  panel.insertBefore(form,message);
+  form.addEventListener("submit",async event=>{
+   event.preventDefault();
+   if(placing||state.busy||!form.reportValidity())return;
+   const data=new FormData(form),name=String(data.get("name")||"").trim(),
+    groupName=String(data.get("groupName")||"").trim();
+   if(!name||!WEDDING_GUEST_GROUPS.some(([key])=>key===groupName))return;
+   placing=true;
+   const save=form.querySelector('[type="submit"]');
+   save.disabled=true;message.textContent="Creando y asignando invitado…";
+   const expanded=Boolean(weddingFloorPortal);
+   try{
+    await getJson("/api/wedding/guests","POST",{
+     name,groupName,rsvp:"pendiente",menu:"",tableId,seatIndex,
+     dietaryNotes:"",email:"",phone:"",notes:""
+    });
+    state.seatingSelectedTableId=tableId;state.seatingTargetSeatIndex=null;
+    closeWeddingSeatPopover();
+    await loadPlanner();
+    if(expanded&&active())setWeddingFloorExpanded(true);
+   }catch(error){
+    placing=false;
+    if(panel.isConnected){
+     save.disabled=false;message.textContent=errorMsg(error);
+     message.setAttribute("role","alert");
+    }
+   }
+  });
+  form.querySelector('input[name="name"]')?.focus({preventScroll:true});
  });
 }
 function setWeddingFloorExpanded(expanded){
