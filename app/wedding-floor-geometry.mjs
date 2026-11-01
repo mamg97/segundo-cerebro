@@ -23,6 +23,27 @@ export function moveFloorPosition(start,dx,dy,dimensions){
   stageWidth,stageHeight,tableWidth,tableHeight
  });
 }
+
+/** Anchor a seat picker inside the *same dialog* as its seat.
+ * All rectangles are in viewport coordinates; result is host-local CSS pixels.
+ * This avoids Safari treating fixed descendants of modal dialogs as viewport-fixed.
+ */
+export function floorPopoverPlacement(anchor,host,{width=320,height=370,padding=8}={}){
+ if(!anchor||!host||![anchor.left,anchor.right,anchor.top,host.left,host.top,host.width,host.height,
+    width,height,padding].every(Number.isFinite)||host.width<=0||host.height<=0)return null;
+ const actualWidth=Math.min(width,Math.max(0,host.width-2*padding));
+ const actualHeight=Math.min(height,Math.max(0,host.height-2*padding));
+ const right=anchor.right-host.left+padding;
+ const left=anchor.left-host.left-actualWidth-padding;
+ return {
+  left:Math.round(clamp(right+actualWidth<=host.width-padding?right:left,
+    padding,Math.max(padding,host.width-actualWidth-padding))),
+  top:Math.round(clamp(anchor.top-host.top,padding,
+    Math.max(padding,host.height-actualHeight-padding))),
+  width:actualWidth
+ };
+}
+
 export function floorDragStart(tile,stage,event){
  const stageRect=stage.getBoundingClientRect(),tileRect=tile.getBoundingClientRect();
  const x=Number.parseFloat(tile.style.left),y=Number.parseFloat(tile.style.top);

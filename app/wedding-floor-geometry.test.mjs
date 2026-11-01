@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {boundFloorPosition,moveFloorPosition,floorDragStart,floorDragUpdate} from "./wedding-floor-geometry.mjs";
+import {boundFloorPosition,moveFloorPosition,floorDragStart,floorDragUpdate,floorPopoverPlacement} from "./wedding-floor-geometry.mjs";
 const dimensions={stageWidth:1200,stageHeight:550,tableWidth:352,tableHeight:368};
 
 test("dragging a centered table never jumps to the top-left corner",()=>{
@@ -35,6 +35,28 @@ test("boundary clamps are centered and scale to actual table size",()=>{
  assert.deepEqual(atDifferentScale,{x:70,y:66.545});
  assert.equal(moveFloorPosition(start,20,20,{...dimensions,stageWidth:0}),null);
  assert.equal(moveFloorPosition({x:NaN,y:50},20,20,dimensions),null);
+});
+test("seat picker is positioned in dialog-local coordinates and clamped on both axes",()=>{
+ const host={left:120,top:64,width:1160,height:730};
+ const rightSeat={left:1210,right:1235,top:760};
+ assert.deepEqual(floorPopoverPlacement(rightSeat,host),{left:762,top:352,width:320});
+ const leftSeat={left:170,right:190,top:100};
+ assert.deepEqual(floorPopoverPlacement(leftSeat,host),{left:78,top:36,width:320});
+ const narrow={left:0,top:0,width:280,height:420};
+ assert.deepEqual(floorPopoverPlacement({left:250,right:275,top:370},narrow),
+  {left:8,top:42,width:264});
+ assert.equal(floorPopoverPlacement(leftSeat,{...host,width:0}),null);
+});
+test("table selection is non-destructive and Safari pointer moves are frame-coalesced",()=>{
+ const source=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ const select=source.split("const select=id=>{")[1]?.split("stage.querySelectorAll(\"[data-wed-floor-table]\").forEach(tile=>{")[0]||"";
+ assert.doesNotMatch(select,/show\(\)/);
+ assert.match(source,/const scheduleDrag=\(\)=>/);
+ assert.match(source,/if\(drag\?\.dimensions\)return drag\.dimensions/);
+ assert.match(source,/suppressClickUntil=performance\.now\(\)\+550/);
+ const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
+ assert.match(css,/\.wed-table-inspector\{[\s\S]*?position:absolute/);
+ assert.match(css,/\.wed-seat-popover\{[\s\S]*?position:absolute/);
 });
 test("drag handler verifies API write and avoids offset-based coordinates",()=>{
  const script=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");

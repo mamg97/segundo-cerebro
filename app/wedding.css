@@ -840,7 +840,8 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 /* Grid-based floor invariant: without JavaScript, every table remains fully
    visible and centered in its own slot. JS moves via translate3d only. */
 .wed-floor-plan[data-wed-table-count="1"]{grid-template-columns:minmax(0,1fr)}
-.wed-floor-table{will-change:transform}
+.wed-floor-table{will-change:auto}
+.wed-floor-table.is-dragging{will-change:transform}
 .wed-floor-table[data-wed-floor-table]{z-index:1}
 .wed-floor-table[data-wed-floor-table].is-dragging{z-index:20}
 
@@ -1165,7 +1166,7 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  color:#f1b560;font-size:12px;margin:0;
 }
 .wed-seat-popover{
- box-sizing:border-box;position:fixed;z-index:2147483001;
+ box-sizing:border-box;position:absolute;z-index:2147483001;
  width:min(320px,calc(100vw - 16px));max-height:min(370px,75dvh);
  display:flex;flex-direction:column;gap:9px;padding:12px;
  background:var(--surface);color:var(--ink);
@@ -1421,7 +1422,9 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
 /* Wedding table inspector v11: editable specifications without leaving the
    canvas, inside the same top-layer dialog when fullscreen is active. */
 .wed-table-inspector{
- position:fixed;
+ /* Dialog-local, not viewport-fixed: Safari/WebKit uses a different
+    containing block for fixed children of modal dialogs. */
+ position:absolute;
  z-index:2147483005;
  inset:10px 10px 10px auto;
  width:min(365px,calc(100vw - 20px));

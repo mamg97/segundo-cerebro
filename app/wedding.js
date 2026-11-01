@@ -1,5 +1,5 @@
 // Private wedding collaboration view. No embedded personal records.
-import {boundFloorPosition,moveFloorPosition} from "./wedding-floor-geometry.mjs?v=0.1.1";
+import {boundFloorPosition,moveFloorPosition,floorPopoverPlacement} from "./wedding-floor-geometry.mjs?v=0.1.2";
 import {renderAgenda,renderProviders,renderGuests,renderTables,namedSeatDiagram,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.25";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.3";
@@ -638,12 +638,14 @@ function openWeddingSeatPicker(anchor,tableId,seatIndex){
   '<div class="wed-seat-popover-results" role="listbox" aria-label="Invitados sin mesa"></div>'+
   '<button type="button" class="wed-seat-popover-new" data-wed-seat-popup-new>+ Crear invitado nuevo</button>'+
   '<small data-wed-seat-popup-message aria-live="polite">'+eligible.length+' personas disponibles</small>';
+ // Safari may position a fixed child of a native <dialog> relative to the
+ // dialogue itself. Use host-local absolute coordinates and clamp both axes.
+ const placement=floorPopoverPlacement(anchor.getBoundingClientRect(),host.getBoundingClientRect());
+ if(!placement){panel.remove();return;}
  host.appendChild(panel);
- const rect=anchor.getBoundingClientRect(),width=320;
- const preferRight=rect.right+width+14<=window.innerWidth;
- const x=preferRight?rect.right+8:Math.max(8,rect.left-width-8);
- const y=Math.min(Math.max(8,rect.top),Math.max(8,window.innerHeight-340));
- panel.style.left=x+"px";panel.style.top=y+"px";
+ panel.style.left=(placement.left+host.scrollLeft)+"px";
+ panel.style.top=(placement.top+host.scrollTop)+"px";
+ panel.style.width=placement.width+"px";
  const outside=event=>{
   if(panel.contains(event.target)||anchor.contains(event.target))return;
   closeWeddingSeatPopover();
@@ -867,24 +869,24 @@ function bindWeddingFloorPlan(area){
  };
  stage.addEventListener("pointerup",finishBackgroundPan);
  stage.addEventListener("pointercancel",finishBackgroundPan);
+ // Selection must NEVER rebuild this SVG world: doing so during Safari's
+ // pointerup/click sequence loses captured pointers and moves live tables.
  const select=id=>{
   if(state.seatingSelectedTableId===id)return;
-  const top=area.scrollTop;
   state.seatingSelectedTableId=id;state.seatingOpenTableId=null;state.seatingTargetSeatIndex=null;
-  if(weddingFloorPortal){
-   stage.querySelectorAll("[data-wed-floor-table]").forEach(tile=>{
-    tile.classList.toggle("is-selected",tile.dataset.wedFloorTable===id);
-   });
-   const centerButton=weddingFloorPortal.shell.querySelector(".wed-floor-heading [data-wed-center-table]");
-   if(centerButton)centerButton.dataset.wedCenterTable=id;
-   return; // Selecting must never dismantle the expanded modal.
-  }
-  show();area.scrollTop=top;
+  stage.querySelectorAll("[data-wed-floor-table]").forEach(item=>{
+   item.classList.toggle("is-selected",item.dataset.wedFloorTable===id);
+  });
+  const centerButton=shell?.querySelector(".wed-floor-heading [data-wed-center-table]");
+  if(centerButton)centerButton.dataset.wedCenterTable=id;
  };
  stage.querySelectorAll("[data-wed-floor-table]").forEach(tile=>{
   const id=tile.dataset.wedFloorTable;
-  let drag=null,suppressClick=false,origin=null,current=null;
+  let drag=null,suppressClickUntil=0,origin=null,current=null;
+  // Measured once per pointer gesture: large SVGs otherwise trigger synchronous
+  // layout on every pointermove, especially costly in Safari on older Macs.
   const dimensions=()=>{
+   if(drag?.dimensions)return drag.dimensions;
    const stageRect=stage.getBoundingClientRect(),tileRect=tile.getBoundingClientRect();
    return {stageWidth:stageRect.width,stageHeight:stageRect.height,
     tableWidth:tileRect.width,tableHeight:tileRect.height};
@@ -918,7 +920,6 @@ function bindWeddingFloorPlan(area){
    position(desired);
   };
   calibrate();
-  requestAnimationFrame(calibrate);
   stage.addEventListener("wed-floor-recalibrate",calibrate);
   const persist=async(point,rollback=current)=>{
    const table=state.tables.find(t=>t.id===id);
@@ -972,6 +973,14 @@ function bindWeddingFloorPlan(area){
    tile.classList.add("is-dragging");
    position(next);
   };
+  const scheduleDrag=()=>{
+   if(!drag||drag.moveFrame!==null)return;
+   drag.moveFrame=requestAnimationFrame(()=>{
+    if(!drag)return;
+    drag.moveFrame=null;
+    updateDrag();
+   });
+  };
   const stepAutoPan=()=>{
    if(!drag)return;
    if(scroll&&drag.moved){
@@ -996,40 +1005,49 @@ function bindWeddingFloorPlan(area){
       !event.target.closest("[data-wed-floor-grip]"))return;
    if(!current)calibrate();
    if(!current)return;
-   const rect=stage.getBoundingClientRect();
+   const rect=stage.getBoundingClientRect(),measured=dimensions();
+   if(!measured.stageWidth||!measured.stageHeight||!measured.tableWidth||!measured.tableHeight)return;
    drag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,
     pointerX:event.clientX,pointerY:event.clientY,
-    startStageLeft:rect.left,startStageTop:rect.top,
-    start:{...current},previous:{...current},moved:false,panFrame:null};
-   tile.setPointerCapture(event.pointerId);
+    startStageLeft:rect.left,startStageTop:rect.top,dimensions:measured,
+    start:{...current},previous:{...current},moved:false,panFrame:null,moveFrame:null};
+   try{tile.setPointerCapture(event.pointerId);}
+   catch(error){drag=null;return;}
    drag.panFrame=requestAnimationFrame(stepAutoPan);
   });
   tile.addEventListener("pointermove",event=>{
    if(!drag||event.pointerId!==drag.pointerId)return;
    drag.pointerX=event.clientX;drag.pointerY=event.clientY;
-   updateDrag();
+   scheduleDrag();
   });
   tile.addEventListener("pointerup",event=>{
    if(!drag||event.pointerId!==drag.pointerId)return;
+   drag.pointerX=event.clientX;drag.pointerY=event.clientY;
+   // Flush the last pointer position before the browser dispatches click.
+   updateDrag();
    const complete=drag;drag=null;
    if(complete.panFrame!==null)cancelAnimationFrame(complete.panFrame);
+   if(complete.moveFrame!==null)cancelAnimationFrame(complete.moveFrame);
    tile.classList.remove("is-dragging");
    if(complete.moved){
-    suppressClick=true;window.setTimeout(()=>{suppressClick=false;},0);
+    // A delayed Safari click must not open the inspector after a move.
+    suppressClickUntil=performance.now()+550;
     void persist(complete.previous,complete.start);
-   }else select(id);
+   }
+   // A stationary pointer is handled by the click listener, without render().
   });
   tile.addEventListener("pointercancel",()=>{
    if(!drag)return;
    const complete=drag;drag=null;
    if(complete.panFrame!==null)cancelAnimationFrame(complete.panFrame);
+   if(complete.moveFrame!==null)cancelAnimationFrame(complete.moveFrame);
    position(complete.start);
    tile.classList.remove("is-dragging");
   });
   tile.addEventListener("click",event=>{
    if(event.target.closest("[data-wed-seat-detail],[data-wed-seat-add],[data-wed-edit-table]"))return;
-   if(suppressClick){suppressClick=false;return;}
-   if(event.target.closest("[data-wed-floor-grip]")){select(id);return;}
+   if(performance.now()<suppressClickUntil)return;
+   select(id);
    openWeddingTableInspector(id);
   });
   tile.addEventListener("keydown",event=>{
