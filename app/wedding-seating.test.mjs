@@ -695,3 +695,65 @@ test("background hand panning remains possible vertically at 30 percent",()=>{
  assert.ok(start>=0&&finish>start);
  assert.doesNotMatch(implementation,/wed-floor-recalibrate|tile\.style\.transform="none"/);
 });
+
+test("unseated totals include pending and optional guests, never decline without a seat",()=>{
+ const t={id:"family",name:"Familia",capacity:12,shape:"redonda"};
+ const guests=[
+  {id:"a",name:"Confirmado sentado",rsvp:"confirmado",groupName:"pareja",tableId:"family"},
+  {id:"b",name:"Pendiente sin mesa",rsvp:"pendiente",groupName:"pareja",tableId:null},
+  {id:"c",name:"Otro pendiente",rsvp:"pendiente",groupName:"padres_miguel",tableId:null},
+  {id:"d",name:"Opcional sin mesa",rsvp:"pendiente",groupName:"opcionales",tableId:null},
+  {id:"e",name:"Rechazado sin mesa",rsvp:"rechazado",groupName:"pareja",tableId:null}
+ ];
+ const original=JSON.stringify(guests);
+ const summary=seatingSummary(guests,[t]);
+ assert.equal(summary.confirmed,1);
+ assert.equal(summary.unseated.length,0,"confirmed-only count remains zero");
+ assert.equal(summary.unseatedAll.length,3,"pending and optional names must be counted");
+ assert.deepEqual(summary.unseatedAll.map(g=>g.id),["b","c","d"]);
+ assert.equal(summary.unseatedPending.length,2);
+ assert.equal(summary.unseatedOptional.length,1);
+ assert.equal(summary.unseatedConfirmed.length,0);
+ assert.equal(summary.unseatedDeclined.length,1);
+ const html=renderTables(guests,[t],null,esc);
+ assert.match(html,/<strong>3<\/strong><span>Sin mesa<\/span>/);
+ assert.match(html,/3 por ubicar · 0 confirmados · 2 pendientes · 1 opcionales/);
+ for(const id of ["b","c","d"])assert.match(html,new RegExp('data-wed-seat-guest="'+id+'"'));
+ assert.doesNotMatch(html,/data-wed-seat-guest="e"/);
+ assert.match(html,/1 rechazados sin mesa/);
+ assert.equal(JSON.stringify(guests),original);
+});
+test("top overview precedes floor and eliminates duplicate selected-table guest card",()=>{
+ const table={id:"first",name:"Mesa test",capacity:6,shape:"redonda"};
+ const guests=[
+  {id:"seated",name:"Nombre Ya Sentado",rsvp:"pendiente",groupName:"pareja",tableId:"first",seatIndex:0},
+  {id:"loose",name:"Nombre Sin Mesa",rsvp:"pendiente",groupName:"pareja",tableId:null}
+ ];
+ const html=renderTables(guests,[table],null,esc,"first");
+ const top=html.indexOf('data-wed-planning-overview');
+ const pending=html.indexOf('class="wed-seating-block wed-pending-top"');
+ const suggested=html.indexOf('class="wed-seating-block wed-suggestions-top"');
+ const floor=html.indexOf('class="wed-seating-block wed-floor-section"');
+ assert.ok(top>=0&&top<pending&&pending<suggested&&suggested<floor,
+  "overview must be at the top, not below the map");
+ assert.doesNotMatch(html,/wed-seating-details|data-wed-selected-details/);
+ assert.match(html,/data-wed-seat-guest="loose"/);
+ assert.doesNotMatch(html,/data-wed-seat-guest="seated"/);
+ assert.match(html,/data-wed-seat-detail="seated"/);
+ assert.match(ui,/data-wed-inspector-unseat/);
+ assert.match(ui,/data-wed-seat-popup-create/);
+ assert.match(ui,/getJson\("\/api\/wedding\/guests","POST"/);
+ assert.match(css,/\.wed-top-planning\{/);
+});
+test("no eligible unassigned people is distinct from no confirmations",()=>{
+ const t={id:"a",capacity:10,shape:"redonda",name:"Mesa"};
+ const guests=[
+  {id:"a1",name:"Asistencia pendiente pero sentado",rsvp:"pendiente",groupName:"pareja",tableId:"a"},
+  {id:"a2",name:"Declinado",rsvp:"rechazado",groupName:"pareja",tableId:null}
+ ];
+ const markup=renderTables(guests,[t],null,esc);
+ assert.match(markup,/Todos los invitados no rechazados tienen mesa asignada/);
+ assert.match(markup,/1 rechazados sin mesa/);
+ assert.match(markup,/Sin confirmaciones todavía/);
+ assert.doesNotMatch(markup,/data-wed-seat-guest=/);
+});
