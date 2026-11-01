@@ -66,7 +66,11 @@ test("iOS PWA bypasses modules and styles and caches only benign static media", 
 test("PWA privacy and architectural documentation match the actual iOS cache boundary", () => {
   const privacy = readFileSync(new URL("../docs/PRIVACY.md", import.meta.url), "utf8");
   const decisions = readFileSync(new URL("../docs/DECISIONS.md", import.meta.url), "utf8");
+  const architecture = readFileSync(new URL("../docs/ARCHITECTURE.md", import.meta.url), "utf8");
   assert.match(privacy, /JavaScript y CSS se obtienen siempre desde la red/);
   assert.match(decisions, /JavaScript y CSS se obtienen siempre desde la red/);
   assert.match(privacy, /no los intercepta ni los almacena/);
+  assert.match(architecture, /JavaScript y CSS se obtienen siempre desde la red/);
+  assert.match(architecture, /recursos estáticos públicos no ejecutables/);
+  assert.doesNotMatch(architecture, /archivos estáticos de código, estilos/);
 });
