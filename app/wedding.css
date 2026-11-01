@@ -1568,3 +1568,84 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  cursor:grabbing;
  user-select:none;
 }
+
+
+/* Wedding planning v13: decisions and pending guests before the floor plan.
+   Each selected table's specification and guest list live solely in its
+   interactive side inspector — never in a repeated card under the map. */
+.wed-top-planning{
+ display:grid;
+ grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+ align-items:start;
+ gap:12px;
+ min-width:0;
+}
+.wed-top-planning > .wed-seating-block{
+ display:grid;gap:8px;min-width:0;
+ padding:12px 14px;
+ border:1px solid var(--line);
+ border-radius:12px;
+ background:var(--surface);
+}
+.wed-top-planning .wed-seating-block-title h4{
+ font-size:13px;line-height:1.25;
+}
+.wed-top-planning .wed-seating-block-title small{
+ font-size:10px;line-height:1.35;
+}
+.wed-top-planning .wed-unseated-list{
+ max-height:144px;overflow:auto;overscroll-behavior:contain;
+ gap:5px;align-content:start;
+}
+.wed-top-planning .wed-unseated-list button{
+ min-height:30px;padding:5px 8px;gap:7px;font-size:10px;
+}
+.wed-overview-empty{
+ margin:0;font-size:11px;line-height:1.5;color:var(--ink-soft);
+}
+.wed-overview-note{
+ display:block;font-size:10px;line-height:1.4;color:var(--ink-soft);
+}
+.wed-top-planning .wed-seating-options{
+ display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;
+ padding:0 0 4px;scrollbar-width:thin;
+}
+.wed-top-planning .wed-seating-option{
+ flex:0 0 min(205px,85%);padding:9px;gap:6px;
+ grid-template-rows:auto auto auto auto;
+}
+.wed-top-planning .wed-seating-option-visual{
+ max-height:75px;overflow:hidden;gap:4px;
+}
+.wed-top-planning .wed-seating-option>p{
+ font-size:9px;line-height:1.35;
+}
+.wed-seat-popover-create{
+ display:grid;gap:7px;
+ padding-top:8px;border-top:1px solid var(--line);
+}
+.wed-seat-popover-create label{
+ display:grid;gap:4px;
+ font-size:10px;color:var(--ink-soft);
+}
+.wed-seat-popover-create input,
+.wed-seat-popover-create select{
+ width:100%;min-width:0;height:34px;
+ padding:6px 9px;border:1px solid var(--line);
+ border-radius:7px;color:var(--ink);
+ background:var(--paper);font:inherit;font-size:11px;
+}
+.wed-seat-popover-create .wed-primary{min-height:34px;font-size:11px}
+.wed-inspector-guests li button[data-wed-inspector-unseat]{
+ flex:0 0 auto;padding:4px 6px;
+ border:1px solid var(--line);border-radius:6px;
+ background:var(--paper);color:var(--blue);
+ font:inherit;font-size:10px;cursor:pointer;
+}
+.wed-inspector-guests li button[data-wed-inspector-unseat]:hover{
+ border-color:var(--blue);
+}
+@media(max-width:920px){
+ .wed-top-planning{grid-template-columns:1fr;}
+ .wed-top-planning .wed-unseated-list{max-height:120px;}
+}
