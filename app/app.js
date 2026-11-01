@@ -22,6 +22,7 @@ import { openWeddingDetail, weddingEntryCard } from "./wedding.js?v=0.1.34";
 import { hrefForArea, hrefForWedding, hrefForHealthTab, hrefForPantryTab, hrefForWebTraffic, routeFromHash } from "./area-routes.mjs?v=0.1.6";
 import { initializeMobileNavigation, syncMobileNavigation } from "./mobile-navigation.mjs?v=0.1.10";
 import { openCareerDetail } from "./career.js?v=0.43.0";
+import { renderFamilyDashboardView } from "./family-dashboard.mjs?v=0.1.0";
 import { loadHealthAdherenceOverview } from "./adherence.js?v=0.33.9";
 import { loadVisionPanel } from "./vision.js?v=0.44.0";
 import { renderHealthDayBalance } from "./health-daily-balance.js?v=0.44.1";
@@ -2474,10 +2475,56 @@ const FAMILY_WEALTH_STATUS_LABELS = {
   pending: "Pendiente de valorar"
 };
 
-function openParentsDetail(initialScope = "mother") {
+// The Family top-level route is the private overview of *all* Parents cases.
+// Generic area notes are not the canonical case registry.
+let familyDashboardPayload=null;
+async function openFamilyDashboard(scope="all",reload=true){
+  if(privateModeKind!=="remote")return;
+  const dialog=document.querySelector("#detail-dialog");
+  dialog.classList.remove("wealth-dialog","health-dialog","habits-dialog","important-events-dialog",
+    "budget-dialog","parents-dialog","electricity-dialog","pantry-dialog","objects-dialog","projects-dialog");
+  dialog.classList.add("parents-dialog","family-dashboard-dialog");
+  document.querySelector("#dialog-context").textContent="Familia · muy confidencial";
+  document.querySelector("#dialog-title").textContent="Familia";
+  const body=document.querySelector("#dialog-body");
+  if(!dialog.open)dialog.showModal();
+  body.innerHTML='<p class="parents-empty">Consultando expedientes y patrimonio privados…</p>';
+  if(reload||!familyDashboardPayload){
+    const options={headers:{Accept:"application/json"},cache:"no-store",credentials:"same-origin"};
+    const responses=await Promise.allSettled([
+      fetch("/api/family/cases",options).then(async r=>{if(!r.ok)throw Error("FAMILY_CASES_"+r.status);return r.json()}),
+      fetch("/api/family/wealth",options).then(async r=>{if(!r.ok)throw Error("FAMILY_WEALTH_"+r.status);return r.json()})
+    ]);
+    familyDashboardPayload={
+      cases:responses[0].status==="fulfilled"&&Array.isArray(responses[0].value?.cases)?responses[0].value.cases:[],
+      casesAvailable:responses[0].status==="fulfilled",
+      wealth:responses[1].status==="fulfilled"?responses[1].value:null,
+      wealthAvailable:responses[1].status==="fulfilled"
+    };
+  }
+  // Route might have changed during the private fetch; never paint stale data.
+  if(!dialog.open||!dialog.classList.contains("family-dashboard-dialog"))return;
+  renderFamilyDashboardPanel(scope);
+}
+function renderFamilyDashboardPanel(scope="all"){
+  const body=document.querySelector("#dialog-body"),payload=familyDashboardPayload;
+  if(!body||!payload)return;
+  body.innerHTML=renderFamilyDashboardView({...payload,scope,esc:escapeHtml,money:value=>formatMoney(value,"EUR")});
+  body.querySelectorAll("[data-family-dashboard-scope]").forEach(button=>
+    button.addEventListener("click",()=>renderFamilyDashboardPanel(button.dataset.familyDashboardScope)));
+  body.querySelector("[data-family-dashboard-refresh]")?.addEventListener("click",()=>void openFamilyDashboard(scope,true));
+  body.querySelectorAll("[data-family-dashboard-case]").forEach(button=>
+    button.addEventListener("click",()=>openParentsDetail(button.dataset.familyCaseScope,button.dataset.familyDashboardCase)));
+  body.querySelectorAll("[data-family-dashboard-parents]").forEach(button=>
+    button.addEventListener("click",()=>openParentsDetail(button.dataset.familyDashboardParents)));
+  body.querySelectorAll("[data-family-dashboard-wealth]").forEach(button=>
+    button.addEventListener("click",()=>openParentsDetail("shared")));
+}
+
+function openParentsDetail(initialScope = "mother", initialCaseId = null) {
   if (privateModeKind !== "remote") return;
   const dialog = document.querySelector("#detail-dialog");
-  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog");
+  dialog.classList.remove("wealth-dialog", "health-dialog", "habits-dialog", "important-events-dialog", "budget-dialog", "family-dashboard-dialog");
   dialog.classList.add("parents-dialog");
   document.querySelector("#dialog-context").textContent = "Gestor Padres · muy confidencial";
   document.querySelector("#dialog-title").textContent = "Padres";
@@ -2500,8 +2547,11 @@ function openParentsDetail(initialScope = "mother") {
     });
   });
 
-  dialog.showModal();
-  void loadParentsPanel(initialScope);
+  if (!dialog.open) dialog.showModal();
+  void loadParentsPanel(initialScope).then(() => {
+    if (initialCaseId && dialog.open && dialog.classList.contains("parents-dialog"))
+      return openFamilyCaseDetail(initialCaseId, initialScope);
+  });
 }
 
 async function loadParentsPanel(scope) {
@@ -12390,6 +12440,10 @@ function openArea(areaId) {
   }
   if (areaId === "area-parents") {
     openParentsDetail();
+    return;
+  }
+  if (areaId === "area-family" && privateModeKind === "remote") {
+    void openFamilyDashboard();
     return;
   }
   if (areaId === "area-projects" && privateModeKind === "remote") {
