@@ -129,7 +129,7 @@ test("backup slot recognizes completed failed Chromium without masking short abo
 
 test("documented Chromium cadence threshold matches the executable workflow", () => {
   const docs = readFileSync(new URL("../../docs/WEB_AUDIT.md", import.meta.url), "utf8");
-  const threshold = workflow.match(/finished - started >= (\\d+)_000/);
+  const threshold = workflow.match(/finished - started >= (\d+)_000/);
   assert.ok(threshold, "Chromium cadence threshold must remain explicit");
   const seconds = Number(threshold[1]);
   assert.ok(seconds >= 90 && seconds <= 120, "only bounded completed Chromium runs cover the slot");
