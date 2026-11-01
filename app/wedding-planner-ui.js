@@ -388,7 +388,8 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  esc(g.name)+' <span>'+esc(g.groupName==="opcionales"?"Opcional":g.rsvp==="confirmado"?"Confirmado":"Pendiente")+' · Asignar ›</span></button>').join("")+'</div>':
  '<p class="wed-overview-empty">Todos los invitados no rechazados tienen mesa asignada.</p>')+
  (summary.unseatedDeclined.length?'<small class="wed-overview-note">'+summary.unseatedDeclined.length+
- ' rechazados sin mesa (no necesitan plaza).</small>':'')+
+ (summary.unseatedDeclined.length===1?' invitado rechazado sin mesa':' invitados rechazados sin mesa')+
+ ' (no necesitan plaza).</small>':'')+
  '<small class="wed-overview-note">Asistencia pendiente y mesa sin asignar son situaciones diferentes.</small>'+
  '</section>'+
  '<section class="wed-seating-block wed-suggestions-top"><div class="wed-seating-block-title">'+
