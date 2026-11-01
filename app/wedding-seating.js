@@ -8,9 +8,18 @@ export function seatingSummary(guests=[],tables=[]){
  const pending=definite.filter(g=>g.rsvp!=="confirmado"&&g.rsvp!=="rechazado").length;
  const declined=definite.filter(g=>g.rsvp==="rechazado").length;
  const occupied=guests.filter(g=>g.tableId).length;
+ // "0 confirmados sin mesa" never meant everyone had a table: pending and
+ // optional guests are real names, also requiring assignment until declined.
+ const unseatedAll=guests.filter(g=>!g.tableId&&g.rsvp!=="rechazado");
+ const unseatedConfirmed=unseatedAll.filter(g=>g.groupName!=="opcionales"&&g.rsvp==="confirmado");
+ const unseatedPending=unseatedAll.filter(g=>g.groupName!=="opcionales"&&g.rsvp!=="confirmado");
+ const unseatedOptional=unseatedAll.filter(g=>g.groupName==="opcionales");
+ const unseatedDeclined=guests.filter(g=>!g.tableId&&g.rsvp==="rechazado");
  const seats=tables.reduce((sum,t)=>sum+(Number(t.capacity)||0),0);
  return {confirmed:confirmed.length,seated:confirmed.filter(g=>g.tableId).length,
-  unseated:confirmed.filter(g=>!g.tableId),pending,declined,optional,occupied,
+  unseated:confirmed.filter(g=>!g.tableId),
+  unseatedAll,unseatedConfirmed,unseatedPending,unseatedOptional,unseatedDeclined,
+  pending,declined,optional,occupied,totalGuests:guests.length,
   seats,free:Math.max(0,seats-occupied),tables:tables.length};
 }
 export function suggestWeddingSeating(guests=[],tables=[]){
