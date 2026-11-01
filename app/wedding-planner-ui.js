@@ -100,7 +100,16 @@ export function renderGuests(guests,tables,editing,esc){
  const legacy=guests.filter(g=>!guestGroupId(g.groupName));
  const current=editing&&editing!=="new"?guests.find(g=>g.id===editing):null;
  return '<section class="wed-planner-panel wed-guest-board"><div class="wed-planner-heading"><div>'+
- '<h3>Lista de invitados</h3><small>'+guests.length+' nombres · '+optional+' opcionales · '+accepted+' confirmados · pulsa un nombre para completar sus datos</small></div></div>'+
+ '<h3>Lista de invitados</h3><small>'+guests.length+' nombres · '+optional+' opcionales · '+accepted+' confirmados · pulsa un nombre para completar sus datos</small></div>'+
+ '<button type="button" class="wed-import-parents-toggle" data-wed-import-parents-toggle>Importar padres Miguel</button></div>'+
+ '<section class="wed-import-parents-panel" data-wed-import-parents-panel hidden aria-label="Sustitución privada de invitados padres Miguel">'+
+ '<strong>Sustituir exclusivamente «Invitados padres Miguel»</strong>'+
+ '<p>Selecciona el archivo privado preparado desde la hoja familiar. Cada persona es un registro. No modifica otras listas ni mesas; elimina las asignaciones previas de este grupo.</p>'+
+ '<label>Archivo JSON de invitados<input type="file" accept=".json,application/json" data-wed-import-parents-file></label>'+
+ '<p data-wed-import-parents-preview role="status" aria-live="polite">Ningún archivo seleccionado.</p>'+
+ '<div class="wed-import-parents-actions"><button type="button" data-wed-import-parents-backup>Descargar copia previa</button>'+
+ '<button type="button" class="wed-primary" data-wed-import-parents-confirm disabled>Sustituir invitados</button>'+
+ '<button type="button" data-wed-import-parents-cancel>Cancelar</button></div></section>'+
  (editing?guestForm(current,tables,esc):"")+
  '<div class="wed-guest-columns">'+WEDDING_GUEST_GROUPS.map(([id,title])=>{
   const people=guests.filter(g=>g.groupName===id);

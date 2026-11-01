@@ -1652,3 +1652,28 @@ button.wed-named-seat:hover,button.wed-named-seat:focus-visible{
  .wed-top-planning{grid-template-columns:1fr;}
  .wed-top-planning .wed-unseated-list{max-height:120px;}
 }
+
+/* Private one-shot import: source names stay in the user-selected file, not git. */
+.wed-import-parents-toggle{
+ flex:0 0 auto;padding:8px 10px;font:inherit;font-size:11px;font-weight:750;
+ color:var(--blue);background:var(--paper);border:1px solid var(--line);
+ border-radius:8px;cursor:pointer;
+}
+.wed-import-parents-toggle:hover{border-color:var(--blue)}
+.wed-import-parents-panel[hidden]{display:none!important}
+.wed-import-parents-panel{
+ display:grid;gap:8px;padding:13px;border:1px solid var(--line);
+ border-radius:11px;background:var(--surface);
+}
+.wed-import-parents-panel strong{font-size:13px}
+.wed-import-parents-panel p{margin:0;font-size:11px;line-height:1.5;color:var(--ink-soft)}
+.wed-import-parents-panel p.is-error{color:#db7b5a}
+.wed-import-parents-panel label{display:grid;gap:6px;font-size:11px;font-weight:700}
+.wed-import-parents-panel input[type=file]{min-width:0;max-width:100%;font:inherit;font-size:11px}
+.wed-import-parents-actions{display:flex;flex-wrap:wrap;gap:8px}
+.wed-import-parents-actions button{
+ padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+ background:var(--paper);color:var(--ink);font:inherit;font-size:11px;cursor:pointer;
+}
+.wed-import-parents-actions .wed-primary{background:var(--blue);color:#fff}
+.wed-import-parents-actions button:disabled{opacity:.45;cursor:not-allowed}

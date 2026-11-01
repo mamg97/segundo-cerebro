@@ -1,6 +1,6 @@
 // Private wedding collaboration view. No embedded personal records.
 import {boundFloorPosition,moveFloorPosition,floorPopoverPlacement} from "./wedding-floor-geometry.mjs?v=0.1.2";
-import {renderAgenda,renderProviders,renderGuests,renderTables,namedSeatDiagram,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.25";
+import {renderAgenda,renderProviders,renderGuests,renderTables,namedSeatDiagram,renderBodasDirectory,WEDDING_GUEST_GROUPS} from "./wedding-planner-ui.js?v=0.1.26";
 import {WEDDING_ASSIGNEES,weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
 import {buildWeddingExport,createWeddingXlsx} from "./wedding-export.js?v=0.1.3";
 export const WEDDING_TYPES=[
@@ -312,7 +312,7 @@ function show(){
 }
 function errorMsg(e){
  if(e.status===409)return "Este elemento ha cambiado desde que lo abriste. He actualizado los datos para evitar sobrescribir los cambios de la otra persona.";
- const dict={TABLE_UPDATE_NOT_VERIFIED:"El servidor no confirma el cambio de capacidad. No se ha marcado como guardado. Revisa la configuración del servidor.",ACCESS_REQUIRED:"Acceso denegado. Es necesario iniciar sesión con una cuenta autorizada por Cloudflare Access.",STORAGE_UNAVAILABLE:"La base de datos no está disponible.",
+ const dict={IMPORT_COUNT_MISMATCH:"La importación no coincide con el total esperado.",IMPORT_NOT_VERIFIED:"No se han podido verificar todos los invitados en D1.",IMPORT_STALE:"La lista ha cambiado en otra sesión. Recarga antes de sustituir.",INVALID_PARENTS_IMPORT:"Archivo familiar inválido o incompleto.",TABLE_UPDATE_NOT_VERIFIED:"El servidor no confirma el cambio de capacidad. No se ha marcado como guardado. Revisa la configuración del servidor.",ACCESS_REQUIRED:"Acceso denegado. Es necesario iniciar sesión con una cuenta autorizada por Cloudflare Access.",STORAGE_UNAVAILABLE:"La base de datos no está disponible.",
    INVALID_ORIGIN:"La sesión no permite guardar cambios.",INVALID_ITEM:"Revisa los campos obligatorios.",PAID_EXCEEDS_CONTRACTED:"Lo pagado no puede superar lo contratado.",INVALID_IMAGE:"El archivo no es una imagen admitida.",IMAGE_TOO_LARGE:"La fotografía es demasiado grande.",TABLE_FULL:"La mesa está completa.",TABLE_HAS_GUESTS:"Vacía la mesa antes de eliminarla.",CAPACITY_BELOW_SEATED:"La capacidad no puede ser inferior a los invitados asignados.",REVISION_CONFLICT:"Los datos han cambiado en otra sesión. Se han actualizado para evitar sobrescribirlos.",DECLINED_SEATING:"No se puede asignar mesa a alguien que no asistirá.",INVALID_ITEM:"Revisa los datos del formulario.",STORAGE_UNAVAILABLE:"No se ha podido acceder al almacén privado.",POSITION_NOT_SAVED:"No se guardó la nueva posición de la mesa. Vuelve a intentarlo."};
  return dict[e.message]||"No se pudo completar la operación ("+e.message+").";
 }
@@ -1065,7 +1065,101 @@ function bindWeddingFloorPlan(area){
   });
  });
 }
+
+/** Private, opt-in one-time replacement of ONLY the parents-Miguel group.
+ * Personal names are loaded locally from the user's selected JSON; never bundled.
+ */
+function bindWeddingParentImport(area){
+ const trigger=area.querySelector("[data-wed-import-parents-toggle]");
+ const panel=area.querySelector("[data-wed-import-parents-panel]");
+ if(!trigger||!panel)return;
+ const file=panel.querySelector("[data-wed-import-parents-file]");
+ const preview=panel.querySelector("[data-wed-import-parents-preview]");
+ const submit=panel.querySelector("[data-wed-import-parents-confirm]");
+ let prepared=null;
+ const current=()=>state.guests.filter(g=>g.groupName==="padres_miguel");
+ const display=(message,isError=false)=>{
+  preview.textContent=message;preview.classList.toggle("is-error",isError);
+ };
+ const close=()=>{panel.hidden=true;prepared=null;file.value="";submit.disabled=true;};
+ trigger.addEventListener("click",()=>{panel.hidden=false;trigger.setAttribute("aria-expanded","true");file.focus({preventScroll:true});});
+ panel.querySelector("[data-wed-import-parents-cancel]").addEventListener("click",()=>{
+  close();trigger.setAttribute("aria-expanded","false");
+ });
+ const backup=panel.querySelector("[data-wed-import-parents-backup]");
+ const downloadBackup=()=>{
+  const snapshot={schema:"segundo-cerebro.wedding.parent-guests.backup.v1",
+   groupName:"padres_miguel",savedAt:new Date().toISOString(),guests:current()};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)],{type:"application/json"}));
+  const link=document.createElement("a");link.href=url;
+  link.download="copia-invitados-padres-miguel-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(link);link.click();link.remove();
+  window.setTimeout(()=>URL.revokeObjectURL(url),5000);
+ };
+ backup.addEventListener("click",downloadBackup);
+ file.addEventListener("change",async()=>{
+  prepared=null;submit.disabled=true;
+  const selected=file.files?.[0];
+  if(!selected)return;
+  if(selected.size>60000){display("Archivo demasiado grande.",true);return;}
+  try{
+   const parsed=JSON.parse(await selected.text());
+   if(parsed?.schema!=="segundo-cerebro.wedding.parent-guests.v1"||
+      parsed?.grupo!=="padres_miguel"||!Array.isArray(parsed.items)||parsed.items.length!==102)
+    throw new Error("La estructura no corresponde a los 102 invitados de la hoja familiar.");
+   const items=parsed.items.map((row,index)=>{
+    const v={name:String(row?.name||"").trim(),rama:row?.rama,
+     subgrupo:String(row?.subgrupo||"").trim(),prevision:row?.prevision};
+    if(!v.name||v.name.length>180||!["mamá","papá"].includes(v.rama)||
+       !["seguro","dudoso"].includes(v.prevision)||!v.subgrupo||v.subgrupo.length>90||
+       row.numero!==index+1)throw new Error("Registro incorrecto en la posición "+(index+1)+".");
+    return v;
+   });
+   const n=(value,key)=>items.filter(x=>x[key]===value).length;
+   if(n("mamá","rama")!==58||n("papá","rama")!==44||
+      n("seguro","prevision")!==92||n("dudoso","prevision")!==10)
+    throw new Error("El desglose no coincide con la hoja original.");
+   prepared={schema:parsed.schema,grupo:parsed.grupo,items};
+   const seated=current().filter(g=>g.tableId).length;
+   display("Archivo válido: 102 personas · 92 seguras y 10 dudosas · 58 rama materna y 44 paterna. Se sustituirán "+
+    current().length+" registros existentes de este grupo"+(seated?" ("+seated+" con mesa asignada).":".")+
+    " Todos entrarán con asistencia pendiente, sin mesa. Antes de continuar, descarga la copia previa.");
+   submit.disabled=false;
+  }catch(error){display(error.message||"Archivo inválido.",true);}
+ });
+ submit.addEventListener("click",async()=>{
+  if(!prepared||state.busy||state.plannerBusy)return;
+  const existing=current(),seated=existing.filter(g=>g.tableId).length;
+  if(!window.confirm("¿Sustituir "+existing.length+" invitados actuales de padres Miguel por "+
+   prepared.items.length+" personas? Se perderán las asignaciones de mesa de este grupo"+
+   (seated?" ("+seated+" asignadas).":".")+" Descarga antes la copia previa."))return;
+  // Always produce a local pre-change backup, even if the user skipped the button.
+  downloadBackup();
+  submit.disabled=true;file.disabled=true;state.busy=true;
+  display("Importando en una transacción privada; no cierres esta pestaña.");
+  try{
+   const saved=await getJson("/api/wedding/guests/import-parents-miguel","POST",
+    {...prepared,expectedExisting:existing.length});
+   if(saved.imported!==102||saved.replaced!==existing.length)
+    throw new Error("IMPORT_COUNT_MISMATCH");
+   const readBack=await getJson("/api/wedding/guests");
+   const verified=(readBack.items||[]).filter(g=>g.groupName==="padres_miguel");
+   if(verified.length!==102)throw new Error("IMPORT_NOT_VERIFIED");
+   state.guests=readBack.items||[];state.guestEditing=null;state.error="";
+   prepared=null;file.value="";display("Importación verificada: 102 personas individuales. Copia previa descargada.");
+   const count=area.querySelector(".wed-guest-column[aria-label='Invitados padres Miguel'] .wed-guest-column-head span");
+   if(count)count.textContent="102";
+   // Render the updated private list after the server confirms its exact count.
+   show();
+  }catch(error){
+   display(errorMsg(error),true);
+   if(error.status===409){state.plannerLoaded=false;await loadPlanner();}
+  }finally{state.busy=false;if(file.isConnected)file.disabled=false;}
+ });
+}
+
 function bindPlannerActions(area){
+ bindWeddingParentImport(area);
  area.querySelector("[data-wed-add-task]")?.addEventListener("click",()=>{
   state.draftCategory="tareas";state.draftStatus="pendiente";state.editing="new";show();
  });

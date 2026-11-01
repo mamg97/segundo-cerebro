@@ -758,3 +758,15 @@ test("no eligible unassigned people is distinct from no confirmations",()=>{
  assert.match(markup,/Sin confirmaciones todavía/);
  assert.doesNotMatch(markup,/data-wed-seat-guest=/);
 });
+
+test("parents import UI requires local JSON, preview and explicit confirm",()=>{
+ const code=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
+ const markup=renderGuests([],[],null,esc);
+ assert.match(markup,/data-wed-import-parents-toggle/);
+ assert.match(markup,/data-wed-import-parents-file/);
+ assert.match(markup,/data-wed-import-parents-backup/);
+ assert.match(markup,/data-wed-import-parents-confirm disabled/);
+ assert.match(code,/window\.confirm\("¿Sustituir "/);
+ assert.match(code,/expectedExisting:existing\.length/);
+ assert.match(code,/downloadBackup\(\)/);
+});

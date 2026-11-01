@@ -1,4 +1,5 @@
 // Private D1 wedding guest list + seating. Personal data never leaves authenticated API.
+import {validateParentImport,parentImportStatements} from "./wedding-parents-import.mjs";
 const GUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const RSVPS=new Set(["pendiente","confirmado","rechazado"]);
 const MENUS=new Set(["","adulto","infantil","vegetariano","vegano","otro"]);
@@ -93,6 +94,28 @@ export async function handleWeddingPlannerRequest(request,env){
   if(!db?.prepare)throw new PlannerError("STORAGE_UNAVAILABLE",503);
   const url=new URL(request.url),path=url.pathname,method=request.method;
   if(method!=="GET"&&request.headers.get("Origin")!==url.origin)throw new PlannerError("INVALID_ORIGIN",403);
+  if(path==="/api/wedding/guests/import-parents-miguel"){
+   if(method!=="POST")throw new PlannerError("METHOD_NOT_ALLOWED",405);
+   if(!(request.headers.get("Content-Type")||"").toLowerCase().startsWith("application/json"))
+    throw new PlannerError("JSON_REQUIRED",415);
+   const raw=await request.text();
+   if(raw.length>30000)throw new PlannerError("TOO_LARGE",413);
+   let importData;
+   try{importData=validateParentImport(JSON.parse(raw));}
+   catch{throw new PlannerError("INVALID_PARENTS_IMPORT");}
+   const existing=await db.prepare("SELECT COUNT(*) AS n FROM wedding_guests WHERE group_name=?")
+    .bind("padres_miguel").first();
+   if(Number(existing?.n||0)!==importData.expectedExisting)
+    throw new PlannerError("IMPORT_STALE",409);
+   // One D1 transaction: a failed INSERT rolls back the scoped deletion.
+   const now=new Date().toISOString();
+   const statements=parentImportStatements(db,importData,actor,now,()=>crypto.randomUUID());
+   await db.batch(statements);
+   const check=await db.prepare("SELECT COUNT(*) AS n FROM wedding_guests WHERE group_name=?")
+    .bind("padres_miguel").first();
+   if(Number(check?.n)!==102)throw new PlannerError("IMPORT_NOT_VERIFIED",502);
+   return json({ok:true,imported:102,replaced:importData.expectedExisting});
+  }
   const match=path.match(/^\/api\/wedding\/(guests|tables)(?:\/([^/]+))?$/);
   if(!match)throw new PlannerError("NOT_FOUND",404);
   const kind=match[1],id=match[2]?uuid(decodeURIComponent(match[2])):null;

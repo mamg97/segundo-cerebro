@@ -81,3 +81,48 @@ test("migration marks legacy floor positions unverified until an explicit modern
  assert.match(source,/position_verified=CASE WHEN \? IS NOT NULL AND \? IS NOT NULL THEN 1 ELSE position_verified END/);
  assert.match(source,/position_x=COALESCE\(\?,position_x\)/);
 });
+
+// Parent import is strictly scoped and its SQL is a transactional D1 batch.
+// Only fabricated fixtures occur in this public repository.
+test("parents Miguel import rejects untrusted or truncated data",async()=>{
+ const {validateParentImport}=await import("./wedding-parents-import.mjs");
+ const items=Array.from({length:102},(_,i)=>({
+  name:"Invitado sintético "+i,rama:i<58?"mamá":"papá",
+  subgrupo:"Grupo ficticio",prevision:i<92?"seguro":"dudoso"
+ }));
+ const sample={schema:"segundo-cerebro.wedding.parent-guests.v1",grupo:"padres_miguel",
+  expectedExisting:4,items};
+ assert.equal(validateParentImport(sample).items.length,102);
+ assert.throws(()=>validateParentImport({...sample,grupo:"padres_andrea"}));
+ assert.throws(()=>validateParentImport({...sample,items:items.slice(0,101)}));
+ assert.throws(()=>validateParentImport({...sample,expectedExisting:-1}));
+ assert.throws(()=>validateParentImport({...sample,items:items.map((v,i)=>i===99?{...v,rama:"padre"}:v)}));
+});
+test("bulk replacement changes no other guest groups and uses a single D1 batch",async()=>{
+ const {parentImportStatements,validateParentImport}=await import("./wedding-parents-import.mjs");
+ const items=Array.from({length:102},(_,i)=>({
+  name:"Persona ficticia "+i,rama:i<58?"mamá":"papá",
+  subgrupo:"Subgrupo de prueba",prevision:i<92?"seguro":"dudoso"
+ }));
+ const data=validateParentImport({schema:"segundo-cerebro.wedding.parent-guests.v1",
+  grupo:"padres_miguel",expectedExisting:5,items});
+ const statements=[];
+ const DB={prepare(sql){return {bind(...params){statements.push({sql,params});return {sql,params};}};}};
+ const queries=parentImportStatements(DB,data,"tester@example.test","2026-01-01T00:00:00.000Z",
+  ()=>"00000000-0000-4000-8000-000000000000");
+ assert.equal(queries.length,7); // one scoped delete + six <=20-row inserts
+ assert.match(queries[0].sql,/DELETE FROM wedding_guests WHERE group_name=\?/);
+ assert.equal(queries[0].params[0],"padres_miguel");
+ assert.equal(queries.slice(1).reduce((n,q)=>n+q.params.length/13,0),102);
+ assert.ok(queries.every(q=>!q.sql.includes("padres_andrea")));
+ assert.ok(queries.every(q=>!q.sql.includes("pareja")));
+});
+test("parent import remains private behind Access, exact Origin and expected group count",async()=>{
+ const body={schema:"segundo-cerebro.wedding.parent-guests.v1",grupo:"padres_miguel",
+  expectedExisting:1,items:[]};
+ const unauth=await handleWeddingPlannerRequest(new Request(
+  "https://private.example/api/wedding/guests/import-parents-miguel",
+  {method:"POST",headers:{Origin:"https://private.example","Content-Type":"application/json"},
+   body:JSON.stringify(body)}),{DB:{prepare(){throw Error("UNAUTHORIZED_ACCESS");}}});
+ assert.equal(unauth.status,403);
+});
