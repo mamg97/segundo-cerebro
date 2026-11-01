@@ -3946,6 +3946,21 @@ html[data-theme="dark"] .gym-session-footer input {
   background: color-mix(in srgb, var(--coral) 9%, transparent);
 }
 
+/* Compact shared budget — actual spending, not outstanding commitments, fills the bar. */
+.budget-compact-extras-heading {
+  padding: 10px 12px 7px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 90%, var(--amber) 10%);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .015em;
+  color: var(--ink);
+}
+.budget-compact-extras .budget-compact-line {
+  background: color-mix(in srgb, var(--surface) 95%, var(--amber) 5%);
+}
+.budget-groups-primary { margin-bottom: 20px; }
+.budget-groups-personal { margin-top: 20px; }
 /* Compact shared budget — summary beside progress, full reconciliation on expand. */
 .budget-group-comun .budget-detail-list { display: none; }
 .budget-compact-table {
