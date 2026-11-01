@@ -358,7 +358,6 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  const summary=seatingSummary(guests,tables);
  const options=suggestWeddingSeating(guests,tables);
  const selected=tables.find(t=>t.id===selectedId)||tables[0]||null;
- const selectedGuests=selected?guests.filter(g=>g.tableId===selected.id):[];
  const columns=Math.min(4,Math.max(1,tables.length));
  const rows=Math.max(1,Math.ceil(tables.length/columns));
  const maxDiagramHeight=Math.max(300,...tables.map(t=>
@@ -374,10 +373,29 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<small>'+summary.seated+'/'+summary.confirmed+' confirmados ubicados · '+summary.tables+' mesas creadas</small></div>'+
  '</div>'+
  '<div class="wed-seating-summary" aria-label="Resumen de distribución">'+
- metric("Confirmados",summary.confirmed)+metric("Sin mesa",summary.unseated.length)+
+ metric("Confirmados",summary.confirmed)+metric("Sin mesa",summary.unseatedAll.length)+
  metric("Plazas creadas",summary.seats)+metric("Plazas libres",summary.free)+
  metric("Pendientes",summary.pending)+metric("Opcionales",summary.optional)+'</div>'+
  (editing?tableForm(editing==="new"?null:tables.find(t=>t.id===editing),esc):"")+
+ '<div class="wed-top-planning" data-wed-planning-overview>'+
+ '<section class="wed-seating-block wed-pending-top" aria-label="Invitados pendientes de asignar">'+
+ '<div class="wed-seating-block-title"><h4>Invitados sin mesa</h4>'+
+ '<small>'+summary.unseatedAll.length+' por ubicar · '+summary.unseatedConfirmed.length+' confirmados · '+
+ summary.unseatedPending.length+' pendientes · '+summary.unseatedOptional.length+' opcionales</small></div>'+
+ (summary.unseatedAll.length?'<div class="wed-unseated-list">'+
+ summary.unseatedAll.slice().sort((a,b)=>a.name.localeCompare(b.name,"es")).map(g=>
+ '<button type="button" data-wed-seat-guest="'+esc(g.id)+'" title="Asignar mesa a '+esc(g.name)+'">'+
+ esc(g.name)+' <span>'+esc(g.groupName==="opcionales"?"Opcional":g.rsvp==="confirmado"?"Confirmado":"Pendiente")+' · Asignar ›</span></button>').join("")+'</div>':
+ '<p class="wed-overview-empty">Todos los invitados no rechazados tienen mesa asignada.</p>')+
+ (summary.unseatedDeclined.length?'<small class="wed-overview-note">'+summary.unseatedDeclined.length+
+ ' rechazados sin mesa (no necesitan plaza).</small>':'')+
+ '<small class="wed-overview-note">Asistencia pendiente y mesa sin asignar son situaciones diferentes.</small>'+
+ '</section>'+
+ '<section class="wed-seating-block wed-suggestions-top"><div class="wed-seating-block-title">'+
+ '<h4>Distribuciones sugeridas</h4><small>Simulaciones para confirmados; no modifican las mesas</small></div>'+
+ (options.length?'<div class="wed-seating-options">'+options.map(layoutPreview).join("")+'</div>':
+ '<p class="wed-overview-empty">Sin confirmaciones todavía. Cuando las registréis aparecerán alternativas.</p>')+
+ '</section></div>'+
  '<section class="wed-seating-block wed-floor-section">'+
  '<div class="wed-floor-shell'+(floorExpanded?' is-expanded':'')+'" data-wed-floor-shell>'+
  '<div class="wed-seating-block-title wed-floor-heading"><div class="wed-floor-title">'+
@@ -410,32 +428,7 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<p class="wed-planner-foot">La distribución y los asientos se guardan de forma privada. Pulsa una silla libre para asignar un invitado.</p>':
  '<p class="wed-planner-empty">Todavía no hay mesas. Pulsa + para crear la primera.</p>')+
  '</div>'+
- (selected?'<article class="wed-seating-card wed-seating-details" data-wed-selected-details="'+esc(selected.id)+'">'+
- '<div class="wed-seating-head"><strong>'+esc(selected.name)+'</strong>'+
- '<span>'+esc(pick(SHAPES,selected.shape))+' · '+selectedGuests.length+'/'+selected.capacity+'</span>'+
- '<button type="button" data-wed-toggle-table-picker="'+esc(selected.id)+'" aria-expanded="false">+ Añadir invitados</button>'+
- '<button type="button" data-wed-center-table="'+esc(selected.id)+'" title="Guardar la mesa en el centro del plano">Centrar mesa</button>'+
- '<button type="button" data-wed-edit-table="'+esc(selected.id)+'">Editar mesa</button></div>'+
- '<div class="wed-seat-caption">'+selectedGuests.filter(g=>g.rsvp==="confirmado"&&g.groupName!=="opcionales").length+
- ' confirmados · '+Math.max(0,selected.capacity-selectedGuests.length)+' libres</div>'+
- tableGuestPicker(selected,guests,esc,chosenSeatIndex)+
- '<div class="wed-seating-guests">'+(selectedGuests.length?selectedGuests.map(g=>
- '<div class="wed-seated-guest"><button type="button" data-wed-seat-detail="'+esc(g.id)+'">'+esc(g.name)+'</button>'+
- '<button type="button" data-wed-unseat-guest="'+esc(g.id)+'" title="Quitar de esta mesa">Quitar</button></div>').join(""):
- '<small>No hay personas sentadas. Pulsa «+ Añadir invitados».</small>')+'</div></article>':"")+'</section>'+
- '<section class="wed-seating-block"><div class="wed-seating-block-title"><h4>Confirmados sin mesa</h4>'+
- '<small>'+summary.unseated.length+' personas pendientes de ubicar</small></div>'+
- (summary.unseated.length?'<div class="wed-unseated-list">'+summary.unseated.map(g=>
- '<button type="button" data-wed-seat-guest="'+esc(g.id)+'">'+esc(g.name)+' <span>Asignar mesa ›</span></button>').join("")+'</div>':
- '<p class="wed-planner-empty">No hay invitados confirmados sin mesa.</p>')+'</section>'+
- '<section class="wed-seating-block"><div class="wed-seating-block-title"><h4>Distribuciones sugeridas</h4>'+
- '<small>Simulaciones con mesas de 6, 8, 10 o 12 plazas</small></div>'+
- (options.length?'<div class="wed-seating-options">'+options.map(layoutPreview).join("")+'</div>':
- '<p class="wed-planner-empty">En cuanto marquéis invitados como confirmados, aparecerán alternativas de distribución.</p>')+
- '<p class="wed-planner-foot">Estas propuestas son orientativas: no crean ni mueven mesas, no asignan invitados ni modifican la información guardada.</p></section>'+
- '</section>';
-}
-export function renderBodasDirectory(esc){
+ '</section>';\n}\nexport function renderBodasDirectory(esc){
  return '<section class="wed-planner-panel"><h3>Recursos oficiales de Bodas.net</h3><p>La planificación se guarda en Segundo Cerebro; el directorio, las opiniones y los servicios de terceros se consultan en su plataforma original.</p>'+
  '<div class="wed-external-grid">'+BODAS_LINKS.map(([name,url,desc])=>'<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="wed-external-card"><strong>'+esc(name)+' ↗</strong><small>'+esc(desc)+'</small></a>').join("")+'</div>'+
  '<p class="wed-planner-foot">Sin API oficial conectada, no podemos importar chats, favoritos, confirmaciones ni datos de Bodas.net. Sus sorteos y beneficios se gestionan exclusivamente allí.</p></section>';
