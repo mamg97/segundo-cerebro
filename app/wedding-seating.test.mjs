@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {ROUND_CAPACITIES,seatingSummary,suggestWeddingSeating,roundSeats} from "./wedding-seating.js";
-import {renderTables,tableFloorPosition} from "./wedding-planner-ui.js";
+import {renderTables,renderGuests,tableFloorPosition} from "./wedding-planner-ui.js";
 const ui=readFileSync(new URL("./wedding.js",import.meta.url),"utf8");
 const css=readFileSync(new URL("./wedding.css",import.meta.url),"utf8");
 const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll('"',"&quot;");
