@@ -528,10 +528,16 @@ function openWeddingTableInspector(id){
   '<section class="wed-inspector-guests"><h4>Comensales ('+guests.length+'/'+table.capacity+
   ')</h4>'+(guests.length?'<ul>'+guests.map(guest=>'<li><span>'+
    (Number.isInteger(guest.seatIndex)?'Plaza '+(guest.seatIndex+1):'Sin plaza fija')+
-   '</span><strong>'+esc(guest.name)+'</strong></li>').join("")+'</ul>':
+   '</span><strong>'+esc(guest.name)+'</strong>'+
+   '<button type="button" data-wed-inspector-unseat="'+esc(guest.id)+'" aria-label="Quitar a '+esc(guest.name)+' de esta mesa">Quitar</button></li>').join("")+'</ul>':
    '<p>No hay comensales asignados.</p>')+'</section>';
  host.appendChild(panel);weddingTableInspector=panel;
  panel.querySelector("[data-wed-inspector-close]")?.addEventListener("click",closeWeddingTableInspector);
+ panel.querySelectorAll("[data-wed-inspector-unseat]").forEach(button=>button.addEventListener("click",()=>{
+  if(state.busy)return;
+  const guest=state.guests.find(g=>g.id===button.dataset.wedInspectorUnseat);
+  if(guest?.tableId===id)void plannerMutation(()=>changeGuestTable(guest,null),{preserveScroll:true});
+ }));
  const form=panel.querySelector("[data-wed-inspector-form]");
  const capacity=form.elements.namedItem("capacity");
  const free=panel.querySelector("[data-wed-inspector-free]");
