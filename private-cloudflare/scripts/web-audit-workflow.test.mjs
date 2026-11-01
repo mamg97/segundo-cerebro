@@ -108,6 +108,16 @@ test("backup slot recognizes completed failed Chromium without masking short abo
   const full = { conclusion: "failure", started_at: "2026-10-30T23:13:30Z",
     completed_at: "2026-10-30T23:17:27Z" };
   assert.equal(fn({ status: "completed" }, full), true);
+  // A real scheduled Chromium run completed 383 checks before its own timeout
+  // in 99 seconds; the backup must not repeat this expensive failed audit.
+  const timedOutAfterChecks = {
+    conclusion: "failure", started_at: "2026-11-01T14:21:04Z",
+    completed_at: "2026-11-01T14:22:43Z"
+  };
+  assert.equal(fn({ status: "completed" }, timedOutAfterChecks), true);
+  assert.equal(fn({ status: "completed" }, {
+    ...timedOutAfterChecks, completed_at: "2026-11-01T14:22:30Z"
+  }), false, "early abort remains eligible for one backup attempt");
   assert.equal(fn({ status: "completed" }, { ...full, completed_at: "2026-10-30T23:13:40Z" }), false);
   assert.equal(fn({ status: "completed" }, { conclusion: "failure" }), false);
   assert.equal(fn({ status: "completed" }, { conclusion: "skipped" }), false);
