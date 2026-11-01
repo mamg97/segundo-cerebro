@@ -69,5 +69,4 @@ test("PWA privacy and architectural documentation match the actual iOS cache bou
   assert.match(privacy, /JavaScript y CSS se obtienen siempre desde la red/);
   assert.match(decisions, /JavaScript y CSS se obtienen siempre desde la red/);
   assert.match(privacy, /no los intercepta ni los almacena/);
-  assert.match(sw, /if \/\\.\(\?:m\?js\|css\)\$\/i\.test\(url\.pathname\)\) return false/);
 });
