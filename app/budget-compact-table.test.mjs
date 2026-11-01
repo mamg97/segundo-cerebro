@@ -39,10 +39,10 @@ test("shared budget uses compact rows while personal budget retains existing car
   assert.doesNotMatch(personal, /class="budget-compact-table"/);
 });
 
-test("progress includes committed funds but columns keep spent distinct", () => {
+test("progress reflects spent alone while commitments remain in details", () => {
   const html = fixtures.renderBudgetCompactRow(mk({}), "EUR");
-  assert.match(html, /value="67.5"/);
-  assert.match(html, />68%<\/span>/);
+  assert.match(html, /value="60"/);
+  assert.match(html, />60%<\/span>/);
   assert.match(html, /budget-compact-planned" data-label="Prev.">200.00 €/);
   assert.match(html, /budget-compact-spent" data-label="Gast.">120.00 €/);
   assert.match(html, /Comprometido <strong>15.00 €/);
@@ -54,14 +54,14 @@ test("overspent budget uses capped red bar without losing true percentage", () =
   const html = fixtures.renderBudgetCompactRow(mk({ budgeted: 100, spent: 140, committed: 10, remaining: -50 }), "EUR");
   assert.match(html, /budget-compact-entry is-over/);
   assert.match(html, /value="100"/);
-  assert.match(html, />150%<\/span>/);
+  assert.match(html, />140%<\/span>/);
   assert.match(html, /budget-compact-remaining is-negative/);
   assert.match(html, />-50.00 €<\/span>/);
 });
 
 test("zero budget and missing notes render safely", () => {
   const html = fixtures.renderBudgetCompactRow(mk({ budgeted: 0, spent: 10, committed: 0, remaining: -10, note: "" }), "EUR");
-  assert.match(html, /Sin partida/);
+  assert.match(html, /Extra/);
   assert.match(html, /budget-compact-entry is-over/);
   assert.doesNotMatch(html, /NaN|Infinity/);
   assert.doesNotMatch(html, /class="budget-compact-note"/);
@@ -80,4 +80,22 @@ test("compact rows adapt to mobile and keep details behind native disclosure", (
   assert.match(styles, /@media \(max-width: 700px\)[\s\S]*?\.budget-compact-columns \{ display: none; \}/);
   assert.match(styles, /\.budget-compact-entry\[open\]/);
   assert.match(styles, /\.budget-compact-line:focus-visible/);
+});
+
+test("unbudgeted pharmacy appears in extras, never in budgeted progress", () => {
+  const html = fixtures.renderBudgetCompactTable([
+    mk({id:"salud-gimnasio",title:"Gimnasio",budgeted:60,spent:0,committed:0,remaining:60}),
+    mk({id:"salud-medicinas",title:"Farmacia",budgeted:0,spent:13.95,committed:0,remaining:-13.95})
+  ], "EUR");
+  assert.match(html,/Extras · gastos sin presupuesto/);
+  const extrasStart=html.indexOf("budget-compact-extras-heading");
+  assert.ok(html.indexOf("Gimnasio") < extrasStart);
+  assert.ok(html.indexOf("Farmacia") > extrasStart);
+  assert.match(html,/value="0"/);
+  assert.doesNotMatch(html,/13.95%/);
+});
+test("main budget progress precedes remaining account allocations in the dialog", () => {
+  const start=source.indexOf('document.querySelector("#dialog-body").innerHTML = (categories.length');
+  const part=source.slice(start,source.indexOf('function renderBudgetGroup(', start));
+  assert.ok(part.indexOf('renderBudgetGroup("Común",') < part.indexOf("renderLiquidityAccounts("));
 });
