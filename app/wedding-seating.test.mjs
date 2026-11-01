@@ -720,7 +720,7 @@ test("unseated totals include pending and optional guests, never decline without
  assert.match(html,/3 por ubicar · 0 confirmados · 2 pendientes · 1 opcionales/);
  for(const id of ["b","c","d"])assert.match(html,new RegExp('data-wed-seat-guest="'+id+'"'));
  assert.doesNotMatch(html,/data-wed-seat-guest="e"/);
- assert.match(html,/1 rechazados sin mesa/);
+ assert.match(html,/1 invitado rechazado sin mesa/);
  assert.equal(JSON.stringify(guests),original);
 });
 test("top overview precedes floor and eliminates duplicate selected-table guest card",()=>{
@@ -753,7 +753,7 @@ test("no eligible unassigned people is distinct from no confirmations",()=>{
  ];
  const markup=renderTables(guests,[t],null,esc);
  assert.match(markup,/Todos los invitados no rechazados tienen mesa asignada/);
- assert.match(markup,/1 rechazados sin mesa/);
+ assert.match(markup,/1 invitado rechazado sin mesa/);
  assert.match(markup,/Sin confirmaciones todavía/);
  assert.doesNotMatch(markup,/data-wed-seat-guest=/);
 });
