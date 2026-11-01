@@ -14,6 +14,7 @@ import { readFinanceBankSource, FinanceBankSourceError } from "./finance-bank-so
 import { ensureCurrentFinanceCycle } from "./finance-cycle.mjs";
 import { readFinanceOptionalRanges } from "./finance-optional-ranges.js";
 import { isFundedFinanceAllocation, requireFinanceReservationSource } from "./finance-allocation-contract.js";
+import { reconcileBudgetEnvelopeForDisplay } from "./finance-budget-envelope.mjs";
 import { reconcileCreditReceiptProvisions } from "./finance-credit-reconciliation.js";
 import { readObjectsLookImage, renderObjectsLookImage, uploadObjectsLookImage } from "./look-images.js";
 import { serveObjectsLookSheetPreview } from "./look-sheet-media.js";
@@ -986,6 +987,7 @@ async function fetchFinanceSummaryUncached(env) {
     .reverse()
     .find((item) => item.date <= todayKey && item.patrimony !== null) || null;
 
+  const budgetCategoryById = new Map(categories.map((item) => [item.id, item]));
   const accountAllocations = parseTableRows(accountAllocationRows)
     .map((item) => {
       const rawChargeDate = item.charge_date || item.due_date || item.billing_date || null;
@@ -1003,7 +1005,11 @@ async function fetchFinanceSummaryUncached(env) {
         cycleNote: item.cycle_note || null
       };
     })
-    .filter((item) => isFundedFinanceAllocation(item));
+    .filter((item) => isFundedFinanceAllocation(item))
+    // Read-only check: when a funded budget is consumed, remove its
+    // remaining envelope from the visualization, not its bank history.
+    .map((item) => reconcileBudgetEnvelopeForDisplay(item, budgetCategoryById))
+    .filter((item) => item.amount > 0.005);
 
   const liquidityAccounts = parseTableRows(accountRows)
     .map((item) => {
