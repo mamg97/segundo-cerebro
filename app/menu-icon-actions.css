@@ -1,0 +1,106 @@
+/* Compact actions shared by Inicio and the editable Menú route.
+   Keep the exact consume/edit/remove handlers, changing presentation only. */
+.home-weekly-menu-table-cell .home-menu-item-actions{
+  display:grid;
+  grid-template-columns:minmax(29px,34px) minmax(0,1fr) minmax(29px,34px);
+  gap:3px;
+  align-items:center;
+  width:100%;
+  min-width:0;
+}
+.home-weekly-menu-table-cell .home-menu-item-actions button,
+.home-weekly-menu-table-cell .home-menu-item-actions .home-menu-consumed-label{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:34px;
+  margin:0;
+  padding:3px 2px;
+  border-radius:8px;
+  font-size:10px;
+  line-height:1;
+  font-weight:800;
+}
+.home-weekly-menu-table-cell .home-menu-item-actions button.home-menu-consume-action,
+.home-weekly-menu-table-cell .home-menu-item-actions button.home-menu-remove-action,
+.home-weekly-menu-table-cell .home-menu-item-actions .home-menu-consumed-label{
+  display:grid;
+  place-items:center;
+  flex:none;
+  grid-row:1;
+  font-size:20px;
+}
+.home-weekly-menu-table-cell .home-menu-item-actions .home-menu-consume-action,
+.home-weekly-menu-table-cell .home-menu-item-actions .home-menu-consumed-label{
+  grid-column:1;
+  color:var(--mint,#48cfa2);
+  border:1px solid color-mix(in srgb,var(--mint,#48cfa2) 48%,var(--line));
+}
+.home-weekly-menu-table-cell .home-menu-item-actions .home-menu-consumed-label{
+  padding:0;
+  background:color-mix(in srgb,var(--mint,#48cfa2) 10%,var(--surface));
+  font-style:normal;
+  cursor:default;
+}
+.home-weekly-menu-table-cell .home-menu-item-actions button.home-menu-change-action{
+  grid-column:2;
+  grid-row:1;
+  font-size:9px;
+  line-height:1.1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:clip;
+}
+.home-weekly-menu-table-cell .home-menu-item-actions button.home-menu-remove-action{
+  grid-column:3;
+  color:#fa7773;
+  border:1px solid color-mix(in srgb,#fa7773 52%,var(--line));
+  background:var(--surface);
+}
+.home-weekly-menu-table-cell .home-menu-item-actions button.home-menu-remove-action:hover{
+  background:color-mix(in srgb,#fa7773 12%,var(--surface));
+}
+.home-weekly-menu-table-cell .home-menu-item-actions button:focus-visible{
+  outline:2px solid var(--blue);
+  outline-offset:2px;
+}
+.home-weekly-menu-table-cell .home-menu-item-actions button[aria-busy="true"]{
+  cursor:wait;
+  opacity:.6;
+}
+.home-weekly-menu-table-cell > .weekly-menu-group-items .weekly-menu-group-item > .home-menu-consumed-label{
+  display:inline-grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  font-size:20px;
+  font-weight:850;
+  border:1px solid color-mix(in srgb,var(--mint,#48cfa2) 48%,var(--line));
+  border-radius:8px;
+  background:color-mix(in srgb,var(--mint,#48cfa2) 10%,var(--surface));
+  color:var(--mint,#48cfa2);
+}
+@media(max-width:600px){
+  .home-weekly-menu-table-cell .home-menu-item-actions{
+    grid-template-columns:29px minmax(0,1fr) 29px;
+    gap:2px;
+  }
+  .home-weekly-menu-table-cell .home-menu-item-actions button,
+  .home-weekly-menu-table-cell .home-menu-item-actions .home-menu-consumed-label{
+    min-height:34px;
+    font-size:9px;
+  }
+  .home-weekly-menu-table-cell .home-menu-item-actions button.home-menu-consume-action,
+  .home-weekly-menu-table-cell .home-menu-item-actions button.home-menu-remove-action,
+  .home-weekly-menu-table-cell .home-menu-item-actions .home-menu-consumed-label{
+    font-size:19px;
+  }
+}
+body.route-area-active #detail-dialog.home-menu-dialog[open] .home-weekly-menu-table-cell .home-menu-item-actions{
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr) 34px;
+  gap:3px;
+}
+body.route-area-active #detail-dialog.home-menu-dialog[open] .home-weekly-menu-table-cell .home-menu-item-actions button{
+  min-height:35px;
+}

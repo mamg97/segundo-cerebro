@@ -6313,11 +6313,11 @@ function renderHomeWeeklyMenuMatrixCell(items, readOnly = false, date = "", mome
               <span>${protein}</span>
             </div>
             ${canEdit ? `<div class="home-menu-item-actions">
-              ${planned ? `<button type="button" data-home-menu-consume="${item.sourceRow}" aria-label="Marcar ${escapeHtml(item.name)} como consumida">✓ Consumida</button>`
-                : '<small class="home-menu-consumed-label">✓ Consumida</small>'}
-              <button type="button" data-home-menu-change="${item.sourceRow}" aria-label="Cambiar alimento o receta ${escapeHtml(item.name)}">Cambiar</button>
-              <button type="button" class="home-menu-remove-action" data-home-menu-remove="${item.sourceRow}" aria-label="Eliminar ${escapeHtml(item.name)} del menú">Eliminar</button>
-            </div>` : consumed ? '<small class="home-menu-consumed-label">✓ Consumida</small>' : ""}
+              ${planned ? `<button type="button" class="home-menu-consume-action" data-home-menu-consume="${item.sourceRow}" aria-label="Marcar ${escapeHtml(item.name)} como consumida" title="Marcar como consumida"><span aria-hidden="true">✓</span></button>`
+                : '<small class="home-menu-consumed-label" role="img" aria-label="Consumida" title="Consumida"><span aria-hidden="true">✓</span></small>'}
+              <button type="button" class="home-menu-change-action" data-home-menu-change="${item.sourceRow}" aria-label="Cambiar alimento o receta ${escapeHtml(item.name)}">Cambiar</button>
+              <button type="button" class="home-menu-remove-action" data-home-menu-remove="${item.sourceRow}" aria-label="Eliminar ${escapeHtml(item.name)} del menú" title="Eliminar del menú"><span aria-hidden="true">×</span></button>
+            </div>` : consumed ? '<small class="home-menu-consumed-label" role="img" aria-label="Consumida" title="Consumida"><span aria-hidden="true">✓</span></small>' : ""}
           </div>`;
       }).join("")}
     </div>${addButton}`;
@@ -6701,7 +6701,7 @@ function bindHomeWeeklyMenuEdits(content, data, model) {
         ? "Esta comida figura como consumida. Se retirará del menú y se anulará su ingesta registrada cuando sea identificable. ¿Continuar?"
         : "Se retirará solo esta entrada del menú. La receta seguirá disponible y el resto de días no cambiarán. ¿Continuar?";
       if(!window.confirm("¿Eliminar «"+String(item.name||"alimento")+"»?\n\n"+explanation))return;
-      button.disabled=true;button.textContent="Eliminando…";
+      button.disabled=true;button.textContent="…";button.setAttribute("aria-busy","true");
       try {
         await submitHomeMenuEdit(item,"remove");
         homeMenuInlineNotice(content,"Entrada eliminada del menú. Receta conservada.");
@@ -6709,7 +6709,7 @@ function bindHomeWeeklyMenuEdits(content, data, model) {
         homeMenuInlineNotice(content,
           "No se pudo eliminar. La entrada se ha conservado ("+String(error?.message||"ERROR")+").",true);
       }finally{
-        if(button.isConnected){button.disabled=false;button.textContent="Eliminar";}
+        if(button.isConnected){button.disabled=false;button.textContent="×";button.removeAttribute("aria-busy");}
       }
     }));
   content.querySelectorAll("[data-home-menu-change]").forEach(button =>
