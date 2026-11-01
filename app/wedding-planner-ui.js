@@ -428,7 +428,9 @@ export function renderTables(guests,tables,editing,esc,selectedId=null,chosenSea
  '<p class="wed-planner-foot">La distribución y los asientos se guardan de forma privada. Pulsa una silla libre para asignar un invitado.</p>':
  '<p class="wed-planner-empty">Todavía no hay mesas. Pulsa + para crear la primera.</p>')+
  '</div>'+
- '</section>';\n}\nexport function renderBodasDirectory(esc){
+ '</section>';
+}
+export function renderBodasDirectory(esc){
  return '<section class="wed-planner-panel"><h3>Recursos oficiales de Bodas.net</h3><p>La planificación se guarda en Segundo Cerebro; el directorio, las opiniones y los servicios de terceros se consultan en su plataforma original.</p>'+
  '<div class="wed-external-grid">'+BODAS_LINKS.map(([name,url,desc])=>'<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="wed-external-card"><strong>'+esc(name)+' ↗</strong><small>'+esc(desc)+'</small></a>').join("")+'</div>'+
  '<p class="wed-planner-foot">Sin API oficial conectada, no podemos importar chats, favoritos, confirmaciones ni datos de Bodas.net. Sus sorteos y beneficios se gestionan exclusivamente allí.</p></section>';
