@@ -1,6 +1,6 @@
 // Wedding planner native tools and explicit outbound Bodas.net references.
 import {weddingAssigneeLabel} from "./wedding-assignees.js?v=0.1.0";
-import {seatingSummary,suggestWeddingSeating,roundSeats,ROUND_CAPACITIES} from "./wedding-seating.js?v=0.1.0";
+import {seatingSummary,suggestWeddingSeating,roundSeats,ROUND_CAPACITIES} from "./wedding-seating.js?v=0.1.1";
 // No scraping, partner API, embeds, personal records or external requests.
 export const BODAS_LINKS=[
  ["Organizador Bodas.net","https://www.bodas.net/organizador-bodas","Planificador original y funciones de Bodas.net"],
